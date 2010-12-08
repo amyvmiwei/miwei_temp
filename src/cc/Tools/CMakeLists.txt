@@ -19,6 +19,7 @@
 
 add_subdirectory(dfsclient)
 add_subdirectory(dumplog)
+add_subdirectory(genes2ngrams)
 add_subdirectory(hyperspace)
 add_subdirectory(hypertable)
 add_subdirectory(master_client)
