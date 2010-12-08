@@ -107,9 +107,9 @@ int main(int argc, char **argv) {
   map<const char*, const char *, ltngram>::iterator iter;
   CharArena arena;
 
-  char *line_buffer = new char [ 1024 * 1024 ];
+  char *line_buffer = new char [ 50 * 1024 * 1024 ];
 
-  output.reserve(1024*1024);
+  output.reserve(50*1024*1024);
 
   ios::sync_with_stdio(false);
 
@@ -121,18 +121,20 @@ int main(int argc, char **argv) {
     while (!cin.eof()) {
 
       if (cin.fail()) {
-	cerr << "Stream failure (line " << lineno << ")" << endl;
+	cerr << "istream failure (line " << lineno << ")" << endl;
 	cin.clear();
       }
 
-      cin.getline(line_buffer, 1024*1024);
+      cin.getline(line_buffer, 50*1024*1024);
       lineno++;
 
       if (*line_buffer == '#')
 	continue;
 
-      if ((sequence = get_field(line_buffer, 2, &end)) == 0)
+      if ((sequence = get_field(line_buffer, 2, &end)) == 0) {
+	cerr << "invalid format on line " << lineno << endl;
 	continue;
+      }
 
       arena.free();
       ngrams.clear();

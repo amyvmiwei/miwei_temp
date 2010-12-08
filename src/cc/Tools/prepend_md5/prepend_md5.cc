@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
   char *ptr;
   char hexdigits[33];
 
-  char *line_buffer = new char [ 1024 * 1024 ];
+  char *line_buffer = new char [ 50 * 1024 * 1024 ];
 
   ios::sync_with_stdio(false);
 
@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
 
     while (!cin.eof()) {
 
-      cin.getline(line_buffer, 1024*1024);
+      cin.getline(line_buffer, 50*1024*1024);
 
       if (*line_buffer == 0)
 	continue;
