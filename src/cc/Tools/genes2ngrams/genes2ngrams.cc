@@ -106,6 +106,11 @@ int main(int argc, char **argv) {
   map<const char*, const char *, ltngram> ngrams;
   map<const char*, const char *, ltngram>::iterator iter;
   CharArena arena;
+  char *bad_ngram = new char [n+1];
+
+  // setup bad ngram buffer (all 'N')
+  memset(bad_ngram, 'N', n);
+  bad_ngram[n]=0;
 
   char *line_buffer = new char [ 50 * 1024 * 1024 ];
 
@@ -157,6 +162,8 @@ int main(int argc, char **argv) {
 	*output.ptr = 0;
 
 	for (size_t i=0; i<=length-n; i++) {
+	  if (!strncmp(&sequence[i], bad_ngram, n))
+	    continue;
 	  sprintf(buf, "%u", (unsigned)i);
 	  if ((iter = ngrams.find(&sequence[i])) == ngrams.end())
 	    ngrams[&sequence[i]] = arena.dup(buf);
