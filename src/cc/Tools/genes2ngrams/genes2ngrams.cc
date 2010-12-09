@@ -36,7 +36,6 @@ extern "C" {
 #include "Common/DynamicBuffer.h"
 #include "Common/Init.h"
 #include "Common/Logger.h"
-#include "Common/PageArena.h"
 #include "Common/StringExt.h"
 
 using namespace Hypertable;
@@ -105,7 +104,6 @@ int main(int argc, char **argv) {
   DynamicBuffer output;
   map<const char*, const char *, ltngram> ngrams;
   map<const char*, const char *, ltngram>::iterator iter;
-  CharArena arena;
   char *bad_ngram = new char [n+1];
 
   // setup bad ngram buffer (all 'N')
@@ -141,7 +139,6 @@ int main(int argc, char **argv) {
 	continue;
       }
 
-      arena.free();
       ngrams.clear();
 
       length = (end) ? end - sequence : strlen(sequence);
@@ -165,13 +162,17 @@ int main(int argc, char **argv) {
 	  if (!strncmp(&sequence[i], bad_ngram, n))
 	    continue;
 	  sprintf(buf, "%u", (unsigned)i);
-	  if ((iter = ngrams.find(&sequence[i])) == ngrams.end())
-	    ngrams[&sequence[i]] = arena.dup(buf);
+	  if ((iter = ngrams.find(&sequence[i])) == ngrams.end()) {
+	    char *newbuf = new char [ strlen(buf)+1 ];
+	    strcpy(newbuf, buf);
+	    ngrams[&sequence[i]] = newbuf;
+	  }
 	  else {
-	    value = arena.alloc(strlen(buf) + strlen((*iter).second) + 2);
+	    value = new char [strlen(buf) + strlen((*iter).second) + 2];
 	    strcpy(value, (*iter).second);
 	    strcat(value, ",");
 	    strcat(value, buf);
+	    delete [] (*iter).second;
 	    ngrams[&sequence[i]] = value;
 	  }
 	}
@@ -180,6 +181,7 @@ int main(int argc, char **argv) {
 	  memcpy(output.base, (*iter).first, n);
 	  strcpy((char *)output.ptr, (*iter).second);
 	  cout << (const char *)output.base << "\n";
+	  delete [] (*iter).second;
 	}
       }
     }
