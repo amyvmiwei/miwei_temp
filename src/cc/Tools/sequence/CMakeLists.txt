@@ -17,10 +17,14 @@
 # 02110-1301, USA.
 #
 
-# genes2ngrams - drops lines with date string older than window
+# genes2ngrams
 add_executable(genes2ngrams genes2ngrams.cc)
 target_link_libraries(genes2ngrams HyperCommon HyperComm)
 
+# taxdump2tsv
+add_executable(taxdump2tsv taxdump2tsv.cc)
+target_link_libraries(taxdump2tsv HyperCommon HyperComm)
+
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS genes2ngrams RUNTIME DESTINATION bin)
+  install(TARGETS genes2ngrams taxdump2tsv RUNTIME DESTINATION bin)
 endif ()
