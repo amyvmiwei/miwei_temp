@@ -90,7 +90,6 @@ namespace {
     int tax_id;
     int parent_id;
     const char *rank;
-    const char *embl_code;
     std::vector<struct node *> children;
   };
 
@@ -115,14 +114,24 @@ namespace {
     for (size_t i=0; i<path_stack.size(); i++)
       path += String("/") + path_stack[i];
     if (reverse_map) {
-      cout << n->tax_id << "\tfull_key\t" << path << "\n";
+      cout << n->tax_id << "\\t" << path << "\tPrimary\t\n";
     }
     else {
-      cout << path << "\ttax_id\t" << n->tax_id << "\n";
+      cout << path << "\tID\t" << n->tax_id << "\n";
       if (n->rank)
-        cout << path << "\trank\t" << n->rank << "\n";
-      if (n->embl_code)
-        cout << path << "\tembl_code\t" << n->embl_code << "\n";
+        cout << path << "\tType\t" << n->rank << "\n";
+      if (n->children.size() > 0) {
+	char *base = new char [ n->children.size() * 16 ];
+	char *ptr = base;
+	for (size_t i=0; i<n->children.size(); i++) {
+	  if (i>0)
+	    *ptr++ = ',';
+	  sprintf(ptr, "%d", n->children[i]->tax_id);
+	  ptr += strlen(ptr);
+	}
+	cout << path << "\tChildren\t" << base << "\n";
+	delete [] base;
+      }
     }
 
     for (size_t i=0; i<n->children.size(); i++) {
@@ -174,7 +183,6 @@ int main(int argc, char **argv) {
       tmp_node.tax_id = atoi(fields[0]);
       tmp_node.parent_id = atoi(fields[1]);
       tmp_node.rank = fws.get(fields[2]);
-      tmp_node.embl_code = fws.get(fields[3]);
 
       nodes.push_back(tmp_node);
     }
