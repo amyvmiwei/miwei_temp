@@ -113,7 +113,19 @@ void Future::cancel() {
     it++;
   }
   m_cond.notify_all();
+}
 
+/**
+ * Resets the Future object. Callers responsibility to make sure this method is called
+ * safely ie after a the Future object has been cancelled or there are no outstanding
+ * asynchronous operations
+ */
+void Future::reset() {
+  ScopedLock lock(m_mutex);
+  HT_ASSERT(m_cancelled || (m_scanner_map.size() == 0 && is_empty()));
+  m_cancelled = false;
+  m_queue.clear();
+  m_scanner_map.clear();
 }
 
 void Future::register_scanner(TableScannerAsync *scanner) {

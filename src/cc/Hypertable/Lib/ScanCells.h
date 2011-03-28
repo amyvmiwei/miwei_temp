@@ -47,7 +47,14 @@ class ScanCells : public ReferenceCount {
 public:
   ScanCells() : m_eos(false){}
 
-  void get(Cells &cells) { m_cells->get(cells); }
+  void get(Cells &cells) {
+    if (m_cells) {
+      m_cells->get(cells);
+    }
+    else {
+      cells.clear();
+    }
+  }
   void get_cell_unchecked(Cell &cc, size_t ii) { m_cells->get_cell(cc, ii); }
   void set_eos() { m_eos = true; }
   bool get_eos() const { return m_eos; }

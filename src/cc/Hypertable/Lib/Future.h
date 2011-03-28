@@ -52,18 +52,27 @@ namespace Hypertable {
      * @param result will contain a reference to the result object
      * @param timeout_ms max milliseconds to block for
      * @param timed_out set to true if the call times out
-     * @return true if asynchronous operations have completed
+     * @return false if asynchronous operations have completed
      */
     bool get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out);
 
     /**
-     * Cancels outstanding scanners/mutators
+     * Cancels outstanding scanners/mutators. Callers responsibility to make sure that
+     * this method gets called before async scanner/mutator destruction when the application
+     * abruptly stops processing async results before all operations are complete
      */
     void cancel();
 
     void register_scanner(TableScannerAsync *scanner);
 
     void deregister_scanner(TableScannerAsync *scanner);
+
+    /**
+     * Resets the Future object. Callers responsibility to make sure this method is called
+     * safely ie after a the Future object has been cancelled or there are no outstanding
+     * asynchronous operations
+     */
+    void reset();
 
   private:
     friend class TableScannerAsync;
