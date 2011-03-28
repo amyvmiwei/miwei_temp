@@ -179,9 +179,9 @@ target_link_libraries(scanner_abrupt_end_test Hypertable)
 add_executable(future_abrupt_end_test tests/future_abrupt_end_test.cc)
 target_link_libraries(future_abrupt_end_test Hypertable)
 
-# future_cancel_test 
-add_executable(future_cancel_test tests/future_cancel_test.cc)
-target_link_libraries(future_cancel_test Hypertable)
+# future_test 
+add_executable(future_test tests/future_test.cc)
+target_link_libraries(future_test Hypertable)
 
 # row_delete_test
 add_executable(row_delete_test tests/row_delete_test.cc)
@@ -246,7 +246,7 @@ configure_file(${SRC_DIR}/loadDataSourceTest-qualified-header.dat
                ${DST_DIR}/loadDataSourceTest-qualified-header.dat)
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
-configure_file(${SRC_DIR}/future_cancel_test.cfg ${DST_DIR}/future_cancel_test.cfg)
+configure_file(${SRC_DIR}/future_test.cfg ${DST_DIR}/future_test.cfg)
 configure_file (${SRC_DIR}/MutatorNoLogSyncTest.cfg ${DST_DIR}/MutatorNoLogSyncTest.cfg)
 configure_file(${SRC_DIR}/name_id_mapper_test.cfg ${DST_DIR}/name_id_mapper_test.cfg)
 configure_file(${SRC_DIR}/metalog_test.golden ${DST_DIR}/metalog_test.golden)
@@ -267,7 +267,7 @@ add_test(CommitLog commit_log_test)
 add_test(MetaLog metalog_test)
 add_test(Client-large-block large_insert_test)
 add_test(Client-scanner-async scanner_async_test)
-add_test(Client-future-cancel future_cancel_test)
+add_test(Client-future future_test)
 add_test(Client-row-delete row_delete_test)
 add_test(Client-periodic-flush periodic_flush_test)
 add_test(NameIdMapper name_id_mapper_test --config=${DST_DIR}/name_id_mapper_test.cfg)
