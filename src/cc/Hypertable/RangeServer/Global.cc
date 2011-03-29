@@ -36,6 +36,7 @@ namespace Hypertable {
   FilesystemPtr          Global::log_dfs;
   MaintenanceQueuePtr    Global::maintenance_queue;
   RangeServerProtocol   *Global::protocol = 0;
+  RangeLocatorPtr        Global::range_locator = 0;
   bool                   Global::verbose = false;
   CommitLog             *Global::user_log = 0;
   CommitLog             *Global::system_log = 0;
