@@ -100,17 +100,6 @@ void GcWorker::scan_metadata(CountMap &files_map) {
       if (is_valid_files)
         insert_files(files_map, (char *)cell.value, cell.value_len, 1);
     }
-    else {
-      // cruft to delete
-      if (cell.timestamp > last_time) {
-        HT_ERROR("Unexpected timestamp order while scanning METADATA");
-        continue;
-      }
-      if (*cell.value != '!') {
-        insert_files(files_map, (char *)cell.value, cell.value_len);
-        delete_cell(cell, mutator);
-      }
-    }
   }
   // for last table
   if (!found_valid_files)
@@ -129,17 +118,6 @@ void GcWorker::delete_row(const std::string &row, TableMutatorPtr &mutator) {
   key.row_len = row.length();
 
   HT_DEBUGF("MasterGc: Deleting row %s", (char *)key.row);
-
-  mutator->set_delete(key);
-}
-
-void GcWorker::delete_cell(const Cell &cell, TableMutatorPtr &mutator) {
-  HT_DEBUG_OUT <<"MasterGc: Deleting cell: ("<< cell.row_key <<", "
-               << cell.column_family <<", "<< cell.column_qualifier <<", "
-               << cell.timestamp <<')'<< HT_END;
-
-  KeySpec key(cell.row_key, cell.column_family, cell.column_qualifier,
-              cell.timestamp);
 
   mutator->set_delete(key);
 }
