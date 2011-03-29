@@ -60,7 +60,6 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
   m_end_row = range->end_row;
   m_range_name = m_table_name + "[" + m_start_row + ".." + m_end_row + "]";
   m_full_name = m_range_name + "(" + m_name + ")";
-  m_cell_cache = new CellCache();
 
   range_dir_initialize();
 
@@ -135,6 +134,8 @@ void AccessGroup::update_schema(SchemaPtr &schema,
  * CellCache should be locked as well.
  */
 void AccessGroup::add(const Key &key, const ByteString value) {
+  if (!m_cell_cache)
+    m_cell_cache = new CellCache();
   if (key.revision > m_latest_stored_revision) {
     if (key.revision < m_earliest_cached_revision)
       m_earliest_cached_revision = key.revision;
@@ -171,7 +172,8 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
   try {
     ScopedLock lock(m_mutex);
 
-    scanner->add_scanner(m_cell_cache->create_scanner(scan_context));
+    if (m_cell_cache)
+      scanner->add_scanner(m_cell_cache->create_scanner(scan_context));
 
     if (m_immutable_cache)
       scanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
@@ -263,21 +265,29 @@ AccessGroup::get_split_rows(std::vector<String> &split_rows,
     }
   }
   if (include_cache) {
-    if (m_immutable_cache &&
-        m_immutable_cache->size() > m_cell_cache->size())
+    if (m_cell_cache) {
+      if (m_immutable_cache &&
+          m_immutable_cache->size() > m_cell_cache->size())
+        m_immutable_cache->get_split_rows(split_rows);
+      else
+        m_cell_cache->get_split_rows(split_rows);
+    }
+    else if (m_immutable_cache)
       m_immutable_cache->get_split_rows(split_rows);
-    else
-      m_cell_cache->get_split_rows(split_rows);
   }
 }
 
 void AccessGroup::get_cached_rows(std::vector<String> &rows) {
   ScopedLock lock(m_mutex);
-  if (m_immutable_cache &&
-      m_immutable_cache->size() > m_cell_cache->size())
+  if (m_cell_cache) {
+    if (m_immutable_cache &&
+        m_immutable_cache->size() > m_cell_cache->size())
+      m_immutable_cache->get_rows(rows);
+    else
+      m_cell_cache->get_rows(rows);
+  }
+  else if (m_immutable_cache)
     m_immutable_cache->get_rows(rows);
-  else
-    m_cell_cache->get_rows(rows);
 }
 
 
@@ -285,7 +295,7 @@ uint64_t AccessGroup::disk_usage() {
   ScopedLock lock(m_mutex);
   uint64_t usage;
   uint64_t du = (m_in_memory) ? 0 : m_disk_usage;
-  uint64_t mu = m_cell_cache->memory_used();
+  uint64_t mu = m_cell_cache ? m_cell_cache->memory_used() : 0;
   if (m_immutable_cache)
     mu += m_immutable_cache->memory_used();
   usage = du + (uint64_t)(m_compression_ratio * (float)mu);
@@ -294,7 +304,7 @@ uint64_t AccessGroup::disk_usage() {
 
 uint64_t AccessGroup::memory_usage() {
   ScopedLock lock(m_mutex);
-  uint64_t mu = m_cell_cache->memory_used();
+  uint64_t mu = m_cell_cache ? m_cell_cache->memory_used() : 0;
   if (m_immutable_cache)
     mu += m_immutable_cache->memory_used();
 
@@ -306,7 +316,7 @@ uint64_t AccessGroup::memory_usage() {
 
 void AccessGroup::space_usage(int64_t *memp, int64_t *diskp) {
   ScopedLock lock(m_mutex);
-  *memp = m_cell_cache->memory_used();
+  *memp = m_cell_cache ? m_cell_cache->memory_used() : 0;
   if (m_immutable_cache)
     *memp += m_immutable_cache->memory_used();
   *diskp = (m_in_memory) ? 0 : m_disk_usage;
@@ -340,8 +350,9 @@ uint64_t AccessGroup::purge_memory(MaintenanceFlag::Map &subtask_map) {
 AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena, time_t now) {
   ScopedLock lock(m_mutex);
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc(sizeof(MaintenanceData));
-  int64_t key_bytes, value_bytes;
-  size_t cell_count;
+  int64_t key_bytes = 0, value_bytes = 0;
+  size_t cell_count = 0;
+  int64_t mu = 0;
 
   memset(mdata, 0, sizeof(MaintenanceData));
   mdata->ag = this;
@@ -353,12 +364,17 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
   mdata->latest_stored_revision = m_latest_stored_revision;
 
-  m_cell_cache->get_counts(&cell_count, &key_bytes, &value_bytes);
+  if (m_cell_cache) {
+    m_cell_cache->get_counts(&cell_count, &key_bytes, &value_bytes);
+    mu = m_cell_cache->memory_used();
+    mdata->mem_allocated = m_cell_cache->memory_allocated();
+    mdata->mem_used = m_cell_cache->memory_used();
+    mdata->deletes = m_cell_cache->get_delete_count();
+  }
+
   mdata->cached_items = cell_count;
   mdata->key_bytes = key_bytes;
   mdata->value_bytes = value_bytes;
-  int64_t mu = m_cell_cache->memory_used();
-  mdata->mem_allocated = m_cell_cache->memory_allocated();
 
   if (m_immutable_cache) {
     mu += m_immutable_cache->memory_used();
@@ -371,7 +387,6 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
   else
     mdata->immutable_items = 0;
 
-  mdata->mem_used = mu;
   mdata->compression_ratio = (m_compression_ratio == 0.0) ? 1.0 : m_compression_ratio;
   mdata->cell_count = mdata->cached_items + mdata->immutable_items;
 
@@ -380,7 +395,6 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
   mdata->disk_estimate = du + (int64_t)(m_compression_ratio * (float)mu);
   mdata->outstanding_scanners = m_outstanding_scanner_count;
   mdata->in_memory = m_in_memory;
-  mdata->deletes = m_cell_cache->get_delete_count();
 
   CellStoreMaintenanceData **tailp = 0;
   mdata->csdata = 0;
@@ -577,8 +591,6 @@ void AccessGroup::run_compaction(int maintenance_flags) {
                        m_range_dir.c_str(),
                        m_next_cs_id++);
 
-      HT_ASSERT(m_immutable_cache);
-
       /**
        * Check for garbage and if threshold reached, change minor to major
        * compaction
@@ -597,7 +609,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
 
       cellstore = new CellStoreV5(Global::dfs.get(), m_schema.get());
 
-      max_num_entries = m_immutable_cache->size();
+      max_num_entries = m_immutable_cache ? m_immutable_cache->size() : 0;
 
       if (m_in_memory) {
         mscanner = new MergeScanner(scan_context, false, true);
@@ -610,7 +622,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         bool return_everything = (MaintenanceFlag::major_compaction(maintenance_flags)) ? false : (tableidx > 0);
         mscanner = new MergeScanner(scan_context, return_everything, true);
         scanner = mscanner;
-        mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
+        if (m_immutable_cache)
+          mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         for (size_t i=tableidx; i<m_stores.size(); i++) {
           HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
@@ -620,7 +633,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
       }
       else {
-        scanner = m_immutable_cache->create_scanner(scan_context);
+        if (m_immutable_cache)
+          scanner = m_immutable_cache->create_scanner(scan_context);
       }
     }
 
@@ -777,33 +791,36 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
 
     m_cell_cache = new_cell_cache;
 
-    cell_cache_scanner = old_cell_cache->create_scanner(scan_context);
+    if (old_cell_cache) {
 
-    /**
-     * Shrink the CellCache
-     */
-    while (cell_cache_scanner->get(key_comps, value)) {
+      cell_cache_scanner = old_cell_cache->create_scanner(scan_context);
 
-      cmp = strcmp(key_comps.row, split_row.c_str());
+      /**
+       * Shrink the CellCache
+       */
+      while (cell_cache_scanner->get(key_comps, value)) {
 
-      if ((cmp > 0 && !drop_high) || (cmp <= 0 && drop_high)) {
-        /*
-         * For IN_MEMORY access groups, record earliest cached
-         * revision that is > latest_stored.  For normal access groups,
-         * record absolute earliest cached revision
-         */
-        if (m_in_memory) {
-          if (key_comps.revision > m_latest_stored_revision &&
-              key_comps.revision < m_earliest_cached_revision)
+        cmp = strcmp(key_comps.row, split_row.c_str());
+
+        if ((cmp > 0 && !drop_high) || (cmp <= 0 && drop_high)) {
+          /*
+           * For IN_MEMORY access groups, record earliest cached
+           * revision that is > latest_stored.  For normal access groups,
+           * record absolute earliest cached revision
+           */
+          if (m_in_memory) {
+            if (key_comps.revision > m_latest_stored_revision &&
+                key_comps.revision < m_earliest_cached_revision)
+              m_earliest_cached_revision = key_comps.revision;
+          }
+          else if (key_comps.revision < m_earliest_cached_revision)
             m_earliest_cached_revision = key_comps.revision;
+          add(key_comps, value);
+          memory_added += key.length() + value.length();
+          items_added++;
         }
-        else if (key_comps.revision < m_earliest_cached_revision)
-          m_earliest_cached_revision = key_comps.revision;
-        add(key_comps, value);
-        memory_added += key.length() + value.length();
-        items_added++;
+        cell_cache_scanner->forward();
       }
-      cell_cache_scanner->forward();
     }
 
     new_cell_cache->unlock();
@@ -849,12 +866,14 @@ void AccessGroup::release_files(const std::vector<String> &files) {
 
 void AccessGroup::stage_compaction() {
   ScopedLock lock(m_mutex);
+  if (!m_cell_cache)
+    return;
   HT_ASSERT(!m_immutable_cache);
   m_immutable_cache = m_cell_cache;
   m_immutable_cache->freeze();
   m_garbage_tracker.add_delete_count( m_immutable_cache->get_delete_count() );
   m_garbage_tracker.accumulate_data( m_immutable_cache->memory_used() );
-  m_cell_cache = new CellCache();
+  m_cell_cache = 0;
   m_earliest_cached_revision_saved = m_earliest_cached_revision;
   m_earliest_cached_revision = TIMESTAMP_MAX;
 }
@@ -884,7 +903,7 @@ void AccessGroup::merge_caches() {
     m_immutable_cache = 0;
     return;
   }
-  else if (m_cell_cache->size() == 0) {
+  else if (!m_cell_cache || m_cell_cache->size() == 0) {
     m_cell_cache = m_immutable_cache;
     m_cell_cache->unfreeze();
     m_immutable_cache = 0;

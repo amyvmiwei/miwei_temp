@@ -175,7 +175,7 @@ namespace Hypertable {
 
     virtual int64_t get_total_entries() {
       boost::mutex::scoped_lock lock(m_mutex);
-      int64_t total = m_cell_cache->get_total_entries();
+      int64_t total = m_cell_cache ? m_cell_cache->get_total_entries() : 0;
       if (m_immutable_cache)
         total += m_immutable_cache->get_total_entries();
       if (!m_in_memory) {
@@ -187,8 +187,18 @@ namespace Hypertable {
 
     void update_schema(SchemaPtr &schema_ptr, Schema::AccessGroup *ag);
 
-    void lock() { m_mutex.lock(); m_cell_cache->lock(); }
-    void unlock() { m_cell_cache->unlock(); m_mutex.unlock(); }
+    void lock() {
+      m_mutex.lock();
+      if (!m_cell_cache)
+        m_cell_cache = new CellCache();
+      m_cell_cache->lock();
+    }
+
+    void unlock() {
+      if (m_cell_cache)
+        m_cell_cache->unlock();
+      m_mutex.unlock();
+    }
 
     CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
@@ -218,12 +228,12 @@ namespace Hypertable {
 
     uint64_t get_collision_count() {
       ScopedLock lock(m_mutex);
-      return m_collisions + m_cell_cache->get_collision_count();
+      return m_collisions + (m_cell_cache ? m_cell_cache->get_collision_count() : 0);
     }
 
     uint64_t get_cached_count() {
       ScopedLock lock(m_mutex);
-      return m_cell_cache->size();
+      return m_cell_cache ? m_cell_cache->size() : 0;
     }
 
     void get_file_list(String &file_list, bool include_blocked) {

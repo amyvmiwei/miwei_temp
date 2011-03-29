@@ -48,9 +48,9 @@ namespace {
 
   struct StatsRecOrderingDescending {
     bool operator()(const StatsRec &x, const StatsRec &y) const {
-      if (x.agdata->mem_allocated == y.agdata->mem_allocated)
+      if (x.agdata->mem_used == y.agdata->mem_used)
 	return x.agdata->mem_used > y.agdata->mem_used;
-      return x.agdata->mem_allocated > y.agdata->mem_allocated;
+      return x.agdata->mem_used > y.agdata->mem_used;
     }
   };
 
@@ -259,7 +259,7 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeStatsVector &range_d
       if ((*iter).second.cumulative_size > prune_threshold) {
         trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
           + (*iter).second.cumulative_size + " > prune_threshold " + prune_threshold + "\n";
-        if (ag_data->mem_allocated > 0) {
+        if (ag_data->mem_used > 0) {
 	  if (range_data[i]->priority == 0)
 	    range_data[i]->priority = priority++;
           if (memory_state.need_more()) {
@@ -379,9 +379,9 @@ namespace {
   struct CellCacheCompactionSortOrdering {
     bool operator()(const AccessGroup::MaintenanceData *x,
 		    const AccessGroup::MaintenanceData *y) const {
-      if (x->mem_allocated == y->mem_allocated)
+      if (x->mem_used == y->mem_used)
 	return x->mem_used > y->mem_used;
-      return x->mem_allocated > y->mem_allocated;
+      return x->mem_used > y->mem_used;
     }
   };
 }
@@ -400,7 +400,7 @@ MaintenancePrioritizer::compact_cellcaches(RangeStatsVector &range_data,
       continue;
 
     for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
-      if (!ag_data->in_memory && ag_data->mem_allocated > 0) {
+      if (!ag_data->in_memory && ag_data->mem_used > 0) {
         ag_data->user_data = range_data[i];
 	md.push_back(ag_data);
       }
