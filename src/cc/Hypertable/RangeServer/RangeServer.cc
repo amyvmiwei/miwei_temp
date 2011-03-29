@@ -270,7 +270,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   HT_INFOF("Prune thresholds - min=%lld, max=%lld", (Lld)Global::log_prune_threshold_min,
            (Lld)Global::log_prune_threshold_max);
-  
+
 }
 
 void RangeServer::shutdown() {
@@ -278,12 +278,15 @@ void RangeServer::shutdown() {
   try {
 
     // stop maintenance timer
-    m_timer_handler->shutdown();
+    if (m_timer_handler) {
+      m_timer_handler->shutdown();
 #if defined(CLEAN_SHUTDOWN)
-    m_timer_handler->wait_for_shutdown();
+      m_timer_handler->wait_for_shutdown();
 #endif
+    }
 
-    m_group_commit_timer_handler->shutdown();
+    if (m_group_commit_timer_handler)
+      m_group_commit_timer_handler->shutdown();
 
     // stop maintenance queue
     Global::maintenance_queue->shutdown();
@@ -291,6 +294,7 @@ void RangeServer::shutdown() {
     Global::maintenance_queue->join();
 #endif
 
+    Global::range_locator = 0;
     delete Global::block_cache;
 
     if (Global::rsml_writer) {
@@ -314,7 +318,8 @@ void RangeServer::shutdown() {
       delete Global::user_log;
     }
 
-    delete m_query_cache;
+    if (m_query_cache)
+      delete m_query_cache;
 
     Global::maintenance_queue = 0;
     Global::metadata_table = 0;
@@ -1413,7 +1418,7 @@ void RangeServer::acknowledge_load(ResponseCallback *cb, const TableIdentifier *
   {
     ScopedLock lock(m_drop_table_mutex);
 
-    HT_INFO_OUT <<"Acknowledging range: "<< table->id <<"["<< range_spec->start_row 
+    HT_INFO_OUT <<"Acknowledging range: "<< table->id <<"["<< range_spec->start_row
                 << ".." << range_spec->end_row << "]" << HT_END;
 
     if (m_dropped_table_id_cache->contains(table->id)) {
@@ -2495,9 +2500,10 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     ScopedLock lock(m_mutex);
     if (!Global::rs_metrics_table) {
       try {
-        Global::rs_metrics_table = new Table(m_props, m_conn_manager,
-                                           Global::hyperspace, m_namemap,
-                                           "sys/RS_METRICS");
+        uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+        Global::rs_metrics_table = new Table(m_props, Global::range_locator, m_conn_manager,
+                                           Global::hyperspace, m_app_queue, m_namemap,
+                                           "sys/RS_METRICS", timeout_ms);
       }
       catch (Hypertable::Exception &e) {
         HT_ERRORF("Unable to open 'sys/RS_METRICS' - %s (%s)",
@@ -2738,8 +2744,10 @@ RangeServer::replay_load_range(ResponseCallback *cb,
      */
     if (!Global::metadata_table) {
       ScopedLock lock(m_mutex);
-      Global::metadata_table = new Table(m_props, m_conn_manager,
-          Global::hyperspace, m_namemap, TableIdentifier::METADATA_NAME);
+      uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+      Global::metadata_table = new Table(m_props, Global::range_locator, m_conn_manager,
+          Global::hyperspace, m_app_queue, m_namemap, TableIdentifier::METADATA_NAME,
+          timeout_ms);
     }
 
     schema = table_info->get_schema();

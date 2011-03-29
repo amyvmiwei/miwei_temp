@@ -58,6 +58,7 @@ namespace Hypertable {
     static Hypertable::FilesystemPtr log_dfs;
     static Hypertable::MaintenanceQueuePtr maintenance_queue;
     static Hypertable::RangeServerProtocol *protocol;
+    static Hypertable::RangeLocatorPtr range_locator;
     static bool           verbose;
     static CommitLog     *user_log;
     static CommitLog     *system_log;
