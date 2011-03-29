@@ -229,7 +229,13 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
       new HandlerFactory(m_comm, m_app_queue, this);
 
   InetAddr listen_addr(INADDR_ANY, port);
-  m_comm->listen(listen_addr, chfp);
+  try {
+    m_comm->listen(listen_addr, chfp);
+  }
+  catch (Exception &e) {
+    HT_FATALF("Unable to listen on port %u - %s - %s",
+              port, Error::get_text(e.code()), e.what());
+  }
 
   /**
    * Create Master client
