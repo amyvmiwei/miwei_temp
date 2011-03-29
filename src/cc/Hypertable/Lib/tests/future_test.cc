@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
   srandom(seed);
 
   try {
-    Client *hypertable = new Client(argv[0], "./future_cancel_test.cfg");
+    Client *hypertable = new Client(argv[0], "./future_test.cfg");
     NamespacePtr ns = hypertable->open_namespace("/");
 
     TablePtr table_ptr;
