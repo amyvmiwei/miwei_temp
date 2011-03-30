@@ -585,7 +585,8 @@ namespace {
     "{\"location\": \"%s\", \"hostname\": \"%s\", \"ip\": \"%s\", \"arch\": \"%s\","
     " \"cores\": \"%d\", \"skew\": \"%d\", \"os\": \"%s\", \"osVersion\": \"%s\","
     " \"vendor\": \"%s\", \"vendorVersion\": \"%s\", \"ram\": \"%.2f\","
-    " \"disk\": \"%.2f\", \"diskUsePct\": \"%u\", \"lastContact\": \"%s\", \"lastError\": \"%s\"}";
+    " \"disk\": \"%.2f\", \"diskUsePct\": \"%u\", \"rangeCount\": \"%llu\","
+    " \"lastContact\": \"%s\", \"lastError\": \"%s\"}";
 
 
   const char *table_json_header = "{\"TableSummary\": {\n  \"tables\": [\n";
@@ -648,6 +649,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
                    ram,
                    disk,
                    disk_use_pct,
+                   (Llu)stats[i].stats->range_count,
                    contact_time.c_str(),
                    error_str.c_str());
 
