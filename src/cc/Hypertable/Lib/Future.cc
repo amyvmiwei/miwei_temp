@@ -28,11 +28,11 @@
 using namespace Hypertable;
 
 bool Future::get(ResultPtr &result) {
-  ScopedLock lock(m_mutex);
+  ScopedRecLock lock(m_outstanding_mutex);
 
   // wait till we have results to serve
   while(is_empty() && !is_done() && !is_cancelled()) {
-    m_cond.wait(lock);
+    m_outstanding_cond.wait(lock);
   }
 
   if (is_cancelled())
@@ -42,12 +42,12 @@ bool Future::get(ResultPtr &result) {
   result = m_queue.front();
   // wake a thread blocked on queue space
   m_queue.pop_front();
-  m_cond.notify_one();
+  m_outstanding_cond.notify_one();
   return true;
 }
 
 bool Future::get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out) {
-  ScopedLock lock(m_mutex);
+  ScopedRecLock lock(m_outstanding_mutex);
 
   timed_out = false;
 
@@ -57,7 +57,7 @@ bool Future::get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out) {
 
   // wait till we have results to serve
   while(is_empty() && !is_done() && !is_cancelled()) {
-    timed_out = m_cond.timed_wait(lock, wait_time);
+    timed_out = m_outstanding_cond.timed_wait(lock, wait_time);
     if (timed_out)
       return is_done();
   }
@@ -68,7 +68,7 @@ bool Future::get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out) {
   result = m_queue.front();
   // wake a thread blocked on queue space
   m_queue.pop_front();
-  m_cond.notify_one();
+  m_outstanding_cond.notify_one();
   return true;
 }
 
@@ -78,14 +78,14 @@ void Future::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
 }
 
 void Future::enqueue(ResultPtr &result) {
-  ScopedLock lock(m_mutex);
+  ScopedRecLock lock(m_outstanding_mutex);
   while (is_full() && !is_cancelled()) {
-    m_cond.wait(lock);
+    m_outstanding_cond.wait(lock);
   }
   if (!is_cancelled()) {
     m_queue.push_back(result);
   }
-  m_cond.notify_one();
+  m_outstanding_cond.notify_one();
 }
 
 void Future::scan_error(TableScannerAsync *scanner, int error, const String &error_msg,
@@ -105,39 +105,27 @@ void Future::update_error(TableMutator *mutator, int error, const String &error_
 }
 
 void Future::cancel() {
-  ScopedLock lock(m_mutex);
+  ScopedRecLock lock(m_outstanding_mutex);
   m_cancelled = true;
   ScannerMap::iterator it = m_scanner_map.begin();
   while (it != m_scanner_map.end()) {
     it->second->cancel();
     it++;
   }
-  m_cond.notify_all();
-}
-
-/**
- * Resets the Future object. Callers responsibility to make sure this method is called
- * safely ie after a the Future object has been cancelled or there are no outstanding
- * asynchronous operations
- */
-void Future::reset() {
-  ScopedLock lock(m_mutex);
-  HT_ASSERT(m_cancelled || (m_scanner_map.size() == 0 && is_empty()));
-  m_cancelled = false;
-  m_queue.clear();
-  m_scanner_map.clear();
+  m_outstanding_cond.notify_all();
 }
 
 void Future::register_scanner(TableScannerAsync *scanner) {
-  ScopedLock lock(m_mutex);
+  ScopedRecLock lock(m_outstanding_mutex);
   uint64_t addr = (uint64_t) scanner;
   ScannerMap::iterator it = m_scanner_map.find(addr);
-  HT_ASSERT(it == m_scanner_map.end());
+  // XXX: TODO DON"T ASSERT if m_cancelled == true throw an exception
+  HT_ASSERT(it == m_scanner_map.end() && !m_cancelled);
   m_scanner_map[addr] = scanner;
 }
 
 void Future::deregister_scanner(TableScannerAsync *scanner) {
-  ScopedLock lock(m_mutex);
+  ScopedRecLock lock(m_outstanding_mutex);
   uint64_t addr = (uint64_t) scanner;
   ScannerMap::iterator it = m_scanner_map.find(addr);
   HT_ASSERT(it != m_scanner_map.end());
