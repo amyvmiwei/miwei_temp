@@ -1,24 +1,56 @@
 :stats: {
+        :scan_rate: {
+                      :pair: [:scan_rate],
+                      :units: "",
+                      :color: ["#cc0000"],
+                      :pname: "Scans/s"
+                  },
+
         :cell_read_rate: { :pair: [:cell_read_rate],
                        :units: "" ,
                        :color: ["#edd400"],
-                       :pname: "Cells Read"},
+                       :pname: "Cells Read/s"},
+
+        :byte_read_rate: { :pair: [:byte_read_rate],
+                       :units: "bytes" ,
+                       :color: ["#edd400"],
+                       :pname: "Bytes Read/s"},
+
+	:update_rate: {
+                      :pair: [:update_rate],
+		      :units: "",
+                      :color: ["#c17d11"],
+                      :pname: "Updates/s"
+                      },
+
         :cell_write_rate: {
                        :pair: [:cell_write_rate],
                        :units: "" ,
                        :color: ["#73d216"],
-                       :pname: "Cells Written"
+                       :pname: "Cells Written/s"
                       },
-        :byte_read_rate: { :pair: [:byte_read_rate],
-                       :units: "bytes" ,
-                       :color: ["#edd400"],
-                       :pname: "Bytes Read"},
+
         :byte_write_rate: {
                        :pair: [:byte_write_rate],
                        :units: "bytes" ,
                        :color: ["#73d216"],
-                       :pname: "Bytes Written"
+                       :pname: "Bytes Written/s"
                       },
+
+        :block_index_memory: {
+                       :pair: [ :block_index_memory],
+                       :units: "Bytes",
+                       :color: ["#5c3566"],
+                       :pname: "Block Index Memory"
+                       },
+
+        :bloom_filter_memory: {
+                       :pair: [:bloom_filter_memory],
+                       :units: "Bytes",
+                       :color: ["#73d216"],
+                       :pname: "Bloom Filter Memory"
+                       },
+
         :bloom_filter_access: {
                        :pair: [:bloom_filter_access],
                        :units: "",
@@ -33,40 +65,6 @@
                        :pname: "Bloom Filter Maybes"
                        },
 
-        :bloom_filter_memory: {
-                       :pair: [:bloom_filter_memory],
-                       :units: "Bytes",
-                       :color: ["#73d216"],
-                       :pname: "Bloom Filter Memory"
-                       },
-        :block_index_memory: {
-                       :pair: [ :block_index_memory],
-                       :units: "Bytes",
-                       :color: ["#5c3566"],
-                       :pname: "Block Index Memory"
-                       },
-
-	:shadow_cache_memory: {
-                       :pair: [ :shadow_cache_memory],
-                       :units: "Bytes",
-                       :color: ["#5c3566"],
-                       :pname: "Shadow Cache Memory"
-                       },
-
-	:compression_ratio: {
-                       :pair: [ :compression_ratio],
-                       :units: "Bytes",
-                       :color: ["#5c3566"],
-                       :pname: "Compression Ratio"
-                       },
-
-        :scans: {
-                      :pair: [:scans],
-                      :units: "",
-                      :color: ["#cc0000"],
-                      :pname: "Scans"
-                  },
-
         :disk_used: {
                        :pair: [:disk_used],
                        :units: "Bytes",
@@ -80,7 +78,6 @@
                       :color: ["#c17d11"],
                       :pname: "Memory Used"
                       },
-
 		      
         :memory_allocated: {
                      :pair: [:memory_allocated],
@@ -89,10 +86,10 @@
                      :color: ["#888a85"],
                      :pname: "Memory Allocated"
                      },
-	:updates: {
-                      :pair: [:updates],
-		      :units: "",
-                      :color: ["#c17d11"],
-                      :pname: "Updates"
-                      }
+
+        :range_count: { :pair: [:range_count],
+                       :units: "" ,
+                       :color: ["#73d216"],
+                       :pname: "Range Count"}
+
 }
