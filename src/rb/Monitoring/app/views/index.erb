@@ -19,6 +19,7 @@
 <th class="ht-table-subheadercell" align="left"> Disk<br/>Use (%)</th>
 <th class="ht-table-subheadercell"> RAM<br/> (GB) </th>
 <th class="ht-table-subheadercell"> Clock<br/> Skew </th>
+<th class="ht-table-subheadercell"> Range<br/> Count </th>
 <th class="ht-table-subheadercell"> Last<br/>Error </th>
 <th class="ht-table-subheadercell"> Last<br/>Contact </th>
 </tr>
@@ -61,6 +62,9 @@
 <td class="ht-table-cell">
 <% end %>
 <%= server['skew'] %>
+</td>
+<td class="ht-table-cell">
+<%= server['rangeCount'] %>
 </td>
 <% if server['lastError'] != 'ok' %>
 <td class="ht-table-cell" bgcolor="red">
