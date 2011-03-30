@@ -37,11 +37,11 @@
                        :pname: "Block Index Memory"
                        },
 
-        :scans: {
-                      :pair: [:scans],
+        :scan_rate: {
+                      :pair: [:scan_rate],
                       :units: "",
                       :color: ["#cc0000"],
-                      :pname: "Scans"
+                      :pname: "Scans/s"
                   },
 
         :disk_used: {
@@ -190,24 +190,18 @@
                    :pname: "Num Ranges"
                    },
 
-         :scans: {
-                   :pair: [:scans],
+         :sync_rate: {
+                   :pair: [:sync_rate],
                    :units: "",
                    :color: ["#cc0000"],
-                   :pname: "Scans"
-                   },
-         :syncs: {
-                   :pair: [:syncs],
-                   :units: "",
-                   :color: ["#cc0000"],
-                   :pname: "Syncs"
+                   :pname: "Syncs/s"
                    },
 
-         :updates: {
-                    :pair: [ :updates],
+         :update_rate: {
+                    :pair: [ :update_rate],
                     :color: ["#5c3566"],
                     :units: "",
-                    :pname: "Updates"
+                    :pname: "Updates/s"
                     },
 
          :block_cache_accesses: {

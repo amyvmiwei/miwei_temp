@@ -159,6 +159,9 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
 
       double elapsed_time = (double)(stats[i].fetch_timestamp - (*iter).second->fetch_timestamp)/1000000000.0;
 
+      rrd_data.scan_rate = stats[i].stats->scan_count/elapsed_time;
+      rrd_data.update_rate = stats[i].stats->update_count /elapsed_time;
+      rrd_data.sync_rate = stats[i].stats->sync_count/elapsed_time;
       rrd_data.cell_read_rate = stats[i].stats->scanned_cells /elapsed_time;
       rrd_data.cell_write_rate = stats[i].stats->updated_cells /elapsed_time;
       rrd_data.byte_read_rate = stats[i].stats->scanned_bytes /elapsed_time;
@@ -167,9 +170,6 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
 
     rrd_data.timestamp = stats[i].stats_timestamp / 1000000000LL;
     rrd_data.range_count = stats[i].stats->range_count;
-    rrd_data.scans = stats[i].stats->scan_count;
-    rrd_data.updates = stats[i].stats->update_count;
-    rrd_data.sync_count = stats[i].stats->sync_count;
     rrd_data.qcache_max_mem = stats[i].stats->query_cache_max_memory;
     rrd_data.qcache_fill = stats[i].stats->query_cache_max_memory -
       stats[i].stats->query_cache_available_memory;
@@ -255,6 +255,8 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     prev_iter = m_prev_table_stat_map.find(ts_iter->first);
     if (prev_iter != m_prev_table_stat_map.end()) {
       double elapsed_time = (double)(ts_iter->second.fetch_timestamp - prev_iter->second.fetch_timestamp)/1000000000.0;
+      ts_iter->second.scan_rate = (ts_iter->second.scans - prev_iter->second.scans)/elapsed_time;
+      ts_iter->second.update_rate = (ts_iter->second.updates - prev_iter->second.updates)/elapsed_time;
       ts_iter->second.cell_read_rate = (ts_iter->second.cells_read - prev_iter->second.cells_read)/elapsed_time;
       ts_iter->second.cell_write_rate = (ts_iter->second.cells_written - prev_iter->second.cells_written)/elapsed_time;
       ts_iter->second.byte_read_rate = (ts_iter->second.bytes_read - prev_iter->second.bytes_read)/elapsed_time;
@@ -369,10 +371,10 @@ void Monitoring::create_rangeserver_rrd(const String &filename) {
   args.push_back((String)"create");
   args.push_back(filename);
   args.push_back(step);
-  args.push_back((String)"DS:range_count:GAUGE:600:0:U"); // num_ranges is not a rate, 600s heartbeat
-  args.push_back((String)"DS:scans:ABSOLUTE:600:0:U"); // scans is a rate, 600s heartbeat
-  args.push_back((String)"DS:updates:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:syncs:ABSOLUTE:600:0:U");
+  args.push_back((String)"DS:range_count:ABSOLUTE:600:0:U"); // num_ranges is not a rate, 600s heartbeat
+  args.push_back((String)"DS:scan_rate:GAUGE:600:0:U"); // scans is a rate, 600s heartbeat
+  args.push_back((String)"DS:update_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:sync_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:cell_read_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:cell_write_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:byte_read_rate:GAUGE:600:0:U");
@@ -436,22 +438,22 @@ void Monitoring::create_table_rrd(const String &filename) {
   args.push_back((String)"create");
   args.push_back(filename);
   args.push_back(step);
-  args.push_back((String)"DS:range_count:GAUGE:600:0:U"); // num_ranges is not a rate, 600s heartbeat
-  args.push_back((String)"DS:scans:ABSOLUTE:600:0:U"); // scans is a rate, 600s heartbeat
-  args.push_back((String)"DS:updates:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:cell_read_rate:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:cell_write_rate:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:byte_read_rate:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:byte_write_rate:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:disk_used:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:compression_ratio:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:memory_used:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:memory_allocated:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:shadow_cache_memory:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:block_index_memory:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:bloom_filter_memory:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:bloom_filter_access:ABSOLUTE:600:0:U");
-  args.push_back((String)"DS:bloom_filter_maybes:ABSOLUTE:600:0:U");
+  args.push_back((String)"DS:range_count:ABSOLUTE:600:0:U"); // num_ranges is not a rate, 600s heartbeat
+  args.push_back((String)"DS:scan_rate:GAUGE:600:0:U"); // scans is a rate, 600s heartbeat
+  args.push_back((String)"DS:update_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:cell_read_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:cell_write_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:byte_read_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:byte_write_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:disk_used:GAUGE:600:0:U");
+  args.push_back((String)"DS:compression_ratio:GAUGE:600:0:U");
+  args.push_back((String)"DS:memory_used:GAUGE:600:0:U");
+  args.push_back((String)"DS:memory_allocated:GAUGE:600:0:U");
+  args.push_back((String)"DS:shadow_cache_memory:GAUGE:600:0:U");
+  args.push_back((String)"DS:block_index_memory:GAUGE:600:0:U");
+  args.push_back((String)"DS:bloom_filter_memory:GAUGE:600:0:U");
+  args.push_back((String)"DS:bloom_filter_access:GAUGE:600:0:U");
+  args.push_back((String)"DS:bloom_filter_maybes:GAUGE:600:0:U");
 
   args.push_back((String)"RRA:AVERAGE:.5:1:2880"); // higherst res (30s) has 2880 samples(1 day)
   args.push_back((String)"RRA:AVERAGE:.5:10:2880"); // 5min res for 10 days
@@ -484,11 +486,11 @@ void Monitoring::update_table_rrd(const String &filename, struct table_rrd_data 
   args.push_back((String)"update");
   args.push_back(filename);
 
-  update = format("%llu:%d:%lld:%lld:%.2f:%.2f:%.2f:%.2f:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%lld",
+  update = format("%llu:%d:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%lld",
 		  (Llu)table_stats_timestamp,
 		  rrd_data.range_count,
-		  (Lld)rrd_data.scans,
-		  (Lld)rrd_data.updates,
+		  rrd_data.scan_rate,
+		  rrd_data.update_rate,
 		  rrd_data.cell_read_rate,
 		  rrd_data.cell_write_rate,
 		  rrd_data.byte_read_rate,
@@ -532,12 +534,12 @@ void Monitoring::update_rangeserver_rrd(const String &filename, struct rangeserv
   args.push_back((String)"update");
   args.push_back(filename);
 
-  update = format("%llu:%d:%lld:%lld:%lld:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%lld:%.2f:%lld:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%.2f:%.2f:%.2f",
+  update = format("%llu:%d:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%lld:%.2f:%lld:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%.2f:%.2f:%.2f",
                   (Llu)rrd_data.timestamp,
                   rrd_data.range_count,
-                  (Lld)rrd_data.scans,
-                  (Lld)rrd_data.updates,
-                  (Lld)rrd_data.sync_count,
+                  rrd_data.scan_rate,
+                  rrd_data.update_rate,
+                  rrd_data.sync_rate,
                   rrd_data.cell_read_rate,
                   rrd_data.cell_write_rate,
                   rrd_data.byte_read_rate,
