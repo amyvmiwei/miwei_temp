@@ -13,6 +13,7 @@ let testnum=1
 start_masters() {
 
     kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid` 2>&1 >& /dev/null
+    /bin/rm -rf $HT_HOME/run/log_backup/mml
 
     $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38050 $@ \
         --pidfile $HT_HOME/run/Hypertable.Master.38050.pid \
