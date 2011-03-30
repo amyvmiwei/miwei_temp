@@ -67,13 +67,6 @@ namespace Hypertable {
 
     void deregister_scanner(TableScannerAsync *scanner);
 
-    /**
-     * Resets the Future object. Callers responsibility to make sure this method is called
-     * safely ie after a the Future object has been cancelled or there are no outstanding
-     * asynchronous operations
-     */
-    void reset();
-
   private:
     friend class TableScannerAsync;
     friend class TableMutator;
@@ -96,8 +89,6 @@ namespace Hypertable {
 
     ResultQueue m_queue;
     size_t m_queue_capacity;
-    boost::condition m_cond;
-    Mutex m_mutex;
     bool m_cancelled;
     typedef map<uint64_t, TableScannerAsync *> ScannerMap;
     ScannerMap m_scanner_map;

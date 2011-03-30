@@ -110,7 +110,7 @@ namespace Hypertable {
      * Blocks till outstanding == 0
      */
     void wait_for_completion() {
-      ScopedLock lock(m_outstanding_mutex);
+      ScopedRecLock lock(m_outstanding_mutex);
       while(m_outstanding) {
         m_outstanding_cond.wait(lock);
       }
@@ -121,7 +121,7 @@ namespace Hypertable {
      *
      */
     void increment_outstanding() {
-      ScopedLock lock(m_outstanding_mutex);
+      ScopedRecLock lock(m_outstanding_mutex);
       ++m_outstanding;
     }
 
@@ -129,7 +129,7 @@ namespace Hypertable {
      *
      */
     void decrement_outstanding() {
-      ScopedLock lock(m_outstanding_mutex);
+      ScopedRecLock lock(m_outstanding_mutex);
       HT_ASSERT(m_outstanding);
       --m_outstanding;
       if (m_outstanding == 0)
@@ -140,13 +140,12 @@ namespace Hypertable {
      *
      */
     bool is_done() {
-      ScopedLock lock(m_outstanding_mutex);
+      ScopedRecLock lock(m_outstanding_mutex);
       return (m_outstanding == 0);
     }
-  private:
-
+  protected:
     size_t m_outstanding;
-    Mutex m_outstanding_mutex;
+    RecMutex m_outstanding_mutex;
     boost::condition m_outstanding_cond;
   };
   typedef intrusive_ptr<ResultCallback> ResultCallbackPtr;

@@ -182,15 +182,15 @@ int main(int argc, char **argv) {
       // this time let the scan run through till completion
       memset(&md5_ctx, 0, sizeof(md5_ctx));
       md5_starts(&md5_ctx);
-      ff.reset();
+      Future ff2(5);
       ssbuilder.clear();
       ssbuilder.add_row_interval("00000",true, "00010", false);
       ssbuilder.add_row_interval("00010",true, "00027", false);
       ssbuilder.add_row_interval("00027",true, "00050", false);
       scan_spec = ssbuilder.get();
-      scanner_ptr = table_ptr->create_scanner_async(&ff, scan_spec);
+      scanner_ptr = table_ptr->create_scanner_async(&ff2, scan_spec);
 
-      while (ff.get(result)) {
+      while (ff2.get(result)) {
         if (result->is_error()) {
           int error;
           String error_msg;
