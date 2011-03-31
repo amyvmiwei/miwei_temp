@@ -134,6 +134,8 @@ namespace Hypertable {
     void wait_for_system_recovery_finish();
     void wait_for_recovery_finish(const TableIdentifier *table,
                                   const RangeSpec *range);
+    bool replay_finished() { return m_replay_finished; }
+
 
     void register_timer(TimerInterface *timer) {
       ScopedLock lock(m_mutex);
