@@ -28,17 +28,25 @@ using namespace Hypertable;
 using namespace Hypertable::MetaLog;
 
 uint16_t DefinitionRangeServer::version() {
-  return 1;
+  return 2;
+}
+
+bool DefinitionRangeServer::supported_version(uint16_t ver) {
+  return ver <= 2;
 }
 
 const char *DefinitionRangeServer::name() {
   return "rsml";
 }
 
-Entity *DefinitionRangeServer::create(const EntityHeader &header) {
+Entity *DefinitionRangeServer::create(uint16_t log_version, const EntityHeader &header) {
 
-  if (header.type == EntityType::RANGE)
-    return new EntityRange(header);
+  if (header.type == EntityType::RANGE) {
+    EntityRange *entity = new EntityRange(header);
+    if (log_version == 1)
+      entity->load_acknowledged = true;
+    return entity;
+  }
 
   HT_THROWF(Error::METALOG_ENTRY_BAD_TYPE,
             "Unrecognized type (%d) encountered in rsml",

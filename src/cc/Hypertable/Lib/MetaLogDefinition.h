@@ -33,9 +33,10 @@ namespace Hypertable {
     public:
       Definition(const char* backup_label) : m_backup_label(backup_label) { }
       virtual uint16_t version() = 0;
+      virtual bool supported_version(uint16_t ver) = 0;
       virtual const char *name() = 0;
       virtual const char *backup_label() { return m_backup_label.c_str(); }
-      virtual Entity *create(const EntityHeader &header) = 0;
+      virtual Entity *create(uint16_t log_version, const EntityHeader &header) = 0;
 
     private:
       String m_backup_label;

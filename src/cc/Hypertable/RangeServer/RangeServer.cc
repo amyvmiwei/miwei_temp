@@ -415,6 +415,7 @@ namespace {
           const OldMetaLog::RangeStates &range_states = rsml_reader->load_range_states(&found_recover_entry);
           foreach(const OldMetaLog::RangeStateInfo *i, range_states) {
             MetaLog::EntityPtr entity = new MetaLog::EntityRange(i->table, i->range, i->range_state, false);
+            ((MetaLog::EntityRange *)entity.get())->load_acknowledged = true;
             entities.push_back(entity);
           }
         }
