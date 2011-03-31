@@ -509,9 +509,9 @@ DiskStat &DiskStat::refresh(const char *dir_prefix) {
         reads_rate = (s.reads - _prev_disk_stat.reads) / elapsed;
         writes_rate = (s.writes - _prev_disk_stat.writes) / elapsed;
         read_rate =
-            (s.read_bytes - _prev_disk_stat.read_bytes) / elapsed / MiB;
+            (s.read_bytes - _prev_disk_stat.read_bytes) / elapsed;
         write_rate =
-            (s.write_bytes - _prev_disk_stat.write_bytes) / elapsed / MiB;
+            (s.write_bytes - _prev_disk_stat.write_bytes) / elapsed;
 
         _prev_disk_stat = s;
         _disk_stat_stopwatch.start();

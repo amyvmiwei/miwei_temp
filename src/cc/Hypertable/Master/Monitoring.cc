@@ -186,8 +186,8 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
       rrd_data.disk_used_pct = (numerator/denominator)*100.0;
 
     for (size_t j=0; j<stats[i].stats->system.disk_stat.size(); j++) {
-      rrd_data.disk_read_KBps += (int64_t)stats[i].stats->system.disk_stat[j].read_rate;
-      rrd_data.disk_write_KBps += (int64_t)stats[i].stats->system.disk_stat[j].write_rate;
+      rrd_data.disk_read_bytes += (int64_t)stats[i].stats->system.disk_stat[j].read_rate;
+      rrd_data.disk_write_bytes += (int64_t)stats[i].stats->system.disk_stat[j].write_rate;
       rrd_data.disk_read_iops += (int64_t)stats[i].stats->system.disk_stat[j].reads_rate;
       rrd_data.disk_write_iops += (int64_t)stats[i].stats->system.disk_stat[j].writes_rate;
     }
@@ -386,8 +386,8 @@ void Monitoring::create_rangeserver_rrd(const String &filename) {
   args.push_back((String)"DS:bcache_max_mem:GAUGE:600:0:U");
   args.push_back((String)"DS:bcache_fill:GAUGE:600:0:U");
   args.push_back((String)"DS:disk_used_pct:GAUGE:600:0:100");
-  args.push_back((String)"DS:disk_read_KBps:GAUGE:600:0:U");
-  args.push_back((String)"DS:disk_write_KBps:GAUGE:600:0:U");
+  args.push_back((String)"DS:disk_read_bytes:GAUGE:600:0:U");
+  args.push_back((String)"DS:disk_write_bytes:GAUGE:600:0:U");
   args.push_back((String)"DS:disk_read_iops:GAUGE:600:0:U");
   args.push_back((String)"DS:disk_write_iops:GAUGE:600:0:U");
   args.push_back((String)"DS:vm_size:GAUGE:600:0:U");
@@ -551,8 +551,8 @@ void Monitoring::update_rangeserver_rrd(const String &filename, struct rangeserv
                   (Lld)rrd_data.bcache_max_mem,
                   (Lld)rrd_data.bcache_fill,
                   rrd_data.disk_used_pct,
-                  (Lld)rrd_data.disk_read_KBps,
-                  (Lld)rrd_data.disk_write_KBps,
+                  (Lld)rrd_data.disk_read_bytes,
+                  (Lld)rrd_data.disk_write_bytes,
                   (Lld)rrd_data.disk_read_iops,
                   (Lld)rrd_data.disk_write_iops,
                   (Lld)rrd_data.vm_size,
@@ -606,6 +606,8 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
   unsigned disk_use_pct;
   String error_str;
   String contact_time;
+  uint64_t range_count;
+
   for (size_t i=0; i<stats.size(); i++) {
     if (stats[i].stats) {
       double numerator=0.0, denominator=0.0;
@@ -624,12 +626,14 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
       ctime_r(&contact, buf);
       contact_time = buf;
       boost::trim(contact_time);
+      range_count = stats[i].stats->range_count;
     }
     else {
       ram = 0.0;
       disk = 0.0;
       disk_use_pct = 0;
       contact_time = String("N/A");
+      range_count = 0;
     }
 
     if (stats[i].fetch_error == 0)
@@ -651,7 +655,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
                    ram,
                    disk,
                    disk_use_pct,
-                   (Llu)stats[i].stats->range_count,
+                   (Llu)range_count,
                    contact_time.c_str(),
                    error_str.c_str());
 
