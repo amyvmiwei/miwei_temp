@@ -31,15 +31,15 @@ namespace {
 enum Mode { MODE_FOO, MODE_BAR };
 
 void basic_test(const PropertiesDesc &desc) {
-  static const char *argv[] = { "test", "--str", "foo", "--strs", "s1",
+  static const char *argv[] = { "test", "--string", "foo", "--strs", "s1",
       "--i16", "64k", "--i32", "20M", "--i64", "8g", "--strs", "s2",
-      "--i64s", "16G", "--i64s", "32G" };
+      "--int64s", "16G", "--int64s", "32G" };
   vector<String> args;
   args.push_back("--f64"); args.push_back("1k");
-  args.push_back("--f64s"); args.push_back("1.5");
-  args.push_back("--f64s"); args.push_back("1.5K");
-  args.push_back("--f64s"); args.push_back("1.5M");
-  args.push_back("--f64s"); args.push_back("1.5g");
+  args.push_back("--float64s"); args.push_back("1.5");
+  args.push_back("--float64s"); args.push_back("1.5K");
+  args.push_back("--float64s"); args.push_back("1.5M");
+  args.push_back("--float64s"); args.push_back("1.5g");
 
   Properties props;
   props.parse_args(sizeof(argv)/sizeof(char *), (char **)argv, desc);
@@ -63,14 +63,14 @@ int main(int argc, char *argv[]) {
     desc.add_options()
       ("help,h", "help")
       ("boo", boo()->zero_tokens()->default_value(true), "a boolean arg")
-      ("str", str()->notifier(notify), "a string arg")
+      ("string", str()->notifier(notify), "a string arg")
       ("strs", strs(), "a list of strings")
       ("i16", i16(), "a 16-bit integer arg")
       ("i32", i32(), "a 32-bit integer arg")
       ("i64", i64(), "a 64-bit integer arg")
-      ("i64s", i64s(), "a list of 64-bit integers")
+      ("int64s", i64s(), "a list of 64-bit integers")
       ("f64", f64(&f64test), "a double arg")
-      ("f64s", f64s(), "a list of doubles")
+      ("float64s", f64s(), "a list of doubles")
       ;
     Properties props;
     props.parse_args(argc, argv, desc);
