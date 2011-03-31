@@ -71,6 +71,8 @@ class RRDStat
     "sync_rate",
     "disk_read_iops",
     "disk_write_iops",
+    "disk_read_bytes",
+    "disk_write_bytes",
     "net_rx_rate",
     "net_tx_rate",
     "loadavg",

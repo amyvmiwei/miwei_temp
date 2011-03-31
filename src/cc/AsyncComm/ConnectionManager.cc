@@ -211,15 +211,15 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
   }
   else if (error != Error::OK) {
     if (conn_state->service_name != "") {
-      HT_ERRORF("Connection attempt to %s at %s failed - %s.  Will retry "
-                "again in %d milliseconds...", conn_state->service_name.c_str(),
-		conn_state->addr.to_str().c_str(), Error::get_text(error),
-                (int)conn_state->timeout_ms);
+      HT_INFOF("Connection attempt to %s at %s failed - %s.  Will retry "
+               "again in %d milliseconds...", conn_state->service_name.c_str(),
+               conn_state->addr.to_str().c_str(), Error::get_text(error),
+               (int)conn_state->timeout_ms);
     }
     else {
-      HT_ERRORF("Connection attempt to service at %s failed - %s.  Will retry "
-                "again in %d milliseconds...", conn_state->addr.to_str().c_str(),
-		Error::get_text(error), (int)conn_state->timeout_ms);
+      HT_INFOF("Connection attempt to service at %s failed - %s.  Will retry "
+               "again in %d milliseconds...", conn_state->addr.to_str().c_str(),
+               Error::get_text(error), (int)conn_state->timeout_ms);
     }
 
     // reschedule (throw in a little randomness)

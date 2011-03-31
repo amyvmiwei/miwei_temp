@@ -54,6 +54,18 @@
                      :units: "",
                      :pname: "Disk Write IOPS"},
 
+        :disk_read_bytes: {
+                    :pair: [:disk_read_bytes],
+                    :color: ["#cc0000"],
+                    :units: "",
+                    :pname: "Disk Read Bytes/s"},
+       
+        :disk_write_bytes: {
+                     :pair: [:disk_write_bytes],
+                     :color: ["#cc0000"],
+                     :units: "",
+                     :pname: "Disk Write Bytes/s"},
+
 	:net_rx_rate: {
                      :pair: [:net_rx_rate],
                      :color: ["#ef2929"],

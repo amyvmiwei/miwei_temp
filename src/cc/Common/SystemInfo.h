@@ -105,7 +105,7 @@ namespace Hypertable {
     double reads_rate;
     double writes_rate;
 
-    // aggreate transfer rate in MB/s
+    // aggreate transfer rate in bytes/s
     double read_rate;
     double write_rate;
   };

@@ -78,8 +78,8 @@ namespace Hypertable {
       int64_t bcache_max_mem;
       int64_t bcache_fill;
       double disk_used_pct;
-      int64_t disk_read_KBps;
-      int64_t disk_write_KBps;
+      int64_t disk_read_bytes;
+      int64_t disk_write_bytes;
       int64_t disk_read_iops;
       int64_t disk_write_iops;
       int64_t vm_size;
