@@ -12,11 +12,11 @@ struct AppPolicy : Policy {
       ("i16", i16(), "16-bit integer")
       ("i32", i32(), "32-bit integer")
       ("i64", i64(), "64-bit integer")
-      ("i64s", i64s(), "a list of 64-bit integers")
+      ("int64s", i64s(), "a list of 64-bit integers")
       ("boo", boo()->zero_tokens()->default_value(false), "a boolean arg")
-      ("str", str(), "a string arg")
+      ("string", str(), "a string arg")
       ("strs", strs(), "a list of strings")
-      ("f64", f64(), "a double arg")
+      ("float64", f64(), "a double arg")
       ("f64s", f64s(), "a list of doubles")
       ;
     cmdline_hidden_desc().add_options()("args", strs(), "arguments");
