@@ -32,8 +32,9 @@ namespace Hypertable {
     public:
       DefinitionRangeServer(const char *backup_label) : Definition(backup_label) { }
       virtual uint16_t version();
+      virtual bool supported_version(uint16_t ver);
       virtual const char *name();
-      virtual Entity *create(const EntityHeader &header);
+      virtual Entity *create(uint16_t log_version, const EntityHeader &header);
     };
     typedef intrusive_ptr<DefinitionRangeServer> DefinitionRangeServerPtr;
   }

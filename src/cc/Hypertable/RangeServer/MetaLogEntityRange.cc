@@ -64,6 +64,8 @@ const String EntityRange::name() {
 }
 
 void EntityRange::display(std::ostream &os) {
-  os << " " << table << " " << spec << " " << state << " " << " " << needs_compaction;
+  os << " " << table << " " << spec << " " << state << " ";
+  os << "needs_compaction=" << (needs_compaction ? "true" : "false") << " ";
+  os << "load_acknowledged=" << (load_acknowledged ? "true" : "false") << " ";
 }
 

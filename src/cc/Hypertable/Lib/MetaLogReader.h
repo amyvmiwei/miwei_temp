@@ -60,6 +60,7 @@ namespace Hypertable {
       std::vector<EntityPtr> m_entities;
       size_t m_cur_offset;
       String m_backup_path;
+      uint16_t m_version;
     };
     typedef intrusive_ptr<Reader> ReaderPtr;
   }

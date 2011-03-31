@@ -39,11 +39,15 @@ uint16_t DefinitionMaster::version() {
   return 1;
 }
 
+bool DefinitionMaster::supported_version(uint16_t ver) {
+  return ver == 1;
+}
+
 const char *DefinitionMaster::name() {
   return "mml";
 }
 
-Entity *DefinitionMaster::create(const EntityHeader &header) {
+Entity *DefinitionMaster::create(uint16_t log_version, const EntityHeader &header) {
 
   if (header.type == EntityType::RANGE_SERVER_CONNECTION) {
     MetaLog::WriterPtr mml_writer = m_context ? m_context->mml_writer : 0;

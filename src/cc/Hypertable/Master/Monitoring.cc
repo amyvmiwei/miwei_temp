@@ -371,7 +371,7 @@ void Monitoring::create_rangeserver_rrd(const String &filename) {
   args.push_back((String)"create");
   args.push_back(filename);
   args.push_back(step);
-  args.push_back((String)"DS:range_count:ABSOLUTE:600:0:U"); // num_ranges is not a rate, 600s heartbeat
+  args.push_back((String)"DS:range_count:GAUGE:600:0:U"); // num_ranges is not a rate, 600s heartbeat
   args.push_back((String)"DS:scan_rate:GAUGE:600:0:U"); // scans is a rate, 600s heartbeat
   args.push_back((String)"DS:update_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:sync_rate:GAUGE:600:0:U");
@@ -438,7 +438,7 @@ void Monitoring::create_table_rrd(const String &filename) {
   args.push_back((String)"create");
   args.push_back(filename);
   args.push_back(step);
-  args.push_back((String)"DS:range_count:ABSOLUTE:600:0:U"); // num_ranges is not a rate, 600s heartbeat
+  args.push_back((String)"DS:range_count:GAUGE:600:0:U"); // num_ranges is not a rate, 600s heartbeat
   args.push_back((String)"DS:scan_rate:GAUGE:600:0:U"); // scans is a rate, 600s heartbeat
   args.push_back((String)"DS:update_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:cell_read_rate:GAUGE:600:0:U");

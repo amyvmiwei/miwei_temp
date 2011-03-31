@@ -73,8 +73,9 @@ namespace Hypertable {
     public:
       TestDefinition() : Definition("bar") {}
       virtual uint16_t version() { return 1; }
+      virtual bool supported_version(uint16_t ver) { return ver==1; }
       virtual const char *name() { return "foo"; }
-      virtual Entity *create(const EntityHeader &header) {
+      virtual Entity *create(uint16_t log_version, const EntityHeader &header) {
         return new EntityGeneric(header);
       }
     };
