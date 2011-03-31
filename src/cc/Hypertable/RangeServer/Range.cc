@@ -1358,3 +1358,42 @@ int64_t Range::get_scan_revision() {
   return m_latest_revision;
 }
 
+std::ostream &Hypertable::operator<<(std::ostream &os, const Range::MaintenanceData &mdata) {
+  os << "RANGE " << mdata.range->get_name() << "\n";
+  os << "table_id=" << mdata.table_id << "\n";
+  os << "scans=" << mdata.scans << "\n";
+  os << "updates=" << mdata.updates << "\n";
+  os << "cells_scanned=" << mdata.cells_scanned << "\n";
+  os << "cells_returned=" << mdata.cells_returned << "\n";
+  os << "cells_written=" << mdata.cells_written << "\n";
+  os << "bytes_scanned=" << mdata.bytes_scanned << "\n";
+  os << "bytes_returned=" << mdata.bytes_returned << "\n";
+  os << "bytes_written=" << mdata.bytes_written << "\n";
+  os << "purgeable_index_memory=" << mdata.purgeable_index_memory << "\n";
+  os << "compact_memory=" << mdata.compact_memory << "\n";
+  os << "soft_limit=" << mdata.soft_limit << "\n";
+  os << "schema_generation=" << mdata.schema_generation << "\n";
+  os << "priority=" << mdata.priority << "\n";
+  os << "state=" << mdata.state << "\n";
+  os << "maintenance_flags=" << mdata.maintenance_flags << "\n";
+  os << "file_count=" << mdata.file_count << "\n";
+  os << "cell_count=" << mdata.cell_count << "\n";
+  os << "memory_used=" << mdata.memory_used << "\n";
+  os << "memory_allocated=" << mdata.memory_allocated << "\n";
+  os << "key_bytes=" << mdata.key_bytes << "\n";
+  os << "value_bytes=" << mdata.value_bytes << "\n";
+  os << "compression_ratio=" << mdata.compression_ratio << "\n";
+  os << "disk_used=" << mdata.disk_used << "\n";
+  os << "disk_estimate=" << mdata.disk_estimate << "\n";
+  os << "shadow_cache_memory=" << mdata.shadow_cache_memory << "\n";
+  os << "block_index_memory=" << mdata.block_index_memory << "\n";
+  os << "bloom_filter_memory=" << mdata.bloom_filter_memory << "\n";
+  os << "bloom_filter_accesses=" << mdata.bloom_filter_accesses << "\n";
+  os << "bloom_filter_maybes=" << mdata.bloom_filter_maybes << "\n";
+  os << "bloom_filter_fps=" << mdata.bloom_filter_fps << "\n";
+  os << "busy=" << (mdata.busy ? "true" : "false") << "\n";
+  os << "is_metadata=" << (mdata.is_metadata ? "true" : "false") << "\n";
+  os << "is_system=" << (mdata.is_system ? "true" : "false") << "\n";
+  os << "relinquish=" << (mdata.relinquish ? "true" : "false") << "\n";
+  return os;
+}

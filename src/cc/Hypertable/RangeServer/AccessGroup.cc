@@ -1023,3 +1023,34 @@ void AccessGroup::dump_keys(std::ofstream &out) {
 	<< " rev=" << (*iter).revision << "\n";
   }
 }
+
+
+std::ostream &Hypertable::operator<<(std::ostream &os, const AccessGroup::MaintenanceData &mdata) {
+  os << "ACCESS GROUP " << mdata.ag->get_full_name() << "\n";
+  os << "earliest_cached_revision=" << mdata.earliest_cached_revision << "\n";
+  os << "latest_stored_revision=" << mdata.latest_stored_revision << "\n";
+  os << "mem_used=" << mdata.mem_used << "\n";
+  os << "mem_allocated=" << mdata.mem_allocated << "\n";
+  os << "cached_items=" << mdata.cached_items << "\n";
+  os << "cell_count=" << mdata.cell_count << "\n";
+  os << "immutable_items=" << mdata.immutable_items << "\n";
+  os << "disk_used=" << mdata.disk_used << "\n";
+  os << "disk_estimate=" << mdata.disk_estimate << "\n";
+  os << "log_space_pinned=" << mdata.log_space_pinned << "\n";
+  os << "key_bytes=" << mdata.key_bytes << "\n";
+  os << "value_bytes=" << mdata.value_bytes << "\n";
+  os << "file_count=" << mdata.file_count << "\n";
+  os << "deletes=" << mdata.deletes << "\n";
+  os << "outstanding_scanners=" << mdata.outstanding_scanners << "\n";
+  os << "compression_ratio=" << mdata.compression_ratio << "\n";
+  os << "maintenance_flags=" << mdata.maintenance_flags << "\n";
+  os << "block_index_memory=" << mdata.block_index_memory << "\n";
+  os << "bloom_filter_memory=" << mdata.bloom_filter_memory << "\n";
+  os << "bloom_filter_accesses=" << mdata.bloom_filter_accesses << "\n";
+  os << "bloom_filter_maybes=" << mdata.bloom_filter_maybes << "\n";
+  os << "bloom_filter_fps=" << mdata.bloom_filter_fps << "\n";
+  os << "shadow_cache_memory=" << mdata.shadow_cache_memory << "\n";
+  os << "in_memory=" << (mdata.in_memory ? "true" : "false") << "\n";
+  os << "gc_needed=" << (mdata.gc_needed ? "true" : "false") << "\n";
+  return os;
+}
