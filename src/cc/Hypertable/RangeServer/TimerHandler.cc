@@ -116,7 +116,7 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
 
   int64_t memory_used = Global::memory_tracker->balance();
 
-  if (memory_used > Global::memory_limit) {
+  if (m_range_server->replay_finished() && memory_used > Global::memory_limit) {
     if (!m_app_queue_paused) {
       HT_INFO("Pausing application queue due to low memory condition");
       m_app_queue_paused = true;
