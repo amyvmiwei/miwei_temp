@@ -108,6 +108,7 @@ namespace {
   void check_dfsbroker(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
     HT_DEBUG_OUT <<"Checking dfsbroker at "<< get_str("dfs-host")
                  <<':'<< get_i16("dfs-port") << HT_END;
+
     DfsBroker::ClientPtr dfs = new DfsBroker::Client(conn_mgr, properties);
 
     if (!dfs->wait_for_connection(wait_ms))
@@ -226,6 +227,8 @@ int main(int argc, char **argv) {
 
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
     conn_mgr->set_quiet_mode(silent);
+
+    properties->set("DfsBroker.Timeout", (int32_t)wait_ms);
 
     if (server_name == "dfsbroker") {
       CHECK_SERVER(dfsbroker);
