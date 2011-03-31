@@ -355,6 +355,8 @@ namespace Hypertable {
 
   typedef intrusive_ptr<Range> RangePtr;
 
+  std::ostream &operator<<(std::ostream &os, const Range::MaintenanceData &mdata);
+
 } // namespace Hypertable
 
 #endif // HYPERTABLE_RANGE_H

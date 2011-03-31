@@ -295,6 +295,7 @@ namespace Hypertable {
   };
   typedef boost::intrusive_ptr<AccessGroup> AccessGroupPtr;
 
+  std::ostream &operator<<(std::ostream &os, const AccessGroup::MaintenanceData &mdata);
 
 } // namespace Hypertable
 
