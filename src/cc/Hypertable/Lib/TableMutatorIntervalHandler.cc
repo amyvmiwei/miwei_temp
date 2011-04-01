@@ -34,6 +34,11 @@ void TableMutatorIntervalHandler::handle(EventPtr &event) {
     app_queue->add(new TableMutatorFlushHandler(this, event));
     self_register();
   }
+  else {
+    ScopedLock lock(mutex);
+    complete = true;
+    cond.notify_all();
+  }
 }
 
 

@@ -24,6 +24,8 @@
 
 #include "AsyncComm/DispatchHandler.h"
 
+#include <boost/thread/condition.hpp>
+
 namespace Hypertable {
 
 class Comm;
@@ -32,7 +34,7 @@ class TableMutatorShared;
 struct TableMutatorIntervalHandler : DispatchHandler {
   TableMutatorIntervalHandler(Comm *comm, ApplicationQueue *app_queue,
                               TableMutatorShared *mutator)
-    : active(true), comm(comm), app_queue(app_queue), mutator(mutator) {
+    : active(true), complete(false), comm(comm), app_queue(app_queue), mutator(mutator) {
     self_register();
   }
 
@@ -45,6 +47,8 @@ struct TableMutatorIntervalHandler : DispatchHandler {
   void stop() {
     ScopedLock lock(mutex);
     active = false;
+    while (!complete)
+      cond.wait(lock);
   }
 
   bool stopped() {
@@ -53,7 +57,9 @@ struct TableMutatorIntervalHandler : DispatchHandler {
   }
 
   Mutex               mutex;
+  boost::condition    cond;
   bool                active;
+  bool                complete;
   Comm               *comm;
   ApplicationQueue   *app_queue;
   TableMutatorShared *mutator;
