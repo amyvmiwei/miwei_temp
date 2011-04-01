@@ -45,6 +45,7 @@ namespace Hypertable {
       void reload();
       int32_t next_file_number() { return m_next_filenum; }
       bool load_file(const String &fname);
+      uint16_t version() { return m_version; }
 
     private:
 

@@ -460,6 +460,14 @@ void RangeServer::local_recover() {
     if (!entities.empty()) {
       HT_DEBUG_OUT <<"Found "<< Global::log_dir << "/" << rsml_definition->name() <<", start recovering"<< HT_END;
 
+      // Fix for load_acknowledge bug
+      if (rsml_reader->version() == 1) {
+	for (size_t i=0; i<entities.size(); i++) {
+	  if ((range_entity = dynamic_cast<MetaLog::EntityRange *>(entities[i].get())) != 0)
+	    range_entity->load_acknowledged = true;
+	}
+      }
+
       Global::rsml_writer = new MetaLog::Writer(Global::log_dfs, rsml_definition,
                                                 Global::log_dir + "/" + rsml_definition->name(),
                                                 entities);
