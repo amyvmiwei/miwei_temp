@@ -24,7 +24,6 @@
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
 #include "Common/SystemInfo.h"
-#include "Common/Stopwatch.h"
 #include "Common/Mutex.h"
 
 extern "C" {
@@ -213,11 +212,6 @@ sigar_net_interface_stat_t _prev_net_stat, *_prev_net_statp = NULL;
 Stopwatch _net_stat_stopwatch;
 const int DEFAULT_NET_STAT_FLAGS =
     SIGAR_NETCONN_CLIENT|SIGAR_NETCONN_SERVER|SIGAR_NETCONN_TCP;
-
-// for computing disk io rate
-RecMutex _disk_mutex;
-sigar_disk_usage_t _prev_disk_stat, *_prev_disk_statp = NULL;
-Stopwatch _disk_stat_stopwatch;
 
 // info/stat singletons
 CpuInfo _cpu_info, *_cpu_infop = NULL;
@@ -473,51 +467,39 @@ MemStat &MemStat::refresh() {
   return *this;
 }
 
+DiskStat::~DiskStat() {
+  delete (sigar_disk_usage_t *)prev_stat;
+}
+
 DiskStat &DiskStat::refresh(const char *dir_prefix) {
-  ScopedRecLock disk_lock(_disk_mutex);
-  bool need_pause = false;
-  {
-    ScopedRecLock lock(_mutex);
+  ScopedRecLock lock(_mutex);
+  sigar_disk_usage_t s;
 
-    if ((prefix != dir_prefix || !_prev_disk_statp)
-        && compute_disk_usage(dir_prefix, _prev_disk_stat)) {
-      HT_DEBUGF("prev_disk_stat: reads=%llu, reads=%llu, read_bytes=%llu "
-                "write_bytes=%llu", (Llu)_prev_disk_stat.reads,
-                (Llu)_prev_disk_stat.writes, (Llu)_prev_disk_stat.read_bytes,
-                (Llu)_prev_disk_stat.write_bytes);
-      _prev_disk_statp = &_prev_disk_stat;
-      prefix = dir_prefix;
-      need_pause = true;
+  memset(&s, 0, sizeof(s));
+
+  if (compute_disk_usage(dir_prefix, s)) {
+    HT_DEBUGF("curr_disk_stat: reads=%llu, reads=%llu, read_bytes=%llu "
+	      "write_bytes=%llu", (Llu)s.reads, (Llu)s.writes,
+	      (Llu)s.read_bytes, (Llu)s.write_bytes);
+
+    if (prev_stat) {
+      stopwatch.stop();
+      double elapsed = stopwatch.elapsed();
+      reads_rate = (s.reads - ((sigar_disk_usage_t *)prev_stat)->reads) / elapsed;
+      writes_rate = (s.writes - ((sigar_disk_usage_t *)prev_stat)->writes) / elapsed;
+      read_rate =
+	(s.read_bytes - ((sigar_disk_usage_t *)prev_stat)->read_bytes) / elapsed;
+      write_rate =
+	(s.write_bytes - ((sigar_disk_usage_t *)prev_stat)->write_bytes) / elapsed;
     }
-    prefix = dir_prefix;
+    else
+      prev_stat = new sigar_disk_usage_t();
+
+    *((sigar_disk_usage_t *)prev_stat) = s;
+    stopwatch.reset();
+    stopwatch.start();
   }
-  if (need_pause)
-    poll(0, 0, DEFAULT_PAUSE);
-  {
-    ScopedRecLock lock(_mutex);
 
-    if (_prev_disk_statp) {
-      sigar_disk_usage_t s;
-
-      if (compute_disk_usage(dir_prefix, s)) {
-        HT_DEBUGF("curr_disk_stat: reads=%llu, reads=%llu, read_bytes=%llu "
-                  "write_bytes=%llu", (Llu)s.reads, (Llu)s.writes,
-                  (Llu)s.read_bytes, (Llu)s.write_bytes);
-        _disk_stat_stopwatch.stop();
-        double elapsed = _disk_stat_stopwatch.elapsed();
-
-        reads_rate = (s.reads - _prev_disk_stat.reads) / elapsed;
-        writes_rate = (s.writes - _prev_disk_stat.writes) / elapsed;
-        read_rate =
-            (s.read_bytes - _prev_disk_stat.read_bytes) / elapsed;
-        write_rate =
-            (s.write_bytes - _prev_disk_stat.write_bytes) / elapsed;
-
-        _prev_disk_stat = s;
-        _disk_stat_stopwatch.start();
-      }
-    }
-  }
   return *this;
 }
 
