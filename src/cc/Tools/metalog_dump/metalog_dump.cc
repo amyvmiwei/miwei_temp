@@ -61,6 +61,7 @@ namespace {
                    "  to be the metalog directory\n\nOptions")
         .add_options()
         ("all", "Display all entities in log (not just latest state)")
+        ("show-version", "Display log version number and exit")
         ;
       cmdline_hidden_desc().add_options()("log-path", str(), "dfs log path");
       cmdline_positional_desc().add("log-path", -1);
@@ -124,6 +125,7 @@ int main(int argc, char **argv) {
     String log_host = get("log-host", String());
     int timeout = has("dfs-timeout") ? get_i32("dfs-timeout") : 10000;
     bool dump_all = has("all");
+    bool show_version = has("show-version");
 
     /**
      * Check for and connect to commit log DFS broker
@@ -172,6 +174,11 @@ int main(int argc, char **argv) {
     }
     else
       rsml_reader = new MetaLog::Reader(fs, def, log_path);
+
+    cout << "log version: " << rsml_reader->version() << "\n";
+
+    if (show_version)
+      _exit(0);
 
     std::vector<MetaLog::EntityPtr> entities;
 

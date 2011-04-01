@@ -42,12 +42,12 @@ using namespace Hypertable;
 using namespace Hypertable::MetaLog;
 
 Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition) :
-  m_fs(fs), m_definition(definition) {
+  m_fs(fs), m_definition(definition), m_version(0) {
 }
 
 
 Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition, const String &path) :
-  m_fs(fs), m_definition(definition) {
+  m_fs(fs), m_definition(definition), m_version(0) {
 
   // Setup DFS path name
   m_path = path;

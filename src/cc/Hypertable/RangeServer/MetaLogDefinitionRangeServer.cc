@@ -41,12 +41,8 @@ const char *DefinitionRangeServer::name() {
 
 Entity *DefinitionRangeServer::create(uint16_t log_version, const EntityHeader &header) {
 
-  if (header.type == EntityType::RANGE) {
-    EntityRange *entity = new EntityRange(header);
-    if (log_version == 1)
-      entity->load_acknowledged = true;
-    return entity;
-  }
+  if (header.type == EntityType::RANGE)
+    return new EntityRange(header);
 
   HT_THROWF(Error::METALOG_ENTRY_BAD_TYPE,
             "Unrecognized type (%d) encountered in rsml",
