@@ -115,6 +115,7 @@ namespace Hypertable {
     uint64_t total_count;
     uint64_t total_buffer_size;
     TableInfoPtr table_info;
+    boost::xtime expire_time;
     hash_map<Range *, RangeUpdateList *> range_map;
     std::set<Range *> wait_ranges;
     DynamicBuffer go_buf;

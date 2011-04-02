@@ -90,7 +90,7 @@ namespace Hypertable {
                        const char *);
     void update(ResponseCallbackUpdate *, const TableIdentifier *,
                 uint32_t count, StaticBuffer &, uint32_t flags);
-    void batch_update(std::vector<TableUpdate *> &updates);
+    void batch_update(std::vector<TableUpdate *> &updates, boost::xtime expire_time);
 
     void commit_log_sync(ResponseCallback *, const TableIdentifier *);
     void drop_table(ResponseCallback *, const TableIdentifier *);
@@ -128,12 +128,13 @@ namespace Hypertable {
 
     void master_change();
 
-    void wait_for_recovery_finish();
-    void wait_for_root_recovery_finish();
-    void wait_for_metadata_recovery_finish();
-    void wait_for_system_recovery_finish();
-    void wait_for_recovery_finish(const TableIdentifier *table,
-                                  const RangeSpec *range);
+    bool wait_for_recovery_finish(boost::xtime expire_time);
+    bool wait_for_root_recovery_finish(boost::xtime expire_time);
+    bool wait_for_metadata_recovery_finish(boost::xtime expire_time);
+    bool wait_for_system_recovery_finish(boost::xtime expire_time);
+    bool wait_for_recovery_finish(const TableIdentifier *table,
+                                  const RangeSpec *range,
+				  boost::xtime expire_time);
     bool replay_finished() { return m_replay_finished; }
 
 

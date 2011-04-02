@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include "Common/Error.h"
+#include "Common/md5.h"
 
 #include "OperationRecoverServer.h"
 
@@ -29,6 +30,7 @@ using namespace Hypertable;
 OperationRecoverServer::OperationRecoverServer(ContextPtr &context, RangeServerConnectionPtr &rsc)
   : Operation(context, MetaLog::EntityType::OPERATION_RECOVER_SERVER), m_rsc(rsc) {
   m_exclusivities.insert(m_rsc->location());
+  m_hash_code = md5_hash("RecoverServer") ^ md5_hash(m_rsc->location().c_str());
 }
 
 
