@@ -132,6 +132,13 @@ namespace Hypertable {
       expire_time.sec += header.timeout_ms/1000;
     }
 
+    boost::xtime expiration_time() {
+      boost::xtime expire_time;
+      boost::xtime_get(&expire_time, boost::TIME_UTC);
+      expire_time.sec += header.timeout_ms/1000;
+      return expire_time;
+    }
+
     /** Type of event.  Can take one of values CONNECTION_ESTABLISHED,
      * DISCONNECT, MESSAGE, ERROR, or TIMER
      */

@@ -40,6 +40,7 @@ void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier 
   ScopedLock lock(m_mutex);
   TableUpdateMap::iterator iter;
   UpdateRequest *request = new UpdateRequest();
+  boost::xtime expire_time = event->expiration_time();
 
   request->buffer = buffer;
   request->count = count;
@@ -57,12 +58,15 @@ void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier 
     tu->commit_iteration = (tu->commit_interval+(m_commit_interval-1)) / m_commit_interval;
     tu->total_count = count;
     tu->total_buffer_size = buffer.size;
+    tu->expire_time = expire_time;
     tu->requests.push_back(request);
 
     m_table_map[tid] = tu;
     return;
   }
 
+  if (expire_time.sec > (*iter).second->expire_time.sec)
+    (*iter).second->expire_time = expire_time;
   (*iter).second->do_sync = do_sync;
   (*iter).second->total_count += count;
   (*iter).second->total_buffer_size += buffer.size;
@@ -74,6 +78,10 @@ void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier 
 void GroupCommit::trigger() {
   ScopedLock lock(m_mutex);
   std::vector<TableUpdate *> updates;
+  boost::xtime expire_time;
+
+  // Clear to Jan 1, 1970
+  memset(&expire_time, 0, sizeof(expire_time));
 
   m_counter++;
 
@@ -81,6 +89,8 @@ void GroupCommit::trigger() {
   while (iter != m_table_map.end()) {
     if ((m_counter % (*iter).second->commit_iteration) == 0) {
       TableUpdateMap::iterator remove_iter = iter;
+      if (iter->second->expire_time.sec > expire_time.sec)
+	expire_time = iter->second->expire_time;
       ++iter;
       updates.push_back((*remove_iter).second);
       m_table_map.erase(remove_iter);
@@ -90,7 +100,7 @@ void GroupCommit::trigger() {
   }
 
   if (!updates.empty()) {
-    m_range_server->batch_update(updates);
+    m_range_server->batch_update(updates, expire_time);
 
     // Free objects
     foreach (TableUpdate *table_update, updates) {

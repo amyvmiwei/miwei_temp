@@ -275,7 +275,7 @@ void DefaultPolicy::init_options() {
         "Host on which Hypertable Master is running")
     ("Hypertable.Master.Port", i16()->default_value(38050),
         "Port number on which Hypertable Master is or should be listening")
-    ("Hypertable.Master.Workers", i32(),
+    ("Hypertable.Master.Workers", i32()->default_value(100),
         "Number of Hypertable Master worker threads created")
     ("Hypertable.Master.Reactors", i32(),
         "Number of Hypertable Master communication reactor threads created")
@@ -365,7 +365,7 @@ void DefaultPolicy::init_options() {
         "Maintenance scheduling interval in milliseconds")
     ("Hypertable.RangeServer.Monitoring.DataDirectories", str()->default_value("/"),
         "Comma-separated list of directory mount points of disk volumes to monitor")
-    ("Hypertable.RangeServer.Workers", i32()->default_value(50),
+    ("Hypertable.RangeServer.Workers", i32()->default_value(100),
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),
         "Number of Range Server communication reactor threads created")

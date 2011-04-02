@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_PATH_H
 #define HYPERTABLE_PATH_H
 
+#include <boost/version.hpp>
 #include <boost/filesystem.hpp>
 
 #include "Common/String.h"
