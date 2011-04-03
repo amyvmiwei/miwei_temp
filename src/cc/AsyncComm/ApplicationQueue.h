@@ -68,13 +68,14 @@ namespace Hypertable {
 
     class ApplicationQueueState {
     public:
-      ApplicationQueueState() : shutdown(false), paused(false) { return; }
+      ApplicationQueueState() : threads_available(0), shutdown(false), paused(false) { return; }
       WorkQueue           queue;
       WorkQueue           urgent_queue;
       UsageRecMap         usage_map;
       Mutex               queue_mutex;
       Mutex               usage_mutex;
       boost::condition    cond;
+      size_t              threads_available;
       bool                shutdown;
       bool                paused;
     };
@@ -82,7 +83,7 @@ namespace Hypertable {
     class Worker {
 
     public:
-      Worker(ApplicationQueueState &qstate) : m_state(qstate) { return; }
+      Worker(ApplicationQueueState &qstate, bool one_shot=false) : m_state(qstate), m_one_shot(one_shot) { return; }
 
       void operator()() {
         WorkRec *rec = 0;
@@ -90,9 +91,10 @@ namespace Hypertable {
 
         while (true) {
 
-          {  // !!! maybe ditch this block specifier
+          {
             ScopedLock lock(m_state.queue_mutex);
 
+            m_state.threads_available++;
             while ((m_state.paused || m_state.queue.empty()) &&
                    m_state.urgent_queue.empty()) {
               if (m_state.shutdown)
@@ -148,6 +150,8 @@ namespace Hypertable {
               if (m_state.shutdown)
                 return;
             }
+            else
+              m_state.threads_available--;
           }
 
           if (rec) {
@@ -162,6 +166,8 @@ namespace Hypertable {
               }
             }
             delete rec;
+            if (m_one_shot)
+              return;
           }
         }
 
@@ -170,6 +176,7 @@ namespace Hypertable {
 
     private:
       ApplicationQueueState &m_state;
+      bool m_one_shot;
     };
 
     Mutex                  m_mutex;
@@ -280,8 +287,13 @@ namespace Hypertable {
 
       {
         ScopedLock lock(m_state.queue_mutex);
-        if (app_handler->is_urgent())
+        if (app_handler->is_urgent()) {
           m_state.urgent_queue.push_back(rec);
+          if (m_state.threads_available == 0) {
+            Worker worker(m_state, true);
+            m_threads.create_thread(worker);
+          }
+        }
         else
           m_state.queue.push_back(rec);
         m_state.cond.notify_one();
