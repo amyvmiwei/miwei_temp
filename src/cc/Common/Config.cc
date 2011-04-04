@@ -365,7 +365,7 @@ void DefaultPolicy::init_options() {
         "Maintenance scheduling interval in milliseconds")
     ("Hypertable.RangeServer.Monitoring.DataDirectories", str()->default_value("/"),
         "Comma-separated list of directory mount points of disk volumes to monitor")
-    ("Hypertable.RangeServer.Workers", i32()->default_value(100),
+    ("Hypertable.RangeServer.Workers", i32()->default_value(50),
         "Number of Range Server worker threads created")
     ("Hypertable.RangeServer.Reactors", i32(),
         "Number of Range Server communication reactor threads created")
