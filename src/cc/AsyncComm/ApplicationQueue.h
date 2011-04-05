@@ -97,8 +97,10 @@ namespace Hypertable {
             m_state.threads_available++;
             while ((m_state.paused || m_state.queue.empty()) &&
                    m_state.urgent_queue.empty()) {
-              if (m_state.shutdown)
+              if (m_state.shutdown) {
+		m_state.threads_available--;
                 return;
+	      }
               m_state.cond.wait(lock);
             }
 
@@ -144,14 +146,18 @@ namespace Hypertable {
               }
             }
             if (rec == 0) {
-              if (m_state.shutdown)
+              if (m_state.shutdown) {
+		m_state.threads_available--;
                 return;
+	      }
               m_state.cond.wait(lock);
-              if (m_state.shutdown)
+              if (m_state.shutdown) {
+		m_state.threads_available--;
                 return;
+	      }
             }
-            else
-              m_state.threads_available--;
+
+	    m_state.threads_available--;
           }
 
           if (rec) {
