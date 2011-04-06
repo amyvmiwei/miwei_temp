@@ -63,10 +63,10 @@ parse_ts(const char *ts) {
     return timegm(&tv) * G;
 
   HT_DELIM_CHECK(*last, ' ');
-  tv.tm_hour = strtol(last + 1, &last, 10) - 1;
+  tv.tm_hour = strtol(last + 1, &last, 10);
   HT_RANGE_CHECK(tv.tm_hour, 0, 23);
   HT_DELIM_CHECK(*last, ':');
-  tv.tm_min = strtol(last + 1, &last, 10) - 1;
+  tv.tm_min = strtol(last + 1, &last, 10);
   HT_RANGE_CHECK(tv.tm_min, 0, 59);
 
   if (*last == 0)
@@ -74,9 +74,9 @@ parse_ts(const char *ts) {
 
   HT_DELIM_CHECK(*last, ':');
 
-  sec = strtod(last+1, &last) - 1;
+  sec = strtod(last+1, &last);
   tv.tm_sec = 0;
-  HT_RANGE_CHECK(sec, 0, 60);
+  HT_RANGE_CHECK(sec, 0, 59);
   // integer nanoseconds
   if (*last == ':') {
     ns = strtol(last+1, &last, 10);
