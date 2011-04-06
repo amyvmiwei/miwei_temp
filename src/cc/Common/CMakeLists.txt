@@ -117,6 +117,10 @@ target_link_libraries(bloom_filter_test HyperCommon)
 add_executable(hash_test tests/hash_test.cc)
 target_link_libraries(hash_test HyperCommon ${MALLOC_LIBRARY})
 
+# timeinline test
+add_executable(timeinline_test tests/timeinline_test.cc)
+target_link_libraries(timeinline_test HyperCommon ${MALLOC_LIBRARY})
+
 # container tests
 add_executable(container_test tests/container_test.cc)
 target_link_libraries(container_test HyperCommon)
@@ -147,6 +151,7 @@ add_test(Common-init ${TEST_DIFF}
 add_test(MD5-Base64 md5_base64_test)
 add_test(Common-StatsSystem-serialize stats_serialize_test)
 add_test(Common-StringCompressor string_compressor_test)
+add_test(Common-TimeInline timeinline_test)
 
 set(VERSION_H ${HYPERTABLE_BINARY_DIR}/src/cc/Common/Version.h)
 
