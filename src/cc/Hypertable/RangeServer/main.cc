@@ -87,10 +87,6 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    uint32_t timeout_ms = get_i32("Hypertable.Request.Timeout");
-    Global::range_locator =
-        new Hypertable::RangeLocator(properties, conn_manager, Global::hyperspace, timeout_ms);
-
     RangeServerPtr range_server= new RangeServer(properties,
         conn_manager, app_queue, Global::hyperspace);
 
