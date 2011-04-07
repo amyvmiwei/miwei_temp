@@ -2,7 +2,6 @@ set :source_machine, "mothercompiler"
 set :install_dir,  "/opt/hypertable"
 set :hypertable_version, "0.9.5.0"
 
-set :default_install_type, "bin"
 set :default_pkg, "hypertable-0.9.5.0.pre-linux-x86_64.deb"
 set :default_dfs, "hadoop"
 set :default_config, "/opt/hypertable/dev-hypertable.cfg"
@@ -49,10 +48,6 @@ end
 def pkg_regex
   '.*\.(deb|rpm)$'
 end
-
-set(:install_type) do
-  "#{default_install_type}"
-end unless exists?(:install_type)
 
 set(:pkg) do
   "#{default_pkg}"
@@ -147,27 +142,27 @@ task :set_current, :roles => [:install_machines, :source] do
 end
 
  desc <<-DESC
-    Distributes installation.  This task copiles the config file and \
-    then rsyncs the installation to each machine in the cluster
+   Distributes installation.  This task rsyncs everything under\
+   #{source_machine}:#{install_dir}/#{hypertable_version} to #{install_dir}\
+   on all machines in the cluster
  DESC
-task :install do
-  if (install_type == "bin")
-    transaction do
-      rsync
-    end
-  elsif (install_type == "pkg")
-    transaction do
-      install_pkg
-    end
-  else
-    raise "Bad install type '#{install_type}' expected one of 'pkg', 'bin'"
+task :dist do
+  transaction do
+    rsync
   end
 end
- 
+
+ desc <<-DESC
+   Alias for install_package command 
+ DESC
+task :install_pkg do
+  install_package
+end
+
  desc <<-DESC
     rsyncs binary packages and installs on each machine in the cluster
  DESC
-task :install_pkg do
+task :install_package do
   pkg_basename = File.basename(pkg)
   pkg_basename =~ /#{pkg_regex}/
   pkg_type = $1
@@ -178,12 +173,12 @@ task :install_pkg do
   if (/-#{hypertable_version}-/ =~ pkg_basename).nil?
     raise "Package #{pkg} doesn't match version #{hypertable_version}"
   end
-  run("rsync -e \"ssh -o StrictHostKeyChecking=no\" #{pkg} #{install_dir}/")
+    run("rsync -e \"ssh -o StrictHostKeyChecking=no\" #{source_machine}:#{pkg} #{install_dir}/")
    
   if (pkg_type == "deb")
     run("dpkg -i #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}") 
   else 
-    run("rpm -ivh #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}")
+    run("rpm -ivh --replacepkgs #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}")
   end
 end
 
