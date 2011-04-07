@@ -985,7 +985,12 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       range->add_read_data(cells_scanned, cells_returned, bytes_scanned, bytes_returned);
     }
 
-    id = (more) ? Global::scanner_map.put(scanner, range, table) : 0;
+    if (more) {
+      scan_ctx->deep_copy_specs();
+      id = Global::scanner_map.put(scanner, range, table);
+    }
+    else
+      id = 0;
 
     if (table->is_metadata())
       HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
