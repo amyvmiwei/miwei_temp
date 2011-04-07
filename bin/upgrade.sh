@@ -20,6 +20,11 @@
 # 02110-1301, USA.
 #
 
+# exit on error
+set -o errexit
+trap 'echo "$status_msg"' EXIT INT TERM
+status_msg="UPGRADE FAILED! Trace follows: "
+
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
@@ -47,49 +52,58 @@ upgrade_dir() {
   cwd=`pwd`
   old_dir=${HYPERTABLE_HOME}/../${FROM}/$dir
   new_dir=${HYPERTABLE_HOME}/$dir
+  
+  status_msg="$status_msg [UPGRADE '$dir' STARTED]"
   if [ -e ${old_dir} ] ; then
     if [ -L ${old_dir} ] ; then
       #setup symlink
       ls_out=$(ls -l "${old_dir}")
       target=${ls_out#*-> }
-      echo "'${old_dir}' symlinked to '${target}'. Setting up '${new_dir}' to link to '${target}' "
+      status_msg="$status_msg :: '${old_dir}' symlinked to '${target}'. Setting up '${new_dir}' to link to '${target}'"
       if [ $dir == "conf" ] ; then
-        cp $new_dir/METADATA.xml $target
+        cp $new_dir/METADATA.xml $target  
         cp $new_dir/RS_METRICS.xml $target
       fi
-      cd $HYPERTABLE_HOME && rm -rf $dir && ln -s $target $dir
+      cd $HYPERTABLE_HOME 
+      rm -rf $dir 
+      ln -s $target $dir
     else 
       if [ $link_only -eq 0 ] ; then
         #copy stuff over
-        echo "'$old_dir' is not a symlink. Copying contents into $new_dir."
+        status_msg="$status_msg :: '$old_dir' is not a symlink. Copying contents into '$new_dir'."
         target="$new_dir.tmp"
         cp -dpR $old_dir $target
         if [ $dir == "conf" ] ; then
-          cp $new_dir/METADATA.xml $target
+          cp $new_dir/METADATA.xml $target 
           cp $new_dir/RS_METRICS.xml $target
         fi
-        cd $HYPERTABLE_HOME && rm -rf $new_dir && mv $target $new_dir
-      else 
-        echo "'$old_dir' is not a symlink. Skipping content copy into $new_dir."
+        cd $HYPERTABLE_HOME 
+        rm -rf $new_dir 
+        mv $target $new_dir
+      else
+        status_msg="$status_msg :: '$old_dir' is not a symlink. Skipping content copy into $new_dir."
       fi
     fi
   else
     #check for stuff under default_link_target
-    echo "$old_dir doesn't exist. Checking default location $fhs_default_target."
+    status_msg="$status_msg :: '$old_dir' doesn't exist. Checking default location '$fhs_default_target.'"
     if [ -e $fhs_default_target ] ; then
        #setup symlink
       target=$fhs_default_target
-      echo "'${fhs_default_target}' found. Setting up '${new_dir}' to link to '${target}' "
+      status_msg="$status_msg :: '${fhs_default_target}' found. Setting up '${new_dir}' to link to '${target}'"
       if [ $dir == "conf" ] ; then
-        cp $new_dir/METADATA.xml $target
+        cp $new_dir/METADATA.xml $target 
         cp $new_dir/RS_METRICS.xml $target
       fi
-      cd $HYPERTABLE_HOME && rm -rf $dir && ln -s $target $dir
+      cd $HYPERTABLE_HOME 
+      rm -rf $dir 
+      ln -s $target $dir
     else
-      echo "'$fhs_default_target' doesn't exist. Nothing to upgrade from."
+      status_msg="$status_msg :: $fhs_default_target' doesn't exist. Nothing to upgrade."
     fi
   fi
   cd $cwd
+  status_msg="$status_msg [UPGRADE '$dir' FINISHED]"
 }
 
 if [ $# != 2 ] ; then
@@ -112,5 +126,4 @@ upgrade_dir run  $varhome/run 0
 upgrade_dir fs   $varhome/fs 0
 upgrade_dir hyperspace  $varhome/hyperspace 0
 upgrade_dir log  $varhome/log 1
-
-exit 0
+status_msg="Upgrade succeeded"
