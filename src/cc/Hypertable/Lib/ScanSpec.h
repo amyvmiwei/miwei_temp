@@ -293,6 +293,11 @@ public:
   /** Copy construct from a ScanSpec */
   ScanSpecBuilder(const ScanSpec &ss) : m_scan_spec(m_arena, ss) {}
 
+  ScanSpecBuilder &operator=(const ScanSpec &ss) {
+    m_scan_spec = ScanSpec(m_arena, ss);
+    return *this;
+  }
+
   /**
    * Sets the maximum number of rows to return in the scan.
    *

@@ -124,7 +124,9 @@ namespace Hypertable {
   public:
     SchemaPtr schema;
     const ScanSpec *spec;
+    ScanSpecBuilder scan_spec_builder;
     const RangeSpec *range;
+    RangeSpecManaged range_managed;
     DynamicBuffer dbuf;
     SerializedKey start_serkey, end_serkey;
     Key start_key, end_key;
@@ -194,6 +196,13 @@ namespace Hypertable {
       if (value_regexp != 0) {
         delete value_regexp;
       }
+    }
+
+    void deep_copy_specs() {
+      scan_spec_builder = *spec;
+      spec = &scan_spec_builder.get();
+      range_managed = *range;
+      range = &range_managed;
     }
 
   private:

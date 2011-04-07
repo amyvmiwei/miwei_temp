@@ -214,7 +214,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   }
 #endif
 
-  app_queue_ptr = new ApplicationQueue( get_i32("workers") );
+  app_queue_ptr = new ApplicationQueue( get_i32("workers"), false );
   vector<Thread::id> thread_ids = app_queue_ptr->get_thread_ids();
   thread_ids.push_back(ThisThread::get_id());
 

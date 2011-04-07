@@ -109,6 +109,7 @@ CommandShell::CommandShell(const String &program_name,
   else if (m_props->has("command-file")) {
     m_cmd_file = m_props->get_str("command-file");
     m_has_cmd_file = true;
+    m_batch_mode = true;
   }
 }
 
