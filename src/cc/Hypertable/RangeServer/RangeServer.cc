@@ -2537,6 +2537,9 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     if (!Global::rs_metrics_table) {
       try {
         uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+        if (!Global::range_locator)
+          Global::range_locator = new Hypertable::RangeLocator(m_props, m_conn_manager,
+                                                               Global::hyperspace, timeout_ms);
         Global::rs_metrics_table = new Table(m_props, Global::range_locator, m_conn_manager,
                                            Global::hyperspace, m_app_queue, m_namemap,
                                            "sys/RS_METRICS", timeout_ms);
@@ -2781,6 +2784,9 @@ RangeServer::replay_load_range(ResponseCallback *cb,
     if (!Global::metadata_table) {
       ScopedLock lock(m_mutex);
       uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+      if (!Global::range_locator)
+        Global::range_locator = new Hypertable::RangeLocator(m_props, m_conn_manager,
+                                                             Global::hyperspace, timeout_ms);
       Global::metadata_table = new Table(m_props, Global::range_locator, m_conn_manager,
           Global::hyperspace, m_app_queue, m_namemap, TableIdentifier::METADATA_NAME,
           timeout_ms);
