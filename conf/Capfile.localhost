@@ -1,11 +1,9 @@
 set :source_machine, "localhost"
 set :install_dir,  "/opt/hypertable"
-set :hypertable_version, "0.9.5.0"
-
-set :default_install_type, "bin"
+set :hypertable_version, "0.9.5.0.pre"
 set :default_pkg, "/tmp/hypertable-0.9.5.0.pre-linux-x86_64.deb"
 set :default_dfs, "local"
-set :default_config, "/opt/hypertable/#{hypertable_version}/conf/hypertable.cfg"
+set :default_config, "/opt/hypertable/dev-hypertable.cfg"
 set :default_additional_args, ""
 set :hbase_home, "/opt/hbase/current"
 set :default_client_multiplier, 1
@@ -23,23 +21,6 @@ role :test_client, "localhost"
 role :test_dispatcher, "localhost"
 
 ######################### END OF USER CONFIGURATION ############################
-
-def install_machines_
-  machines =
-  (roles[:master].servers | \
-   roles[:hyperspace].servers | \
-   roles[:slave].servers | \
-   roles[:thriftbroker].servers | \
-   roles[:spare].servers | \
-   roles[:test_client].servers | \
-   roles[:test_dispatcher].servers) - roles[:source].servers
-   if machines.empty?
-     machines = (roles[:master].servers)
-   end
-   machines
-end
-
-role(:install_machines) { install_machines_ }
 
 def supported_pkgs
   {"rpm"=>1, "deb"=>1}
@@ -100,7 +81,7 @@ end
     #{source_machine}:#{install_dir}/{#hypertable_version}/conf
     to all machines in the cluster    
  DESC
-task :push_config_all, :roles => [:install_machines, :source] do
+task :push_config_all do
    run <<-CMD
      rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
   CMD
@@ -121,7 +102,7 @@ end
     installation machine specified by the variable 'source_machine' \
     (default=#{source_machine})
  DESC
-task :rsync, :roles => :install_machines do
+task :rsync do
   run <<-CMD
      rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=conf --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir} &&
      rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
@@ -133,7 +114,7 @@ end
     to point to the directory of the current version
     (default=#{hypertable_version})
  DESC
-task :set_current, :roles => [:install_machines, :source] do
+task :set_current do
   run <<-CMD
    cd #{install_dir} &&
    rm -f current &&
@@ -185,7 +166,7 @@ end
  desc <<-DESC
     fhsize's the installations
  DESC
-task :fhsize, :roles => [:install_machines, :source] do
+task :fhsize do
   transaction do 
     run <<-CMD
       #{install_dir}/#{hypertable_version}/bin/fhsize.sh
@@ -222,7 +203,7 @@ end
     installation specified by the hypertable_version
     (#{hypertable_version})
 DESC
-task :upgrade_all, :roles => [:install_machines, :source] do
+task :upgrade_all do
   run <<-CMD
     #{install_dir}/#{hypertable_version}/bin/upgrade.sh \
         #{install_dir}/current #{hypertable_version}
