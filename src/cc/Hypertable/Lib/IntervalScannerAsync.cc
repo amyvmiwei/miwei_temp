@@ -280,10 +280,14 @@ bool IntervalScannerAsync::abort(bool is_create) {
  reset_outstanding_status(is_create, true);
   m_eos = true;
   m_aborted = true;
-  return (!has_outstanding_requests());
+  bool move_to_next = m_current && !has_outstanding_requests();
+  if (move_to_next)
+    m_current = false;
+  return move_to_next;
 }
 
-bool IntervalScannerAsync::retry(bool refresh, bool hard, bool is_create) {
+bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_create,
+      bool *move_to_next) {
   uint32_t wait_time = 3000;
   reset_outstanding_status(is_create, false);
 
@@ -291,6 +295,12 @@ bool IntervalScannerAsync::retry(bool refresh, bool hard, bool is_create) {
   if (!is_create && refresh) {
     HT_ERROR_OUT << "Table schema can't be refreshed when schema changes after scanner creation"
                  << HT_END;
+    // retry failed, abort scanner
+    *move_to_next = !has_outstanding_requests() && m_current;
+    if (*move_to_next)
+      m_current = false;
+    m_eos = true;
+    m_aborted = true;
     return false;
   }
 
@@ -299,6 +309,12 @@ bool IntervalScannerAsync::retry(bool refresh, bool hard, bool is_create) {
     uint32_t duration  = m_create_timer.duration();
     HT_ERRORF("Scanner creation request will time out. Initial timer "
               "duration %d", (int)duration);
+    // retry failed, abort scanner
+    *move_to_next = !has_outstanding_requests() && m_current;
+    if (*move_to_next)
+      m_current = false;
+    m_eos = true;
+    m_aborted = true;
     return false;
   }
 
@@ -313,10 +329,19 @@ bool IntervalScannerAsync::retry(bool refresh, bool hard, bool is_create) {
     if (m_create_outstanding) {
       reset_outstanding_status(is_create, false);
     }
+    // retry failed, abort scanner
+    *move_to_next = !has_outstanding_requests() && m_current;
+    if (*move_to_next)
+      m_current = false;
+    m_eos = true;
+    m_aborted = true;
     return false;
   }
 
   HT_ASSERT (!m_current ||  m_eos || has_outstanding_requests());
+  *move_to_next = !has_outstanding_requests() && m_current;
+  if (*move_to_next)
+    m_current = false;
   return true;
 }
 

@@ -899,6 +899,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
   try {
     DynamicBuffer rbuf;
 
+    HT_MAYBE_FAIL("create-scanner-1");
     if (scan_spec->row_intervals.size() > 0) {
       if (scan_spec->row_intervals.size() > 1 && !scan_spec->scan_and_filter_rows)
         HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
@@ -950,13 +951,13 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       boost::shared_array<uint8_t> ext_buffer;
       uint32_t ext_len;
       if (m_query_cache->lookup(cache_key, ext_buffer, &ext_len)) {
-	// The first argument to the response method is flags and the
-	// 0th bit is the EOS (end-of-scan) bit, hence the 1
-	if ((error = cb->response(1, id, ext_buffer, ext_len)) != Error::OK)
-	  HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-	range->decrement_scan_counter();
-	decrement_needed = false;
-	return;
+        // The first argument to the response method is flags and the
+        // 0th bit is the EOS (end-of-scan) bit, hence the 1
+        if ((error = cb->response(1, id, ext_buffer, ext_len)) != Error::OK)
+          HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
+        range->decrement_scan_counter();
+        decrement_needed = false;
+        return;
       }
     }
 
