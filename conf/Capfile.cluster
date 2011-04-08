@@ -160,7 +160,7 @@ task :install_package do
   if (pkg_type == "deb")
     run("dpkg -i #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}") 
   else 
-    run("rpm -ivh --replacepkgs #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}")
+    run("rpm -ivh --replacepkgs --nomd5 #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}")
   end
 end
 
