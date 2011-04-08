@@ -43,7 +43,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
     uint32_t timeout_ms, bool retry_table_not_found, ResultCallback *cb)
   : m_bytes_scanned(0), m_cb(cb), m_current_scanner(0),
     m_outstanding(0), m_error(Error::OK), m_table(table), m_scan_spec_builder(scan_spec),
-    m_cancelled(false), m_error_shown(false) {
+    m_cancelled(false) {
 
   ScopedLock lock(m_mutex);
 
@@ -171,7 +171,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
       case (Error::TABLE_NOT_FOUND):
       case (Error::RANGESERVER_TABLE_NOT_FOUND):
         if (m_retry_table_not_found && is_create)
-        abort = !(m_interval_scanners[scanner_id]->retry(true, true, is_create));
+        abort = !(m_interval_scanners[scanner_id]->retry_or_abort(true, true, is_create, &next));
         else {
           next = m_interval_scanners[scanner_id]->abort(is_create);
           abort = true;
@@ -179,7 +179,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
         break;
       case (Error::RANGESERVER_GENERATION_MISMATCH):
         if (is_create)
-        abort = !(m_interval_scanners[scanner_id]->retry(true, false, is_create));
+        abort = !(m_interval_scanners[scanner_id]->retry_or_abort(true, false, is_create, &next));
         else {
           next = m_interval_scanners[scanner_id]->abort(is_create);
           abort = true;
@@ -188,7 +188,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
       case(Error::RANGESERVER_RANGE_NOT_FOUND):
       case(Error::COMM_NOT_CONNECTED):
       case(Error::COMM_BROKEN_CONNECTION):
-        abort = !(m_interval_scanners[scanner_id]->retry(false, true, is_create));
+        abort = !(m_interval_scanners[scanner_id]->retry_or_abort(false, true, is_create, &next));
         break;
 
       default:
@@ -301,11 +301,7 @@ void TableScannerAsync::maybe_callback_error(int scanner_id, bool next) {
     eos = true;
   }
 
-  if (!m_error_shown) {
-    HT_ASSERT(m_error != Error::OK);
-    m_cb->scan_error(this, m_error, m_error_msg, eos);
-    m_error_shown = true;
-  }
+  m_cb->scan_error(this, m_error, m_error_msg, eos);
 
   if (eos) {
     m_cb->deregister_scanner(this);

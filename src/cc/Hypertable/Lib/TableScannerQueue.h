@@ -46,7 +46,7 @@ namespace Hypertable {
      *
      * @param results_capacity max number of ScanCells that can be enqueued
      */
-    TableScannerQueue() : m_error(Error::OK){ }
+    TableScannerQueue() : m_error(Error::OK), m_error_shown(false) { }
 
     ~TableScannerQueue () { }
 
@@ -65,9 +65,10 @@ namespace Hypertable {
       while(true) {
         {
           ScopedLock lock(m_mutex);
-          if (m_error != Error::OK) {
+          if (m_error != Error::OK && !m_error_shown) {
             *error = m_error;
             error_msg = m_error_msg;
+            m_error_shown = true;
             break;
           }
           else if (!m_cells_queue.empty()) {
@@ -85,6 +86,11 @@ namespace Hypertable {
         app_handler->run();
         delete app_handler;
       }
+      if (m_error != Error::OK) {
+        *error = m_error;
+        error_msg = m_error_msg;
+        cells = 0;
+      }
       HT_ASSERT(cells != 0 || *error != Error::OK);
     }
 
@@ -96,6 +102,7 @@ namespace Hypertable {
     void set_error(int error, const String &error_msg) {
       m_error = error;
       m_error_msg = error_msg;
+      m_error_shown = false;
     }
 
     /**
@@ -116,6 +123,7 @@ namespace Hypertable {
     CellsQueue             m_cells_queue;
     int                    m_error;
     String                 m_error_msg;
+    bool                   m_error_shown;
   };
 
   typedef boost::intrusive_ptr<TableScannerQueue> TableScannerQueuePtr;

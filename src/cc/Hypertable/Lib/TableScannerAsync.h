@@ -151,7 +151,6 @@ namespace Hypertable {
     Table              *m_table;
     ScanSpecBuilder     m_scan_spec_builder;
     bool                m_cancelled;
-    bool                m_error_shown;
   };
 
   typedef intrusive_ptr<TableScannerAsync> TableScannerAsyncPtr;
