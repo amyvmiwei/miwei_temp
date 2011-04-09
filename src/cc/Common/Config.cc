@@ -375,8 +375,7 @@ void DefaultPolicy::init_options() {
         "Number of milliseconds to wait before carrying out an update (TESTING)")
     ("Hypertable.RangeServer.ProxyName", str()->default_value(""),
         "Use this value for the proxy name (if set) instead of reading from run dir.")
-    ("ThriftBroker.Timeout", i32()->default_value(1600*K), "Timeout (ms) "
-        "for thrift broker")
+    ("ThriftBroker.Timeout", i32(), "Timeout (ms) for thrift broker")
     ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "
         "thrift broker")
     ("ThriftBroker.Future.QueueSize", i32()->default_value(10), "Capacity "

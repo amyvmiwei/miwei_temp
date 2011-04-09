@@ -30,7 +30,7 @@ void init_thrift_client_options() {
   cmdline_desc().add_options()
     ("thrift-broker", str()->default_value("localhost:38080"),
         "Thrift client endpoint in <host:port> format")
-    ("thrift-timeout", i32()->default_value(20000),
+    ("thrift-timeout", i32(),
         "Timeout in milli-seconds for thrift client connections")
     ;
   alias("thrift-timeout", "ThriftBroker.Timeout");
