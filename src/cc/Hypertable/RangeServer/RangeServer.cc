@@ -143,12 +143,26 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_scanner_ttl = (time_t)10000;
   }
 
+  const MemStat &mem_stat = System::mem_stat();
   if (cfg.has("MemoryLimit"))
     Global::memory_limit = cfg.get_i64("MemoryLimit");
   else {
-    double pct = (double)cfg.get_i32("MemoryLimit.Percentage") / 100.0;
-    Global::memory_limit = (int64_t)((double)System::mem_stat().ram * 1000000.0 * pct);
+    double pct = std::max(1.0, std::min((double)cfg.get_i32("MemoryLimit.Percentage"), 99.0)) / 100.0;
+    Global::memory_limit = (int64_t)(mem_stat.ram * Property::MiB * pct);
   }
+
+  if (cfg.has("MemoryLimit.EnsureUnused"))
+    Global::memory_limit_ensure_unused = cfg.get_i64("MemoryLimit.EnsureUnused");
+  else {
+    double pct = std::max(1.0, std::min((double)cfg.get_i32("MemoryLimit.EnsureUnused.Percentage"), 99.0)) / 100.0;
+    Global::memory_limit_ensure_unused = (int64_t)(mem_stat.ram * Property::MiB * pct);
+  }
+
+  // adjust current limit according to the actual memory situation
+  int64_t free_memory_50pct = (int64_t)(0.5 * mem_stat.free * Property::MiB);
+  Global::memory_limit_ensure_unused_current = std::min(free_memory_50pct, Global::memory_limit_ensure_unused);
+  if (Global::memory_limit_ensure_unused_current < Global::memory_limit_ensure_unused)
+    HT_NOTICEF("Start up in low memory condition (free memory %.2fMB)", mem_stat.free);
 
   m_max_clock_skew = cfg.get_i32("ClockSkew.Max");
 
@@ -159,15 +173,33 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   if (cfg.has("BlockCache.MaxMemory"))
     block_cache_max = cfg.get_i64("BlockCache.MaxMemory");
   else {
-    double physical_ram = System::mem_stat().ram * 1024 * 1024;
+    double physical_ram = mem_stat.ram * Property::MiB;
     block_cache_max = (int64_t)physical_ram;
+  }
+  // reduce block cache minimum if required
+  if ((double)block_cache_min > (double)Global::memory_limit * 0.1) {
+    block_cache_min = (int64_t)((double)Global::memory_limit * 0.1);
+    props->set("Hypertable.RangeServer.BlockCache.MinMemory", block_cache_min);
+    HT_INFOF("Minimum size of block cache has been reduced to %.2fMB", (double)block_cache_min / Property::MiB);
+  }
+  if (block_cache_min > block_cache_max) {
+    block_cache_min = (int64_t)((double)block_cache_max * 0.1);
+    props->set("Hypertable.RangeServer.BlockCache.MinMemory", block_cache_min);
+    HT_INFOF("Minimum size of block cache has been reduced to %.2fMB", (double)block_cache_min / Property::MiB);
   }
 
   Global::block_cache = new FileBlockCache(block_cache_min, block_cache_max);
 
-  uint64_t query_cache_memory = cfg.get_i64("QueryCache.MaxMemory");
-  if (query_cache_memory > 0)
+  int64_t query_cache_memory = cfg.get_i64("QueryCache.MaxMemory");
+  if (query_cache_memory > 0) {
+    // reduce query cache if required
+    if ((double)query_cache_memory > (double)Global::memory_limit * 0.2) {
+      query_cache_memory = (int64_t)((double)Global::memory_limit * 0.2);
+      props->set("Hypertable.RangeServer.QueryCache.MaxMemory", query_cache_memory);
+      HT_INFOF("Maximum size of query cache has been reduced to %.2fMB", (double)query_cache_memory / Property::MiB);
+    }
     m_query_cache = new QueryCache(query_cache_memory);
+  }
 
   Global::memory_tracker = new MemoryTracker(Global::block_cache);
   Global::memory_tracker->add(query_cache_memory);
@@ -263,7 +295,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   double max_memory_ratio = (double)max_memory_percentage / 100.0;
 
-  int64_t threshold_max = (int64_t)((double)System::mem_stat().ram *
+  int64_t threshold_max = (int64_t)(mem_stat.ram *
                                     max_memory_ratio * (double)MiB);
 
   Global::log_prune_threshold_max = cfg.get_i64("CommitLog.PruneThreshold.Max", threshold_max);

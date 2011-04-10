@@ -208,7 +208,7 @@ void DefaultPolicy::init_options() {
         "Port number on which to listen (read by LocalBroker only)")
     ("DfsBroker.Local.Root", str(), "Root of file and directory "
         "hierarchy for local broker (if relative path, then is relative to "
-        "the installation directory)")
+        "the Hypertable data directory root)")
     ("DfsBroker.Local.Workers", i32()->default_value(20),
         "Number of local broker worker threads created")
     ("DfsBroker.Local.Reactors", i32(),
@@ -244,7 +244,7 @@ void DefaultPolicy::init_options() {
         "Number of Hyperspace Master communication reactor threads created")
     ("Hyperspace.Replica.Dir", str(), "Root of hyperspace file and directory "
         "heirarchy in local filesystem (if relative path, then is relative to "
-        "the installation directory)")
+        "the Hypertable data directory root)")
     ("Hyperspace.KeepAlive.Interval", i32()->default_value(10000),
         "Hyperspace Keepalive interval (see Chubby paper)")
     ("Hyperspace.Lease.Interval", i32()->default_value(60000),
@@ -289,6 +289,9 @@ void DefaultPolicy::init_options() {
      "RangeServer memory limit specified as percentage of physical RAM")
     ("Hypertable.RangeServer.LowMemoryLimit.Percentage", i32()->default_value(10),
      "Amount of memory to free in low memory condition as percentage of RangeServer memory limit")
+    ("Hypertable.RangeServer.MemoryLimit.EnsureUnused", i64(), "Amount of unused physical memory")
+    ("Hypertable.RangeServer.MemoryLimit.EnsureUnused.Percentage", i32()->default_value(10),
+     "Amount of unused physical memory specified as percentage of physical RAM")
     ("Hypertable.RangeServer.Port", i16()->default_value(38060),
         "Port number on which range servers are or should be listening")
     ("Hypertable.RangeServer.AccessGroup.CellCache.PageSize",

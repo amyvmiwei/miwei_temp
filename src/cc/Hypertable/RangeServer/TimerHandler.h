@@ -48,6 +48,7 @@ namespace Hypertable {
     Comm         *m_comm;
     RangeServer  *m_range_server;
     ApplicationQueuePtr m_app_queue;
+    int64_t       m_query_cache_memory;
     int32_t       m_timer_interval;
     int32_t       m_current_interval;
     int64_t       m_last_low_memory_maintenance;
@@ -55,6 +56,9 @@ namespace Hypertable {
     bool          m_app_queue_paused;
     boost::xtime  m_last_maintenance;
     bool          m_maintenance_outstanding;
+
+    void restart_app_queue();
+    bool low_memory_mode();
   };
   typedef boost::intrusive_ptr<TimerHandler> TimerHandlerPtr;
 }

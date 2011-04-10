@@ -74,12 +74,19 @@ void MaintenanceScheduler::schedule() {
   MaintenancePrioritizer::MemoryState memory_state;
 
   memory_state.balance = Global::memory_tracker->balance();
+  memory_state.limit = Global::memory_limit;
+  // adjust limit if it makes sense
+  if (Global::memory_limit_ensure_unused_current &&
+      memory_state.balance - m_query_cache_memory > Global::memory_limit_ensure_unused_current) {
+    memory_state.limit = std::min(memory_state.limit, (int64_t)(System::mem_stat().ram * Property::MiB)
+                                  - Global::memory_limit_ensure_unused_current);
+  }
 
   if (low_memory_mode()) {
     if (Global::maintenance_queue->pending() < Global::maintenance_queue->workers())
       m_scheduling_needed = true;
-    int64_t excess = (memory_state.balance > Global::memory_limit) ? memory_state.balance - Global::memory_limit : 0;
-    memory_state.needed = ((Global::memory_limit * m_low_memory_limit_percentage) / 100) + excess;
+    int64_t excess = (memory_state.balance > memory_state.limit) ? memory_state.balance - memory_state.limit : 0;
+    memory_state.needed = ((memory_state.limit * m_low_memory_limit_percentage) / 100) + excess;
   }
 
   boost::xtime now;
@@ -183,8 +190,8 @@ void MaintenanceScheduler::schedule() {
 
     HT_INFOF("Memory Statistics (MB): VM=%.2f, RSS=%.2f, tracked=%.2f, computed=%.2f limit=%.2f",
 	     System::proc_stat().vm_size, System::proc_stat().vm_resident,
-	     (double)memory_state.balance/1000000.0, (double)total_memory/1000000.0,
-             (double)Global::memory_limit/1000000.0);
+	     (double)memory_state.balance/(double)Property::MiB, (double)total_memory/(double)Property::MiB,
+             (double)Global::memory_limit/(double)Property::MiB);
     HT_INFOF("Memory Allocation: BlockCache=%.2f%% BlockIndex=%.2f%% "
 	     "BloomFilter=%.2f%% CellCache=%.2f%% ShadowCache=%.2f%% "
 	     "QueryCache=%.2f%%",

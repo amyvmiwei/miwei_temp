@@ -83,6 +83,12 @@ namespace Hypertable {
     static int64_t        log_prune_threshold_min;
     static int64_t        log_prune_threshold_max;
     static int64_t        memory_limit;
+    // amount of unused physical memory to achieve according
+    // to the configuration
+    static int64_t        memory_limit_ensure_unused;
+    // amount of unused physical memory to achieve according
+    // to the current memory situation
+    static int64_t        memory_limit_ensure_unused_current;
     static uint64_t       access_counter;
     static bool           enable_shadow_cache;
     static std::string    toplevel_dir;
