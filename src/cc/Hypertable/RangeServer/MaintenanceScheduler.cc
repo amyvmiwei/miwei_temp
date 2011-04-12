@@ -78,8 +78,10 @@ void MaintenanceScheduler::schedule() {
   // adjust limit if it makes sense
   if (Global::memory_limit_ensure_unused_current &&
       memory_state.balance - m_query_cache_memory > Global::memory_limit_ensure_unused_current) {
-    memory_state.limit = std::min(memory_state.limit, (int64_t)(System::mem_stat().ram * Property::MiB)
-                                  - Global::memory_limit_ensure_unused_current);
+    int64_t excess = Global::memory_limit_ensure_unused_current
+                       - (int64_t)(System::mem_stat().free * Property::MiB);
+    if (excess > 0)
+      memory_state.limit = memory_state.balance - excess;
   }
 
   if (low_memory_mode()) {

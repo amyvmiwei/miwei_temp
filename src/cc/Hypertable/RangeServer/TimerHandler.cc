@@ -45,7 +45,7 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
   : m_comm(comm), m_range_server(range_server),
     m_last_low_memory_maintenance(TIMESTAMP_NULL),
     m_urgent_maintenance_scheduled(false), m_app_queue_paused(false),
-    m_maintenance_outstanding(false) {
+    m_low_physical_memory(false), m_maintenance_outstanding(false) {
   int error;
   int32_t maintenance_interval;
 
@@ -132,7 +132,7 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
     restart_app_queue();
   }
 
-  if (m_app_queue_paused) {
+  if (low_memory()) {
     int64_t now = get_ts64();
     if (m_last_low_memory_maintenance != TIMESTAMP_NULL) {
       if ((now-m_last_low_memory_maintenance) < (m_timer_interval*1000000LL))
@@ -178,26 +178,25 @@ void TimerHandler::restart_app_queue() {
 
 bool TimerHandler::low_memory_mode() {
   int64_t memory_used = Global::memory_tracker->balance();
-  if (memory_used > Global::memory_limit)
-    return true;
 
   // ensure unused physical memory if it makes sense
   if (Global::memory_limit_ensure_unused_current &&
       memory_used - m_query_cache_memory > Global::memory_limit_ensure_unused_current) {
 
-    const MemStat &mem_stat = System::mem_stat();
-
     // adjust current limit according to the actual memory situation
-    int64_t free_memory = (int64_t)(mem_stat.free * Property::MiB);
+    int64_t free_memory = (int64_t)(System::mem_stat().free * Property::MiB);
     if (Global::memory_limit_ensure_unused_current < Global::memory_limit_ensure_unused)
       Global::memory_limit_ensure_unused_current = std::min(free_memory, Global::memory_limit_ensure_unused);
 
     // low physical memory reached?
-    if ((int64_t)(mem_stat.free * Property::MiB) < Global::memory_limit_ensure_unused_current) {
-       HT_INFOF("Low physical memory (free %.2fMB, limit %.2fMB)",
-                 mem_stat.free, Global::memory_limit_ensure_unused_current / (double)Property::MiB);
-       return true;
-    }
+    m_low_physical_memory = free_memory < Global::memory_limit_ensure_unused_current;
+    if (m_low_physical_memory)
+       HT_INFOF("Low physical memory (free %.2fMB, limit %.2fMB)", free_memory / (double)Property::MiB,
+                 Global::memory_limit_ensure_unused_current / (double)Property::MiB);
   }
-  return false;
+  else {
+    // don't care
+    m_low_physical_memory = false;
+  }
+  return memory_used > Global::memory_limit;
 }

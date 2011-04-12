@@ -290,7 +290,7 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.LowMemoryLimit.Percentage", i32()->default_value(10),
      "Amount of memory to free in low memory condition as percentage of RangeServer memory limit")
     ("Hypertable.RangeServer.MemoryLimit.EnsureUnused", i64(), "Amount of unused physical memory")
-    ("Hypertable.RangeServer.MemoryLimit.EnsureUnused.Percentage", i32()->default_value(10),
+    ("Hypertable.RangeServer.MemoryLimit.EnsureUnused.Percentage", i32()->default_value(5),
      "Amount of unused physical memory specified as percentage of physical RAM")
     ("Hypertable.RangeServer.Port", i16()->default_value(38060),
         "Port number on which range servers are or should be listening")
