@@ -1,3 +1,10 @@
+Version 0.9.5.0.pre3:
+(2011-04-12)
+
+    Modified stop-servers.sh to stop master and rangeserver iff client progs exist
+    Upgraded to CDH3u0
+    Fix for recent ensure unused physical memory patch
+
 Version 0.9.5.0.pre2:
 (2011-04-11)
 
