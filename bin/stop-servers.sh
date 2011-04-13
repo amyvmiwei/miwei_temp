@@ -81,6 +81,14 @@ while [ "$1" != "${1##[-+]}" ]; do
 done
 
 
+if [ ! -e $HYPERTABLE_HOME/bin/ht_master_client ] ; then
+  STOP_MASTER="false"
+fi
+
+if [ ! -e $HYPERTABLE_HOME/bin/ht_rsclient ] ; then
+  STOP_RANGESERVER="false"
+fi
+
 
 #
 # Stop TestClient
