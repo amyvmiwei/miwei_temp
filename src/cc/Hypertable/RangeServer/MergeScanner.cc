@@ -32,16 +32,16 @@
 using namespace Hypertable;
 
 
-MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes, bool ag_scanner)
-  : CellListScanner(scan_ctx), m_done(false), m_initialized(false),
+MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes, bool ag_scanner,
+    bool debug) : CellListScanner(scan_ctx), m_done(false), m_initialized(false),
     m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0),
     m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(return_deletes),
     m_no_forward(false), m_count_present(false), m_skip_remaining_counter(false),
-    m_counted_value(12), m_tmp_count(8), m_ag_scanner(ag_scanner), 
+    m_counted_value(12), m_tmp_count(8), m_ag_scanner(ag_scanner),
     m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_revs_count(0),
     m_revs_limit(0), m_cell_cutoff(0), m_bytes_input(0), m_bytes_output(0),
     m_cells_input(0), m_cells_output(0),
-    m_cur_bytes(0), m_prev_key(0), m_prev_cf(-1) {
+    m_cur_bytes(0), m_prev_key(0), m_prev_cf(-1), m_debug(debug) {
 
   if (scan_ctx->spec != 0) {
     m_row_limit = scan_ctx->spec->row_limit;
@@ -133,11 +133,11 @@ void MergeScanner::forward() {
       if(sstate.key.timestamp < m_cell_cutoff )
         continue;
 
-      if (sstate.key.timestamp < m_start_timestamp && !m_return_deletes) {
+      if (sstate.key.timestamp < m_start_timestamp) {
         continue;
       }
       else if (sstate.key.revision > m_revision
-          || (sstate.key.timestamp >= m_end_timestamp && !m_return_deletes)) {
+          || (sstate.key.timestamp >= m_end_timestamp && (!m_return_deletes || sstate.key.flag == FLAG_INSERT))) {
         continue;
       }
       else if (sstate.key.flag == FLAG_DELETE_ROW) {
@@ -463,7 +463,7 @@ void MergeScanner::initialize() {
               m_ag_scanner;
 
     if (sstate.key.timestamp < m_cell_cutoff
-        || (sstate.key.timestamp < m_start_timestamp && !m_return_deletes)) {
+        || (sstate.key.timestamp < m_start_timestamp)) {
       m_queue.pop();
       sstate.scanner->forward();
       if (sstate.scanner->get(sstate.key, sstate.value))
@@ -515,7 +515,7 @@ void MergeScanner::initialize() {
     }
     else {
       if (sstate.key.revision > m_revision
-          || (sstate.key.timestamp >= m_end_timestamp && !m_return_deletes)) {
+          || (sstate.key.timestamp >= m_end_timestamp && (!m_return_deletes || sstate.key.flag == FLAG_INSERT))) {
         m_queue.pop();
         sstate.scanner->forward();
         if (sstate.scanner->get(sstate.key, sstate.value))
