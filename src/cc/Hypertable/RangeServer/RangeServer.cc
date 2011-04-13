@@ -995,7 +995,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     if (table->is_metadata())
       HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
-               "%lld k/v pairs", id, table->id, (Lld)cells_returned);
+               "%lld k/v pairs, more=%lld", id, table->id, (Lld)cells_returned, (Lld) more);
 
     /**
      *  Send back data

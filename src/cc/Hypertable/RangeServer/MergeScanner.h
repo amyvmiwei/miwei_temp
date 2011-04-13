@@ -89,12 +89,13 @@ namespace Hypertable {
       }
     };
 
-    MergeScanner(ScanContextPtr &scan_ctx, bool return_everything=true, bool ag_scanner=false);
+    MergeScanner(ScanContextPtr &scan_ctx, bool return_everything=true, bool ag_scanner=false,
+                 bool debug=false);
     virtual ~MergeScanner();
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
     void add_scanner(CellListScanner *scanner);
-
+    void set_debug(bool debug) { m_debug = debug; }
     void install_release_callback(CellStoreReleaseCallback &cb) {
       m_release_callback = cb;
     }
@@ -217,6 +218,7 @@ namespace Hypertable {
     int32_t       m_prev_cf;
     RegexpInfo    m_regexp_cache;
     CellStoreReleaseCallback m_release_callback;
+    bool          m_debug;
   };
 
   typedef boost::intrusive_ptr<MergeScanner> MergeScannerPtr;
