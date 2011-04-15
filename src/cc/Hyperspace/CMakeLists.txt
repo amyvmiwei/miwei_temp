@@ -35,7 +35,7 @@ HsClientState.cc
 
 # Hyperspace library
 add_library(Hyperspace ${Hyperspace_SRCS})
-target_link_libraries(Hyperspace ${BDB_LIBRARIES} HyperTools)
+target_link_libraries(Hyperspace HyperTools)
 
 set(Master_SRCS
 StateDbKeys.cc
@@ -90,7 +90,7 @@ endif ()
 
 # Hyperspace.Master
 add_executable(Hyperspace.Master ${Master_SRCS})
-target_link_libraries(Hyperspace.Master Hyperspace ${HYPERSPACE_MALLOC_LIBRARY})
+target_link_libraries(Hyperspace.Master Hyperspace ${BDB_LIBRARIES} ${HYPERSPACE_MALLOC_LIBRARY})
 
 # BerkeleyDbFilesystem test
 add_executable(bdb_fs_test tests/bdb_fs_test.cc BerkeleyDbFilesystem.cc StateDbKeys.cc)
