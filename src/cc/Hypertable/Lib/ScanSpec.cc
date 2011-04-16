@@ -135,11 +135,11 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     }
     time_interval.first = decode_i64(bufp, remainp);
     time_interval.second = decode_i64(bufp, remainp);
-    return_deletes = decode_i8(bufp, remainp);
-    keys_only = decode_i8(bufp, remainp) != 0;
+    return_deletes = decode_bool(bufp, remainp);
+    keys_only = decode_bool(bufp, remainp);
     row_regexp = decode_vstr(bufp, remainp);
     value_regexp = decode_vstr(bufp, remainp);
-    scan_and_filter_rows = decode_i8(bufp, remainp) != 0);
+    scan_and_filter_rows = decode_bool(bufp, remainp));
 }
 
 

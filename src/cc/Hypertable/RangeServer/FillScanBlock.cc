@@ -82,6 +82,11 @@ namespace Hypertable {
       else
         value_len = value.length();
 
+      if (value.ptr == 0) {
+        value.ptr = (const uint8_t *)"";
+        value_len = 1;
+      }
+
       if (dbuf.base == 0) {
         if (key.length + value_len > limit) {
           limit = key.length + value_len;
@@ -99,11 +104,11 @@ namespace Hypertable {
         last_key.row = (const char *)base + (key.row - (const char *)key.serial.ptr);
         last_key.column_qualifier = (const char *)base + (key.column_qualifier - (const char *)key.serial.ptr);
 
-        if (counter) {
+        if (counter)
           dbuf.add_unchecked(counter_value.base, value_len);
-        }
         else
           dbuf.add_unchecked(value.ptr, value_len);
+
         remaining -= (key.length + value_len);
         scanner->forward();
       }
