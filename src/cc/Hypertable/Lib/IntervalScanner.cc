@@ -169,6 +169,7 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
                                         scan_spec.time_interval.second);
 
   m_scan_spec_builder.set_return_deletes(scan_spec.return_deletes);
+  m_scan_spec_builder.set_keys_only(scan_spec.keys_only);
 
   // start scan asynchronously (can trigger table not found exceptions)
   m_create_scanner_row = m_start_row;
