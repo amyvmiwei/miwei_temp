@@ -698,7 +698,7 @@ bool LoadDataSource::parse_date_format(const char *str, int64_t &timestamp) {
     ns = strtoul(ptr, &end_ptr, 10);
   }
 
-  timestamp = (int64_t)(((double)tt + dval) * 1000000000LL) + ns;
+  timestamp = ((int64_t)tt * 1000000000LL) + (int64_t)(dval * 1000000000.0) + ns;
 
   return true;
 }
