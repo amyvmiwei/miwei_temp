@@ -114,7 +114,7 @@ end
     to point to the directory of the current version
     (default=#{hypertable_version})
  DESC
-task :set_current do
+task :set_current, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare] do
   run <<-CMD
    cd #{install_dir} &&
    rm -f current &&
@@ -143,7 +143,7 @@ end
  desc <<-DESC
     rsyncs binary packages and installs on each machine in the cluster
  DESC
-task :install_package do
+task :install_package, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare] do
   pkg_basename = File.basename(pkg)
   pkg_basename =~ /#{pkg_regex}/
   pkg_type = $1
@@ -203,7 +203,7 @@ end
     installation specified by the hypertable_version
     (#{hypertable_version})
 DESC
-task :upgrade_all do
+task :upgrade_all, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare] do
   run <<-CMD
     #{install_dir}/#{hypertable_version}/bin/upgrade.sh \
         #{install_dir}/current #{hypertable_version}
@@ -457,5 +457,3 @@ task :run_test do
     run_test_dispatcher
   end
 end
-
-
