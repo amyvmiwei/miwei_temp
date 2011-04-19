@@ -514,3 +514,14 @@ SELECT * from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'Suitability' OR RO
 SELECT col1:"", col2:"" from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'http://yahoo.com') SCAN_AND_FILTER_ROWS;
 SELECT CELLS col1:"" from RegexpTest WHERE (ROW = 'suitability' OR ROW = 'Suitability' OR ROW = 'suitability') SCAN_AND_FILTER_ROWS;
 SELECT * from RegexpTest WHERE (ROW = 'Suitability' OR ROW = 'moss Berry' OR ROW = 'Orange marmalade' OR ROW = 'http://yahoo.com/mail') SCAN_AND_FILTER_ROWS;
+
+# test max_versions with other predicates
+INSERT INTO RegexpTest VALUES('version_test_0', 'col2', '000');
+INSERT INTO RegexpTest VALUES('version_test_0', 'col2', '100');
+SELECT col2 from RegexpTest WHERE ROW = 'version_test_0' AND VALUE REGEXP "000" MAX_VERSIONS=1;
+SELECT col2 from RegexpTest WHERE ROW = 'version_test_0' AND VALUE REGEXP "000" MAX_VERSIONS=2;
+INSERT INTO RegexpTest VALUES('2007-12-02 08:00:00', 'version_test_1', 'col2:000', '000');
+INSERT INTO RegexpTest VALUES('2007-12-02 09:00:00', 'version_test_1', 'col2:000', '100');
+INSERT INTO RegexpTest VALUES('2007-12-02 08:00:00', 'version_test_1', 'col2:100', '000');
+SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "000" MAX_VERSIONS=1;
+SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "000"  AND '2007-12-02 07:30:00' < TIMESTAMP <= '2007-12-02 08:30:00' MAX_VERSIONS=1 DISPLAY_TIMESTAMPS;
