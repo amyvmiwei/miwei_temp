@@ -74,6 +74,14 @@ namespace Hypertable {
       m_running = false;
     }
 
+    void reset(bool start_timer=false) {
+      m_running = false;
+      m_started = false;
+      m_remaining = m_duration;
+      if (start_timer)
+        start();
+    }
+
     uint32_t remaining() {
       if (m_running) { stop(); start(); }
       return m_remaining;
