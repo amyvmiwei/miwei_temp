@@ -267,13 +267,13 @@ void IntervalScannerAsync::reset_outstanding_status(bool is_create, bool reset_t
     HT_ASSERT(m_create_outstanding && !m_create_event_saved);
     m_create_outstanding = false;
     if (reset_timer)
-      m_create_timer.stop();
+      m_create_timer.reset();
   }
   else {
     HT_ASSERT(m_fetch_outstanding && m_current);
     m_fetch_outstanding = false;
     if (reset_timer)
-      m_fetch_timer.stop();
+      m_fetch_timer.reset();
   }
 }
 
