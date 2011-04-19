@@ -77,6 +77,7 @@ void MergeScanner::forward() {
   Key key;
   size_t len;
   bool counter;
+  bool new_row, new_cf, new_cq;
 
   if (m_queue.empty()) {
     if (m_count_present)
@@ -96,6 +97,7 @@ void MergeScanner::forward() {
 
       m_queue.pop();
 
+      new_row = new_cf = new_cq = false;
       /**
        * In some cases the forward might already be done and so the scanner shdn't be forwarded
        * again. For example you know a counter is done only after forwarding to the 1st post
@@ -192,8 +194,7 @@ void MergeScanner::forward() {
           break;
       }
       else {
-        // this cell is not a delete and it is within the requested time and
-        // revision intervals.
+        // this cell is not a delete and it is within the requested time interval.
         if (m_delete_present) {
           if (m_deleted_cell.fill() > 0) {
             if(!matches_deleted_cell(sstate.key))
@@ -223,6 +224,43 @@ void MergeScanner::forward() {
               && m_deleted_row.fill() == 0)
             m_delete_present = false;
         }
+
+        // keep track of revisions
+        const uint8_t *latest_key = (const uint8_t *)sstate.key.row;
+        size_t latest_key_len = sstate.key.flag_ptr - (const uint8_t *)sstate.key.row + 1;
+
+        if (m_prev_key.fill()==0) {
+          new_row = new_cf = new_cq = true;
+          m_cell_count = 1;
+          m_prev_key.set(latest_key, latest_key_len);
+          m_prev_cf = sstate.key.column_family_code;
+          m_revs_count=0;
+          m_revs_limit = m_scan_context_ptr->family_info[
+            sstate.key.column_family_code].max_versions;
+        }
+        else if (m_prev_key.fill() != latest_key_len ||
+            memcmp(latest_key, m_prev_key.base, latest_key_len)) {
+          new_cq = true;
+
+          if (strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
+            new_row = true;
+            new_cf = true;
+            m_cell_count = 1;
+          }
+          else if (sstate.key.column_family_code != m_prev_cf) {
+            new_cf = true;
+            m_cell_count = 1;
+          }
+
+          m_prev_key.set(latest_key, latest_key_len);
+          m_prev_cf = sstate.key.column_family_code;
+          m_revs_count=0;
+          m_revs_limit = m_scan_context_ptr->family_info[
+            sstate.key.column_family_code].max_versions;
+        }
+        m_revs_count++;
+        if (m_revs_limit && m_revs_count > m_revs_limit && !counter)
+          continue;
 
         // test for filter matching
         if (m_ag_scanner) {
@@ -277,11 +315,7 @@ void MergeScanner::forward() {
       }
     }
 
-    const uint8_t *prev_key = (const uint8_t *)sstate.key.row;
-    size_t prev_key_len = sstate.key.flag_ptr
-      - (const uint8_t *)sstate.key.row + 1;
     bool incr_cf_count = false;
-    bool incr_revs_count = false;
 
     // deal with counters. apply row_limit but not revs/cell_limit
     if (m_count_present) {
@@ -300,15 +334,14 @@ void MergeScanner::forward() {
     }
     else if (counter && sstate.key.flag == FLAG_INSERT) {
       // new counter, check for row limit
-      if (m_prev_key.fill() != 0) {
-        if (m_row_limit && strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
-          m_row_count++;
-          if (!m_return_deletes && (m_row_limit != 0) && m_row_count >= m_row_limit) {
-            m_done = true;
-            break;
-          }
+      if (new_row) {
+        m_row_count++;
+        if (!m_return_deletes && m_row_limit && m_row_count > m_row_limit) {
+          m_done = true;
+          break;
         }
       }
+
       // start new count and loop
       m_count_present = true;
       m_count = 0;
@@ -317,72 +350,25 @@ void MergeScanner::forward() {
       continue;
     }
 
-    if (m_prev_key.fill() != 0) {
-      if (m_row_limit || m_cell_limit) {
-        if (strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
-          m_row_count++;
-          m_cell_count = 0;
-          if (!m_return_deletes && (m_row_limit != 0) && m_row_count >= m_row_limit) {
-            m_done = true;
-            break;
-          }
-          m_prev_key.set(prev_key, prev_key_len);
-          m_prev_cf = (int32_t) sstate.key.column_family_code;
-          m_revs_limit = m_scan_context_ptr->family_info[
-            sstate.key.column_family_code].max_versions;
-          m_revs_count = 0;
-          break;
-        }
-        else {
-          if (m_cell_limit) {
-            // rowkey matches, check if cf matches too
-            if ((int32_t)sstate.key.column_family_code == m_prev_cf)
-              incr_cf_count = true;
-            else {
-              m_prev_cf = (int32_t)sstate.key.column_family_code;
-              m_cell_count = 0;
-            }
-          }
-        }
+    if (m_row_limit || m_cell_limit) {
+      if (new_row) {
+        m_row_count++;
+        if (!m_return_deletes && m_row_limit && m_row_count > m_row_limit)
+          m_done = true;
+        break;
       }
-
-      if (prev_key_len == m_prev_key.fill()
-          && !memcmp(prev_key, m_prev_key.base, prev_key_len)) {
-        if (m_revs_limit) {
-          incr_revs_count = true;
-        }
-      }
-      else {
-        m_prev_key.set(prev_key, prev_key_len);
-        m_prev_cf = sstate.key.column_family_code;
-        m_revs_limit = m_scan_context_ptr->family_info[
-          sstate.key.column_family_code].max_versions;
-        m_revs_count = 0;
-      }
-
-      // deal with revs limit first and cell limit second so that we don't hit the case where
-      // enough cells are not when revs limit is hit but cell count keeps getting incremented
-      // even though the cells are not returned
-      if (incr_revs_count) {
-        m_revs_count++;
-        if (m_revs_count >= m_revs_limit)
-          continue;
-      }
-
-      if (incr_cf_count) {
-        m_cell_count++;
-        if (m_cell_count >= m_cell_limit)
-          continue;
+      else if (m_cell_limit) {
+        if (!new_cf)
+          incr_cf_count = true;
       }
     }
-    else {
-      m_prev_key.set(prev_key, prev_key_len);
-      m_prev_cf = sstate.key.column_family_code;
-      m_revs_limit = m_scan_context_ptr->family_info[
-        sstate.key.column_family_code].max_versions;
-      m_revs_count = 0;
-      m_cell_count = 0;
+
+    if (incr_cf_count) {
+      m_cell_count++;
+      if (m_cell_count > m_cell_limit)
+        continue;
     }
+
     break;
   }
   m_bytes_output += m_cur_bytes;
@@ -422,8 +408,6 @@ void MergeScanner::finish_count() {
 
   m_prev_key.set(m_counted_key.row, m_counted_key.len_cell());
   m_prev_cf = m_counted_key.column_family_code;
-  m_revs_limit = m_scan_context_ptr->family_info[m_counted_key.column_family_code].max_versions;
-  m_revs_count = 0;
   m_cell_count = 0;
   m_no_forward = true;
   m_count_present = false;
@@ -433,7 +417,7 @@ void MergeScanner::finish_count() {
 
 void MergeScanner::initialize() {
   ScannerState sstate;
-  bool counter;
+  bool counter, new_row, new_cf, new_cq;
 
   m_cur_bytes = 0;
 
@@ -449,10 +433,13 @@ void MergeScanner::initialize() {
   while (!m_queue.empty()) {
     sstate = m_queue.top();
 
+    new_row = new_cf = new_cq = false;
+
     // I/O tracking
     m_cur_bytes = sstate.key.length + sstate.value.length();
     m_bytes_input += m_cur_bytes;
     m_cells_input++;
+
 
     m_cell_cutoff = m_scan_context_ptr->family_info[
         sstate.key.column_family_code].cutoff_time;
@@ -522,6 +509,49 @@ void MergeScanner::initialize() {
           m_queue.push(sstate);
         continue;
       }
+
+      // keep track of revisions
+      const uint8_t *latest_key = (const uint8_t *)sstate.key.row;
+      size_t latest_key_len = sstate.key.flag_ptr - (const uint8_t *)sstate.key.row + 1;
+
+      if (m_prev_key.fill()==0) {
+        new_row = new_cf = new_cq = true;
+        m_cell_count = 1;
+        m_prev_key.set(latest_key, latest_key_len);
+        m_prev_cf = sstate.key.column_family_code;
+        m_revs_count=0;
+        m_revs_limit = m_scan_context_ptr->family_info[
+          sstate.key.column_family_code].max_versions;
+      }
+      else if (m_prev_key.fill() != latest_key_len ||
+          memcmp(latest_key, m_prev_key.base, latest_key_len)) {
+        new_cq = true;
+
+        if (strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
+          new_row = true;
+          new_cf = true;
+          m_cell_count=1;
+        }
+        else if (sstate.key.column_family_code != m_prev_cf) {
+          new_cf = true;
+          m_cell_count=1;
+        }
+
+        m_prev_key.set(latest_key, latest_key_len);
+        m_prev_cf = sstate.key.column_family_code;
+        m_revs_count=0;
+        m_revs_limit = m_scan_context_ptr->family_info[
+          sstate.key.column_family_code].max_versions;
+      }
+      m_revs_count++;
+      if (m_revs_limit && m_revs_count > m_revs_limit && !counter) {
+        m_queue.pop();
+        sstate.scanner->forward();
+        if (sstate.scanner->get(sstate.key, sstate.value))
+          m_queue.push(sstate);
+        continue;
+      }
+
       // test for filter matching
       if (m_ag_scanner) {
         // row set .. we only need to do this in ag scanners
@@ -577,7 +607,6 @@ void MergeScanner::initialize() {
           sstate.key.column_family_code].max_versions;
       m_cell_cutoff = m_scan_context_ptr->family_info[
           sstate.key.column_family_code].cutoff_time;
-      m_revs_count = 0;
 
       // if counter then keep incrementing till we are ready with 1st kv pair
       if (counter) {
@@ -596,7 +625,7 @@ void MergeScanner::initialize() {
 
   m_bytes_output += m_cur_bytes;
   m_cells_input++;
-
+  m_row_count=1;
   m_initialized = true;
 }
 
