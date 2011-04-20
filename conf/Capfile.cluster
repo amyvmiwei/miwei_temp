@@ -84,7 +84,7 @@ end
  DESC
 task :push_config_all do
    run <<-CMD
-     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
+     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
   CMD
 end
 
@@ -105,8 +105,8 @@ end
  DESC
 task :rsync do
   run <<-CMD
-     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=conf --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir} &&
-     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace/ #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
+     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=conf --exclude=hyperspace #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir} &&
+     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
   CMD
 end
 
