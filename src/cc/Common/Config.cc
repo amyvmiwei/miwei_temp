@@ -226,6 +226,8 @@ void DefaultPolicy::init_options() {
         " maintenance interval (checkpoint BerkeleyDB, log cleanup etc)")
     ("Hyperspace.Checkpoint.Size", i32()->default_value(1*M), "Run BerkeleyDB checkpoint"
         " when logs exceed this size limit")
+    ("Hyperspace.Client.Datagram.SendPort", i16()->default_value(0),
+        "Client UDP send port for keepalive packets")
     ("Hyperspace.LogGc.Interval", i32()->default_value(3600000), "Check for unused BerkeleyDB "
         "log files after this much time")
     ("Hyperspace.LogGc.MaxUnusedLogs", i32()->default_value(200), "Number of unused BerkeleyDB "
