@@ -101,6 +101,7 @@ namespace Hyperspace {
     static const uint64_t ms_bad_notification_grace_period = 120000;
     bool m_reconnect;
     uint16_t m_hyperspace_port;
+    uint16_t m_datagram_send_port;
     std::vector<String> m_hyperspace_replicas;
   };
 
