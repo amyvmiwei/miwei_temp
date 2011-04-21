@@ -36,7 +36,7 @@ LoadDataEscape::escape(const char *in_buf, size_t in_len,
   const char *last_xfer = in_buf;
 
   while (in_ptr < in_end) {
-    if (*in_ptr == '\n' || *in_ptr == '\t' || *in_ptr == '\\') {
+    if (*in_ptr == '\n' || *in_ptr == '\t' || *in_ptr == '\0' || *in_ptr == '\\') {
       if (!transformed) {
         m_buf.clear();
         m_buf.reserve((in_len*2)+1);
@@ -50,6 +50,8 @@ LoadDataEscape::escape(const char *in_buf, size_t in_len,
         *m_buf.ptr++ = 'n';
       else if (*in_ptr == '\t')
         *m_buf.ptr++ = 't';
+      else if (*in_ptr == '\0')
+        *m_buf.ptr++ = '0';
       else
         *m_buf.ptr++ = '\\';
       in_ptr++;
@@ -90,7 +92,7 @@ LoadDataEscape::unescape(const char *in_buf, size_t in_len,
 
   while (in_ptr < in_end) {
     if (*in_ptr == '\\' &&
-        (*(in_ptr+1) == 'n' || *(in_ptr+1) == 't' || *(in_ptr+1) == '\\')) {
+        (*(in_ptr+1) == 'n' || *(in_ptr+1) == 't' || *(in_ptr+1) == '0' || *(in_ptr+1) == '\\')) {
       if (!transformed) {
         m_buf.clear();
         m_buf.reserve(in_len+1);
@@ -103,6 +105,8 @@ LoadDataEscape::unescape(const char *in_buf, size_t in_len,
         *m_buf.ptr++ = '\n';
       else if (*(in_ptr+1) == 't')
         *m_buf.ptr++ = '\t';
+      else if (*(in_ptr+1) == '0')
+        *m_buf.ptr++ = '\0';
       else
         *m_buf.ptr++ = '\\';
       in_ptr += 2;
