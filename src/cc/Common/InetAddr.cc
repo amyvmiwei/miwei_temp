@@ -104,6 +104,28 @@ bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
 }
 
 bool
+InetAddr::is_ipv4(const char *ipin) {
+  const char *ptr = ipin, *end = ipin + strlen(ipin);
+  char *last;
+  int component=0;
+  int num_components=0;
+  int base=10;
+
+  while(ptr < end) {
+    component = strtol(ptr, &last, base);
+    num_components++;
+    if (last == end)
+      break;
+    if (*last != '.' || last > end || component > 255 || component < 0 || num_components > 4)
+      return false;
+    ptr = last+1;
+  }
+  if (num_components != 4 || component > 255 || component < 0)
+    return false;
+  return true;
+}
+
+bool
 InetAddr::parse_ipv4(const char *ipin, uint16_t port, sockaddr_in &addr,
                      int base) {
   uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;

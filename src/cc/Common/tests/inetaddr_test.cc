@@ -37,6 +37,10 @@ bool test_parse_ipv4(const char *ipstr) {
   return false;
 }
 
+bool test_is_ipv4(const char *ipstr) {
+  return InetAddr::is_ipv4(ipstr);
+}
+
 void bench_loop(uint32_t n, sockaddr_in &addr) {
   addr.sin_addr.s_addr = htonl(n);
 }
@@ -62,6 +66,17 @@ int main(int argc, char *argv[]) {
   //HT_ASSERT(test_parse_ipv4("0xa08ee01")); doesn't work on linux
   HT_ASSERT(test_parse_ipv4("127.0.0.1"));
   HT_ASSERT(test_parse_ipv4("127.0.0.1_") == false);
+
+  HT_ASSERT(test_is_ipv4("10.8.238.1"));
+  HT_ASSERT(test_is_ipv4("192.168.238.100"));
+  HT_ASSERT(test_is_ipv4("1.2.3.4"));
+  HT_ASSERT(test_is_ipv4("1491.8.1.3") == false);
+  HT_ASSERT(test_is_ipv4("149.8.1") == false);
+  HT_ASSERT(test_is_ipv4("149.8.1.2.3") == false);
+  HT_ASSERT(test_is_ipv4("700.8.1.2") == false);
+  HT_ASSERT(test_is_ipv4("12.foo.bar.com") == false);
+  HT_ASSERT(test_is_ipv4("127.0.0.1_") == false);
+  HT_ASSERT(test_is_ipv4("foo.bar.com.baz") == false);
 
   if (argc > 1) {
     size_t n = atoi(argv[1]);
