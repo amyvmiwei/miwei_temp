@@ -219,8 +219,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   thread_ids.push_back(ThisThread::get_id());
 
 
-  m_bdb_fs = new BerkeleyDbFilesystem(props, System::net_info().host_name,
-                                      m_base_dir, thread_ids);
+  m_bdb_fs = new BerkeleyDbFilesystem(props, m_base_dir, thread_ids);
   Event::set_bdb_fs(m_bdb_fs);
 
   /**
