@@ -34,6 +34,8 @@
 #include "Common/String.h"
 #include "Common/ScopeGuard.h"
 #include "Common/Path.h"
+#include "Common/System.h"
+#include "Common/SystemInfo.h"
 
 #include "BerkeleyDbFilesystem.h"
 #include "DbtManaged.h"
@@ -70,7 +72,6 @@ const char* BerkeleyDbFilesystem::ms_name_state_db = "state.db";
 /**
  */
 BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
-                                           String localhost,
                                            const std::string &basedir,
                                            const vector<Thread::id> &thread_ids,
                                            bool force_recover)
@@ -104,6 +105,9 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
     Dbt key, data;
     DbtManaged keym, datam;
     char numbuf[17];
+    String localhost = System::net_info().host_name;
+    String localip = System::net_info().primary_addr;
+    HT_INFO_OUT << "localhost=" << localhost << " localip=" << localip << HT_END;
 
     m_env.set_lk_detect(DB_LOCK_DEFAULT);
     m_env.set_app_private(&m_replication_info);
@@ -162,28 +166,39 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
 
       int priority = m_replication_info.num_replicas;
       foreach(String replica, props->get_strs("Hyperspace.Replica.Host")) {
-        // just look at hostname
-        size_t replica_len = replica.find('.');
-        if (replica_len == string::npos)
-          replica_len = replica.length();
-        replica = replica.substr(0, replica_len);
+        bool is_ipv4 = InetAddr::is_ipv4(replica.c_str());
+        bool is_localhost=false;
+        Endpoint e;
 
-        Endpoint e = InetAddr::parse_endpoint(replica, replication_port);
-        if (localhost == e.host) {
+        if (is_ipv4) {
+          e = InetAddr::parse_endpoint(replica, replication_port);
+          if (replica == localip)
+            is_localhost = true;
+        }
+        else {
+          size_t replica_len = replica.find('.');
+          if (replica_len == string::npos)
+            replica_len = replica.length();
+          replica = replica.substr(0, replica_len);
+          e = InetAddr::parse_endpoint(replica, replication_port);
+          if (localhost == e.host)
+            is_localhost = true;
+        }
+        if (is_localhost) {
           // make sure all replicas are electable and have same priority
           m_env.rep_set_priority(priority);
 
           m_env.repmgr_set_local_site(e.host.c_str(), e.port, 0);
           m_replication_info.localhost = e.host;
-          HT_INFO_OUT << "Added local replication site " << m_replication_info.localhost
-                      << " priority=" << priority << HT_END;
+          HT_INFO_OUT << "Added local replication site " << e.host
+              << " priority=" << priority << HT_END;
         }
         else {
           int eid;
           m_env.repmgr_add_remote_site(e.host.c_str(), e.port, &eid, 0);
           m_replication_info.replica_map[eid] = e.host;
           HT_INFO_OUT << "Added remote replication site " << e.host
-                      << " priority=" << priority << HT_END;
+              << " priority=" << priority << HT_END;
         }
         --priority;
       }
@@ -1119,7 +1134,7 @@ BerkeleyDbFilesystem::get_directory_attr_listing(BDbTxn &txn, String fname,
     if (!ends_with(fname, "/"))
       fname += "/";
     foreach(DirEntryAttr &entry, listing)
-      if (entry.is_dir) 
+      if (entry.is_dir)
         get_directory_attr_listing(txn, fname + entry.name, aname, true, entry.sub_entries);
   }
 }

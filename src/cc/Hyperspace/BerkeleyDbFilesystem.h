@@ -142,7 +142,7 @@ namespace Hyperspace {
 
   class BerkeleyDbFilesystem {
   public:
-    BerkeleyDbFilesystem(PropertiesPtr &props, String localhost,
+    BerkeleyDbFilesystem(PropertiesPtr &props,
                          const String &basedir,
                          const vector<Thread::id> &thread_ids,
                          bool force_recover=false);

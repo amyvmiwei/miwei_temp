@@ -34,6 +34,7 @@ namespace Hypertable {
    */
   struct Endpoint {
     Endpoint(const String &host, uint16_t port) : host(host), port(port) {}
+    Endpoint() : port(0) {}
 
     String host;
     uint16_t port;
