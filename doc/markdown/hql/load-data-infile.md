@@ -220,9 +220,9 @@ many entries that fall within the same second.
 The `NO_ESCAPE` option provides a way to disable the escaping mechanism.
 The newline and tab characters are escaped and unescaped when transferred in
 and out of the system.  The `LOAD DATA INFILE` command will scan the input
-for the two character sequences '\' 'n', '\' 't', and '\' '\' and will convert them
-into a newline, tab, and backslash, respectively.  The `NO_ESCAPE` option
-disables this conversion.
+for the two character sequences '\' 'n', '\' 't', '\' '0', and '\' '\' and will
+convert them into a newline, tab, NUL, and backslash, respectively.  The
+`NO_ESCAPE` option disables this conversion.
 
 #### `DUPLICATE_KEY_COLUMNS`
 <p>

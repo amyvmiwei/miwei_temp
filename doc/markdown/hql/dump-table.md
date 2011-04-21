@@ -105,6 +105,10 @@ converted into two character escape sequences, described in the following table.
 <td>&nbsp;tab \t</td>
 <td><pre> '\' 't' </pre></td>
 </tr>
+<tr>
+<td>&nbsp;NUL \0</td>
+<td><pre> '\' '0' </pre></td>
+</tr>
 </table>
 <p>
 The `NO_ESCAPE` option turns off this escaping mechanism.
