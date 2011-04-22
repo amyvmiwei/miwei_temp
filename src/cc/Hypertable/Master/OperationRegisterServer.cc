@@ -62,7 +62,7 @@ void OperationRegisterServer::execute() {
       if (m_context->location_hash.empty())
         m_location = String("rs") + id;
       else
-        m_location = format("rs-%s-%d", m_context->location_hash.c_str(), id);
+        m_location = format("rs-%s-%llu", m_context->location_hash.c_str(), (Llu)id);
     }
     m_rsc = new RangeServerConnection(m_context->mml_writer, m_location, 
                                       m_system_stats.net_info.host_name, m_public_addr);
