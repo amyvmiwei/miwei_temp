@@ -25,6 +25,7 @@ DiscreteRandomGenerator.cc
 DiscreteRandomGeneratorFactory.cc
 DiscreteRandomGeneratorZipf.cc
 Error.cc
+Escaper.cc
 FailureInducer.cc
 FileUtils.cc
 Filesystem.cc
@@ -68,6 +69,9 @@ target_link_libraries(ht_checksum HyperCommon)
 # tests
 add_executable(exception_test tests/exception_test.cc)
 target_link_libraries(exception_test HyperCommon)
+
+add_executable(escaper_test tests/escaper_test.cc)
+target_link_libraries(escaper_test HyperCommon)
 
 add_executable(logging_test tests/logging_test.cc)
 target_link_libraries(logging_test HyperCommon)
@@ -138,6 +142,7 @@ add_executable(string_compressor_test tests/string_compressor_test.cc)
 target_link_libraries(string_compressor_test HyperCommon)
 
 add_test(Common-Exception exception_test)
+add_test(Common-Exception escaper_test)
 add_test(Common-Logging logging_test)
 add_test(Common-Serialization sertest)
 add_test(Common-ScopeGuard scope_guard_test)

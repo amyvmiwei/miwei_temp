@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
     table_stat.bytes_returned = Random::number64();
     table_stat.cells_written = Random::number64();
     table_stat.bytes_written = Random::number64();
+    table_stat.disk_bytes_read = Random::number64();
     table_stat.disk_used = Random::number64();
     table_stat.compression_ratio = Random::uniform01();
     table_stat.memory_used = Random::number64();

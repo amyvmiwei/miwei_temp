@@ -28,6 +28,8 @@
 
 #include "Hypertable/Lib/TableMutator.h"
 
+#include "LoadFactors.h"
+
 namespace Hypertable {
 
   class LoadMetricsRange {
@@ -42,10 +44,8 @@ namespace Hypertable {
     }
 
     void compute_and_store(TableMutator *mutator, time_t now,
-                           uint64_t disk_used, uint64_t memory_used,
-                           uint64_t scans, uint64_t updates,
-                           uint64_t cells_read, uint64_t cells_written,
-                           uint64_t bytes_read, uint64_t bytes_written);
+                           LoadFactors &load_factors,
+                           uint64_t disk_used, uint64_t memory_used);
 
   private:
 
@@ -60,12 +60,7 @@ namespace Hypertable {
     String m_new_end_row;
     bool m_new_rows;
     time_t m_timestamp;
-    uint64_t m_scans;
-    uint64_t m_updates;
-    uint64_t m_cells_read;
-    uint64_t m_cells_written;
-    uint64_t m_bytes_read;
-    uint64_t m_bytes_written;
+    LoadFactors m_load_factors;
   };
 }
 

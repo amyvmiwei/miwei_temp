@@ -98,6 +98,7 @@ namespace Hypertable {
       double scan_rate;
       uint64_t cells_read;
       uint64_t bytes_read;
+      uint64_t disk_bytes_read;
       uint64_t updates;
       double update_rate;
       uint64_t cells_written;
@@ -117,6 +118,7 @@ namespace Hypertable {
       double cell_write_rate;
       double byte_read_rate;
       double byte_write_rate;
+      double disk_read_rate;
     };
 
     void create_dir(const String &dir);

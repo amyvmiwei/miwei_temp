@@ -261,7 +261,8 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
       ts_iter->second.cell_write_rate = (ts_iter->second.cells_written - prev_iter->second.cells_written)/elapsed_time;
       ts_iter->second.byte_read_rate = (ts_iter->second.bytes_read - prev_iter->second.bytes_read)/elapsed_time;
       ts_iter->second.byte_write_rate = (ts_iter->second.bytes_written - prev_iter->second.bytes_written)/elapsed_time;
-      HT_INFOF("cell_write_rate %.2f",ts_iter->second.cell_write_rate);
+      ts_iter->second.disk_read_rate = (ts_iter->second.disk_bytes_read - prev_iter->second.disk_bytes_read)/elapsed_time;
+      //HT_INFOF("cell_write_rate %.2f",ts_iter->second.cell_write_rate);
     }
 
     String table_file_name = ts_iter->first;
@@ -307,6 +308,7 @@ void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fe
     table_data.scans += table_stats[i].scans;
     table_data.cells_read += table_stats[i].cells_scanned;
     table_data.bytes_read += table_stats[i].bytes_scanned;
+    table_data.disk_bytes_read += table_stats[i].disk_bytes_read;
     table_data.updates += table_stats[i].updates;
     table_data.cells_written += table_stats[i].cells_written;
     table_data.bytes_written += table_stats[i].bytes_written;
@@ -445,6 +447,7 @@ void Monitoring::create_table_rrd(const String &filename) {
   args.push_back((String)"DS:cell_write_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:byte_read_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:byte_write_rate:GAUGE:600:0:U");
+  args.push_back((String)"DS:disk_read_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:disk_used:GAUGE:600:0:U");
   args.push_back((String)"DS:compression_ratio:GAUGE:600:0:U");
   args.push_back((String)"DS:memory_used:GAUGE:600:0:U");
@@ -486,7 +489,7 @@ void Monitoring::update_table_rrd(const String &filename, struct table_rrd_data 
   args.push_back((String)"update");
   args.push_back(filename);
 
-  update = format("%llu:%d:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%lld",
+  update = format("%llu:%d:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%lld",
 		  (Llu)table_stats_timestamp,
 		  rrd_data.range_count,
 		  rrd_data.scan_rate,
@@ -495,6 +498,7 @@ void Monitoring::update_table_rrd(const String &filename, struct table_rrd_data 
 		  rrd_data.cell_write_rate,
 		  rrd_data.byte_read_rate,
 		  rrd_data.byte_write_rate,
+		  rrd_data.disk_read_rate,
 		  (Lld)rrd_data.disk_used,
 		  rrd_data.compression_ratio,
 		  (Lld)rrd_data.memory_used,

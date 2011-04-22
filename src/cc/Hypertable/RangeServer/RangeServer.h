@@ -202,10 +202,12 @@ namespace Hypertable {
     QueryCache            *m_query_cache;
     int64_t                m_last_revision;
     int64_t                m_scanner_buffer_size;
+    time_t                 m_last_metrics_update;
     time_t                 m_next_metrics_update;
     double                 m_loadavg_accum;
     uint64_t               m_page_in_accum;
     uint64_t               m_page_out_accum;
+    LoadFactors            m_load_factors;
     size_t                 m_metric_samples;
     size_t                 m_cores;
     CellsBuilder          *m_pending_metrics_updates;

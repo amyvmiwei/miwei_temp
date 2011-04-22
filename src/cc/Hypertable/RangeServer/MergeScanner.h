@@ -110,6 +110,9 @@ namespace Hypertable {
         *outcellsp = m_cells_output;
     }
 
+    virtual uint64_t get_disk_read();
+
+
   private:
     void initialize();
     inline bool matches_deleted_row(const Key& key) const {

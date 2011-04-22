@@ -39,6 +39,8 @@ namespace Hypertable {
     virtual void forward();
     virtual bool get(Key &key, ByteString &value);
 
+    virtual uint64_t get_disk_read() { return 0; }
+
     typedef std::map<const SerializedKey, uint32_t> CellCacheMap;
 
   private:
