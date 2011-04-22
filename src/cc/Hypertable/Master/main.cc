@@ -30,6 +30,7 @@ extern "C" {
 #include "Common/ScopeGuard.h"
 #include "Common/System.h"
 #include "Common/Thread.h"
+#include "Common/md5.h"
 
 #include "AsyncComm/Comm.h"
 
@@ -112,6 +113,12 @@ int main(int argc, char **argv) {
         new MetaLog::DefinitionMaster(context, format("%s_%u", "master", port).c_str());
     context->monitoring = new Monitoring(properties, context->namemap);
     context->request_timeout = (time_t)(context->props->get_i32("Hypertable.Request.Timeout") / 1000);
+
+    if (get_bool("Hypertable.Master.Locations.IncludeMasterHash")) {
+      char location_hash[33];
+      md5_string(format("%s:%u", System::net_info().host_name.c_str(), port).c_str(), location_hash);
+      context->location_hash = String(location_hash).substr(0, 8);
+    }
 
     context->monitoring_interval = context->props->get_i32("Hypertable.Monitoring.Interval");
     context->gc_interval = context->props->get_i32("Hypertable.Master.Gc.Interval");

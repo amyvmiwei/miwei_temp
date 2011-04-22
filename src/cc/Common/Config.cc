@@ -283,6 +283,8 @@ void DefaultPolicy::init_options() {
         "Number of Hypertable Master communication reactor threads created")
     ("Hypertable.Master.Gc.Interval", i32()->default_value(300000),
         "Garbage collection interval in milliseconds by Master")
+    ("Hypertable.Master.Locations.IncludeMasterHash", boo()->default_value(false),
+        "Includes master hash (host:port) in RangeServer location id")
     ("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage",
      i32()->default_value(20), "Perform major compaction when garbage accounts "
      "for this percentage of the data")

@@ -91,6 +91,7 @@ namespace Hypertable {
     bool test_mode;
     OperationProcessor *op;
     std::set<int64_t> in_progress_ops;
+    String location_hash;
 
     void add_server(RangeServerConnectionPtr &rsc);
     bool connect_server(RangeServerConnectionPtr &rsc, const String &hostname, InetAddr local_addr, InetAddr public_addr);
