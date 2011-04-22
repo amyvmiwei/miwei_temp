@@ -42,7 +42,6 @@ OperationRegisterServer::OperationRegisterServer(ContextPtr &context, EventPtr &
 
   m_local_addr = InetAddr(event->addr);
   m_public_addr = InetAddr(m_system_stats.net_info.primary_addr, m_listen_port);
-
 }
 
 
@@ -60,7 +59,10 @@ void OperationRegisterServer::execute() {
   if (!m_rsc) {
     if (m_location == "") {
       uint64_t id = m_context->hyperspace->attr_incr(m_context->master_file_handle, "next_server_id");
-      m_location = String("rs") + id;
+      if (m_context->location_hash.empty())
+        m_location = String("rs") + id;
+      else
+        m_location = format("rs-%s-%d", m_context->location_hash.c_str(), id);
     }
     m_rsc = new RangeServerConnection(m_context->mml_writer, m_location, 
                                       m_system_stats.net_info.host_name, m_public_addr);
