@@ -225,6 +225,8 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
 
         m_zcodec->inflate(buf, expand_buf, header);
 
+        m_disk_read += expand_buf.fill();
+
         if (!header.check_magic(CellStore::DATA_BLOCK_MAGIC))
           HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC,
                    "Error inflating cell store block - magic string mismatch");

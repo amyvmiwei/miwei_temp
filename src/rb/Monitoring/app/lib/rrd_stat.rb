@@ -92,6 +92,7 @@ class RRDStat
   [ "scan_rate",
     "cell_read_rate",
     "byte_read_rate",
+    "disk_read_rate",
     "update_rate",
     "cell_write_rate",
     "byte_write_rate",

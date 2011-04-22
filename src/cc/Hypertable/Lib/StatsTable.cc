@@ -51,6 +51,7 @@ void StatsTable::clear() {
   updates = 0;
   cells_written = 0;
   bytes_written = 0;
+  disk_bytes_read = 0;
   disk_used = 0;
   key_bytes = 0;
   value_bytes = 0;
@@ -79,6 +80,7 @@ size_t StatsTable::encoded_length_group(int group) const {
       Serialization::encoded_length_vi64(updates) +     \
       Serialization::encoded_length_vi64(cells_written) + \
       Serialization::encoded_length_vi64(bytes_written) + \
+      Serialization::encoded_length_vi64(disk_bytes_read) + \
       Serialization::encoded_length_vi64(disk_used) + \
       Serialization::encoded_length_vi64(key_bytes) + \
       Serialization::encoded_length_vi64(value_bytes) + \
@@ -110,6 +112,7 @@ void StatsTable::encode_group(int group, uint8_t **bufp) const {
     Serialization::encode_vi64(bufp, updates);
     Serialization::encode_vi64(bufp, cells_written);
     Serialization::encode_vi64(bufp, bytes_written);
+    Serialization::encode_vi64(bufp, disk_bytes_read);
     Serialization::encode_vi64(bufp, disk_used);
     Serialization::encode_vi64(bufp, key_bytes);
     Serialization::encode_vi64(bufp, value_bytes);
@@ -140,6 +143,7 @@ void StatsTable::decode_group(int group, uint16_t len, const uint8_t **bufp, siz
     updates = Serialization::decode_vi64(bufp, remainp);
     cells_written = Serialization::decode_vi64(bufp, remainp);
     bytes_written = Serialization::decode_vi64(bufp, remainp);
+    disk_bytes_read = Serialization::decode_vi64(bufp, remainp);
     disk_used = Serialization::decode_vi64(bufp, remainp);
     key_bytes = Serialization::decode_vi64(bufp, remainp);
     value_bytes = Serialization::decode_vi64(bufp, remainp);
@@ -171,6 +175,7 @@ bool StatsTable::operator==(const StatsTable &other) const {
       updates == other.updates &&
       cells_written == other.cells_written &&
       bytes_written == other.bytes_written &&
+      disk_bytes_read == other.disk_bytes_read &&
       disk_used == other.disk_used &&
       key_bytes == other.key_bytes &&
       value_bytes == other.value_bytes &&

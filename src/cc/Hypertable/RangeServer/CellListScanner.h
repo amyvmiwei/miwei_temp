@@ -33,8 +33,8 @@ namespace Hypertable {
 
   class CellListScanner : public ReferenceCount {
   public:
-    CellListScanner() { return; }
-    CellListScanner(ScanContextPtr &scan_ctx) : m_scan_context_ptr(scan_ctx) { }
+    CellListScanner() : m_disk_read(0) { return; }
+    CellListScanner(ScanContextPtr &scan_ctx) : m_disk_read(0), m_scan_context_ptr(scan_ctx) { }
     virtual ~CellListScanner() { return; }
 
     virtual void forward() = 0;
@@ -42,7 +42,11 @@ namespace Hypertable {
 
     ScanContext *scan_context() { return m_scan_context_ptr.get(); }
 
+    virtual uint64_t get_disk_read() = 0;
+    void add_disk_read(uint64_t amount) { m_disk_read += amount; }
+
   protected:
+    uint64_t m_disk_read;
     ScanContextPtr m_scan_context_ptr;
   };
 

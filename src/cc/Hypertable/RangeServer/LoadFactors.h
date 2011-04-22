@@ -1,12 +1,12 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
  * as published by the Free Software Foundation; version 2 of the
- * License, or any later version.
+ * License.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,32 +19,37 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_CELLSTORESCANNERINTERVAL_H
-#define HYPERTABLE_CELLSTORESCANNERINTERVAL_H
-
-#include "Common/ByteString.h"
-#include "Hypertable/Lib/Key.h"
+#ifndef HYPERTABLE_LOADFACTORS_H
+#define HYPERTABLE_LOADFACTORS_H
 
 namespace Hypertable {
 
-  class CellStoreScannerInterval {
+  class LoadFactors {
   public:
-    CellStoreScannerInterval() : m_disk_read(0) { }
-    virtual void forward() = 0;
-    virtual bool get(Key &key, ByteString &value) = 0;
-    virtual ~CellStoreScannerInterval() { }
-    uint64_t get_disk_read() { return m_disk_read; }
+    
+    LoadFactors() {
+      reset();
+    }
 
-  protected:
-    struct BlockInfo {
-      int64_t offset;
-      int64_t zlength;
-      const uint8_t *base;
-      const uint8_t *end;
-    };
-    uint64_t m_disk_read;
+    void reset() {
+      scans = 0;
+      updates = 0;
+      cells_scanned = 0;
+      cells_written = 0;
+      bytes_scanned = 0;
+      bytes_written = 0;
+      disk_bytes_read = 0;
+    }
+
+    uint64_t scans;
+    uint64_t updates;
+    uint64_t cells_scanned;
+    uint64_t cells_written;
+    uint64_t bytes_scanned;
+    uint64_t bytes_written;
+    uint64_t disk_bytes_read;
   };
-
 }
 
-#endif // HYPERTABLE_CELLSTORESCANNERINTERVAL_H
+
+#endif // HYPERTABLE_LOADFACTORS_H

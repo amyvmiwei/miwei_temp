@@ -14,7 +14,12 @@
         :byte_read_rate: { :pair: [:byte_read_rate],
                        :units: "bytes" ,
                        :color: ["#edd400"],
-                       :pname: "Bytes Read/s"},
+                       :pname: "Table Bytes Read/s"},
+
+        :disk_read_rate: { :pair: [:disk_read_rate],
+                       :units: "bytes" ,
+                       :color: ["#edd400"],
+                       :pname: "Disk Bytes Read/s"},
 
 	:update_rate: {
                       :pair: [:update_rate],
@@ -34,7 +39,7 @@
                        :pair: [:byte_write_rate],
                        :units: "bytes" ,
                        :color: ["#73d216"],
-                       :pname: "Bytes Written/s"
+                       :pname: "Table Bytes Written/s"
                       },
 
         :block_index_memory: {

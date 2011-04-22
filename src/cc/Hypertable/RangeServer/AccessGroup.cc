@@ -171,6 +171,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
 
   try {
     ScopedLock lock(m_mutex);
+    uint64_t initial_bytes_read;
 
     if (m_cell_cache)
       scanner->add_scanner(m_cell_cache->create_scanner(scan_context));
@@ -188,6 +189,8 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
           continue;
 
         bloom_filter_disabled = boost::any_cast<uint8_t>(m_stores[i].cs->get_trailer()->get("bloom_filter_mode")) == BLOOM_FILTER_DISABLED;
+
+        initial_bytes_read = m_stores[i].cs->bytes_read();
 
         // Query bloomfilter only if it is enabled and a start row has been specified
         // (ie query is not something like select bar from foo;)
@@ -215,6 +218,10 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
             callback.add_file(m_stores[i].cs->get_filename());
           }
         }
+
+        if (m_stores[i].cs->bytes_read() > initial_bytes_read)
+          scanner->add_disk_read(m_stores[i].cs->bytes_read() - initial_bytes_read);
+
       }
     }
   }

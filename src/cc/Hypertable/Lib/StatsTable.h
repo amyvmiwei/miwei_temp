@@ -45,6 +45,7 @@ namespace Hypertable {
       updates = other.updates;
       cells_written = other.cells_written;
       bytes_written = other.bytes_written;
+      disk_bytes_read = other.disk_bytes_read;
       disk_used = other.disk_used;
       key_bytes = other.key_bytes;
       value_bytes = other.value_bytes;
@@ -75,6 +76,7 @@ namespace Hypertable {
     uint64_t updates;
     uint64_t cells_written;
     uint64_t bytes_written;
+    uint64_t disk_bytes_read;
     uint64_t disk_used;
     uint64_t key_bytes;
     uint64_t value_bytes;

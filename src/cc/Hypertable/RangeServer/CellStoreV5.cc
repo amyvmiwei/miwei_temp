@@ -340,6 +340,8 @@ void CellStoreV5::load_bloom_filter() {
                 "CellStore '%s' : tried to read %lld but only got %lld",
                 m_filename.c_str(), (Lld)m_bloom_filter->total_size(), (Lld)len);
 
+    m_bytes_read += len;
+
     m_bloom_filter->validate(m_filename);
   }
 
@@ -863,6 +865,8 @@ void CellStoreV5::load_block_index() {
     buf.ptr += (m_trailer.var_index_offset - m_trailer.fix_index_offset);
     m_compressor->inflate(buf, m_index_builder.fixed_buf(), header);
 
+    m_bytes_read += m_index_builder.fixed_buf().fill();
+
     inflating_fixed = false;
 
     if (!header.check_magic(INDEX_FIXED_BLOCK_MAGIC))
@@ -875,6 +879,8 @@ void CellStoreV5::load_block_index() {
     vbuf.ptr = buf.ptr + amount;
 
     m_compressor->inflate(vbuf, m_index_builder.variable_buf(), header);
+
+    m_bytes_read += m_index_builder.variable_buf().fill();
 
     if (!header.check_magic(INDEX_VARIABLE_BLOCK_MAGIC))
       HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC, m_filename);

@@ -264,10 +264,19 @@ namespace Hypertable {
      */
     virtual bool restricted_range() = 0;
 
+    /**
+     * Returns the number of "uncompressed" bytes read from the underlying
+     * filesystem.
+     *
+     * @return number of uncompressed bytes read from filesystem
+     */
+    uint64_t bytes_read() { return m_bytes_read; }
+
     static const char DATA_BLOCK_MAGIC[10];
     static const char INDEX_FIXED_BLOCK_MAGIC[10];
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
+    uint64_t m_bytes_read;
     IndexMemoryStats m_index_stats;
     std::vector <String> m_replaced_files;
   };
