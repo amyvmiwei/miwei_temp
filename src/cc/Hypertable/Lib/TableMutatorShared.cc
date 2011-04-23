@@ -43,9 +43,9 @@ TableMutatorShared::~TableMutatorShared() {
 }
 
 
-void TableMutatorShared::auto_flush(Timer &timer) {
+void TableMutatorShared::auto_flush() {
   ScopedRecLock lock(m_mutex);
-  Parent::auto_flush(timer);
+  Parent::auto_flush();
   m_last_flush_ts.reset();
 }
 

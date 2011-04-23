@@ -86,9 +86,14 @@ TableMutatorIntervalHandler.cc
 TableMutatorScatterBuffer.cc
 TableMutatorShared.cc
 TableMutatorSyncDispatchHandler.cc
+TableMutatorSync.cc
+TableMutatorAsync.cc
+TableMutatorAsyncDispatchHandler.cc
+TableMutatorAsyncHandler.cc
+TableMutatorAsyncScatterBuffer.cc
 TableScanner.cc
 TableScannerAsync.cc
-TableScannerCallback.cc
+TableCallback.cc
 TableScannerHandler.cc
 TableSplit.cc
 TestSource.cc

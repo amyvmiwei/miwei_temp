@@ -141,7 +141,7 @@ namespace Hypertable {
 
     void replay_transfer_log(CommitLogReader *commit_log_reader);
 
-    MaintenanceData *get_maintenance_data(ByteArena &arena, time_t now, TableMutator *mutator);
+    MaintenanceData *get_maintenance_data(ByteArena &arena, time_t now, TableMutatorSync *mutator);
 
     void wait_for_maintenance_to_complete() {
       m_maintenance_guard.wait_for_complete();

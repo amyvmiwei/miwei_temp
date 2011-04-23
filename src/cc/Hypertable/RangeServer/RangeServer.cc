@@ -1162,7 +1162,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     const RangeSpec *range_spec, const char *transfer_log_dir,
     const RangeState *range_state, bool needs_compaction) {
   int error = Error::OK;
-  TableMutatorPtr mutator;
+  TableMutatorSyncPtr mutator;
   KeySpec key;
   String metadata_key_str;
   bool is_root;
@@ -1386,7 +1386,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       /**
        * Take ownership of the range
        */
-      mutator = Global::metadata_table->create_mutator();
+      mutator = Global::metadata_table->create_mutator_sync();
 
       key.row = metadata_key_str.c_str();
       key.row_len = strlen(metadata_key_str.c_str());
@@ -2363,7 +2363,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   std::vector<RangePtr> range_vector;
   String metadata_prefix;
   String metadata_key;
-  TableMutatorPtr mutator;
+  TableMutatorSyncPtr mutator;
 
   HT_INFO_OUT << "drop table " << table->id << HT_END;
 
@@ -2412,7 +2412,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   Schema::AccessGroups &ags = schema->get_access_groups();
 
   // create METADATA table mutator for clearing 'Location' columns
-  mutator = Global::metadata_table->create_mutator();
+  mutator = Global::metadata_table->create_mutator_sync();
 
   KeySpec key;
 
@@ -2568,7 +2568,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
                                    &m_stats->block_cache_accesses,
                                    &m_stats->block_cache_hits);
 
-  TableMutatorPtr mutator;
+  TableMutatorSyncPtr mutator;
   if (now > m_next_metrics_update) {
     ScopedLock lock(m_mutex);
     if (!Global::rs_metrics_table) {
@@ -2587,7 +2587,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
       }
     }
     if (Global::rs_metrics_table) {
-      mutator = Global::rs_metrics_table->create_mutator();
+      mutator = Global::rs_metrics_table->create_mutator_sync();
       /**
        * Add pending updates
        */

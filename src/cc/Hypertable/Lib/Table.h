@@ -31,6 +31,7 @@
 #include "Schema.h"
 #include "RangeLocator.h"
 #include "Types.h"
+#include "RangeServerProtocol.h"
 
 namespace Hyperspace {
   class Session;
@@ -43,6 +44,8 @@ namespace Hypertable {
   class TableScannerAsync;
   class TableScanner;
   class TableMutator;
+  class TableMutatorSync;
+  class TableMutatorAsync;
 
   /** Represents an open table.
    */
@@ -54,6 +57,11 @@ namespace Hypertable {
       OPEN_FLAG_BYPASS_TABLE_CACHE           = 0x01,
       OPEN_FLAG_REFRESH_TABLE_CACHE          = 0x02,
       OPEN_FLAG_NO_AUTO_TABLE_REFRESH        = 0x04
+    };
+
+    enum {
+      MUTATOR_FLAG_NO_LOG_SYNC        = RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC,
+      MUTATOR_FLAG_IGNORE_UNKNOWN_CFS = RangeServerProtocol::UPDATE_FLAG_IGNORE_UNKNOWN_CFS
     };
 
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
@@ -76,6 +84,20 @@ namespace Hypertable {
     TableMutator *create_mutator(uint32_t timeout_ms = 0,
                                  uint32_t flags = 0,
                                  uint32_t flush_interval_ms = 0);
+
+    /**
+     * Creates a synchronous mutator on this table
+     *
+     * @param timeout_ms maximum time in milliseconds to allow
+     *        mutator methods to execute before throwing an exception
+     * @param flags mutator flags
+     * @param flush_interval_ms time interval in milliseconds to flush
+     *        data. 0 disables it.
+     * @return newly constructed mutator object
+     */
+    TableMutatorSync *create_mutator_sync(uint32_t timeout_ms = 0,
+                                          uint32_t flags = 0,
+                                          uint32_t flush_interval_ms = 0);
 
     /**
      * Creates a synchronous scanner on this table
@@ -145,7 +167,7 @@ namespace Hypertable {
     bool auto_refresh() {
       return (m_flags & OPEN_FLAG_NO_AUTO_TABLE_REFRESH) == 0;
     }
-    
+
     int32_t get_flags() { return m_flags; }
 
   private:

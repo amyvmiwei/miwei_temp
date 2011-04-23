@@ -135,11 +135,11 @@ inline bool operator < (const SharedMutatorMapKey &skey1, const SharedMutatorMap
 
 typedef Meta::list<ThriftBrokerPolicy, DefaultCommPolicy> Policies;
 
-typedef std::map<SharedMutatorMapKey, TableMutatorPtr> SharedMutatorMap;
+typedef std::map<SharedMutatorMapKey, TableMutatorSyncPtr> SharedMutatorMap;
 typedef hash_map< ::int64_t, TableScannerPtr> ScannerMap;
 typedef hash_map< ::int64_t, TableScannerAsyncPtr> ScannerAsyncMap;
 typedef hash_map< ::int64_t, ::int64_t> ReverseScannerAsyncMap;
-typedef hash_map< ::int64_t, TableMutatorPtr> MutatorMap;
+typedef hash_map< ::int64_t, TableMutatorSyncPtr> MutatorMap;
 typedef hash_map< ::int64_t, NamespacePtr> NamespaceMap;
 typedef hash_map< ::int64_t, FuturePtr> FutureMap;
 typedef hash_map< ::int64_t, HqlInterpreterPtr> HqlInterpreterMap;
@@ -429,7 +429,7 @@ struct HqlCallback : HqlInterpreter::Callback {
 
   virtual void on_return(const String &);
   virtual void on_scan(TableScanner &);
-  virtual void on_finish(TableMutator *);
+  virtual void on_finish(TableMutatorSync *);
 };
 
 class ServerHandler : public HqlServiceIf {
@@ -942,7 +942,7 @@ public:
     try {
       NamespacePtr namespace_ptr = get_namespace(ns);
       TablePtr t = namespace_ptr->open_table(table);
-      Mutator id =  get_mutator_id(t->create_mutator(0, flags, flush_interval));
+      Mutator id =  get_mutator_id(t->create_mutator_sync(0, flags, flush_interval));
       LOG_API("namespace=" << ns << " table="<< table <<" mutator="<< id);
       return id;
     } RETHROW()
@@ -1524,7 +1524,7 @@ public:
              format("Invalid scanner id: %lld", (Lld)id));
   }
 
-  ::int64_t get_mutator_id(TableMutator *mutator) {
+  ::int64_t get_mutator_id(TableMutatorSync *mutator) {
     ScopedLock lock(m_mutator_mutex);
     ::int64_t id = (::int64_t)mutator;
     m_mutator_map.insert(make_pair(id, mutator)); // no overwrite
@@ -1551,13 +1551,13 @@ public:
             <<" with appname=" << mutate_spec.appname);
     NamespacePtr namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
-    TableMutatorPtr mutator = t->create_mutator(0, mutate_spec.flags, mutate_spec.flush_interval);
+    TableMutatorSyncPtr mutator = t->create_mutator_sync(0, mutate_spec.flags, mutate_spec.flush_interval);
     m_shared_mutator_map[skey] = mutator;
     return;
   }
 
 
-  TableMutatorPtr get_shared_mutator(const ThriftGen::Namespace ns, const String &table,
+  TableMutatorSyncPtr get_shared_mutator(const ThriftGen::Namespace ns, const String &table,
                                      const ThriftGen::MutateSpec &mutate_spec) {
     ScopedLock lock(m_shared_mutator_mutex);
     SharedMutatorMapKey skey(ns, table, mutate_spec);
@@ -1573,13 +1573,13 @@ public:
               " with appname=" << mutate_spec.appname);
       NamespacePtr namespace_ptr = get_namespace(ns);
       TablePtr t = namespace_ptr->open_table(table);
-      TableMutatorPtr mutator = t->create_mutator(0, mutate_spec.flags, mutate_spec.flush_interval);
+      TableMutatorSyncPtr mutator = t->create_mutator_sync(0, mutate_spec.flags, mutate_spec.flush_interval);
       m_shared_mutator_map[skey] = mutator;
       return mutator;
     }
   }
 
-  TableMutatorPtr get_mutator(::int64_t id) {
+  TableMutatorSyncPtr get_mutator(::int64_t id) {
     ScopedLock lock(m_mutator_mutex);
     MutatorMap::iterator it = m_mutator_map.find(id);
 
@@ -1683,7 +1683,7 @@ void HqlCallback<ResultT, CellT>::on_scan(TableScanner &s) {
 }
 
 template <class ResultT, class CellT>
-void HqlCallback<ResultT, CellT>::on_finish(TableMutator *m) {
+void HqlCallback<ResultT, CellT>::on_finish(TableMutatorSync *m) {
   if (flush) {
     Parent::on_finish(m);
   }

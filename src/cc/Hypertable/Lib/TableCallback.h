@@ -19,22 +19,24 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLESCANNERCALLBACK_H
-#define HYPERTABLE_TABLESCANNERCALLBACK_H
+#ifndef HYPERTABLE_TABLECALLBACK_H
+#define HYPERTABLE_TABLECALLBACK_H
 
 #include "ResultCallback.h"
 
 namespace Hypertable {
 
   class TableScanner;
+  class TableMutatorSync;
 
   /** Represents an open table.
    */
-  class TableScannerCallback: public ResultCallback {
+  class TableCallback: public ResultCallback {
 
   public:
 
-    TableScannerCallback(TableScanner *scanner) : m_scanner(scanner) {};
+    TableCallback(TableScanner *scanner) : m_scanner(scanner) {};
+    TableCallback(TableMutatorSync *mutator) : m_mutator(mutator) {};
 
     /**
      * Callback method for successful scan
@@ -56,16 +58,27 @@ namespace Hypertable {
                     bool eos);
 
     /**
-     * Mutator callbacks do nothing
+     * Callback method for successful mutations
+     *
+     * @param mutator
      */
-    void update_ok(TableMutator *mutator, FailedMutations &failed_mutations) {}
-    void update_error(TableMutator *mutator, int error, const String &error_msg) {}
+    void update_ok(TableMutatorAsync *mutator);
 
+    /**
+     * Callback method for mutation errors
+     *
+     * @param mutator
+     * @param error
+     * @param failures vector of failed mutations
+     */
+    void update_error(TableMutatorAsync *mutator, int error, FailedMutations &failures);
 
   private:
     TableScanner *m_scanner;
+    TableMutatorSync *m_mutator;
+
   };
-  typedef intrusive_ptr<TableScannerCallback> TableScannerCallbackPtr;
+  typedef intrusive_ptr<TableCallback> TableCallbackPtr;
 } // namesapce Hypertable
 
-#endif // HYPERTABLE_TABLESCANNERCALLBACK_H
+#endif // HYPERTABLE_TABLECALLBACK_H

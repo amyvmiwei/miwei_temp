@@ -20,7 +20,7 @@
 #include "Common/Compat.h"
 #include "Result.h"
 
-#include "TableMutator.h"
+#include "TableMutatorAsync.h"
 #include "TableScannerAsync.h"
 
 namespace Hypertable {
@@ -31,19 +31,18 @@ Result::Result(TableScannerAsync *scanner, ScanCellsPtr &cells) : m_scanner(scan
 }
 
 Result::Result(TableScannerAsync *scanner, int error, const String &error_msg) :
-  m_scanner(scanner), m_mutator(0), m_error(error), m_error_msg(error_msg), m_isscan(true),
-  m_iserror(true) {
-    return;
-  }
-
-Result::Result(TableMutator *mutator, FailedMutations &failed_mutations) : m_scanner(0),
-    m_mutator(mutator), m_isscan(true), m_iserror(false)  {
-  HT_THROW(Error::NOT_IMPLEMENTED, "Asynchronous mutators not yet supported");
+    m_scanner(scanner), m_mutator(0), m_error(error), m_error_msg(error_msg), m_isscan(true),
+    m_iserror(true) {
+  return;
 }
 
-Result::Result(TableMutator *mutator, int error, const String &error_msg) : m_scanner(0),
-  m_mutator(mutator), m_isscan(false), m_iserror(true) {
-  HT_THROW(Error::NOT_IMPLEMENTED, "Asynchronous mutators not yet supported");
+Result::Result(TableMutatorAsync *mutator) : m_scanner(0), m_mutator(mutator),
+    m_isscan(true), m_iserror(false)  {
+}
+
+Result::Result(TableMutatorAsync *mutator, int error, FailedMutations &failed_mutations)
+  : m_scanner(0), m_mutator(mutator), m_isscan(false), m_iserror(true),
+    m_failed_mutations(failed_mutations) {
 }
 
 TableScannerAsync *Result::get_scanner() {
@@ -52,7 +51,7 @@ TableScannerAsync *Result::get_scanner() {
   return m_scanner;
 }
 
-TableMutator *Result::get_mutator() {
+TableMutatorAsync *Result::get_mutator() {
   if (m_isscan)
     HT_THROW(Error::NOT_ALLOWED, "Requested mutator for non-scan result");
   return m_mutator;
@@ -72,6 +71,11 @@ void Result::get_error(int &error, String &error_msg) {
   error = m_error;
   error_msg = m_error_msg;
   return;
+}
+
+FailedMutations &
+Result::get_failed_mutations() {
+  return m_failed_mutations;
 }
 
 } // namespace Hypertable

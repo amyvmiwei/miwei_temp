@@ -75,8 +75,8 @@ namespace Hypertable {
     void scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells);
     void scan_error(TableScannerAsync *scanner, int error, const String &error_msg,
                     bool eos);
-    void update_ok(TableMutator *mutator, FailedMutations &failed_mutations);
-    void update_error(TableMutator *mutator, int error, const String &error_msg);
+    void update_ok(TableMutatorAsync *mutator);
+    void update_error(TableMutatorAsync *mutator, int error, FailedMutations &failures);
 
     bool is_full() { return (m_queue_capacity <= m_queue.size()); }
 

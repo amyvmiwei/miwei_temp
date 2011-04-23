@@ -69,7 +69,7 @@ int main(int argc, char **argv) {
     Client *hypertable = new Client(argv[0], "./hypertable.cfg");
     NamespacePtr ns = hypertable->open_namespace("/");
     TablePtr table_ptr;
-    TableMutatorPtr mutator_ptr;
+    TableMutatorSyncPtr mutator_ptr;
     TableScannerPtr scanner_ptr;
     KeySpec key;
     Cell cell;
@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
 
     table_ptr = ns->open_table("RowDeleteTest");
 
-    mutator_ptr = table_ptr->create_mutator();
+    mutator_ptr = table_ptr->create_mutator_sync();
 
     key.row = "foo";
     key.row_len = strlen("foo");

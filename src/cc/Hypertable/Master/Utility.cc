@@ -33,7 +33,7 @@
 #include "Hypertable/Lib/KeySpec.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/TableMutator.h"
+#include "Hypertable/Lib/TableMutatorSync.h"
 #include "Hypertable/Lib/TableScanner.h"
 #include "Hypertable/Lib/Types.h"
 
@@ -217,7 +217,7 @@ void create_table_write_metadata(ContextPtr &context, TableIdentifier *table) {
     return;
   }
 
-  TableMutatorPtr mutator_ptr = context->metadata_table->create_mutator();
+  TableMutatorSyncPtr mutator_ptr = context->metadata_table->create_mutator_sync();
 
   String metadata_key_str = String(table->id) + ":" + Key::END_ROW_MARKER;
   String start_row;

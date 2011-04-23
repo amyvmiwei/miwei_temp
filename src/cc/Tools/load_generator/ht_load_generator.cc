@@ -187,7 +187,7 @@ int main(int argc, char **argv) {
         HT_FATAL("DataGenerator.DeletePercentage not supported with stdout option");
       delete_pct = generator_props->get_i32("DataGenerator.DeletePercentage");
     }
-    
+
     if (parallel > 0 && load_type == "query")
       HT_FATAL("parallel support for query load not yet implemented");
 
@@ -284,7 +284,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   ::uint64_t unflushed_data=0;
 
   if (no_log_sync)
-    mutator_flags |= TableMutator::FLAG_NO_LOG_SYNC;
+    mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
 
   if (to_stdout) {
     cout << "rowkey\tcolumnkey\tvalue\n";
@@ -449,7 +449,7 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
   boost::thread_group threads;
 
   if (no_log_sync)
-    mutator_flags |= TableMutator::FLAG_NO_LOG_SYNC;
+    mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
 
   Stopwatch stopwatch;
 

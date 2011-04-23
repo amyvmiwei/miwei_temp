@@ -25,8 +25,9 @@
 
 namespace Hypertable {
 
-  class TableMutator;
+  class TableMutatorAsync;
   class TableScannerAsync;
+  // Must match definition in TableMutatorAsyncScatterBuffer.h
   typedef std::pair<Cell, int> FailedMutation;
   typedef std::vector<FailedMutation> FailedMutations;
 
@@ -36,27 +37,27 @@ namespace Hypertable {
       Result(TableScannerAsync *scanner, ScanCellsPtr &cells);
       Result(TableScannerAsync *scanner, int error,
              const String &error_msg);
-      Result(TableMutator *, FailedMutations &failed_mutations);
-      Result(TableMutator *, int error, const String &error_msg);
-
+      Result(TableMutatorAsync *);
+      Result(TableMutatorAsync *, int error, FailedMutations &failed_mutations);
 
       bool is_error() const { return m_iserror; }
       bool is_scan() const { return m_isscan; }
       bool is_update() const { return !m_isscan; }
       TableScannerAsync *get_scanner();
-      TableMutator *get_mutator();
+      TableMutatorAsync *get_mutator();
       void get_cells(Cells &cells);
       void get_error(int &error, String &m_error_msg);
+      FailedMutations& get_failed_mutations();
 
     private:
       TableScannerAsync *m_scanner;
-      TableMutator *m_mutator;
+      TableMutatorAsync *m_mutator;
       ScanCellsPtr m_cells;
       int m_error;
       String m_error_msg;
       bool m_isscan;
       bool m_iserror;
-
+      FailedMutations m_failed_mutations;
   };
   typedef intrusive_ptr<Result> ResultPtr;
 }

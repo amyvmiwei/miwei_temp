@@ -34,7 +34,10 @@
 
 #include "Table.h"
 #include "TableScanner.h"
+#include "TableMutator.h"
 #include "TableMutatorShared.h"
+#include "TableMutatorAsync.h"
+#include "TableMutatorSync.h"
 
 using namespace Hypertable;
 using namespace Hyperspace;
@@ -162,16 +165,28 @@ Table::~Table() {
 }
 
 
-TableMutator *
+TableMutator*
 Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
                       uint32_t flush_interval_ms) {
+  uint32_t timeout = timeout_ms ? timeout_ms : m_timeout_ms;
+
+  //if (flush_interval_ms) {
+  //  return new TableMutatorShared(m_props, m_comm, this, m_range_locator,
+  //                                m_app_queue, timeout, flush_interval_ms, flags);
+  //}
+  return new TableMutator(m_props, m_comm, this, m_range_locator, timeout, flags);
+}
+
+TableMutatorSync *
+Table::create_mutator_sync(uint32_t timeout_ms, uint32_t flags,
+                           uint32_t flush_interval_ms) {
   uint32_t timeout = timeout_ms ? timeout_ms : m_timeout_ms;
 
   if (flush_interval_ms) {
     return new TableMutatorShared(m_props, m_comm, this, m_range_locator,
                                   m_app_queue, timeout, flush_interval_ms, flags);
   }
-  return new TableMutator(m_props, m_comm, this, m_range_locator, timeout, flags);
+  return new TableMutatorSync(m_props, m_comm, this, m_range_locator, timeout, flags);
 }
 
 TableScanner *

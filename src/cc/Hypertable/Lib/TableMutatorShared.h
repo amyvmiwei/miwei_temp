@@ -22,7 +22,7 @@
 
 #include "Common/Time.h"
 
-#include "TableMutator.h"
+#include "TableMutatorSync.h"
 
 namespace Hypertable {
 
@@ -33,8 +33,8 @@ class TableMutatorIntervalHandler;
  * has an option to do periodic flushes. For best throughput use the vanilla
  * TableMutator
  */
-class TableMutatorShared : public TableMutator {
-  typedef TableMutator Parent;
+class TableMutatorShared : public TableMutatorSync {
+  typedef TableMutatorSync Parent;
 
 public:
   /**
@@ -135,7 +135,7 @@ public:
   void interval_flush();
 
 protected:
-  virtual void auto_flush(Timer &);
+  virtual void auto_flush();
 
 private:
   RecMutex      m_mutex;

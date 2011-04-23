@@ -94,13 +94,13 @@ void Future::scan_error(TableScannerAsync *scanner, int error, const String &err
   enqueue(result);
 }
 
-void Future::update_ok(TableMutator *mutator, FailedMutations &failed_mutations) {
-  ResultPtr result = new Result(mutator, failed_mutations);
+void Future::update_ok(TableMutatorAsync *mutator) {
+  ResultPtr result = new Result(mutator);
   enqueue(result);
 }
 
-void Future::update_error(TableMutator *mutator, int error, const String &error_msg) {
-  ResultPtr result = new Result(mutator, error, error_msg);
+void Future::update_error(TableMutatorAsync *mutator, int error, FailedMutations &failures) {
+  ResultPtr result = new Result(mutator, error, failures);
   enqueue(result);
 }
 
