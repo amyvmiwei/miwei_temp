@@ -79,7 +79,7 @@ int main(int argc, char **argv) {
   ClientPtr hypertable_client;
   NamespacePtr ns;
   TablePtr table;
-  TableMutatorPtr mutator;
+  TableMutatorSyncPtr mutator;
   KeySpec key;
   boost::shared_array<char> value_data;
   boost::shared_array<char> key_data;
@@ -115,7 +115,7 @@ int main(int argc, char **argv) {
     ns = hypertable_client->open_namespace("/");
     table = ns->open_table("RandomTest");
 
-    mutator = table->create_mutator();
+    mutator = table->create_mutator_sync();
   }
   catch (Hypertable::Exception &e) {
     cerr << e << endl;

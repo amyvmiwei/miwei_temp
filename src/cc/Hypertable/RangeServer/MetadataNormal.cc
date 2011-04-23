@@ -107,10 +107,10 @@ bool MetadataNormal::get_next_files(String &ag_name, String &files, uint32_t *ne
 
 
 void MetadataNormal::write_files(const String &ag_name, const String &files) {
-  TableMutatorPtr mutator;
+  TableMutatorSyncPtr mutator;
   KeySpec key;
 
-  mutator = Global::metadata_table->create_mutator();
+  mutator = Global::metadata_table->create_mutator_sync();
 
   key.row = m_metadata_key.c_str();
   key.row_len = m_metadata_key.length();
@@ -123,10 +123,10 @@ void MetadataNormal::write_files(const String &ag_name, const String &files) {
 
 
 void MetadataNormal::write_files(const String &ag_name, const String &files, uint32_t nextcsid) {
-  TableMutatorPtr mutator;
+  TableMutatorSyncPtr mutator;
   KeySpec key;
 
-  mutator = Global::metadata_table->create_mutator();
+  mutator = Global::metadata_table->create_mutator_sync();
 
   key.row = m_metadata_key.c_str();
   key.row_len = m_metadata_key.length();

@@ -27,8 +27,8 @@
 
 using namespace Hypertable;
 
-void RangeStatsGatherer::fetch(RangeStatsVector &range_stats, 
-                               size_t *lenp, TableMutator *mutator) {
+void RangeStatsGatherer::fetch(RangeStatsVector &range_stats,
+                               size_t *lenp, TableMutatorSync *mutator) {
   std::vector<TableInfoPtr> table_vec;
 
   range_stats.clear();

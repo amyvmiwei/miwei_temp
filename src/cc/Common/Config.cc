@@ -257,6 +257,9 @@ void DefaultPolicy::init_options() {
         "Top-level hypertable directory name")
     ("Hypertable.Monitoring.Interval", i32()->default_value(30000),
         "Monitoring statistics gathering interval (in milliseconds)")
+    ("Hypertable.Mutator.ScatterBuffer.Limit",
+     i32()->default_value(2), "Number of scatter buffers created by a single "
+        "asynchronous mutator")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "

@@ -19,36 +19,35 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_GCWORKER_H
-#define HYPERTABLE_GCWORKER_H
+#ifndef HYPERTABLE_TABLEMUTATORASYNCHANDLER_H
+#define HYPERTABLE_TABLEMUTATORASYNCHANDLER_H
 
-#include "Common/CstrHashMap.h"
-
-#include "Hypertable/Lib/Client.h"
-
-#include "Context.h"
+#include "AsyncComm/ApplicationHandler.h"
 
 namespace Hypertable {
 
-  typedef CstrHashMap<int> CountMap; // filename -> reference count
+  class TableMutatorAsync;
+  /**
+   * This class is a DispatchHandler
+   *
+   */
+  class TableMutatorAsyncHandler: public ApplicationHandler {
 
-  class GcWorker {
   public:
-    GcWorker(ContextPtr &context);
-    void gc();
+    /**
+     * Constructor.  Initializes state.
+     */
+    TableMutatorAsyncHandler(TableMutatorAsync *mutator, size_t scatter_buffer);
+
+    /**
+     */
+    virtual void run();
 
   private:
-    void scan_metadata(CountMap &files_map);
-    void delete_row(const std::string &row, TableMutatorSyncPtr &mutator);
-    void delete_cell(const Cell &cell, TableMutatorSyncPtr &mutator);
-    void insert_files(CountMap &map, const char *buf, size_t len, int c=0);
-    void insert_file(CountMap &map, const char *fname, int c);
-    void reap(CountMap &files_map);
-
-    ContextPtr m_context;
-    String     m_tables_dir;
+    TableMutatorAsync *m_mutator;
+    size_t m_scatter_buffer;
   };
+}
 
-} // namespace Hypertable
 
-#endif // HYPERTABLE_GCWORKER_H
+#endif // HYPERTABLE_TABLEMUTATORASYNCHANDLER_H

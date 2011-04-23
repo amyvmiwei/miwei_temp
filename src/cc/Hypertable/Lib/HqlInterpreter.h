@@ -31,6 +31,7 @@
 #include "TableDumper.h"
 #include "TableScanner.h"
 #include "TableMutator.h"
+#include "TableMutatorSync.h"
 
 namespace Hypertable {
 
@@ -94,6 +95,22 @@ namespace Hypertable {
           } while (!mutator->retry());
         }
       }
+
+      /** Called when interpreter is finished note, mutator pointer maybe NULL
+       * in case of things like load data ... into file
+       */
+      virtual void
+      on_finish(TableMutatorSync *mutator) {
+        if (mutator) try {
+          mutator->flush();
+        }
+        catch (Exception &e) {
+          do {
+            mutator->show_failed(e);
+          } while (!mutator->retry());
+        }
+      }
+
     };
 
     /** An example for simple queries that returns small number of results */

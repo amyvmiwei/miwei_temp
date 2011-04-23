@@ -152,11 +152,12 @@ namespace {
       outfile << e << endl;
       _exit(1);
     }
-    void update_ok(TableMutator *mutator, FailedMutations &failed_mutations) {
+
+    void update_ok(TableMutatorAsync *mutator) {
       outfile << "This should never happen" << endl;
       _exit(1);
     }
-    void update_error(TableMutator *mutator, int error, const String &error_msg) {
+    void update_error(TableMutatorAsync *mutator, int error, FailedMutations &failures) {
       outfile << "This should never happen" << endl;
       _exit(1);
     }
@@ -207,9 +208,9 @@ namespace {
     TablePtr table_location;
     TablePtr table_energy;
 
-    TableMutatorPtr mutator_color;
-    TableMutatorPtr mutator_location;
-    TableMutatorPtr mutator_energy;
+    TableMutatorSyncPtr mutator_color;
+    TableMutatorSyncPtr mutator_location;
+    TableMutatorSyncPtr mutator_energy;
 
     ns->drop_table("FruitColor", true);
     ns->drop_table("FruitLocation", true);
@@ -223,9 +224,9 @@ namespace {
     table_location    = ns->open_table("FruitLocation");
     table_energy      = ns->open_table("FruitEnergy");
 
-    mutator_color     = table_color->create_mutator();
-    mutator_location  = table_location->create_mutator();
-    mutator_energy    = table_energy->create_mutator();
+    mutator_color     = table_color->create_mutator_sync();
+    mutator_location  = table_location->create_mutator_sync();
+    mutator_energy    = table_energy->create_mutator_sync();
 
     key.column_family = "data";
     key.column_qualifier = 0;

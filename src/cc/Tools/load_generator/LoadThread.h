@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "Hypertable/Lib/Table.h"
-#include "Hypertable/Lib/TableMutator.h"
+#include "Hypertable/Lib/TableMutatorSync.h"
 
 #include "ParallelLoad.h"
 
@@ -40,7 +40,7 @@ namespace Hypertable {
 
   private:
     TablePtr m_table;
-    TableMutatorPtr m_mutator;
+    TableMutatorSyncPtr m_mutator;
     ::uint32_t m_mutator_flags;
     ParallelStateRec &m_state;
   };

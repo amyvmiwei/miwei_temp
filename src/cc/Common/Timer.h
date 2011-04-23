@@ -44,6 +44,17 @@ namespace Hypertable {
         start();
     }
 
+    // Assignment operator copy state but don't start
+    Timer& operator= (Timer &src) {
+      if (&src != this) {
+        m_running = false;
+        m_started = false;
+        m_duration = src.duration();
+        m_remaining = src.remaining();
+      }
+      return *this;
+    }
+
     void start() {
       if (!m_running) {
         boost::xtime_get(&start_time, boost::TIME_UTC);

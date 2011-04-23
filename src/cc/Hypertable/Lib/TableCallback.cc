@@ -21,18 +21,28 @@
 
 #include "Common/Compat.h"
 
-#include "TableScannerCallback.h"
+#include "TableCallback.h"
 #include "TableScanner.h"
+#include "TableMutatorSync.h"
 
 namespace Hypertable {
 
-void TableScannerCallback::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
+void TableCallback::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
   m_scanner->scan_ok(cells);
 }
 
-void TableScannerCallback::scan_error(TableScannerAsync *scanner, int error,
+void TableCallback::scan_error(TableScannerAsync *scanner, int error,
                                           const String &error_msg, bool eos) {
   m_scanner->scan_error(error, error_msg);
+}
+
+void TableCallback::update_ok(TableMutatorAsync *mutator) {
+  m_mutator->update_ok();
+}
+
+void TableCallback::update_error(TableMutatorAsync *mutator, int error,
+    FailedMutations &failures) {
+  m_mutator->update_error(error, failures);
 }
 
 } // namespace Hypertable

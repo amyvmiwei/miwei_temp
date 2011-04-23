@@ -1,0 +1,254 @@
+/** -*- c++ -*-
+ * Copyright (C) 2011 Hypertable, Inc.
+ *
+ * This file is part of Hypertable.
+ *
+ * Hypertable is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; version 2 of the
+ * License, or any later version.
+ *
+ * Hypertable is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ */
+
+#ifndef HYPERTABLE_TABLEMUTATORASYNC_H
+#define HYPERTABLE_TABLEMUTATORASYNC_H
+
+#include <iostream>
+
+#include "AsyncComm/ConnectionManager.h"
+
+#include "Common/Properties.h"
+#include "Common/StringExt.h"
+#include "Common/Timer.h"
+
+#include "Cells.h"
+#include "KeySpec.h"
+#include "Table.h"
+#include "TableMutatorAsyncScatterBuffer.h"
+#include "RangeLocator.h"
+#include "RangeServerClient.h"
+#include "Schema.h"
+#include "Types.h"
+
+namespace Hypertable {
+
+  /**
+   * Provides the ability to mutate a table in the form of adding and deleting
+   * rows and cells.  Objects of this class are used to collect mutations and
+   * periodically flush them to the appropriate range servers.  There is a 1 MB
+   * buffer of mutations for each range server.  When one of the buffers fills
+   * up all the buffers are flushed to their respective range servers.
+   */
+  class TableMutatorAsync : public ReferenceCount {
+
+  public:
+
+    /**
+     * Constructs the TableMutator object
+     *
+     * @param props reference to properties smart pointer
+     * @param comm pointer to the Comm layer
+     * @param app_queue pointer to the Application Queue
+     * @param table pointer to the table object
+     * @param range_locator smart pointer to range locator
+     * @param timeout_ms maximum time in milliseconds to allow methods
+     *        to execute before throwing an exception
+     * @param cb callback for this mutator
+     * @param flags rangeserver client update command flags
+     * @param max_buffers maximum number of scatter buffers to be used
+     * @param auto_flush_explicit if true TableMutatorAsync will not auto_flush unless auto_flush method is called explicitly
+     */
+    TableMutatorAsync(PropertiesPtr &props, Comm *comm,
+                 ApplicationQueuePtr &app_queue, Table *table,
+                 RangeLocatorPtr &range_locator, uint32_t timeout_ms, ResultCallback *cb,
+                 uint32_t flags = 0, uint32_t max_buffers=0, bool auto_flush_explicit=false);
+
+    /**
+     * Destructor for TableMutator object
+     * Make sure buffers are flushed and unsynced rangeservers get synced.
+     */
+    ~TableMutatorAsync();
+
+    /**
+     * Returns the amount of memory used by the collected mutations in the current buffer.
+     *
+     * @return amount of memory used by the collected mutations.
+     */
+    virtual uint64_t memory_used() { return m_memory_used; }
+
+    /**
+     * There are certain circumstances when mutations get flushed to the wrong
+     * range server due to stale range location information.  When the correct
+     * location information is discovered, these mutations get resent to the
+     * proper range server.  This method returns the number of mutations that
+     * were resent.
+     *
+     * @return number of mutations that were resent
+     */
+    uint64_t get_resend_count() { return m_resends; }
+
+    /**
+     * Inserts a cell into the table.
+     *
+     * @param key key of the cell being inserted
+     * @param value pointer to the value to store in the cell
+     * @param value_len length of data pointed to by value
+     */
+    void set(const KeySpec &key, const void *value, uint32_t value_len);
+
+    /**
+     * Convenient helper for null-terminated values
+     */
+    void set(const KeySpec &key, const char *value) {
+      if (value)
+        set(key, value, strlen(value));
+      else
+        set(key, 0, 0);
+    }
+
+    /**
+     * Convenient helper for String values
+     */
+    void set(const KeySpec &key, const String &value) {
+      set(key, value.data(), value.length());
+    }
+
+    /**
+     * Deletes an entire row, a column family in a particular row, or a specific
+     * cell within a row.
+     *
+     * @param key key of the row or cell(s) being deleted
+     */
+    void set_delete(const KeySpec &key);
+
+    /**
+     * Insert a bunch of cells into the table (atomically if cells are in
+     * the same range/row)
+     *
+     * @param cells a list of cells
+     */
+    void set_cells(const Cells &cells) {
+      set_cells(cells.begin(), cells.end());
+    }
+
+    /**
+     * Insert a bunch of cells into the table (atomically if cells are in
+     * the same range/row)
+     *
+     * @param cells a list of cells
+     */
+    void set_cells(Cells::const_iterator start, Cells::const_iterator end);
+
+    /**
+     * Flushes the current buffer accumulated mutations to their respective range servers.
+     */
+    void flush();
+
+    /**
+     * This is where buffers call back into when their outstanding operations are complete
+     * @param id id of the buffer
+     * @param error error code for finished buffer
+     * @param retry true if buffer has retries
+     */
+    void buffer_finish(uint32_t id, int error, bool retry);
+    void cancel();
+    bool is_cancelled();
+    void get_unsynced_rangeservers(std::vector<CommAddress> &unsynced);
+    TableMutatorAsyncScatterBufferPtr get_outstanding_buffer(size_t id);
+    uint32_t get_next_buffer_id() {
+      ScopedLock lock(m_buffer_mutex);
+      return ++m_next_buffer_id;
+    }
+    bool retry(uint32_t timeout_ms);
+    void recycle_buffer(TableMutatorAsyncScatterBufferPtr &buffer);
+    void get_failed_mutations(FailedMutations &failed_mutations) {
+      failed_mutations = m_failed_mutations;
+    }
+    bool has_outstanding() {
+      ScopedLock lock(m_buffer_mutex);
+      return (m_outstanding_buffers.size() !=0);
+    }
+    /**
+     * Calls sync on any unsynced rangeservers and waits for completion
+     */
+    void sync();
+    void auto_flush();
+
+  protected:
+    void wait_for_completion();
+  private:
+    enum Operation {
+      SET = 1,
+      SET_CELLS,
+      SET_DELETE,
+      FLUSH
+    };
+
+    void to_full_key(const void *row, const char *cf, const void *cq,
+                     int64_t ts, int64_t rev, uint8_t flag, Key &full_key, bool &unknown_cf);
+    void to_full_key(const KeySpec &key, Key &full_key, bool &unknown_cf) {
+      to_full_key(key.row, key.column_family, key.column_qualifier,
+                  key.timestamp, key.revision, FLAG_INSERT, full_key, unknown_cf);
+    }
+    void to_full_key(const Cell &cell, Key &full_key, bool &unknown_cf) {
+      to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,
+                  cell.timestamp, cell.revision, cell.flag, full_key, unknown_cf);
+    }
+    bool needs_flush();
+    void do_flush(bool auto_flush);
+    void update_unsynced_rangeservers(const CommAddressSet &unsynced);
+    void handle_send_exceptions();
+    typedef std::map<uint32_t, TableMutatorAsyncScatterBufferPtr> ScatterBufferAsyncMap;
+    PropertiesPtr        m_props;
+    Comm                *m_comm;
+    ApplicationQueuePtr  m_app_queue;
+    TablePtr             m_table;
+    SchemaPtr            m_schema;
+    RangeLocatorPtr      m_range_locator;
+    TableIdentifierManaged m_table_identifier;
+    uint64_t             m_memory_used;
+    uint64_t             m_max_memory;
+    ScatterBufferAsyncMap  m_outstanding_buffers;
+    ScatterBufferAsyncMap  m_free_buffers;
+    TableMutatorAsyncScatterBufferPtr m_current_buffer;
+    uint64_t             m_resends;
+    uint32_t             m_timeout_ms;
+    ResultCallback       *m_cb;
+    uint32_t             m_flags;
+    uint32_t             m_flush_delay;
+    CommAddressSet       m_unsynced_rangeservers;
+    int32_t     m_last_error;
+    int         m_last_op;
+    KeySpec     m_last_key;
+    const void *m_last_value;
+    uint32_t    m_last_value_len;
+    Cells::const_iterator m_last_cells_it;
+    Cells::const_iterator m_last_cells_end;
+    const static uint32_t ms_max_sync_retries = 5;
+
+    Mutex      m_mutex;
+    Mutex      m_cancel_mutex;
+    Mutex      m_buffer_mutex;
+    boost::condition m_cond;
+    uint32_t   m_max_buffers;
+    bool       m_auto_flush_explicit;
+    uint32_t   m_next_buffer_id;
+    bool       m_cancelled;
+    bool       m_mutated;
+    FailedMutations m_failed_mutations;
+  };
+
+  typedef intrusive_ptr<TableMutatorAsync> TableMutatorAsyncPtr;
+
+} // namespace Hypertable
+
+#endif // HYPERTABLE_TABLEMUTATORASYNC_H

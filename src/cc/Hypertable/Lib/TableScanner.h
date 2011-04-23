@@ -26,8 +26,7 @@
 #include "Common/ReferenceCount.h"
 #include "TableScannerQueue.h"
 #include "TableScannerAsync.h"
-#include "ResultCallback.h"
-#include "TableScannerCallback.h"
+#include "TableCallback.h"
 #include "ScanCells.h"
 
 namespace Hypertable {
@@ -42,13 +41,11 @@ namespace Hypertable {
      * Constructs a TableScanner object.
      *
      * @param comm pointer to the Comm layer
-     * @param app_queue pointer to ApplicationQueue
      * @param table pointer to the table object
      * @param range_locator smart pointer to range locator
      * @param scan_spec reference to scan specification object
      * @param timeout_ms maximum time in milliseconds to allow scanner
      *        methods to execute before throwing an exception
-     * @param max_queued_results max number of results to enqueue before blocking
      */
     TableScanner(Comm *comm, Table *table,  RangeLocatorPtr &range_locator,
                  const ScanSpec &scan_spec, uint32_t timeout_ms);
@@ -97,7 +94,7 @@ namespace Hypertable {
 
   private:
 
-    friend class TableScannerCallback;
+    friend class TableCallback;
     /**
      * Callback method for successful scan
      *
@@ -116,7 +113,7 @@ namespace Hypertable {
 
     TableScannerQueuePtr m_queue;
     TableScannerAsyncPtr m_scanner;
-    TableScannerCallback m_callback;
+    TableCallback m_callback;
     ScanCellsPtr m_cur_cells;
     size_t m_cur_cells_index;
     size_t m_cur_cells_size;

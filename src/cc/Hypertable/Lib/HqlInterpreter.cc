@@ -436,7 +436,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
 
   fout.strict_sync();
 
-  cb.on_finish(0);
+  cb.on_finish((TableMutator*)0);
 }
 
 
@@ -543,7 +543,7 @@ cmd_dump_table(NamespacePtr &ns,
 
   fout.strict_sync();
 
-  cb.on_finish(0);
+  cb.on_finish((TableMutator*)0);
 }
 
 void
@@ -553,7 +553,7 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
-  TableMutatorPtr mutator;
+  TableMutatorSyncPtr mutator;
   bool into_table = true;
   bool display_timestamps = false;
   boost::iostreams::filtering_ostream fout;
@@ -583,7 +583,7 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
     else
       fout.push(boost::iostreams::null_sink());
     table = ns->open_table(state.table_name);
-    mutator = table->create_mutator(0, mutator_flags);
+    mutator = table->create_mutator_sync(0, mutator_flags);
   }
 
   HT_ON_SCOPE_EXIT(&close_file, out_fd);
@@ -698,11 +698,11 @@ cmd_insert(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
-  TableMutatorPtr mutator;
+  TableMutatorSyncPtr mutator;
   const Cells &cells = state.inserts.get();
 
   table = ns->open_table(state.table_name);
-  mutator = table->create_mutator();
+  mutator = table->create_mutator_sync();
 
   try {
     mutator->set_cells(cells);
@@ -729,12 +729,12 @@ cmd_delete(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   TablePtr table;
-  TableMutatorPtr mutator;
+  TableMutatorSyncPtr mutator;
   KeySpec key;
   char *column_qualifier;
 
   table = ns->open_table(state.table_name);
-  mutator = table->create_mutator();
+  mutator = table->create_mutator_sync();
 
   key.row = state.delete_row.c_str();
   key.row_len = state.delete_row.length();

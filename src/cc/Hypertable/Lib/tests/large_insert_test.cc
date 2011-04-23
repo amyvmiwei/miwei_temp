@@ -89,7 +89,7 @@ int main(int argc, char **argv) {
     NamespacePtr ns = hypertable->open_namespace("/");
 
     TablePtr table_ptr;
-    TableMutatorPtr mutator_ptr;
+    TableMutatorSyncPtr mutator_ptr;
     TableScannerPtr scanner_ptr;
     KeySpec key;
     ScanSpec scan_spec;
@@ -104,7 +104,7 @@ int main(int argc, char **argv) {
 
     table_ptr = ns->open_table("BigTest");
 
-    mutator_ptr = table_ptr->create_mutator();
+    mutator_ptr = table_ptr->create_mutator_sync();
 
     key.column_family = "data";
     key.column_qualifier = 0;
@@ -155,7 +155,7 @@ int main(int argc, char **argv) {
 
     table_ptr = ns->open_table("BigTest");
 
-    mutator_ptr = table_ptr->create_mutator();
+    mutator_ptr = table_ptr->create_mutator_sync();
 
     key.column_family = "data";
     key.column_qualifier = 0;
