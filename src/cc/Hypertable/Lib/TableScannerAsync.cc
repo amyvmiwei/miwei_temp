@@ -185,6 +185,10 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
           abort = true;
         }
         break;
+      case(Error::RANGESERVER_INVALID_SCANNER_ID):
+        abort = !(m_interval_scanners[scanner_id]->is_destroyed_scanner(is_create));
+        next = true;
+        break;
       case(Error::RANGESERVER_RANGE_NOT_FOUND):
       case(Error::COMM_NOT_CONNECTED):
       case(Error::COMM_BROKEN_CONNECTION):
@@ -214,6 +218,9 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
     maybe_callback_error(scanner_id, next);
     if (next && scanner_id == m_current_scanner)
       move_to_next_interval_scanner(scanner_id, cancelled);
+  }
+  else if (next && scanner_id == m_current_scanner) {
+    move_to_next_interval_scanner(scanner_id, cancelled);
   }
 }
 

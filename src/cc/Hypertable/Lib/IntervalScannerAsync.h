@@ -71,6 +71,7 @@ namespace Hypertable {
     bool set_current(bool *show_results, ScanCellsPtr &cells, bool abort);
     inline bool has_outstanding_requests() { return m_create_outstanding || m_fetch_outstanding; }
     int64_t bytes_scanned() { return m_bytes_scanned; }
+    bool is_destroyed_scanner(bool is_create);
 
   private:
     void reset_outstanding_status(bool is_create, bool reset_timer);
@@ -115,6 +116,7 @@ namespace Hypertable {
     int                 m_cur_scanner_id;
     bool                m_create_event_saved;
     bool                m_aborted;
+    bool                m_invalid_scanner_id_ok;
   };
 
   typedef intrusive_ptr<IntervalScannerAsync> IntervalScannerAsyncPtr;
