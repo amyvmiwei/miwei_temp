@@ -35,7 +35,7 @@ void Hypertable::escape(String &str, const String &escape_chars) {
     memset(escaped, 0, 256*sizeof(bool));
     for (size_t i=0; i<escape_chars.length(); i++)
       escaped[(size_t)escape_chars[i]] = true;
-    escaped['\\'] = true;
+    escaped[(size_t)'\\'] = true;
 
     const char *src = str.c_str();
 
