@@ -1751,7 +1751,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
 
   foreach (TableUpdate *table_update, updates) {
 
-    HT_INFO_OUT <<"Update: "<< table_update->id << HT_END;
+    HT_DEBUG_OUT <<"Update: "<< table_update->id << HT_END;
 
     try {
       m_live_map->get(&table_update->id, table_update->table_info);
@@ -2100,7 +2100,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
       HT_WARNF("Table update for %s aborted, up to %u bytes of commits written to transfer logs",
                table_update->id.id, committed_transfer_data);
     else
-      HT_INFOF("Added %d (%d transferring) updates to '%s'",
+      HT_DEBUGF("Added %d (%d transferring) updates to '%s'",
                 table_update->total_added, table_update->transfer_count,
                 table_update->id.id);
     if (!table_update->id.is_metadata())
