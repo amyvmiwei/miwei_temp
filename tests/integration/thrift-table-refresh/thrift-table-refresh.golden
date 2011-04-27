@@ -1,0 +1,41 @@
+[test-1]
+row02	a	hello, world
+[test-2]
+row02	a	hello, world
+row03	b	thrift_insert.py
+[test-3]
+row02 a hello, world
+row03 b thrift_insert.py
+row04 c hello, world
+[test-4]
+row02 a hello, world
+row03 b thrift_insert.py
+row04 c hello, world
+row05 d hello, world
+[test-5]
+row02	a	hello, world
+row03	b	thrift_insert.py
+row04	c	hello, world
+row05	d	hello, world
+row06	e	hello, world
+row07	d	thrift_insert.py
+[test-6]
+row08 a hello, world
+row09 c thrift_insert.py
+[test-7]
+row08	a	hello, world
+row09	c	thrift_insert.py
+[test-8]
+HqlResult(mutator=None, cells=None, results=None, scanner=None)
+row08	a	hello, world
+row09	c	thrift_insert.py
+row10	f	hello, world
+[test-9]
+HqlResult(mutator=None, cells=None, results=None, scanner=None)
+row08	a	hello, world
+row09	c	thrift_insert.py
+row10	f	hello, world
+[test-10]
+HqlResult(mutator=None, cells=None, results=None, scanner=None)
+Error: Hypertable::Exception: foo - HYPERTABLE table does not exist
+ foo - HYPERTABLE table does not exist

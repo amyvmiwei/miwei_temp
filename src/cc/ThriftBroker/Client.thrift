@@ -180,6 +180,7 @@ struct ScanSpec {
   13:optional bool scan_and_filter_rows = 0
 }
 
+
 /** State flags for a key
  *
  * Note for maintainers: the definition must be sync'ed with FLAG_* constants
@@ -636,11 +637,8 @@ service ClientService {
    * @param ns - namespace id 
    * @param table_name - table name
    * @param scan_spec - scan specification
-   * @param retry_table_not_found - whether to retry upon errors caused by
-   *        drop/create tables with the same name
    */
-  Scanner open_scanner(1:Namespace ns, 2:string table_name, 3:ScanSpec scan_spec,
-                       4:bool retry_table_not_found = 0)
+  Scanner open_scanner(1:Namespace ns, 2:string table_name, 3:ScanSpec scan_spec)
       throws (1:ClientException e),
   
   /**
@@ -649,11 +647,9 @@ service ClientService {
    * @param table_name - table name
    * @param future - callback object
    * @param scan_spec - scan specification
-   * @param retry_table_not_found - whether to retry upon errors caused by
-   *        drop/create tables with the same name
    */
   ScannerAsync open_scanner_async(1:Namespace ns, 2:string table_name, 3:Future future, 
-                                  4:ScanSpec scan_spec, 5:bool retry_table_not_found = 0)
+                                  4:ScanSpec scan_spec)
       throws (1:ClientException e),
 
 

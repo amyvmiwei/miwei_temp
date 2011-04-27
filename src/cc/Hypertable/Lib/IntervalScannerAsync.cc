@@ -38,14 +38,13 @@ using namespace Hypertable;
 
 IntervalScannerAsync::IntervalScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
     Table *table, RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
-    uint32_t timeout_ms, bool retry_table_not_found, bool current,
-    TableScannerAsync *scanner, int id)
+    uint32_t timeout_ms, bool current, TableScannerAsync *scanner, int id)
   : m_comm(comm), m_table(table), m_range_locator(range_locator),
     m_loc_cache(range_locator->location_cache()),
     m_range_server(comm, timeout_ms), m_eos(false),
     m_fetch_outstanding(false), m_create_outstanding(false),
     m_end_inclusive(false), m_rows_seen(0), m_timeout_ms(timeout_ms),
-    m_retry_table_not_found(retry_table_not_found), m_current(current), m_bytes_scanned(0),
+    m_current(current), m_bytes_scanned(0),
     m_create_handler(app_queue, scanner, id, true),
     m_fetch_handler(app_queue, scanner, id, false),
     m_scanner(scanner), m_id(id), m_create_timer(timeout_ms), m_fetch_timer(timeout_ms),

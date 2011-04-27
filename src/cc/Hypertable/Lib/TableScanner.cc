@@ -37,7 +37,7 @@ using namespace Hypertable;
 
 TableScanner::TableScanner(Comm *comm, Table *table,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
-    uint32_t timeout_ms, bool retry_table_not_found)
+    uint32_t timeout_ms)
   : m_callback(this), m_cur_cells(0), m_cur_cells_index(0), m_cur_cells_size(0),
     m_error(Error::OK),
     m_eos(false), m_bytes_scanned(0) {
@@ -45,7 +45,7 @@ TableScanner::TableScanner(Comm *comm, Table *table,
   m_queue = new TableScannerQueue;
   ApplicationQueuePtr app_queue = (ApplicationQueue *)m_queue.get();
   m_scanner = new TableScannerAsync(comm, app_queue, table, range_locator, scan_spec,
-                                    timeout_ms, retry_table_not_found, &m_callback);
+                                    timeout_ms, &m_callback);
 }
 
 

@@ -35,7 +35,7 @@ sleep(2);
 
 echo "scanner examples\n";
 $scanner = $client->open_scanner($namespace, "thrift_test",
-    new Hypertable_ThriftGen_ScanSpec(array('revs'=> 1)), true);
+    new Hypertable_ThriftGen_ScanSpec(array('revs'=> 1)));
 
 $cells = $client->next_cells($scanner);
 

@@ -306,7 +306,7 @@ public class DriverHypertable extends Driver {
       scan_spec.addToRow_intervals(ri);
 
       try {
-        long scanner = mClient.open_scanner(mNamespaceId, mTableName, scan_spec, true);
+        long scanner = mClient.open_scanner(mNamespaceId, mTableName, scan_spec);
         while (!eos) {
           reader.reset( mClient.next_cells_serialized(scanner) );
           while (reader.next()) {

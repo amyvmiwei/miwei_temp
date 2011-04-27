@@ -25,6 +25,7 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
+#include "Table.h"
 #include "TableMutatorDispatchHandler.h"
 
 using namespace Hypertable;
@@ -35,8 +36,8 @@ using namespace Serialization;
  *
  */
 TableMutatorDispatchHandler::TableMutatorDispatchHandler(
-  TableMutatorSendBuffer *send_buffer, bool refresh_schema)
-  : m_send_buffer(send_buffer), m_refresh_schema(refresh_schema) {
+       TableMutatorSendBuffer *send_buffer, bool auto_refresh)
+  : m_send_buffer(send_buffer), m_auto_refresh(auto_refresh) {
 }
 
 
@@ -50,7 +51,9 @@ void TableMutatorDispatchHandler::handle(EventPtr &event_ptr) {
   if (event_ptr->type == Event::MESSAGE) {
     error = Protocol::response_code(event_ptr);
     if (error != Error::OK) {
-      if (error == Error::RANGESERVER_GENERATION_MISMATCH && m_refresh_schema)
+      if (m_auto_refresh &&
+          (error == Error::RANGESERVER_GENERATION_MISMATCH ||
+           error == Error::RANGESERVER_TABLE_NOT_FOUND))
         m_send_buffer->add_retries_all(true, error);
       else
         m_send_buffer->add_errors_all(error);

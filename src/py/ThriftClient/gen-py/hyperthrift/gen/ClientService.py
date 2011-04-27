@@ -132,39 +132,33 @@ class Iface:
     """
     pass
 
-  def open_scanner(self, ns, table_name, scan_spec, retry_table_not_found):
+  def open_scanner(self, ns, table_name, scan_spec):
     """
     Open a table scanner
     @param ns - namespace id
     @param table_name - table name
     @param scan_spec - scan specification
-    @param retry_table_not_found - whether to retry upon errors caused by
-           drop/create tables with the same name
 
     Parameters:
      - ns
      - table_name
      - scan_spec
-     - retry_table_not_found
     """
     pass
 
-  def open_scanner_async(self, ns, table_name, future, scan_spec, retry_table_not_found):
+  def open_scanner_async(self, ns, table_name, future, scan_spec):
     """
     Open an asynchronous table scanner
     @param ns - namespace id
     @param table_name - table name
     @param future - callback object
     @param scan_spec - scan specification
-    @param retry_table_not_found - whether to retry upon errors caused by
-           drop/create tables with the same name
 
     Parameters:
      - ns
      - table_name
      - future
      - scan_spec
-     - retry_table_not_found
     """
     pass
 
@@ -1079,31 +1073,27 @@ class Client(Iface):
       raise result.e
     return
 
-  def open_scanner(self, ns, table_name, scan_spec, retry_table_not_found):
+  def open_scanner(self, ns, table_name, scan_spec):
     """
     Open a table scanner
     @param ns - namespace id
     @param table_name - table name
     @param scan_spec - scan specification
-    @param retry_table_not_found - whether to retry upon errors caused by
-           drop/create tables with the same name
 
     Parameters:
      - ns
      - table_name
      - scan_spec
-     - retry_table_not_found
     """
-    self.send_open_scanner(ns, table_name, scan_spec, retry_table_not_found)
+    self.send_open_scanner(ns, table_name, scan_spec)
     return self.recv_open_scanner()
 
-  def send_open_scanner(self, ns, table_name, scan_spec, retry_table_not_found):
+  def send_open_scanner(self, ns, table_name, scan_spec):
     self._oprot.writeMessageBegin('open_scanner', TMessageType.CALL, self._seqid)
     args = open_scanner_args()
     args.ns = ns
     args.table_name = table_name
     args.scan_spec = scan_spec
-    args.retry_table_not_found = retry_table_not_found
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1124,34 +1114,30 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "open_scanner failed: unknown result");
 
-  def open_scanner_async(self, ns, table_name, future, scan_spec, retry_table_not_found):
+  def open_scanner_async(self, ns, table_name, future, scan_spec):
     """
     Open an asynchronous table scanner
     @param ns - namespace id
     @param table_name - table name
     @param future - callback object
     @param scan_spec - scan specification
-    @param retry_table_not_found - whether to retry upon errors caused by
-           drop/create tables with the same name
 
     Parameters:
      - ns
      - table_name
      - future
      - scan_spec
-     - retry_table_not_found
     """
-    self.send_open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found)
+    self.send_open_scanner_async(ns, table_name, future, scan_spec)
     return self.recv_open_scanner_async()
 
-  def send_open_scanner_async(self, ns, table_name, future, scan_spec, retry_table_not_found):
+  def send_open_scanner_async(self, ns, table_name, future, scan_spec):
     self._oprot.writeMessageBegin('open_scanner_async', TMessageType.CALL, self._seqid)
     args = open_scanner_async_args()
     args.ns = ns
     args.table_name = table_name
     args.future = future
     args.scan_spec = scan_spec
-    args.retry_table_not_found = retry_table_not_found
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -2923,7 +2909,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = open_scanner_result()
     try:
-      result.success = self._handler.open_scanner(args.ns, args.table_name, args.scan_spec, args.retry_table_not_found)
+      result.success = self._handler.open_scanner(args.ns, args.table_name, args.scan_spec)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("open_scanner", TMessageType.REPLY, seqid)
@@ -2937,7 +2923,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = open_scanner_async_result()
     try:
-      result.success = self._handler.open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec, args.retry_table_not_found)
+      result.success = self._handler.open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("open_scanner_async", TMessageType.REPLY, seqid)
@@ -4769,7 +4755,6 @@ class open_scanner_args:
    - ns
    - table_name
    - scan_spec
-   - retry_table_not_found
   """
 
   thrift_spec = (
@@ -4777,14 +4762,12 @@ class open_scanner_args:
     (1, TType.I64, 'ns', None, None, ), # 1
     (2, TType.STRING, 'table_name', None, None, ), # 2
     (3, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 3
-    (4, TType.BOOL, 'retry_table_not_found', None, False, ), # 4
   )
 
-  def __init__(self, ns=None, table_name=None, scan_spec=None, retry_table_not_found=thrift_spec[4][4],):
+  def __init__(self, ns=None, table_name=None, scan_spec=None,):
     self.ns = ns
     self.table_name = table_name
     self.scan_spec = scan_spec
-    self.retry_table_not_found = retry_table_not_found
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -4811,11 +4794,6 @@ class open_scanner_args:
           self.scan_spec.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 4:
-        if ftype == TType.BOOL:
-          self.retry_table_not_found = iprot.readBool();
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -4837,10 +4815,6 @@ class open_scanner_args:
     if self.scan_spec != None:
       oprot.writeFieldBegin('scan_spec', TType.STRUCT, 3)
       self.scan_spec.write(oprot)
-      oprot.writeFieldEnd()
-    if self.retry_table_not_found != None:
-      oprot.writeFieldBegin('retry_table_not_found', TType.BOOL, 4)
-      oprot.writeBool(self.retry_table_not_found)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -4937,7 +4911,6 @@ class open_scanner_async_args:
    - table_name
    - future
    - scan_spec
-   - retry_table_not_found
   """
 
   thrift_spec = (
@@ -4946,15 +4919,13 @@ class open_scanner_async_args:
     (2, TType.STRING, 'table_name', None, None, ), # 2
     (3, TType.I64, 'future', None, None, ), # 3
     (4, TType.STRUCT, 'scan_spec', (ScanSpec, ScanSpec.thrift_spec), None, ), # 4
-    (5, TType.BOOL, 'retry_table_not_found', None, False, ), # 5
   )
 
-  def __init__(self, ns=None, table_name=None, future=None, scan_spec=None, retry_table_not_found=thrift_spec[5][4],):
+  def __init__(self, ns=None, table_name=None, future=None, scan_spec=None,):
     self.ns = ns
     self.table_name = table_name
     self.future = future
     self.scan_spec = scan_spec
-    self.retry_table_not_found = retry_table_not_found
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -4986,11 +4957,6 @@ class open_scanner_async_args:
           self.scan_spec.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 5:
-        if ftype == TType.BOOL:
-          self.retry_table_not_found = iprot.readBool();
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -5016,10 +4982,6 @@ class open_scanner_async_args:
     if self.scan_spec != None:
       oprot.writeFieldBegin('scan_spec', TType.STRUCT, 4)
       self.scan_spec.write(oprot)
-      oprot.writeFieldEnd()
-    if self.retry_table_not_found != None:
-      oprot.writeFieldBegin('retry_table_not_found', TType.BOOL, 5)
-      oprot.writeBool(self.retry_table_not_found)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

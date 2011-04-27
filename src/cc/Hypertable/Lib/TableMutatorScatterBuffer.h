@@ -54,8 +54,8 @@ namespace Hypertable {
   class TableMutatorScatterBuffer : public ReferenceCount {
 
   public:
-    TableMutatorScatterBuffer(Comm *, const TableIdentifier *,
-                              SchemaPtr &, RangeLocatorPtr &, uint32_t timeout_ms);
+    TableMutatorScatterBuffer(Comm *, const TableIdentifier *, SchemaPtr &,
+                              RangeLocatorPtr &, bool auto_refresh, uint32_t timeout_ms);
     void set(const Key &, const void *value, uint32_t value_len, Timer &timer);
     void set_delete(const Key &key, Timer &timer);
     void set(SerializedKey key, ByteString value, Timer &timer);
@@ -90,13 +90,13 @@ namespace Hypertable {
     TableMutatorSendBufferMap m_buffer_map;
     TableMutatorCompletionCounter m_completion_counter;
     bool                 m_full;
+    bool                 m_auto_refresh;
     uint64_t             m_resends;
     FailedMutations      m_failed_mutations;
     FlyweightString      m_constant_strings;
     uint32_t             m_timeout_ms;
     uint32_t             m_server_flush_limit;
     uint32_t             m_last_send_flags;
-    bool                 m_refresh_schema;
     DynamicBuffer        m_counter_value;
   };
 

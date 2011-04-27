@@ -174,10 +174,10 @@ namespace Hypertable {
      * Opens a table
      *
      * @param name name of the table
-     * @param force by pass any cache if possible
+     * @param flags open flags
      * @return pointer to Table object
      */
-    TablePtr open_table(const String &name, bool force = false);
+    TablePtr open_table(const String &name, int32_t flags = 0);
 
     /**
      * Refreshes the cached table entry
@@ -259,7 +259,7 @@ namespace Hypertable {
     String get_full_name(const String &sub_name);
 
     void initialize();
-    TablePtr _open_table(const String &full_name, bool force=false);
+    TablePtr _open_table(const String &full_name, int32_t flags = 0);
 
     String                  m_name;
     String                  m_id;
@@ -273,7 +273,6 @@ namespace Hypertable {
     RangeLocatorPtr         m_range_locator;
     String                  m_toplevel_dir;
     bool                    m_hyperspace_reconnect;
-    bool                    m_refresh_schema;
     Mutex                   m_mutex;
     TableCachePtr           m_table_cache;
     uint32_t                m_timeout_ms;

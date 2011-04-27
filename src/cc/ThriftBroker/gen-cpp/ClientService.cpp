@@ -1759,14 +1759,6 @@ uint32_t ClientService_open_scanner_args::read(::apache::thrift::protocol::TProt
           xfer += iprot->skip(ftype);
         }
         break;
-      case 4:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->retry_table_not_found);
-          this->__isset.retry_table_not_found = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -1791,9 +1783,6 @@ uint32_t ClientService_open_scanner_args::write(::apache::thrift::protocol::TPro
   xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
   xfer += this->scan_spec.write(oprot);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("retry_table_not_found", ::apache::thrift::protocol::T_BOOL, 4);
-  xfer += oprot->writeBool(this->retry_table_not_found);
-  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -1810,9 +1799,6 @@ uint32_t ClientService_open_scanner_pargs::write(::apache::thrift::protocol::TPr
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 3);
   xfer += (*(this->scan_spec)).write(oprot);
-  xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("retry_table_not_found", ::apache::thrift::protocol::T_BOOL, 4);
-  xfer += oprot->writeBool((*(this->retry_table_not_found)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -1987,14 +1973,6 @@ uint32_t ClientService_open_scanner_async_args::read(::apache::thrift::protocol:
           xfer += iprot->skip(ftype);
         }
         break;
-      case 5:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->retry_table_not_found);
-          this->__isset.retry_table_not_found = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -2022,9 +2000,6 @@ uint32_t ClientService_open_scanner_async_args::write(::apache::thrift::protocol
   xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 4);
   xfer += this->scan_spec.write(oprot);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("retry_table_not_found", ::apache::thrift::protocol::T_BOOL, 5);
-  xfer += oprot->writeBool(this->retry_table_not_found);
-  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -2044,9 +2019,6 @@ uint32_t ClientService_open_scanner_async_pargs::write(::apache::thrift::protoco
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldBegin("scan_spec", ::apache::thrift::protocol::T_STRUCT, 4);
   xfer += (*(this->scan_spec)).write(oprot);
-  xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("retry_table_not_found", ::apache::thrift::protocol::T_BOOL, 5);
-  xfer += oprot->writeBool((*(this->retry_table_not_found)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -10728,13 +10700,13 @@ void ClientServiceClient::recv_close_future()
   return;
 }
 
-Scanner ClientServiceClient::open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found)
+Scanner ClientServiceClient::open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec)
 {
-  send_open_scanner(ns, table_name, scan_spec, retry_table_not_found);
+  send_open_scanner(ns, table_name, scan_spec);
   return recv_open_scanner();
 }
 
-void ClientServiceClient::send_open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found)
+void ClientServiceClient::send_open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("open_scanner", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -10743,7 +10715,6 @@ void ClientServiceClient::send_open_scanner(const Namespace ns, const std::strin
   args.ns = &ns;
   args.table_name = &table_name;
   args.scan_spec = &scan_spec;
-  args.retry_table_not_found = &retry_table_not_found;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -10792,13 +10763,13 @@ Scanner ClientServiceClient::recv_open_scanner()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "open_scanner failed: unknown result");
 }
 
-ScannerAsync ClientServiceClient::open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found)
+ScannerAsync ClientServiceClient::open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec)
 {
-  send_open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found);
+  send_open_scanner_async(ns, table_name, future, scan_spec);
   return recv_open_scanner_async();
 }
 
-void ClientServiceClient::send_open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found)
+void ClientServiceClient::send_open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("open_scanner_async", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -10808,7 +10779,6 @@ void ClientServiceClient::send_open_scanner_async(const Namespace ns, const std:
   args.table_name = &table_name;
   args.future = &future;
   args.scan_spec = &scan_spec;
-  args.retry_table_not_found = &retry_table_not_found;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -13830,7 +13800,7 @@ void ClientServiceProcessor::process_open_scanner(int32_t seqid, ::apache::thrif
 
   ClientService_open_scanner_result result;
   try {
-    result.success = iface_->open_scanner(args.ns, args.table_name, args.scan_spec, args.retry_table_not_found);
+    result.success = iface_->open_scanner(args.ns, args.table_name, args.scan_spec);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
@@ -13887,7 +13857,7 @@ void ClientServiceProcessor::process_open_scanner_async(int32_t seqid, ::apache:
 
   ClientService_open_scanner_async_result result;
   try {
-    result.success = iface_->open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec, args.retry_table_not_found);
+    result.success = iface_->open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;

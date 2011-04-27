@@ -52,14 +52,12 @@ namespace Hypertable {
      * @param scan_spec reference to scan specification object
      * @param timeout_ms maximum time in milliseconds to allow scanner
      *        methods to execute before throwing an exception
-     * @param retry_table_not_found whether to retry upon errors caused by
-     *        drop/create tables with the same name
      * @param cb callback to be notified when results arrive
      */
     TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
                       RangeLocatorPtr &range_locator,
                       const ScanSpec &scan_spec, uint32_t timeout_ms,
-                      bool retry_table_not_found, ResultCallback *cb);
+                      ResultCallback *cb);
 
     ~TableScannerAsync();
 
@@ -135,7 +133,6 @@ namespace Hypertable {
 
     std::vector<IntervalScannerAsyncPtr>  m_interval_scanners;
     uint32_t            m_timeout_ms;
-    bool                m_retry_table_not_found;
     int64_t             m_bytes_scanned;
     typedef std::set<const char *, LtCstr> CstrRowSet;
     CstrRowSet          m_rowset;

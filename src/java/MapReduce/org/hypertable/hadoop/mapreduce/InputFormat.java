@@ -107,7 +107,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         InterruptedException {
       try {
         m_ns = m_client.open_namespace(m_namespace);
-        m_scanner = m_client.open_scanner(m_ns, m_tablename, m_scan_spec, true);
+        m_scanner = m_client.open_scanner(m_ns, m_tablename, m_scan_spec);
       }
       catch (TTransportException e) {
         e.printStackTrace();

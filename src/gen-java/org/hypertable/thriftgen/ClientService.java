@@ -125,15 +125,12 @@ public class ClientService {
      * @param ns - namespace id
      * @param table_name - table name
      * @param scan_spec - scan specification
-     * @param retry_table_not_found - whether to retry upon errors caused by
-     *        drop/create tables with the same name
      * 
      * @param ns
      * @param table_name
      * @param scan_spec
-     * @param retry_table_not_found
      */
-    public long open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, org.apache.thrift.TException;
+    public long open_scanner(long ns, String table_name, ScanSpec scan_spec) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Open an asynchronous table scanner
@@ -141,16 +138,13 @@ public class ClientService {
      * @param table_name - table name
      * @param future - callback object
      * @param scan_spec - scan specification
-     * @param retry_table_not_found - whether to retry upon errors caused by
-     *        drop/create tables with the same name
      * 
      * @param ns
      * @param table_name
      * @param future
      * @param scan_spec
-     * @param retry_table_not_found
      */
-    public long open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, org.apache.thrift.TException;
+    public long open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Close a table scanner
@@ -640,9 +634,9 @@ public class ClientService {
 
     public void close_future(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_future_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.open_scanner_call> resultHandler) throws org.apache.thrift.TException;
+    public void open_scanner(long ns, String table_name, ScanSpec scan_spec, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.open_scanner_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.open_scanner_async_call> resultHandler) throws org.apache.thrift.TException;
+    public void open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.open_scanner_async_call> resultHandler) throws org.apache.thrift.TException;
 
     public void close_scanner(long scanner, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_scanner_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -1138,20 +1132,19 @@ public class ClientService {
       return;
     }
 
-    public long open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, org.apache.thrift.TException
+    public long open_scanner(long ns, String table_name, ScanSpec scan_spec) throws ClientException, org.apache.thrift.TException
     {
-      send_open_scanner(ns, table_name, scan_spec, retry_table_not_found);
+      send_open_scanner(ns, table_name, scan_spec);
       return recv_open_scanner();
     }
 
-    public void send_open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found) throws org.apache.thrift.TException
+    public void send_open_scanner(long ns, String table_name, ScanSpec scan_spec) throws org.apache.thrift.TException
     {
       oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("open_scanner", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       open_scanner_args args = new open_scanner_args();
       args.setNs(ns);
       args.setTable_name(table_name);
       args.setScan_spec(scan_spec);
-      args.setRetry_table_not_found(retry_table_not_found);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -1180,13 +1173,13 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "open_scanner failed: unknown result");
     }
 
-    public long open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found) throws ClientException, org.apache.thrift.TException
+    public long open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec) throws ClientException, org.apache.thrift.TException
     {
-      send_open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found);
+      send_open_scanner_async(ns, table_name, future, scan_spec);
       return recv_open_scanner_async();
     }
 
-    public void send_open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found) throws org.apache.thrift.TException
+    public void send_open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec) throws org.apache.thrift.TException
     {
       oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("open_scanner_async", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       open_scanner_async_args args = new open_scanner_async_args();
@@ -1194,7 +1187,6 @@ public class ClientService {
       args.setTable_name(table_name);
       args.setFuture(future);
       args.setScan_spec(scan_spec);
-      args.setRetry_table_not_found(retry_table_not_found);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -3083,9 +3075,9 @@ public class ClientService {
       }
     }
 
-    public void open_scanner(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found, org.apache.thrift.async.AsyncMethodCallback<open_scanner_call> resultHandler) throws org.apache.thrift.TException {
+    public void open_scanner(long ns, String table_name, ScanSpec scan_spec, org.apache.thrift.async.AsyncMethodCallback<open_scanner_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      open_scanner_call method_call = new open_scanner_call(ns, table_name, scan_spec, retry_table_not_found, resultHandler, this, protocolFactory, transport);
+      open_scanner_call method_call = new open_scanner_call(ns, table_name, scan_spec, resultHandler, this, protocolFactory, transport);
       this.currentMethod = method_call;
       manager.call(method_call);
     }
@@ -3094,13 +3086,11 @@ public class ClientService {
       private long ns;
       private String table_name;
       private ScanSpec scan_spec;
-      private boolean retry_table_not_found;
-      public open_scanner_call(long ns, String table_name, ScanSpec scan_spec, boolean retry_table_not_found, org.apache.thrift.async.AsyncMethodCallback<open_scanner_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public open_scanner_call(long ns, String table_name, ScanSpec scan_spec, org.apache.thrift.async.AsyncMethodCallback<open_scanner_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.table_name = table_name;
         this.scan_spec = scan_spec;
-        this.retry_table_not_found = retry_table_not_found;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -3109,7 +3099,6 @@ public class ClientService {
         args.setNs(ns);
         args.setTable_name(table_name);
         args.setScan_spec(scan_spec);
-        args.setRetry_table_not_found(retry_table_not_found);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -3124,9 +3113,9 @@ public class ClientService {
       }
     }
 
-    public void open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found, org.apache.thrift.async.AsyncMethodCallback<open_scanner_async_call> resultHandler) throws org.apache.thrift.TException {
+    public void open_scanner_async(long ns, String table_name, long future, ScanSpec scan_spec, org.apache.thrift.async.AsyncMethodCallback<open_scanner_async_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      open_scanner_async_call method_call = new open_scanner_async_call(ns, table_name, future, scan_spec, retry_table_not_found, resultHandler, this, protocolFactory, transport);
+      open_scanner_async_call method_call = new open_scanner_async_call(ns, table_name, future, scan_spec, resultHandler, this, protocolFactory, transport);
       this.currentMethod = method_call;
       manager.call(method_call);
     }
@@ -3136,14 +3125,12 @@ public class ClientService {
       private String table_name;
       private long future;
       private ScanSpec scan_spec;
-      private boolean retry_table_not_found;
-      public open_scanner_async_call(long ns, String table_name, long future, ScanSpec scan_spec, boolean retry_table_not_found, org.apache.thrift.async.AsyncMethodCallback<open_scanner_async_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public open_scanner_async_call(long ns, String table_name, long future, ScanSpec scan_spec, org.apache.thrift.async.AsyncMethodCallback<open_scanner_async_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.table_name = table_name;
         this.future = future;
         this.scan_spec = scan_spec;
-        this.retry_table_not_found = retry_table_not_found;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -3153,7 +3140,6 @@ public class ClientService {
         args.setTable_name(table_name);
         args.setFuture(future);
         args.setScan_spec(scan_spec);
-        args.setRetry_table_not_found(retry_table_not_found);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -5048,7 +5034,7 @@ public class ClientService {
         iprot.readMessageEnd();
         open_scanner_result result = new open_scanner_result();
         try {
-          result.success = iface_.open_scanner(args.ns, args.table_name, args.scan_spec, args.retry_table_not_found);
+          result.success = iface_.open_scanner(args.ns, args.table_name, args.scan_spec);
           result.setSuccessIsSet(true);
         } catch (ClientException e) {
           result.e = e;
@@ -5087,7 +5073,7 @@ public class ClientService {
         iprot.readMessageEnd();
         open_scanner_async_result result = new open_scanner_async_result();
         try {
-          result.success = iface_.open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec, args.retry_table_not_found);
+          result.success = iface_.open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec);
           result.setSuccessIsSet(true);
         } catch (ClientException e) {
           result.e = e;
@@ -13142,19 +13128,16 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
     private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
     private static final org.apache.thrift.protocol.TField SCAN_SPEC_FIELD_DESC = new org.apache.thrift.protocol.TField("scan_spec", org.apache.thrift.protocol.TType.STRUCT, (short)3);
-    private static final org.apache.thrift.protocol.TField RETRY_TABLE_NOT_FOUND_FIELD_DESC = new org.apache.thrift.protocol.TField("retry_table_not_found", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
     public long ns;
     public String table_name;
     public ScanSpec scan_spec;
-    public boolean retry_table_not_found;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       NS((short)1, "ns"),
       TABLE_NAME((short)2, "table_name"),
-      SCAN_SPEC((short)3, "scan_spec"),
-      RETRY_TABLE_NOT_FOUND((short)4, "retry_table_not_found");
+      SCAN_SPEC((short)3, "scan_spec");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -13175,8 +13158,6 @@ public class ClientService {
             return TABLE_NAME;
           case 3: // SCAN_SPEC
             return SCAN_SPEC;
-          case 4: // RETRY_TABLE_NOT_FOUND
-            return RETRY_TABLE_NOT_FOUND;
           default:
             return null;
         }
@@ -13218,8 +13199,7 @@ public class ClientService {
 
     // isset id assignments
     private static final int __NS_ISSET_ID = 0;
-    private static final int __RETRY_TABLE_NOT_FOUND_ISSET_ID = 1;
-    private BitSet __isset_bit_vector = new BitSet(2);
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
@@ -13230,30 +13210,23 @@ public class ClientService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.SCAN_SPEC, new org.apache.thrift.meta_data.FieldMetaData("scan_spec", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ScanSpec.class)));
-      tmpMap.put(_Fields.RETRY_TABLE_NOT_FOUND, new org.apache.thrift.meta_data.FieldMetaData("retry_table_not_found", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(open_scanner_args.class, metaDataMap);
     }
 
     public open_scanner_args() {
-      this.retry_table_not_found = false;
-
     }
 
     public open_scanner_args(
       long ns,
       String table_name,
-      ScanSpec scan_spec,
-      boolean retry_table_not_found)
+      ScanSpec scan_spec)
     {
       this();
       this.ns = ns;
       setNsIsSet(true);
       this.table_name = table_name;
       this.scan_spec = scan_spec;
-      this.retry_table_not_found = retry_table_not_found;
-      setRetry_table_not_foundIsSet(true);
     }
 
     /**
@@ -13269,7 +13242,6 @@ public class ClientService {
       if (other.isSetScan_spec()) {
         this.scan_spec = new ScanSpec(other.scan_spec);
       }
-      this.retry_table_not_found = other.retry_table_not_found;
     }
 
     public open_scanner_args deepCopy() {
@@ -13282,8 +13254,6 @@ public class ClientService {
       this.ns = 0;
       this.table_name = null;
       this.scan_spec = null;
-      this.retry_table_not_found = false;
-
     }
 
     public long getNs() {
@@ -13357,29 +13327,6 @@ public class ClientService {
       }
     }
 
-    public boolean isRetry_table_not_found() {
-      return this.retry_table_not_found;
-    }
-
-    public open_scanner_args setRetry_table_not_found(boolean retry_table_not_found) {
-      this.retry_table_not_found = retry_table_not_found;
-      setRetry_table_not_foundIsSet(true);
-      return this;
-    }
-
-    public void unsetRetry_table_not_found() {
-      __isset_bit_vector.clear(__RETRY_TABLE_NOT_FOUND_ISSET_ID);
-    }
-
-    /** Returns true if field retry_table_not_found is set (has been assigned a value) and false otherwise */
-    public boolean isSetRetry_table_not_found() {
-      return __isset_bit_vector.get(__RETRY_TABLE_NOT_FOUND_ISSET_ID);
-    }
-
-    public void setRetry_table_not_foundIsSet(boolean value) {
-      __isset_bit_vector.set(__RETRY_TABLE_NOT_FOUND_ISSET_ID, value);
-    }
-
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case NS:
@@ -13406,14 +13353,6 @@ public class ClientService {
         }
         break;
 
-      case RETRY_TABLE_NOT_FOUND:
-        if (value == null) {
-          unsetRetry_table_not_found();
-        } else {
-          setRetry_table_not_found((Boolean)value);
-        }
-        break;
-
       }
     }
 
@@ -13427,9 +13366,6 @@ public class ClientService {
 
       case SCAN_SPEC:
         return getScan_spec();
-
-      case RETRY_TABLE_NOT_FOUND:
-        return new Boolean(isRetry_table_not_found());
 
       }
       throw new IllegalStateException();
@@ -13448,8 +13384,6 @@ public class ClientService {
         return isSetTable_name();
       case SCAN_SPEC:
         return isSetScan_spec();
-      case RETRY_TABLE_NOT_FOUND:
-        return isSetRetry_table_not_found();
       }
       throw new IllegalStateException();
     }
@@ -13491,15 +13425,6 @@ public class ClientService {
         if (!(this_present_scan_spec && that_present_scan_spec))
           return false;
         if (!this.scan_spec.equals(that.scan_spec))
-          return false;
-      }
-
-      boolean this_present_retry_table_not_found = true;
-      boolean that_present_retry_table_not_found = true;
-      if (this_present_retry_table_not_found || that_present_retry_table_not_found) {
-        if (!(this_present_retry_table_not_found && that_present_retry_table_not_found))
-          return false;
-        if (this.retry_table_not_found != that.retry_table_not_found)
           return false;
       }
 
@@ -13549,16 +13474,6 @@ public class ClientService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetRetry_table_not_found()).compareTo(typedOther.isSetRetry_table_not_found());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetRetry_table_not_found()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.retry_table_not_found, typedOther.retry_table_not_found);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       return 0;
     }
 
@@ -13599,14 +13514,6 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 4: // RETRY_TABLE_NOT_FOUND
-            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
-              this.retry_table_not_found = iprot.readBool();
-              setRetry_table_not_foundIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -13635,9 +13542,6 @@ public class ClientService {
         this.scan_spec.write(oprot);
         oprot.writeFieldEnd();
       }
-      oprot.writeFieldBegin(RETRY_TABLE_NOT_FOUND_FIELD_DESC);
-      oprot.writeBool(this.retry_table_not_found);
-      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -13666,10 +13570,6 @@ public class ClientService {
         sb.append(this.scan_spec);
       }
       first = false;
-      if (!first) sb.append(", ");
-      sb.append("retry_table_not_found:");
-      sb.append(this.retry_table_not_found);
-      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -13688,6 +13588,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -14088,21 +13990,18 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
     private static final org.apache.thrift.protocol.TField FUTURE_FIELD_DESC = new org.apache.thrift.protocol.TField("future", org.apache.thrift.protocol.TType.I64, (short)3);
     private static final org.apache.thrift.protocol.TField SCAN_SPEC_FIELD_DESC = new org.apache.thrift.protocol.TField("scan_spec", org.apache.thrift.protocol.TType.STRUCT, (short)4);
-    private static final org.apache.thrift.protocol.TField RETRY_TABLE_NOT_FOUND_FIELD_DESC = new org.apache.thrift.protocol.TField("retry_table_not_found", org.apache.thrift.protocol.TType.BOOL, (short)5);
 
     public long ns;
     public String table_name;
     public long future;
     public ScanSpec scan_spec;
-    public boolean retry_table_not_found;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       NS((short)1, "ns"),
       TABLE_NAME((short)2, "table_name"),
       FUTURE((short)3, "future"),
-      SCAN_SPEC((short)4, "scan_spec"),
-      RETRY_TABLE_NOT_FOUND((short)5, "retry_table_not_found");
+      SCAN_SPEC((short)4, "scan_spec");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -14125,8 +14024,6 @@ public class ClientService {
             return FUTURE;
           case 4: // SCAN_SPEC
             return SCAN_SPEC;
-          case 5: // RETRY_TABLE_NOT_FOUND
-            return RETRY_TABLE_NOT_FOUND;
           default:
             return null;
         }
@@ -14169,8 +14066,7 @@ public class ClientService {
     // isset id assignments
     private static final int __NS_ISSET_ID = 0;
     private static final int __FUTURE_ISSET_ID = 1;
-    private static final int __RETRY_TABLE_NOT_FOUND_ISSET_ID = 2;
-    private BitSet __isset_bit_vector = new BitSet(3);
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
@@ -14183,23 +14079,18 @@ public class ClientService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Future")));
       tmpMap.put(_Fields.SCAN_SPEC, new org.apache.thrift.meta_data.FieldMetaData("scan_spec", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ScanSpec.class)));
-      tmpMap.put(_Fields.RETRY_TABLE_NOT_FOUND, new org.apache.thrift.meta_data.FieldMetaData("retry_table_not_found", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(open_scanner_async_args.class, metaDataMap);
     }
 
     public open_scanner_async_args() {
-      this.retry_table_not_found = false;
-
     }
 
     public open_scanner_async_args(
       long ns,
       String table_name,
       long future,
-      ScanSpec scan_spec,
-      boolean retry_table_not_found)
+      ScanSpec scan_spec)
     {
       this();
       this.ns = ns;
@@ -14208,8 +14099,6 @@ public class ClientService {
       this.future = future;
       setFutureIsSet(true);
       this.scan_spec = scan_spec;
-      this.retry_table_not_found = retry_table_not_found;
-      setRetry_table_not_foundIsSet(true);
     }
 
     /**
@@ -14226,7 +14115,6 @@ public class ClientService {
       if (other.isSetScan_spec()) {
         this.scan_spec = new ScanSpec(other.scan_spec);
       }
-      this.retry_table_not_found = other.retry_table_not_found;
     }
 
     public open_scanner_async_args deepCopy() {
@@ -14241,8 +14129,6 @@ public class ClientService {
       setFutureIsSet(false);
       this.future = 0;
       this.scan_spec = null;
-      this.retry_table_not_found = false;
-
     }
 
     public long getNs() {
@@ -14339,29 +14225,6 @@ public class ClientService {
       }
     }
 
-    public boolean isRetry_table_not_found() {
-      return this.retry_table_not_found;
-    }
-
-    public open_scanner_async_args setRetry_table_not_found(boolean retry_table_not_found) {
-      this.retry_table_not_found = retry_table_not_found;
-      setRetry_table_not_foundIsSet(true);
-      return this;
-    }
-
-    public void unsetRetry_table_not_found() {
-      __isset_bit_vector.clear(__RETRY_TABLE_NOT_FOUND_ISSET_ID);
-    }
-
-    /** Returns true if field retry_table_not_found is set (has been assigned a value) and false otherwise */
-    public boolean isSetRetry_table_not_found() {
-      return __isset_bit_vector.get(__RETRY_TABLE_NOT_FOUND_ISSET_ID);
-    }
-
-    public void setRetry_table_not_foundIsSet(boolean value) {
-      __isset_bit_vector.set(__RETRY_TABLE_NOT_FOUND_ISSET_ID, value);
-    }
-
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case NS:
@@ -14396,14 +14259,6 @@ public class ClientService {
         }
         break;
 
-      case RETRY_TABLE_NOT_FOUND:
-        if (value == null) {
-          unsetRetry_table_not_found();
-        } else {
-          setRetry_table_not_found((Boolean)value);
-        }
-        break;
-
       }
     }
 
@@ -14420,9 +14275,6 @@ public class ClientService {
 
       case SCAN_SPEC:
         return getScan_spec();
-
-      case RETRY_TABLE_NOT_FOUND:
-        return new Boolean(isRetry_table_not_found());
 
       }
       throw new IllegalStateException();
@@ -14443,8 +14295,6 @@ public class ClientService {
         return isSetFuture();
       case SCAN_SPEC:
         return isSetScan_spec();
-      case RETRY_TABLE_NOT_FOUND:
-        return isSetRetry_table_not_found();
       }
       throw new IllegalStateException();
     }
@@ -14495,15 +14345,6 @@ public class ClientService {
         if (!(this_present_scan_spec && that_present_scan_spec))
           return false;
         if (!this.scan_spec.equals(that.scan_spec))
-          return false;
-      }
-
-      boolean this_present_retry_table_not_found = true;
-      boolean that_present_retry_table_not_found = true;
-      if (this_present_retry_table_not_found || that_present_retry_table_not_found) {
-        if (!(this_present_retry_table_not_found && that_present_retry_table_not_found))
-          return false;
-        if (this.retry_table_not_found != that.retry_table_not_found)
           return false;
       }
 
@@ -14563,16 +14404,6 @@ public class ClientService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetRetry_table_not_found()).compareTo(typedOther.isSetRetry_table_not_found());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetRetry_table_not_found()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.retry_table_not_found, typedOther.retry_table_not_found);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       return 0;
     }
 
@@ -14621,14 +14452,6 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 5: // RETRY_TABLE_NOT_FOUND
-            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
-              this.retry_table_not_found = iprot.readBool();
-              setRetry_table_not_foundIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -14660,9 +14483,6 @@ public class ClientService {
         this.scan_spec.write(oprot);
         oprot.writeFieldEnd();
       }
-      oprot.writeFieldBegin(RETRY_TABLE_NOT_FOUND_FIELD_DESC);
-      oprot.writeBool(this.retry_table_not_found);
-      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -14695,10 +14515,6 @@ public class ClientService {
         sb.append(this.scan_spec);
       }
       first = false;
-      if (!first) sb.append(", ");
-      sb.append("retry_table_not_found:");
-      sb.append(this.retry_table_not_found);
-      first = false;
       sb.append(")");
       return sb.toString();
     }
@@ -14717,6 +14533,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);

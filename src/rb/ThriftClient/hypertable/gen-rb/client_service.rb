@@ -168,13 +168,13 @@ require 'client_types'
                   return
                 end
 
-                def open_scanner(ns, table_name, scan_spec, retry_table_not_found)
-                  send_open_scanner(ns, table_name, scan_spec, retry_table_not_found)
+                def open_scanner(ns, table_name, scan_spec)
+                  send_open_scanner(ns, table_name, scan_spec)
                   return recv_open_scanner()
                 end
 
-                def send_open_scanner(ns, table_name, scan_spec, retry_table_not_found)
-                  send_message('open_scanner', Open_scanner_args, :ns => ns, :table_name => table_name, :scan_spec => scan_spec, :retry_table_not_found => retry_table_not_found)
+                def send_open_scanner(ns, table_name, scan_spec)
+                  send_message('open_scanner', Open_scanner_args, :ns => ns, :table_name => table_name, :scan_spec => scan_spec)
                 end
 
                 def recv_open_scanner()
@@ -184,13 +184,13 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_scanner failed: unknown result')
                 end
 
-                def open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found)
-                  send_open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found)
+                def open_scanner_async(ns, table_name, future, scan_spec)
+                  send_open_scanner_async(ns, table_name, future, scan_spec)
                   return recv_open_scanner_async()
                 end
 
-                def send_open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found)
-                  send_message('open_scanner_async', Open_scanner_async_args, :ns => ns, :table_name => table_name, :future => future, :scan_spec => scan_spec, :retry_table_not_found => retry_table_not_found)
+                def send_open_scanner_async(ns, table_name, future, scan_spec)
+                  send_message('open_scanner_async', Open_scanner_async_args, :ns => ns, :table_name => table_name, :future => future, :scan_spec => scan_spec)
                 end
 
                 def recv_open_scanner_async()
@@ -925,7 +925,7 @@ require 'client_types'
                   args = read_args(iprot, Open_scanner_args)
                   result = Open_scanner_result.new()
                   begin
-                    result.success = @handler.open_scanner(args.ns, args.table_name, args.scan_spec, args.retry_table_not_found)
+                    result.success = @handler.open_scanner(args.ns, args.table_name, args.scan_spec)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -936,7 +936,7 @@ require 'client_types'
                   args = read_args(iprot, Open_scanner_async_args)
                   result = Open_scanner_async_result.new()
                   begin
-                    result.success = @handler.open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec, args.retry_table_not_found)
+                    result.success = @handler.open_scanner_async(args.ns, args.table_name, args.future, args.scan_spec)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -1711,13 +1711,11 @@ require 'client_types'
                 NS = 1
                 TABLE_NAME = 2
                 SCAN_SPEC = 3
-                RETRY_TABLE_NOT_FOUND = 4
 
                 FIELDS = {
                   NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
                   TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
-                  SCAN_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec},
-                  RETRY_TABLE_NOT_FOUND => {:type => ::Thrift::Types::BOOL, :name => 'retry_table_not_found', :default => false}
+                  SCAN_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec}
                 }
 
                 def struct_fields; FIELDS; end
@@ -1752,14 +1750,12 @@ require 'client_types'
                 TABLE_NAME = 2
                 FUTURE = 3
                 SCAN_SPEC = 4
-                RETRY_TABLE_NOT_FOUND = 5
 
                 FIELDS = {
                   NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
                   TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
                   FUTURE => {:type => ::Thrift::Types::I64, :name => 'future'},
-                  SCAN_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec},
-                  RETRY_TABLE_NOT_FOUND => {:type => ::Thrift::Types::BOOL, :name => 'retry_table_not_found', :default => false}
+                  SCAN_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'scan_spec', :class => Hypertable::ThriftGen::ScanSpec}
                 }
 
                 def struct_fields; FIELDS; end

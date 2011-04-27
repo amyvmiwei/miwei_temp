@@ -51,8 +51,6 @@ namespace Hypertable {
      * @param scan_spec reference to scan specification object
      * @param timeout_ms maximum time in milliseconds to allow scanner
      *        methods to execute before throwing an exception
-     * @param retry_table_not_found whether to retry upon errors caused by
-     *        drop/create tables with the same name
      * @param current is this scanner the current scanner being used
      * @param scanner pointer to table scanner
      * @param id scanner id
@@ -60,8 +58,7 @@ namespace Hypertable {
     IntervalScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
                          RangeLocatorPtr &range_locator,
                          const ScanSpec &scan_spec, uint32_t timeout_ms,
-                         bool retry_table_not_found, bool current,
-                         TableScannerAsync *scanner, int id);
+                         bool current, TableScannerAsync *scanner, int id);
 
     virtual ~IntervalScannerAsync();
 
@@ -105,7 +102,6 @@ namespace Hypertable {
     bool                m_end_inclusive;
     int32_t             m_rows_seen;
     uint32_t            m_timeout_ms;
-    bool                m_retry_table_not_found;
     bool                m_current;
     int64_t             m_bytes_scanned;
     CstrSet             m_rowset;

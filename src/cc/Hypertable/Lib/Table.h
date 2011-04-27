@@ -49,11 +49,18 @@ namespace Hypertable {
   class Table : public ReferenceCount {
 
   public:
+
+    enum {
+      OPEN_FLAG_BYPASS_TABLE_CACHE           = 0x01,
+      OPEN_FLAG_REFRESH_TABLE_CACHE          = 0x02,
+      OPEN_FLAG_NO_AUTO_TABLE_REFRESH        = 0x04
+    };
+
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
-          NameIdMapperPtr &namemap, const String &name);
+          NameIdMapperPtr &namemap, const String &name, int32_t flags=0);
     Table(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
           Hyperspace::SessionPtr &, ApplicationQueuePtr &, NameIdMapperPtr &namemap,
-          const String &name, uint32_t default_timeout_ms);
+          const String &name, int32_t flags, uint32_t default_timeout_ms);
     virtual ~Table();
 
     /**
@@ -76,30 +83,27 @@ namespace Hypertable {
      * @param scan_spec scan specification
      * @param timeout_ms maximum time in milliseconds to allow
      *        scanner methods to execute before throwing an exception
-     * @param retry_table_not_found whether to retry upon errors caused by
-     *        drop/create tables with the same name
+     * @param scanner flags
      * @return pointer to scanner object
      */
     TableScanner *create_scanner(const ScanSpec &scan_spec,
-                                 uint32_t timeout_ms = 0,
-                                 bool retry_table_not_found = false);
+                                 uint32_t timeout_ms = 0, int32_t flags = 0);
 
 
     /**
      * Creates an asynchronous scanner on this table
      *
+     * @param cb callback to be notified when scan results arrive
      * @param scan_spec scan specification
      * @param timeout_ms maximum time in milliseconds to allow
      *        scanner methods to execute before throwing an exception
-     * @param retry_table_not_found whether to retry upon errors caused by
-     *        drop/create tables with the same name
-     * @param cb callback to be notified when scan results arrive
+     * @param scanner flags
      * @return pointer to scanner object
      */
     TableScannerAsync *create_scanner_async(ResultCallback *cb,
                                             const ScanSpec &scan_spec,
                                             uint32_t timeout_ms = 0,
-                                            bool retry_table_not_found = false);
+                                            int32_t flags = 0);
 
     void get_identifier(TableIdentifier *table_id_p) {
       memcpy(table_id_p, &m_table, sizeof(TableIdentifier));
@@ -138,6 +142,12 @@ namespace Hypertable {
       return m_stale;
     }
 
+    bool auto_refresh() {
+      return (m_flags & OPEN_FLAG_NO_AUTO_TABLE_REFRESH) == 0;
+    }
+    
+    int32_t get_flags() { return m_flags; }
+
   private:
     void initialize();
 
@@ -152,6 +162,7 @@ namespace Hypertable {
     NameIdMapperPtr        m_namemap;
     String                 m_name;
     TableIdentifierManaged m_table;
+    int32_t                m_flags;
     int                    m_timeout_ms;
     bool                   m_stale;
     String                 m_toplevel_dir;

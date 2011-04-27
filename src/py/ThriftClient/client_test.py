@@ -32,7 +32,7 @@ try:
 
   print "scanner examples";
   scanner = client.open_scanner(namespace, "thrift_test",
-                                ScanSpec(None, None, None, 1), True);
+                                ScanSpec(None, None, None, 1));
 
   while True:
     cells = client.next_cells(scanner)
@@ -42,9 +42,9 @@ try:
   
   print "asynchronous scanner examples\n";
   future = client.open_future(0);
-  color_scanner = client.open_scanner_async(namespace, "FruitColor", future, ScanSpec(None, None, None, 1), True);
-  location_scanner = client.open_scanner_async(namespace, "FruitLocation", future, ScanSpec(None, None, None, 1), True);
-  energy_scanner = client.open_scanner_async(namespace, "FruitEnergy", future, ScanSpec(None, None, None, 1), True);
+  color_scanner = client.open_scanner_async(namespace, "FruitColor", future, ScanSpec(None, None, None, 1));
+  location_scanner = client.open_scanner_async(namespace, "FruitLocation", future, ScanSpec(None, None, None, 1));
+  energy_scanner = client.open_scanner_async(namespace, "FruitEnergy", future, ScanSpec(None, None, None, 1));
 
   
   expected_cells = 6;
@@ -65,7 +65,7 @@ try:
 
   print "regexp scanner example";
   scanner = client.open_scanner(namespace, "thrift_test",
-      ScanSpec(None, None, None, 1, 0, None, None, ["col"], False,0, "k", "v[24]"), True);
+      ScanSpec(None, None, None, 1, 0, None, None, ["col"], False,0, "k", "v[24]"));
 
   while True:
     cells = client.next_cells(scanner)

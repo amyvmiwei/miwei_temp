@@ -24,8 +24,8 @@ class ClientServiceIf {
   virtual void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) = 0;
   virtual void get_future_result_serialized(ResultSerialized& _return, const Future ff) = 0;
   virtual void close_future(const Future ff) = 0;
-  virtual Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found) = 0;
-  virtual ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found) = 0;
+  virtual Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) = 0;
+  virtual ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec) = 0;
   virtual void close_scanner(const Scanner scanner) = 0;
   virtual void close_scanner_async(const ScannerAsync scanner) = 0;
   virtual void next_cells(std::vector<Cell> & _return, const Scanner scanner) = 0;
@@ -102,11 +102,11 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void close_future(const Future /* ff */) {
     return;
   }
-  Scanner open_scanner(const Namespace /* ns */, const std::string& /* table_name */, const ScanSpec& /* scan_spec */, const bool /* retry_table_not_found */) {
+  Scanner open_scanner(const Namespace /* ns */, const std::string& /* table_name */, const ScanSpec& /* scan_spec */) {
     Scanner _return = 0;
     return _return;
   }
-  ScannerAsync open_scanner_async(const Namespace /* ns */, const std::string& /* table_name */, const Future /* future */, const ScanSpec& /* scan_spec */, const bool /* retry_table_not_found */) {
+  ScannerAsync open_scanner_async(const Namespace /* ns */, const std::string& /* table_name */, const Future /* future */, const ScanSpec& /* scan_spec */) {
     ScannerAsync _return = 0;
     return _return;
   }
@@ -1273,17 +1273,16 @@ class ClientService_close_future_presult {
 };
 
 typedef struct _ClientService_open_scanner_args__isset {
-  _ClientService_open_scanner_args__isset() : ns(false), table_name(false), scan_spec(false), retry_table_not_found(false) {}
+  _ClientService_open_scanner_args__isset() : ns(false), table_name(false), scan_spec(false) {}
   bool ns;
   bool table_name;
   bool scan_spec;
-  bool retry_table_not_found;
 } _ClientService_open_scanner_args__isset;
 
 class ClientService_open_scanner_args {
  public:
 
-  ClientService_open_scanner_args() : ns(0), table_name(""), retry_table_not_found(false) {
+  ClientService_open_scanner_args() : ns(0), table_name("") {
   }
 
   virtual ~ClientService_open_scanner_args() throw() {}
@@ -1291,7 +1290,6 @@ class ClientService_open_scanner_args {
   Namespace ns;
   std::string table_name;
   ScanSpec scan_spec;
-  bool retry_table_not_found;
 
   _ClientService_open_scanner_args__isset __isset;
 
@@ -1302,8 +1300,6 @@ class ClientService_open_scanner_args {
     if (!(table_name == rhs.table_name))
       return false;
     if (!(scan_spec == rhs.scan_spec))
-      return false;
-    if (!(retry_table_not_found == rhs.retry_table_not_found))
       return false;
     return true;
   }
@@ -1328,7 +1324,6 @@ class ClientService_open_scanner_pargs {
   const Namespace* ns;
   const std::string* table_name;
   const ScanSpec* scan_spec;
-  const bool* retry_table_not_found;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1394,18 +1389,17 @@ class ClientService_open_scanner_presult {
 };
 
 typedef struct _ClientService_open_scanner_async_args__isset {
-  _ClientService_open_scanner_async_args__isset() : ns(false), table_name(false), future(false), scan_spec(false), retry_table_not_found(false) {}
+  _ClientService_open_scanner_async_args__isset() : ns(false), table_name(false), future(false), scan_spec(false) {}
   bool ns;
   bool table_name;
   bool future;
   bool scan_spec;
-  bool retry_table_not_found;
 } _ClientService_open_scanner_async_args__isset;
 
 class ClientService_open_scanner_async_args {
  public:
 
-  ClientService_open_scanner_async_args() : ns(0), table_name(""), future(0), retry_table_not_found(false) {
+  ClientService_open_scanner_async_args() : ns(0), table_name(""), future(0) {
   }
 
   virtual ~ClientService_open_scanner_async_args() throw() {}
@@ -1414,7 +1408,6 @@ class ClientService_open_scanner_async_args {
   std::string table_name;
   Future future;
   ScanSpec scan_spec;
-  bool retry_table_not_found;
 
   _ClientService_open_scanner_async_args__isset __isset;
 
@@ -1427,8 +1420,6 @@ class ClientService_open_scanner_async_args {
     if (!(future == rhs.future))
       return false;
     if (!(scan_spec == rhs.scan_spec))
-      return false;
-    if (!(retry_table_not_found == rhs.retry_table_not_found))
       return false;
     return true;
   }
@@ -1454,7 +1445,6 @@ class ClientService_open_scanner_async_pargs {
   const std::string* table_name;
   const Future* future;
   const ScanSpec* scan_spec;
-  const bool* retry_table_not_found;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -5840,11 +5830,11 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void close_future(const Future ff);
   void send_close_future(const Future ff);
   void recv_close_future();
-  Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found);
-  void send_open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found);
+  Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec);
+  void send_open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec);
   Scanner recv_open_scanner();
-  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found);
-  void send_open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found);
+  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec);
+  void send_open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec);
   ScannerAsync recv_open_scanner_async();
   void close_scanner(const Scanner scanner);
   void send_close_scanner(const Scanner scanner);
@@ -6192,24 +6182,24 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found) {
+  Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->open_scanner(ns, table_name, scan_spec, retry_table_not_found);
+        return ifaces_[i]->open_scanner(ns, table_name, scan_spec);
       } else {
-        ifaces_[i]->open_scanner(ns, table_name, scan_spec, retry_table_not_found);
+        ifaces_[i]->open_scanner(ns, table_name, scan_spec);
       }
     }
   }
 
-  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found) {
+  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found);
+        return ifaces_[i]->open_scanner_async(ns, table_name, future, scan_spec);
       } else {
-        ifaces_[i]->open_scanner_async(ns, table_name, future, scan_spec, retry_table_not_found);
+        ifaces_[i]->open_scanner_async(ns, table_name, future, scan_spec);
       }
     }
   }

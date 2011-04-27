@@ -87,7 +87,7 @@ public class BasicClientTest {
       // scanner examples
       System.out.println("Full scan");
       ScanSpec scanSpec = new ScanSpec(); // empty scan spec select all
-      long scanner = client.open_scanner(ns, "thrift_test", scanSpec, true);
+      long scanner = client.open_scanner(ns, "thrift_test", scanSpec);
 
       try {
         List<Cell> cells = client.next_cells(scanner);
@@ -104,7 +104,7 @@ public class BasicClientTest {
       scanSpec.addToColumns("col:/^.*$/");
       scanSpec.setRow_regexp("java.*");
       scanSpec.setValue_regexp("v2");
-      scanner = client.open_scanner(ns, "thrift_test", scanSpec, true);
+      scanner = client.open_scanner(ns, "thrift_test", scanSpec);
       System.out.println("Restricted scan");
       try {
         List<Cell> cells = client.next_cells(scanner);
@@ -130,9 +130,9 @@ public class BasicClientTest {
         System.out.println("Asynchronous scan");
         ScanSpec ss = new ScanSpec();
         future = client.open_future(0);
-        color_scanner = client.open_scanner_async(ns, "FruitColor", future, ss, true);
-        location_scanner = client.open_scanner_async(ns, "FruitLocation", future, ss, true);
-        energy_scanner = client.open_scanner_async(ns, "FruitEnergy", future, ss, true);
+        color_scanner = client.open_scanner_async(ns, "FruitColor", future, ss);
+        location_scanner = client.open_scanner_async(ns, "FruitLocation", future, ss);
+        energy_scanner = client.open_scanner_async(ns, "FruitEnergy", future, ss);
         Result result;
         while (true) {
           result = client.get_future_result(future);
