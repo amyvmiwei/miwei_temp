@@ -1642,7 +1642,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   if (m_update_delay)
     poll(0, 0, m_update_delay);
 
-  HT_DEBUG_OUT <<"Update:\n"<< *table << HT_END;
+  HT_DEBUG_OUT <<"Update: "<< *table << HT_END;
 
   if (!m_replay_finished) {
     if (table->is_metadata()) {
@@ -1751,7 +1751,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
 
   foreach (TableUpdate *table_update, updates) {
 
-    HT_DEBUG_OUT <<"Update:\n"<< table_update->id << HT_END;
+    HT_INFO_OUT <<"Update: "<< table_update->id << HT_END;
 
     try {
       m_live_map->get(&table_update->id, table_update->table_info);
@@ -2100,7 +2100,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
       HT_WARNF("Table update for %s aborted, up to %u bytes of commits written to transfer logs",
                table_update->id.id, committed_transfer_data);
     else
-      HT_DEBUGF("Added %d (%d transferring) updates to '%s'",
+      HT_INFOF("Added %d (%d transferring) updates to '%s'",
                 table_update->total_added, table_update->transfer_count,
                 table_update->id.id);
     if (!table_update->id.is_metadata())
@@ -2547,8 +2547,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
           Global::range_locator = new Hypertable::RangeLocator(m_props, m_conn_manager,
                                                                Global::hyperspace, timeout_ms);
         Global::rs_metrics_table = new Table(m_props, Global::range_locator, m_conn_manager,
-                                           Global::hyperspace, m_app_queue, m_namemap,
-                                           "sys/RS_METRICS", timeout_ms);
+                                             Global::hyperspace, m_app_queue, m_namemap,
+                                             "sys/RS_METRICS", 0, timeout_ms);
       }
       catch (Hypertable::Exception &e) {
         HT_ERRORF("Unable to open 'sys/RS_METRICS' - %s (%s)",
@@ -2814,7 +2814,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
                                                              Global::hyperspace, timeout_ms);
       Global::metadata_table = new Table(m_props, Global::range_locator, m_conn_manager,
           Global::hyperspace, m_app_queue, m_namemap, TableIdentifier::METADATA_NAME,
-          timeout_ms);
+          0, timeout_ms);
     }
 
     schema = table_info->get_schema();

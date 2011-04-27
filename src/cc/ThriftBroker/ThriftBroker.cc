@@ -491,13 +491,11 @@ public:
   }
 
   virtual Scanner
-  open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss,
-               bool retry_table_not_found) {
+  open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss) {
     LOG_API("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
-      Scanner id = get_scanner_id(_open_scanner(ns, table, ss,
-                                                retry_table_not_found).get());
+      Scanner id = get_scanner_id(_open_scanner(ns, table, ss).get());
       LOG_API("scanner="<< id);
       return id;
     } RETHROW()
@@ -506,12 +504,11 @@ public:
   virtual ScannerAsync
   open_scanner_async(const ThriftGen::Namespace ns, const String &table,
                      const ThriftGen::Future ff,
-                     const ThriftGen::ScanSpec &ss, bool retry_table_not_found) {
+                     const ThriftGen::ScanSpec &ss) {
     LOG_API("namespace=" << ns << " table="<< table << " future=" << ff << " scan_spec="<< ss);
 
     try {
-      ScannerAsync id = get_scanner_async_id(_open_scanner_async(ns, table, ff, ss,
-                                                                 retry_table_not_found).get());
+      ScannerAsync id = get_scanner_async_id(_open_scanner_async(ns, table, ff, ss).get());
       LOG_API("scanner_async="<< id);
       return id;
     } RETHROW()
@@ -733,7 +730,7 @@ public:
     LOG_API("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
-      TableScannerPtr scanner = _open_scanner(ns, table, ss, true);
+      TableScannerPtr scanner = _open_scanner(ns, table, ss);
       _next(result, scanner, INT32_MAX);
       LOG_API("namespace=" << ns << " table="<< table <<" result.size="<< result.size());
     } RETHROW()
@@ -745,7 +742,7 @@ public:
     LOG_API("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
-      TableScannerPtr scanner = _open_scanner(ns, table, ss, true);
+      TableScannerPtr scanner = _open_scanner(ns, table, ss);
       _next(result, scanner, INT32_MAX);
       LOG_API("namespace=" << ns << " table="<< table <<" result.size="<< result.size());
     } RETHROW()
@@ -758,7 +755,7 @@ public:
 
     try {
       SerializedCellsWriter writer(0, true);
-      TableScannerPtr scanner = _open_scanner(ns, table, ss, true);
+      TableScannerPtr scanner = _open_scanner(ns, table, ss);
       Hypertable::Cell cell;
 
       while (scanner->next(cell))
@@ -1271,25 +1268,23 @@ public:
 
   TableScannerAsyncPtr
   _open_scanner_async(const ThriftGen::Namespace ns, const String &table,
-                      const ThriftGen::Future ff, const ThriftGen::ScanSpec &ss,
-                      bool retry_table_not_found) {
+                      const ThriftGen::Future ff, const ThriftGen::ScanSpec &ss) {
     NamespacePtr namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
     FuturePtr &future_ptr = get_future(ff);
 
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
-    return t->create_scanner_async(future_ptr.get(), hss, 0, retry_table_not_found);
+    return t->create_scanner_async(future_ptr.get(), hss, 0);
   }
 
   TableScannerPtr
-  _open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss,
-                bool retry_table_not_found) {
+  _open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss) {
     NamespacePtr namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
-    return t->create_scanner(hss, 0, retry_table_not_found);
+    return t->create_scanner(hss, 0);
   }
 
   template <class CellT>

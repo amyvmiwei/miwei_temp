@@ -72,12 +72,12 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("close_future\n");
   }
 
-  Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec, const bool retry_table_not_found) {
+  Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) {
     // Your implementation goes here
     printf("open_scanner\n");
   }
 
-  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec, const bool retry_table_not_found) {
+  ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec) {
     // Your implementation goes here
     printf("open_scanner_async\n");
   }

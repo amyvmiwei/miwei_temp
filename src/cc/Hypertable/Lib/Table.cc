@@ -41,10 +41,11 @@ using namespace Hyperspace;
 
 
 Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
-             Hyperspace::SessionPtr &hyperspace, NameIdMapperPtr &namemap, const String &name)
+             Hyperspace::SessionPtr &hyperspace, NameIdMapperPtr &namemap,
+             const String &name, int32_t flags)
   : m_props(props), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_namemap(namemap), m_name(name),
-    m_stale(true) {
+    m_flags(flags), m_stale(true) {
 
   m_timeout_ms = props->get_i32("Hypertable.Request.Timeout");
   initialize();
@@ -57,14 +58,13 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
 
 
 Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
-    ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-    ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, const String &name,
-    uint32_t timeout_ms)
+             ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
+             ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, const String &name,
+             int32_t flags, uint32_t timeout_ms)
   : m_props(props), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace),
     m_range_locator(range_locator), m_app_queue(app_queue), m_namemap(namemap),
-    m_name(name), m_timeout_ms(timeout_ms), m_stale(true) {
-
+    m_name(name), m_flags(flags), m_timeout_ms(timeout_ms), m_stale(true) {
   initialize();
 }
 
@@ -85,23 +85,13 @@ void Table::initialize() {
 
 
   // Convert table name to ID string
-  if (m_table.id == 0) {
-    bool is_namespace;
 
-    if (!m_namemap->name_to_id(m_name, table_id, &is_namespace) ||
-        is_namespace)
-      HT_THROW(Error::TABLE_NOT_FOUND, m_name);
-    m_table.set_id(table_id);
-  }
-  else {
-    bool is_namespace;
-    String new_name;
+  bool is_namespace;
 
-    if (!m_namemap->id_to_name(m_table.id, new_name, &is_namespace) ||
-        is_namespace)
-      HT_THROWF(Error::TABLE_NOT_FOUND, "%s (%s)", table_id.c_str(), m_name.c_str());
-    m_name = new_name;
-  }
+  if (!m_namemap->name_to_id(m_name, table_id, &is_namespace) ||
+      is_namespace)
+    HT_THROW(Error::TABLE_NOT_FOUND, m_name);
+  m_table.set_id(table_id);
 
   tablefile = m_toplevel_dir + "/tables/" + m_table.id;
 
@@ -186,16 +176,14 @@ Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
 
 TableScanner *
 Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms,
-                      bool retry_table_not_found) {
+                      int32_t flags) {
   return new TableScanner(m_comm, this, m_range_locator, scan_spec,
-                          timeout_ms ? timeout_ms : m_timeout_ms,
-                          retry_table_not_found);
+                          timeout_ms ? timeout_ms : m_timeout_ms);
 }
 
 TableScannerAsync *
 Table::create_scanner_async(ResultCallback *cb, const ScanSpec &scan_spec, uint32_t timeout_ms,
-                            bool retry_table_not_found) {
+                            int32_t flags) {
   return  new TableScannerAsync(m_comm, m_app_queue, this, m_range_locator, scan_spec,
-                                timeout_ms ? timeout_ms : m_timeout_ms, retry_table_not_found,
-                                cb);
+                                timeout_ms ? timeout_ms : m_timeout_ms, cb);
 }

@@ -34,8 +34,8 @@ module Hypertable
       end
     end
 
-    def with_scanner(namespace, table, scan_spec, retry_table_not_found = true)
-      scanner = open_scanner(namespace, table, scan_spec, retry_table_not_found)
+    def with_scanner(namespace, table, scan_spec)
+      scanner = open_scanner(namespace, table, scan_spec)
       begin
         yield scanner
       ensure

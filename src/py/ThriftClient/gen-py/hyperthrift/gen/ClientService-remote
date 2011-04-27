@@ -31,8 +31,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  ResultAsArrays get_future_result_as_arrays(Future ff)'
   print '  ResultSerialized get_future_result_serialized(Future ff)'
   print '  void close_future(Future ff)'
-  print '  Scanner open_scanner(Namespace ns, string table_name, ScanSpec scan_spec, bool retry_table_not_found)'
-  print '  ScannerAsync open_scanner_async(Namespace ns, string table_name, Future future, ScanSpec scan_spec, bool retry_table_not_found)'
+  print '  Scanner open_scanner(Namespace ns, string table_name, ScanSpec scan_spec)'
+  print '  ScannerAsync open_scanner_async(Namespace ns, string table_name, Future future, ScanSpec scan_spec)'
   print '  void close_scanner(Scanner scanner)'
   print '  void close_scanner_async(ScannerAsync scanner)'
   print '   next_cells(Scanner scanner)'
@@ -183,16 +183,16 @@ elif cmd == 'close_future':
   pp.pprint(client.close_future(eval(args[0]),))
 
 elif cmd == 'open_scanner':
-  if len(args) != 4:
-    print 'open_scanner requires 4 args'
+  if len(args) != 3:
+    print 'open_scanner requires 3 args'
     sys.exit(1)
-  pp.pprint(client.open_scanner(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
+  pp.pprint(client.open_scanner(eval(args[0]),args[1],eval(args[2]),))
 
 elif cmd == 'open_scanner_async':
-  if len(args) != 5:
-    print 'open_scanner_async requires 5 args'
+  if len(args) != 4:
+    print 'open_scanner_async requires 4 args'
     sys.exit(1)
-  pp.pprint(client.open_scanner_async(eval(args[0]),args[1],eval(args[2]),eval(args[3]),eval(args[4]),))
+  pp.pprint(client.open_scanner_async(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
 elif cmd == 'close_scanner':
   if len(args) != 1:

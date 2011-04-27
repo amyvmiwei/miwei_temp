@@ -39,12 +39,11 @@ void RequestHandlerDump::run() {
   try {
     outfile = Serialization::decode_vstr(&decode_ptr, &decode_remain);
     nokeys = Serialization::decode_bool(&decode_ptr, &decode_remain);
+    m_range_server->dump(&cb, outfile, nokeys);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    cb.error(Error::PROTOCOL_ERROR, "Error decoding DUMP request");
-    return;
+    cb.error(e.code(), e.what());
   }
 
-  m_range_server->dump(&cb, outfile, nokeys);
 }

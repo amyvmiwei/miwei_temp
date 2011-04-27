@@ -194,8 +194,6 @@ void Client::initialize() {
 
   m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
 
-  m_refresh_schema = m_props->get_bool("Hypertable.Client.RefreshSchema");
-
   Timer timer(m_timeout_ms, true);
 
   remaining = timer.remaining();

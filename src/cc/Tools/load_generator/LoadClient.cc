@@ -172,7 +172,7 @@ LoadClient::create_scanner(const String &tablename, const ScanSpec &scan_spec)
     thrift_scan_spec.__isset.columns = thrift_scan_spec.__isset.row_intervals = true;
 
     m_thrift_scanner = m_thrift_client->open_scanner(m_thrift_namespace, tablename,
-                                                     thrift_scan_spec, true);
+                                                     thrift_scan_spec);
 #endif
   }
   else {

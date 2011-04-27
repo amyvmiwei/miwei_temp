@@ -62,7 +62,7 @@ TableMutator::TableMutator(PropertiesPtr & props, Comm *comm, Table *table,
   : m_comm(comm), m_table(table), m_range_locator(range_locator),
     m_memory_used(0), m_resends(0), m_timeout_ms(timeout_ms), m_flags(flags),
     m_prev_buffer_flags(0), m_flush_delay(0), m_last_error(Error::OK),
-    m_last_op(0) {
+    m_last_op(0), m_mutated(false) {
 
   HT_ASSERT(timeout_ms);
 
@@ -70,9 +70,8 @@ TableMutator::TableMutator(PropertiesPtr & props, Comm *comm, Table *table,
 
   m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
   m_max_memory = props->get_i64("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate");
-  m_refresh_schema = props->get_bool("Hypertable.Client.RefreshSchema");
   m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
-      m_schema, m_range_locator, timeout_ms);
+                m_schema, m_range_locator, m_table->auto_refresh(), timeout_ms);
 }
 
 TableMutator::~TableMutator() {
@@ -196,7 +195,7 @@ TableMutator::to_full_key(const void *row, const char *column_family,
   Schema::ColumnFamily *cf = m_schema->get_column_family(column_family);
 
   if (!cf) {
-    if (m_refresh_schema) {
+    if (m_table->auto_refresh()) {
       m_table->refresh(m_table_identifier, m_schema);
       m_buffer->refresh_schema(m_table_identifier, m_schema);
       cf = m_schema->get_column_family(column_family);
@@ -240,7 +239,7 @@ void TableMutator::auto_flush(Timer &timer) {
       m_prev_buffer = m_buffer;
       m_prev_buffer_flags = m_flags;
       m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
-          m_schema, m_range_locator, m_timeout_ms);
+                m_schema, m_range_locator, m_table->get_flags(), m_timeout_ms);
       m_memory_used = 0;
     }
     HT_RETHROW("auto flushing")
@@ -334,7 +333,9 @@ void TableMutator::sync() {
           retry_count++;
           sync_handler.get_errors(errors);
           for (size_t i=0; i<errors.size(); i++) {
-            if (errors[i].error == Error::RANGESERVER_GENERATION_MISMATCH && m_refresh_schema)
+            if (m_table->auto_refresh() &&
+                (errors[i].error == Error::RANGESERVER_GENERATION_MISMATCH ||
+                 !m_mutated && errors[i].error == Error::RANGESERVER_TABLE_NOT_FOUND))
               do_refresh = true;
             else
               HT_ERRORF("commit log sync error - %s - %s", errors[i].msg.c_str(),
@@ -391,11 +392,14 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
       // Re-send failed updates
       m_prev_buffer->send(m_rangeserver_flags_map, m_prev_buffer_flags);
     }
+    m_mutated = true;
   }
   catch (Exception &e) {
     m_last_error = e.code();
 
-    if (m_refresh_schema && m_last_error == Error::RANGESERVER_GENERATION_MISMATCH) {
+    if (m_table->auto_refresh() &&
+        (m_last_error == Error::RANGESERVER_GENERATION_MISMATCH || 
+         !m_mutated && m_last_error == Error::RANGESERVER_TABLE_NOT_FOUND)) {
       m_table->refresh(m_table_identifier, m_schema);
       m_prev_buffer->refresh_schema(m_table_identifier, m_schema);
       // redo buffer is needed to resend (ranges split/moves etc)

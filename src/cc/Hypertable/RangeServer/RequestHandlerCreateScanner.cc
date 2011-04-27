@@ -63,6 +63,6 @@ void RequestHandlerCreateScanner::run() {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    cb.error(Error::PROTOCOL_ERROR, "Error handling create scanner message");
+    cb.error(e.code(), e.what());
   }
 }

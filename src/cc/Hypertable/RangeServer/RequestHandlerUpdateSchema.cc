@@ -51,6 +51,6 @@ void RequestHandlerUpdateSchema::run() {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    cb.error(Error::PROTOCOL_ERROR, "Error handling Update Schema message");
+    cb.error(e.code(), e.what());
   }
 }

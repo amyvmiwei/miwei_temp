@@ -48,13 +48,10 @@ namespace Hypertable {
      * @param scan_spec reference to scan specification object
      * @param timeout_ms maximum time in milliseconds to allow scanner
      *        methods to execute before throwing an exception
-     * @param retry_table_not_found whether to retry upon errors caused by
-     *        drop/create tables with the same name
      * @param max_queued_results max number of results to enqueue before blocking
      */
     TableScanner(Comm *comm, Table *table,  RangeLocatorPtr &range_locator,
-                     const ScanSpec &scan_spec, uint32_t timeout_ms,
-                     bool retry_table_not_found);
+                 const ScanSpec &scan_spec, uint32_t timeout_ms);
 
     /**
      * Cancel asynchronous scanner and keep dealing with RangeServer responses

@@ -40,7 +40,7 @@ using namespace Hypertable;
  */
 TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
-    uint32_t timeout_ms, bool retry_table_not_found, ResultCallback *cb)
+    uint32_t timeout_ms, ResultCallback *cb)
   : m_bytes_scanned(0), m_cb(cb), m_current_scanner(0),
     m_outstanding(0), m_error(Error::OK), m_table(table), m_scan_spec_builder(scan_spec),
     m_cancelled(false) {
@@ -63,7 +63,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
       if (scan_spec.cell_intervals.empty()) {
         ri_scanner = 0;
         ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator, scan_spec,
-            timeout_ms, retry_table_not_found, !current_set, this, scanner_id++);
+                                              timeout_ms, !current_set, this, scanner_id++);
 
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
@@ -76,8 +76,8 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
               scan_spec.cell_intervals[i]);
           ri_scanner = 0;
           ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
-              interval_scan_spec, timeout_ms, retry_table_not_found, !current_set, this,
-              scanner_id++);
+                                                interval_scan_spec, timeout_ms,
+                                                !current_set, this, scanner_id++);
           current_set = true;
           m_interval_scanners.push_back(ri_scanner);
           m_outstanding++;
@@ -94,8 +94,8 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
           interval_scan_spec.row_intervals.push_back(ri);
           ri_scanner = 0;
           ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
-              interval_scan_spec, timeout_ms, retry_table_not_found, !current_set,
-              this, scanner_id++);
+                                                interval_scan_spec, timeout_ms, !current_set,
+                                                this, scanner_id++);
           current_set = true;
           m_interval_scanners.push_back(ri_scanner);
           m_outstanding++;
@@ -106,7 +106,7 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
       if (rowset_scan_spec.row_intervals.size()) {
        ri_scanner = 0;
        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
-            rowset_scan_spec, timeout_ms, retry_table_not_found, !current_set,
+                                             rowset_scan_spec, timeout_ms, !current_set,
             this, scanner_id++);
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
@@ -119,8 +119,8 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
         interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
         ri_scanner = 0;
         ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
-            interval_scan_spec, timeout_ms, retry_table_not_found, !current_set,
-            this, scanner_id++);
+                                              interval_scan_spec, timeout_ms, !current_set,
+                                              this, scanner_id++);
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
         m_outstanding++;
@@ -170,7 +170,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
     switch(error) {
       case (Error::TABLE_NOT_FOUND):
       case (Error::RANGESERVER_TABLE_NOT_FOUND):
-        if (m_retry_table_not_found && is_create)
+        if (m_table->auto_refresh() && is_create)
         abort = !(m_interval_scanners[scanner_id]->retry_or_abort(true, true, is_create, &next));
         else {
           next = m_interval_scanners[scanner_id]->abort(is_create);
@@ -178,7 +178,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
         }
         break;
       case (Error::RANGESERVER_GENERATION_MISMATCH):
-        if (is_create)
+        if (m_table->auto_refresh() && is_create)
         abort = !(m_interval_scanners[scanner_id]->retry_or_abort(true, false, is_create, &next));
         else {
           next = m_interval_scanners[scanner_id]->abort(is_create);

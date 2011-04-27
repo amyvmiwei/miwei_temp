@@ -25,9 +25,9 @@ begin
     puts "testing asynchronous api..."
     # testing asynchronous scanner api
     client.with_future() do |future|
-      color_scanner = client.open_scanner_async(ns, "FruitColor", future, ScanSpec.new(), true)
-      location_scanner = client.open_scanner_async(ns, "FruitLocation", future, ScanSpec.new(), true)
-      energy_scanner = client.open_scanner_async(ns, "FruitEnergy", future, ScanSpec.new(), true)
+      color_scanner = client.open_scanner_async(ns, "FruitColor", future, ScanSpec.new())
+      location_scanner = client.open_scanner_async(ns, "FruitLocation", future, ScanSpec.new())
+      energy_scanner = client.open_scanner_async(ns, "FruitEnergy", future, ScanSpec.new())
       expected_cells=6
       num_cells=0
       while (true)

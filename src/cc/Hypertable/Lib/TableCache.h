@@ -43,7 +43,7 @@ namespace Hypertable {
     /**
      *
      */
-    TablePtr get(const String &table_name, bool force);
+    TablePtr get(const String &table_name, int32_t flags);
 
     /**
      * @param table_name Name of table
