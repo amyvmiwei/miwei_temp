@@ -49,7 +49,7 @@ IntervalScannerAsync::IntervalScannerAsync(Comm *comm, ApplicationQueuePtr &app_
     m_fetch_handler(app_queue, scanner, id, false),
     m_scanner(scanner), m_id(id), m_create_timer(timeout_ms), m_fetch_timer(timeout_ms),
     m_cur_scanner_finished(false), m_cur_scanner_id(0), m_create_event_saved(false),
-    m_aborted(false) {
+    m_aborted(false), m_invalid_scanner_id_ok(false) {
 
   HT_ASSERT(m_timeout_ms);
 
@@ -269,7 +269,7 @@ void IntervalScannerAsync::reset_outstanding_status(bool is_create, bool reset_t
       m_create_timer.reset();
   }
   else {
-    HT_ASSERT(m_fetch_outstanding && m_current);
+    HT_ASSERT(m_fetch_outstanding && (m_current || m_invalid_scanner_id_ok));
     m_fetch_outstanding = false;
     if (reset_timer)
       m_fetch_timer.reset();
@@ -284,6 +284,19 @@ bool IntervalScannerAsync::abort(bool is_create) {
   if (move_to_next)
     m_current = false;
   return move_to_next;
+}
+
+bool IntervalScannerAsync::is_destroyed_scanner(bool is_create) {
+  // handle case where row limit was hit and scanner was cancelled but fetch request is
+  // still outstanding
+  reset_outstanding_status(is_create, true);
+  if (m_invalid_scanner_id_ok) {
+    HT_ASSERT(!is_create);
+    HT_ASSERT(!has_outstanding_requests());
+    m_invalid_scanner_id_ok = false;
+    return true;
+  }
+  return false;
 }
 
 bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_create,
@@ -444,8 +457,8 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
   if (m_eos && !m_cur_scanner_finished) {
     HT_ASSERT(m_fetch_outstanding);
     m_range_server.destroy_scanner(m_range_info.addr, m_cur_scanner_id, 0);
+    m_invalid_scanner_id_ok=true;
     m_cur_scanner_id = 0;
-    m_fetch_outstanding = false;
   }
   return;
 }
