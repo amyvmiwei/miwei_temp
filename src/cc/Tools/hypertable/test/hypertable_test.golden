@@ -2635,3 +2635,10 @@ version_test_1	col2:100	000
 SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "000"  AND '2007-12-02 07:30:00' < TIMESTAMP <= '2007-12-02 08:30:00' MAX_VERSIONS=1 DISPLAY_TIMESTAMPS;
 2007-12-02 08:00:00.000000000	version_test_1	col2:000	000
 2007-12-02 08:00:00.000000000	version_test_1	col2:100	000
+
+# issue 528: embedded semicolon test
+DROP TABLE IF EXISTS Test;
+CREATE TABLE Test('col');
+INSERT INTO Test VALUES ('foo;', 'col', 'bar');
+SELECT * FROM Test WHERE ROW='foo;';
+foo;	col	bar
