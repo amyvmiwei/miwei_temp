@@ -1331,8 +1331,8 @@ uint32_t NamespaceListing::write(::apache::thrift::protocol::TProtocol* oprot) c
   return xfer;
 }
 
-const char* TableSplit::ascii_fingerprint = "7F96769A10DED7E9839D38968220F75A";
-const uint8_t TableSplit::binary_fingerprint[16] = {0x7F,0x96,0x76,0x9A,0x10,0xDE,0xD7,0xE9,0x83,0x9D,0x38,0x96,0x82,0x20,0xF7,0x5A};
+const char* TableSplit::ascii_fingerprint = "62D6903A20E658BF9EEF263D3451F763";
+const uint8_t TableSplit::binary_fingerprint[16] = {0x62,0xD6,0x90,0x3A,0x20,0xE6,0x58,0xBF,0x9E,0xEF,0x26,0x3D,0x34,0x51,0xF7,0x63};
 
 uint32_t TableSplit::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -1386,6 +1386,14 @@ uint32_t TableSplit::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 5:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->hostname);
+          this->__isset.hostname = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -1419,6 +1427,11 @@ uint32_t TableSplit::write(::apache::thrift::protocol::TProtocol* oprot) const {
   if (this->__isset.ip_address) {
     xfer += oprot->writeFieldBegin("ip_address", ::apache::thrift::protocol::T_STRING, 4);
     xfer += oprot->writeString(this->ip_address);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.hostname) {
+    xfer += oprot->writeFieldBegin("hostname", ::apache::thrift::protocol::T_STRING, 5);
+    xfer += oprot->writeString(this->hostname);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();

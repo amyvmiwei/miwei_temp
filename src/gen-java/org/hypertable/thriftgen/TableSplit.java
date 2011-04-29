@@ -35,6 +35,9 @@ import org.slf4j.LoggerFactory;
  * 
  *   <dt>ip_address</dt>
  *   <dd>The IP address of the split.</dd>
+ * 
+ *   <dt>hostname</dt>
+ *   <dd>The hostname of the split.</dd>
  * </dl>
  */
 public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSplit._Fields>, java.io.Serializable, Cloneable {
@@ -44,18 +47,21 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
   private static final org.apache.thrift.protocol.TField END_ROW_FIELD_DESC = new org.apache.thrift.protocol.TField("end_row", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField LOCATION_FIELD_DESC = new org.apache.thrift.protocol.TField("location", org.apache.thrift.protocol.TType.STRING, (short)3);
   private static final org.apache.thrift.protocol.TField IP_ADDRESS_FIELD_DESC = new org.apache.thrift.protocol.TField("ip_address", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField HOSTNAME_FIELD_DESC = new org.apache.thrift.protocol.TField("hostname", org.apache.thrift.protocol.TType.STRING, (short)5);
 
   public String start_row;
   public String end_row;
   public String location;
   public String ip_address;
+  public String hostname;
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     START_ROW((short)1, "start_row"),
     END_ROW((short)2, "end_row"),
     LOCATION((short)3, "location"),
-    IP_ADDRESS((short)4, "ip_address");
+    IP_ADDRESS((short)4, "ip_address"),
+    HOSTNAME((short)5, "hostname");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -78,6 +84,8 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
           return LOCATION;
         case 4: // IP_ADDRESS
           return IP_ADDRESS;
+        case 5: // HOSTNAME
+          return HOSTNAME;
         default:
           return null;
       }
@@ -130,6 +138,8 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.IP_ADDRESS, new org.apache.thrift.meta_data.FieldMetaData("ip_address", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.HOSTNAME, new org.apache.thrift.meta_data.FieldMetaData("hostname", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(TableSplit.class, metaDataMap);
   }
@@ -153,6 +163,9 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
     if (other.isSetIp_address()) {
       this.ip_address = other.ip_address;
     }
+    if (other.isSetHostname()) {
+      this.hostname = other.hostname;
+    }
   }
 
   public TableSplit deepCopy() {
@@ -165,6 +178,7 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
     this.end_row = null;
     this.location = null;
     this.ip_address = null;
+    this.hostname = null;
   }
 
   public String getStart_row() {
@@ -263,6 +277,30 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
     }
   }
 
+  public String getHostname() {
+    return this.hostname;
+  }
+
+  public TableSplit setHostname(String hostname) {
+    this.hostname = hostname;
+    return this;
+  }
+
+  public void unsetHostname() {
+    this.hostname = null;
+  }
+
+  /** Returns true if field hostname is set (has been assigned a value) and false otherwise */
+  public boolean isSetHostname() {
+    return this.hostname != null;
+  }
+
+  public void setHostnameIsSet(boolean value) {
+    if (!value) {
+      this.hostname = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case START_ROW:
@@ -297,6 +335,14 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
       }
       break;
 
+    case HOSTNAME:
+      if (value == null) {
+        unsetHostname();
+      } else {
+        setHostname((String)value);
+      }
+      break;
+
     }
   }
 
@@ -313,6 +359,9 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
 
     case IP_ADDRESS:
       return getIp_address();
+
+    case HOSTNAME:
+      return getHostname();
 
     }
     throw new IllegalStateException();
@@ -333,6 +382,8 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
       return isSetLocation();
     case IP_ADDRESS:
       return isSetIp_address();
+    case HOSTNAME:
+      return isSetHostname();
     }
     throw new IllegalStateException();
   }
@@ -383,6 +434,15 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
       if (!(this_present_ip_address && that_present_ip_address))
         return false;
       if (!this.ip_address.equals(that.ip_address))
+        return false;
+    }
+
+    boolean this_present_hostname = true && this.isSetHostname();
+    boolean that_present_hostname = true && that.isSetHostname();
+    if (this_present_hostname || that_present_hostname) {
+      if (!(this_present_hostname && that_present_hostname))
+        return false;
+      if (!this.hostname.equals(that.hostname))
         return false;
     }
 
@@ -442,6 +502,16 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetHostname()).compareTo(typedOther.isSetHostname());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetHostname()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.hostname, typedOther.hostname);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -487,6 +557,13 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
+        case 5: // HOSTNAME
+          if (field.type == org.apache.thrift.protocol.TType.STRING) {
+            this.hostname = iprot.readString();
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
         default:
           org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
       }
@@ -527,6 +604,13 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
       if (isSetIp_address()) {
         oprot.writeFieldBegin(IP_ADDRESS_FIELD_DESC);
         oprot.writeString(this.ip_address);
+        oprot.writeFieldEnd();
+      }
+    }
+    if (this.hostname != null) {
+      if (isSetHostname()) {
+        oprot.writeFieldBegin(HOSTNAME_FIELD_DESC);
+        oprot.writeString(this.hostname);
         oprot.writeFieldEnd();
       }
     }
@@ -575,6 +659,16 @@ public class TableSplit implements org.apache.thrift.TBase<TableSplit, TableSpli
         sb.append("null");
       } else {
         sb.append(this.ip_address);
+      }
+      first = false;
+    }
+    if (isSetHostname()) {
+      if (!first) sb.append(", ");
+      sb.append("hostname:");
+      if (this.hostname == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.hostname);
       }
       first = false;
     }

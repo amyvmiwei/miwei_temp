@@ -30,16 +30,16 @@ extern "C" {
 
 using namespace Hypertable;
 
-void ProxyMap::update_mapping(const String &proxy, const InetAddr &addr,
-			      ProxyMapT &invalidated_map,
+void ProxyMap::update_mapping(const String &proxy, const String &hostname,
+                              const InetAddr &addr, ProxyMapT &invalidated_map,
 			      ProxyMapT &new_map) {
   ScopedLock lock(m_mutex);
   ProxyMapT::iterator iter = m_map.find(proxy);
-  if (iter != m_map.end() && (*iter).second == addr)
+  if (iter != m_map.end() && (*iter).second.addr == addr)
     return;
   invalidate(proxy, addr, invalidated_map);
-  new_map[proxy] = addr;
-  m_map[proxy] = addr;
+  new_map[proxy] = ProxyAddressInfo(hostname, addr);
+  m_map[proxy] = ProxyAddressInfo(hostname, addr);
   m_reverse_map[addr] = proxy;
 }
 
@@ -47,35 +47,38 @@ void ProxyMap::update_mapping(const String &proxy, const InetAddr &addr,
 void ProxyMap::update_mappings(String &mappings, ProxyMapT &invalidated_map,
 			       ProxyMapT &new_map) {
   ScopedLock lock(m_mutex);
-  char *line, *proxy, *addr_str, *end_nl, *end_tab;
+  char *line, *proxy, *hostname, *addr_str, *end_nl, *end_tab;
 
   for (line = strtok_r((char *)mappings.c_str(), "\n", &end_nl); line;
        line = strtok_r(0, "\n", &end_nl)) {
     proxy = strtok_r(line, "\t", &end_tab);
     HT_ASSERT(proxy);
+    hostname = strtok_r(0, "\t", &end_tab);
+    HT_ASSERT(hostname);
     addr_str = strtok_r(0, "\t", &end_tab);
     HT_ASSERT(addr_str);
     InetAddr addr(addr_str);
 
     ProxyMapT::iterator iter = m_map.find(proxy);
-    if (iter != m_map.end() && (*iter).second == addr)
+    if (iter != m_map.end() && (*iter).second.addr == addr)
       continue;
 
     invalidate(proxy, addr, invalidated_map);
-    new_map[proxy] = addr;
-    m_map[proxy] = addr;
+    new_map[proxy] = ProxyAddressInfo(hostname, addr);
+    m_map[proxy] = ProxyAddressInfo(hostname, addr);
     m_reverse_map[addr] = proxy;
   }
 }
 
 
 
-bool ProxyMap::get_mapping(const String &proxy, InetAddr &addr) {
+bool ProxyMap::get_mapping(const String &proxy, String &hostname, InetAddr &addr) {
   ScopedLock lock(m_mutex);
   ProxyMapT::iterator iter = m_map.find(proxy);
   if (iter == m_map.end())
     return false;
-  addr = (*iter).second;
+  addr = (*iter).second.addr;
+  hostname = (*iter).second.hostname;
   return true;
 }
 
@@ -94,7 +97,7 @@ CommBuf *ProxyMap::create_update_message() {
   CommHeader header;
   header.flags |= CommHeader::FLAGS_BIT_PROXY_MAP_UPDATE;
   for (ProxyMapT::iterator iter = m_map.begin(); iter != m_map.end(); ++iter)
-    payload += (*iter).first + "\t" + (*iter).second.format() + "\n";
+    payload += (*iter).first + "\t" + (*iter).second.hostname + "\t" + (*iter).second.addr.format() + "\n";
   CommBuf *cbuf = new CommBuf(header, payload.length());
   if (payload.length())
     cbuf->append_bytes((uint8_t *)payload.c_str(), payload.length());
@@ -109,9 +112,9 @@ void ProxyMap::invalidate(const String &proxy, const InetAddr &addr,
 
   // Invalidate entries from forward map
   if ((iter = m_map.find(proxy)) != m_map.end()) {
-    if ((*iter).second != addr) {
+    if ((*iter).second.addr != addr) {
       invalidated_map[(*iter).first] = (*iter).second;
-      m_reverse_map.erase( (*iter).second );
+      m_reverse_map.erase( (*iter).second.addr );
       m_map.erase((*iter).first);
     }
   }
@@ -119,7 +122,7 @@ void ProxyMap::invalidate(const String &proxy, const InetAddr &addr,
   // Invalidate entries from reverse map
   if ((rev_iter = m_reverse_map.find(addr)) != m_reverse_map.end()) {
     if ((*rev_iter).second != proxy) {
-      invalidated_map[(*rev_iter).second] = (*rev_iter).first;
+      invalidated_map[(*rev_iter).second] = ProxyAddressInfo("unknown", (*rev_iter).first);
       m_map.erase((*rev_iter).second);
       m_reverse_map.erase((*rev_iter).first);
     }

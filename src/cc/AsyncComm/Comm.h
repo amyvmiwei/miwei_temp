@@ -95,9 +95,10 @@ namespace Hypertable {
      * Adds a proxy name for a TCP connection
      *
      * @param proxy proxy name
+     * @param hostname hostname of remote machine
      * @param addr connection identifier (remote address)
      */
-    int add_proxy(const String &proxy, const InetAddr &addr);
+    int add_proxy(const String &proxy, const String &hostname, const InetAddr &addr);
 
     /**
      * Fills in the proxy map

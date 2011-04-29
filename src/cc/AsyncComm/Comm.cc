@@ -158,9 +158,9 @@ void Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf) {
 }
 
 
-int Comm::add_proxy(const String &proxy, const InetAddr &addr) {
+int Comm::add_proxy(const String &proxy, const String &hostname, const InetAddr &addr) {
   HT_ASSERT(ReactorFactory::proxy_master);
-  return m_handler_map->add_proxy(proxy, addr);
+  return m_handler_map->add_proxy(proxy, hostname, addr);
 }
 
 void Comm::get_proxy_map(ProxyMapT &proxy_map) {

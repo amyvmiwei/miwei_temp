@@ -338,8 +338,10 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
       boost::trim(str);
       tsbuilder.set_location(str);
       ProxyMapT::iterator pmiter = proxy_map.find(str);
-      if (pmiter != proxy_map.end())
-	tsbuilder.set_ip_address( (*pmiter).second.format_ipaddress() );
+      if (pmiter != proxy_map.end()) {
+	tsbuilder.set_ip_address( (*pmiter).second.addr.format_ipaddress() );
+	tsbuilder.set_hostname( (*pmiter).second.hostname );
+      }
     }
     else if (!strcmp(cell.column_family, "StartRow")) {
       str = String((const char *)cell.value, cell.value_len);

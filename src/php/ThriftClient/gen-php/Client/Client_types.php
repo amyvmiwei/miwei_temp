@@ -1872,6 +1872,7 @@ class Hypertable_ThriftGen_TableSplit {
   public $end_row = null;
   public $location = null;
   public $ip_address = null;
+  public $hostname = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -1892,6 +1893,10 @@ class Hypertable_ThriftGen_TableSplit {
           'var' => 'ip_address',
           'type' => TType::STRING,
           ),
+        5 => array(
+          'var' => 'hostname',
+          'type' => TType::STRING,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -1906,6 +1911,9 @@ class Hypertable_ThriftGen_TableSplit {
       }
       if (isset($vals['ip_address'])) {
         $this->ip_address = $vals['ip_address'];
+      }
+      if (isset($vals['hostname'])) {
+        $this->hostname = $vals['hostname'];
       }
     }
   }
@@ -1957,6 +1965,13 @@ class Hypertable_ThriftGen_TableSplit {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 5:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->hostname);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -1988,6 +2003,11 @@ class Hypertable_ThriftGen_TableSplit {
     if ($this->ip_address !== null) {
       $xfer += $output->writeFieldBegin('ip_address', TType::STRING, 4);
       $xfer += $output->writeString($this->ip_address);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->hostname !== null) {
+      $xfer += $output->writeFieldBegin('hostname', TType::STRING, 5);
+      $xfer += $output->writeString($this->hostname);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

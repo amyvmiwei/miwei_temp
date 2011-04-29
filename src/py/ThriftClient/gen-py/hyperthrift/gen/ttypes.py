@@ -1543,6 +1543,9 @@ class TableSplit:
 
     <dt>ip_address</dt>
     <dd>The IP address of the split.</dd>
+
+    <dt>hostname</dt>
+    <dd>The hostname of the split.</dd>
   </dl>
 
   Attributes:
@@ -1550,6 +1553,7 @@ class TableSplit:
    - end_row
    - location
    - ip_address
+   - hostname
   """
 
   thrift_spec = (
@@ -1558,13 +1562,15 @@ class TableSplit:
     (2, TType.STRING, 'end_row', None, None, ), # 2
     (3, TType.STRING, 'location', None, None, ), # 3
     (4, TType.STRING, 'ip_address', None, None, ), # 4
+    (5, TType.STRING, 'hostname', None, None, ), # 5
   )
 
-  def __init__(self, start_row=None, end_row=None, location=None, ip_address=None,):
+  def __init__(self, start_row=None, end_row=None, location=None, ip_address=None, hostname=None,):
     self.start_row = start_row
     self.end_row = end_row
     self.location = location
     self.ip_address = ip_address
+    self.hostname = hostname
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -1595,6 +1601,11 @@ class TableSplit:
           self.ip_address = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.STRING:
+          self.hostname = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1620,6 +1631,10 @@ class TableSplit:
     if self.ip_address != None:
       oprot.writeFieldBegin('ip_address', TType.STRING, 4)
       oprot.writeString(self.ip_address)
+      oprot.writeFieldEnd()
+    if self.hostname != None:
+      oprot.writeFieldBegin('hostname', TType.STRING, 5)
+      oprot.writeString(self.hostname)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
