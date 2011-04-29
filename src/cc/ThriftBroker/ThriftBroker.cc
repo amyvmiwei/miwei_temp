@@ -401,6 +401,16 @@ void convert_table_split(const Hypertable::TableSplit &hsplit, ThriftGen::TableS
     tsplit.__isset.ip_address = false;
   }
 
+  /** hostname **/
+  if (hsplit.hostname) {
+    tsplit.hostname = hsplit.hostname;
+    tsplit.__isset.hostname = true;
+  }
+  else {
+    tsplit.hostname = "";
+    tsplit.__isset.hostname = false;
+  }
+
 }
 
 

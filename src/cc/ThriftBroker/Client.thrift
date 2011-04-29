@@ -437,6 +437,9 @@ struct NamespaceListing {
  *
  *   <dt>ip_address</dt>
  *   <dd>The IP address of the split.</dd>
+ *
+ *   <dt>hostname</dt>
+ *   <dd>The hostname of the split.</dd>
  * </dl>
  */
 struct TableSplit {
@@ -444,6 +447,7 @@ struct TableSplit {
   2: optional string end_row
   3: optional string location
   4: optional string ip_address
+  5: optional string hostname
 }
 
 /**  

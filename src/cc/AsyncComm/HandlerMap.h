@@ -87,20 +87,20 @@ namespace Hypertable {
       return Error::OK;
     }
 
-    int add_proxy(const String &proxy, const InetAddr &addr) {
+    int add_proxy(const String &proxy, const String &hostname, const InetAddr &addr) {
       ScopedLock lock(m_mutex);
       ProxyMapT new_map, invalidated_map;
 
-      m_proxy_map.update_mapping(proxy, addr, invalidated_map, new_map);
+      m_proxy_map.update_mapping(proxy, hostname, addr, invalidated_map, new_map);
 
       foreach(const ProxyMapT::value_type &v, invalidated_map) {
-	IOHandler *handler = lookup_handler(v.second);
+	IOHandler *handler = lookup_handler(v.second.addr);
 	if (handler)
 	  handler->set_proxy("");
       }
 
       foreach(const ProxyMapT::value_type &v, new_map) {
-	IOHandler *handler = lookup_handler(v.second);
+	IOHandler *handler = lookup_handler(v.second.addr);
 	if (handler)
 	  handler->set_proxy(v.first);
       }
@@ -128,13 +128,13 @@ namespace Hypertable {
       m_proxy_map.update_mappings(mappings, invalidated_map, new_map);
 
       foreach(const ProxyMapT::value_type &v, invalidated_map) {
-	IOHandler *handler = lookup_handler(v.second);
+	IOHandler *handler = lookup_handler(v.second.addr);
 	if (handler)
 	  handler->set_proxy("");
       }
 
       foreach(const ProxyMapT::value_type &v, new_map) {
-	IOHandler *handler = lookup_handler(v.second);
+	IOHandler *handler = lookup_handler(v.second.addr);
 	if (handler)
 	  handler->set_proxy(v.first);
       }
@@ -262,8 +262,9 @@ namespace Hypertable {
 
     bool translate_proxy_address(const CommAddress &proxy_addr, CommAddress &addr) {
       InetAddr inet_addr;
+      String hostname;
       HT_ASSERT(proxy_addr.is_proxy());
-      if (!m_proxy_map.get_mapping(proxy_addr.proxy, inet_addr))
+      if (!m_proxy_map.get_mapping(proxy_addr.proxy, hostname, inet_addr))
         return false;
       addr.set_inet(inet_addr);
       return true;
@@ -312,7 +313,7 @@ namespace Hypertable {
       String mapping;
 
       foreach(const ProxyMapT::value_type &v, mappings)
-	mapping += v.first + "\t" + InetAddr::format(v.second) + "\n";
+	mapping += v.first + "\t" + v.second.hostname + "\t" + InetAddr::format(v.second.addr) + "\n";
 
       uint8_t *buffer = new uint8_t [ mapping.length() + 1 ];
       strcpy((char *)buffer, mapping.c_str());
@@ -342,11 +343,12 @@ namespace Hypertable {
      * Translates CommAddress into INET socket address
      */
     int translate_address(const CommAddress &addr, InetAddr *inet_addr) {
+      String hostname;
 
       HT_ASSERT(addr.is_set());
 
       if (addr.is_proxy()) {
-	if (!m_proxy_map.get_mapping(addr.proxy, *inet_addr))
+	if (!m_proxy_map.get_mapping(addr.proxy, hostname, *inet_addr))
 	  return Error::COMM_INVALID_PROXY;
       }
       else

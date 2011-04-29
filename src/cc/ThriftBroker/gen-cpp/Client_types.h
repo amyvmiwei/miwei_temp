@@ -655,20 +655,21 @@ class NamespaceListing {
 };
 
 typedef struct _TableSplit__isset {
-  _TableSplit__isset() : start_row(false), end_row(false), location(false), ip_address(false) {}
+  _TableSplit__isset() : start_row(false), end_row(false), location(false), ip_address(false), hostname(false) {}
   bool start_row;
   bool end_row;
   bool location;
   bool ip_address;
+  bool hostname;
 } _TableSplit__isset;
 
 class TableSplit {
  public:
 
-  static const char* ascii_fingerprint; // = "7F96769A10DED7E9839D38968220F75A";
-  static const uint8_t binary_fingerprint[16]; // = {0x7F,0x96,0x76,0x9A,0x10,0xDE,0xD7,0xE9,0x83,0x9D,0x38,0x96,0x82,0x20,0xF7,0x5A};
+  static const char* ascii_fingerprint; // = "62D6903A20E658BF9EEF263D3451F763";
+  static const uint8_t binary_fingerprint[16]; // = {0x62,0xD6,0x90,0x3A,0x20,0xE6,0x58,0xBF,0x9E,0xEF,0x26,0x3D,0x34,0x51,0xF7,0x63};
 
-  TableSplit() : start_row(""), end_row(""), location(""), ip_address("") {
+  TableSplit() : start_row(""), end_row(""), location(""), ip_address(""), hostname("") {
   }
 
   virtual ~TableSplit() throw() {}
@@ -677,6 +678,7 @@ class TableSplit {
   std::string end_row;
   std::string location;
   std::string ip_address;
+  std::string hostname;
 
   _TableSplit__isset __isset;
 
@@ -697,6 +699,10 @@ class TableSplit {
     if (__isset.ip_address != rhs.__isset.ip_address)
       return false;
     else if (__isset.ip_address && !(ip_address == rhs.ip_address))
+      return false;
+    if (__isset.hostname != rhs.__isset.hostname)
+      return false;
+    else if (__isset.hostname && !(hostname == rhs.hostname))
       return false;
     return true;
   }

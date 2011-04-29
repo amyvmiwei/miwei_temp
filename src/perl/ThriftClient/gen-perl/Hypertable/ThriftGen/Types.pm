@@ -1493,7 +1493,7 @@ sub write {
 
 package Hypertable::ThriftGen::TableSplit;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::TableSplit->mk_accessors( qw( start_row end_row location ip_address ) );
+Hypertable::ThriftGen::TableSplit->mk_accessors( qw( start_row end_row location ip_address hostname ) );
 
 sub new {
   my $classname = shift;
@@ -1503,6 +1503,7 @@ sub new {
   $self->{end_row} = undef;
   $self->{location} = undef;
   $self->{ip_address} = undef;
+  $self->{hostname} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{start_row}) {
       $self->{start_row} = $vals->{start_row};
@@ -1515,6 +1516,9 @@ sub new {
     }
     if (defined $vals->{ip_address}) {
       $self->{ip_address} = $vals->{ip_address};
+    }
+    if (defined $vals->{hostname}) {
+      $self->{hostname} = $vals->{hostname};
     }
   }
   return bless ($self, $classname);
@@ -1563,6 +1567,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^5$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{hostname});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -1593,6 +1603,11 @@ sub write {
   if (defined $self->{ip_address}) {
     $xfer += $output->writeFieldBegin('ip_address', TType::STRING, 4);
     $xfer += $output->writeString($self->{ip_address});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{hostname}) {
+    $xfer += $output->writeFieldBegin('hostname', TType::STRING, 5);
+    $xfer += $output->writeString($self->{hostname});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

@@ -32,17 +32,25 @@
 
 namespace Hypertable {
 
-  typedef hash_map<String, InetAddr> ProxyMapT;
+  class ProxyAddressInfo {
+  public:
+    ProxyAddressInfo() { }
+    ProxyAddressInfo(const String &h, InetAddr a) : hostname(h), addr(a) { }
+    String hostname;
+    InetAddr addr;
+  } ;
+
+  typedef hash_map<String, ProxyAddressInfo> ProxyMapT;
 
   class ProxyMap {
 
   public:
     
-    void update_mapping(const String &proxy, const InetAddr &addr,
+    void update_mapping(const String &proxy, const String &hostname, const InetAddr &addr,
 			ProxyMapT &invalidated_map, ProxyMapT &new_map);
     void update_mappings(String &mappings, ProxyMapT &invalidated_map,
 			 ProxyMapT &new_map);
-    bool get_mapping(const String &proxy, InetAddr &addr);
+    bool get_mapping(const String &proxy, String &hostname, InetAddr &addr);
 
     String get_proxy(InetAddr &addr);
     

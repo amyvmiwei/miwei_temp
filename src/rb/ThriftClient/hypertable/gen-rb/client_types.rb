@@ -519,6 +519,9 @@ module Hypertable
         # 
         #   <dt>ip_address</dt>
         #   <dd>The IP address of the split.</dd>
+        # 
+        #   <dt>hostname</dt>
+        #   <dd>The hostname of the split.</dd>
         # </dl>
         class TableSplit
           include ::Thrift::Struct, ::Thrift::Struct_Union
@@ -526,12 +529,14 @@ module Hypertable
           END_ROW = 2
           LOCATION = 3
           IP_ADDRESS = 4
+          HOSTNAME = 5
 
           FIELDS = {
             START_ROW => {:type => ::Thrift::Types::STRING, :name => 'start_row', :optional => true},
             END_ROW => {:type => ::Thrift::Types::STRING, :name => 'end_row', :optional => true},
             LOCATION => {:type => ::Thrift::Types::STRING, :name => 'location', :optional => true},
-            IP_ADDRESS => {:type => ::Thrift::Types::STRING, :name => 'ip_address', :optional => true}
+            IP_ADDRESS => {:type => ::Thrift::Types::STRING, :name => 'ip_address', :optional => true},
+            HOSTNAME => {:type => ::Thrift::Types::STRING, :name => 'hostname', :optional => true}
           }
 
           def struct_fields; FIELDS; end
