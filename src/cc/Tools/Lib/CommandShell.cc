@@ -74,7 +74,7 @@ namespace {
 
   char *find_char(const char *s, int c) {
     bool in_quotes = false;
-    char quote_char;
+    char quote_char = 0;
 
     for (const char *ptr=s; *ptr; ptr++) {
       if (in_quotes) {

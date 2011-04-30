@@ -24,7 +24,9 @@ package org.hypertable.hadoop.mapred;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import java.text.ParseException;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
 
@@ -41,6 +43,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobConfigurable;
 
 import org.hypertable.thriftgen.*;
+import org.hypertable.Common.Time;
 import org.hypertable.hadoop.mapreduce.ScanSpec;
 import org.hypertable.hadoop.mapred.TableSplit;
 
@@ -54,60 +57,245 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
   final Log LOG = LogFactory.getLog(InputFormat.class);
 
-  public static final String NAMESPACE = "hypertable.mapreduce.input.namespace";
-  public static final String TABLE = "hypertable.mapreduce.input.table";
-  public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
-  public static final String START_ROW = "hypertable.mapreduce.input.startrow";
-  public static final String END_ROW = "hypertable.mapreduce.input.endrow";
-  public static final String HAS_TIMESTAMP = "hypertable.mapreduce.input.timestamp";
+  public static final String NAMESPACE          = "hypertable.mapreduce.input.namespace";
+  public static final String TABLE              = "hypertable.mapreduce.input.table";
+  public static final String COLUMNS            = "hypertable.mapreduce.input.scan_spec.columns";
+  public static final String OPTIONS            = "hypertable.mapreduce.input.scan_spec.options";
+  public static final String ROW_INTERVAL       = "hypertable.mapreduce.input.scan_spec.row_interval";
+  public static final String TIMESTAMP_INTERVAL = "hypertable.mapreduce.input.scan_spec.timestamp_interval";
+  public static final String INCLUDE_TIMESTAMPS = "hypertable.mapreduce.input.include_timestamps";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
   private String m_namespace = null;
   private String m_tablename = null;
-  private boolean m_timestamp = false;
+  private boolean m_include_timestamps = false;
+
+  private static String stripQuotes(String str) {
+    if (str != null && str.length() > 0) {
+      if ((str.charAt(0) == '\'' && str.charAt(str.length()-1) == '\'') ||
+          (str.charAt(0) == '"' && str.charAt(str.length()-1) == '"'))
+        return str.substring(1, str.length()-1);
+    }
+    return str;
+  }
+
+  public void parseOptions(JobConf job) throws ParseException {
+    String str = job.get(OPTIONS);
+    if (str != null) {
+      String [] strs = str.split("\\s");
+      for (int i=0; i<strs.length; i++) {
+        strs[i] = strs[i].toUpperCase();
+        if (strs[i].equals("MAX_VERSIONS") || strs[i].equals("REVS")) {
+          i++;
+          if (i==strs.length)
+            throw new ParseException("Bad OPTIONS spec", i);
+          int value = Integer.parseInt(strs[i]);
+          m_base_spec.setRevs(value);
+        }
+        else if (strs[i].equals("CELL_LIMIT")) {
+          i++;
+          if (i==strs.length)
+            throw new ParseException("Bad OPTIONS spec", i);
+          int value = Integer.parseInt(strs[i]);
+          m_base_spec.setCell_limit(value);
+        }
+        else if (strs[i].equals("KEYS_ONLY")) {
+          m_base_spec.setKeys_only(true);
+        }
+        else
+          throw new ParseException("Bad OPTIONS spec: "+strs[i], i);
+      }
+    }
+  }
+
+  public void parseColumns(JobConf job) {
+    String str = job.get(COLUMNS);
+    if (str != null) {
+      String [] columns = str.split(",");
+      for (int i=0; i<columns.length; i++)
+        m_base_spec.addToColumns(stripQuotes(columns[i]));
+    }
+  }
+
+  public String [] parseRelopSpec(String str, String name) {
+    String name_uppercase = name.toUpperCase();
+    String name_lowercase = name.toLowerCase();
+    String [] strs = new String [5];
+    int ts_offset = str.indexOf(name_uppercase);
+    if (ts_offset == -1)
+      ts_offset = str.indexOf(name_lowercase);
+    if (ts_offset == -1)
+      return null;
+
+    strs[0] = str.substring(0, ts_offset).trim();
+    strs[2] = str.substring(ts_offset, ts_offset+name.length());
+    strs[4] = str.substring(ts_offset+name.length()).trim();
+
+    if (strs[0].length() > 0) {
+      int offset = strs[0].length()-1;
+      while (offset > 0 &&
+             (strs[0].charAt(offset) == '<' ||
+              strs[0].charAt(offset) == '=' ||
+              strs[0].charAt(offset) == '>'))
+        offset--;
+      if (offset == -1 || offset == strs[0].length()-1)
+        return null;
+      strs[1] = strs[0].substring(offset+1);
+      strs[0] = strs[0].substring(0, offset).trim();
+    }
+
+    if (strs[4].length() > 0) {
+      int offset = 0;
+      while (offset < strs[4].length() &&
+             (strs[4].charAt(offset) == '<' ||
+              strs[4].charAt(offset) == '=' ||
+              strs[4].charAt(offset) == '>'))
+        offset++;
+      if (offset == strs[4].length() || offset == 0)
+        return null;
+      strs[3] = strs[4].substring(0, offset);
+      strs[4] = strs[4].substring(offset).trim();
+    }
+
+    if (strs[0].length() == 0 && strs[4].length() == 0)
+      return null;
+
+    if (strs[0].length() == 0) {
+      if (strs[3].equals(">") || strs[3].equals(">=")) {
+        strs[0] = strs[4];
+        if (strs[3].equals(">"))
+          strs[1] = "<=";
+        else if (strs[3].equals(">="))
+          strs[1] = "<";
+        strs[3] = null;
+        strs[4] = null;
+      }
+    }
+    else if (strs[4].length() == 0) {
+      if (strs[1].equals(">") || strs[1].equals(">=")) {
+        strs[4] = strs[0];
+        if (strs[1].equals(">"))
+          strs[3] = "<=";
+        else if (strs[1].equals(">="))
+          strs[3] = "<";
+        strs[1] = null;
+        strs[0] = null;
+      }
+    }
+    else {
+      if (strs[1].equals(">") || strs[1].equals(">=")) {
+        if (!strs[3].equals(">") && !strs[3].equals(">="))
+          return null;
+        String tmp = strs[0];
+        strs[0] = strs[4];
+        strs[4] = tmp;
+        if (strs[1].equals(">"))
+          strs[1] = "<=";
+        else if (strs[1].equals(">="))
+          strs[1] = "<";
+        if (strs[3].equals(">"))
+          strs[3] = "<=";
+        else if (strs[3].equals(">="))
+          strs[3] = "<";
+      }
+    }
+
+    if (strs[1] != null && strs[1].equals("=") && strs[3] != null && strs[3].equals("="))
+      return null;
+
+    strs[0] = stripQuotes(strs[0]);
+    strs[4] = stripQuotes(strs[4]);
+
+    return strs;
+  }
+
+  public void parseTimestampInterval(JobConf job) throws ParseException {
+    String str = job.get(TIMESTAMP_INTERVAL);
+    if (str != null) {
+      Date ts;
+      long epoch_time;
+      String [] parsedRelop = parseRelopSpec(str, "TIMESTAMP");
+
+      if (parsedRelop == null)
+        throw new ParseException("Invalid TIMESTAMP interval: "+str, 0);
+
+      if (parsedRelop[0] != null && parsedRelop[0].length() > 0) {
+        ts = Time.parse_ts(parsedRelop[0]);
+        epoch_time = ts.getTime() * 1000000;
+        m_base_spec.setStart_time(epoch_time);
+        if (parsedRelop[1].equals("="))
+          m_base_spec.setEnd_time(epoch_time);
+      }
+
+      if (parsedRelop[4] != null && parsedRelop[4].length() > 0) {
+        ts = Time.parse_ts(parsedRelop[4]);
+        epoch_time = ts.getTime() * 1000000;
+        m_base_spec.setEnd_time(epoch_time);
+        if (parsedRelop[3].equals("="))
+          m_base_spec.setStart_time(epoch_time);
+      }
+    }
+  }
+
+  public void parseRowInterval(JobConf job) throws ParseException {
+    String str = job.get(ROW_INTERVAL);
+    if (str != null) {
+      Date ts;
+      long epoch_time;
+      String [] parsedRelop = parseRelopSpec(str, "ROW");
+      RowInterval interval = new RowInterval();
+
+      if (parsedRelop == null)
+        throw new ParseException("Invalid ROW interval: "+str, 0);
+
+      if (parsedRelop[0] != null && parsedRelop[0].length() > 0) {
+        interval.setStart_row(parsedRelop[0]);
+        interval.setStart_rowIsSet(true);
+        if (parsedRelop[1].equals("<"))
+          interval.setStart_inclusive(false);
+        else if (parsedRelop[1].equals("<="))
+          interval.setStart_inclusive(true);
+        else
+          throw new ParseException("Invalid ROW interval, bad RELOP (" + parsedRelop[1] + ")", 0);        
+        interval.setStart_inclusiveIsSet(true);
+      }
+
+      if (parsedRelop[4] != null && parsedRelop[4].length() > 0) {
+        interval.setEnd_row(parsedRelop[4]);
+        interval.setEnd_rowIsSet(true);
+        if (parsedRelop[3].equals("<"))
+          interval.setEnd_inclusive(false);
+        else if (parsedRelop[3].equals("<="))
+          interval.setEnd_inclusive(true);
+        else
+          throw new ParseException("Invalid ROW interval, bad RELOP (" + parsedRelop[3] + ")", 0);
+        interval.setEnd_inclusiveIsSet(true);
+      }
+
+      if(interval.isSetStart_row() || interval.isSetEnd_row()) {
+        m_base_spec.addToRow_intervals(interval);
+        m_base_spec.setRow_intervalsIsSet(true);
+      }
+    }
+  }
 
   public void configure(JobConf job)
   {
-    m_timestamp = job.getBoolean(HAS_TIMESTAMP, false);
+    m_include_timestamps = job.getBoolean(INCLUDE_TIMESTAMPS, false);
     try {
-      if(job.get(SCAN_SPEC) == null) {
-        job.set(SCAN_SPEC, (new ScanSpec()).toSerializedText());
-      }
-      m_base_spec = ScanSpec.serializedTextToScanSpec( job.get(SCAN_SPEC) );
+      m_base_spec = new ScanSpec();
 
-      String start_row = job.get(START_ROW);
-      String end_row = job.get(END_ROW);
-
-      if(start_row != null || end_row != null) {
-        RowInterval interval = new RowInterval();
-
-        m_base_spec.unsetRow_intervals();
-
-        if(start_row != null) {
-          interval.setStart_row(start_row);
-          interval.setStart_rowIsSet(true);
-          interval.setStart_inclusive(false);
-          interval.setStart_inclusiveIsSet(true);
-        }
-
-        if(end_row != null) {
-          interval.setEnd_row(end_row);
-          interval.setEnd_rowIsSet(true);
-          interval.setEnd_inclusive(true);
-          interval.setEnd_inclusiveIsSet(true);
-        }
-
-        if(interval.isSetStart_row() || interval.isSetEnd_row()) {
-          m_base_spec.addToRow_intervals(interval);
-          m_base_spec.setRow_intervalsIsSet(true);
-        }
-      }
+      parseColumns(job);
+      parseOptions(job);
+      parseTimestampInterval(job);
+      parseRowInterval(job);
 
       System.out.println(m_base_spec);
     }
     catch (Exception e) {
       e.printStackTrace();
+      System.exit(-1);
     }
 
   }
@@ -206,7 +394,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       /* XXX not sure if "clear" is necessary */
 
       try {
-        if (m_timestamp && cell_key.isSetTimestamp()) {
+        if (m_include_timestamps && cell_key.isSetTimestamp()) {
           t_timestamp = Long.toString(cell_key.timestamp).getBytes("UTF-8");
           clear = true;
         }
@@ -231,7 +419,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
       if(clear) {
           key.clear();
-          if(m_timestamp) {
+          if(m_include_timestamps) {
               key.append(t_timestamp,0,t_timestamp.length);
               key.append(tab,0,tab.length);
           }
@@ -334,42 +522,32 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         boolean skip = false;
 
         if (m_base_spec.isSetRow_intervals()) {
-            for (RowInterval ri : m_base_spec.getRow_intervals()) {
+          for (RowInterval ri : m_base_spec.getRow_intervals()) {
 
-                if(ri.isSetStart_row() && ts.start_row != null) {
-                    if (ri.getStart_row().compareTo(ts.start_row) >= 0) {
-                        skip = true;
-                    }
-                }
-
-                if(ri.isSetEnd_row() && ts.end_row != null) {
-                    if(ri.getEnd_row().compareTo(ts.end_row) < 0) {
-                        skip = true;
-                    }
-                }
-
-                if(ri.isSetStart_row() && ts.start_row == null && ts.end_row != null) {
-                    if(ri.getStart_row().compareTo(ts.end_row) >= 0) {
-                        skip = true;
-                    }
-                }
-                if(ri.isSetEnd_row() && ts.end_row == null && ts.start_row != null) {
-                    if(ri.getEnd_row().compareTo(ts.start_row) < 0) {
-                        skip = true;
-                    }
-                }
-                if(skip) {
-                    break;
-                }
+            if (ri.isSetEnd_row() && ts.start_row != null) {
+              if (ri.getEnd_row().compareTo(ts.start_row) < 0 ||
+                  (!ri.isSetEnd_inclusive() && ri.getEnd_row().compareTo(ts.start_row) == 0))
+                skip = true;
             }
+
+            if (ri.isSetStart_row() && ts.end_row != null) {
+              if (ri.getStart_row().compareTo(ts.end_row) > 0 ||
+                  (!ri.isSetStart_inclusive() && ri.getStart_row().compareTo(ts.end_row) == 0))
+                skip = true;
+            }
+
+            if (skip) {
+              break;
+            }
+          }
         }
         if(skip) {
-            continue;
+          continue;
         }
         byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
         byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
 
-        TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row, end_row, ts.ip_address);
+        TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row, end_row, ts.hostname);
         splits.add(split);
       }
 
