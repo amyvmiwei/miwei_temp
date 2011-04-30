@@ -45,7 +45,7 @@ implements InputSplit,Comparable<TableSplit> {
   private byte [] m_tablename;
   private byte [] m_startrow;
   private byte [] m_endrow;
-  private String m_range_location;
+  private String m_hostname;
   private ScanSpec m_scanspec;
 
   /** Default constructor. */
@@ -59,24 +59,18 @@ implements InputSplit,Comparable<TableSplit> {
    * @param tableName  The name of the current table.
    * @param startRow  The start row of the split.
    * @param endRow  The end row of the split.
-   * @param location  The location of the range.
+   * @param hostname  The hostname of the range.
    */
   public TableSplit(byte [] tableName, byte [] startRow, byte [] endRow,
-      final String location) {
+                    final String hostname) {
     this.m_tablename = tableName;
     this.m_startrow = startRow;
     this.m_endrow = endRow;
+    this.m_hostname = hostname;
     // Check for END_ROW marker
     if (endRow != null && endRow.length == 2 &&
         endRow[0] == (byte)0xff && endRow[1] == (byte)0xff) {
       this.m_endrow = null;
-    }
-    try {
-        java.net.InetAddress inetAdd =
-        java.net.InetAddress.getByName(location);
-        this.m_range_location = inetAdd.getHostName();
-    } catch(java.net.UnknownHostException uhe) {
-        //handle exception
     }
   }
 
@@ -113,7 +107,7 @@ implements InputSplit,Comparable<TableSplit> {
    * @return The range's location.
    */
   public String getRangeLocation() {
-    return m_range_location;
+    return m_hostname;
   }
 
   /**
@@ -123,7 +117,10 @@ implements InputSplit,Comparable<TableSplit> {
    * @see org.apache.hadoop.mapreduce.InputSplit#getLocations()
    */
   public String[] getLocations() {
-    return new String[] {m_range_location};
+    int period_offset = m_hostname.indexOf('.');
+    if (period_offset == -1)
+      return new String[] {m_hostname};
+    return new String[] {m_hostname, m_hostname.substring(0, period_offset)};
   }
 
   /**
@@ -169,28 +166,26 @@ implements InputSplit,Comparable<TableSplit> {
 
       if (base_spec.isSetRow_intervals()) {
         for (RowInterval ri : base_spec.getRow_intervals()) {
-          if(m_startrow == null) {
-            if(ri.isSetStart_row() && m_endrow != null) {
-              if(ri.getStart_row().compareTo(new String(m_endrow, "UTF-8")) < 0) {
-                interval.setStart_row(ri.getStart_row());
-                interval.setStart_rowIsSet(true);
-                interval.setStart_inclusive(false);
-                interval.setStart_inclusiveIsSet(true);
-              }
+          if (ri.isSetStart_row()) {
+            if (m_startrow == null ||
+                ri.getStart_row().compareTo(new String(m_startrow, "UTF-8")) > 0) {
+              interval.setStart_row(ri.getStart_row());
+              interval.setStart_rowIsSet(true);
+              interval.setStart_inclusive( ri.isStart_inclusive() );
+              interval.setStart_inclusiveIsSet(true);
             }
-
           }
-          if(m_endrow == null) {
-            if(ri.isSetEnd_row() && m_startrow != null) {
-              if(ri.getEnd_row().compareTo(new String(m_startrow, "UTF-8")) >= 0) {
-                interval.setEnd_row(ri.getEnd_row());
-                interval.setEnd_rowIsSet(true);
-                interval.setEnd_inclusive(true);
-                interval.setEnd_inclusiveIsSet(true);
-              }
+          if (ri.isSetEnd_row()) {
+            if (m_endrow == null ||
+                ri.getEnd_row().compareTo(new String(m_endrow, "UTF-8")) < 0) {
+              interval.setEnd_row(ri.getEnd_row());
+              interval.setEnd_rowIsSet(true);
+              interval.setEnd_inclusive( ri.isEnd_inclusive() );
+              interval.setEnd_inclusiveIsSet(true);
             }
-
           }
+          // Only allowing a single row interval
+          break;
         }
       }
     }
@@ -217,7 +212,7 @@ implements InputSplit,Comparable<TableSplit> {
     m_tablename = Serialization.readByteArray(in);
     m_startrow = Serialization.readByteArray(in);
     m_endrow = Serialization.readByteArray(in);
-    m_range_location = Serialization.toString(Serialization.readByteArray(in));
+    m_hostname = Serialization.toString(Serialization.readByteArray(in));
   }
 
   /**
@@ -230,7 +225,7 @@ implements InputSplit,Comparable<TableSplit> {
     Serialization.writeByteArray(out, m_tablename);
     Serialization.writeByteArray(out, m_startrow);
     Serialization.writeByteArray(out, m_endrow);
-    Serialization.writeByteArray(out, Serialization.toBytes(m_range_location));
+    Serialization.writeByteArray(out, Serialization.toBytes(m_hostname));
   }
 
   /**
@@ -249,7 +244,7 @@ implements InputSplit,Comparable<TableSplit> {
     if (m_endrow != null)
       end_str = Serialization.toStringBinary(m_endrow);
 
-    return m_range_location + ":" + start_str + "," + end_str;
+    return m_hostname + ":" + start_str + "," + end_str;
   }
 
   public int compareTo(TableSplit split) {
@@ -261,7 +256,7 @@ implements InputSplit,Comparable<TableSplit> {
     return Serialization.equals(m_tablename, split.m_tablename) &&
       Serialization.equals(m_startrow, split.m_startrow) &&
       Serialization.equals(m_endrow, split.m_endrow) &&
-      m_range_location.equals(split.m_range_location);
+      m_hostname.equals(split.m_hostname);
   }
 
 }

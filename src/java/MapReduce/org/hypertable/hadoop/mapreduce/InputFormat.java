@@ -305,7 +305,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
         byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
         TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row,
-                                          end_row, ts.ip_address);
+                                          end_row, ts.hostname);
         splits.add(split);
       }
       return splits;
