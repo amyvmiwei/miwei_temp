@@ -62,6 +62,7 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
   const char *start_row, *end_row;
   String family, qualifier;
   bool has_qualifier, is_regexp;
+  bool start_row_inclusive=true;
 
   if (!scan_spec.row_intervals.empty() && !scan_spec.cell_intervals.empty())
     HT_THROW(Error::BAD_SCAN_SPEC,
@@ -91,7 +92,7 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
     if (!scan_spec.scan_and_filter_rows) {
       start_row = (scan_spec.row_intervals[0].start == 0) ? ""
           : scan_spec.row_intervals[0].start;
-
+      start_row_inclusive = scan_spec.row_intervals[0].start_inclusive;
       if (scan_spec.row_intervals[0].end == 0 ||
           scan_spec.row_intervals[0].end[0] == 0)
         end_row = Key::END_ROW_MARKER;
@@ -176,6 +177,8 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
 
   // start scan asynchronously (can trigger table not found exceptions)
   m_create_scanner_row = m_start_row;
+  if (!start_row_inclusive)
+    m_create_scanner_row.append(1,1);
   find_range_and_start_scan(m_create_scanner_row.c_str());
   HT_ASSERT(m_create_outstanding && !m_fetch_outstanding);
 }
