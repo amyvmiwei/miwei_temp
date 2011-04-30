@@ -1,6 +1,15 @@
 Version 0.9.5.0.pre4:
-(2011-04-25)
+(2011-05-01)
 
+    Removed benchmark tasks from Capfiles, added Capfile.benchmark
+    Added support for ScanSpec in Hadoop streaming mapred
+    Added hostname to AsyncComm proxy map
+    issue 528: Allow embedded semicolons in HQL string constants
+    Added optional support for jemalloc
+    Fixed bug in scanner which causes assert when a scanner hits row limit and receives results from a cancelled scanner
+    Missed checkin of auto-generated java code
+    Fixed CellStore GC regression; Added test
+    API Change: Made Table objects auto-refresh schema by default
     Added more info to RS_METRICS (including disk_bytes_read)
     Support for optionally including master location hash into RangeServer proxies
     Added support for IP addresses to be used as Hyperspace.Replication.Host strings.
