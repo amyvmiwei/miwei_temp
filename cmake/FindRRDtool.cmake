@@ -33,12 +33,81 @@ find_library(FREETYPE_LIBRARY freetype PATHS
     )
 
 set(PNG_NAMES ${PNG_NAMES} png12 png14)
-  find_library(PNG_LIBRARY NAMES ${PNG_NAMES} NO_DEFAULT_PATH PATHS
+find_library(PNG_LIBRARY NAMES ${PNG_NAMES} NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
     /usr/lib
     /usr/lib64
+    )
+
+find_library(PANGOCAIRO_LIBRARY NAMES pangocairo NO_DEFAULT_PATH PATHS
+    ${HT_DEPENDENCY_LIB_DIR}
+    /opt/local/lib
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    )
+
+find_library(PANGO_LIBRARY NAMES pango NO_DEFAULT_PATH PATHS
+    ${HT_DEPENDENCY_LIB_DIR}
+    /opt/local/lib
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    /lib
+    /lib64
+    )
+
+find_library(CAIRO_LIBRARY NAMES cairo NO_DEFAULT_PATH PATHS
+    ${HT_DEPENDENCY_LIB_DIR}
+    /opt/local/lib
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    /lib
+    /lib64
+    )
+
+find_library(PANGOFT2_LIBRARY NAMES pangoft2 NO_DEFAULT_PATH PATHS
+    ${HT_DEPENDENCY_LIB_DIR}
+    /opt/local/lib
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    /lib
+    /lib64
+    )
+
+
+find_library(GOBJECT_LIBRARY NAMES gobject NO_DEFAULT_PATH PATHS
+    ${HT_DEPENDENCY_LIB_DIR}
+    /opt/local/lib
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    /lib
+    /lib64
+    )
+
+find_library(GMODULE_LIBRARY NAMES gmodule NO_DEFAULT_PATH PATHS
+    ${HT_DEPENDENCY_LIB_DIR}
+    /opt/local/lib
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    /lib
+    /lib64
+    )
+
+find_library(GLIB_LIBRARY NAMES glib NO_DEFAULT_PATH PATHS
+    ${HT_DEPENDENCY_LIB_DIR}
+    /opt/local/lib
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    /lib
+    /lib64
     )
 
 find_library(ART_LGPL_2_LIBRARY NAMES art_lgpl_2 NO_DEFAULT_PATH PATHS
@@ -49,16 +118,46 @@ find_library(ART_LGPL_2_LIBRARY NAMES art_lgpl_2 NO_DEFAULT_PATH PATHS
     /usr/lib64
     )
 
-message(STATUS "${RRD_LIBRARY} ${RRD_INCLUDE_DIR} ${FREETYPE_LIBRARY} ${PNG_LIBRARY} ${ART_LGPL_2_LIBRARY}")
-  
-if (RRD_LIBRARY AND RRD_INCLUDE_DIR AND FREETYPE_LIBRARY AND PNG_LIBRARY AND ART_LGPL_2_LIBRARY)
-  set(RRD_LIBRARIES ${RRD_LIBRARY} ${FREETYPE_LIBRARY} ${PNG_LIBRARY} ${ART_LGPL_2_LIBRARY})
-  set(RRD_FOUND TRUE)
-  message(STATUS "Found RRDtool: ${RRD_LIBRARIES}")
-else ()
-  set(RRD_FOUND FALSE)
-endif ()
+if (APPLE)
 
+  find_library(PIXMAN_LIBRARY NAMES pixman NO_DEFAULT_PATH PATHS
+    ${HT_DEPENDENCY_LIB_DIR}
+    /opt/local/lib
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    )
+
+find_library(GTHREAD_LIBRARY NAMES gthread NO_DEFAULT_PATH PATHS
+    ${HT_DEPENDENCY_LIB_DIR}
+    /opt/local/lib
+    /usr/local/lib
+    /usr/lib
+    /usr/lib64
+    )
+
+  message(STATUS "${RRD_LIBRARY} ${RRD_INCLUDE_DIR} ${FREETYPE_LIBRARY} ${PNG_LIBRARY} ${PANGOCAIRO_LIBRARY} ${PANGO_LIBRARY} ${PANGOFT2_LIBRARY} ${CAIRO_LIBRARY} ${PIXMAN_LIBRARY} ${GOBJECT_LIBRARY} ${GMODULE_LIBRARY} ${GTHREAD_LIBRARY} ${GLIB_LIBRARY} ${ART_LGPL_2_LIBRARY}")
+  
+  if (RRD_LIBRARY AND RRD_INCLUDE_DIR AND FREETYPE_LIBRARY AND PNG_LIBRARY AND PANGOCAIRO_LIBRARY AND PANGO_LIBRARY AND PANGOFT2_LIBRARY AND CAIRO_LIBRARY AND PIXMAN_LIBRARY AND GOBJECT_LIBRARY AND GMODULE_LIBRARY AND GTHREAD_LIBRARY AND GLIB_LIBRARY AND ART_LGPL_2_LIBRARY)
+    set(RRD_LIBRARIES ${RRD_LIBRARY} ${FREETYPE_LIBRARY} ${PNG_LIBRARY} ${PANGOCAIRO_LIBRARY} ${PANGO_LIBRARY} ${PANGOFT2_LIBRARY} ${CAIRO_LIBRARY} ${PIXMAN_LIBRARY} ${GOBJECT_LIBRARY} ${GMODULE_LIBRARY} ${GTHREAD_LIBRARY} ${GLIB_LIBRARY} ${ART_LGPL_2_LIBRARY})
+    set(RRD_FOUND TRUE)
+    message(STATUS "Found RRDtool: ${RRD_LIBRARIES}")
+  else ()
+    set(RRD_FOUND FALSE)
+  endif ()
+
+else ()
+
+  message(STATUS "${RRD_LIBRARY} ${RRD_INCLUDE_DIR} ${FREETYPE_LIBRARY} ${PNG_LIBRARY} ${PANGOCAIRO_LIBRARY} ${PANGO_LIBRARY} ${PANGOFT2_LIBRARY} ${CAIRO_LIBRARY} ${GOBJECT_LIBRARY} ${GMODULE_LIBRARY} ${GLIB_LIBRARY} ${ART_LGPL_2_LIBRARY}")
+  
+  if (RRD_LIBRARY AND RRD_INCLUDE_DIR AND FREETYPE_LIBRARY AND PNG_LIBRARY AND PANGOCAIRO_LIBRARY AND PANGO_LIBRARY AND PANGOFT2_LIBRARY AND CAIRO_LIBRARY AND GOBJECT_LIBRARY AND GMODULE_LIBRARY AND GLIB_LIBRARY AND ART_LGPL_2_LIBRARY)
+    set(RRD_LIBRARIES ${RRD_LIBRARY} ${FREETYPE_LIBRARY} ${PNG_LIBRARY} ${PANGOCAIRO_LIBRARY} ${PANGO_LIBRARY} ${PANGOFT2_LIBRARY} ${CAIRO_LIBRARY} ${GOBJECT_LIBRARY} ${GMODULE_LIBRARY} ${GLIB_LIBRARY} ${ART_LGPL_2_LIBRARY})
+    set(RRD_FOUND TRUE)
+    message(STATUS "Found RRDtool: ${RRD_LIBRARIES}")
+  else ()
+    set(RRD_FOUND FALSE)
+  endif ()
+endif ()
 
 if (RRD_FOUND)
   if (NOT RRD_FIND_QUIETLY)

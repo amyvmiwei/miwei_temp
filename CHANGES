@@ -1,6 +1,7 @@
 Version 0.9.5.0.pre4:
 (2011-05-01)
 
+    [Issue 617] Fixed Superfluous RangeServer::create_scanner() request when scanning over exact range
     Removed benchmark tasks from Capfiles, added Capfile.benchmark
     Added support for ScanSpec in Hadoop streaming mapred
     Added hostname to AsyncComm proxy map
