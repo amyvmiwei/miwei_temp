@@ -61,6 +61,8 @@ namespace Hypertable {
   int64_t                Global::log_prune_threshold_min = 0;
   int64_t                Global::log_prune_threshold_max = 0;
   int64_t                Global::memory_limit = 0;
+  int64_t                Global::memory_limit_ensure_unused = 0;
+  int64_t                Global::memory_limit_ensure_unused_current = 0;
   uint64_t               Global::access_counter = 0;
   bool                   Global::enable_shadow_cache = true;
   std::string            Global::toplevel_dir;
