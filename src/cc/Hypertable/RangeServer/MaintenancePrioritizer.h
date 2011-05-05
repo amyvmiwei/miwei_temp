@@ -38,7 +38,7 @@ namespace Hypertable {
 
     class MemoryState {
     public:
-      MemoryState() : limit(Global::memory_limit), balance(0), needed(0) { }
+      MemoryState() : limit(0), balance(0), needed(0) { }
       void decrement_needed(int64_t amount) {
         if (amount > needed)
           needed = 0;

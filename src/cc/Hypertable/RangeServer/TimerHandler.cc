@@ -45,10 +45,11 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
   : m_comm(comm), m_range_server(range_server),
     m_last_low_memory_maintenance(TIMESTAMP_NULL),
     m_urgent_maintenance_scheduled(false), m_app_queue_paused(false),
-    m_maintenance_outstanding(false) {
+    m_low_physical_memory(false), m_maintenance_outstanding(false) {
   int error;
   int32_t maintenance_interval;
 
+  m_query_cache_memory = get_i64("Hypertable.RangeServer.QueryCache.MaxMemory");
   m_timer_interval = get_i32("Hypertable.RangeServer.Timer.Interval");
   maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
 
@@ -95,6 +96,11 @@ void TimerHandler::complete_maintenance_notify() {
   ScopedLock lock(m_mutex);
   m_maintenance_outstanding = false;
   boost::xtime_get(&m_last_maintenance, TIME_UTC);
+  if (m_app_queue_paused) {
+    if (!low_memory_mode()) {
+      restart_app_queue();
+    }
+  }
 }
 
 
@@ -114,9 +120,7 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
     return;
   }
 
-  int64_t memory_used = Global::memory_tracker->balance();
-
-  if (m_range_server->replay_finished() && memory_used > Global::memory_limit) {
+  if (m_range_server->replay_finished() && low_memory_mode()) {
     if (!m_app_queue_paused) {
       HT_INFO("Pausing application queue due to low memory condition");
       m_app_queue_paused = true;
@@ -124,17 +128,11 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
       m_current_interval = 500;
     }
   }
-  else {
-    if (m_app_queue_paused) {
-      HT_INFO("Restarting application queue");
-      m_app_queue->start();
-      m_app_queue_paused = false;
-      m_last_low_memory_maintenance = TIMESTAMP_NULL;
-      m_current_interval = m_timer_interval;
-    }
+  else if (m_app_queue_paused) {
+    restart_app_queue();
   }
 
-  if (m_app_queue_paused) {
+  if (low_memory()) {
     int64_t now = get_ts64();
     if (m_last_low_memory_maintenance != TIMESTAMP_NULL) {
       if ((now-m_last_low_memory_maintenance) < (m_timer_interval*1000000LL))
@@ -167,4 +165,38 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;
   }
+}
+
+void TimerHandler::restart_app_queue() {
+  HT_ASSERT(m_app_queue_paused);
+  HT_INFO("Restarting application queue");
+  m_app_queue->start();
+  m_app_queue_paused = false;
+  m_last_low_memory_maintenance = TIMESTAMP_NULL;
+  m_current_interval = m_timer_interval;
+}
+
+bool TimerHandler::low_memory_mode() {
+  int64_t memory_used = Global::memory_tracker->balance();
+
+  // ensure unused physical memory if it makes sense
+  if (Global::memory_limit_ensure_unused_current &&
+      memory_used - m_query_cache_memory > Global::memory_limit_ensure_unused_current) {
+
+    // adjust current limit according to the actual memory situation
+    int64_t free_memory = (int64_t)(System::mem_stat().free * Property::MiB);
+    if (Global::memory_limit_ensure_unused_current < Global::memory_limit_ensure_unused)
+      Global::memory_limit_ensure_unused_current = std::min(free_memory, Global::memory_limit_ensure_unused);
+
+    // low physical memory reached?
+    m_low_physical_memory = free_memory < Global::memory_limit_ensure_unused_current;
+    if (m_low_physical_memory)
+       HT_INFOF("Low physical memory (free %.2fMB, limit %.2fMB)", free_memory / (double)Property::MiB,
+                 Global::memory_limit_ensure_unused_current / (double)Property::MiB);
+  }
+  else {
+    // don't care
+    m_low_physical_memory = false;
+  }
+  return memory_used > Global::memory_limit;
 }
