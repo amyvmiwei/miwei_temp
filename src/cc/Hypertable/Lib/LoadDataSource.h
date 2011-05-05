@@ -112,7 +112,7 @@ namespace Hypertable {
     String get_header();
 
     bool parse_date_format(const char *str, int64_t &timestamp);
-
+    bool parse_sec(const char *str, char **end_ptr, int64_t &ns);
     bool add_row_component(int index);
 
     struct ColumnInfo {
