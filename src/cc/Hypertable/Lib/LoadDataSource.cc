@@ -31,6 +31,8 @@
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/iostreams/filter/gzip.hpp>
 #include <boost/shared_array.hpp>
+#include <boost/spirit/include/classic_core.hpp>
+#include <boost/spirit/include/classic_assign_actor.hpp>
 
 extern "C" {
 #include <strings.h>
@@ -51,6 +53,7 @@ extern "C" {
 #include "LoadDataSource.h"
 
 using namespace boost::iostreams;
+using namespace boost::spirit::classic;
 using namespace Hypertable;
 using namespace std;
 
@@ -619,12 +622,12 @@ bool LoadDataSource::add_row_component(int index) {
 
 bool LoadDataSource::parse_date_format(const char *str, int64_t &timestamp) {
   int ival;
-  double dval=0;
   const char *ptr = str;
   char *end_ptr;
   struct tm tm;
   time_t tt;
   int64_t ns;
+  int64_t sec;
 
   ns = (int64_t)strtoll(ptr, &end_ptr, 10);
   if (*end_ptr == 0) {
@@ -681,7 +684,9 @@ bool LoadDataSource::parse_date_format(const char *str, int64_t &timestamp) {
   /**
    * second
    */
-  dval = strtod(ptr, &end_ptr);
+
+  if(!parse_sec(ptr, &end_ptr, sec))
+    return false;
   tm.tm_sec = 0;
 
 #if !defined(__sun__)
@@ -698,7 +703,21 @@ bool LoadDataSource::parse_date_format(const char *str, int64_t &timestamp) {
     ns = strtoul(ptr, &end_ptr, 10);
   }
 
-  timestamp = ((int64_t)tt * 1000000000LL) + (int64_t)(dval * 1000000000.0) + ns;
+  timestamp = ((int64_t)tt * 1000000000LL) + sec + ns;
 
   return true;
+}
+
+bool LoadDataSource::parse_sec(const char *str, char **end_ptr, int64_t &ns) {
+  uint_parser<unsigned int, 10, 2, 2> uint2_p;
+  int64_t int_seconds=0;
+  double decimal_seconds=0;
+  *end_ptr = (char*) str;
+  parse_info<> info = parse(str,
+      (uint2_p[assign_a(int_seconds)] >> !real_p[assign_a(decimal_seconds)]));
+  ns =  (int64_t)int_seconds * 1000000000LL + (int64_t)(decimal_seconds *
+      ((double) 1000000000LL));
+  if (info.hit)
+    *end_ptr += info.length - 1 ;
+  return info.hit;
 }
