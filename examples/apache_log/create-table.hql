@@ -1,3 +1,4 @@
+use namespace "/";
 create table LogDb (
 	ClientIpAddress,
 	UserId,	
