@@ -167,7 +167,7 @@ include(DocHelper)
 
 # sub-project directories
 add_subdirectory(src)
-#add_subdirectory(examples)
+add_subdirectory(examples)
 add_subdirectory(contrib)
 add_subdirectory(tests/integration)
 

@@ -51,6 +51,7 @@ namespace {
  */
 int main(int argc, char **argv) {
   ClientPtr client_ptr;
+  NamespacePtr namespace_ptr;
   TablePtr table_ptr;
   TableScannerPtr scanner_ptr;
   ScanSpecBuilder scan_spec_builder;
@@ -67,8 +68,11 @@ int main(int argc, char **argv) {
     // Create Hypertable client object
     client_ptr = new Client( System::locate_install_dir(argv[0]) );
 
+    // Open the root namespace
+    namespace_ptr = client_ptr->open_namespace("/");
+
     // Open the 'LogDb' table
-    table_ptr = client_ptr->open_table("LogDb");
+    table_ptr = namespace_ptr->open_table("LogDb");
 
     // setup row interval
     end_row = (String)argv[1];

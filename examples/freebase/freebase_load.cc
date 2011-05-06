@@ -69,6 +69,7 @@ namespace {
 int main(int argc, char **argv) {
   freebase_parser parser;
   ClientPtr client_ptr;
+  NamespacePtr namespace_ptr;
   TablePtr table_ptr;
   TableMutatorPtr mutator_ptr;
   KeySpec key;
@@ -91,8 +92,11 @@ int main(int argc, char **argv) {
     // Create Hypertable client object
     client_ptr = new Client( System::locate_install_dir(argv[0]) );
 
+    // Open the root namespace
+    namespace_ptr = client_ptr->open_namespace("/");
+
     // Open the 'free' table
-    table_ptr = client_ptr->open_table("freebase");
+    table_ptr = namespace_ptr->open_table("freebase");
 
     // Create a mutator object on the
     // 'LogDb' table
