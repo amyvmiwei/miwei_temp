@@ -60,9 +60,9 @@ void LiveFileTracker::add_references(const std::vector<String> &filev) {
   ScopedLock lock(m_mutex);
   FileRefCountMap::iterator iter;
   for (size_t i=0; i<filev.size(); i++) {
-    iter = m_referenced.find(filev[i]);
+    iter = m_referenced.find(strip_basename(filev[i]));
     if (iter == m_referenced.end())
-      m_referenced[filev[i]] = 1;
+      m_referenced[strip_basename(filev[i])] = 1;
     else
       (*iter).second++;
   }
@@ -77,11 +77,11 @@ void LiveFileTracker::remove_references(const std::vector<String> &filev) {
   ScopedLock lock(m_mutex);
   FileRefCountMap::iterator iter;
   for (size_t i=0; i<filev.size(); i++) {
-    iter = m_referenced.find(filev[i]);
+    iter = m_referenced.find(strip_basename(filev[i]));
     HT_ASSERT(iter != m_referenced.end());
     if (--(*iter).second == 0) {
       m_referenced.erase(iter);
-      if (m_blocked.count(filev[i]) > 0)
+      if (m_blocked.count(strip_basename(filev[i])) > 0)
         m_need_update = true;
     }
   }
