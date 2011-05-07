@@ -324,6 +324,8 @@ void DefaultPolicy::init_options() {
      "Default minimum group commit interval in milliseconds")
     ("Hypertable.RangeServer.BlockCache.MinMemory", i64()->default_value(150*M),
         "Minimum size of block cache")
+    ("Hypertable.RangeServer.BlockCache.MaxMemory", i64(),
+        "Maximum (target) size of block cache")
     ("Hypertable.RangeServer.QueryCache.MaxMemory", i64()->default_value(50*M),
         "Maximum size of query cache")
     ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(256*MiB),
