@@ -602,15 +602,27 @@ void AccessGroup::run_compaction(int maintenance_flags) {
        * Check for garbage and if threshold reached, change minor to major
        * compaction
        */
-      if (minor && m_garbage_tracker.check_needed( m_immutable_cache->memory_used() )) {
-        uint64_t total_bytes, valid_bytes;
-        compute_garbage_stats(&total_bytes, &valid_bytes);
-        garbage_check_performed = true;
-        m_garbage_tracker.set_garbage_stats(total_bytes, valid_bytes);
-        if (m_garbage_tracker.need_collection()) {
-          HT_INFOF("Switching from minor to major compaction to collect %.2f%% garbage",
-                   ((double)(total_bytes-valid_bytes)/(double)total_bytes)*100.00);
-          tableidx=0;
+      if (minor) {
+        if (m_immutable_cache) {
+          if (m_garbage_tracker.check_needed( m_immutable_cache->memory_used() )) {
+            uint64_t total_bytes, valid_bytes;
+            compute_garbage_stats(&total_bytes, &valid_bytes);
+            garbage_check_performed = true;
+            m_garbage_tracker.set_garbage_stats(total_bytes, valid_bytes);
+            if (m_garbage_tracker.need_collection()) {
+              HT_INFOF("Switching from minor to major compaction to collect %.2f%% garbage",
+                       ((double)(total_bytes-valid_bytes)/(double)total_bytes)*100.00);
+              tableidx=0;
+            }
+          }
+        }
+        else {
+          merge_caches();
+          if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
+            m_earliest_cached_revision = m_earliest_cached_revision_saved;
+            m_earliest_cached_revision_saved = TIMESTAMP_MAX;
+          }
+          return;
         }
       }
 
