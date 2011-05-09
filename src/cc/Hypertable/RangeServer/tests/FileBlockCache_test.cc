@@ -111,14 +111,6 @@ int main(int argc, char **argv) {
 
   cout << "FileBlockCache_test SEED = " << seed << ", total-memory = " << total_memory << endl;
 
-  /**
-   * Check to make sure cache rejects items that are too large
-   */
-  if (cache->insert_and_checkout(0, 0, 0, total_memory+1)) {
-    HT_ERROR("Cache accepted too large of an item");
-    return 1;
-  }
-
   while (total_alloc < total_memory) {
     index = (int)(random() % (MAX_FILE_ID*MAX_FILE_OFFSET));
     file_id = input_data[index].file_id;

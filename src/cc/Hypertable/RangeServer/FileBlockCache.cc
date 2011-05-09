@@ -86,14 +86,16 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
   HashIndex &hash_index = m_cache.get<1>();
   int64_t key = ((int64_t)file_id << 32) | file_offset;
 
-  if (length > m_limit || hash_index.find(key) != hash_index.end())
+  if (hash_index.find(key) != hash_index.end())
     return false;
 
   if (m_available < length)
     make_room(length);
 
-  if (m_available < length)
-    return false;
+  if (m_available < length) {
+    m_limit += (length-m_available);
+    m_available += (length-m_available);
+  }
 
   BlockCacheEntry entry(file_id, file_offset);
   entry.block = block;
