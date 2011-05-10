@@ -52,6 +52,8 @@ import org.hypertable.hadoop.mapreduce.Helper;
 import org.hypertable.hadoop.mapreduce.KeyWritable;
 import org.hypertable.hadoop.mapreduce.ScanSpec;
 
+import org.hypertable.thriftgen.RowInterval;
+
 import org.hypertable.Common.Time;
 
 /**
@@ -217,6 +219,7 @@ public class WikipediaWordCount {
    * holds the scan specification (scan predicate).
    */
   public static class Arguments {
+    public String namespace = "/";
     public ScanSpec scan_spec = new ScanSpec();
   }
 
@@ -226,9 +229,37 @@ public class WikipediaWordCount {
    */
   public static Arguments parseArgs(String[] args) throws ParseException {
     Arguments parsed_args = new Arguments();
+    RowInterval row_interval = null;
     Date ts;
     for (int i=0; i<args.length; i++) {
-      if (args[i].startsWith("--start-time=")) {
+      if (args[i].startsWith("--namespace=")) {
+        parsed_args.namespace = args[i].substring(12);
+      }
+      else if (args[i].startsWith("--row-")) {
+        if (row_interval == null)
+          row_interval = new RowInterval();
+        if (args[i].startsWith("--row-gt=")) {
+          row_interval.setStart_row(args[i].substring(9));
+          row_interval.setStart_inclusive(false);
+        }
+        else if (args[i].startsWith("--row-ge=")) {
+          row_interval.setStart_row(args[i].substring(9));
+          row_interval.setStart_inclusive(true);
+        }
+        else if (args[i].startsWith("--row-lt=")) {
+          row_interval.setEnd_row(args[i].substring(9));
+          row_interval.setEnd_inclusive(false);
+        }
+        else if (args[i].startsWith("--row-le=")) {
+          row_interval.setEnd_row(args[i].substring(9));
+          row_interval.setEnd_inclusive(true);
+        }
+        else {
+          System.out.println("Unsupported option: " + args[i]);
+          System.exit(-1);
+        }
+      }
+      else if (args[i].startsWith("--start-time=")) {
         ts = Time.parse_ts(args[i].substring(13));
         parsed_args.scan_spec.start_time = ts.getTime() * 1000000;
         parsed_args.scan_spec.setStart_timeIsSet(true);
@@ -246,6 +277,13 @@ public class WikipediaWordCount {
         parsed_args.scan_spec.setColumns(columns);
         parsed_args.scan_spec.setColumnsIsSet(true);
       }
+      else {
+        System.out.println("Unsupported option: " + args[i]);
+        System.exit(-1);
+      }
+    }
+    if (row_interval != null) {
+      parsed_args.scan_spec.addToRow_intervals(row_interval);
     }
     return parsed_args;
   }
@@ -273,8 +311,8 @@ public class WikipediaWordCount {
      * specification into the job configuration which is used in the InputFormat
      * as the scanner predicate.
      */
-    Helper.initMapperJob("/", "wikipedia", parsed_args.scan_spec, TokenizerMapper.class,
-                         KeyWritable.class, IntWritable.class, job);
+    Helper.initMapperJob(parsed_args.namespace, "wikipedia", parsed_args.scan_spec,
+                         TokenizerMapper.class, KeyWritable.class, IntWritable.class, job);
 
     /**
      * Sets up the Reducer configuration.  Specifies the reducer class, the
@@ -282,7 +320,7 @@ public class WikipediaWordCount {
      * output table name ("wikipedia") and the reducer's output types to the
      * defaults (KeyWritable, BytesWritable).
      */
-    Helper.initReducerJob("/", "wikipedia", IntSumTableReducer.class, job);
+    Helper.initReducerJob(parsed_args.namespace, "wikipedia", IntSumTableReducer.class, job);
 
     System.exit(job.waitForCompletion(true) ? 0 : 1);
   }
