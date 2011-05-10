@@ -278,7 +278,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
   /**
    * Calculates the splits that will serve as input for the map tasks. The
-   * number of splits matches the number of regions in a table.
+   * number of splits matches the number of ranges in a table.
    *
    * @param context  The current job context.
    * @return The list of input splits.
@@ -291,8 +291,22 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
     long ns=0;
     try {
+      RowInterval ri = null;
+
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
+
+      if (m_base_spec == null)
+        m_base_spec = ScanSpec.serializedTextToScanSpec( context.getConfiguration().get(SCAN_SPEC) );
+
+      java.util.Iterator<RowInterval> iter = m_base_spec.getRow_intervalsIterator();
+      if (iter != null && iter.hasNext()) {
+        ri = iter.next();
+        if (iter.hasNext()) {
+          System.out.println("InputFormat only allows a single ROW interval");
+          System.exit(-1);
+        }
+      }
 
       String namespace = context.getConfiguration().get(NAMESPACE);
       String tablename = context.getConfiguration().get(TABLE);
@@ -302,11 +316,16 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
           m_client.get_table_splits(ns, tablename);
       List<InputSplit> splits = new ArrayList<InputSplit>(tsplits.size());
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
-        byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
-        byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
-        TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row,
-                                          end_row, ts.hostname);
-        splits.add(split);
+        if (ri == null ||
+            ((!ri.isSetStart_row() || ts.end_row == null || ts.end_row.compareTo(ri.getStart_row()) > 0 ||
+              (ts.end_row.compareTo(ri.getStart_row()) == 0 && ri.isStart_inclusive())) &&
+             (!ri.isSetEnd_row() || ts.start_row == null || ts.start_row.compareTo(ri.getEnd_row()) < 0))) {
+          byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
+          byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
+          TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row,
+                                            end_row, ts.hostname);
+          splits.add(split);
+        }
       }
       return splits;
     }

@@ -57,7 +57,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
   final Log LOG = LogFactory.getLog(InputFormat.class);
 
-  public static final String NAMESPACE          = "hypertable.mapreduce.input.namespace";
+  public static final String NAMESPACE          = "hypertable.mapreduce.namespace";
+  public static final String INPUT_NAMESPACE    = "hypertable.mapreduce.input.namespace";
   public static final String TABLE              = "hypertable.mapreduce.input.table";
   public static final String COLUMNS            = "hypertable.mapreduce.input.scan_spec.columns";
   public static final String OPTIONS            = "hypertable.mapreduce.input.scan_spec.options";
@@ -483,11 +484,12 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
     try {
       TableSplit ts = (TableSplit)split;
       if (m_namespace == null) {
-        m_namespace = job.get(NAMESPACE);
+        m_namespace = job.get(INPUT_NAMESPACE);
+        if (m_namespace == null)
+          m_namespace = job.get(NAMESPACE);
       }
-      if (m_tablename == null) {
+      if (m_tablename == null)
         m_tablename = job.get(TABLE);
-      }
       ScanSpec scan_spec = ts.createScanSpec(m_base_spec);
       System.out.println(scan_spec);
 
@@ -509,46 +511,40 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
     long ns=0;
 
     try {
+      RowInterval ri = null;
+
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
-      String namespace = job.get(NAMESPACE);
+
       String tablename = job.get(TABLE);
+      String namespace = job.get(INPUT_NAMESPACE);
+      if (namespace == null)
+        namespace = job.get(NAMESPACE);
+
+      java.util.Iterator<RowInterval> iter = m_base_spec.getRow_intervalsIterator();
+      if (iter != null && iter.hasNext()) {
+        ri = iter.next();
+        if (iter.hasNext()) {
+          System.out.println("InputFormat only allows a single ROW interval");
+          System.exit(-1);
+        }
+      }
 
       ns = m_client.open_namespace(namespace);
       List<org.hypertable.thriftgen.TableSplit> tsplits =
           m_client.get_table_splits(ns, tablename);
       List<InputSplit> splits = new ArrayList<InputSplit>(tsplits.size());
+
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
-        boolean skip = false;
-
-        if (m_base_spec.isSetRow_intervals()) {
-          for (RowInterval ri : m_base_spec.getRow_intervals()) {
-
-            if (ri.isSetEnd_row() && ts.start_row != null) {
-              if (ri.getEnd_row().compareTo(ts.start_row) < 0 ||
-                  (!ri.isSetEnd_inclusive() && ri.getEnd_row().compareTo(ts.start_row) == 0))
-                skip = true;
-            }
-
-            if (ri.isSetStart_row() && ts.end_row != null) {
-              if (ri.getStart_row().compareTo(ts.end_row) > 0 ||
-                  (!ri.isSetStart_inclusive() && ri.getStart_row().compareTo(ts.end_row) == 0))
-                skip = true;
-            }
-
-            if (skip) {
-              break;
-            }
-          }
+        if (ri == null ||
+            ((!ri.isSetStart_row() || ts.end_row == null || ts.end_row.compareTo(ri.getStart_row()) > 0 ||
+              (ts.end_row.compareTo(ri.getStart_row()) == 0 && ri.isStart_inclusive())) &&
+             (!ri.isSetEnd_row() || ts.start_row == null || ts.start_row.compareTo(ri.getEnd_row()) < 0))) {
+          byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
+          byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
+          TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row, end_row, ts.hostname);
+          splits.add(split);
         }
-        if(skip) {
-          continue;
-        }
-        byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
-        byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
-
-        TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row, end_row, ts.hostname);
-        splits.add(split);
       }
 
       InputSplit[] isplits = new InputSplit[splits.size()];

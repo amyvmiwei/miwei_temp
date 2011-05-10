@@ -55,10 +55,11 @@ import org.hypertable.thrift.SerializedCellsWriter;
 public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFormat<Text, Text> {
   private static final Log log = LogFactory.getLog(TextTableOutputFormat.class);
 
-  public static final String NAMESPACE = "hypertable.mapreduce.output.namespace";
+  public static final String NAMESPACE = "hypertable.mapreduce.namespace";
+  public static final String OUTPUT_NAMESPACE = "hypertable.mapreduce.output.namespace";
   public static final String TABLE = "hypertable.mapreduce.output.table";
-  public static final String MUTATOR_FLAGS = "hypertable.mapreduce.output.mutator-flags";
-  public static final String MUTATOR_FLUSH_INTERVAL = "hypertable.mapreduce.output.mutator-flush-interval";
+  public static final String MUTATOR_FLAGS = "hypertable.mapreduce.output.mutator_flags";
+  public static final String MUTATOR_FLUSH_INTERVAL = "hypertable.mapreduce.output.mutator_flush_interval";
   public static final int CLIENT_BUFFER_SIZE = 1024*1024*12;
 
   /**
@@ -253,7 +254,9 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
    */
   public RecordWriter<Text, Text> getRecordWriter(FileSystem ignored, JobConf job, String name, Progressable progress)
     throws IOException {
-    String namespace = job.get(TextTableOutputFormat.NAMESPACE);
+    String namespace = job.get(TextTableOutputFormat.OUTPUT_NAMESPACE);
+    if (namespace == null)
+      namespace = job.get(TextTableOutputFormat.NAMESPACE);
     String table = job.get(TextTableOutputFormat.TABLE);
     int flags = job.getInt(TextTableOutputFormat.MUTATOR_FLAGS, 0);
     int flush_interval = job.getInt(TextTableOutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
