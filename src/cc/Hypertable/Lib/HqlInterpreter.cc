@@ -565,6 +565,9 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   if (LoadDataFlags::ignore_unknown_cfs(state.load_flags))
     mutator_flags |= TableMutator::FLAG_IGNORE_UNKNOWN_CFS;
 
+  // Turn on no-log-sync unconditionally for LOAD DATA INFILE
+  mutator_flags |= TableMutator::FLAG_NO_LOG_SYNC;
+
   if (state.table_name.empty()) {
     if (state.output_file.empty())
       HT_THROW(Error::HQL_PARSE_ERROR,
