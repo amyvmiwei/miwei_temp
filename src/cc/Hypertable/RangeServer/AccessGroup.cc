@@ -53,7 +53,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_earliest_cached_revision_saved(TIMESTAMP_MAX),
     m_latest_stored_revision(TIMESTAMP_MIN), m_collisions(0),
     m_file_tracker(identifier, schema, range, ag->name), m_is_root(false),
-    m_recovering(false) {
+    m_recovering(false), m_needs_merging(false) {
 
   m_table_name = m_identifier.id;
   m_start_row = range->start_row;
@@ -447,6 +447,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
   mdata->file_count = m_stores.size();
 
   mdata->gc_needed = m_garbage_tracker.check_needed(mdata->deletes, mdata->mem_used, now);
+  mdata->needs_merging = m_needs_merging;
 
   mdata->maintenance_flags = 0;
 
@@ -486,15 +487,6 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore) {
   m_file_tracker.add_live_noupdate(cellstore->get_filename());
 }
 
-namespace {
-  struct LtCellStoreInfo {
-    bool operator()(const AccessGroup::CellStoreInfo &x, const AccessGroup::CellStoreInfo &y) const {
-      return x.cs->disk_usage() > y.cs->disk_usage();
-    }
-  };
-
-}
-
 void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp) {
   ScanContextPtr scan_context = new ScanContext(m_schema);
   MergeScannerPtr mscanner = new MergeScanner(scan_context, false, true);
@@ -524,20 +516,23 @@ void AccessGroup::run_compaction(int maintenance_flags) {
   Key key;
   CellListScannerPtr scanner;
   MergeScanner *mscanner = 0;
-  size_t tableidx = 1;
   CellStorePtr cellstore;
   CellCachePtr filtered_cache, shadow_cache;
   String metadata_key_str;
   bool abort_loop = true;
   bool minor = false;
+  bool merging = false;
+  bool major = false;
+  bool gc = false;
   bool garbage_check_performed = false;
+  size_t merge_offset=0, merge_length=0;
+  String added_file;
 
   while (abort_loop) {
     ScopedLock lock(m_mutex);
     if (m_in_memory) {
       if (!m_immutable_cache || m_immutable_cache->empty())
         break;
-      tableidx = m_stores.size();
       HT_INFOF("Starting InMemory Compaction of %s(%s)",
                m_range_name.c_str(), m_name.c_str());
     }
@@ -546,27 +541,31 @@ void AccessGroup::run_compaction(int maintenance_flags) {
           m_stores.size() <= (size_t)1 &&
           !MaintenanceFlag::split(maintenance_flags))
         break;
-      tableidx = 0;
+      major = true;
       HT_INFOF("Starting Major Compaction of %s(%s)",
                m_range_name.c_str(), m_name.c_str());
     }
     else {
-      if (m_stores.size() > (size_t)Global::access_group_max_files) {
-        LtCellStoreInfo descending;
-        sort(m_stores.begin(), m_stores.end(), descending);
-        tableidx = m_stores.size() - Global::access_group_merge_files;
+      if (MaintenanceFlag::merging_compaction(maintenance_flags)) {
+        if (!find_merge_run(&merge_offset, &merge_length)) {
+          m_needs_merging = false;
+          break;
+        }
         HT_INFOF("Starting Merging Compaction of %s(%s)",
                  m_range_name.c_str(), m_name.c_str());
+        merging = true;
+        merge_caches();
       }
       else {
         if (!MaintenanceFlag::gc_compaction(maintenance_flags) &&
             (!m_immutable_cache || m_immutable_cache->empty()))
           break;
-        tableidx = m_stores.size();
-	minor = true;
-        const char *compaction_type = MaintenanceFlag::gc_compaction(maintenance_flags) ? "GC" : "Minor";
-        HT_INFOF("Starting %s Compaction of %s(%s)",
-                 compaction_type, m_range_name.c_str(), m_name.c_str());
+        if (MaintenanceFlag::gc_compaction(maintenance_flags))
+          gc = true;
+        else
+          minor = true;
+        HT_INFOF("Starting %s Compaction of %s(%s)", (gc ? "GC" : "Minor"),
+                 m_range_name.c_str(), m_name.c_str());
       }
     }
     abort_loop = false;
@@ -575,10 +574,6 @@ void AccessGroup::run_compaction(int maintenance_flags) {
   if (abort_loop) {
     ScopedLock lock(m_mutex);
     merge_caches();
-    if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
-      m_earliest_cached_revision = m_earliest_cached_revision_saved;
-      m_earliest_cached_revision_saved = TIMESTAMP_MAX;
-    }
     return;
   }
 
@@ -612,16 +607,13 @@ void AccessGroup::run_compaction(int maintenance_flags) {
             if (m_garbage_tracker.need_collection()) {
               HT_INFOF("Switching from minor to major compaction to collect %.2f%% garbage",
                        ((double)(total_bytes-valid_bytes)/(double)total_bytes)*100.00);
-              tableidx=0;
+              gc = true;
+              minor = false;
             }
           }
         }
         else {
           merge_caches();
-          if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
-            m_earliest_cached_revision = m_earliest_cached_revision_saved;
-            m_earliest_cached_revision_saved = TIMESTAMP_MAX;
-          }
           return;
         }
       }
@@ -636,14 +628,11 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         filtered_cache = new CellCache();
       }
-      else if (MaintenanceFlag::major_compaction(maintenance_flags) ||
-	       tableidx < m_stores.size()) {
-        bool return_everything = (MaintenanceFlag::major_compaction(maintenance_flags)) ? false : (tableidx > 0);
-        mscanner = new MergeScanner(scan_context, return_everything, true);
+      else if (merging) {
+        mscanner = new MergeScanner(scan_context, true, true);
         scanner = mscanner;
-        if (m_immutable_cache)
-          mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
-        for (size_t i=tableidx; i<m_stores.size(); i++) {
+        max_num_entries = 0;
+        for (size_t i=merge_offset; i<merge_offset+merge_length; i++) {
           HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
           int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV5::SPLIT) ? 2: 1;
@@ -651,10 +640,21 @@ void AccessGroup::run_compaction(int maintenance_flags) {
               (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
       }
-      else {
+      else if (major || gc) {
+        mscanner = new MergeScanner(scan_context, false, true);
+        scanner = mscanner;
         if (m_immutable_cache)
-          scanner = m_immutable_cache->create_scanner(scan_context);
+          mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
+        for (size_t i=0; i<m_stores.size(); i++) {
+          HT_ASSERT(m_stores[i].cs);
+          mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
+          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV5::SPLIT) ? 2: 1;
+          max_num_entries += (boost::any_cast<int64_t>
+              (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
+        }
       }
+      else
+        scanner = m_immutable_cache->create_scanner(scan_context);
     }
 
     cellstore->create(cs_file.c_str(), max_num_entries, m_cellstore_props);
@@ -668,7 +668,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
 
     CellStoreTrailerV5 *trailer = dynamic_cast<CellStoreTrailerV5 *>(cellstore->get_trailer());
 
-    if (tableidx == 0 && mscanner)
+    if (major && mscanner)
       trailer->flags |= CellStoreTrailerV5::MAJOR_COMPACTION;
 
     if (maintenance_flags & MaintenanceFlag::SPLIT)
@@ -680,70 +680,86 @@ void AccessGroup::run_compaction(int maintenance_flags) {
      * Install new CellCache and CellStore and update Live file tracker
      */
     std::vector<String> removed_files;
-    String added_file;
     {
       ScopedLock lock(m_mutex);
 
-      /**
-       * If major compaction was performed and we didn't do a garbage
-       * check, then update the garbage tracker with statistics from
-       * the MergeScanner.  Also clear the garbage tracker.
-       */
-      if (tableidx == 0 && mscanner) {
-        if (!garbage_check_performed) {
-          uint64_t input_bytes, output_bytes;
-          mscanner->get_io_accounting_data(&input_bytes, &output_bytes);
-          m_garbage_tracker.set_garbage_stats(input_bytes, output_bytes);
-        }
-        m_garbage_tracker.clear();
-      }
-      else if (m_in_memory)
-        m_garbage_tracker.clear();
-
-      m_latest_stored_revision = boost::any_cast<int64_t>
-        (cellstore->get_trailer()->get("revision"));
-      if (m_latest_stored_revision >= m_earliest_cached_revision)
-        HT_ERROR("Revision (clock) skew detected! May result in data loss.");
-
-      if (m_in_memory) {
-        m_immutable_cache = filtered_cache;
-        merge_caches();
-        for (size_t i=0; i<m_stores.size(); i++)
+      if (merging) {
+        std::vector<CellStoreInfo> new_stores;
+        new_stores.reserve(m_stores.size() - (merge_length-1));
+        for (size_t i=0; i<merge_offset; i++)
+          new_stores.push_back(m_stores[i]);
+        for (size_t i=merge_offset; i<merge_offset+merge_length; i++)
           removed_files.push_back(m_stores[i].cs->get_filename());
-        m_stores.clear();
-      }
-      else {
-
-	if (minor && Global::enable_shadow_cache &&
-	    !MaintenanceFlag::purge_shadow_cache(maintenance_flags))
-	  shadow_cache = m_immutable_cache;
-	m_immutable_cache = 0;
-
-        /** Drop the compacted tables from the table vector **/
-        if (tableidx < m_stores.size()) {
-          for (size_t i=tableidx; i<m_stores.size(); i++)
-            removed_files.push_back(m_stores[i].cs->get_filename());
-          m_stores.resize(tableidx);
-        }
-      }
-
-      /** Add the new cell store to the table vector, or delete it if
-       * it contains no entries
-       */
-      if (cellstore->get_total_entries() > 0) {
-        m_stores.push_back( CellStoreInfo(cellstore, shadow_cache, m_earliest_cached_revision_saved) );
-        m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
+        new_stores.push_back(cellstore);
         added_file = cellstore->get_filename();
+        for (size_t i=merge_offset+merge_length; i<m_stores.size(); i++)
+          new_stores.push_back(m_stores[i]);
+        m_stores.swap(new_stores);
       }
       else {
-        String fname = cellstore->get_filename();
-        cellstore = 0;
-        try {
-          Global::dfs->remove(fname);
+
+        /**
+         * If major compaction was performed and we didn't do a garbage
+         * check, then update the garbage tracker with statistics from
+         * the MergeScanner.  Also clear the garbage tracker.
+         */
+        if ((major || gc) && mscanner) {
+          if (!garbage_check_performed) {
+            uint64_t input_bytes, output_bytes;
+            mscanner->get_io_accounting_data(&input_bytes, &output_bytes);
+            m_garbage_tracker.set_garbage_stats(input_bytes, output_bytes);
+          }
+          m_garbage_tracker.clear();
         }
-        catch (Hypertable::Exception &e) {
-          HT_ERROR_OUT << "Problem removing '" << fname.c_str() << "' " \
-                       << e << HT_END;
+        else if (m_in_memory)
+          m_garbage_tracker.clear();
+
+        m_latest_stored_revision = boost::any_cast<int64_t>
+          (cellstore->get_trailer()->get("revision"));
+        if (m_latest_stored_revision >= m_earliest_cached_revision)
+          HT_ERROR("Revision (clock) skew detected! May result in data loss.");
+
+        if (m_in_memory) {
+          m_immutable_cache = filtered_cache;
+          merge_caches(false);
+          for (size_t i=0; i<m_stores.size(); i++)
+            removed_files.push_back(m_stores[i].cs->get_filename());
+          m_stores.clear();
+        }
+        else {
+
+          if (minor && Global::enable_shadow_cache &&
+              !MaintenanceFlag::purge_shadow_cache(maintenance_flags))
+            shadow_cache = m_immutable_cache;
+          m_immutable_cache = 0;
+
+          /** Drop the compacted CellStores from the stores vector **/
+          if (major || gc) {
+            for (size_t i=0; i<m_stores.size(); i++)
+              removed_files.push_back(m_stores[i].cs->get_filename());
+            m_stores.clear();
+          }
+        }
+
+        /** Add the new cell store to the table vector, or delete it if
+         * it contains no entries
+         */
+        if (cellstore->get_total_entries() > 0) {
+          m_stores.push_back( CellStoreInfo(cellstore, shadow_cache, m_earliest_cached_revision_saved) );
+          check_for_needs_merging();
+          m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
+          added_file = cellstore->get_filename();
+        }
+        else {
+          String fname = cellstore->get_filename();
+          cellstore = 0;
+          try {
+            Global::dfs->remove(fname);
+          }
+          catch (Hypertable::Exception &e) {
+            HT_ERROR_OUT << "Problem removing '" << fname.c_str() << "' " \
+                         << e << HT_END;
+          }
         }
       }
 
@@ -753,10 +769,13 @@ void AccessGroup::run_compaction(int maintenance_flags) {
     m_file_tracker.update_live(added_file, removed_files, m_next_cs_id);
     m_file_tracker.update_files_column();
 
-    m_earliest_cached_revision_saved = TIMESTAMP_MAX;
+    if (merging)
+      m_needs_merging = find_merge_run();
+    else
+      m_earliest_cached_revision_saved = TIMESTAMP_MAX;
 
-    HT_INFOF("Finished Compaction of %s(%s)", m_range_name.c_str(),
-             m_name.c_str());
+    HT_INFOF("Finished Compaction of %s(%s) to %s", m_range_name.c_str(),
+             m_name.c_str(), added_file.c_str());
 
   }
   catch (Exception &e) {
@@ -855,6 +874,8 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
 
     m_stores = new_stores;
 
+    m_needs_merging = find_merge_run();
+
     m_earliest_cached_revision_saved = TIMESTAMP_MAX;
 
     m_recovering = false;
@@ -903,17 +924,19 @@ void AccessGroup::unstage_compaction() {
   m_garbage_tracker.add_delete_count( -m_immutable_cache->get_delete_count() );
   m_garbage_tracker.accumulate_data( -m_immutable_cache->memory_used() );
   merge_caches();
-  if (m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
-    m_earliest_cached_revision = m_earliest_cached_revision_saved;
-    m_earliest_cached_revision_saved = TIMESTAMP_MAX;
-  }
 }
 
 
 /**
  * Assumes mutex is locked
  */
-void AccessGroup::merge_caches() {
+void AccessGroup::merge_caches(bool reset_earliest_cached_revision) {
+
+  if (reset_earliest_cached_revision &&
+      m_earliest_cached_revision_saved != TIMESTAMP_MAX) {
+    m_earliest_cached_revision = m_earliest_cached_revision_saved;
+    m_earliest_cached_revision_saved = TIMESTAMP_MAX;
+  }
 
   if (!m_immutable_cache)
     return;
@@ -1012,6 +1035,75 @@ void AccessGroup::recompute_compression_ratio() {
   else
     m_compression_ratio = 1.0;
 }
+
+
+bool AccessGroup::find_merge_run(size_t *indexp, size_t *lenp) {
+  size_t index = 0;
+  size_t count = 0;
+  size_t i = 0;
+  int64_t running_total = 0;
+
+  if (m_in_memory || m_stores.size() == 0)
+    return false;
+
+  do {
+    count++;
+    running_total += m_stores[i].cs->disk_usage();
+
+    if (running_total >= Global::cellstore_target_size_max) {
+      index = i;
+      count = 1;
+      running_total = m_stores[i].cs->disk_usage();
+    }
+    else if (running_total >= Global::cellstore_target_size_min &&
+             count > 1) {
+      if (indexp)
+        *indexp = index;
+      if (lenp)
+        *lenp = count;
+      return true;
+    }
+    i++;
+  } while (i < m_stores.size());
+
+  return false;
+}
+
+
+void AccessGroup::check_for_needs_merging() {
+  size_t count = 0;
+  int64_t running_total = 0;
+
+  if (m_in_memory || m_needs_merging == true)
+    return;
+  
+  for (int i = m_stores.size()-1; i>=0; i--) {
+    count++;
+    running_total += m_stores[i].cs->disk_usage();
+    if (running_total >= Global::cellstore_target_size_max)
+      return;
+    else if (running_total >= Global::cellstore_target_size_min &&
+             (m_stores.size() - (size_t)i) > 1) {
+      m_needs_merging = true;
+      break;
+    }
+  }
+}
+
+namespace {
+  struct LtCellStoreInfoTimestamp {
+    bool operator()(const AccessGroup::CellStoreInfo &x, const AccessGroup::CellStoreInfo &y) const {
+      return x.timestamp_min < y.timestamp_min;
+    }
+  };
+}
+
+
+void AccessGroup::sort_cellstores_by_timestamp() {
+  LtCellStoreInfoTimestamp order;
+  sort(m_stores.begin(), m_stores.end(), order);
+}
+
 
 void AccessGroup::dump_keys(std::ofstream &out) {
   ScopedLock lock(m_mutex);

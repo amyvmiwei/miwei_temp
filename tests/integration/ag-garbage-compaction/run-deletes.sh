@@ -40,8 +40,11 @@ kill -9 `cat $PIDFILE`
 
 n=`fgrep "Switching from minor to major" rangeserver.output | wc -l`
 if [ $n -eq 0 ] ; then
-  echo "RangeServer did not switch to major compaction for gc purposes"
-  exit 1
+  n=`fgrep "Starting GC Compaction" rangeserver.output | wc -l`
+  if [ $n -eq 0 ] ; then
+    echo "RangeServer did not commence a GC compaction"
+    exit 1
+  fi
 fi
 
 exit 0

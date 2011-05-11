@@ -48,8 +48,6 @@ namespace Hypertable {
   int64_t                Global::range_split_size = 0;
   int64_t                Global::range_maximum_size = 0;
   int32_t                Global::access_group_garbage_compaction_threshold = 0;
-  int32_t                Global::access_group_max_files = 0;
-  int32_t                Global::access_group_merge_files = 0;
   int32_t                Global::access_group_max_mem = 0;
   int32_t                Global::cell_cache_scanner_cache_size = 0;
   ScannerMap             Global::scanner_map;
@@ -60,6 +58,8 @@ namespace Hypertable {
   MemoryTracker         *Global::memory_tracker = 0;
   int64_t                Global::log_prune_threshold_min = 0;
   int64_t                Global::log_prune_threshold_max = 0;
+  int64_t                Global::cellstore_target_size_min = 0;
+  int64_t                Global::cellstore_target_size_max = 0;
   int64_t                Global::memory_limit = 0;
   int64_t                Global::memory_limit_ensure_unused = 0;
   int64_t                Global::memory_limit_ensure_unused_current = 0;

@@ -24,6 +24,11 @@
 
 #include "Error.h"
 
+namespace Hypertable { namespace Logger {
+    extern bool show_line_numbers;
+  }
+}
+
 using namespace Hypertable;
 
 namespace {
@@ -283,15 +288,21 @@ std::ostream &operator<<(std::ostream &out, const Exception &e) {
   out <<"Hypertable::Exception: "<< e.message() <<" - "
       << Error::get_text(e.code());
 
-  if (e.line())
-    out <<"\n\tat "<< e.func() <<" ("<< e.file() <<':'<< e.line() <<')';
+  if (e.line()) {
+    out <<"\n\tat "<< e.func() <<" ("<< e.file();
+    if (Logger::show_line_numbers)
+      out <<':'<< e.line();
+    out <<')';
+  }
 
   int prev_code = e.code();
 
   for (Exception *prev = e.prev; prev; prev = prev->prev) {
     out <<"\n\tat "<< (prev->func() ? prev->func() : "-") <<" ("
-        << (prev->file() ? prev->file() : "-") <<':'<< prev->line() <<"): "
-        << prev->message();
+        << (prev->file() ? prev->file() : "-");
+    if (Logger::show_line_numbers)    
+      out <<':'<< prev->line();
+    out <<"): " << prev->message();
 
     if (prev->code() != prev_code) {
       out <<" - "<< Error::get_text(prev->code());

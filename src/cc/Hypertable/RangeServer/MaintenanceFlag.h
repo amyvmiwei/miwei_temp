@@ -33,7 +33,7 @@ namespace Hypertable {
       COMPACT_MINOR             = 0x0201,
       COMPACT_MAJOR             = 0x0202,
       COMPACT_MERGING           = 0x0204,
-      COMPACT_GC                = 0x0205,
+      COMPACT_GC                = 0x0208,
       MEMORY_PURGE              = 0x0400,
       MEMORY_PURGE_SHADOW_CACHE = 0x0401,
       MEMORY_PURGE_CELLSTORE    = 0x0402,
@@ -44,8 +44,16 @@ namespace Hypertable {
       return (flags & SPLIT) == SPLIT;
     }
 
+    inline bool compaction(int flags) {
+      return (flags & COMPACT) == COMPACT;
+    }
+
     inline bool minor_compaction(int flags) {
       return (flags & COMPACT_MINOR) == COMPACT_MINOR;
+    }
+
+    inline bool merging_compaction(int flags) {
+      return (flags & COMPACT_MERGING) == COMPACT_MERGING;
     }
 
     inline bool major_compaction(int flags) {
@@ -85,6 +93,12 @@ namespace Hypertable {
 	if (iter != this->end())
 	  return (*iter).second;
 	return 0;
+      }
+      bool compaction(const void *key) {
+	iterator iter = this->find(key);
+	if (iter != this->end())
+	  return ((*iter).second & COMPACT) == COMPACT;
+	return false;
       }
       bool minor_compaction(const void *key) {
 	iterator iter = this->find(key);

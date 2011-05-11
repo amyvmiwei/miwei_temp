@@ -70,8 +70,6 @@ namespace Hypertable {
     static int64_t        range_split_size;
     static int64_t        range_maximum_size;
     static int32_t        access_group_garbage_compaction_threshold;
-    static int32_t        access_group_max_files;
-    static int32_t        access_group_merge_files;
     static int32_t        access_group_max_mem;
     static int32_t        cell_cache_scanner_cache_size;
     static ScannerMap     scanner_map;
@@ -82,6 +80,8 @@ namespace Hypertable {
     static Hypertable::MemoryTracker *memory_tracker;
     static int64_t        log_prune_threshold_min;
     static int64_t        log_prune_threshold_max;
+    static int64_t        cellstore_target_size_min;
+    static int64_t        cellstore_target_size_max;
     static int64_t        memory_limit;
     // amount of unused physical memory to achieve according
     // to the configuration
