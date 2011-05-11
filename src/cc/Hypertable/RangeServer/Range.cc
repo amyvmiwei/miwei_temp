@@ -150,7 +150,7 @@ void Range::split_install_log_rollback_metadata() {
     String metadata_key_str;
     KeySpec key;
 
-    TableMutatorSyncPtr mutator = Global::metadata_table->create_mutator_sync();
+    TableMutatorPtr mutator = Global::metadata_table->create_mutator();
 
     // Reset start row
     metadata_key_str = String("") + m_metalog_entity->table.id + ":" + m_metalog_entity->spec.end_row;
@@ -422,7 +422,7 @@ bool Range::cancel_maintenance() {
 
 
 Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now,
-                                                    TableMutatorSync *mutator) {
+                                                    TableMutator *mutator) {
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc( sizeof(MaintenanceData) );
   AccessGroup::MaintenanceData **tailp = 0;
   AccessGroupVector  ag_vector(0);
@@ -646,7 +646,7 @@ void Range::relinquish_compact_and_finish() {
 
   // Record "move" in sys/RS_METRICS
   if (Global::rs_metrics_table) {
-    TableMutatorSyncPtr mutator = Global::rs_metrics_table->create_mutator_sync();
+    TableMutatorPtr mutator = Global::rs_metrics_table->create_mutator();
     KeySpec key;
     String row = Global::location_initializer->get() + ":" + m_metalog_entity->table.id;
     key.row = row.c_str();
@@ -907,7 +907,7 @@ void Range::split_compact_and_shrink() {
     String metadata_key_str;
     KeySpec key;
 
-    TableMutatorSyncPtr mutator = Global::metadata_table->create_mutator_sync();
+    TableMutatorPtr mutator = Global::metadata_table->create_mutator();
 
     // For new range with existing end row, update METADATA entry with new
     // 'StartRow' column.

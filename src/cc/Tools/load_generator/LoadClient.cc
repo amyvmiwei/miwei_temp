@@ -87,7 +87,7 @@ LoadClient::create_mutator(const String &tablename, int mutator_flags)
       m_native_table = m_ns->open_table(tablename);
       m_native_table_open = true;
     }
-    m_native_mutator = m_native_table->create_mutator_sync(0, mutator_flags);
+    m_native_mutator = m_native_table->create_mutator(0, mutator_flags);
   }
 }
 

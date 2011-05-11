@@ -44,7 +44,6 @@ namespace Hypertable {
   class TableScannerAsync;
   class TableScanner;
   class TableMutator;
-  class TableMutatorSync;
   class TableMutatorAsync;
 
   /** Represents an open table.
@@ -84,20 +83,6 @@ namespace Hypertable {
     TableMutator *create_mutator(uint32_t timeout_ms = 0,
                                  uint32_t flags = 0,
                                  uint32_t flush_interval_ms = 0);
-
-    /**
-     * Creates a synchronous mutator on this table
-     *
-     * @param timeout_ms maximum time in milliseconds to allow
-     *        mutator methods to execute before throwing an exception
-     * @param flags mutator flags
-     * @param flush_interval_ms time interval in milliseconds to flush
-     *        data. 0 disables it.
-     * @return newly constructed mutator object
-     */
-    TableMutatorSync *create_mutator_sync(uint32_t timeout_ms = 0,
-                                          uint32_t flags = 0,
-                                          uint32_t flush_interval_ms = 0);
 
     /**
      * Creates a synchronous scanner on this table

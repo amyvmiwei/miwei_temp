@@ -26,7 +26,7 @@
 #include "Common/Mutex.h"
 #include "Common/String.h"
 
-#include "Hypertable/Lib/TableMutatorSync.h"
+#include "Hypertable/Lib/TableMutator.h"
 
 #include "LoadFactors.h"
 
@@ -43,7 +43,7 @@ namespace Hypertable {
       m_new_rows = true;
     }
 
-    void compute_and_store(TableMutatorSync *mutator, time_t now,
+    void compute_and_store(TableMutator *mutator, time_t now,
                            LoadFactors &load_factors,
                            uint64_t disk_used, uint64_t memory_used);
 

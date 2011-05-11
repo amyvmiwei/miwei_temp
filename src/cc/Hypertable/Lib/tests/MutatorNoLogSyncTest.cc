@@ -299,7 +299,7 @@ int main(int argc, char **argv) {
   try {
     // Load up some data so we have at least 3 ranges and do an explicit flush
     {
-      TableMutatorSyncPtr mutator_ptr = table_ptr->create_mutator_sync(0, TableMutator::FLAG_NO_LOG_SYNC);
+      TableMutatorPtr mutator_ptr = table_ptr->create_mutator(0, TableMutator::FLAG_NO_LOG_SYNC);
       cout << "*** Load 1" << endl;
       for (ii=0; ii<30; ++ii) {
         row_key = numbers[ii];
@@ -319,7 +319,7 @@ int main(int argc, char **argv) {
 
     // Load up a bit more and do an explicit flush
     {
-      TableMutatorSyncPtr mutator_ptr = table_ptr->create_mutator_sync(0, TableMutator::FLAG_NO_LOG_SYNC);
+      TableMutatorPtr mutator_ptr = table_ptr->create_mutator(0, TableMutator::FLAG_NO_LOG_SYNC);
        cout << "*** Load 2" << endl;
       for (;ii<34; ++ii) {
         row_key = numbers[ii];
@@ -339,7 +339,7 @@ int main(int argc, char **argv) {
 
     // Test flush on mutator destruction
     {
-      TableMutatorSyncPtr mutator_ptr = table_ptr->create_mutator_sync(0, TableMutator::FLAG_NO_LOG_SYNC);
+      TableMutatorPtr mutator_ptr = table_ptr->create_mutator(0, TableMutator::FLAG_NO_LOG_SYNC);
       cout << "*** Load 3" << endl;
       for (;ii<38; ++ii) {
         row_key = numbers[ii];

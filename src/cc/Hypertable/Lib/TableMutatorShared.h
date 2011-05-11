@@ -1,5 +1,5 @@
 /** -*- C++ -*-
- * Copyright (C) 2009  Luke Lu (llu@hypertable.org)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,7 +22,7 @@
 
 #include "Common/Time.h"
 
-#include "TableMutatorSync.h"
+#include "TableMutator.h"
 
 namespace Hypertable {
 
@@ -33,8 +33,8 @@ class TableMutatorIntervalHandler;
  * has an option to do periodic flushes. For best throughput use the vanilla
  * TableMutator
  */
-class TableMutatorShared : public TableMutatorSync {
-  typedef TableMutatorSync Parent;
+class TableMutatorShared : public TableMutator {
+  typedef TableMutator Parent;
 
 public:
   /**

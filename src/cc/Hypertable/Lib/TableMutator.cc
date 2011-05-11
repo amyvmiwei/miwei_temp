@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -33,7 +33,6 @@ extern "C" {
 
 #include "Key.h"
 #include "TableMutator.h"
-#include "TableMutatorSyncDispatchHandler.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -57,45 +56,32 @@ void TableMutator::handle_exceptions() {
 }
 
 
-TableMutator::TableMutator(PropertiesPtr & props, Comm *comm, Table *table,
-    RangeLocatorPtr &range_locator, uint32_t timeout_ms, uint32_t flags)
-  : m_comm(comm), m_table(table), m_range_locator(range_locator),
-    m_memory_used(0), m_resends(0), m_timeout_ms(timeout_ms), m_flags(flags),
-    m_prev_buffer_flags(0), m_flush_delay(0), m_last_error(Error::OK),
-    m_last_op(0), m_mutated(false) {
-
+TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table,
+    RangeLocatorPtr &range_locator,
+    uint32_t timeout_ms, uint32_t flags)
+  : m_callback(this), m_timeout_ms(timeout_ms), m_flags(flags), m_last_error(Error::OK),
+    m_last_op(0), m_unflushed_updates(false) {
   HT_ASSERT(timeout_ms);
-
-  table->get(m_table_identifier, m_schema);
-
-  m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
-  m_max_memory = props->get_i64("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate");
-  m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
-                m_schema, m_range_locator, m_table->auto_refresh(), timeout_ms);
+  m_queue = new TableMutatorQueue;
+  ApplicationQueuePtr app_queue = (ApplicationQueue *)m_queue.get();
+  m_mutator  = new TableMutatorAsync(props, comm, app_queue, table, range_locator, timeout_ms,
+      &m_callback, flags, false);
 }
 
 TableMutator::~TableMutator() {
-  // Flush buffers and sync rangeserver commit logs
-  HT_TRY_OR_LOG("final flush", flush());
+  if (m_unflushed_updates)
+    flush();
+  m_mutator->cancel();
 }
 
 void
 TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
-  Timer timer(m_timeout_ms);
-  bool unknown_cf;
-  bool ignore_unknown_cfs = (m_flags & FLAG_IGNORE_UNKNOWN_CFS) ;
 
   try {
     m_last_op = SET;
-    auto_flush(timer);
-    key.sanity_check();
-
-    Key full_key;
-    to_full_key(key, full_key, unknown_cf);
-    if (ignore_unknown_cfs && unknown_cf)
-      return;
-    m_buffer->set(full_key, value, value_len, timer);
-    m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
+    auto_flush();
+    m_mutator->set(key, value, value_len);
+    m_unflushed_updates = true;
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -112,40 +98,12 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
 
 void
 TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
-  Timer timer(m_timeout_ms);
-  bool unknown_cf;
-  bool ignore_unknown_cfs = (m_flags & FLAG_IGNORE_UNKNOWN_CFS) ;
 
   try {
     m_last_op = SET_CELLS;
-    auto_flush(timer);
-
-    for (; it != end; ++it) {
-      Key full_key;
-      const Cell &cell = *it;
-      cell.sanity_check();
-
-      if (!cell.column_family) {
-        if (cell.flag != FLAG_DELETE_ROW)
-          HT_THROW(Error::BAD_KEY,
-              (String)"Column family not specified in non-delete row set on row="
-              + (String)cell.row_key);
-
-        full_key.row = cell.row_key;
-        full_key.timestamp = cell.timestamp;
-        full_key.revision = cell.revision;
-        full_key.flag = cell.flag;
-      }
-      else {
-        to_full_key(cell, full_key, unknown_cf);
-        if (ignore_unknown_cfs && unknown_cf)
-          continue;
-      }
-      // assuming all inserts for now
-      m_buffer->set(full_key, cell.value, cell.value_len, timer);
-      m_memory_used += 20 + strlen(cell.row_key)
-          + (cell.column_qualifier ? strlen(cell.column_qualifier) : 0);
-    }
+    auto_flush();
+    m_mutator->set_cells(it, end);
+    m_unflushed_updates = true;
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -161,28 +119,12 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
 
 
 void TableMutator::set_delete(const KeySpec &key) {
-  Timer timer(m_timeout_ms);
-  Key full_key;
-  bool unknown_cf;
-  bool ignore_unknown_cfs = (m_flags & FLAG_IGNORE_UNKNOWN_CFS) ;
 
   try {
     m_last_op = SET_DELETE;
-    auto_flush(timer);
-    key.sanity_check();
-
-    if (!key.column_family) {
-      full_key.row = (const char *)key.row;
-      full_key.timestamp = key.timestamp;
-      full_key.revision = key.revision;
-    }
-    else {
-      to_full_key(key, full_key, unknown_cf);
-      if (ignore_unknown_cfs && unknown_cf)
-        return;
-    }
-    m_buffer->set_delete(full_key, timer);
-    m_memory_used += 20 + key.row_len + key.column_qualifier_len;
+    auto_flush();
+    m_mutator->set_delete(key);
+    m_unflushed_updates = true;
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -196,97 +138,40 @@ void TableMutator::set_delete(const KeySpec &key) {
   }
 }
 
-void
-TableMutator::to_full_key(const void *row, const char *column_family,
-    const void *column_qualifier, int64_t timestamp, int64_t revision,
-    uint8_t flag, Key &full_key, bool &unknown_cf) {
-  bool ignore_unknown_cfs = (m_flags & FLAG_IGNORE_UNKNOWN_CFS);
-
-  unknown_cf = false;
-
-  if (!column_family)
-    HT_THROW(Error::BAD_KEY, "Column family not specified");
-
-  Schema::ColumnFamily *cf = m_schema->get_column_family(column_family);
-
-  if (!cf) {
-    if (m_table->auto_refresh()) {
-      m_table->refresh(m_table_identifier, m_schema);
-      m_buffer->refresh_schema(m_table_identifier, m_schema);
-      cf = m_schema->get_column_family(column_family);
-      if (!cf) {
-        unknown_cf = true;
-        if (ignore_unknown_cfs)
-          return;
-        HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
-      }
+void TableMutator::auto_flush() {
+  try {
+    if (!m_mutator->needs_flush())
+      return;
+    while(m_mutator->has_outstanding()) {
+      m_queue->wait_for_buffer();
+      if (m_last_error != Error::OK)
+        HT_THROW(m_last_error, "");
     }
-    else {
-      unknown_cf = true;
-      if (ignore_unknown_cfs)
-        return;
-      HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
-    }
+    m_mutator->auto_flush();
   }
-
-  full_key.row = (const char *)row;
-  full_key.column_qualifier = (const char *)column_qualifier;
-  full_key.column_family_code = (uint8_t)cf->id;
-  full_key.timestamp = timestamp;
-  full_key.revision = revision;
-  full_key.flag = flag;
-}
-
-
-void TableMutator::auto_flush(Timer &timer) {
-  if (m_buffer->full() || m_memory_used > m_max_memory) {
-    try {
-      m_last_op = FLUSH;
-      timer.start();
-
-      if (m_prev_buffer)
-        wait_for_previous_buffer(timer);
-
-      if (m_flush_delay)
-        poll(0, 0, m_flush_delay);
-
-      m_buffer->send(m_rangeserver_flags_map, m_flags);
-      m_prev_buffer = m_buffer;
-      m_prev_buffer_flags = m_flags;
-      m_buffer = new TableMutatorScatterBuffer(m_comm, &m_table_identifier,
-                m_schema, m_range_locator, m_table->get_flags(), m_timeout_ms);
-      m_memory_used = 0;
-    }
-    HT_RETHROW("auto flushing")
+  catch (...) {
+    m_last_op = FLUSH;
+    handle_exceptions();
+    throw;
   }
 }
 
 
 void TableMutator::flush() {
-  Timer timer(m_timeout_ms, true);
-
   try {
-    if (m_prev_buffer)
-      wait_for_previous_buffer(timer);
-
-    /**
-     * If there are buffered updates, send them and wait for completion
-     * Wait for commit log sync
-     */
-    if (m_memory_used > 0) {
-      // flush & sync non-empty buffers
-      m_buffer->send(m_rangeserver_flags_map, 0);
-      // sync remaining unsynced rangeservers
-      sync();
-      m_prev_buffer = m_buffer;
-      m_prev_buffer_flags = 0;
-      wait_for_previous_buffer(timer);
-      m_rangeserver_flags_map.clear();
+    m_last_error = Error::OK;
+    while(m_mutator->has_outstanding()) {
+      m_queue->wait_for_buffer();
+      if (m_last_error != Error::OK)
+        HT_THROW(m_last_error, "");
     }
-
-    m_buffer->reset();
-    m_prev_buffer = 0;
-
+    m_mutator->flush();
+    while(m_mutator->has_outstanding()) {
+      m_queue->wait_for_buffer();
+      if (m_last_error != Error::OK)
+        HT_THROW(m_last_error, "");
+    }
+    m_unflushed_updates = false;
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -294,8 +179,8 @@ void TableMutator::flush() {
     throw;
   }
   catch (...) {
-    handle_exceptions();
     m_last_op = FLUSH;
+    handle_exceptions();
     throw;
   }
 }
@@ -317,7 +202,7 @@ bool TableMutator::retry(uint32_t timeout_ms) {
     case SET:        set(m_last_key, m_last_value, m_last_value_len);   break;
     case SET_DELETE: set_delete(m_last_key);                            break;
     case SET_CELLS:  set_cells(m_last_cells_it, m_last_cells_end);      break;
-    case FLUSH:      flush();                                           break;
+    case FLUSH:      retry_flush();                                     break;
     }
   }
   catch(...) {
@@ -328,62 +213,16 @@ bool TableMutator::retry(uint32_t timeout_ms) {
   return true;
 }
 
-void TableMutator::sync() {
-  vector<CommAddress> unsynced_rangeservers;
-
-  try {
-    for (RangeServerFlagsMap::iterator iter = m_rangeserver_flags_map.begin();
-         iter != m_rangeserver_flags_map.end(); ++iter) {
-      if ((iter->second & FLAG_NO_LOG_SYNC) == FLAG_NO_LOG_SYNC)
-        unsynced_rangeservers.push_back(iter->first);
-    }
-
-    if (!unsynced_rangeservers.empty()) {
-      TableMutatorSyncDispatchHandler sync_handler(m_comm, m_table_identifier, m_timeout_ms);
-
-      foreach (CommAddress addr, unsynced_rangeservers)
-	sync_handler.add(addr);
-
-      if (!sync_handler.wait_for_completion()) {
-        std::vector<TableMutatorSyncDispatchHandler::ErrorResult> errors;
-        uint32_t retry_count = 0;
-        bool retry_failed;
-        do {
-          bool do_refresh = false;
-          retry_count++;
-          sync_handler.get_errors(errors);
-          for (size_t i=0; i<errors.size(); i++) {
-            if (m_table->auto_refresh() &&
-                (errors[i].error == Error::RANGESERVER_GENERATION_MISMATCH ||
-                 (!m_mutated && errors[i].error == Error::RANGESERVER_TABLE_NOT_FOUND)))
-              do_refresh = true;
-            else
-              HT_ERRORF("commit log sync error - %s - %s", errors[i].msg.c_str(),
-                        Error::get_text(errors[i].error));
-          }
-          if (do_refresh)
-            m_table->refresh(m_table_identifier, m_schema);
-          sync_handler.retry();
-        }
-        while ((retry_failed = (!sync_handler.wait_for_completion())) &&
-            retry_count < ms_max_sync_retries);
-        /**
-         * Commit log sync failed
-         */
-        if (retry_failed) {
-          sync_handler.get_errors(errors);
-          String error_str;
-          error_str =  (String) "commit log sync error '" + errors[0].msg.c_str() + "' '" +
-                       Error::get_text(errors[0].error) + "' max retry limit=" +
-                       ms_max_sync_retries + " hit";
-          HT_THROW(errors[0].error, error_str);
-        }
-      }
-    }
+void TableMutator::retry_flush() {
+  if (m_failed_cells.size() > 0) {
+    set_cells(m_failed_cells.get());
   }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    throw;
+  flush();
+}
+
+void TableMutator::sync() {
+  try {
+    m_mutator->sync();
   }
   catch (...) {
     handle_exceptions();
@@ -391,75 +230,11 @@ void TableMutator::sync() {
   }
 }
 
-void TableMutator::wait_for_previous_buffer(Timer &timer) {
-  TableMutatorScatterBuffer *redo_buffer = 0;
-  uint32_t wait_time = 1000;
-  timer.start();
-
-  try_again:
-  try {
-    while (!m_prev_buffer->wait_for_completion()) {
-      if (timer.remaining() < wait_time)
-        HT_THROW_(Error::REQUEST_TIMEOUT);
-
-      // wait a bit
-      poll(0, 0, wait_time);
-      wait_time += 2000;
-
-      // redo buffer is needed to resend (ranges split/moves etc)
-      if ((redo_buffer = m_prev_buffer->create_redo_buffer(timer)) == 0)
-        continue;
-
-      m_resends += m_prev_buffer->get_resend_count();
-      m_prev_buffer = redo_buffer;
-
-      // Re-send failed updates
-      m_prev_buffer->send(m_rangeserver_flags_map, m_prev_buffer_flags);
-    }
-    m_mutated = true;
-  }
-  catch (Exception &e) {
-    m_last_error = e.code();
-
-    if (m_table->auto_refresh() &&
-        (m_last_error == Error::RANGESERVER_GENERATION_MISMATCH || 
-         (!m_mutated && m_last_error == Error::RANGESERVER_TABLE_NOT_FOUND))) {
-      m_table->refresh(m_table_identifier, m_schema);
-      m_prev_buffer->refresh_schema(m_table_identifier, m_schema);
-      // redo buffer is needed to resend (ranges split/moves etc)
-      if ((redo_buffer = m_prev_buffer->create_redo_buffer(timer)) != 0) {
-        m_resends += m_prev_buffer->get_resend_count();
-        m_prev_buffer = redo_buffer;
-        // Re-send failed updates
-        m_prev_buffer->send(m_rangeserver_flags_map, m_prev_buffer_flags);
-        goto try_again;
-      }
-    }
-    else
-      HT_THROW2_(e.code(), e);
-  }
-  catch (std::bad_alloc &e) {
-    HT_THROW(Error::BAD_MEMORY_ALLOCATION, "waiting for previous buffer");
-  }
-  catch (std::exception &e) {
-    HT_THROW(Error::EXTERNAL, "caught std::exception: waiting for previous buffer ");
-  }
-  catch (...) {
-    HT_ERROR("caught unknown exception ");
-    throw;
-  }
-
-}
-
-
 std::ostream &
 TableMutator::show_failed(const Exception &e, std::ostream &out) {
-  FailedMutations failed_mutations;
 
-  get_failed(failed_mutations);
-
-  if (!failed_mutations.empty()) {
-    foreach(const FailedMutation &v, failed_mutations) {
+  if (!m_failed_mutations.empty()) {
+    foreach(const FailedMutation &v, m_failed_mutations) {
       out << "Failed: (" << v.first.row_key << "," << v.first.column_family;
 
       if (v.first.column_qualifier && *(v.first.column_qualifier))
@@ -473,4 +248,26 @@ TableMutator::show_failed(const Exception &e, std::ostream &out) {
   else throw e;
 
   return out;
+}
+
+void TableMutator::update_ok() {
+  if (m_failed_cells.size() > 0) {
+    m_failed_cells.clear();
+    m_failed_mutations.clear();
+  }
+}
+
+void TableMutator::update_error(int error, FailedMutations &failures) {
+  // copy all failed updates
+  m_last_error = error;
+  m_failed_cells.clear();
+  m_failed_mutations.clear();
+  size_t ii=0;
+  Cell last_cell;
+  foreach(const FailedMutation &v, failures) {
+    m_failed_cells.add(v.first);
+    m_failed_cells.get_cell(last_cell, ii);
+    ++ii;
+    m_failed_mutations.push_back(std::make_pair(last_cell, v.second));
+  }
 }

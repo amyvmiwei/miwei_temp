@@ -268,9 +268,6 @@ bool TableMutatorAsync::is_cancelled() {
 }
 
 bool TableMutatorAsync::needs_flush() {
-  if (is_cancelled())
-    return false;
-
   if (m_current_buffer->full() || m_memory_used > m_max_memory)
     return true;
   return false;
@@ -357,6 +354,10 @@ void TableMutatorAsync::sync() {
         }
       }
     }
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    throw;
   }
   catch (...) {
     handle_send_exceptions();

@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -33,7 +33,9 @@
 #include "Cells.h"
 #include "KeySpec.h"
 #include "Table.h"
-#include "TableMutatorScatterBuffer.h"
+#include "TableMutatorAsync.h"
+#include "TableMutatorQueue.h"
+#include "TableCallback.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
 #include "Schema.h"
@@ -64,8 +66,8 @@ namespace Hypertable {
      * @param flags rangeserver client update command flags
      */
     TableMutator(PropertiesPtr &props, Comm *comm, Table *table,
-                 RangeLocatorPtr &range_locator, uint32_t timeout_ms,
-                 uint32_t flags = 0);
+                     RangeLocatorPtr &range_locator, uint32_t timeout_ms,
+                     uint32_t flags = 0);
 
     /**
      * Destructor for TableMutator object
@@ -131,11 +133,19 @@ namespace Hypertable {
     virtual bool retry(uint32_t timeout_ms=0);
 
     /**
+     * Checks for failed mutations
+     *
+     */
+    virtual bool need_retry() {
+      return (m_failed_mutations.size() > 0);
+    }
+
+    /**
      * Returns the amount of memory used by the collected mutations.
      *
      * @return amount of memory used by the collected mutations.
      */
-    virtual uint64_t memory_used() { return m_memory_used; }
+    virtual uint64_t memory_used() { return m_mutator->memory_used(); }
 
     /**
      * There are certain circumstances when mutations get flushed to the wrong
@@ -146,7 +156,7 @@ namespace Hypertable {
      *
      * @return number of mutations that were resent
      */
-    uint64_t get_resend_count() { return m_resends; }
+    uint64_t get_resend_count() { return m_mutator->get_resend_count(); }
 
     /**
      * Returns the failed mutations
@@ -154,23 +164,11 @@ namespace Hypertable {
      * @param failed_mutations reference to vector of Cell/error pairs
      */
     virtual void get_failed(FailedMutations &failed_mutations) {
-      if (m_prev_buffer)
-        m_prev_buffer->get_failed_mutations(failed_mutations);
+      failed_mutations = m_failed_mutations;
     }
 
     /** Show failed mutations */
     std::ostream &show_failed(const Exception &, std::ostream & = std::cout);
-
-    /**
-     * Indicates whether or not there are failed updates to be retried
-     *
-     * @return true if there are failed updates to retry, false otherwise
-     */
-    virtual bool need_retry() {
-      if (m_prev_buffer)
-        return m_prev_buffer->get_failure_count() > 0;
-      return false;
-    }
 
     // The flags shd be the same as in Hypertable::RangeServerProtocol.
     enum {
@@ -179,8 +177,11 @@ namespace Hypertable {
       FLAG_IGNORE_UNKNOWN_CFS = 0x0002
     };
 
+    void update_ok();
+    void update_error(int error, FailedMutations &failures);
+
   protected:
-    void auto_flush(Timer &);
+    void auto_flush();
 
   private:
     enum Operation {
@@ -195,19 +196,6 @@ namespace Hypertable {
      */
     void sync();
 
-    void wait_for_previous_buffer(Timer &timer);
-    void to_full_key(const void *row, const char *cf, const void *cq,
-                     int64_t ts, int64_t rev, uint8_t flag, Key &full_key, bool &unknown_cf);
-    void to_full_key(const KeySpec &key, Key &full_key, bool &unknown_cf) {
-      to_full_key(key.row, key.column_family, key.column_qualifier,
-                  key.timestamp, key.revision, FLAG_INSERT, full_key, unknown_cf);
-    }
-    void to_full_key(const Cell &cell, Key &full_key, bool &unknown_cf) {
-      to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,
-                  cell.timestamp, cell.revision, cell.flag, full_key, unknown_cf);
-    }
-    void set_cells(Cells::const_iterator start, Cells::const_iterator end);
-
     void save_last(const KeySpec &key, const void *value, size_t value_len) {
       m_last_key = key;
       m_last_value = value;
@@ -219,7 +207,11 @@ namespace Hypertable {
       m_last_cells_end = end;
     }
 
+    void set_cells(Cells::const_iterator start, Cells::const_iterator end);
+
     void handle_exceptions();
+
+    void retry_flush();
 
     PropertiesPtr        m_props;
     Comm                *m_comm;
@@ -229,14 +221,13 @@ namespace Hypertable {
     TableIdentifierManaged m_table_identifier;
     uint64_t             m_memory_used;
     uint64_t             m_max_memory;
-    TableMutatorScatterBufferPtr  m_buffer;
-    TableMutatorScatterBufferPtr  m_prev_buffer;
-    uint64_t             m_resends;
+    TableCallback m_callback;
+    TableMutatorQueuePtr m_queue;
+    TableMutatorAsyncPtr m_mutator;
     uint32_t             m_timeout_ms;
     uint32_t             m_flags;
     uint32_t             m_prev_buffer_flags;
     uint32_t             m_flush_delay;
-    RangeServerFlagsMap  m_rangeserver_flags_map;
     int32_t     m_last_error;
     int         m_last_op;
     KeySpec     m_last_key;
@@ -245,7 +236,10 @@ namespace Hypertable {
     Cells::const_iterator m_last_cells_it;
     Cells::const_iterator m_last_cells_end;
     const static uint32_t ms_max_sync_retries = 5;
-    bool       m_mutated;
+    bool       m_refresh_schema;
+    bool       m_unflushed_updates;
+    FailedMutations m_failed_mutations;
+    CellsBuilder    m_failed_cells;
   };
 
   typedef intrusive_ptr<TableMutator> TableMutatorPtr;

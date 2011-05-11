@@ -84,7 +84,7 @@ int main(int argc, char **argv) {
   ClientPtr hypertable_client_ptr;
   NamespacePtr namespace_ptr;
   TablePtr table_ptr;
-  TableMutatorSyncPtr mutator_ptr;
+  TableMutatorPtr mutator_ptr;
   KeySpec key;
   boost::shared_array<char> random_chars;
   char *value_ptr;
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 
       namespace_ptr = hypertable_client_ptr->open_namespace("/");
       table_ptr = namespace_ptr->open_table("RandomTest");
-      mutator_ptr = table_ptr->create_mutator_sync(0, mutator_flags);
+      mutator_ptr = table_ptr->create_mutator(0, mutator_flags);
     }
     catch (Hypertable::Exception &e) {
       cerr << e << endl;
