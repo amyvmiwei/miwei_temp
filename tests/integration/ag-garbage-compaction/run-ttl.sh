@@ -32,13 +32,13 @@ $HT_HOME/bin/ht ht_load_generator update \
     --rowkey.component.0.format="%010lld" \
     --rowkey.component.0.max=10000 \
     --Field.value.size=10000 \
-    --rowkey.seed=1 \
+    --row-seed=1 \
     --max-bytes=5000000
 date
 
 finish_time=`date "+%s"`
 
-echo "use 'SYS'; select Files from METADATA where ROW =^ '1:' REVS=1;" | $HT_SHELL --batch
+echo "use 'sys'; select Files from METADATA where ROW =^ '1:' REVS=1;" | $HT_SHELL --batch
 
 let elapsed_time=$finish_time-$start_time
 let wait_time=$TTL*3
@@ -53,10 +53,10 @@ echo "Sleeping for $sleep_time seconds to give GC compaction a chance to run..."
 sleep $sleep_time
 
 # Make sure cell stores have been removed
-lines=`echo "use 'SYS'; select Files from METADATA where ROW =^ '1:' REVS=1;" | $HT_SHELL --batch | fgrep "/cs" | wc -l`
+lines=`echo "use 'sys'; select Files from METADATA where ROW =^ '1:' REVS=1;" | $HT_SHELL --batch | fgrep "/cs" | wc -l`
 n=`echo $lines | tr -d " "`
 if [ $n != "0" ] ; then
-  echo "RangeServer did not switch to major compaction for gc purposes ($n)"
+  echo "RangeServer did not perform a GC compaction ($n)"
   exit 1
 fi
 

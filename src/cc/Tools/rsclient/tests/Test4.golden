@@ -7,6 +7,7 @@ list of shell meta commands.
 
 UPDATE 'test/Test4' "Test4-data.txt";
 success
+pause 1;
 CREATE SCANNER ON 'test/Test4'[..??];
 1181153477000234 photoalbum plum:http://terraserver-usa.com/image.aspx?s=14&lon=-75.684776&lat=39.620362&w=2
 1181153477000269 pseudomitotic broccoli:http://maps.yahoo.com/maps_result?lat=40.787484&lon=-76.538358&mag=4

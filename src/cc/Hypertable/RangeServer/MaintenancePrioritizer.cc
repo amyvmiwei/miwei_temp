@@ -276,6 +276,16 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeStatsVector &range_d
       else
         trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
           + (*iter).second.cumulative_size + " <= prune_threshold " + prune_threshold + "\n";
+
+      // memory purge takes precedent over merging compactions
+      if (ag_data->needs_merging &&
+          (range_data[i]->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) == 0) {
+        if (range_data[i]->priority == 0)
+          range_data[i]->priority = priority++;
+        range_data[i]->maintenance_flags |= MaintenanceFlag::COMPACT;
+        ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MERGING;
+      }
+
     }
   }
 

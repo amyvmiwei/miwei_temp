@@ -1161,7 +1161,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
       Barrier::ScopedActivator block_updates(m_update_barrier);
       ScopedLock lock(m_mutex);
       for (size_t i=0; i<ag_vector.size(); i++) {
-	if (subtask_map.minor_compaction(ag_vector[i].get()))
+	if (subtask_map.compaction(ag_vector[i].get()))
 	  ag_vector[i]->stage_compaction();
       }
     }

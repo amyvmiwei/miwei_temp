@@ -97,6 +97,7 @@ namespace Hypertable {
       uint64_t shadow_cache_memory;
       bool     in_memory;
       bool     gc_needed;
+      bool     needs_merging;
     };
 
     class CellStoreInfo {
@@ -243,7 +244,11 @@ namespace Hypertable {
     void release_files(const std::vector<String> &files);
 
     void recovery_initialize() { m_recovering = true; }
-    void recovery_finalize() { m_recovering = false; }
+    void recovery_finalize() {
+      sort_cellstores_by_timestamp();
+      m_needs_merging = find_merge_run();
+      m_recovering = false;
+    }
 
     void dump_keys(std::ofstream &out);
 
@@ -256,9 +261,12 @@ namespace Hypertable {
 
   private:
 
-    void merge_caches();
+    void merge_caches(bool reset_earliest_cached_revision=true);
     void range_dir_initialize();
     void recompute_compression_ratio();
+    bool find_merge_run(size_t *indexp=0, size_t *lenp=0);
+    void check_for_needs_merging();
+    void sort_cellstores_by_timestamp();
 
     Mutex                m_mutex;
     Mutex                m_outstanding_scanner_mutex;
@@ -291,6 +299,7 @@ namespace Hypertable {
     bool                 m_in_memory;
     bool                 m_recovering;
     bool                 m_bloom_filter_disabled;
+    bool                 m_needs_merging;
 
   };
   typedef boost::intrusive_ptr<AccessGroup> AccessGroupPtr;

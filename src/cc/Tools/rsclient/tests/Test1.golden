@@ -213,6 +213,7 @@ success
 success
 success
 success
+pause 1;
 CREATE SCANNER ON 'test/Test1'[..??] LIMIT 500;
 1181153478099511 A apple:http://www.lib.utexas.edu/
 1181153478459079 Aaronitic onion:http://prola.aps.org/abstract/PRI/v13/i5/p307_1

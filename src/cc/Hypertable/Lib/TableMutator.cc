@@ -97,6 +97,11 @@ TableMutator::set(const KeySpec &key, const void *value, uint32_t value_len) {
     m_buffer->set(full_key, value, value_len, timer);
     m_memory_used += 20 + key.row_len + key.column_qualifier_len + value_len;
   }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    save_last(key, value, value_len);
+    throw;
+  }
   catch (...) {
     handle_exceptions();
     save_last(key, value, value_len);
@@ -142,6 +147,11 @@ TableMutator::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
           + (cell.column_qualifier ? strlen(cell.column_qualifier) : 0);
     }
   }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    save_last(it, end);
+    throw;
+  }
   catch (...) {
     handle_exceptions();
     save_last(it, end);
@@ -173,6 +183,11 @@ void TableMutator::set_delete(const KeySpec &key) {
     }
     m_buffer->set_delete(full_key, timer);
     m_memory_used += 20 + key.row_len + key.column_qualifier_len;
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    m_last_key = key;
+    throw;
   }
   catch (...) {
     handle_exceptions();
@@ -273,6 +288,11 @@ void TableMutator::flush() {
     m_prev_buffer = 0;
 
   }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    m_last_op = FLUSH;
+    throw;
+  }
   catch (...) {
     handle_exceptions();
     m_last_op = FLUSH;
@@ -360,6 +380,10 @@ void TableMutator::sync() {
         }
       }
     }
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    throw;
   }
   catch (...) {
     handle_exceptions();

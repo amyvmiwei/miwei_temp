@@ -43,8 +43,10 @@ namespace Hypertable {
           m_prioritizer = &m_prioritizer_low_memory;
       }
       else {
-        if (m_prioritizer != &m_prioritizer_log_cleanup)
+        if (m_prioritizer != &m_prioritizer_log_cleanup) {
           m_prioritizer = &m_prioritizer_log_cleanup;
+          boost::xtime_get(&m_last_low_memory, TIME_UTC);
+        }
       }
     }
 
@@ -69,8 +71,11 @@ namespace Hypertable {
     MaintenancePrioritizerLowMemory  m_prioritizer_low_memory;
     int32_t m_maintenance_interval;
     boost::xtime m_last_maintenance;
+    boost::xtime m_last_low_memory;
     int64_t m_query_cache_memory;
     int32_t m_low_memory_limit_percentage;
+    int32_t m_merging_delay;
+    int32_t m_merges_per_interval;
   };
 
   typedef intrusive_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;

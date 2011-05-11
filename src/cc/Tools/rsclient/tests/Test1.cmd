@@ -1,4 +1,5 @@
 UPDATE 'test/Test1' "Test1-data.txt";
+pause 1;
 CREATE SCANNER ON 'test/Test1'[..??] LIMIT 500;
 DESTROY SCANNER;
 CREATE SCANNER ON 'test/Test1'[..??] WHERE ROW = "Agamemnon";
