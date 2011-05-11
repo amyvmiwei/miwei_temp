@@ -39,8 +39,8 @@ namespace Hypertable {
 
   private:
     void scan_metadata(CountMap &files_map);
-    void delete_row(const std::string &row, TableMutatorSyncPtr &mutator);
-    void delete_cell(const Cell &cell, TableMutatorSyncPtr &mutator);
+    void delete_row(const std::string &row, TableMutatorPtr &mutator);
+    void delete_cell(const Cell &cell, TableMutatorPtr &mutator);
     void insert_files(CountMap &map, const char *buf, size_t len, int c=0);
     void insert_file(CountMap &map, const char *fname, int c);
     void reap(CountMap &files_map);

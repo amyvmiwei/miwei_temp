@@ -391,9 +391,15 @@ void TableMutatorAsyncScatterBuffer::set_retries_to_fail(int error) {
       while (bs.ptr < endptr) {
         key.load((SerializedKey)bs);
         cell.row_key = key.row;
-        cf = m_schema->get_column_family(key.column_family_code);
-        HT_ASSERT(cf);
-        cell.column_family = m_constant_strings.get(cf->name.c_str());
+        cell.flag = key.flag;
+        if (cell.flag == FLAG_DELETE_ROW) {
+          cell.column_family = 0;
+        }
+        else {
+          cf = m_schema->get_column_family(key.column_family_code);
+          HT_ASSERT(cf);
+          cell.column_family = m_constant_strings.get(cf->name.c_str());
+        }
         cell.column_qualifier = key.column_qualifier;
         cell.timestamp = key.timestamp;
         bs.next();
@@ -428,9 +434,15 @@ int TableMutatorAsyncScatterBuffer::set_failed_mutations() {
       while (bs.ptr < endptr) {
         key.load((SerializedKey)bs);
         cell.row_key = key.row;
-        cf = m_schema->get_column_family(key.column_family_code);
-        HT_ASSERT(cf);
-        cell.column_family = m_constant_strings.get(cf->name.c_str());
+        cell.flag = key.flag;
+        if (cell.flag == FLAG_DELETE_ROW) {
+          cell.column_family = 0;
+        }
+        else {
+          cf = m_schema->get_column_family(key.column_family_code);
+          HT_ASSERT(cf);
+          cell.column_family = m_constant_strings.get(cf->name.c_str());
+        }
         cell.column_qualifier = key.column_qualifier;
         cell.timestamp = key.timestamp;
         bs.next();
@@ -456,6 +468,7 @@ void TableMutatorAsyncScatterBuffer::reset() {
   m_resends = 0;
   m_memory_used = 0;
   m_failed_mutations.clear();
+  m_wait_time = ms_init_redo_wait_time;
   m_unsynced_rangeservers.clear();
 }
 

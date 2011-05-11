@@ -182,6 +182,7 @@ namespace Hypertable {
      */
     void sync();
     void auto_flush();
+    bool needs_flush();
 
   protected:
     void wait_for_completion();
@@ -203,7 +204,6 @@ namespace Hypertable {
       to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,
                   cell.timestamp, cell.revision, cell.flag, full_key, unknown_cf);
     }
-    bool needs_flush();
     void do_flush(bool auto_flush);
     void update_unsynced_rangeservers(const CommAddressSet &unsynced);
     void handle_send_exceptions();

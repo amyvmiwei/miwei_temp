@@ -61,7 +61,7 @@ void GcWorker::scan_metadata(CountMap &files_map) {
 
   scanner = m_context->metadata_table->create_scanner(scan_spec);
 
-  TableMutatorSyncPtr mutator = m_context->metadata_table->create_mutator_sync();
+  TableMutatorPtr mutator = m_context->metadata_table->create_mutator();
 
   Cell cell;
   string last_row;
@@ -119,7 +119,7 @@ void GcWorker::scan_metadata(CountMap &files_map) {
   mutator->flush();
 }
 
-void GcWorker::delete_row(const std::string &row, TableMutatorSyncPtr &mutator) {
+void GcWorker::delete_row(const std::string &row, TableMutatorPtr &mutator) {
   KeySpec key;
 
   if (row.empty())
@@ -133,7 +133,7 @@ void GcWorker::delete_row(const std::string &row, TableMutatorSyncPtr &mutator) 
   mutator->set_delete(key);
 }
 
-void GcWorker::delete_cell(const Cell &cell, TableMutatorSyncPtr &mutator) {
+void GcWorker::delete_cell(const Cell &cell, TableMutatorPtr &mutator) {
   HT_DEBUG_OUT <<"MasterGc: Deleting cell: ("<< cell.row_key <<", "
                << cell.column_family <<", "<< cell.column_qualifier <<", "
                << cell.timestamp <<')'<< HT_END;

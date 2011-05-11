@@ -23,7 +23,7 @@
 
 #include "TableCallback.h"
 #include "TableScanner.h"
-#include "TableMutatorSync.h"
+#include "TableMutator.h"
 
 namespace Hypertable {
 

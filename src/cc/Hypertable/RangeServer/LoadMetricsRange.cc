@@ -40,7 +40,7 @@ LoadMetricsRange::LoadMetricsRange(const String &table_id, const String &start_r
  *  v2:<ts>,<disk>,<memory>,<disk-bytes-read-rate>,<byte-write-rate>,<byte-read-rate>,<update-rate>,<scan-rate>,<cell-write-rate>,<cell-read-rate>
  */
 
-void LoadMetricsRange::compute_and_store(TableMutatorSync *mutator, time_t now,
+void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
                                          LoadFactors &load_factors,
                                          uint64_t disk_used, uint64_t memory_used) {
   bool update_start_row = false;

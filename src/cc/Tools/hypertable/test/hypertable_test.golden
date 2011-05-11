@@ -147,9 +147,10 @@ key2	TestColumnFamily	tcf2
 key3	TestColumnFamily	tcf3
 key4	TestColumnFamily	tcf4
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
+ERROR hypertable : caught std::exception: Bad column family 'Unknown'
 ERROR hypertable : set: Hypertable::Exception: Bad column family 'Unknown' - HYPERTABLE bad key
-	at void Hypertable::TableMutator::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, bool&) (src/cc/Hypertable/Lib/TableMutator.cc)
-Error: line number 2 - HYPERTABLE bad key
+	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, bool&) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
+Error: line number 2 - HQL bad load file format
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( TestColumnFamily );
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_ts.tsv" INTO TABLE hypertable;
@@ -653,8 +654,9 @@ Error: Column family 'Red' multiply defined - HYPERTABLE bad schema
 
 ALTER TABLE Fruits RENAME COLUMN FAMILY ('Orange', 'Pink') RENAME COLUMN FAMILY ('refer-url', 'referral');
 insert into Fruits values('www.cnn.com', 'Orange', 'Kumquat');
+ERROR hypertable : caught std::exception: Bad column family 'Orange'
 ERROR hypertable : set_cells: Hypertable::Exception: Bad column family 'Orange' - HYPERTABLE bad key
-	at void Hypertable::TableMutator::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, bool&) (src/cc/Hypertable/Lib/TableMutator.cc)
+	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, bool&) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
 Error: Bad column family 'Orange' - HYPERTABLE bad key
 insert into Fruits values('www.cnn.com', 'Pink', 'Grapefruit');
 select * from Fruits;

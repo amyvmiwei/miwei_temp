@@ -40,7 +40,6 @@
 #include "TableScannerAsync.h"
 #include "TableSplit.h"
 #include "TableMutator.h"
-#include "TableMutatorSync.h"
 #include "NamespaceListing.h"
 
 namespace Hypertable {
