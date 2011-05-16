@@ -1,4 +1,3 @@
-USE "/";
 CREATE EXTERNAL TABLE ht_table(key INT, value MAP<STRING, STRING>) STORED BY 'org.hypertable.hadoop.hive.HTStorageHandler' with SERDEPROPERTIES ("hypertable.columns.mapping" = ":key,address:") TBLPROPERTIES ("hypertable.table.name"="HiveTest","hypertable.table.namespace"="/");
 SELECT * FROM ht_table;
 SELECT * FROM ht_table where key>2;
