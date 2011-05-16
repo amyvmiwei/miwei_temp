@@ -1,0 +1,3 @@
+21.d4 d6 2.Nf3 g6 3.e4 Bg7 4.Bc4 Nf6 5.Qe2 O-O 6.O-O Bg4 7.Rd1 Nc6
+71.f2-f4 e7-e5 2.f4xe5 d7-d6 3.e5xd6 Bf8xd6 4.g2-g3 Qd8-g5 5.Ng1-f3 Qg5xg3+ 6.h2xg3 Bd6xg3
+12231.Qa3 Rc8 2.Bb5 a6 3.dxc5 bxc5
