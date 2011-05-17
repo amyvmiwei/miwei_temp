@@ -1,3 +1,21 @@
+Version 0.9.5.0.pre5:
+(2011-05-17)
+
+    Upgraded Hive jars to CDH3U0 distribution.
+    Added support for Hypertable.RangeServer.CellStore.TargetSize.Minimum
+    Fixed compaction maintenance staging skip for non-minor compactions
+    Fixed split-merge-loop10 and ac-garbage-compaction tests
+    Set NO_LOG_SYNC in HqlInterpreter unconditionally for LOAD DATA INFILE
+    Cleaned up MapReduce job conf properties and Fixed ROW interval spec
+    Auto-increase block cache size to accomodate query load
+    issue 618: Fixed NULL pointer dereference in AccessGroup::run_compaction
+    Added Hypertable.RangeServer.BlockCache.MaxMemory config property
+    Strip base filename from scan files in METADATA Files column
+    Upgraded apache_log and freebase examples to use post namespace API.
+    Fixed inconsistency in timestamp parsing between LDI and Hql shell insert command.
+    Andy's EnsureUnused patch (disabled by default)
+    Fixed FindRRDtool.cmake to work on mac
+
 Version 0.9.5.0.pre4:
 (2011-05-01)
 
