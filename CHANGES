@@ -1,6 +1,7 @@
 Version 0.9.5.0.pre5:
-(2011-05-17)
+(2011-05-18)
 
+    Changed Group Commit table hash_map to ordered map and fixed memory leak
     Upgraded Hive jars to CDH3U0 distribution.
     Added support for Hypertable.RangeServer.CellStore.TargetSize.Minimum
     Fixed compaction maintenance staging skip for non-minor compactions
