@@ -1928,10 +1928,9 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
         // Make sure range didn't just shrink
         if (rulist->range->start_row() != start_row ||
             rulist->range->end_row() != end_row) {
-          if (rulist->range_blocked) {
-            rulist->range->decrement_update_counter();
-            table_update->range_map.erase(rulist->range.get());
-          }
+          rulist->range->decrement_update_counter();
+          table_update->range_map.erase(rulist->range.get());
+          delete rulist;
           continue;
         }
 

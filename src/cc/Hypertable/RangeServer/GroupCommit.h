@@ -22,14 +22,29 @@
 #ifndef HYPERSPACE_GROUPCOMMIT_H
 #define HYPERSPACE_GROUPCOMMIT_H
 
-#include "Common/HashMap.h"
 #include "Common/Mutex.h"
 #include "Common/FlyweightString.h"
 
 #include "GroupCommitInterface.h"
 #include "RangeServer.h"
 
+#include <map>
+
 namespace Hypertable {
+
+  struct lttid {
+    bool operator()(const Hypertable::TableIdentifier &tid1, const Hypertable::TableIdentifier &tid2) const {
+      if (tid1.id == 0 || tid2.id == 0) {
+        if (tid1.id == 0)
+          return true;
+        return false;
+      }
+      int cmpval = strcmp(tid1.id, tid2.id);
+      if (cmpval != 0)
+        return cmpval < 0;
+      return tid1.generation < tid2.generation;
+    }
+  };
 
   /**
    */
@@ -48,7 +63,7 @@ namespace Hypertable {
     int           m_counter;
     FlyweightString m_flyweight_strings;
 
-    typedef hash_map<TableIdentifier, TableUpdate *, __gnu_cxx::hash<TableIdentifier>, eqtid> TableUpdateMap;
+    typedef std::map<TableIdentifier, TableUpdate *, lttid> TableUpdateMap;
     TableUpdateMap m_table_map;
   };
 }
