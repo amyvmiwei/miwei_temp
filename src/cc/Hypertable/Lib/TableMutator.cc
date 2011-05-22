@@ -355,7 +355,7 @@ void TableMutator::sync() {
           for (size_t i=0; i<errors.size(); i++) {
             if (m_table->auto_refresh() &&
                 (errors[i].error == Error::RANGESERVER_GENERATION_MISMATCH ||
-                 !m_mutated && errors[i].error == Error::RANGESERVER_TABLE_NOT_FOUND))
+                 (!m_mutated && errors[i].error == Error::RANGESERVER_TABLE_NOT_FOUND)))
               do_refresh = true;
             else
               HT_ERRORF("commit log sync error - %s - %s", errors[i].msg.c_str(),
@@ -398,7 +398,7 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
 
   try_again:
   try {
-    while (!m_prev_buffer->wait_for_completion(timer)) {
+    while (!m_prev_buffer->wait_for_completion()) {
       if (timer.remaining() < wait_time)
         HT_THROW_(Error::REQUEST_TIMEOUT);
 
@@ -423,7 +423,7 @@ void TableMutator::wait_for_previous_buffer(Timer &timer) {
 
     if (m_table->auto_refresh() &&
         (m_last_error == Error::RANGESERVER_GENERATION_MISMATCH || 
-         !m_mutated && m_last_error == Error::RANGESERVER_TABLE_NOT_FOUND)) {
+         (!m_mutated && m_last_error == Error::RANGESERVER_TABLE_NOT_FOUND))) {
       m_table->refresh(m_table_identifier, m_schema);
       m_prev_buffer->refresh_schema(m_table_identifier, m_schema);
       // redo buffer is needed to resend (ranges split/moves etc)
