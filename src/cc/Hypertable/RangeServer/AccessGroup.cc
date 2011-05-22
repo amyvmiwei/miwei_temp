@@ -1163,5 +1163,6 @@ std::ostream &Hypertable::operator<<(std::ostream &os, const AccessGroup::Mainte
   os << "shadow_cache_memory=" << mdata.shadow_cache_memory << "\n";
   os << "in_memory=" << (mdata.in_memory ? "true" : "false") << "\n";
   os << "gc_needed=" << (mdata.gc_needed ? "true" : "false") << "\n";
+  os << "needs_merging=" << (mdata.needs_merging ? "true" : "false") << "\n";
   return os;
 }

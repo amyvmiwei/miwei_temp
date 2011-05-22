@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <limits>
 #include <iostream>
+#include <fstream>
 
 #include "Global.h"
 #include "MaintenanceFlag.h"
@@ -60,6 +61,7 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPt
   // Setup to immediately schedule maintenance
   boost::xtime_get(&m_last_maintenance, TIME_UTC);
   memcpy(&m_last_low_memory, &m_last_maintenance, sizeof(boost::xtime));
+  memcpy(&m_last_check, &m_last_maintenance, sizeof(boost::xtime));
   m_last_maintenance.sec -= m_maintenance_interval / 1000;
   m_low_memory_limit_percentage = get_i32("Hypertable.RangeServer.LowMemoryLimit.Percentage");
   m_merging_delay = get_i32("Hypertable.RangeServer.Maintenance.MergingCompaction.Delay");
@@ -75,7 +77,8 @@ void MaintenanceScheduler::schedule() {
   AccessGroup::MaintenanceData *ag_data;
   String output;
   String ag_name;
-  String trace_str = "STAT ***** MaintenanceScheduler::schedule() *****\n";
+  String trace_str;
+  int64_t excess;
   MaintenancePrioritizer::MemoryState memory_state;
   bool low_memory = low_memory_mode();
 
@@ -85,7 +88,7 @@ void MaintenanceScheduler::schedule() {
   // adjust limit if it makes sense
   if (Global::memory_limit_ensure_unused_current &&
       memory_state.balance - m_query_cache_memory > Global::memory_limit_ensure_unused_current) {
-    int64_t excess = Global::memory_limit_ensure_unused_current
+    excess = Global::memory_limit_ensure_unused_current
                        - (int64_t)(System::mem_stat().free * Property::MiB);
     if (excess > 0)
       memory_state.limit = memory_state.balance - excess;
@@ -94,9 +97,22 @@ void MaintenanceScheduler::schedule() {
   if (low_memory) {
     if (Global::maintenance_queue->pending() < Global::maintenance_queue->workers())
       m_scheduling_needed = true;
-    int64_t excess = (memory_state.balance > memory_state.limit) ? memory_state.balance - memory_state.limit : 0;
+    excess = (memory_state.balance > memory_state.limit) ? memory_state.balance - memory_state.limit : 0;
     memory_state.needed = ((memory_state.limit * m_low_memory_limit_percentage) / 100) + excess;
   }
+
+  trace_str += String("low_memory\t") + (low_memory ? "true" : "false") + "\n";
+  trace_str += String("Global::memory_tracker->balance()\t") + Global::memory_tracker->balance() + "\n";
+  trace_str += String("Global::memory_limit\t") + Global::memory_limit + "\n";
+  trace_str += String("Global::memory_limit_ensure_unused_current\t") + Global::memory_limit_ensure_unused_current + "\n";
+  trace_str += String("m_query_cache_memory\t") + m_query_cache_memory + "\n";
+  trace_str += String("excess\t") + excess + "\n";
+  trace_str += String("Global::maintenance_queue->pending()\t") + (int)Global::maintenance_queue->pending() + "\n";
+  trace_str += String("Global::maintenance_queue->workers()\t") + (int)Global::maintenance_queue->workers() + "\n";
+  trace_str += String("m_low_memory_limit_percentage\t") + m_low_memory_limit_percentage + "\n";
+  trace_str += String("memory_state.balance\t") + memory_state.balance + "\n";
+  trace_str += String("memory_state.limit\t") + memory_state.limit + "\n";
+  trace_str += String("memory_state.needed\t") + memory_state.needed + "\n";
 
   boost::xtime now;
   boost::xtime_get(&now, TIME_UTC);
@@ -135,6 +151,11 @@ void MaintenanceScheduler::schedule() {
     int64_t revision_root = Global::root_log ? Global::root_log->get_latest_revision() : TIMESTAMP_MIN;
     AccessGroup::CellStoreMaintenanceData *cs_data;
 
+    trace_str += String("before revision_root\t") + revision_root + "\n";
+    trace_str += String("before revision_metadata\t") + revision_metadata + "\n";
+    trace_str += String("before revision_system\t") + revision_system + "\n";
+    trace_str += String("before revision_user\t") + revision_user + "\n";
+
     for (size_t i=0; i<range_data.size(); i++) {
       for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
 
@@ -171,10 +192,12 @@ void MaintenanceScheduler::schedule() {
       }
     }
 
-    trace_str += String("STAT revision_root\t") + revision_root + "\n";
-    trace_str += String("STAT revision_metadata\t") + revision_metadata + "\n";
-    trace_str += String("STAT revision_system\t") + revision_system + "\n";
-    trace_str += String("STAT revision_user\t") + revision_user + "\n";
+    trace_str += String("after revision_root\t") + revision_root + "\n";
+    trace_str += String("after revision_metadata\t") + revision_metadata + "\n";
+    trace_str += String("after revision_system\t") + revision_system + "\n";
+    trace_str += String("after revision_user\t") + revision_user + "\n";
+
+    check_file_dump_statistics(now, range_data, trace_str);
 
     if (Global::root_log)
       Global::root_log->purge(revision_root);
@@ -289,9 +312,33 @@ void MaintenanceScheduler::schedule() {
     }
   }
 
-  cout << flush << trace_str << flush;
+  //cout << flush << trace_str << flush;
 
   m_scheduling_needed = false;
 
   m_stats_gatherer->clear();
+}
+
+
+void MaintenanceScheduler::check_file_dump_statistics(boost::xtime now, RangeStatsVector &range_data,
+                                                      const String &header_str) {
+  AccessGroup::MaintenanceData *ag_data;
+
+  if (xtime_diff_millis(m_last_check, now) >= (int64_t)60000) {
+    if (FileUtils::exists(System::install_dir + "/run/debug-scheduler")) {
+      String output_fname = System::install_dir + "/run/scheduler.output";
+      ofstream out;
+      out.open(output_fname.c_str());
+      out << header_str << "\n";
+      for (size_t i=0; i<range_data.size(); i++) {
+        out << *range_data[i] << "\n";
+        for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next)
+          out << *ag_data << "\n";
+      }
+      out.close();
+      FileUtils::unlink(System::install_dir + "/run/debug-scheduler");
+    }
+    m_last_check = now;
+  }
+  
 }
