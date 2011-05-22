@@ -288,8 +288,8 @@ bool TableMutatorScatterBuffer::completed() {
 }
 
 
-bool TableMutatorScatterBuffer::wait_for_completion(Timer &timer) {
-  if (!m_completion_counter.wait_for_completion(timer)) {
+bool TableMutatorScatterBuffer::wait_for_completion() {
+  if (!m_completion_counter.wait_for_completion()) {
     if (m_completion_counter.has_errors()) {
       TableMutatorSendBufferPtr send_buffer;
       std::vector<FailedRegion> failed_regions;

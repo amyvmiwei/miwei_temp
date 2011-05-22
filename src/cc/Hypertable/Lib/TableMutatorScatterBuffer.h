@@ -62,7 +62,7 @@ namespace Hypertable {
     bool full() { return m_full; }
     void send(RangeServerFlagsMap &rangeserver_flags_map, uint32_t flags);
     bool completed();
-    bool wait_for_completion(Timer &timer);
+    bool wait_for_completion();
     void reset();
     TableMutatorScatterBuffer *create_redo_buffer(Timer &timer);
     uint64_t get_resend_count() { return m_resends; }

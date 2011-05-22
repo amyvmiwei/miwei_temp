@@ -681,8 +681,7 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
     }
   }
   catch (Exception &e) {
-    HT_THROW2F(Error::HQL_BAD_LOAD_FILE_FORMAT, e,
-        "line number %lld", (Lld)lds->get_current_lineno());
+    HT_THROW2F(e.code(), e, "line number %lld", (Lld)lds->get_current_lineno());
   }
 
   fout.strict_sync();

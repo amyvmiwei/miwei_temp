@@ -74,6 +74,13 @@ namespace Hypertable {
       return !(m_retries || m_errors);
     }
 
+    bool wait_for_completion() {
+      ScopedLock lock(m_mutex);
+      while (m_outstanding)
+        m_cond.wait(lock);
+      return !(m_retries || m_errors);
+    }
+
     void set_retries() { m_retries = true; }
 
     void set_errors() { m_errors = true; }
