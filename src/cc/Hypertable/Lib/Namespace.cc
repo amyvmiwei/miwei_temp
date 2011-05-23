@@ -302,6 +302,8 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
   ProxyMapT proxy_map;
   String full_name = get_full_name(table_name);
 
+  try_again:
+
   table = open_table(table_name);
 
   table->get(tid, schema);
@@ -311,6 +313,7 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
   sprintf(start_row, "%s:", tid.id);
   sprintf(end_row, "%s:%s", tid.id, Key::END_ROW_MARKER);
 
+  scan_spec.clear();
   scan_spec.row_limit = 0;
   scan_spec.max_versions = 1;
   scan_spec.columns.clear();
@@ -325,7 +328,12 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
 
   m_comm->get_proxy_map(proxy_map);
 
+  bool refresh=true;
+  tsbuilder.clear();
+  splits.clear();
+  last_row.clear();
   while (scanner_ptr->next(cell)) {
+    refresh = false;
     if (strcmp(last_row.c_str(), cell.row_key) && last_row != "") {
       const char *ptr = strchr(last_row.c_str(), ':');
       HT_ASSERT(ptr);
@@ -335,12 +343,16 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
     }
     if (!strcmp(cell.column_family, "Location")) {
       str = String((const char *)cell.value, cell.value_len);
+      if (str == "!") {
+        refresh = true;
+        break;
+      }
       boost::trim(str);
       tsbuilder.set_location(str);
       ProxyMapT::iterator pmiter = proxy_map.find(str);
       if (pmiter != proxy_map.end()) {
-	tsbuilder.set_ip_address( (*pmiter).second.addr.format_ipaddress() );
-	tsbuilder.set_hostname( (*pmiter).second.hostname );
+        tsbuilder.set_ip_address( (*pmiter).second.addr.format_ipaddress() );
+        tsbuilder.set_hostname( (*pmiter).second.hostname );
       }
     }
     else if (!strcmp(cell.column_family, "StartRow")) {
@@ -352,7 +364,10 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
       HT_FATALF("Unexpected column family - %s", cell.column_family);
     last_row = cell.row_key;
   }
-
+  if (refresh) {
+    refresh_table(table_name);
+    goto try_again;
+  }
   tsbuilder.set_end_row(Key::END_ROW_MARKER);
   splits.push_back(tsbuilder.get());
 
