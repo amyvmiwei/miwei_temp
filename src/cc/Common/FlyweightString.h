@@ -46,6 +46,20 @@ namespace Hypertable {
       m_strings.insert(constant_str);
       return constant_str;
     }
+    const char *get(const char *str, size_t len) {
+      if (str == 0)
+        return 0;
+      char *new_str = new char [ len + 1 ];
+      memcpy(new_str, str, len);
+      new_str[len] = 0;
+      CstrSet::iterator iter = m_strings.find(new_str);
+      if (iter != m_strings.end()) {
+        delete [] new_str;
+        return *iter;
+      }
+      m_strings.insert(new_str);
+      return new_str;
+    }
 
   private:
     CstrSet m_strings;
