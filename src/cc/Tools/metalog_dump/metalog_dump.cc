@@ -28,6 +28,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "Common/Error.h"
+#include "Common/FileUtils.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
 #include "Common/Init.h"
@@ -42,6 +43,7 @@
 #include "Hypertable/Lib/MetaLog.h"
 #include "Hypertable/Lib/MetaLogReader.h"
 
+#include "Hypertable/RangeServer/MetaLogEntityRange.h"
 #include "Hypertable/RangeServer/MetaLogDefinitionRangeServer.h"
 #include "Hypertable/Master/MetaLogDefinitionMaster.h"
 
@@ -61,6 +63,8 @@ namespace {
                    "  to be the metalog directory\n\nOptions")
         .add_options()
         ("all", "Display all entities in log (not just latest state)")
+        ("metadata-tsv", "For each Range, dump StartRow and Location .tsv lines")
+        ("location", "Used with --metadata-tsv to specify location proxy")
         ("show-version", "Display log version number and exit")
         ;
       cmdline_hidden_desc().add_options()("log-path", str(), "dfs log path");
@@ -126,6 +130,15 @@ int main(int argc, char **argv) {
     int timeout = has("dfs-timeout") ? get_i32("dfs-timeout") : 10000;
     bool dump_all = has("all");
     bool show_version = has("show-version");
+    bool metadata_tsv = has("metadata-tsv");
+    String location;
+
+    if (metadata_tsv) {
+      if (has("location"))
+        location = get_str("location");
+      else
+        location = FileUtils::file_to_string("/opt/hypertable/current/run/location");
+    }
 
     /**
      * Check for and connect to commit log DFS broker
@@ -175,7 +188,8 @@ int main(int argc, char **argv) {
     else
       rsml_reader = new MetaLog::Reader(fs, def, log_path);
 
-    cout << "log version: " << rsml_reader->version() << "\n";
+    if (!metadata_tsv)
+      cout << "log version: " << rsml_reader->version() << "\n";
 
     if (show_version)
       _exit(0);
@@ -187,8 +201,21 @@ int main(int argc, char **argv) {
     else
       rsml_reader->get_entities(entities);
 
-    for (size_t i=0; i<entities.size(); i++)
-      cout << *entities[i] << "\n";
+    if (metadata_tsv) {
+      MetaLog::EntityRange *entity_range;
+      for (size_t i=0; i<entities.size(); i++) {
+        entity_range = dynamic_cast<MetaLog::EntityRange *>(entities[i].get());
+        if (entity_range) {
+          cout << entity_range->table.id << ":" << entity_range->spec.end_row << "\tStartRow\t" << entity_range->spec.start_row << "\n";
+          cout << entity_range->table.id << ":" << entity_range->spec.end_row << "\tLocation\t" << location << "\n";
+        }
+      }
+    }
+    else {
+      for (size_t i=0; i<entities.size(); i++)
+        cout << *entities[i] << "\n";
+    }
+
     cout << flush;
 
   }
