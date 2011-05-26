@@ -47,6 +47,7 @@ int main(int argc, char **argv) {
   int fd;
   std::vector<String> key_columns;
   DfsBroker::ClientPtr null_dfs_client;
+  bool is_delete;
 
   vector<String> testnames;
   testnames.push_back("loadDataSourceTest");
@@ -70,13 +71,20 @@ int main(int argc, char **argv) {
                                         dat_fn.c_str(), LOCAL_FILE, "", LOCAL_FILE,
                                         key_columns, "");
 
-    while (lds->next(0, &key, &value, &value_len, 0)) {
-      cerr << "row=" << (const char *)key.row
-           << " column_family=" << key.column_family;
-      if (key.column_qualifier_len > 0)
-        cerr << " column_qualifier=" << (const char *)key.column_qualifier;
-      cerr << " value=" << (const char *)value << endl;
+    while (lds->next(&key, &value, &value_len, &is_delete, 0)) {
+      cerr << "row=" << (const char *)key.row;
+      if (key.column_family) {
+        cerr << "\tcolumn_family=" << key.column_family;
+        if (key.column_qualifier_len > 0)
+          cerr << "\tcolumn_qualifier=" << (const char *)key.column_qualifier;
+      }
+      cerr << "\tvalue=" << (const char *)value;
+      if (is_delete)
+        cerr << "\tDELETE\n";
+      else
+        cerr << "\n";
     }
+    cerr << flush;
 
     String golden_fn = testnames[i] + ".golden";
     String sys_cmd = "diff " + output_fn + " " + golden_fn;

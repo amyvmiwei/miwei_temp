@@ -1,9 +1,21 @@
-row=abenteric column_family=foo column_qualifier=http://www.foo.com/ value=How now brown cow
-row=barothermohygrograph column_family=bar value=Herbie Hancock
-row=Batonga column_family=foo value=Head Hunters
+row=abenteric	column_family=foo	column_qualifier=http://www.foo.com/	value=How now brown cow
+row=barothermohygrograph	column_family=bar	value=Herbie Hancock
+row=Batonga	column_family=foo	value=Head Hunters
 warning: too few fields on line 5
 warn: invalid timestamp format on line 6, skipping...
 warning: too few fields on line 7
 warning: too few fields on line 8
-row=carbonification column_family=sherlock column_qualifier=holmes value=this\tis\ta\ttab\tdelimited\tvalue
-row=biomagnify column_family=sherlock column_qualifier=holmes value=\\\this\contains\lots\of\backslashes\\\
+row=carbonification	column_family=sherlock	column_qualifier=holmes	value=this\tis\ta\ttab\tdelimited\tvalue
+row=biomagnify	column_family=sherlock	column_qualifier=holmes	value=\\\this\contains\lots\of\backslashes\\\
+row=dandy	column_family=foo	value=chicken
+row=dandy	column_family=bar	value=chicken
+row=warhols	column_family=foo	column_qualifier=a	value=scratch
+row=warhols	column_family=foo	column_qualifier=b	value=scratch
+row=warhols	column_family=bar	value=scratch
+row=warhols	column_family=bar	column_qualifier=a	value=scratch
+row=warhols	column_family=bar	column_qualifier=b	value=scratch
+row=dandy	value=	DELETE
+row=warhols	column_family=bar	value=	DELETE
+row=warhols	column_family=foo	column_qualifier=a	value=	DELETE
+warning: too few fields on line 21
+warning: too few fields on line 22
