@@ -291,14 +291,11 @@ LoadDataSource::parse_header(const String &header, const std::vector<String> &ke
  *
  */
 bool
-LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
-    uint8_t **valuep, uint32_t *value_lenp, uint32_t *consumedp) {
+LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
+                     bool *is_deletep, uint32_t *consumedp) {
   String line;
   int index;
   char *base, *ptr, *colon;
-
-  if (type_flagp)
-    *type_flagp = FLAG_INSERT;
 
   if (consumedp)
     *consumedp = 0;
@@ -378,7 +375,6 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
 
       if ((colon = strchr(base, ':')) != 0) {
         *colon++ = 0;
-        keyp->column_family = base;
         if (colon < ptr) {
           keyp->column_qualifier = colon;
           keyp->column_qualifier_len = ptr - colon;
@@ -392,14 +388,28 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
         keyp->column_qualifier = 0;
         keyp->column_qualifier_len = 0;
       }
-      keyp->column_family = base;
+      keyp->column_family = *base ? base : 0;
       ptr++;
 
       /**
        * Get value
        */
-      *valuep = (uint8_t *)ptr;
-      *value_lenp = strlen(ptr);
+      base = ptr;
+      *valuep = (uint8_t *)base;
+      if ((ptr = strchr(base, '\t')) == 0) {
+        *value_lenp = strlen((char *)*valuep);
+        *is_deletep = false;
+      }
+      else {
+        *value_lenp = ptr-base;
+        *ptr++ = 0;
+        if (!strncmp(ptr, "DELETE", 6))
+          *is_deletep = true;
+        else {
+          cerr << "warning: too many fields on line " << m_cur_line << endl;
+          *is_deletep = false;
+        }
+      }
 
       if (m_zipped && consumedp) {
         *consumedp = incr_consumed();
@@ -409,6 +419,8 @@ LoadDataSource::next(uint32_t *type_flagp, KeySpec *keyp,
     }
   }
   else {
+
+    *is_deletep = false;
 
     // skip timestamp and rowkey (if needed)
     while (m_next_value < m_limit &&

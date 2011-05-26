@@ -8,3 +8,15 @@ abracadabra	Batonga	foo:	Head Hunters
 2009-02-12 02:12:12	barothermohygrograph	ba
 2009-02-12 02:12:12.1000000000	carbonification	sherlock:holmes	this\tis\ta\ttab\tdelimited\tvalue
 2009-02-12 02:12:12.3000000000	biomagnify	sherlock:holmes	\\\this\contains\lots\of\backslashes\\\
+2009-02-12 02:12:13	dandy	foo	chicken
+2009-02-12 02:12:13	dandy	bar	chicken
+2009-02-12 02:12:13	warhols	foo:a	scratch
+2009-02-12 02:12:13	warhols	foo:b	scratch
+2009-02-12 02:12:13	warhols	bar	scratch
+2009-02-12 02:12:13	warhols	bar:a	scratch
+2009-02-12 02:12:13	warhols	bar:b	scratch
+2009-02-12 02:12:13	dandy			DELETE
+2009-02-12 02:12:13	warhols	bar		DELETE
+2009-02-12 02:12:13	warhols	foo:a		DELETE
+
+

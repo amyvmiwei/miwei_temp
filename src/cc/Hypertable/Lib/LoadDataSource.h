@@ -61,9 +61,8 @@ namespace Hypertable {
       return m_leading_timestamps || (m_timestamp_index != -1);
     }
 
-    virtual bool next(uint32_t *type_flagp, KeySpec *keyp,
-                      uint8_t **valuep, uint32_t *value_lenp,
-                      uint32_t *consumedp);
+    virtual bool next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
+                      bool *is_deletep, uint32_t *consumedp);
 
     virtual void init(const std::vector<String> &key_columns, const String &timestamp_column);
 
