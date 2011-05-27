@@ -53,6 +53,10 @@ namespace Hypertable {
   class TableMutator : public ReferenceCount {
 
   public:
+    enum {
+      FLAG_NO_LOG_SYNC             = Table::MUTATOR_FLAG_NO_LOG_SYNC,
+      FLAG_IGNORE_UNKNOWN_CFS      = Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS
+    };
 
     /**
      * Constructs the TableMutator object
@@ -170,13 +174,6 @@ namespace Hypertable {
     /** Show failed mutations */
     std::ostream &show_failed(const Exception &, std::ostream & = std::cout);
 
-    // The flags shd be the same as in Hypertable::RangeServerProtocol.
-    enum {
-      /* Don't force a commit log sync on update */
-      FLAG_NO_LOG_SYNC        = 0x0001,
-      FLAG_IGNORE_UNKNOWN_CFS = 0x0002
-    };
-
     void update_ok();
     void update_error(int error, FailedMutations &failures);
 
@@ -190,11 +187,6 @@ namespace Hypertable {
       SET_DELETE,
       FLUSH
     };
-
-    /**
-     * Calls sync on any unsynced rangeservers and waits for completion
-     */
-    void sync();
 
     void save_last(const KeySpec &key, const void *value, size_t value_len) {
       m_last_key = key;
@@ -226,7 +218,6 @@ namespace Hypertable {
     TableMutatorAsyncPtr m_mutator;
     uint32_t             m_timeout_ms;
     uint32_t             m_flags;
-    uint32_t             m_prev_buffer_flags;
     uint32_t             m_flush_delay;
     int32_t     m_last_error;
     int         m_last_op;

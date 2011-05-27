@@ -18,6 +18,10 @@ interface ClientServiceIf {
   public function get_future_result($ff);
   public function get_future_result_as_arrays($ff);
   public function get_future_result_serialized($ff);
+  public function future_is_empty($ff);
+  public function future_is_full($ff);
+  public function future_is_cancelled($ff);
+  public function future_has_outstanding($ff);
   public function close_future($ff);
   public function open_scanner($ns, $table_name, $scan_spec);
   public function open_scanner_async($ns, $table_name, $future, $scan_spec);
@@ -42,13 +46,21 @@ interface ClientServiceIf {
   public function offer_cell($ns, $table_name, $mutate_spec, $cell);
   public function offer_cell_as_array($ns, $table_name, $mutate_spec, $cell);
   public function open_mutator($ns, $table_name, $flags, $flush_interval);
+  public function open_mutator_async($ns, $table_name, $future, $flags);
   public function close_mutator($mutator, $flush);
+  public function close_mutator_async($mutator);
   public function set_cell($mutator, $cell);
   public function set_cell_as_array($mutator, $cell);
   public function set_cells($mutator, $cells);
   public function set_cells_as_arrays($mutator, $cells);
   public function set_cells_serialized($mutator, $cells, $flush);
   public function flush_mutator($mutator);
+  public function set_cell_async($mutator, $cell);
+  public function set_cell_as_array_async($mutator, $cell);
+  public function set_cells_async($mutator, $cells);
+  public function set_cells_as_arrays_async($mutator, $cells);
+  public function set_cells_serialized_async($mutator, $cells, $flush);
+  public function flush_mutator_async($mutator);
   public function exists_namespace($ns);
   public function exists_table($ns, $name);
   public function get_table_id($ns, $table_name);
@@ -547,6 +559,222 @@ class ClientServiceClient implements ClientServiceIf {
       throw $result->e;
     }
     throw new Exception("get_future_result_serialized failed: unknown result");
+  }
+
+  public function future_is_empty($ff)
+  {
+    $this->send_future_is_empty($ff);
+    return $this->recv_future_is_empty();
+  }
+
+  public function send_future_is_empty($ff)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_future_is_empty_args();
+    $args->ff = $ff;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'future_is_empty', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('future_is_empty', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_future_is_empty()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_future_is_empty_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_future_is_empty_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->success !== null) {
+      return $result->success;
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    throw new Exception("future_is_empty failed: unknown result");
+  }
+
+  public function future_is_full($ff)
+  {
+    $this->send_future_is_full($ff);
+    return $this->recv_future_is_full();
+  }
+
+  public function send_future_is_full($ff)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_future_is_full_args();
+    $args->ff = $ff;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'future_is_full', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('future_is_full', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_future_is_full()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_future_is_full_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_future_is_full_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->success !== null) {
+      return $result->success;
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    throw new Exception("future_is_full failed: unknown result");
+  }
+
+  public function future_is_cancelled($ff)
+  {
+    $this->send_future_is_cancelled($ff);
+    return $this->recv_future_is_cancelled();
+  }
+
+  public function send_future_is_cancelled($ff)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_future_is_cancelled_args();
+    $args->ff = $ff;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'future_is_cancelled', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('future_is_cancelled', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_future_is_cancelled()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_future_is_cancelled_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_future_is_cancelled_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->success !== null) {
+      return $result->success;
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    throw new Exception("future_is_cancelled failed: unknown result");
+  }
+
+  public function future_has_outstanding($ff)
+  {
+    $this->send_future_has_outstanding($ff);
+    return $this->recv_future_has_outstanding();
+  }
+
+  public function send_future_has_outstanding($ff)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_future_has_outstanding_args();
+    $args->ff = $ff;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'future_has_outstanding', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('future_has_outstanding', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_future_has_outstanding()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_future_has_outstanding_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_future_has_outstanding_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->success !== null) {
+      return $result->success;
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    throw new Exception("future_has_outstanding failed: unknown result");
   }
 
   public function close_future($ff)
@@ -1855,6 +2083,63 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("open_mutator failed: unknown result");
   }
 
+  public function open_mutator_async($ns, $table_name, $future, $flags)
+  {
+    $this->send_open_mutator_async($ns, $table_name, $future, $flags);
+    return $this->recv_open_mutator_async();
+  }
+
+  public function send_open_mutator_async($ns, $table_name, $future, $flags)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_open_mutator_async_args();
+    $args->ns = $ns;
+    $args->table_name = $table_name;
+    $args->future = $future;
+    $args->flags = $flags;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'open_mutator_async', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('open_mutator_async', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_open_mutator_async()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_open_mutator_async_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_open_mutator_async_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->success !== null) {
+      return $result->success;
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    throw new Exception("open_mutator_async failed: unknown result");
+  }
+
   public function close_mutator($mutator, $flush)
   {
     $this->send_close_mutator($mutator, $flush);
@@ -1898,6 +2183,57 @@ class ClientServiceClient implements ClientServiceIf {
         throw $x;
       }
       $result = new Hypertable_ThriftGen_ClientService_close_mutator_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
+  public function close_mutator_async($mutator)
+  {
+    $this->send_close_mutator_async($mutator);
+    $this->recv_close_mutator_async();
+  }
+
+  public function send_close_mutator_async($mutator)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_close_mutator_async_args();
+    $args->mutator = $mutator;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'close_mutator_async', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('close_mutator_async', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_close_mutator_async()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_close_mutator_async_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_close_mutator_async_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -2210,6 +2546,318 @@ class ClientServiceClient implements ClientServiceIf {
         throw $x;
       }
       $result = new Hypertable_ThriftGen_ClientService_flush_mutator_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
+  public function set_cell_async($mutator, $cell)
+  {
+    $this->send_set_cell_async($mutator, $cell);
+    $this->recv_set_cell_async();
+  }
+
+  public function send_set_cell_async($mutator, $cell)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_set_cell_async_args();
+    $args->mutator = $mutator;
+    $args->cell = $cell;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'set_cell_async', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('set_cell_async', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_set_cell_async()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_set_cell_async_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_set_cell_async_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
+  public function set_cell_as_array_async($mutator, $cell)
+  {
+    $this->send_set_cell_as_array_async($mutator, $cell);
+    $this->recv_set_cell_as_array_async();
+  }
+
+  public function send_set_cell_as_array_async($mutator, $cell)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_set_cell_as_array_async_args();
+    $args->mutator = $mutator;
+    $args->cell = $cell;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'set_cell_as_array_async', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('set_cell_as_array_async', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_set_cell_as_array_async()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_set_cell_as_array_async_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_set_cell_as_array_async_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
+  public function set_cells_async($mutator, $cells)
+  {
+    $this->send_set_cells_async($mutator, $cells);
+    $this->recv_set_cells_async();
+  }
+
+  public function send_set_cells_async($mutator, $cells)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_set_cells_async_args();
+    $args->mutator = $mutator;
+    $args->cells = $cells;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'set_cells_async', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('set_cells_async', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_set_cells_async()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_set_cells_async_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_set_cells_async_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
+  public function set_cells_as_arrays_async($mutator, $cells)
+  {
+    $this->send_set_cells_as_arrays_async($mutator, $cells);
+    $this->recv_set_cells_as_arrays_async();
+  }
+
+  public function send_set_cells_as_arrays_async($mutator, $cells)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_set_cells_as_arrays_async_args();
+    $args->mutator = $mutator;
+    $args->cells = $cells;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'set_cells_as_arrays_async', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('set_cells_as_arrays_async', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_set_cells_as_arrays_async()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_set_cells_as_arrays_async_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_set_cells_as_arrays_async_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
+  public function set_cells_serialized_async($mutator, $cells, $flush)
+  {
+    $this->send_set_cells_serialized_async($mutator, $cells, $flush);
+    $this->recv_set_cells_serialized_async();
+  }
+
+  public function send_set_cells_serialized_async($mutator, $cells, $flush)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_set_cells_serialized_async_args();
+    $args->mutator = $mutator;
+    $args->cells = $cells;
+    $args->flush = $flush;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'set_cells_serialized_async', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('set_cells_serialized_async', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_set_cells_serialized_async()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_set_cells_serialized_async_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_set_cells_serialized_async_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
+  public function flush_mutator_async($mutator)
+  {
+    $this->send_flush_mutator_async($mutator);
+    $this->recv_flush_mutator_async();
+  }
+
+  public function send_flush_mutator_async($mutator)
+  {
+    $args = new Hypertable_ThriftGen_ClientService_flush_mutator_async_args();
+    $args->mutator = $mutator;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'flush_mutator_async', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('flush_mutator_async', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_flush_mutator_async()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_flush_mutator_async_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new Hypertable_ThriftGen_ClientService_flush_mutator_async_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -4273,6 +4921,670 @@ class Hypertable_ThriftGen_ClientService_get_future_result_serialized_result {
       }
       $xfer += $output->writeFieldBegin('success', TType::STRUCT, 0);
       $xfer += $this->success->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_future_is_empty_args {
+  static $_TSPEC;
+
+  public $ff = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ff',
+          'type' => TType::I64,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ff'])) {
+        $this->ff = $vals['ff'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_future_is_empty_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ff);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_future_is_empty_args');
+    if ($this->ff !== null) {
+      $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
+      $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_future_is_empty_result {
+  static $_TSPEC;
+
+  public $success = null;
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        0 => array(
+          'var' => 'success',
+          'type' => TType::BOOL,
+          ),
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['success'])) {
+        $this->success = $vals['success'];
+      }
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_future_is_empty_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 0:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->success);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_future_is_empty_result');
+    if ($this->success !== null) {
+      $xfer += $output->writeFieldBegin('success', TType::BOOL, 0);
+      $xfer += $output->writeBool($this->success);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_future_is_full_args {
+  static $_TSPEC;
+
+  public $ff = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ff',
+          'type' => TType::I64,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ff'])) {
+        $this->ff = $vals['ff'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_future_is_full_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ff);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_future_is_full_args');
+    if ($this->ff !== null) {
+      $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
+      $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_future_is_full_result {
+  static $_TSPEC;
+
+  public $success = null;
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        0 => array(
+          'var' => 'success',
+          'type' => TType::BOOL,
+          ),
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['success'])) {
+        $this->success = $vals['success'];
+      }
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_future_is_full_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 0:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->success);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_future_is_full_result');
+    if ($this->success !== null) {
+      $xfer += $output->writeFieldBegin('success', TType::BOOL, 0);
+      $xfer += $output->writeBool($this->success);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_future_is_cancelled_args {
+  static $_TSPEC;
+
+  public $ff = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ff',
+          'type' => TType::I64,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ff'])) {
+        $this->ff = $vals['ff'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_future_is_cancelled_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ff);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_future_is_cancelled_args');
+    if ($this->ff !== null) {
+      $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
+      $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_future_is_cancelled_result {
+  static $_TSPEC;
+
+  public $success = null;
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        0 => array(
+          'var' => 'success',
+          'type' => TType::BOOL,
+          ),
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['success'])) {
+        $this->success = $vals['success'];
+      }
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_future_is_cancelled_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 0:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->success);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_future_is_cancelled_result');
+    if ($this->success !== null) {
+      $xfer += $output->writeFieldBegin('success', TType::BOOL, 0);
+      $xfer += $output->writeBool($this->success);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_future_has_outstanding_args {
+  static $_TSPEC;
+
+  public $ff = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ff',
+          'type' => TType::I64,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ff'])) {
+        $this->ff = $vals['ff'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_future_has_outstanding_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ff);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_future_has_outstanding_args');
+    if ($this->ff !== null) {
+      $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
+      $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_future_has_outstanding_result {
+  static $_TSPEC;
+
+  public $success = null;
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        0 => array(
+          'var' => 'success',
+          'type' => TType::BOOL,
+          ),
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['success'])) {
+        $this->success = $vals['success'];
+      }
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_future_has_outstanding_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 0:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->success);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_future_has_outstanding_result');
+    if ($this->success !== null) {
+      $xfer += $output->writeFieldBegin('success', TType::BOOL, 0);
+      $xfer += $output->writeBool($this->success);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->e !== null) {
@@ -9295,6 +10607,232 @@ class Hypertable_ThriftGen_ClientService_open_mutator_result {
 
 }
 
+class Hypertable_ThriftGen_ClientService_open_mutator_async_args {
+  static $_TSPEC;
+
+  public $ns = null;
+  public $table_name = null;
+  public $future = null;
+  public $flags = 0;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ns',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'table_name',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'future',
+          'type' => TType::I64,
+          ),
+        4 => array(
+          'var' => 'flags',
+          'type' => TType::I32,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ns'])) {
+        $this->ns = $vals['ns'];
+      }
+      if (isset($vals['table_name'])) {
+        $this->table_name = $vals['table_name'];
+      }
+      if (isset($vals['future'])) {
+        $this->future = $vals['future'];
+      }
+      if (isset($vals['flags'])) {
+        $this->flags = $vals['flags'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_open_mutator_async_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ns);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->table_name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->future);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->flags);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_open_mutator_async_args');
+    if ($this->ns !== null) {
+      $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+      $xfer += $output->writeI64($this->ns);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->table_name !== null) {
+      $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+      $xfer += $output->writeString($this->table_name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->future !== null) {
+      $xfer += $output->writeFieldBegin('future', TType::I64, 3);
+      $xfer += $output->writeI64($this->future);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->flags !== null) {
+      $xfer += $output->writeFieldBegin('flags', TType::I32, 4);
+      $xfer += $output->writeI32($this->flags);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_open_mutator_async_result {
+  static $_TSPEC;
+
+  public $success = null;
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        0 => array(
+          'var' => 'success',
+          'type' => TType::I64,
+          ),
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['success'])) {
+        $this->success = $vals['success'];
+      }
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_open_mutator_async_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 0:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->success);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_open_mutator_async_result');
+    if ($this->success !== null) {
+      $xfer += $output->writeFieldBegin('success', TType::I64, 0);
+      $xfer += $output->writeI64($this->success);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class Hypertable_ThriftGen_ClientService_close_mutator_args {
   static $_TSPEC;
 
@@ -9449,6 +10987,152 @@ class Hypertable_ThriftGen_ClientService_close_mutator_result {
   public function write($output) {
     $xfer = 0;
     $xfer += $output->writeStructBegin('ClientService_close_mutator_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_close_mutator_async_args {
+  static $_TSPEC;
+
+  public $mutator = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'mutator',
+          'type' => TType::I64,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['mutator'])) {
+        $this->mutator = $vals['mutator'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_close_mutator_async_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->mutator);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_close_mutator_async_args');
+    if ($this->mutator !== null) {
+      $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+      $xfer += $output->writeI64($this->mutator);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_close_mutator_async_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_close_mutator_async_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_close_mutator_async_result');
     if ($this->e !== null) {
       $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
       $xfer += $this->e->write($output);
@@ -10565,6 +12249,1110 @@ class Hypertable_ThriftGen_ClientService_flush_mutator_result {
 
 }
 
+class Hypertable_ThriftGen_ClientService_set_cell_async_args {
+  static $_TSPEC;
+
+  public $mutator = null;
+  public $cell = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'mutator',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'cell',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_Cell',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['mutator'])) {
+        $this->mutator = $vals['mutator'];
+      }
+      if (isset($vals['cell'])) {
+        $this->cell = $vals['cell'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cell_async_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->mutator);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRUCT) {
+            $this->cell = new Hypertable_ThriftGen_Cell();
+            $xfer += $this->cell->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cell_async_args');
+    if ($this->mutator !== null) {
+      $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+      $xfer += $output->writeI64($this->mutator);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cell !== null) {
+      if (!is_object($this->cell)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cell', TType::STRUCT, 2);
+      $xfer += $this->cell->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_set_cell_async_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cell_async_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cell_async_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_set_cell_as_array_async_args {
+  static $_TSPEC;
+
+  public $mutator = null;
+  public $cell = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'mutator',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'cell',
+          'type' => TType::LST,
+          'etype' => TType::STRING,
+          'elem' => array(
+            'type' => TType::STRING,
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['mutator'])) {
+        $this->mutator = $vals['mutator'];
+      }
+      if (isset($vals['cell'])) {
+        $this->cell = $vals['cell'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cell_as_array_async_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->mutator);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::LST) {
+            $this->cell = array();
+            $_size207 = 0;
+            $_etype210 = 0;
+            $xfer += $input->readListBegin($_etype210, $_size207);
+            for ($_i211 = 0; $_i211 < $_size207; ++$_i211)
+            {
+              $elem212 = null;
+              $xfer += $input->readString($elem212);
+              $this->cell []= $elem212;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cell_as_array_async_args');
+    if ($this->mutator !== null) {
+      $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+      $xfer += $output->writeI64($this->mutator);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cell !== null) {
+      if (!is_array($this->cell)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cell', TType::LST, 2);
+      {
+        $output->writeListBegin(TType::STRING, count($this->cell));
+        {
+          foreach ($this->cell as $iter213)
+          {
+            $xfer += $output->writeString($iter213);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_set_cell_as_array_async_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cell_as_array_async_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cell_as_array_async_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_set_cells_async_args {
+  static $_TSPEC;
+
+  public $mutator = null;
+  public $cells = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'mutator',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'cells',
+          'type' => TType::LST,
+          'etype' => TType::STRUCT,
+          'elem' => array(
+            'type' => TType::STRUCT,
+            'class' => 'Hypertable_ThriftGen_Cell',
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['mutator'])) {
+        $this->mutator = $vals['mutator'];
+      }
+      if (isset($vals['cells'])) {
+        $this->cells = $vals['cells'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cells_async_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->mutator);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::LST) {
+            $this->cells = array();
+            $_size214 = 0;
+            $_etype217 = 0;
+            $xfer += $input->readListBegin($_etype217, $_size214);
+            for ($_i218 = 0; $_i218 < $_size214; ++$_i218)
+            {
+              $elem219 = null;
+              $elem219 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem219->read($input);
+              $this->cells []= $elem219;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cells_async_args');
+    if ($this->mutator !== null) {
+      $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+      $xfer += $output->writeI64($this->mutator);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cells !== null) {
+      if (!is_array($this->cells)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cells', TType::LST, 2);
+      {
+        $output->writeListBegin(TType::STRUCT, count($this->cells));
+        {
+          foreach ($this->cells as $iter220)
+          {
+            $xfer += $iter220->write($output);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_set_cells_async_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cells_async_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cells_async_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_set_cells_as_arrays_async_args {
+  static $_TSPEC;
+
+  public $mutator = null;
+  public $cells = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'mutator',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'cells',
+          'type' => TType::LST,
+          'etype' => TType::LST,
+          'elem' => array(
+            'type' => TType::LST,
+            'etype' => TType::STRING,
+            'elem' => array(
+              'type' => TType::STRING,
+              ),
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['mutator'])) {
+        $this->mutator = $vals['mutator'];
+      }
+      if (isset($vals['cells'])) {
+        $this->cells = $vals['cells'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cells_as_arrays_async_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->mutator);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::LST) {
+            $this->cells = array();
+            $_size221 = 0;
+            $_etype224 = 0;
+            $xfer += $input->readListBegin($_etype224, $_size221);
+            for ($_i225 = 0; $_i225 < $_size221; ++$_i225)
+            {
+              $elem226 = null;
+              $elem226 = array();
+              $_size227 = 0;
+              $_etype230 = 0;
+              $xfer += $input->readListBegin($_etype230, $_size227);
+              for ($_i231 = 0; $_i231 < $_size227; ++$_i231)
+              {
+                $elem232 = null;
+                $xfer += $input->readString($elem232);
+                $elem226 []= $elem232;
+              }
+              $xfer += $input->readListEnd();
+              $this->cells []= $elem226;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cells_as_arrays_async_args');
+    if ($this->mutator !== null) {
+      $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+      $xfer += $output->writeI64($this->mutator);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cells !== null) {
+      if (!is_array($this->cells)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cells', TType::LST, 2);
+      {
+        $output->writeListBegin(TType::LST, count($this->cells));
+        {
+          foreach ($this->cells as $iter233)
+          {
+            {
+              $output->writeListBegin(TType::STRING, count($iter233));
+              {
+                foreach ($iter233 as $iter234)
+                {
+                  $xfer += $output->writeString($iter234);
+                }
+              }
+              $output->writeListEnd();
+            }
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_set_cells_as_arrays_async_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cells_as_arrays_async_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cells_as_arrays_async_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_set_cells_serialized_async_args {
+  static $_TSPEC;
+
+  public $mutator = null;
+  public $cells = null;
+  public $flush = false;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'mutator',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'cells',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'flush',
+          'type' => TType::BOOL,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['mutator'])) {
+        $this->mutator = $vals['mutator'];
+      }
+      if (isset($vals['cells'])) {
+        $this->cells = $vals['cells'];
+      }
+      if (isset($vals['flush'])) {
+        $this->flush = $vals['flush'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cells_serialized_async_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->mutator);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->cells);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->flush);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cells_serialized_async_args');
+    if ($this->mutator !== null) {
+      $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+      $xfer += $output->writeI64($this->mutator);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cells !== null) {
+      $xfer += $output->writeFieldBegin('cells', TType::STRING, 2);
+      $xfer += $output->writeString($this->cells);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->flush !== null) {
+      $xfer += $output->writeFieldBegin('flush', TType::BOOL, 3);
+      $xfer += $output->writeBool($this->flush);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_set_cells_serialized_async_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_set_cells_serialized_async_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_set_cells_serialized_async_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_flush_mutator_async_args {
+  static $_TSPEC;
+
+  public $mutator = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'mutator',
+          'type' => TType::I64,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['mutator'])) {
+        $this->mutator = $vals['mutator'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_flush_mutator_async_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->mutator);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_flush_mutator_async_args');
+    if ($this->mutator !== null) {
+      $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+      $xfer += $output->writeI64($this->mutator);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ClientService_flush_mutator_async_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_flush_mutator_async_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new Hypertable_ThriftGen_ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_flush_mutator_async_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class Hypertable_ThriftGen_ClientService_exists_namespace_args {
   static $_TSPEC;
 
@@ -11608,14 +14396,14 @@ class Hypertable_ThriftGen_ClientService_get_tables_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size207 = 0;
-            $_etype210 = 0;
-            $xfer += $input->readListBegin($_etype210, $_size207);
-            for ($_i211 = 0; $_i211 < $_size207; ++$_i211)
+            $_size235 = 0;
+            $_etype238 = 0;
+            $xfer += $input->readListBegin($_etype238, $_size235);
+            for ($_i239 = 0; $_i239 < $_size235; ++$_i239)
             {
-              $elem212 = null;
-              $xfer += $input->readString($elem212);
-              $this->success []= $elem212;
+              $elem240 = null;
+              $xfer += $input->readString($elem240);
+              $this->success []= $elem240;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -11651,9 +14439,9 @@ class Hypertable_ThriftGen_ClientService_get_tables_result {
       {
         $output->writeListBegin(TType::STRING, count($this->success));
         {
-          foreach ($this->success as $iter213)
+          foreach ($this->success as $iter241)
           {
-            $xfer += $output->writeString($iter213);
+            $xfer += $output->writeString($iter241);
           }
         }
         $output->writeListEnd();
@@ -11801,15 +14589,15 @@ class Hypertable_ThriftGen_ClientService_get_listing_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size214 = 0;
-            $_etype217 = 0;
-            $xfer += $input->readListBegin($_etype217, $_size214);
-            for ($_i218 = 0; $_i218 < $_size214; ++$_i218)
+            $_size242 = 0;
+            $_etype245 = 0;
+            $xfer += $input->readListBegin($_etype245, $_size242);
+            for ($_i246 = 0; $_i246 < $_size242; ++$_i246)
             {
-              $elem219 = null;
-              $elem219 = new Hypertable_ThriftGen_NamespaceListing();
-              $xfer += $elem219->read($input);
-              $this->success []= $elem219;
+              $elem247 = null;
+              $elem247 = new Hypertable_ThriftGen_NamespaceListing();
+              $xfer += $elem247->read($input);
+              $this->success []= $elem247;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -11845,9 +14633,9 @@ class Hypertable_ThriftGen_ClientService_get_listing_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter220)
+          foreach ($this->success as $iter248)
           {
-            $xfer += $iter220->write($output);
+            $xfer += $iter248->write($output);
           }
         }
         $output->writeListEnd();
@@ -12015,15 +14803,15 @@ class Hypertable_ThriftGen_ClientService_get_table_splits_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size221 = 0;
-            $_etype224 = 0;
-            $xfer += $input->readListBegin($_etype224, $_size221);
-            for ($_i225 = 0; $_i225 < $_size221; ++$_i225)
+            $_size249 = 0;
+            $_etype252 = 0;
+            $xfer += $input->readListBegin($_etype252, $_size249);
+            for ($_i253 = 0; $_i253 < $_size249; ++$_i253)
             {
-              $elem226 = null;
-              $elem226 = new Hypertable_ThriftGen_TableSplit();
-              $xfer += $elem226->read($input);
-              $this->success []= $elem226;
+              $elem254 = null;
+              $elem254 = new Hypertable_ThriftGen_TableSplit();
+              $xfer += $elem254->read($input);
+              $this->success []= $elem254;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -12059,9 +14847,9 @@ class Hypertable_ThriftGen_ClientService_get_table_splits_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter227)
+          foreach ($this->success as $iter255)
           {
-            $xfer += $iter227->write($output);
+            $xfer += $iter255->write($output);
           }
         }
         $output->writeListEnd();

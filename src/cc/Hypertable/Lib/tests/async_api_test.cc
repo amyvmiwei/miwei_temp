@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -79,10 +79,10 @@ namespace {
   "</Schema>";
 
   const char *usage[] = {
-    "usage: scanner_async_test",
+    "usage: mutator_async_test",
     "",
-    "Tests asynchronous scans across multiple tables. Generates output file "
-    "'./scannerAsyncTest.output' and diffs it against './scannerAsyncTest.golden'.'",
+    "Tests asynchronous scans and updates across multiple tables. Generates output file "
+    "'./asyncApiTest.output' and diffs it against './asyncApiTest.golden'.'",
     0
   };
 
@@ -142,7 +142,7 @@ namespace {
         }
       }
       else {
-        outfile << "Received "<< cc.size() << "cells for scan " << endl;
+        outfile << "Received "<< cc.size() << " cells for scan " << endl;
       }
     }
 
@@ -154,11 +154,13 @@ namespace {
     }
 
     void update_ok(TableMutatorAsync *mutator) {
-      outfile << "This should never happen" << endl;
-      _exit(1);
+      ScopedLock lock(mutex);
+      outfile << "Mutation done" << endl;
     }
     void update_error(TableMutatorAsync *mutator, int error, FailedMutations &failures) {
-      outfile << "This should never happen" << endl;
+      ScopedLock lock(mutex);
+      Exception e(error, "");
+      outfile << e << endl;
       _exit(1);
     }
 
@@ -207,10 +209,10 @@ namespace {
     TablePtr table_color;
     TablePtr table_location;
     TablePtr table_energy;
-
-    TableMutatorPtr mutator_color;
-    TableMutatorPtr mutator_location;
-    TableMutatorPtr mutator_energy;
+    FruitCallback cb;
+    TableMutatorAsyncPtr mutator_color;
+    TableMutatorAsyncPtr mutator_location;
+    TableMutatorAsyncPtr mutator_energy;
 
     ns->drop_table("FruitColor", true);
     ns->drop_table("FruitLocation", true);
@@ -224,9 +226,9 @@ namespace {
     table_location    = ns->open_table("FruitLocation");
     table_energy      = ns->open_table("FruitEnergy");
 
-    mutator_color     = table_color->create_mutator();
-    mutator_location  = table_location->create_mutator();
-    mutator_energy    = table_energy->create_mutator();
+    mutator_color     = table_color->create_mutator_async(&cb);
+    mutator_location  = table_location->create_mutator_async(&cb);
+    mutator_energy    = table_energy->create_mutator_async(&cb);
 
     key.column_family = "data";
     key.column_qualifier = 0;
@@ -258,7 +260,7 @@ int main(int argc, char **argv) {
     Client *hypertable = new Client(argv[0], "./hypertable.cfg");
     NamespacePtr ns = hypertable->open_namespace("/");
 
-    outfile.open("scannerAsyncTest.output");
+    outfile.open("asyncApiTest.output");
     write(hypertable, ns);
     read(hypertable, ns);
     outfile.close();
@@ -268,7 +270,7 @@ int main(int argc, char **argv) {
     _exit(1);
   }
 
-  if (system("diff ./scannerAsyncTest.output ./scannerAsyncTest.golden"))
+  if (system("diff ./asyncApiTest.output ./asyncApiTest.golden"))
     _exit(1);
 
   _exit(0);

@@ -40,6 +40,7 @@
 #include "Common/InetAddr.h"
 
 #include "Cell.h"
+#include "Cells.h"
 #include "Key.h"
 #include "RangeLocator.h"
 #include "Schema.h"
@@ -47,9 +48,6 @@
 #include "TableMutatorAsyncCompletionCounter.h"
 
 namespace Hypertable {
-
-  typedef std::pair<Cell, int> FailedMutation;
-  typedef std::vector<FailedMutation> FailedMutations;
 
   class TableMutatorAsync;
   class TableMutatorAsyncScatterBuffer : public ReferenceCount {

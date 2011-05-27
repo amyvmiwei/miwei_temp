@@ -51,6 +51,22 @@ struct BasicTest : HqlServiceIf {
     return client->cancel_future(ff);
   }
 
+  bool future_is_empty(const Future ff) {
+    return client->future_is_empty(ff);
+  }
+
+  bool future_is_full(const Future ff) {
+    return client->future_is_full(ff);
+  }
+
+  bool future_is_cancelled(const Future ff) {
+    return client->future_is_cancelled(ff);
+  }
+
+  bool future_has_outstanding(const Future ff) {
+    return client->future_has_outstanding(ff);
+  }
+
   void get_future_result(Result& _result, const Future ff) {
     return client->get_future_result(_result, ff);
   }
@@ -200,6 +216,15 @@ struct BasicTest : HqlServiceIf {
     client->close_mutator(mutator, flush);
   }
 
+  MutatorAsync open_mutator_async(const Namespace ns, const std::string& table,
+                                  Future ff, int32_t flags) {
+    return client->open_mutator_async(ns, table, ff, flags);
+  }
+
+  void close_mutator_async(const MutatorAsync mutator) {
+    client->close_mutator_async(mutator);
+  }
+
   void flush_mutator(const Mutator mutator) {
     client->flush_mutator(mutator);
   }
@@ -227,6 +252,35 @@ struct BasicTest : HqlServiceIf {
                        const CellsSerialized &cells,
                        bool flush) {
     client->set_cells_serialized(mutator, cells, flush);
+  }
+
+  void flush_mutator_async(const MutatorAsync mutator) {
+    client->flush_mutator_async(mutator);
+  }
+
+  void set_cell_async(const MutatorAsync mutator, const Cell& cell) {
+    client->set_cell_async(mutator, cell);
+  }
+
+  void set_cells_async(const MutatorAsync mutator, const std::vector<Cell> & cells) {
+    client->set_cells_async(mutator, cells);
+  }
+
+  void set_cell_as_array_async(const MutatorAsync mutator, const CellAsArray& cell) {
+    client->set_cell_as_array_async(mutator, cell);
+  }
+
+  void
+  set_cells_as_arrays_async(const MutatorAsync mutator,
+                            const std::vector<CellAsArray> & cells) {
+    client->set_cells_as_arrays_async(mutator, cells);
+  }
+
+  void
+  set_cells_serialized_async(const MutatorAsync mutator,
+                             const CellsSerialized &cells,
+                             bool flush) {
+    client->set_cells_serialized_async(mutator, cells, flush);
   }
 
   bool exists_namespace(const std::string& ns) {
@@ -303,7 +357,7 @@ struct BasicTest : HqlServiceIf {
       test_set();
       test_put();
       test_scan(out);
-      test_scan_async(out);
+      test_async(out);
       test_rename();
     }
     catch (ClientException &e) {
@@ -431,7 +485,7 @@ struct BasicTest : HqlServiceIf {
     sleep(2);
   }
 
-  void test_scan_async(std::ostream &out) {
+  void test_async(std::ostream &out) {
     Namespace ns = open_namespace("test");
     String insert;
     int num_expected_results = 6;
@@ -440,15 +494,73 @@ struct BasicTest : HqlServiceIf {
     hql_query(hql_result, ns, "create table FruitColor(data)");
     hql_query(hql_result, ns, "create table FruitLocation(data)");
     hql_query(hql_result, ns, "create table FruitEnergy(data)");
-    insert = (String) "insert into FruitColor values ('apple', 'data', 'red'), " +
-             "('kiwi', 'data', 'brown'), ('pomegranate', 'data', 'pink')";
-    hql_query(hql_result, ns, insert.c_str());
-    insert = (String) "insert into FruitLocation values ('apple', 'data', 'Western Asia'), " +
-             "('kiwi','data', 'Southern China'), ('pomegranate', 'data', 'Iran')";
-    hql_query(hql_result, ns, insert.c_str());
-    insert = (String) "insert into FruitEnergy values ('apple', 'data', '2.18kJ/g'), " +
-             "('kiwi', 'data', '0.61Cal/g'), ('pomegranate', 'data', '0.53Cal/g')";
-    hql_query(hql_result, ns, insert.c_str());
+
+
+    // async writes
+    {
+      Future ff = open_future();
+      MutatorAsync color_mutator       = open_mutator_async(ns, "FruitColor", ff, 0);
+      MutatorAsync location_mutator    = open_mutator_async(ns, "FruitLocation", ff, 0);
+      MutatorAsync energy_mutator      = open_mutator_async(ns, "FruitEnergy", ff, 0);
+      std::vector<Cell> color, location, energy;
+
+      color.push_back(make_cell("apple", "data", 0, "red"));
+      color.push_back(make_cell("kiwi", "data", 0, "brown"));
+      color.push_back(make_cell("pomegranate", "data", 0, "pink"));
+
+      location.push_back(make_cell("apple", "data", 0, "Western Asia"));
+      location.push_back(make_cell("kiwi", "data", 0, "Southern China"));
+      location.push_back(make_cell("pomegranate", "data", 0, "Iran"));
+
+      energy.push_back(make_cell("apple", "data", 0 , "2.18kJ/g"));
+      energy.push_back(make_cell("kiwi", "data", 0 , "0.61Cal/g"));
+      energy.push_back(make_cell("pomegranate", "data", 0 , "0.53Cal/g"));
+
+      set_cells_async(color_mutator, color);
+      set_cells_async(energy_mutator, energy);
+      set_cells_async(location_mutator, location);
+
+      flush_mutator_async(color_mutator);
+      flush_mutator_async(location_mutator);
+      flush_mutator_async(energy_mutator);
+
+      Result result;
+      int num_results=0;
+      while (true) {
+        get_future_result(result, ff);
+        ++num_results;
+        if (result.is_empty)
+          break;
+        if (result.is_scan == true) {
+          out << "All results are expected to be from mutators" << std::endl;
+          _exit(1);
+        }
+        if (result.is_error == true) {
+          out << "Got unexpected error from mutator" << std::endl;
+          _exit(1);
+        }
+        if (num_results > 3) {
+          out << "Got unexpected number of results from mutator" << std::endl;
+          _exit(1);
+        }
+        out << "Async flush successful" << std::endl;
+      }
+
+      if (future_has_outstanding(ff) || !future_is_empty(ff) || future_is_cancelled(ff)) {
+        out << "Future should not have any outstanding operations or queued results or be cancelled" << std::endl;
+        _exit(1);
+      }
+
+      cancel_future(ff);
+      if (!future_is_cancelled(ff)) {
+        out << "Future should be cancelled" << std::endl;
+        _exit(1);
+      }
+      close_mutator_async(color_mutator);
+      close_mutator_async(location_mutator);
+      close_mutator_async(energy_mutator);
+      close_future(ff);
+    }
 
     RowInterval ri_apple;
     ri_apple.start_row = "apple";

@@ -89,7 +89,6 @@ int main(int argc, char **argv) {
     NamespacePtr ns = hypertable->open_namespace("/");
 
     TablePtr table_ptr;
-    TableMutatorPtr mutator_ptr;
     KeySpec key;
     ScanSpecBuilder ssbuilder;
     ScanSpec scan_spec;
@@ -101,38 +100,61 @@ int main(int argc, char **argv) {
     /**
      * Load data
      */
-    ns->drop_table("FutureTest", true);
-    ns->create_table("FutureTest", schema);
+    {
+      Future ff;
+      TableMutatorAsyncPtr mutator_ptr;
+      ns->drop_table("FutureTest", true);
+      ns->create_table("FutureTest", schema);
 
-    table_ptr = ns->open_table("FutureTest");
+      table_ptr = ns->open_table("FutureTest");
 
-    mutator_ptr = table_ptr->create_mutator();
+      mutator_ptr = table_ptr->create_mutator_async(&ff, 0, Table::MUTATOR_FLAG_NO_LOG_SYNC);
 
-    key.column_family = "data";
-    key.column_qualifier = 0;
-    key.column_qualifier_len = 0;
+      key.column_family = "data";
+      key.column_qualifier = 0;
+      key.column_qualifier_len = 0;
 
-    memset(&md5_ctx, 0, sizeof(md5_ctx));
-    md5_starts(&md5_ctx);
+      memset(&md5_ctx, 0, sizeof(md5_ctx));
+      md5_starts(&md5_ctx);
 
-    for (size_t i=0; i<100; i++) {
-      load_buffer_with_random(buf, 1000);
-      sprintf(keybuf, "%05u", (unsigned)i);
-      key.row = keybuf;
-      key.row_len = strlen(keybuf);
-      mutator_ptr->set(key, buf, 1000);
-      if (i<50)
-        md5_update(&md5_ctx, buf, 1000);
+      size_t outstanding=0;
+      for (size_t i=0; i<100; i++) {
+        load_buffer_with_random(buf, 1000);
+        sprintf(keybuf, "%05u", (unsigned)i);
+        key.row = keybuf;
+        key.row_len = strlen(keybuf);
+        mutator_ptr->set(key, buf, 1000);
+        mutator_ptr->flush();
+        outstanding++;
+
+        if (outstanding>5) {
+          while (ff.get(result)) {
+            if (result->is_error()) {
+              int error;
+              String error_msg;
+              result->get_error(error, error_msg);
+              Exception e(error, error_msg);
+              HT_ERROR_OUT << "Encountered scan error " << e << HT_END;
+              _exit(1);
+            }
+
+            HT_ASSERT(result->is_update());
+            HT_INFO_OUT <<  "Flush complete" << HT_END;
+            HT_ASSERT(outstanding > 0);
+            outstanding--;
+          }
+          HT_ASSERT(outstanding==0);
+        }
+
+        if (i<50)
+          md5_update(&md5_ctx, buf, 1000);
+      }
+      md5_finish(&md5_ctx, sent_digest);
     }
-    md5_finish(&md5_ctx, sent_digest);
-
-    mutator_ptr->flush();
-
-    mutator_ptr = 0;
 
     {
       // Do asynchronous scan and cancel after some time
-      Future ff(5);
+      Future ff(500);
       TableScannerAsyncPtr scanner_ptr;
 
       ssbuilder.set_row_limit(60);
@@ -149,6 +171,8 @@ int main(int argc, char **argv) {
       int num_cells=0;
       bool finished = false;
       while (!finished) {
+        if (ff.is_full())
+          HT_INFO_OUT << "Future queue is full" << HT_END;
         ff.get(result);
         if (result->is_error()) {
           int error;
@@ -182,7 +206,7 @@ int main(int argc, char **argv) {
       // this time let the scan run through till completion
       memset(&md5_ctx, 0, sizeof(md5_ctx));
       md5_starts(&md5_ctx);
-      Future ff2(5);
+      Future ff2;
       ssbuilder.clear();
       ssbuilder.add_row_interval("00000",true, "00010", false);
       ssbuilder.add_row_interval("00010",true, "00027", false);

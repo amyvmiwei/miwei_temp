@@ -37,12 +37,12 @@ Result::Result(TableScannerAsync *scanner, int error, const String &error_msg) :
 }
 
 Result::Result(TableMutatorAsync *mutator) : m_scanner(0), m_mutator(mutator),
-    m_isscan(true), m_iserror(false)  {
+    m_isscan(false), m_iserror(false)  {
 }
 
 Result::Result(TableMutatorAsync *mutator, int error, FailedMutations &failed_mutations)
-  : m_scanner(0), m_mutator(mutator), m_isscan(false), m_iserror(true),
-    m_failed_mutations(failed_mutations) {
+  : m_scanner(0), m_mutator(mutator), m_isscan(false), m_iserror(true) {
+  m_failed_cells.copy_failed_mutations(failed_mutations, m_failed_mutations);
 }
 
 TableScannerAsync *Result::get_scanner() {
@@ -78,4 +78,11 @@ Result::get_failed_mutations() {
   return m_failed_mutations;
 }
 
+void Result::get_failed_cells(Cells &cells) {
+  if (m_isscan)
+    HT_THROW(Error::NOT_ALLOWED, "Requested failed cells for non-mutator result");
+  if (!m_iserror)
+    HT_THROW(Error::NOT_ALLOWED, "Requested failed cells for successful mutation");
+  m_failed_cells.get(cells);
+}
 } // namespace Hypertable

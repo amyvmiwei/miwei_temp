@@ -176,6 +176,14 @@ Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
   return new TableMutator(m_props, m_comm, this, m_range_locator, timeout, flags);
 }
 
+TableMutatorAsync *
+Table::create_mutator_async(ResultCallback *cb, uint32_t timeout_ms, uint32_t flags) {
+  uint32_t timeout = timeout_ms ? timeout_ms : m_timeout_ms;
+
+  return new TableMutatorAsync(m_props, m_comm, m_app_queue, this, m_range_locator, timeout,
+      cb, flags);
+}
+
 TableScanner *
 Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms,
                       int32_t flags) {

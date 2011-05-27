@@ -24,24 +24,29 @@
 
 #include "Future.h"
 #include "TableScannerAsync.h"
+#include "TableMutatorAsync.h"
 
 using namespace Hypertable;
 
 bool Future::get(ResultPtr &result) {
   ScopedRecLock lock(m_outstanding_mutex);
+  size_t mem_result=0;
 
   // wait till we have results to serve
-  while(is_empty() && !is_done() && !is_cancelled()) {
+  while(_is_empty() && !is_done() && !is_cancelled()) {
     m_outstanding_cond.wait(lock);
   }
 
   if (is_cancelled())
     return false;
-  if (is_empty() && is_done())
+  if (_is_empty() && is_done())
     return false;
   result = m_queue.front();
+  mem_result = result->memory_used();
   // wake a thread blocked on queue space
   m_queue.pop_front();
+  m_memory_used -= mem_result;
+  HT_ASSERT(m_memory_used >= 0);
   m_outstanding_cond.notify_one();
   return true;
 }
@@ -56,14 +61,14 @@ bool Future::get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out) {
   xtime_add_millis(wait_time, timeout_ms);
 
   // wait till we have results to serve
-  while(is_empty() && !is_done() && !is_cancelled()) {
+  while(_is_empty() && !is_done() && !is_cancelled()) {
     timed_out = m_outstanding_cond.timed_wait(lock, wait_time);
     if (timed_out)
       return is_done();
   }
   if (is_cancelled())
     return false;
-  if (is_empty() && is_done())
+  if (_is_empty() && is_done())
     return false;
   result = m_queue.front();
   // wake a thread blocked on queue space
@@ -79,11 +84,14 @@ void Future::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
 
 void Future::enqueue(ResultPtr &result) {
   ScopedRecLock lock(m_outstanding_mutex);
-  while (is_full() && !is_cancelled()) {
+  size_t mem_result = result->memory_used();
+
+  while (!has_remaining_capacity() && !is_cancelled()) {
     m_outstanding_cond.wait(lock);
   }
   if (!is_cancelled()) {
     m_queue.push_back(result);
+    m_memory_used += mem_result;
   }
   m_outstanding_cond.notify_one();
 }
@@ -107,14 +115,36 @@ void Future::update_error(TableMutatorAsync *mutator, int error, FailedMutations
 void Future::cancel() {
   ScopedRecLock lock(m_outstanding_mutex);
   m_cancelled = true;
-  ScannerMap::iterator it = m_scanner_map.begin();
-  while (it != m_scanner_map.end()) {
-    it->second->cancel();
-    it++;
+  ScannerMap::iterator s_it = m_scanner_map.begin();
+  while (s_it != m_scanner_map.end()) {
+    s_it->second->cancel();
+    s_it++;
   }
+  MutatorMap::iterator m_it = m_mutator_map.begin();
+  while (m_it != m_mutator_map.end()) {
+    m_it->second->cancel();
+    m_it++;
+  }
+
   m_outstanding_cond.notify_all();
 }
 
+void Future::register_mutator(TableMutatorAsync *mutator) {
+  ScopedRecLock lock(m_outstanding_mutex);
+  uint64_t addr = (uint64_t) mutator;
+  MutatorMap::iterator it = m_mutator_map.find(addr);
+  // XXX: TODO DON"T ASSERT if m_cancelled == true throw an exception
+  HT_ASSERT(it == m_mutator_map.end() && !m_cancelled);
+  m_mutator_map[addr] = mutator;
+}
+
+void Future::deregister_mutator(TableMutatorAsync *mutator) {
+  ScopedRecLock lock(m_outstanding_mutex);
+  uint64_t addr = (uint64_t) mutator;
+  MutatorMap::iterator it = m_mutator_map.find(addr);
+  HT_ASSERT(it != m_mutator_map.end());
+  m_mutator_map.erase(it);
+}
 void Future::register_scanner(TableScannerAsync *scanner) {
   ScopedRecLock lock(m_outstanding_mutex);
   uint64_t addr = (uint64_t) scanner;

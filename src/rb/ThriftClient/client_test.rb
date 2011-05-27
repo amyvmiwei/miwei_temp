@@ -25,6 +25,45 @@ begin
     puts "testing asynchronous api..."
     # testing asynchronous scanner api
     client.with_future() do |future|
+      mutator_async_1 = client.open_mutator_async(ns, "thrift_test", future, 0)
+      mutator_async_2 = client.open_mutator_async(ns, "thrift_test", future, 0)
+      key = Key.new 
+      key.row = "k1"
+      key.column_family = "col"
+      cell = Cell.new
+      cell.key = key
+      cell.value = "v1-async-rb"
+      client.set_cell_async(mutator_async_1, cell)
+      key = Key.new 
+      key.row = "k2"
+      key.column_family = "col"
+      cell = Cell.new
+      cell.key = key
+      cell.value = "v2-async-rb"
+      client.set_cell_async(mutator_async_2, cell)
+      client.flush_mutator_async(mutator_async_1)
+      client.flush_mutator_async(mutator_async_2)
+      num_results=0
+      while (true)
+        result = client.get_future_result(future)
+        if result.is_empty || result.is_error || result.is_scan
+          break
+        end
+        num_results = num_results+1
+      end
+      
+      if (num_results != 2)
+        puts "Expected 2 results from flushes got {#num_results}"
+        exit 1
+      end 
+      client.close_mutator_async(mutator_async_1)
+      client.close_mutator_async(mutator_async_2)
+      
+      if (client.future_is_cancelled(future) || client.future_is_full(future) || client.future_has_outstanding(future) || !client.future_is_empty(future))
+        puts "Future operations in unexpected state"
+        exit 1
+      end
+
       color_scanner = client.open_scanner_async(ns, "FruitColor", future, ScanSpec.new())
       location_scanner = client.open_scanner_async(ns, "FruitLocation", future, ScanSpec.new())
       energy_scanner = client.open_scanner_async(ns, "FruitEnergy", future, ScanSpec.new())
@@ -47,8 +86,8 @@ begin
       client.close_scanner_async(color_scanner)
       client.close_scanner_async(location_scanner)
       client.close_scanner_async(energy_scanner)
-      if num_cells != expected_cells
-        puts "Expected #{expected_cells} got {#num_cells}"
+      if (num_cells != expected_cells || !client.future_is_cancelled(future))
+        puts "Expected #{expected_cells} got {#num_cells} and future to be cancelled"
         exit 1
       end
     end

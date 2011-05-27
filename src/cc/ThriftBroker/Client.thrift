@@ -59,6 +59,14 @@ typedef i64 ScannerAsync
  */
 typedef i64 Mutator
 
+/** Opaque ID for a asynchronous table mutator 
+ *
+ * A mutator is recommended for injecting large amount of data (across
+ * many calls to mutator methods)
+ */
+typedef i64 MutatorAsync  
+
+
 /** Value for table cell
  *
  * Use binary instead of string to generate efficient type for Java.
@@ -627,6 +635,26 @@ service ClientService {
    * @return - result from async scanner/mutator
    */
   ResultSerialized get_future_result_serialized(1:Future ff) throws (1:ClientException e),
+  
+  /**
+   * Check if future object's queue is empty
+   */
+  bool future_is_empty(1: Future ff) throws (1:ClientException e),
+
+  /**
+   * Check if future object's queue is full
+   */
+  bool future_is_full(1: Future ff) throws (1:ClientException e),
+
+  /**
+   * Check if future object has been cancelled
+   */
+  bool future_is_cancelled(1: Future ff) throws (1:ClientException e),
+  
+  /**
+   * Check if future object has outstanding operations
+   */
+  bool future_has_outstanding(1: Future ff) throws (1:ClientException e),
 
   /**
    * Close a future object 
@@ -852,6 +880,19 @@ service ClientService {
    */
   Mutator open_mutator(1:Namespace ns, 2:string table_name, 3:i32 flags = 0; 
       4:i32 flush_interval = 0) throws (1:ClientException e),
+  
+  /**
+   * Open an asynchronous table mutator
+   *
+   * @param ns - namespace id 
+   * @param table_name - table name
+   * @param future - callback object
+   * @param flags - mutator flags
+   *
+   * @return mutator id
+   */
+  MutatorAsync open_mutator_async(1:Namespace ns, 2:string table_name, 3:Future future, 
+      4:i32 flags = 0) throws (1:ClientException e),
 
   /**
    * Close a table mutator
@@ -860,6 +901,15 @@ service ClientService {
    */
   void close_mutator(1:Mutator mutator, 2:bool flush = 1)
       throws (1:ClientException e),
+  
+  /**
+   * Close an asynchronous table mutator
+   *
+   * @param mutator - mutator id to close
+   */
+  void close_mutator_async(1:MutatorAsync mutator)
+      throws (1:ClientException e),
+
 
   /**
    * Set a cell in the table
@@ -903,6 +953,49 @@ service ClientService {
    * Flush mutator buffers
    */
   void flush_mutator(1:Mutator mutator) throws (1:ClientException e),
+  
+  /**
+   * Set a cell in the table using an asynchonous mutator
+   *
+   * @param mutator - mutator id
+   *
+   * @param cell - the cell to set
+   */
+  void set_cell_async(1:MutatorAsync mutator, 2:Cell cell) throws (1:ClientException e),
+
+  /**
+   * Alternative interface using array as cell using an asynchonous mutator 
+   */
+  void set_cell_as_array_async(1:MutatorAsync mutator, 2:CellAsArray cell)
+      throws (1:ClientException e),
+
+  /**
+   * Put a list of cells into a table using asynchonous mutator 
+   *
+   * @param mutator - mutator id
+   *
+   * @param cells - a list of cells (a cell with no row key set is assumed
+   *        to have the same row key as the previous cell)
+   */
+  void set_cells_async(1:MutatorAsync mutator, 2:list<Cell> cells)
+      throws (1:ClientException e),
+
+  /**
+   * Alternative interface using array as cell
+   */
+  void set_cells_as_arrays_async(1:MutatorAsync mutator, 2:list<CellAsArray> cells)
+      throws (1:ClientException e),
+
+  /**
+   * Alternative interface using buffer of serialized cells
+   */
+  void set_cells_serialized_async(1:MutatorAsync mutator, 2:CellsSerialized cells, 3:bool flush = 0)
+      throws (1:ClientException e),
+
+  /**
+   * Flush mutator buffers
+   */
+  void flush_mutator_async(1:MutatorAsync mutator) throws (1:ClientException e),
   
   /**
    * Check if the namespace exists 

@@ -87,6 +87,16 @@ namespace Hypertable {
       return true;
     }
 
+    /**
+     * Approximate estimate of memory used by scanblock (returns the size of the event payload)
+     * which contains most of the data
+     */
+    size_t memory_used() const {
+      if (m_event_ptr)
+        return m_event_ptr->payload_len;
+      return 0;
+    }
+
     /** Returns scanner ID associated with this scanblock.
      *
      * @return scanner ID

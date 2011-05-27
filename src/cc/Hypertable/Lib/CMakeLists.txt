@@ -169,9 +169,9 @@ target_link_libraries(escape_test Hypertable)
 add_executable(large_insert_test tests/large_insert_test.cc)
 target_link_libraries(large_insert_test Hypertable)
 
-# scanner_async_test 
-add_executable(scanner_async_test tests/scanner_async_test.cc)
-target_link_libraries(scanner_async_test Hypertable)
+# async_api_test 
+add_executable(async_api_test tests/async_api_test.cc)
+target_link_libraries(async_api_test Hypertable)
 
 # scanner_abrupt_end_test
 add_executable(scanner_abrupt_end_test tests/scanner_abrupt_end_test.cc)
@@ -180,6 +180,10 @@ target_link_libraries(scanner_abrupt_end_test Hypertable)
 # future_abrupt_end_test
 add_executable(future_abrupt_end_test tests/future_abrupt_end_test.cc)
 target_link_libraries(future_abrupt_end_test Hypertable)
+
+# future_mutator_cancel_test
+add_executable(future_mutator_cancel_test tests/future_mutator_cancel_test.cc)
+target_link_libraries(future_mutator_cancel_test Hypertable)
 
 # future_test 
 add_executable(future_test tests/future_test.cc)
@@ -232,8 +236,8 @@ configure_file(${HYPERTABLE_SOURCE_DIR}/tests/data/random.dat
 configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
 configure_file(${SRC_DIR}/locationCacheTest.golden
                ${DST_DIR}/locationCacheTest.golden)
-configure_file(${SRC_DIR}/scannerAsyncTest.golden
-               ${DST_DIR}/scannerAsyncTest.golden)
+configure_file(${SRC_DIR}/asyncApiTest.golden
+               ${DST_DIR}/asyncApiTest.golden)
 configure_file(${SRC_DIR}/loadDataSourceTest.golden
                ${DST_DIR}/loadDataSourceTest.golden)
 configure_file(${SRC_DIR}/loadDataSourceTest.dat
@@ -268,7 +272,7 @@ add_test(BlockCompressor-ZLIB compressor_test zlib)
 add_test(CommitLog commit_log_test)
 add_test(MetaLog metalog_test)
 add_test(Client-large-block large_insert_test)
-add_test(Client-scanner-async scanner_async_test)
+add_test(Client-async-api async_api_test)
 add_test(Client-future future_test)
 add_test(Client-row-delete row_delete_test)
 add_test(Client-periodic-flush periodic_flush_test)

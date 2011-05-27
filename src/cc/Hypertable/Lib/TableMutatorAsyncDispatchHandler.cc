@@ -39,7 +39,7 @@ TableMutatorAsyncDispatchHandler::TableMutatorAsyncDispatchHandler(
     uint32_t scatter_buffer, TableMutatorAsyncSendBuffer *send_buffer, bool auto_refresh)
   : m_app_queue(app_queue), m_mutator(mutator),
     m_scatter_buffer(scatter_buffer), m_send_buffer(send_buffer),
-    m_auto_refresh(auto_refresh) {
+    m_auto_refresh(auto_refresh), m_handled(false) {
 }
 
 /**
@@ -47,6 +47,9 @@ TableMutatorAsyncDispatchHandler::TableMutatorAsyncDispatchHandler(
  */
 void TableMutatorAsyncDispatchHandler::handle(EventPtr &event_ptr) {
   int32_t error;
+
+  HT_ASSERT(!m_handled);
+  m_handled = true;
 
   if (event_ptr->type == Event::MESSAGE) {
     error = Protocol::response_code(event_ptr);
@@ -97,7 +100,11 @@ void TableMutatorAsyncDispatchHandler::handle(EventPtr &event_ptr) {
   }
 
   bool complete = m_send_buffer->counterp->decrement();
-  if (complete)
-    m_app_queue->add(new TableMutatorAsyncHandler(m_mutator, m_scatter_buffer));
+  if (complete) {
+    TableMutatorAsyncHandler *handler = new TableMutatorAsyncHandler(m_mutator, m_scatter_buffer);
+    //HT_INFO_OUT << "[bibble] Created TableMutatorAsyncHandler " << std::hex << handler
+    //    << " in TableMutatorAsyncDispatchHandler " << this << HT_END;
+    m_app_queue->add(handler);
+  }
 }
 

@@ -45,6 +45,8 @@ typedef int64_t ScannerAsync;
 
 typedef int64_t Mutator;
 
+typedef int64_t MutatorAsync;
+
 typedef std::string Value;
 
 typedef std::vector<std::string>  CellAsArray;

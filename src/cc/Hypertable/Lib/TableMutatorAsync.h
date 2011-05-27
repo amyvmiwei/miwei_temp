@@ -64,13 +64,13 @@ namespace Hypertable {
      *        to execute before throwing an exception
      * @param cb callback for this mutator
      * @param flags rangeserver client update command flags
-     * @param max_buffers maximum number of scatter buffers to be used
-     * @param auto_flush_explicit if true TableMutatorAsync will not auto_flush unless auto_flush method is called explicitly
+     * @param explicit_block_only if true TableMutatorAsync will not auto_flush or
+     *     wait_for_completion unless explicitly told to do so by caller
      */
     TableMutatorAsync(PropertiesPtr &props, Comm *comm,
                  ApplicationQueuePtr &app_queue, Table *table,
                  RangeLocatorPtr &range_locator, uint32_t timeout_ms, ResultCallback *cb,
-                 uint32_t flags = 0, uint32_t max_buffers=0, bool auto_flush_explicit=false);
+                 uint32_t flags = 0, bool explicit_block_only=false);
 
     /**
      * Destructor for TableMutator object
@@ -150,8 +150,9 @@ namespace Hypertable {
 
     /**
      * Flushes the current buffer accumulated mutations to their respective range servers.
+     * @param sync if false then theres no guarantee that the data is synced disk
      */
-    void flush();
+    void flush(bool sync=true);
 
     /**
      * This is where buffers call back into when their outstanding operations are complete
@@ -169,7 +170,7 @@ namespace Hypertable {
       return ++m_next_buffer_id;
     }
     bool retry(uint32_t timeout_ms);
-    void recycle_buffer(TableMutatorAsyncScatterBufferPtr &buffer);
+    void update_outstanding(TableMutatorAsyncScatterBufferPtr &buffer);
     void get_failed_mutations(FailedMutations &failed_mutations) {
       failed_mutations = m_failed_mutations;
     }
@@ -177,15 +178,11 @@ namespace Hypertable {
       ScopedLock lock(m_buffer_mutex);
       return (m_outstanding_buffers.size() !=0);
     }
-    /**
-     * Calls sync on any unsynced rangeservers and waits for completion
-     */
-    void sync();
-    void auto_flush();
     bool needs_flush();
 
   protected:
     void wait_for_completion();
+
   private:
     enum Operation {
       SET = 1,
@@ -193,6 +190,11 @@ namespace Hypertable {
       SET_DELETE,
       FLUSH
     };
+
+    /**
+     * Calls sync on any unsynced rangeservers and waits for completion
+     */
+    void do_sync();
 
     void to_full_key(const void *row, const char *cf, const void *cq,
                      int64_t ts, int64_t rev, uint8_t flag, Key &full_key, bool &unknown_cf);
@@ -204,7 +206,6 @@ namespace Hypertable {
       to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,
                   cell.timestamp, cell.revision, cell.flag, full_key, unknown_cf);
     }
-    void do_flush(bool auto_flush);
     void update_unsynced_rangeservers(const CommAddressSet &unsynced);
     void handle_send_exceptions();
     typedef std::map<uint32_t, TableMutatorAsyncScatterBufferPtr> ScatterBufferAsyncMap;
@@ -218,13 +219,11 @@ namespace Hypertable {
     uint64_t             m_memory_used;
     uint64_t             m_max_memory;
     ScatterBufferAsyncMap  m_outstanding_buffers;
-    ScatterBufferAsyncMap  m_free_buffers;
     TableMutatorAsyncScatterBufferPtr m_current_buffer;
     uint64_t             m_resends;
     uint32_t             m_timeout_ms;
     ResultCallback       *m_cb;
     uint32_t             m_flags;
-    uint32_t             m_flush_delay;
     CommAddressSet       m_unsynced_rangeservers;
     int32_t     m_last_error;
     int         m_last_op;
@@ -239,8 +238,7 @@ namespace Hypertable {
     Mutex      m_cancel_mutex;
     Mutex      m_buffer_mutex;
     boost::condition m_cond;
-    uint32_t   m_max_buffers;
-    bool       m_auto_flush_explicit;
+    bool       m_explicit_block_only;
     uint32_t   m_next_buffer_id;
     bool       m_cancelled;
     bool       m_mutated;

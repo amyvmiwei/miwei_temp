@@ -30,6 +30,10 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  Result get_future_result(Future ff)'
   print '  ResultAsArrays get_future_result_as_arrays(Future ff)'
   print '  ResultSerialized get_future_result_serialized(Future ff)'
+  print '  bool future_is_empty(Future ff)'
+  print '  bool future_is_full(Future ff)'
+  print '  bool future_is_cancelled(Future ff)'
+  print '  bool future_has_outstanding(Future ff)'
   print '  void close_future(Future ff)'
   print '  Scanner open_scanner(Namespace ns, string table_name, ScanSpec scan_spec)'
   print '  ScannerAsync open_scanner_async(Namespace ns, string table_name, Future future, ScanSpec scan_spec)'
@@ -54,13 +58,21 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void offer_cell(Namespace ns, string table_name, MutateSpec mutate_spec, Cell cell)'
   print '  void offer_cell_as_array(Namespace ns, string table_name, MutateSpec mutate_spec, CellAsArray cell)'
   print '  Mutator open_mutator(Namespace ns, string table_name, i32 flags, i32 flush_interval)'
+  print '  MutatorAsync open_mutator_async(Namespace ns, string table_name, Future future, i32 flags)'
   print '  void close_mutator(Mutator mutator, bool flush)'
+  print '  void close_mutator_async(MutatorAsync mutator)'
   print '  void set_cell(Mutator mutator, Cell cell)'
   print '  void set_cell_as_array(Mutator mutator, CellAsArray cell)'
   print '  void set_cells(Mutator mutator,  cells)'
   print '  void set_cells_as_arrays(Mutator mutator,  cells)'
   print '  void set_cells_serialized(Mutator mutator, CellsSerialized cells, bool flush)'
   print '  void flush_mutator(Mutator mutator)'
+  print '  void set_cell_async(MutatorAsync mutator, Cell cell)'
+  print '  void set_cell_as_array_async(MutatorAsync mutator, CellAsArray cell)'
+  print '  void set_cells_async(MutatorAsync mutator,  cells)'
+  print '  void set_cells_as_arrays_async(MutatorAsync mutator,  cells)'
+  print '  void set_cells_serialized_async(MutatorAsync mutator, CellsSerialized cells, bool flush)'
+  print '  void flush_mutator_async(MutatorAsync mutator)'
   print '  bool exists_namespace(string ns)'
   print '  bool exists_table(Namespace ns, string name)'
   print '  string get_table_id(Namespace ns, string table_name)'
@@ -175,6 +187,30 @@ elif cmd == 'get_future_result_serialized':
     print 'get_future_result_serialized requires 1 args'
     sys.exit(1)
   pp.pprint(client.get_future_result_serialized(eval(args[0]),))
+
+elif cmd == 'future_is_empty':
+  if len(args) != 1:
+    print 'future_is_empty requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.future_is_empty(eval(args[0]),))
+
+elif cmd == 'future_is_full':
+  if len(args) != 1:
+    print 'future_is_full requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.future_is_full(eval(args[0]),))
+
+elif cmd == 'future_is_cancelled':
+  if len(args) != 1:
+    print 'future_is_cancelled requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.future_is_cancelled(eval(args[0]),))
+
+elif cmd == 'future_has_outstanding':
+  if len(args) != 1:
+    print 'future_has_outstanding requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.future_has_outstanding(eval(args[0]),))
 
 elif cmd == 'close_future':
   if len(args) != 1:
@@ -320,11 +356,23 @@ elif cmd == 'open_mutator':
     sys.exit(1)
   pp.pprint(client.open_mutator(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
 
+elif cmd == 'open_mutator_async':
+  if len(args) != 4:
+    print 'open_mutator_async requires 4 args'
+    sys.exit(1)
+  pp.pprint(client.open_mutator_async(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
+
 elif cmd == 'close_mutator':
   if len(args) != 2:
     print 'close_mutator requires 2 args'
     sys.exit(1)
   pp.pprint(client.close_mutator(eval(args[0]),eval(args[1]),))
+
+elif cmd == 'close_mutator_async':
+  if len(args) != 1:
+    print 'close_mutator_async requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.close_mutator_async(eval(args[0]),))
 
 elif cmd == 'set_cell':
   if len(args) != 2:
@@ -361,6 +409,42 @@ elif cmd == 'flush_mutator':
     print 'flush_mutator requires 1 args'
     sys.exit(1)
   pp.pprint(client.flush_mutator(eval(args[0]),))
+
+elif cmd == 'set_cell_async':
+  if len(args) != 2:
+    print 'set_cell_async requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.set_cell_async(eval(args[0]),eval(args[1]),))
+
+elif cmd == 'set_cell_as_array_async':
+  if len(args) != 2:
+    print 'set_cell_as_array_async requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.set_cell_as_array_async(eval(args[0]),eval(args[1]),))
+
+elif cmd == 'set_cells_async':
+  if len(args) != 2:
+    print 'set_cells_async requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.set_cells_async(eval(args[0]),eval(args[1]),))
+
+elif cmd == 'set_cells_as_arrays_async':
+  if len(args) != 2:
+    print 'set_cells_as_arrays_async requires 2 args'
+    sys.exit(1)
+  pp.pprint(client.set_cells_as_arrays_async(eval(args[0]),eval(args[1]),))
+
+elif cmd == 'set_cells_serialized_async':
+  if len(args) != 3:
+    print 'set_cells_serialized_async requires 3 args'
+    sys.exit(1)
+  pp.pprint(client.set_cells_serialized_async(eval(args[0]),eval(args[1]),eval(args[2]),))
+
+elif cmd == 'flush_mutator_async':
+  if len(args) != 1:
+    print 'flush_mutator_async requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.flush_mutator_async(eval(args[0]),))
 
 elif cmd == 'exists_namespace':
   if len(args) != 1:

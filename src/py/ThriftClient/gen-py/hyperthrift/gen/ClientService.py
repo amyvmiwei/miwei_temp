@@ -122,6 +122,42 @@ class Iface:
     """
     pass
 
+  def future_is_empty(self, ff):
+    """
+    Check if future object's queue is empty
+
+    Parameters:
+     - ff
+    """
+    pass
+
+  def future_is_full(self, ff):
+    """
+    Check if future object's queue is full
+
+    Parameters:
+     - ff
+    """
+    pass
+
+  def future_is_cancelled(self, ff):
+    """
+    Check if future object has been cancelled
+
+    Parameters:
+     - ff
+    """
+    pass
+
+  def future_has_outstanding(self, ff):
+    """
+    Check if future object has outstanding operations
+
+    Parameters:
+     - ff
+    """
+    pass
+
   def close_future(self, ff):
     """
     Close a future object
@@ -459,6 +495,25 @@ class Iface:
     """
     pass
 
+  def open_mutator_async(self, ns, table_name, future, flags):
+    """
+    Open an asynchronous table mutator
+
+    @param ns - namespace id
+    @param table_name - table name
+    @param future - callback object
+    @param flags - mutator flags
+
+    @return mutator id
+
+    Parameters:
+     - ns
+     - table_name
+     - future
+     - flags
+    """
+    pass
+
   def close_mutator(self, mutator, flush):
     """
     Close a table mutator
@@ -468,6 +523,17 @@ class Iface:
     Parameters:
      - mutator
      - flush
+    """
+    pass
+
+  def close_mutator_async(self, mutator):
+    """
+    Close an asynchronous table mutator
+
+    @param mutator - mutator id to close
+
+    Parameters:
+     - mutator
     """
     pass
 
@@ -532,6 +598,75 @@ class Iface:
     pass
 
   def flush_mutator(self, mutator):
+    """
+    Flush mutator buffers
+
+    Parameters:
+     - mutator
+    """
+    pass
+
+  def set_cell_async(self, mutator, cell):
+    """
+    Set a cell in the table using an asynchonous mutator
+
+    @param mutator - mutator id
+
+    @param cell - the cell to set
+
+    Parameters:
+     - mutator
+     - cell
+    """
+    pass
+
+  def set_cell_as_array_async(self, mutator, cell):
+    """
+    Alternative interface using array as cell using an asynchonous mutator
+
+    Parameters:
+     - mutator
+     - cell
+    """
+    pass
+
+  def set_cells_async(self, mutator, cells):
+    """
+    Put a list of cells into a table using asynchonous mutator
+
+    @param mutator - mutator id
+
+    @param cells - a list of cells (a cell with no row key set is assumed
+           to have the same row key as the previous cell)
+
+    Parameters:
+     - mutator
+     - cells
+    """
+    pass
+
+  def set_cells_as_arrays_async(self, mutator, cells):
+    """
+    Alternative interface using array as cell
+
+    Parameters:
+     - mutator
+     - cells
+    """
+    pass
+
+  def set_cells_serialized_async(self, mutator, cells, flush):
+    """
+    Alternative interface using buffer of serialized cells
+
+    Parameters:
+     - mutator
+     - cells
+     - flush
+    """
+    pass
+
+  def flush_mutator_async(self, mutator):
     """
     Flush mutator buffers
 
@@ -1039,6 +1174,142 @@ class Client(Iface):
     if result.e != None:
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_future_result_serialized failed: unknown result");
+
+  def future_is_empty(self, ff):
+    """
+    Check if future object's queue is empty
+
+    Parameters:
+     - ff
+    """
+    self.send_future_is_empty(ff)
+    return self.recv_future_is_empty()
+
+  def send_future_is_empty(self, ff):
+    self._oprot.writeMessageBegin('future_is_empty', TMessageType.CALL, self._seqid)
+    args = future_is_empty_args()
+    args.ff = ff
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_future_is_empty(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = future_is_empty_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "future_is_empty failed: unknown result");
+
+  def future_is_full(self, ff):
+    """
+    Check if future object's queue is full
+
+    Parameters:
+     - ff
+    """
+    self.send_future_is_full(ff)
+    return self.recv_future_is_full()
+
+  def send_future_is_full(self, ff):
+    self._oprot.writeMessageBegin('future_is_full', TMessageType.CALL, self._seqid)
+    args = future_is_full_args()
+    args.ff = ff
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_future_is_full(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = future_is_full_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "future_is_full failed: unknown result");
+
+  def future_is_cancelled(self, ff):
+    """
+    Check if future object has been cancelled
+
+    Parameters:
+     - ff
+    """
+    self.send_future_is_cancelled(ff)
+    return self.recv_future_is_cancelled()
+
+  def send_future_is_cancelled(self, ff):
+    self._oprot.writeMessageBegin('future_is_cancelled', TMessageType.CALL, self._seqid)
+    args = future_is_cancelled_args()
+    args.ff = ff
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_future_is_cancelled(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = future_is_cancelled_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "future_is_cancelled failed: unknown result");
+
+  def future_has_outstanding(self, ff):
+    """
+    Check if future object has outstanding operations
+
+    Parameters:
+     - ff
+    """
+    self.send_future_has_outstanding(ff)
+    return self.recv_future_has_outstanding()
+
+  def send_future_has_outstanding(self, ff):
+    self._oprot.writeMessageBegin('future_has_outstanding', TMessageType.CALL, self._seqid)
+    args = future_has_outstanding_args()
+    args.ff = ff
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_future_has_outstanding(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = future_has_outstanding_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "future_has_outstanding failed: unknown result");
 
   def close_future(self, ff):
     """
@@ -1996,6 +2267,53 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "open_mutator failed: unknown result");
 
+  def open_mutator_async(self, ns, table_name, future, flags):
+    """
+    Open an asynchronous table mutator
+
+    @param ns - namespace id
+    @param table_name - table name
+    @param future - callback object
+    @param flags - mutator flags
+
+    @return mutator id
+
+    Parameters:
+     - ns
+     - table_name
+     - future
+     - flags
+    """
+    self.send_open_mutator_async(ns, table_name, future, flags)
+    return self.recv_open_mutator_async()
+
+  def send_open_mutator_async(self, ns, table_name, future, flags):
+    self._oprot.writeMessageBegin('open_mutator_async', TMessageType.CALL, self._seqid)
+    args = open_mutator_async_args()
+    args.ns = ns
+    args.table_name = table_name
+    args.future = future
+    args.flags = flags
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_open_mutator_async(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = open_mutator_async_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success != None:
+      return result.success
+    if result.e != None:
+      raise result.e
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "open_mutator_async failed: unknown result");
+
   def close_mutator(self, mutator, flush):
     """
     Close a table mutator
@@ -2026,6 +2344,40 @@ class Client(Iface):
       self._iprot.readMessageEnd()
       raise x
     result = close_mutator_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def close_mutator_async(self, mutator):
+    """
+    Close an asynchronous table mutator
+
+    @param mutator - mutator id to close
+
+    Parameters:
+     - mutator
+    """
+    self.send_close_mutator_async(mutator)
+    self.recv_close_mutator_async()
+
+  def send_close_mutator_async(self, mutator):
+    self._oprot.writeMessageBegin('close_mutator_async', TMessageType.CALL, self._seqid)
+    args = close_mutator_async_args()
+    args.mutator = mutator
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_close_mutator_async(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = close_mutator_async_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     if result.e != None:
@@ -2239,6 +2591,219 @@ class Client(Iface):
       self._iprot.readMessageEnd()
       raise x
     result = flush_mutator_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def set_cell_async(self, mutator, cell):
+    """
+    Set a cell in the table using an asynchonous mutator
+
+    @param mutator - mutator id
+
+    @param cell - the cell to set
+
+    Parameters:
+     - mutator
+     - cell
+    """
+    self.send_set_cell_async(mutator, cell)
+    self.recv_set_cell_async()
+
+  def send_set_cell_async(self, mutator, cell):
+    self._oprot.writeMessageBegin('set_cell_async', TMessageType.CALL, self._seqid)
+    args = set_cell_async_args()
+    args.mutator = mutator
+    args.cell = cell
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_set_cell_async(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = set_cell_async_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def set_cell_as_array_async(self, mutator, cell):
+    """
+    Alternative interface using array as cell using an asynchonous mutator
+
+    Parameters:
+     - mutator
+     - cell
+    """
+    self.send_set_cell_as_array_async(mutator, cell)
+    self.recv_set_cell_as_array_async()
+
+  def send_set_cell_as_array_async(self, mutator, cell):
+    self._oprot.writeMessageBegin('set_cell_as_array_async', TMessageType.CALL, self._seqid)
+    args = set_cell_as_array_async_args()
+    args.mutator = mutator
+    args.cell = cell
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_set_cell_as_array_async(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = set_cell_as_array_async_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def set_cells_async(self, mutator, cells):
+    """
+    Put a list of cells into a table using asynchonous mutator
+
+    @param mutator - mutator id
+
+    @param cells - a list of cells (a cell with no row key set is assumed
+           to have the same row key as the previous cell)
+
+    Parameters:
+     - mutator
+     - cells
+    """
+    self.send_set_cells_async(mutator, cells)
+    self.recv_set_cells_async()
+
+  def send_set_cells_async(self, mutator, cells):
+    self._oprot.writeMessageBegin('set_cells_async', TMessageType.CALL, self._seqid)
+    args = set_cells_async_args()
+    args.mutator = mutator
+    args.cells = cells
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_set_cells_async(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = set_cells_async_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def set_cells_as_arrays_async(self, mutator, cells):
+    """
+    Alternative interface using array as cell
+
+    Parameters:
+     - mutator
+     - cells
+    """
+    self.send_set_cells_as_arrays_async(mutator, cells)
+    self.recv_set_cells_as_arrays_async()
+
+  def send_set_cells_as_arrays_async(self, mutator, cells):
+    self._oprot.writeMessageBegin('set_cells_as_arrays_async', TMessageType.CALL, self._seqid)
+    args = set_cells_as_arrays_async_args()
+    args.mutator = mutator
+    args.cells = cells
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_set_cells_as_arrays_async(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = set_cells_as_arrays_async_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def set_cells_serialized_async(self, mutator, cells, flush):
+    """
+    Alternative interface using buffer of serialized cells
+
+    Parameters:
+     - mutator
+     - cells
+     - flush
+    """
+    self.send_set_cells_serialized_async(mutator, cells, flush)
+    self.recv_set_cells_serialized_async()
+
+  def send_set_cells_serialized_async(self, mutator, cells, flush):
+    self._oprot.writeMessageBegin('set_cells_serialized_async', TMessageType.CALL, self._seqid)
+    args = set_cells_serialized_async_args()
+    args.mutator = mutator
+    args.cells = cells
+    args.flush = flush
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_set_cells_serialized_async(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = set_cells_serialized_async_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e != None:
+      raise result.e
+    return
+
+  def flush_mutator_async(self, mutator):
+    """
+    Flush mutator buffers
+
+    Parameters:
+     - mutator
+    """
+    self.send_flush_mutator_async(mutator)
+    self.recv_flush_mutator_async()
+
+  def send_flush_mutator_async(self, mutator):
+    self._oprot.writeMessageBegin('flush_mutator_async', TMessageType.CALL, self._seqid)
+    args = flush_mutator_async_args()
+    args.mutator = mutator
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_flush_mutator_async(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = flush_mutator_async_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     if result.e != None:
@@ -2705,6 +3270,10 @@ class Processor(Iface, TProcessor):
     self._processMap["get_future_result"] = Processor.process_get_future_result
     self._processMap["get_future_result_as_arrays"] = Processor.process_get_future_result_as_arrays
     self._processMap["get_future_result_serialized"] = Processor.process_get_future_result_serialized
+    self._processMap["future_is_empty"] = Processor.process_future_is_empty
+    self._processMap["future_is_full"] = Processor.process_future_is_full
+    self._processMap["future_is_cancelled"] = Processor.process_future_is_cancelled
+    self._processMap["future_has_outstanding"] = Processor.process_future_has_outstanding
     self._processMap["close_future"] = Processor.process_close_future
     self._processMap["open_scanner"] = Processor.process_open_scanner
     self._processMap["open_scanner_async"] = Processor.process_open_scanner_async
@@ -2729,13 +3298,21 @@ class Processor(Iface, TProcessor):
     self._processMap["offer_cell"] = Processor.process_offer_cell
     self._processMap["offer_cell_as_array"] = Processor.process_offer_cell_as_array
     self._processMap["open_mutator"] = Processor.process_open_mutator
+    self._processMap["open_mutator_async"] = Processor.process_open_mutator_async
     self._processMap["close_mutator"] = Processor.process_close_mutator
+    self._processMap["close_mutator_async"] = Processor.process_close_mutator_async
     self._processMap["set_cell"] = Processor.process_set_cell
     self._processMap["set_cell_as_array"] = Processor.process_set_cell_as_array
     self._processMap["set_cells"] = Processor.process_set_cells
     self._processMap["set_cells_as_arrays"] = Processor.process_set_cells_as_arrays
     self._processMap["set_cells_serialized"] = Processor.process_set_cells_serialized
     self._processMap["flush_mutator"] = Processor.process_flush_mutator
+    self._processMap["set_cell_async"] = Processor.process_set_cell_async
+    self._processMap["set_cell_as_array_async"] = Processor.process_set_cell_as_array_async
+    self._processMap["set_cells_async"] = Processor.process_set_cells_async
+    self._processMap["set_cells_as_arrays_async"] = Processor.process_set_cells_as_arrays_async
+    self._processMap["set_cells_serialized_async"] = Processor.process_set_cells_serialized_async
+    self._processMap["flush_mutator_async"] = Processor.process_flush_mutator_async
     self._processMap["exists_namespace"] = Processor.process_exists_namespace
     self._processMap["exists_table"] = Processor.process_exists_table
     self._processMap["get_table_id"] = Processor.process_get_table_id
@@ -2885,6 +3462,62 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_future_result_serialized", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_future_is_empty(self, seqid, iprot, oprot):
+    args = future_is_empty_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = future_is_empty_result()
+    try:
+      result.success = self._handler.future_is_empty(args.ff)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("future_is_empty", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_future_is_full(self, seqid, iprot, oprot):
+    args = future_is_full_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = future_is_full_result()
+    try:
+      result.success = self._handler.future_is_full(args.ff)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("future_is_full", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_future_is_cancelled(self, seqid, iprot, oprot):
+    args = future_is_cancelled_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = future_is_cancelled_result()
+    try:
+      result.success = self._handler.future_is_cancelled(args.ff)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("future_is_cancelled", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_future_has_outstanding(self, seqid, iprot, oprot):
+    args = future_has_outstanding_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = future_has_outstanding_result()
+    try:
+      result.success = self._handler.future_has_outstanding(args.ff)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("future_has_outstanding", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -3222,6 +3855,20 @@ class Processor(Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
+  def process_open_mutator_async(self, seqid, iprot, oprot):
+    args = open_mutator_async_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = open_mutator_async_result()
+    try:
+      result.success = self._handler.open_mutator_async(args.ns, args.table_name, args.future, args.flags)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("open_mutator_async", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
   def process_close_mutator(self, seqid, iprot, oprot):
     args = close_mutator_args()
     args.read(iprot)
@@ -3232,6 +3879,20 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("close_mutator", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_close_mutator_async(self, seqid, iprot, oprot):
+    args = close_mutator_async_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = close_mutator_async_result()
+    try:
+      self._handler.close_mutator_async(args.mutator)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("close_mutator_async", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -3316,6 +3977,90 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("flush_mutator", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_set_cell_async(self, seqid, iprot, oprot):
+    args = set_cell_async_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = set_cell_async_result()
+    try:
+      self._handler.set_cell_async(args.mutator, args.cell)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("set_cell_async", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_set_cell_as_array_async(self, seqid, iprot, oprot):
+    args = set_cell_as_array_async_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = set_cell_as_array_async_result()
+    try:
+      self._handler.set_cell_as_array_async(args.mutator, args.cell)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("set_cell_as_array_async", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_set_cells_async(self, seqid, iprot, oprot):
+    args = set_cells_async_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = set_cells_async_result()
+    try:
+      self._handler.set_cells_async(args.mutator, args.cells)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("set_cells_async", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_set_cells_as_arrays_async(self, seqid, iprot, oprot):
+    args = set_cells_as_arrays_async_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = set_cells_as_arrays_async_result()
+    try:
+      self._handler.set_cells_as_arrays_async(args.mutator, args.cells)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("set_cells_as_arrays_async", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_set_cells_serialized_async(self, seqid, iprot, oprot):
+    args = set_cells_serialized_async_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = set_cells_serialized_async_result()
+    try:
+      self._handler.set_cells_serialized_async(args.mutator, args.cells, args.flush)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("set_cells_serialized_async", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_flush_mutator_async(self, seqid, iprot, oprot):
+    args = flush_mutator_async_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = flush_mutator_async_result()
+    try:
+      self._handler.flush_mutator_async(args.mutator)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("flush_mutator_async", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -4608,6 +5353,526 @@ class get_future_result_serialized_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.STRUCT, 0)
       self.success.write(oprot)
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class future_is_empty_args:
+  """
+  Attributes:
+   - ff
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ff', None, None, ), # 1
+  )
+
+  def __init__(self, ff=None,):
+    self.ff = ff
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ff = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('future_is_empty_args')
+    if self.ff != None:
+      oprot.writeFieldBegin('ff', TType.I64, 1)
+      oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class future_is_empty_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.BOOL, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.BOOL:
+          self.success = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('future_is_empty_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.BOOL, 0)
+      oprot.writeBool(self.success)
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class future_is_full_args:
+  """
+  Attributes:
+   - ff
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ff', None, None, ), # 1
+  )
+
+  def __init__(self, ff=None,):
+    self.ff = ff
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ff = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('future_is_full_args')
+    if self.ff != None:
+      oprot.writeFieldBegin('ff', TType.I64, 1)
+      oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class future_is_full_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.BOOL, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.BOOL:
+          self.success = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('future_is_full_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.BOOL, 0)
+      oprot.writeBool(self.success)
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class future_is_cancelled_args:
+  """
+  Attributes:
+   - ff
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ff', None, None, ), # 1
+  )
+
+  def __init__(self, ff=None,):
+    self.ff = ff
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ff = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('future_is_cancelled_args')
+    if self.ff != None:
+      oprot.writeFieldBegin('ff', TType.I64, 1)
+      oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class future_is_cancelled_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.BOOL, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.BOOL:
+          self.success = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('future_is_cancelled_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.BOOL, 0)
+      oprot.writeBool(self.success)
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class future_has_outstanding_args:
+  """
+  Attributes:
+   - ff
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ff', None, None, ), # 1
+  )
+
+  def __init__(self, ff=None,):
+    self.ff = ff
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ff = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('future_has_outstanding_args')
+    if self.ff != None:
+      oprot.writeFieldBegin('ff', TType.I64, 1)
+      oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class future_has_outstanding_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.BOOL, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.BOOL:
+          self.success = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('future_has_outstanding_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.BOOL, 0)
+      oprot.writeBool(self.success)
       oprot.writeFieldEnd()
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
@@ -8237,6 +9502,172 @@ class open_mutator_result:
   def __ne__(self, other):
     return not (self == other)
 
+class open_mutator_async_args:
+  """
+  Attributes:
+   - ns
+   - table_name
+   - future
+   - flags
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.I64, 'future', None, None, ), # 3
+    (4, TType.I32, 'flags', None, 0, ), # 4
+  )
+
+  def __init__(self, ns=None, table_name=None, future=None, flags=thrift_spec[4][4],):
+    self.ns = ns
+    self.table_name = table_name
+    self.future = future
+    self.flags = flags
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I64:
+          self.future = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.I32:
+          self.flags = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('open_mutator_async_args')
+    if self.ns != None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name != None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
+      oprot.writeFieldEnd()
+    if self.future != None:
+      oprot.writeFieldBegin('future', TType.I64, 3)
+      oprot.writeI64(self.future)
+      oprot.writeFieldEnd()
+    if self.flags != None:
+      oprot.writeFieldBegin('flags', TType.I32, 4)
+      oprot.writeI32(self.flags)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class open_mutator_async_result:
+  """
+  Attributes:
+   - success
+   - e
+  """
+
+  thrift_spec = (
+    (0, TType.I64, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, success=None, e=None,):
+    self.success = success
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.I64:
+          self.success = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('open_mutator_async_result')
+    if self.success != None:
+      oprot.writeFieldBegin('success', TType.I64, 0)
+      oprot.writeI64(self.success)
+      oprot.writeFieldEnd()
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class close_mutator_args:
   """
   Attributes:
@@ -8347,6 +9778,125 @@ class close_mutator_result:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('close_mutator_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class close_mutator_async_args:
+  """
+  Attributes:
+   - mutator
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'mutator', None, None, ), # 1
+  )
+
+  def __init__(self, mutator=None,):
+    self.mutator = mutator
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.mutator = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('close_mutator_async_args')
+    if self.mutator != None:
+      oprot.writeFieldBegin('mutator', TType.I64, 1)
+      oprot.writeI64(self.mutator)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class close_mutator_async_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('close_mutator_async_result')
     if self.e != None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)
@@ -9188,6 +10738,826 @@ class flush_mutator_result:
   def __ne__(self, other):
     return not (self == other)
 
+class set_cell_async_args:
+  """
+  Attributes:
+   - mutator
+   - cell
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'mutator', None, None, ), # 1
+    (2, TType.STRUCT, 'cell', (Cell, Cell.thrift_spec), None, ), # 2
+  )
+
+  def __init__(self, mutator=None, cell=None,):
+    self.mutator = mutator
+    self.cell = cell
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.mutator = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRUCT:
+          self.cell = Cell()
+          self.cell.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cell_async_args')
+    if self.mutator != None:
+      oprot.writeFieldBegin('mutator', TType.I64, 1)
+      oprot.writeI64(self.mutator)
+      oprot.writeFieldEnd()
+    if self.cell != None:
+      oprot.writeFieldBegin('cell', TType.STRUCT, 2)
+      self.cell.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class set_cell_async_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cell_async_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class set_cell_as_array_async_args:
+  """
+  Attributes:
+   - mutator
+   - cell
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'mutator', None, None, ), # 1
+    (2, TType.LIST, 'cell', (TType.STRING,None), None, ), # 2
+  )
+
+  def __init__(self, mutator=None, cell=None,):
+    self.mutator = mutator
+    self.cell = cell
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.mutator = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.LIST:
+          self.cell = []
+          (_etype210, _size207) = iprot.readListBegin()
+          for _i211 in xrange(_size207):
+            _elem212 = iprot.readString();
+            self.cell.append(_elem212)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cell_as_array_async_args')
+    if self.mutator != None:
+      oprot.writeFieldBegin('mutator', TType.I64, 1)
+      oprot.writeI64(self.mutator)
+      oprot.writeFieldEnd()
+    if self.cell != None:
+      oprot.writeFieldBegin('cell', TType.LIST, 2)
+      oprot.writeListBegin(TType.STRING, len(self.cell))
+      for iter213 in self.cell:
+        oprot.writeString(iter213)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class set_cell_as_array_async_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cell_as_array_async_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class set_cells_async_args:
+  """
+  Attributes:
+   - mutator
+   - cells
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'mutator', None, None, ), # 1
+    (2, TType.LIST, 'cells', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 2
+  )
+
+  def __init__(self, mutator=None, cells=None,):
+    self.mutator = mutator
+    self.cells = cells
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.mutator = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.LIST:
+          self.cells = []
+          (_etype217, _size214) = iprot.readListBegin()
+          for _i218 in xrange(_size214):
+            _elem219 = Cell()
+            _elem219.read(iprot)
+            self.cells.append(_elem219)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cells_async_args')
+    if self.mutator != None:
+      oprot.writeFieldBegin('mutator', TType.I64, 1)
+      oprot.writeI64(self.mutator)
+      oprot.writeFieldEnd()
+    if self.cells != None:
+      oprot.writeFieldBegin('cells', TType.LIST, 2)
+      oprot.writeListBegin(TType.STRUCT, len(self.cells))
+      for iter220 in self.cells:
+        iter220.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class set_cells_async_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cells_async_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class set_cells_as_arrays_async_args:
+  """
+  Attributes:
+   - mutator
+   - cells
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'mutator', None, None, ), # 1
+    (2, TType.LIST, 'cells', (TType.LIST,(TType.STRING,None)), None, ), # 2
+  )
+
+  def __init__(self, mutator=None, cells=None,):
+    self.mutator = mutator
+    self.cells = cells
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.mutator = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.LIST:
+          self.cells = []
+          (_etype224, _size221) = iprot.readListBegin()
+          for _i225 in xrange(_size221):
+            _elem226 = []
+            (_etype230, _size227) = iprot.readListBegin()
+            for _i231 in xrange(_size227):
+              _elem232 = iprot.readString();
+              _elem226.append(_elem232)
+            iprot.readListEnd()
+            self.cells.append(_elem226)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cells_as_arrays_async_args')
+    if self.mutator != None:
+      oprot.writeFieldBegin('mutator', TType.I64, 1)
+      oprot.writeI64(self.mutator)
+      oprot.writeFieldEnd()
+    if self.cells != None:
+      oprot.writeFieldBegin('cells', TType.LIST, 2)
+      oprot.writeListBegin(TType.LIST, len(self.cells))
+      for iter233 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter233))
+        for iter234 in iter233:
+          oprot.writeString(iter234)
+        oprot.writeListEnd()
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class set_cells_as_arrays_async_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cells_as_arrays_async_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class set_cells_serialized_async_args:
+  """
+  Attributes:
+   - mutator
+   - cells
+   - flush
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'mutator', None, None, ), # 1
+    (2, TType.STRING, 'cells', None, None, ), # 2
+    (3, TType.BOOL, 'flush', None, False, ), # 3
+  )
+
+  def __init__(self, mutator=None, cells=None, flush=thrift_spec[3][4],):
+    self.mutator = mutator
+    self.cells = cells
+    self.flush = flush
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.mutator = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.cells = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.BOOL:
+          self.flush = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cells_serialized_async_args')
+    if self.mutator != None:
+      oprot.writeFieldBegin('mutator', TType.I64, 1)
+      oprot.writeI64(self.mutator)
+      oprot.writeFieldEnd()
+    if self.cells != None:
+      oprot.writeFieldBegin('cells', TType.STRING, 2)
+      oprot.writeString(self.cells)
+      oprot.writeFieldEnd()
+    if self.flush != None:
+      oprot.writeFieldBegin('flush', TType.BOOL, 3)
+      oprot.writeBool(self.flush)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class set_cells_serialized_async_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('set_cells_serialized_async_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class flush_mutator_async_args:
+  """
+  Attributes:
+   - mutator
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'mutator', None, None, ), # 1
+  )
+
+  def __init__(self, mutator=None,):
+    self.mutator = mutator
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.mutator = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('flush_mutator_async_args')
+    if self.mutator != None:
+      oprot.writeFieldBegin('mutator', TType.I64, 1)
+      oprot.writeI64(self.mutator)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class flush_mutator_async_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('flush_mutator_async_result')
+    if self.e != None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+    def validate(self):
+      return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class exists_namespace_args:
   """
   Attributes:
@@ -9974,10 +12344,10 @@ class get_tables_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype210, _size207) = iprot.readListBegin()
-          for _i211 in xrange(_size207):
-            _elem212 = iprot.readString();
-            self.success.append(_elem212)
+          (_etype238, _size235) = iprot.readListBegin()
+          for _i239 in xrange(_size235):
+            _elem240 = iprot.readString();
+            self.success.append(_elem240)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -10000,8 +12370,8 @@ class get_tables_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRING, len(self.success))
-      for iter213 in self.success:
-        oprot.writeString(iter213)
+      for iter241 in self.success:
+        oprot.writeString(iter241)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:
@@ -10112,11 +12482,11 @@ class get_listing_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype217, _size214) = iprot.readListBegin()
-          for _i218 in xrange(_size214):
-            _elem219 = NamespaceListing()
-            _elem219.read(iprot)
-            self.success.append(_elem219)
+          (_etype245, _size242) = iprot.readListBegin()
+          for _i246 in xrange(_size242):
+            _elem247 = NamespaceListing()
+            _elem247.read(iprot)
+            self.success.append(_elem247)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -10139,8 +12509,8 @@ class get_listing_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter220 in self.success:
-        iter220.write(oprot)
+      for iter248 in self.success:
+        iter248.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:
@@ -10263,11 +12633,11 @@ class get_table_splits_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype224, _size221) = iprot.readListBegin()
-          for _i225 in xrange(_size221):
-            _elem226 = TableSplit()
-            _elem226.read(iprot)
-            self.success.append(_elem226)
+          (_etype252, _size249) = iprot.readListBegin()
+          for _i253 in xrange(_size249):
+            _elem254 = TableSplit()
+            _elem254.read(iprot)
+            self.success.append(_elem254)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -10290,8 +12660,8 @@ class get_table_splits_result:
     if self.success != None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter227 in self.success:
-        iter227.write(oprot)
+      for iter255 in self.success:
+        iter255.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e != None:
