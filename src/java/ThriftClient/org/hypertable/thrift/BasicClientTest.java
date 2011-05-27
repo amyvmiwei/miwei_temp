@@ -118,8 +118,10 @@ public class BasicClientTest {
         client.close_scanner(scanner);
       }
 
-      // asynchronous scanner
+      // asynchronous api
       long future=0;
+      long mutator_async_1=0;
+      long mutator_async_2=0;
       long color_scanner=0;
       long location_scanner=0;
       long energy_scanner=0;
@@ -127,9 +129,59 @@ public class BasicClientTest {
       int num_cells = 0;
 
       try {
+        System.out.println("Asynchronous mutator");
+        future = client.open_future(0);
+        mutator_async_1 = client.open_mutator_async(ns, "thrift_test", future, 0);
+        mutator_async_2 = client.open_mutator_async(ns, "thrift_test", future, 0);
+        Result result;
+
+        Cell cell = new Cell();
+        Key key;
+
+        key = new Key();
+        key.setRow("java-put1");
+        key.setColumn_family("col");
+        cell.setKey(key);
+        String vtmp = "java-async-put-v1";
+        cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
+        client.set_cell_async(mutator_async_1, cell);
+
+        key = new Key();
+        key.setRow("java-put2");
+        key.setColumn_family("col");
+        cell.setKey(key);
+        vtmp = "java-async-put-v2";
+        cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
+        client.set_cell_async(mutator_async_2, cell);
+
+        client.flush_mutator_async(mutator_async_1);
+        client.flush_mutator_async(mutator_async_2);
+
+        int num_flushes=0;
+        while (true) {
+          result = client.get_future_result(future);
+          if (result.is_empty || result.is_error || result.is_scan)
+            break;
+          num_flushes++;
+        }
+        if (num_flushes>2) {
+          System.out.println("Expected 2 flushes, received " + num_flushes);
+          System.exit(1);
+        }
+        if (client.future_is_cancelled(future) || client.future_is_full(future) ||
+            !client.future_is_empty(future) || client.future_has_outstanding(future)) {
+          System.out.println("Future object in unexpected state");
+          System.exit(1);
+        }
+      }
+      finally {
+        client.close_mutator_async(mutator_async_1);
+        client.close_mutator_async(mutator_async_2);
+      }
+
+      try {
         System.out.println("Asynchronous scan");
         ScanSpec ss = new ScanSpec();
-        future = client.open_future(0);
         color_scanner = client.open_scanner_async(ns, "FruitColor", future, ss);
         location_scanner = client.open_scanner_async(ns, "FruitLocation", future, ss);
         energy_scanner = client.open_scanner_async(ns, "FruitEnergy", future, ss);
@@ -146,6 +198,10 @@ public class BasicClientTest {
             client.cancel_future(future);
             break;
           }
+        }
+        if (!client.future_is_cancelled(future)) {
+          System.out.println("Expected future object to be cancelled");
+          System.exit(1);
         }
       }
       finally {

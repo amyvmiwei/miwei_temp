@@ -67,6 +67,26 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("get_future_result_serialized\n");
   }
 
+  bool future_is_empty(const Future ff) {
+    // Your implementation goes here
+    printf("future_is_empty\n");
+  }
+
+  bool future_is_full(const Future ff) {
+    // Your implementation goes here
+    printf("future_is_full\n");
+  }
+
+  bool future_is_cancelled(const Future ff) {
+    // Your implementation goes here
+    printf("future_is_cancelled\n");
+  }
+
+  bool future_has_outstanding(const Future ff) {
+    // Your implementation goes here
+    printf("future_has_outstanding\n");
+  }
+
   void close_future(const Future ff) {
     // Your implementation goes here
     printf("close_future\n");
@@ -187,9 +207,19 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("open_mutator\n");
   }
 
+  MutatorAsync open_mutator_async(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags) {
+    // Your implementation goes here
+    printf("open_mutator_async\n");
+  }
+
   void close_mutator(const Mutator mutator, const bool flush) {
     // Your implementation goes here
     printf("close_mutator\n");
+  }
+
+  void close_mutator_async(const MutatorAsync mutator) {
+    // Your implementation goes here
+    printf("close_mutator_async\n");
   }
 
   void set_cell(const Mutator mutator, const Cell& cell) {
@@ -220,6 +250,36 @@ class ClientServiceHandler : virtual public ClientServiceIf {
   void flush_mutator(const Mutator mutator) {
     // Your implementation goes here
     printf("flush_mutator\n");
+  }
+
+  void set_cell_async(const MutatorAsync mutator, const Cell& cell) {
+    // Your implementation goes here
+    printf("set_cell_async\n");
+  }
+
+  void set_cell_as_array_async(const MutatorAsync mutator, const CellAsArray& cell) {
+    // Your implementation goes here
+    printf("set_cell_as_array_async\n");
+  }
+
+  void set_cells_async(const MutatorAsync mutator, const std::vector<Cell> & cells) {
+    // Your implementation goes here
+    printf("set_cells_async\n");
+  }
+
+  void set_cells_as_arrays_async(const MutatorAsync mutator, const std::vector<CellAsArray> & cells) {
+    // Your implementation goes here
+    printf("set_cells_as_arrays_async\n");
+  }
+
+  void set_cells_serialized_async(const MutatorAsync mutator, const CellsSerialized& cells, const bool flush) {
+    // Your implementation goes here
+    printf("set_cells_serialized_async\n");
+  }
+
+  void flush_mutator_async(const MutatorAsync mutator) {
+    // Your implementation goes here
+    printf("flush_mutator_async\n");
   }
 
   bool exists_namespace(const std::string& ns) {

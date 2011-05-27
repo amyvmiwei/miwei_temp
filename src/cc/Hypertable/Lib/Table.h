@@ -83,7 +83,17 @@ namespace Hypertable {
     TableMutator *create_mutator(uint32_t timeout_ms = 0,
                                  uint32_t flags = 0,
                                  uint32_t flush_interval_ms = 0);
-
+    /**
+     * Creates an asynchronous mutator on this table
+     *
+     * @param timeout_ms maximum time in milliseconds to allow
+     *        mutator methods to execute before throwing an exception
+     * @param flags mutator flags
+     * @return newly constructed mutator object
+     */
+    TableMutatorAsync *create_mutator_async(ResultCallback *cb,
+                                            uint32_t timeout_ms = 0,
+                                            uint32_t flags = 0);
     /**
      * Creates a synchronous scanner on this table
      *

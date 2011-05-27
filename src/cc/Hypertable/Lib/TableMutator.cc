@@ -59,11 +59,13 @@ void TableMutator::handle_exceptions() {
 TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table,
     RangeLocatorPtr &range_locator,
     uint32_t timeout_ms, uint32_t flags)
-  : m_callback(this), m_timeout_ms(timeout_ms), m_flags(flags), m_last_error(Error::OK),
-    m_last_op(0), m_unflushed_updates(false) {
+  : m_callback(this), m_timeout_ms(timeout_ms), m_flags(flags), m_flush_delay(0),
+    m_last_error(Error::OK), m_last_op(0), m_unflushed_updates(false) {
   HT_ASSERT(timeout_ms);
   m_queue = new TableMutatorQueue;
   ApplicationQueuePtr app_queue = (ApplicationQueue *)m_queue.get();
+
+  m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
   m_mutator  = new TableMutatorAsync(props, comm, app_queue, table, range_locator, timeout_ms,
       &m_callback, flags, false);
 }
@@ -147,7 +149,11 @@ void TableMutator::auto_flush() {
       if (m_last_error != Error::OK)
         HT_THROW(m_last_error, "");
     }
-    m_mutator->auto_flush();
+
+    if (m_flush_delay)
+      poll(0, 0, m_flush_delay);
+
+    m_mutator->flush(!(m_flags & Table::MUTATOR_FLAG_NO_LOG_SYNC));
   }
   catch (...) {
     m_last_op = FLUSH;
@@ -220,16 +226,6 @@ void TableMutator::retry_flush() {
   flush();
 }
 
-void TableMutator::sync() {
-  try {
-    m_mutator->sync();
-  }
-  catch (...) {
-    handle_exceptions();
-    throw;
-  }
-}
-
 std::ostream &
 TableMutator::show_failed(const Exception &e, std::ostream &out) {
 
@@ -260,14 +256,5 @@ void TableMutator::update_ok() {
 void TableMutator::update_error(int error, FailedMutations &failures) {
   // copy all failed updates
   m_last_error = error;
-  m_failed_cells.clear();
-  m_failed_mutations.clear();
-  size_t ii=0;
-  Cell last_cell;
-  foreach(const FailedMutation &v, failures) {
-    m_failed_cells.add(v.first);
-    m_failed_cells.get_cell(last_cell, ii);
-    ++ii;
-    m_failed_mutations.push_back(std::make_pair(last_cell, v.second));
-  }
+  m_failed_cells.copy_failed_mutations(failures, m_failed_mutations);
 }

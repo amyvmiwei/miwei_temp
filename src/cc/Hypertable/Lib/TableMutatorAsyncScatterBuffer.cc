@@ -460,10 +460,10 @@ int TableMutatorAsyncScatterBuffer::set_failed_mutations() {
 
 
 void TableMutatorAsyncScatterBuffer::reset() {
+  HT_ASSERT(completed());
   for (TableMutatorAsyncSendBufferMap::const_iterator iter = m_buffer_map.begin();
        iter != m_buffer_map.end(); ++iter)
     (*iter).second->reset();
-  HT_ASSERT(completed());
   m_full = false;
   m_resends = 0;
   m_memory_used = 0;

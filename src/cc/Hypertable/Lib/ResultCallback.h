@@ -33,9 +33,6 @@ namespace Hypertable {
 
   class TableScannerAsync;
   class TableMutatorAsync;
-  // Must match definition in TableMutatorAsyncScatterBuffer.h
-  typedef std::pair<Cell, int> FailedMutation;
-  typedef std::vector<FailedMutation> FailedMutations;
 
   /** Represents an open table.
    */

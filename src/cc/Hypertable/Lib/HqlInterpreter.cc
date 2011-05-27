@@ -563,10 +563,10 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   int64_t last_total = 0, new_total;
 
   if (LoadDataFlags::ignore_unknown_cfs(state.load_flags))
-    mutator_flags |= TableMutator::FLAG_IGNORE_UNKNOWN_CFS;
+    mutator_flags |= Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS;
 
   // Turn on no-log-sync unconditionally for LOAD DATA INFILE
-  mutator_flags |= TableMutator::FLAG_NO_LOG_SYNC;
+  mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
 
   if (state.table_name.empty()) {
     if (state.output_file.empty())
@@ -823,7 +823,7 @@ HqlInterpreter::HqlInterpreter(Client *client, ConnectionManagerPtr &conn_manage
     bool immutable_namespace) : m_client(client), m_mutator_flags(0),
     m_conn_manager(conn_manager), m_dfs_client(0), m_immutable_namespace(immutable_namespace) {
   if (Config::properties->get_bool("Hypertable.HqlInterpreter.Mutator.NoLogSync"))
-    m_mutator_flags = TableMutator::FLAG_NO_LOG_SYNC;
+    m_mutator_flags = Table::MUTATOR_FLAG_NO_LOG_SYNC;
 
 }
 

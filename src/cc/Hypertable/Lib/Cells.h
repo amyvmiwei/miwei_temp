@@ -32,6 +32,8 @@ namespace Hypertable {
 
 typedef PageArenaAllocator<Cell> CellAlloc;
 typedef std::vector<Cell, CellAlloc> Cells;
+typedef std::pair<Cell, int> FailedMutation;
+typedef std::vector<FailedMutation> FailedMutations;
 
 class CellsBuilder : public ReferenceCount {
 public:
@@ -40,6 +42,10 @@ public:
 
   size_t size() const {
     return m_cells.size();
+  }
+
+  size_t memory_used() const {
+    return m_arena.used();
   }
 
   void get_cell(Cell &cc, size_t ii) {
@@ -89,6 +95,16 @@ public:
 
   void clear() { m_cells.clear(); }
 
+  void copy_failed_mutations(const FailedMutations &src, FailedMutations &dst) {
+  clear();
+  dst.clear();
+  size_t ii=0;
+  foreach(const FailedMutation &v, src) {
+    add(v.first);
+    dst.push_back(std::make_pair(m_cells[ii], v.second));
+    ++ii;
+  }
+}
 protected:
   CharArena m_arena;
   Cells m_cells;
@@ -96,6 +112,10 @@ protected:
 };
 
 typedef intrusive_ptr<CellsBuilder> CellsBuilderPtr;
+
+
+
+
 } // namespace Hypertable
 
 #endif // HYPERTABLE_CELLS_H

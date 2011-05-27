@@ -65,6 +65,14 @@ public:
       return 0;
   }
 
+  size_t memory_used() const {
+    size_t mem_used=0;
+    foreach(const ScanBlockPtr &v, m_scanblocks) {
+      mem_used += v->memory_used();
+    }
+    return mem_used;
+  }
+
 protected:
 
   friend class IntervalScannerAsync;
@@ -93,7 +101,6 @@ protected:
             int *rows_seen, String &cur_row, CstrSet &rowset, int64_t *bytes_scanned);
 
   vector<ScanBlockPtr> m_scanblocks;
-  ScanBlock m_scanblock;
   CellsBuilderPtr m_cells;
   bool m_eos;
 }; // ScanCells

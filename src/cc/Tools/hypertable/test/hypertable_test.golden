@@ -150,7 +150,7 @@ LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_unknown_cf.tsv" INTO TABLE hy
 ERROR hypertable : caught std::exception: Bad column family 'Unknown'
 ERROR hypertable : set: Hypertable::Exception: Bad column family 'Unknown' - HYPERTABLE bad key
 	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, bool&) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
-Error: line number 2 - HQL bad load file format
+Error: line number 2 - HYPERTABLE bad key
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( TestColumnFamily );
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_ts.tsv" INTO TABLE hypertable;

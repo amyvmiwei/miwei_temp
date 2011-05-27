@@ -96,7 +96,7 @@ int main(int argc, char **argv) {
     namespace_ptr = hypertable_client_ptr->open_namespace("/");
     table_ptr = namespace_ptr->open_table("LoadTest");
     // Do asynchronous scan
-    FuturePtr future_ptr = new Future(5);
+    FuturePtr future_ptr = new Future(5000000);
     vector<TableScannerAsyncPtr> scanners;
     TableScannerAsyncPtr scanner;
     ResultPtr result;

@@ -27,9 +27,6 @@ namespace Hypertable {
 
   class TableMutatorAsync;
   class TableScannerAsync;
-  // Must match definition in TableMutatorAsyncScatterBuffer.h
-  typedef std::pair<Cell, int> FailedMutation;
-  typedef std::vector<FailedMutation> FailedMutations;
 
   class Result: public ReferenceCount {
     public:
@@ -48,6 +45,13 @@ namespace Hypertable {
       void get_cells(Cells &cells);
       void get_error(int &error, String &m_error_msg);
       FailedMutations& get_failed_mutations();
+      void get_failed_cells(Cells &cells);
+      size_t memory_used() {
+        if (m_isscan)
+          return (m_cells ? m_cells->memory_used() : 0);
+        else
+          return (m_iserror ? m_failed_cells.memory_used() : 0);
+      }
 
     private:
       TableScannerAsync *m_scanner;
@@ -57,6 +61,7 @@ namespace Hypertable {
       String m_error_msg;
       bool m_isscan;
       bool m_iserror;
+      CellsBuilder m_failed_cells;
       FailedMutations m_failed_mutations;
   };
   typedef intrusive_ptr<Result> ResultPtr;

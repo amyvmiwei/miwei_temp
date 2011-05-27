@@ -153,6 +153,70 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_future_result_serialized failed: unknown result')
                 end
 
+                def future_is_empty(ff)
+                  send_future_is_empty(ff)
+                  return recv_future_is_empty()
+                end
+
+                def send_future_is_empty(ff)
+                  send_message('future_is_empty', Future_is_empty_args, :ff => ff)
+                end
+
+                def recv_future_is_empty()
+                  result = receive_message(Future_is_empty_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'future_is_empty failed: unknown result')
+                end
+
+                def future_is_full(ff)
+                  send_future_is_full(ff)
+                  return recv_future_is_full()
+                end
+
+                def send_future_is_full(ff)
+                  send_message('future_is_full', Future_is_full_args, :ff => ff)
+                end
+
+                def recv_future_is_full()
+                  result = receive_message(Future_is_full_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'future_is_full failed: unknown result')
+                end
+
+                def future_is_cancelled(ff)
+                  send_future_is_cancelled(ff)
+                  return recv_future_is_cancelled()
+                end
+
+                def send_future_is_cancelled(ff)
+                  send_message('future_is_cancelled', Future_is_cancelled_args, :ff => ff)
+                end
+
+                def recv_future_is_cancelled()
+                  result = receive_message(Future_is_cancelled_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'future_is_cancelled failed: unknown result')
+                end
+
+                def future_has_outstanding(ff)
+                  send_future_has_outstanding(ff)
+                  return recv_future_has_outstanding()
+                end
+
+                def send_future_has_outstanding(ff)
+                  send_message('future_has_outstanding', Future_has_outstanding_args, :ff => ff)
+                end
+
+                def recv_future_has_outstanding()
+                  result = receive_message(Future_has_outstanding_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'future_has_outstanding failed: unknown result')
+                end
+
                 def close_future(ff)
                   send_close_future(ff)
                   recv_close_future()
@@ -528,6 +592,22 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_mutator failed: unknown result')
                 end
 
+                def open_mutator_async(ns, table_name, future, flags)
+                  send_open_mutator_async(ns, table_name, future, flags)
+                  return recv_open_mutator_async()
+                end
+
+                def send_open_mutator_async(ns, table_name, future, flags)
+                  send_message('open_mutator_async', Open_mutator_async_args, :ns => ns, :table_name => table_name, :future => future, :flags => flags)
+                end
+
+                def recv_open_mutator_async()
+                  result = receive_message(Open_mutator_async_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_mutator_async failed: unknown result')
+                end
+
                 def close_mutator(mutator, flush)
                   send_close_mutator(mutator, flush)
                   recv_close_mutator()
@@ -539,6 +619,21 @@ require 'client_types'
 
                 def recv_close_mutator()
                   result = receive_message(Close_mutator_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def close_mutator_async(mutator)
+                  send_close_mutator_async(mutator)
+                  recv_close_mutator_async()
+                end
+
+                def send_close_mutator_async(mutator)
+                  send_message('close_mutator_async', Close_mutator_async_args, :mutator => mutator)
+                end
+
+                def recv_close_mutator_async()
+                  result = receive_message(Close_mutator_async_result)
                   raise result.e unless result.e.nil?
                   return
                 end
@@ -629,6 +724,96 @@ require 'client_types'
 
                 def recv_flush_mutator()
                   result = receive_message(Flush_mutator_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def set_cell_async(mutator, cell)
+                  send_set_cell_async(mutator, cell)
+                  recv_set_cell_async()
+                end
+
+                def send_set_cell_async(mutator, cell)
+                  send_message('set_cell_async', Set_cell_async_args, :mutator => mutator, :cell => cell)
+                end
+
+                def recv_set_cell_async()
+                  result = receive_message(Set_cell_async_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def set_cell_as_array_async(mutator, cell)
+                  send_set_cell_as_array_async(mutator, cell)
+                  recv_set_cell_as_array_async()
+                end
+
+                def send_set_cell_as_array_async(mutator, cell)
+                  send_message('set_cell_as_array_async', Set_cell_as_array_async_args, :mutator => mutator, :cell => cell)
+                end
+
+                def recv_set_cell_as_array_async()
+                  result = receive_message(Set_cell_as_array_async_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def set_cells_async(mutator, cells)
+                  send_set_cells_async(mutator, cells)
+                  recv_set_cells_async()
+                end
+
+                def send_set_cells_async(mutator, cells)
+                  send_message('set_cells_async', Set_cells_async_args, :mutator => mutator, :cells => cells)
+                end
+
+                def recv_set_cells_async()
+                  result = receive_message(Set_cells_async_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def set_cells_as_arrays_async(mutator, cells)
+                  send_set_cells_as_arrays_async(mutator, cells)
+                  recv_set_cells_as_arrays_async()
+                end
+
+                def send_set_cells_as_arrays_async(mutator, cells)
+                  send_message('set_cells_as_arrays_async', Set_cells_as_arrays_async_args, :mutator => mutator, :cells => cells)
+                end
+
+                def recv_set_cells_as_arrays_async()
+                  result = receive_message(Set_cells_as_arrays_async_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def set_cells_serialized_async(mutator, cells, flush)
+                  send_set_cells_serialized_async(mutator, cells, flush)
+                  recv_set_cells_serialized_async()
+                end
+
+                def send_set_cells_serialized_async(mutator, cells, flush)
+                  send_message('set_cells_serialized_async', Set_cells_serialized_async_args, :mutator => mutator, :cells => cells, :flush => flush)
+                end
+
+                def recv_set_cells_serialized_async()
+                  result = receive_message(Set_cells_serialized_async_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def flush_mutator_async(mutator)
+                  send_flush_mutator_async(mutator)
+                  recv_flush_mutator_async()
+                end
+
+                def send_flush_mutator_async(mutator)
+                  send_message('flush_mutator_async', Flush_mutator_async_args, :mutator => mutator)
+                end
+
+                def recv_flush_mutator_async()
+                  result = receive_message(Flush_mutator_async_result)
                   raise result.e unless result.e.nil?
                   return
                 end
@@ -910,6 +1095,50 @@ require 'client_types'
                   write_result(result, oprot, 'get_future_result_serialized', seqid)
                 end
 
+                def process_future_is_empty(seqid, iprot, oprot)
+                  args = read_args(iprot, Future_is_empty_args)
+                  result = Future_is_empty_result.new()
+                  begin
+                    result.success = @handler.future_is_empty(args.ff)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'future_is_empty', seqid)
+                end
+
+                def process_future_is_full(seqid, iprot, oprot)
+                  args = read_args(iprot, Future_is_full_args)
+                  result = Future_is_full_result.new()
+                  begin
+                    result.success = @handler.future_is_full(args.ff)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'future_is_full', seqid)
+                end
+
+                def process_future_is_cancelled(seqid, iprot, oprot)
+                  args = read_args(iprot, Future_is_cancelled_args)
+                  result = Future_is_cancelled_result.new()
+                  begin
+                    result.success = @handler.future_is_cancelled(args.ff)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'future_is_cancelled', seqid)
+                end
+
+                def process_future_has_outstanding(seqid, iprot, oprot)
+                  args = read_args(iprot, Future_has_outstanding_args)
+                  result = Future_has_outstanding_result.new()
+                  begin
+                    result.success = @handler.future_has_outstanding(args.ff)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'future_has_outstanding', seqid)
+                end
+
                 def process_close_future(seqid, iprot, oprot)
                   args = read_args(iprot, Close_future_args)
                   result = Close_future_result.new()
@@ -1170,6 +1399,17 @@ require 'client_types'
                   write_result(result, oprot, 'open_mutator', seqid)
                 end
 
+                def process_open_mutator_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Open_mutator_async_args)
+                  result = Open_mutator_async_result.new()
+                  begin
+                    result.success = @handler.open_mutator_async(args.ns, args.table_name, args.future, args.flags)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'open_mutator_async', seqid)
+                end
+
                 def process_close_mutator(seqid, iprot, oprot)
                   args = read_args(iprot, Close_mutator_args)
                   result = Close_mutator_result.new()
@@ -1179,6 +1419,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'close_mutator', seqid)
+                end
+
+                def process_close_mutator_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Close_mutator_async_args)
+                  result = Close_mutator_async_result.new()
+                  begin
+                    @handler.close_mutator_async(args.mutator)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'close_mutator_async', seqid)
                 end
 
                 def process_set_cell(seqid, iprot, oprot)
@@ -1245,6 +1496,72 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'flush_mutator', seqid)
+                end
+
+                def process_set_cell_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Set_cell_async_args)
+                  result = Set_cell_async_result.new()
+                  begin
+                    @handler.set_cell_async(args.mutator, args.cell)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'set_cell_async', seqid)
+                end
+
+                def process_set_cell_as_array_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Set_cell_as_array_async_args)
+                  result = Set_cell_as_array_async_result.new()
+                  begin
+                    @handler.set_cell_as_array_async(args.mutator, args.cell)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'set_cell_as_array_async', seqid)
+                end
+
+                def process_set_cells_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Set_cells_async_args)
+                  result = Set_cells_async_result.new()
+                  begin
+                    @handler.set_cells_async(args.mutator, args.cells)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'set_cells_async', seqid)
+                end
+
+                def process_set_cells_as_arrays_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Set_cells_as_arrays_async_args)
+                  result = Set_cells_as_arrays_async_result.new()
+                  begin
+                    @handler.set_cells_as_arrays_async(args.mutator, args.cells)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'set_cells_as_arrays_async', seqid)
+                end
+
+                def process_set_cells_serialized_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Set_cells_serialized_async_args)
+                  result = Set_cells_serialized_async_result.new()
+                  begin
+                    @handler.set_cells_serialized_async(args.mutator, args.cells, args.flush)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'set_cells_serialized_async', seqid)
+                end
+
+                def process_flush_mutator_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Flush_mutator_async_args)
+                  result = Flush_mutator_async_result.new()
+                  begin
+                    @handler.flush_mutator_async(args.mutator)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'flush_mutator_async', seqid)
                 end
 
                 def process_exists_namespace(seqid, iprot, oprot)
@@ -1663,6 +1980,142 @@ require 'client_types'
 
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::ResultSerialized},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Future_is_empty_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                FF = 1
+
+                FIELDS = {
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Future_is_empty_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::BOOL, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Future_is_full_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                FF = 1
+
+                FIELDS = {
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Future_is_full_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::BOOL, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Future_is_cancelled_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                FF = 1
+
+                FIELDS = {
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Future_is_cancelled_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::BOOL, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Future_has_outstanding_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                FF = 1
+
+                FIELDS = {
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Future_has_outstanding_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::BOOL, :name => 'success'},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
@@ -2546,6 +2999,46 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
+              class Open_mutator_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+                FUTURE = 3
+                FLAGS = 4
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
+                  FUTURE => {:type => ::Thrift::Types::I64, :name => 'future'},
+                  FLAGS => {:type => ::Thrift::Types::I32, :name => 'flags', :default => 0}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Open_mutator_async_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::I64, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
               class Close_mutator_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 MUTATOR = 1
@@ -2565,6 +3058,38 @@ require 'client_types'
               end
 
               class Close_mutator_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Close_mutator_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                MUTATOR = 1
+
+                FIELDS = {
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Close_mutator_async_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 
@@ -2769,6 +3294,210 @@ require 'client_types'
               end
 
               class Flush_mutator_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cell_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                MUTATOR = 1
+                CELL = 2
+
+                FIELDS = {
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  CELL => {:type => ::Thrift::Types::STRUCT, :name => 'cell', :class => Hypertable::ThriftGen::Cell}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cell_async_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cell_as_array_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                MUTATOR = 1
+                CELL = 2
+
+                FIELDS = {
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  CELL => {:type => ::Thrift::Types::LIST, :name => 'cell', :element => {:type => ::Thrift::Types::STRING}}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cell_as_array_async_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cells_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                MUTATOR = 1
+                CELLS = 2
+
+                FIELDS = {
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cells_async_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cells_as_arrays_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                MUTATOR = 1
+                CELLS = 2
+
+                FIELDS = {
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cells_as_arrays_async_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cells_serialized_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                MUTATOR = 1
+                CELLS = 2
+                FLUSH = 3
+
+                FIELDS = {
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
+                  CELLS => {:type => ::Thrift::Types::STRING, :name => 'cells', :binary => true},
+                  FLUSH => {:type => ::Thrift::Types::BOOL, :name => 'flush', :default => false}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Set_cells_serialized_async_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Flush_mutator_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                MUTATOR = 1
+
+                FIELDS = {
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Flush_mutator_async_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 

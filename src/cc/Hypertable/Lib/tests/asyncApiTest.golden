@@ -1,3 +1,15 @@
+Mutation done
+Mutation done
+Mutation done
+Mutation done
+Mutation done
+Mutation done
+Mutation done
+Mutation done
+Mutation done
+Mutation done
+Mutation done
+Mutation done
 Issuing scans for 'apple'
 Got result = {name:apple, location:Western Asia, color:red, energy_density:2.18kJ/g}
 Issuing scans for 'banana'
@@ -7,7 +19,7 @@ Got result = {name:pomegranate, location:Iranian plateau, color:red, energy_dens
 Issuing scans for 'kiwi'
 Got result = {name:kiwi, location:Southern China, color:brown, energy_density:0.61Cal/g}
 Issuing scans for 'guava'
-Received 0cells for scan 
-Received 0cells for scan 
-Received 0cells for scan 
+Received 0 cells for scan 
+Received 0 cells for scan 
+Received 0 cells for scan 
 Got result = {name:, location:, color:, energy_density:}

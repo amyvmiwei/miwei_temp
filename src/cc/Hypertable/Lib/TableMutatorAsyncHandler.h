@@ -37,7 +37,7 @@ namespace Hypertable {
     /**
      * Constructor.  Initializes state.
      */
-    TableMutatorAsyncHandler(TableMutatorAsync *mutator, size_t scatter_buffer);
+    TableMutatorAsyncHandler(TableMutatorAsync *mutator, uint32_t scatter_buffer);
 
     /**
      */
@@ -45,7 +45,7 @@ namespace Hypertable {
 
   private:
     TableMutatorAsync *m_mutator;
-    size_t m_scatter_buffer;
+    uint32_t m_scatter_buffer;
   };
 }
 
