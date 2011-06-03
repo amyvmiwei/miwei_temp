@@ -1,3 +1,15 @@
+Version 0.9.5.0.pre6:
+(2011-06-03)
+
+    Fixed bug in MaintenanceScheduler introduced w/ merging compactions
+    Fixed bug in the FileBlockCache wrt growing to accomodate
+    Added support for DELETE lines in .tsv files
+    Added check for DFSBROKER_BAD_FILENAME on skip_not_found
+    Added --metadata-tsv option to metalog_dump
+    Fixed bug whereby get_table_splits() was returning stale results for previously dropped tables.
+    Added MaintenanceScheduler state dump via existence of run/debug-scheduler file
+    Fixed FMR in TableMutator timeout
+
 Version 0.9.5.0.pre5:
 (2011-05-18)
 
