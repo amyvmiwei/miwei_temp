@@ -78,7 +78,7 @@ void MaintenanceScheduler::schedule() {
   String output;
   String ag_name;
   String trace_str;
-  int64_t excess;
+  int64_t excess = 0;
   MaintenancePrioritizer::MemoryState memory_state;
   bool low_memory = low_memory_mode();
 
@@ -113,6 +113,17 @@ void MaintenanceScheduler::schedule() {
   trace_str += String("memory_state.balance\t") + memory_state.balance + "\n";
   trace_str += String("memory_state.limit\t") + memory_state.limit + "\n";
   trace_str += String("memory_state.needed\t") + memory_state.needed + "\n";
+  {
+    uint64_t max_memory;
+    uint64_t available_memory;
+    uint64_t accesses;
+    uint64_t hits;
+    Global::block_cache->get_stats(&max_memory, &available_memory, &accesses, &hits);
+    trace_str += String("FileBlockCache-max_memory\t") + max_memory + "\n";
+    trace_str += String("FileBlockCache-available_memory\t") + available_memory + "\n";
+    trace_str += String("FileBlockCache-accesses\t") + accesses + "\n";
+    trace_str += String("FileBlockCache-hits\t") + hits + "\n";
+  }
 
   boost::xtime now;
   boost::xtime_get(&now, TIME_UTC);
@@ -197,8 +208,6 @@ void MaintenanceScheduler::schedule() {
     trace_str += String("after revision_system\t") + revision_system + "\n";
     trace_str += String("after revision_user\t") + revision_user + "\n";
 
-    check_file_dump_statistics(now, range_data, trace_str);
-
     if (Global::root_log)
       Global::root_log->purge(revision_root);
 
@@ -233,7 +242,10 @@ void MaintenanceScheduler::schedule() {
 	     cell_cache_pct, shadow_cache_pct, query_cache_pct);
   }
 
-  m_prioritizer->prioritize(range_data, memory_state, trace_str);
+  String dummy_str;
+  m_prioritizer->prioritize(range_data, memory_state, dummy_str);
+
+  check_file_dump_statistics(now, range_data, trace_str);
 
   boost::xtime schedule_time;
   boost::xtime_get(&schedule_time, boost::TIME_UTC);
