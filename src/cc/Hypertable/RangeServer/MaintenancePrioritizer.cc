@@ -406,11 +406,12 @@ MaintenancePrioritizer::compact_cellcaches(RangeStatsVector &range_data,
   for (size_t i=0; i<range_data.size(); i++) {
 
     if (range_data[i]->busy ||
-	range_data[i]->maintenance_flags & (MaintenanceFlag::SPLIT|MaintenanceFlag::COMPACT))
+	range_data[i]->maintenance_flags & MaintenanceFlag::SPLIT)
       continue;
 
     for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
-      if (!ag_data->in_memory && ag_data->mem_used > 0) {
+      if (!MaintenanceFlag::major_compaction(ag_data->maintenance_flags) &&
+	  !ag_data->in_memory && ag_data->mem_used > 0) {
         ag_data->user_data = range_data[i];
 	md.push_back(ag_data);
       }

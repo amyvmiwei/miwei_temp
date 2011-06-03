@@ -162,7 +162,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_
 
   if (update_bytes < 500000 && scan_count > 10) {
 
-    // READ heavy
+    HT_INFO("READ workload prioritization");
 
     if (!compact_cellcaches(range_data, memory_state, priority, trace_str))
       return;
@@ -178,7 +178,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_
   }
   else if (m_server_stats->get_update_mbps(collector_id) > 0.5 && scan_count < 5) {
 
-    // WRITE heavy
+    HT_INFO("WRITE workload prioritization");
 
     Global::block_cache->cap_memory_use();
     memory_state.decrement_needed( Global::block_cache->decrease_limit(memory_state.needed) );
@@ -193,6 +193,8 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_
 
   }
   else {
+
+    HT_INFO("MIXED workload prioritization");
 
     Global::block_cache->cap_memory_use();
     memory_state.decrement_needed( Global::block_cache->decrease_limit(memory_state.needed) );

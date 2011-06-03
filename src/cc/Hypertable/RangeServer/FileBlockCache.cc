@@ -93,8 +93,12 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
     make_room(length);
 
   if (m_available < length) {
-    m_limit += (length-m_available);
-    m_available += (length-m_available);
+    if ((length-m_available) <= (m_max_memory-m_limit)) {
+      m_limit += (length-m_available);
+      m_available += (length-m_available);
+    }
+    else
+      HT_FATALF("Unable to add block (%lld bytes) to block cache", (Lld)length);
   }
 
   BlockCacheEntry entry(file_id, file_offset);
