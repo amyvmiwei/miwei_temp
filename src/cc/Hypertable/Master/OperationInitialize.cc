@@ -217,6 +217,11 @@ void OperationInitialize::execute() {
       m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
                                             m_context->hyperspace, m_context->namemap,
                                             TableIdentifier::METADATA_NAME);
+    if (!m_context->rs_metrics_table)
+      m_context->rs_metrics_table = new Table(m_context->props, m_context->conn_manager,
+                                              m_context->hyperspace, m_context->namemap,
+                                              "sys/RS_METRICS");
+
     complete_ok();
     break;
 

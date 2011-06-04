@@ -31,6 +31,7 @@ extern "C" {
 #include "OperationGatherStatistics.h"
 #include "OperationProcessor.h"
 #include "RangeServerStatistics.h"
+#include "LoadBalancer.h"
 
 using namespace Hypertable;
 
@@ -87,6 +88,7 @@ void OperationGatherStatistics::execute() {
     dispatch_handler.wait_for_completion();
 
     m_context->monitoring->add(results);
+    m_context->balancer->transfer_monitoring_data(results);
     set_state(OperationState::COMPLETE);
     break;
 

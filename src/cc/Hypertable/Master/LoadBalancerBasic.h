@@ -22,23 +22,47 @@
 #ifndef HYPERTABLE_LOADBALANCERBASIC_H
 #define HYPERTABLE_LOADBALANCERBASIC_H
 
+#include <map>
+#include <iostream>
+
+
+#include "Common/String.h"
+
 #include "LoadBalancer.h"
+#include "RSMetrics.h"
+
 
 namespace Hypertable {
 
   class LoadBalancerBasic : public LoadBalancer {
-  public:
+    public:
 
-    LoadBalancerBasic(ContextPtr context) : LoadBalancer(context) { }
+      enum {
+        BALANCE_MODE_DISTRIBUTE_LOAD         = 0,
+        BALANCE_MODE_DISTRIBUTE_TABLE_RANGES = 1
+      };
 
-    //void receive_monitoring_data(vector<RangeServerStatistics> &stats) = 0;
-    //void balance() = 0;
+      LoadBalancerBasic(ContextPtr context) : LoadBalancer(context), m_waiting_for_servers(false) { }
 
-    //String assign_to_server(TableIdentifier &tid, RangeIdentifier &rid) = 0;
-    //void range_move_loaded(TableIdentifier &tid, RangeIdentifier &rid) = 0;
-    //void range_relinquish_acknowledged(TableIdentifier &tid, RangeIdentifier &rid) = 0;
-    //time_t maintenance_interval() = 0;
-  };
+      void transfer_monitoring_data(vector<RangeServerStatistics> &stats);
+      void balance();
+
+      //String assign_to_server(TableIdentifier &tid, RangeIdentifier &rid) = 0;
+      //void range_move_loaded(TableIdentifier &tid, RangeIdentifier &rid) = 0;
+      //void range_relinquish_acknowledged(TableIdentifier &tid, RangeIdentifier &rid) = 0;
+      //time_t maintenance_interval() = 0;
+    private:
+      void calculate_balance_plan(BalancePlanPtr &plan);
+      void distribute_load(const boost::posix_time::ptime &now, BalancePlanPtr &plan);
+      void distribute_table_ranges(vector<RangeServerStatistics> &range_server_stats,
+                                   BalancePlanPtr &plan);
+
+      double m_loadavg_deviation_threshold;
+      Mutex m_data_mutex;
+      bool  m_waiting_for_servers;
+      std::vector <RangeServerStatistics> m_range_server_stats;
+      ptime m_wait_time_start;
+  }; // LoadBalancerBasic
 
 } // namespace Hypertable
 
