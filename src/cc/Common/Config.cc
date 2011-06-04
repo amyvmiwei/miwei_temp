@@ -257,6 +257,14 @@ void DefaultPolicy::init_options() {
         "Top-level hypertable directory name")
     ("Hypertable.Monitoring.Interval", i32()->default_value(30000),
         "Monitoring statistics gathering interval (in milliseconds)")
+    ("Hypertable.LoadBalancer.Interval", i32()->default_value(86400000),
+        "Time interval between LoadBalancer operations")
+    ("Hypertable.LoadBalancer.WindowStart", str()->default_value("00:00:01"),
+        "Time of day at which LoadBalancer balance window starts")
+    ("Hypertable.LoadBalancer.WindowEnd", str()->default_value("00:03:00"),
+        "Time of day at which the LoadBalancer balance window ends")
+    ("Hypertable.LoadBalancer.ServerWaitInterval", i32()->default_value(3000),
+        "Amount of time to wait before running balancer when a new RangeServer is detected")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "

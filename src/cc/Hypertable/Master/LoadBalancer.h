@@ -25,24 +25,34 @@
 #include <set>
 
 #include <boost/thread/condition.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 
 #include "Hypertable/Lib/BalancePlan.h"
 
+#include "RSMetrics.h"
 #include "Context.h"
 
 namespace Hypertable {
+  using namespace boost::posix_time;
 
   class OperationBalance;
 
   class LoadBalancer : public ReferenceCount {
   public:
-    //void receive_monitoring_data(vector<RangeServerStatistics> &stats) = 0;
-    //void balance() = 0;
+    virtual void balance() = 0;
+    virtual void transfer_monitoring_data(vector<RangeServerStatistics> &stats)=0;
 
-    LoadBalancer(ContextPtr context) : m_context(context) { }
+    LoadBalancer(ContextPtr context) : m_context(context), m_last_balance_time(min_date_time) {
+      m_balance_interval     = m_context->props->get_i32("Hypertable.LoadBalancer.Interval");
+      m_balance_window_start = duration_from_string(m_context->props->get_str(
+          "Hypertable.LoadBalancer.WindowStart"));
+      m_balance_window_end   = duration_from_string(m_context->props->get_str(
+          "Hypertable.LoadBalancer.WindowEnd"));
+      m_balance_wait = m_context->props->get_i32("Hypertable.LoadBalancer.ServerWaitInterval");
+    }
 
     virtual void register_plan(BalancePlanPtr &plan);
     virtual void deregister_plan(BalancePlanPtr &plan);
@@ -59,6 +69,11 @@ namespace Hypertable {
     Mutex m_mutex;
     boost::condition m_cond;
     ContextPtr m_context;
+    uint32_t m_balance_interval;
+    uint32_t m_balance_wait;
+    time_duration m_balance_window_start;
+    time_duration m_balance_window_end;
+    ptime m_last_balance_time;
 
   private:
     struct lt_move_spec {

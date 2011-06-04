@@ -35,6 +35,14 @@ namespace Hypertable {
   public:
 
     RangeMoveSpec() { clear(); }
+    RangeMoveSpec(const char *src, const char *dest, const char* table_id,
+                  const char *start_row, const char *end_row) {
+      source_location = src;
+      dest_location = dest;
+      table.set_id(table_id);
+      range.set_start_row(start_row);
+      range.set_end_row(end_row);
+    }
 
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;

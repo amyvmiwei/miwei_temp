@@ -82,6 +82,7 @@ namespace Hypertable {
     MonitoringPtr monitoring;
     ResponseManager *response_manager;
     TablePtr metadata_table;
+    TablePtr rs_metrics_table;
     uint64_t range_split_size;
     time_t request_timeout;
     uint32_t timer_interval;
@@ -155,7 +156,7 @@ namespace Hypertable {
     typedef ServerList::nth_index<2>::type HostnameIndex;
     typedef ServerList::nth_index<3>::type PublicAddrIndex;
     typedef ServerList::nth_index<4>::type LocalAddrIndex;
-    
+
     ServerList m_server_list;
     ServerList::iterator m_server_list_iter;
   };

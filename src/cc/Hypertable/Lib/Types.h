@@ -101,6 +101,11 @@ namespace Hypertable {
       id = m_name.c_str();
     }
 
+    void set_id(const char *new_name) {
+      m_name = new_name;
+      id = m_name.c_str();
+    }
+
     String get_id() const {
       return m_name;
     }
@@ -160,6 +165,14 @@ namespace Hypertable {
       start_row = m_start.c_str();
     }
     void set_end_row(const String &e) {
+      m_end = e;
+      end_row = m_end.c_str();
+    }
+    void set_start_row(const char *s) {
+      m_start = s;
+      start_row = m_start.c_str();
+    }
+    void set_end_row(const char *e) {
       m_end = e;
       end_row = m_end.c_str();
     }

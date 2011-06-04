@@ -40,7 +40,9 @@ void LoadBalancer::register_plan(BalancePlanPtr &plan) {
     std::pair<MoveSetT::iterator, bool> ret = m_current_set.insert(move);
     HT_ASSERT(ret.second);
   }
-  
+
+  HT_INFO_OUT << "Balance plan registered" << HT_END;
+  HT_DEBUG_OUT << "Registered plan=" << *m_plan << HT_END;
 }
 
 
