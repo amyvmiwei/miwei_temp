@@ -44,11 +44,14 @@ void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
                                          LoadFactors &load_factors,
                                          uint64_t disk_used, uint64_t memory_used) {
   bool update_start_row = false;
+  String old_start_row, old_end_row;
 
   if (m_new_rows) {
     ScopedLock lock(m_mutex);
     uint8_t *oldbuf = m_buffer.release();
     update_start_row = true;
+    old_start_row = m_start_row;
+    old_end_row = m_end_row;
     initialize(m_table_id, m_new_start_row, m_new_end_row);
     m_new_rows = false;
     delete [] oldbuf;
@@ -77,18 +80,38 @@ void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
 
   key.row = row.c_str();
   key.row_len = row.length();
-  key.column_qualifier = m_end_row;
-  key.column_qualifier_len = strlen(m_end_row);
 
   if (update_start_row) {
-    key.column_family = "range_start_row";
     try {
+      // delete old entries
+      key.column_qualifier = old_end_row.c_str();
+      key.column_qualifier_len = old_end_row.size();
+      // delete old start row
+      key.column_family = "range_start_row";
+      mutator->set_delete(key);
+      // delete old range metrics
+      key.column_family = "range";
+      mutator->set_delete(key);
+      // delete old move
+      key.column_family = "range_move";
+      mutator->set_delete(key);
+
+      // set new qualifier
+      key.column_qualifier = m_end_row;
+      key.column_qualifier_len = strlen(m_end_row);
+      // insert new start row
+      key.column_family = "range_start_row";
       mutator->set(key, (uint8_t *)m_start_row, strlen(m_start_row));
     }
     catch (Exception &e) {
       HT_ERROR_OUT << "Problem updating sys/RS_METRICS - " << e << HT_END;
     }
   }
+  else {
+    key.column_qualifier = m_end_row;
+    key.column_qualifier_len = strlen(m_end_row);
+  }
+
 
   key.column_family = "range";
   try {
@@ -103,7 +126,8 @@ void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
 }
 
 
-void LoadMetricsRange::initialize(const String &table_id, const String &start_row, const String &end_row) {
+void LoadMetricsRange::initialize(const String &table_id, const String &start_row,
+    const String &end_row) {
 
   m_buffer.reserve(table_id.length() + 1 + start_row.length() + 1 + end_row.length() + 1);
 
