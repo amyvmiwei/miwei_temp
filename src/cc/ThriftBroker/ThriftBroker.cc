@@ -440,7 +440,7 @@ public:
     m_next_threshold = Config::get_i32("ThriftBroker.NextThreshold");
     m_client = new Hypertable::Client();
     m_next_namespace_id = 1;
-    m_next_future_id = 0;
+    m_next_future_id = 1;
     m_future_queue_size = Config::get_i32("ThriftBroker.Future.QueueSize");
   }
 
@@ -843,7 +843,7 @@ public:
     LOG_API("future=" << ff);
 
     try {
-      FuturePtr &future_ptr = get_future(ff);
+      FuturePtr future_ptr = get_future(ff);
       ResultPtr hresult;
       bool done = !(future_ptr->get(hresult));
       if (done) {
@@ -865,7 +865,7 @@ public:
     LOG_API("future=" << ff);
 
     try {
-      FuturePtr &future_ptr = get_future(ff);
+      FuturePtr future_ptr = get_future(ff);
       ResultPtr hresult;
       bool done = !(future_ptr->get(hresult));
       if (done) {
@@ -887,7 +887,7 @@ public:
     LOG_API("future=" << ff);
 
     try {
-      FuturePtr &future_ptr = get_future(ff);
+      FuturePtr future_ptr = get_future(ff);
       ResultPtr hresult;
       bool done = !(future_ptr->get(hresult));
       if (done) {
@@ -909,7 +909,7 @@ public:
     LOG_API("future=" << ff);
 
     try {
-      FuturePtr &future_ptr = get_future(ff);
+      FuturePtr future_ptr = get_future(ff);
       future_ptr->cancel();
     } RETHROW()
   }
@@ -919,7 +919,7 @@ public:
     LOG_API("future=" << ff);
 
     try {
-      FuturePtr &future_ptr = get_future(ff);
+      FuturePtr future_ptr = get_future(ff);
       return future_ptr->is_empty();
     } RETHROW()
   }
@@ -929,7 +929,7 @@ public:
     LOG_API("future=" << ff);
 
     try {
-      FuturePtr &future_ptr = get_future(ff);
+      FuturePtr future_ptr = get_future(ff);
       return future_ptr->is_full();
     } RETHROW()
   }
@@ -939,7 +939,7 @@ public:
     LOG_API("future=" << ff);
 
     try {
-      FuturePtr &future_ptr = get_future(ff);
+      FuturePtr future_ptr = get_future(ff);
       return future_ptr->is_cancelled();
     } RETHROW()
   }
@@ -949,7 +949,7 @@ public:
     LOG_API("future=" << ff);
 
     try {
-      FuturePtr &future_ptr = get_future(ff);
+      FuturePtr future_ptr = get_future(ff);
       return future_ptr->has_outstanding();
     } RETHROW()
   }
@@ -1422,7 +1422,7 @@ public:
                       const ThriftGen::Future ff, ::int32_t flags) {
     NamespacePtr namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
-    FuturePtr &future_ptr = get_future(ff);
+    FuturePtr future_ptr = get_future(ff);
 
     return t->create_mutator_async(future_ptr.get(), flags);
   }
@@ -1432,7 +1432,7 @@ public:
                       const ThriftGen::Future ff, const ThriftGen::ScanSpec &ss) {
     NamespacePtr namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
-    FuturePtr &future_ptr = get_future(ff);
+    FuturePtr future_ptr = get_future(ff);
 
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
@@ -1560,7 +1560,7 @@ public:
     get_mutator_async(mutator)->set_cells(cb.get());
   }
 
-  FuturePtr& get_future(::int64_t id) {
+  FuturePtr get_future(::int64_t id) {
     ScopedLock lock(m_future_mutex);
     FutureMap::iterator it = m_future_map.find(id);
 
@@ -1590,8 +1590,8 @@ public:
   // returned id is guaranteed to be unique and non-zero
   ::int64_t get_future_id(FuturePtr *ff) {
     ScopedLock lock(m_future_mutex);
-    ::int64_t id = m_next_future_id++;
-
+    ::int64_t id = m_next_future_id;
+    m_next_future_id++;
     m_future_map.insert(make_pair(id, *ff)); // no overwrite
     return id;
   }
