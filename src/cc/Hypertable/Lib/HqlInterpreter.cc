@@ -806,6 +806,17 @@ cmd_drop_table(NamespacePtr &ns, ParserState &state,
   cb.on_finish();
 }
 
+void
+cmd_balance(Client *client, ParserState &state,
+            HqlInterpreter::Callback &cb) {
+  MasterClientPtr master = client->get_master_client();
+
+  master->balance(state.balance_plan);
+
+  cb.on_finish();
+}
+
+
 void cmd_shutdown_master(Client *client, HqlInterpreter::Callback &cb) {
   client->shutdown();
   cb.on_finish();
@@ -889,6 +900,8 @@ void HqlInterpreter::execute(const String &line, Callback &cb) {
                         m_immutable_namespace, state, cb);         break;
     case COMMAND_DROP_NAMESPACE:
       cmd_drop_namespace(m_client, m_namespace, state, cb);        break;
+    case COMMAND_BALANCE:
+      cmd_balance(m_client, state, cb);                            break;
 
     default:
       HT_THROW(Error::HQL_PARSE_ERROR, String("unsupported command: ") + stripped_line);

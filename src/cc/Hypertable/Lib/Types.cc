@@ -37,6 +37,10 @@ const char *TableIdentifier::METADATA_NAME= "sys/METADATA";
 const int TableIdentifier::METADATA_ID_LENGTH = 3;
 
 bool TableIdentifier::operator==(const TableIdentifier &other) const {
+  if (id == 0 || other.id == 0) {
+    if (id != other.id)
+      return false;
+  }
   if (strcmp(id, other.id) ||
       generation != other.generation)
     return false;
@@ -45,6 +49,21 @@ bool TableIdentifier::operator==(const TableIdentifier &other) const {
 
 bool TableIdentifier::operator!=(const TableIdentifier &other) const {
   return !(*this == other);
+}
+
+bool TableIdentifier::operator<(const TableIdentifier &other) const {
+  if (id == 0 || other.id == 0) {
+    if (other.id != 0)
+      return true;
+    else if (id != 0)
+      return false;
+  }
+  int cmpval = strcmp(id, other.id);
+
+  if (cmpval < 0 || 
+      (cmpval == 0 && generation < other.generation))
+    return true;
+  return false;
 }
 
 
@@ -90,6 +109,39 @@ bool RangeSpec::operator==(const RangeSpec &other) const {
 
 bool RangeSpec::operator!=(const RangeSpec &other) const {
   return !(*this == other);
+}
+
+bool RangeSpec::operator<(const RangeSpec &other) const {
+
+  if (start_row == 0 || other.start_row == 0) {
+    if (other.start_row != 0)
+      return true;
+    else if (start_row != 0)
+      return false;
+  }
+  else {
+    int cmpval = strcmp(start_row, other.start_row);
+    if (cmpval < 0)
+      return true;
+    else if (cmpval > 0)
+      return false;
+  }
+
+  if (end_row == 0 || other.end_row == 0) {
+    if (other.end_row != 0)
+      return true;
+    else if (end_row != 0)
+      return false;
+  }
+  else {
+    int cmpval = strcmp(end_row, other.end_row);
+    if (cmpval < 0)
+      return true;
+    else if (cmpval > 0)
+      return false;
+  }
+
+  return false;
 }
 
 size_t RangeSpec::encoded_length() const {

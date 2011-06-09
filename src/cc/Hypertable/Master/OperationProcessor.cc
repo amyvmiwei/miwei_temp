@@ -95,11 +95,10 @@ void OperationProcessor::add_operations(std::vector<OperationPtr> &operations) {
 void OperationProcessor::add_operation_internal(OperationPtr &operation) {
 
   if (operation->exclusive()) {
-    if (m_context.exclusive_ops.count(operation->name()) > 0) {
-      HT_WARNF("Dropping %s because another one is outstanding",
-               operation->name().c_str());
-      return;
-    }
+    if (m_context.exclusive_ops.count(operation->name()) > 0)
+      HT_THROWF(Error::MASTER_OPERATION_IN_PROGRESS,
+                "Dropping %s because another one is outstanding",
+                operation->name().c_str());
     m_context.exclusive_ops.insert(operation->name());
   }
 
@@ -474,6 +473,8 @@ void OperationProcessor::Worker::retire_operation(Vertex v, OperationPtr &operat
   m_context.op->purge_from_obstruction_index(v);
   m_context.op->purge_from_dependency_index(v);
   m_context.op->purge_from_exclusivity_index(v);
+  if (in_degree(v, m_context.graph) > 0)
+    m_context.need_order_recompute = true;
   clear_vertex(v, m_context.graph);
   remove_vertex(v, m_context.graph);
   m_context.live.erase(v);

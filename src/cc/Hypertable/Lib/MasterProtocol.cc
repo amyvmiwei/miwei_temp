@@ -122,6 +122,7 @@ namespace Hypertable {
     return cbuf;
   }
 
+
   CommBuf *
   MasterProtocol::create_relinquish_acknowledge_request(const TableIdentifier *table,
                                                         const RangeSpec &range) {
@@ -156,6 +157,13 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::create_balance_request(BalancePlan &plan) {
+    CommHeader header(COMMAND_BALANCE);
+    CommBuf *cbuf = new CommBuf(header, plan.encoded_length());
+    plan.encode(cbuf->get_data_ptr_address());
+    return cbuf;
+  }
+
   const char *MasterProtocol::m_command_strings[] = {
     "create table",
     "get schema",
@@ -165,7 +173,13 @@ namespace Hypertable {
     "drop table",
     "alter table",
     "shutdown",
-    "close"
+    "close",
+    "create namespace",
+    "drop namespace",
+    "rename table",
+    "relinquish acknowledge",
+    "fetch result",
+    "balance"
   };
 
   const char *MasterProtocol::command_text(uint64_t command) {

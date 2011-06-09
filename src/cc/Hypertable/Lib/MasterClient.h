@@ -37,6 +37,7 @@
 #include "Hyperspace/HandleCallback.h"
 #include "Hyperspace/Session.h"
 
+#include "Hypertable/Lib/BalancePlan.h"
 #include "Hypertable/Lib/Types.h"
 
 
@@ -122,6 +123,11 @@ namespace Hypertable {
     void drop_table(const String &table_name, bool if_exists, Timer *timer=0);
 
     void shutdown(Timer *timer=0);
+
+    void balance(BalancePlan &plan, DispatchHandler *handler,
+                 Timer *timer = 0);
+
+    void balance(BalancePlan &plan, Timer *timer = 0);
 
     void reload_master();
 

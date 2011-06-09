@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 
 #include "Context.h"
+#include "LoadBalancer.h"
 #include "Operation.h"
 
 using namespace Hypertable;
@@ -32,6 +33,7 @@ Context::~Context() {
     hyperspace->close(master_file_handle);
     master_file_handle = 0;
   }
+  delete balancer;
 }
 
 void Context::add_server(RangeServerConnectionPtr &rsc) {

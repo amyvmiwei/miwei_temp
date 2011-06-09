@@ -219,6 +219,16 @@ void Operation::complete_error(int error, const String &msg) {
   m_context->mml_writer->record_state(this);
 }
 
+void Operation::complete_error_no_log(int error, const String &msg) {
+  ScopedLock lock(m_mutex); 
+  m_state = OperationState::COMPLETE;
+  m_error = error;
+  m_error_msg = msg;
+  m_dependencies.clear();
+  m_obstructions.clear();
+  m_exclusivities.clear();
+}
+
 void Operation::complete_error(Exception &e) {
   complete_error(e.code(), e.what());
 }

@@ -875,7 +875,10 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
 
   try {
 
-    m_live_map->get(table, table_info);
+    if (!m_live_map->get(table->id, table_info)) {
+      cb->error(Error::TABLE_NOT_FOUND, table->id);
+      return;
+    }
 
     /**
      * Fetch range info
@@ -1100,7 +1103,8 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
       HT_THROW(Error::RANGESERVER_INVALID_SCANNER_ID,
                format("scanner ID %d", scanner_id));
 
-    m_live_map->get(&scanner_table, table_info);
+    if (!m_live_map->get(scanner_table.id, table_info))
+      HT_THROWF(Error::TABLE_NOT_FOUND, "%s", scanner_table.id);
 
     schema = table_info->get_schema();
 
@@ -1485,12 +1489,9 @@ void RangeServer::acknowledge_load(ResponseCallback *cb, const TableIdentifier *
       return;
     }
 
-    {
-      ScopedLock lock(m_mutex);
-      if (!m_live_map->get(table->id, table_info)) {
-        cb->error(Error::TABLE_NOT_FOUND, table->id);
-        return;
-      }
+    if (!m_live_map->get(table->id, table_info)) {
+      cb->error(Error::TABLE_NOT_FOUND, table->id);
+      return;
     }
 
     if (!table_info->get_range(range_spec, range)) {
@@ -1786,7 +1787,11 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
     HT_DEBUG_OUT <<"Update: "<< table_update->id << HT_END;
 
     try {
-      m_live_map->get(&table_update->id, table_update->table_info);
+      if (!m_live_map->get(table_update->id.id, table_update->table_info)) {
+        table_update->error = Error::TABLE_NOT_FOUND;
+        table_update->error_msg = table_update->id.id;
+        continue;
+      }
     }
     catch (Exception &e) {
       table_update->error = e.code();
@@ -3050,7 +3055,8 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
 
   try {
 
-    m_live_map->get(table->id, table_info);
+    if (!m_live_map->get(table->id, table_info))
+      HT_THROWF(Error::TABLE_NOT_FOUND, "%s", table->id);
 
     /** Remove the range **/
     if (!table_info->remove_range(range_spec, range))
@@ -3079,20 +3085,30 @@ RangeServer::relinquish_range(ResponseCallback *cb, const TableIdentifier *table
 
   try {
 
-    m_live_map->get(table->id, table_info);
+    if (!m_live_map->get(table->id, table_info)) {
+      cb->error(Error::TABLE_NOT_FOUND, table->id);
+      return;
+    }
 
-    /** Remove the range **/
     if (!table_info->get_range(range_spec, range))
       HT_THROW(Error::RANGESERVER_RANGE_NOT_FOUND,
                format("%s[%s..%s]", table->id, range_spec->start_row, range_spec->end_row));
 
     range->schedule_relinquish();
 
+    // Wake up maintenance scheduler
+    {
+      ScopedLock lock(m_mutex);
+      m_maintenance_scheduler->need_scheduling();
+      if (m_timer_handler)
+        m_timer_handler->schedule_maintenance();
+    }
+
     cb->response_ok();
   }
   catch (Hypertable::Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
     int error = 0;
+    HT_INFO_OUT << e << HT_END;
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
   }

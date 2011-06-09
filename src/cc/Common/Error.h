@@ -79,6 +79,7 @@ namespace Hypertable {
       NOT_ALLOWED                        = 44,
       INDUCED_FAILURE                    = 45,
       SERVER_SHUTTING_DOWN               = 46,
+      LOCATION_UNASSIGNED                = 47,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

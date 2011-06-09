@@ -537,6 +537,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
                m_range_name.c_str(), m_name.c_str());
     }
     else if (MaintenanceFlag::major_compaction(maintenance_flags)) {
+      HT_INFOF("Trying MAJOR compaction for %s(%s)",
+               m_range_name.c_str(), m_name.c_str());
       if ((!m_immutable_cache || m_immutable_cache->empty()) &&
           m_stores.size() <= (size_t)1 &&
           !MaintenanceFlag::split(maintenance_flags))

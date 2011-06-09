@@ -552,6 +552,26 @@ namespace Hypertable {
                     const RangeSpec &range, DispatchHandler *handler,
                     Timer &timer);
 
+    /** Issues a "relinquish range" request synchronously
+     *
+     * @param addr address of RangeServer
+     * @param table table identifier
+     * @param range range specification
+     */
+    void relinquish_range(const CommAddress &addr, const TableIdentifier &table,
+                          const RangeSpec &range);
+
+    /** Issues a "relinquish range" request synchronously, with timer.
+     *
+     * @param addr address of RangeServer
+     * @param table table identifier
+     * @param range range specification
+     * @param timer timer
+     */
+    void relinquish_range(const CommAddress &addr, const TableIdentifier &table,
+                          const RangeSpec &range, Timer &timer);
+
+
   private:
 
     void do_load_range(const CommAddress &addr, const TableIdentifier &table,
@@ -575,6 +595,8 @@ namespace Hypertable {
     void do_status(const CommAddress &addr, uint32_t timeout_ms);
     void do_get_statistics(const CommAddress &addr, StatsRangeServer &stats,
                            uint32_t timeout_ms);
+    void do_relinquish_range(const CommAddress &addr, const TableIdentifier &table,
+                             const RangeSpec &range, uint32_t timeout_ms);
 
     void send_message(const CommAddress &addr, CommBufPtr &cbp,
                       DispatchHandler *handler, uint32_t timeout_ms);

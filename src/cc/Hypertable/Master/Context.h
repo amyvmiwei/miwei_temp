@@ -51,6 +51,7 @@ namespace Hypertable {
 
   using namespace boost::multi_index;
 
+  class LoadBalancer;
   class Operation;
   class OperationProcessor;
   class ResponseManager;
@@ -77,6 +78,7 @@ namespace Hypertable {
     NameIdMapperPtr namemap;
     MetaLog::DefinitionPtr mml_definition;
     MetaLog::WriterPtr mml_writer;
+    LoadBalancer *balancer;
     MonitoringPtr monitoring;
     ResponseManager *response_manager;
     TablePtr metadata_table;

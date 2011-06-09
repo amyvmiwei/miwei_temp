@@ -31,6 +31,7 @@
 
 #include "Hypertable/Lib/Key.h"
 
+#include "LoadBalancer.h"
 #include "OperationMoveRange.h"
 #include "OperationProcessor.h"
 #include "Utility.h"
@@ -98,7 +99,7 @@ void OperationMoveRange::execute() {
   switch (state) {
 
   case OperationState::INITIAL:
-    if (!Utility::next_available_server(m_context, m_location))
+    if (!m_context->balancer->get_destination(m_table, m_range, m_location))
       return;
     {
       ScopedLock lock(m_mutex);
@@ -137,7 +138,7 @@ void OperationMoveRange::execute() {
       if (m_context->test_mode)
         HT_WARNF("Skipping %s::load_range() because in TEST MODE", m_location.c_str());
       else
-        rsc.load_range(addr, *table, *range, m_transfer_log.c_str(), range_state, false);
+        rsc.load_range(addr, *table, *range, m_transfer_log.c_str(), range_state, !m_is_split);
     }
     catch (Exception &e) {
       if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED) {
@@ -146,6 +147,7 @@ void OperationMoveRange::execute() {
           if (!Utility::table_exists(m_context, m_table.id)) {
             HT_WARNF("Aborting MoveRange %s because table no longer exists",
                      m_range_name.c_str());
+            m_context->balancer->move_complete(m_table, m_range, Error::TABLE_NOT_FOUND);
             complete_ok();
             return;
           }
@@ -153,6 +155,7 @@ void OperationMoveRange::execute() {
             return;
           HT_THROW2(e.code(), e, format("MoveRange %s to %s", m_range_name.c_str(), m_location.c_str()));
         }
+        m_context->balancer->move_complete(m_table, m_range, e.code());
         complete_ok();
         return;
       }
@@ -184,6 +187,7 @@ void OperationMoveRange::execute() {
         }
       }
     }
+    m_context->balancer->move_complete(m_table, m_range);
     complete_ok();
     break;
 

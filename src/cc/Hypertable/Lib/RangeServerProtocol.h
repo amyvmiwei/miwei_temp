@@ -57,7 +57,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_CLOSE                = 18;
     static const uint64_t COMMAND_WAIT_FOR_MAINTENANCE = 19;
     static const uint64_t COMMAND_ACKNOWLEDGE_LOAD     = 20;
-    static const uint64_t COMMAND_MAX                  = 21;
+    static const uint64_t COMMAND_RELINQUISH_RANGE     = 21;
+    static const uint64_t COMMAND_MAX                  = 22;
 
     static const char *m_command_strings[];
 
@@ -234,6 +235,16 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_get_statistics();
+
+    /** Creates a "relinquish range" request message.
+     *
+     * @param table table identifier
+     * @param range range specification
+     * @return protocol message
+     */
+    static CommBuf *create_request_relinquish_range(const TableIdentifier &table,
+                                                    const RangeSpec &range);
+
 
     virtual const char *command_text(uint64_t command);
   };

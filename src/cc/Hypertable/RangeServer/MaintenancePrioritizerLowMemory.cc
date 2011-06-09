@@ -120,7 +120,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_all(RangeStatsVector &range_d
   if (!schedule_inprogress_operations(range_data, memory_state, priority, trace_str))
     return;
 
-  if (!schedule_splits(range_data, memory_state, priority, trace_str))
+  if (!schedule_splits_and_relinquishes(range_data, memory_state, priority, trace_str))
     return;
 
   if (!schedule_necessary_compactions(range_data, log, prune_threshold,
