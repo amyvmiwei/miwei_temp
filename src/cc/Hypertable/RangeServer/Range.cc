@@ -1151,7 +1151,7 @@ void Range::split_notify_master() {
 void Range::compact(MaintenanceFlag::Map &subtask_map) {
   RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
   AccessGroupVector ag_vector(0);
-  int flags;
+  int flags = 0;
 
   {
     ScopedLock lock(m_schema_mutex);
