@@ -115,7 +115,7 @@ bool LoadBalancer::wait_for_complete(RangeMoveSpecPtr &move, uint32_t timeout_mi
 
   boost::xtime_get(&expire_time, boost::TIME_UTC);
   expire_time.sec += timeout_millis/1000;
-  expire_time.nsec += (double)(timeout_millis-(timeout_millis/1000)) * 1000000.0;
+  expire_time.nsec += (int32_t)((double)(timeout_millis-(timeout_millis/1000)) * 1000000.0);
 
   while ((iter = m_current_set.find(move)) != m_current_set.end() &&
          (*iter)->complete == false) {
