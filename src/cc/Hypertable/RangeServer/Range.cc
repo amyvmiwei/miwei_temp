@@ -439,7 +439,6 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->load_factors.bytes_written = m_bytes_written;
     mdata->load_factors.cells_written = m_cells_written;
     mdata->schema_generation = m_metalog_entity->table.generation;
-    mdata->soft_limit = m_metalog_entity->state.soft_limit;
   }
 
   mdata->range = this;
@@ -458,6 +457,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->bytes_returned = m_bytes_returned;
     mdata->load_factors.disk_bytes_read = m_disk_bytes_read;
     mdata->state = m_metalog_entity->state.state;
+    mdata->soft_limit = m_metalog_entity->state.soft_limit;
   }
 
   for (size_t i=0; i<ag_vector.size(); i++) {
@@ -502,6 +502,8 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
   }
 
   mdata->busy = m_maintenance_guard.in_progress() || !m_metalog_entity->load_acknowledged;
+
+  mdata->needs_major_compaction = m_metalog_entity->needs_compaction;
 
   if (mutator)
     m_load_metrics.compute_and_store(mutator, now, mdata->load_factors,
@@ -569,7 +571,7 @@ void Range::relinquish_install_log() {
   Global::log_dfs->mkdirs(m_metalog_entity->state.transfer_log);
 
   /**
-   * Write RelinquishStart MetaLog entry
+   * Persist RELINQUISH_LOG_INSTALLED Metalog state
    */
   {
     ScopedLock lock(m_mutex);
@@ -577,8 +579,7 @@ void Range::relinquish_install_log() {
   }
   for (int i=0; true; i++) {
     try {
-      /**  TBD **/
-      //Global::range_log->log_relinquish_start(m_metalog_entity->table, m_metalog_entity->spec);
+      Global::rsml_writer->record_state(m_metalog_entity.get());
       break;
     }
     catch (Exception &e) {
@@ -587,7 +588,7 @@ void Range::relinquish_install_log() {
         poll(0, 0, 5000);
         continue;
       }
-      HT_ERRORF("Problem writing RelinquishStart meta log entry for %s",
+      HT_ERRORF("Problem updating meta log entry with RELINQUISH_LOG_INSTALLED state for %s",
                 m_name.c_str());
       HT_FATAL_OUT << e << HT_END;
     }
@@ -619,7 +620,7 @@ void Range::relinquish_compact_and_finish() {
     HT_THROW(Error::CANCELLED, "");
 
   /**
-   * Perform major compactions
+   * Perform minor compactions
    */
   for (size_t i=0; i<ag_vector.size(); i++)
     ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR);
@@ -630,8 +631,6 @@ void Range::relinquish_compact_and_finish() {
     ScopedLock lock(m_schema_mutex);
     m_metalog_entity->table.generation = m_schema->get_generation();
   }
-
-  m_dropped = true;
 
   // Remove range from the system
   {
@@ -672,12 +671,15 @@ void Range::relinquish_compact_and_finish() {
                               m_metalog_entity->state.soft_limit, false);
 
   /**
-   * Write RelinquishDone MetaLog entry
+   * Persist STEADY Metalog state
    */
+  {
+    ScopedLock lock(m_mutex);
+    m_metalog_entity->state.state = RangeState::STEADY;
+  }
   for (int i=0; true; i++) {
     try {
-      // TBD
-      //Global::range_log->log_relinquish_done(m_metalog_entity->table, m_metalog_entity->spec, m_metalog_entity->state);
+      Global::rsml_writer->record_state(m_metalog_entity.get());
       break;
     }
     catch (Exception &e) {
@@ -686,13 +688,13 @@ void Range::relinquish_compact_and_finish() {
         poll(0, 0, 5000);
         continue;
       }
-      HT_ERRORF("Problem writing RelinquishDone meta log entry for %s",
+      HT_ERRORF("Problem updating meta log entry with STEADY state for %s",
                 m_name.c_str());
       HT_FATAL_OUT << e << HT_END;
     }
   }
 
-  // Acknowledge write of the RelinquishDone RSML entry to the master
+  // Acknowledge RSML update
   try {
     m_master_client->relinquish_acknowledge(&m_metalog_entity->table,
                                             m_metalog_entity->spec, (DispatchHandler *)0);
@@ -844,12 +846,14 @@ void Range::split_install_log() {
     m_metalog_entity->state.set_old_boundary_row(m_metalog_entity->spec.start_row);
 
   /**
-   * Write SPLIT_START MetaLog entry
+   * Persist SPLIT_LOG_INSTALLED Metalog state
    */
-  m_metalog_entity->state.state = RangeState::SPLIT_LOG_INSTALLED;
+  {
+    ScopedLock lock(m_mutex);
+    m_metalog_entity->state.state = RangeState::SPLIT_LOG_INSTALLED;
+  }
   for (int i=0; true; i++) {
     try {
-      //Global::range_log->log_split_start(m_metalog_entity->table, m_metalog_entity->spec, m_metalog_entity->state);
       Global::rsml_writer->record_state(m_metalog_entity.get());
       break;
     }
@@ -859,7 +863,7 @@ void Range::split_install_log() {
         poll(0, 0, 5000);
         continue;
       }
-      HT_ERRORF("Problem writing SplitStart meta log entry for %s "
+      HT_ERRORF("Problem updating meta log with SPLIT_LOG_INSTALLED state for %s "
                 "split-point='%s'", m_name.c_str(), m_metalog_entity->state.split_point);
       HT_FATAL_OUT << e << HT_END;
     }
@@ -1009,10 +1013,6 @@ void Range::split_compact_and_shrink() {
     }
   }
 
-  /**
-   * Write SplitShrunk MetaLog entry
-   */
-  m_metalog_entity->state.state = RangeState::SPLIT_SHRUNK;
   if (m_split_off_high) {
     /** Create DFS directories for this range **/
     {
@@ -1035,9 +1035,15 @@ void Range::split_compact_and_shrink() {
 
   }
 
+  /**
+   * Persist SPLIT_SHRUNK MetaLog state
+   */
+  {
+    ScopedLock lock(m_mutex);
+    m_metalog_entity->state.state = RangeState::SPLIT_SHRUNK;
+  }
   for (int i=0; true; i++) {
     try {
-      //Global::range_log->log_split_shrunk(m_metalog_entity->table, m_metalog_entity->spec, m_metalog_entity->state);
       Global::rsml_writer->record_state(m_metalog_entity.get());
       break;
     }
@@ -1047,7 +1053,7 @@ void Range::split_compact_and_shrink() {
         poll(0, 0, 5000);
         continue;
       }
-      HT_ERRORF("Problem writing SplitShrunk meta log entry for %s "
+      HT_ERRORF("Problem updating meta log entry with SPLIT_SHRUNK state %s "
                 "split-point='%s'", m_name.c_str(), m_metalog_entity->state.split_point);
       HT_FATAL_OUT << e << HT_END;
     }
@@ -1103,20 +1109,16 @@ void Range::split_notify_master() {
   HT_MAYBE_FAIL("split-3");
   HT_MAYBE_FAIL_X("metadata-split-3", m_metalog_entity->table.is_metadata());
 
-  String split_point = m_metalog_entity->state.split_point;
-
+  /**
+   * Persist STEADY Metalog state
+   */
   {
-    ScopedLock lock(m_schema_mutex);
+    ScopedLock lock(m_mutex);
     m_metalog_entity->state.clear();
     m_metalog_entity->state.soft_limit = soft_limit;
   }
-
-  /**
-   * Write SplitDone MetaLog entry
-   */
   for (int i=0; true; i++) {
     try {
-      //Global::range_log->log_split_done(m_metalog_entity->table, m_metalog_entity->spec, m_metalog_entity->state);
       Global::rsml_writer->record_state(m_metalog_entity.get());
       break;
     }
@@ -1126,13 +1128,13 @@ void Range::split_notify_master() {
         poll(0, 0, 5000);
         continue;
       }
-      HT_ERRORF("Problem writing SplitDone meta log entry for %s "
-                "split-point='%s'", m_name.c_str(), split_point.c_str());
+      HT_ERRORF("Problem updating meta log with STEADY state for %s",
+                m_name.c_str());
       HT_FATAL_OUT << e << HT_END;
     }
   }
 
-  // Acknowledge write of the SplitDone RSML entry to the master
+  // Acknowledge RSML update
   try {
     m_master_client->relinquish_acknowledge(&m_metalog_entity->table, range,
                                             (DispatchHandler *)0);
@@ -1186,6 +1188,17 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
     if (e.code() == Error::CANCELLED || cancel_maintenance())
       return;
     throw;
+  }
+
+  if (m_metalog_entity->needs_compaction && MaintenanceFlag::major_compaction(flags)) {
+    try {
+      m_metalog_entity->needs_compaction = false;
+      Global::rsml_writer->record_state(m_metalog_entity.get());
+    }
+    catch (Exception &e) {
+      HT_ERRORF("Problem updating meta log entry for %s", m_name.c_str());
+      m_metalog_entity->needs_compaction = true;
+    }
   }
 
   {

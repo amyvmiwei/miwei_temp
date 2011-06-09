@@ -40,6 +40,7 @@ extern "C" {
 
 #include "ConnectionHandler.h"
 #include "Context.h"
+#include "LoadBalancerBasic.h"
 #include "MetaLogDefinitionMaster.h"
 #include "OperationInitialize.h"
 #include "OperationProcessor.h"
@@ -161,6 +162,8 @@ int main(int argc, char **argv) {
 
     int worker_count  = get_i32("workers");
     context->op = new OperationProcessor(context, worker_count);
+
+    context->balancer = new LoadBalancerBasic(context);
 
     // First do System Upgrade
     operation = new OperationSystemUpgrade(context);

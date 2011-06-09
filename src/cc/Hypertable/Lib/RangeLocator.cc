@@ -347,7 +347,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
     }
     catch (Exception &e) {
       if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
-        m_cache->invalidate(TableIdentifier::METADATA_ID, meta_keys.start);
+        m_root_stale = true;
       SAVE_ERR2(e.code(), e, format("Problem creating scanner for start row "
                 "'%s' on METADATA[..??]", meta_keys.start));
       return e.code();

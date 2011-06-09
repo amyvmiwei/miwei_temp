@@ -48,6 +48,7 @@ namespace Hypertable {
 
     bool operator==(const TableIdentifier &other) const;
     bool operator!=(const TableIdentifier &other) const;
+    bool operator<(const TableIdentifier &other) const;
 
     bool is_metadata() const { return !strcmp(id, METADATA_ID); }
     bool is_system() const { return !strncmp(id, "0/", 2); }
@@ -120,6 +121,7 @@ namespace Hypertable {
     virtual ~RangeSpec() { }
     bool operator==(const RangeSpec &other) const;
     bool operator!=(const RangeSpec &other) const;
+    bool operator<(const RangeSpec &other) const;
 
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;

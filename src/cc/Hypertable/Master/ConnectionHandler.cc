@@ -33,6 +33,7 @@
 #include "ConnectionHandler.h"
 
 #include "OperationAlterTable.h"
+#include "OperationBalance.h"
 #include "OperationCollectGarbage.h"
 #include "OperationCreateNamespace.h"
 #include "OperationCreateTable.h"
@@ -124,6 +125,9 @@ void ConnectionHandler::handle(EventPtr &event) {
       case MasterProtocol::COMMAND_RELINQUISH_ACKNOWLEDGE:
         operation = new OperationRelinquishAcknowledge(m_context, event);
         break;
+      case MasterProtocol::COMMAND_BALANCE:
+        operation = new OperationBalance(m_context, event);
+        break;
       case MasterProtocol::COMMAND_SHUTDOWN:
         HT_INFO("Received shutdown command");
         m_shutdown = true;
@@ -158,15 +162,19 @@ void ConnectionHandler::handle(EventPtr &event) {
           return;
         m_context->op->add_operation(operation);
       }
-      else
-        HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
-                  (Llu)event->header.command);
+      else {
+        ResponseCallback cb(m_context->comm, event);
+        cb.error(Error::PROTOCOL_ERROR, 
+                 format("Unimplemented command (%llu)", (Llu)event->header.command));
+      }
     }
     catch (Exception &e) {
-      ResponseCallback cb(m_context->comm, event);
-      HT_ERROR_OUT << e << HT_END;
-      cb.error(Error::PROTOCOL_ERROR, 
-               format("%s - %s", e.what(), get_text(e.code())));
+      if (e.code() == Error::MASTER_OPERATION_IN_PROGRESS)
+        HT_WARNF("%s", e.what());
+      else
+        HT_ERROR_OUT << e << HT_END;
+      operation->complete_error_no_log(e.code(), e.what());
+      m_context->response_manager->add_operation(operation);
     }
   }
   else if (event->type == Event::DISCONNECT) {
@@ -184,16 +192,24 @@ void ConnectionHandler::handle(EventPtr &event) {
     int error;
     time_t now = time(0);
 
-    if (m_context->next_monitoring_time <= now) {
-      operation = new OperationGatherStatistics(m_context);
-      m_context->op->add_operation(operation);
-      m_context->next_monitoring_time = now + (m_context->monitoring_interval/1000) - 1;
-    }
+    try {
+      if (m_context->next_monitoring_time <= now) {
+        operation = new OperationGatherStatistics(m_context);
+        m_context->op->add_operation(operation);
+        m_context->next_monitoring_time = now + (m_context->monitoring_interval/1000) - 1;
+      }
 
-    if (m_context->next_gc_time <= now) {
-      operation = new OperationCollectGarbage(m_context);
-      m_context->op->add_operation(operation);
-      m_context->next_gc_time = now + (m_context->gc_interval/1000) - 1;
+      if (m_context->next_gc_time <= now) {
+        operation = new OperationCollectGarbage(m_context);
+        m_context->op->add_operation(operation);
+        m_context->next_gc_time = now + (m_context->gc_interval/1000) - 1;
+      }
+    }
+    catch (Exception &e) {
+      if (e.code() == Error::MASTER_OPERATION_IN_PROGRESS)
+        HT_WARNF("%s", e.what());
+      else
+        HT_ERROR_OUT << e << HT_END;
     }
 
     if ((error = m_context->comm->set_timer(m_context->timer_interval, this)) != Error::OK)

@@ -36,6 +36,7 @@
 #include "DfsBroker/Lib/Client.h"
 
 #include "Hypertable/Master/Context.h"
+#include "Hypertable/Master/LoadBalancerBasic.h"
 #include "Hypertable/Master/MetaLogDefinitionMaster.h"
 #include "Hypertable/Master/OperationCreateNamespace.h"
 #include "Hypertable/Master/OperationCreateTable.h"
@@ -248,6 +249,8 @@ int main(int argc, char **argv) {
 
     FailureInducer::instance = new FailureInducer();
     context->request_timeout = 600;
+
+    context->balancer = new LoadBalancerBasic(context);
 
     ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
     context->response_manager = new ResponseManager(rmctx);

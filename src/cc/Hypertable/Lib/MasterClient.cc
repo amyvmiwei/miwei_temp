@@ -583,6 +583,8 @@ MasterClient::move_range(TableIdentifier *table, RangeSpec &range,
   }
 }
 
+
+
 void
 MasterClient::relinquish_acknowledge(TableIdentifier *table, RangeSpec &range,
                                      DispatchHandler *handler, Timer *timer) {
@@ -793,6 +795,77 @@ void MasterClient::shutdown(Timer *timer) {
     if (error != Error::COMM_BROKEN_CONNECTION)
       HT_THROW(error, "Master 'shutdown' error");
   }
+}
+
+void MasterClient::balance(BalancePlan &plan, DispatchHandler *handler,
+                           Timer *timer) {
+  Timer tmp_timer(m_timeout_ms);
+  CommBufPtr cbp;
+  EventPtr event;
+  int64_t id = 0;
+  String label = "balance";
+
+  initialize(timer, tmp_timer);
+
+  while (!timer->expired()) {
+    cbp = MasterProtocol::create_balance_request(plan);
+    if (!send_message(cbp, timer, event, label))
+      continue;
+    const uint8_t *ptr = event->payload + 4;
+    size_t remain = event->payload_len - 4;
+    id = decode_i64(&ptr, &remain);
+    cbp = MasterProtocol::create_fetch_result_request(id);
+    send_message_async(cbp, handler, timer, label);
+    return;
+  }
+
+  {
+    ScopedLock lock(m_mutex);
+    HT_THROWF(Error::REQUEST_TIMEOUT,
+              "MasterClient operation %s to master %s failed", label.c_str(),
+              m_master_addr.format().c_str());
+  }
+}
+
+
+
+void MasterClient::balance(BalancePlan &plan, Timer *timer) {
+  Timer tmp_timer(m_timeout_ms);
+  CommBufPtr cbp;
+  EventPtr event;
+  int64_t id = 0;
+  String label = "balance";
+
+  initialize(timer, tmp_timer);
+
+  try {
+
+    while (!timer->expired()) {
+      cbp = MasterProtocol::create_balance_request(plan);
+
+      if (!send_message(cbp, timer, event, label))
+        continue;
+      const uint8_t *ptr = event->payload + 4;
+      size_t remain = event->payload_len - 4;
+      id = decode_i64(&ptr, &remain);
+      break;
+    }
+
+    if (timer->expired()) {
+      ScopedLock lock(m_mutex);
+      HT_THROWF(Error::REQUEST_TIMEOUT,
+                "MasterClient operation %s to master %s failed", label.c_str(),
+                m_master_addr.format().c_str());
+    }
+
+  }
+  catch (Exception &e) {
+    if (e.code() != Error::MASTER_OPERATION_IN_PROGRESS)
+      HT_THROW2(e.code(), e, label);
+  }
+
+  fetch_result(id, timer, event, label);
+
 }
 
 

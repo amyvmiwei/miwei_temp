@@ -116,6 +116,7 @@ namespace Hypertable {
     virtual bool remove_explicitly() { return false; }
 
     void complete_error(int error, const String &msg);
+    void complete_error_no_log(int error, const String &msg);
     void complete_error(Exception &e);
     void complete_ok();
     void complete_ok_no_log();
@@ -175,7 +176,8 @@ namespace Hypertable {
         OPERATION_RENAME_TABLE           = 0x0002000F,
         OPERATION_GET_SCHEMA             = 0x00020010,
         OPERATION_MOVE_RANGE             = 0x00020011,
-        OPERATION_RELINQUISH_ACKNOWLEDGE = 0x00020012
+        OPERATION_RELINQUISH_ACKNOWLEDGE = 0x00020012,
+        OPERATION_BALANCE                = 0x00020013
       };
     }
   }

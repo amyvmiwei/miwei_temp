@@ -107,6 +107,9 @@ namespace Hypertable {
     void drop_namespace(const String &name, Namespace *base=NULL, bool if_exists=false);
 
     Hyperspace::SessionPtr& get_hyperspace_session();
+
+    MasterClientPtr get_master_client();
+
     void close();
     void shutdown();
 

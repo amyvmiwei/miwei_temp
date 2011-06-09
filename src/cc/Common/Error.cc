@@ -95,6 +95,8 @@ namespace {
     { Error::NO_RESPONSE,                   "HYPERTABLE no response" },
     { Error::NOT_ALLOWED,                   "HYPERTABLE not allowed" },
     { Error::INDUCED_FAILURE,               "HYPERTABLE induced failure" },
+    { Error::SERVER_SHUTTING_DOWN,          "HYPERTABLE server shutting down" },
+    { Error::LOCATION_UNASSIGNED,           "HYPERTABLE location unassigned" },
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},
     { Error::CONFIG_GET_ERROR,            "CONFIG failed to get config value"},

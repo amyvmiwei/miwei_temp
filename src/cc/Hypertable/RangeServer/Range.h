@@ -97,6 +97,7 @@ namespace Hypertable {
       bool     is_metadata;
       bool     is_system;
       bool     relinquish;
+      bool     needs_major_compaction;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;

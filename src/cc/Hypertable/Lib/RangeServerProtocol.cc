@@ -51,6 +51,7 @@ namespace Hypertable {
     "close",
     "wait for maintenance",
     "acknowledge load",
+    "relinquish range",
     (const char *)0
   };
 
@@ -250,5 +251,18 @@ namespace Hypertable {
     CommBuf *cbuf = new CommBuf(header);
     return cbuf;
   }
+
+  CommBuf *
+  RangeServerProtocol::create_request_relinquish_range(const TableIdentifier &table,
+                                                 const RangeSpec &range) {
+    CommHeader header(COMMAND_RELINQUISH_RANGE);
+    CommBuf *cbuf = new CommBuf(header, table.encoded_length()
+                                + range.encoded_length());
+    table.encode(cbuf->get_data_ptr_address());
+    range.encode(cbuf->get_data_ptr_address());
+    return cbuf;
+  }
+
+
 
 } // namespace Hypertable

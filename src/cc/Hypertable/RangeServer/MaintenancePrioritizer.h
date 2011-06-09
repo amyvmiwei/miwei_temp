@@ -66,9 +66,9 @@ namespace Hypertable {
                                         MemoryState &memory_state,
                                         int32_t &priority, String &trace_str);
 
-    bool schedule_splits(RangeStatsVector &range_data,
-                         MemoryState &memory_state,
-                         int32_t &priority, String &trace_str);
+    bool schedule_splits_and_relinquishes(RangeStatsVector &range_data,
+                                          MemoryState &memory_state,
+                                          int32_t &priority, String &trace_str);
 
     bool schedule_necessary_compactions(RangeStatsVector &range_data,
                             CommitLog *log, int64_t prune_threshold,

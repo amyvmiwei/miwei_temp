@@ -100,8 +100,7 @@ MaintenancePrioritizer::schedule_inprogress_operations(RangeStatsVector &range_d
       continue;
 
     in_progress = false;
-    if (range_data[i]->state == RangeState::RELINQUISH_LOG_INSTALLED ||
-        range_data[i]->relinquish) {
+    if (range_data[i]->state == RangeState::RELINQUISH_LOG_INSTALLED) {
       HT_INFOF("Adding maintenance for range %s because mid-relinquish(%d)",
                range_data[i]->range->get_name().c_str(), range_data[i]->state);
       range_data[i]->maintenance_flags |= MaintenanceFlag::RELINQUISH;
@@ -133,7 +132,7 @@ MaintenancePrioritizer::schedule_inprogress_operations(RangeStatsVector &range_d
 }
 
 bool
-MaintenancePrioritizer::schedule_splits(RangeStatsVector &range_data,
+MaintenancePrioritizer::schedule_splits_and_relinquishes(RangeStatsVector &range_data,
             MemoryState &memory_state, int32_t &priority, String &trace_str) {
   AccessGroup::MaintenanceData *ag_data;
   AccessGroup::CellStoreMaintenanceData *cs_data;
@@ -160,7 +159,14 @@ MaintenancePrioritizer::schedule_splits(RangeStatsVector &range_data,
 
     if (!range_data[i]->range->is_root() &&
 	range_data[i]->range->get_error() != Error::RANGESERVER_ROW_OVERFLOW) {
-      if (range_data[i]->is_metadata) {
+      if (range_data[i]->relinquish) {
+        HT_INFOF("Adding maintenance for range %s because marked for relinquish(%d)",
+                 range_data[i]->range->get_name().c_str(), range_data[i]->state);
+        memory_state.decrement_needed(mem_total);
+        range_data[i]->priority = priority++;
+        range_data[i]->maintenance_flags |= MaintenanceFlag::RELINQUISH;
+      }
+      else if (range_data[i]->is_metadata) {
         if (Global::range_metadata_split_size != 0 &&
             disk_total >= Global::range_metadata_split_size) {
           HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",

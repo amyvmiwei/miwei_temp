@@ -1,6 +1,7 @@
 # CMake file for integration tests
 
 #add_subdirectory(scanner-create-failure)
+add_subdirectory(balance)
 add_subdirectory(scanner-abrupt-end)
 add_subdirectory(future-abrupt-end)
 add_subdirectory(future-mutator-cancel)

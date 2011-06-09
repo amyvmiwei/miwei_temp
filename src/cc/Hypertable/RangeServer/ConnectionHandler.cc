@@ -52,6 +52,7 @@ extern "C" {
 #include "RequestHandlerReplayUpdate.h"
 #include "RequestHandlerReplayCommit.h"
 #include "RequestHandlerDropRange.h"
+#include "RequestHandlerRelinquishRange.h"
 #include "RequestHandlerClose.h"
 #include "RequestHandlerCommitLogSync.h"
 #include "RequestHandlerWaitForMaintenance.h"
@@ -153,6 +154,12 @@ void ConnectionHandler::handle(EventPtr &event) {
         handler = new RequestHandlerDropRange(m_comm, m_range_server_ptr.get(),
                                               event);
         break;
+
+      case RangeServerProtocol::COMMAND_RELINQUISH_RANGE:
+        handler = new RequestHandlerRelinquishRange(m_comm, m_range_server_ptr.get(),
+                                                    event);
+        break;
+        
       case RangeServerProtocol::COMMAND_STATUS:
         handler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(),
                                            event);

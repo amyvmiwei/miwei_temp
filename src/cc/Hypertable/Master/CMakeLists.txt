@@ -23,10 +23,13 @@ Context.cc
 GcWorker.cc
 DispatchHandlerOperation.cc
 DispatchHandlerOperationGetStatistics.cc
+LoadBalancer.cc
+LoadBalancerBasic.cc
 MetaLogDefinitionMaster.cc
 Monitoring.cc
 Operation.cc
 OperationAlterTable.cc
+OperationBalance.cc
 OperationCollectGarbage.cc
 OperationCreateNamespace.cc
 OperationCreateTable.cc

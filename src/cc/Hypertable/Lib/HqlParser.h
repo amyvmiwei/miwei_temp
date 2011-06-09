@@ -49,6 +49,7 @@
 #include "Common/Logger.h"
 #include "Common/Time.h"
 
+#include "BalancePlan.h"
 #include "Key.h"
 #include "Cells.h"
 #include "Schema.h"
@@ -95,6 +96,7 @@ namespace Hypertable {
       COMMAND_DROP_NAMESPACE,
       COMMAND_RENAME_TABLE,
       COMMAND_WAIT_FOR_MAINTENANCE,
+      COMMAND_BALANCE,
       COMMAND_MAX
     };
 
@@ -267,6 +269,8 @@ namespace Hypertable {
       String str;
       String output_file;
       String input_file;
+      String source;
+      String destination;
       int input_file_src;
       String header_file;
       int header_file_src;
@@ -292,6 +296,7 @@ namespace Hypertable {
       ScanState scan;
       InsertRecord current_insert_value;
       CellsBuilder inserts;
+      BalancePlan balance_plan;
       std::vector<String> delete_columns;
       bool delete_all_columns;
       String delete_row;
@@ -370,6 +375,46 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         state.range_end_row = String(str, end-str);
         trim_if(state.range_end_row, is_any_of("'\""));
+      }
+      ParserState &state;
+    };
+
+    struct set_source {
+      set_source(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.source = String(str, end-str);
+        trim_if(state.source, is_any_of("'\""));
+      }
+      ParserState &state;
+    };
+
+    struct set_destination {
+      set_destination(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.destination = String(str, end-str);
+        trim_if(state.destination, is_any_of("'\""));
+      }
+      ParserState &state;
+    };
+
+    struct add_range_move_spec {
+      add_range_move_spec(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        RangeMoveSpecPtr move_spec = new RangeMoveSpec();
+        move_spec->table.set_id(state.table_name);
+        move_spec->range.set_start_row(state.range_start_row);
+        move_spec->range.set_end_row(state.range_end_row);
+        move_spec->source_location = state.source;
+        move_spec->dest_location = state.destination;
+        state.balance_plan.moves.push_back(move_spec);
+      }
+      ParserState &state;
+    };
+
+    struct balance_set_duration {
+      balance_set_duration(ParserState &state) : state(state) { }
+      void operator()(size_t duration) const {
+        state.balance_plan.duration_millis = 1000*duration;
       }
       ParserState &state;
     };
@@ -1540,6 +1585,8 @@ namespace Hypertable {
 
           Token CREATE       = as_lower_d["create"];
           Token DROP         = as_lower_d["drop"];
+          Token BALANCE      = as_lower_d["balance"];
+          Token DURATION     = as_lower_d["duration"];
           Token ADD          = as_lower_d["add"];
           Token USE          = as_lower_d["use"];
           Token RENAME       = as_lower_d["rename"];
@@ -1729,6 +1776,29 @@ namespace Hypertable {
                 COMMAND_REPLAY_COMMIT)]
             | exists_table_statement[set_command(self.state, COMMAND_EXISTS_TABLE)]
             | wait_for_maintenance_statement[set_command(self.state, COMMAND_WAIT_FOR_MAINTENANCE)]
+            | balance_statement[set_command(self.state, COMMAND_BALANCE)]
+            ;
+
+          balance_statement
+            = BALANCE >> *(range_move_spec_list)
+                      >> *(balance_option_spec)
+            ;
+
+          range_move_spec_list
+            = range_move_spec[add_range_move_spec(self.state)] >> *(COMMA
+              >> range_move_spec[add_range_move_spec(self.state)])
+            ;
+
+          range_move_spec
+            = LPAREN 
+            >> range_spec >> COMMA
+            >> string_literal[set_source(self.state)] >> COMMA
+            >> string_literal[set_destination(self.state)]
+            >> RPAREN
+            ;
+
+          balance_option_spec
+            = DURATION >> EQUAL >> uint_p[balance_set_duration(self.state)]
             ;
 
           drop_range_statement
@@ -2310,6 +2380,10 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(replay_start_statement);
           BOOST_SPIRIT_DEBUG_RULE(replay_log_statement);
           BOOST_SPIRIT_DEBUG_RULE(replay_commit_statement);
+          BOOST_SPIRIT_DEBUG_RULE(balance_statement);
+          BOOST_SPIRIT_DEBUG_RULE(balance_option_spec);
+          BOOST_SPIRIT_DEBUG_RULE(range_move_spec_list);
+          BOOST_SPIRIT_DEBUG_RULE(range_move_spec);
 #endif
         }
 
@@ -2342,12 +2416,14 @@ namespace Hypertable {
           load_range_statement,
           dump_statement, dump_where_clause, dump_where_predicate,
           dump_table_statement, dump_table_option_spec, range_spec,
-	        exists_table_statement, update_statement, create_scanner_statement,
+          exists_table_statement, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
           close_statement, shutdown_statement, shutdown_master_statement, 
           drop_range_statement, replay_start_statement, replay_log_statement,
           replay_commit_statement, cell_interval, cell_predicate,
-          cell_spec, wait_for_maintenance_statement;
+          cell_spec, wait_for_maintenance_statement, move_range_statement,
+          balance_statement, range_move_spec_list, range_move_spec,
+          balance_option_spec;
       };
 
       ParserState &state;

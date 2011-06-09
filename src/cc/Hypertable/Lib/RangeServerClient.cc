@@ -582,6 +582,31 @@ RangeServerClient::drop_range(const CommAddress &addr,
   send_message(addr, cbp, handler, timer.remaining());
 }
 
+void RangeServerClient::relinquish_range(const CommAddress &addr,
+                   const TableIdentifier &table, const RangeSpec &range) {
+  do_relinquish_range(addr, table, range, m_default_timeout_ms);
+}
+
+void RangeServerClient::relinquish_range(const CommAddress &addr,
+                                         const TableIdentifier &table,
+                                         const RangeSpec &range, Timer &timer) {
+  do_relinquish_range(addr, table, range, timer.remaining());
+}
+
+void
+RangeServerClient::do_relinquish_range(const CommAddress &addr, const TableIdentifier &table,
+                                       const RangeSpec &range, uint32_t timeout_ms) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event;
+  CommBufPtr cbp(RangeServerProtocol::create_request_relinquish_range(table, range));
+  send_message(addr, cbp, &sync_handler, timeout_ms);
+
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
+             String("RangeServer relinquish_range() failure : ")
+             + Protocol::string_format_message(event));
+}
+
 
 void
 RangeServerClient::send_message(const CommAddress &addr, CommBufPtr &cbp,
