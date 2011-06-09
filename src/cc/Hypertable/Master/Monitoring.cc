@@ -69,7 +69,6 @@ void Monitoring::create_dir(const String &dir) {
 
 void Monitoring::add_server(const String &location, StatsSystem &system_info) {
   ScopedLock lock(m_mutex);
-  uint32_t id;
 
   RangeServerMap::iterator iter = m_server_map.find(location);
 
@@ -78,15 +77,8 @@ void Monitoring::add_server(const String &location, StatsSystem &system_info) {
     return;
   }
 
-  const char *ptr = location.c_str();
-  while (*ptr && !isdigit(*ptr))
-    ptr++;
-  id = atoi(ptr);
-  HT_ASSERT(id > 0);
-
   m_server_map[location] = new RangeServerStatistics();
   m_server_map[location]->location = location;
-  m_server_map[location]->id = id;
   m_server_map[location]->system_info = new StatsSystem(system_info);
 }
 
@@ -103,7 +95,7 @@ namespace {
   /** STL Strict Weak Ordering for RangeServerStatistics  */
   struct LtRangeServerStatistics {
     bool operator()(const RangeServerStatistics &s1, const RangeServerStatistics &s2) const {
-      return s1.id < s2.id;
+      return s1.location < s2.location;
     }
   };
 

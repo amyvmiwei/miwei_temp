@@ -34,7 +34,6 @@ namespace Hypertable {
   public:
     RangeServerStatistics() : dropped(false), clock_skew(0), stats_timestamp(TIMESTAMP_MIN), fetch_timestamp(TIMESTAMP_MIN), fetch_error(0) { }
     String location;
-    uint32_t id;
     InetAddr addr;
     bool dropped;
     int32_t clock_skew;
