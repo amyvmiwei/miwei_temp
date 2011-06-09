@@ -25,6 +25,7 @@
 #include "Common/Serialization.h"
 #include "Common/StatsSystem.h"
 #include "Common/Path.h"
+#include "Common/md5.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -47,8 +48,15 @@ LocationInitializer::LocationInitializer(PropertiesPtr &props)
   // Get location string
   {
     m_location = m_props->get_str("Hypertable.RangeServer.ProxyName");
-    if (!m_location.empty())
+    if (!m_location.empty()) {
       boost::trim(m_location);
+      if (m_location == "*") {
+        char location_hash[33];
+        uint16_t port = m_props->get_i16("Hypertable.RangeServer.Port");
+        md5_string(format("%s:%u", System::net_info().host_name.c_str(), port).c_str(), location_hash);
+        m_location = format("rs-%s", String(location_hash).substr(0, 8).c_str());
+      }
+    }
     else if (FileUtils::exists(m_location_file)) {
       if (FileUtils::read(m_location_file, m_location) <= 0) {
         HT_ERRORF("Problem reading location file '%s'", m_location_file.c_str());
