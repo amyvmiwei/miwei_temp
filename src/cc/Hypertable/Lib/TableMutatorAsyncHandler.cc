@@ -47,12 +47,9 @@ TableMutatorAsyncHandler::TableMutatorAsyncHandler(TableMutatorAsync *mutator,
 void TableMutatorAsyncHandler::run() {
   // The scatter buffer will get destroyed when the TableMutator releases it
   // and this method goes out of scope
-  //HT_INFO_OUT << "[bibble] Running TableMutatorAsyncHandler " << std::hex << this << HT_END;
   TableMutatorAsyncScatterBufferPtr buffer =
       m_mutator->get_outstanding_buffer(m_scatter_buffer);
   HT_ASSERT(buffer);
   buffer->finish();
-  //HT_INFO_OUT << "[bibble] TableMutatorAsyncHandler " << std::hex << this << " completed"
-  //    << HT_END;
 }
 

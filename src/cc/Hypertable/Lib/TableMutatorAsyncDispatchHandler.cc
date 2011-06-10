@@ -102,8 +102,6 @@ void TableMutatorAsyncDispatchHandler::handle(EventPtr &event_ptr) {
   bool complete = m_send_buffer->counterp->decrement();
   if (complete) {
     TableMutatorAsyncHandler *handler = new TableMutatorAsyncHandler(m_mutator, m_scatter_buffer);
-    //HT_INFO_OUT << "[bibble] Created TableMutatorAsyncHandler " << std::hex << handler
-    //    << " in TableMutatorAsyncDispatchHandler " << this << HT_END;
     m_app_queue->add(handler);
   }
 }

@@ -46,12 +46,6 @@ namespace Hypertable {
                                      TableMutatorAsyncSendBuffer *send_buffer,
                                      bool auto_refresh);
 
-    ~TableMutatorAsyncDispatchHandler() {
-      //HT_INFO_OUT << "[bibble] Destroying TableMutatorAsyncDispatchHandler " << std::hex
-      //    << this << HT_END;
-      HT_ASSERT(m_handled);
-    }
-
     /**
      * Dispatch method.  This gets called by the AsyncComm layer
      * when an event occurs in response to a previously sent
