@@ -45,12 +45,6 @@ namespace Hypertable {
         send_count(0), retry_count(0), m_table_identifier(tid),
         m_range_locator(rl) { }
 
-    //~TableMutatorAsyncSendBuffer() {
-    //  HT_INFO_OUT << "[bibble] Deleting TableMutatorAsyncSendBuffer " << std::hex << this
-    //      << " and dispatch handler "
-    //      << std::hex << dispatch_handler.get()  << HT_END;
-    //}
-
     void add_retries(uint32_t count, uint32_t offset, uint32_t len) {
       accum.add(pending_updates.base+offset, len);
       counterp->set_retries();
@@ -104,8 +98,6 @@ namespace Hypertable {
     }
     void reset() {
       clear();
-      //HT_INFO_OUT << "[bibble] In TableMutatorAsyncSendBuffer " << std::hex << this
-      //    << " deleting dispatch handler " << dispatch_handler.get()  << HT_END;
       dispatch_handler = 0;
     }
     void get_failed_regions(std::vector<FailedRegionAsync> &errors) {
