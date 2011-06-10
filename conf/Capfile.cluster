@@ -218,6 +218,11 @@ task :start_master, :roles => :master do
   CMD
 end
 
+desc "Starts monitoring server."
+task :start_monitoring, :roles => :master do
+  #{install_dir}/current/bin/start-monitoring.sh
+end
+
 desc "Starts ThriftBroker on master."
 task :start_master_thriftbroker, :roles => :master do
   run <<-CMD
@@ -287,6 +292,11 @@ task :stop_master, :roles => :master do
   #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver --no-dfsbroker &&
   #{install_dir}/current/bin/stop-monitoring.sh
   CMD
+end
+
+desc "Stops monitoring server."
+task :stop_monitoring, :roles => :master do
+  #{install_dir}/current/bin/stop-monitoring.sh
 end
 
 desc "Stops hyperspace processes."
