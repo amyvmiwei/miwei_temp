@@ -549,6 +549,7 @@ void IOHandlerData::handle_message_header(clock_t arrival_clocks, time_t arrival
     return;
   }
 
+  m_event = new Event(Event::MESSAGE, m_addr);
   m_event->load_header(m_sd, m_message_header, header_len);
   m_event->arrival_clocks = arrival_clocks;
   m_event->arrival_time = arrival_time;
@@ -569,7 +570,6 @@ void IOHandlerData::handle_message_header(clock_t arrival_clocks, time_t arrival
   m_message_remaining = m_event->header.total_len - header_len;
   m_message_header_remaining = 0;
   m_got_header = true;
-
 }
 
 
@@ -579,6 +579,8 @@ void IOHandlerData::handle_message_body() {
   if (m_event->header.flags & CommHeader::FLAGS_BIT_PROXY_MAP_UPDATE) {
     ReactorRunner::handler_map->update_proxies((const char *)m_message,
                   m_event->header.total_len - m_event->header.header_len);
+    delete [] m_message;
+    delete m_event;
     //HT_INFO("proxy map update");
   }
   else if ((m_event->header.flags & CommHeader::FLAGS_BIT_REQUEST) == 0 &&

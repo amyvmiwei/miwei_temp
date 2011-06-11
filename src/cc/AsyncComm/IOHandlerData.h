@@ -45,16 +45,20 @@ namespace Hypertable {
   public:
 
     IOHandlerData(int sd, const InetAddr &addr, DispatchHandlerPtr &dhp, bool connected=false)
-      : IOHandler(sd, addr, dhp), m_send_queue() {
+      : IOHandler(sd, addr, dhp), m_event(0), m_send_queue() {
       m_connected = connected;
       reset_incoming_message_state();
     }
 
+    virtual ~IOHandlerData() {
+      delete m_event;
+    }
+
     void reset_incoming_message_state() {
       m_got_header = false;
-      m_event = new Event(Event::MESSAGE, m_addr);
+      m_event = 0;
       m_message_header_ptr = m_message_header;
-      m_message_header_remaining = m_event->header.fixed_length();
+      m_message_header_remaining = CommHeader::FIXED_LENGTH;
       m_message = 0;
       m_message_ptr = 0;
       m_message_remaining = 0;
