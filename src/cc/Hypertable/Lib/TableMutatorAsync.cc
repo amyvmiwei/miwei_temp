@@ -336,6 +336,7 @@ void TableMutatorAsync::do_sync() {
 }
 
 TableMutatorAsyncScatterBufferPtr TableMutatorAsync::get_outstanding_buffer(size_t id) {
+  ScopedLock lock(m_buffer_mutex);
   TableMutatorAsyncScatterBufferPtr buffer;
   ScatterBufferAsyncMap::iterator it = m_outstanding_buffers.find(id);
   if (it != m_outstanding_buffers.end())
@@ -363,7 +364,12 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
   bool cancelled = is_cancelled();
   ScopedLock lock(m_mutex);
   TableMutatorAsyncScatterBufferPtr buffer;
-  ScatterBufferAsyncMap::iterator it = m_outstanding_buffers.find(id);
+  ScatterBufferAsyncMap::iterator it;
+
+  {
+    ScopedLock lock(m_buffer_mutex);
+    it = m_outstanding_buffers.find(id);
+  }
   HT_ASSERT(it != m_outstanding_buffers.end());
 
   buffer = it->second;
@@ -409,9 +415,10 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
     else {
       HT_ASSERT(redo);
       m_resends += buffer->get_resend_count();
+      ScopedLock lock(m_buffer_mutex);
       m_outstanding_buffers.erase(it);
-      m_outstanding_buffers[next_id] = redo;
       redo->send(buffer->get_send_flags());
+      m_outstanding_buffers[next_id] = redo;
     }
   }
   else {
