@@ -85,7 +85,6 @@ void Future::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
 void Future::enqueue(ResultPtr &result) {
   ScopedRecLock lock(m_outstanding_mutex);
   size_t mem_result = result->memory_used();
-
   while (!has_remaining_capacity() && !is_cancelled()) {
     m_outstanding_cond.wait(lock);
   }

@@ -66,6 +66,11 @@ namespace Hypertable {
      */
     virtual void deregister_mutator(TableMutatorAsync *mutator) { }
 
+    /**
+     * Callback method for completion, default one does nothing.
+     *
+     */
+    virtual void completed() { }
 
     /**
      * Callback method for successful scan
@@ -125,11 +130,18 @@ namespace Hypertable {
      *
      */
     void decrement_outstanding() {
-      ScopedRecLock lock(m_outstanding_mutex);
-      HT_ASSERT(m_outstanding);
-      --m_outstanding;
-      if (m_outstanding == 0)
-        m_outstanding_cond.notify_one();
+      bool is_complete = false;
+      {
+        ScopedRecLock lock(m_outstanding_mutex);
+        HT_ASSERT(m_outstanding);
+        --m_outstanding;
+        if (m_outstanding == 0)  {
+          m_outstanding_cond.notify_one();
+          is_complete = true;
+        }
+      }
+      if (is_complete)
+        completed();
     }
 
     /**

@@ -164,6 +164,10 @@ namespace {
       _exit(1);
     }
 
+    void completed() {
+      outfile << "Async calls completed" << endl;
+    }
+
     String &get_fruit() {
       return m_fruit.to_str();
     }
