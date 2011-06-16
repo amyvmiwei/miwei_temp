@@ -299,7 +299,7 @@ void TableMutatorAsync::do_sync() {
           for (size_t i=0; i<errors.size(); i++) {
             if (m_table->auto_refresh() &&
                 (errors[i].error == Error::RANGESERVER_GENERATION_MISMATCH ||
-                 !m_mutated && errors[i].error == Error::RANGESERVER_TABLE_NOT_FOUND))
+                 (!m_mutated && errors[i].error == Error::RANGESERVER_TABLE_NOT_FOUND)))
               do_refresh = true;
             else
               HT_ERRORF("commit log sync error - %s - %s", errors[i].msg.c_str(),

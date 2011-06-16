@@ -280,7 +280,7 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
 
       outstanding = true;
 
-      if (flags & Table::MUTATOR_FLAG_NO_LOG_SYNC ==Table::MUTATOR_FLAG_NO_LOG_SYNC)
+      if (flags & Table::MUTATOR_FLAG_NO_LOG_SYNC)
         m_unsynced_rangeservers.insert(send_buffer->addr);
 
     }
