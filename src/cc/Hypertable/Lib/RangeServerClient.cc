@@ -607,6 +607,19 @@ RangeServerClient::do_relinquish_range(const CommAddress &addr, const TableIdent
              + Protocol::string_format_message(event));
 }
 
+void RangeServerClient::heapcheck(const CommAddress &addr, String &outfile) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event;
+  CommBufPtr cbp(RangeServerProtocol::create_request_heapcheck(outfile));
+  send_message(addr, cbp, &sync_handler, m_default_timeout_ms);
+
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
+             String("RangeServer heapcheck() failure : ")
+             + Protocol::string_format_message(event));
+}
+
+
 
 void
 RangeServerClient::send_message(const CommAddress &addr, CommBufPtr &cbp,

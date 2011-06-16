@@ -52,6 +52,7 @@ namespace Hypertable {
     "wait for maintenance",
     "acknowledge load",
     "relinquish range",
+    "heapcheck",
     (const char *)0
   };
 
@@ -263,6 +264,13 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *RangeServerProtocol::create_request_heapcheck(const String &outfile) {
+    CommHeader header(COMMAND_HEAPCHECK);
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
+    CommBuf *cbuf = new CommBuf(header, Serialization::encoded_length_vstr(outfile));
+    Serialization::encode_vstr(cbuf->get_data_ptr_address(), outfile.c_str());
+    return cbuf;
+  }
 
 
 } // namespace Hypertable

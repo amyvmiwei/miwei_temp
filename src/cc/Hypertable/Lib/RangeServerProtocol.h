@@ -58,7 +58,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_WAIT_FOR_MAINTENANCE = 19;
     static const uint64_t COMMAND_ACKNOWLEDGE_LOAD     = 20;
     static const uint64_t COMMAND_RELINQUISH_RANGE     = 21;
-    static const uint64_t COMMAND_MAX                  = 22;
+    static const uint64_t COMMAND_HEAPCHECK            = 22;
+    static const uint64_t COMMAND_MAX                  = 23;
 
     static const char *m_command_strings[];
 
@@ -244,6 +245,14 @@ namespace Hypertable {
      */
     static CommBuf *create_request_relinquish_range(const TableIdentifier &table,
                                                     const RangeSpec &range);
+
+    /** Creates a "heapcheck" request message.
+     *
+     * @param outfile name of file to dump heap stats to
+     * @return protocol message
+     */
+    static CommBuf *create_request_heapcheck(const String &outfile);
+
 
 
     virtual const char *command_text(uint64_t command);

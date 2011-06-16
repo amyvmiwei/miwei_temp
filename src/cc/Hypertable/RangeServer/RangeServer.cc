@@ -36,6 +36,12 @@ extern "C" {
 #include <sys/resource.h>
 }
 
+#if defined(TCMALLOC)
+#include <google/tcmalloc.h>
+#include <google/heap-checker.h>
+#include <google/malloc_extension.h>
+#endif
+
 #include "Common/FailureInducer.h"
 #include "Common/FileUtils.h"
 #include "Common/HashMap.h"
@@ -2527,6 +2533,24 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
     cb->error(Error::LOCAL_IO_ERROR, e.what());
     return;
   }
+  cb->response_ok();
+}
+
+void RangeServer::heapcheck(ResponseCallback *cb, const char *outfile) {
+
+  HT_INFO("heapcheck");
+
+#if defined(TCMALLOC)
+  HeapLeakChecker::NoGlobalLeaks();
+  if (outfile && *outfile) {
+    std::ofstream out(outfile);
+    char buf[4096];
+    MallocExtension::instance()->GetStats(buf, 4096);
+    out << buf << std::endl;
+  }
+#else
+  HT_WARN("heapcheck not defined for current allocator");
+#endif
   cb->response_ok();
 }
 

@@ -12,7 +12,7 @@ set :default_test_args, ""
 
 role :source, "mothercompiler"
 role :master, "mothercompiler"
-role :hyperspace, "mothercompiler, motherlode000, motherlode001"
+role :hyperspace, "mothercompiler", "motherlode000", "motherlode001"
 role :slave,  "motherlode000", "motherlode001", "motherlode002", "motherlode003", "motherlode004", "
 motherlode005", "motherlode006", "motherlode007", "motherlode008"
 role :localhost, "mothercompiler"

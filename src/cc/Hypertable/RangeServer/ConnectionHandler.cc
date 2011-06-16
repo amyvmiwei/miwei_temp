@@ -45,6 +45,7 @@ extern "C" {
 #include "RequestHandlerUpdate.h"
 #include "RequestHandlerCreateScanner.h"
 #include "RequestHandlerFetchScanblock.h"
+#include "RequestHandlerHeapcheck.h"
 #include "RequestHandlerDropTable.h"
 #include "RequestHandlerStatus.h"
 #include "RequestHandlerReplayBegin.h"
@@ -190,6 +191,10 @@ void ConnectionHandler::handle(EventPtr &event) {
       case RangeServerProtocol::COMMAND_UPDATE_SCHEMA:
         handler = new RequestHandlerUpdateSchema(m_comm,
             m_range_server_ptr.get(), event);
+        break;
+      case RangeServerProtocol::COMMAND_HEAPCHECK:
+        handler = new RequestHandlerHeapcheck(m_comm, m_range_server_ptr.get(),
+                                              event);
         break;
       case RangeServerProtocol::COMMAND_COMMIT_LOG_SYNC:
         handler = new RequestHandlerCommitLogSync(m_comm, m_range_server_ptr.get(), event);
