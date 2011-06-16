@@ -91,6 +91,7 @@ RequestHandlerDump.cc
 RequestHandlerGetStatistics.cc
 RequestHandlerGroupCommit.cc
 RequestHandlerFetchScanblock.cc
+RequestHandlerHeapcheck.cc
 RequestHandlerDropTable.cc
 RequestHandlerLoadRange.cc
 RequestHandlerUpdateSchema.cc

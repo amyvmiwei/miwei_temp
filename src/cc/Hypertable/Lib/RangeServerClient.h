@@ -571,6 +571,14 @@ namespace Hypertable {
     void relinquish_range(const CommAddress &addr, const TableIdentifier &table,
                           const RangeSpec &range, Timer &timer);
 
+    /** Issues a "heapcheck" request.  This call blocks until it receives a
+     * response from the server.
+     *
+     * @param addr address of RangeServer
+     * @param outfile output file to dump heap stats to
+     */
+    void heapcheck(const CommAddress &addr, String &outfile);
+
 
   private:
 

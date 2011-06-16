@@ -108,6 +108,7 @@ namespace Hypertable {
 
     void relinquish_range(ResponseCallback *, const TableIdentifier *,
                           const RangeSpec *);
+    void heapcheck(ResponseCallback *, const char *);
 
     void close(ResponseCallback *cb);
 

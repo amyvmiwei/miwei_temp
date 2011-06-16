@@ -12,7 +12,7 @@ find_path(Tcmalloc_INCLUDE_DIR google/tcmalloc.h NO_DEFAULT_PATH PATHS
   /usr/local/include
 )
 
-if (USE_TCMALLOC)
+if (USE_TCMALLOC OR CMAKE_BUILD_TYPE STREQUAL "Debug")
   set(Tcmalloc_NAMES tcmalloc)
 else ()
   set(Tcmalloc_NAMES tcmalloc_minimal tcmalloc)

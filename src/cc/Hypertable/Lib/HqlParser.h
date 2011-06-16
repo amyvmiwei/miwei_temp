@@ -97,6 +97,7 @@ namespace Hypertable {
       COMMAND_RENAME_TABLE,
       COMMAND_WAIT_FOR_MAINTENANCE,
       COMMAND_BALANCE,
+      COMMAND_HEAPCHECK,
       COMMAND_MAX
     };
 
@@ -1703,6 +1704,7 @@ namespace Hypertable {
           Token WAIT         = as_lower_d["wait"];
           Token FOR          = as_lower_d["for"];
           Token MAINTENANCE  = as_lower_d["maintenance"];
+          Token HEAPCHECK    = as_lower_d["heapcheck"];
 
           /**
            * Start grammar definition
@@ -1777,6 +1779,11 @@ namespace Hypertable {
             | exists_table_statement[set_command(self.state, COMMAND_EXISTS_TABLE)]
             | wait_for_maintenance_statement[set_command(self.state, COMMAND_WAIT_FOR_MAINTENANCE)]
             | balance_statement[set_command(self.state, COMMAND_BALANCE)]
+            | heapcheck_statement[set_command(self.state, COMMAND_HEAPCHECK)]
+            ;
+
+          heapcheck_statement
+            = HEAPCHECK >> *(string_literal[set_output_file(self.state)])
             ;
 
           balance_statement
@@ -2384,6 +2391,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(balance_option_spec);
           BOOST_SPIRIT_DEBUG_RULE(range_move_spec_list);
           BOOST_SPIRIT_DEBUG_RULE(range_move_spec);
+          BOOST_SPIRIT_DEBUG_RULE(heapcheck_statement);
 #endif
         }
 
@@ -2423,7 +2431,7 @@ namespace Hypertable {
           replay_commit_statement, cell_interval, cell_predicate,
           cell_spec, wait_for_maintenance_statement, move_range_statement,
           balance_statement, range_move_spec_list, range_move_spec,
-          balance_option_spec;
+          balance_option_spec, heapcheck_statement;
       };
 
       ParserState &state;

@@ -365,6 +365,9 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       m_range_server->close(m_addr);
       m_range_server->shutdown(m_addr);
     }
+    if (state.command == COMMAND_HEAPCHECK) {
+      m_range_server->heapcheck(m_addr, state.output_file);
+    }
     else
       HT_THROW(Error::HQL_PARSE_ERROR, "unsupported command");
   }
