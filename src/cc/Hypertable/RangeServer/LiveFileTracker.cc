@@ -36,7 +36,8 @@ LiveFileTracker::LiveFileTracker(const TableIdentifier *identifier,
                                  const String &ag_name) :
   m_identifier(*identifier), m_schema_ptr(schema_ptr),
   m_start_row(range->start_row), m_end_row(range->end_row),
-  m_ag_name(ag_name), m_need_update(false), m_is_root(false) {
+  m_ag_name(ag_name), m_need_update(false), m_is_root(false),
+  m_last_nextcsid(0), m_cur_nextcsid(0) {
 
   m_is_root = (m_identifier.is_metadata() && *range->start_row == 0
                && !strcmp(range->end_row, Key::END_ROOT_ROW));
