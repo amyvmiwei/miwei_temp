@@ -176,7 +176,7 @@ implements InputSplit,Comparable<TableSplit> {
             }
           }
           if (ri.isSetEnd_row()) {
-            if (m_endrow == null ||
+            if (m_endrow == null || m_endrow.length == 0 ||
                 ri.getEnd_row().compareTo(new String(m_endrow, "UTF-8")) < 0) {
               interval.setEnd_row(ri.getEnd_row());
               interval.setEnd_rowIsSet(true);
