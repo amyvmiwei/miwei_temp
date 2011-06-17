@@ -55,6 +55,8 @@ namespace Hypertable {
       uint64_t block_index_access_counter;
     };
 
+    CellStore() : m_bytes_read(0) { }
+
     virtual ~CellStore() { return; }
 
     virtual void add(const Key &key, const ByteString value) = 0;
