@@ -39,6 +39,10 @@ while [ "$1" != "${1##[-+]}" ]; do
       HEAPCHECK="env HEAPCHECK=normal"
       shift
       ;;
+    --heapprofile)
+      HEAPCHECK="env HEAPPROFILE=/tmp/rs-$$.hprof"
+      shift
+      ;;
     *)
       break
       ;;
