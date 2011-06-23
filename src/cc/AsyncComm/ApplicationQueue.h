@@ -73,8 +73,7 @@ namespace Hypertable {
       WorkQueue           queue;
       WorkQueue           urgent_queue;
       UsageRecMap         usage_map;
-      Mutex               queue_mutex;
-      Mutex               usage_mutex;
+      Mutex               mutex;
       boost::condition    cond;
       size_t              threads_available;
       bool                shutdown;
@@ -93,7 +92,7 @@ namespace Hypertable {
         while (true) {
 
           {
-            ScopedLock lock(m_state.queue_mutex);
+            ScopedLock lock(m_state.mutex);
 
             m_state.threads_available++;
             while ((m_state.paused || m_state.queue.empty()) &&
@@ -105,47 +104,46 @@ namespace Hypertable {
               m_state.cond.wait(lock);
             }
 
-            {
-              ScopedLock ulock(m_state.usage_mutex);
+            rec = 0;
 
+            iter = m_state.urgent_queue.begin();
+            while (iter != m_state.urgent_queue.end()) {
+              rec = (*iter);
+              if (rec->handler->expired()) {
+                iter = m_state.urgent_queue.erase(iter);
+                remove_expired(rec);
+                continue;
+              }
+              if (rec->usage == 0 || !rec->usage->running) {
+                if (rec->usage)
+                  rec->usage->running = true;
+                m_state.urgent_queue.erase(iter);
+                break;
+              }
               rec = 0;
+              iter++;
+            }
 
-              iter = m_state.urgent_queue.begin();
-              while (iter != m_state.urgent_queue.end()) {
+            if (rec == 0 && !m_state.paused) {
+              iter = m_state.queue.begin();
+              while (iter != m_state.queue.end()) {
                 rec = (*iter);
                 if (rec->handler->expired()) {
-                  iter = m_state.urgent_queue.erase(iter);
+                  iter = m_state.queue.erase(iter);
+                  remove_expired(rec);
                   continue;
                 }
                 if (rec->usage == 0 || !rec->usage->running) {
                   if (rec->usage)
                     rec->usage->running = true;
-                  m_state.urgent_queue.erase(iter);
+                  m_state.queue.erase(iter);
                   break;
                 }
                 rec = 0;
                 iter++;
               }
-
-              if (rec == 0 && !m_state.paused) {
-                iter = m_state.queue.begin();
-                while (iter != m_state.queue.end()) {
-                  rec = (*iter);
-                  if (rec->handler->expired()) {
-                    iter = m_state.queue.erase(iter);
-                    continue;
-                  }
-                  if (rec->usage == 0 || !rec->usage->running) {
-                    if (rec->usage)
-                      rec->usage->running = true;
-                    m_state.queue.erase(iter);
-                    break;
-                  }
-                  rec = 0;
-                  iter++;
-                }
-              }
             }
+
             if (rec == 0 && !m_one_shot) {
               if (m_state.shutdown) {
 		m_state.threads_available--;
@@ -163,16 +161,7 @@ namespace Hypertable {
 
           if (rec) {
             rec->handler->run();
-            if (rec->usage) {
-              ScopedLock ulock(m_state.usage_mutex);
-              rec->usage->running = false;
-              rec->usage->outstanding--;
-              if (rec->usage->outstanding == 0) {
-                m_state.usage_map.erase(rec->usage->thread_group);
-                delete rec->usage;
-              }
-            }
-            delete rec;
+	    remove(rec);
             if (m_one_shot)
               return;
           }
@@ -184,6 +173,31 @@ namespace Hypertable {
       }
 
     private:
+
+      void remove(WorkRec *rec) {
+	if (rec->usage) {
+	  ScopedLock ulock(m_state.mutex);
+          rec->usage->running = false;
+	  rec->usage->outstanding--;
+	  if (rec->usage->outstanding == 0) {
+	    m_state.usage_map.erase(rec->usage->thread_group);
+	    delete rec->usage;
+	  }
+	}
+	delete rec;
+      }
+
+      void remove_expired(WorkRec *rec) {
+	if (rec->usage) {
+	  rec->usage->outstanding--;
+	  if (rec->usage->outstanding == 0) {
+	    m_state.usage_map.erase(rec->usage->thread_group);
+	    delete rec->usage;
+	  }
+	}
+	delete rec;
+      }
+
       ApplicationQueueState &m_state;
       bool m_one_shot;
     };
@@ -257,12 +271,12 @@ namespace Hypertable {
     }
 
     virtual void stop() {
-      ScopedLock lock(m_state.queue_mutex);
+      ScopedLock lock(m_state.mutex);
       m_state.paused = true;
     }
 
     virtual void start() {
-      ScopedLock lock(m_state.queue_mutex);
+      ScopedLock lock(m_state.mutex);
       m_state.paused = false;
       m_state.cond.notify_all();
     }
@@ -283,7 +297,7 @@ namespace Hypertable {
       HT_ASSERT(app_handler);
 
       if (thread_group != 0) {
-        ScopedLock ulock(m_state.usage_mutex);
+        ScopedLock ulock(m_state.mutex);
         if ((uiter = m_state.usage_map.find(thread_group))
             != m_state.usage_map.end()) {
           rec->usage = (*uiter).second;
@@ -297,7 +311,7 @@ namespace Hypertable {
       }
 
       {
-        ScopedLock lock(m_state.queue_mutex);
+        ScopedLock lock(m_state.mutex);
         if (app_handler->is_urgent()) {
           m_state.urgent_queue.push_back(rec);
           if (m_dynamic_threads && m_state.threads_available == 0) {
