@@ -39,6 +39,7 @@ extern "C" {
 #if defined(TCMALLOC)
 #include <google/tcmalloc.h>
 #include <google/heap-checker.h>
+#include <google/heap-profiler.h>
 #include <google/malloc_extension.h>
 #endif
 
@@ -2548,6 +2549,8 @@ void RangeServer::heapcheck(ResponseCallback *cb, const char *outfile) {
     MallocExtension::instance()->GetStats(buf, 4096);
     out << buf << std::endl;
   }
+  if (IsHeapProfilerRunning())
+    HeapProfilerDump("heapcheck");
 #else
   HT_WARN("heapcheck not defined for current allocator");
 #endif
