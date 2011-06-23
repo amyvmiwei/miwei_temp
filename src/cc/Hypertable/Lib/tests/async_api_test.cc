@@ -165,6 +165,7 @@ namespace {
     }
 
     void completed() {
+      ScopedLock lock(mutex);
       outfile << "Async calls completed" << endl;
     }
 
