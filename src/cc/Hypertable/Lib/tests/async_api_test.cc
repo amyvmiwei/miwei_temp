@@ -89,19 +89,21 @@ namespace {
   String output;
   class Fruit {
   public:
-    Fruit() {}
+    Fruit() {clear();}
     String &to_str() {
       str = (String)"{name:" + name + ", location:"+ location + ", color:" + color +
             ", energy_density:" + energy_density + "}";
       return str;
     }
     void clear() {
+      results=0;
       str.clear();
       name.clear();
       location.clear();
       color.clear();
       energy_density.clear();
     }
+    int results;
     String str;
     String name;
     String location;
@@ -111,10 +113,13 @@ namespace {
 
   class FruitCallback: public ResultCallback {
   public:
-    FruitCallback():m_error(Error::OK) {}
+    FruitCallback(bool show_complete=true):m_error(Error::OK), m_show_complete(show_complete) {
+      clear();
+    }
 
     void clear() {
       m_fruit.clear();
+      m_complete_shown=false;
     }
 
     void scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
@@ -123,6 +128,7 @@ namespace {
       cells->get(cc);
       String table_name = scanner->get_table_name();
 
+      m_fruit.results++;
       if (cc.size() == 1) {
         if (!table_name.compare("FruitColor")) {
           m_fruit.name = cc[0].row_key;
@@ -166,18 +172,29 @@ namespace {
 
     void completed() {
       ScopedLock lock(mutex);
-      outfile << "Async calls completed" << endl;
+      if (m_fruit.results == 3 && m_show_complete) {
+        HT_ASSERT(!m_complete_shown);
+        outfile << "Async calls completed" << endl;
+        m_complete_shown = true;
+        m_cond.notify_one();
+      }
     }
 
     String &get_fruit() {
+      ScopedLock lock(mutex);
+      while (!m_complete_shown)
+        m_cond.wait(lock);
       return m_fruit.to_str();
     }
 
   private:
     Mutex mutex;
+    boost::condition m_cond;
     Fruit m_fruit;
     int m_error;
     String m_error_msg;
+    bool m_show_complete;
+    bool m_complete_shown;
   };
 
   void read(Client *client, NamespacePtr &ns) {
@@ -214,7 +231,7 @@ namespace {
     TablePtr table_color;
     TablePtr table_location;
     TablePtr table_energy;
-    FruitCallback cb;
+    FruitCallback cb(false);
     TableMutatorAsyncPtr mutator_color;
     TableMutatorAsyncPtr mutator_location;
     TableMutatorAsyncPtr mutator_energy;

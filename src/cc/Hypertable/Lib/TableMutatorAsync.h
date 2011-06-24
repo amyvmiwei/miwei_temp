@@ -165,10 +165,6 @@ namespace Hypertable {
     bool is_cancelled();
     void get_unsynced_rangeservers(std::vector<CommAddress> &unsynced);
     TableMutatorAsyncScatterBufferPtr get_outstanding_buffer(size_t id);
-    uint32_t get_next_buffer_id() {
-      ScopedLock lock(m_buffer_mutex);
-      return ++m_next_buffer_id;
-    }
     bool retry(uint32_t timeout_ms);
     void update_outstanding(TableMutatorAsyncScatterBufferPtr &buffer);
     void get_failed_mutations(FailedMutations &failed_mutations) {
@@ -234,7 +230,6 @@ namespace Hypertable {
     Cells::const_iterator m_last_cells_end;
     const static uint32_t ms_max_sync_retries = 5;
 
-    Mutex      m_mutex;
     Mutex      m_cancel_mutex;
     Mutex      m_buffer_mutex;
     boost::condition m_cond;
