@@ -69,7 +69,7 @@ TableMutatorAsync::TableMutatorAsync(PropertiesPtr &props, Comm *comm,
 
   m_max_memory = props->get_i64("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate");
 
-  uint32_t buffer_id = get_next_buffer_id();
+  uint32_t buffer_id = ++m_next_buffer_id;
   m_current_buffer = new TableMutatorAsyncScatterBuffer(m_comm, app_queue, this,
       &m_table_identifier, m_schema, m_range_locator, m_table->auto_refresh(), timeout_ms,
       buffer_id);
@@ -350,7 +350,6 @@ void TableMutatorAsync::update_unsynced_rangeservers(const CommAddressSet &unsyn
 }
 
 void TableMutatorAsync::update_outstanding(TableMutatorAsyncScatterBufferPtr &buffer) {
-  ScopedLock lock(m_buffer_mutex);
   m_outstanding_buffers.erase(buffer->get_id());
   if (m_outstanding_buffers.size()==0) {
     m_cond.notify_one();
@@ -362,14 +361,11 @@ void TableMutatorAsync::update_outstanding(TableMutatorAsyncScatterBufferPtr &bu
 
 void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
   bool cancelled = is_cancelled();
-  ScopedLock lock(m_mutex);
+  ScopedLock lock(m_buffer_mutex);
   TableMutatorAsyncScatterBufferPtr buffer;
   ScatterBufferAsyncMap::iterator it;
 
-  {
-    ScopedLock lock(m_buffer_mutex);
-    it = m_outstanding_buffers.find(id);
-  }
+  it = m_outstanding_buffers.find(id);
   HT_ASSERT(it != m_outstanding_buffers.end());
 
   buffer = it->second;
@@ -402,7 +398,7 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
 
   if (retry) {
     // create & send redo buffer
-    uint32_t next_id = get_next_buffer_id();
+    uint32_t next_id = ++m_next_buffer_id;
     TableMutatorAsyncScatterBufferPtr redo;
     redo = buffer->create_redo_buffer(next_id);
     if (!redo) {
@@ -415,7 +411,6 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
     else {
       HT_ASSERT(redo);
       m_resends += buffer->get_resend_count();
-      ScopedLock lock(m_buffer_mutex);
       m_outstanding_buffers.erase(it);
       redo->send(buffer->get_send_flags());
       m_outstanding_buffers[next_id] = redo;
