@@ -61,6 +61,7 @@ namespace Hypertable {
     String location;
     int64_t timestamp;
     int32_t range_count;
+    int32_t scanner_count;
     uint64_t scan_count;
     uint64_t scanned_cells;
     uint64_t scanned_bytes;

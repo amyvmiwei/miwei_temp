@@ -2643,6 +2643,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   /**
    * Aggregate per-table stats
    */
+  CstrToInt32Map table_scanner_count_map;
   StatsTable table_stat;
   StatsTableMap::iterator iter;
   m_stats->tables.clear();
@@ -2662,6 +2663,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
       else
 	table_stat.compression_ratio = 1.0;
       m_stats->tables.push_back(table_stat);
+      table_scanner_count_map[table_stat.table_id.c_str()] = 0;
       table_stat.clear();
       table_stat.table_id = range_data[ii]->table_id;
     }
@@ -2704,7 +2706,13 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     else
       table_stat.compression_ratio = 1.0;
     m_stats->tables.push_back(table_stat);
+    table_scanner_count_map[table_stat.table_id.c_str()] = 0;
   }
+
+  // collect outstanding scanner counts
+  Global::scanner_map.get_counts(&m_stats->scanner_count, table_scanner_count_map);
+  for (size_t i=0; i<m_stats->tables.size(); i++)
+    m_stats->tables[i].scanner_count = table_scanner_count_map[m_stats->tables[i].table_id.c_str()];
 
   if (m_query_cache) {
     m_query_cache->get_stats(&m_stats->query_cache_max_memory,

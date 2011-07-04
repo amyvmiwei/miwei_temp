@@ -89,6 +89,11 @@
                        :color: ["#73d216"],
                        :pname: "Range Count"},
 
+        :scanner_count: { :pair: [:scanner_count],
+                       :units: "" ,
+                       :color: ["#cc0000"],
+                       :pname: "Outstanding Scanner Count"},
+
 	:disk_used_pct: {
                     :pair: [:disk_used_pct],
                     :color: ["#5c3566"],
