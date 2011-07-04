@@ -95,6 +95,11 @@
         :range_count: { :pair: [:range_count],
                        :units: "" ,
                        :color: ["#73d216"],
-                       :pname: "Range Count"}
+                       :pname: "Range Count"},
+
+        :scanner_count: { :pair: [:scanner_count],
+                       :units: "" ,
+                       :color: ["#cc0000"],
+                       :pname: "Outstanding Scanner Count"}
 
 }

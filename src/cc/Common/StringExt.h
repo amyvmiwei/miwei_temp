@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <stdexcept>
 #include <set>
+#include <map>
 
 #include "Common/String.h"
 #include "HashMap.h"
@@ -40,6 +41,8 @@ struct LtCstr {
 };
 
 typedef std::set<const char *, LtCstr>  CstrSet;
+
+typedef std::map<const char *, int32_t, LtCstr>  CstrToInt32Map;
 
 inline std::string operator+(const std::string& s1, short sval) {
   char cbuf[8];

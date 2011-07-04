@@ -92,6 +92,21 @@ void ScannerMap::purge_expired(uint32_t max_idle_millis) {
 }
 
 
+void ScannerMap::get_counts(int32_t *totalp, CstrToInt32Map &table_scanner_count_map) {
+  ScopedLock lock(m_mutex);
+  CstrToInt32Map::iterator tsc_iter;
+
+  *totalp = m_scanner_map.size();
+
+  for (CellListScannerMap::iterator iter = m_scanner_map.begin();
+       iter != m_scanner_map.end(); ++iter) {
+    if ((tsc_iter = table_scanner_count_map.find((*iter).second.table.id)) != table_scanner_count_map.end())
+      table_scanner_count_map[(*iter).second.table.id]++;
+  }
+
+}
+
+
 int64_t ScannerMap::get_timestamp_millis() {
   boost::xtime now;
   boost::xtime_get(&now, boost::TIME_UTC);

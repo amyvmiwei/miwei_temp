@@ -64,6 +64,7 @@ namespace Hypertable {
     struct rangeserver_rrd_data {
       uint64_t timestamp;
       int32_t range_count;
+      int32_t scanner_count;
       double scan_rate;
       double update_rate;
       double sync_rate;
@@ -92,6 +93,7 @@ namespace Hypertable {
     struct table_rrd_data {
       int64_t fetch_timestamp;
       uint32_t range_count;
+      uint32_t scanner_count;
       uint64_t cell_count;
       uint64_t file_count;
       uint64_t scans;

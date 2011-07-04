@@ -83,6 +83,18 @@ namespace Hypertable {
      */
     void purge_expired(uint32_t max_idle_ms);
 
+    /**
+     * This method retrieves outstanding scanner counts.  It returns the
+     * total number of outstanding scanners as well as the number of outstanding
+     * scanners per-table.  Only the tables that exist in the table_scanner_count_map
+     * that is passed into this method will be counted.
+     *
+     * @param totalp address of variable to hold total outstanding counters
+     * @param table_scanner_count_map reference to table count map (NOTE: must be filled
+     * in by caller, no new entries will be added)
+     */
+    void get_counts(int32_t *totalp, CstrToInt32Map &table_scanner_count_map);
+
   private:
 
     /**
