@@ -242,6 +242,39 @@ TableInfo::find_containing_range(const String &row, RangePtr &range,
   return true;
 }
 
+bool 
+TableInfo::find_containing_range(const String &row, RangePtr &range,
+                                 const char **start_rowp, const char **end_rowp) const {
+
+  RangeMap::const_iterator iter = m_range_map.lower_bound(row);
+
+  if (iter == m_range_map.end() || (*iter).second == 0)
+    return false;
+
+  *start_rowp = (*iter).second->start_row_cstring();
+  *end_rowp = (*iter).second->end_row_cstring();
+
+  if (strcmp(row.c_str(), *start_rowp) <= 0)
+    return false;
+
+  range = (*iter).second;
+
+  return true;
+}
+
+
+bool TableInfo::includes_row(const String &row) const {
+
+  RangeMap::const_iterator iter = m_range_map.lower_bound(row);
+
+  if (iter == m_range_map.end() || (*iter).second == 0)
+    return false;
+
+  if (strcmp(row.c_str(), (*iter).second->start_row_cstring()) <= 0)
+    return false;
+
+  return true;
+}
 
 void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
   ScopedLock lock(m_mutex);
