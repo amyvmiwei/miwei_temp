@@ -130,11 +130,19 @@ namespace Hypertable {
       return m_metalog_entity->spec.start_row;
     }
 
+    const char *start_row_cstring() const {
+      return m_metalog_entity->spec.start_row;
+    }
+
     /**
      * Returns the end row of the range.
      */
     String end_row() {
       ScopedLock lock(m_mutex);
+      return m_metalog_entity->spec.end_row;
+    }
+
+    const char *end_row_cstring() {
       return m_metalog_entity->spec.end_row;
     }
 

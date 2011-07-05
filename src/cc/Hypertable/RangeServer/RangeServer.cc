@@ -794,11 +794,9 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader) {
   const uint8_t *ptr, *end;
   int64_t revision;
   TableInfoPtr table_info;
-  RangePtr range;
   SerializedKey key;
   ByteString value;
   uint32_t block_count = 0;
-  String start_row, end_row;
 
   while (log_reader->next((const uint8_t **)&base, &len, &header)) {
 
@@ -836,8 +834,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader) {
         HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
 
       // Look for containing range, add to stop mods if not found
-      if (!table_info->find_containing_range(key.row(), range,
-                                             start_row, end_row))
+      if (!table_info->includes_row(key.row()))
         continue;
 
       // add key/value pair to buffer
@@ -2934,7 +2931,7 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
   String err_msg;
   int64_t revision;
   RangePtr range;
-  String start_row, end_row;
+  const char *start_row, *end_row;
   int error;
 
   //HT_DEBUGF("replay_update - length=%ld", len);
@@ -2976,15 +2973,13 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
         row = SerializedKey(ptr).row();
 
         // Look for containing range, add to stop mods if not found
-        if (!table_info->find_containing_range(row, range,
-                                               start_row, end_row))
+        if (!table_info->find_containing_range(row, range, &start_row, &end_row))
           HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
                     "range for row '%s'", row);
 
         serkey.ptr = ptr;
 
-        while (ptr < block_end
-            && (end_row == "" || (strcmp(row, end_row.c_str()) <= 0))) {
+        while (ptr < block_end && (end_row == 0 || (strcmp(row, end_row) <= 0))) {
 
           // extract the key
           ptr += serkey.length();

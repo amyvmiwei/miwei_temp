@@ -147,6 +147,26 @@ namespace Hypertable {
                                String &start_row, String &end_row);
 
     /**
+     * Finds the range that the given row belongs to
+     *
+     * @param row row key used to locate range (in)
+     * @param range reference to smart pointer to hold removed range (out)
+     * @param start_row starting row of range (out)
+     * @param end_row ending row of range (out)
+     * @return true if found, false otherwise
+     */
+    bool find_containing_range(const String &row, RangePtr &range,
+                               const char **start_rowp, const char **end_rowp) const;
+
+    /**
+     * Returns true if the given row belongs to the set of ranges
+     * included in the table's range set.
+     *
+     * @param row row to lookup
+     */
+    bool includes_row(const String &row) const;
+
+    /**
      * Dumps range table information to stdout
      */
     void dump_range_table();
