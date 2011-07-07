@@ -57,7 +57,6 @@ namespace Hypertable {
       void distribute_table_ranges(vector<RangeServerStatistics> &range_server_stats,
                                    BalancePlanPtr &plan);
 
-      double m_loadavg_deviation_threshold;
       Mutex m_data_mutex;
       bool  m_waiting_for_servers;
       std::vector <RangeServerStatistics> m_range_server_stats;

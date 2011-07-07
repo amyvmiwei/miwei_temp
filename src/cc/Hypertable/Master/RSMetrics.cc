@@ -32,7 +32,7 @@
 using namespace std;
 using namespace Hypertable;
 
-void RSMetrics::get_range_metrics(const char *server, vector<RangeMetrics> &range_metrics) {
+void RSMetrics::get_range_metrics(const char *server, RangeMetricsMap &range_metrics) {
   ScanSpec scan_spec;
   RowInterval ri;
   Cell cell;
@@ -50,22 +50,25 @@ void RSMetrics::get_range_metrics(const char *server, vector<RangeMetrics> &rang
 
   TableScannerPtr scanner = m_table->create_scanner(scan_spec);
   while (scanner->next(cell)) {
-    table = strchr(cell.row_key, ':');
+    table = strchr(cell.row_key, ':') + 1;
     end_row = cell.column_qualifier;
     HT_ASSERT(!(table == NULL || end_row == NULL));
-    RangeMetrics &last = range_metrics.back();
+    String key = format("%s:%s", table, end_row);
 
-    if (last.get_table_id() != table || last.get_end_row() != end_row) {
+    RangeMetricsMap::iterator rm_it = range_metrics.find(key);
+
+    if (rm_it == range_metrics.end()) {
       RangeMetrics rm(server, table, end_row);
-      range_metrics.push_back(rm);
+      pair<RangeMetricsMap::iterator, bool>  ret = range_metrics.insert(make_pair(key, rm));
+      rm_it = ret.first;
     }
 
     if (!strcmp(cell.column_family, "range"))
-      range_metrics.back().add_measurement((const char*) cell.value, cell.value_len);
-    else if (!strcmp(cell.column_family, "range_set_start_row"))
-      range_metrics.back().set_start_row((const char*) cell.value, cell.value_len);
+      rm_it->second.add_measurement((const char*) cell.value, cell.value_len);
+    else if (!strcmp(cell.column_family, "range_start_row"))
+      rm_it->second.set_start_row((const char*) cell.value, cell.value_len);
     else if (!strcmp(cell.column_family, "range_move"))
-      range_metrics.back().set_last_move((const char*) cell.value, cell.value_len);
+      rm_it->second.set_last_move((const char*) cell.value, cell.value_len);
   }
 }
 
@@ -75,10 +78,12 @@ void RSMetrics::get_server_metrics(vector<ServerMetrics> &server_metrics) {
 
   TableScannerPtr scanner = m_table->create_scanner(scan_spec);
   Cell cell;
+  bool empty=true;
 
   while (scanner->next(cell)) {
     HT_ASSERT(!strcmp(cell.column_family,"server"));
-    if (server_metrics.back().get_id() != cell.row_key) {
+    if (empty || server_metrics.back().get_id() != cell.row_key) {
+      empty = false;
       ServerMetrics sm(cell.row_key);
       server_metrics.push_back(sm);
     }

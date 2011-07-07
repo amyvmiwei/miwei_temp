@@ -33,7 +33,7 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
 
   ServerMetricSummary ss;
   ServerSetDescLoad servers_desc_load;
-  int num_servers=servers_desc_load.size();
+  int num_servers;
   int num_loaded_servers=0;
   double mean_loadavg=0;
   double mean_loadavg_per_loadestimate=0;
@@ -48,6 +48,7 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
       num_loaded_servers++;
     }
   }
+  num_servers = servers_desc_load.size();
 
   if (num_servers < 2 || num_loaded_servers < 1) {
     HT_INFO_OUT << "No balancing required, num_servers=" << num_servers
@@ -85,13 +86,13 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
       break;
     }
 
-    vector<RangeMetrics> range_metrics;
+    RangeMetricsMap range_metrics;
     RangeSetDescLoad ranges_desc_load;
 
     rs_metrics.get_range_metrics(heaviest_server.server_id, range_metrics);
     populate_range_load_set(range_metrics, ranges_desc_load);
 
-    RangeSetDescLoad::iterator ranges_desc_load_it = ranges_desc_load.begin();;
+    RangeSetDescLoad::iterator ranges_desc_load_it = ranges_desc_load.begin();
 
     while (heaviest_server.loadavg > m_loadavg_deviation_threshold + mean_loadavg &&
            ranges_desc_load_it != ranges_desc_load.end()) {
@@ -101,6 +102,7 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
         RangeMoveSpecPtr move = new RangeMoveSpec(heaviest_server.server_id,
             lightest_server.server_id, ranges_desc_load_it->table_id,
             ranges_desc_load_it->start_row, ranges_desc_load_it->end_row);
+        HT_DEBUG_OUT << "Added move to plan: " << *(move.get()) << HT_END;
         balance_plan->moves.push_back(move);
 
         // recompute loadavgs
@@ -119,6 +121,9 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
         // no need to erase this range from the heaviest loaded range
         // since we will skip to next range and delete the heaviest server from set of
         // servers used in balancing after all moves are done for it
+      }
+      else {
+        HT_DEBUG_OUT << "Moving range " << *ranges_desc_load_it << " is not viable." << HT_END;
       }
       ranges_desc_load_it++;
     }
@@ -145,7 +150,7 @@ void LoadBalancerBasicDistributeLoad::calculate_server_summary(const ServerMetri
       loadestimate += measurement.bytes_written_rate + measurement.bytes_scanned_rate;
     }
     summary.loadavg /= measurements.size();
-    summary.loadavg_per_loadestimate = (loadestimate/summary.loadavg)/measurements.size();
+    summary.loadavg_per_loadestimate = summary.loadavg/(loadestimate/measurements.size());
   }
 }
 
@@ -167,15 +172,15 @@ void LoadBalancerBasicDistributeLoad::calculate_range_summary(const RangeMetrics
 }
 
 
-void LoadBalancerBasicDistributeLoad::populate_range_load_set(const vector<RangeMetrics> &range_metrics, RangeSetDescLoad &ranges_desc_load) {
+void LoadBalancerBasicDistributeLoad::populate_range_load_set(const RangeMetricsMap &range_metrics, RangeSetDescLoad &ranges_desc_load) {
 
   ranges_desc_load.clear();
-  foreach(const RangeMetrics &rm, range_metrics) {
+  foreach(const RangeMetricsMap::value_type &vv, range_metrics) {
     // don't consider ranges that can't be moved
-    if (!rm.is_moveable())
+    if (!vv.second.is_moveable())
       continue;
     RangeMetricSummary summary;
-    calculate_range_summary(rm, summary);
+    calculate_range_summary(vv.second, summary);
     ranges_desc_load.insert(summary);
   }
 }

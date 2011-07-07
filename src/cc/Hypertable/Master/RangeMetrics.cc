@@ -90,5 +90,3 @@ bool RangeMetrics::is_moveable() const {
   // TODO: don't move a range that was moved recently
   return true;
 }
-
-

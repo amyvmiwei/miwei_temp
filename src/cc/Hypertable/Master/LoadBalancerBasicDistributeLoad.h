@@ -77,7 +77,7 @@ namespace Hypertable {
     private:
       void calculate_server_summary(const ServerMetrics &metrics, ServerMetricSummary &summary);
       void calculate_range_summary(const RangeMetrics &metrics, RangeMetricSummary &summary);
-      void populate_range_load_set(const std::vector<RangeMetrics> &range_metrics,
+      void populate_range_load_set(const RangeMetricsMap &range_metrics,
                                    RangeSetDescLoad &ranges_desc_load);
       bool check_move(const ServerMetricSummary &source, const ServerMetricSummary &destination,
                       double range_loadestimate, double mean_loadavg);
