@@ -38,10 +38,11 @@ namespace Hypertable {
 
   // This class reads in data from the sys/RS_METRICS table and makes it accessible.
   // It reads the data either from the sys/RS_METRICS table or from a text file dump if the same
+
   class RSMetrics : public ReferenceCount {
   public:
     RSMetrics(TablePtr &rs_metrics) : m_table(rs_metrics) { }
-    void get_range_metrics(const char *server_id, vector<RangeMetrics> &range_metrics);
+    void get_range_metrics(const char *server_id, RangeMetricsMap &range_metrics);
     void get_server_metrics(vector<ServerMetrics> &server_metrics);
 
   private:

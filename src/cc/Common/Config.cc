@@ -265,6 +265,9 @@ void DefaultPolicy::init_options() {
         "Time of day at which the LoadBalancer balance window ends")
     ("Hypertable.LoadBalancer.ServerWaitInterval", i32()->default_value(3000),
         "Amount of time to wait before running balancer when a new RangeServer is detected")
+    ("Hypertable.LoadBalancer.LoadavgThreshold", f64()->default_value(0.25),
+        "Servers with loadavg above this much above the mean will be considered by the "
+        "load balancer to be overloaded")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "

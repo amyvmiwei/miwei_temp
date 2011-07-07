@@ -20,6 +20,8 @@
  */
 #include "Common/Compat.h"
 
+#include <algorithm>
+
 #include "Hypertable/Lib/Client.h"
 #include "LoadBalancerBasicDistributeTableRanges.h"
 
@@ -112,7 +114,7 @@ bool LoadBalancerBasicDistributeTableRanges::maybe_add_to_plan(const char *table
   }
 
   // this should never happen
-  if (m_empty_servers.find(src_server) != m_empty_servers.end()) {
+  if (m_empty_servers_set.find(src_server) != m_empty_servers_set.end()) {
     HT_DEBUG_OUT << "Source server " << src_server << " is in empty_server set"
          << " Dont move " << src_server << ":"<< table << "[" << start_row << ".."
          << end_row << "] " << HT_END;
@@ -148,6 +150,7 @@ bool LoadBalancerBasicDistributeTableRanges::maybe_add_to_plan(const char *table
   // find a destination server that can take this range
   RangeDistributionMap::iterator dst_range_dist_it;
   String dst_server;
+
   foreach(const char *empty_server, m_empty_servers) {
     dst_range_dist_it = table_it->second->range_dist.find(empty_server);
     if (dst_range_dist_it == table_it->second->range_dist.end()) {
@@ -176,11 +179,17 @@ bool LoadBalancerBasicDistributeTableRanges::maybe_add_to_plan(const char *table
   RangeMoveSpecPtr move = new RangeMoveSpec(src_server, dst_server.c_str(), table, start_row,
                                             end_row);
   plan->moves.push_back(move);
+
+  // randomly shuffle the contents of the empty_servers vector to avoid
+  // adjacent ranges from accumulating on the same empty range server
+  random_shuffle(m_empty_servers.begin(), m_empty_servers.end());
+
   return true;
 }
 
 void LoadBalancerBasicDistributeTableRanges::clear() {
   m_empty_servers.clear();
+  m_empty_servers_set.clear();
   m_saturated_tables.clear();
   m_table_summaries.clear();
 }
@@ -210,7 +219,8 @@ void LoadBalancerBasicDistributeTableRanges::compute_range_distribution(vector<R
     }
     else {
       HT_DEBUG_OUT << "Found empty server " << server_id << HT_END;
-      m_empty_servers.insert(server_id);
+      m_empty_servers_set.insert(server_id);
+      m_empty_servers.push_back(server_id);
     }
   }
   HT_DEBUG_OUT << " m_table_summaries.size=" << m_table_summaries.size()

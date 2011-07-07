@@ -52,6 +52,8 @@ namespace Hypertable {
       m_balance_window_end   = duration_from_string(m_context->props->get_str(
           "Hypertable.LoadBalancer.WindowEnd"));
       m_balance_wait = m_context->props->get_i32("Hypertable.LoadBalancer.ServerWaitInterval");
+      m_balance_loadavg_threshold = m_context->props->get_f64("Hypertable.LoadBalancer.LoadavgThreshold");
+
     }
 
     virtual void register_plan(BalancePlanPtr &plan);
@@ -74,6 +76,7 @@ namespace Hypertable {
     time_duration m_balance_window_start;
     time_duration m_balance_window_end;
     ptime m_last_balance_time;
+    double m_balance_loadavg_threshold;
 
   private:
     struct lt_move_spec {

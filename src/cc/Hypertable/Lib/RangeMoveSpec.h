@@ -37,6 +37,7 @@ namespace Hypertable {
     RangeMoveSpec() { clear(); }
     RangeMoveSpec(const char *src, const char *dest, const char* table_id,
                   const char *start_row, const char *end_row) {
+      clear();
       source_location = src;
       dest_location = dest;
       table.set_id(table_id);

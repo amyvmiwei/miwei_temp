@@ -23,6 +23,7 @@
 #define HYPERTABLE_RANGEMETRICS_H
 
 #include <vector>
+#include <set>
 #include "Common/String.h"
 
 namespace Hypertable {
@@ -85,6 +86,9 @@ namespace Hypertable {
     bool m_start_row_set;
     bool m_last_move_set;
   }; // RangeMetrics
+
+  typedef std::map<String, RangeMetrics> RangeMetricsMap;
+
 } // namespace Hypertable
 
 #endif // HYPERTABLE_RANGEMETRICS_H

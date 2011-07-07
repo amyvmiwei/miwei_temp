@@ -113,7 +113,7 @@ void LoadBalancerBasic::distribute_load(const ptime &now, BalancePlanPtr &balanc
   if (td < m_balance_window_start || td > m_balance_window_end)
     return;
 
-  LoadBalancerBasicDistributeLoad planner(m_loadavg_deviation_threshold,
+  LoadBalancerBasicDistributeLoad planner(m_balance_loadavg_threshold,
                                           m_context->rs_metrics_table);
   planner.compute_plan(balance_plan);
   return;
