@@ -65,6 +65,7 @@ namespace Hypertable {
       uint64_t timestamp;
       int32_t range_count;
       int32_t scanner_count;
+      int64_t file_count;
       double scan_rate;
       double update_rate;
       double sync_rate;

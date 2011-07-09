@@ -29,6 +29,7 @@ int main(int argc, char *argv[]) {
   stats1->timestamp = Random::number64();
   stats1->range_count = Random::number32();
   stats1->scanner_count = Random::number32();
+  stats1->file_count = Random::number64();
   stats1->scan_count = Random::number64();
   stats1->scanned_cells = Random::number64();
   stats1->scanned_bytes = Random::number64();

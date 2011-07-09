@@ -2706,10 +2706,13 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     table_scanner_count_map[table_stat.table_id.c_str()] = 0;
   }
 
-  // collect outstanding scanner counts
+  // collect outstanding scanner count and compute server cellstore total
+  m_stats->file_count = 0;
   Global::scanner_map.get_counts(&m_stats->scanner_count, table_scanner_count_map);
-  for (size_t i=0; i<m_stats->tables.size(); i++)
+  for (size_t i=0; i<m_stats->tables.size(); i++) {
     m_stats->tables[i].scanner_count = table_scanner_count_map[m_stats->tables[i].table_id.c_str()];
+    m_stats->file_count += m_stats->tables[i].file_count;
+  }
 
   if (m_query_cache) {
     m_query_cache->get_stats(&m_stats->query_cache_max_memory,
