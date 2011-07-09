@@ -77,6 +77,7 @@ class RRDStat
     "net_tx_rate",
     "loadavg",
     "scanner_count",
+    "file_count",
     "range_count",
     "disk_used_pct",
     "vm_size",

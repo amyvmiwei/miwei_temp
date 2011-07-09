@@ -68,6 +68,7 @@ StatsRangeServer::StatsRangeServer(const StatsRangeServer &other) : StatsSeriali
   timestamp = other.timestamp;
   range_count = other.range_count;
   scanner_count = other.scanner_count;
+  file_count = other.file_count;
   scan_count = other.scan_count;
   scanned_cells = other.scanned_cells;
   scanned_bytes = other.scanned_bytes;
@@ -92,6 +93,7 @@ bool StatsRangeServer::operator==(const StatsRangeServer &other) const {
       timestamp != other.timestamp ||
       range_count != other.range_count ||
       scanner_count != other.scanner_count ||
+      file_count != other.file_count ||
       scan_count != other.scan_count ||
       scanned_cells != other.scanned_cells ||
       scanned_bytes != other.scanned_bytes ||
@@ -122,7 +124,7 @@ bool StatsRangeServer::operator==(const StatsRangeServer &other) const {
 
 size_t StatsRangeServer::encoded_length_group(int group) const {
   if (group == PRIMARY_GROUP) {
-    size_t len = Serialization::encoded_length_vstr(location) + 4*2 + 8*16 + \
+    size_t len = Serialization::encoded_length_vstr(location) + 4*2 + 8*17 + \
       system.encoded_length() + \
       Serialization::encoded_length_vi32(tables.size());
     for (size_t i=0; i<tables.size(); i++)
@@ -140,6 +142,7 @@ void StatsRangeServer::encode_group(int group, uint8_t **bufp) const {
     Serialization::encode_i64(bufp, timestamp);
     Serialization::encode_i32(bufp, range_count);
     Serialization::encode_i32(bufp, scanner_count);
+    Serialization::encode_i64(bufp, file_count);
     Serialization::encode_i64(bufp, scan_count);
     Serialization::encode_i64(bufp, scanned_cells);
     Serialization::encode_i64(bufp, scanned_bytes);
@@ -170,6 +173,7 @@ void StatsRangeServer::decode_group(int group, uint16_t len, const uint8_t **buf
     timestamp = Serialization::decode_i64(bufp, remainp);
     range_count = Serialization::decode_i32(bufp, remainp);
     scanner_count = Serialization::decode_i32(bufp, remainp);
+    file_count = Serialization::decode_i64(bufp, remainp);
     scan_count = Serialization::decode_i64(bufp, remainp);
     scanned_cells = Serialization::decode_i64(bufp, remainp);
     scanned_bytes = Serialization::decode_i64(bufp, remainp);

@@ -94,6 +94,11 @@
                        :color: ["#cc0000"],
                        :pname: "Outstanding Scanner Count"},
 
+        :file_count: { :pair: [:file_count],
+                       :units: "" ,
+                       :color: ["#5c3566"],
+                       :pname: "CellStore Count"},
+
 	:disk_used_pct: {
                     :pair: [:disk_used_pct],
                     :color: ["#5c3566"],
