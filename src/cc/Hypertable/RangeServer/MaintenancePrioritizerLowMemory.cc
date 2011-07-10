@@ -162,7 +162,8 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_
 
   if (update_bytes < 500000 && scan_count > 10) {
 
-    HT_INFO("READ workload prioritization");
+    HT_INFOF("READ workload prioritization (update_bytes=%llu, scan_count=%u)",
+	     (Llu)update_bytes, (unsigned)scan_count);
 
     if (!compact_cellcaches(range_data, memory_state, priority, trace_str))
       return;
@@ -173,38 +174,23 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_
       return;
 
     if (!purge_cellstore_indexes(range_data, memory_state, priority, trace_str))
-      return;
-
-  }
-  else if (m_server_stats->get_update_mbps(collector_id) > 0.5 && scan_count < 5) {
-
-    HT_INFO("WRITE workload prioritization");
-
-    Global::block_cache->cap_memory_use();
-    memory_state.decrement_needed( Global::block_cache->decrease_limit(memory_state.needed) );
-    if (!memory_state.need_more())
-      return;
-
-    if (!purge_cellstore_indexes(range_data, memory_state, priority, trace_str))
-      return;
-
-    if (!compact_cellcaches(range_data, memory_state, priority, trace_str))
       return;
 
   }
   else {
 
-    HT_INFO("MIXED workload prioritization");
+    HT_INFOF("WRITE workload prioritization (update_bytes=%llu, scan_count=%u)",
+	     (Llu)update_bytes, (unsigned)scan_count);
 
     Global::block_cache->cap_memory_use();
     memory_state.decrement_needed( Global::block_cache->decrease_limit(memory_state.needed) );
     if (!memory_state.need_more())
       return;
 
-    if (!compact_cellcaches(range_data, memory_state, priority, trace_str))
+    if (!purge_cellstore_indexes(range_data, memory_state, priority, trace_str))
       return;
 
-    if (!purge_cellstore_indexes(range_data, memory_state, priority, trace_str))
+    if (!compact_cellcaches(range_data, memory_state, priority, trace_str))
       return;
 
   }

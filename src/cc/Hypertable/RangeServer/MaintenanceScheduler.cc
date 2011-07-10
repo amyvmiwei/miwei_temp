@@ -130,7 +130,10 @@ void MaintenanceScheduler::schedule() {
   int64_t millis_since_last_maintenance =
     xtime_diff_millis(m_last_maintenance, now);
 
-  bool do_merges = !low_memory && xtime_diff_millis(m_last_low_memory, now) >= (int64_t)m_merging_delay;
+  int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
+  bool do_merges = !low_memory && 
+    ((m_server_stats->get_update_bytes(collector_id) < 1000 && m_server_stats->get_scan_count(collector_id) < 5) ||
+     xtime_diff_millis(m_last_low_memory, now) >= (int64_t)m_merging_delay);
 
   if (!m_scheduling_needed &&
       millis_since_last_maintenance < m_maintenance_interval)
