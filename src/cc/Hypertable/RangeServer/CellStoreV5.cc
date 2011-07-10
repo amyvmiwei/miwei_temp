@@ -83,8 +83,7 @@ CellStoreV5::~CellStoreV5() {
     HT_ERROR_OUT << e << HT_END;
   }
 
-  if (m_index_stats.bloom_filter_memory + m_index_stats.block_index_memory > 0)
-    Global::memory_tracker->subtract( m_index_stats.bloom_filter_memory + m_index_stats.block_index_memory );
+  Global::memory_tracker->subtract( sizeof(CellStoreV5) + m_index_stats.bloom_filter_memory + m_index_stats.block_index_memory );
 
 }
 
@@ -345,7 +344,7 @@ void CellStoreV5::load_bloom_filter() {
     m_bloom_filter->validate(m_filename);
   }
 
-  m_index_stats.bloom_filter_memory = m_bloom_filter->total_size();
+  m_index_stats.bloom_filter_memory = sizeof(BloomFilterWithChecksum) + m_bloom_filter->total_size();
   Global::memory_tracker->add(m_index_stats.bloom_filter_memory);
 
 }
@@ -504,6 +503,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
     BlockCompressionHeader header(DATA_BLOCK_MAGIC);
 
     m_index_builder.add_entry(m_key_compressor, m_offset);
+    m_key_compressor = 0;
 
     m_uncompressed_data += (float)m_buffer.fill();
     m_compressor->deflate(m_buffer, zbuf, header, HT_DIRECT_IO_ALIGNMENT);
@@ -724,15 +724,15 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
   else
     m_disk_usage = m_file_length;
 
-  m_index_stats.block_index_memory = sizeof(CellStoreV5) + index_memory;
+  m_index_stats.block_index_memory = index_memory;
 
   if (m_bloom_filter)
-    m_index_stats.bloom_filter_memory = m_bloom_filter->total_size();
+    m_index_stats.bloom_filter_memory = sizeof(BloomFilterWithChecksum) + m_bloom_filter->total_size();
 
   delete [] m_column_ttl;
   m_column_ttl = 0;
 
-  Global::memory_tracker->add( m_index_stats.block_index_memory + m_index_stats.bloom_filter_memory );
+  Global::memory_tracker->add( sizeof(CellStoreV5) + m_index_stats.block_index_memory + m_index_stats.bloom_filter_memory );
 }
 
 
@@ -827,6 +827,8 @@ CellStoreV5::open(const String &fname, const String &start_row,
               "Bad index offsets in CellStore trailer fd=%u fix=%lld, var=%lld, "
               "length=%llu, file='%s'", (unsigned)m_fd, (Lld)m_trailer.fix_index_offset,
            (Lld)m_trailer.var_index_offset, (Llu)m_file_length, fname.c_str());
+
+  Global::memory_tracker->add( sizeof(CellStoreV5) );
 
 }
 

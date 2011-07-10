@@ -238,50 +238,49 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeStatsVector &range_d
 
       disk_total += ag_data->disk_estimate;
 
-      if (ag_data->earliest_cached_revision == TIMESTAMP_MAX ||
-          cumulative_size_map.empty())
-        continue;
+      if (ag_data->earliest_cached_revision != TIMESTAMP_MAX && !cumulative_size_map.empty()) {
 
-      iter = cumulative_size_map.lower_bound(ag_data->earliest_cached_revision);
+        iter = cumulative_size_map.lower_bound(ag_data->earliest_cached_revision);
 
-      if (iter == cumulative_size_map.end()) {
-        String errstr;
-        for (iter = cumulative_size_map.begin(); iter != cumulative_size_map.end(); iter++) {
-          errstr += String("PERROR frag-") + (*iter).second.fragno +
-            "\trevision\t" + (*iter).first + "\n";
-          errstr += String("PERROR frag-") + (*iter).second.fragno +
-            "\tdistance\t" + (*iter).second.distance + "\n";
-          errstr += String("PERROR frag-") + (*iter).second.fragno +
-            "\tsize\t" + (*iter).second.cumulative_size + "\n";
-        }
-        errstr += String("PERROR revision ") +
-          ag_data->earliest_cached_revision + " not found in map\n";
-        cout << flush << errstr << flush;
-        trace_str += String("STAT *** This should never happen, ecr = ") +
-          ag_data->earliest_cached_revision + " ***\n";
-        continue;
-      }
-
-      if ((*iter).second.cumulative_size > prune_threshold) {
-        trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
-          + (*iter).second.cumulative_size + " > prune_threshold " + prune_threshold + "\n";
-        if (ag_data->mem_used > 0) {
-	  if (range_data[i]->priority == 0)
-	    range_data[i]->priority = priority++;
-          if (memory_state.need_more()) {
-            range_data[i]->maintenance_flags |= MaintenanceFlag::COMPACT|MaintenanceFlag::MEMORY_PURGE;
-            ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR|MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
-            memory_state.decrement_needed(ag_data->mem_allocated);
+        if (iter == cumulative_size_map.end()) {
+          String errstr;
+          for (iter = cumulative_size_map.begin(); iter != cumulative_size_map.end(); iter++) {
+            errstr += String("PERROR frag-") + (*iter).second.fragno +
+              "\trevision\t" + (*iter).first + "\n";
+            errstr += String("PERROR frag-") + (*iter).second.fragno +
+              "\tdistance\t" + (*iter).second.distance + "\n";
+            errstr += String("PERROR frag-") + (*iter).second.fragno +
+              "\tsize\t" + (*iter).second.cumulative_size + "\n";
           }
-          else {
-            range_data[i]->maintenance_flags |= MaintenanceFlag::COMPACT;
-            ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR;
+          errstr += String("PERROR revision ") +
+            ag_data->earliest_cached_revision + " not found in map\n";
+          cout << flush << errstr << flush;
+          trace_str += String("STAT *** This should never happen, ecr = ") +
+            ag_data->earliest_cached_revision + " ***\n";
+          continue;
+        }
+
+        if ((*iter).second.cumulative_size > prune_threshold) {
+          trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
+            + (*iter).second.cumulative_size + " > prune_threshold " + prune_threshold + "\n";
+          if (ag_data->mem_used > 0) {
+            if (range_data[i]->priority == 0)
+              range_data[i]->priority = priority++;
+            if (memory_state.need_more()) {
+              range_data[i]->maintenance_flags |= MaintenanceFlag::COMPACT|MaintenanceFlag::MEMORY_PURGE;
+              ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR|MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
+              memory_state.decrement_needed(ag_data->mem_allocated);
+            }
+            else {
+              range_data[i]->maintenance_flags |= MaintenanceFlag::COMPACT;
+              ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR;
+            }
           }
         }
+        else
+          trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
+            + (*iter).second.cumulative_size + " <= prune_threshold " + prune_threshold + "\n";
       }
-      else
-        trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
-          + (*iter).second.cumulative_size + " <= prune_threshold " + prune_threshold + "\n";
 
       // memory purge takes precedent over merging compactions
       if (ag_data->needs_merging &&
