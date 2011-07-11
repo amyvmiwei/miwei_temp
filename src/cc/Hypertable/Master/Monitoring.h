@@ -86,6 +86,9 @@ namespace Hypertable {
       int64_t disk_write_iops;
       int64_t vm_size;
       int64_t vm_resident;
+      int64_t heap_size;
+      int64_t heap_slack;
+      int64_t tracked_memory;
       double net_rx_rate;
       double net_tx_rate;
       double load_average;
