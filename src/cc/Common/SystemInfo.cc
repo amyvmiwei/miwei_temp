@@ -35,6 +35,10 @@ extern "C" {
 #include <stdlib.h>
 }
 
+#if defined(TCMALLOC) || defined(TCMALLOC_MINIMAL)
+#include <google/malloc_extension.h>
+#endif
+
 #define HT_FIELD_NOTIMPL(_field_) (_field_ == (uint64_t)-1)
 
 using namespace Hypertable;
@@ -164,7 +168,9 @@ bool ProcStat::operator==(const ProcStat &other) const {
       Serialization::equal(vm_share, other.vm_share) &&
       minor_faults == other.minor_faults &&
       major_faults == other.major_faults &&
-      page_faults == other.page_faults)
+      page_faults == other.page_faults &&
+      heap_size == other.heap_size &&
+      heap_slack == other.heap_slack)
     return true;
   return false;
 }
@@ -687,6 +693,10 @@ ProcStat &ProcStat::refresh() {
   minor_faults = HT_FIELD_NOTIMPL(m.minor_faults) ? 0 : m.minor_faults;
   major_faults = HT_FIELD_NOTIMPL(m.major_faults) ? 0 : m.major_faults;
   page_faults = HT_FIELD_NOTIMPL(m.page_faults) ? 0 : m.page_faults;;
+#if defined(TCMALLOC) || defined(TCMALLOC_MINIMAL)
+  MallocExtension::instance()->GetNumericProperty("generic.heap_size", &heap_size);
+  MallocExtension::instance()->GetNumericProperty("tcmalloc.slack_bytes", &heap_slack);
+#endif
 
   return *this;
 }
@@ -818,6 +828,7 @@ std::ostream &operator<<(std::ostream &out, const ProcStat &s) {
       <<"\n vm_size="<< s.vm_size <<" vm_resident="<< s.vm_resident
       <<" vm_share="<< s.vm_share <<"\n major_faults="<< s.major_faults
       <<" minor_faults="<< s.minor_faults <<" page_faults="<< s.page_faults
+      <<" heap_size="<< s.heap_size <<" heap_slack="<< s.heap_slack
       <<'}';
   return out;
 }

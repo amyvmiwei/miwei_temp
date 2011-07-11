@@ -118,6 +118,24 @@
                   :units: "KB",
                   :pname: "Virtual Memory Resident"},
 
+        :heap_size: {
+                  :pair: [:heap_size],
+                  :color: ["#5c3566"],
+                  :units: "KB",
+                  :pname: "Heap Size"},
+
+        :heap_slack: {
+                  :pair: [:heap_slack],
+                  :color: ["#edd400"],
+                  :units: "KB",
+                  :pname: "Heap Slack Bytes"},
+
+        :tracked_memory: {
+                  :pair: [:tracked_memory],
+                  :color: ["#ff8c00"],
+                  :units: "KB",
+                  :pname: "Tracked Memory"},
+
 	:bcache_fill: {
                     :pair: [:bcache_fill],
                     :color: ["#5c3566"],

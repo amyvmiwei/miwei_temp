@@ -84,6 +84,7 @@ StatsRangeServer::StatsRangeServer(const StatsRangeServer &other) : StatsSeriali
   block_cache_available_memory = other.block_cache_available_memory;
   block_cache_accesses = other.block_cache_accesses;
   block_cache_hits = other.block_cache_hits;
+  tracked_memory = other.tracked_memory;
   system = other.system;
   tables = other.tables;
 }
@@ -109,6 +110,7 @@ bool StatsRangeServer::operator==(const StatsRangeServer &other) const {
       block_cache_available_memory != other.block_cache_available_memory ||
       block_cache_accesses != other.block_cache_accesses ||
       block_cache_hits != other.block_cache_hits ||
+      tracked_memory != other.tracked_memory ||
       system != other.system)
     return false;
   if (tables.size() != other.tables.size())
@@ -124,7 +126,7 @@ bool StatsRangeServer::operator==(const StatsRangeServer &other) const {
 
 size_t StatsRangeServer::encoded_length_group(int group) const {
   if (group == PRIMARY_GROUP) {
-    size_t len = Serialization::encoded_length_vstr(location) + 4*2 + 8*17 + \
+    size_t len = Serialization::encoded_length_vstr(location) + 4*2 + 8*18 + \
       system.encoded_length() + \
       Serialization::encoded_length_vi32(tables.size());
     for (size_t i=0; i<tables.size(); i++)
@@ -158,6 +160,7 @@ void StatsRangeServer::encode_group(int group, uint8_t **bufp) const {
     Serialization::encode_i64(bufp, block_cache_available_memory);
     Serialization::encode_i64(bufp, block_cache_accesses);
     Serialization::encode_i64(bufp, block_cache_hits);
+    Serialization::encode_i64(bufp, tracked_memory);
     system.encode(bufp);
     Serialization::encode_vi32(bufp, tables.size());
     for (size_t i=0; i<tables.size(); i++)
@@ -189,6 +192,7 @@ void StatsRangeServer::decode_group(int group, uint16_t len, const uint8_t **buf
     block_cache_available_memory = Serialization::decode_i64(bufp, remainp);
     block_cache_accesses = Serialization::decode_i64(bufp, remainp);
     block_cache_hits = Serialization::decode_i64(bufp, remainp);
+    tracked_memory = Serialization::decode_i64(bufp, remainp);
     system.decode(bufp, remainp);
     size_t table_count = Serialization::decode_vi32(bufp, remainp);
     tables.clear();

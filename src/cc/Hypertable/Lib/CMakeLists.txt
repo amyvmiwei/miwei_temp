@@ -118,7 +118,7 @@ quicklz/quicklz.cc
 
 add_library(Hypertable ${Hypertable_SRCS})
 add_dependencies(Hypertable HyperComm Hyperspace HyperCommon)
-target_link_libraries(Hypertable ${EXPAT_LIBRARIES} ${RRD_LIBRARIES} Hyperspace HyperDfsBroker)
+target_link_libraries(Hypertable ${EXPAT_LIBRARIES} ${RRD_LIBRARIES} Hyperspace HyperDfsBroker ${MALLOC_LIBRARY})
 
 # generate_test_data
 add_executable(generate_test_data generate_test_data.cc)

@@ -273,7 +273,7 @@ size_t StatsSystem::encoded_length_group(int group) const {
     return len;
   }
   else if (group == PROC_GROUP) {
-    return (6*8) + (4*Serialization::encoded_length_double());
+    return (6*8) + (4*Serialization::encoded_length_double()) + 2*8;
   }
   else if (group == FS_GROUP) {
     size_t len = Serialization::encoded_length_vi32(fs_stat.size());
@@ -393,6 +393,8 @@ void StatsSystem::encode_group(int group, uint8_t **bufp) const {
     Serialization::encode_i64(bufp, proc_stat.minor_faults);
     Serialization::encode_i64(bufp, proc_stat.major_faults);
     Serialization::encode_i64(bufp, proc_stat.page_faults);
+    Serialization::encode_i64(bufp, proc_stat.heap_size);
+    Serialization::encode_i64(bufp, proc_stat.heap_slack);
   }
   else if (group == FS_GROUP) {
     Serialization::encode_vi32(bufp, fs_stat.size());
@@ -529,6 +531,8 @@ void StatsSystem::decode_group(int group, uint16_t len, const uint8_t **bufp, si
     proc_stat.minor_faults = Serialization::decode_i64(bufp, remainp);
     proc_stat.major_faults = Serialization::decode_i64(bufp, remainp);
     proc_stat.page_faults = Serialization::decode_i64(bufp, remainp);
+    proc_stat.heap_size = Serialization::decode_i64(bufp, remainp);
+    proc_stat.heap_slack = Serialization::decode_i64(bufp, remainp);
     m_categories |= PROC;
   }
   else if (group == FS_GROUP) {

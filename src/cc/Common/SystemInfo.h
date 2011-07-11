@@ -222,6 +222,8 @@ namespace Hypertable {
     uint64_t minor_faults;
     uint64_t major_faults;
     uint64_t page_faults;
+    uint64_t heap_size;
+    uint64_t heap_slack;
   };
 
   struct FsStat {
