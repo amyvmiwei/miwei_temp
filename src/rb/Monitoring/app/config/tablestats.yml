@@ -2,85 +2,67 @@
         :scan_rate: {
                       :pair: [:scan_rate],
                       :units: "",
-                      :color: ["#cc0000"],
+                      :color: ["#ffd700"],
                       :pname: "Scans/s"
                   },
-
-        :cell_read_rate: { :pair: [:cell_read_rate],
-                       :units: "" ,
-                       :color: ["#edd400"],
-                       :pname: "Cells Read/s"},
-
-        :byte_read_rate: { :pair: [:byte_read_rate],
-                       :units: "bytes" ,
-                       :color: ["#edd400"],
-                       :pname: "Table Bytes Read/s"},
-
-        :disk_read_rate: { :pair: [:disk_read_rate],
-                       :units: "bytes" ,
-                       :color: ["#edd400"],
-                       :pname: "Disk Bytes Read/s"},
 
 	:update_rate: {
                       :pair: [:update_rate],
 		      :units: "",
-                      :color: ["#c17d11"],
+                      :color: ["#daa520"],
                       :pname: "Updates/s"
                       },
+
+        :cell_read_rate: { :pair: [:cell_read_rate],
+                       :units: "" ,
+                       :color: ["#7cfc00"],
+                       :pname: "Cells Read/s"},
 
         :cell_write_rate: {
                        :pair: [:cell_write_rate],
                        :units: "" ,
-                       :color: ["#73d216"],
+                       :color: ["#008000"],
                        :pname: "Cells Written/s"
                       },
+
+        :byte_read_rate: { :pair: [:byte_read_rate],
+                       :units: "bytes" ,
+                       :color: ["#00ffff"],
+                       :pname: "Table Bytes Read/s"},
 
         :byte_write_rate: {
                        :pair: [:byte_write_rate],
                        :units: "bytes" ,
-                       :color: ["#73d216"],
+                       :color: ["#00008b"],
                        :pname: "Table Bytes Written/s"
                       },
 
-        :block_index_memory: {
-                       :pair: [ :block_index_memory],
-                       :units: "Bytes",
-                       :color: ["#5c3566"],
-                       :pname: "Block Index Memory"
-                       },
+        :disk_read_rate: { :pair: [:disk_read_rate],
+                       :units: "bytes" ,
+                       :color: ["#ff00ff"],
+                       :pname: "Disk Bytes Read/s"},
 
-        :bloom_filter_memory: {
-                       :pair: [:bloom_filter_memory],
-                       :units: "Bytes",
-                       :color: ["#73d216"],
-                       :pname: "Bloom Filter Memory"
-                       },
+        :scanner_count: { :pair: [:scanner_count],
+                       :units: "" ,
+                       :color: ["#ffd700"],
+                       :pname: "Outstanding Scanner Count"},
 
-        :bloom_filter_access: {
-                       :pair: [:bloom_filter_access],
-                       :units: "",
-                       :color: ["#ad7fa8"],
-                       :pname: "Bloom Filter Accesses"
-                       },
-
-        :bloom_filter_maybes: {
-                       :pair:  [:bloom_filter_maybes],
-                       :units: "",
-                       :color: ["#73d216"],
-                       :pname: "Bloom Filter Maybes"
-                       },
+        :range_count: { :pair: [:range_count],
+                       :units: "" ,
+                       :color: ["#1e90ff"],
+                       :pname: "Range Count"},
 
         :disk_used: {
                        :pair: [:disk_used],
                        :units: "Bytes",
-                       :color: ["#fcaf3e"],
+                       :color: ["#ff4500"],
                        :pname: "Disk Used"
                        },
 
         :memory_used: {
                       :pair: [:memory_used],
                       :units: "Bytes",
-                      :color: ["#c17d11"],
+                      :color: ["#ee82ee"],
                       :pname: "Memory Used"
                       },
 		      
@@ -88,18 +70,36 @@
                      :pair: [:memory_allocated],
                      :units: "Bytes",
                      :immutable: true,
-                     :color: ["#888a85"],
+                     :color: ["#d02090"],
                      :pname: "Memory Allocated"
                      },
 
-        :range_count: { :pair: [:range_count],
-                       :units: "" ,
-                       :color: ["#73d216"],
-                       :pname: "Range Count"},
+        :block_index_memory: {
+                       :pair: [ :block_index_memory],
+                       :units: "Bytes",
+                       :color: ["#000080"],
+                       :pname: "Block Index Memory"
+                       },
 
-        :scanner_count: { :pair: [:scanner_count],
-                       :units: "" ,
-                       :color: ["#cc0000"],
-                       :pname: "Outstanding Scanner Count"}
+        :bloom_filter_memory: {
+                       :pair: [:bloom_filter_memory],
+                       :units: "Bytes",
+                       :color: ["#ffde27"],
+                       :pname: "Bloom Filter Memory"
+                       },
+
+        :bloom_filter_access: {
+                       :pair: [:bloom_filter_access],
+                       :units: "",
+                       :color: ["#ff9000"],
+                       :pname: "Bloom Filter Accesses"
+                       },
+
+        :bloom_filter_maybes: {
+                       :pair:  [:bloom_filter_maybes],
+                       :units: "",
+                       :color: ["#ff4500"],
+                       :pname: "Bloom Filter Maybes"
+                       }
 
 }
