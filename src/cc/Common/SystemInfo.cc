@@ -638,10 +638,11 @@ NetStat &NetStat::refresh() {
         HT_DEBUGF("curr_net_stat: rx_bytes=%llu, tx_bytes=%llu",
                   (Llu)curr.rx_bytes, (Llu)curr.tx_bytes);
 
-        rx_rate = (curr.rx_bytes - _prev_net_stat.rx_bytes) / elapsed / KiB;
-        tx_rate = (curr.tx_bytes - _prev_net_stat.tx_bytes) / elapsed / KiB;
+        rx_rate = (curr.rx_bytes - _prev_net_stat.rx_bytes) / elapsed;
+        tx_rate = (curr.tx_bytes - _prev_net_stat.tx_bytes) / elapsed;
 
         _prev_net_stat = curr;
+        _net_stat_stopwatch.reset();
         _net_stat_stopwatch.start();
       }
     }
