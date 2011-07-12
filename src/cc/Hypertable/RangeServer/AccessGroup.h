@@ -265,7 +265,7 @@ namespace Hypertable {
     void range_dir_initialize();
     void recompute_compression_ratio();
     bool find_merge_run(size_t *indexp=0, size_t *lenp=0);
-    void check_for_needs_merging();
+    bool needs_merging();
     void sort_cellstores_by_timestamp();
 
     Mutex                m_mutex;

@@ -93,6 +93,7 @@ namespace Hypertable {
     static bool           enable_shadow_cache;
     static std::string    toplevel_dir;
     static int32_t        metrics_interval;
+    static int32_t        merge_cellstore_run_length_threshold;
   };
 
 } // namespace Hypertable
