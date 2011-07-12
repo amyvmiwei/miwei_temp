@@ -3,174 +3,174 @@
         :scan_rate: {
                    :pair: [:scan_rate],
                    :units: "",
-                   :color: ["#cc0000"],
+                   :color: ["#ffd700"],
                    :pname: "Scans/s"},
-
-        :cell_read_rate: { :pair: [:cell_read_rate],
-                       :units: "" ,
-                       :color: ["#edd400"],
-                       :pname: "Cells Read/s"},
-
-        :byte_read_rate: {
-                     :pair: [:byte_read_rate],
-                     :color: ["#c17d11"],
-                     :units: "Bytes",
-                     :pname: "Bytes Read/s"},
 
         :update_rate: {
                    :pair: [:update_rate],
                    :units: "",
-                   :color: ["#cc0000"],
+                   :color: ["#daa520"],
                    :pname: "Updates/s"},
+
+        :cell_read_rate: { :pair: [:cell_read_rate],
+                       :units: "" ,
+                       :color: ["#7cfc00"],
+                       :pname: "Cells Read/s"},
 
         :cell_write_rate: {
                        :pair: [:cell_write_rate],
                        :units: "" ,
-                       :color: ["#73d216"],
+                       :color: ["#008000"],
                        :pname: "Cells Written/s"
                       },
 
+        :byte_read_rate: {
+                     :pair: [:byte_read_rate],
+                     :color: ["#00ffff"],
+                     :units: "Bytes",
+                     :pname: "Table Bytes Read/s"},
+
         :byte_write_rate: {
                      :pair: [:byte_write_rate],
-                     :color: [ "#888a85"],
+                     :color: ["#00008b"],
                      :units: "Bytes",
-                     :pname: "Bytes Written/s"},
+                     :pname: "Table Bytes Written/s"},
 
         :sync_rate: {
                    :pair: [:sync_rate],
                    :units: "",
-                   :color: ["#cc0000"],
+                   :color: ["#ff4500"],
                    :pname: "Syncs/s"},
 
 	:disk_read_iops: {
                      :pair: [:disk_read_iops],
-                     :color: ["#ef2929"],
+                     :color: ["#ffd700"],
                      :units: "",
-                     :pname: "Disk Read IOPS"},
+                     :pname: "Disk Activity - Read IOPS"},
 
 	:disk_write_iops: {
                      :pair: [:disk_write_iops],
-                     :color: ["#ef2929"],
+                     :color: ["#daa520"],
                      :units: "",
-                     :pname: "Disk Write IOPS"},
+                     :pname: "Disk Activity - Write IOPS"},
 
         :disk_read_bytes: {
                     :pair: [:disk_read_bytes],
-                    :color: ["#cc0000"],
+                    :color: ["#ff00ff"],
                     :units: "",
-                    :pname: "Disk Read Bytes/s"},
+                    :pname: "Disk Activity - Read Bytes/s"},
        
         :disk_write_bytes: {
                      :pair: [:disk_write_bytes],
-                     :color: ["#cc0000"],
+                     :color: ["#d02090"],
                      :units: "",
-                     :pname: "Disk Write Bytes/s"},
+                     :pname: "Disk Activity - Write Bytes/s"},
 
 	:net_rx_rate: {
                      :pair: [:net_rx_rate],
-                     :color: ["#ef2929"],
+                     :color: ["#7cfc00"],
                      :units: "",
-                     :pname: "Net RX Rate"},
+                     :pname: "Network Activity - RX Rate"},
 
 	:net_tx_rate: {
                      :pair: [:net_tx_rate],
-                     :color: ["#ef2929"],
+                     :color: ["#008000"],
                      :units: "",
-                     :pname: "Net TX Rate"},
+                     :pname: "Network Activity - TX Rate"},
 
         :loadavg: {
                     :pair: [:loadavg],
-                    :color: ["#73d216"],
+                    :color: ["#ff0000"],
                     :units: "",
-                    :pname: "Load Avg"},
-
-        :range_count: { :pair: [:range_count],
-                       :units: "" ,
-                       :color: ["#73d216"],
-                       :pname: "Range Count"},
+                    :pname: "Load Average"},
 
         :scanner_count: { :pair: [:scanner_count],
                        :units: "" ,
-                       :color: ["#cc0000"],
+                       :color: ["#ffd700"],
                        :pname: "Outstanding Scanner Count"},
 
         :file_count: { :pair: [:file_count],
                        :units: "" ,
-                       :color: ["#5c3566"],
+                       :color: ["#8b4513"],
                        :pname: "CellStore Count"},
+
+        :range_count: { :pair: [:range_count],
+                       :units: "" ,
+                       :color: ["#1e90ff"],
+                       :pname: "Range Count"},
 
 	:disk_used_pct: {
                     :pair: [:disk_used_pct],
-                    :color: ["#5c3566"],
+                    :color: ["#008000"],
                     :units: "",
                     :pname: "Disk Used (%)"
                     },
 
         :vm_size: {
                   :pair: [:vm_size],
-                  :color: ["#ef2929"],
+                  :color: ["#696969"],
                   :units: "KB",
                   :pname: "Virtual Memory Size"},
 
         :vm_resident: {
                   :pair: [:vm_resident],
-                  :color: ["#73d216"],
+                  :color: ["#000000"],
                   :units: "KB",
-                  :pname: "Virtual Memory Resident"},
+                  :pname: "Resident Memory Size"},
 
         :heap_size: {
                   :pair: [:heap_size],
-                  :color: ["#5c3566"],
+                  :color: ["#ffd700"],
                   :units: "KB",
                   :pname: "Heap Size"},
 
         :heap_slack: {
                   :pair: [:heap_slack],
-                  :color: ["#edd400"],
+                  :color: ["#daa520"],
                   :units: "KB",
                   :pname: "Heap Slack Bytes"},
 
         :tracked_memory: {
                   :pair: [:tracked_memory],
-                  :color: ["#ff8c00"],
+                  :color: ["#8b008b"],
                   :units: "KB",
                   :pname: "Tracked Memory"},
 
 	:bcache_fill: {
                     :pair: [:bcache_fill],
-                    :color: ["#5c3566"],
+                    :color: ["#00ffff"],
                     :units: "",
                     :pname: "Block Cache Fill"
                     },
 
         :bcache_hit_pct: {
                     :pair: [:bcache_hit_pct],
-                    :color: ["#cc0000"],
+                    :color: ["#0000ff"],
                     :units: "",
-                    :pname: "Block Cache Hit (%)"},
+                    :pname: "Block Cache Hit Rate (%)"},
         :bcache_max_mem: {
                     :pair: [:bcache_max_mem],
-                    :color: ["#5c3566"],
+                    :color: ["#00008b"],
                     :units: "",
-                    :pname: "Block Cache Max Mem",
+                    :pname: "Block Cache Max Memory",
                     :flag: "1"  },
 
         :qcache_fill: {
                   :pair: [:qcache_fill],
-                  :color: ["#fcaf3e"],
+                  :color: ["#ffa500"],
                   :units: "" ,
                   :pname: "Query Cache Fill"},
 
         :qcache_hit_pct: {
                      :pair: [:qcache_hit_pct],
-                     :color: ["#ef2929"],
+                     :color: ["#fd7903"],
                      :units: "",
-                     :pname: "Query Cache Hits (%)"},
+                     :pname: "Query Cache Hit Rate (%)"},
 
         :qcache_max_mem: {
                      :pair: [:qcache_max_mem],
-                     :color: ["#8ae234"],
+                     :color: ["#ff4500"],
                      :units: "",
-                     :pname: "Query Cache Max Mem"}
+                     :pname: "Query Cache Max Memory"}
 	
 }
