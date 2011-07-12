@@ -24,6 +24,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "Common/Error.h"
+#include "Common/Logger.h"
 
 #include "ServerMetrics.h"
 
@@ -40,14 +41,15 @@ void ServerMeasurement::parse_measurement(const char *measurement, size_t len) {
   String str(measurement, len);
   boost::split(splits, str, boost::is_any_of(":,"));
 
-  if (splits.size() != 12)
-    HT_THROW(Error::PROTOCOL_ERROR, (String) "Measurement string '" + str
-        + "' has " + (int)(splits.size()) + (String)" components, expected 12.");
-
   version = atoi(splits[0].c_str());
   if (version != 2)
     HT_THROW(Error::NOT_IMPLEMENTED, (String) "ServerMetrics version=" + version
         + " expected 2");
+
+  if (splits.size() != 12)
+    HT_THROW(Error::PROTOCOL_ERROR, (String) "Measurement string '" + str
+        + "' has " + (int)(splits.size()) + (String)" components, expected 12.");
+
   timestamp             = strtoll(splits[1].c_str(), 0, 0);
   loadavg               = strtod(splits[2].c_str(), 0);
   disk_bytes_read_rate  = strtod(splits[3].c_str(), 0);
@@ -62,7 +64,16 @@ void ServerMeasurement::parse_measurement(const char *measurement, size_t len) {
 }
 
 void ServerMetrics::add_measurement(const char *measurement, size_t len) {
-  ServerMeasurement sm(measurement, len);
-  m_measurements.push_back(sm);
+  try {
+    ServerMeasurement sm(measurement, len);
+    m_measurements.push_back(sm);
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::NOT_IMPLEMENTED) {
+      HT_WARN_OUT << e << HT_END;
+    }
+    else
+      HT_THROW(e.code(), e.what());
+  }
 }
 

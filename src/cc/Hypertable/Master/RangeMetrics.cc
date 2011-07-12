@@ -24,6 +24,7 @@
 #include <boost/algorithm/string.hpp>
 
 #include "Common/Error.h"
+#include "Common/Logger.h"
 #include "Common/StringExt.h"
 
 #include "Hypertable/Lib/Key.h"
@@ -43,15 +44,16 @@ void RangeMeasurement::parse_measurement(const char *measurement, size_t len) {
   vector<String> splits;
   String str(measurement, len);
   boost::split(splits, str, boost::is_any_of(":,"));
+  version = atoi(splits[0].c_str());
+
+  if (version != 2)
+    HT_THROW(Error::NOT_IMPLEMENTED, (String) "ServerMetrics version=" + version
+        + " expected 2");
 
   if (splits.size() != 11)
     HT_THROW(Error::PROTOCOL_ERROR, (String) "Measurement string '" + str
         + "' has " + (int)(splits.size()) + (String)" components, expected 11.");
 
-  version = atoi(splits[0].c_str());
-  if (version != 2)
-    HT_THROW(Error::NOT_IMPLEMENTED, (String) "ServerMetrics version=" + version
-        + " expected 2");
   timestamp             = strtoll(splits[1].c_str(), 0, 0);
   disk_used             = strtoll(splits[2].c_str(), 0, 0);
   memory_used           = strtoll(splits[3].c_str(), 0, 0);
@@ -71,8 +73,17 @@ RangeMetrics::RangeMetrics(const char *server_id, const char *table_id,
 }
 
 void RangeMetrics::add_measurement(const char *measurement, size_t len) {
-  RangeMeasurement rm(measurement, len);
-  m_measurements.push_back(rm);
+  try {
+    RangeMeasurement rm(measurement, len);
+    m_measurements.push_back(rm);
+  }
+  catch (Exception &e) {
+    if (e.code() == Error::NOT_IMPLEMENTED) {
+      HT_WARN_OUT << e << HT_END;
+    }
+    else
+      HT_THROW(e.code(), e.what());
+  }
 }
 
 void RangeMetrics::set_last_move(const char *move, size_t len) {
