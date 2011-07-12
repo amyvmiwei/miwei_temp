@@ -1907,6 +1907,9 @@ int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
 
+    if (get_bool("ThriftBroker.Hyperspace.Session.Reconnect"))
+      properties->set("Hyperspace.Session.Reconnect", true);
+
     ::uint16_t port = get_i16("port");
     boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
     boost::shared_ptr<ServerHandler> handler(new ServerHandler());

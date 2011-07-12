@@ -411,7 +411,8 @@ void DefaultPolicy::init_options() {
         "Maximum flush interval in milliseconds")
     ("ThriftBroker.Workers", i32()->default_value(50), "Number of "
         "worker threads for thrift broker")
-
+    ("ThriftBroker.Hyperspace.Session.Reconnect", boo()->default_value(true),
+        "ThriftBroker will reconnect to Hyperspace on session expiry")
     ;
   alias("Hypertable.RangeServer.CommitLog.RollLimit",
         "Hypertable.CommitLog.RollLimit");
