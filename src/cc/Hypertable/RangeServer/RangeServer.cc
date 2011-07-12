@@ -119,6 +119,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   boost::trim_if(Global::toplevel_dir, boost::is_any_of("/"));
   Global::toplevel_dir = String("/") + Global::toplevel_dir;
 
+  Global::merge_cellstore_run_length_threshold = cfg.get_i32("CellStore.Merge.RunLengthThreshold");
+
   std::vector<int64_t> collector_periods(2);
   int64_t interval = (int64_t)cfg.get_i32("Maintenance.Interval");
   collector_periods[RSStats::STATS_COLLECTOR_MAINTENANCE] = interval;

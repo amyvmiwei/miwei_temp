@@ -309,6 +309,8 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.CellStore.TargetSize.Window",
         i64()->default_value(30*MiB), "Size window above target minimum for "
         "CellStores in which merges will be considered")
+    ("Hypertable.RangeServer.CellStore.Merge.RunLengthThreshold", i32()->default_value(10),
+        "Trigger a merge if an adjacent run of merge candidate CellStores exceeds this length")
     ("Hypertable.RangeServer.CellStore.DefaultBlockSize",
         i32()->default_value(64*KiB), "Default block size for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultReplication",
