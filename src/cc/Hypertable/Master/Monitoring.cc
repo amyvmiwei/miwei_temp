@@ -28,6 +28,8 @@
 #include <cctype>
 #include <cstdlib>
 
+#include <boost/algorithm/string.hpp>
+
 extern "C" {
 #include <rrd.h>
 #include <time.h>
@@ -95,10 +97,15 @@ namespace {
   /** STL Strict Weak Ordering for RangeServerStatistics  */
   struct LtRangeServerStatistics {
     bool operator()(const RangeServerStatistics &s1, const RangeServerStatistics &s2) const {
+      if (boost::algorithm::starts_with(s1.location, "rs") &&
+          boost::algorithm::starts_with(s2.location, "rs")) {
+        int id1 = atoi(s1.location.c_str()+2);
+        int id2 = atoi(s2.location.c_str()+2);
+        return id1 < id2;
+      }
       return s1.location < s2.location;
     }
   };
-
 }
 
 void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
@@ -597,7 +604,7 @@ namespace {
   const char *rs_json_header = "{\"RangeServerSummary\": {\n  \"servers\": [\n";
   const char *rs_json_footer= "\n  ]\n}}\n";
   const char *rs_entry_format =
-    "{\"location\": \"%s\", \"hostname\": \"%s\", \"ip\": \"%s\", \"arch\": \"%s\","
+    "{\"order\": \"%d\", \"location\": \"%s\", \"hostname\": \"%s\", \"ip\": \"%s\", \"arch\": \"%s\","
     " \"cores\": \"%d\", \"skew\": \"%d\", \"os\": \"%s\", \"osVersion\": \"%s\","
     " \"vendor\": \"%s\", \"vendorVersion\": \"%s\", \"ram\": \"%.2f\","
     " \"disk\": \"%.2f\", \"diskUsePct\": \"%u\", \"rangeCount\": \"%llu\","
@@ -655,6 +662,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
       error_str = Error::get_text(stats[i].fetch_error);
 
     entry = format(rs_entry_format,
+                   i,
                    stats[i].location.c_str(),
                    stats[i].system_info->net_info.host_name.c_str(),
                    stats[i].system_info->net_info.primary_addr.c_str(),

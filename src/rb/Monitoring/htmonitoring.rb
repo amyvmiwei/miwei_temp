@@ -48,11 +48,11 @@ module HTMonitoring
     get '/' do
       @range_servers = StatsJson.new(:file => 'rangeserver_summary.json')
       @rs_records = @range_servers.parse_stats_file
-      @rs_records['RangeServerSummary']['servers'].sort! { |a,b| a['location'] <=> b['location'] }
+      @rs_records['RangeServerSummary']['servers'].sort! { |a,b| a['order'].to_i <=> b['order'].to_i }
       @n_ord="dsc"
       @name_sort_img = "/images/arrow_up.png"
       if params[:sort] == "name" && params[:ord] = "dsc"
-        @rs_records['RangeServerSummary']['servers'].sort! { |a,b| b['location'] <=> a['location'] }
+        @rs_records['RangeServerSummary']['servers'].sort! { |a,b| b['order'].to_i <=> a['order'].to_i }
         @n_ord="asc"
         @name_sort_img = "/images/arrow_down.png"
       end
