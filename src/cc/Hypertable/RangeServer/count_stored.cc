@@ -70,7 +70,7 @@ struct RangeCellStoreInfo {
   std::vector<String> cell_stores;
 };
 
-struct CellStoreInfo {
+struct cell_store_info {
   String start_row;
   String end_row;
   String file;
@@ -78,7 +78,7 @@ struct CellStoreInfo {
 
 void
 fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_name,
-                       std::vector<CellStoreInfo> &file_vector);
+                       std::vector<cell_store_info> &file_vector);
 
 } // local namespace
 
@@ -116,7 +116,7 @@ int main(int argc, char **argv) {
     Global::block_cache = new FileBlockCache(200000000LL, 200000000LL);
     Global::memory_tracker = new MemoryTracker(Global::block_cache);
 
-    std::vector<CellStoreInfo> file_vector;
+    std::vector<cell_store_info> file_vector;
 
     fill_cell_store_vector(hypertable_client, ns, table_name.c_str(), file_vector);
 
@@ -170,7 +170,7 @@ namespace {
 
 void
 fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_name,
-                       std::vector<CellStoreInfo> &file_vector) {
+                       std::vector<cell_store_info> &file_vector) {
   TablePtr table_ptr;
   NamespacePtr ns_system;
   TableScannerPtr scanner_ptr;
@@ -180,7 +180,7 @@ fill_cell_store_vector(ClientPtr &client, NamespacePtr &ns, const char *table_na
   char start_row[16];
   char end_row[16];
   RangeCellStoreInfo range_cell_store_info;
-  CellStoreInfo cell_store_info;
+  cell_store_info cell_store_info;
   String table_id;
 
   try {

@@ -1138,7 +1138,7 @@ bool AccessGroup::needs_merging() {
 
 namespace {
   struct LtCellStoreInfoTimestamp {
-    bool operator()(const AccessGroup::CellStoreInfo &x, const AccessGroup::CellStoreInfo &y) const {
+    bool operator()(const CellStoreInfo &x, const CellStoreInfo &y) const {
       return x.timestamp_min < y.timestamp_min;
     }
   };
