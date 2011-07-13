@@ -149,7 +149,6 @@ namespace Hypertable {
     DispatchHandlerSynchronizer  m_sync_handler;
     uint32_t               m_outstanding_appends;
     int64_t                m_offset;
-    ByteString             m_last_key;
     int64_t                m_file_length;
     int64_t                m_disk_usage;
     std::string            m_split_row;
