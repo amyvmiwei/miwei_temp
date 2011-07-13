@@ -13,13 +13,13 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
    --Hypertable.RangeServer.Port=38060 \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
-   --Hypertable.RangeServer.Range.SplitSize=250K 2>1 > rangeserver.rs1.output&
+   --Hypertable.RangeServer.Range.SplitSize=400K 2>1 > rangeserver.rs1.output&
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
    --Hypertable.RangeServer.Port=38061 \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
-   --Hypertable.RangeServer.Range.SplitSize=250K 2>1 > rangeserver.rs2.output&
+   --Hypertable.RangeServer.Range.SplitSize=400K 2>1 > rangeserver.rs2.output&
 
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 
