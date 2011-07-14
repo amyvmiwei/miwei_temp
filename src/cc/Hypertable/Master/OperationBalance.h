@@ -46,6 +46,7 @@ namespace Hypertable {
     virtual void decode_state(const uint8_t **bufp, size_t *remainp);
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
     virtual bool exclusive() { return true; }
+    const String get_algorithm();
 
   private:
     BalancePlanPtr m_plan;

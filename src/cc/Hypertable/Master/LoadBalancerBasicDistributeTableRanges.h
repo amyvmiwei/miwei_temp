@@ -59,8 +59,7 @@ namespace Hypertable {
       // map of table_id to TableSummary
       typedef std::map<const char *, TableSummaryPtr, LtCstr> TableSummaryMap;
 
-      CstrSet m_empty_servers_set;
-      vector<const char *> m_empty_servers;
+      vector<const char *> m_servers;
       CstrSet m_saturated_tables;
       TableSummaryMap m_table_summaries;
       TablePtr m_table;

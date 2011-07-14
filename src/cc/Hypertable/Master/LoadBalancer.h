@@ -42,7 +42,7 @@ namespace Hypertable {
 
   class LoadBalancer : public ReferenceCount {
   public:
-    virtual void balance() = 0;
+    virtual void balance(const String &algorithm=String()) = 0;
     virtual void transfer_monitoring_data(vector<RangeServerStatistics> &stats)=0;
 
     LoadBalancer(ContextPtr context) : m_context(context), m_last_balance_time(min_date_time) {

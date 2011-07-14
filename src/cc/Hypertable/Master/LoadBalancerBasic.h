@@ -36,23 +36,21 @@ namespace Hypertable {
 
   class LoadBalancerBasic : public LoadBalancer {
     public:
-
-      enum {
-        BALANCE_MODE_DISTRIBUTE_LOAD         = 0,
-        BALANCE_MODE_DISTRIBUTE_TABLE_RANGES = 1
-      };
-
+    enum {
+      BALANCE_MODE_DISTRIBUTE_LOAD             = 1,
+      BALANCE_MODE_DISTRIBUTE_TABLE_RANGES     = 2
+    };
       LoadBalancerBasic(ContextPtr context) : LoadBalancer(context), m_waiting_for_servers(false) { }
 
       void transfer_monitoring_data(vector<RangeServerStatistics> &stats);
-      void balance();
+      void balance(const String &algorithm=String());
 
       //String assign_to_server(TableIdentifier &tid, RangeIdentifier &rid) = 0;
       //void range_move_loaded(TableIdentifier &tid, RangeIdentifier &rid) = 0;
       //void range_relinquish_acknowledged(TableIdentifier &tid, RangeIdentifier &rid) = 0;
       //time_t maintenance_interval() = 0;
     private:
-      void calculate_balance_plan(BalancePlanPtr &plan);
+      void calculate_balance_plan(String algorithm, BalancePlanPtr &plan);
       void distribute_load(const boost::posix_time::ptime &now, BalancePlanPtr &plan);
       void distribute_table_ranges(vector<RangeServerStatistics> &range_server_stats,
                                    BalancePlanPtr &plan);

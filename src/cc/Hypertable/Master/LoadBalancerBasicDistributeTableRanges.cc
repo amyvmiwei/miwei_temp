@@ -32,12 +32,15 @@ void LoadBalancerBasicDistributeTableRanges::compute_plan(vector<RangeServerStat
 
   clear();
   m_num_servers = range_server_stats.size();
-  if (m_num_servers < 1)
+  if (m_num_servers <= 1)
     return;
   compute_range_distribution(range_server_stats);
+  m_num_servers = m_servers.size();
+  HT_INFO_OUT << "m_num_servers=" << m_num_servers << HT_END;
+  if (m_servers.size() <= 1)
+    return;
   // Now scan thru METADATA Location and StartRow and come up with balance plan
-  if (m_empty_servers.size() > 0)
-    compute_moves(balance_plan);
+  compute_moves(balance_plan);
   return;
 }
 
@@ -113,13 +116,6 @@ bool LoadBalancerBasicDistributeTableRanges::maybe_add_to_plan(const char *table
     return false;
   }
 
-  // this should never happen
-  if (m_empty_servers_set.find(src_server) != m_empty_servers_set.end()) {
-    HT_DEBUG_OUT << "Source server " << src_server << " is in empty_server set"
-         << " Dont move " << src_server << ":"<< table << "[" << start_row << ".."
-         << end_row << "] " << HT_END;
-    return false;
-  }
   // we dont have summary info on this table
   TableSummaryMap::iterator table_it = m_table_summaries.find(table);
   if (table_it == m_table_summaries.end()) {
@@ -141,8 +137,8 @@ bool LoadBalancerBasicDistributeTableRanges::maybe_add_to_plan(const char *table
     return false;
   }
   if (src_range_dist_it->second <= ranges_per_server) {
-    HT_DEBUG_OUT << "src server has " << src_range_dist_it->second << "ranges from this table "
-         << " which is below average " << ranges_per_server
+    HT_DEBUG_OUT << "src server has " << src_range_dist_it->second
+         << " ranges from this table which is below average " << ranges_per_server
          << " Dont move " << src_server << ":"<< table << "[" << start_row << ".."
          << end_row << "] " << HT_END;
     return false;
@@ -151,21 +147,25 @@ bool LoadBalancerBasicDistributeTableRanges::maybe_add_to_plan(const char *table
   RangeDistributionMap::iterator dst_range_dist_it;
   String dst_server;
 
-  foreach(const char *empty_server, m_empty_servers) {
-    dst_range_dist_it = table_it->second->range_dist.find(empty_server);
+  bool found_dst_server=false;
+  foreach(const char *target_server, m_servers) {
+    if (!strcmp(target_server, src_server))
+      continue;
+    dst_range_dist_it = table_it->second->range_dist.find(target_server);
     if (dst_range_dist_it == table_it->second->range_dist.end()) {
       pair<RangeDistributionMap::iterator, bool>  ret =
-          table_it->second->range_dist.insert(make_pair(empty_server, 0));
+          table_it->second->range_dist.insert(make_pair(target_server, 0));
       dst_range_dist_it = ret.first;
     }
     if (dst_range_dist_it->second < ranges_per_server) {
-      dst_server = empty_server;
+      found_dst_server = true;
+      dst_server = target_server;
       break;
     }
   }
 
   // none of the empty servers can accomodate any more ranges from this table
-  if (dst_server.size() == 0) {
+  if (!found_dst_server) {
     m_saturated_tables.insert(table_it->first);
     HT_DEBUG_OUT << "Can't find destination for ranges from table " << table << " (saturated)."
          << " Dont move " << src_server << ":"<< table << "[" << start_row << ".."
@@ -182,14 +182,13 @@ bool LoadBalancerBasicDistributeTableRanges::maybe_add_to_plan(const char *table
 
   // randomly shuffle the contents of the empty_servers vector to avoid
   // adjacent ranges from accumulating on the same empty range server
-  random_shuffle(m_empty_servers.begin(), m_empty_servers.end());
+  random_shuffle(m_servers.begin(), m_servers.end());
 
   return true;
 }
 
 void LoadBalancerBasicDistributeTableRanges::clear() {
-  m_empty_servers.clear();
-  m_empty_servers_set.clear();
+  m_servers.clear();
   m_saturated_tables.clear();
   m_table_summaries.clear();
 }
@@ -197,9 +196,10 @@ void LoadBalancerBasicDistributeTableRanges::clear() {
 void LoadBalancerBasicDistributeTableRanges::compute_range_distribution(vector<RangeServerStatistics> &range_server_stats) {
 
   foreach (RangeServerStatistics &rs, range_server_stats) {
-    if (!rs.stats)
+    if (!rs.stats || !rs.stats->live)
       continue;
     const char *server_id = rs.location.c_str();
+    m_servers.push_back(server_id);
     if (rs.stats->range_count > 0) {
       foreach (StatsTable &table, rs.stats->tables) {
         uint32_t range_count=table.range_count;
@@ -219,10 +219,7 @@ void LoadBalancerBasicDistributeTableRanges::compute_range_distribution(vector<R
     }
     else {
       HT_DEBUG_OUT << "Found empty server " << server_id << HT_END;
-      m_empty_servers_set.insert(server_id);
-      m_empty_servers.push_back(server_id);
     }
   }
-  HT_DEBUG_OUT << " m_table_summaries.size=" << m_table_summaries.size()
-      << ", m_empty_servers.size=" << m_empty_servers.size() << HT_END;
+  HT_DEBUG_OUT << " m_table_summaries.size=" << m_table_summaries.size() << HT_END;
 }

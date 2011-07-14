@@ -20,6 +20,8 @@
  */
 #include "Common/Compat.h"
 
+#include <boost/algorithm/string.hpp>
+
 #include "LoadBalancerBasic.h"
 #include "LoadBalancerBasicDistributeLoad.h"
 #include "LoadBalancerBasicDistributeTableRanges.h"
@@ -31,10 +33,10 @@ using namespace boost::posix_time;
 using namespace Hypertable;
 using namespace std;
 
-void LoadBalancerBasic::balance() {
+void LoadBalancerBasic::balance(const String &algorithm) {
   BalancePlanPtr plan = new BalancePlan;
   try {
-    calculate_balance_plan(plan);
+    calculate_balance_plan(algorithm, plan);
     if (plan->moves.size()>0) {
       OperationPtr operation = new OperationBalance(m_context, plan);
       m_context->op->add_operation(operation);
@@ -56,50 +58,69 @@ void LoadBalancerBasic::transfer_monitoring_data(vector<RangeServerStatistics> &
   m_range_server_stats.swap(stats);
 }
 
-void LoadBalancerBasic::calculate_balance_plan(BalancePlanPtr &balance_plan) {
+void LoadBalancerBasic::calculate_balance_plan(String algorithm, BalancePlanPtr &balance_plan) {
 
   vector <RangeServerStatistics> range_server_stats;
   uint32_t mode = BALANCE_MODE_DISTRIBUTE_LOAD;
   ptime now = second_clock::local_time();
-  {
-    // determine which balancer to use
-    ScopedLock lock(m_data_mutex);
-    range_server_stats.swap(m_range_server_stats);
-  }
 
-  // when we see a new server wait for next maintenance interval to balance
-  if (!m_waiting_for_servers) {
-    foreach(const RangeServerStatistics &server_stats, range_server_stats) {
-      if (server_stats.stats->range_count == 0) {
-        mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
-        range_server_stats.swap(m_range_server_stats);
-        m_wait_time_start = now;
-        m_waiting_for_servers = true;
-        break;
+  boost::to_upper(algorithm);
+  if (algorithm.size() == 0) {
+    // determine which balancer to use
+    mode = BALANCE_MODE_DISTRIBUTE_LOAD;
+    {
+      ScopedLock lock(m_data_mutex);
+      range_server_stats.swap(m_range_server_stats);
+    }
+
+    // when we see a new server wait for next maintenance interval to balance
+    if (!m_waiting_for_servers) {
+      foreach(const RangeServerStatistics &server_stats, range_server_stats) {
+        if (server_stats.stats->live && server_stats.stats->range_count == 0) {
+          mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
+          range_server_stats.swap(m_range_server_stats);
+          m_wait_time_start = now;
+          m_waiting_for_servers = true;
+          break;
+        }
       }
     }
+    else
+      mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
   }
-  else
-    mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
+  else {
+    if (algorithm == "TABLE_RANGES") {
+      mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
+      m_waiting_for_servers = false;
+    }
+    else if (algorithm == "LOAD")
+      mode = BALANCE_MODE_DISTRIBUTE_LOAD;
+    else
+      HT_THROW(Error::NOT_IMPLEMENTED, (String)"Unknown LoadBalancer algorithm '" + algorithm
+          + "' supported algorithms are 'TABLE_RANGES', 'LOAD'");
+  }
 
   // TODO: write a factory class to create the sub balancer objects
 
   if (mode == BALANCE_MODE_DISTRIBUTE_LOAD && !m_waiting_for_servers) {
     distribute_load(now, balance_plan);
-    m_waiting_for_servers = true;
   }
   else {
     time_duration td = now - m_wait_time_start;
-    if (td.total_milliseconds() > m_balance_wait) {
-      distribute_table_ranges(range_server_stats, balance_plan);
+    if (m_waiting_for_servers && td.total_milliseconds() > m_balance_wait)
       m_waiting_for_servers = false;
-    }
+    if (!m_waiting_for_servers)
+      distribute_table_ranges(range_server_stats, balance_plan);
   }
 
   if (balance_plan->moves.size()) {
-    HT_INFO_OUT << "BalancePlan = " << *balance_plan << HT_END;
-    if (mode == BALANCE_MODE_DISTRIBUTE_LOAD)
+    if (mode == BALANCE_MODE_DISTRIBUTE_LOAD) {
+      HT_INFO_OUT << "LoadBalancerBasic mode=BALANCE_MODE_DISTRIBUTE_LOAD" << HT_END;
       m_last_balance_time = now;
+    }
+    else
+      HT_INFO_OUT << "LoadBalancerBasic mode=BALANCE_MODE_DISTRIBUTE_TABLE_RANGES" << HT_END;
+    HT_INFO_OUT << "BalancePlan = " << *balance_plan << HT_END;
   }
 }
 
@@ -112,6 +133,10 @@ void LoadBalancerBasic::distribute_load(const ptime &now, BalancePlanPtr &balanc
   td = now.time_of_day();
   if (td < m_balance_window_start || td > m_balance_window_end)
     return;
+
+  HT_INFO_OUT << "Current time = " << td << ", m_balance_window_start="
+      << m_balance_window_start << ", m_balance_window_end="
+      << m_balance_window_end << HT_END;
 
   LoadBalancerBasicDistributeLoad planner(m_balance_loadavg_threshold,
                                           m_context->rs_metrics_table);

@@ -156,3 +156,7 @@ const String OperationBalance::name() {
 const String OperationBalance::label() {
   return format("Balance (%u moves)", (unsigned)m_plan->moves.size());
 }
+
+const String OperationBalance::get_algorithm() {
+  return m_plan->algorithm;
+}
