@@ -27,8 +27,8 @@
 
 using namespace Hypertable;
 
-OperationLoadBalancer::OperationLoadBalancer(ContextPtr &context)
-  : Operation(context, MetaLog::EntityType::OPERATION_LOAD_BALANCER) {
+OperationLoadBalancer::OperationLoadBalancer(ContextPtr &context, const String &algorithm)
+  : Operation(context, MetaLog::EntityType::OPERATION_LOAD_BALANCER), m_algorithm(algorithm) {
   m_dependencies.insert(Dependency::INIT);
   m_dependencies.insert(Dependency::METADATA);
   m_dependencies.insert(Dependency::SYSTEM);
@@ -39,7 +39,7 @@ void OperationLoadBalancer::execute() {
   HT_INFOF("Entering LoadBalancer-%lld", (Lld)header.id);
 
   try {
-    m_context->balancer->balance();
+    m_context->balancer->balance(m_algorithm);
   }
   catch (Exception &e) {
     HT_THROW2(e.code(), e, "Load Balancer");

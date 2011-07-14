@@ -28,7 +28,7 @@ namespace Hypertable {
 
   class OperationLoadBalancer : public Operation {
   public:
-    OperationLoadBalancer(ContextPtr &context);
+    OperationLoadBalancer(ContextPtr &context, const String &algorithm=String());
     virtual ~OperationLoadBalancer() { }
 
     virtual void execute();
@@ -41,6 +41,8 @@ namespace Hypertable {
     virtual void encode_state(uint8_t **bufp) const { }
     virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }
     virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
+  private:
+    String m_algorithm;
   };
   typedef intrusive_ptr<OperationLoadBalancer> OperationLoadBalancerPtr;
 

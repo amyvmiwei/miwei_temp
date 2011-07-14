@@ -398,6 +398,15 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_balance_algorithm {
+      set_balance_algorithm(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.balance_plan.algorithm = String(str, end-str);
+        trim_if(state.balance_plan.algorithm, is_any_of("'\""));
+      }
+      ParserState &state;
+    };
+
     struct add_range_move_spec {
       add_range_move_spec(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1705,7 +1714,7 @@ namespace Hypertable {
           Token FOR          = as_lower_d["for"];
           Token MAINTENANCE  = as_lower_d["maintenance"];
           Token HEAPCHECK    = as_lower_d["heapcheck"];
-
+          Token ALGORITHM    = as_lower_d["algorithm"];
           /**
            * Start grammar definition
            */
@@ -1787,8 +1796,9 @@ namespace Hypertable {
             ;
 
           balance_statement
-            = BALANCE >> *(range_move_spec_list)
-                      >> *(balance_option_spec)
+            = BALANCE >> !(ALGORITHM >> EQUAL >> user_identifier[set_balance_algorithm(self.state)])
+              >> *(range_move_spec_list)
+              >> *(balance_option_spec)
             ;
 
           range_move_spec_list
@@ -1797,7 +1807,7 @@ namespace Hypertable {
             ;
 
           range_move_spec
-            = LPAREN 
+            = LPAREN
             >> range_spec >> COMMA
             >> string_literal[set_source(self.state)] >> COMMA
             >> string_literal[set_destination(self.state)]
@@ -2426,7 +2436,7 @@ namespace Hypertable {
           dump_table_statement, dump_table_option_spec, range_spec,
           exists_table_statement, update_statement, create_scanner_statement,
           destroy_scanner_statement, fetch_scanblock_statement,
-          close_statement, shutdown_statement, shutdown_master_statement, 
+          close_statement, shutdown_statement, shutdown_master_statement,
           drop_range_statement, replay_start_statement, replay_log_statement,
           replay_commit_statement, cell_interval, cell_predicate,
           cell_spec, wait_for_maintenance_statement, move_range_statement,
