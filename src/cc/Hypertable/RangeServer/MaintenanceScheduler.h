@@ -80,6 +80,7 @@ namespace Hypertable {
     int32_t m_low_memory_limit_percentage;
     int32_t m_merging_delay;
     int32_t m_merges_per_interval;
+    int32_t m_move_compactions_per_interval;
   };
 
   typedef intrusive_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;

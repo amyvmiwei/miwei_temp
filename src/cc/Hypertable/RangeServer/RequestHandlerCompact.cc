@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -39,18 +39,16 @@ using namespace Serialization;
  */
 void RequestHandlerCompact::run() {
   ResponseCallback cb(m_comm, m_event_ptr);
-  TableIdentifier table;
-  RangeSpec range;
-  uint8_t compaction_type = 0;
+  const char *table_id;
+  uint32_t flags;
   const uint8_t *decode_ptr = m_event_ptr->payload;
   size_t decode_remain = m_event_ptr->payload_len;
 
   try {
-    table.decode(&decode_ptr, &decode_remain);
-    range.decode(&decode_ptr, &decode_remain);
-    compaction_type = decode_i8(&decode_ptr, &decode_remain);
+    table_id = decode_vstr(&decode_ptr, &decode_remain);
+    flags = decode_i32(&decode_ptr, &decode_remain);
 
-    m_range_server->compact(&cb, &table, &range, compaction_type);
+    m_range_server->compact(&cb, table_id, flags);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

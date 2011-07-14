@@ -62,6 +62,51 @@ namespace Hypertable {
     return m_command_strings[command];
   }
 
+  String
+  RangeServerProtocol::compact_flags_to_string(uint32_t flags) {
+    String str = "ranges=";
+    if ((flags & COMPACT_FLAG_ALL) == COMPACT_FLAG_ALL)
+      str += "ALL";
+    else {
+      bool first=true;
+      if ((flags & COMPACT_FLAG_ROOT) == COMPACT_FLAG_ROOT) {
+        str += "ROOT";
+        first=false;
+      }
+      if ((flags & COMPACT_FLAG_METADATA) == COMPACT_FLAG_METADATA) {
+        if (!first) {
+          str += "|";
+          first=false;
+        }
+        str += "METADATA";
+      }
+      if ((flags & COMPACT_FLAG_SYSTEM) == COMPACT_FLAG_SYSTEM) {
+        if (!first) {
+          str += "|";
+          first=false;
+        }
+        str += "SYSTEM";
+      }
+      if ((flags & COMPACT_FLAG_USER) == COMPACT_FLAG_USER) {
+        if (!first) {
+          str += "|";
+          first=false;
+        }
+        str += "USER";
+      }
+    }
+    return str;
+  }
+
+  CommBuf *
+  RangeServerProtocol::create_request_compact(const String &table_id, uint32_t flags) {
+    CommHeader header(COMMAND_COMPACT);
+    CommBuf *cbuf = new CommBuf(header, Serialization::encoded_length_vstr(table_id) + 4);
+    Serialization::encode_vstr(cbuf->get_data_ptr_address(), table_id);
+    Serialization::encode_i32(cbuf->get_data_ptr_address(), flags);
+    return cbuf;
+  }
+
   CommBuf *
   RangeServerProtocol::create_request_load_range(const TableIdentifier &table,
       const RangeSpec &range, const char *transfer_log,

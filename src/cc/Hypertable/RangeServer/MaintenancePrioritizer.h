@@ -54,8 +54,8 @@ namespace Hypertable {
     MaintenancePrioritizer(RSStatsPtr &server_stats)
       : m_cellstore_minimum_size(0), m_server_stats(server_stats) { }
 
-    virtual void prioritize(RangeStatsVector &range_data,
-                            MemoryState &memory_state, String &trace_str) = 0;
+    virtual void prioritize(RangeStatsVector &range_data, MemoryState &memory_state,
+                            int32_t priority, String &trace_str) = 0;
 
   protected:
 

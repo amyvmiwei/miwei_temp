@@ -859,53 +859,96 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader) {
 
 
 void
-RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
-                     const RangeSpec *range_spec, uint8_t compaction_type) {
-  int error = Error::OK;
-  String errmsg;
+RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags) {
+  std::vector<RangePtr> ranges;
   TableInfoPtr table_info;
-  RangePtr range;
-  bool major = false;
+  size_t range_count = 0;
 
-  // Check for major compaction
-  if (compaction_type == 1)
-    major = true;
-
-  HT_INFO_OUT <<"compacting\n"<< *table << *range_spec
-              <<"Compaction type="<< (major ? "major" : "minor") << HT_END;
+  if (*table_id)
+    HT_INFO_OUT << "compacting table ID=" << table_id << HT_END;
+  else
+    HT_INFO_OUT << "compacting " << RangeServerProtocol::compact_flags_to_string(flags) << HT_END;
 
   if (!m_replay_finished) {
-    if (!wait_for_recovery_finish(table, range_spec, cb->get_event()->expiration_time()))
+    if (!RangeServer::wait_for_recovery_finish(cb->get_event()->expiration_time()))
       return;
   }
 
   try {
 
-    if (!m_live_map->get(table->id, table_info)) {
-      cb->error(Error::TABLE_NOT_FOUND, table->id);
-      return;
+    if (*table_id) {
+
+      if (!m_live_map->get(table_id, table_info)) {
+        cb->error(Error::TABLE_NOT_FOUND, table_id);
+        return;
+      }
+
+      ranges.clear();
+      table_info->get_range_vector(ranges);
+
+      for (size_t i=0; i<ranges.size(); i++)
+        ranges[i]->set_needs_compaction(true);
+
+      range_count = ranges.size();
+    }
+    else {
+      std::vector<TableInfoPtr> tables;
+
+      m_live_map->get_all(tables);
+
+      for (size_t i=0; i<tables.size(); i++) {
+
+        if (tables[i]->identifier().is_metadata()) {
+
+          if ((flags & RangeServerProtocol::COMPACT_FLAG_METADATA) ==
+              RangeServerProtocol::COMPACT_FLAG_METADATA) {
+            ranges.clear();
+            tables[i]->get_range_vector(ranges);
+            for (size_t j=0; j<ranges.size(); j++)
+              ranges[j]->set_needs_compaction(true);
+            range_count += ranges.size();
+          }
+          else if ((flags & RangeServerProtocol::COMPACT_FLAG_ROOT) ==
+                   RangeServerProtocol::COMPACT_FLAG_ROOT) {
+            ranges.clear();
+            tables[i]->get_range_vector(ranges);
+            for (size_t j=0; j<ranges.size(); j++) {
+              if (ranges[j]->is_root()) {
+                ranges[j]->set_needs_compaction(true);
+                range_count++;
+                break;
+              }
+            }
+          }
+        }
+
+        if ((flags & RangeServerProtocol::COMPACT_FLAG_SYSTEM) ==
+            RangeServerProtocol::COMPACT_FLAG_SYSTEM && tables[i]->identifier().is_system()) {
+          ranges.clear();
+          tables[i]->get_range_vector(ranges);
+          for (size_t j=0; j<ranges.size(); j++)
+            ranges[j]->set_needs_compaction(true);
+          range_count += ranges.size();
+        }
+
+        if ((flags & RangeServerProtocol::COMPACT_FLAG_USER) ==
+            RangeServerProtocol::COMPACT_FLAG_USER && tables[i]->identifier().is_user()) {
+          ranges.clear();
+          tables[i]->get_range_vector(ranges);
+          for (size_t j=0; j<ranges.size(); j++)
+            ranges[j]->set_needs_compaction(true);
+          range_count += ranges.size();
+        }
+      }
     }
 
-    /**
-     * Fetch range info
-     */
-    if (!table_info->get_range(range_spec, range))
-      HT_THROW(Error::RANGESERVER_RANGE_NOT_FOUND,
-               format("%s[%s..%s]", table->id, range_spec->start_row,
-                      range_spec->end_row));
+    HT_INFOF("Compaction scheduled for %d ranges", (int)range_count);
 
-    /*** FIX ME
-    Global::maintenance_queue->add(new MaintenanceTaskCompaction(range, major));
-    **/
-
-    if ((error = cb->response_ok()) != Error::OK)
-      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-
-    HT_DEBUGF("Compaction (%s) scheduled for table '%s' end row '%s'",
-              (major ? "major" : "minor"), table->id, range_spec->end_row);
+    cb->response_ok();
 
   }
   catch (Hypertable::Exception &e) {
+    int error;
     HT_ERROR_OUT << e << HT_END;
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK) {
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));

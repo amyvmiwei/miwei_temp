@@ -44,6 +44,36 @@ RangeServerClient::RangeServerClient(Comm *comm, uint32_t timeout_ms)
 RangeServerClient::~RangeServerClient() {
 }
 
+
+void
+RangeServerClient::compact(const CommAddress &addr, const String &table_id, uint32_t flags) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event;
+  CommBufPtr cbp(RangeServerProtocol::create_request_compact(table_id, flags));
+
+  send_message(addr, cbp, &sync_handler, m_default_timeout_ms);
+
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
+             String("RangeServer compact() failure : ")
+             + Protocol::string_format_message(event));
+}
+
+void
+RangeServerClient::compact(const CommAddress &addr, const String &table_id, uint32_t flags,
+                           DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_compact(table_id, flags));
+  send_message(addr, cbp, handler, m_default_timeout_ms);
+}
+
+void
+RangeServerClient::compact(const CommAddress &addr, const String &table_id, uint32_t flags,
+                           DispatchHandler *handler, Timer &timer) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_compact(table_id, flags));
+  send_message(addr, cbp, handler, timer.remaining());
+}
+
+
 void
 RangeServerClient::load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,

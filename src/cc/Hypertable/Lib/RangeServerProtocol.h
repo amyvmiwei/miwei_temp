@@ -77,6 +77,25 @@ namespace Hypertable {
       UPDATE_FLAG_IGNORE_UNKNOWN_CFS = 0x0002
     };
 
+    // Flags for 
+    enum {
+      COMPACT_FLAG_ROOT     = 0x0001,
+      COMPACT_FLAG_METADATA = 0x0002,
+      COMPACT_FLAG_SYSTEM   = 0x0004,
+      COMPACT_FLAG_USER     = 0x0008,
+      COMPACT_FLAG_ALL      = 0x000F
+    };
+
+    static String compact_flags_to_string(uint32_t flags);
+
+    /** Creates a "compact" request message
+     *
+     * @param table_id table identifier
+     * @param flags compact flags
+     * @return protocol message
+     */
+    static CommBuf *create_request_compact(const String &table_id, uint32_t flags);
+
     /** Creates a "load range" request message
      *
      * @param table table identifier

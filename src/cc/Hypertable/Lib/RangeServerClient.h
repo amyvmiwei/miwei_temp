@@ -58,6 +58,35 @@ namespace Hypertable {
     }
     uint32_t default_timeout() const { return m_default_timeout_ms; }
 
+    /** Issues a "compact" request synchronously.
+     *
+     * @param addr address of RangeServer
+     * @param table_id table identifier
+     * @param flags compact flags
+     */
+    void compact(const CommAddress &addr, const String &table_id, uint32_t flags);
+
+    /** Issues a "compact" request asynchronously.
+     *
+     * @param addr address of RangeServer
+     * @param table_id table identifier
+     * @param flags compact flags
+     * @param handler dispatch handler
+     */
+    void compact(const CommAddress &addr, const String &table_id, uint32_t flags,
+                 DispatchHandler *handler);
+
+    /** Issues a "compact" request asynchronously with a timer
+     *
+     * @param addr address of RangeServer
+     * @param table_id table identifier
+     * @param flags compact flags
+     * @param handler dispatch handler
+     * @param timer timer
+     */
+    void compact(const CommAddress &addr, const String &table_id, uint32_t flags,
+                 DispatchHandler *handler, Timer &timer);
+
     /** Issues a synchronous "load range" request.
      *
      * @param addr address of RangeServer

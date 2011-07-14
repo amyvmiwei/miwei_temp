@@ -34,6 +34,7 @@ namespace Hypertable {
       COMPACT_MAJOR             = 0x0202,
       COMPACT_MERGING           = 0x0204,
       COMPACT_GC                = 0x0208,
+      COMPACT_MOVE              = 0x0210,
       MEMORY_PURGE              = 0x0400,
       MEMORY_PURGE_SHADOW_CACHE = 0x0401,
       MEMORY_PURGE_CELLSTORE    = 0x0402,
@@ -62,6 +63,10 @@ namespace Hypertable {
 
     inline bool gc_compaction(int flags) {
       return (flags & COMPACT_GC) == COMPACT_GC;
+    }
+
+    inline bool move_compaction(int flags) {
+      return (flags & COMPACT_MOVE) == COMPACT_MOVE;
     }
 
     inline bool purge_shadow_cache(int flags) {

@@ -60,6 +60,7 @@ namespace {
 
   const char *help_text_rsclient_contents[] = {
     "",
+    "COMPACT ............... Schedules range compactions",
     "CREATE SCANNER ........ Creates a scanner and displays first block of results",
     "DESTROY SCANNER ....... Destroys a scanner",
     "DROP RANGE ............ Drop a range",
@@ -89,6 +90,37 @@ namespace {
     "",
     0
   };
+
+  const char *help_text_compact[] = {
+    "",
+    "COMPACT TABLE table_name",
+    "COMPACT RANGES range_type ['|' range_type ...]",
+    "",
+    "range_type:",
+    "    ALL",
+    "    | ROOT",
+    "    | METADATA",
+    "    | SYSTEM",
+    "    | USER",
+    "",
+    "This command schedules a major compaction for each range specified",
+    "in the command.  The TABLE version of the command will schedule",
+    "a major compaction for each range in the given table.  The RANGES",
+    "version of the command will schedule compactions for all the ranges",
+    "of the given type(s), regardless of what table they belong to.",
+    "",
+    "NOTE:  Compactions scheduled by this command are spread out over time.",
+    "During each maintenance interval, which by default happens once every",
+    "60 seconds, a limited number of these compactions will get scheduled",
+    "as controlled by the following property:",
+    "",
+    "  Hypertable.RangeServer.Maintenance.MoveCompactionsPerInterval",
+    "",
+    "The default value for this property is 2.",
+    "",
+    0
+  };
+
 
   const char *help_text_create_scanner[] = {
     "",
@@ -1721,6 +1753,9 @@ const char **HqlHelpText::get(const String &subject) {
 void HqlHelpText::install_range_server_client_text() {
   text_map.clear();
   text_map[""] = help_text_rsclient_contents;
+  text_map["compact"] = help_text_compact;
+  text_map["compact table"] = help_text_compact;
+  text_map["compact ranges"] = help_text_compact;
   text_map["contents"] = help_text_rsclient_contents;
   text_map["select"] = help_text_select;
   text_map["create"] = help_text_create_scanner;
