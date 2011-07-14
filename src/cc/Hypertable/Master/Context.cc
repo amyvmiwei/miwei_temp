@@ -238,3 +238,20 @@ void Context::clear_in_progress() {
   ScopedLock lock(mutex);
   in_progress_ops.clear();
 }
+
+
+void Context::add_unacknowledged_move(int64_t hash) {
+  ScopedLock lock(mutex);  
+  unacknowledged_moves.insert(hash);
+}
+
+bool Context::exists_unacknowledged_move(int64_t hash) {
+  ScopedLock lock(mutex);  
+  return unacknowledged_moves.count(hash) > 0;
+}
+
+void Context::acknowledge_move(int64_t hash) {
+  ScopedLock lock(mutex);
+  if (unacknowledged_moves.count(hash) > 0)
+    unacknowledged_moves.erase(hash);
+}

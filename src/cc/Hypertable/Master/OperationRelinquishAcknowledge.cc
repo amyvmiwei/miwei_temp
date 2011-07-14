@@ -44,11 +44,16 @@ OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &conte
 }
 
 void OperationRelinquishAcknowledge::execute() {
+  int64_t hash_code;
+
   HT_INFOF("Entering RelinquishAcknowledge-%lld %s[%s..%s] state=%s",
            (Lld)header.id, m_table.id, m_range.start_row, m_range.end_row,
            OperationState::get_text(m_state));
 
-  m_context->response_manager->remove_operation(Utility::range_hash_code(m_table, m_range, "OperationMoveRange"));
+  hash_code = Utility::range_hash_code(m_table, m_range, "OperationMoveRange");
+
+  m_context->response_manager->remove_operation(hash_code);
+  m_context->acknowledge_move(hash_code);
   complete_ok_no_log();
   {
     ScopedLock lock(m_mutex);
