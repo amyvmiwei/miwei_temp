@@ -67,6 +67,7 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPt
   m_merging_delay = get_i32("Hypertable.RangeServer.Maintenance.MergingCompaction.Delay");
   m_merges_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MergesPerInterval",
                                   std::numeric_limits<int32_t>::max());
+  m_move_compactions_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MoveCompactionsPerInterval");
 }
 
 
@@ -81,6 +82,7 @@ void MaintenanceScheduler::schedule() {
   int64_t excess = 0;
   MaintenancePrioritizer::MemoryState memory_state;
   bool low_memory = low_memory_mode();
+  int32_t priority = 1;
 
   memory_state.balance = Global::memory_tracker->balance();
   memory_state.limit = Global::memory_limit;
@@ -171,6 +173,13 @@ void MaintenanceScheduler::schedule() {
     trace_str += String("before revision_user\t") + revision_user + "\n";
 
     for (size_t i=0; i<range_data.size(); i++) {
+
+      if (range_data[i]->needs_major_compaction && priority <= m_move_compactions_per_interval) {
+        range_data[i]->priority = priority++;
+        range_data[i]->maintenance_flags = MaintenanceFlag::COMPACT_MOVE;
+        continue;
+      }
+
       for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
 
 	// compute memory stats
@@ -246,7 +255,7 @@ void MaintenanceScheduler::schedule() {
   }
 
   String dummy_str;
-  m_prioritizer->prioritize(range_data, memory_state, dummy_str);
+  m_prioritizer->prioritize(range_data, memory_state, priority, dummy_str);
 
   check_file_dump_statistics(now, range_data, trace_str);
 
@@ -295,18 +304,20 @@ void MaintenanceScheduler::schedule() {
 	MaintenanceTaskCompaction *task;
         RangePtr range(range_data_prioritized[i]->range);
 	task = new MaintenanceTaskCompaction(schedule_time, range);
-	for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i]->agdata; ag_data; ag_data=ag_data->next) {
-          if (MaintenanceFlag::minor_compaction(ag_data->maintenance_flags) ||
-              MaintenanceFlag::major_compaction(ag_data->maintenance_flags) ||
-              MaintenanceFlag::gc_compaction(ag_data->maintenance_flags))
-            task->add_subtask(ag_data->ag, ag_data->maintenance_flags);
-          else if (MaintenanceFlag::merging_compaction(ag_data->maintenance_flags)) {
-            if (do_merges && merges_created < m_merges_per_interval) {
+        if (!range_data_prioritized[i]->needs_major_compaction) {
+          for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i]->agdata; ag_data; ag_data=ag_data->next) {
+            if (MaintenanceFlag::minor_compaction(ag_data->maintenance_flags) ||
+                MaintenanceFlag::major_compaction(ag_data->maintenance_flags) ||
+                MaintenanceFlag::gc_compaction(ag_data->maintenance_flags))
               task->add_subtask(ag_data->ag, ag_data->maintenance_flags);
-              merges_created++;
+            else if (MaintenanceFlag::merging_compaction(ag_data->maintenance_flags)) {
+              if (do_merges && merges_created < m_merges_per_interval) {
+                task->add_subtask(ag_data->ag, ag_data->maintenance_flags);
+                merges_created++;
+              }
             }
           }
-	}
+        }
         Global::maintenance_queue->add(task);
       }
       else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) {

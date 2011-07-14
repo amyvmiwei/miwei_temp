@@ -1165,14 +1165,20 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
       Barrier::ScopedActivator block_updates(m_update_barrier);
       ScopedLock lock(m_mutex);
       for (size_t i=0; i<ag_vector.size(); i++) {
-	if (subtask_map.compaction(ag_vector[i].get()))
+	if (m_metalog_entity->needs_compaction ||
+            subtask_map.compaction(ag_vector[i].get()))
 	  ag_vector[i]->stage_compaction();
       }
     }
 
     // do compactions
     for (size_t i=0; i<ag_vector.size(); i++) {
-      flags = subtask_map.flags(ag_vector[i].get());
+
+      if (m_metalog_entity->needs_compaction)
+        flags = MaintenanceFlag::COMPACT_MOVE;
+      else
+        flags = subtask_map.flags(ag_vector[i].get());
+
       if (flags & MaintenanceFlag::COMPACT) {
 	try {
 	  ag_vector[i]->run_compaction(flags);
@@ -1190,7 +1196,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
     throw;
   }
 
-  if (m_metalog_entity->needs_compaction && MaintenanceFlag::major_compaction(flags)) {
+  if (m_metalog_entity->needs_compaction) {
     try {
       m_metalog_entity->needs_compaction = false;
       Global::rsml_writer->record_state(m_metalog_entity.get());

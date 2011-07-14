@@ -368,6 +368,15 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
     else if (state.command == COMMAND_HEAPCHECK) {
       m_range_server->heapcheck(m_addr, state.output_file);
     }
+    else if (state.command == COMMAND_COMPACT) {
+      if (state.table_name != "") {
+        m_range_server->compact(m_addr, table->id, 0);
+      }
+      else {
+        HT_ASSERT(state.flags);
+        m_range_server->compact(m_addr, "", state.flags);
+      }
+    }
     else
       HT_THROW(Error::HQL_PARSE_ERROR, format("unsupported command: %d", state.command));
   }

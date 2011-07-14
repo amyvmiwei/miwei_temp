@@ -34,12 +34,11 @@ using namespace std;
 void
 MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
                                              MemoryState &memory_state,
-                                             String &trace_str) {
+                                             int32_t priority, String &trace_str) {
   RangeStatsVector range_data_root;
   RangeStatsVector range_data_metadata;
   RangeStatsVector range_data_system;
   RangeStatsVector range_data_user;
-  int32_t priority = 1;
   int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
 
   for (size_t i=0; i<range_data.size(); i++) {

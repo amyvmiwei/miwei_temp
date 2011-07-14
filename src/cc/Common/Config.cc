@@ -386,6 +386,8 @@ void DefaultPolicy::init_options() {
         "Limit on number of merging tasks to create per maintenance interval")
     ("Hypertable.RangeServer.Maintenance.MergingCompaction.Delay", i32()->default_value(900000),
         "Millisecond delay before scheduling merging compactions in non-low memory mode")
+    ("Hypertable.RangeServer.Maintenance.MoveCompactionsPerInterval", i32()->default_value(2),
+        "Limit on number of major compactions due to move per maintenance interval")
     ("Hypertable.RangeServer.Monitoring.DataDirectories", str()->default_value("/"),
         "Comma-separated list of directory mount points of disk volumes to monitor")
     ("Hypertable.RangeServer.Workers", i32()->default_value(50),

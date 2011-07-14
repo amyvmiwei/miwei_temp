@@ -536,12 +536,12 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       HT_INFOF("Starting InMemory Compaction of %s(%s)",
                m_range_name.c_str(), m_name.c_str());
     }
-    else if (MaintenanceFlag::major_compaction(maintenance_flags)) {
-      HT_INFOF("Trying MAJOR compaction for %s(%s)",
-               m_range_name.c_str(), m_name.c_str());
+    else if (MaintenanceFlag::major_compaction(maintenance_flags) ||
+             MaintenanceFlag::move_compaction(maintenance_flags)) {
       if ((!m_immutable_cache || m_immutable_cache->empty()) &&
           m_stores.size() <= (size_t)1 &&
-          !MaintenanceFlag::split(maintenance_flags))
+          (!MaintenanceFlag::split(maintenance_flags) &&
+           !MaintenanceFlag::move_compaction(maintenance_flags)))
         break;
       major = true;
       HT_INFOF("Starting Major Compaction of %s(%s)",

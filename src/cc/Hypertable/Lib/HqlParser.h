@@ -56,6 +56,7 @@
 #include "ScanSpec.h"
 #include "LoadDataFlags.h"
 #include "LoadDataSource.h"
+#include "RangeServerProtocol.h"
 
 namespace Hypertable {
   namespace Hql {
@@ -98,6 +99,7 @@ namespace Hypertable {
       COMMAND_WAIT_FOR_MAINTENANCE,
       COMMAND_BALANCE,
       COMMAND_HEAPCHECK,
+      COMMAND_COMPACT,
       COMMAND_MAX
     };
 
@@ -255,7 +257,7 @@ namespace Hypertable {
     public:
       ParserState() : command(0), group_commit_interval(0), table_blocksize(0),
                       table_replication(-1), table_in_memory(false), max_versions(0),
-                      ttl(0), load_flags(0), cf(0), ag(0), nanoseconds(0),
+                      ttl(0), load_flags(0), flags(0), cf(0), ag(0), nanoseconds(0),
                       decimal_seconds(0), delete_all_columns(false),
                       delete_time(0), if_exists(false), tables_only(false), with_ids(false),
                       replay(false), scanner_id(-1), row_uniquify_chars(0),
@@ -285,6 +287,7 @@ namespace Hypertable {
       std::vector<String> key_columns;
       String timestamp_column;
       int load_flags;
+      uint32_t flags;
       Schema::ColumnFamily *cf;
       Schema::AccessGroup *ag;
       Schema::ColumnFamilyMap cf_map;
@@ -1542,6 +1545,29 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_compact_range_type {
+      set_compact_range_type(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String range_type_str = String(str, end-str);
+        trim_if(range_type_str, is_any_of("'\""));
+        to_lower(range_type_str);
+        if (range_type_str == "all")
+          state.flags |= RangeServerProtocol::COMPACT_FLAG_ALL;
+        else if (range_type_str == "root")
+          state.flags |= RangeServerProtocol::COMPACT_FLAG_ROOT;
+        else if (range_type_str == "metadata")
+          state.flags |= RangeServerProtocol::COMPACT_FLAG_METADATA;
+        else if (range_type_str == "system")
+          state.flags |= RangeServerProtocol::COMPACT_FLAG_SYSTEM;
+        else if (range_type_str == "user")
+          state.flags |= RangeServerProtocol::COMPACT_FLAG_USER;
+        else
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   format("Invalid range type specifier:  %s", range_type_str.c_str()));
+
+      }
+      ParserState &state;
+    };
 
     struct Parser : grammar<Parser> {
       Parser(ParserState &state) : state(state) { }
@@ -1587,6 +1613,7 @@ namespace Hypertable {
           chlit<>     DOT('.');
           strlit<>    DOTDOT("..");
           strlit<>    DOUBLEQUESTIONMARK("??");
+          chlit<>     PIPE('|');
 
           /**
            * TOKENS
@@ -1715,6 +1742,14 @@ namespace Hypertable {
           Token MAINTENANCE  = as_lower_d["maintenance"];
           Token HEAPCHECK    = as_lower_d["heapcheck"];
           Token ALGORITHM    = as_lower_d["algorithm"];
+          Token COMPACT      = as_lower_d["compact"];
+          Token ALL          = as_lower_d["all"];
+          Token ROOT         = as_lower_d["root"];
+          Token METADATA     = as_lower_d["metadata"];
+          Token SYSTEM       = as_lower_d["system"];
+          Token USER         = as_lower_d["user"];
+          Token RANGES       = as_lower_d["ranges"];
+
           /**
            * Start grammar definition
            */
@@ -1789,6 +1824,22 @@ namespace Hypertable {
             | wait_for_maintenance_statement[set_command(self.state, COMMAND_WAIT_FOR_MAINTENANCE)]
             | balance_statement[set_command(self.state, COMMAND_BALANCE)]
             | heapcheck_statement[set_command(self.state, COMMAND_HEAPCHECK)]
+            | compact_statement[set_command(self.state, COMMAND_COMPACT)]
+            ;
+
+          compact_statement
+            = COMPACT >> TABLE >> user_identifier[set_table_name(self.state)]
+            | COMPACT >> RANGES 
+                      >> (range_type[set_compact_range_type(self.state)]
+                          >> *(PIPE >> range_type[set_compact_range_type(self.state)]))
+            ;
+
+          range_type
+            = ALL
+            | ROOT
+            | METADATA
+            | SYSTEM
+            | USER
             ;
 
           heapcheck_statement
@@ -2402,6 +2453,8 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(range_move_spec_list);
           BOOST_SPIRIT_DEBUG_RULE(range_move_spec);
           BOOST_SPIRIT_DEBUG_RULE(heapcheck_statement);
+          BOOST_SPIRIT_DEBUG_RULE(compact_statement);
+          BOOST_SPIRIT_DEBUG_RULE(range_type);
 #endif
         }
 
@@ -2441,7 +2494,7 @@ namespace Hypertable {
           replay_commit_statement, cell_interval, cell_predicate,
           cell_spec, wait_for_maintenance_statement, move_range_statement,
           balance_statement, range_move_spec_list, range_move_spec,
-          balance_option_spec, heapcheck_statement;
+          balance_option_spec, heapcheck_statement, compact_statement, range_type;
       };
 
       ParserState &state;
