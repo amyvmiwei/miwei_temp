@@ -20,6 +20,7 @@
 #include "Common/Compat.h"
 #include "Common/Init.h"
 #include "Common/BloomFilter.h"
+#include "Common/BloomFilterWithChecksum.h"
 #include "Common/Logger.h"
 #include "Common/Stopwatch.h"
 #include "Common/Lookup3.h"
@@ -97,6 +98,9 @@ struct BloomFilterTest {
   template <class HashT>
   void test(const String &label) {
     size_t nitems = items.size() / 2;
+
+    /*** Without Checksum ***/
+
     BasicBloomFilter<HashT> filter(nitems, fp_prob);
 
     cout << label << endl;
@@ -117,6 +121,61 @@ struct BloomFilterTest {
 
     cout << "  false positive rate: expected "<< fp_prob <<", got "
          << false_positives / nfalses << endl;
+
+    /*** With Checksum ***/
+
+    BasicBloomFilterWithChecksum<HashT> *filter_with_checksum = new BasicBloomFilterWithChecksum<HashT>(nitems, fp_prob);
+
+    cout << label << " (with checksum)" << endl;
+
+    MEASURE("  insert", for (size_t i = 0; i < nitems; ++i)
+      filter_with_checksum->insert(items[i].data), nitems);
+
+    MEASURE("  true positives", for (size_t i = 0; i < nitems; ++i)
+      HT_ASSERT(filter_with_checksum->may_contain(items[i].data)), nitems);
+
+    MEASURE("  false positives",
+      for (size_t i = nitems, n = items.size(); i < n; ++i)
+        if (filter_with_checksum->may_contain(items[i].data))
+          ++false_positives, nfalses);
+
+    cout << "  false positive rate: expected "<< fp_prob <<", got "
+         << false_positives / nfalses << endl;
+
+    StaticBuffer sbuf;
+    filter_with_checksum->serialize(sbuf);
+
+    StaticBuffer serialized_buf(sbuf.size);
+    memcpy(serialized_buf.base, sbuf.base, sbuf.size);
+
+    size_t items_estimate = filter_with_checksum->get_items_actual();
+    size_t items_actual = filter_with_checksum->get_items_actual();
+    int64_t length = filter_with_checksum->get_length_bits();
+    size_t num_hashes = filter_with_checksum->get_num_hashes();
+
+    delete filter_with_checksum;
+
+    /*** With Checksum after Deserialization ***/
+
+    filter_with_checksum = new BasicBloomFilterWithChecksum<HashT>(items_estimate, items_actual, length, num_hashes);
+
+    memcpy(filter_with_checksum->base(), serialized_buf.base, serialized_buf.size);
+
+    cout << label << " (with checksum deserialized)" << endl;
+
+    MEASURE("  true positives", for (size_t i = 0; i < nitems; ++i)
+      HT_ASSERT(filter_with_checksum->may_contain(items[i].data)), nitems);
+
+    MEASURE("  false positives",
+      for (size_t i = nitems, n = items.size(); i < n; ++i)
+        if (filter_with_checksum->may_contain(items[i].data))
+          ++false_positives, nfalses);
+
+    cout << "  false positive rate: expected "<< fp_prob <<", got "
+         << false_positives / nfalses << endl;
+
+    delete filter_with_checksum;
+
   }
 
   void run() {
