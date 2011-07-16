@@ -44,7 +44,7 @@ void OperationLoadBalancer::execute() {
   catch (Exception &e) {
     HT_THROW2(e.code(), e, "Load Balancer");
   }
-  set_state(OperationState::COMPLETE);
+  complete_ok_no_log();
   HT_INFOF("Leaving LoadBalancer-%lld", (Lld)header.id);
 }
 
