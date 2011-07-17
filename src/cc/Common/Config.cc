@@ -257,6 +257,8 @@ void DefaultPolicy::init_options() {
         "Top-level hypertable directory name")
     ("Hypertable.Monitoring.Interval", i32()->default_value(30000),
         "Monitoring statistics gathering interval (in milliseconds)")
+    ("Hypertable.LoadBalancer.Enable", boo()->default_value(true),
+        "Enable automatic load balancing")
     ("Hypertable.LoadBalancer.Interval", i32()->default_value(86400000),
         "Time interval between LoadBalancer operations")
     ("Hypertable.LoadBalancer.WindowStart", str()->default_value("00:00:01"),
