@@ -40,7 +40,7 @@ namespace Hypertable {
       BALANCE_MODE_DISTRIBUTE_LOAD             = 1,
       BALANCE_MODE_DISTRIBUTE_TABLE_RANGES     = 2
     };
-      LoadBalancerBasic(ContextPtr context) : LoadBalancer(context), m_waiting_for_servers(false) { }
+    LoadBalancerBasic(ContextPtr context);
 
       void transfer_monitoring_data(vector<RangeServerStatistics> &stats);
       void balance(const String &algorithm=String());
@@ -56,6 +56,7 @@ namespace Hypertable {
                                    BalancePlanPtr &plan);
 
       Mutex m_data_mutex;
+      bool m_enabled;
       bool  m_waiting_for_servers;
       std::vector <RangeServerStatistics> m_range_server_stats;
       ptime m_wait_time_start;

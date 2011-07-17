@@ -33,8 +33,16 @@ using namespace boost::posix_time;
 using namespace Hypertable;
 using namespace std;
 
+
+LoadBalancerBasic::LoadBalancerBasic(ContextPtr context) : LoadBalancer(context), m_waiting_for_servers(false) {
+  m_enabled = context->props->get_bool("Hypertable.LoadBalancer.Enable");
+}
+
+
 void LoadBalancerBasic::balance(const String &algorithm) {
   BalancePlanPtr plan = new BalancePlan;
+  if (!m_enabled && algorithm == "")
+    return;
   try {
     calculate_balance_plan(algorithm, plan);
     if (plan->moves.size()>0) {
