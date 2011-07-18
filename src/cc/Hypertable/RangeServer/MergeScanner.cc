@@ -199,7 +199,7 @@ void MergeScanner::forward() {
             if(!matches_deleted_cell(sstate.key))
               // we wont see the previously seen deleted cell again
               m_deleted_cell.clear();
-            else if (sstate.key.timestamp < m_deleted_cell_timestamp)
+            else if (sstate.key.timestamp <= m_deleted_cell_timestamp)
               // apply previously seen delete cell to this cell
               continue;
           }
@@ -207,7 +207,7 @@ void MergeScanner::forward() {
             if(!matches_deleted_column_family(sstate.key))
               // we wont see the previously seen deleted column family again
               m_deleted_column_family.clear();
-            else if (sstate.key.timestamp < m_deleted_column_family_timestamp)
+            else if (sstate.key.timestamp <= m_deleted_column_family_timestamp)
               // apply previously seen delete column family to this cell
               continue;
           }
@@ -215,7 +215,7 @@ void MergeScanner::forward() {
             if(!matches_deleted_row(sstate.key))
               // we wont see the previously seen deleted row family again
               m_deleted_row.clear();
-            else if (sstate.key.timestamp < m_deleted_row_timestamp)
+            else if (sstate.key.timestamp <= m_deleted_row_timestamp)
               // apply previously seen delete row family to this cell
               continue;
           }
@@ -398,7 +398,7 @@ bool MergeScanner::get(Key &key, ByteString &value) {
 
 void MergeScanner::finish_count() {
   uint8_t *ptr = m_counted_value.base;
-  
+
   *ptr++ = 8;  // length
   Serialization::encode_i64(&ptr, m_count);
 
