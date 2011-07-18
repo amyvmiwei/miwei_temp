@@ -739,10 +739,10 @@ cmd_delete(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
   key.row = state.delete_row.c_str();
   key.row_len = state.delete_row.length();
 
-  if (state.delete_time != 0)
-    key.timestamp = ++state.delete_time;
-  else
+  if (state.delete_time == 0)
     key.timestamp = AUTO_ASSIGN;
+  else
+    key.timestamp = state.delete_time;
 
   if (state.delete_all_columns) {
     try {
