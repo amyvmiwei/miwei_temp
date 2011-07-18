@@ -96,6 +96,9 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
       new CommitLogBlockStream(m_fs, (*fragment_queue_iter).log_dir,
                                format("%u", (*fragment_queue_iter).num));
 
+  HT_INFOF("Replaying commit log fragment %s/%u", (*fragment_queue_iter).log_dir.c_str(),
+	   (*fragment_queue_iter).num);
+
   if (!(*fragment_queue_iter).block_stream->next(infop, header)) {
     CommitLogFileInfo &info = *fragment_queue_iter;
     delete info.block_stream;
