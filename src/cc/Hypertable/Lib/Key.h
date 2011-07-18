@@ -123,7 +123,7 @@ namespace Hypertable {
     }
 
     SerializedKey  serial;
-    uint32_t       length;
+    uint32_t       length;  // length of serialized key
     uint8_t        flag;
     uint8_t        control;
     uint8_t        column_family_code;

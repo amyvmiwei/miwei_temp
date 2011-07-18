@@ -174,6 +174,7 @@ namespace Hypertable {
         m_skip_remaining_counter = true;
       }
     }
+    void start_count(const Key &key, const ByteString &value);
     void finish_count();
 
     bool          m_done;
@@ -195,10 +196,10 @@ namespace Hypertable {
     bool          m_no_forward;
     bool          m_count_present;
     bool          m_skip_remaining_counter;
+    DynamicBuffer m_counted_key_buffer;
     uint64_t      m_count;
     Key           m_counted_key;
     DynamicBuffer m_counted_value;
-    DynamicBuffer m_tmp_count;
 
     bool          m_ag_scanner;
     bool          m_track_io;

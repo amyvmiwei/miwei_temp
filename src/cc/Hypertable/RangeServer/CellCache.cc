@@ -93,6 +93,8 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
     return;
   }
 
+  HT_ASSERT(*value.ptr == 8);
+
   CellMap::iterator iter = m_cell_map.lower_bound(key.serial);
 
   if (iter == m_cell_map.end()) {
@@ -118,10 +120,12 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
   ByteString old_value;
   old_value.ptr = (*iter).first.ptr + (*iter).second;
 
+  HT_ASSERT(*old_value.ptr == 8 || *old_value.ptr == 9);
+
   /*
-   * Sanity check the old value, if it's a reset just insert the new value
+   * If old value was a reset, just insert the new value
    */
-  if (*old_value.ptr != 8) {
+  if (*old_value.ptr == 9) {
     add(key, value);
     return;
   }
