@@ -37,10 +37,9 @@ MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes, bool a
     m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0),
     m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(return_deletes),
     m_no_forward(false), m_count_present(false), m_skip_remaining_counter(false),
-    m_counted_value(12), m_tmp_count(8), m_ag_scanner(ag_scanner),
-    m_row_count(0), m_row_limit(0), m_cell_count(0), m_cell_limit(0), m_revs_count(0),
-    m_revs_limit(0), m_cell_cutoff(0), m_bytes_input(0), m_bytes_output(0),
-    m_cells_input(0), m_cells_output(0),
+    m_counted_value(12), m_ag_scanner(ag_scanner), m_row_count(0), m_row_limit(0),
+    m_cell_count(0), m_cell_limit(0), m_revs_count(0), m_revs_limit(0), m_cell_cutoff(0),
+    m_bytes_input(0), m_bytes_output(0), m_cells_input(0), m_cells_output(0),
     m_cur_bytes(0), m_prev_key(0), m_prev_cf(-1), m_debug(debug) {
 
   if (scan_ctx->spec != 0) {
@@ -343,10 +342,7 @@ void MergeScanner::forward() {
       }
 
       // start new count and loop
-      m_count_present = true;
-      m_count = 0;
-      m_counted_key.load(sstate.key.serial);
-      increment_count(sstate.key, sstate.value);
+      start_count(sstate.key, sstate.value);
       continue;
     }
 
@@ -401,17 +397,31 @@ bool MergeScanner::get(Key &key, ByteString &value) {
 }
 
 void MergeScanner::finish_count() {
-  m_tmp_count.clear();
-  m_counted_value.clear();
-  Serialization::encode_i64(&m_tmp_count.ptr, m_count);
-  append_as_byte_string(m_counted_value, m_tmp_count.base, 8);
+  uint8_t *ptr = m_counted_value.base;
+  
+  *ptr++ = 8;  // length
+  Serialization::encode_i64(&ptr, m_count);
 
   m_prev_key.set(m_counted_key.row, m_counted_key.len_cell());
   m_prev_cf = m_counted_key.column_family_code;
   m_cell_count = 0;
   m_no_forward = true;
   m_count_present = false;
-  m_skip_remaining_counter = false;
+}
+
+void MergeScanner::start_count(const Key &key, const ByteString &value) {
+  SerializedKey serial;
+
+  m_count_present = true;
+  m_count = 0;
+
+  m_counted_key_buffer.clear();
+  m_counted_key_buffer.ensure(key.length);
+  memcpy(m_counted_key_buffer.base, key.serial.ptr, key.length);
+  serial.ptr = m_counted_key_buffer.base;
+
+  m_counted_key.load(serial);
+  increment_count(key, value);
 
 }
 
@@ -611,10 +621,7 @@ void MergeScanner::initialize() {
       // if counter then keep incrementing till we are ready with 1st kv pair
       if (counter) {
         // new counter
-        m_count_present = true;
-        m_count = 0;
-        m_counted_key.load(sstate.key.serial);
-        increment_count(sstate.key, sstate.value);
+        start_count(sstate.key, sstate.value);
         forward();
         m_initialized = true;
         return;
