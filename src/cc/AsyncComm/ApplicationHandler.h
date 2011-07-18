@@ -102,6 +102,13 @@ namespace Hypertable {
 	  else
 	    HT_WARNF("Response expired, wait time %u > timeout %u", wait_ms,
 		     m_event_ptr->header.timeout_ms);
+
+	  if (m_event_ptr->header.timeout_ms == 0) {
+	    HT_INFO("Changing zero timeout request to 120000 ms");
+	    m_event_ptr->header.timeout_ms = 120000;
+	    return false;
+	  }
+
 	  return true;
 	}
       }

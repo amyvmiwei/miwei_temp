@@ -245,7 +245,7 @@ RangeLocator::find_loop(const TableIdentifier *table, const char *row_key,
     // check for timer expiration
     if (timer.remaining() < wait_time) {
       dump_error_history();
-      HT_THROWF(Error::REQUEST_TIMEOUT, "Locating range for row='%s'", row_key);
+      HT_THROWF(Error::REQUEST_TIMEOUT, "Locating range for table %s row='%s'", table->id, row_key);
     }
 
     // wait a bit
