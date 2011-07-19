@@ -127,6 +127,7 @@ void GcWorker::delete_row(const std::string &row, TableMutatorPtr &mutator) {
 
   key.row = row.c_str();
   key.row_len = row.length();
+  key.flag = FLAG_DELETE_ROW;
 
   HT_DEBUGF("MasterGc: Deleting row %s", (char *)key.row);
 
@@ -139,8 +140,7 @@ void GcWorker::delete_cell(const Cell &cell, TableMutatorPtr &mutator) {
                << cell.timestamp <<')'<< HT_END;
 
   KeySpec key(cell.row_key, cell.column_family, cell.column_qualifier,
-              cell.timestamp);
-
+              cell.timestamp, FLAG_DELETE_CELL);
   mutator->set_delete(key);
 }
 

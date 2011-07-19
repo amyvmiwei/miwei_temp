@@ -11,15 +11,17 @@ int _kKeyFlagValues[] = {
   KeyFlag::DELETE_ROW,
   KeyFlag::DELETE_CF,
   KeyFlag::DELETE_CELL,
+  KeyFlag::DELETE_CELL_VERSION,
   KeyFlag::INSERT
 };
 const char* _kKeyFlagNames[] = {
   "DELETE_ROW",
   "DELETE_CF",
   "DELETE_CELL",
+  "DELETE_CELL_VERSION",
   "INSERT"
 };
-const std::map<int, const char*> _KeyFlag_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(4, _kKeyFlagValues, _kKeyFlagNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
+const std::map<int, const char*> _KeyFlag_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(5, _kKeyFlagValues, _kKeyFlagNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
 
 int _kMutatorFlagValues[] = {
   MutatorFlag::NO_LOG_SYNC,

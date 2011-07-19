@@ -172,6 +172,7 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
       full_key.row = (const char *)key.row;
       full_key.timestamp = key.timestamp;
       full_key.revision = key.revision;
+      full_key.flag = key.flag;
     }
     else {
       to_full_key(key, full_key, unknown_cf);

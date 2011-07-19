@@ -249,10 +249,19 @@ namespace Hypertable {
         os << " qualifier='" << key.column_qualifier << "'";
       os << " ts=" << key.timestamp;
       os << " rev=" << key.revision;
-      if (key.flag == FLAG_DELETE_CELL)
-        os << " DELETE_CELL";
+
+      if (key.flag == FLAG_DELETE_ROW)
+        os << " DELETE_ROW";
       else if (key.flag == FLAG_DELETE_COLUMN_FAMILY)
         os << " DELETE_COLUMN_FAMILY";
+      else if (key.flag == FLAG_DELETE_CELL)
+        os << " DELETE_CELL";
+      else if (key.flag == FLAG_DELETE_CELL_VERSION)
+        os << " DELETE_CELL_VERSION";
+      else if (key.flag == FLAG_INSERT)
+        os << " INSERT";
+      else
+        os << key.flag << "(unrecognized flag)";
     }
     return os;
   }

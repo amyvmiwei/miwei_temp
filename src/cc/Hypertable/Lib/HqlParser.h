@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -260,7 +260,8 @@ namespace Hypertable {
                       table_replication(-1), table_in_memory(false), max_versions(0),
                       ttl(0), load_flags(0), flags(0), cf(0), ag(0), nanoseconds(0),
                       decimal_seconds(0), delete_all_columns(false),
-                      delete_time(0), if_exists(false), tables_only(false), with_ids(false),
+                      delete_time(0), delete_version_time(0),
+                      if_exists(false), tables_only(false), with_ids(false),
                       replay(false), scanner_id(-1), row_uniquify_chars(0),
                       escape(true), nokeys(false) {
         memset(&tmval, 0, sizeof(tmval));
@@ -306,6 +307,7 @@ namespace Hypertable {
       bool delete_all_columns;
       String delete_row;
       ::int64_t delete_time;
+      ::int64_t delete_version_time;
       bool if_exists;
       bool tables_only;
       bool with_ids;
@@ -1530,6 +1532,22 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_delete_version_timestamp {
+      set_delete_version_timestamp(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        time_t t = timegm(&state.tmval);
+        if (t == (time_t)-1)
+          HT_THROW(Error::HQL_PARSE_ERROR, String("DELETE invalid timestamp."));
+        state.delete_version_time = (::int64_t)t * 1000000000LL +
+            (::int64_t)(state.decimal_seconds * ((double) 1000000000LL)) + state.nanoseconds;
+        memset(&state.tmval, 0, sizeof(state.tmval));
+        state.nanoseconds = 0;
+        state.decimal_seconds = 0;
+      }
+      ParserState &state;
+    };
+
+
     struct set_scanner_id {
       set_scanner_id(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1692,6 +1710,7 @@ namespace Hypertable {
           Token DATA         = as_lower_d["data"];
           Token INFILE       = as_lower_d["infile"];
           Token TIMESTAMP    = as_lower_d["timestamp"];
+          Token VERSION      = as_lower_d["version"];
           Token INSERT       = as_lower_d["insert"];
           Token DELETE       = as_lower_d["delete"];
           Token VALUE        = as_lower_d["value"];
@@ -1832,7 +1851,7 @@ namespace Hypertable {
 
           metadata_sync_statement
             = METADATA >> SYNC >> TABLE >> user_identifier[set_table_name(self.state)] >> *(metadata_sync_option_spec)
-            | METADATA >> SYNC >> RANGES 
+            | METADATA >> SYNC >> RANGES
                       >> (range_type[set_flags_range_type(self.state)]
                           >> *(PIPE >> range_type[set_flags_range_type(self.state)])) >> *(metadata_sync_option_spec)
             ;
@@ -1843,7 +1862,7 @@ namespace Hypertable {
 
           compact_statement
             = COMPACT >> TABLE >> user_identifier[set_table_name(self.state)]
-            | COMPACT >> RANGES 
+            | COMPACT >> RANGES
                       >> (range_type[set_flags_range_type(self.state)]
                           >> *(PIPE >> range_type[set_flags_range_type(self.state)]))
             ;
@@ -1998,8 +2017,8 @@ namespace Hypertable {
               >> FROM >> user_identifier[set_table_name(self.state)]
               >> WHERE >> ROW >> EQUAL >> string_literal[
                   delete_set_row(self.state)]
-              >> !(TIMESTAMP >> date_expression[
-                  set_delete_timestamp(self.state)])
+              >> !(TIMESTAMP >> date_expression[set_delete_timestamp(self.state)]
+                  | VERSION >> date_expression[set_delete_version_timestamp(self.state)])
             ;
 
           delete_column_clause

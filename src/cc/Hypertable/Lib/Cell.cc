@@ -42,6 +42,8 @@ std::ostream &operator<<(std::ostream &os, const Cell &cell) {
     os << "DELETE_COLUMN_FAMILY";
   else if (cell.flag==FLAG_DELETE_CELL)
     os << "DELETE_CELL";
+  else if (cell.flag == FLAG_DELETE_CELL_VERSION)
+    os << "DELETE_CELL_VERSION";
   else if (cell.flag==FLAG_INSERT)
     os << "FLAG_INSERT";
   else

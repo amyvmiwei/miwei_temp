@@ -1,54 +1,71 @@
 [baseline]
+control=(REV|TS|SHARED) row='delete_cell' family=1 qualifier='insert' ts=8755 rev=8755 DELETE_CELL
+control=(REV|TS|SHARED) row='delete_cell' family=1 qualifier='insert' ts=8754 rev=8754 INSERT
+control=(REV|TS|SHARED) row='delete_cell_version' family=1 qualifier='insert' ts=8757 rev=8757 DELETE_CELL_VERSION
+control=(REV|TS|SHARED) row='delete_cell_version' family=1 qualifier='insert' ts=8757 rev=8757 INSERT
+control=(REV|TS|SHARED) row='delete_cell_version' family=1 qualifier='insert' ts=8756 rev=8756 INSERT
 control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='' ts=4 rev=4 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3
+control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3 INSERT
 control=(REV|TS|SHARED) row='delete_large' ts=8753 rev=8753 DELETE_ROW
 control=(REV|TS|SHARED) row='delete_large' family=1 qualifier='' ts=4378 rev=4378 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_large' family=1 qualifier='insert' ts=13 rev=13
-control=(REV|TS|SHARED) row='delete_none' family=1 qualifier='insert' ts=12 rev=12
+control=(REV|TS|SHARED) row='delete_large' family=1 qualifier='insert' ts=13 rev=13 INSERT
+control=(REV|TS|SHARED) row='delete_none' family=1 qualifier='insert' ts=12 rev=12 INSERT
 control=(REV|TS|SHARED) row='delete_row' ts=2 rev=2 DELETE_ROW
-control=(REV|TS|SHARED) row='delete_row' family=1 qualifier='insert' ts=1 rev=1
+control=(REV|TS|SHARED) row='delete_row' family=1 qualifier='insert' ts=1 rev=1 INSERT
 control=(REV|TS|SHARED) row='delete_row_cf' ts=10 rev=10 DELETE_ROW
 control=(REV|TS|SHARED) row='delete_row_cf' ts=6 rev=6 DELETE_ROW
 control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='' ts=11 rev=11 DELETE_COLUMN_FAMILY
 control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='' ts=8 rev=8 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=9 rev=9
-control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=7 rev=7
-control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=5 rev=5
+control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=9 rev=9 INSERT
+control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=7 rev=7 INSERT
+control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=5 rev=5 INSERT
 [delete-row]
 control=(REV|TS|SHARED) row='delete_row' ts=2 rev=2 DELETE_ROW
-control=(REV|TS|SHARED) row='delete_row' family=1 qualifier='insert' ts=1 rev=1
+control=(REV|TS|SHARED) row='delete_row' family=1 qualifier='insert' ts=1 rev=1 INSERT
 control=(REV|TS|SHARED) row='delete_row' ts=2 rev=2 DELETE_ROW
-control=(REV|TS|SHARED) row='delete_row' family=1 qualifier='insert' ts=1 rev=1
+control=(REV|TS|SHARED) row='delete_row' family=1 qualifier='insert' ts=1 rev=1 INSERT
 control=(REV|TS|SHARED) row='delete_row' ts=2 rev=2 DELETE_ROW
-control=(REV|TS|SHARED) row='delete_row' family=1 qualifier='insert' ts=1 rev=1
+control=(REV|TS|SHARED) row='delete_row' family=1 qualifier='insert' ts=1 rev=1 INSERT
 [delete-cf]
 control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='' ts=4 rev=4 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3
+control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3 INSERT
 control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='' ts=4 rev=4 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3
+control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3 INSERT
 control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='' ts=4 rev=4 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3
+control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3 INSERT
 control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='' ts=4 rev=4 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3
+control=(REV|TS|SHARED) row='delete_cf' family=1 qualifier='insert' ts=3 rev=3 INSERT
 [delete-row-cf]
 control=(REV|TS|SHARED) row='delete_row_cf' ts=10 rev=10 DELETE_ROW
 control=(REV|TS|SHARED) row='delete_row_cf' ts=6 rev=6 DELETE_ROW
 control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='' ts=11 rev=11 DELETE_COLUMN_FAMILY
 control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='' ts=8 rev=8 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=9 rev=9
-control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=7 rev=7
-control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=5 rev=5
+control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=9 rev=9 INSERT
+control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=7 rev=7 INSERT
+control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=5 rev=5 INSERT
 control=(REV|TS|SHARED) row='delete_row_cf' ts=10 rev=10 DELETE_ROW
 control=(REV|TS|SHARED) row='delete_row_cf' ts=6 rev=6 DELETE_ROW
 control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='' ts=11 rev=11 DELETE_COLUMN_FAMILY
 control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='' ts=8 rev=8 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=9 rev=9
-control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=7 rev=7
-control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=5 rev=5
+control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=9 rev=9 INSERT
+control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=7 rev=7 INSERT
+control=(REV|TS|SHARED) row='delete_row_cf' family=1 qualifier='insert' ts=5 rev=5 INSERT
+[delete-cell]
+control=(REV|TS|SHARED) row='delete_cell' family=1 qualifier='insert' ts=8755 rev=8755 DELETE_CELL
+control=(REV|TS|SHARED) row='delete_cell' family=1 qualifier='insert' ts=8754 rev=8754 INSERT
+control=(REV|TS|SHARED) row='delete_cell' family=1 qualifier='insert' ts=8755 rev=8755 DELETE_CELL
+control=(REV|TS|SHARED) row='delete_cell' family=1 qualifier='insert' ts=8754 rev=8754 INSERT
+[delete-cell-version]
+control=(REV|TS|SHARED) row='delete_cell_version' family=1 qualifier='insert' ts=8757 rev=8757 DELETE_CELL_VERSION
+control=(REV|TS|SHARED) row='delete_cell_version' family=1 qualifier='insert' ts=8757 rev=8757 INSERT
+control=(REV|TS|SHARED) row='delete_cell_version' family=1 qualifier='insert' ts=8756 rev=8756 INSERT
+control=(REV|TS|SHARED) row='delete_cell_version' family=1 qualifier='insert' ts=8757 rev=8757 DELETE_CELL_VERSION
+control=(REV|TS|SHARED) row='delete_cell_version' family=1 qualifier='insert' ts=8757 rev=8757 INSERT
+control=(REV|TS|SHARED) row='delete_cell_version' family=1 qualifier='insert' ts=8756 rev=8756 INSERT
 [delete-none]
-control=(REV|TS|SHARED) row='delete_none' family=1 qualifier='insert' ts=12 rev=12
+control=(REV|TS|SHARED) row='delete_none' family=1 qualifier='insert' ts=12 rev=12 INSERT
 [delete-large]
 control=(REV|TS|SHARED) row='delete_large' ts=8753 rev=8753 DELETE_ROW
 control=(REV|TS|SHARED) row='delete_large' family=1 qualifier='' ts=4378 rev=4378 DELETE_COLUMN_FAMILY
-control=(REV|TS|SHARED) row='delete_large' family=1 qualifier='insert' ts=13 rev=13
-trailer.delete_count= 8
+control=(REV|TS|SHARED) row='delete_large' family=1 qualifier='insert' ts=13 rev=13 INSERT
+trailer.delete_count= 10

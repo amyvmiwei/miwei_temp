@@ -94,14 +94,17 @@ int main(int argc, char **argv) {
     key.column_qualifier_len = 0;
     mutator_ptr->set(key, value1, strlen(value1));
     mutator_ptr->flush();
+    key.clear();
 
     key.row = "foo";
     key.row_len = strlen("foo");
     key.column_family = 0;
     key.column_qualifier = 0;
     key.column_qualifier_len = 0;
+    key.flag = FLAG_DELETE_ROW;
     mutator_ptr->set_delete(key);
     mutator_ptr->flush();
+    key.clear();
 
     key.row = "foo";
     key.row_len = strlen("foo");
@@ -110,6 +113,7 @@ int main(int argc, char **argv) {
     key.column_qualifier_len = 0;
     mutator_ptr->set(key, value2, strlen(value2));
     mutator_ptr->flush();
+    key.clear();
 
     mutator_ptr = 0;
 
@@ -133,6 +137,8 @@ int main(int argc, char **argv) {
 	result += String(" DELETE COLUMN FAMILY");
       else if (cell.flag == FLAG_DELETE_CELL)
 	result += String(" DELETE CELL");
+      else if (cell.flag == FLAG_DELETE_CELL_VERSION)
+	result += String(" DELETE CELL VERSION");
       else
 	result += String(" ") + String((const char *)cell.value, cell.value_len);
       values.push_back(result);

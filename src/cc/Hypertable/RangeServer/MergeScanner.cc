@@ -35,7 +35,8 @@ using namespace Hypertable;
 MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes, bool ag_scanner,
     bool debug) : CellListScanner(scan_ctx), m_done(false), m_initialized(false),
     m_scanners(), m_queue(), m_delete_present(false), m_deleted_row(0),
-    m_deleted_column_family(0), m_deleted_cell(0), m_return_deletes(return_deletes),
+    m_deleted_column_family(0), m_deleted_cell(0), m_deleted_cell_version(0),
+    m_return_deletes(return_deletes),
     m_no_forward(false), m_count_present(false), m_skip_remaining_counter(false),
     m_counted_value(12), m_ag_scanner(ag_scanner), m_row_count(0), m_row_limit(0),
     m_cell_count(0), m_cell_limit(0), m_revs_count(0), m_revs_limit(0), m_cell_cutoff(0),
@@ -192,9 +193,36 @@ void MergeScanner::forward() {
         if (m_return_deletes)
           break;
       }
+      else if (sstate.key.flag == FLAG_DELETE_CELL_VERSION) {
+        len = sstate.key.len_cell();
+        if (matches_deleted_cell_version(sstate.key))
+          m_deleted_cell_version_set.insert(sstate.key.timestamp);
+        else {
+          m_deleted_cell_version.clear();
+          m_deleted_cell_version_set.clear();
+          m_deleted_cell_version.ensure(len);
+          memcpy(m_deleted_cell_version.base, sstate.key.row, len);
+          m_deleted_cell_version.ptr = m_deleted_cell_version.base + len;
+          m_deleted_cell_version_set.insert(sstate.key.timestamp);
+          m_delete_present = true;
+        }
+        if (m_return_deletes)
+          break;
+      }
       else {
         // this cell is not a delete and it is within the requested time interval.
         if (m_delete_present) {
+          if (m_deleted_cell_version.fill() > 0) {
+            if(!matches_deleted_cell_version(sstate.key)) {
+              // we wont see the previously seen deleted cell version again
+              m_deleted_cell_version.clear();
+              m_deleted_cell_version_set.clear();
+            }
+            else if (m_deleted_cell_version_set.find(sstate.key.timestamp) !=
+                     m_deleted_cell_version_set.end())
+              // apply previously seen delete cell version to this cell
+              continue;
+          }
           if (m_deleted_cell.fill() > 0) {
             if(!matches_deleted_cell(sstate.key))
               // we wont see the previously seen deleted cell again
@@ -219,8 +247,8 @@ void MergeScanner::forward() {
               // apply previously seen delete row family to this cell
               continue;
           }
-          if (m_deleted_cell.fill() == 0 && m_deleted_column_family.fill() == 0
-              && m_deleted_row.fill() == 0)
+          if (m_deleted_cell_version.fill() == 0 && m_deleted_cell.fill() == 0 &&
+              m_deleted_column_family.fill() == 0 && m_deleted_row.fill() == 0)
             m_delete_present = false;
         }
 
@@ -503,6 +531,20 @@ void MergeScanner::initialize() {
       memcpy(m_deleted_cell.base, sstate.key.row, len);
       m_deleted_cell.ptr = m_deleted_cell.base + len;
       m_deleted_cell_timestamp = sstate.key.timestamp;
+      m_delete_present = true;
+      if (!m_return_deletes) {
+        forward();
+        m_initialized = true;
+        return;
+      }
+    }
+    else if (sstate.key.flag == FLAG_DELETE_CELL_VERSION) {
+      size_t len = sstate.key.len_cell();
+      m_deleted_cell_version.clear();
+      m_deleted_cell_version.ensure(len);
+      memcpy(m_deleted_cell_version.base, sstate.key.row, len);
+      m_deleted_cell_version.ptr = m_deleted_cell_version.base + len;
+      m_deleted_cell_version_set.insert(sstate.key.timestamp);
       m_delete_present = true;
       if (!m_return_deletes) {
         forward();

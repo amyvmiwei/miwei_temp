@@ -39,7 +39,7 @@ using namespace std;
 
 CellCache::CellCache()
   : m_arena(), m_cell_map(std::less<const SerializedKey>(), Alloc(m_arena)),
-    m_deletes(0), m_collisions(0), m_key_bytes(0), m_value_bytes(0), 
+    m_deletes(0), m_collisions(0), m_key_bytes(0), m_value_bytes(0),
     m_frozen(false), m_have_counter_deletes(false) {
   assert(Config::properties); // requires Config::init* first
   m_arena.set_page_size((size_t)
@@ -71,7 +71,7 @@ void CellCache::add(const Key &key, const ByteString value) {
     HT_WARNF("Collision detected key insert (row = %s)", new_key.row());
   }
   else {
-    if (key.flag <= FLAG_DELETE_CELL)
+    if (key.flag <= FLAG_DELETE_CELL_VERSION)
       m_deletes++;
   }
 }

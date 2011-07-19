@@ -200,12 +200,15 @@ struct ScanSpec {
  *
  * DELETE_CELL: key is pending delete
  *
+ * DELETE_CELL_VERSION: delete specific timestamped version of key
+ *
  * INSERT: key is an insert/update (default state)
  */
 enum KeyFlag {
   DELETE_ROW = 0,
   DELETE_CF = 1,
   DELETE_CELL = 2,
+  DELETE_CELL_VERSION = 3,
   INSERT = 255
 }
 
