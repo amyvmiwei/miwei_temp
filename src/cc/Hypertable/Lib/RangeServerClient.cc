@@ -75,6 +75,22 @@ RangeServerClient::compact(const CommAddress &addr, const String &table_id, uint
 
 
 void
+RangeServerClient::metadata_sync(const CommAddress &addr, const String &table_id, uint32_t flags,
+                                 std::vector<String> &columns) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event;
+  CommBufPtr cbp(RangeServerProtocol::create_request_metadata_sync(table_id, flags, columns));
+
+  send_message(addr, cbp, &sync_handler, m_default_timeout_ms);
+
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
+             String("RangeServer metadata_sync() failure : ")
+             + Protocol::string_format_message(event));
+}
+
+
+void
 RangeServerClient::load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
     const char *transfer_log, const RangeState &range_state, bool needs_compaction) {

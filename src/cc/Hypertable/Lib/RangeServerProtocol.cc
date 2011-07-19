@@ -53,6 +53,7 @@ namespace Hypertable {
     "acknowledge load",
     "relinquish range",
     "heapcheck",
+    "metadata sync",
     (const char *)0
   };
 
@@ -64,7 +65,7 @@ namespace Hypertable {
 
   String
   RangeServerProtocol::compact_flags_to_string(uint32_t flags) {
-    String str = "ranges=";
+    String str;
     if ((flags & COMPACT_FLAG_ALL) == COMPACT_FLAG_ALL)
       str += "ALL";
     else {
@@ -104,6 +105,22 @@ namespace Hypertable {
     CommBuf *cbuf = new CommBuf(header, Serialization::encoded_length_vstr(table_id) + 4);
     Serialization::encode_vstr(cbuf->get_data_ptr_address(), table_id);
     Serialization::encode_i32(cbuf->get_data_ptr_address(), flags);
+    return cbuf;
+  }
+
+  CommBuf *
+  RangeServerProtocol::create_request_metadata_sync(const String &table_id, uint32_t flags,
+                                                    std::vector<String> &columns) {
+    CommHeader header(COMMAND_METADATA_SYNC);
+    size_t length = Serialization::encoded_length_vstr(table_id) + 8;
+    for (size_t i=0; i<columns.size(); i++)
+      length += Serialization::encoded_length_vstr(columns[i]);
+    CommBuf *cbuf = new CommBuf(header, length);
+    Serialization::encode_vstr(cbuf->get_data_ptr_address(), table_id);
+    Serialization::encode_i32(cbuf->get_data_ptr_address(), flags);
+    Serialization::encode_i32(cbuf->get_data_ptr_address(), columns.size());
+    for (size_t i=0; i<columns.size(); i++)
+      Serialization::encode_vstr(cbuf->get_data_ptr_address(), columns[i]);
     return cbuf;
   }
 

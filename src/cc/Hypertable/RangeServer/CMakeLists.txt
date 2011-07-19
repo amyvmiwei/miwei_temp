@@ -94,6 +94,7 @@ RequestHandlerFetchScanblock.cc
 RequestHandlerHeapcheck.cc
 RequestHandlerDropTable.cc
 RequestHandlerLoadRange.cc
+RequestHandlerMetadataSync.cc
 RequestHandlerUpdateSchema.cc
 RequestHandlerRelinquishRange.cc
 RequestHandlerReplayBegin.cc

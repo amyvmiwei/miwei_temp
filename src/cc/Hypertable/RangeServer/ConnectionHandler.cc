@@ -47,6 +47,7 @@ extern "C" {
 #include "RequestHandlerFetchScanblock.h"
 #include "RequestHandlerHeapcheck.h"
 #include "RequestHandlerDropTable.h"
+#include "RequestHandlerMetadataSync.h"
 #include "RequestHandlerStatus.h"
 #include "RequestHandlerReplayBegin.h"
 #include "RequestHandlerReplayLoadRange.h"
@@ -199,6 +200,11 @@ void ConnectionHandler::handle(EventPtr &event) {
       case RangeServerProtocol::COMMAND_COMMIT_LOG_SYNC:
         handler = new RequestHandlerCommitLogSync(m_comm, m_range_server_ptr.get(), event);
         break;
+      case RangeServerProtocol::COMMAND_METADATA_SYNC:
+        handler = new RequestHandlerMetadataSync(m_comm, m_range_server_ptr.get(),
+                                                 event);
+        break;
+
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
                   (Llu)event->header.command);

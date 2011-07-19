@@ -377,6 +377,15 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
         m_range_server->compact(m_addr, "", state.flags);
       }
     }
+    else if (state.command == COMMAND_METADATA_SYNC) {
+      if (state.table_name != "") {
+        m_range_server->metadata_sync(m_addr, table->id, 0, state.columns);
+      }
+      else {
+        HT_ASSERT(state.flags);
+        m_range_server->metadata_sync(m_addr, "", state.flags, state.columns);
+      }
+    }
     else
       HT_THROW(Error::HQL_PARSE_ERROR, format("unsupported command: %d", state.command));
   }

@@ -109,6 +109,8 @@ namespace Hypertable {
                           const RangeSpec *);
     void heapcheck(ResponseCallback *, const char *);
 
+    void metadata_sync(ResponseCallback *, const char *, uint32_t flags, std::vector<const char *> columns);
+
     void close(ResponseCallback *cb);
 
     /**
