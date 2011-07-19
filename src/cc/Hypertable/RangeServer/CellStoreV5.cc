@@ -450,7 +450,7 @@ void CellStoreV5::add(const Key &key, const ByteString value) {
       m_trailer.expiration_time = key.timestamp + m_column_ttl[key.column_family_code];
   }
 
-  if (key.flag <= FLAG_DELETE_CELL)
+  if (key.flag <= FLAG_DELETE_CELL_VERSION)
     m_trailer.delete_count++;
 
   m_buffer.ensure(key_len + value_len);
@@ -929,7 +929,7 @@ void CellStoreV5::load_block_index() {
   }
 
   m_index_builder.release_fixed_buf();
-  
+
   Global::memory_tracker->add( m_index_stats.block_index_memory );
 }
 

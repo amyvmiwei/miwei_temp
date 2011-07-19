@@ -31,30 +31,36 @@
 
 namespace Hypertable {
 
-  const int64_t TIMESTAMP_MIN  = INT64_MIN;
-  const int64_t TIMESTAMP_MAX  = INT64_MAX;
-  const int64_t TIMESTAMP_NULL = INT64_MIN + 1;
-  const int64_t TIMESTAMP_AUTO = INT64_MIN + 2;
-  const int64_t AUTO_ASSIGN    = INT64_MIN + 2;
+  static const int64_t TIMESTAMP_MIN  = INT64_MIN;
+  static const int64_t TIMESTAMP_MAX  = INT64_MAX;
+  static const int64_t TIMESTAMP_NULL = INT64_MIN + 1;
+  static const int64_t TIMESTAMP_AUTO = INT64_MIN + 2;
+  static const int64_t AUTO_ASSIGN    = INT64_MIN + 2;
+
+  static const uint32_t FLAG_DELETE_ROW            = 0x00;
+  static const uint32_t FLAG_DELETE_COLUMN_FAMILY  = 0x01;
+  static const uint32_t FLAG_DELETE_CELL           = 0x02;
+  static const uint32_t FLAG_DELETE_CELL_VERSION   = 0x03;
+  static const uint32_t FLAG_INSERT                = 0xFF;
 
   class KeySpec {
   public:
 
     KeySpec() : row(0), row_len(0), column_family(0), column_qualifier(0),
                 column_qualifier_len(0), timestamp(AUTO_ASSIGN),
-                revision(AUTO_ASSIGN) {}
+                revision(AUTO_ASSIGN), flag(FLAG_INSERT) {}
 
     explicit KeySpec(const char *r, const char *cf, const char *cq,
-                     int64_t ts = AUTO_ASSIGN)
+                     int64_t ts = AUTO_ASSIGN, uint8_t flag_=FLAG_INSERT)
       : row(r), row_len(r ? strlen(r) : 0), column_family(cf),
         column_qualifier(cq), column_qualifier_len(cq ? strlen(cq) : 0),
-        timestamp(ts), revision(AUTO_ASSIGN) {}
+        timestamp(ts), revision(AUTO_ASSIGN), flag(flag_) {}
 
     explicit KeySpec(const char *r, const char *cf,
-                     int64_t ts = AUTO_ASSIGN)
+                     int64_t ts = AUTO_ASSIGN, uint8_t flag_=FLAG_INSERT)
       : row(r), row_len(r ? strlen(r) : 0), column_family(cf),
         column_qualifier(0), column_qualifier_len(0),
-        timestamp(ts), revision(AUTO_ASSIGN) {}
+        timestamp(ts), revision(AUTO_ASSIGN), flag(flag_) {}
 
     void clear() {
       row = 0;
@@ -64,6 +70,7 @@ namespace Hypertable {
       column_qualifier_len = 0;
       timestamp = AUTO_ASSIGN;
       revision = AUTO_ASSIGN;
+      flag = FLAG_INSERT;
     }
 
     void sanity_check() const {
@@ -95,6 +102,17 @@ namespace Hypertable {
           HT_THROWF(Error::BAD_KEY, "Invalid column qualifier - '\\0' character"
                     " not allowed (offset=%d)", (int)strlen(cq));
       }
+
+      if (flag > FLAG_DELETE_ROW && flag < FLAG_INSERT) {
+        if (column_family == 0)
+          HT_THROWF(Error::BAD_KEY, "Flag is set to %d but column family is null", flag);
+        if (flag > FLAG_DELETE_COLUMN_FAMILY && flag < FLAG_INSERT) {
+          if (column_qualifier_len == 0)
+            HT_THROWF(Error::BAD_KEY, "Flag is set to %d but column qualifier is null", flag);
+          if (flag == FLAG_DELETE_CELL_VERSION && timestamp == AUTO_ASSIGN)
+            HT_THROWF(Error::BAD_KEY, "Flag is set to %d but timestamp is AUTO_ASSIGN", flag);
+        }
+      }
     }
 
     const void  *row;
@@ -104,6 +122,7 @@ namespace Hypertable {
     size_t       column_qualifier_len;
     int64_t      timestamp;
     int64_t      revision;  // internal use only
+    uint8_t      flag;
   };
 
   std::ostream &operator<<(std::ostream &, const KeySpec &);
@@ -135,6 +154,11 @@ namespace Hypertable {
     void set_timestamp(int64_t timestamp) {
       m_key_spec.timestamp = timestamp;
     }
+
+    void set_flag(uint8_t flag_) {
+      m_key_spec.flag = flag_;
+    }
+
 
     /**
      * Clears the state.

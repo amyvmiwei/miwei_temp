@@ -196,7 +196,7 @@ namespace Hypertable {
                      int64_t ts, int64_t rev, uint8_t flag, Key &full_key, bool &unknown_cf);
     void to_full_key(const KeySpec &key, Key &full_key, bool &unknown_cf) {
       to_full_key(key.row, key.column_family, key.column_qualifier,
-                  key.timestamp, key.revision, FLAG_INSERT, full_key, unknown_cf);
+                  key.timestamp, key.revision, key.flag, full_key, unknown_cf);
     }
     void to_full_key(const Cell &cell, Key &full_key, bool &unknown_cf) {
       to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,

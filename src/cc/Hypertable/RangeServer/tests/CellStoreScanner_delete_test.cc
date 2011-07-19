@@ -499,6 +499,8 @@ int main(int argc, char **argv) {
     String delete_none = "delete_none";
     String delete_large = "delete_large";
     String insert = "insert";
+    String delete_cell = "delete_cell";
+    String delete_cell_version = "delete_cell_version";
 
     Config::init(argc, argv);
 
@@ -696,6 +698,43 @@ int main(int argc, char **argv) {
       num_deletes++;
     }
 
+    // delete cell and cell_version family
+    serkey.ptr = dbuf.ptr;
+    row = delete_cell;
+    create_key_and_append(dbuf, FLAG_INSERT, row.c_str(), 1, qualifier.c_str(), timestamp,
+                          timestamp);
+    timestamp++;
+    serkeyv.push_back(serkey);
+
+    serkey.ptr = dbuf.ptr;
+    row = delete_cell;
+    create_key_and_append(dbuf, FLAG_DELETE_CELL, row.c_str(), 1, qualifier.c_str(), timestamp,
+                          timestamp);
+    timestamp++;
+    serkeyv.push_back(serkey);
+    num_deletes++;
+
+    serkey.ptr = dbuf.ptr;
+    row = delete_cell_version;
+    create_key_and_append(dbuf, FLAG_INSERT, row.c_str(), 1, qualifier.c_str(), timestamp,
+                          timestamp);
+    timestamp++;
+    serkeyv.push_back(serkey);
+
+    serkey.ptr = dbuf.ptr;
+    row = delete_cell_version;
+    create_key_and_append(dbuf, FLAG_INSERT, row.c_str(), 1, qualifier.c_str(), timestamp,
+                          timestamp);
+    timestamp++;
+    serkeyv.push_back(serkey);
+
+    serkey.ptr = dbuf.ptr;
+    row = delete_cell_version;
+    create_key_and_append(dbuf, FLAG_DELETE_CELL_VERSION, row.c_str(), 1, qualifier.c_str(),
+                          timestamp-1, timestamp-1);
+    serkeyv.push_back(serkey);
+    num_deletes++;
+
     sort(serkeyv.begin(), serkeyv.end());
 
     keyv.reserve( serkeyv.size() );
@@ -704,8 +743,8 @@ int main(int argc, char **argv) {
     for (size_t i=0; i<serkeyv.size(); i++) {
       key.load( serkeyv[i] );
       cs->add(key, bsvalue);
-      if (delete_large.compare(key.row) || key.flag == FLAG_DELETE_ROW ||
-          key.flag == FLAG_DELETE_COLUMN_FAMILY || !insert.compare(key.column_qualifier))
+      if (delete_large.compare(key.row) || key.flag != FLAG_INSERT ||
+          !insert.compare(key.column_qualifier))
         out << key << "\n";
       keyv.push_back(key);
     }
@@ -788,6 +827,42 @@ int main(int argc, char **argv) {
     out << "[delete-row-cf]\n";
     ssbuilder.clear();
     row = delete_row_cf;
+    column = (String)"tag:" + qualifier;
+    ssbuilder.add_cell(row.c_str(), column.c_str());
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+    ssbuilder.clear();
+    ssbuilder.add_cell_interval(row.c_str(),"tag", true,
+        row.c_str(), "tag", true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+    out << "[delete-cell]\n";
+    ssbuilder.clear();
+    row = delete_cell;
+    column = (String)"tag:" + qualifier;
+    ssbuilder.add_cell(row.c_str(), column.c_str());
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+    ssbuilder.clear();
+    ssbuilder.add_cell_interval(row.c_str(),"tag", true,
+        row.c_str(), "tag", true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,
+                                   schema);
+    scanner = cs->create_scanner(scan_ctx);
+    display_scan(scanner, out);
+
+    out << "[delete-cell-version]\n";
+    ssbuilder.clear();
+    row = delete_cell_version;
     column = (String)"tag:" + qualifier;
     ssbuilder.add_cell(row.c_str(), column.c_str());
     scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()), &range,

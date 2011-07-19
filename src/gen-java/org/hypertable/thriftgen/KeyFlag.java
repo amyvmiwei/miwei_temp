@@ -22,12 +22,15 @@ import org.apache.thrift.TEnum;
  * 
  * DELETE_CELL: key is pending delete
  * 
+ * DELETE_CELL_VERSION: delete specific timestamped version of key
+ * 
  * INSERT: key is an insert/update (default state)
  */
 public enum KeyFlag implements org.apache.thrift.TEnum {
   DELETE_ROW(0),
   DELETE_CF(1),
   DELETE_CELL(2),
+  DELETE_CELL_VERSION(3),
   INSERT(255);
 
   private final int value;
@@ -55,6 +58,8 @@ public enum KeyFlag implements org.apache.thrift.TEnum {
         return DELETE_CF;
       case 2:
         return DELETE_CELL;
+      case 3:
+        return DELETE_CELL_VERSION;
       case 255:
         return INSERT;
       default:

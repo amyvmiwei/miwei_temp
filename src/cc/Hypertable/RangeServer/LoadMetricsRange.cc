@@ -84,6 +84,7 @@ void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
   if (update_start_row) {
     try {
       // delete old entries
+      key.flag = FLAG_DELETE_CELL;
       key.column_qualifier = old_end_row.c_str();
       key.column_qualifier_len = old_end_row.size();
       // delete old start row

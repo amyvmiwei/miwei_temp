@@ -27,17 +27,21 @@ class KeyFlag:
 
   DELETE_CELL: key is pending delete
 
+  DELETE_CELL_VERSION: delete specific timestamped version of key
+
   INSERT: key is an insert/update (default state)
   """
   DELETE_ROW = 0
   DELETE_CF = 1
   DELETE_CELL = 2
+  DELETE_CELL_VERSION = 3
   INSERT = 255
 
   _VALUES_TO_NAMES = {
     0: "DELETE_ROW",
     1: "DELETE_CF",
     2: "DELETE_CELL",
+    3: "DELETE_CELL_VERSION",
     255: "INSERT",
   }
 
@@ -45,6 +49,7 @@ class KeyFlag:
     "DELETE_ROW": 0,
     "DELETE_CF": 1,
     "DELETE_CELL": 2,
+    "DELETE_CELL_VERSION": 3,
     "INSERT": 255,
   }
 

@@ -124,6 +124,9 @@ void TableMutatorAsyncScatterBuffer::set_delete(const Key &key, size_t incr_mem)
   RangeLocationInfo range_info;
   TableMutatorAsyncSendBufferMap::const_iterator iter;
 
+  if (key.flag == FLAG_INSERT)
+    HT_THROW(Error::BAD_KEY, "Key flag is FLAG_INSERT, expected delete");
+
   if (!m_loc_cache->lookup(m_table_identifier.id, key.row, &range_info)) {
     m_timer.start();
     m_range_locator->find_loop(&m_table_identifier, key.row, &range_info,
@@ -140,15 +143,24 @@ void TableMutatorAsyncScatterBuffer::set_delete(const Key &key, size_t incr_mem)
   }
 
   (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
-  uint8_t key_flag;
-  if (key.column_family_code == 0)
-    key_flag = FLAG_DELETE_ROW;
-  else if (key.column_qualifier)
-    key_flag = FLAG_DELETE_CELL;
-  else
-    key_flag = FLAG_DELETE_COLUMN_FAMILY;
+  if (key.flag == FLAG_DELETE_ROW) {
+    if (key.column_family_code != 0)
+      HT_THROWF(Error::BAD_KEY, "key.flag set to FLAG_DELETE_ROW but column family=%d", key.flag);
+  }
+  else if (key.flag == FLAG_DELETE_COLUMN_FAMILY ||
+           key.flag == FLAG_DELETE_CELL || key.flag == FLAG_DELETE_CELL_VERSION) {
+    if (key.column_family_code == 0)
+      HT_THROWF(Error::BAD_KEY, "key.flag set to %d but column family=0", key.flag);
+    if (key.flag == FLAG_DELETE_CELL || key.flag == FLAG_DELETE_CELL_VERSION) {
+      if (!key.column_qualifier)
+        HT_THROWF(Error::BAD_KEY, "key.flag set to %d but column qualifier=0", key.flag);
+      if (key.flag == FLAG_DELETE_CELL_VERSION && key.timestamp == AUTO_ASSIGN) {
+        HT_THROWF(Error::BAD_KEY, "key.flag set to %d but timestamp == AUTO_ASSIGN", key.flag);
+      }
+    }
+  }
 
-  create_key_and_append((*iter).second->accum, key_flag, key.row,
+  create_key_and_append((*iter).second->accum, key.flag, key.row,
       key.column_family_code, key.column_qualifier, key.timestamp);
   append_as_byte_string((*iter).second->accum, 0, 0);
 

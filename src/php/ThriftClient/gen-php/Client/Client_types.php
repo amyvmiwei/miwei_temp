@@ -11,6 +11,7 @@ $GLOBALS['Hypertable_ThriftGen_E_KeyFlag'] = array(
   'DELETE_ROW' => 0,
   'DELETE_CF' => 1,
   'DELETE_CELL' => 2,
+  'DELETE_CELL_VERSION' => 3,
   'INSERT' => 255,
 );
 
@@ -18,11 +19,13 @@ final class Hypertable_ThriftGen_KeyFlag {
   const DELETE_ROW = 0;
   const DELETE_CF = 1;
   const DELETE_CELL = 2;
+  const DELETE_CELL_VERSION = 3;
   const INSERT = 255;
   static public $__names = array(
     0 => 'DELETE_ROW',
     1 => 'DELETE_CF',
     2 => 'DELETE_CELL',
+    3 => 'DELETE_CELL_VERSION',
     255 => 'INSERT',
   );
 }

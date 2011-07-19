@@ -164,6 +164,7 @@ void Range::split_install_log_rollback_metadata() {
 
     // Get rid of new range
     metadata_key_str = format("%s:%s", m_metalog_entity->table.id, m_metalog_entity->state.split_point);
+    key.flag = FLAG_DELETE_ROW;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
