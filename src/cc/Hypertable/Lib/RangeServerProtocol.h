@@ -59,7 +59,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_ACKNOWLEDGE_LOAD     = 20;
     static const uint64_t COMMAND_RELINQUISH_RANGE     = 21;
     static const uint64_t COMMAND_HEAPCHECK            = 22;
-    static const uint64_t COMMAND_MAX                  = 23;
+    static const uint64_t COMMAND_METADATA_SYNC        = 23;
+    static const uint64_t COMMAND_MAX                  = 24;
 
     static const char *m_command_strings[];
 
@@ -95,6 +96,16 @@ namespace Hypertable {
      * @return protocol message
      */
     static CommBuf *create_request_compact(const String &table_id, uint32_t flags);
+
+    /** Creates a "metadata_sync" request message
+     *
+     * @param table_id table identifier
+     * @param flags metadata_sync flags
+     * @param columns names of columns to sync
+     * @return protocol message
+     */
+    static CommBuf *create_request_metadata_sync(const String &table_id, uint32_t flags,
+                                                 std::vector<String> &columns);
 
     /** Creates a "load range" request message
      *

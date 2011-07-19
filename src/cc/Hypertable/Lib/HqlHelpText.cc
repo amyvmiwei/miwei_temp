@@ -66,6 +66,7 @@ namespace {
     "DROP RANGE ............ Drop a range",
     "FETCH SCANBLOCK ....... Fetch the next block results of a scan",
     "LOAD RANGE ............ Load a range",
+    "METADATA SYNC ......... Sync METADATA table with RSML data",
     "REPLAY START .......... Start replay",
     "REPLAY LOG ............ Replay a commit log",
     "REPLAY COMMIT ......... Commit replay",
@@ -117,6 +118,30 @@ namespace {
     "  Hypertable.RangeServer.Maintenance.MoveCompactionsPerInterval",
     "",
     "The default value for this property is 2.",
+    "",
+    0
+  };
+
+  const char *help_text_metadata_sync[] = {
+    "",
+    "METADATA SYNC TABLE table_name [options_spec]",
+    "METADATA SYNC RANGES range_type ['|' range_type ...] [options_spec]",
+    "",
+    "range_type:",
+    "    ALL",
+    "    | ROOT",
+    "    | METADATA",
+    "    | SYSTEM",
+    "    | USER",
+    "",
+    "options_spec:",
+    "    COLUMNS=<columns>",
+    "",
+    "This command re-writes columns of the METADATA table, for a set of",
+    "ranges, using data from the RSML.  The TABLE version of the command",
+    "re-writes METADATA for the ranges in the given table.  The RANGES",
+    "version of the command re-writes METADATA for all ranges of the",
+    "given type(s), regardless of what table they belong to.",
     "",
     0
   };
@@ -1767,6 +1792,8 @@ void HqlHelpText::install_range_server_client_text() {
   text_map["fetch scanblock"] = help_text_fetch_scanblock;
   text_map["load"] = help_text_load_range;
   text_map["load range"] = help_text_load_range;
+  text_map["metadata"] = help_text_metadata_sync;
+  text_map["metadata sync"] = help_text_metadata_sync;
   text_map["update"] = help_text_update;
   text_map["replay start"] = help_text_replay_start;
   text_map["replay log"] = help_text_replay_log;

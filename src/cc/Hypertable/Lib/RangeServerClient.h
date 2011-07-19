@@ -87,6 +87,16 @@ namespace Hypertable {
     void compact(const CommAddress &addr, const String &table_id, uint32_t flags,
                  DispatchHandler *handler, Timer &timer);
 
+    /** Issues a "metadata_sync" request synchronously.
+     *
+     * @param addr address of RangeServer
+     * @param table_id table identifier
+     * @param flags metadata_sync flags
+     * @param columns names of columns to sync
+     */
+    void metadata_sync(const CommAddress &addr, const String &table_id, uint32_t flags,
+                       std::vector<String> &columns);
+
     /** Issues a synchronous "load range" request.
      *
      * @param addr address of RangeServer

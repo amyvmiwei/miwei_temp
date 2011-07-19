@@ -598,7 +598,7 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
 
   lds = LoadDataSourceFactory::create(dfs_client, state.input_file, state.input_file_src,
       state.header_file, state.header_file_src,
-      state.key_columns, state.timestamp_column,
+      state.columns, state.timestamp_column,
       state.row_uniquify_chars, state.load_flags);
 
   cb.file_size = lds->get_source_size();
