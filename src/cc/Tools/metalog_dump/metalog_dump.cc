@@ -64,7 +64,8 @@ namespace {
         .add_options()
         ("all", "Display all entities in log (not just latest state)")
         ("metadata-tsv", "For each Range, dump StartRow and Location .tsv lines")
-        ("location", "Used with --metadata-tsv to specify location proxy")
+        ("location", str()->default_value(""),
+         "Used with --metadata-tsv to specify location proxy")
         ("show-version", "Display log version number and exit")
         ;
       cmdline_hidden_desc().add_options()("log-path", str(), "dfs log path");
@@ -134,10 +135,10 @@ int main(int argc, char **argv) {
     String location;
 
     if (metadata_tsv) {
-      if (has("location"))
+      if (has("location") && get_str("location").size()>0)
         location = get_str("location");
       else
-        location = FileUtils::file_to_string("/opt/hypertable/current/run/location");
+        location = FileUtils::file_to_string(System::install_dir + (String)"/run/location");
     }
 
     /**
