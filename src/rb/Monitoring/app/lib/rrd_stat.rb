@@ -82,6 +82,8 @@ class RRDStat
     "disk_used_pct",
     "vm_size",
     "vm_resident",
+    "page_in",
+    "page_out",
     "heap_size",
     "heap_slack",
     "tracked_memory",

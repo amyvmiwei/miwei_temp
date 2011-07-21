@@ -195,6 +195,8 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
 
     rrd_data.vm_size = (int64_t)stats[i].stats->system.proc_stat.vm_size * 1024*1024;
     rrd_data.vm_resident = (int64_t)stats[i].stats->system.proc_stat.vm_resident * 1024*1024;
+    rrd_data.page_in = (int64_t)stats[i].stats->system.swap_stat.page_in;
+    rrd_data.page_out = (int64_t)stats[i].stats->system.swap_stat.page_out;
     rrd_data.heap_size = (int64_t)stats[i].stats->system.proc_stat.heap_size;
     rrd_data.heap_slack = (int64_t)stats[i].stats->system.proc_stat.heap_slack;
     rrd_data.tracked_memory = (int64_t)stats[i].stats->tracked_memory;
@@ -400,6 +402,8 @@ void Monitoring::create_rangeserver_rrd(const String &filename) {
   args.push_back((String)"DS:disk_write_iops:GAUGE:600:0:U");
   args.push_back((String)"DS:vm_size:GAUGE:600:0:U");
   args.push_back((String)"DS:vm_resident:GAUGE:600:0:U");
+  args.push_back((String)"DS:page_in:GAUGE:600:0:U");
+  args.push_back((String)"DS:page_out:GAUGE:600:0:U");
   args.push_back((String)"DS:heap_size:GAUGE:600:0:U");
   args.push_back((String)"DS:heap_slack:GAUGE:600:0:U");
   args.push_back((String)"DS:tracked_memory:GAUGE:600:0:U");
@@ -549,7 +553,7 @@ void Monitoring::update_rangeserver_rrd(const String &filename, struct rangeserv
   args.push_back((String)"update");
   args.push_back(filename);
 
-  update = format("%llu:%d:%d:%lld:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%lld:%.2f:%lld:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%.2f:%.2f:%.2f",
+  update = format("%llu:%d:%d:%lld:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%lld:%.2f:%lld:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%.2f:%.2f:%.2f",
                   (Llu)rrd_data.timestamp,
                   rrd_data.range_count,
                   rrd_data.scanner_count,
@@ -574,6 +578,8 @@ void Monitoring::update_rangeserver_rrd(const String &filename, struct rangeserv
                   (Lld)rrd_data.disk_write_iops,
                   (Lld)rrd_data.vm_size,
                   (Lld)rrd_data.vm_resident,
+                  (Lld)rrd_data.page_in,
+                  (Lld)rrd_data.page_out,
                   (Lld)rrd_data.heap_size,
                   (Lld)rrd_data.heap_slack,
                   (Lld)rrd_data.tracked_memory,
