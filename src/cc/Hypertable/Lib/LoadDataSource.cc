@@ -403,8 +403,21 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
       else {
         *value_lenp = ptr-base;
         *ptr++ = 0;
-        if (!strncmp(ptr, "DELETE", 6))
+        if (!strncmp(ptr, "DELETE", 6)) {
+	  if (keyp->column_family == 0)
+	    keyp->flag = FLAG_DELETE_ROW;
+	  else {
+	    if (!m_leading_timestamps)
+	      keyp->flag = FLAG_DELETE_COLUMN_FAMILY;
+	    else
+	      keyp->flag = FLAG_DELETE_CELL;
+	  }
           *is_deletep = true;
+	}
+	else if (!strncmp(ptr, "DELETE_VERSION", 6) && keyp->column_family) {
+	  keyp->flag = FLAG_DELETE_CELL_VERSION;
+          *is_deletep = true;
+	}
         else {
           cerr << "warning: too many fields on line " << m_cur_line << endl;
           *is_deletep = false;
