@@ -118,6 +118,18 @@
                   :units: "KB",
                   :pname: "Resident Memory Size"},
 
+        :page_in: {
+                  :pair: [:page_in],
+                  :color: ["#FFC155"],
+                  :units: "KB",
+                  :pname: "Pages Swapped In"},
+
+        :page_out: {
+                  :pair: [:page_out],
+                  :color: ["#FA9F00"],
+                  :units: "KB",
+                  :pname: "Pages Swapped Out"},
+
         :heap_size: {
                   :pair: [:heap_size],
                   :color: ["#ffd700"],

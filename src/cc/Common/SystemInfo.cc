@@ -509,6 +509,10 @@ DiskStat &DiskStat::refresh(const char *dir_prefix) {
   return *this;
 }
 
+SwapStat::~SwapStat() {
+  delete (sigar_swap_t *)prev_stat;
+}
+
 SwapStat &SwapStat::refresh() {
   ScopedRecLock lock(_mutex);
   sigar_swap_t s;
@@ -518,8 +522,18 @@ SwapStat &SwapStat::refresh() {
   total = s.total / MiB;
   used = s.used / MiB;
   free = s.free / MiB;
-  page_in = s.page_in;
-  page_out = s.page_out;
+
+  if (prev_stat) {
+    page_in = s.page_in - ((sigar_swap_t *)prev_stat)->page_in;
+    page_out = s.page_out - ((sigar_swap_t *)prev_stat)->page_out;
+  }
+  else {
+    prev_stat = new sigar_swap_t();
+    page_in = s.page_in;
+    page_out = s.page_out;
+  }
+
+  *((sigar_swap_t *)prev_stat) = s;
 
   return *this;
 }

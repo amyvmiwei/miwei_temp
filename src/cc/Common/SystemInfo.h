@@ -119,6 +119,8 @@ namespace Hypertable {
   };
 
   struct SwapStat {
+    SwapStat() : prev_stat(0) { }
+    ~SwapStat();
     SwapStat &refresh();
     bool operator==(const SwapStat &other) const;
     bool operator!=(const SwapStat &other) const {
@@ -132,6 +134,8 @@ namespace Hypertable {
 
     uint64_t page_in;
     uint64_t page_out;
+
+    void *prev_stat;
   };
 
   struct NetInfo {
