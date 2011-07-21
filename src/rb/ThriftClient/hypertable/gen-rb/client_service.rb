@@ -43,6 +43,21 @@ require 'client_types'
                   return
                 end
 
+                def alter_table(ns, table_name, schema)
+                  send_alter_table(ns, table_name, schema)
+                  recv_alter_table()
+                end
+
+                def send_alter_table(ns, table_name, schema)
+                  send_message('alter_table', Alter_table_args, :ns => ns, :table_name => table_name, :schema => schema)
+                end
+
+                def recv_alter_table()
+                  result = receive_message(Alter_table_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def open_namespace(ns)
                   send_open_namespace(ns)
                   return recv_open_namespace()
@@ -882,6 +897,22 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_schema_str failed: unknown result')
                 end
 
+                def get_schema_str_with_ids(ns, table_name)
+                  send_get_schema_str_with_ids(ns, table_name)
+                  return recv_get_schema_str_with_ids()
+                end
+
+                def send_get_schema_str_with_ids(ns, table_name)
+                  send_message('get_schema_str_with_ids', Get_schema_str_with_ids_args, :ns => ns, :table_name => table_name)
+                end
+
+                def recv_get_schema_str_with_ids()
+                  result = receive_message(Get_schema_str_with_ids_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_schema_str_with_ids failed: unknown result')
+                end
+
                 def get_schema(ns, table_name)
                   send_get_schema(ns, table_name)
                   return recv_get_schema()
@@ -1016,6 +1047,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'create_table', seqid)
+                end
+
+                def process_alter_table(seqid, iprot, oprot)
+                  args = read_args(iprot, Alter_table_args)
+                  result = Alter_table_result.new()
+                  begin
+                    @handler.alter_table(args.ns, args.table_name, args.schema)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'alter_table', seqid)
                 end
 
                 def process_open_namespace(seqid, iprot, oprot)
@@ -1608,6 +1650,17 @@ require 'client_types'
                   write_result(result, oprot, 'get_schema_str', seqid)
                 end
 
+                def process_get_schema_str_with_ids(seqid, iprot, oprot)
+                  args = read_args(iprot, Get_schema_str_with_ids_args)
+                  result = Get_schema_str_with_ids_result.new()
+                  begin
+                    result.success = @handler.get_schema_str_with_ids(args.ns, args.table_name)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'get_schema_str_with_ids', seqid)
+                end
+
                 def process_get_schema(seqid, iprot, oprot)
                   args = read_args(iprot, Get_schema_args)
                   result = Get_schema_result.new()
@@ -1742,6 +1795,42 @@ require 'client_types'
               end
 
               class Create_table_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Alter_table_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+                SCHEMA = 3
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
+                  SCHEMA => {:type => ::Thrift::Types::STRING, :name => 'schema'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Alter_table_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 
@@ -3638,6 +3727,42 @@ require 'client_types'
               end
 
               class Get_schema_str_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Get_schema_str_with_ids_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Get_schema_str_with_ids_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 SUCCESS = 0
                 E = 1

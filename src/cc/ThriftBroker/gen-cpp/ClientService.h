@@ -16,6 +16,7 @@ class ClientServiceIf {
   virtual ~ClientServiceIf() {}
   virtual void create_namespace(const std::string& ns) = 0;
   virtual void create_table(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
+  virtual void alter_table(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
   virtual Namespace open_namespace(const std::string& ns) = 0;
   virtual void close_namespace(const Namespace ns) = 0;
   virtual Future open_future(const int32_t queue_size) = 0;
@@ -70,6 +71,7 @@ class ClientServiceIf {
   virtual bool exists_table(const Namespace ns, const std::string& name) = 0;
   virtual void get_table_id(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
+  virtual void get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void get_schema(Schema& _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void get_tables(std::vector<std::string> & _return, const Namespace ns) = 0;
   virtual void get_listing(std::vector<NamespaceListing> & _return, const Namespace ns) = 0;
@@ -86,6 +88,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return;
   }
   void create_table(const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* schema */) {
+    return;
+  }
+  void alter_table(const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* schema */) {
     return;
   }
   Namespace open_namespace(const std::string& /* ns */) {
@@ -260,6 +265,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return;
   }
   void get_schema_str(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
+    return;
+  }
+  void get_schema_str_with_ids(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
     return;
   }
   void get_schema(Schema& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
@@ -490,6 +498,116 @@ class ClientService_create_table_presult {
   ClientException e;
 
   _ClientService_create_table_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_alter_table_args__isset {
+  _ClientService_alter_table_args__isset() : ns(false), table_name(false), schema(false) {}
+  bool ns;
+  bool table_name;
+  bool schema;
+} _ClientService_alter_table_args__isset;
+
+class ClientService_alter_table_args {
+ public:
+
+  ClientService_alter_table_args() : ns(0), table_name(""), schema("") {
+  }
+
+  virtual ~ClientService_alter_table_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  std::string schema;
+
+  _ClientService_alter_table_args__isset __isset;
+
+  bool operator == (const ClientService_alter_table_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(schema == rhs.schema))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_alter_table_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_alter_table_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_alter_table_pargs {
+ public:
+
+
+  virtual ~ClientService_alter_table_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const std::string* schema;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_alter_table_result__isset {
+  _ClientService_alter_table_result__isset() : e(false) {}
+  bool e;
+} _ClientService_alter_table_result__isset;
+
+class ClientService_alter_table_result {
+ public:
+
+  ClientService_alter_table_result() {
+  }
+
+  virtual ~ClientService_alter_table_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_alter_table_result__isset __isset;
+
+  bool operator == (const ClientService_alter_table_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_alter_table_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_alter_table_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_alter_table_presult__isset {
+  _ClientService_alter_table_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_alter_table_presult__isset;
+
+class ClientService_alter_table_presult {
+ public:
+
+
+  virtual ~ClientService_alter_table_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_alter_table_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -6349,6 +6467,117 @@ class ClientService_get_schema_str_presult {
 
 };
 
+typedef struct _ClientService_get_schema_str_with_ids_args__isset {
+  _ClientService_get_schema_str_with_ids_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_get_schema_str_with_ids_args__isset;
+
+class ClientService_get_schema_str_with_ids_args {
+ public:
+
+  ClientService_get_schema_str_with_ids_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_get_schema_str_with_ids_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+
+  _ClientService_get_schema_str_with_ids_args__isset __isset;
+
+  bool operator == (const ClientService_get_schema_str_with_ids_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_schema_str_with_ids_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_schema_str_with_ids_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_get_schema_str_with_ids_pargs {
+ public:
+
+
+  virtual ~ClientService_get_schema_str_with_ids_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_get_schema_str_with_ids_result__isset {
+  _ClientService_get_schema_str_with_ids_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_schema_str_with_ids_result__isset;
+
+class ClientService_get_schema_str_with_ids_result {
+ public:
+
+  ClientService_get_schema_str_with_ids_result() : success("") {
+  }
+
+  virtual ~ClientService_get_schema_str_with_ids_result() throw() {}
+
+  std::string success;
+  ClientException e;
+
+  _ClientService_get_schema_str_with_ids_result__isset __isset;
+
+  bool operator == (const ClientService_get_schema_str_with_ids_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_get_schema_str_with_ids_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_get_schema_str_with_ids_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_get_schema_str_with_ids_presult__isset {
+  _ClientService_get_schema_str_with_ids_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_get_schema_str_with_ids_presult__isset;
+
+class ClientService_get_schema_str_with_ids_presult {
+ public:
+
+
+  virtual ~ClientService_get_schema_str_with_ids_presult() throw() {}
+
+  std::string* success;
+  ClientException e;
+
+  _ClientService_get_schema_str_with_ids_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_get_schema_args__isset {
   _ClientService_get_schema_args__isset() : ns(false), table_name(false) {}
   bool ns;
@@ -7134,6 +7363,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void create_table(const Namespace ns, const std::string& table_name, const std::string& schema);
   void send_create_table(const Namespace ns, const std::string& table_name, const std::string& schema);
   void recv_create_table();
+  void alter_table(const Namespace ns, const std::string& table_name, const std::string& schema);
+  void send_alter_table(const Namespace ns, const std::string& table_name, const std::string& schema);
+  void recv_alter_table();
   Namespace open_namespace(const std::string& ns);
   void send_open_namespace(const std::string& ns);
   Namespace recv_open_namespace();
@@ -7296,6 +7528,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name);
   void send_get_schema_str(const Namespace ns, const std::string& table_name);
   void recv_get_schema_str(std::string& _return);
+  void get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name);
+  void send_get_schema_str_with_ids(const Namespace ns, const std::string& table_name);
+  void recv_get_schema_str_with_ids(std::string& _return);
   void get_schema(Schema& _return, const Namespace ns, const std::string& table_name);
   void send_get_schema(const Namespace ns, const std::string& table_name);
   void recv_get_schema(Schema& _return);
@@ -7332,6 +7567,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   std::map<std::string, void (ClientServiceProcessor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*, void*)> processMap_;
   void process_create_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_create_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_alter_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -7386,6 +7622,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_exists_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_table_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_schema_str(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_get_schema_str_with_ids(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_listing(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -7398,6 +7635,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     iface_(iface) {
     processMap_["create_namespace"] = &ClientServiceProcessor::process_create_namespace;
     processMap_["create_table"] = &ClientServiceProcessor::process_create_table;
+    processMap_["alter_table"] = &ClientServiceProcessor::process_alter_table;
     processMap_["open_namespace"] = &ClientServiceProcessor::process_open_namespace;
     processMap_["close_namespace"] = &ClientServiceProcessor::process_close_namespace;
     processMap_["open_future"] = &ClientServiceProcessor::process_open_future;
@@ -7452,6 +7690,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["exists_table"] = &ClientServiceProcessor::process_exists_table;
     processMap_["get_table_id"] = &ClientServiceProcessor::process_get_table_id;
     processMap_["get_schema_str"] = &ClientServiceProcessor::process_get_schema_str;
+    processMap_["get_schema_str_with_ids"] = &ClientServiceProcessor::process_get_schema_str_with_ids;
     processMap_["get_schema"] = &ClientServiceProcessor::process_get_schema;
     processMap_["get_tables"] = &ClientServiceProcessor::process_get_tables;
     processMap_["get_listing"] = &ClientServiceProcessor::process_get_listing;
@@ -7488,6 +7727,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       ifaces_[i]->create_table(ns, table_name, schema);
+    }
+  }
+
+  void alter_table(const Namespace ns, const std::string& table_name, const std::string& schema) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->alter_table(ns, table_name, schema);
     }
   }
 
@@ -8003,6 +8249,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->get_schema_str(_return, ns, table_name);
+      }
+    }
+  }
+
+  void get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->get_schema_str_with_ids(_return, ns, table_name);
+        return;
+      } else {
+        ifaces_[i]->get_schema_str_with_ids(_return, ns, table_name);
       }
     }
   }

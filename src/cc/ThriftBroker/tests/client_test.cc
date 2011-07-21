@@ -43,6 +43,10 @@ struct BasicTest : HqlServiceIf {
     client->create_table(ns, table, schema);
   }
 
+  void alter_table(const Namespace ns, const std::string& table, const std::string& schema) {
+    client->alter_table(ns, table, schema);
+  }
+
   Future open_future(int queue_size = 0) {
     return client->open_future(queue_size);
   }
@@ -299,6 +303,11 @@ struct BasicTest : HqlServiceIf {
     client->get_schema_str(_return, ns, table);
   }
 
+  void get_schema_str_with_ids(std::string& _return, const Namespace ns,
+      const std::string& table) {
+    client->get_schema_str_with_ids(_return, ns, table);
+  }
+
   void get_schema(Schema& _return, const Namespace ns, const std::string& table) {
     client->get_schema(_return, ns, table);
   }
@@ -358,7 +367,7 @@ struct BasicTest : HqlServiceIf {
       test_put();
       test_scan(out);
       test_async(out);
-      test_rename();
+      test_rename_alter(out);
     }
     catch (ClientException &e) {
       std::cout << e << std::endl;
@@ -366,11 +375,31 @@ struct BasicTest : HqlServiceIf {
     }
   }
 
-  void test_rename() {
+  void test_rename_alter(std::ostream &out) {
+    out << "Rename and alter" << std::endl;
     Namespace ns = open_namespace("test");
     HqlResult result;
     hql_query(result, ns, "create table foo('bar')");
     rename_table(ns, "foo", "foo_renamed");
+    String str = (String)"<Schema generation=\"2\">" +
+                         "  <AccessGroup name=\"default\">" +
+                         "    <ColumnFamily id=\"1\">" +
+                         "      <Generation>1</Generation>" +
+                         "      <Name>bar</Name>" +
+                         "      <Counter>false</Counter>" +
+                         "      <deleted>true</deleted>" +
+                         "    </ColumnFamily>" +
+                         "    <ColumnFamily id=\"2\">" +
+                         "      <Generation>2</Generation>" +
+                         "      <Name>\"bar2\"</Name>" +
+                         "      <Counter>false</Counter>" +
+                         "      <deleted>false</deleted>" +
+                         "    </ColumnFamily>" +
+                         "   </AccessGroup>" +
+                         "</Schema>";
+    alter_table(ns, "foo_renamed", str);
+    get_schema_str_with_ids(str, ns, "foo_renamed");
+    out << str << std::endl;
     drop_table(ns, "foo_renamed", false);
     close_namespace(ns);
   }
