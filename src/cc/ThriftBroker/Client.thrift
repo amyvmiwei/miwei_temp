@@ -590,6 +590,16 @@ service ClientService {
       throws (1:ClientException e),
   
   /**
+   * Alter a table
+   *
+   * @param ns - namespace id 
+   * @param table_name - table name
+   * @param schema - schema of the table (in xml)
+   */
+  void alter_table(1:Namespace ns, 2:string table_name, 3:string schema)
+      throws (1:ClientException e),
+  
+  /**
    * Open a namespace 
    *
    * @param ns - namespace
@@ -1041,6 +1051,17 @@ service ClientService {
    * @return schema string (in xml)
    */
   string get_schema_str(1:Namespace ns, 2:string table_name) throws (1:ClientException e),
+  
+  /**
+   * Get the schema of a table as a string along with column family ids 
+   *
+   * @param ns - namespace id 
+   *
+   * @param table_name - table name
+   *
+   * @return schema string (in xml)
+   */
+  string get_schema_str_with_ids(1:Namespace ns, 2:string table_name) throws (1:ClientException e),
   
   /**
    * Get the schema of a table as a string (that can be used with create_table)

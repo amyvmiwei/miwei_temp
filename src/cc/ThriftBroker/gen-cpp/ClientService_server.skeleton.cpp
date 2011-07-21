@@ -32,6 +32,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("create_table\n");
   }
 
+  void alter_table(const Namespace ns, const std::string& table_name, const std::string& schema) {
+    // Your implementation goes here
+    printf("alter_table\n");
+  }
+
   Namespace open_namespace(const std::string& ns) {
     // Your implementation goes here
     printf("open_namespace\n");
@@ -300,6 +305,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
   void get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name) {
     // Your implementation goes here
     printf("get_schema_str\n");
+  }
+
+  void get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name) {
+    // Your implementation goes here
+    printf("get_schema_str_with_ids\n");
   }
 
   void get_schema(Schema& _return, const Namespace ns, const std::string& table_name) {

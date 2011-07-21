@@ -501,6 +501,16 @@ public:
     } RETHROW()
   }
 
+  virtual void alter_table(const ThriftGen::Namespace ns, const String &table, const String &schema) {
+    LOG_API("namespace=" << ns << " table="<< table <<" schema="<< schema);
+
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      namespace_ptr->alter_table(table, schema);
+      LOG_API("namespace=" << ns << " table="<< table <<" done");
+    } RETHROW()
+  }
+
   virtual Scanner
   open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss) {
     LOG_API("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
@@ -1199,6 +1209,18 @@ public:
       LOG_API("namespace=" << ns << " table="<< table <<" schema="<< result);
     } RETHROW()
   }
+
+  virtual void get_schema_str_with_ids(String &result, const ThriftGen::Namespace ns,
+      const String &table) {
+    LOG_API("namespace=" << ns << " table="<< table);
+
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      result = namespace_ptr->get_schema_str(table, true);
+      LOG_API("namespace=" << ns << " table="<< table <<" schema="<< result);
+    } RETHROW()
+  }
+
 
   virtual void get_schema(ThriftGen::Schema &result, const ThriftGen::Namespace ns, const String &table) {
     LOG_API("namespace=" << ns << " table="<< table);
