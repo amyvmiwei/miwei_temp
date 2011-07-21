@@ -130,6 +130,7 @@ void OperationBalance::execute() {
 
 
 void OperationBalance::display_state(std::ostream &os) {
+  os << *(m_plan.get());
 }
 
 size_t OperationBalance::encoded_state_length() const {

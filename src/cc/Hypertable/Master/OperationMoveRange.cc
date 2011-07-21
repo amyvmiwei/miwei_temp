@@ -45,7 +45,7 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context, const TableIdentifie
   : Operation(context, MetaLog::EntityType::OPERATION_MOVE_RANGE),
     m_table(table), m_range(range), m_transfer_log(transfer_log),
     m_soft_limit(soft_limit), m_is_split(is_split), m_remove_explicitly(true),
-    m_from_mml(false) {
+    m_in_progress(false) {
   m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row, m_range.end_row);
   initialize_dependencies();
   m_hash_code = Utility::range_hash_code(m_table, m_range, "OperationMoveRange");
@@ -53,33 +53,18 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context, const TableIdentifie
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context,
                                        const MetaLog::EntityHeader &header_)
-  : Operation(context, header_), m_remove_explicitly(true), m_from_mml(true) {
+  : Operation(context, header_), m_remove_explicitly(true), m_in_progress(false) {
 }
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_MOVE_RANGE),
-    m_remove_explicitly(true), m_from_mml(false) {
+    m_remove_explicitly(true), m_in_progress(false) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
 
-  /**
-   * If this move is already in progress, then respond OK and
-   * mark this operation complete
-   */
-  if (m_context->exists_unacknowledged_move(m_hash_code)) {
-    try {
-      ResponseCallback cb(context->comm, event);
-      cb.response_ok();
-    }
-    catch (Exception &e) {
-      HT_WARN_OUT << e << HT_END;
-    }
-    complete_ok_no_log();
-    return;
-  }
-
-  initialize_dependencies();
+  if (!m_in_progress)
+    initialize_dependencies();
 }
 
 void OperationMoveRange::initialize_dependencies() {
@@ -114,6 +99,11 @@ void OperationMoveRange::execute() {
 
   HT_INFOF("Entering MoveRange-%lld %s state=%s",
            (Lld)header.id, m_range_name.c_str(), OperationState::get_text(state));
+
+  if (m_in_progress) {
+    complete_ok_no_log();
+    state = get_state();
+  }
 
   switch (state) {
 
@@ -256,8 +246,12 @@ void OperationMoveRange::decode_request(const uint8_t **bufp, size_t *remainp) {
   m_is_split = Serialization::decode_bool(bufp, remainp);
   m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row, m_range.end_row);
   m_hash_code = Utility::range_hash_code(m_table, m_range, "OperationMoveRange");
-  if (m_from_mml)
-    m_context->add_unacknowledged_move(m_hash_code);
+  if (m_context) {
+    if (m_context->exists_unacknowledged_move(m_hash_code))
+      m_in_progress = true;
+    else
+      m_context->add_unacknowledged_move(m_hash_code);
+  }
 }
 
 const String OperationMoveRange::name() {
