@@ -401,7 +401,13 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
     // create & send redo buffer
     uint32_t next_id = ++m_next_buffer_id;
     TableMutatorAsyncScatterBufferPtr redo;
-    redo = buffer->create_redo_buffer(next_id);
+    try {
+      redo = buffer->create_redo_buffer(next_id);
+    }
+    catch (Exception &e) {
+      error = e.code();
+      redo=0;
+    }
     if (!redo) {
       buffer->get_failed_mutations(m_failed_mutations);
       // send error to callback
