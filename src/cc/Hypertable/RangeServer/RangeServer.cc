@@ -1658,6 +1658,10 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
       if (Global::rsml_writer)
         Global::rsml_writer->record_state( range->metalog_entity() );
+      else {
+        cb->error(Error::SERVER_SHUTTING_DOWN, Global::location_initializer->get());
+        return;
+      }
 
       table_info->add_staged_range(range);
     }
@@ -1731,6 +1735,11 @@ void RangeServer::acknowledge_load(ResponseCallback *cb, const TableIdentifier *
 
     if (Global::rsml_writer)
       Global::rsml_writer->record_state( range->metalog_entity() );
+    else {
+      cb->error(Error::SERVER_SHUTTING_DOWN, Global::location_initializer->get());
+      return;
+    }
+
   }
 
   cb->response_ok();
@@ -2631,6 +2640,10 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
     if (Global::rsml_writer) {
       ScopedLock lock(m_drop_table_mutex);
       Global::rsml_writer->record_removal( range_vector[i]->metalog_entity() );
+    }
+    else {
+      cb->error(Error::SERVER_SHUTTING_DOWN, Global::location_initializer->get());
+      return;
     }
   }
 
