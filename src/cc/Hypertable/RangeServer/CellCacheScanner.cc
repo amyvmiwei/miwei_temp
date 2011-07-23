@@ -45,7 +45,7 @@ CellCacheScanner::CellCacheScanner(CellCachePtr &cellcache,
   Key current;
   String tmp_str;
 
-  m_keys_only = (scan_ctx->spec) ? scan_ctx->spec->keys_only : false;
+  m_keys_only = (scan_ctx->spec) ? (scan_ctx->spec->keys_only && !scan_ctx->spec->value_regexp) : false;
 
   current_buf.grow(scan_ctx->start_key.row_len +
                    scan_ctx->start_key.column_qualifier_len +
