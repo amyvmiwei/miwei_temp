@@ -35,16 +35,18 @@ namespace Hypertable {
     uint8_t *ptr;
     ScanContext *scan_context = scanner->scan_context();
     bool return_all = (scan_context->spec->return_deletes) ? true : false;
+    bool keys_only = scan_context->spec->keys_only;
     char numbuf[17];
     DynamicBuffer counter_value;
     bool counter;
+    String empty_value("");
 
     assert(dbuf.base == 0);
 
     memset(&last_key, 0, sizeof(last_key));
 
     while ((more = scanner->get(key, value))) {
-
+      counter = false;
       if (!return_all) {
         // drop duplicates
         if (key.timestamp == last_key.timestamp &&
@@ -59,31 +61,37 @@ namespace Hypertable {
         memcpy(&last_key, &key, sizeof(Key));
       }
 
-      counter = scan_context->family_info[key.column_family_code].counter &&
+      if (keys_only) {
+        value.ptr = 0;
+        counter_value.clear();
+      }
+      else {
+        counter = scan_context->family_info[key.column_family_code].counter &&
           (key.flag == FLAG_INSERT);
 
-      if (counter) {
-        const uint8_t *decode;
-        uint64_t count;
-        size_t remain = value.decode_length(&decode);
-        // value must be encoded 64 bit int
-        if (remain != 8)
-          HT_FATAL_OUT << "Expected counter to be encoded 64 bit int but remain=" << remain
-                       << " ,key=" << key << " ,value="<< value.str() << HT_END;
+        if (counter) {
+          const uint8_t *decode;
+          uint64_t count;
+          size_t remain = value.decode_length(&decode);
+          // value must be encoded 64 bit int
+          if (remain != 8)
+            HT_FATAL_OUT << "Expected counter to be encoded 64 bit int but remain=" << remain
+              << " ,key=" << key << " ,value="<< value.str() << HT_END;
 
-        count = Serialization::decode_i64(&decode, &remain);
-        //convert counter to ascii
-        sprintf(numbuf, "%llu", (Llu) count);
-        value_len = strlen(numbuf);
-        counter_value.clear();
-        append_as_byte_string(counter_value, numbuf, value_len);
-        value_len = counter_value.fill();
+          count = Serialization::decode_i64(&decode, &remain);
+          //convert counter to ascii
+          sprintf(numbuf, "%llu", (Llu) count);
+          value_len = strlen(numbuf);
+          counter_value.clear();
+          append_as_byte_string(counter_value, numbuf, value_len);
+          value_len = counter_value.fill();
+        }
+        else
+          value_len = value.length();
       }
-      else
-        value_len = value.length();
 
       if (value.ptr == 0) {
-        value.ptr = (const uint8_t *)"";
+        value.ptr = (const uint8_t *)empty_value.c_str();
         value_len = 1;
       }
 

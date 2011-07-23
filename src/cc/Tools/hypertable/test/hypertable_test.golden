@@ -2558,6 +2558,10 @@ SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a"
 http://yahoo.com	col2:mailto	bodhi2sattva17
 martingale_123	col2:ergodic1	Consignificative65Era
 moss berry	col1:w1234	giants
+SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a" KEYS_ONLY;
+http://yahoo.com
+martingale_123
+moss berry
 
 # test empty qualifier filtering
 INSERT INTO RegexpTest VALUES('http://yahoo.com', 'col2', 'swiss');

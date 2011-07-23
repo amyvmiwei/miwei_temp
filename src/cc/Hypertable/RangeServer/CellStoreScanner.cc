@@ -43,7 +43,7 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
   m_interval_max(0), m_keys_only(false), m_eos(false) {
   SerializedKey start_key, end_key;
 
-  m_keys_only = (scan_ctx->spec) ? scan_ctx->spec->keys_only : false;
+  m_keys_only = (scan_ctx->spec) ? (scan_ctx->spec->keys_only && !scan_ctx->spec->value_regexp) : false;
 
   memset(m_interval_scanners, 0, 3*sizeof(CellStoreScannerInterval *));
 

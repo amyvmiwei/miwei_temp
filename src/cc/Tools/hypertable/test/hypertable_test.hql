@@ -497,6 +497,7 @@ SELECT col2:"bird",col2:/mail/ from RegexpTest WHERE ROW REGEXP "http://.*";
 SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
 SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "^\D+" AND VALUE REGEXP "l.*e";
 SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a";
+SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a" KEYS_ONLY;
 
 # test empty qualifier filtering
 INSERT INTO RegexpTest VALUES('http://yahoo.com', 'col2', 'swiss');
