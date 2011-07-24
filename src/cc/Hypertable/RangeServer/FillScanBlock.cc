@@ -64,6 +64,7 @@ namespace Hypertable {
       if (keys_only) {
         value.ptr = 0;
         counter_value.clear();
+        value_len = 0;
       }
       else {
         counter = scan_context->family_info[key.column_family_code].counter &&
