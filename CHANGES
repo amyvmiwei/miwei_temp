@@ -1,3 +1,64 @@
+Version 0.9.5.0:
+(2011-07-24)
+
+    Added Asynchronous Mutators
+    Added Load Balancer    
+    Fixed RSML write race condition on shutdown
+    Added FLAG_DELETE_CELL_VERSION to allow a specific version of a cell to be deleted.
+    Fixed problem with COUNTER support in MergeScanner causing corrupt keys
+    Fixed CellStoreV5 memory tracking
+    Fixed ApplicationHandler leak on timeout; RangeServer.Scanner.Ttl default to 1800s
+    Fixed Event object leak in Comm layer
+    Improved CellStore memory tracking; Fixed merging compaction scheduling; dropped MIXED prioritization
+    Added CellStore count monitoring graph for RangeServers
+    Added scanner_count graphs to monitoring interface
+    Added heap_size, heap_slack, and tracked_memory RangeServer monitoring graphs
+    Fixed bug in RangeServer where the server would crash while processing some queries.
+    Fixed bug whereby TableMutatorAsync timeout errors were being dropped.
+    [Issue 527] Partially implemented. Thrift API partially incomplete
+    Added paging statistics graphs to RangeServer monitoring page
+    Fixed support for DELETE records in LoadDataSource.cc
+    Fix to unacknowledged move cache patch
+    [issue 637] Fixed: problem with delete cell with timestamp
+    Fixed a couple of minor bugs in metalog_dump tool.
+    Added METADATA SYNC command to rsclient
+    Added assert(timeout!=0) in Comm layer; Added/Improved some log messages
+    Added Hypertable.LoadBalancer.Enable property to allow for disabling balancer
+    Added removal of Range entity from RSML at end of relinquish operation
+    Added support for move compactions; Added COMPACT command to rsclient
+    Added unacknowledged_move cache to Master to avoid repeated move
+    Made changes to LoadBalancer to ignore RangeServers that are not live yet.
+    Reduced Range split size for Balance-Mechanics tests to avoid running out of file handles.
+    Improved bloom filter regression tests
+    [issue 285] ThriftBroker requires a restart after hypertable server processes are restarted
+    Skip over RS_METRICS entries where version != 2
+    Fixed SystemInfo network rx/tx calculation
+    issue 639: Changed sort order to be numeric on RangeServer Monitoring page
+    Fixed race condition in TableMutatorAsync as well as bug in async_api_test.
+    Fixed couple of minor test issues.
+    Modified LoadMetricsRange to delete entries for "old" range after a split.
+    issue 630: use hostname instead of IP on RS page; Improved graph colors
+    Improved merge algorithm by merging long runs of CellStores < TargetSize.Minimum
+    Added complete AccessGroup information to RangeServer::dump
+    issue 636: Fixed bogus RangeServer shutdown error message
+    Eliminated superfluous memory allocations during log replay
+    Added --heapprofile to start-rangeserver.sh
+    Fixed a couple of uninitialized memory references
+    Fixed bug in ScanSpec end_row specification.
+    Changed default value of Hyperspace.LogGc.Interval to 10 mins instead of 1 hr
+    Fixed couple of possibly buggy comparisons in TableMutatorAsync code.
+    Added completed method to ResultCallback so applications can be notified when outstanding async calls are complete.
+    Added "heapcheck" command to RangeServer for dumping heap stats
+    Fixed race condition in TableMutatorAsync code.
+    Added stop_monitoring and start_monitoring cap commands.
+    Removed over-aggressive assert in TableMutatorAsyncDispatchHandler destructor.
+    Fixed a couple of warnings
+    Make Monitoring class map servers by location instead of id
+    If RangeServer.ProxyName equals "*" generate Location name using hostname+port
+    Added balancing mechanics
+    Minor fix to Thrift future calls.
+    Replaced TableMutator code with new mutator code based on TableMutatorAsync
+
 Version 0.9.5.0.pre6:
 (2011-06-03)
 
