@@ -138,6 +138,7 @@ int main(int argc, char **argv) {
       FailureInducer::instance->parse_option(get_str("induce-failure"));
     }
 
+
     /**
      * Read/load MML
      */
@@ -188,6 +189,17 @@ int main(int argc, char **argv) {
       if (context->namemap->exists_mapping("/sys/METADATA", 0))
 	init_op->set_state(OperationState::CREATE_RS_METRICS);
       operations.push_back( init_op );
+    }
+    else {
+      if (context->metadata_table == 0)
+        context->metadata_table = new Table(context->props, context->conn_manager,
+                                            context->hyperspace, context->namemap,
+                                            TableIdentifier::METADATA_NAME);
+
+      if (context->rs_metrics_table == 0)
+        context->rs_metrics_table = new Table(context->props, context->conn_manager,
+                                              context->hyperspace, context->namemap,
+                                              "sys/RS_METRICS");
     }
 
     // Add PERPETUAL operations
