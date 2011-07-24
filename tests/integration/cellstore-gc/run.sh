@@ -34,7 +34,7 @@ sleep 1
 
 while [ $NUM_POLLS -gt 0 ]; do
 
-  find $HT_HOME/fs/local/hypertable/tables/ -name 'cs*' -print | awk 'BEGIN { FS="/tables/" } { print $NF }' | sort > FILESYSTEM.files
+  find $HT_HOME/fs/local/hypertable/tables/ -name 'cs*' -print | awk 'BEGIN { FS="/tables/" } { print $NF }' | sed 's/^\/*//g' | sort > FILESYSTEM.files
 
   echo "use '/sys'; select Files from METADATA revs=1;" | $HT_HOME/bin/ht shell --batch | cut -f3 | awk 'BEGIN { FS=";" } { for (i = 1; i <= NF; i++) if ($i != "\\n") print $i }' | sort | uniq > METADATA.files
 
