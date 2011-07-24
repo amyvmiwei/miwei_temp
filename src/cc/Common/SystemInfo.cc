@@ -709,8 +709,11 @@ ProcStat &ProcStat::refresh() {
   major_faults = HT_FIELD_NOTIMPL(m.major_faults) ? 0 : m.major_faults;
   page_faults = HT_FIELD_NOTIMPL(m.page_faults) ? 0 : m.page_faults;;
 #if defined(TCMALLOC) || defined(TCMALLOC_MINIMAL)
-  MallocExtension::instance()->GetNumericProperty("generic.heap_size", &heap_size);
-  MallocExtension::instance()->GetNumericProperty("tcmalloc.slack_bytes", &heap_slack);
+  size_t tmp_heap_size, tmp_heap_slack;
+  MallocExtension::instance()->GetNumericProperty("generic.heap_size", &tmp_heap_size);
+  heap_size = tmp_heap_size;
+  MallocExtension::instance()->GetNumericProperty("tcmalloc.slack_bytes", &tmp_heap_slack);
+  heap_slack = tmp_heap_slack;
 #endif
 
   return *this;
