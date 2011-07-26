@@ -27,7 +27,7 @@
 
 #include "Hypertable/Lib/BlockCompressionHeader.h"
 #include "Global.h"
-#include "CellStoreBlockIndexMap.h"
+#include "CellStoreBlockIndexArray.h"
 #include "CellStoreScanner.h"
 
 #include "CellStoreScannerInterval.h"
@@ -201,5 +201,5 @@ void CellStoreScanner<IndexT>::forward() {
   m_interval_scanners[m_interval_index]->forward();
 }
 
-template class CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >;
-template class CellStoreScanner<CellStoreBlockIndexMap<int64_t> >;
+template class CellStoreScanner<CellStoreBlockIndexArray<uint32_t> >;
+template class CellStoreScanner<CellStoreBlockIndexArray<int64_t> >;
