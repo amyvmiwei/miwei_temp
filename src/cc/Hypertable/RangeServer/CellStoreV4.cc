@@ -117,8 +117,8 @@ CellListScanner *CellStoreV4::create_scanner(ScanContextPtr &scan_ctx) {
   }
 
   if (m_64bit_index)
-    return new CellStoreScanner<CellStoreBlockIndexMap<int64_t> >(this, scan_ctx, need_index ? &m_index_map64 : 0);
-  return new CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >(this, scan_ctx, need_index ? &m_index_map32 : 0);
+    return new CellStoreScanner<CellStoreBlockIndexArray<int64_t> >(this, scan_ctx, need_index ? &m_index_map64 : 0);
+  return new CellStoreScanner<CellStoreBlockIndexArray<uint32_t> >(this, scan_ctx, need_index ? &m_index_map32 : 0);
 }
 
 
@@ -274,7 +274,7 @@ void CellStoreV4::load_bloom_filter() {
   }
 
   if (m_bloom_filter->total_size() > 0) {
-    len = m_filesys->pread(m_fd, m_bloom_filter->base(), 
+    len = m_filesys->pread(m_fd, m_bloom_filter->base(),
                            m_bloom_filter->total_size(),
                            m_trailer.filter_offset);
 
@@ -380,7 +380,7 @@ void CellStoreV4::add(const Key &key, const ByteString value) {
   }
 
   m_key_compressor->add(key);
-  
+
   size_t key_len = m_key_compressor->length();
   size_t value_len = value.length();
 

@@ -27,7 +27,7 @@
 
 #include "Hypertable/Lib/BlockCompressionHeader.h"
 #include "Global.h"
-#include "CellStoreBlockIndexMap.h"
+#include "CellStoreBlockIndexArray.h"
 
 #include "CellStoreScannerIntervalBlockIndex.h"
 
@@ -271,5 +271,5 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
 }
 
 
-template class CellStoreScannerIntervalBlockIndex<CellStoreBlockIndexMap<uint32_t> >;
-template class CellStoreScannerIntervalBlockIndex<CellStoreBlockIndexMap<int64_t> >;
+template class CellStoreScannerIntervalBlockIndex<CellStoreBlockIndexArray<uint32_t> >;
+template class CellStoreScannerIntervalBlockIndex<CellStoreBlockIndexArray<int64_t> >;

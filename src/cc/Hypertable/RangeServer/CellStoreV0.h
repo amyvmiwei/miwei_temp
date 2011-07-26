@@ -32,7 +32,7 @@
 #include <ext/hash_set>
 #endif
 
-#include "CellStoreBlockIndexMap.h"
+#include "CellStoreBlockIndexArray.h"
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/DynamicBuffer.h"
@@ -128,7 +128,7 @@ namespace Hypertable {
     int32_t                m_fd;
     std::string            m_filename;
     IndexMap               m_index;
-    CellStoreBlockIndexMap<uint32_t> m_index_map32;
+    CellStoreBlockIndexArray<uint32_t> m_index_map32;
     CellStoreTrailerV0     m_trailer;
     BlockCompressionCodec *m_compressor;
     DynamicBuffer          m_buffer;

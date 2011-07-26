@@ -119,8 +119,8 @@ CellListScanner *CellStoreV5::create_scanner(ScanContextPtr &scan_ctx) {
   }
 
   if (m_64bit_index)
-    return new CellStoreScanner<CellStoreBlockIndexMap<int64_t> >(this, scan_ctx, need_index ? &m_index_map64 : 0);
-  return new CellStoreScanner<CellStoreBlockIndexMap<uint32_t> >(this, scan_ctx, need_index ? &m_index_map32 : 0);
+    return new CellStoreScanner<CellStoreBlockIndexArray<int64_t> >(this, scan_ctx, need_index ? &m_index_map64 : 0);
+  return new CellStoreScanner<CellStoreBlockIndexArray<uint32_t> >(this, scan_ctx, need_index ? &m_index_map32 : 0);
 }
 
 
