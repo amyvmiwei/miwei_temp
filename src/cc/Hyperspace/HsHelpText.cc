@@ -31,6 +31,7 @@ namespace {
   const char *help_text_contents[] = {
     "",
     "mkdir ............. Creates a directory in Hyperspace",
+    "mkdirs ............ Creates all paths leading upto and including directory in Hyperspace",
     "delete ............ Delete file/directory",
     "open .............. Open a file/directory",
     "create ............ Create a file",
@@ -53,6 +54,7 @@ namespace {
     "getseq ............ Get a lock sequencer for a file/directory",
     "echo .............. Echo user input",
     "locate ............ Get the location of Hyperspace Master or all Replicas",
+    "dump .............. Dump contents of hyperspace"
     "",
     "Statements must be terminated with ';' to execute.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is one from",
@@ -66,6 +68,13 @@ namespace {
     "  This command issues a MKDIR request to Hyperspace.",
     (const char *)0
   };
+
+  const char *help_mkdirs[] = {
+    "mkdirs <dir>",
+    "  This command issues a MKDIRS request to Hyperspace.",
+    (const char *)0
+  };
+
 
   const char *help_delete[] = {
     "delete <dir>",
@@ -196,12 +205,24 @@ namespace {
     (const char *)0
   };
 
+  const char *help_dump[] = {
+    "dump <path> [AS_COMMANDS] [output_file]",
+    "  This command dumps all the contents of Hyperspace under the specified path.",
+    "  If no output_file is specified the contents are dumped to STDOUT.",
+    "  The AS_COMMANDS option prints out the contents as Hyperspace shell commands ",
+    "  for easy reloading back into Hyperspace. To reload while preserving white spaces",
+    "  in attributes, use something like 'hyperspace --command-file dump_file'.",
+    (const char *)0
+  };
+
+
   typedef Hypertable::hash_map<std::string, const char **>  HelpTextMap;
 
   HelpTextMap &build_help_text_map() {
     HelpTextMap *map = new HelpTextMap();
     (*map)[""] = help_text_contents;
     (*map)["mkdir"] = help_mkdir;
+    (*map)["mkdirs"] = help_mkdirs;
     (*map)["delete"] = help_delete;
     (*map)["open"] = help_open;
     (*map)["create"] = help_create;
@@ -221,6 +242,7 @@ namespace {
     (*map)["release"] = help_release;
     (*map)["getseq"] = help_getsequencer;
     (*map)["locate"] = help_locate;
+    (*map)["dump"] = help_dump;
     return *map;
   }
 
