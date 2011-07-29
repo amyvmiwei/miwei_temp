@@ -24,6 +24,8 @@
 #include <cassert>
 #include <cstdio>
 #include <cstring>
+#include <fstream>
+#include <iostream>
 
 extern "C" {
 #include <time.h>
@@ -36,6 +38,7 @@ extern "C" {
 #include <boost/progress.hpp>
 #include <boost/timer.hpp>
 #include <boost/thread/xtime.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
@@ -72,7 +75,10 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String fname = state.dir_name;
       m_session->mkdir(fname);
     }
-
+    else if (state.command == COMMAND_MKDIRS) {
+      String fname = state.dir_name;
+      m_session->mkdirs(fname);
+    }
     else if (state.command == COMMAND_DELETE) {
       String fname = state.node_name;
       m_session->unlink(fname);
@@ -273,6 +279,135 @@ void HsCommandInterpreter::execute_line(const String &line) {
       sort(listing.begin(), listing.end(), ascending);
       printDirEntryAttrListing(0, name, listing);
     }
+
+    else if (state.command == COMMAND_DUMP) {
+      ::uint64_t handle;
+      String fname;
+      String outfile = state.outfile;
+      String slash("/");
+      vector<String> dirs;
+      String last_component;
+      ostream *oo;
+      DynamicBuffer value(0);
+      String value_str;
+      String display_fname;
+      String escaped_double_quote("\\\"");
+      String unescaped_double_quote(1, '"');
+      String escaped_single_quote("\\\'");
+      String unescaped_single_quote("'");
+      String escaped_newline("\\n\n");
+      String unescaped_newline(1,'\n');
+
+      String lock_attr("lock.generation");
+      String generation_attr("generation");
+
+      dirs.push_back(state.dir_name);
+      if (!outfile.empty()) {
+        FileUtils::expand_tilde(state.outfile);
+        oo = new ofstream(state.outfile.c_str(), ios_base::out);
+      }
+      else
+        oo = &cout;
+
+      while (!dirs.empty()) {
+        Util::normalize_pathname(dirs.back(), fname);
+        if (fname.size()==0)
+          display_fname = "/";
+        else
+          display_fname = fname;
+        dirs.pop_back();
+        vector<struct DirEntry> listing;
+        vector<String> attrs;
+        vector<String> tmp_dirs;
+        HandleCallbackPtr null_callback;
+        bool has_newline=false;
+
+        handle = m_session->open(fname, OPEN_FLAG_READ, null_callback);
+
+        if (state.as_commands) {
+          *oo << "MKDIRS " << display_fname << ";" << endl;
+          *oo << "OPEN " << display_fname << " FLAGS=READ|WRITE|CREATE ;" << endl;
+        }
+        else
+          *oo << display_fname << "\t" << endl;
+        // read all attrs of this dir
+        attrs.clear();
+        m_session->attr_list(handle, attrs);
+
+        foreach(const String &attr, attrs) {
+          if (attr == lock_attr || attr == generation_attr)
+            continue;
+          value.clear();
+          m_session->attr_get(handle, attr, value);
+          value_str = String((const char *)value.base, value.fill());
+
+          boost::algorithm::replace_all(value_str, unescaped_double_quote, escaped_double_quote);
+          boost::algorithm::replace_all(value_str, unescaped_single_quote, escaped_single_quote);
+          has_newline = false;
+          if (value_str.find("\n") != String::npos)
+            has_newline = true;
+          //boost::algorithm::replace_all(value_str, unescaped_newline, escaped_newline);
+
+          if (state.as_commands) {
+            *oo << "ATTRSET " << display_fname << " " << attr << "=\"" << value_str << "\"";
+            if (has_newline)
+              *oo << "\n";
+            *oo << ";" << endl;
+          }
+          else
+            *oo << display_fname << ":" << attr << "\t" << value_str << endl;
+        }
+
+        // read all files and dirs under this path
+        m_session->readdir(handle, listing);
+        foreach(const struct DirEntry &entry, listing) {
+          // if dir save it
+          if(entry.is_dir)
+            tmp_dirs.push_back(fname + "/" + entry.name);
+          // if file get all get all info
+          else {
+            String file;
+            Util::normalize_pathname(fname + "/" + entry.name, file);
+
+            if (state.as_commands)
+              *oo << "OPEN " << file << " FLAGS=READ|WRITE|CREATE ;" << endl;
+            else
+              *oo << file << "\t" << endl;
+            handle = m_session->open(file, OPEN_FLAG_READ, null_callback);
+            attrs.clear();
+            m_session->attr_list(handle, attrs);
+
+            foreach(const String &attr, attrs) {
+              if (attr == lock_attr || attr == generation_attr)
+                continue;
+              value.clear();
+              m_session->attr_get(handle, attr, value);
+              value_str = String((const char *)value.base, value.fill());
+              boost::algorithm::replace_all(value_str, unescaped_double_quote, escaped_double_quote);
+              boost::algorithm::replace_all(value_str, unescaped_single_quote, escaped_single_quote);
+              has_newline = false;
+              if (value_str.find("\n") != String::npos)
+                has_newline = true;
+              //boost::algorithm::replace_all(value_str, unescaped_newline, escaped_newline);
+
+              if (state.as_commands) {
+                *oo << "ATTRSET " << file << " " << attr << "=\"" << value_str << "\"";
+                if (has_newline)
+                  *oo << "\n";
+                *oo << ";" << endl;
+              }
+              else
+                *oo << file << ":" << attr << "\t" << value_str << endl;
+            }
+          }
+        }
+
+        if (tmp_dirs.size())
+          for(int ii=tmp_dirs.size()-1; ii>=0; --ii)
+            dirs.push_back(tmp_dirs[ii]);
+      }
+    }
+
     else if (state.command == COMMAND_LOCK) {
       ::uint64_t handle;
       ::uint32_t mode = state.lock_mode;

@@ -1,0 +1,26 @@
+MKDIRS /;
+MKDIRS /dumptest/ ;
+MKDIRS /dumptest/dir0/;
+MKDIRS /dumptest/dir1/;
+OPEN /dumptest/dir0/foo FLAGS=READ|WRITE|CREATE ;
+ATTRSET /dumptest/dir0/foo schema="<Schema generation=\"002\">
+  <AccessGroup name=\"not default any more\">
+    <ColumnFamily id=\"1\">
+      <Generation>1</Generation>
+      <Name>NotLogDir</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+"
+;
+OPEN /dumptest/dir1/foo FLAGS=READ|WRITE|CREATE ;
+ATTRSET /dumptest/dir1/foo schema="<Schema generation=\"1\">
+  <AccessGroup name=\"default\">
+  </AccessGroup>
+</Schema>
+"
+;
+OPEN /dumptest/dir1/bar FLAGS=READ|WRITE|CREATE ;
+ATTRSET /dumptest/dir1/bar nid="2";

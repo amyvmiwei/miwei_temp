@@ -1,6 +1,7 @@
 # CMake file for integration tests
 
 #add_subdirectory(scanner-create-failure)
+add_subdirectory(hyperspace-dump)
 add_subdirectory(balance)
 add_subdirectory(load-balancer)
 add_subdirectory(scanner-abrupt-end)

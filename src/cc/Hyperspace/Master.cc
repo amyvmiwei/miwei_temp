@@ -514,12 +514,14 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
     HT_INFOF("mkdir(session_id=%llu, name=%s)", (Llu)session_id, name);
   }
 
-  if (!find_parent_node(name, parent_node, child_name)) {
+  if (!find_parent_node(name, parent_node, child_name) || strlen(name)==0) {
     cb->error(Error::HYPERSPACE_FILE_EXISTS, "directory '/' exists");
     return;
   }
 
-  HT_ASSERT(name[0] == '/' && name[strlen(name)-1] != '/');
+  if (name[0] != '/' || name[strlen(name)-1] == '/') {
+    cb->error(Error::HYPERSPACE_BAD_PATHNAME, (String)"directory '" + name + "' bad");
+  }
 
   HT_BDBTXN_BEGIN() {
     // make sure parent node data is setup
