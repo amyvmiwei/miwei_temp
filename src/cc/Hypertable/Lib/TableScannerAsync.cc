@@ -140,8 +140,13 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
 }
 
 TableScannerAsync::~TableScannerAsync() {
-  cancel();
-  wait_for_completion();
+  try {
+    cancel();
+    wait_for_completion();
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+  }
 }
 
 void TableScannerAsync::cancel() {

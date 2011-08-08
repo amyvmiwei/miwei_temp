@@ -55,13 +55,18 @@ namespace Hypertable {
      * till async scanner is done
      */
     ~TableScanner() {
-      m_scanner->cancel();
-      if (!m_scanner->is_complete()) {
-        ScanCellsPtr cells;
-        int error=Error::OK;
-        String error_msg;
-        while (!m_scanner->is_complete())
-          m_queue->next_result(cells, &error, error_msg);
+      try {
+        m_scanner->cancel();
+        if (!m_scanner->is_complete()) {
+          ScanCellsPtr cells;
+          int error=Error::OK;
+          String error_msg;
+          while (!m_scanner->is_complete())
+            m_queue->next_result(cells, &error, error_msg);
+        }
+      }
+      catch(Exception &e) {
+        HT_ERROR_OUT << e << HT_END;
       }
     }
 
