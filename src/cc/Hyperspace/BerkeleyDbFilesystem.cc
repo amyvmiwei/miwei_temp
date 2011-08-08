@@ -154,7 +154,11 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       m_env.rep_set_config(DB_REPMGR_CONF_2SITE_STRICT, 1);
       // all replicas must ack all txns
       m_env.repmgr_set_ack_policy(DB_REPMGR_ACKS_QUORUM);
+
+#if !(DB_VERSION_MAJOR > 5 || (DB_VERSION_MAJOR == 5 && DB_VERSION_MINOR >= 2))
       m_env.rep_set_nsites(m_replication_info.num_replicas);
+#endif
+
       // BDB times are in microseconds
       m_env.rep_set_timeout(DB_REP_HEARTBEAT_SEND, 30000000); //30s
       m_env.rep_set_timeout(DB_REP_HEARTBEAT_MONITOR, 60000000); //60s
@@ -181,21 +185,39 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
             replica_len = replica.length();
           replica = replica.substr(0, replica_len);
           e = InetAddr::parse_endpoint(replica, replication_port);
-          if (localhost == e.host)
+          if (boost::iequals(localhost, e.host))
             is_localhost = true;
         }
         if (is_localhost) {
           // make sure all replicas are electable and have same priority
           m_env.rep_set_priority(priority);
 
+#if DB_VERSION_MAJOR > 5 || (DB_VERSION_MAJOR == 5 && DB_VERSION_MINOR >= 2)
+          DbSite *dbsite;
+          m_env.repmgr_site(e.host.c_str(), e.port, &dbsite, 0);
+          dbsite->set_config(DB_LOCAL_SITE, 1);
+          dbsite->set_config(DB_LEGACY, 1);
+          dbsite->close();
+#else
           m_env.repmgr_set_local_site(e.host.c_str(), e.port, 0);
+#endif
           m_replication_info.localhost = e.host;
           HT_INFO_OUT << "Added local replication site " << e.host
               << " priority=" << priority << HT_END;
         }
         else {
           int eid;
+
+#if DB_VERSION_MAJOR > 5 || (DB_VERSION_MAJOR == 5 && DB_VERSION_MINOR >= 2)
+          DbSite *dbsite;
+          m_env.repmgr_site(e.host.c_str(), e.port, &dbsite, 0);
+          dbsite->set_config(DB_BOOTSTRAP_HELPER, 1);
+          dbsite->set_config(DB_LEGACY, 1);
+          dbsite->get_eid(&eid);
+          dbsite->close();
+#else
           m_env.repmgr_add_remote_site(e.host.c_str(), e.port, &eid, 0);
+#endif
           m_replication_info.replica_map[eid] = e.host;
           HT_INFO_OUT << "Added remote replication site " << e.host
               << " priority=" << priority << HT_END;
@@ -220,9 +242,28 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       Db *handle_namespace_db = new Db(&m_env, 0);
       Db *handle_state_db     = new Db(&m_env, 0);
 
-      handle_namespace_db->open(NULL, ms_name_namespace_db, NULL, DB_BTREE, m_db_flags, 0);
+      try {
+        handle_namespace_db->open(NULL, ms_name_namespace_db, NULL, DB_BTREE, m_db_flags, 0);
+      }
+      catch(DbException &e) {
+        // retry if locker killed to resolve a deadlock
+        if (e.get_errno() == DB_LOCK_DEADLOCK)
+          handle_namespace_db->open(NULL, ms_name_namespace_db, NULL, DB_BTREE, m_db_flags, 0);
+        else
+          throw;
+      }
+
       handle_state_db->set_flags(DB_DUP|DB_REVSPLITOFF);
-      handle_state_db->open(NULL, ms_name_state_db, NULL, DB_BTREE, m_db_flags, 0);
+      try {
+        handle_state_db->open(NULL, ms_name_state_db, NULL, DB_BTREE, m_db_flags, 0);
+      }
+      catch(DbException &e) {
+        // retry if locker killed to resolve a deadlock
+        if (e.get_errno() == DB_LOCK_DEADLOCK)
+          handle_state_db->open(NULL, ms_name_state_db, NULL, DB_BTREE, m_db_flags, 0);
+        else
+          throw;
+      }
 
       key.set_data((void *)"/");
       key.set_size(2);
@@ -358,7 +399,7 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
    }
    break;
   case DB_EVENT_REP_ELECTED:
-   HT_INFO_OUT << "Received DB_EVENT_REP_ELECTED event ignore and wait for DB_EVENT_REP_MASTER"               << HT_END;
+   HT_INFO_OUT << "Received DB_EVENT_REP_ELECTED event ignore and wait for DB_EVENT_REP_MASTER" << HT_END;
    break;
   case DB_EVENT_REP_NEWMASTER:
    HT_INFO_OUT << "Received DB_EVENT_REP_NEWMASTER event" << HT_END;
@@ -395,6 +436,43 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
   case DB_EVENT_WRITE_FAILED:
    HT_INFO_OUT << "Received DB_EVENT_WROTE_FAILED event" << HT_END;
    break;
+
+#if DB_VERSION_MAJOR > 5 || (DB_VERSION_MAJOR == 5 && DB_VERSION_MINOR >= 2)
+  case DB_EVENT_REP_CONNECT_BROKEN:
+   HT_INFO_OUT << "Received DB_EVENT_REP_CONNECT_BROKEN event" << HT_END;
+   break;
+  case DB_EVENT_REP_CONNECT_ESTD:
+   HT_INFO_OUT << "Received DB_EVENT_REP_CONNECT_ESTD event" << HT_END;
+   break;
+  case DB_EVENT_REP_CONNECT_TRY_FAILED:
+   HT_INFO_OUT << "Received DB_EVENT_REP_CONNECT_TRY_FAILED event" << HT_END;
+   break;
+  case DB_EVENT_REP_DUPMASTER:
+   HT_INFO_OUT << "Received DB_EVENT_REP_DUPMASTER event" << HT_END;
+   break;
+  case DB_EVENT_REP_ELECTION_FAILED:
+   HT_INFO_OUT << "Received DB_EVENT_REP_ELECTION_FAILED event" << HT_END;
+   break;
+  case DB_EVENT_REP_INIT_DONE:
+   HT_INFO_OUT << "Received DB_EVENT_REP_INIT_DONE event" << HT_END;
+   break;
+  case DB_EVENT_REP_JOIN_FAILURE:
+   HT_INFO_OUT << "Received DB_EVENT_REP_JOIN_FAILURE event" << HT_END;
+   break;
+  case DB_EVENT_REP_LOCAL_SITE_REMOVED:
+   HT_INFO_OUT << "Received DB_EVENT_REP_LOCAL_SITE_REMOVED event" << HT_END;
+   break;
+  case DB_EVENT_REP_MASTER_FAILURE:
+   HT_INFO_OUT << "Received DB_EVENT_REP_MASTER_FAILURE event" << HT_END;
+   break;
+  case DB_EVENT_REP_SITE_ADDED:
+   HT_INFO_OUT << "Received DB_EVENT_REP_SITE_ADDED event" << HT_END;
+   break;
+  case DB_EVENT_REP_SITE_REMOVED:
+   HT_INFO_OUT << "Received DB_EVENT_REP_SITE_REMOVED event" << HT_END;
+   break;
+#endif
+
   default:
    HT_INFO_OUT << "Received BerkeleyDB event " << which << HT_END;
   }
@@ -410,6 +488,27 @@ void BerkeleyDbFilesystem::init_db_handles(const vector<Thread::id> &thread_ids)
     m_thread_handle_map[thread_id] = db_handles;
     HT_INFO_OUT << "Created DB handles for thread: " << thread_id << HT_END;
   }
+
+}
+
+
+BDbHandlesPtr BerkeleyDbFilesystem::get_db_handles() {
+  ThreadHandleMap::iterator it = m_thread_handle_map.find(ThisThread::get_id());
+  if (it == m_thread_handle_map.end())
+    HT_FATAL_OUT << "No thread handle found for thread " << ThisThread::get_id() << HT_END;
+
+  // Open per thread handles if not already open
+  if (!it->second->m_open) {
+    it->second->m_handle_namespace_db = new Db(&m_env, 0);
+    it->second->m_handle_state_db = new Db(&m_env, 0);
+    it->second->m_handle_namespace_db->open(NULL, ms_name_namespace_db,
+                                            NULL, DB_BTREE, m_db_flags, 0);
+    it->second->m_handle_state_db->set_flags(DB_DUP|DB_REVSPLITOFF);
+    it->second->m_handle_state_db->open(NULL, ms_name_state_db, NULL,
+                                        DB_BTREE, m_db_flags, 0);
+    it->second->m_open=true;
+  }
+  return it->second;
 
 }
 
@@ -474,28 +573,14 @@ void BerkeleyDbFilesystem::start_transaction(BDbTxn &txn) {
 
   // begin transaction
   try {
-    ThreadHandleMap::iterator it = m_thread_handle_map.find(ThisThread::get_id());
-    if (it == m_thread_handle_map.end())
-      HT_FATAL_OUT << "No thread handle found for thread " << ThisThread::get_id() << HT_END;
-
-    // open db handles
     HT_ASSERT(txn.m_handle_namespace_db == 0 && txn.m_handle_state_db == 0);
 
-    // Open per thread handles if not already open
-    if (!it->second->m_open) {
-      it->second->m_handle_namespace_db = new Db(&m_env, 0);
-      it->second->m_handle_state_db = new Db(&m_env, 0);
-      it->second->m_handle_namespace_db->open(NULL, ms_name_namespace_db,
-                                              NULL, DB_BTREE, m_db_flags, 0);
-      it->second->m_handle_state_db->set_flags(DB_DUP|DB_REVSPLITOFF);
-      it->second->m_handle_state_db->open(NULL, ms_name_state_db, NULL,
-                                          DB_BTREE, m_db_flags, 0);
-      it->second->m_open=true;
-    }
+    // open db handles
+    BDbHandlesPtr db_handles = get_db_handles();
 
     // Use handles for this thread
-    txn.m_handle_namespace_db = it->second->m_handle_namespace_db;
-    txn.m_handle_state_db = it->second->m_handle_state_db;
+    txn.m_handle_namespace_db = db_handles->m_handle_namespace_db;
+    txn.m_handle_state_db = db_handles->m_handle_state_db;
 
     // open txn
     m_env.txn_begin(NULL, &txn.m_db_txn, 0);

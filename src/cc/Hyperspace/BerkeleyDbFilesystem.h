@@ -706,7 +706,7 @@ namespace Hyperspace {
      * Initialize per worker thread DB handles
      */
     void init_db_handles(const vector<Thread::id> &thread_ids);
-
+    BDbHandlesPtr get_db_handles();
     void build_attr_key(BDbTxn &, String &keystr,
                         const String &aname, Dbt &key);
     static void db_event_callback(DbEnv *dbenv, uint32_t which, void *info);
