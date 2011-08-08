@@ -198,34 +198,38 @@ TableMutatorAsync::to_full_key(const void *row, const char *column_family,
 
   unknown_cf = false;
 
-  if (!column_family)
-    HT_THROW(Error::BAD_KEY, "Column family not specified");
+  if (flag > FLAG_DELETE_ROW) {
+    if (!column_family)
+      HT_THROW(Error::BAD_KEY, "Column family not specified");
 
-  Schema::ColumnFamily *cf = m_schema->get_column_family(column_family);
+    Schema::ColumnFamily *cf = m_schema->get_column_family(column_family);
 
-  if (!cf) {
-    if (m_table->auto_refresh()) {
-      m_table->refresh(m_table_identifier, m_schema);
-      m_current_buffer->refresh_schema(m_table_identifier, m_schema);
-      cf = m_schema->get_column_family(column_family);
-      if (!cf) {
+    if (!cf) {
+      if (m_table->auto_refresh()) {
+        m_table->refresh(m_table_identifier, m_schema);
+        m_current_buffer->refresh_schema(m_table_identifier, m_schema);
+        cf = m_schema->get_column_family(column_family);
+        if (!cf) {
+          unknown_cf = true;
+          if (ignore_unknown_cfs)
+            return;
+          HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
+        }
+      }
+      else {
         unknown_cf = true;
         if (ignore_unknown_cfs)
           return;
         HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
       }
     }
-    else {
-      unknown_cf = true;
-      if (ignore_unknown_cfs)
-        return;
-      HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
-    }
+    full_key.column_family_code = (uint8_t)cf->id;
   }
+  else
+    full_key.column_family_code = 0;
 
   full_key.row = (const char *)row;
   full_key.column_qualifier = (const char *)column_qualifier;
-  full_key.column_family_code = (uint8_t)cf->id;
   full_key.timestamp = timestamp;
   full_key.revision = revision;
   full_key.flag = flag;
