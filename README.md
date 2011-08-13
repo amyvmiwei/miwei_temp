@@ -65,6 +65,11 @@ HOW TO BUILD FROM SOURCE
 
         cmake -DCMAKE_BUILD_TYPE=Release -DVERSION_ADD_COMMIT_SUFFIX=1 ~/src/hypertable
 
+    If you would like to build OS specific packages in a directory that contains
+    the specific OS and version (e.g. hypertable-0.9.5.0-suse_11.4-i386), you can configure as follows:
+
+        cmake -DCMAKE_BUILD_TYPE=Release -DPACKAGE_OS_SPECIFIC=1 ~/src/hypertable
+
     Note, you can also use:
 
         ccmake ~/src/hypertable

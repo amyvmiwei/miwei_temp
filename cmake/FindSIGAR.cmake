@@ -33,7 +33,32 @@ find_library(SIGAR_LIBRARY
 
 if (SIGAR_INCLUDE_DIR AND SIGAR_LIBRARY)
   set(SIGAR_FOUND TRUE)
+  string(STRIP "${SIGAR_LIBRARY}" SIGAR_LIBRARY)
   set(SIGAR_LIBRARIES ${SIGAR_LIBRARY} ${CMAKE_DL_LIBS})
+  if (CMAKE_MAJOR_VERSION LESS 1 OR CMAKE_MINOR_VERSION LESS 8)
+    set(SYSTEM_VERSION_LINK_LIBS ${CMAKE_DL_LIBS}\ ${SIGAR_LIBRARY})
+  else ()
+    set(SYSTEM_VERSION_LINK_LIBS ${SIGAR_LIBRARY})
+  endif ()
+  try_compile(SYSTEMVERSION_CHECK_BUILD
+              ${HYPERTABLE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
+              ${HYPERTABLE_SOURCE_DIR}/cmake/SystemVersion.cc
+              COPY_FILE ./system_version
+              OUTPUT_VARIABLE FOO
+              CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${SIGAR_INCLUDE_DIR}
+                          -DLINK_LIBRARIES=${SYSTEM_VERSION_LINK_LIBS})
+  #message(STATUS "cb=${SYSTEMVERSION_CHECK_BUILD} c=${SYSTEMVERSION_CHECK} val=${SYSTEMVERSION_TRY_OUT} foo=${FOO}")
+  if (NOT SYSTEMVERSION_CHECK_BUILD)
+    message(FATAL_ERROR "Unable to determine OS vendor/version")
+  endif ()
+  execute_process(COMMAND env DYLD_LIBRARY_PATH=/opt/local/lib LD_LIBRARY_PATH=/opt/local/lib ./system_version
+                  RESULT_VARIABLE RUN_RESULT
+                  OUTPUT_VARIABLE RUN_OUTPUT)
+  if (RUN_RESULT STREQUAL "0")
+    string(STRIP "${RUN_OUTPUT}" OS_VERSION)
+  else ()
+    message(FATAL_ERROR "Unable to determine OS vendor/version")
+  endif ()
 else ()
   set(SIGAR_FOUND FALSE)
   set(SIGAR_LIBRARIES)
@@ -41,6 +66,7 @@ endif ()
 
 if (SIGAR_FOUND)
   message(STATUS "Found SIGAR: ${SIGAR_LIBRARIES}")
+  message(STATUS "Operating System: ${OS_VERSION}")
 else ()
   message(STATUS "Not Found SIGAR: ${SIGAR_LIBRARY}")
   if (SIGAR_FIND_REQUIRED)
@@ -52,4 +78,5 @@ endif ()
 mark_as_advanced(
   SIGAR_LIBRARY
   SIGAR_INCLUDE_DIR
+  OS_VERSION
 )
