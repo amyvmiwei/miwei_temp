@@ -38,7 +38,7 @@ if (Tcmalloc_FOUND)
           ${HYPERTABLE_SOURCE_DIR}/cmake/CheckTcmalloc.cc
           CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${Tcmalloc_INCLUDE_DIR}
                       -DLINK_LIBRARIES=${Tcmalloc_LIBRARIES}
-          OUTPUT_VARIABLE TC_TRY_OUT)
+          RUN_OUTPUT_VARIABLE TC_TRY_OUT)
   #message("tc_check build: ${TC_CHECK_BUILD}")
   #message("tc_check: ${TC_CHECK}")
   #message("tc_version: ${TC_TRY_OUT}")
@@ -52,7 +52,7 @@ if (Tcmalloc_FOUND)
   if (NOT TC_VERSION MATCHES "^[0-9]+.*")
     set(TC_VERSION "unknown -- make sure it's 1.1+")
   endif ()
-  message(STATUS "       version: ${TC_VERSION}")
+  message("       version: ${TC_VERSION}")
 else ()
   message(STATUS "Not Found Tcmalloc: ${Tcmalloc_LIBRARY}")
   if (Tcmalloc_FIND_REQUIRED)
