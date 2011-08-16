@@ -66,7 +66,11 @@ void CellCache::add(const Key &key, const ByteString value) {
 
   value.write(ptr);
 
-  if (! m_cell_map.insert(CellMap::value_type(new_key, key.length)).second) {
+  CellMap::value_type v(new_key, key.length);
+  std::pair<CellMap::iterator, bool> r = m_cell_map.insert(v);
+  if (!r.second) {
+    m_cell_map.erase(r.first);
+    m_cell_map.insert(v);
     m_collisions++;
     HT_WARNF("Collision detected key insert (row = %s)", new_key.row());
   }

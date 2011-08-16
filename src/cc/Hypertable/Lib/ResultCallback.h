@@ -130,18 +130,13 @@ namespace Hypertable {
      *
      */
     void decrement_outstanding() {
-      bool is_complete = false;
-      {
-        ScopedRecLock lock(m_outstanding_mutex);
-        HT_ASSERT(m_outstanding);
-        --m_outstanding;
-        if (m_outstanding == 0)  {
-          m_outstanding_cond.notify_one();
-          is_complete = true;
-        }
-      }
-      if (is_complete)
+      ScopedRecLock lock(m_outstanding_mutex);
+      HT_ASSERT(m_outstanding);
+      --m_outstanding;
+      if (m_outstanding == 0) {
         completed();
+        m_outstanding_cond.notify_one();
+      }
     }
 
     /**
