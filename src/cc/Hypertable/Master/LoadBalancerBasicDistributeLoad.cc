@@ -108,6 +108,7 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
         // recompute loadavgs
         heaviest_server.loadavg -=
             heaviest_server.loadavg_per_loadestimate * ranges_desc_load_it->loadestimate;
+        heaviest_server.loadavg = (heaviest_server.loadavg < 0) ? 0 : heaviest_server.loadavg;
         lightest_server.loadavg +=
           lightest_server.loadavg_per_loadestimate * ranges_desc_load_it->loadestimate;
 
@@ -194,7 +195,6 @@ bool LoadBalancerBasicDistributeLoad::check_move(const ServerMetricSummary &sour
 
     delta_source = source.loadavg_per_loadestimate * range_loadestimate;
     delta_destination = destination.loadavg_per_loadestimate * range_loadestimate;
-    HT_ASSERT(delta_source <= source.loadavg);
     loadavg_destination += delta_destination;
     return (loadavg_destination < m_loadavg_deviation_threshold + mean_loadavg);
 }
