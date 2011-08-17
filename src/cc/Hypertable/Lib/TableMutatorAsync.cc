@@ -387,7 +387,8 @@ void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
       retry = true;
     }
     else {
-      HT_ASSERT(!retry);
+      if (retry)
+        buffer->set_retries_to_fail(error);
       // send error to callback
       buffer->get_failed_mutations(m_failed_mutations);
       if (m_cb != 0)

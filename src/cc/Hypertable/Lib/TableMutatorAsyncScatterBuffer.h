@@ -90,9 +90,9 @@ namespace Hypertable {
     size_t memory_used() const { return m_memory_used; }
     void set_memory_used(size_t mem) { m_memory_used = mem; }
     void finish();
+    void set_retries_to_fail(int error);
 
   private:
-    void set_retries_to_fail(int error);
     int set_failed_mutations();
     typedef CommAddressMap<TableMutatorAsyncSendBufferPtr> TableMutatorAsyncSendBufferMap;
 
