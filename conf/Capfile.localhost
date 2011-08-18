@@ -14,6 +14,7 @@ role :spare
 role :localhost, "localhost"
 
 ######################### END OF USER CONFIGURATION ############################
+set :noprompt, 0
 
 def supported_pkgs
   {"rpm"=>1, "deb"=>1}
@@ -222,7 +223,6 @@ task :start_monitoring, :roles => :master do
   #{install_dir}/current/bin/start-monitoring.sh
 end
 
-
 desc "Starts ThriftBroker on master."
 task :start_master_thriftbroker, :roles => :master do
   run <<-CMD
@@ -262,8 +262,15 @@ task :start_dfsbrokers, :roles => [:master, :slave] do
       #{config_option}"
 end
 
-desc "Stops all servers."
+desc "Stops all servers. If you are CERTAIN you know what you're doing and want to avoid the prompt run 'cap stop -s noprompt=1'"
 task :stop do
+   
+  if (noprompt != 1)
+    puts "This will STOP ALL SERVERS in the Hypertable instance with MASTER='#{roles[:master].first}'. ARE YOU SURE you want to proceed? ('Yes' to proceed)"
+    value = STDIN.gets.chomp rescue nil
+    exit unless value == "Yes"
+  end
+ 
   transaction do
     stop_master
     stop_slaves
@@ -313,8 +320,23 @@ task :stop_thriftbrokers, :roles => :thriftbroker do
   CMD
 end
 
-desc "Cleans hyperspace & rangeservers, removing all tables."
+desc "Cleans hyperspace & rangeservers, removing all tables. If you are CERTAIN you know what you're doing and want to avoid the prompt run 'cap cleandb -s noprompt=1'"
 task :cleandb do
+  
+  if noprompt != 1
+    puts "This will DELETE ALL DATA stored in the Hypertable instance with MASTER='#{roles[:master].first}'. ARE YOU SURE you want to proceed? ('Yes' to proceed)"
+    value = STDIN.gets.chomp rescue nil
+    exit unless value == "Yes"
+    time = 30
+    interval = 5
+    while (time>0)
+      puts "Clean database with MASTER='#{roles[:master].first}' IN #{time}s! Ctrl-C to abort"
+      sleep interval 
+      time -= interval
+    end
+    puts "Clean database NOW!"
+  end
+
   transaction do
     clean_master
     clean_hyperspace
@@ -327,7 +349,8 @@ task :clean_master, :roles => :master do
   run <<-CMD
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} && \
-   #{install_dir}/current/bin/clean-database.sh #{config_option} ;
+   #{install_dir}/current/bin/clean-database.sh #{config_option} && \ 
+   #{install_dir}/current/bin/stop-monitoring.sh ;
   CMD
 end
 
