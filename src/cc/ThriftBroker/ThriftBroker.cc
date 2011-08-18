@@ -22,6 +22,9 @@
 #include "Common/Mutex.h"
 #include "Common/Random.h"
 
+#include <iostream>
+#include <iomanip>
+
 #include <boost/shared_ptr.hpp>
 
 #include <concurrency/ThreadManager.h>
@@ -70,7 +73,7 @@
 #define LOG_API_FINISH(_expr_) \
   if (m_log_api) { \
     boost::xtime_get(&end_time, TIME_UTC); \
-    std::cout << start_time.sec <<'.'<< setw(9) << setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< _expr_ << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< _expr_ << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
   }
 
 #define LOG_API(_expr_) do { \
