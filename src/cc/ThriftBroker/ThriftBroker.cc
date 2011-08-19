@@ -1192,7 +1192,7 @@ public:
       }
       TableMutatorAsyncPtr mutator_ptr = get_mutator_async(mutator);
 	    mutator_ptr->set_cells(cb.get());
-      if (flush || reader.flush())
+      if (flush || reader.flush() || mutator_ptr->needs_flush())
         mutator_ptr->flush();
       LOG_API_FINISH("mutator="<< mutator <<" cell.size="<< cells.size());
     } RETHROW()
@@ -1598,7 +1598,11 @@ public:
   void _set_cells_async(const MutatorAsync mutator, const vector<CellT> &cells) {
     Hypertable::Cells hcells;
     convert_cells(cells, hcells);
-    get_mutator_async(mutator)->set_cells(hcells);
+    TableMutatorAsyncPtr mutator_ptr = get_mutator_async(mutator);
+
+    mutator_ptr->set_cells(hcells);
+    if (mutator_ptr->needs_flush())
+      mutator_ptr->flush();
   }
 
   template <class CellT>
@@ -1607,7 +1611,11 @@ public:
     Hypertable::Cell hcell;
     convert_cell(cell, hcell);
     cb.add(hcell, false);
-    get_mutator_async(mutator)->set_cells(cb.get());
+    TableMutatorAsyncPtr mutator_ptr = get_mutator_async(mutator);
+
+    mutator_ptr->set_cells(cb.get());
+    if (mutator_ptr->needs_flush())
+      mutator_ptr->flush();
   }
 
   FuturePtr get_future(::int64_t id) {
