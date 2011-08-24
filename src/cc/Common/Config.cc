@@ -296,6 +296,8 @@ void DefaultPolicy::init_options() {
         "Garbage collection interval in milliseconds by Master")
     ("Hypertable.Master.Locations.IncludeMasterHash", boo()->default_value(false),
         "Includes master hash (host:port) in RangeServer location id")
+    ("Hypertable.Master.Split.SoftLimitEnabled", boo()->default_value(true),
+        "Enable aggressive splitting of tables with little data to spread out ranges")
     ("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage",
      i32()->default_value(20), "Perform major compaction when garbage accounts "
      "for this percentage of the data")
