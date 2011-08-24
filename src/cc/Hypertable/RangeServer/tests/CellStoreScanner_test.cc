@@ -581,6 +581,7 @@ int main(int argc, char **argv) {
     char select_cf_row[256];
     String cf_foo = "foo";
     vector<String> replaced_files_write;
+    TableIdentifier table_id("0");
 
     // should coalesce and be in 1 block along with trailer
     replaced_files_write.push_back("/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0");
@@ -632,7 +633,7 @@ int main(int argc, char **argv) {
     }
 
     cs = new CellStoreV5(Global::dfs.get(), schema.get());
-    HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
+    HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
     cs->set_replaced_files(replaced_files_write);
 
     DynamicBuffer dbuf(64000);
@@ -735,7 +736,6 @@ int main(int argc, char **argv) {
       out << key << "\n";
     }
 
-    TableIdentifier table_id("0");
     cs->finalize(&table_id);
 
     RangeSpec range;
@@ -1425,7 +1425,7 @@ int main(int argc, char **argv) {
     cs_props->set("blocksize", (uint32_t)10000);
     cs_props->set("compressor", String("none"));
     cs = new CellStoreV5(Global::dfs.get(), schema.get());
-    HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
+    HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
     // should not coalesce and be in a separate block from trailer
     replaced_files_write.push_back("1/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0");
     replaced_files_write.push_back("2/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0");
@@ -1538,7 +1538,7 @@ int main(int argc, char **argv) {
     }
 
     cs = new CellStoreV5(Global::dfs.get(), schema.get());
-    HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props));
+    HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
     // should coalesce and be in 2 blocks, with the 2nd block also containing the trailer
     replaced_files_write.push_back("7/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0");
     replaced_files_write.push_back("8/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0");

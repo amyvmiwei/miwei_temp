@@ -105,7 +105,7 @@ CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scan_ctx) {
 
 void
 CellStoreV0::create(const char *fname, size_t max_entries,
-                    PropertiesPtr &props) {
+                    PropertiesPtr &props, const TableIdentifier *table_id) {
   uint32_t blocksize = props->get("blocksize", uint32_t(0));
   String compressor = props->get("compressor", String());
 

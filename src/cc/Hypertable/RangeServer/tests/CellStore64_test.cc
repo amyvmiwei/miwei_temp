@@ -111,6 +111,8 @@ int main(int argc, char **argv) {
 
     String testdir = "/test/CellStore";
     String csname = testdir + "/cs64";
+    TableIdentifier table_id;
+    memset(&table_id, 0, sizeof(table_id));
 
     client->mkdirs(testdir);
 
@@ -118,7 +120,7 @@ int main(int argc, char **argv) {
     Config::properties->set("Hypertable.RangeServer.CellStore.DefaultBlockSize", 4*1024*1024);
 
     cs = new CellStoreV5(Global::dfs.get());
-    HT_TRY("creating cellstore", cs->create(csname.c_str(), 4096, Config::properties));
+    HT_TRY("creating cellstore", cs->create(csname.c_str(), 4096, Config::properties, &table_id));
 
     // setup value
     value_data = new char [ (1024*1024)+1 ];
@@ -146,8 +148,6 @@ int main(int argc, char **argv) {
       key.length = key_buf.fill();
       cs->add(key, value_bs);
     }
-    TableIdentifier table_id;
-    memset(&table_id, 0, sizeof(table_id));
     cs->finalize(&table_id);
 
     //cs = CellStoreFactory::open(csname, "", Key::END_ROW_MARKER);

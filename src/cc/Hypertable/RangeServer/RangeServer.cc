@@ -109,7 +109,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::access_group_max_mem = cfg.get_i64("AccessGroup.MaxMemory");
   Global::enable_shadow_cache = cfg.get_bool("AccessGroup.ShadowCache");
   Global::cellstore_target_size_min = cfg.get_i64("CellStore.TargetSize.Minimum");
-  Global::cellstore_target_size_max = 
+  Global::cellstore_target_size_max =
     Global::cellstore_target_size_min + cfg.get_i64("CellStore.TargetSize.Window");
   m_scanner_buffer_size = cfg.get_i64("Scanner.BufferSize");
   maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
@@ -727,7 +727,7 @@ void RangeServer::local_recover() {
 	  m_live_map->merge(m_replay_map);
 
         Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir
-            + "/user", m_props, user_log_reader.get());
+            + "/user", m_props, user_log_reader.get(), false);
         m_replay_finished = true;
         m_replay_finished_cond.notify_all();
       }
@@ -762,7 +762,7 @@ void RangeServer::local_recover() {
             + "/system", m_props, system_log_reader.get());
 
       Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir
-          + "/user", m_props, user_log_reader.get());
+          + "/user", m_props, user_log_reader.get(), false);
 
       Global::rsml_writer = new MetaLog::Writer(Global::log_dfs, rsml_definition,
                                                 Global::log_dir + "/" + rsml_definition->name(),
@@ -980,7 +980,7 @@ namespace {
         mutator->set(key, Global::location_initializer->get());
       }
     }
-    
+
   }
 
 }
@@ -1006,7 +1006,7 @@ RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id, uint32_t 
   if (*table_id)
     HT_INFO_OUT << "metadata sync table ID=" << table_id << " " << columns_str << HT_END;
   else
-    HT_INFO_OUT << "metadata sync ranges FLAGS=" << RangeServerProtocol::compact_flags_to_string(flags) 
+    HT_INFO_OUT << "metadata sync ranges FLAGS=" << RangeServerProtocol::compact_flags_to_string(flags)
                 << " " << columns_str << HT_END;
 
   if (!m_replay_finished) {
@@ -1049,7 +1049,7 @@ RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id, uint32_t 
 
       ranges.clear();
       table_info->get_range_vector(ranges);
-      
+
       do_metadata_sync(ranges, mutator, table_id, do_start_row, do_location);
       range_count = ranges.size();
 
@@ -3040,7 +3040,10 @@ void RangeServer::replay_begin(ResponseCallback *cb, uint16_t group) {
     return;
   }
 
-  m_replay_log = new CommitLog(Global::log_dfs, replay_log_dir, m_props);
+  /**
+   * Commented out for now, should be addressed during failover work
+   */
+  //m_replay_log = new CommitLog(Global::log_dfs, replay_log_dir, m_props);
 
   cb->response_ok();
 }

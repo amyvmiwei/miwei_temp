@@ -328,8 +328,8 @@ void DefaultPolicy::init_options() {
         "Trigger a merge if an adjacent run of merge candidate CellStores exceeds this length")
     ("Hypertable.RangeServer.CellStore.DefaultBlockSize",
         i32()->default_value(64*KiB), "Default block size for cell stores")
-    ("Hypertable.RangeServer.CellStore.DefaultReplication",
-        i32(), "Default replication for cell stores")
+    ("Hypertable.RangeServer.Data.DefaultReplication",
+        i32()->default_value(-1), "Default replication for data")
     ("Hypertable.RangeServer.CellStore.DefaultCompressor",
         str()->default_value("lzo"), "Default compressor for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultBloomFilter",
@@ -370,7 +370,7 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.CommitLog.Compressor",
         str()->default_value("quicklz"),
         "Commit log compressor to use (zlib, lzo, quicklz, bmz, none)")
-    ("Hypertable.CommitLog.Replication", i32(),
+    ("Hypertable.Metadata.Replication", i32()->default_value(-1),
         "Replication factor for commit log files")
     ("Hypertable.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
