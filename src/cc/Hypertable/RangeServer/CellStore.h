@@ -75,9 +75,10 @@ namespace Hypertable {
      * @param max_entries maximum number of entries the cell store is
      *        expected to have
      * @param props cellstore specific properties
+     * @param table_identifier table identifier
      */
     virtual void create(const char *fname, size_t max_entries,
-                        PropertiesPtr &props) = 0;
+                        PropertiesPtr &props, const TableIdentifier *table_id=0) = 0;
 
     /**
      * Finalizes the creation of a cell store, by writing block index and
@@ -281,6 +282,7 @@ namespace Hypertable {
     uint64_t m_bytes_read;
     IndexMemoryStats m_index_stats;
     std::vector <String> m_replaced_files;
+    TableIdentifierManaged m_table_identifier;
   };
 
   typedef intrusive_ptr<CellStore> CellStorePtr;

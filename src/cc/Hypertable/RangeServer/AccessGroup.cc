@@ -659,7 +659,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         scanner = m_immutable_cache->create_scanner(scan_context);
     }
 
-    cellstore->create(cs_file.c_str(), max_num_entries, m_cellstore_props);
+    cellstore->create(cs_file.c_str(), max_num_entries, m_cellstore_props, &m_identifier);
 
     while (scanner->get(key, value)) {
       cellstore->add(key, value);

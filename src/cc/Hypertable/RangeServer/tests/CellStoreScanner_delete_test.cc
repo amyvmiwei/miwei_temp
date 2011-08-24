@@ -501,6 +501,7 @@ int main(int argc, char **argv) {
     String insert = "insert";
     String delete_cell = "delete_cell";
     String delete_cell_version = "delete_cell_version";
+    TableIdentifier table_id("0");
 
     Config::init(argc, argv);
 
@@ -541,7 +542,7 @@ int main(int argc, char **argv) {
     // make sure blocks are small so only one key value pair fits in a block
     cs_props->set("blocksize", uint32_t(32));
     cs = new CellStoreV5(Global::dfs.get(), schema.get());
-    HT_TRY("creating cellstore", cs->create(csname.c_str(), 24000, cs_props));
+    HT_TRY("creating cellstore", cs->create(csname.c_str(), 24000, cs_props, &table_id));
 
     DynamicBuffer dbuf(512000);
     String row;
@@ -749,7 +750,6 @@ int main(int argc, char **argv) {
       keyv.push_back(key);
     }
 
-    TableIdentifier table_id("0");
     cs->finalize(&table_id);
 
     RangeSpec range;

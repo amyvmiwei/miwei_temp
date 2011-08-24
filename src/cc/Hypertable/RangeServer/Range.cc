@@ -601,7 +601,8 @@ void Range::relinquish_install_log() {
   {
     Barrier::ScopedActivator block_updates(m_update_barrier);
     ScopedLock lock(m_mutex);
-    m_transfer_log = new CommitLog(Global::dfs, m_metalog_entity->state.transfer_log);
+    m_transfer_log = new CommitLog(Global::dfs, m_metalog_entity->state.transfer_log,
+                                   !m_metalog_entity->table.is_user());
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->stage_compaction();
   }
@@ -873,7 +874,8 @@ void Range::split_install_log() {
     ScopedLock lock(m_mutex);
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->stage_compaction();
-    m_transfer_log = new CommitLog(Global::dfs, m_metalog_entity->state.transfer_log);
+    m_transfer_log = new CommitLog(Global::dfs, m_metalog_entity->state.transfer_log,
+                                   !m_metalog_entity->table.is_user() );
   }
 
   HT_MAYBE_FAIL("split-1");
@@ -1259,7 +1261,8 @@ void Range::recovery_finalize() {
 
     commit_log_reader = 0;
 
-    m_transfer_log = new CommitLog(Global::dfs, m_metalog_entity->state.transfer_log);
+    m_transfer_log = new CommitLog(Global::dfs, m_metalog_entity->state.transfer_log,
+                                   !m_metalog_entity->table.is_user());
 
     // re-initiate compaction
     for (size_t i=0; i<m_access_group_vector.size(); i++)

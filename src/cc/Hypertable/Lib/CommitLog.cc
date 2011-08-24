@@ -57,9 +57,9 @@ namespace {
 }
 
 
-CommitLog::CommitLog(FilesystemPtr &fs, const String &log_dir)
+CommitLog::CommitLog(FilesystemPtr &fs, const String &log_dir, bool is_meta)
   : CommitLogBase(log_dir), m_fs(fs) {
-  initialize(log_dir, Config::properties, 0);
+  initialize(log_dir, Config::properties, 0, is_meta);
 }
 
 CommitLog::~CommitLog() {
@@ -68,22 +68,26 @@ CommitLog::~CommitLog() {
 }
 
 void
-CommitLog::initialize(const String &log_dir,
-                      PropertiesPtr &props, CommitLogBase *init_log) {
+CommitLog::initialize(const String &log_dir, PropertiesPtr &props,
+                      CommitLogBase *init_log, bool is_meta) {
   String compressor;
 
   m_log_dir = log_dir;
   m_cur_fragment_length = 0;
   m_cur_fragment_num = 0;
   m_needs_roll = false;
+  m_replication = -1;
+
+  if (is_meta)
+    m_replication = props->get_i32("Hypertable.Metadata.Replication");
+  else
+    m_replication = props->get_i32("Hypertable.RangeServer.Data.DefaultReplication");
 
   SubProperties cfg(props, "Hypertable.CommitLog.");
 
   HT_TRY("getting commit log properites",
     m_max_fragment_size = cfg.get_i64("RollLimit");
     compressor = cfg.get_str("Compressor"));
-
-  m_replication = cfg.get_i32("Replication", (int32_t)-1);
 
   m_compressor = CompressorFactory::create_block_codec(compressor);
 

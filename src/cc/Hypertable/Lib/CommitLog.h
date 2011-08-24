@@ -77,11 +77,13 @@ namespace Hypertable {
      * @param log_dir directory of the commit log
      * @param props reference to properties map
      * @param init_log base log to pull fragments from
+     * @param is_meta true for root, system and metadata logs
      */
     CommitLog(FilesystemPtr &fs, const String &log_dir,
-              PropertiesPtr &props, CommitLogBase *init_log = 0)
+              PropertiesPtr &props, CommitLogBase *init_log = 0,
+              bool is_meta=true)
       : CommitLogBase(log_dir), m_fs(fs) {
-      initialize(log_dir, props, init_log);
+      initialize(log_dir, props, init_log, is_meta);
     }
 
     /**
@@ -89,8 +91,9 @@ namespace Hypertable {
      *
      * @param fs filesystem to write log into
      * @param log_dir directory of the commit log
+     * @param is_meta true for root, system and metadata logs
      */
-    CommitLog(FilesystemPtr &fs, const String &log_dir);
+    CommitLog(FilesystemPtr &fs, const String &log_dir, bool is_meta=true);
 
     virtual ~CommitLog();
 
@@ -182,7 +185,7 @@ namespace Hypertable {
 
   private:
     void initialize(const String &log_dir,
-                    PropertiesPtr &, CommitLogBase *init_log);
+                    PropertiesPtr &, CommitLogBase *init_log, bool is_meta);
     int roll();
     int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header,
                            int64_t revision, bool sync);

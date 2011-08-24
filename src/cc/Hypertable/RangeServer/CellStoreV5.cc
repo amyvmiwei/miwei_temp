@@ -123,20 +123,32 @@ CellListScanner *CellStoreV5::create_scanner(ScanContextPtr &scan_ctx) {
   return new CellStoreScanner<CellStoreBlockIndexArray<uint32_t> >(this, scan_ctx, need_index ? &m_index_map32 : 0);
 }
 
+int get_replication(PropertiesPtr &props, const TableIdentifier *table_id) {
+
+  int32_t replication = props->get_i32("replication", int32_t(-1));
+
+  if (replication == -1 && table_id) {
+    if (table_id->is_user()) {
+      if (Config::has("Hypertable.RangeServer.Data.DefaultReplication"))
+        replication = Config::get_i32("Hypertable.RangeServer.Data.DefaultReplication");
+    }
+    else if (Config::has("Hypertable.Metadata.Replication"))
+      replication = Config::get_i32("Hypertable.Metadata.Replication");
+  }
+
+  return replication;
+}
 
 void
 CellStoreV5::create(const char *fname, size_t max_entries,
-                    PropertiesPtr &props) {
-  int32_t replication = props->get_i32("replication", int32_t(-1));
+                    PropertiesPtr &props, const TableIdentifier *table_id) {
   int64_t blocksize = props->get("blocksize", uint32_t(0));
   String compressor = props->get("compressor", String());
 
   m_key_compressor = new KeyCompressorPrefix();
 
   assert(Config::properties); // requires Config::init* first
-
-  if (replication == -1 && Config::has("Hypertable.RangeServer.CellStore.DefaultReplication"))
-    replication = Config::get_i32("Hypertable.RangeServer.CellStore.DefaultReplication");
+  int32_t replication = get_replication(props, table_id);
 
   if (blocksize == 0)
     blocksize = Config::get_i32("Hypertable.RangeServer.CellStore"
@@ -193,7 +205,7 @@ CellStoreV5::create(const char *fname, size_t max_entries,
       m_compressor_args);
 
   uint32_t oflags = Filesystem::OPEN_FLAG_DIRECTIO|Filesystem::OPEN_FLAG_OVERWRITE;
-  m_fd = m_filesys->create(m_filename, oflags, -1, -1, -1);
+  m_fd = m_filesys->create(m_filename, oflags, -1, replication, -1);
 
   m_bloom_filter_mode = props->get<BloomFilterMode>("bloom-filter-mode");
   m_max_approx_items = props->get_i32("max-approx-items");
