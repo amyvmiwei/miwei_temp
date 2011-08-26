@@ -241,7 +241,8 @@ int Comm::send_request(IOHandlerDataPtr &data_handler, uint32_t timeout_ms,
 		       CommBufPtr &cbuf, DispatchHandler *resp_handler) {
   int error;
 
-  HT_ASSERT(timeout_ms != 0);
+  if (timeout_ms == 0)
+    HT_THROW(Error::REQUEST_TIMEOUT, "Request with timeout of 0");
 
   cbuf->header.flags |= CommHeader::FLAGS_BIT_REQUEST;
   if (resp_handler == 0) {
