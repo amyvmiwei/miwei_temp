@@ -251,10 +251,11 @@ int main(int argc, char **argv) {
       }
     }
     cout << flush;
-
+    _exit(0);
   }
   catch (std::exception &e) {
     cerr << "Error - " << e.what() << endl;
     exit(1);
   }
+
 }
