@@ -178,6 +178,11 @@ namespace Hypertable {
       m_proxy = proxy;
     }
 
+    String get_proxy() {
+      ScopedLock lock(m_mutex);
+      return m_proxy;
+    }
+
     int get_sd() { return m_sd; }
 
     void get_reactor(ReactorPtr &reactor_ptr) { reactor_ptr = m_reactor_ptr; }
