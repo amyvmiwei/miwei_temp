@@ -34,7 +34,7 @@
 #include <time.h>
 
 #include "bmz-internal.h"
-#include "../lzo/minilzo.h"
+#include "ThirdParty/lzo/minilzo.h"
 
 /* Initial bases for computing Rabin Karp rolling hash */
 #define BM_B1 257

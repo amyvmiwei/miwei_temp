@@ -112,13 +112,11 @@ old/RangeServerMetaLogEntries.cc
 old/RangeServerMetaLogEntryFactory.cc
 old/RangeServerMetaLogReader.cc
 bmz/bmz.c
-lzo/minilzo.c
-quicklz/quicklz.cc
 )
 
 add_library(Hypertable ${Hypertable_SRCS})
 add_dependencies(Hypertable HyperComm Hyperspace HyperCommon)
-target_link_libraries(Hypertable ${EXPAT_LIBRARIES} ${RRD_LIBRARIES} Hyperspace HyperDfsBroker ${MALLOC_LIBRARY})
+target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperDfsBroker ${MALLOC_LIBRARY} HyperThirdParty)
 
 # generate_test_data
 add_executable(generate_test_data generate_test_data.cc)

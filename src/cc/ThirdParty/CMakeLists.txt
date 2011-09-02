@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2008 Doug Judd (Zvents, Inc.)
+# Copyright(C) 2011 Hypertable, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,11 +17,21 @@
 # 02110-1301, USA.
 #
 
-add_subdirectory(dfsclient)
-add_subdirectory(hyperspace)
-add_subdirectory(hypertable)
-add_subdirectory(dumplog)
-add_subdirectory(merge_diff)
-add_subdirectory(rsclient)
-add_subdirectory(rsdump)
-add_subdirectory(serverup)
+set(ThirdParty_SRCS
+lzo/minilzo.c
+quicklz/quicklz.cc
+)
+
+add_library(HyperThirdParty ${ThirdParty_SRCS})
+
+if (NOT HT_COMPONENT_INSTALL)
+  file(GLOB HEADERS *.h)
+
+  install(FILES ${HEADERS} ${VERSION_H} DESTINATION include/ThirdParty)
+
+  install(TARGETS HyperThirdParty
+          RUNTIME DESTINATION bin
+          LIBRARY DESTINATION lib
+          ARCHIVE DESTINATION lib)
+
+endif ()

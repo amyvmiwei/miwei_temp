@@ -23,7 +23,7 @@ CommandInterpreter.cc
 )
 
 add_library(HyperTools ${Hypertools_SRCS})
-target_link_libraries(HyperTools HyperComm)
+target_link_libraries(HyperTools HyperComm ${READLINE_LIBRARIES})
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)

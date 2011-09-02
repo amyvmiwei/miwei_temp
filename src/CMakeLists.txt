@@ -1,6 +1,7 @@
 # CMake file for hypertable source
 
 add_subdirectory(cc/Common)
+add_subdirectory(cc/ThirdParty)
 add_subdirectory(cc/AsyncComm)
 add_subdirectory(cc/Hyperspace)
 add_subdirectory(cc/Hypertable/Master)
