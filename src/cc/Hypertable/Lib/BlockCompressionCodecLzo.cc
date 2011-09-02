@@ -26,7 +26,7 @@
 #include "Common/Logger.h"
 #include "Common/Checksum.h"
 
-#include "lzo/minilzo.h"
+#include "ThirdParty/lzo/minilzo.h"
 #include "BlockCompressionCodecLzo.h"
 
 using namespace Hypertable;

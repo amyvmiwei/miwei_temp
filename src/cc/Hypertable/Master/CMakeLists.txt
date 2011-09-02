@@ -59,11 +59,11 @@ RSMetrics.cc
 
 # HyperMaster Lib
 add_library(HyperMaster ${Master_SRCS})
-target_link_libraries(HyperMaster m Hyperspace HyperDfsBroker Hypertable)
+target_link_libraries(HyperMaster m Hyperspace HyperDfsBroker Hypertable ${RRD_LIBRARIES})
 
 # Hypertable.Master
 add_executable(Hypertable.Master main.cc)
-target_link_libraries(Hypertable.Master HyperMaster Hyperspace Hypertable HyperDfsBroker ${RRD_LIBRARIES} ${MALLOC_LIBRARY})
+target_link_libraries(Hypertable.Master HyperMaster Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
 
 # op_test_driver
 add_executable(op_test_driver tests/op_test_driver.cc)

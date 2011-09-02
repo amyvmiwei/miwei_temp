@@ -57,7 +57,7 @@ endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 
 add_library(HyperCommon ${Common_SRCS})
 target_link_libraries(HyperCommon ${BOOST_LIBS} ${Log4cpp_LIBRARIES}
-    ${READLINE_LIBRARIES} ${ZLIB_LIBRARIES} ${SIGAR_LIBRARIES}
+    ${ZLIB_LIBRARIES} ${SIGAR_LIBRARIES}
     ${NCURSES_LIBRARY} ${CMAKE_THREAD_LIBS_INIT} ${MALLOC_LIBRARY})
 
 add_executable(system_info system_info.cc)

@@ -24,7 +24,7 @@
 
 #include "Common/Compat.h"
 #include "BlockCompressionCodec.h"
-#include "quicklz/quicklz.h"
+#include "ThirdParty/quicklz/quicklz.h"
 
 namespace Hypertable {
 
