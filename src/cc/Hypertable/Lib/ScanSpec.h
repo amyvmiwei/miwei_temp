@@ -103,12 +103,12 @@ typedef std::vector<const char *, CstrAlloc> CstrColumns;
 class ScanSpec {
 public:
   ScanSpec()
-    : row_limit(0), cell_limit(0), max_versions(0),
+    : row_limit(0), cell_limit(0), cell_limit_per_family(0), max_versions(0),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
       return_deletes(false), keys_only(false),
       row_regexp(0), value_regexp(0),scan_and_filter_rows(false) { }
   ScanSpec(CharArena &arena)
-    : row_limit(0), cell_limit(0), max_versions(0), columns(CstrAlloc(arena)),
+    : row_limit(0), cell_limit(0), cell_limit_per_family(0), max_versions(0), columns(CstrAlloc(arena)),
       row_intervals(RowIntervalAlloc(arena)),
       cell_intervals(CellIntervalAlloc(arena)),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
@@ -124,6 +124,7 @@ public:
   void clear() {
     row_limit = 0;
     cell_limit = 0;
+    cell_limit_per_family = 0;
     max_versions = 0;
     columns.clear();
     row_intervals.clear();
@@ -141,6 +142,7 @@ public:
   void base_copy(ScanSpec &other) const {
     other.row_limit = row_limit;
     other.cell_limit = cell_limit;
+    other.cell_limit_per_family = cell_limit_per_family;
     other.max_versions = max_versions;
     other.columns = columns;
     other.time_interval = time_interval;
@@ -271,6 +273,7 @@ public:
 
   int32_t row_limit;
   int32_t cell_limit;
+  int32_t cell_limit_per_family;
   uint32_t max_versions;
   CstrColumns columns;
   RowIntervals row_intervals;
@@ -306,11 +309,18 @@ public:
   void set_row_limit(int32_t n) { m_scan_spec.row_limit = n; }
 
   /**
-   * Sets the maximum number of cells to return per column family, per row
+   * Sets the maximum number of cells to return
    *
    * @param n cell limit
    */
   void set_cell_limit(int32_t n) { m_scan_spec.cell_limit = n; }
+
+  /**
+   * Sets the maximum number of cells to return per column family
+   *
+   * @param n cell limit per column family
+   */
+  void set_cell_limit_per_family(int32_t n) { m_scan_spec.cell_limit_per_family = n; }
 
   /**
    * Sets the maximum number of revisions of each cell to return in the scan.

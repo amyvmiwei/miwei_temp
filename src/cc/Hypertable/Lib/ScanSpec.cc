@@ -83,6 +83,7 @@ void CellInterval::decode(const uint8_t **bufp, size_t *remainp) {
 size_t ScanSpec::encoded_length() const {
   size_t len = encoded_length_vi32(row_limit) +
                encoded_length_vi32(cell_limit) +
+               encoded_length_vi32(cell_limit_per_family) +
                encoded_length_vi32(max_versions) +
                encoded_length_vi32(columns.size()) +
                encoded_length_vi32(row_intervals.size()) +
@@ -100,6 +101,7 @@ size_t ScanSpec::encoded_length() const {
 void ScanSpec::encode(uint8_t **bufp) const {
   encode_vi32(bufp, row_limit);
   encode_vi32(bufp, cell_limit);
+  encode_vi32(bufp, cell_limit_per_family);
   encode_vi32(bufp, max_versions);
   encode_vi32(bufp, columns.size());
   foreach(const char *c, columns) encode_vstr(bufp, c);
@@ -122,6 +124,7 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
   HT_TRY("decoding scan spec",
     row_limit = decode_vi32(bufp, remainp);
     cell_limit = decode_vi32(bufp, remainp);
+    cell_limit_per_family = decode_vi32(bufp, remainp);
     max_versions = decode_vi32(bufp, remainp);
     for (size_t nc = decode_vi32(bufp, remainp); nc--;)
       columns.push_back(decode_vstr(bufp, remainp));
@@ -191,6 +194,7 @@ ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
      <<" cell_limit="<< scan_spec.cell_limit
+     <<" cell_limit_per_family="<< scan_spec.cell_limit_per_family
      <<" max_versions="<< scan_spec.max_versions
      <<" return_deletes="<< scan_spec.return_deletes
      <<" keys_only="<< scan_spec.keys_only;
@@ -222,8 +226,8 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
 
 
 ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
-  : row_limit(ss.row_limit), cell_limit(ss.cell_limit), max_versions(ss.max_versions),
-    columns(CstrAlloc(arena)), row_intervals(RowIntervalAlloc(arena)),
+  : row_limit(ss.row_limit), cell_limit(ss.cell_limit), cell_limit_per_family(ss.cell_limit_per_family),
+    max_versions(ss.max_versions), columns(CstrAlloc(arena)), row_intervals(RowIntervalAlloc(arena)),
     cell_intervals(CellIntervalAlloc(arena)),
     time_interval(ss.time_interval.first, ss.time_interval.second),
     return_deletes(ss.return_deletes), keys_only(ss.keys_only),
