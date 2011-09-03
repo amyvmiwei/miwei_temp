@@ -222,7 +222,7 @@ namespace Hypertable {
     int32_t       m_row_count;
     int32_t       m_row_limit;
     int32_t       m_cell_count;
-    int32_t       m_cell_limit;
+    int32_t       m_cell_limit_per_family;
     uint32_t      m_revs_count;
     uint32_t      m_revs_limit;
     int64_t       m_cell_cutoff;

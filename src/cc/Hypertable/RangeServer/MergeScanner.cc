@@ -39,13 +39,13 @@ MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes, bool a
     m_return_deletes(return_deletes),
     m_no_forward(false), m_count_present(false), m_skip_remaining_counter(false),
     m_counted_value(12), m_ag_scanner(ag_scanner), m_row_count(0), m_row_limit(0),
-    m_cell_count(0), m_cell_limit(0), m_revs_count(0), m_revs_limit(0), m_cell_cutoff(0),
+    m_cell_count(0), m_cell_limit_per_family(0), m_revs_count(0), m_revs_limit(0), m_cell_cutoff(0),
     m_bytes_input(0), m_bytes_output(0), m_cells_input(0), m_cells_output(0),
     m_cur_bytes(0), m_prev_key(0), m_prev_cf(-1), m_debug(debug) {
 
   if (scan_ctx->spec != 0) {
     m_row_limit = scan_ctx->spec->row_limit;
-    m_cell_limit = scan_ctx->spec->cell_limit;
+    m_cell_limit_per_family = scan_ctx->spec->cell_limit_per_family;
   }
 
   m_start_timestamp = scan_ctx->time_interval.first;
@@ -344,7 +344,7 @@ void MergeScanner::forward() {
 
     bool incr_cf_count = false;
 
-    // deal with counters. apply row_limit but not revs/cell_limit
+    // deal with counters. apply row_limit but not revs/cell_limit_per_family
     if (m_count_present) {
       if(counter && matches_counted_key(sstate.key)) {
         if (sstate.key.flag == FLAG_INSERT) {
@@ -374,14 +374,14 @@ void MergeScanner::forward() {
       continue;
     }
 
-    if (m_row_limit || m_cell_limit) {
+    if (m_row_limit || m_cell_limit_per_family) {
       if (new_row) {
         m_row_count++;
         if (!m_return_deletes && m_row_limit && m_row_count > m_row_limit)
           m_done = true;
         break;
       }
-      else if (m_cell_limit) {
+      else if (m_cell_limit_per_family) {
         if (!new_cf)
           incr_cf_count = true;
       }
@@ -389,7 +389,7 @@ void MergeScanner::forward() {
 
     if (incr_cf_count) {
       m_cell_count++;
-      if (m_cell_count > m_cell_limit)
+      if (m_cell_count > m_cell_limit_per_family)
         continue;
     }
 

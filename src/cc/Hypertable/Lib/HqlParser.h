@@ -1135,6 +1135,17 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct scan_set_cell_limit_per_family {
+      scan_set_cell_limit_per_family(ParserState &state) : state(state) { }
+      void operator()(int ival) const {
+        if (state.scan.builder.get().cell_limit_per_family != 0)
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "SELECT CELL_LIMIT_PER_FAMILY predicate multiply defined.");
+        state.scan.builder.set_cell_limit_per_family(ival);
+      }
+      ParserState &state;
+    };
+
     struct scan_set_outfile {
       scan_set_outfile(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1704,6 +1715,7 @@ namespace Hypertable {
           Token REVS         = as_lower_d["revs"];
           Token LIMIT        = as_lower_d["limit"];
           Token CELL_LIMIT   = as_lower_d["cell_limit"];
+          Token CELL_LIMIT_PER_FAMILY   = as_lower_d["cell_limit_per_family"];
           Token INTO         = as_lower_d["into"];
           Token FILE         = as_lower_d["file"];
           Token LOAD         = as_lower_d["load"];
@@ -2310,6 +2322,8 @@ namespace Hypertable {
             | LIMIT >> uint_p[scan_set_row_limit(self.state)]
             | CELL_LIMIT >> EQUAL >> uint_p[scan_set_cell_limit(self.state)]
             | CELL_LIMIT >> uint_p[scan_set_cell_limit(self.state)]
+            | CELL_LIMIT_PER_FAMILY >> EQUAL >> uint_p[scan_set_cell_limit_per_family(self.state)]
+            | CELL_LIMIT_PER_FAMILY >> uint_p[scan_set_cell_limit_per_family(self.state)]
             | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
             | DISPLAY_TIMESTAMPS[scan_set_display_timestamps(self.state)]
             | RETURN_DELETES[scan_set_return_deletes(self.state)]
