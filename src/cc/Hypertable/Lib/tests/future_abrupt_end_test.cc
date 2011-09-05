@@ -153,5 +153,5 @@ int main(int argc, char **argv) {
   }
   cout << "Test passed"<< endl;
 
-  exit(0);
+  _exit(0);
 }

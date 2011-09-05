@@ -63,7 +63,7 @@ namespace Hypertable {
 
     void validate_and_exit(const char *golden_file) {
       validate(golden_file);
-      exit (m_error ? 1 : 0);
+      _exit(m_error ? 1 : 0);
     }
 
     int validate(const char *golden_file) {
