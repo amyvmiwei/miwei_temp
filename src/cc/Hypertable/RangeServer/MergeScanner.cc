@@ -39,12 +39,14 @@ MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, bool return_deletes, bool a
     m_return_deletes(return_deletes),
     m_no_forward(false), m_count_present(false), m_skip_remaining_counter(false),
     m_counted_value(12), m_ag_scanner(ag_scanner), m_row_count(0), m_row_limit(0),
-    m_cell_count(0), m_cell_limit_per_family(0), m_revs_count(0), m_revs_limit(0), m_cell_cutoff(0),
-    m_bytes_input(0), m_bytes_output(0), m_cells_input(0), m_cells_output(0),
-    m_cur_bytes(0), m_prev_key(0), m_prev_cf(-1), m_debug(debug) {
+    m_cell_count(0), m_cell_limit(0), m_cell_count_per_family(0), m_cell_limit_per_family(0),
+    m_revs_count(0), m_revs_limit(0), m_cell_cutoff(0), m_bytes_input(0), m_bytes_output(0),
+    m_cells_input(0), m_cells_output(0), m_cur_bytes(0), m_prev_key(0),
+    m_prev_cf(-1), m_debug(debug) {
 
   if (scan_ctx->spec != 0) {
     m_row_limit = scan_ctx->spec->row_limit;
+    m_cell_limit = scan_ctx->spec->cell_limit;
     m_cell_limit_per_family = scan_ctx->spec->cell_limit_per_family;
   }
 
@@ -258,7 +260,7 @@ void MergeScanner::forward() {
 
         if (m_prev_key.fill()==0) {
           new_row = new_cf = new_cq = true;
-          m_cell_count = 1;
+          m_cell_count_per_family = 1;
           m_prev_key.set(latest_key, latest_key_len);
           m_prev_cf = sstate.key.column_family_code;
           m_revs_count=0;
@@ -272,11 +274,11 @@ void MergeScanner::forward() {
           if (strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
             new_row = true;
             new_cf = true;
-            m_cell_count = 1;
+            m_cell_count_per_family = 1;
           }
           else if (sstate.key.column_family_code != m_prev_cf) {
             new_cf = true;
-            m_cell_count = 1;
+            m_cell_count_per_family = 1;
           }
 
           m_prev_key.set(latest_key, latest_key_len);
@@ -388,13 +390,20 @@ void MergeScanner::forward() {
     }
 
     if (incr_cf_count) {
-      m_cell_count++;
-      if (m_cell_count > m_cell_limit_per_family)
+      m_cell_count_per_family++;
+      if (m_cell_count_per_family > m_cell_limit_per_family)
         continue;
     }
 
     break;
   }
+
+  if (m_cell_limit) {
+    m_cell_count++;
+    if (m_cell_count > m_cell_limit)
+      m_done = true;
+  }
+
   m_bytes_output += m_cur_bytes;
   m_cells_output++;
 }
@@ -432,7 +441,7 @@ void MergeScanner::finish_count() {
 
   m_prev_key.set(m_counted_key.row, m_counted_key.len_cell());
   m_prev_cf = m_counted_key.column_family_code;
-  m_cell_count = 0;
+  m_cell_count_per_family = 0;
   m_no_forward = true;
   m_count_present = false;
 }
@@ -468,6 +477,10 @@ void MergeScanner::initialize() {
       m_queue.push(sstate);
     }
   }
+
+  if (m_cell_limit)
+    m_cell_count = 1;
+
   while (!m_queue.empty()) {
     sstate = m_queue.top();
 
@@ -568,7 +581,7 @@ void MergeScanner::initialize() {
 
       if (m_prev_key.fill()==0) {
         new_row = new_cf = new_cq = true;
-        m_cell_count = 1;
+        m_cell_count_per_family = 1;
         m_prev_key.set(latest_key, latest_key_len);
         m_prev_cf = sstate.key.column_family_code;
         m_revs_count=0;
@@ -582,11 +595,11 @@ void MergeScanner::initialize() {
         if (strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
           new_row = true;
           new_cf = true;
-          m_cell_count=1;
+          m_cell_count_per_family=1;
         }
         else if (sstate.key.column_family_code != m_prev_cf) {
           new_cf = true;
-          m_cell_count=1;
+          m_cell_count_per_family=1;
         }
 
         m_prev_key.set(latest_key, latest_key_len);

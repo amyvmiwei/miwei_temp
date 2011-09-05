@@ -41,6 +41,7 @@ SELECT
     options_spec:
       (REVS revision_count
       | LIMIT row_count
+      | CELL_LIMIT max_cells
       | CELL_LIMIT_PER_FAMILY max_cells_per_cf
       | INTO FILE [file_location]filename[.gz]
       | DISPLAY_TIMESTAMPS
@@ -80,6 +81,11 @@ Limits the number of rows returned by the `SELECT` statement to `row_count`.
 <p>
 Limits the number of cells returned per row per column family by the `SELECT` 
 statement to `max_cells_per_cf`.
+
+#### `CELL_LIMIT max_cells`
+<p>
+Limits the total number of cells returned by the query to `max_cells`
+(applied after `CELL_LIMIT_PER_FAMILY`).
 
 #### `INTO FILE [file://|dfs://]filename[.gz]`
 <p>
