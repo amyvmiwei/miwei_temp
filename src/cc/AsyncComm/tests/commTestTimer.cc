@@ -133,5 +133,5 @@ int main(int argc, char **argv) {
 
   harness.regenerate_golden_file("commTestTimer.golden");
 
-  return 0;
+  _exit(0);
 }
