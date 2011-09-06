@@ -28,6 +28,7 @@ find_library(FREETYPE_LIBRARY freetype PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     )
@@ -37,6 +38,7 @@ find_library(PNG_LIBRARY NAMES ${PNG_NAMES} NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     )
@@ -45,6 +47,7 @@ find_library(PANGOCAIRO_LIBRARY NAMES pangocairo NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     )
@@ -53,6 +56,7 @@ find_library(PANGO_LIBRARY NAMES pango NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
@@ -73,6 +77,7 @@ find_library(PANGOFT2_LIBRARY NAMES pangoft2 NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
@@ -84,6 +89,7 @@ find_library(GOBJECT_LIBRARY NAMES gobject NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
@@ -94,6 +100,7 @@ find_library(GMODULE_LIBRARY NAMES gmodule NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
@@ -104,6 +111,7 @@ find_library(GLIB_LIBRARY NAMES glib NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
@@ -114,6 +122,7 @@ find_library(ART_LGPL_2_LIBRARY NAMES art_lgpl_2 NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     )
@@ -132,6 +141,7 @@ find_library(GTHREAD_LIBRARY NAMES gthread NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
+    /usr/lib/i386-linux-gnu
     /usr/lib
     /usr/lib64
     )
