@@ -27,9 +27,9 @@ using namespace Hypertable;
 /**
  *
  */
-MaintenanceTaskCompaction::MaintenanceTaskCompaction(boost::xtime &stime,
-                                                     RangePtr &range)
-  : MaintenanceTask(stime, range, String("COMPACTION ") + range->get_name()) {
+MaintenanceTaskCompaction::MaintenanceTaskCompaction(int level, int priority,
+						     boost::xtime &stime, RangePtr &range)
+  : MaintenanceTask(level, priority, stime, range, String("COMPACTION ") + range->get_name()) {
 }
 
 

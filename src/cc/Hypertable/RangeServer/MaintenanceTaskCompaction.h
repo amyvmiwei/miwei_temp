@@ -28,7 +28,7 @@ namespace Hypertable {
 
   class MaintenanceTaskCompaction : public MaintenanceTask {
   public:
-    MaintenanceTaskCompaction(boost::xtime &stime, RangePtr &range);
+    MaintenanceTaskCompaction(int level, int priority, boost::xtime &stime, RangePtr &range);
     virtual void execute();
   };
 

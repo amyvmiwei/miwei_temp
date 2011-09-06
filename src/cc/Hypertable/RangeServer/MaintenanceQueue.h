@@ -49,9 +49,10 @@ namespace Hypertable {
     struct LtMaintenanceTask {
       bool
       operator()(const MaintenanceTask *sm1, const MaintenanceTask *sm2) const {
-        int cmp = xtime_cmp(sm1->start_time, sm2->start_time);
-        if (cmp == 0)
-          return sm1->priority < sm2->priority;
+	if (sm1->level != sm2->level)
+	  return sm1->level > sm2->level;
+	if (sm1->priority != sm2->priority)
+	  return sm1->priority > sm2->priority;
         return xtime_cmp(sm1->start_time, sm2->start_time) >= 0;
       }
     };
@@ -61,7 +62,7 @@ namespace Hypertable {
 
     class MaintenanceQueueState {
     public:
-      MaintenanceQueueState() : shutdown(false) { return; }
+      MaintenanceQueueState() : shutdown(false), outstanding(0), outstanding_level(10000) { return; }
       TaskQueue          queue;
       Mutex              mutex;
       boost::condition   cond;
@@ -69,6 +70,8 @@ namespace Hypertable {
       bool               shutdown;
       std::set<Range *>  pending;
       std::set<Range *>  in_progress;
+      int                outstanding;
+      int                outstanding_level;
     };
 
     class Worker {
@@ -88,13 +91,15 @@ namespace Hypertable {
 
             boost::xtime_get(&now, boost::TIME_UTC);
 
-            while (m_state.queue.empty() ||
-                   xtime_cmp((m_state.queue.top())->start_time, now) > 0) {
+            while (m_state.queue.empty() || 
+		   (m_state.outstanding && ((m_state.queue.top())->level > m_state.outstanding_level)) ||
+		   xtime_cmp((m_state.queue.top())->start_time, now) > 0) {
 
               if (m_state.shutdown)
                 return;
 
-              if (m_state.queue.empty())
+              if (m_state.queue.empty() || 
+		  (m_state.outstanding && (m_state.queue.top())->level > m_state.outstanding_level))
                 m_state.cond.wait(lock);
               else {
                 next_work = (m_state.queue.top())->start_time;
@@ -104,9 +109,13 @@ namespace Hypertable {
             }
 
             task = m_state.queue.top();
-            m_state.queue.pop();
-            m_state.pending.erase(task->get_range());
-            m_state.in_progress.insert(task->get_range());
+	    if (m_state.outstanding == 0 || task->level <= m_state.outstanding_level) {
+	      m_state.outstanding++;
+	      m_state.outstanding_level = task->level;
+	      m_state.queue.pop();
+	      m_state.pending.erase(task->get_range());
+	      m_state.in_progress.insert(task->get_range());
+	    }
           }
 
           try {
@@ -132,6 +141,7 @@ namespace Hypertable {
                 task->start_time.sec += task->get_retry_delay() / 1000;
                 m_state.queue.push(task);
                 m_state.cond.notify_one();
+		m_state.outstanding--;
                 continue;
               }
               HT_ERRORF("Maintenance Task '%s' failed, dropping task ...",
@@ -141,6 +151,7 @@ namespace Hypertable {
 
           {
             ScopedLock lock(m_state.mutex);
+	    m_state.outstanding--;
             m_state.in_progress.erase(task->get_range());
 	    if (m_state.queue.empty() && m_state.in_progress.empty())
 	      m_state.empty_cond.notify_one();

@@ -56,6 +56,8 @@ namespace Hypertable {
 
   private:
 
+    int get_level(RangePtr &range);
+
     bool low_memory_mode() {
       return m_prioritizer == &m_prioritizer_low_memory;
     }
