@@ -28,7 +28,7 @@ namespace Hypertable {
 
   class MaintenanceTaskSplit : public MaintenanceTask {
   public:
-    MaintenanceTaskSplit(boost::xtime &start_time, RangePtr &range);
+    MaintenanceTaskSplit(int level, int priority, boost::xtime &start_time, RangePtr &range);
     virtual void execute();
   };
 

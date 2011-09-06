@@ -265,15 +265,18 @@ void MaintenanceScheduler::schedule() {
   // if this is the first time around, just enqueue work that
   // was in progress
   if (!m_initialized) {
+    int level = 0, priority = 0;
     for (size_t i=0; i<range_data.size(); i++) {
       if (range_data[i]->state == RangeState::SPLIT_LOG_INSTALLED ||
           range_data[i]->state == RangeState::SPLIT_SHRUNK) {
         RangePtr range(range_data[i]->range);
-        Global::maintenance_queue->add(new MaintenanceTaskSplit(schedule_time, range));
+	level = get_level(range);
+        Global::maintenance_queue->add(new MaintenanceTaskSplit(level, priority++, schedule_time, range));
       }
       else if (range_data[i]->state == RangeState::RELINQUISH_LOG_INSTALLED) {
         RangePtr range(range_data[i]->range);
-        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(schedule_time, range));
+	level = get_level(range);
+        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(level, priority++, schedule_time, range));
       }
     }
     m_initialized = true;
@@ -290,20 +293,24 @@ void MaintenanceScheduler::schedule() {
     sort(range_data_prioritized.begin(), range_data_prioritized.end(), ordering);
 
     int32_t merges_created = 0;
+    int level = 0;
 
     for (size_t i=0; i<range_data_prioritized.size(); i++) {
       if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::SPLIT) {
         RangePtr range(range_data_prioritized[i]->range);
-        Global::maintenance_queue->add(new MaintenanceTaskSplit(schedule_time, range));
+	level = get_level(range);
+        Global::maintenance_queue->add(new MaintenanceTaskSplit(level, range_data_prioritized[i]->priority, schedule_time, range));
       }
       else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::RELINQUISH) {
         RangePtr range(range_data_prioritized[i]->range);
-        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(schedule_time, range));
+	level = get_level(range);
+        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(level, range_data_prioritized[i]->priority, schedule_time, range));
       }
       else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::COMPACT) {
 	MaintenanceTaskCompaction *task;
         RangePtr range(range_data_prioritized[i]->range);
-	task = new MaintenanceTaskCompaction(schedule_time, range);
+	level = get_level(range);
+	task = new MaintenanceTaskCompaction(level, range_data_prioritized[i]->priority, schedule_time, range);
         if (!range_data_prioritized[i]->needs_major_compaction) {
           for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i]->agdata; ag_data; ag_data=ag_data->next) {
             if (MaintenanceFlag::minor_compaction(ag_data->maintenance_flags) ||
@@ -323,7 +330,8 @@ void MaintenanceScheduler::schedule() {
       else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) {
 	MaintenanceTaskMemoryPurge *task;
         RangePtr range(range_data_prioritized[i]->range);
-	task = new MaintenanceTaskMemoryPurge(schedule_time, range);
+	level = get_level(range);
+	task = new MaintenanceTaskMemoryPurge(level, range_data_prioritized[i]->priority, schedule_time, range);
 	for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i]->agdata; ag_data; ag_data=ag_data->next) {
 	  if (ag_data->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) {
 	    task->add_subtask(ag_data->ag, ag_data->maintenance_flags);
@@ -343,6 +351,16 @@ void MaintenanceScheduler::schedule() {
   m_scheduling_needed = false;
 
   m_stats_gatherer->clear();
+}
+
+int MaintenanceScheduler::get_level(RangePtr &range) {
+  if (range->is_root())
+    return 0;
+  if (range->metalog_entity()->table.is_metadata())
+    return 1;
+  else if (range->metalog_entity()->table.is_system())
+    return 2;
+  return 3;
 }
 
 

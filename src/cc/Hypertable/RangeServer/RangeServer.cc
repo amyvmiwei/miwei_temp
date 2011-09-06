@@ -484,6 +484,7 @@ void RangeServer::local_recover() {
   std::vector<RangePtr> rangev;
   std::vector<MetaLog::EntityPtr> entities;
   MetaLog::EntityRange *range_entity;
+  int priority = 0;
 
   try {
     std::vector<MaintenanceTask*> maintenance_tasks;
@@ -542,7 +543,7 @@ void RangeServer::local_recover() {
           range->recovery_finalize();
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
-	    maintenance_tasks.push_back(new MaintenanceTaskSplit(now, range));
+	    maintenance_tasks.push_back(new MaintenanceTaskSplit(0, priority++, now, range));
 	  else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
@@ -599,7 +600,7 @@ void RangeServer::local_recover() {
           range->recovery_finalize();
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
-	    maintenance_tasks.push_back(new MaintenanceTaskSplit(now, range));
+	    maintenance_tasks.push_back(new MaintenanceTaskSplit(1, priority++, now, range));
 	  else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
@@ -655,7 +656,7 @@ void RangeServer::local_recover() {
           range->recovery_finalize();
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
-	    maintenance_tasks.push_back(new MaintenanceTaskSplit(now, range));
+	    maintenance_tasks.push_back(new MaintenanceTaskSplit(2, priority++, now, range));
 	  else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
@@ -711,7 +712,7 @@ void RangeServer::local_recover() {
           range->recovery_finalize();
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
-	    maintenance_tasks.push_back(new MaintenanceTaskSplit(now, range));
+	    maintenance_tasks.push_back(new MaintenanceTaskSplit(3, priority++, now, range));
 	  else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}

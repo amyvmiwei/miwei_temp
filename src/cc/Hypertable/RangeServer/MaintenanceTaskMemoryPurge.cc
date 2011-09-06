@@ -27,9 +27,9 @@ using namespace Hypertable;
 /**
  *
  */
-MaintenanceTaskMemoryPurge::MaintenanceTaskMemoryPurge(boost::xtime &stime,
-                                                     RangePtr &range)
-  : MaintenanceTask(stime, range, String("MEMORY PURGE ") + range->get_name()) {
+MaintenanceTaskMemoryPurge::MaintenanceTaskMemoryPurge(int level, int priority, boost::xtime &stime,
+						       RangePtr &range)
+  : MaintenanceTask(level, priority, stime, range, String("MEMORY PURGE ") + range->get_name()) {
 }
 
 

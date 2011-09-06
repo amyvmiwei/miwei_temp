@@ -28,8 +28,8 @@ using namespace Hypertable;
 /**
  *
  */
-MaintenanceTaskSplit::MaintenanceTaskSplit(boost::xtime &stime, RangePtr &range)
-  : MaintenanceTask(stime, range, String("SPLIT ") + range->get_name()) {
+MaintenanceTaskSplit::MaintenanceTaskSplit(int level, int priority, boost::xtime &stime, RangePtr &range)
+  : MaintenanceTask(level, priority, stime, range, String("SPLIT ") + range->get_name()) {
   set_retry_delay(5000);
   set_retry(true);
 }
