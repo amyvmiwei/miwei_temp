@@ -141,7 +141,10 @@ module Hypertable
         #   <dd>Specifies the names of the columns to return</dd>
         # 
         #   <dt>cell_limit</dt>
-        #   <dd>Specifies max number of cells to return per column family per row</dd>
+        #   <dd>Specifies max number of cells to return</dd>
+        # 
+        #   <dt>cell_limit_per_family</dt>
+        #   <dd>Specifies max number of cells to return per column family</dd>
         # 
         #   <dt>row_regexp</dt>
         #   <dd>Specifies a regexp used to filter by rowkey</dd>
@@ -163,7 +166,8 @@ module Hypertable
           END_TIME = 7
           COLUMNS = 8
           KEYS_ONLY = 9
-          CELL_LIMIT = 10
+          CELL_LIMIT = 14
+          CELL_LIMIT_PER_FAMILY = 10
           ROW_REGEXP = 11
           VALUE_REGEXP = 12
           SCAN_AND_FILTER_ROWS = 13
@@ -179,6 +183,7 @@ module Hypertable
             COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRING}, :optional => true},
             KEYS_ONLY => {:type => ::Thrift::Types::BOOL, :name => 'keys_only', :default => false, :optional => true},
             CELL_LIMIT => {:type => ::Thrift::Types::I32, :name => 'cell_limit', :default => 0, :optional => true},
+            CELL_LIMIT_PER_FAMILY => {:type => ::Thrift::Types::I32, :name => 'cell_limit_per_family', :default => 0, :optional => true},
             ROW_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'row_regexp', :optional => true},
             VALUE_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'value_regexp', :optional => true},
             SCAN_AND_FILTER_ROWS => {:type => ::Thrift::Types::BOOL, :name => 'scan_and_filter_rows', :default => false, :optional => true}

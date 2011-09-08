@@ -181,7 +181,7 @@ class CellInterval {
 };
 
 typedef struct _ScanSpec__isset {
-  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false) {}
+  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), cell_limit_per_family(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false) {}
   bool row_intervals;
   bool cell_intervals;
   bool return_deletes;
@@ -192,6 +192,7 @@ typedef struct _ScanSpec__isset {
   bool columns;
   bool keys_only;
   bool cell_limit;
+  bool cell_limit_per_family;
   bool row_regexp;
   bool value_regexp;
   bool scan_and_filter_rows;
@@ -200,10 +201,10 @@ typedef struct _ScanSpec__isset {
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "05B8915B6E6CD581FE75B14AA5F06EB0";
-  static const uint8_t binary_fingerprint[16]; // = {0x05,0xB8,0x91,0x5B,0x6E,0x6C,0xD5,0x81,0xFE,0x75,0xB1,0x4A,0xA5,0xF0,0x6E,0xB0};
+  static const char* ascii_fingerprint; // = "585F20907E16C294741E3D63B14153DD";
+  static const uint8_t binary_fingerprint[16]; // = {0x58,0x5F,0x20,0x90,0x7E,0x16,0xC2,0x94,0x74,0x1E,0x3D,0x63,0xB1,0x41,0x53,0xDD};
 
-  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false) {
+  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), cell_limit_per_family(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false) {
   }
 
   virtual ~ScanSpec() throw() {}
@@ -218,6 +219,7 @@ class ScanSpec {
   std::vector<std::string>  columns;
   bool keys_only;
   int32_t cell_limit;
+  int32_t cell_limit_per_family;
   std::string row_regexp;
   std::string value_regexp;
   bool scan_and_filter_rows;
@@ -265,6 +267,10 @@ class ScanSpec {
     if (__isset.cell_limit != rhs.__isset.cell_limit)
       return false;
     else if (__isset.cell_limit && !(cell_limit == rhs.cell_limit))
+      return false;
+    if (__isset.cell_limit_per_family != rhs.__isset.cell_limit_per_family)
+      return false;
+    else if (__isset.cell_limit_per_family && !(cell_limit_per_family == rhs.cell_limit_per_family))
       return false;
     if (__isset.row_regexp != rhs.__isset.row_regexp)
       return false;

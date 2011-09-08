@@ -267,7 +267,7 @@ sub write {
 
 package Hypertable::ThriftGen::ScanSpec;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only cell_limit row_regexp value_regexp scan_and_filter_rows ) );
+Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only cell_limit cell_limit_per_family row_regexp value_regexp scan_and_filter_rows ) );
 
 sub new {
   my $classname = shift;
@@ -283,6 +283,7 @@ sub new {
   $self->{columns} = undef;
   $self->{keys_only} = 0;
   $self->{cell_limit} = 0;
+  $self->{cell_limit_per_family} = 0;
   $self->{row_regexp} = undef;
   $self->{value_regexp} = undef;
   $self->{scan_and_filter_rows} = 0;
@@ -316,6 +317,9 @@ sub new {
     }
     if (defined $vals->{cell_limit}) {
       $self->{cell_limit} = $vals->{cell_limit};
+    }
+    if (defined $vals->{cell_limit_per_family}) {
+      $self->{cell_limit_per_family} = $vals->{cell_limit_per_family};
     }
     if (defined $vals->{row_regexp}) {
       $self->{row_regexp} = $vals->{row_regexp};
@@ -441,8 +445,14 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^10$/ && do{      if ($ftype == TType::I32) {
+      /^14$/ && do{      if ($ftype == TType::I32) {
         $xfer += $input->readI32(\$self->{cell_limit});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^10$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{cell_limit_per_family});
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -549,9 +559,9 @@ sub write {
     $xfer += $output->writeBool($self->{keys_only});
     $xfer += $output->writeFieldEnd();
   }
-  if (defined $self->{cell_limit}) {
-    $xfer += $output->writeFieldBegin('cell_limit', TType::I32, 10);
-    $xfer += $output->writeI32($self->{cell_limit});
+  if (defined $self->{cell_limit_per_family}) {
+    $xfer += $output->writeFieldBegin('cell_limit_per_family', TType::I32, 10);
+    $xfer += $output->writeI32($self->{cell_limit_per_family});
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{row_regexp}) {
@@ -567,6 +577,11 @@ sub write {
   if (defined $self->{scan_and_filter_rows}) {
     $xfer += $output->writeFieldBegin('scan_and_filter_rows', TType::BOOL, 13);
     $xfer += $output->writeBool($self->{scan_and_filter_rows});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cell_limit}) {
+    $xfer += $output->writeFieldBegin('cell_limit', TType::I32, 14);
+    $xfer += $output->writeI32($self->{cell_limit});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

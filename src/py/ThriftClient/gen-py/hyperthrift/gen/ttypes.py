@@ -361,7 +361,10 @@ class ScanSpec:
     <dd>Specifies the names of the columns to return</dd>
 
     <dt>cell_limit</dt>
-    <dd>Specifies max number of cells to return per column family per row</dd>
+    <dd>Specifies max number of cells to return</dd>
+
+    <dt>cell_limit_per_family</dt>
+    <dd>Specifies max number of cells to return per column family</dd>
 
     <dt>row_regexp</dt>
     <dd>Specifies a regexp used to filter by rowkey</dd>
@@ -384,6 +387,7 @@ class ScanSpec:
    - columns
    - keys_only
    - cell_limit
+   - cell_limit_per_family
    - row_regexp
    - value_regexp
    - scan_and_filter_rows
@@ -400,13 +404,14 @@ class ScanSpec:
     (7, TType.I64, 'end_time', None, None, ), # 7
     (8, TType.LIST, 'columns', (TType.STRING,None), None, ), # 8
     (9, TType.BOOL, 'keys_only', None, False, ), # 9
-    (10, TType.I32, 'cell_limit', None, 0, ), # 10
+    (10, TType.I32, 'cell_limit_per_family', None, 0, ), # 10
     (11, TType.STRING, 'row_regexp', None, None, ), # 11
     (12, TType.STRING, 'value_regexp', None, None, ), # 12
     (13, TType.BOOL, 'scan_and_filter_rows', None, False, ), # 13
+    (14, TType.I32, 'cell_limit', None, 0, ), # 14
   )
 
-  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4],):
+  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[14][4], cell_limit_per_family=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4],):
     self.row_intervals = row_intervals
     self.cell_intervals = cell_intervals
     self.return_deletes = return_deletes
@@ -417,6 +422,7 @@ class ScanSpec:
     self.columns = columns
     self.keys_only = keys_only
     self.cell_limit = cell_limit
+    self.cell_limit_per_family = cell_limit_per_family
     self.row_regexp = row_regexp
     self.value_regexp = value_regexp
     self.scan_and_filter_rows = scan_and_filter_rows
@@ -492,9 +498,14 @@ class ScanSpec:
           self.keys_only = iprot.readBool();
         else:
           iprot.skip(ftype)
-      elif fid == 10:
+      elif fid == 14:
         if ftype == TType.I32:
           self.cell_limit = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 10:
+        if ftype == TType.I32:
+          self.cell_limit_per_family = iprot.readI32();
         else:
           iprot.skip(ftype)
       elif fid == 11:
@@ -567,9 +578,9 @@ class ScanSpec:
       oprot.writeFieldBegin('keys_only', TType.BOOL, 9)
       oprot.writeBool(self.keys_only)
       oprot.writeFieldEnd()
-    if self.cell_limit != None:
-      oprot.writeFieldBegin('cell_limit', TType.I32, 10)
-      oprot.writeI32(self.cell_limit)
+    if self.cell_limit_per_family != None:
+      oprot.writeFieldBegin('cell_limit_per_family', TType.I32, 10)
+      oprot.writeI32(self.cell_limit_per_family)
       oprot.writeFieldEnd()
     if self.row_regexp != None:
       oprot.writeFieldBegin('row_regexp', TType.STRING, 11)
@@ -582,6 +593,10 @@ class ScanSpec:
     if self.scan_and_filter_rows != None:
       oprot.writeFieldBegin('scan_and_filter_rows', TType.BOOL, 13)
       oprot.writeBool(self.scan_and_filter_rows)
+      oprot.writeFieldEnd()
+    if self.cell_limit != None:
+      oprot.writeFieldBegin('cell_limit', TType.I32, 14)
+      oprot.writeI32(self.cell_limit)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

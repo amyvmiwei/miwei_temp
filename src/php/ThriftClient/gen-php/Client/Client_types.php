@@ -361,6 +361,7 @@ class Hypertable_ThriftGen_ScanSpec {
   public $columns = null;
   public $keys_only = false;
   public $cell_limit = 0;
+  public $cell_limit_per_family = 0;
   public $row_regexp = null;
   public $value_regexp = null;
   public $scan_and_filter_rows = false;
@@ -418,8 +419,12 @@ class Hypertable_ThriftGen_ScanSpec {
           'var' => 'keys_only',
           'type' => TType::BOOL,
           ),
-        10 => array(
+        14 => array(
           'var' => 'cell_limit',
+          'type' => TType::I32,
+          ),
+        10 => array(
+          'var' => 'cell_limit_per_family',
           'type' => TType::I32,
           ),
         11 => array(
@@ -466,6 +471,9 @@ class Hypertable_ThriftGen_ScanSpec {
       }
       if (isset($vals['cell_limit'])) {
         $this->cell_limit = $vals['cell_limit'];
+      }
+      if (isset($vals['cell_limit_per_family'])) {
+        $this->cell_limit_per_family = $vals['cell_limit_per_family'];
       }
       if (isset($vals['row_regexp'])) {
         $this->row_regexp = $vals['row_regexp'];
@@ -593,9 +601,16 @@ class Hypertable_ThriftGen_ScanSpec {
             $xfer += $input->skip($ftype);
           }
           break;
-        case 10:
+        case 14:
           if ($ftype == TType::I32) {
             $xfer += $input->readI32($this->cell_limit);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 10:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->cell_limit_per_family);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -715,9 +730,9 @@ class Hypertable_ThriftGen_ScanSpec {
       $xfer += $output->writeBool($this->keys_only);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->cell_limit !== null) {
-      $xfer += $output->writeFieldBegin('cell_limit', TType::I32, 10);
-      $xfer += $output->writeI32($this->cell_limit);
+    if ($this->cell_limit_per_family !== null) {
+      $xfer += $output->writeFieldBegin('cell_limit_per_family', TType::I32, 10);
+      $xfer += $output->writeI32($this->cell_limit_per_family);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->row_regexp !== null) {
@@ -733,6 +748,11 @@ class Hypertable_ThriftGen_ScanSpec {
     if ($this->scan_and_filter_rows !== null) {
       $xfer += $output->writeFieldBegin('scan_and_filter_rows', TType::BOOL, 13);
       $xfer += $output->writeBool($this->scan_and_filter_rows);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cell_limit !== null) {
+      $xfer += $output->writeFieldBegin('cell_limit', TType::I32, 14);
+      $xfer += $output->writeI32($this->cell_limit);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

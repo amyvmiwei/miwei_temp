@@ -160,7 +160,10 @@ struct CellInterval {
  *   <dd>Specifies the names of the columns to return</dd>
  *
  *   <dt>cell_limit</dt>
- *   <dd>Specifies max number of cells to return per column family per row</dd>
+ *   <dd>Specifies max number of cells to return</dd>
+ *
+ *   <dt>cell_limit_per_family</dt>
+ *   <dd>Specifies max number of cells to return per column family</dd>
  *
  *   <dt>row_regexp</dt>
  *   <dd>Specifies a regexp used to filter by rowkey</dd>
@@ -182,7 +185,8 @@ struct ScanSpec {
   7: optional i64 end_time
   8: optional list<string> columns
   9: optional bool keys_only = 0
-  10:optional i32 cell_limit = 0 
+  14:optional i32 cell_limit = 0 
+  10:optional i32 cell_limit_per_family = 0 
   11:optional string row_regexp
   12:optional string value_regexp
   13:optional bool scan_and_filter_rows = 0

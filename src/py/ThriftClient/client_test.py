@@ -101,7 +101,7 @@ try:
 
   print "regexp scanner example";
   scanner = client.open_scanner(namespace, "thrift_test",
-      ScanSpec(None, None, None, 1, 0, None, None, ["col"], False,0, "k", "v[24]"));
+      ScanSpec(None, None, None, 1, 0, None, None, ["col"], False,0, 0, "k", "v[24]"));
 
   while True:
     cells = client.next_cells(scanner)
