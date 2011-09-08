@@ -65,6 +65,7 @@ StatsRangeServer::StatsRangeServer(PropertiesPtr &props) : StatsSerializable(RAN
 StatsRangeServer::StatsRangeServer(const StatsRangeServer &other) : StatsSerializable(other.id, other.group_count) {
   memcpy(group_ids, other.group_ids, group_count);
   location = other.location;
+  version = other.version;
   timestamp = other.timestamp;
   range_count = other.range_count;
   scanner_count = other.scanner_count;
@@ -92,6 +93,7 @@ StatsRangeServer::StatsRangeServer(const StatsRangeServer &other) : StatsSeriali
 
 bool StatsRangeServer::operator==(const StatsRangeServer &other) const {
   if (location != other.location ||
+      version != other.version ||
       timestamp != other.timestamp ||
       range_count != other.range_count ||
       scanner_count != other.scanner_count ||
@@ -128,7 +130,8 @@ bool StatsRangeServer::operator==(const StatsRangeServer &other) const {
 
 size_t StatsRangeServer::encoded_length_group(int group) const {
   if (group == PRIMARY_GROUP) {
-    size_t len = Serialization::encoded_length_vstr(location) + 4*2 + 8*18 + 1 + \
+    size_t len = Serialization::encoded_length_vstr(location) + \
+      Serialization::encoded_length_vstr(version) + 4*2 + 8*18 + 1 + \
       system.encoded_length() + \
       Serialization::encoded_length_vi32(tables.size());
     for (size_t i=0; i<tables.size(); i++)
@@ -143,6 +146,7 @@ size_t StatsRangeServer::encoded_length_group(int group) const {
 void StatsRangeServer::encode_group(int group, uint8_t **bufp) const {
   if (group == PRIMARY_GROUP) {
     Serialization::encode_vstr(bufp, location);
+    Serialization::encode_vstr(bufp, version);
     Serialization::encode_i64(bufp, timestamp);
     Serialization::encode_i32(bufp, range_count);
     Serialization::encode_i32(bufp, scanner_count);
@@ -176,6 +180,7 @@ void StatsRangeServer::encode_group(int group, uint8_t **bufp) const {
 void StatsRangeServer::decode_group(int group, uint16_t len, const uint8_t **bufp, size_t *remainp) {
   if (group == PRIMARY_GROUP) {
     location = Serialization::decode_vstr(bufp, remainp);
+    version = Serialization::decode_vstr(bufp, remainp);
     timestamp = Serialization::decode_i64(bufp, remainp);
     range_count = Serialization::decode_i32(bufp, remainp);
     scanner_count = Serialization::decode_i32(bufp, remainp);

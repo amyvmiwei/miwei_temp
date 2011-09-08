@@ -2786,6 +2786,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   m_metric_samples++;
 
   m_stats->set_location(Global::location_initializer->get());
+  m_stats->set_version(version_string());
   m_stats->timestamp = timestamp;
   m_stats->scan_count = m_server_stats->get_scan_count(collector_id);
   m_stats->scanned_cells = m_server_stats->get_scan_cells(collector_id);

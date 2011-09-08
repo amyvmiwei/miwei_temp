@@ -53,12 +53,17 @@ namespace Hypertable {
       if (loc != location)
         location = loc;
     }
+    void set_version( const String &ver ) {
+      if (ver != version)
+        version = ver;
+    }
     bool operator==(const StatsRangeServer &other) const;
     bool operator!=(const StatsRangeServer &other) const {
       return !(*this == other);
     }
 
     String location;
+    String version;
     int64_t timestamp;
     int32_t range_count;
     int32_t scanner_count;

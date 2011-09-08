@@ -48,6 +48,8 @@ module HTMonitoring
     get '/' do
       @range_servers = StatsJson.new(:file => 'rangeserver_summary.json')
       @rs_records = @range_servers.parse_stats_file
+      @master = StatsJson.new(:file => 'master_summary.json')
+      @master_record = @master.parse_stats_file
       @rs_records['RangeServerSummary']['servers'].sort! { |a,b| a['order'].to_i <=> b['order'].to_i }
       @n_ord="dsc"
       @name_sort_img = "/images/arrow_up.png"
@@ -62,6 +64,8 @@ module HTMonitoring
     get '/tables' do
       @tables = StatsJson.new(:file => 'table_summary.json')
       @table_records = @tables.parse_stats_file
+      @master = StatsJson.new(:file => 'master_summary.json')
+      @master_record = @master.parse_stats_file
       
       @id_sort_img = "/images/arrows.png"
       @id_ord = "asc"

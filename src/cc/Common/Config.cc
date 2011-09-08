@@ -447,7 +447,7 @@ void parse_args(int argc, char *argv[]) {
   }
 
   if (has("version")) {
-    std::cout << version() << std::endl;
+    std::cout << version_string() << std::endl;
     _exit(0);
   }
 
@@ -511,7 +511,7 @@ void DefaultPolicy::init() {
     _exit(0);
   }
   if (verbose) {
-    HT_NOTICE_OUT <<"Initializing "<< System::exe_name <<" ("<< version()
+    HT_NOTICE_OUT <<"Initializing "<< System::exe_name <<" (Hypertable "<< version_string()
                   <<")..." << HT_END;
   }
 }

@@ -134,6 +134,7 @@ namespace Hypertable {
     void create_rangeserver_rrd(const String &filename);
     void update_rangeserver_rrd(const String &filename, struct rangeserver_rrd_data &rrd_data);
     void dump_rangeserver_summary_json(std::vector<RangeServerStatistics> &stats);
+    void dump_master_summary_json();
 
     void create_table_rrd(const String &filename);
     void update_table_rrd(const String &filename, struct table_rrd_data &rrd_data);
