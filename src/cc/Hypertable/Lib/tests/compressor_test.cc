@@ -43,6 +43,7 @@ namespace {
     "zlib",
     "lzo",
     "quicklz",
+    "snappy",
     "",
     0
   };
