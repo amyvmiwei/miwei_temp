@@ -119,7 +119,7 @@ namespace Hyperspace {
           ms_bdb_fs->delete_event(txn, m_id);
           txn.commit(0);
         }
-        HT_BDBTXN_EVT_END();
+        HT_BDBTXN_EVT_END(BOOST_PP_EMPTY());
         m_cond.notify_all();
       }
     }
