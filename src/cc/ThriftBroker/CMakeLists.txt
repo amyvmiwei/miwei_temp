@@ -17,8 +17,13 @@
 # 02110-1301, USA.
 #
 
-HT_GLOB(ThriftGen_SRCS gen-cpp/*Service.cpp gen-cpp/*constants.cpp
-        gen-cpp/*types.cpp)
+HT_GLOB(ThriftGen_SRCS
+        gen-cpp/Client_constants.cpp 
+        gen-cpp/ClientService.cpp 
+        gen-cpp/Client_types.cpp
+        gen-cpp/Hql_constants.cpp 
+        gen-cpp/HqlService.cpp 
+        gen-cpp/Hql_types.cpp)
 
 add_library(HyperThrift ThriftHelper.cc SerializedCellsReader.cc SerializedCellsWriter.cc ${ThriftGen_SRCS})
 target_link_libraries(HyperThrift ${Thrift_LIBS} ${LibEvent_LIBS})
