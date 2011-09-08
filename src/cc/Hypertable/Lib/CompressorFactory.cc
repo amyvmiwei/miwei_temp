@@ -27,6 +27,7 @@
 #include "BlockCompressionCodecZlib.h"
 #include "BlockCompressionCodecLzo.h"
 #include "BlockCompressionCodecQuicklz.h"
+#include "BlockCompressionCodecSnappy.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -59,6 +60,9 @@ CompressorFactory::parse_block_codec_spec(const std::string &spec,
   if (name == "quicklz")
     return BlockCompressionCodec::QUICKLZ;
 
+  if (name == "snappy")
+    return BlockCompressionCodec::SNAPPY;
+
   HT_ERRORF("unknown codec type: %s", name.c_str());
   return BlockCompressionCodec::UNKNOWN;
 }
@@ -77,6 +81,8 @@ CompressorFactory::create_block_codec(BlockCompressionCodec::Type type,
     return new BlockCompressionCodecLzo(args);
   case BlockCompressionCodec::QUICKLZ:
     return new BlockCompressionCodecQuicklz(args);
+  case BlockCompressionCodec::SNAPPY:
+    return new BlockCompressionCodecSnappy(args);
   default:
     HT_THROWF(Error::BLOCK_COMPRESSOR_UNSUPPORTED_TYPE, "Invalid compression "
               "type: '%d'", (int)type);

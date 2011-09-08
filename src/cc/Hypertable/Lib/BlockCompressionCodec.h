@@ -39,7 +39,7 @@ namespace Hypertable {
   class BlockCompressionCodec : public ReferenceCount {
   public:
     enum Type { UNKNOWN=-1, NONE=0, BMZ=1, ZLIB=2, LZO=3, QUICKLZ=4,
-                COMPRESSION_TYPE_LIMIT=5 };
+                SNAPPY=5, COMPRESSION_TYPE_LIMIT=6 };
     typedef std::vector<String> Args;
 
     static const char *get_compressor_name(uint16_t algo);

@@ -26,6 +26,7 @@ BlockCompressionCodecLzo.cc
 BlockCompressionCodecNone.cc
 BlockCompressionCodecQuicklz.cc
 BlockCompressionCodecZlib.cc
+BlockCompressionCodecSnappy.cc
 BlockCompressionHeader.cc
 BlockCompressionHeaderCommitLog.cc
 Cell.cc
@@ -269,6 +270,7 @@ add_test(BlockCompressor-LZO compressor_test lzo)
 add_test(BlockCompressor-NONE compressor_test none)
 add_test(BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test(BlockCompressor-ZLIB compressor_test zlib)
+add_test(BlockCompressor-SNAPPY compressor_test snappy)
 add_test(CommitLog commit_log_test)
 add_test(MetaLog metalog_test)
 add_test(Client-large-block large_insert_test)

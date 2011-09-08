@@ -72,7 +72,7 @@ Mutex desc_mutex;
 bool desc_inited = false;
 
 PropertiesDesc
-  compressor_desc("  bmz|lzo|quicklz|zlib|none [compressor_options]\n\n"
+  compressor_desc("  bmz|lzo|quicklz|zlib|snappy|none [compressor_options]\n\n"
       "compressor_options"),
   bloom_filter_desc("  rows|rows+cols|none [bloom_filter_options]\n\n"
       "  Default bloom filter is defined by the config property:\n"
@@ -95,7 +95,8 @@ void init_schema_options_desc() {
     ("offset", i16()->default_value(0), "Starting fingerprint offset for bmz")
     ;
   compressor_hidden_desc.add_options()
-    ("compressor-type", str(), "Compressor type (bmz|lzo|quicklz|zlib|none)")
+    ("compressor-type", str(), 
+        "Compressor type (bmz|lzo|quicklz|zlib|snappy|none)")
     ;
   compressor_pos_desc.add("compressor-type", 1);
 
