@@ -54,8 +54,10 @@ void
 BlockCompressionCodecSnappy::deflate(const DynamicBuffer &input,
     DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
   output.reserve(header.length()+snappy::MaxCompressedLength(input.fill()));
+  size_t outlen;
   snappy::RawCompress((const char *)input.base, input.fill(), 
-                (char *)output.base+header.length(), &output.size);
+                (char *)output.base+header.length(), &outlen);
+  output.size=outlen;
 
   header.set_compression_type(SNAPPY);
   header.set_data_length(input.fill());
