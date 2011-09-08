@@ -43,4 +43,4 @@ else ()
   set(HT_VCS_STRING "exported")
 endif ()
 
-set(VERSION_STRING "Hypertable ${VERSION} (${HT_VCS_STRING})")
+set(VERSION_STRING "${VERSION} (${HT_VCS_STRING})")

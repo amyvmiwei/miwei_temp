@@ -292,6 +292,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   }
   dump_table_summary_json();
 
+  dump_master_summary_json();
 }
 
 void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fetch_timestamp) {
@@ -610,18 +611,28 @@ namespace {
   const char *rs_json_header = "{\"RangeServerSummary\": {\n  \"servers\": [\n";
   const char *rs_json_footer= "\n  ]\n}}\n";
   const char *rs_entry_format =
-    "{\"order\": \"%d\", \"location\": \"%s\", \"hostname\": \"%s\", \"ip\": \"%s\", \"arch\": \"%s\","
+    "{\"order\": \"%d\", \"location\": \"%s\", \"version\": \"%s\", \"hostname\": \"%s\", \"ip\": \"%s\", \"arch\": \"%s\","
     " \"cores\": \"%d\", \"skew\": \"%d\", \"os\": \"%s\", \"osVersion\": \"%s\","
     " \"vendor\": \"%s\", \"vendorVersion\": \"%s\", \"ram\": \"%.2f\","
     " \"disk\": \"%.2f\", \"diskUsePct\": \"%u\", \"rangeCount\": \"%llu\","
     " \"lastContact\": \"%s\", \"lastError\": \"%s\"}";
 
+  const char *master_json = "{\"MasterSummary\": {\"version\": \"%s\"}}\n";
 
   const char *table_json_header = "{\"TableSummary\": {\n  \"tables\": [\n";
   const char *table_json_footer= "\n  ]\n}}\n";
   const char *table_entry_format =
     "{\"id\": \"%s\",\"name\": \"%s\",\"rangecount\": \"%u\", \"cellcount\": \"%llu\", \"filecount\": \"%llu\", \"disk\": \"%llu\","
     " \"memory\": \"%llu\", \"average_key_size\": \"%.1f\", \"average_value_size\": \"%.1f\", \"compression_ratio\": \"%.3f\"}";
+}
+
+void Monitoring::dump_master_summary_json() {
+  String contents = format(master_json, version_string());
+  String tmp_filename = m_monitoring_dir + "/master_summary.tmp";
+  String json_filename = m_monitoring_dir + "/master_summary.json";
+  if (FileUtils::write(tmp_filename, contents) == -1)
+    return;
+  FileUtils::rename(tmp_filename, json_filename);
 }
 
 void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics> &stats) {
@@ -670,6 +681,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
     entry = format(rs_entry_format,
                    i,
                    stats[i].location.c_str(),
+                   stats[i].stats->version.c_str(),
                    stats[i].system_info->net_info.host_name.c_str(),
                    stats[i].system_info->net_info.primary_addr.c_str(),
                    stats[i].system_info->os_info.arch.c_str(),

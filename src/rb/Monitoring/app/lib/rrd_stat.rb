@@ -44,7 +44,7 @@ class RRDStat
 
 
   def get_table_info
-    json = StatsJson.new(:file => 'table_summary.json',:data => '/opt/hypertable/current/run/monitoring/')
+    json = StatsJson.new(:file => 'table_summary.json')
     range_servers = json.parse_stats_file
     range_servers['TableSummary']['tables'].each do |server|
       @server_ip_list[:"#{server['id']}"] = server['name']
@@ -53,7 +53,7 @@ class RRDStat
   end
 
   def get_rs_info
-    json = StatsJson.new(:file => 'rangeserver_summary.json',:data => '/opt/hypertable/current/run/monitoring/')
+    json = StatsJson.new(:file => 'rangeserver_summary.json')
     range_servers = json.parse_stats_file
     range_servers['RangeServerSummary']['servers'].each do |server|
       @server_ip_list[:"#{server['location']}"] = server['hostname']
