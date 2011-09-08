@@ -52,7 +52,10 @@ import org.slf4j.LoggerFactory;
  *   <dd>Specifies the names of the columns to return</dd>
  * 
  *   <dt>cell_limit</dt>
- *   <dd>Specifies max number of cells to return per column family per row</dd>
+ *   <dd>Specifies max number of cells to return</dd>
+ * 
+ *   <dt>cell_limit_per_family</dt>
+ *   <dd>Specifies max number of cells to return per column family</dd>
  * 
  *   <dt>row_regexp</dt>
  *   <dd>Specifies a regexp used to filter by rowkey</dd>
@@ -76,7 +79,8 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
   private static final org.apache.thrift.protocol.TField END_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("end_time", org.apache.thrift.protocol.TType.I64, (short)7);
   private static final org.apache.thrift.protocol.TField COLUMNS_FIELD_DESC = new org.apache.thrift.protocol.TField("columns", org.apache.thrift.protocol.TType.LIST, (short)8);
   private static final org.apache.thrift.protocol.TField KEYS_ONLY_FIELD_DESC = new org.apache.thrift.protocol.TField("keys_only", org.apache.thrift.protocol.TType.BOOL, (short)9);
-  private static final org.apache.thrift.protocol.TField CELL_LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("cell_limit", org.apache.thrift.protocol.TType.I32, (short)10);
+  private static final org.apache.thrift.protocol.TField CELL_LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("cell_limit", org.apache.thrift.protocol.TType.I32, (short)14);
+  private static final org.apache.thrift.protocol.TField CELL_LIMIT_PER_FAMILY_FIELD_DESC = new org.apache.thrift.protocol.TField("cell_limit_per_family", org.apache.thrift.protocol.TType.I32, (short)10);
   private static final org.apache.thrift.protocol.TField ROW_REGEXP_FIELD_DESC = new org.apache.thrift.protocol.TField("row_regexp", org.apache.thrift.protocol.TType.STRING, (short)11);
   private static final org.apache.thrift.protocol.TField VALUE_REGEXP_FIELD_DESC = new org.apache.thrift.protocol.TField("value_regexp", org.apache.thrift.protocol.TType.STRING, (short)12);
   private static final org.apache.thrift.protocol.TField SCAN_AND_FILTER_ROWS_FIELD_DESC = new org.apache.thrift.protocol.TField("scan_and_filter_rows", org.apache.thrift.protocol.TType.BOOL, (short)13);
@@ -91,6 +95,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
   public List<String> columns;
   public boolean keys_only;
   public int cell_limit;
+  public int cell_limit_per_family;
   public String row_regexp;
   public String value_regexp;
   public boolean scan_and_filter_rows;
@@ -106,7 +111,8 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     END_TIME((short)7, "end_time"),
     COLUMNS((short)8, "columns"),
     KEYS_ONLY((short)9, "keys_only"),
-    CELL_LIMIT((short)10, "cell_limit"),
+    CELL_LIMIT((short)14, "cell_limit"),
+    CELL_LIMIT_PER_FAMILY((short)10, "cell_limit_per_family"),
     ROW_REGEXP((short)11, "row_regexp"),
     VALUE_REGEXP((short)12, "value_regexp"),
     SCAN_AND_FILTER_ROWS((short)13, "scan_and_filter_rows");
@@ -142,8 +148,10 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
           return COLUMNS;
         case 9: // KEYS_ONLY
           return KEYS_ONLY;
-        case 10: // CELL_LIMIT
+        case 14: // CELL_LIMIT
           return CELL_LIMIT;
+        case 10: // CELL_LIMIT_PER_FAMILY
+          return CELL_LIMIT_PER_FAMILY;
         case 11: // ROW_REGEXP
           return ROW_REGEXP;
         case 12: // VALUE_REGEXP
@@ -197,8 +205,9 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
   private static final int __END_TIME_ISSET_ID = 4;
   private static final int __KEYS_ONLY_ISSET_ID = 5;
   private static final int __CELL_LIMIT_ISSET_ID = 6;
-  private static final int __SCAN_AND_FILTER_ROWS_ISSET_ID = 7;
-  private BitSet __isset_bit_vector = new BitSet(8);
+  private static final int __CELL_LIMIT_PER_FAMILY_ISSET_ID = 7;
+  private static final int __SCAN_AND_FILTER_ROWS_ISSET_ID = 8;
+  private BitSet __isset_bit_vector = new BitSet(9);
 
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
@@ -226,6 +235,8 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     tmpMap.put(_Fields.CELL_LIMIT, new org.apache.thrift.meta_data.FieldMetaData("cell_limit", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.CELL_LIMIT_PER_FAMILY, new org.apache.thrift.meta_data.FieldMetaData("cell_limit_per_family", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     tmpMap.put(_Fields.ROW_REGEXP, new org.apache.thrift.meta_data.FieldMetaData("row_regexp", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.VALUE_REGEXP, new org.apache.thrift.meta_data.FieldMetaData("value_regexp", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
@@ -246,6 +257,8 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     this.keys_only = false;
 
     this.cell_limit = 0;
+
+    this.cell_limit_per_family = 0;
 
     this.scan_and_filter_rows = false;
 
@@ -285,6 +298,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     }
     this.keys_only = other.keys_only;
     this.cell_limit = other.cell_limit;
+    this.cell_limit_per_family = other.cell_limit_per_family;
     if (other.isSetRow_regexp()) {
       this.row_regexp = other.row_regexp;
     }
@@ -316,6 +330,8 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     this.keys_only = false;
 
     this.cell_limit = 0;
+
+    this.cell_limit_per_family = 0;
 
     this.row_regexp = null;
     this.value_regexp = null;
@@ -601,6 +617,29 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     __isset_bit_vector.set(__CELL_LIMIT_ISSET_ID, value);
   }
 
+  public int getCell_limit_per_family() {
+    return this.cell_limit_per_family;
+  }
+
+  public ScanSpec setCell_limit_per_family(int cell_limit_per_family) {
+    this.cell_limit_per_family = cell_limit_per_family;
+    setCell_limit_per_familyIsSet(true);
+    return this;
+  }
+
+  public void unsetCell_limit_per_family() {
+    __isset_bit_vector.clear(__CELL_LIMIT_PER_FAMILY_ISSET_ID);
+  }
+
+  /** Returns true if field cell_limit_per_family is set (has been assigned a value) and false otherwise */
+  public boolean isSetCell_limit_per_family() {
+    return __isset_bit_vector.get(__CELL_LIMIT_PER_FAMILY_ISSET_ID);
+  }
+
+  public void setCell_limit_per_familyIsSet(boolean value) {
+    __isset_bit_vector.set(__CELL_LIMIT_PER_FAMILY_ISSET_ID, value);
+  }
+
   public String getRow_regexp() {
     return this.row_regexp;
   }
@@ -754,6 +793,14 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       }
       break;
 
+    case CELL_LIMIT_PER_FAMILY:
+      if (value == null) {
+        unsetCell_limit_per_family();
+      } else {
+        setCell_limit_per_family((Integer)value);
+      }
+      break;
+
     case ROW_REGEXP:
       if (value == null) {
         unsetRow_regexp();
@@ -813,6 +860,9 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     case CELL_LIMIT:
       return new Integer(getCell_limit());
 
+    case CELL_LIMIT_PER_FAMILY:
+      return new Integer(getCell_limit_per_family());
+
     case ROW_REGEXP:
       return getRow_regexp();
 
@@ -853,6 +903,8 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       return isSetKeys_only();
     case CELL_LIMIT:
       return isSetCell_limit();
+    case CELL_LIMIT_PER_FAMILY:
+      return isSetCell_limit_per_family();
     case ROW_REGEXP:
       return isSetRow_regexp();
     case VALUE_REGEXP:
@@ -963,6 +1015,15 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       if (!(this_present_cell_limit && that_present_cell_limit))
         return false;
       if (this.cell_limit != that.cell_limit)
+        return false;
+    }
+
+    boolean this_present_cell_limit_per_family = true && this.isSetCell_limit_per_family();
+    boolean that_present_cell_limit_per_family = true && that.isSetCell_limit_per_family();
+    if (this_present_cell_limit_per_family || that_present_cell_limit_per_family) {
+      if (!(this_present_cell_limit_per_family && that_present_cell_limit_per_family))
+        return false;
+      if (this.cell_limit_per_family != that.cell_limit_per_family)
         return false;
     }
 
@@ -1105,6 +1166,16 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     }
     if (isSetCell_limit()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cell_limit, typedOther.cell_limit);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetCell_limit_per_family()).compareTo(typedOther.isSetCell_limit_per_family());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetCell_limit_per_family()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cell_limit_per_family, typedOther.cell_limit_per_family);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1257,10 +1328,18 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 10: // CELL_LIMIT
+        case 14: // CELL_LIMIT
           if (field.type == org.apache.thrift.protocol.TType.I32) {
             this.cell_limit = iprot.readI32();
             setCell_limitIsSet(true);
+          } else { 
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+          }
+          break;
+        case 10: // CELL_LIMIT_PER_FAMILY
+          if (field.type == org.apache.thrift.protocol.TType.I32) {
+            this.cell_limit_per_family = iprot.readI32();
+            setCell_limit_per_familyIsSet(true);
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -1374,9 +1453,9 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       oprot.writeBool(this.keys_only);
       oprot.writeFieldEnd();
     }
-    if (isSetCell_limit()) {
-      oprot.writeFieldBegin(CELL_LIMIT_FIELD_DESC);
-      oprot.writeI32(this.cell_limit);
+    if (isSetCell_limit_per_family()) {
+      oprot.writeFieldBegin(CELL_LIMIT_PER_FAMILY_FIELD_DESC);
+      oprot.writeI32(this.cell_limit_per_family);
       oprot.writeFieldEnd();
     }
     if (this.row_regexp != null) {
@@ -1396,6 +1475,11 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     if (isSetScan_and_filter_rows()) {
       oprot.writeFieldBegin(SCAN_AND_FILTER_ROWS_FIELD_DESC);
       oprot.writeBool(this.scan_and_filter_rows);
+      oprot.writeFieldEnd();
+    }
+    if (isSetCell_limit()) {
+      oprot.writeFieldBegin(CELL_LIMIT_FIELD_DESC);
+      oprot.writeI32(this.cell_limit);
       oprot.writeFieldEnd();
     }
     oprot.writeFieldStop();
@@ -1476,6 +1560,12 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       if (!first) sb.append(", ");
       sb.append("cell_limit:");
       sb.append(this.cell_limit);
+      first = false;
+    }
+    if (isSetCell_limit_per_family()) {
+      if (!first) sb.append(", ");
+      sb.append("cell_limit_per_family:");
+      sb.append(this.cell_limit_per_family);
       first = false;
     }
     if (isSetRow_regexp()) {

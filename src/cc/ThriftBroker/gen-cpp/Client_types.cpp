@@ -249,8 +249,8 @@ uint32_t CellInterval::write(::apache::thrift::protocol::TProtocol* oprot) const
   return xfer;
 }
 
-const char* ScanSpec::ascii_fingerprint = "05B8915B6E6CD581FE75B14AA5F06EB0";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0x05,0xB8,0x91,0x5B,0x6E,0x6C,0xD5,0x81,0xFE,0x75,0xB1,0x4A,0xA5,0xF0,0x6E,0xB0};
+const char* ScanSpec::ascii_fingerprint = "585F20907E16C294741E3D63B14153DD";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0x58,0x5F,0x20,0x90,0x7E,0x16,0xC2,0x94,0x74,0x1E,0x3D,0x63,0xB1,0x41,0x53,0xDD};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -380,10 +380,18 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
-      case 10:
+      case 14:
         if (ftype == ::apache::thrift::protocol::T_I32) {
           xfer += iprot->readI32(this->cell_limit);
           this->__isset.cell_limit = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 10:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->cell_limit_per_family);
+          this->__isset.cell_limit_per_family = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -496,9 +504,9 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeBool(this->keys_only);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.cell_limit) {
-    xfer += oprot->writeFieldBegin("cell_limit", ::apache::thrift::protocol::T_I32, 10);
-    xfer += oprot->writeI32(this->cell_limit);
+  if (this->__isset.cell_limit_per_family) {
+    xfer += oprot->writeFieldBegin("cell_limit_per_family", ::apache::thrift::protocol::T_I32, 10);
+    xfer += oprot->writeI32(this->cell_limit_per_family);
     xfer += oprot->writeFieldEnd();
   }
   if (this->__isset.row_regexp) {
@@ -514,6 +522,11 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
   if (this->__isset.scan_and_filter_rows) {
     xfer += oprot->writeFieldBegin("scan_and_filter_rows", ::apache::thrift::protocol::T_BOOL, 13);
     xfer += oprot->writeBool(this->scan_and_filter_rows);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.cell_limit) {
+    xfer += oprot->writeFieldBegin("cell_limit", ::apache::thrift::protocol::T_I32, 14);
+    xfer += oprot->writeI32(this->cell_limit);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
