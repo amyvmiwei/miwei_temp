@@ -145,7 +145,7 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
         }
         if (mNamespaceId != 0)
           mClient.close_namespace(mNamespaceId);
-        mClient.close_mutator(mMutator, true);
+        mClient.close_mutator(mMutator);
       }
       catch (Exception e) {
         log.error(e);

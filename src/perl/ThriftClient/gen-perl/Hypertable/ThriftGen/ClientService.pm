@@ -6434,20 +6434,16 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_close_mutator_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_close_mutator_args->mk_accessors( qw( mutator flush ) );
+Hypertable::ThriftGen::ClientService_close_mutator_args->mk_accessors( qw( mutator ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
   $self->{mutator} = undef;
-  $self->{flush} = 1;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{mutator}) {
       $self->{mutator} = $vals->{mutator};
-    }
-    if (defined $vals->{flush}) {
-      $self->{flush} = $vals->{flush};
     }
   }
   return bless ($self, $classname);
@@ -6478,12 +6474,6 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^2$/ && do{      if ($ftype == TType::BOOL) {
-        $xfer += $input->readBool(\$self->{flush});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -6499,11 +6489,6 @@ sub write {
   if (defined $self->{mutator}) {
     $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
     $xfer += $output->writeI64($self->{mutator});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{flush}) {
-    $xfer += $output->writeFieldBegin('flush', TType::BOOL, 2);
-    $xfer += $output->writeBool($self->{flush});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -10844,7 +10829,6 @@ sub open_mutator_async{
 sub close_mutator{
   my $self = shift;
   my $mutator = shift;
-  my $flush = shift;
 
   die 'implement interface';
 }
@@ -11380,8 +11364,7 @@ sub close_mutator{
   my ($self, $request) = @_;
 
   my $mutator = ($request->{'mutator'}) ? $request->{'mutator'} : undef;
-  my $flush = ($request->{'flush'}) ? $request->{'flush'} : undef;
-  return $self->{impl}->close_mutator($mutator, $flush);
+  return $self->{impl}->close_mutator($mutator);
 }
 
 sub close_mutator_async{
@@ -13482,21 +13465,18 @@ sub recv_open_mutator_async{
 sub close_mutator{
   my $self = shift;
   my $mutator = shift;
-  my $flush = shift;
 
-    $self->send_close_mutator($mutator, $flush);
+    $self->send_close_mutator($mutator);
   $self->recv_close_mutator();
 }
 
 sub send_close_mutator{
   my $self = shift;
   my $mutator = shift;
-  my $flush = shift;
 
   $self->{output}->writeMessageBegin('close_mutator', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_close_mutator_args();
   $args->{mutator} = $mutator;
-  $args->{flush} = $flush;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -15396,7 +15376,7 @@ sub process_close_mutator {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_close_mutator_result();
     eval {
-      $self->{handler}->close_mutator($args->mutator, $args->flush);
+      $self->{handler}->close_mutator($args->mutator);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }

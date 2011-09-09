@@ -7809,14 +7809,6 @@ uint32_t ClientService_close_mutator_args::read(::apache::thrift::protocol::TPro
           xfer += iprot->skip(ftype);
         }
         break;
-      case 2:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->flush);
-          this->__isset.flush = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -7835,9 +7827,6 @@ uint32_t ClientService_close_mutator_args::write(::apache::thrift::protocol::TPr
   xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->mutator);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush", ::apache::thrift::protocol::T_BOOL, 2);
-  xfer += oprot->writeBool(this->flush);
-  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -7848,9 +7837,6 @@ uint32_t ClientService_close_mutator_pargs::write(::apache::thrift::protocol::TP
   xfer += oprot->writeStructBegin("ClientService_close_mutator_pargs");
   xfer += oprot->writeFieldBegin("mutator", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->mutator)));
-  xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush", ::apache::thrift::protocol::T_BOOL, 2);
-  xfer += oprot->writeBool((*(this->flush)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -15080,20 +15066,19 @@ MutatorAsync ClientServiceClient::recv_open_mutator_async()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "open_mutator_async failed: unknown result");
 }
 
-void ClientServiceClient::close_mutator(const Mutator mutator, const bool flush)
+void ClientServiceClient::close_mutator(const Mutator mutator)
 {
-  send_close_mutator(mutator, flush);
+  send_close_mutator(mutator);
   recv_close_mutator();
 }
 
-void ClientServiceClient::send_close_mutator(const Mutator mutator, const bool flush)
+void ClientServiceClient::send_close_mutator(const Mutator mutator)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("close_mutator", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_close_mutator_pargs args;
   args.mutator = &mutator;
-  args.flush = &flush;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -18880,7 +18865,7 @@ void ClientServiceProcessor::process_close_mutator(int32_t seqid, ::apache::thri
 
   ClientService_close_mutator_result result;
   try {
-    iface_->close_mutator(args.mutator, args.flush);
+    iface_->close_mutator(args.mutator);
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;

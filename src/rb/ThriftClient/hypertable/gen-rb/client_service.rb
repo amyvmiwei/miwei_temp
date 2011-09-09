@@ -623,13 +623,13 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'open_mutator_async failed: unknown result')
                 end
 
-                def close_mutator(mutator, flush)
-                  send_close_mutator(mutator, flush)
+                def close_mutator(mutator)
+                  send_close_mutator(mutator)
                   recv_close_mutator()
                 end
 
-                def send_close_mutator(mutator, flush)
-                  send_message('close_mutator', Close_mutator_args, :mutator => mutator, :flush => flush)
+                def send_close_mutator(mutator)
+                  send_message('close_mutator', Close_mutator_args, :mutator => mutator)
                 end
 
                 def recv_close_mutator()
@@ -1456,7 +1456,7 @@ require 'client_types'
                   args = read_args(iprot, Close_mutator_args)
                   result = Close_mutator_result.new()
                   begin
-                    @handler.close_mutator(args.mutator, args.flush)
+                    @handler.close_mutator(args.mutator)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -3131,11 +3131,9 @@ require 'client_types'
               class Close_mutator_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 MUTATOR = 1
-                FLUSH = 2
 
                 FIELDS = {
-                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'},
-                  FLUSH => {:type => ::Thrift::Types::BOOL, :name => 'flush', :default => true}
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'}
                 }
 
                 def struct_fields; FIELDS; end

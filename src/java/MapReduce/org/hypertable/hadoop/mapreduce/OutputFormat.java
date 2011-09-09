@@ -112,7 +112,7 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
     @Override
       public void close(TaskAttemptContext ctx) throws IOException {
       try {
-        mClient.close_mutator(mMutator, true);
+        mClient.close_mutator(mMutator);
         mClient.close_namespace(mNamespace);
       }
       catch (Exception e) {

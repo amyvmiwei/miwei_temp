@@ -916,7 +916,7 @@ service ClientService {
    *
    * @param mutator - mutator id to close
    */
-  void close_mutator(1:Mutator mutator, 2:bool flush = 1)
+  void close_mutator(1:Mutator mutator)
       throws (1:ClientException e),
   
   /**

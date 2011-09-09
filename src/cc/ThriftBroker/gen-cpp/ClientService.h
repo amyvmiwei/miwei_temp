@@ -53,7 +53,7 @@ class ClientServiceIf {
   virtual void offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) = 0;
   virtual Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) = 0;
   virtual MutatorAsync open_mutator_async(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags) = 0;
-  virtual void close_mutator(const Mutator mutator, const bool flush) = 0;
+  virtual void close_mutator(const Mutator mutator) = 0;
   virtual void close_mutator_async(const MutatorAsync mutator) = 0;
   virtual void set_cell(const Mutator mutator, const Cell& cell) = 0;
   virtual void set_cell_as_array(const Mutator mutator, const CellAsArray& cell) = 0;
@@ -211,7 +211,7 @@ class ClientServiceNull : virtual public ClientServiceIf {
     MutatorAsync _return = 0;
     return _return;
   }
-  void close_mutator(const Mutator /* mutator */, const bool /* flush */) {
+  void close_mutator(const Mutator /* mutator */) {
     return;
   }
   void close_mutator_async(const MutatorAsync /* mutator */) {
@@ -4564,29 +4564,25 @@ class ClientService_open_mutator_async_presult {
 };
 
 typedef struct _ClientService_close_mutator_args__isset {
-  _ClientService_close_mutator_args__isset() : mutator(false), flush(false) {}
+  _ClientService_close_mutator_args__isset() : mutator(false) {}
   bool mutator;
-  bool flush;
 } _ClientService_close_mutator_args__isset;
 
 class ClientService_close_mutator_args {
  public:
 
-  ClientService_close_mutator_args() : mutator(0), flush(true) {
+  ClientService_close_mutator_args() : mutator(0) {
   }
 
   virtual ~ClientService_close_mutator_args() throw() {}
 
   Mutator mutator;
-  bool flush;
 
   _ClientService_close_mutator_args__isset __isset;
 
   bool operator == (const ClientService_close_mutator_args & rhs) const
   {
     if (!(mutator == rhs.mutator))
-      return false;
-    if (!(flush == rhs.flush))
       return false;
     return true;
   }
@@ -4609,7 +4605,6 @@ class ClientService_close_mutator_pargs {
   virtual ~ClientService_close_mutator_pargs() throw() {}
 
   const Mutator* mutator;
-  const bool* flush;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -7474,8 +7469,8 @@ class ClientServiceClient : virtual public ClientServiceIf {
   MutatorAsync open_mutator_async(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags);
   void send_open_mutator_async(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags);
   MutatorAsync recv_open_mutator_async();
-  void close_mutator(const Mutator mutator, const bool flush);
-  void send_close_mutator(const Mutator mutator, const bool flush);
+  void close_mutator(const Mutator mutator);
+  void send_close_mutator(const Mutator mutator);
   void recv_close_mutator();
   void close_mutator_async(const MutatorAsync mutator);
   void send_close_mutator_async(const MutatorAsync mutator);
@@ -8109,10 +8104,10 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  void close_mutator(const Mutator mutator, const bool flush) {
+  void close_mutator(const Mutator mutator) {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
-      ifaces_[i]->close_mutator(mutator, flush);
+      ifaces_[i]->close_mutator(mutator);
     }
   }
 

@@ -17,7 +17,7 @@ $mutator = $client->open_mutator($namespace, "thrift_test", 0, 0);
 $key = new Hypertable_ThriftGen_Key(array('row'=> 'php-k1', 'column_family'=> 'col'));
 $cell = new Hypertable_ThriftGen_Cell(array('key' => $key, 'value'=> 'php-v1'));
 $client->set_cell($mutator, $cell);
-$client->close_mutator($mutator, true);
+$client->close_mutator($mutator);
 
 echo "shared mutator examples\n";
 $mutate_spec = new Hypertable_ThriftGen_MutateSpec(array('appname'=>"test-php", 

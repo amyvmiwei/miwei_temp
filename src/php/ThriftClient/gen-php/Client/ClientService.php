@@ -48,7 +48,7 @@ interface ClientServiceIf {
   public function offer_cell_as_array($ns, $table_name, $mutate_spec, $cell);
   public function open_mutator($ns, $table_name, $flags, $flush_interval);
   public function open_mutator_async($ns, $table_name, $future, $flags);
-  public function close_mutator($mutator, $flush);
+  public function close_mutator($mutator);
   public function close_mutator_async($mutator);
   public function set_cell($mutator, $cell);
   public function set_cell_as_array($mutator, $cell);
@@ -2195,17 +2195,16 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("open_mutator_async failed: unknown result");
   }
 
-  public function close_mutator($mutator, $flush)
+  public function close_mutator($mutator)
   {
-    $this->send_close_mutator($mutator, $flush);
+    $this->send_close_mutator($mutator);
     $this->recv_close_mutator();
   }
 
-  public function send_close_mutator($mutator, $flush)
+  public function send_close_mutator($mutator)
   {
     $args = new Hypertable_ThriftGen_ClientService_close_mutator_args();
     $args->mutator = $mutator;
-    $args->flush = $flush;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -11133,7 +11132,6 @@ class Hypertable_ThriftGen_ClientService_close_mutator_args {
   static $_TSPEC;
 
   public $mutator = null;
-  public $flush = true;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -11142,18 +11140,11 @@ class Hypertable_ThriftGen_ClientService_close_mutator_args {
           'var' => 'mutator',
           'type' => TType::I64,
           ),
-        2 => array(
-          'var' => 'flush',
-          'type' => TType::BOOL,
-          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['mutator'])) {
         $this->mutator = $vals['mutator'];
-      }
-      if (isset($vals['flush'])) {
-        $this->flush = $vals['flush'];
       }
     }
   }
@@ -11184,13 +11175,6 @@ class Hypertable_ThriftGen_ClientService_close_mutator_args {
             $xfer += $input->skip($ftype);
           }
           break;
-        case 2:
-          if ($ftype == TType::BOOL) {
-            $xfer += $input->readBool($this->flush);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -11207,11 +11191,6 @@ class Hypertable_ThriftGen_ClientService_close_mutator_args {
     if ($this->mutator !== null) {
       $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
       $xfer += $output->writeI64($this->mutator);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->flush !== null) {
-      $xfer += $output->writeFieldBegin('flush', TType::BOOL, 2);
-      $xfer += $output->writeBool($this->flush);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

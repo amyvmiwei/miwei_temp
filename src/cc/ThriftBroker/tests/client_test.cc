@@ -216,8 +216,8 @@ struct BasicTest : HqlServiceIf {
     return client->open_mutator(ns, table, flags, flush_interval);
   }
 
-  void close_mutator(const Mutator mutator, const bool flush) {
-    client->close_mutator(mutator, flush);
+  void close_mutator(const Mutator mutator) {
+    client->close_mutator(mutator);
   }
 
   MutatorAsync open_mutator_async(const Namespace ns, const std::string& table,
@@ -480,7 +480,7 @@ struct BasicTest : HqlServiceIf {
     cells.push_back(make_cell("k3", "col", 0, "", "2008-11-11 22:22:22", 0,
                               ThriftGen::KeyFlag::DELETE_ROW));
     set_cells(m, cells);
-    close_mutator(m, true);
+    close_mutator(m);
     close_namespace(ns);
   }
 

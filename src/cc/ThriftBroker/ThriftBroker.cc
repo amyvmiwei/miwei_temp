@@ -1067,12 +1067,11 @@ public:
   }
 
 
-  virtual void close_mutator(const Mutator mutator, const bool flush) {
+  virtual void close_mutator(const Mutator mutator) {
+
     LOG_API_START("mutator="<< mutator);
     try {
-      if (flush)
-        flush_mutator(mutator);
-
+      flush_mutator(mutator);
       remove_mutator(mutator);
     } RETHROW(" mutator=" << mutator)
     LOG_API_FINISH;
@@ -1082,6 +1081,7 @@ public:
 
     LOG_API_START("mutator="<< mutator);
     try {
+      flush_mutator_async(mutator);
       remove_mutator_async(mutator);
     } RETHROW(" mutator" << mutator)
     LOG_API_FINISH;

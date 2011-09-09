@@ -462,9 +462,8 @@ public class ClientService {
      * @param mutator - mutator id to close
      * 
      * @param mutator
-     * @param flush
      */
-    public void close_mutator(long mutator, boolean flush) throws ClientException, org.apache.thrift.TException;
+    public void close_mutator(long mutator) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Close an asynchronous table mutator
@@ -830,7 +829,7 @@ public class ClientService {
 
     public void open_mutator_async(long ns, String table_name, long future, int flags, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.open_mutator_async_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void close_mutator(long mutator, boolean flush, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_mutator_call> resultHandler) throws org.apache.thrift.TException;
+    public void close_mutator(long mutator, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_mutator_call> resultHandler) throws org.apache.thrift.TException;
 
     public void close_mutator_async(long mutator, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_mutator_async_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -2444,18 +2443,17 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "open_mutator_async failed: unknown result");
     }
 
-    public void close_mutator(long mutator, boolean flush) throws ClientException, org.apache.thrift.TException
+    public void close_mutator(long mutator) throws ClientException, org.apache.thrift.TException
     {
-      send_close_mutator(mutator, flush);
+      send_close_mutator(mutator);
       recv_close_mutator();
     }
 
-    public void send_close_mutator(long mutator, boolean flush) throws org.apache.thrift.TException
+    public void send_close_mutator(long mutator) throws org.apache.thrift.TException
     {
       oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("close_mutator", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
       close_mutator_args args = new close_mutator_args();
       args.setMutator(mutator);
-      args.setFlush(flush);
       args.write(oprot_);
       oprot_.writeMessageEnd();
       oprot_.getTransport().flush();
@@ -4829,27 +4827,24 @@ public class ClientService {
       }
     }
 
-    public void close_mutator(long mutator, boolean flush, org.apache.thrift.async.AsyncMethodCallback<close_mutator_call> resultHandler) throws org.apache.thrift.TException {
+    public void close_mutator(long mutator, org.apache.thrift.async.AsyncMethodCallback<close_mutator_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      close_mutator_call method_call = new close_mutator_call(mutator, flush, resultHandler, this, protocolFactory, transport);
+      close_mutator_call method_call = new close_mutator_call(mutator, resultHandler, this, protocolFactory, transport);
       this.currentMethod = method_call;
       manager.call(method_call);
     }
 
     public static class close_mutator_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long mutator;
-      private boolean flush;
-      public close_mutator_call(long mutator, boolean flush, org.apache.thrift.async.AsyncMethodCallback<close_mutator_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public close_mutator_call(long mutator, org.apache.thrift.async.AsyncMethodCallback<close_mutator_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.mutator = mutator;
-        this.flush = flush;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("close_mutator", org.apache.thrift.protocol.TMessageType.CALL, 0));
         close_mutator_args args = new close_mutator_args();
         args.setMutator(mutator);
-        args.setFlush(flush);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -7330,7 +7325,7 @@ public class ClientService {
         iprot.readMessageEnd();
         close_mutator_result result = new close_mutator_result();
         try {
-          iface_.close_mutator(args.mutator, args.flush);
+          iface_.close_mutator(args.mutator);
         } catch (ClientException e) {
           result.e = e;
         } catch (Throwable th) {
@@ -38104,15 +38099,12 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("close_mutator_args");
 
     private static final org.apache.thrift.protocol.TField MUTATOR_FIELD_DESC = new org.apache.thrift.protocol.TField("mutator", org.apache.thrift.protocol.TType.I64, (short)1);
-    private static final org.apache.thrift.protocol.TField FLUSH_FIELD_DESC = new org.apache.thrift.protocol.TField("flush", org.apache.thrift.protocol.TType.BOOL, (short)2);
 
     public long mutator;
-    public boolean flush;
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      MUTATOR((short)1, "mutator"),
-      FLUSH((short)2, "flush");
+      MUTATOR((short)1, "mutator");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -38129,8 +38121,6 @@ public class ClientService {
         switch(fieldId) {
           case 1: // MUTATOR
             return MUTATOR;
-          case 2: // FLUSH
-            return FLUSH;
           default:
             return null;
         }
@@ -38172,34 +38162,26 @@ public class ClientService {
 
     // isset id assignments
     private static final int __MUTATOR_ISSET_ID = 0;
-    private static final int __FLUSH_ISSET_ID = 1;
-    private BitSet __isset_bit_vector = new BitSet(2);
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.MUTATOR, new org.apache.thrift.meta_data.FieldMetaData("mutator", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Mutator")));
-      tmpMap.put(_Fields.FLUSH, new org.apache.thrift.meta_data.FieldMetaData("flush", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(close_mutator_args.class, metaDataMap);
     }
 
     public close_mutator_args() {
-      this.flush = true;
-
     }
 
     public close_mutator_args(
-      long mutator,
-      boolean flush)
+      long mutator)
     {
       this();
       this.mutator = mutator;
       setMutatorIsSet(true);
-      this.flush = flush;
-      setFlushIsSet(true);
     }
 
     /**
@@ -38209,7 +38191,6 @@ public class ClientService {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.mutator = other.mutator;
-      this.flush = other.flush;
     }
 
     public close_mutator_args deepCopy() {
@@ -38220,8 +38201,6 @@ public class ClientService {
     public void clear() {
       setMutatorIsSet(false);
       this.mutator = 0;
-      this.flush = true;
-
     }
 
     public long getMutator() {
@@ -38247,29 +38226,6 @@ public class ClientService {
       __isset_bit_vector.set(__MUTATOR_ISSET_ID, value);
     }
 
-    public boolean isFlush() {
-      return this.flush;
-    }
-
-    public close_mutator_args setFlush(boolean flush) {
-      this.flush = flush;
-      setFlushIsSet(true);
-      return this;
-    }
-
-    public void unsetFlush() {
-      __isset_bit_vector.clear(__FLUSH_ISSET_ID);
-    }
-
-    /** Returns true if field flush is set (has been assigned a value) and false otherwise */
-    public boolean isSetFlush() {
-      return __isset_bit_vector.get(__FLUSH_ISSET_ID);
-    }
-
-    public void setFlushIsSet(boolean value) {
-      __isset_bit_vector.set(__FLUSH_ISSET_ID, value);
-    }
-
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case MUTATOR:
@@ -38280,14 +38236,6 @@ public class ClientService {
         }
         break;
 
-      case FLUSH:
-        if (value == null) {
-          unsetFlush();
-        } else {
-          setFlush((Boolean)value);
-        }
-        break;
-
       }
     }
 
@@ -38295,9 +38243,6 @@ public class ClientService {
       switch (field) {
       case MUTATOR:
         return new Long(getMutator());
-
-      case FLUSH:
-        return new Boolean(isFlush());
 
       }
       throw new IllegalStateException();
@@ -38312,8 +38257,6 @@ public class ClientService {
       switch (field) {
       case MUTATOR:
         return isSetMutator();
-      case FLUSH:
-        return isSetFlush();
       }
       throw new IllegalStateException();
     }
@@ -38337,15 +38280,6 @@ public class ClientService {
         if (!(this_present_mutator && that_present_mutator))
           return false;
         if (this.mutator != that.mutator)
-          return false;
-      }
-
-      boolean this_present_flush = true;
-      boolean that_present_flush = true;
-      if (this_present_flush || that_present_flush) {
-        if (!(this_present_flush && that_present_flush))
-          return false;
-        if (this.flush != that.flush)
           return false;
       }
 
@@ -38375,16 +38309,6 @@ public class ClientService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetFlush()).compareTo(typedOther.isSetFlush());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetFlush()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flush, typedOther.flush);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       return 0;
     }
 
@@ -38410,14 +38334,6 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 2: // FLUSH
-            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
-              this.flush = iprot.readBool();
-              setFlushIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -38436,9 +38352,6 @@ public class ClientService {
       oprot.writeFieldBegin(MUTATOR_FIELD_DESC);
       oprot.writeI64(this.mutator);
       oprot.writeFieldEnd();
-      oprot.writeFieldBegin(FLUSH_FIELD_DESC);
-      oprot.writeBool(this.flush);
-      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -38450,10 +38363,6 @@ public class ClientService {
 
       sb.append("mutator:");
       sb.append(this.mutator);
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("flush:");
-      sb.append(this.flush);
       first = false;
       sb.append(")");
       return sb.toString();
