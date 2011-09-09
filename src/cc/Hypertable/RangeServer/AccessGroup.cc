@@ -37,7 +37,7 @@
 #include "CellStoreV5.h"
 #include "Global.h"
 #include "MaintenanceFlag.h"
-#include "MergeScanner.h"
+#include "MergeScannerAccessGroup.h"
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
 #include "Config.h"
@@ -161,7 +161,9 @@ void AccessGroup::add(const Key &key, const ByteString value) {
 
 
 CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
-  MergeScanner *scanner = new MergeScanner(scan_context, true, true);
+  bool all = scan_context->spec ? scan_context->spec->return_deletes : false;
+  MergeScanner *scanner = new MergeScannerAccessGroup(scan_context, all);
+
   CellStoreReleaseCallback callback(this);
 
   {
@@ -489,7 +491,7 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore) {
 
 void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp) {
   ScanContextPtr scan_context = new ScanContext(m_schema);
-  MergeScannerPtr mscanner = new MergeScanner(scan_context, false, true);
+  MergeScannerPtr mscanner = new MergeScannerAccessGroup(scan_context);
   ByteString value;
   Key key;
 
@@ -625,13 +627,13 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       max_num_entries = m_immutable_cache ? m_immutable_cache->size() : 0;
 
       if (m_in_memory) {
-        mscanner = new MergeScanner(scan_context, false, true);
+        mscanner = new MergeScannerAccessGroup(scan_context);
         scanner = mscanner;
         mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));
         filtered_cache = new CellCache();
       }
       else if (merging) {
-        mscanner = new MergeScanner(scan_context, true, true);
+        mscanner = new MergeScannerAccessGroup(scan_context, true);
         scanner = mscanner;
         max_num_entries = 0;
         for (size_t i=merge_offset; i<merge_offset+merge_length; i++) {
@@ -643,7 +645,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
       }
       else if (major || gc) {
-        mscanner = new MergeScanner(scan_context, false, true);
+        mscanner = new MergeScannerAccessGroup(scan_context);
         scanner = mscanner;
         if (m_immutable_cache)
           mscanner->add_scanner(m_immutable_cache->create_scanner(scan_context));

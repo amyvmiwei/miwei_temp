@@ -43,7 +43,7 @@ extern "C" {
 
 #include "CellStoreFactory.h"
 #include "Global.h"
-#include "MergeScanner.h"
+#include "MergeScannerRange.h"
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
 #include "Range.h"
@@ -359,8 +359,7 @@ void Range::add(const Key &key, const ByteString value) {
 
 
 CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
-  bool return_deletes = scan_ctx->spec ? scan_ctx->spec->return_deletes : false;
-  MergeScanner *mscanner = new MergeScanner(scan_ctx, return_deletes);
+  MergeScanner *mscanner = new MergeScannerRange(scan_ctx);
   AccessGroupVector  ag_vector(0);
 
   {
