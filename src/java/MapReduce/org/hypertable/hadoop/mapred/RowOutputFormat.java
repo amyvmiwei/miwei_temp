@@ -123,7 +123,7 @@ public class RowOutputFormat
           mClient.set_cells_serialized(mMutator, mSerializedCellsWriter.buffer(), false);
         }
 
-        mClient.close_mutator(mMutator, true);
+        mClient.close_mutator(mMutator);
         mClient.close_namespace(mNamespace);
       }
       catch (Exception e) {

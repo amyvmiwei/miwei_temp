@@ -217,7 +217,7 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("open_mutator_async\n");
   }
 
-  void close_mutator(const Mutator mutator, const bool flush) {
+  void close_mutator(const Mutator mutator) {
     // Your implementation goes here
     printf("close_mutator\n");
   }

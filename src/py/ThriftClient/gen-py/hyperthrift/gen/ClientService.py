@@ -529,7 +529,7 @@ class Iface:
     """
     pass
 
-  def close_mutator(self, mutator, flush):
+  def close_mutator(self, mutator):
     """
     Close a table mutator
 
@@ -537,7 +537,6 @@ class Iface:
 
     Parameters:
      - mutator
-     - flush
     """
     pass
 
@@ -2385,7 +2384,7 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "open_mutator_async failed: unknown result");
 
-  def close_mutator(self, mutator, flush):
+  def close_mutator(self, mutator):
     """
     Close a table mutator
 
@@ -2393,16 +2392,14 @@ class Client(Iface):
 
     Parameters:
      - mutator
-     - flush
     """
-    self.send_close_mutator(mutator, flush)
+    self.send_close_mutator(mutator)
     self.recv_close_mutator()
 
-  def send_close_mutator(self, mutator, flush):
+  def send_close_mutator(self, mutator):
     self._oprot.writeMessageBegin('close_mutator', TMessageType.CALL, self._seqid)
     args = close_mutator_args()
     args.mutator = mutator
-    args.flush = flush
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -4004,7 +4001,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = close_mutator_result()
     try:
-      self._handler.close_mutator(args.mutator, args.flush)
+      self._handler.close_mutator(args.mutator)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("close_mutator", TMessageType.REPLY, seqid)
@@ -9958,18 +9955,15 @@ class close_mutator_args:
   """
   Attributes:
    - mutator
-   - flush
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'mutator', None, None, ), # 1
-    (2, TType.BOOL, 'flush', None, True, ), # 2
   )
 
-  def __init__(self, mutator=None, flush=thrift_spec[2][4],):
+  def __init__(self, mutator=None,):
     self.mutator = mutator
-    self.flush = flush
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -9985,11 +9979,6 @@ class close_mutator_args:
           self.mutator = iprot.readI64();
         else:
           iprot.skip(ftype)
-      elif fid == 2:
-        if ftype == TType.BOOL:
-          self.flush = iprot.readBool();
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -10003,10 +9992,6 @@ class close_mutator_args:
     if self.mutator != None:
       oprot.writeFieldBegin('mutator', TType.I64, 1)
       oprot.writeI64(self.mutator)
-      oprot.writeFieldEnd()
-    if self.flush != None:
-      oprot.writeFieldBegin('flush', TType.BOOL, 2)
-      oprot.writeBool(self.flush)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

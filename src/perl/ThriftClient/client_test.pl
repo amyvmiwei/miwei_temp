@@ -17,6 +17,7 @@ my $cell = new Hypertable::ThriftGen::Cell({key => $key,
                                             value => 'perl-v1'});
 $client->set_cell($mutator, $cell);
 $client->flush_mutator($mutator);
+$client->close_mutator($mutator);
 
 print "shared mutator examples\n";
 my $mutate_spec = new Hypertable::ThriftGen::MutateSpec({appname => "test-perl",

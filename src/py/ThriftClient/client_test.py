@@ -22,6 +22,7 @@ try:
   mutator = client.open_mutator(namespace, "thrift_test", 0, 0);
   client.set_cell(mutator, Cell(Key("py-k1", "col", None), "py-v1"))
   client.flush_mutator(mutator);
+  client.close_mutator(mutator);
 
   print "shared mutator examples";
   mutate_spec = MutateSpec("test_py", 1000, 0);

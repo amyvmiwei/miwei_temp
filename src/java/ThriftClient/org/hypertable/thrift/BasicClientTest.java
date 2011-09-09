@@ -54,7 +54,7 @@ public class BasicClientTest {
         client.set_cell(mutator, cell);
       }
       finally {
-        client.close_mutator(mutator, true);
+        client.close_mutator(mutator);
       }
 
       // shared mutator example
@@ -246,7 +246,7 @@ public class BasicClientTest {
         cell.setValue( ByteBuffer.wrap(str.getBytes()) );
         client.set_cell(mutator, cell);
 
-        client.close_mutator(mutator, true);
+        client.close_mutator(mutator);
 
         HqlResult result = client.hql_query(ns, "select * from java_thrift_test");
         List<Cell> cells = result.cells;
