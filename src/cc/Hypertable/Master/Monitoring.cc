@@ -644,6 +644,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
   String error_str;
   String contact_time;
   uint64_t range_count;
+  const char *version_string = "";
 
   for (size_t i=0; i<stats.size(); i++) {
     if (stats[i].stats) {
@@ -664,6 +665,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
       contact_time = buf;
       boost::trim(contact_time);
       range_count = stats[i].stats->range_count;
+      version_string = stats[i].stats->version.c_str();
     }
     else {
       ram = 0.0;
@@ -681,7 +683,7 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
     entry = format(rs_entry_format,
                    i,
                    stats[i].location.c_str(),
-                   stats[i].stats->version.c_str(),
+                   version_string,
                    stats[i].system_info->net_info.host_name.c_str(),
                    stats[i].system_info->net_info.primary_addr.c_str(),
                    stats[i].system_info->os_info.arch.c_str(),
