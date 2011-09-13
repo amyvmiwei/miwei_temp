@@ -32,6 +32,7 @@ class ClientServiceIf {
   virtual Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) = 0;
   virtual ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec) = 0;
   virtual void close_scanner(const Scanner scanner) = 0;
+  virtual void cancel_scanner_async(const ScannerAsync scanner) = 0;
   virtual void close_scanner_async(const ScannerAsync scanner) = 0;
   virtual void next_cells(std::vector<Cell> & _return, const Scanner scanner) = 0;
   virtual void next_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
@@ -54,6 +55,7 @@ class ClientServiceIf {
   virtual Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) = 0;
   virtual MutatorAsync open_mutator_async(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags) = 0;
   virtual void close_mutator(const Mutator mutator) = 0;
+  virtual void cancel_mutator_async(const MutatorAsync mutator) = 0;
   virtual void close_mutator_async(const MutatorAsync mutator) = 0;
   virtual void set_cell(const Mutator mutator, const Cell& cell) = 0;
   virtual void set_cell_as_array(const Mutator mutator, const CellAsArray& cell) = 0;
@@ -146,6 +148,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void close_scanner(const Scanner /* scanner */) {
     return;
   }
+  void cancel_scanner_async(const ScannerAsync /* scanner */) {
+    return;
+  }
   void close_scanner_async(const ScannerAsync /* scanner */) {
     return;
   }
@@ -212,6 +217,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return _return;
   }
   void close_mutator(const Mutator /* mutator */) {
+    return;
+  }
+  void cancel_mutator_async(const MutatorAsync /* mutator */) {
     return;
   }
   void close_mutator_async(const MutatorAsync /* mutator */) {
@@ -2199,6 +2207,106 @@ class ClientService_close_scanner_presult {
   ClientException e;
 
   _ClientService_close_scanner_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_cancel_scanner_async_args__isset {
+  _ClientService_cancel_scanner_async_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_cancel_scanner_async_args__isset;
+
+class ClientService_cancel_scanner_async_args {
+ public:
+
+  ClientService_cancel_scanner_async_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_cancel_scanner_async_args() throw() {}
+
+  ScannerAsync scanner;
+
+  _ClientService_cancel_scanner_async_args__isset __isset;
+
+  bool operator == (const ClientService_cancel_scanner_async_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_cancel_scanner_async_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_cancel_scanner_async_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_cancel_scanner_async_pargs {
+ public:
+
+
+  virtual ~ClientService_cancel_scanner_async_pargs() throw() {}
+
+  const ScannerAsync* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_cancel_scanner_async_result__isset {
+  _ClientService_cancel_scanner_async_result__isset() : e(false) {}
+  bool e;
+} _ClientService_cancel_scanner_async_result__isset;
+
+class ClientService_cancel_scanner_async_result {
+ public:
+
+  ClientService_cancel_scanner_async_result() {
+  }
+
+  virtual ~ClientService_cancel_scanner_async_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_cancel_scanner_async_result__isset __isset;
+
+  bool operator == (const ClientService_cancel_scanner_async_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_cancel_scanner_async_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_cancel_scanner_async_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_cancel_scanner_async_presult__isset {
+  _ClientService_cancel_scanner_async_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_cancel_scanner_async_presult__isset;
+
+class ClientService_cancel_scanner_async_presult {
+ public:
+
+
+  virtual ~ClientService_cancel_scanner_async_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_cancel_scanner_async_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -4658,6 +4766,106 @@ class ClientService_close_mutator_presult {
   ClientException e;
 
   _ClientService_close_mutator_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_cancel_mutator_async_args__isset {
+  _ClientService_cancel_mutator_async_args__isset() : mutator(false) {}
+  bool mutator;
+} _ClientService_cancel_mutator_async_args__isset;
+
+class ClientService_cancel_mutator_async_args {
+ public:
+
+  ClientService_cancel_mutator_async_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_cancel_mutator_async_args() throw() {}
+
+  MutatorAsync mutator;
+
+  _ClientService_cancel_mutator_async_args__isset __isset;
+
+  bool operator == (const ClientService_cancel_mutator_async_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_cancel_mutator_async_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_cancel_mutator_async_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_cancel_mutator_async_pargs {
+ public:
+
+
+  virtual ~ClientService_cancel_mutator_async_pargs() throw() {}
+
+  const MutatorAsync* mutator;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_cancel_mutator_async_result__isset {
+  _ClientService_cancel_mutator_async_result__isset() : e(false) {}
+  bool e;
+} _ClientService_cancel_mutator_async_result__isset;
+
+class ClientService_cancel_mutator_async_result {
+ public:
+
+  ClientService_cancel_mutator_async_result() {
+  }
+
+  virtual ~ClientService_cancel_mutator_async_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_cancel_mutator_async_result__isset __isset;
+
+  bool operator == (const ClientService_cancel_mutator_async_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_cancel_mutator_async_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_cancel_mutator_async_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_cancel_mutator_async_presult__isset {
+  _ClientService_cancel_mutator_async_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_cancel_mutator_async_presult__isset;
+
+class ClientService_cancel_mutator_async_presult {
+ public:
+
+
+  virtual ~ClientService_cancel_mutator_async_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_cancel_mutator_async_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -7406,6 +7614,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void close_scanner(const Scanner scanner);
   void send_close_scanner(const Scanner scanner);
   void recv_close_scanner();
+  void cancel_scanner_async(const ScannerAsync scanner);
+  void send_cancel_scanner_async(const ScannerAsync scanner);
+  void recv_cancel_scanner_async();
   void close_scanner_async(const ScannerAsync scanner);
   void send_close_scanner_async(const ScannerAsync scanner);
   void recv_close_scanner_async();
@@ -7472,6 +7683,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void close_mutator(const Mutator mutator);
   void send_close_mutator(const Mutator mutator);
   void recv_close_mutator();
+  void cancel_mutator_async(const MutatorAsync mutator);
+  void send_cancel_mutator_async(const MutatorAsync mutator);
+  void recv_cancel_mutator_async();
   void close_mutator_async(const MutatorAsync mutator);
   void send_close_mutator_async(const MutatorAsync mutator);
   void recv_close_mutator_async();
@@ -7578,6 +7792,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_open_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_cancel_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_next_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_next_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -7600,6 +7815,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_open_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_mutator_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_cancel_mutator_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_mutator_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -7646,6 +7862,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["open_scanner"] = &ClientServiceProcessor::process_open_scanner;
     processMap_["open_scanner_async"] = &ClientServiceProcessor::process_open_scanner_async;
     processMap_["close_scanner"] = &ClientServiceProcessor::process_close_scanner;
+    processMap_["cancel_scanner_async"] = &ClientServiceProcessor::process_cancel_scanner_async;
     processMap_["close_scanner_async"] = &ClientServiceProcessor::process_close_scanner_async;
     processMap_["next_cells"] = &ClientServiceProcessor::process_next_cells;
     processMap_["next_cells_as_arrays"] = &ClientServiceProcessor::process_next_cells_as_arrays;
@@ -7668,6 +7885,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["open_mutator"] = &ClientServiceProcessor::process_open_mutator;
     processMap_["open_mutator_async"] = &ClientServiceProcessor::process_open_mutator_async;
     processMap_["close_mutator"] = &ClientServiceProcessor::process_close_mutator;
+    processMap_["cancel_mutator_async"] = &ClientServiceProcessor::process_cancel_mutator_async;
     processMap_["close_mutator_async"] = &ClientServiceProcessor::process_close_mutator_async;
     processMap_["set_cell"] = &ClientServiceProcessor::process_set_cell;
     processMap_["set_cell_as_array"] = &ClientServiceProcessor::process_set_cell_as_array;
@@ -7881,6 +8099,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       ifaces_[i]->close_scanner(scanner);
+    }
+  }
+
+  void cancel_scanner_async(const ScannerAsync scanner) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->cancel_scanner_async(scanner);
     }
   }
 
@@ -8108,6 +8333,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     uint32_t sz = ifaces_.size();
     for (uint32_t i = 0; i < sz; ++i) {
       ifaces_[i]->close_mutator(mutator);
+    }
+  }
+
+  void cancel_mutator_async(const MutatorAsync mutator) {
+    uint32_t sz = ifaces_.size();
+    for (uint32_t i = 0; i < sz; ++i) {
+      ifaces_[i]->cancel_mutator_async(mutator);
     }
   }
 

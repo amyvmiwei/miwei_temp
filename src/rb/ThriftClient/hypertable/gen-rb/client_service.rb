@@ -294,6 +294,21 @@ require 'client_types'
                   return
                 end
 
+                def cancel_scanner_async(scanner)
+                  send_cancel_scanner_async(scanner)
+                  recv_cancel_scanner_async()
+                end
+
+                def send_cancel_scanner_async(scanner)
+                  send_message('cancel_scanner_async', Cancel_scanner_async_args, :scanner => scanner)
+                end
+
+                def recv_cancel_scanner_async()
+                  result = receive_message(Cancel_scanner_async_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def close_scanner_async(scanner)
                   send_close_scanner_async(scanner)
                   recv_close_scanner_async()
@@ -634,6 +649,21 @@ require 'client_types'
 
                 def recv_close_mutator()
                   result = receive_message(Close_mutator_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def cancel_mutator_async(mutator)
+                  send_cancel_mutator_async(mutator)
+                  recv_cancel_mutator_async()
+                end
+
+                def send_cancel_mutator_async(mutator)
+                  send_message('cancel_mutator_async', Cancel_mutator_async_args, :mutator => mutator)
+                end
+
+                def recv_cancel_mutator_async()
+                  result = receive_message(Cancel_mutator_async_result)
                   raise result.e unless result.e.nil?
                   return
                 end
@@ -1225,6 +1255,17 @@ require 'client_types'
                   write_result(result, oprot, 'close_scanner', seqid)
                 end
 
+                def process_cancel_scanner_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Cancel_scanner_async_args)
+                  result = Cancel_scanner_async_result.new()
+                  begin
+                    @handler.cancel_scanner_async(args.scanner)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'cancel_scanner_async', seqid)
+                end
+
                 def process_close_scanner_async(seqid, iprot, oprot)
                   args = read_args(iprot, Close_scanner_async_args)
                   result = Close_scanner_async_result.new()
@@ -1461,6 +1502,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'close_mutator', seqid)
+                end
+
+                def process_cancel_mutator_async(seqid, iprot, oprot)
+                  args = read_args(iprot, Cancel_mutator_async_args)
+                  result = Cancel_mutator_async_result.new()
+                  begin
+                    @handler.cancel_mutator_async(args.mutator)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'cancel_mutator_async', seqid)
                 end
 
                 def process_close_mutator_async(seqid, iprot, oprot)
@@ -2358,6 +2410,38 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
+              class Cancel_scanner_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SCANNER = 1
+
+                FIELDS = {
+                  SCANNER => {:type => ::Thrift::Types::I64, :name => 'scanner'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Cancel_scanner_async_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
               class Close_scanner_async_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 SCANNER = 1
@@ -3145,6 +3229,38 @@ require 'client_types'
               end
 
               class Close_mutator_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Cancel_mutator_async_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                MUTATOR = 1
+
+                FIELDS = {
+                  MUTATOR => {:type => ::Thrift::Types::I64, :name => 'mutator'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Cancel_mutator_async_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 

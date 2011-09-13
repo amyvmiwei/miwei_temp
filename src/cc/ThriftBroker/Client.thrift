@@ -710,6 +710,13 @@ service ClientService {
   void close_scanner(1:Scanner scanner) throws (1:ClientException e),
   
   /**
+   * Cancel a table scanner
+   *
+   * @param scanner - scanner id to close
+   */
+  void cancel_scanner_async(1:ScannerAsync scanner) throws (1:ClientException e),
+
+  /**
    * Close a table scanner
    *
    * @param scanner - scanner id to close
@@ -919,6 +926,14 @@ service ClientService {
   void close_mutator(1:Mutator mutator)
       throws (1:ClientException e),
   
+  /**
+   * Cancel an asynchronous table mutator
+   *
+   * @param mutator -  mutator id to cancel 
+   */
+  void cancel_mutator_async(1:MutatorAsync mutator) 
+      throws (1:ClientException e),
+
   /**
    * Close an asynchronous table mutator
    *

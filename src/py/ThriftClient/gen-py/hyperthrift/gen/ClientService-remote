@@ -39,6 +39,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  Scanner open_scanner(Namespace ns, string table_name, ScanSpec scan_spec)'
   print '  ScannerAsync open_scanner_async(Namespace ns, string table_name, Future future, ScanSpec scan_spec)'
   print '  void close_scanner(Scanner scanner)'
+  print '  void cancel_scanner_async(ScannerAsync scanner)'
   print '  void close_scanner_async(ScannerAsync scanner)'
   print '   next_cells(Scanner scanner)'
   print '   next_cells_as_arrays(Scanner scanner)'
@@ -61,6 +62,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  Mutator open_mutator(Namespace ns, string table_name, i32 flags, i32 flush_interval)'
   print '  MutatorAsync open_mutator_async(Namespace ns, string table_name, Future future, i32 flags)'
   print '  void close_mutator(Mutator mutator)'
+  print '  void cancel_mutator_async(MutatorAsync mutator)'
   print '  void close_mutator_async(MutatorAsync mutator)'
   print '  void set_cell(Mutator mutator, Cell cell)'
   print '  void set_cell_as_array(Mutator mutator, CellAsArray cell)'
@@ -244,6 +246,12 @@ elif cmd == 'close_scanner':
     sys.exit(1)
   pp.pprint(client.close_scanner(eval(args[0]),))
 
+elif cmd == 'cancel_scanner_async':
+  if len(args) != 1:
+    print 'cancel_scanner_async requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.cancel_scanner_async(eval(args[0]),))
+
 elif cmd == 'close_scanner_async':
   if len(args) != 1:
     print 'close_scanner_async requires 1 args'
@@ -375,6 +383,12 @@ elif cmd == 'close_mutator':
     print 'close_mutator requires 1 args'
     sys.exit(1)
   pp.pprint(client.close_mutator(eval(args[0]),))
+
+elif cmd == 'cancel_mutator_async':
+  if len(args) != 1:
+    print 'cancel_mutator_async requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.cancel_mutator_async(eval(args[0]),))
 
 elif cmd == 'close_mutator_async':
   if len(args) != 1:
