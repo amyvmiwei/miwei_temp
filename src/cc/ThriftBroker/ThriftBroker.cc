@@ -583,6 +583,17 @@ public:
     LOG_API_FINISH;
   }
 
+  virtual void cancel_scanner_async(const ScannerAsync scanner) {
+    LOG_API_START("scanner="<< scanner);
+
+    try {
+      get_scanner_async(scanner)->cancel();
+    } RETHROW(" scanner=" << scanner)
+
+    LOG_API_FINISH_E(" cancelled");
+  }
+
+
   virtual void close_scanner_async(const ScannerAsync scanner_async) {
     LOG_API_START("scanner_async="<< scanner_async);
     try {
@@ -1075,6 +1086,16 @@ public:
       remove_mutator(mutator);
     } RETHROW(" mutator=" << mutator)
     LOG_API_FINISH;
+  }
+
+  virtual void cancel_mutator_async(const MutatorAsync mutator) {
+    LOG_API_START("mutator="<< mutator);
+
+    try {
+      get_mutator_async(mutator)->cancel();
+    } RETHROW(" mutator="<< mutator)
+
+    LOG_API_FINISH_E(" cancelled");
   }
 
   virtual void close_mutator_async(const MutatorAsync mutator) {

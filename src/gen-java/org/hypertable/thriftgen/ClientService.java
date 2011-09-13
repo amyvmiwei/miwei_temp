@@ -197,6 +197,15 @@ public class ClientService {
     public void close_scanner(long scanner) throws ClientException, org.apache.thrift.TException;
 
     /**
+     * Cancel a table scanner
+     * 
+     * @param scanner - scanner id to close
+     * 
+     * @param scanner
+     */
+    public void cancel_scanner_async(long scanner) throws ClientException, org.apache.thrift.TException;
+
+    /**
      * Close a table scanner
      * 
      * @param scanner - scanner id to close
@@ -464,6 +473,15 @@ public class ClientService {
      * @param mutator
      */
     public void close_mutator(long mutator) throws ClientException, org.apache.thrift.TException;
+
+    /**
+     * Cancel an asynchronous table mutator
+     * 
+     * @param mutator -  mutator id to cancel
+     * 
+     * @param mutator
+     */
+    public void cancel_mutator_async(long mutator) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Close an asynchronous table mutator
@@ -787,6 +805,8 @@ public class ClientService {
 
     public void close_scanner(long scanner, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_scanner_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void cancel_scanner_async(long scanner, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.cancel_scanner_async_call> resultHandler) throws org.apache.thrift.TException;
+
     public void close_scanner_async(long scanner, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_scanner_async_call> resultHandler) throws org.apache.thrift.TException;
 
     public void next_cells(long scanner, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.next_cells_call> resultHandler) throws org.apache.thrift.TException;
@@ -830,6 +850,8 @@ public class ClientService {
     public void open_mutator_async(long ns, String table_name, long future, int flags, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.open_mutator_async_call> resultHandler) throws org.apache.thrift.TException;
 
     public void close_mutator(long mutator, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_mutator_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void cancel_mutator_async(long mutator, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.cancel_mutator_async_call> resultHandler) throws org.apache.thrift.TException;
 
     public void close_mutator_async(long mutator, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_mutator_async_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -1602,6 +1624,42 @@ public class ClientService {
         throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "close_scanner failed: out of sequence response");
       }
       close_scanner_result result = new close_scanner_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void cancel_scanner_async(long scanner) throws ClientException, org.apache.thrift.TException
+    {
+      send_cancel_scanner_async(scanner);
+      recv_cancel_scanner_async();
+    }
+
+    public void send_cancel_scanner_async(long scanner) throws org.apache.thrift.TException
+    {
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_scanner_async", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
+      cancel_scanner_async_args args = new cancel_scanner_async_args();
+      args.setScanner(scanner);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_cancel_scanner_async() throws ClientException, org.apache.thrift.TException
+    {
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "cancel_scanner_async failed: out of sequence response");
+      }
+      cancel_scanner_async_result result = new cancel_scanner_async_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
       if (result.e != null) {
@@ -2471,6 +2529,42 @@ public class ClientService {
         throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "close_mutator failed: out of sequence response");
       }
       close_mutator_result result = new close_mutator_result();
+      result.read(iprot_);
+      iprot_.readMessageEnd();
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void cancel_mutator_async(long mutator) throws ClientException, org.apache.thrift.TException
+    {
+      send_cancel_mutator_async(mutator);
+      recv_cancel_mutator_async();
+    }
+
+    public void send_cancel_mutator_async(long mutator) throws org.apache.thrift.TException
+    {
+      oprot_.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_mutator_async", org.apache.thrift.protocol.TMessageType.CALL, ++seqid_));
+      cancel_mutator_async_args args = new cancel_mutator_async_args();
+      args.setMutator(mutator);
+      args.write(oprot_);
+      oprot_.writeMessageEnd();
+      oprot_.getTransport().flush();
+    }
+
+    public void recv_cancel_mutator_async() throws ClientException, org.apache.thrift.TException
+    {
+      org.apache.thrift.protocol.TMessage msg = iprot_.readMessageBegin();
+      if (msg.type == org.apache.thrift.protocol.TMessageType.EXCEPTION) {
+        org.apache.thrift.TApplicationException x = org.apache.thrift.TApplicationException.read(iprot_);
+        iprot_.readMessageEnd();
+        throw x;
+      }
+      if (msg.seqid != seqid_) {
+        throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.BAD_SEQUENCE_ID, "cancel_mutator_async failed: out of sequence response");
+      }
+      cancel_mutator_async_result result = new cancel_mutator_async_result();
       result.read(iprot_);
       iprot_.readMessageEnd();
       if (result.e != null) {
@@ -4050,6 +4144,38 @@ public class ClientService {
       }
     }
 
+    public void cancel_scanner_async(long scanner, org.apache.thrift.async.AsyncMethodCallback<cancel_scanner_async_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      cancel_scanner_async_call method_call = new cancel_scanner_async_call(scanner, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
+      manager.call(method_call);
+    }
+
+    public static class cancel_scanner_async_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private long scanner;
+      public cancel_scanner_async_call(long scanner, org.apache.thrift.async.AsyncMethodCallback<cancel_scanner_async_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.scanner = scanner;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_scanner_async", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        cancel_scanner_async_args args = new cancel_scanner_async_args();
+        args.setScanner(scanner);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_cancel_scanner_async();
+      }
+    }
+
     public void close_scanner_async(long scanner, org.apache.thrift.async.AsyncMethodCallback<close_scanner_async_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       close_scanner_async_call method_call = new close_scanner_async_call(scanner, resultHandler, this, protocolFactory, transport);
@@ -4856,6 +4982,38 @@ public class ClientService {
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         (new Client(prot)).recv_close_mutator();
+      }
+    }
+
+    public void cancel_mutator_async(long mutator, org.apache.thrift.async.AsyncMethodCallback<cancel_mutator_async_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      cancel_mutator_async_call method_call = new cancel_mutator_async_call(mutator, resultHandler, this, protocolFactory, transport);
+      this.currentMethod = method_call;
+      manager.call(method_call);
+    }
+
+    public static class cancel_mutator_async_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private long mutator;
+      public cancel_mutator_async_call(long mutator, org.apache.thrift.async.AsyncMethodCallback<cancel_mutator_async_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.mutator = mutator;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_mutator_async", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        cancel_mutator_async_args args = new cancel_mutator_async_args();
+        args.setMutator(mutator);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_cancel_mutator_async();
       }
     }
 
@@ -5753,6 +5911,7 @@ public class ClientService {
       processMap_.put("open_scanner", new open_scanner());
       processMap_.put("open_scanner_async", new open_scanner_async());
       processMap_.put("close_scanner", new close_scanner());
+      processMap_.put("cancel_scanner_async", new cancel_scanner_async());
       processMap_.put("close_scanner_async", new close_scanner_async());
       processMap_.put("next_cells", new next_cells());
       processMap_.put("next_cells_as_arrays", new next_cells_as_arrays());
@@ -5775,6 +5934,7 @@ public class ClientService {
       processMap_.put("open_mutator", new open_mutator());
       processMap_.put("open_mutator_async", new open_mutator_async());
       processMap_.put("close_mutator", new close_mutator());
+      processMap_.put("cancel_mutator_async", new cancel_mutator_async());
       processMap_.put("close_mutator_async", new close_mutator_async());
       processMap_.put("set_cell", new set_cell());
       processMap_.put("set_cell_as_array", new set_cell_as_array());
@@ -6512,6 +6672,44 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("close_scanner", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class cancel_scanner_async implements ProcessFunction {
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
+      {
+        cancel_scanner_async_args args = new cancel_scanner_async_args();
+        try {
+          args.read(iprot);
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
+          iprot.readMessageEnd();
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_scanner_async", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        cancel_scanner_async_result result = new cancel_scanner_async_result();
+        try {
+          iface_.cancel_scanner_async(args.scanner);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing cancel_scanner_async", th);
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.INTERNAL_ERROR, "Internal error processing cancel_scanner_async");
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_scanner_async", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_scanner_async", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -7338,6 +7536,44 @@ public class ClientService {
           return;
         }
         oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("close_mutator", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
+        result.write(oprot);
+        oprot.writeMessageEnd();
+        oprot.getTransport().flush();
+      }
+
+    }
+
+    private class cancel_mutator_async implements ProcessFunction {
+      public void process(int seqid, org.apache.thrift.protocol.TProtocol iprot, org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException
+      {
+        cancel_mutator_async_args args = new cancel_mutator_async_args();
+        try {
+          args.read(iprot);
+        } catch (org.apache.thrift.protocol.TProtocolException e) {
+          iprot.readMessageEnd();
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.PROTOCOL_ERROR, e.getMessage());
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_mutator_async", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        iprot.readMessageEnd();
+        cancel_mutator_async_result result = new cancel_mutator_async_result();
+        try {
+          iface_.cancel_mutator_async(args.mutator);
+        } catch (ClientException e) {
+          result.e = e;
+        } catch (Throwable th) {
+          LOGGER.error("Internal error processing cancel_mutator_async", th);
+          org.apache.thrift.TApplicationException x = new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.INTERNAL_ERROR, "Internal error processing cancel_mutator_async");
+          oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_mutator_async", org.apache.thrift.protocol.TMessageType.EXCEPTION, seqid));
+          x.write(oprot);
+          oprot.writeMessageEnd();
+          oprot.getTransport().flush();
+          return;
+        }
+        oprot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("cancel_mutator_async", org.apache.thrift.protocol.TMessageType.REPLY, seqid));
         result.write(oprot);
         oprot.writeMessageEnd();
         oprot.getTransport().flush();
@@ -20717,6 +20953,598 @@ public class ClientService {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("close_scanner_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class cancel_scanner_async_args implements org.apache.thrift.TBase<cancel_scanner_async_args, cancel_scanner_async_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("cancel_scanner_async_args");
+
+    private static final org.apache.thrift.protocol.TField SCANNER_FIELD_DESC = new org.apache.thrift.protocol.TField("scanner", org.apache.thrift.protocol.TType.I64, (short)1);
+
+    public long scanner;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      SCANNER((short)1, "scanner");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // SCANNER
+            return SCANNER;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __SCANNER_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.SCANNER, new org.apache.thrift.meta_data.FieldMetaData("scanner", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "ScannerAsync")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(cancel_scanner_async_args.class, metaDataMap);
+    }
+
+    public cancel_scanner_async_args() {
+    }
+
+    public cancel_scanner_async_args(
+      long scanner)
+    {
+      this();
+      this.scanner = scanner;
+      setScannerIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public cancel_scanner_async_args(cancel_scanner_async_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.scanner = other.scanner;
+    }
+
+    public cancel_scanner_async_args deepCopy() {
+      return new cancel_scanner_async_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setScannerIsSet(false);
+      this.scanner = 0;
+    }
+
+    public long getScanner() {
+      return this.scanner;
+    }
+
+    public cancel_scanner_async_args setScanner(long scanner) {
+      this.scanner = scanner;
+      setScannerIsSet(true);
+      return this;
+    }
+
+    public void unsetScanner() {
+      __isset_bit_vector.clear(__SCANNER_ISSET_ID);
+    }
+
+    /** Returns true if field scanner is set (has been assigned a value) and false otherwise */
+    public boolean isSetScanner() {
+      return __isset_bit_vector.get(__SCANNER_ISSET_ID);
+    }
+
+    public void setScannerIsSet(boolean value) {
+      __isset_bit_vector.set(__SCANNER_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case SCANNER:
+        if (value == null) {
+          unsetScanner();
+        } else {
+          setScanner((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case SCANNER:
+        return new Long(getScanner());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case SCANNER:
+        return isSetScanner();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof cancel_scanner_async_args)
+        return this.equals((cancel_scanner_async_args)that);
+      return false;
+    }
+
+    public boolean equals(cancel_scanner_async_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_scanner = true;
+      boolean that_present_scanner = true;
+      if (this_present_scanner || that_present_scanner) {
+        if (!(this_present_scanner && that_present_scanner))
+          return false;
+        if (this.scanner != that.scanner)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(cancel_scanner_async_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      cancel_scanner_async_args typedOther = (cancel_scanner_async_args)other;
+
+      lastComparison = Boolean.valueOf(isSetScanner()).compareTo(typedOther.isSetScanner());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetScanner()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.scanner, typedOther.scanner);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // SCANNER
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
+              this.scanner = iprot.readI64();
+              setScannerIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(SCANNER_FIELD_DESC);
+      oprot.writeI64(this.scanner);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("cancel_scanner_async_args(");
+      boolean first = true;
+
+      sb.append("scanner:");
+      sb.append(this.scanner);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class cancel_scanner_async_result implements org.apache.thrift.TBase<cancel_scanner_async_result, cancel_scanner_async_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("cancel_scanner_async_result");
+
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(cancel_scanner_async_result.class, metaDataMap);
+    }
+
+    public cancel_scanner_async_result() {
+    }
+
+    public cancel_scanner_async_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public cancel_scanner_async_result(cancel_scanner_async_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public cancel_scanner_async_result deepCopy() {
+      return new cancel_scanner_async_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public cancel_scanner_async_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof cancel_scanner_async_result)
+        return this.equals((cancel_scanner_async_result)that);
+      return false;
+    }
+
+    public boolean equals(cancel_scanner_async_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(cancel_scanner_async_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      cancel_scanner_async_result typedOther = (cancel_scanner_async_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("cancel_scanner_async_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -38654,6 +39482,600 @@ public class ClientService {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("close_mutator_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class cancel_mutator_async_args implements org.apache.thrift.TBase<cancel_mutator_async_args, cancel_mutator_async_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("cancel_mutator_async_args");
+
+    private static final org.apache.thrift.protocol.TField MUTATOR_FIELD_DESC = new org.apache.thrift.protocol.TField("mutator", org.apache.thrift.protocol.TType.I64, (short)1);
+
+    public long mutator;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      MUTATOR((short)1, "mutator");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // MUTATOR
+            return MUTATOR;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __MUTATOR_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.MUTATOR, new org.apache.thrift.meta_data.FieldMetaData("mutator", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "MutatorAsync")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(cancel_mutator_async_args.class, metaDataMap);
+    }
+
+    public cancel_mutator_async_args() {
+    }
+
+    public cancel_mutator_async_args(
+      long mutator)
+    {
+      this();
+      this.mutator = mutator;
+      setMutatorIsSet(true);
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public cancel_mutator_async_args(cancel_mutator_async_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.mutator = other.mutator;
+    }
+
+    public cancel_mutator_async_args deepCopy() {
+      return new cancel_mutator_async_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setMutatorIsSet(false);
+      this.mutator = 0;
+    }
+
+    public long getMutator() {
+      return this.mutator;
+    }
+
+    public cancel_mutator_async_args setMutator(long mutator) {
+      this.mutator = mutator;
+      setMutatorIsSet(true);
+      return this;
+    }
+
+    public void unsetMutator() {
+      __isset_bit_vector.clear(__MUTATOR_ISSET_ID);
+    }
+
+    /** Returns true if field mutator is set (has been assigned a value) and false otherwise */
+    public boolean isSetMutator() {
+      return __isset_bit_vector.get(__MUTATOR_ISSET_ID);
+    }
+
+    public void setMutatorIsSet(boolean value) {
+      __isset_bit_vector.set(__MUTATOR_ISSET_ID, value);
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case MUTATOR:
+        if (value == null) {
+          unsetMutator();
+        } else {
+          setMutator((Long)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case MUTATOR:
+        return new Long(getMutator());
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case MUTATOR:
+        return isSetMutator();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof cancel_mutator_async_args)
+        return this.equals((cancel_mutator_async_args)that);
+      return false;
+    }
+
+    public boolean equals(cancel_mutator_async_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_mutator = true;
+      boolean that_present_mutator = true;
+      if (this_present_mutator || that_present_mutator) {
+        if (!(this_present_mutator && that_present_mutator))
+          return false;
+        if (this.mutator != that.mutator)
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(cancel_mutator_async_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      cancel_mutator_async_args typedOther = (cancel_mutator_async_args)other;
+
+      lastComparison = Boolean.valueOf(isSetMutator()).compareTo(typedOther.isSetMutator());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMutator()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mutator, typedOther.mutator);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // MUTATOR
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
+              this.mutator = iprot.readI64();
+              setMutatorIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(MUTATOR_FIELD_DESC);
+      oprot.writeI64(this.mutator);
+      oprot.writeFieldEnd();
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("cancel_mutator_async_args(");
+      boolean first = true;
+
+      sb.append("mutator:");
+      sb.append(this.mutator);
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class cancel_mutator_async_result implements org.apache.thrift.TBase<cancel_mutator_async_result, cancel_mutator_async_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("cancel_mutator_async_result");
+
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    public ClientException e;
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(cancel_mutator_async_result.class, metaDataMap);
+    }
+
+    public cancel_mutator_async_result() {
+    }
+
+    public cancel_mutator_async_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public cancel_mutator_async_result(cancel_mutator_async_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public cancel_mutator_async_result deepCopy() {
+      return new cancel_mutator_async_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public cancel_mutator_async_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof cancel_mutator_async_result)
+        return this.equals((cancel_mutator_async_result)that);
+      return false;
+    }
+
+    public boolean equals(cancel_mutator_async_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(cancel_mutator_async_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      cancel_mutator_async_result typedOther = (cancel_mutator_async_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("cancel_mutator_async_result(");
       boolean first = true;
 
       sb.append("e:");

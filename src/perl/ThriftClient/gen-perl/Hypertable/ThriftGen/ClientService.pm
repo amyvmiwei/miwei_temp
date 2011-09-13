@@ -2639,6 +2639,135 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_cancel_scanner_async_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_cancel_scanner_async_args->mk_accessors( qw( scanner ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{scanner} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{scanner}) {
+      $self->{scanner} = $vals->{scanner};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_cancel_scanner_async_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{scanner});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_cancel_scanner_async_args');
+  if (defined $self->{scanner}) {
+    $xfer += $output->writeFieldBegin('scanner', TType::I64, 1);
+    $xfer += $output->writeI64($self->{scanner});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_cancel_scanner_async_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_cancel_scanner_async_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_cancel_scanner_async_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_cancel_scanner_async_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_close_scanner_async_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientService_close_scanner_async_args->mk_accessors( qw( scanner ) );
@@ -6551,6 +6680,135 @@ sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ClientService_close_mutator_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_cancel_mutator_async_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_cancel_mutator_async_args->mk_accessors( qw( mutator ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{mutator} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{mutator}) {
+      $self->{mutator} = $vals->{mutator};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_cancel_mutator_async_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{mutator});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_cancel_mutator_async_args');
+  if (defined $self->{mutator}) {
+    $xfer += $output->writeFieldBegin('mutator', TType::I64, 1);
+    $xfer += $output->writeI64($self->{mutator});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_cancel_mutator_async_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_cancel_mutator_async_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_cancel_mutator_async_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_cancel_mutator_async_result');
   if (defined $self->{e}) {
     $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
     $xfer += $self->{e}->write($output);
@@ -10644,6 +10902,13 @@ sub close_scanner{
   die 'implement interface';
 }
 
+sub cancel_scanner_async{
+  my $self = shift;
+  my $scanner = shift;
+
+  die 'implement interface';
+}
+
 sub close_scanner_async{
   my $self = shift;
   my $scanner = shift;
@@ -10827,6 +11092,13 @@ sub open_mutator_async{
 }
 
 sub close_mutator{
+  my $self = shift;
+  my $mutator = shift;
+
+  die 'implement interface';
+}
+
+sub cancel_mutator_async{
   my $self = shift;
   my $mutator = shift;
 
@@ -11178,6 +11450,13 @@ sub close_scanner{
   return $self->{impl}->close_scanner($scanner);
 }
 
+sub cancel_scanner_async{
+  my ($self, $request) = @_;
+
+  my $scanner = ($request->{'scanner'}) ? $request->{'scanner'} : undef;
+  return $self->{impl}->cancel_scanner_async($scanner);
+}
+
 sub close_scanner_async{
   my ($self, $request) = @_;
 
@@ -11365,6 +11644,13 @@ sub close_mutator{
 
   my $mutator = ($request->{'mutator'}) ? $request->{'mutator'} : undef;
   return $self->{impl}->close_mutator($mutator);
+}
+
+sub cancel_mutator_async{
+  my ($self, $request) = @_;
+
+  my $mutator = ($request->{'mutator'}) ? $request->{'mutator'} : undef;
+  return $self->{impl}->cancel_mutator_async($mutator);
 }
 
 sub close_mutator_async{
@@ -12404,6 +12690,49 @@ sub recv_close_scanner{
     die $x;
   }
   my $result = new Hypertable::ThriftGen::ClientService_close_scanner_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
+sub cancel_scanner_async{
+  my $self = shift;
+  my $scanner = shift;
+
+    $self->send_cancel_scanner_async($scanner);
+  $self->recv_cancel_scanner_async();
+}
+
+sub send_cancel_scanner_async{
+  my $self = shift;
+  my $scanner = shift;
+
+  $self->{output}->writeMessageBegin('cancel_scanner_async', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_cancel_scanner_async_args();
+  $args->{scanner} = $scanner;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_cancel_scanner_async{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_cancel_scanner_async_result();
   $result->read($self->{input});
   $self->{input}->readMessageEnd();
 
@@ -13497,6 +13826,49 @@ sub recv_close_mutator{
     die $x;
   }
   my $result = new Hypertable::ThriftGen::ClientService_close_mutator_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
+sub cancel_mutator_async{
+  my $self = shift;
+  my $mutator = shift;
+
+    $self->send_cancel_mutator_async($mutator);
+  $self->recv_cancel_mutator_async();
+}
+
+sub send_cancel_mutator_async{
+  my $self = shift;
+  my $mutator = shift;
+
+  $self->{output}->writeMessageBegin('cancel_mutator_async', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_cancel_mutator_async_args();
+  $args->{mutator} = $mutator;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_cancel_mutator_async{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_cancel_mutator_async_result();
   $result->read($self->{input});
   $self->{input}->readMessageEnd();
 
@@ -15016,6 +15388,23 @@ sub process_close_scanner {
     $output->getTransport()->flush();
 }
 
+sub process_cancel_scanner_async {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_cancel_scanner_async_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_cancel_scanner_async_result();
+    eval {
+      $self->{handler}->cancel_scanner_async($args->scanner);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('cancel_scanner_async', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
 sub process_close_scanner_async {
     my ($self, $seqid, $input, $output) = @_;
     my $args = new Hypertable::ThriftGen::ClientService_close_scanner_async_args();
@@ -15381,6 +15770,23 @@ sub process_close_mutator {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('close_mutator', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_cancel_mutator_async {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_cancel_mutator_async_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_cancel_mutator_async_result();
+    eval {
+      $self->{handler}->cancel_mutator_async($args->mutator);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('cancel_mutator_async', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

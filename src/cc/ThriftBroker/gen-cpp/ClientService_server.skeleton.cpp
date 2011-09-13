@@ -112,6 +112,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("close_scanner\n");
   }
 
+  void cancel_scanner_async(const ScannerAsync scanner) {
+    // Your implementation goes here
+    printf("cancel_scanner_async\n");
+  }
+
   void close_scanner_async(const ScannerAsync scanner) {
     // Your implementation goes here
     printf("close_scanner_async\n");
@@ -220,6 +225,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
   void close_mutator(const Mutator mutator) {
     // Your implementation goes here
     printf("close_mutator\n");
+  }
+
+  void cancel_mutator_async(const MutatorAsync mutator) {
+    // Your implementation goes here
+    printf("cancel_mutator_async\n");
   }
 
   void close_mutator_async(const MutatorAsync mutator) {

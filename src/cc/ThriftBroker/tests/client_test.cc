@@ -102,6 +102,10 @@ struct BasicTest : HqlServiceIf {
     client->close_scanner(scanner);
   }
 
+  void cancel_scanner_async(const ScannerAsync scanner_async) {
+    client->cancel_scanner_async(scanner_async);
+  }
+
   void close_scanner_async(const ScannerAsync scanner_async) {
     client->close_scanner_async(scanner_async);
   }
@@ -223,6 +227,10 @@ struct BasicTest : HqlServiceIf {
   MutatorAsync open_mutator_async(const Namespace ns, const std::string& table,
                                   Future ff, int32_t flags) {
     return client->open_mutator_async(ns, table, ff, flags);
+  }
+
+  void cancel_mutator_async(const MutatorAsync mutator) {
+    client->cancel_mutator_async(mutator);
   }
 
   void close_mutator_async(const MutatorAsync mutator) {
