@@ -564,7 +564,8 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   FILE *outf = cb.output;
   int out_fd = -1;
   bool largefile_mode = false;
-  int64_t last_total = 0, new_total;
+  ::uint64_t running_total = 0;
+  ::uint64_t consume_threshold = 0;
 
   if (LoadDataFlags::ignore_unknown_cfs(state.load_flags))
     mutator_flags |= Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS;
@@ -609,6 +610,7 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   if (cb.file_size > std::numeric_limits<unsigned long>::max()) {
     largefile_mode = true;
     unsigned long adjusted_size = (unsigned long)(cb.file_size / 1048576LL);
+    consume_threshold = 1048576LL;
     cb.on_update(adjusted_size);
   }
   else
@@ -625,7 +627,7 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   KeySpec key;
   ::uint8_t *value;
   ::uint32_t value_len;
-  ::uint32_t consumed;
+  ::uint32_t consumed = 0;
   LoadDataEscape row_escaper;
   LoadDataEscape qualifier_escaper;
   LoadDataEscape value_escaper;
@@ -680,11 +682,15 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
 
       if (cb.normal_mode && state.input_file_src != STDIN) {
         if (largefile_mode == true) {
-          new_total = last_total + consumed;
-          consumed = (unsigned long)((new_total / 1048576LL) - (last_total / 1048576LL));
-          last_total = new_total;
+	  running_total += consumed;
+	  if (running_total >= consume_threshold) {
+	    consumed = 1 + (unsigned long)((running_total - consume_threshold) / 1048576LL);
+	    consume_threshold += (::uint64_t)consumed * 1048576LL;
+	    cb.on_progress(consumed);
+	  }
         }
-        cb.on_progress(consumed);
+	else
+	  cb.on_progress(consumed);
       }
     }
   }

@@ -273,7 +273,6 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
   ::uint64_t total_cells=0;
-  ::uint64_t total_bytes=0;
   Cells cells;
   clock_t start_clocks=0, stop_clocks=0;
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
@@ -282,6 +281,8 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   DataGenerator dg(props);
   ::uint32_t mutator_flags=0;
   ::uint64_t unflushed_data=0;
+  ::uint64_t total_bytes = 0;
+  ::uint64_t consume_threshold = 0;
 
   if (no_log_sync)
     mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
@@ -312,12 +313,12 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
     String config_file = get_str("config");
     bool key_limit = props->has("DataGenerator.MaxKeys");
     bool largefile_mode = false;
-    uint32_t adjusted_bytes = 0;
-    int64_t last_total = 0, new_total;
+    ::uint32_t adjusted_bytes = 0;
 
-    if (dg.get_max_bytes() > std::numeric_limits<long>::max()) {
+    if (dg.get_max_bytes() > std::numeric_limits< ::uint32_t >::max()) {
       largefile_mode = true;
       adjusted_bytes = (uint32_t)(dg.get_max_bytes() / 1048576LL);
+      consume_threshold = 1048576LL;
     }
     else
       adjusted_bytes = dg.get_max_bytes();
@@ -396,10 +397,11 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 	       progress_meter += 1;
       else {
 	       if (largefile_mode == true) {
-	         new_total = last_total + iter.last_data_size();
-	         uint32_t consumed = (uint32_t)((new_total / 1048576LL) - (last_total / 1048576LL));
-	         last_total = new_total;
-	         progress_meter += consumed;
+		 if (total_bytes >= consume_threshold) {
+		   uint32_t consumed = 1 + (uint32_t)((total_bytes - consume_threshold) / 1048576LL);
+		   progress_meter += consumed;
+		   consume_threshold += (::uint64_t)consumed * 1048576LL;
+		 }
 	       }
 	       else
 	         progress_meter += iter.last_data_size();
@@ -449,9 +451,11 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
   Cells cells;
   ofstream sample_file;
   DataGenerator dg(props);
-  ::uint32_t mutator_flags=0;
   std::vector<ParallelStateRec> load_vector(parallel);
+  ::uint32_t mutator_flags=0;
   ::uint32_t next = 0;
+  ::uint64_t consume_threshold = 0;
+  ::uint64_t consume_total = 0;
   boost::thread_group threads;
 
   if (no_log_sync)
@@ -468,7 +472,6 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
     bool key_limit = props->has("DataGenerator.MaxKeys");
     bool largefile_mode = false;
     uint32_t adjusted_bytes = 0;
-    int64_t last_total = 0, new_total;
     LoadRec *lrec;
 
     client = new Hypertable::Client(config_file);
@@ -481,6 +484,7 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
     if (dg.get_max_bytes() > std::numeric_limits<long>::max()) {
       largefile_mode = true;
       adjusted_bytes = (uint32_t)(dg.get_max_bytes() / 1048576LL);
+      consume_threshold = 1048576LL;
     }
     else
       adjusted_bytes = dg.get_max_bytes();
@@ -505,10 +509,12 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
             progress_meter += 1;
           else {
             if (largefile_mode == true) {
-              new_total = last_total + garbage->amount;
-              uint32_t consumed = (uint32_t)((new_total / 1048576LL) - (last_total / 1048576LL));
-              last_total = new_total;
-              progress_meter += consumed;
+	      consume_total += garbage->amount;
+	      if (consume_total >= consume_threshold) {
+		uint32_t consumed = 1 + (uint32_t)((consume_total - consume_threshold) / 1048576LL);
+		progress_meter += consumed;
+		consume_threshold += (::uint64_t)consumed * 1048576LL;
+	      }
             }
             else
               progress_meter += garbage->amount;
