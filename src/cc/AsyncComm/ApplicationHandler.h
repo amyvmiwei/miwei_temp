@@ -88,29 +88,29 @@ namespace Hypertable {
       if (m_event_ptr && m_event_ptr->type == Event::MESSAGE &&
           ReactorRunner::record_arrival_clocks &&
           (m_event_ptr->header.flags & CommHeader::FLAGS_BIT_REQUEST)) {
-	uint32_t wait_ms;
-	if (m_event_ptr->arrival_time != 0)
-	  wait_ms = (time(0) - m_event_ptr->arrival_time) * 1000;
-	else {
-	  clock_t clock_diff = std::clock() - m_event_ptr->arrival_clocks;
-	  wait_ms = (clock_diff * 1000) / CLOCKS_PER_SEC;
-	}
-	if (wait_ms >= m_event_ptr->header.timeout_ms) {
-	  if (m_event_ptr->header.flags & CommHeader::FLAGS_BIT_REQUEST)
-	    HT_WARNF("Request expired, wait time %u > timeout %u", wait_ms,
-		     m_event_ptr->header.timeout_ms);
-	  else
-	    HT_WARNF("Response expired, wait time %u > timeout %u", wait_ms,
-		     m_event_ptr->header.timeout_ms);
+        clock_t wait_ms;
+        if (m_event_ptr->arrival_time != 0)
+          wait_ms = (time(0) - m_event_ptr->arrival_time) * 1000;
+        else {
+          clock_t clock_diff = std::clock() - m_event_ptr->arrival_clocks;
+          wait_ms = (clock_diff * 1000) / CLOCKS_PER_SEC;
+        }
+        if (wait_ms >= (clock_t)m_event_ptr->header.timeout_ms) {
+          if (m_event_ptr->header.flags & CommHeader::FLAGS_BIT_REQUEST)
+            HT_WARNF("Request expired, wait time %ld > timeout %u", wait_ms,
+                 m_event_ptr->header.timeout_ms);
+          else
+            HT_WARNF("Response expired, wait time %ld > timeout %u", wait_ms,
+                 m_event_ptr->header.timeout_ms);
 
-	  if (m_event_ptr->header.timeout_ms == 0) {
-	    HT_INFO("Changing zero timeout request to 120000 ms");
-	    m_event_ptr->header.timeout_ms = 120000;
-	    return false;
-	  }
+          if (m_event_ptr->header.timeout_ms == 0) {
+            HT_INFO("Changing zero timeout request to 120000 ms");
+            m_event_ptr->header.timeout_ms = 120000;
+            return false;
+          }
 
-	  return true;
-	}
+          return true;
+        }
       }
       return false;
     }
