@@ -1,5 +1,5 @@
 /** -*- c++ -*-
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -42,6 +42,7 @@ namespace Hypertable {
       uint32_t iteration;
       uint32_t trigger_iteration;
       int failure_type;
+      int error_code;
     };
     typedef hash_map<String, failure_inducer_state *> StateMap;
     Mutex m_mutex;
@@ -59,7 +60,7 @@ namespace Hypertable {
   if (Hypertable::FailureInducer::enabled() && (_exp_)) { \
     Hypertable::FailureInducer::instance->maybe_fail(_label_); \
   }
-    
+
 
 
 #endif // HYPERTABLE_FAILUREINDUCER_H

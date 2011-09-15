@@ -17,6 +17,9 @@
 # 02110-1301, USA.
 #
 
+set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Common")
+set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Common")
+
 set(Common_SRCS
 Abi.cc
 Checksum.cc
@@ -142,6 +145,12 @@ target_link_libraries(stats_serialize_test HyperCommon)
 add_executable(string_compressor_test tests/string_compressor_test.cc)
 target_link_libraries(string_compressor_test HyperCommon)
 
+# FailureInducer test
+add_executable(failure_inducer_test tests/failure_inducer_test.cc)
+target_link_libraries(failure_inducer_test HyperCommon)
+configure_file(${SRC_DIR}/tests/failure_inducer_test.golden
+               ${DST_DIR}/failure_inducer_test.golden)
+
 add_test(Common-Exception exception_test)
 add_test(Common-Exception escaper_test)
 add_test(Common-Logging logging_test)
@@ -158,6 +167,7 @@ add_test(MD5-Base64 md5_base64_test)
 add_test(Common-StatsSystem-serialize stats_serialize_test)
 add_test(Common-StringCompressor string_compressor_test)
 add_test(Common-TimeInline timeinline_test)
+add_test(Common-FailureInducer failure_inducer_test)
 
 set(VERSION_H ${HYPERTABLE_BINARY_DIR}/src/cc/Common/Version.h)
 

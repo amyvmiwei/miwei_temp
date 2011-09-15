@@ -1,0 +1,84 @@
+/** -*- C++ -*-
+ * Copyright (C) 2011 Hypertable, Inc.
+ *
+ * This file is part of Hypertable.
+ *
+ * Hypertable is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; either version 2
+ * of the License, or any later version.
+ *
+ * Hypertable is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
+ */
+
+#include "Common/Compat.h"
+#include "Common/Logger.h"
+#include "Common/Init.h"
+#include "Common/Config.h"
+#include "Common/FailureInducer.h"
+#include "Common/FileUtils.h"
+#include "Common/String.h"
+#include <iostream>
+#include <fstream>
+using namespace Hypertable;
+using namespace std;
+
+namespace {
+
+const char *required_files[] = {
+  "./failure_inducer_test",
+  "./failure_inducer_test.golden",
+  0
+};
+
+void hit_labels() {
+  HT_MAYBE_FAIL("label-1");
+  HT_MAYBE_FAIL("label-2");
+  HT_MAYBE_FAIL("label-3");
+  HT_MAYBE_FAIL("label-4")
+}
+
+void test(const String &outfile) {
+  FailureInducer::instance = new FailureInducer();
+
+  FailureInducer::instance->parse_option("label-1:throw:1");
+  FailureInducer::instance->parse_option("label-2:throw(4):2");
+  FailureInducer::instance->parse_option("label-3:throw(0x5001B):3");
+
+  ofstream os(outfile.c_str());
+
+  for (int ii=0; ii < 10; ++ii) {
+    try {
+      hit_labels();
+    }
+    catch (Exception &e) {
+      os << "Caught exception with code " << e.code() << "-" << e.what() << endl;
+    }
+  }
+}
+
+}
+
+int main(int argc, char *argv[]) {
+  Config::init(argc, argv);
+  String outfile("failure_inducer_test.out");
+
+  for (int i=0; required_files[i]; i++) {
+    if (!FileUtils::exists(required_files[i])) {
+      HT_ERRORF("Unable to find '%s'", required_files[i]);
+      _exit(1);
+    }
+  }
+  test(outfile);
+  String cmd_str = "diff failure_inducer_test.out failure_inducer_test.golden";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  return 0;
+}
