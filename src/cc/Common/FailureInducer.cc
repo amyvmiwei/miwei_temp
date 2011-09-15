@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2009 Doug Judd (Zvents, Inc.)
+ * Copyright (C) 2011 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -20,6 +20,9 @@
  */
 
 #include "Compat.h"
+
+#include <boost/algorithm/string.hpp>
+
 #include "FailureInducer.h"
 #include "Error.h"
 #include "Logger.h"
@@ -40,11 +43,21 @@ void FailureInducer::parse_option(String option) {
   istr = strchr(istr, ':');
   HT_ASSERT(istr != 0);
   *istr++ = 0;
+  size_t failure_type_len=strlen(failure_type);
   failure_inducer_state *statep = new failure_inducer_state;
   if (!strcmp(failure_type, "exit"))
     statep->failure_type = FAILURE_TYPE_EXIT;
-  else if (!strcmp(failure_type, "throw"))
+  else if (boost::algorithm::starts_with(failure_type, "throw")) {
     statep->failure_type = FAILURE_TYPE_THROW;
+    statep->error_code = Error::INDUCED_FAILURE;
+    if (failure_type_len > 5 && failure_type[5] == '(') {
+      const char *error_code = failure_type+6;
+      if (boost::algorithm::istarts_with(error_code, "0x"))
+        statep->error_code = (int)strtol(error_code, NULL, 16);
+      else
+        statep->error_code = (int)strtol(error_code, NULL, 0);
+    }
+  }
   else
     HT_ASSERT(!"Unknown failure type");
   statep->iteration = 0;
@@ -59,15 +72,16 @@ void FailureInducer::maybe_fail(const String &label) {
     if ((*iter).second->iteration == (*iter).second->trigger_iteration) {
       if ((*iter).second->failure_type == FAILURE_TYPE_THROW) {
         uint32_t iteration = (*iter).second->iteration;
+        int error_code = (*iter).second->error_code;
         delete (*iter).second;
         m_state_map.erase(iter);
-        HT_THROW(Error::INDUCED_FAILURE,
-                 format("induced failure '%s' iteration=%u",
-                        label.c_str(), iteration));
+        HT_THROW(error_code,
+                 format("induced failure code '%d' '%s' iteration=%u",
+                        error_code, label.c_str(), iteration));
       }
       else {
-        HT_ERRORF("induced failure '%s' iteration=%u",
-                  (*iter).first.c_str(), (*iter).second->iteration);
+        HT_ERRORF("induced failure code '%d' '%s' iteration=%u",
+                 (*iter).second->error_code, (*iter).first.c_str(), (*iter).second->iteration);
         _exit(1);
       }
     }
