@@ -204,8 +204,10 @@ MergeScannerAccessGroup::do_initialize()
       // filter by value regexp last since its probly the most expensive
       if (m_scan_context_ptr->value_regexp &&
           !m_scan_context_ptr->family_info[sstate.key.column_family_code].counter) {
-        String value(sstate.value.str(), sstate.value.length());
-        if (!RE2::PartialMatch(value, *(m_scan_context_ptr->value_regexp))) {
+        const uint8_t *dptr;
+        if (!RE2::PartialMatch(re2::StringPiece((const char *)sstate.value.str(),
+                            sstate.value.decode_length(&dptr)), 
+                            *(m_scan_context_ptr->value_regexp))) {
           m_queue.pop();
           sstate.scanner->forward();
           if (sstate.scanner->get(sstate.key, sstate.value))
@@ -461,8 +463,10 @@ MergeScannerAccessGroup::do_forward()
         // filter but value regexp last since its probly the most expensive
         if (m_scan_context_ptr->value_regexp &&
             !m_scan_context_ptr->family_info[sstate.key.column_family_code].counter) {
-          String value(sstate.value.str(), sstate.value.length());
-          if (!RE2::PartialMatch(value, *(m_scan_context_ptr->value_regexp)))
+          const uint8_t *dptr;
+          if (!RE2::PartialMatch(re2::StringPiece((const char *)sstate.value.str(),
+                            sstate.value.decode_length(&dptr)), 
+                            *(m_scan_context_ptr->value_regexp)))
             continue;
         }
         break;

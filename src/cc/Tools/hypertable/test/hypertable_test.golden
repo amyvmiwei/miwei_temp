@@ -2558,6 +2558,8 @@ http://yahoo.com	col2:bird	pheasant
 http://yahoo.com	col2:mailto	bodhi2sattva17
 SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
 moss berry	col1:w1234	giants
+SELECT col1 from RegexpTest WHERE VALUE REGEXP "^clone$";
+orange marmalade	col1:w1234	clone
 SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "^\D+" AND VALUE REGEXP "l.*e";
 orange marmalade	col1:w1234	clone
 SELECT CELLS col1:/^w/, col2:/^[em].*/ from RegexpTest WHERE VALUE REGEXP "i.*a";
