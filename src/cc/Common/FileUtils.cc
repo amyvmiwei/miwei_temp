@@ -30,6 +30,7 @@ extern "C" {
 #include <errno.h>
 #include <pwd.h>
 #include <fcntl.h>
+#include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -342,6 +343,28 @@ String FileUtils::file_to_string(const String &fname) {
   str = (contents == 0) ? "" : contents;
   delete [] contents;
   return str;
+}
+
+
+
+void *FileUtils::mmap(const String &fname, off_t *lenp) {
+  int fd;
+  struct stat statbuf;
+  void *map;
+
+  if (::stat(fname.c_str(), &statbuf) != 0)
+    HT_FATALF("Unable determine length of '%s' for memory mapping - %s", fname.c_str(), strerror(errno));
+  *lenp = (off_t)statbuf.st_size;
+
+  if ((fd = ::open(fname.c_str(), O_RDONLY)) == -1)
+    HT_FATALF("Unable to open '%s' for memory mapping - %s", fname.c_str(), strerror(errno));
+  
+  if ((map = ::mmap(0, *lenp, PROT_READ, MAP_SHARED, fd, 0)) == MAP_FAILED)
+    HT_FATALF("Unable to memory map file '%s' - %s", fname.c_str(), strerror(errno));
+
+  close(fd);
+
+  return map;
 }
 
 

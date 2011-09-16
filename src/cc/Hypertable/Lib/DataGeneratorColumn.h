@@ -48,7 +48,7 @@ namespace Hypertable {
 
   class ColumnSpec {
   public:
-    ColumnSpec() : size(-1) { }
+    ColumnSpec() : size(-1), to_stdout(false) { }
     QualifierSpec qualifier;
     int size;
     int order;
@@ -56,6 +56,7 @@ namespace Hypertable {
     String column_family;
     unsigned seed;
     String distribution;
+    bool to_stdout;
   };
 
   class Column : public ColumnSpec {
@@ -68,7 +69,8 @@ namespace Hypertable {
     virtual ~Column() { }
     virtual bool next() = 0;
     virtual String &qualifier() = 0;
-    virtual String &value() = 0;
+    virtual const char *value() = 0;
+    virtual uint32_t value_len() = 0;
   protected:
     std::vector<Qualifier *> m_qualifiers;
     size_t m_next_qualifier;
@@ -78,15 +80,16 @@ namespace Hypertable {
   public:
     ColumnString(ColumnSpec &spec, bool keys_only=false) : Column(spec), m_keys_only(keys_only) {
       if (source == "") {
-        m_source_len = size * 50;
-        m_source.reset( new char [ m_source_len ] );
-        Random::fill_buffer_with_random_ascii((char *)m_source.get(), m_source_len);
+        m_value_data_len = size * 50;
+        m_value_data.reset( new char [ m_value_data_len ] );
+        Random::fill_buffer_with_random_ascii((char *)m_value_data.get(), m_value_data_len);
+	m_source = (const char *)m_value_data.get();
       }
       else {
-        m_source.reset( FileUtils::file_to_buffer(source, &m_source_len) );
-        HT_ASSERT(m_source_len >= size);
+	m_source = (const char *)FileUtils::mmap(source, &m_value_data_len);
+        HT_ASSERT(m_value_data_len >= size);
       }
-      m_source_len -= size;
+      m_value_data_len -= size;
       m_render_buf.reset( new char [ size * 2 ] + 1 );
     }
     virtual ~ColumnString() { }
@@ -96,24 +99,33 @@ namespace Hypertable {
       else
         m_next_qualifier = (m_next_qualifier + 1) % m_qualifiers.size();
       if (m_next_qualifier == 0 && !m_keys_only) {
-        off_t offset = Random::number32() % m_source_len;
-        const char *src = m_source.get() + offset;
-        char *dst = m_render_buf.get();
-        for (size_t i=0; i<(size_t)size; i++) {
-          if (*src == '\n') {
-            *dst++ = '\\';
-            *dst++ = 'n';
-          }
-          else if (*src == '\t') {
-            *dst++ = '\\';
-            *dst++ = 't';
-          }
-          else
-            *dst++ = *src;
-          src++;
-        }
-        *dst = 0;
-        m_value = m_render_buf.get();
+        off_t offset = Random::number32() % m_value_data_len;
+	if (to_stdout) {
+	  m_value = m_source + offset;
+	}
+	else {
+	  const char *src = m_source + offset;
+	  char *dst = m_render_buf.get();
+	  for (size_t i=0; i<(size_t)size; i++) {
+	    if (*src == '\n') {
+	      *dst++ = '\\';
+	      *dst++ = 'n';
+	    }
+	    else if (*src == '\t') {
+	      *dst++ = '\\';
+	      *dst++ = 't';
+	    }
+	    else if (*src == '\0') {
+	      *dst++ = '\\';
+	      *dst++ = '0';
+	    }
+	    else
+	      *dst++ = *src;
+	    src++;
+	  }
+	  *dst = 0;
+	  m_value = m_render_buf.get();
+	}
       }
       if (m_qualifiers.empty())
         return false;
@@ -127,16 +139,20 @@ namespace Hypertable {
         return m_qualifier;
       return m_qualifiers[m_next_qualifier]->get();
     }
-    virtual String &value() {
+    virtual const char *value() {
       return m_value;
+    }
+    virtual uint32_t value_len() {
+      return size;
     }
   private:
     bool m_keys_only;
-    String m_value;
+    const char *m_value;
     String m_qualifier;
     boost::shared_array<char> m_render_buf;
-    boost::shared_array<const char> m_source;
-    off_t m_source_len;
+    boost::shared_array<const char> m_value_data;
+    const char *m_source;
+    off_t m_value_data_len;
   };
 
 }
