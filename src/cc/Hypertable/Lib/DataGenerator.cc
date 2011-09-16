@@ -97,8 +97,8 @@ void DataGeneratorIterator::next() {
     m_cell.column_family = m_columns[m_next_column]->column_family.c_str();
     m_cell.column_qualifier = m_columns[m_next_column]->qualifier().c_str();
     if (!m_keys_only) {
-      m_cell.value = (const ::uint8_t *)m_columns[m_next_column]->value().c_str();
-      m_cell.value_len = m_columns[m_next_column]->value().length();
+      m_cell.value = (const ::uint8_t *)m_columns[m_next_column]->value();
+      m_cell.value_len = m_columns[m_next_column]->value_len();
     }
     m_last_data_size = m_row.length() + strlen(m_cell.column_qualifier) + m_cell.value_len;
     m_amount += m_last_data_size;
