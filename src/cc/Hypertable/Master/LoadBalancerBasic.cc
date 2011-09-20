@@ -48,6 +48,8 @@ void LoadBalancerBasic::balance(const String &algorithm) {
     if (plan->moves.size()>0) {
       OperationPtr operation = new OperationBalance(m_context, plan);
       m_context->op->add_operation(operation);
+      ptime now = second_clock::local_time();
+      m_last_balance_time = now;
     }
     else
       HT_DEBUG_OUT << "No balance plan created, nothing to do" << HT_END;
@@ -73,17 +75,23 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
   ptime now = second_clock::local_time();
 
   {
+    time_duration td = now - m_last_balance_time;
+    if (td.total_milliseconds() < m_balance_wait) {
+      HT_INFO_OUT << "now=" << now << ", last balance issued at " << m_last_balance_time
+          << ", wait for " << m_balance_wait << " before checking whether balance is "
+          << "needed" << HT_END;
+      return;
+    }
     ScopedLock lock(m_data_mutex);
     range_server_stats = m_range_server_stats;
   }
-
 
   boost::to_upper(algorithm);
   if (algorithm.size() == 0) {
     // determine which balancer to use
     mode = BALANCE_MODE_DISTRIBUTE_LOAD;
 
-    // when we see a new server wait for next maintenance interval to balance
+    // when we see a new server wait for some time before scheduling a balance balance
     if (!m_waiting_for_servers) {
       foreach(const RangeServerStatistics &server_stats, range_server_stats) {
         if (server_stats.stats->live && server_stats.stats->range_count == 0) {
@@ -125,7 +133,6 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
   if (balance_plan->moves.size()) {
     if (mode == BALANCE_MODE_DISTRIBUTE_LOAD) {
       HT_INFO_OUT << "LoadBalancerBasic mode=BALANCE_MODE_DISTRIBUTE_LOAD" << HT_END;
-      m_last_balance_time = now;
     }
     else
       HT_INFO_OUT << "LoadBalancerBasic mode=BALANCE_MODE_DISTRIBUTE_TABLE_RANGES" << HT_END;
