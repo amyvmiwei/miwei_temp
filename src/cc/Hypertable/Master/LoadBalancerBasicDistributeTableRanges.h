@@ -36,7 +36,8 @@ namespace Hypertable {
   class LoadBalancerBasicDistributeTableRanges {
 
     public:
-      LoadBalancerBasicDistributeTableRanges(TablePtr &table) : m_table(table) { }
+      LoadBalancerBasicDistributeTableRanges(TablePtr &table) : m_table(table),
+          m_num_servers(0), m_num_ranges(0) { }
       void compute_plan(std::vector<RangeServerStatistics> &range_server_stats,
                         BalancePlanPtr &balance_plan);
     private:
@@ -64,6 +65,7 @@ namespace Hypertable {
       TableSummaryMap m_table_summaries;
       TablePtr m_table;
       uint32_t m_num_servers;
+      size_t m_num_ranges;
   }; // LoadBalancerBasicDistributeTableRanges
 
 

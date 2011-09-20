@@ -36,7 +36,8 @@ void LoadBalancerBasicDistributeTableRanges::compute_plan(vector<RangeServerStat
     return;
   compute_range_distribution(range_server_stats);
   m_num_servers = m_servers.size();
-  HT_INFO_OUT << "m_num_servers=" << m_num_servers << HT_END;
+  HT_INFO_OUT << "m_num_servers=" << m_num_servers << ", total ranges=" << m_num_ranges
+      << HT_END;
   if (m_servers.size() <= 1)
     return;
   // Now scan thru METADATA Location and StartRow and come up with balance plan
@@ -195,12 +196,14 @@ void LoadBalancerBasicDistributeTableRanges::clear() {
 
 void LoadBalancerBasicDistributeTableRanges::compute_range_distribution(vector<RangeServerStatistics> &range_server_stats) {
 
+  m_num_ranges=0;
   foreach (RangeServerStatistics &rs, range_server_stats) {
     if (!rs.stats || !rs.stats->live)
       continue;
     const char *server_id = rs.location.c_str();
     m_servers.push_back(server_id);
     if (rs.stats->range_count > 0) {
+      m_num_ranges += rs.stats->range_count;
       foreach (StatsTable &table, rs.stats->tables) {
         uint32_t range_count=table.range_count;
         const char *table_id = table.table_id.c_str();
