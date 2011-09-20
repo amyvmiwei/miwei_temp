@@ -23,6 +23,10 @@
 #include <cstdlib>
 #include <iostream>
 
+extern "C" {
+#include <unistd.h>
+}
+
 #include "Common/md5.h"
 #include "Common/Usage.h"
 
@@ -238,6 +242,72 @@ int main(int argc, char **argv) {
         _exit(1);
       }
       HT_INFO_OUT << "full scan test finished" << HT_END;
+
+      // this time cancel individual scanners
+      memset(&md5_ctx, 0, sizeof(md5_ctx));
+      md5_starts(&md5_ctx);
+      Future ff3(50000);
+      ssbuilder.clear();
+      ssbuilder.add_row_interval("00000",true, "00006", false);
+      ssbuilder.add_row_interval("00006",true, "00041", false);
+      ssbuilder.add_row_interval("00041",true, "00050", false);
+      ScanSpec scan_spec_a = ssbuilder.get();
+
+      ssbuilder.clear();
+      ssbuilder.add_row_interval("00000",true, "00016", false);
+      ssbuilder.add_row_interval("00016",true, "00031", false);
+      ssbuilder.add_row_interval("00031",true, "00050", false);
+      scan_spec = ssbuilder.get();
+
+      ssbuilder.clear();
+      ssbuilder.add_row_interval("00009",true, "00099", false);
+      ScanSpec scan_spec_c = ssbuilder.get();
+
+      TableScannerAsyncPtr scanner_a_ptr = table_ptr->create_scanner_async(&ff3, scan_spec_a);
+      TableScannerAsyncPtr scanner_b_ptr = table_ptr->create_scanner_async(&ff3, scan_spec);
+      TableScannerAsyncPtr scanner_c_ptr = table_ptr->create_scanner_async(&ff3, scan_spec_c);
+
+      // wait until the queue is full
+      while (!ff3.is_full())
+        sleep(1);
+
+      // cancel the scanners
+      scanner_a_ptr->cancel();
+      scanner_c_ptr->cancel();
+
+      // get the remaining results
+      while (ff3.get(result)) {
+        if (result->is_error()) {
+          int error;
+          String error_msg;
+          result->get_error(error, error_msg);
+          Exception e(error, error_msg);
+          HT_ERROR_OUT << "Encountered scan error " << e << HT_END;
+          _exit(1);
+        }
+
+        if (scanner_b_ptr == result->get_scanner()) {
+          result->get_cells(cells);
+          for (size_t ii=0; ii< cells.size(); ++ii) {
+            md5_update(&md5_ctx, (unsigned char *)cells[ii].value, cells[ii].value_len);
+            HT_INFO_OUT <<  "Got cell with key=" << cells[ii].row_key << HT_END;
+          }
+        }
+        else {
+          HT_ERROR("Result from a cancelled scanner received");
+          _exit(1);
+        }
+      }
+
+      md5_finish(&md5_ctx, received_digest);
+
+      if (memcmp(sent_digest, received_digest, 16)) {
+        HT_ERROR("MD5 digest mismatch between sent and received");
+        _exit(1);
+      }
+      HT_INFO_OUT << "cancel scanner test finished" << HT_END;
+
+      scanner_a_ptr = scanner_b_ptr = scanner_c_ptr = 0;
     }
   }
   catch (Exception &e) {

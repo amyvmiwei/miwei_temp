@@ -125,8 +125,72 @@ int main(int argc, char **argv) {
         }
         ii++;
       }
+      HT_INFO_OUT << "Cancel future test finished" << HT_END;
     }
-    HT_INFO_OUT << "Test finished" << HT_END;
+
+    // this time cancel individual mutators
+    if (num_mutators > 1) {
+      Future ff;
+      vector<TableMutatorAsyncPtr> mutator_ptrs;
+      set<TableMutatorAsyncPtr> cancelled_mutator_ptrs;
+      table_ptr = ns->open_table("FutureTest");
+
+      for(size_t ii=0; ii<num_mutators; ++ii)
+        mutator_ptrs.push_back(table_ptr->create_mutator_async(&ff));
+
+      key.column_family = "data";
+      key.column_qualifier = 0;
+      key.column_qualifier_len = 0;
+
+      size_t cells=0;
+      size_t num_updates=0;
+      while(true) {
+        for (size_t jj=0; jj < num_mutators; ++jj) {
+          TableMutatorAsyncPtr mutator_ptr = mutator_ptrs[jj];
+          if (cancelled_mutator_ptrs.find(mutator_ptr) != cancelled_mutator_ptrs.end())
+            continue;
+          load_buffer_with_random(buf, 10);
+          sprintf(keybuf, "%05u", (unsigned)cells);
+          key.row = keybuf;
+          key.row_len = strlen(keybuf);
+          mutator_ptr->set(key, buf, 10);
+          if (cells % cells_per_flush == 0)
+            mutator_ptr->flush();
+          size_t cancel_after_num_cells = total_cells / 4 + (random() % total_cells*3/4);
+          if (cancelled_mutator_ptrs.size() < num_mutators/2
+              && cells >= cancel_after_num_cells) {
+            HT_INFO_OUT << "Cancelling mutator #" << jj << HT_END;
+            mutator_ptr->cancel();
+            cancelled_mutator_ptrs.insert(mutator_ptr);
+          }
+        }
+        while (!ff.is_empty() && ff.get(result)) {
+          if (result->is_error()) {
+            int error;
+            String error_msg;
+            result->get_error(error, error_msg);
+            Exception e(error, error_msg);
+            HT_ERROR_OUT << "Encountered mutate error " << e << HT_END;
+            _exit(1);
+          }
+          else if (cancelled_mutator_ptrs.find(result->get_mutator()) != cancelled_mutator_ptrs.end()) {
+            HT_ERROR("Result from a cancelled scanner received");
+            _exit(1);
+          }
+          else
+            ++num_updates;
+        }
+        if (cells >= total_cells) {
+          HT_INFO_OUT << "Wrote " << cells << " cells, got " << num_updates << " updates, "
+            << cancelled_mutator_ptrs.size() << "/" << num_mutators
+            << " mutators cancelled" << HT_END;
+          ff.cancel();
+          break;
+        }
+        ++cells;
+      }
+      HT_INFO_OUT << "Cancel individual mutators test finished" << HT_END;
+    }
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
