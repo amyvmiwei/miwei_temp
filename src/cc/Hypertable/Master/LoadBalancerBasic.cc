@@ -136,7 +136,8 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
     }
     else
       HT_INFO_OUT << "LoadBalancerBasic mode=BALANCE_MODE_DISTRIBUTE_TABLE_RANGES" << HT_END;
-    HT_INFO_OUT << "BalancePlan = " << *balance_plan << HT_END;
+    HT_INFO_OUT << "Move " << balance_plan->moves.size() << " ranges, BalancePlan = "
+        << *balance_plan << HT_END;
   }
 }
 
