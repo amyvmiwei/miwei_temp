@@ -265,7 +265,7 @@ void DefaultPolicy::init_options() {
         "Time of day at which LoadBalancer balance window starts")
     ("Hypertable.LoadBalancer.WindowEnd", str()->default_value("00:03:00"),
         "Time of day at which the LoadBalancer balance window ends")
-    ("Hypertable.LoadBalancer.ServerWaitInterval", i32()->default_value(3000),
+    ("Hypertable.LoadBalancer.ServerWaitInterval", i32()->default_value(300000),
         "Amount of time to wait before running balancer when a new RangeServer is detected")
     ("Hypertable.LoadBalancer.LoadavgThreshold", f64()->default_value(0.25),
         "Servers with loadavg above this much above the mean will be considered by the "

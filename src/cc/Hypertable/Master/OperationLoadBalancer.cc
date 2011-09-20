@@ -36,7 +36,7 @@ OperationLoadBalancer::OperationLoadBalancer(ContextPtr &context, const String &
 
 
 void OperationLoadBalancer::execute() {
-  HT_INFOF("Entering LoadBalancer-%lld", (Lld)header.id);
+  HT_INFOF("Entering LoadBalancer-%lld algorithm=%s", (Lld)header.id, m_algorithm.c_str());
 
   try {
     m_context->balancer->balance(m_algorithm);
@@ -45,7 +45,7 @@ void OperationLoadBalancer::execute() {
     HT_THROW2(e.code(), e, "Load Balancer");
   }
   complete_ok_no_log();
-  HT_INFOF("Leaving LoadBalancer-%lld", (Lld)header.id);
+  HT_INFOF("Leaving LoadBalancer-%lld algorithm=%s", (Lld)header.id, m_algorithm.c_str());
 }
 
 const String OperationLoadBalancer::name() {
