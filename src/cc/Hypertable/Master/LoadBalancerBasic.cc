@@ -66,27 +66,28 @@ void LoadBalancerBasic::transfer_monitoring_data(vector<RangeServerStatistics> &
   m_range_server_stats.swap(stats);
 }
 
-void LoadBalancerBasic::calculate_balance_plan(String algorithm, BalancePlanPtr &balance_plan) {
-
+void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPtr &balance_plan) {
+  String algorithm(algo);
   vector <RangeServerStatistics> range_server_stats;
   uint32_t mode = BALANCE_MODE_DISTRIBUTE_LOAD;
   ptime now = second_clock::local_time();
+
+  {
+    ScopedLock lock(m_data_mutex);
+    range_server_stats = m_range_server_stats;
+  }
+
 
   boost::to_upper(algorithm);
   if (algorithm.size() == 0) {
     // determine which balancer to use
     mode = BALANCE_MODE_DISTRIBUTE_LOAD;
-    {
-      ScopedLock lock(m_data_mutex);
-      range_server_stats.swap(m_range_server_stats);
-    }
 
     // when we see a new server wait for next maintenance interval to balance
     if (!m_waiting_for_servers) {
       foreach(const RangeServerStatistics &server_stats, range_server_stats) {
         if (server_stats.stats->live && server_stats.stats->range_count == 0) {
           mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
-          range_server_stats.swap(m_range_server_stats);
           m_wait_time_start = now;
           m_waiting_for_servers = true;
           break;
@@ -97,11 +98,11 @@ void LoadBalancerBasic::calculate_balance_plan(String algorithm, BalancePlanPtr 
       mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
   }
   else {
-    if (algorithm == "TABLE_RANGES") {
+    if (algorithm.compare("TABLE_RANGES")==0) {
       mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
       m_waiting_for_servers = false;
     }
-    else if (algorithm == "LOAD")
+    else if (algorithm.compare("LOAD")==0)
       mode = BALANCE_MODE_DISTRIBUTE_LOAD;
     else
       HT_THROW(Error::NOT_IMPLEMENTED, (String)"Unknown LoadBalancer algorithm '" + algorithm
