@@ -50,7 +50,7 @@ namespace Hypertable {
       //void range_relinquish_acknowledged(TableIdentifier &tid, RangeIdentifier &rid) = 0;
       //time_t maintenance_interval() = 0;
     private:
-      void calculate_balance_plan(String algorithm, BalancePlanPtr &plan);
+      void calculate_balance_plan(const String &algorithm, BalancePlanPtr &plan);
       void distribute_load(const boost::posix_time::ptime &now, BalancePlanPtr &plan);
       void distribute_table_ranges(vector<RangeServerStatistics> &range_server_stats,
                                    BalancePlanPtr &plan);
