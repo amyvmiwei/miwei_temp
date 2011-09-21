@@ -71,7 +71,7 @@ MergeScannerAccessGroup::do_initialize()
 {
   ScannerState sstate;
   bool counter;
-  int64_t cell_cutoff, cur_bytes;
+  int64_t cell_cutoff, cur_bytes=0;
 
   while (!m_queue.empty()) {
     sstate = m_queue.top();
