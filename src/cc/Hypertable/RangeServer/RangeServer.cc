@@ -71,6 +71,7 @@ extern "C" {
 #include "MaintenanceScheduler.h"
 #include "MaintenanceTaskCompaction.h"
 #include "MaintenanceTaskSplit.h"
+#include "MaintenanceTaskRelinquish.h"
 #include "MergeScanner.h"
 #include "MetaLogDefinitionRangeServer.h"
 #include "MetaLogEntityRange.h"
@@ -544,6 +545,8 @@ void RangeServer::local_recover() {
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
 	    maintenance_tasks.push_back(new MaintenanceTaskSplit(0, priority++, now, range));
+    else if (range->get_state() == RangeState::RELINQUISH_LOG_INSTALLED)
+      maintenance_tasks.push_back(new MaintenanceTaskRelinquish(0, priority++, now, range));
 	  else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
@@ -601,7 +604,9 @@ void RangeServer::local_recover() {
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
 	    maintenance_tasks.push_back(new MaintenanceTaskSplit(1, priority++, now, range));
-	  else
+	  else if (range->get_state() == RangeState::RELINQUISH_LOG_INSTALLED)
+      maintenance_tasks.push_back(new MaintenanceTaskRelinquish(1, priority++, now, range));
+    else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
       }
@@ -657,7 +662,9 @@ void RangeServer::local_recover() {
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
 	    maintenance_tasks.push_back(new MaintenanceTaskSplit(2, priority++, now, range));
-	  else
+	  else if (range->get_state() == RangeState::RELINQUISH_LOG_INSTALLED)
+      maintenance_tasks.push_back(new MaintenanceTaskRelinquish(2, priority++, now, range));
+    else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
       }
@@ -713,6 +720,8 @@ void RangeServer::local_recover() {
 	  if (range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
 	      range->get_state() == RangeState::SPLIT_SHRUNK)
 	    maintenance_tasks.push_back(new MaintenanceTaskSplit(3, priority++, now, range));
+    else if (range->get_state() == RangeState::RELINQUISH_LOG_INSTALLED)
+      maintenance_tasks.push_back(new MaintenanceTaskRelinquish(3, priority++, now, range));
 	  else
 	    HT_ASSERT(range->get_state() == RangeState::STEADY);
 	}
