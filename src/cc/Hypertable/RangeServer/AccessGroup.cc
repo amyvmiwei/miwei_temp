@@ -136,7 +136,7 @@ void AccessGroup::update_schema(SchemaPtr &schema,
 void AccessGroup::add(const Key &key, const ByteString value) {
   if (!m_cell_cache)
     m_cell_cache = new CellCache();
-  if (key.revision > m_latest_stored_revision) {
+  if (key.revision > m_latest_stored_revision || Global::ignore_clock_skew_errors) {
     if (key.revision < m_earliest_cached_revision)
       m_earliest_cached_revision = key.revision;
     if (m_schema->column_is_counter(key.column_family_code))

@@ -95,6 +95,7 @@ namespace Hypertable {
     static std::string    toplevel_dir;
     static int32_t        metrics_interval;
     static int32_t        merge_cellstore_run_length_threshold;
+    static bool           ignore_clock_skew_errors;
   };
 
 } // namespace Hypertable
