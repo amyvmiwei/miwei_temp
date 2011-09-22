@@ -1,0 +1,69 @@
+
+<? 
+
+require_once('ViewFunctions.php');
+
+
+if (!$this->profile) {
+  echo "Sorry, no valid profile specified!";
+  return;  
+}
+
+?>
+
+<h2><? echo $this->profile->getId() ?>'s Profile</h2>
+<p>
+Your profile information is visible to other users. Email and additional 
+information are not mandatory and will not be verified.
+</p>
+<? if ($this->profile->getAvatar()) { ?>
+  <img src="<? echo $this->profile->getAvatar() ?>" width="64" height="64" />
+<? } ?>
+<br />
+<br />
+
+<table border="0">
+<tr>
+<td>Display Name:</td><td><? echo $this->profile->getDisplayName() ?></td></tr>
+<td>Email:</td><td><? echo $this->profile->getEmail() ?></td></tr>
+<td>Location:</td><td><? echo $this->profile->getLocation() ?></td></tr>
+<td>Webpage:</td><td>
+<? 
+$w=$this->profile->getWebpage();
+if ($w)
+  echo "<a target=\"_blank\" href=\"$w\">$w</a>";
+else
+  echo "&nbsp;";
+?></td></tr>
+<td>Bio:</td><td><? echo $this->profile->getBio() ?></td></tr>
+</table>
+
+<br />
+<br />
+
+<? 
+$u=$this->profile->getId();
+if ($this->is_following) {
+  echo "You are following this user. ";
+  echo "<a href=\"/profile/unfollow/$u\">[[Unfollow]]</a>.";
+}
+else {
+  echo "You are not following this user. ";
+  echo "<a href=\"/profile/follow/$u\">[[Follow]]</a>.";
+}
+
+$max=$this->followers_count;
+$count=count($this->followers);
+echo "<h2>$u's Most Recent Followers ($count of $max)</h2>";
+ShowUsers($this->followers);
+
+$max=$this->following_count;
+$count=count($this->following);
+echo "<h2>Most Recent Users Followed by $u ($count of $max)</h2>";
+ShowUsers($this->following);
+
+$max=$this->my_stream_count;
+$count=count($this->my_stream);
+echo "<h2>$u's Most Recent Tweets ($count of $max)</h2>";
+ShowTweets($this->my_stream);
+?>

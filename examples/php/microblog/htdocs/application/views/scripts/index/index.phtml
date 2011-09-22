@@ -1,0 +1,48 @@
+
+<?
+
+require_once('Profile.php');
+require_once('ProfileTable.php');
+require_once('ViewFunctions.php');
+
+?>
+
+<p>
+This is the Hypertable microblog sample. It demonstrates how to create a 
+"Twitter"-like web application based on Hypertable and PHP.
+</p>
+<h2>Send a Message</h2>
+<?= $this->sendForm ?>
+<hr>
+<h2>Your Streams</h2>
+<div id="streams" style="background-color: #e9e9e9; padding: 5px;">
+  <a <? if ($this->show=='') echo 'style="background-color: #bbb;" '; ?> 
+    href="/index">Favorites</a> -
+  <a <? if ($this->show=='mine') echo 'style="background-color: #bbb;" '; ?> 
+    href="/index/mine">Your tweets</a> -
+  <a <? if ($this->show=='following') echo 'style="background-color: #bbb;" '; ?> 
+    href="/index/following">Following</a> -
+  <a <? if ($this->show=='followers') echo 'style="background-color: #bbb;" '; ?> 
+    href="/index/followers">Followers</a>
+</div>
+<br />
+<div id="data">
+<?
+    if ($this->show=='' or $this->show=='mine' or $this->show=='all')
+      showTweets($this->data);
+    else 
+      showUsers($this->data);
+?>
+</div>
+<div id="pager" style="background-color: #f0f0f0; padding: 5px; text-align: right;">
+<?
+    $fwd=$this->show;
+    if (!$fwd)
+      $fwd='index';
+    if ($this->new_cutoff_time) {
+      $c=$this->new_cutoff_time;
+      echo "<a href=\"/index/$fwd?cutoff=$c\">Older &gt;</a> ";
+    }
+?>
+</div>
+

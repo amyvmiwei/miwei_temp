@@ -1,0 +1,67 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="/style/style.css">
+<link rel="stylesheet" type="text/css" href="/static/styles.css">
+<title>Hypertable Micro-blog sample</title>
+</head>
+<body>
+<div id="all">
+<div id="header">
+	<div id="logo">
+		<h1><a href="http://hypertable.com"><img src="/static/lgo-hypertable.jpg" alt="Hypertable"></a></h1>
+		<p>A Micro-blog Sample</p>
+	</div><!-- logo -->
+	<div id="nav">
+		<ul>
+			<li><a href="/about">About</a></li>
+			<li><a href="/index">Dashboard</a></li>
+<?
+  if (!Zend_Auth::getInstance()->hasIdentity()) {
+?>
+			<li class="last"><a href="/login">Log in/Sign in</a></li>
+<?
+  }
+  else {
+?>
+			<li><a href="/login/logout">Log out</a></li>
+			<li class="last"><a href="/profile">Profile</a></li>
+<?
+  }
+?>
+		</ul>
+	</div><!-- nav -->
+</div><!-- header -->
+	<div id="contents-container">
+		<div id="contents">
+			<div id="fullpage">
+
+
+<?php echo $this->layout()->content; ?>
+
+
+<p></p><p></p>
+			</div><!-- home -->
+		</div><!-- contents -->
+	</div><!-- contents-container -->
+</div><!-- all -->
+<div id="footer-container">
+	<div id="footer">
+		<p class="nav">
+			<a href="http://hypertable.org/about.html">About</a> |
+			<a href="http://hypertable.org/download.html">Download</a> |
+			<a href="http://hypertable.org/license.html">License</a> |
+			<a href="http://hypertable.org/documentation.html">Documentation</a> |
+			<a class="external" href="http://code.google.com/p/hypertable/issues/list">Bug Tracker</a> |
+			<a href="http://hypertable.org/mailing-list.html">Mailing Lists</a> |
+			<a href="http://hypertable.org/sponsors.html">Sponsors</a> |
+			<a href="http://hypertable.org/feedback.html">Feedback</a> |
+			<a href="http://hypertable.org/sitemap.html">Sitemap</a>
+		</p>
+		<!-- . nav -->
+		<p class="copy">© 2011 Hypertable. All rights reserved. Based on a design by <a href="http://www.bluecoastweb.com/" target="_blank">Blue Coast Web</a></p>
+	</div><!-- footer -->
+</div><!-- footer-container -->
+
+</body></html>

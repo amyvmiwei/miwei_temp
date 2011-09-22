@@ -1,0 +1,26 @@
+
+<h2>Edit your Profile</h2>
+<p>
+Your profile information is visible to other users. Email and additional 
+information are not mandatory and will not be verified.
+</p>
+<?= $this->form;
+
+require_once('ViewFunctions.php');
+
+$u=$this->username;
+$max=(int)$this->followers_count;
+$count=count($this->followers);
+echo "<h2>$u's Most Recent Followers ($count of $max)</h2>";
+ShowUsers($this->followers);
+
+$max=(int)$this->following_count;
+$count=count($this->following);
+echo "<h2>Most Recent Users Followed by $u ($count of $max)</h2>";
+ShowUsers($this->following);
+
+$max=(int)$this->my_stream_count;
+$count=count($this->my_stream);
+echo "<h2>$u's Most Recent Tweets ($count of $max)</h2>";
+ShowTweets($this->my_stream);
+?>
