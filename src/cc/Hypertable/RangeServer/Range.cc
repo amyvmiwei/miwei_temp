@@ -63,7 +63,7 @@ Range::Range(MasterClientPtr &master_client,
     m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
     m_split_off_high(false), m_added_inserts(0), m_range_set(range_set),
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
-    m_relinquish(false), m_maintenance_generation(0),
+    m_relinquish(false), m_removed_from_working_set(false), m_maintenance_generation(0),
     m_load_metrics(identifier->id, range->start_row, range->end_row) {
   m_metalog_entity = new MetaLog::EntityRange(*identifier, *range, *state, needs_compaction);
   initialize();
@@ -619,56 +619,60 @@ void Range::relinquish_install_log() {
 
 
 void Range::relinquish_compact_and_finish() {
-  AccessGroupVector ag_vector(0);
 
-  {
-    ScopedLock lock(m_schema_mutex);
-    ag_vector = m_access_group_vector;
-  }
+  if (!m_removed_from_working_set) {
+    AccessGroupVector ag_vector(0);
 
-  if (cancel_maintenance())
-    HT_THROW(Error::CANCELLED, "");
-
-  /**
-   * Perform minor compactions
-   */
-  for (size_t i=0; i<ag_vector.size(); i++)
-    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR);
-
-  // VERIFY
-  // update the latest generation, this should probably be protected
-  {
-    ScopedLock lock(m_schema_mutex);
-    m_metalog_entity->table.generation = m_schema->get_generation();
-  }
-
-  // Record "move" in sys/RS_METRICS
-  if (Global::rs_metrics_table) {
-    TableMutatorPtr mutator = Global::rs_metrics_table->create_mutator();
-    KeySpec key;
-    String row = Global::location_initializer->get() + ":" + m_metalog_entity->table.id;
-    key.row = row.c_str();
-    key.row_len = row.length();
-    key.column_family = "range_move";
-    key.column_qualifier = m_metalog_entity->spec.end_row;
-    key.column_qualifier_len = strlen(m_metalog_entity->spec.end_row);
-    try {
-      mutator->set(key, 0, 0);
-      mutator->flush();
+    {
+      ScopedLock lock(m_schema_mutex);
+      ag_vector = m_access_group_vector;
     }
-    catch (Exception &e) {
-      HT_ERROR_OUT << "Problem updating sys/RS_METRICS - " << e << HT_END;
+
+    if (cancel_maintenance())
+      HT_THROW(Error::CANCELLED, "");
+
+    /**
+     * Perform minor compactions
+     */
+    for (size_t i=0; i<ag_vector.size(); i++)
+      ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR);
+
+    // VERIFY
+    // update the latest generation, this should probably be protected
+    {
+      ScopedLock lock(m_schema_mutex);
+      m_metalog_entity->table.generation = m_schema->get_generation();
     }
-  }
 
-  // Remove range from the system
-  {
-    Barrier::ScopedActivator block_updates(m_update_barrier);
-    Barrier::ScopedActivator block_scans(m_scan_barrier);
+    // Record "move" in sys/RS_METRICS
+    if (Global::rs_metrics_table) {
+      TableMutatorPtr mutator = Global::rs_metrics_table->create_mutator();
+      KeySpec key;
+      String row = Global::location_initializer->get() + ":" + m_metalog_entity->table.id;
+      key.row = row.c_str();
+      key.row_len = row.length();
+      key.column_family = "range_move";
+      key.column_qualifier = m_metalog_entity->spec.end_row;
+      key.column_qualifier_len = strlen(m_metalog_entity->spec.end_row);
+      try {
+	mutator->set(key, 0, 0);
+	mutator->flush();
+      }
+      catch (Exception &e) {
+	HT_ERROR_OUT << "Problem updating sys/RS_METRICS - " << e << HT_END;
+      }
+    }
 
-    if (!m_range_set->remove(m_metalog_entity->spec.end_row)) {
-      HT_ERROR_OUT << "Problem removing range " << m_name << HT_END;
-      HT_ABORT;
+    // Remove range from the system
+    {
+      Barrier::ScopedActivator block_updates(m_update_barrier);
+      Barrier::ScopedActivator block_scans(m_scan_barrier);
+
+      if (!m_range_set->remove(m_metalog_entity->spec.end_row)) {
+	HT_ERROR_OUT << "Problem removing range " << m_name << HT_END;
+	HT_ABORT;
+      }
+      m_removed_from_working_set = true;
     }
   }
 
