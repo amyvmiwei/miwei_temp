@@ -53,7 +53,8 @@ namespace Hypertable {
     RangeServerConnectionPtr m_rsc;
     InetAddr m_local_addr;
     InetAddr m_public_addr;
-
+    int64_t m_register_ts;
+    int64_t m_received_ts;
   };
 
 

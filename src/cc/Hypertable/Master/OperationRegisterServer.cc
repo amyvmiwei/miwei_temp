@@ -20,10 +20,14 @@
  */
 
 #include "Common/Compat.h"
+
+#include <cmath>
+
 #include "Common/Error.h"
 #include "Common/FailureInducer.h"
 #include "Common/Serialization.h"
 #include "Common/StringExt.h"
+#include "Common/Time.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -33,15 +37,17 @@
 using namespace Hypertable;
 
 
-OperationRegisterServer::OperationRegisterServer(ContextPtr &context, EventPtr &event) 
+OperationRegisterServer::OperationRegisterServer(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_REGISTER_SERVER) {
-  
+
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
 
   m_local_addr = InetAddr(event->addr);
   m_public_addr = InetAddr(m_system_stats.net_info.primary_addr, m_listen_port);
+  m_received_ts = get_ts64();
+
 }
 
 
@@ -64,30 +70,49 @@ void OperationRegisterServer::execute() {
       else
         m_location = format("rs-%s-%llu", m_context->location_hash.c_str(), (Llu)id);
     }
-    m_rsc = new RangeServerConnection(m_context->mml_writer, m_location, 
+    m_rsc = new RangeServerConnection(m_context->mml_writer, m_location,
                                       m_system_stats.net_info.host_name, m_public_addr);
   }
 
-  m_context->monitoring->add_server(m_location, m_system_stats);
   m_context->connect_server(m_rsc, m_system_stats.net_info.host_name,
                             m_local_addr, m_public_addr);
-
-  HT_INFOF("%lld Registering server %s (host=%s, local_addr=%s, public_addr=%s)",
-           (Lld)header.id, m_rsc->location().c_str(), m_system_stats.net_info.host_name.c_str(),
-           m_local_addr.format().c_str(), m_public_addr.format().c_str());
-
-  /** Send back Response **/
-  {
+  int32_t difference = (int32_t)abs((m_received_ts - m_register_ts)/ 1000LL);
+  if (difference > m_context->max_allowable_skew) {
+    m_error = Error::RANGESERVER_CLOCK_SKEW;
+    m_error_msg = format("Detected clock skew while registering server %s(%s), as location %s register_ts=%llu, received_ts=%llu, difference=%d > allowable skew %d",
+        m_system_stats.net_info.host_name.c_str(), m_public_addr.format().c_str(),
+        m_location.c_str(), (Llu)m_register_ts, (Llu)m_received_ts, difference,
+        m_context->max_allowable_skew);
+    HT_ERROR_OUT << m_error_msg << HT_END;
+    // clock skew detected by master
     CommHeader header;
     header.initialize_from_request_header(m_event->header);
     CommBufPtr cbp(new CommBuf(header, encoded_result_length()));
+
     encode_result(cbp->get_data_ptr_address());
     int error = m_context->comm->send_response(m_event->addr, cbp);
     if (error != Error::OK)
       HT_ERRORF("Problem sending response (location=%s) back to %s",
                 m_location.c_str(), m_event->addr.format().c_str());
   }
+  else {
+    m_context->monitoring->add_server(m_location, m_system_stats);
+    HT_INFOF("%lld Registering server %s (host=%s, local_addr=%s, public_addr=%s)",
+        (Lld)header.id, m_rsc->location().c_str(), m_system_stats.net_info.host_name.c_str(),
+        m_local_addr.format().c_str(), m_public_addr.format().c_str());
 
+    /** Send back Response **/
+    {
+      CommHeader header;
+      header.initialize_from_request_header(m_event->header);
+      CommBufPtr cbp(new CommBuf(header, encoded_result_length()));
+      encode_result(cbp->get_data_ptr_address());
+      int error = m_context->comm->send_response(m_event->addr, cbp);
+      if (error != Error::OK)
+        HT_ERRORF("Problem sending response (location=%s) back to %s",
+            m_location.c_str(), m_event->addr.format().c_str());
+    }
+  }
   complete_ok_no_log();
   m_context->op->unblock(m_location);
   m_context->op->unblock(Dependency::SERVERS);
@@ -115,6 +140,7 @@ void OperationRegisterServer::decode_result(const uint8_t **bufp, size_t *remain
 
 void OperationRegisterServer::display_state(std::ostream &os) {
   os << " location=" << m_location << " host=" << m_system_stats.net_info.host_name;
+  os << " register_ts=" << m_register_ts;
   os << " local_addr=" << m_rsc->local_addr().format();
   os << " public_addr=" << m_rsc->public_addr().format() << " ";
 }
@@ -123,6 +149,7 @@ void OperationRegisterServer::decode_request(const uint8_t **bufp, size_t *remai
   m_location = Serialization::decode_vstr(bufp, remainp);
   m_listen_port = Serialization::decode_i16(bufp, remainp);
   m_system_stats.decode(bufp, remainp);
+  m_register_ts = Serialization::decode_i64(bufp, remainp);
 }
 
 const String OperationRegisterServer::name() {
