@@ -31,6 +31,7 @@ using namespace Hyperspace;
 
 namespace Hypertable {
 
+  Mutex                  Global::mutex;
   SessionPtr             Global::hyperspace = 0;
   FilesystemPtr          Global::dfs;
   FilesystemPtr          Global::log_dfs;

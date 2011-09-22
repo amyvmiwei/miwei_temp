@@ -166,25 +166,12 @@ MaintenancePrioritizer::schedule_splits_and_relinquishes(RangeStatsVector &range
         range_data[i]->priority = priority++;
         range_data[i]->maintenance_flags |= MaintenanceFlag::RELINQUISH;
       }
-      else if (range_data[i]->is_metadata) {
-        if (Global::range_metadata_split_size != 0 &&
-            disk_total >= Global::range_metadata_split_size) {
-          HT_INFOF("Adding maintenance for range %s because dist_total %d exceeds %d",
-                   range_data[i]->range->get_name().c_str(), (int)disk_total, (int)Global::range_metadata_split_size);
-          memory_state.decrement_needed(mem_total);
-          range_data[i]->priority = priority++;
-	  range_data[i]->maintenance_flags |= MaintenanceFlag::SPLIT;
-        }
-      }
-      else {
-        assert(range_data[i]->soft_limit != 0);
-        if (disk_total >= range_data[i]->soft_limit) {
-          HT_INFOF("Adding maintenance for range %s because dist_total %lld exceeds %lld",
-                   range_data[i]->range->get_name().c_str(), (Lld)disk_total, (Lld)range_data[i]->soft_limit);
-          memory_state.decrement_needed(mem_total);
-          range_data[i]->priority = priority++;
-	  range_data[i]->maintenance_flags |= MaintenanceFlag::SPLIT;
-        }
+      else if (range_data[i]->needs_split) {
+	HT_INFOF("Adding maintenance for range %s because disk_total %d exceeds split threshold",
+		 range_data[i]->range->get_name().c_str(), (int)disk_total);
+	memory_state.decrement_needed(mem_total);
+	range_data[i]->priority = priority++;
+	range_data[i]->maintenance_flags |= MaintenanceFlag::SPLIT;
       }
     }
   }

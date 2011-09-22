@@ -98,6 +98,7 @@ namespace Hypertable {
       bool     is_system;
       bool     relinquish;
       bool     needs_major_compaction;
+      bool     needs_split;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
@@ -344,6 +345,7 @@ namespace Hypertable {
     RangeMaintenanceGuard m_maintenance_guard;
     int64_t          m_revision;
     int64_t          m_latest_revision;
+    int64_t          m_split_threshold;
     String           m_split_row;
     CommitLogPtr     m_transfer_log;
     bool             m_split_off_high;

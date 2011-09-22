@@ -102,9 +102,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   SubProperties cfg(props, "Hypertable.RangeServer.");
 
   m_verbose = props->get_bool("verbose");
-  Global::range_metadata_split_size = cfg.get_i64("Range.MetadataSplitSize", 0);
   Global::range_split_size = cfg.get_i64("Range.SplitSize");
   Global::range_maximum_size = cfg.get_i64("Range.MaximumSize");
+  Global::range_metadata_split_size = cfg.get_i64("Range.MetadataSplitSize", Global::range_split_size);
   Global::access_group_garbage_compaction_threshold = cfg.get_i32("AccessGroup.GarbageThreshold.Percentage");
   Global::access_group_max_mem = cfg.get_i64("AccessGroup.MaxMemory");
   Global::enable_shadow_cache = cfg.get_bool("AccessGroup.ShadowCache");
@@ -2703,6 +2703,7 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
     stats_gatherer.fetch(range_data);
 
     for (size_t i=0; i<range_data.size(); i++) {
+      out << *range_data[i] << "\n";
       for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next)
         out << *ag_data << "\n";
     }
