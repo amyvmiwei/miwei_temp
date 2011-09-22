@@ -121,6 +121,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::toplevel_dir = String("/") + Global::toplevel_dir;
 
   Global::merge_cellstore_run_length_threshold = cfg.get_i32("CellStore.Merge.RunLengthThreshold");
+  Global::ignore_clock_skew_errors = cfg.get_bool("IgnoreClockSkewErrors");
 
   std::vector<int64_t> collector_periods(2);
   int64_t interval = (int64_t)cfg.get_i32("Maintenance.Interval");
@@ -2208,7 +2209,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
               if (auto_revision < latest_range_revision) {
                 difference = (int32_t)((latest_range_revision - auto_revision)
                                        / 1000LL);
-                if (difference > m_max_clock_skew) {
+                if (difference > m_max_clock_skew && !Global::ignore_clock_skew_errors) {
                   request->error = Error::RANGESERVER_CLOCK_SKEW;
                   HT_ERRORF("Clock skew of %lld microseconds exceeds maximum "
                             "(%lld) range=%s", (Lld)difference,
