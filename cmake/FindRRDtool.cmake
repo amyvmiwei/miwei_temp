@@ -29,6 +29,7 @@ find_library(FREETYPE_LIBRARY freetype PATHS
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     )
@@ -39,24 +40,27 @@ find_library(PNG_LIBRARY NAMES ${PNG_NAMES} NO_DEFAULT_PATH PATHS
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     )
 
-find_library(PANGOCAIRO_LIBRARY NAMES pangocairo NO_DEFAULT_PATH PATHS
+find_library(PANGOCAIRO_LIBRARY NAMES pangocairo pangocairo-1.0 NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     )
 
-find_library(PANGO_LIBRARY NAMES pango NO_DEFAULT_PATH PATHS
+find_library(PANGO_LIBRARY NAMES pango pango-1.0 NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
@@ -73,11 +77,12 @@ find_library(CAIRO_LIBRARY NAMES cairo NO_DEFAULT_PATH PATHS
     /lib64
     )
 
-find_library(PANGOFT2_LIBRARY NAMES pangoft2 NO_DEFAULT_PATH PATHS
+find_library(PANGOFT2_LIBRARY NAMES pangoft2 pangoft2-1.0 NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
@@ -85,33 +90,36 @@ find_library(PANGOFT2_LIBRARY NAMES pangoft2 NO_DEFAULT_PATH PATHS
     )
 
 
-find_library(GOBJECT_LIBRARY NAMES gobject NO_DEFAULT_PATH PATHS
+find_library(GOBJECT_LIBRARY NAMES gobject gobject-2.0 NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
     /lib64
     )
 
-find_library(GMODULE_LIBRARY NAMES gmodule NO_DEFAULT_PATH PATHS
+find_library(GMODULE_LIBRARY NAMES gmodule gmodule-2.0 NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
     /lib64
     )
 
-find_library(GLIB_LIBRARY NAMES glib NO_DEFAULT_PATH PATHS
+find_library(GLIB_LIBRARY NAMES glib glib-2.0 NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     /lib
@@ -123,6 +131,7 @@ find_library(ART_LGPL_2_LIBRARY NAMES art_lgpl_2 NO_DEFAULT_PATH PATHS
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     )
@@ -142,6 +151,7 @@ find_library(GTHREAD_LIBRARY NAMES gthread NO_DEFAULT_PATH PATHS
     /opt/local/lib
     /usr/local/lib
     /usr/lib/i386-linux-gnu
+    /usr/lib/x86_64-linux-gnu
     /usr/lib
     /usr/lib64
     )
