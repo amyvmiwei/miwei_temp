@@ -77,6 +77,7 @@ public class HdfsBroker {
         mConf.set("fs.default.name", str);
         mConf.set("dfs.client.buffer.dir", "/tmp");
         mConf.setInt("dfs.client.block.write.retries", 3);
+        mConf.setBoolean("fs.automatic.close", false);
 
         try {
             mFilesystem = FileSystem.get(mConf);

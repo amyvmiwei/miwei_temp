@@ -25,6 +25,9 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.Properties;
 import java.util.logging.Logger;
+
+import org.apache.hadoop.fs.FileSystem;
+
 import org.hypertable.AsyncComm.ApplicationQueue;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.ConnectionHandlerFactory;
@@ -69,6 +72,12 @@ public class main {
             java.lang.System.out.println("ShutdownHook called");
             ms_broker.mOpenFileMap.RemoveAll();
             ms_app_queue.Shutdown();
+	    try {
+		FileSystem.closeAll();
+	    }
+	    catch (IOException e) {
+		e.printStackTrace();
+	    }
         }
     }
 
