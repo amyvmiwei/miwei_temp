@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include "Common/Serialization.h"
+#include "Common/Time.h"
 
 #include "AsyncComm/CommHeader.h"
 
@@ -96,11 +97,13 @@ namespace Hypertable {
   MasterProtocol::create_register_server_request(const String &location,
                                                  uint16_t listen_port,
                                                  StatsSystem &system_stats) {
+    int64_t now = get_ts64();
     CommHeader header(COMMAND_REGISTER_SERVER);
-    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location) + 2 + system_stats.encoded_length());
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(location) + 2 + system_stats.encoded_length() + 8);
     cbuf->append_vstr(location);
     cbuf->append_i16(listen_port);
     system_stats.encode(cbuf->get_data_ptr_address());
+    cbuf->append_i64(now);
     return cbuf;
   }
 

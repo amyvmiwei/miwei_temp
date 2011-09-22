@@ -98,6 +98,7 @@ namespace Hypertable {
     std::set<int64_t> in_progress_ops;
     std::set<int64_t> unacknowledged_moves;
     String location_hash;
+    int32_t max_allowable_skew;
 
     void add_server(RangeServerConnectionPtr &rsc);
     bool connect_server(RangeServerConnectionPtr &rsc, const String &hostname, InetAddr local_addr, InetAddr public_addr);

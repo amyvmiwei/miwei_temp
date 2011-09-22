@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
       md5_string(format("%s:%u", System::net_info().host_name.c_str(), port).c_str(), location_hash);
       context->location_hash = String(location_hash).substr(0, 8);
     }
-
+    context->max_allowable_skew = context->props->get_i32("Hypertable.RangeServer.ClockSkew.Max");
     context->monitoring_interval = context->props->get_i32("Hypertable.Monitoring.Interval");
     context->gc_interval = context->props->get_i32("Hypertable.Master.Gc.Interval");
     context->timer_interval = std::min(context->monitoring_interval, context->gc_interval);

@@ -36,7 +36,7 @@
 using namespace Hypertable;
 using namespace Serialization;
 
-LocationInitializer::LocationInitializer(PropertiesPtr &props) 
+LocationInitializer::LocationInitializer(PropertiesPtr &props)
   : m_props(props), m_location_persisted(false) {
 
   Path data_dir = m_props->get_str("Hypertable.DataDirectory");
@@ -66,7 +66,7 @@ LocationInitializer::LocationInitializer(PropertiesPtr &props)
       boost::trim(m_location);
     }
   }
-  
+
 }
 
 CommBuf *LocationInitializer::create_initialization_request() {
@@ -92,11 +92,8 @@ CommBuf *LocationInitializer::create_initialization_request() {
   stats.add_categories(StatsSystem::CPUINFO|StatsSystem::NETINFO|
                        StatsSystem::OSINFO|StatsSystem::PROCINFO, dirs);
 
-  CommHeader header(MasterProtocol::COMMAND_REGISTER_SERVER);
-  CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(m_location) + 2 + stats.encoded_length());
-  cbuf->append_vstr(m_location);
-  cbuf->append_i16(port);
-  stats.encode(cbuf->get_data_ptr_address());
+  CommBuf *cbuf = MasterProtocol::create_register_server_request(m_location, port, stats);
+
   return cbuf;
 }
 

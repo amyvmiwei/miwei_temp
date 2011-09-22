@@ -68,7 +68,7 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
 }
 
 
-MasterClient::MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms) 
+MasterClient::MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms)
   : m_comm(comm), m_master_addr(addr), m_timeout_ms(timeout_ms) {
   m_retry_interval = Config::properties->get_i32("Hypertable.Connection.Retry.Interval");
 }
@@ -482,52 +482,6 @@ void MasterClient::status(Timer *timer) {
   }
 
 }
-
-
-void
-MasterClient::register_server(std::string &location, uint16_t listen_port,
-                              StatsSystem &system_stats,
-                              DispatchHandler *handler, Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  CommBufPtr cbp;
-  EventPtr event;
-  String label = format("register_server('%s', listen_port=%u)", location.c_str(), listen_port);
-
-  initialize(timer, tmp_timer);
-  
-  cbp = MasterProtocol::create_register_server_request(location, listen_port, system_stats);
-  send_message_async(cbp, handler, timer, label);
-}
-
-
-void MasterClient::register_server(std::string &location, uint16_t listen_port,
-                                   StatsSystem &system_stats, Timer *timer) {
-  Timer tmp_timer(m_timeout_ms);
-  CommBufPtr cbp;
-  EventPtr event;
-  String label = format("register_server('%s', listen_port=%u)", location.c_str(), listen_port);
-
-  initialize(timer, tmp_timer);
-
-  while (!timer->expired()) {
-    cbp = MasterProtocol::create_register_server_request(location, listen_port, system_stats);
-    if (!send_message(cbp, timer, event, label))
-      continue;
-    const uint8_t *ptr = event->payload + 4;
-    size_t remain = event->payload_len - 4;
-    location = decode_vstr(&ptr, &remain);
-    return;
-  }
-
-  {
-    ScopedLock lock(m_mutex);
-    HT_THROWF(Error::REQUEST_TIMEOUT,
-              "MasterClient operation %s to master %s failed", label.c_str(),
-              m_master_addr.format().c_str());
-  }
-
-}
-
 
 void
 MasterClient::move_range(TableIdentifier *table, RangeSpec &range,
@@ -971,7 +925,7 @@ void MasterClient::reload_master() {
       m_master_addr_string = addr_str;
 
       InetAddr::initialize(&m_master_addr, m_master_addr_string.c_str());
-      
+
       m_conn_manager->add_with_initializer(m_master_addr, m_retry_interval, "Master",
                                            m_dispatcher_handler, m_connection_initializer);
     }
