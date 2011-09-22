@@ -359,6 +359,7 @@ namespace Hypertable {
     bool             m_dropped;
     bool             m_capacity_exceeded_throttle;
     bool             m_relinquish;
+    bool             m_removed_from_working_set;
     int64_t          m_maintenance_generation;
     LoadMetricsRange m_load_metrics;
   };
