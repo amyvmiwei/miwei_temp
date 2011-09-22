@@ -14,7 +14,7 @@ require_once $GLOBALS['THRIFT_ROOT'].'/transport/TFramedTransport.php';
  * include everything here due to the bogus path setup.
  */
 $old_error_reporting = error_reporting();
-error_reporting(E_NONE);
+error_reporting(0); // E_NONE
 $GEN_DIR = dirname(__FILE__).'/gen-php';
 require_once $GEN_DIR.'/Client/ClientService.php';
 require_once $GEN_DIR.'/Client/Client_types.php';
