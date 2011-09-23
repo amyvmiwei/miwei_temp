@@ -2807,6 +2807,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   m_stats->updated_bytes = m_server_stats->get_update_bytes(collector_id);
   m_stats->sync_count = m_server_stats->get_sync_count(collector_id);
   m_stats->tracked_memory = Global::memory_tracker->balance();
+  m_stats->cpu_user = m_stats->system.cpu_stat.user;
+  m_stats->cpu_sys = m_stats->system.cpu_stat.sys;
   m_stats->live = m_replay_finished;
 
   if (m_query_cache)

@@ -76,6 +76,8 @@ class RRDStat
     "net_rx_rate",
     "net_tx_rate",
     "loadavg",
+    "cpu_user",
+    "cpu_sys",
     "scanner_count",
     "file_count",
     "range_count",

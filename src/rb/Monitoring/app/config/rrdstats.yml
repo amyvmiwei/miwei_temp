@@ -84,6 +84,18 @@
                     :units: "",
                     :pname: "Load Average"},
 
+        :cpu_user: {
+                    :pair: [:cpu_user],
+                    :color: ["#7cfc00"],
+                    :units: "",
+                    :pname: "CPU User Time (%)"},
+
+        :cpu_sys: {
+                    :pair: [:cpu_sys],
+                    :color: ["#ee6410"],
+                    :units: "",
+                    :pname: "CPU System Time (%)"},
+
         :scanner_count: { :pair: [:scanner_count],
                        :units: "" ,
                        :color: ["#ffd700"],

@@ -84,6 +84,8 @@ namespace Hypertable {
     uint64_t block_cache_accesses;
     uint64_t block_cache_hits;
     uint64_t tracked_memory;
+    double   cpu_user;
+    double   cpu_sys;
     bool     live;
 
     StatsSystem system;

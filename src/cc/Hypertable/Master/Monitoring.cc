@@ -203,6 +203,8 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     rrd_data.net_rx_rate = (int64_t)stats[i].stats->system.net_stat.rx_rate;
     rrd_data.net_tx_rate = (int64_t)stats[i].stats->system.net_stat.tx_rate;
     rrd_data.load_average = stats[i].stats->system.loadavg_stat.loadavg[0];
+    rrd_data.cpu_user = stats[i].stats->cpu_user;
+    rrd_data.cpu_sys = stats[i].stats->cpu_sys;
 
     compute_clock_skew(stats[i].stats->timestamp, &stats[i]);
 
@@ -411,6 +413,8 @@ void Monitoring::create_rangeserver_rrd(const String &filename) {
   args.push_back((String)"DS:net_rx_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:net_tx_rate:GAUGE:600:0:U");
   args.push_back((String)"DS:loadavg:GAUGE:600:0:U");
+  args.push_back((String)"DS:cpu_user:GAUGE:600:0:U");
+  args.push_back((String)"DS:cpu_sys:GAUGE:600:0:U");
 
   args.push_back((String)"RRA:AVERAGE:.5:1:2880"); // higherst res (30s) has 2880 samples(1 day)
   args.push_back((String)"RRA:AVERAGE:.5:10:2880"); // 5min res for 10 days
@@ -554,7 +558,7 @@ void Monitoring::update_rangeserver_rrd(const String &filename, struct rangeserv
   args.push_back((String)"update");
   args.push_back(filename);
 
-  update = format("%llu:%d:%d:%lld:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%lld:%.2f:%lld:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%.2f:%.2f:%.2f",
+  update = format("%llu:%d:%d:%lld:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%.2f:%lld:%lld:%.2f:%lld:%lld:%.2f:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%lld:%.2f:%.2f:%.2f:%.2f:%.2f",
                   (Llu)rrd_data.timestamp,
                   rrd_data.range_count,
                   rrd_data.scanner_count,
@@ -586,7 +590,9 @@ void Monitoring::update_rangeserver_rrd(const String &filename, struct rangeserv
                   (Lld)rrd_data.tracked_memory,
                   rrd_data.net_rx_rate,
                   rrd_data.net_tx_rate,
-                  rrd_data.load_average);
+                  rrd_data.load_average,
+                  rrd_data.cpu_user,
+                  rrd_data.cpu_sys);
 
   HT_INFOF("update=\"%s\"", update.c_str());
 
