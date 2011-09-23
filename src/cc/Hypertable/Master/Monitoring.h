@@ -94,6 +94,8 @@ namespace Hypertable {
       double net_rx_rate;
       double net_tx_rate;
       double load_average;
+      double cpu_user;
+      double cpu_sys;
     };
 
     struct table_rrd_data {
