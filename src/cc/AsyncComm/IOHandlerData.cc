@@ -103,7 +103,7 @@ namespace {
 
 
 bool
-IOHandlerData::handle_event(struct pollfd *event, clock_t arrival_clocks, time_t arrival_time) {
+IOHandlerData::handle_event(struct pollfd *event, time_t arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -144,7 +144,7 @@ IOHandlerData::handle_event(struct pollfd *event, clock_t arrival_clocks, time_t
           }
           else {
             m_message_header_ptr += nread;
-            handle_message_header(arrival_clocks, arrival_time);
+            handle_message_header(arrival_time);
           }
 
           if (eof)
@@ -211,7 +211,7 @@ IOHandlerData::handle_event(struct pollfd *event, clock_t arrival_clocks, time_t
 #if defined(__linux__)
 
 bool
-IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks, time_t arrival_time) {
+IOHandlerData::handle_event(struct epoll_event *event, time_t arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -252,7 +252,7 @@ IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks, t
           }
           else {
             m_message_header_ptr += nread;
-            handle_message_header(arrival_clocks, arrival_time);
+            handle_message_header(arrival_time);
           }
 
           if (eof)
@@ -325,7 +325,7 @@ IOHandlerData::handle_event(struct epoll_event *event, clock_t arrival_clocks, t
 
 #elif defined(__sun__)
 
-bool IOHandlerData::handle_event(port_event_t *event, clock_t arrival_clocks, time_t arrival_time) {
+bool IOHandlerData::handle_event(port_event_t *event, time_t arrival_time) {
   int error = 0;
   bool eof = false;
 
@@ -368,7 +368,7 @@ bool IOHandlerData::handle_event(port_event_t *event, clock_t arrival_clocks, ti
           }
           else {
             m_message_header_ptr += nread;
-            handle_message_header(arrival_clocks, arrival_time);
+            handle_message_header(arrival_time);
           }
 
           if (eof)
@@ -443,7 +443,7 @@ bool IOHandlerData::handle_event(port_event_t *event, clock_t arrival_clocks, ti
 /**
  *
  */
-bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks, time_t arrival_time) {
+bool IOHandlerData::handle_event(struct kevent *event, time_t arrival_time) {
 
   //DisplayEvent(event);
 
@@ -479,7 +479,7 @@ bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks, t
             assert(nread == m_message_header_remaining);
             available -= nread;
             m_message_header_ptr += nread;
-            handle_message_header(arrival_clocks, arrival_time);
+            handle_message_header(arrival_time);
           }
           else {
             nread = FileUtils::read(m_sd, m_message_header_ptr, available);
@@ -538,7 +538,7 @@ bool IOHandlerData::handle_event(struct kevent *event, clock_t arrival_clocks, t
 #endif
 
 
-void IOHandlerData::handle_message_header(clock_t arrival_clocks, time_t arrival_time) {
+void IOHandlerData::handle_message_header(time_t arrival_time) {
   size_t header_len = (size_t)m_message_header[1];
 
   // check to see if there is any variable length header
@@ -551,7 +551,6 @@ void IOHandlerData::handle_message_header(clock_t arrival_clocks, time_t arrival
 
   m_event = new Event(Event::MESSAGE, m_addr);
   m_event->load_header(m_sd, m_message_header, header_len);
-  m_event->arrival_clocks = arrival_clocks;
   m_event->arrival_time = arrival_time;
 
 #if defined(__linux__)

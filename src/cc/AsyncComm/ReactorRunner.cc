@@ -48,7 +48,7 @@ extern "C" {
 using namespace Hypertable;
 
 bool Hypertable::ReactorRunner::shutdown = false;
-bool Hypertable::ReactorRunner::record_arrival_clocks = false;
+bool Hypertable::ReactorRunner::record_arrival_time = false;
 HandlerMapPtr Hypertable::ReactorRunner::handler_map;
 
 
@@ -58,9 +58,8 @@ void ReactorRunner::operator()() {
   std::set<IOHandler *> removed_handlers;
   PollTimeout timeout;
   bool did_delay = false;
-  clock_t arrival_clocks = 0;
   time_t arrival_time = 0;
-  bool got_clocks = false;
+  bool got_arrival_time = false;
   std::vector<struct pollfd> pollfds;
   std::vector<IOHandler *> handlers;
 
@@ -75,8 +74,8 @@ void ReactorRunner::operator()() {
     while ((n = poll(&pollfds[0], pollfds.size(),
 		     timeout.get_millis())) >= 0 || errno == EINTR) {
 
-      if (record_arrival_clocks)
-	got_clocks = false;
+      if (record_arrival_time)
+	got_arrival_time = false;
 
       if (dispatch_delay)
 	did_delay = false;
@@ -106,13 +105,13 @@ void ReactorRunner::operator()() {
 	    poll(0, 0, (int)dispatch_delay);
 	    did_delay = true;
 	  }
-	  if (record_arrival_clocks && !got_clocks
+	  if (record_arrival_time && !got_arrival_time
 	      && (pollfds[i].revents & POLLIN)) {
 	    arrival_time = time(0);
-	    got_clocks = true;
+	    got_arrival_time = true;
 	  }
 	  if (handlers[i]) {
-	    if (handlers[i]->handle_event(&pollfds[i], 0, arrival_time)) {
+	    if (handlers[i]->handle_event(&pollfds[i], arrival_time)) {
 	      handler_map->decomission_handler(handlers[i]->get_address());
 	      removed_handlers.insert(handlers[i]);
 	    }
@@ -140,8 +139,8 @@ void ReactorRunner::operator()() {
   while ((n = epoll_wait(m_reactor_ptr->poll_fd, events, 256,
           timeout.get_millis())) >= 0 || errno == EINTR) {
 
-    if (record_arrival_clocks)
-      got_clocks = false;
+    if (record_arrival_time)
+      got_arrival_time = false;
 
     if (dispatch_delay)
       did_delay = false;
@@ -157,12 +156,12 @@ void ReactorRunner::operator()() {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
         }
-        if (record_arrival_clocks && !got_clocks
+        if (record_arrival_time && !got_arrival_time
             && (events[i].events & EPOLLIN)) {
-          arrival_clocks = std::clock();
-          got_clocks = true;
+	  arrival_time = time(0);
+          got_arrival_time = true;
         }
-        if (handler && handler->handle_event(&events[i], arrival_clocks)) {
+        if (handler && handler->handle_event(&events[i], arrival_time)) {
           handler_map->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);
         }
@@ -195,8 +194,8 @@ void ReactorRunner::operator()() {
 
     //HT_INFOF("port_getn returned with %d", nget);
 
-    if (record_arrival_clocks)
-      got_clocks = false;
+    if (record_arrival_time)
+      got_arrival_time = false;
 
     if (dispatch_delay)
       did_delay = false;
@@ -216,11 +215,11 @@ void ReactorRunner::operator()() {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
         }
-        if (record_arrival_clocks && !got_clocks && events[i].portev_events == POLLIN) {
-          arrival_clocks = std::clock();
-          got_clocks = true;
+        if (record_arrival_time && !got_arrival_time && events[i].portev_events == POLLIN) {
+	  arrival_time = time(0);
+          got_arrival_time = true;
         }
-        if (handler && handler->handle_event(&events[i], arrival_clocks)) {
+        if (handler && handler->handle_event(&events[i], arrival_time)) {
           handler_map->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);
         }
@@ -250,8 +249,8 @@ void ReactorRunner::operator()() {
   while ((n = kevent(m_reactor_ptr->kqd, NULL, 0, events, 32,
           timeout.get_timespec())) >= 0 || errno == EINTR) {
 
-    if (record_arrival_clocks)
-      got_clocks = false;
+    if (record_arrival_time)
+      got_arrival_time = false;
 
     if (dispatch_delay)
       did_delay = false;
@@ -265,11 +264,11 @@ void ReactorRunner::operator()() {
           poll(0, 0, (int)dispatch_delay);
           did_delay = true;
         }
-        if (record_arrival_clocks && !got_clocks && events[i].filter == EVFILT_READ) {
-          arrival_clocks = std::clock();
-          got_clocks = true;
+        if (record_arrival_time && !got_arrival_time && events[i].filter == EVFILT_READ) {
+	  arrival_time = time(0);
+          got_arrival_time = true;
         }
-        if (handler && handler->handle_event(&events[i], arrival_clocks)) {
+        if (handler && handler->handle_event(&events[i], arrival_time)) {
           handler_map->decomission_handler(handler->get_address());
           removed_handlers.insert(handler);
         }
