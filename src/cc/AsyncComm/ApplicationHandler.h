@@ -86,21 +86,15 @@ namespace Hypertable {
 
     bool expired() {
       if (m_event_ptr && m_event_ptr->type == Event::MESSAGE &&
-          ReactorRunner::record_arrival_clocks &&
+          ReactorRunner::record_arrival_time &&
           (m_event_ptr->header.flags & CommHeader::FLAGS_BIT_REQUEST)) {
-        clock_t wait_ms;
-        if (m_event_ptr->arrival_time != 0)
-          wait_ms = (time(0) - m_event_ptr->arrival_time) * 1000;
-        else {
-          clock_t clock_diff = std::clock() - m_event_ptr->arrival_clocks;
-          wait_ms = (clock_diff * 1000) / CLOCKS_PER_SEC;
-        }
-        if (wait_ms >= (clock_t)m_event_ptr->header.timeout_ms) {
+        uint32_t wait_ms = (time(0) - m_event_ptr->arrival_time) * 1000;
+        if (wait_ms >= m_event_ptr->header.timeout_ms) {
           if (m_event_ptr->header.flags & CommHeader::FLAGS_BIT_REQUEST)
-            HT_WARNF("Request expired, wait time %ld > timeout %u", wait_ms,
+            HT_WARNF("Request expired, wait time %u > timeout %u", (unsigned)wait_ms,
                  m_event_ptr->header.timeout_ms);
           else
-            HT_WARNF("Response expired, wait time %ld > timeout %u", wait_ms,
+            HT_WARNF("Response expired, wait time %u > timeout %u", (unsigned)wait_ms,
                  m_event_ptr->header.timeout_ms);
 
           if (m_event_ptr->header.timeout_ms == 0) {

@@ -52,7 +52,7 @@ namespace Hypertable {
      */
     Event(Type ct, const sockaddr_in &a, int err = 0)
       : type(ct), addr(a), proxy_buf(0), error(err), payload(0), payload_len(0),
-        thread_group(0), arrival_clocks(0), arrival_time(0) {
+        thread_group(0), arrival_time(0) {
       proxy = 0;
     }
 
@@ -65,7 +65,7 @@ namespace Hypertable {
      */
     Event(Type ct, const sockaddr_in &a, const String &p, int err = 0)
       : type(ct), addr(a), proxy_buf(0), error(err), payload(0), payload_len(0),
-        thread_group(0), arrival_clocks(0), arrival_time(0) {
+        thread_group(0), arrival_time(0) {
       set_proxy(p);
     }
 
@@ -75,7 +75,7 @@ namespace Hypertable {
      * @param err error code associated with this event
      */
     Event(Type ct, int err=0) : type(ct), proxy_buf(0), error(err), payload(0),
-        payload_len(0), thread_group(0), arrival_clocks(0), arrival_time(0) {
+        payload_len(0), thread_group(0), arrival_time(0) {
       proxy = 0;
     }
 
@@ -86,7 +86,7 @@ namespace Hypertable {
      */
     Event(Type ct, const String &p, int err=0) : type(ct), proxy_buf(0),
           error(err), payload(0), payload_len(0), thread_group(0),
-	  arrival_clocks(0), arrival_time(0) {
+	  arrival_time(0) {
       set_proxy(p);
     }
 
@@ -179,9 +179,6 @@ namespace Hypertable {
      * If the gid is zero, then the thread_group member is also set to zero
      */
     uint64_t thread_group;
-
-    /** time (clock ticks) when message arrived **/
-    clock_t arrival_clocks;
 
     /** time (seconds since epoch) when message arrived **/
     time_t arrival_time;
