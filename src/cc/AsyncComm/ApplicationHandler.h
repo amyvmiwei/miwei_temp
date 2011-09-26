@@ -88,11 +88,21 @@ namespace Hypertable {
       if (m_event_ptr && m_event_ptr->type == Event::MESSAGE &&
           ReactorRunner::record_arrival_time &&
           (m_event_ptr->header.flags & CommHeader::FLAGS_BIT_REQUEST)) {
-        uint32_t wait_ms = (time(0) - m_event_ptr->arrival_time) * 1000;
+        uint32_t wait_ms;
+	time_t now = time(0);
+	HT_ASSERT(now != (time_t)-1);
+	if (now < m_event_ptr->arrival_time) {
+	  HT_WARNF("time() returned %ld which is less than the arrival time of %ld",
+		   (long int)now, (long int)m_event_ptr->arrival_time);
+	  wait_ms = 0;
+	}
+	else
+	  wait_ms = (now - m_event_ptr->arrival_time) * 1000;
         if (wait_ms >= m_event_ptr->header.timeout_ms) {
           if (m_event_ptr->header.flags & CommHeader::FLAGS_BIT_REQUEST)
-            HT_WARNF("Request expired, wait time %u > timeout %u", (unsigned)wait_ms,
-                 m_event_ptr->header.timeout_ms);
+            HT_WARNF("Request expired, wait time %u > timeout %u (now=%ld, arrival_time=%ld)",
+		     (unsigned)wait_ms, m_event_ptr->header.timeout_ms,
+		     (long int)now, (long int)m_event_ptr->arrival_time);
           else
             HT_WARNF("Response expired, wait time %u > timeout %u", (unsigned)wait_ms,
                  m_event_ptr->header.timeout_ms);
