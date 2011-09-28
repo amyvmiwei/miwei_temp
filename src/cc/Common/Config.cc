@@ -331,7 +331,7 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.Data.DefaultReplication",
         i32()->default_value(-1), "Default replication for data")
     ("Hypertable.RangeServer.CellStore.DefaultCompressor",
-        str()->default_value("lzo"), "Default compressor for cell stores")
+        str()->default_value("snappy"), "Default compressor for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultBloomFilter",
         str()->default_value("rows"), "Default bloom filter for cell stores")
     ("Hypertable.RangeServer.CellStore.SkipNotFound",
@@ -370,14 +370,14 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
     ("Hypertable.RangeServer.CommitLog.Compressor",
-        str()->default_value("quicklz"),
-        "Commit log compressor to use (zlib, lzo, quicklz, bmz, none)")
+        str()->default_value("snappy"),
+        "Commit log compressor to use (zlib, lzo, quicklz, snappy, bmz, none)")
     ("Hypertable.Metadata.Replication", i32()->default_value(-1),
         "Replication factor for commit log files")
     ("Hypertable.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
-    ("Hypertable.CommitLog.Compressor", str()->default_value("quicklz"),
-        "Commit log compressor to use (zlib, lzo, quicklz, bmz, none)")
+    ("Hypertable.CommitLog.Compressor", str()->default_value("snappy"),
+        "Commit log compressor to use (zlib, lzo, quicklz, snappy, bmz, none)")
     ("Hypertable.CommitLog.SkipErrors", boo()->default_value(false),
         "Skip over any corruption encountered in the commit log")
     ("Hypertable.RangeServer.Scanner.Ttl", i32()->default_value(1800*K),
