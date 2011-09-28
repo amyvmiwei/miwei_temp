@@ -157,6 +157,12 @@ std::ostream &operator<<(std::ostream &out, const ScanSpec &ss) {
   if (ss.__isset.row_limit)
     out <<" row_limit="<< ss.row_limit;
 
+  if (ss.__isset.cell_limit)
+    out <<" cell_limit="<< ss.row_limit;
+
+  if (ss.__isset.cell_limit_per_family)
+    out <<" cell_limit_per_family="<< ss.cell_limit_per_family;
+
   if (ss.__isset.revs)
     out <<" revs="<< ss.revs;
 
