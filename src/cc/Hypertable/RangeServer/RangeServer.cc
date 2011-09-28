@@ -2567,9 +2567,10 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
             encode_i32(&ptr, request->send_back_vector[i].count);
             encode_i32(&ptr, request->send_back_vector[i].offset);
             encode_i32(&ptr, request->send_back_vector[i].len);
-            HT_INFOF("Sending back error %x, count %d, offset %d, len %d",
+            HT_INFOF("Sending back error %x, count %d, offset %d, len %d, table id %s",
                      request->send_back_vector[i].error, request->send_back_vector[i].count,
-                     request->send_back_vector[i].offset, request->send_back_vector[i].len);
+                     request->send_back_vector[i].offset, request->send_back_vector[i].len,
+                     table_update->id.id);
           }
           if ((error = cb.response(ext)) != Error::OK)
             HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
