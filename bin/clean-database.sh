@@ -69,8 +69,8 @@ case $confirm in
     /bin/rm -rf $RUNTIME_ROOT/run/location
     /bin/rm -rf $RUNTIME_ROOT/run/last-dfs
     echo "Cleared hyperspace"
-    /bin/rm -rf $RUNTIME_ROOT/run/monitoring/*
-    echo "Cleared monitoring data"
+    #/bin/rm -rf $RUNTIME_ROOT/run/monitoring/*
+    #echo "Cleared monitoring data"
     ;;
   *) echo "Database not cleared";;
 esac
