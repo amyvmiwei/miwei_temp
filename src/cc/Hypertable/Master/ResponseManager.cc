@@ -140,9 +140,9 @@ void ResponseManager::add_operation(OperationPtr &operation) {
   ResponseManagerContext::DeliveryIdentifierIndex &delivery_identifier_index = m_context->delivery_list.get<2>();
   ResponseManagerContext::DeliveryIdentifierIndex::iterator iter;
 
-  if (operation->remove_explicitly())
-    m_context->explicit_removal_ops.push_back(ResponseManagerContext::OperationRec(operation));
-  else if ((iter = delivery_identifier_index.find(operation->id())) == delivery_identifier_index.end())
+  HT_ASSERT(!operation->remove_explicitly());
+
+  if ((iter = delivery_identifier_index.find(operation->id())) == delivery_identifier_index.end())
     m_context->expirable_ops.push_back(ResponseManagerContext::OperationRec(operation));
   else {
     int error = Error::OK;
@@ -160,16 +160,6 @@ void ResponseManager::add_operation(OperationPtr &operation) {
   }
 }
 
-
-void ResponseManager::remove_operation(int64_t hash_code) {
-  ScopedLock lock(m_context->mutex);
-  ResponseManagerContext::OperationHashCodeIndex &hash_index = m_context->explicit_removal_ops.get<3>();
-  ResponseManagerContext::OperationHashCodeIndex::iterator iter;
-  HT_ASSERT((iter = hash_index.find(hash_code)) != hash_index.end());
-  m_context->removal_queue.push_back(iter->op);
-  hash_index.erase(iter);
-  m_context->cond.notify_all();
-}
 
 bool ResponseManager::operation_complete(int64_t hash_code) {
   ScopedLock lock(m_context->mutex);

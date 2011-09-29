@@ -46,7 +46,9 @@ namespace Hypertable {
     virtual void encode_state(uint8_t **bufp) const;
     virtual void decode_state(const uint8_t **bufp, size_t *remainp);
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
-    virtual bool remove_explicitly() { return m_remove_explicitly; }
+    virtual void decode_result(const uint8_t **bufp, size_t *remainp);
+
+    virtual bool remove_explicitly() { return true; }
 
     String get_location() { return m_location; }
 
@@ -58,7 +60,6 @@ namespace Hypertable {
     bool m_is_split;
     String m_location;
     String m_range_name;
-    bool m_remove_explicitly;
     bool m_in_progress;
   };
 

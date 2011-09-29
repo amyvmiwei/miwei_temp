@@ -47,6 +47,7 @@ extern "C" {
 #include "OperationRecoverServer.h"
 #include "OperationSystemUpgrade.h"
 #include "OperationWaitForServers.h"
+#include "RemovalManager.h"
 #include "ResponseManager.h"
 
 using namespace Hypertable;
@@ -138,6 +139,7 @@ int main(int argc, char **argv) {
       FailureInducer::instance->parse_option(get_str("induce-failure"));
     }
 
+    context->removal_manager = new RemovalManager();
 
     /**
      * Read/load MML
@@ -154,9 +156,9 @@ int main(int argc, char **argv) {
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
                                               log_dir, entities);
 
-    /**
-     * Create Response Manager
-     */
+    context->removal_manager->set_mml_writer(context->mml_writer);
+
+    /** Response Manager */
     ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
     context->response_manager = new ResponseManager(rmctx);
     Thread response_manager_thread(*context->response_manager);

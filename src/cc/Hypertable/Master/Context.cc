@@ -24,6 +24,7 @@
 #include "Context.h"
 #include "LoadBalancer.h"
 #include "Operation.h"
+#include "RemovalManager.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -237,21 +238,5 @@ void Context::remove_in_progress(Operation *operation) {
 void Context::clear_in_progress() {
   ScopedLock lock(mutex);
   in_progress_ops.clear();
-}
-
-
-void Context::add_unacknowledged_move(int64_t hash) {
-  ScopedLock lock(mutex);  
-  unacknowledged_moves.insert(hash);
-}
-
-bool Context::exists_unacknowledged_move(int64_t hash) {
-  ScopedLock lock(mutex);  
-  return unacknowledged_moves.count(hash) > 0;
-}
-
-void Context::acknowledge_move(int64_t hash) {
-  ScopedLock lock(mutex);
-  if (unacknowledged_moves.count(hash) > 0)
-    unacknowledged_moves.erase(hash);
+  removal_manager->clear();
 }

@@ -110,7 +110,6 @@ namespace Hypertable {
     MetaLog::WriterPtr mml_writer;
     bool shutdown;
     OperationList expirable_ops;
-    OperationList explicit_removal_ops;
     DeliveryList delivery_list;
     std::list<OperationPtr> removal_queue;
   };
@@ -122,7 +121,6 @@ namespace Hypertable {
     ResponseManager(ResponseManagerContext *context) : m_context(context) { }
     void operator()();
     void add_operation(OperationPtr &operation);
-    void remove_operation(int64_t hash_code);
     bool operation_complete(int64_t hash_code);
     void add_delivery_info(EventPtr &event);
     void shutdown();

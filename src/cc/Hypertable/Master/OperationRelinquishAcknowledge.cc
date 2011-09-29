@@ -30,6 +30,7 @@
 #include "OperationMoveRange.h"
 #include "OperationProcessor.h"
 #include "OperationRelinquishAcknowledge.h"
+#include "RemovalManager.h"
 #include "Utility.h"
 
 using namespace Hypertable;
@@ -52,8 +53,7 @@ void OperationRelinquishAcknowledge::execute() {
 
   hash_code = Utility::range_hash_code(m_table, m_range, "OperationMoveRange");
 
-  m_context->response_manager->remove_operation(hash_code);
-  m_context->acknowledge_move(hash_code);
+  m_context->removal_manager->approve_removal(hash_code);
   complete_ok_no_log();
   {
     ScopedLock lock(m_mutex);

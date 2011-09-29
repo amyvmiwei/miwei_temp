@@ -57,6 +57,7 @@ namespace Hypertable {
   class Operation;
   class OperationProcessor;
   class ResponseManager;
+  class RemovalManager;
 
   class Context : public ReferenceCount {
   public:
@@ -83,6 +84,7 @@ namespace Hypertable {
     LoadBalancer *balancer;
     MonitoringPtr monitoring;
     ResponseManager *response_manager;
+    RemovalManager *removal_manager;
     TablePtr metadata_table;
     TablePtr rs_metrics_table;
     uint64_t range_split_size;
@@ -96,7 +98,6 @@ namespace Hypertable {
     bool test_mode;
     OperationProcessor *op;
     std::set<int64_t> in_progress_ops;
-    std::set<int64_t> unacknowledged_moves;
     String location_hash;
     int32_t max_allowable_skew;
 
@@ -119,9 +120,6 @@ namespace Hypertable {
     bool add_in_progress(Operation *operation);
     void remove_in_progress(Operation *operation);
     void clear_in_progress();
-    void add_unacknowledged_move(int64_t hash);
-    bool exists_unacknowledged_move(int64_t hash);
-    void acknowledge_move(int64_t hash);
 
   private:
 
