@@ -46,6 +46,7 @@
 #include "Hypertable/Master/OperationRenameTable.h"
 #include "Hypertable/Master/OperationSystemUpgrade.h"
 #include "Hypertable/Master/OperationMoveRange.h"
+#include "Hypertable/Master/RemovalManager.h"
 #include "Hypertable/Master/ResponseManager.h"
 
 #include <boost/algorithm/string.hpp>
@@ -255,6 +256,8 @@ int main(int argc, char **argv) {
     ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
     context->response_manager = new ResponseManager(rmctx);
     Thread response_manager_thread(*context->response_manager);
+
+    context->removal_manager = new RemovalManager(context->mml_writer);
 
     String testname = get_str("test");
 

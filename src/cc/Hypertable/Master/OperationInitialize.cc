@@ -31,6 +31,7 @@
 #include "OperationCreateNamespace.h"
 #include "OperationCreateTable.h"
 #include "OperationInitialize.h"
+#include "RemovalManager.h"
 #include "Utility.h"
 
 using namespace Hypertable;
@@ -39,6 +40,9 @@ using namespace Hyperspace;
 OperationInitialize::OperationInitialize(ContextPtr &context)
   : Operation(context, MetaLog::EntityType::OPERATION_INITIALIZE) {
   m_obstructions.insert(Dependency::INIT);
+  // Two required acknowledgements: one for when it is run
+  // and the other to prevent it from getting deleted
+  m_context->removal_manager->add_operation(this, 2);
 }
 
 OperationInitialize::OperationInitialize(ContextPtr &context,
@@ -260,16 +264,29 @@ void OperationInitialize::decode_state(const uint8_t **bufp, size_t *remainp) {
     m_root_range_name = format("%s[%s..%s]", m_table.id, "", Key::END_ROOT_ROW);
     m_metadata_range_name = format("%s[%s..%s]", m_table.id, Key::END_ROOT_ROW, Key::END_ROW_MARKER);
   }
+
+  /* 
+   * Add to explicit removal manager with two required acknowledgements:
+   *   1. for when the operation completes
+   *   2. to prevent it from getting removed
+   */
+  if (m_context)
+    m_context->removal_manager->add_operation(this, 2);
+
 }
 
 void OperationInitialize::decode_result(const uint8_t **bufp, size_t *remainp) {
   // We need to do this here because we don't know the
   // state until we're decoding and if the state is COMPLETE,
   // this method is called instead of decode_state
-  if (m_context && is_complete())
+  if (m_context) {
     m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
                                           m_context->hyperspace, m_context->namemap,
                                           TableIdentifier::METADATA_NAME);
+    // Two required acknowledgements: one for when it is run
+    // and the other to prevent it from getting deleted
+    m_context->removal_manager->add_operation(this, 2);
+  }
   Operation::decode_result(bufp, remainp);
 }
 

@@ -34,6 +34,7 @@
 #include "LoadBalancer.h"
 #include "OperationMoveRange.h"
 #include "OperationProcessor.h"
+#include "RemovalManager.h"
 #include "Utility.h"
 
 using namespace Hypertable;
@@ -44,8 +45,7 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context, const TableIdentifie
                                        uint64_t soft_limit, bool is_split)
   : Operation(context, MetaLog::EntityType::OPERATION_MOVE_RANGE),
     m_table(table), m_range(range), m_transfer_log(transfer_log),
-    m_soft_limit(soft_limit), m_is_split(is_split), m_remove_explicitly(true),
-    m_in_progress(false) {
+    m_soft_limit(soft_limit), m_is_split(is_split), m_in_progress(false) {
   m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row, m_range.end_row);
   initialize_dependencies();
   m_hash_code = Utility::range_hash_code(m_table, m_range, "OperationMoveRange");
@@ -53,12 +53,12 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context, const TableIdentifie
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context,
                                        const MetaLog::EntityHeader &header_)
-  : Operation(context, header_), m_remove_explicitly(true), m_in_progress(false) {
+  : Operation(context, header_), m_in_progress(false) {
 }
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_MOVE_RANGE),
-    m_remove_explicitly(true), m_in_progress(false) {
+    m_in_progress(false) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
@@ -247,11 +247,25 @@ void OperationMoveRange::decode_request(const uint8_t **bufp, size_t *remainp) {
   m_range_name = format("%s[%s..%s]", m_table.id, m_range.start_row, m_range.end_row);
   m_hash_code = Utility::range_hash_code(m_table, m_range, "OperationMoveRange");
   if (m_context) {
-    if (m_context->exists_unacknowledged_move(m_hash_code))
+    if (m_context->removal_manager->is_present(m_hash_code))
       m_in_progress = true;
-    else
-      m_context->add_unacknowledged_move(m_hash_code);
+    else {
+      /* 
+       * Add to explicit removal manager; Two acknowledgements are needed:
+       *   1. When operation completes
+       *   2. When reliniquish acknowledged
+       */
+      m_context->removal_manager->add_operation(this, 2);
+    }
   }
+}
+
+void OperationMoveRange::decode_result(const uint8_t **bufp, size_t *remainp) {
+  // Two required acknowledgements: one for when it is run,
+  // and the other for when relinquish acknowledged
+  if (m_context)
+    m_context->removal_manager->add_operation(this, 2);  
+  Operation::decode_result(bufp, remainp);
 }
 
 const String OperationMoveRange::name() {
