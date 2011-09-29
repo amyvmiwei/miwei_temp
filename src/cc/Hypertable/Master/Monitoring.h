@@ -159,6 +159,7 @@ namespace Hypertable {
     String m_monitoring_rs_dir;
     int32_t m_monitoring_interval;
     int32_t m_allowable_skew;
+    int32_t m_last_server_count;
     uint64_t table_stats_timestamp;
     NameIdMapperPtr m_namemap_ptr;
   };

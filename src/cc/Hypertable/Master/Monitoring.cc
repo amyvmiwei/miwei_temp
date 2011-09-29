@@ -40,7 +40,7 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-Monitoring::Monitoring(PropertiesPtr &props,NameIdMapperPtr &m_namemap) {
+Monitoring::Monitoring(PropertiesPtr &props,NameIdMapperPtr &m_namemap) : m_last_server_count(0) {
 
   /**
    * Create dir for storing monitoring stats
@@ -113,6 +113,8 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   struct rangeserver_rrd_data rrd_data;
   RangeServerMap::iterator iter;
   double numerator, denominator;
+  int32_t server_count = 0;
+  
   //to keep track max timestamp across rangeserver
   //this value is used to update table rrds
   table_stats_timestamp = 0;
@@ -131,12 +133,14 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
       continue;
     }
 
-    if (stats[i].fetch_error != 0) {
+    if (stats[i].fetch_error != Error::OK) {
       (*iter).second->fetch_error = stats[i].fetch_error;
       (*iter).second->fetch_error_msg = stats[i].fetch_error_msg;
       (*iter).second->fetch_timestamp = stats[i].fetch_timestamp;
       continue;
     }
+    else
+      server_count++;
 
     if ((*iter).second->stats) {
 
@@ -262,15 +266,27 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     // calculate read rates and write rates
     prev_iter = m_prev_table_stat_map.find(ts_iter->first);
     if (prev_iter != m_prev_table_stat_map.end()) {
-      double elapsed_time = (double)(ts_iter->second.fetch_timestamp - prev_iter->second.fetch_timestamp)/1000000000.0;
-      ts_iter->second.scan_rate = (ts_iter->second.scans - prev_iter->second.scans)/elapsed_time;
-      ts_iter->second.update_rate = (ts_iter->second.updates - prev_iter->second.updates)/elapsed_time;
-      ts_iter->second.cell_read_rate = (ts_iter->second.cells_read - prev_iter->second.cells_read)/elapsed_time;
-      ts_iter->second.cell_write_rate = (ts_iter->second.cells_written - prev_iter->second.cells_written)/elapsed_time;
-      ts_iter->second.byte_read_rate = (ts_iter->second.bytes_read - prev_iter->second.bytes_read)/elapsed_time;
-      ts_iter->second.byte_write_rate = (ts_iter->second.bytes_written - prev_iter->second.bytes_written)/elapsed_time;
-      ts_iter->second.disk_read_rate = (ts_iter->second.disk_bytes_read - prev_iter->second.disk_bytes_read)/elapsed_time;
-      //HT_INFOF("cell_write_rate %.2f",ts_iter->second.cell_write_rate);
+      if (server_count != m_last_server_count) {
+	HT_INFOF("Statistics server count mismatch (cur %u != prev %u), using previous statistics",
+		 (unsigned)server_count, (unsigned)m_last_server_count);
+	ts_iter->second.scan_rate = prev_iter->second.scan_rate;
+	ts_iter->second.update_rate = prev_iter->second.update_rate;
+	ts_iter->second.cell_read_rate = prev_iter->second.cell_read_rate;
+	ts_iter->second.cell_write_rate = prev_iter->second.cell_write_rate;
+	ts_iter->second.byte_read_rate = prev_iter->second.byte_read_rate;
+	ts_iter->second.byte_write_rate = prev_iter->second.byte_write_rate;
+	ts_iter->second.disk_read_rate = prev_iter->second.disk_read_rate;
+      }
+      else {
+	double elapsed_time = (double)(ts_iter->second.fetch_timestamp - prev_iter->second.fetch_timestamp)/1000000000.0;
+	ts_iter->second.scan_rate = (ts_iter->second.scans - prev_iter->second.scans)/elapsed_time;
+	ts_iter->second.update_rate = (ts_iter->second.updates - prev_iter->second.updates)/elapsed_time;
+	ts_iter->second.cell_read_rate = (ts_iter->second.cells_read - prev_iter->second.cells_read)/elapsed_time;
+	ts_iter->second.cell_write_rate = (ts_iter->second.cells_written - prev_iter->second.cells_written)/elapsed_time;
+	ts_iter->second.byte_read_rate = (ts_iter->second.bytes_read - prev_iter->second.bytes_read)/elapsed_time;
+	ts_iter->second.byte_write_rate = (ts_iter->second.bytes_written - prev_iter->second.bytes_written)/elapsed_time;
+	ts_iter->second.disk_read_rate = (ts_iter->second.disk_bytes_read - prev_iter->second.disk_bytes_read)/elapsed_time;
+      }
     }
 
     String table_file_name = ts_iter->first;
@@ -295,6 +311,9 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   dump_table_summary_json();
 
   dump_master_summary_json();
+
+  m_last_server_count = server_count;
+
 }
 
 void Monitoring::add_table_stats(std::vector<StatsTable> &table_stats,int64_t fetch_timestamp) {
