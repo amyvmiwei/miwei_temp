@@ -2681,9 +2681,16 @@ SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "
 2007-12-02 08:00:00.000000000	version_test_1	col2:000	000
 2007-12-02 08:00:00.000000000	version_test_1	col2:100	000
 
+# negative tests with OFFSET and CELL_OFFSET
+SELECT col2 from RegexpTest OFFSET 1 CELL_OFFSET 2;
+Error: SELECT OFFSET predicate not allowed in combination with OFFSET. - HYPERTABLE HQL parse error
+SELECT col2 from RegexpTest OFFSET 2 CELL_OFFSET 1;
+Error: SELECT OFFSET predicate not allowed in combination with OFFSET. - HYPERTABLE HQL parse error
+
 # issue 528: embedded semicolon test
 DROP TABLE IF EXISTS Test;
 CREATE TABLE Test('col');
 INSERT INTO Test VALUES ('foo;', 'col', 'bar');
 SELECT * FROM Test WHERE ROW='foo;';
 foo;	col	bar
+

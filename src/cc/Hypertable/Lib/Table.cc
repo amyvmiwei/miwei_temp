@@ -194,6 +194,6 @@ Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms,
 TableScannerAsync *
 Table::create_scanner_async(ResultCallback *cb, const ScanSpec &scan_spec, uint32_t timeout_ms,
                             int32_t flags) {
-  return  new TableScannerAsync(m_comm, m_app_queue, this, m_range_locator, scan_spec,
+  return new TableScannerAsync(m_comm, m_app_queue, this, m_range_locator, scan_spec,
                                 timeout_ms ? timeout_ms : m_timeout_ms, cb);
 }

@@ -376,6 +376,12 @@ class ScanSpec:
 
     <dt>scan_and_filter_rows</dt>
     <dd>Indicates whether table scan filters the rows specified instead of individual look up</dd>
+
+    <dt>row_offset</dt>
+    <dd>Specifies number of rows to be skipped</dd>
+
+    <dt>cell_offset</dt>
+    <dd>Specifies number of cells to be skipped</dd>
   </dl>
 
   Attributes:
@@ -393,6 +399,8 @@ class ScanSpec:
    - row_regexp
    - value_regexp
    - scan_and_filter_rows
+   - row_offset
+   - cell_offset
   """
 
   thrift_spec = (
@@ -411,9 +419,11 @@ class ScanSpec:
     (12, TType.STRING, 'value_regexp', None, None, ), # 12
     (13, TType.BOOL, 'scan_and_filter_rows', None, False, ), # 13
     (14, TType.I32, 'cell_limit', None, 0, ), # 14
+    (15, TType.I32, 'row_offset', None, 0, ), # 15
+    (16, TType.I32, 'cell_offset', None, 0, ), # 16
   )
 
-  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[14][4], cell_limit_per_family=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4],):
+  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[14][4], cell_limit_per_family=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4], row_offset=thrift_spec[15][4], cell_offset=thrift_spec[16][4],):
     self.row_intervals = row_intervals
     self.cell_intervals = cell_intervals
     self.return_deletes = return_deletes
@@ -428,6 +438,8 @@ class ScanSpec:
     self.row_regexp = row_regexp
     self.value_regexp = value_regexp
     self.scan_and_filter_rows = scan_and_filter_rows
+    self.row_offset = row_offset
+    self.cell_offset = cell_offset
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -525,6 +537,16 @@ class ScanSpec:
           self.scan_and_filter_rows = iprot.readBool();
         else:
           iprot.skip(ftype)
+      elif fid == 15:
+        if ftype == TType.I32:
+          self.row_offset = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 16:
+        if ftype == TType.I32:
+          self.cell_offset = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -599,6 +621,14 @@ class ScanSpec:
     if self.cell_limit is not None:
       oprot.writeFieldBegin('cell_limit', TType.I32, 14)
       oprot.writeI32(self.cell_limit)
+      oprot.writeFieldEnd()
+    if self.row_offset != None:
+      oprot.writeFieldBegin('row_offset', TType.I32, 15)
+      oprot.writeI32(self.row_offset)
+      oprot.writeFieldEnd()
+    if self.cell_offset != None:
+      oprot.writeFieldBegin('cell_offset', TType.I32, 16)
+      oprot.writeI32(self.cell_offset)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

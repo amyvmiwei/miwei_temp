@@ -231,7 +231,7 @@ class CellInterval {
 };
 
 typedef struct _ScanSpec__isset {
-  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), cell_limit_per_family(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false) {}
+  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), cell_limit_per_family(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false), row_offset(false), cell_offset(false) {}
   bool row_intervals;
   bool cell_intervals;
   bool return_deletes;
@@ -246,15 +246,17 @@ typedef struct _ScanSpec__isset {
   bool row_regexp;
   bool value_regexp;
   bool scan_and_filter_rows;
+  bool row_offset;
+  bool cell_offset;
 } _ScanSpec__isset;
 
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "585F20907E16C294741E3D63B14153DD";
-  static const uint8_t binary_fingerprint[16]; // = {0x58,0x5F,0x20,0x90,0x7E,0x16,0xC2,0x94,0x74,0x1E,0x3D,0x63,0xB1,0x41,0x53,0xDD};
+  static const char* ascii_fingerprint; // = "06910BA995D9609370329554F16A7F0D";
+  static const uint8_t binary_fingerprint[16]; // = {0x06,0x91,0x0B,0xA9,0x95,0xD9,0x60,0x93,0x70,0x32,0x95,0x54,0xF1,0x6A,0x7F,0x0D};
 
-  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), cell_limit_per_family(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false) {
+  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), cell_limit_per_family(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false), row_offset(0), cell_offset(0) {
   }
 
   virtual ~ScanSpec() throw() {}
@@ -273,6 +275,8 @@ class ScanSpec {
   std::string row_regexp;
   std::string value_regexp;
   bool scan_and_filter_rows;
+  int32_t row_offset;
+  int32_t cell_offset;
 
   _ScanSpec__isset __isset;
 
@@ -403,6 +407,14 @@ class ScanSpec {
     if (__isset.scan_and_filter_rows != rhs.__isset.scan_and_filter_rows)
       return false;
     else if (__isset.scan_and_filter_rows && !(scan_and_filter_rows == rhs.scan_and_filter_rows))
+      return false;
+    if (__isset.row_offset != rhs.__isset.row_offset)
+      return false;
+    else if (__isset.row_offset && !(row_offset == rhs.row_offset))
+      return false;
+    if (__isset.cell_offset != rhs.__isset.cell_offset)
+      return false;
+    else if (__isset.cell_offset && !(cell_offset == rhs.cell_offset))
       return false;
     return true;
   }

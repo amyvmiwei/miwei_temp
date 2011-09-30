@@ -187,6 +187,12 @@ std::ostream &operator<<(std::ostream &out, const ScanSpec &ss) {
   if (ss.__isset.scan_and_filter_rows)
     out <<" scan_and_filter_rows="<< ss.scan_and_filter_rows;
 
+  if (ss.__isset.row_offset)
+    out <<" row_offset="<< ss.row_offset;
+
+  if (ss.__isset.cell_offset)
+    out <<" cell_offset="<< ss.cell_offset;
+
   return out <<'}';
 }
 

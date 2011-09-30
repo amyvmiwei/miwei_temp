@@ -100,6 +100,28 @@ protected:
             const String &end_row, bool end_inclusive, int row_limit,
             int *rows_seen, String &cur_row, CstrSet &rowset, int64_t *bytes_scanned);
 
+  /**
+   * get number of rows that were skipped because of an OFFSET predicate
+   */
+  int get_skipped_rows() {
+    foreach(const ScanBlockPtr &v, m_scanblocks) {
+      if (v->get_skipped_rows())
+        return (v->get_skipped_rows());
+    }
+    return 0;
+  }
+
+  /**
+   * get number of cells that were skipped because of a CELL_OFFSET predicate
+   */
+  int get_skipped_cells() {
+    foreach(const ScanBlockPtr &v, m_scanblocks) {
+      if (v->get_skipped_cells())
+        return (v->get_skipped_cells());
+    }
+    return 0;
+  }
+
   vector<ScanBlockPtr> m_scanblocks;
   CellsBuilderPtr m_cells;
   bool m_eos;

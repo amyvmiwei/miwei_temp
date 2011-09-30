@@ -73,6 +73,7 @@ extern "C" {
 #include "MaintenanceTaskSplit.h"
 #include "MaintenanceTaskRelinquish.h"
 #include "MergeScanner.h"
+#include "MergeScannerRange.h"
 #include "MetaLogDefinitionRangeServer.h"
 #include "MetaLogEntityRange.h"
 #include "RangeServer.h"
@@ -1248,7 +1249,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       if (m_query_cache->lookup(cache_key, ext_buffer, &ext_len)) {
         // The first argument to the response method is flags and the
         // 0th bit is the EOS (end-of-scan) bit, hence the 1
-        if ((error = cb->response(1, id, ext_buffer, ext_len)) != Error::OK)
+        if ((error = cb->response(1, id, ext_buffer, ext_len, 0, 0)) 
+                != Error::OK)
           HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
         range->decrement_scan_counter();
         decrement_needed = false;
@@ -1289,6 +1291,10 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     else
       id = 0;
 
+    MergeScannerRange *rscan=dynamic_cast<MergeScannerRange *>(scanner.get());
+    int skipped_rows = rscan ? rscan->get_skipped_rows() : 0;
+    int skipped_cells = rscan ? rscan->get_skipped_cells() : 0;
+
     if (table->is_metadata())
       HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
                "%lld k/v pairs, more=%lld", id, table->id, (Lld)cells_returned, (Lld) more);
@@ -1306,7 +1312,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       tablename_ptr = row_key_ptr + strlen(row_key_ptr) + 1;
       strcpy(tablename_ptr, table->id);
       boost::shared_array<uint8_t> ext_buffer(buffer);
-      if ((error = cb->response(1, id, ext_buffer, rbuf.fill())) != Error::OK) {
+      if ((error = cb->response(1, id, ext_buffer, rbuf.fill(), 
+             skipped_rows, skipped_cells)) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
       m_query_cache->insert(cache_key, tablename_ptr, row_key_ptr, ext_buffer, rbuf.fill());
@@ -1314,7 +1321,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     else {
       short moreflag = more ? 0 : 1;
       StaticBuffer ext(rbuf);
-      if ((error = cb->response(moreflag, id, ext)) != Error::OK) {
+      if ((error = cb->response(moreflag, id, ext, skipped_rows, skipped_cells))
+             != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
@@ -1404,7 +1412,8 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
       short moreflag = more ? 0 : 1;
       StaticBuffer ext(rbuf);
 
-      if ((error = cb->response(moreflag, scanner_id, ext)) != Error::OK)
+      error = cb->response(moreflag, scanner_id, ext);
+      if (error != Error::OK)
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
 
       HT_DEBUGF("Successfully fetched %u bytes (%lld k/v pairs) of scan data",

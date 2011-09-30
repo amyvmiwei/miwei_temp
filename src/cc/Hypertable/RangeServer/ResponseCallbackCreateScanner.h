@@ -36,10 +36,12 @@ namespace Hypertable {
     ResponseCallbackCreateScanner(Comm *comm, EventPtr &event_ptr)
       : ResponseCallback(comm, event_ptr) { }
 
-    int response(short moreflag, int32_t id, StaticBuffer &ext);
+    int response(short moreflag, int32_t id, StaticBuffer &ext,
+         int32_t skipped_rows, int32_t skipped_cells);
+
     int response(short moreflag, int32_t id, 
-		 boost::shared_array<uint8_t> &ext_buffer,
-		 uint32_t ext_len);
+         boost::shared_array<uint8_t> &ext_buffer, uint32_t ext_len,
+         int32_t skipped_rows, int32_t skipped_cells);
   };
 
 }

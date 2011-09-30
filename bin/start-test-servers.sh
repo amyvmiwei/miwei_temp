@@ -14,6 +14,7 @@ usage_exit() {
 while [ $# -gt 0 ]; do
   case $1 in
     --clear)              clear=1;;
+    --clean)              clear=1;;
     -h|--help)            usage_exit;;
     --val*|--no*|--heap*) opts[${#opts[*]}]=$1;;
     *)                    break;;

@@ -249,8 +249,8 @@ uint32_t CellInterval::write(::apache::thrift::protocol::TProtocol* oprot) const
   return xfer;
 }
 
-const char* ScanSpec::ascii_fingerprint = "585F20907E16C294741E3D63B14153DD";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0x58,0x5F,0x20,0x90,0x7E,0x16,0xC2,0x94,0x74,0x1E,0x3D,0x63,0xB1,0x41,0x53,0xDD};
+const char* ScanSpec::ascii_fingerprint = "06910BA995D9609370329554F16A7F0D";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0x06,0x91,0x0B,0xA9,0x95,0xD9,0x60,0x93,0x70,0x32,0x95,0x54,0xF1,0x6A,0x7F,0x0D};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -420,6 +420,22 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 15:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->row_offset);
+          this->__isset.row_offset = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 16:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->cell_offset);
+          this->__isset.cell_offset = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -527,6 +543,16 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
   if (this->__isset.cell_limit) {
     xfer += oprot->writeFieldBegin("cell_limit", ::apache::thrift::protocol::T_I32, 14);
     xfer += oprot->writeI32(this->cell_limit);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.row_offset) {
+    xfer += oprot->writeFieldBegin("row_offset", ::apache::thrift::protocol::T_I32, 15);
+    xfer += oprot->writeI32(this->row_offset);
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.cell_offset) {
+    xfer += oprot->writeFieldBegin("cell_offset", ::apache::thrift::protocol::T_I32, 16);
+    xfer += oprot->writeI32(this->cell_offset);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
