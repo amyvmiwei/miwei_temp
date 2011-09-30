@@ -365,6 +365,8 @@ class ScanSpec {
   public $row_regexp = null;
   public $value_regexp = null;
   public $scan_and_filter_rows = false;
+  public $row_offset = 0;
+  public $cell_offset = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -439,6 +441,14 @@ class ScanSpec {
           'var' => 'scan_and_filter_rows',
           'type' => TType::BOOL,
           ),
+        15 => array(
+          'var' => 'row_offset',
+          'type' => TType::I32,
+          ),
+        16 => array(
+          'var' => 'cell_offset',
+          'type' => TType::I32,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -483,6 +493,12 @@ class ScanSpec {
       }
       if (isset($vals['scan_and_filter_rows'])) {
         $this->scan_and_filter_rows = $vals['scan_and_filter_rows'];
+      }
+      if (isset($vals['row_offset'])) {
+        $this->row_offset = $vals['row_offset'];
+      }
+      if (isset($vals['cell_offset'])) {
+        $this->cell_offset = $vals['cell_offset'];
       }
     }
   }
@@ -636,6 +652,20 @@ class ScanSpec {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 15:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->row_offset);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 16:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->cell_offset);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -753,6 +783,16 @@ class ScanSpec {
     if ($this->cell_limit !== null) {
       $xfer += $output->writeFieldBegin('cell_limit', TType::I32, 14);
       $xfer += $output->writeI32($this->cell_limit);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->row_offset !== null) {
+      $xfer += $output->writeFieldBegin('row_offset', TType::I32, 15);
+      $xfer += $output->writeI32($this->row_offset);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cell_offset !== null) {
+      $xfer += $output->writeFieldBegin('cell_offset', TType::I32, 16);
+      $xfer += $output->writeI32($this->cell_offset);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

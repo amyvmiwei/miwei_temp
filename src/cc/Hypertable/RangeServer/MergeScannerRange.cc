@@ -32,13 +32,17 @@ using namespace Hypertable;
 
 
 MergeScannerRange::MergeScannerRange(ScanContextPtr &scan_ctx) 
-  : MergeScanner(scan_ctx), m_cell_count(0), m_cell_limit(0),
+  : MergeScanner(scan_ctx), m_cell_offset(0), m_cell_skipped(0), 
+    m_cell_count(0), m_cell_limit(0), m_row_offset(0), m_row_skipped(0),
     m_row_count(0), m_row_limit(0), m_cell_count_per_family(0), 
-    m_cell_limit_per_family(0), m_prev_key(0), m_prev_cf(-1) {
+    m_cell_limit_per_family(0), m_prev_key(0), m_prev_cf(-1),
+    m_skip_this_row(false) {
   if (scan_ctx->spec != 0) {
     m_cell_limit = scan_ctx->spec->cell_limit;
     m_row_limit = scan_ctx->spec->row_limit;
     m_cell_limit_per_family = scan_ctx->spec->cell_limit_per_family;
+    m_row_offset = scan_ctx->spec->row_offset;
+    m_cell_offset = scan_ctx->spec->cell_offset;
   }
 }
 
@@ -80,14 +84,27 @@ MergeScannerRange::do_initialize()
     m_prev_key.set(sstate.key.row, sstate.key.flag_ptr
                    - (const uint8_t *)sstate.key.row + 1);
     m_prev_cf = sstate.key.column_family_code;
+
+    if (m_row_offset) {
+      m_skip_this_row = true;
+      m_row_skipped++;
+    }
   }
 
-  if (m_cell_limit)
+  if (m_cell_offset)
+    m_cell_skipped = 1;
+  else if (!m_row_offset && m_cell_limit)
     m_cell_count = 1;
-  if (m_row_limit)
+
+  if (m_row_limit && !m_row_offset && !m_cell_offset)
     m_row_count = 1;
 
   io_add_output_cell(cur_bytes);
+
+  // was OFFSET or CELL_OFFSET specified? then move forward and skip
+  if (m_cell_offset || m_row_offset) {
+    do_forward();
+  }
 }
 
 void 
@@ -139,6 +156,12 @@ MergeScannerRange::do_forward()
       if (m_prev_key.fill()==0) {
         new_row = new_cf = new_cq = true;
         m_cell_count_per_family = 1;
+        if (m_row_offset && m_row_skipped < m_row_offset) {
+          m_skip_this_row = true;
+          m_row_skipped++;
+        }
+        else
+          m_skip_this_row = false;
         m_prev_key.set(latest_key, latest_key_len);
         m_prev_cf = sstate.key.column_family_code;
       }
@@ -150,6 +173,12 @@ MergeScannerRange::do_forward()
           new_row = true;
           new_cf = true;
           m_cell_count_per_family = 1;
+          if (m_row_offset && m_row_skipped < m_row_offset) {
+            m_skip_this_row = true;
+            m_row_skipped++;
+          }
+          else
+            m_skip_this_row = false;
         }
         else if (sstate.key.column_family_code != m_prev_cf) {
           new_cf = true;
@@ -163,8 +192,11 @@ MergeScannerRange::do_forward()
 
     bool incr_cf_count = false;
 
-    // now apply the limits
-    if (m_row_limit || m_cell_limit_per_family) {
+    // check ROW_OFFSET
+    if (m_skip_this_row)
+      continue;
+
+    if (!m_cell_offset && m_row_limit || m_cell_limit_per_family) {
       if (new_row) {
         m_row_count++;
         if (m_row_limit && m_row_count > m_row_limit)
@@ -186,11 +218,21 @@ MergeScannerRange::do_forward()
     break;
   }
 
-  if (!m_done && m_cell_limit) {
-    m_cell_count++;
-    if (m_cell_count > m_cell_limit)
-      m_done = true;
+  if (!m_done) {
+    // check CELL_OFFSET and call function recursively if we need to skip
+    // more cells
+    if (m_cell_offset != 0 && m_cell_skipped < m_cell_offset) {
+      m_cell_skipped++;
+      do_forward();
+      return;
+    }
+
+    if (m_cell_limit)
+      m_cell_count++;
   }
 
   io_add_output_cell(cur_bytes);
+
+  if (m_cell_limit != 0 && m_cell_count > m_cell_limit)
+    m_done = true;
 }

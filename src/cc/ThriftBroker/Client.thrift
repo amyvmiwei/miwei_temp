@@ -173,6 +173,12 @@ struct CellInterval {
  *
  *   <dt>scan_and_filter_rows</dt>
  *   <dd>Indicates whether table scan filters the rows specified instead of individual look up</dd>
+ *
+ *   <dt>row_offset</dt>
+ *   <dd>Specifies number of rows to be skipped</dd>
+ *
+ *   <dt>cell_offset</dt>
+ *   <dd>Specifies number of cells to be skipped</dd>
  * </dl>
  */
 struct ScanSpec {
@@ -190,6 +196,8 @@ struct ScanSpec {
   11:optional string row_regexp
   12:optional string value_regexp
   13:optional bool scan_and_filter_rows = 0
+  15:optional i32 row_offset = 0
+  16:optional i32 cell_offset = 0 
 }
 
 

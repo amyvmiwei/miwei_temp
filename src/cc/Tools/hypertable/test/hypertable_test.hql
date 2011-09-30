@@ -540,8 +540,13 @@ INSERT INTO RegexpTest VALUES('2007-12-02 08:00:00', 'version_test_1', 'col2:100
 SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "000" MAX_VERSIONS=1;
 SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "000"  AND '2007-12-02 07:30:00' < TIMESTAMP <= '2007-12-02 08:30:00' MAX_VERSIONS=1 DISPLAY_TIMESTAMPS;
 
+# negative tests with OFFSET and CELL_OFFSET
+SELECT col2 from RegexpTest OFFSET 1 CELL_OFFSET 2;
+SELECT col2 from RegexpTest OFFSET 2 CELL_OFFSET 1;
+
 # issue 528: embedded semicolon test
 DROP TABLE IF EXISTS Test;
 CREATE TABLE Test('col');
 INSERT INTO Test VALUES ('foo;', 'col', 'bar');
 SELECT * FROM Test WHERE ROW='foo;';
+

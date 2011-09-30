@@ -267,7 +267,7 @@ sub write {
 
 package Hypertable::ThriftGen::ScanSpec;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only cell_limit cell_limit_per_family row_regexp value_regexp scan_and_filter_rows ) );
+Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only cell_limit cell_limit_per_family row_regexp value_regexp scan_and_filter_rows row_offset cell_offset ) );
 
 sub new {
   my $classname = shift;
@@ -287,6 +287,8 @@ sub new {
   $self->{row_regexp} = undef;
   $self->{value_regexp} = undef;
   $self->{scan_and_filter_rows} = 0;
+  $self->{row_offset} = 0;
+  $self->{cell_offset} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{row_intervals}) {
       $self->{row_intervals} = $vals->{row_intervals};
@@ -329,6 +331,12 @@ sub new {
     }
     if (defined $vals->{scan_and_filter_rows}) {
       $self->{scan_and_filter_rows} = $vals->{scan_and_filter_rows};
+    }
+    if (defined $vals->{row_offset}) {
+      $self->{row_offset} = $vals->{row_offset};
+    }
+    if (defined $vals->{cell_offset}) {
+      $self->{cell_offset} = $vals->{cell_offset};
     }
   }
   return bless ($self, $classname);
@@ -475,6 +483,18 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^15$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{row_offset});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^16$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{cell_offset});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -582,6 +602,16 @@ sub write {
   if (defined $self->{cell_limit}) {
     $xfer += $output->writeFieldBegin('cell_limit', TType::I32, 14);
     $xfer += $output->writeI32($self->{cell_limit});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{row_offset}) {
+    $xfer += $output->writeFieldBegin('row_offset', TType::I32, 15);
+    $xfer += $output->writeI32($self->{row_offset});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cell_offset}) {
+    $xfer += $output->writeFieldBegin('cell_offset', TType::I32, 16);
+    $xfer += $output->writeI32($self->{cell_offset});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

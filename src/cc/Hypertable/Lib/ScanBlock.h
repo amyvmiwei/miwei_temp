@@ -102,10 +102,19 @@ namespace Hypertable {
      * @return scanner ID
      */
     int get_scanner_id() { return m_scanner_id; }
+
+    /** Returns number of skipped rows because of an OFFSET predicate */
+    int get_skipped_rows() { return m_skipped_rows; }
+
+    /** Returns number of skipped rows because of a CELL_OFFSET predicate */
+    int get_skipped_cells() { return m_skipped_cells; }
+
   private:
     int m_error;
     uint16_t m_flags;
     int m_scanner_id;
+    int m_skipped_rows;
+    int m_skipped_cells;
     Vector m_vec;
     Vector::iterator m_iter;
     EventPtr m_event_ptr;

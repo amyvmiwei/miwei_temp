@@ -26,13 +26,16 @@ using namespace Hypertable;
 
 int
 ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
-                                        StaticBuffer &ext) {
+                StaticBuffer &ext, 
+                int32_t skipped_rows, int32_t skipped_cells) {
   CommHeader header;
   header.initialize_from_request_header(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf( header, 10, ext));
+  CommBufPtr cbp(new CommBuf( header, 18, ext));
   cbp->append_i32(Error::OK);
   cbp->append_i16(moreflag);
-  cbp->append_i32(id);   // scanner ID
+  cbp->append_i32(id);              // scanner ID
+  cbp->append_i32(skipped_rows);    // for OFFSET
+  cbp->append_i32(skipped_cells);   // for CELL_OFFSET
 
   return m_comm->send_response(m_event_ptr->addr, cbp);
 }
@@ -40,14 +43,17 @@ ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
 
 int
 ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
-					boost::shared_array<uint8_t> &ext_buffer,
-					uint32_t ext_len) {
+                boost::shared_array<uint8_t> &ext_buffer,
+                uint32_t ext_len, int32_t skipped_rows, 
+                int32_t skipped_cells) {
   CommHeader header;
   header.initialize_from_request_header(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf( header, 10, ext_buffer, ext_len));
+  CommBufPtr cbp(new CommBuf( header, 18, ext_buffer, ext_len));
   cbp->append_i32(Error::OK);
   cbp->append_i16(moreflag);
-  cbp->append_i32(id);   // scanner ID
+  cbp->append_i32(id);              // scanner ID
+  cbp->append_i32(skipped_rows);    // for OFFSET
+  cbp->append_i32(skipped_cells);   // for CELL_OFFSET
 
   return m_comm->send_response(m_event_ptr->addr, cbp);
 }

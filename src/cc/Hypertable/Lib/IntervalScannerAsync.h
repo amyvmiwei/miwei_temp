@@ -78,7 +78,7 @@ namespace Hypertable {
     void do_readahead();
     void init(const ScanSpec &);
     void find_range_and_start_scan(const char *row_key, bool hard=false);
-    void set_result(EventPtr &event, ScanCellsPtr &cells);
+    void set_result(EventPtr &event, ScanCellsPtr &cells, bool is_create=false);
     void load_result(ScanCellsPtr &cells);
     void set_range_spec(DynamicBuffer &dbuf, RangeSpec &range);
 

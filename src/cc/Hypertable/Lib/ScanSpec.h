@@ -103,12 +103,14 @@ typedef std::vector<const char *, CstrAlloc> CstrColumns;
 class ScanSpec {
 public:
   ScanSpec()
-    : row_limit(0), cell_limit(0), cell_limit_per_family(0), max_versions(0),
+    : row_limit(0), cell_limit(0), cell_limit_per_family(0), 
+      row_offset(0), cell_offset(0), max_versions(0),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
       return_deletes(false), keys_only(false),
       row_regexp(0), value_regexp(0),scan_and_filter_rows(false) { }
   ScanSpec(CharArena &arena)
-    : row_limit(0), cell_limit(0), cell_limit_per_family(0), max_versions(0), columns(CstrAlloc(arena)),
+    : row_limit(0), cell_limit(0), cell_limit_per_family(0), 
+      row_offset(0), cell_offset(0), max_versions(0), columns(CstrAlloc(arena)),
       row_intervals(RowIntervalAlloc(arena)),
       cell_intervals(CellIntervalAlloc(arena)),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
@@ -125,6 +127,8 @@ public:
     row_limit = 0;
     cell_limit = 0;
     cell_limit_per_family = 0;
+    row_offset = 0;
+    cell_offset = 0;
     max_versions = 0;
     columns.clear();
     row_intervals.clear();
@@ -143,6 +147,8 @@ public:
     other.row_limit = row_limit;
     other.cell_limit = cell_limit;
     other.cell_limit_per_family = cell_limit_per_family;
+    other.row_offset = row_offset;
+    other.cell_offset = cell_offset;
     other.max_versions = max_versions;
     other.columns = columns;
     other.time_interval = time_interval;
@@ -159,12 +165,12 @@ public:
     if (row_intervals.size() == 1) {
       HT_ASSERT(row_intervals[0].start && row_intervals[0].end);
       if (!strcmp(row_intervals[0].start, row_intervals[0].end))
-	return true;
+        return true;
     }
     else if (cell_intervals.size() == 1) {
       HT_ASSERT(cell_intervals[0].start_row && cell_intervals[0].end_row);
       if (!strcmp(cell_intervals[0].start_row, cell_intervals[0].end_row))
-	return true;
+        return true;
     }
     return false;
   }
@@ -274,6 +280,8 @@ public:
   int32_t row_limit;
   int32_t cell_limit;
   int32_t cell_limit_per_family;
+  int32_t row_offset;
+  int32_t cell_offset;
   uint32_t max_versions;
   CstrColumns columns;
   RowIntervals row_intervals;
@@ -321,6 +329,30 @@ public:
    * @param n cell limit per column family
    */
   void set_cell_limit_per_family(int32_t n) { m_scan_spec.cell_limit_per_family = n; }
+
+  /**
+   * Sets the number of rows to be skipped at the beginning of the query
+   *
+   * @param n row offset
+   */
+  void set_row_offset(int32_t n) { 
+    if (n && m_scan_spec.cell_offset)
+      HT_THROW(Error::BAD_SCAN_SPEC, "predicate row_offset not allowed in "
+           "combination with cell_offset");
+    m_scan_spec.row_offset = n; 
+  }
+
+  /**
+   * Sets the number of cells to be skipped at the beginning of the query
+   *
+   * @param n cell offset
+   */
+  void set_cell_offset(int32_t n) { 
+    if (n && m_scan_spec.row_offset)
+      HT_THROW(Error::BAD_SCAN_SPEC, "predicate cell_offset not allowed in "
+           "combination with row_offset");
+    m_scan_spec.cell_offset = n; 
+  }
 
   /**
    * Sets the maximum number of revisions of each cell to return in the scan.

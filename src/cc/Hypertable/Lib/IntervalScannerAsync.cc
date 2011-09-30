@@ -78,6 +78,8 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
   m_scan_spec_builder.set_max_versions(scan_spec.max_versions);
   m_scan_spec_builder.set_row_regexp(scan_spec.row_regexp);
   m_scan_spec_builder.set_value_regexp(scan_spec.value_regexp);
+  m_scan_spec_builder.set_row_offset(scan_spec.row_offset);
+  m_scan_spec_builder.set_cell_offset(scan_spec.cell_offset);
 
   for (size_t i=0; i<scan_spec.columns.size(); i++) {
     ScanSpec::parse_column(scan_spec.columns[i], family, qualifier, &has_qualifier, &is_regexp);
@@ -398,7 +400,7 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
   *show_results = m_current;
   // if this event is from a fetch scanblock
   if (!is_create) {
-    set_result(event, cells);
+    set_result(event, cells, is_create);
     do_readahead();
     load_result(cells);
     if (m_eos)
@@ -419,7 +421,7 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
       else {
         // set the range_info and load cells
         m_range_info = m_next_range_info;
-        set_result(event, cells);
+        set_result(event, cells, is_create);
         do_readahead();
         load_result(cells);
         if (m_eos)
@@ -437,12 +439,34 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
   return (m_eos && !has_outstanding_requests());
 }
 
-void IntervalScannerAsync::set_result(EventPtr &event, ScanCellsPtr &cells) {
+void IntervalScannerAsync::set_result(EventPtr &event, ScanCellsPtr &cells,
+        bool is_create) {
   cells = new ScanCells;
   m_cur_scanner_finished = cells->add(event, &m_cur_scanner_id);
 
+  // if there was an OFFSET (or CELL_OFFSET) predicate in the query and the
+  // RangeServer actually skipped rows (or cells) because of this predicate
+  // then adjust the ScanSpec for the next scanner.
+  int skipped_rows = 0;
+  int skipped_cells = 0;
+  if (is_create) {
+    skipped_rows = cells->get_skipped_rows();
+    skipped_cells = cells->get_skipped_cells();
+    if (skipped_rows) {
+      HT_ASSERT(skipped_cells == 0);
+      HT_ASSERT(m_scan_spec_builder.get().row_offset >= skipped_rows);
+      m_scan_spec_builder.get().row_offset -= skipped_rows;
+    }
+    if (skipped_cells) {
+      HT_ASSERT(skipped_rows == 0);
+      HT_ASSERT(m_scan_spec_builder.get().cell_offset >= skipped_cells);
+      m_scan_spec_builder.get().cell_offset -= skipped_cells;
+    }
+  }
+
   // current scanner is finished but we have results saved from the next scanner
   if (m_cur_scanner_finished && m_create_event_saved) {
+    HT_ASSERT(skipped_rows == 0 && skipped_cells == 0);
     HT_ASSERT(!has_outstanding_requests());
     m_create_event_saved = false;
     m_range_info = m_next_range_info;
@@ -504,7 +528,6 @@ bool IntervalScannerAsync::set_current(bool *show_results, ScanCellsPtr &cells, 
 }
 
 void IntervalScannerAsync::do_readahead() {
-
   if (m_eos)
     return;
 
@@ -516,6 +539,11 @@ void IntervalScannerAsync::do_readahead() {
     m_fetch_timer.start();
     m_range_server.fetch_scanblock(m_range_info.addr, m_cur_scanner_id,
                                    &m_fetch_handler, m_fetch_timer);
+    // if an OFFSET predicate was specified: return; we don't want to create
+    // more scanners till the RangeServer returned the first data
+    if (m_scan_spec_builder.get().cell_offset ||
+        m_scan_spec_builder.get().row_offset)
+      return;
   }
   // if the current scanner is finished
   else {

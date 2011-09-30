@@ -1146,6 +1146,36 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct scan_set_row_offset {
+      scan_set_row_offset(ParserState &state) : state(state) { }
+      void operator()(int ival) const {
+        if (state.scan.builder.get().row_offset != 0)
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "SELECT OFFSET predicate multiply defined.");
+        if (state.scan.builder.get().cell_offset != 0)
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "SELECT OFFSET predicate not allowed in combination with "
+                   "CELL_OFFSET.");
+        state.scan.builder.set_row_offset(ival);
+      }
+      ParserState &state;
+    };
+
+    struct scan_set_cell_offset {
+      scan_set_cell_offset(ParserState &state) : state(state) { }
+      void operator()(int ival) const {
+        if (state.scan.builder.get().cell_offset != 0)
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "SELECT CELL_OFFSET predicate multiply defined.");
+        if (state.scan.builder.get().row_offset != 0)
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "SELECT OFFSET predicate not allowed in combination with "
+                   "OFFSET.");
+        state.scan.builder.set_cell_offset(ival);
+      }
+      ParserState &state;
+    };
+
     struct scan_set_outfile {
       scan_set_outfile(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1716,6 +1746,8 @@ namespace Hypertable {
           Token LIMIT        = as_lower_d["limit"];
           Token CELL_LIMIT   = as_lower_d["cell_limit"];
           Token CELL_LIMIT_PER_FAMILY   = as_lower_d["cell_limit_per_family"];
+          Token OFFSET       = as_lower_d["offset"];
+          Token CELL_OFFSET  = as_lower_d["cell_offset"];
           Token INTO         = as_lower_d["into"];
           Token FILE         = as_lower_d["file"];
           Token LOAD         = as_lower_d["load"];
@@ -2324,6 +2356,10 @@ namespace Hypertable {
             | CELL_LIMIT >> uint_p[scan_set_cell_limit(self.state)]
             | CELL_LIMIT_PER_FAMILY >> EQUAL >> uint_p[scan_set_cell_limit_per_family(self.state)]
             | CELL_LIMIT_PER_FAMILY >> uint_p[scan_set_cell_limit_per_family(self.state)]
+            | OFFSET >> EQUAL >> uint_p[scan_set_row_offset(self.state)]
+            | OFFSET >> uint_p[scan_set_row_offset(self.state)]
+            | CELL_OFFSET >> EQUAL >> uint_p[scan_set_cell_offset(self.state)]
+            | CELL_OFFSET >> uint_p[scan_set_cell_offset(self.state)]
             | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
             | DISPLAY_TIMESTAMPS[scan_set_display_timestamps(self.state)]
             | RETURN_DELETES[scan_set_return_deletes(self.state)]

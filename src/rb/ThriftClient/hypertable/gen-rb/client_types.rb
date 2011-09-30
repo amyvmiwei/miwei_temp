@@ -154,6 +154,12 @@ module Hypertable
         # 
         #   <dt>scan_and_filter_rows</dt>
         #   <dd>Indicates whether table scan filters the rows specified instead of individual look up</dd>
+        # 
+        #   <dt>row_offset</dt>
+        #   <dd>Specifies number of rows to be skipped</dd>
+        # 
+        #   <dt>cell_offset</dt>
+        #   <dd>Specifies number of cells to be skipped</dd>
         # </dl>
         class ScanSpec
           include ::Thrift::Struct, ::Thrift::Struct_Union
@@ -171,6 +177,8 @@ module Hypertable
           ROW_REGEXP = 11
           VALUE_REGEXP = 12
           SCAN_AND_FILTER_ROWS = 13
+          ROW_OFFSET = 15
+          CELL_OFFSET = 16
 
           FIELDS = {
             ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
@@ -186,7 +194,9 @@ module Hypertable
             CELL_LIMIT_PER_FAMILY => {:type => ::Thrift::Types::I32, :name => 'cell_limit_per_family', :default => 0, :optional => true},
             ROW_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'row_regexp', :optional => true},
             VALUE_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'value_regexp', :optional => true},
-            SCAN_AND_FILTER_ROWS => {:type => ::Thrift::Types::BOOL, :name => 'scan_and_filter_rows', :default => false, :optional => true}
+            SCAN_AND_FILTER_ROWS => {:type => ::Thrift::Types::BOOL, :name => 'scan_and_filter_rows', :default => false, :optional => true},
+            ROW_OFFSET => {:type => ::Thrift::Types::I32, :name => 'row_offset', :default => 0, :optional => true},
+            CELL_OFFSET => {:type => ::Thrift::Types::I32, :name => 'cell_offset', :default => 0, :optional => true}
           }
 
           def struct_fields; FIELDS; end

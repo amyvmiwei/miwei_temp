@@ -45,6 +45,8 @@ namespace {
     "./hypertable_test.golden",
     "./hypertable_select_gz_test.golden",
     "./hypertable_test.tsv",
+    "./offset_test.hql",
+    "./offset_test.golden",
     0
   };
 }
@@ -78,6 +80,18 @@ int main(int argc, char **argv) {
     _exit(1);
 
   cmd_str = "diff hypertable_select_gz_test.output hypertable_select_gz_test.golden";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  /**
+   *  offset-test
+   */
+  cmd_str = "./hypertable --test-mode --config hypertable.cfg "
+      "< offset_test.hql > offset_test.output 2>&1";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  cmd_str = "diff offset_test.output offset_test.golden";
   if (system(cmd_str.c_str()) != 0)
     _exit(1);
 

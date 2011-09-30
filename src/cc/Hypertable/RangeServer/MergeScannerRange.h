@@ -39,20 +39,33 @@ namespace Hypertable {
   public:
     MergeScannerRange(ScanContextPtr &scan_ctx);
 
+    int32_t get_skipped_cells() {
+      return m_cell_skipped;
+    }
+
+    int32_t get_skipped_rows() {
+      return m_row_skipped;
+    }
+
   protected:
     virtual bool do_get(Key &key, ByteString &value);
     virtual void do_initialize();
     virtual void do_forward();
 
   private:
+    int32_t       m_cell_offset;
+    int32_t       m_cell_skipped;
     int32_t       m_cell_count;
     int32_t       m_cell_limit;
+    int32_t       m_row_offset;
+    int32_t       m_row_skipped;
     int32_t       m_row_count;
     int32_t       m_row_limit;
     int32_t       m_cell_count_per_family;
     int32_t       m_cell_limit_per_family;
     DynamicBuffer m_prev_key;
     int32_t       m_prev_cf;
+    bool          m_skip_this_row;
   };
 
 } // namespace Hypertable
