@@ -30,37 +30,14 @@ using namespace Hypertable;
 void LoadBalancer::register_plan(BalancePlanPtr &plan) {
   ScopedLock lock(m_mutex);
 
-  if (m_plan)
-    HT_THROW(Error::MASTER_OPERATION_IN_PROGRESS, "Balance plan already registered");
-
   m_plan = plan;
 
   // Insert moves into current set
-  foreach (RangeMoveSpecPtr &move, m_plan->moves) {
-    std::pair<MoveSetT::iterator, bool> ret = m_current_set.insert(move);
-    HT_ASSERT(ret.second);
-  }
+  foreach (RangeMoveSpecPtr &move, m_plan->moves)
+    m_current_set.insert(move);
 
-  HT_INFO_OUT << "Balance plan registered" << HT_END;
-  HT_DEBUG_OUT << "Registered plan=" << *m_plan << HT_END;
-}
-
-
-void LoadBalancer::deregister_plan(BalancePlanPtr &plan) {
-  ScopedLock lock(m_mutex);
-
-  foreach (RangeMoveSpecPtr &move, m_plan->moves) {
-    if (!move->complete) {
-      std::pair<MoveSetT::iterator, bool> ret = m_incomplete_set.insert(move);
-      if (!ret.second) {
-        m_incomplete_set.erase(ret.first);
-        std::pair<MoveSetT::iterator, bool> ret = m_incomplete_set.insert(move);
-      }
-    }
-  }
-
-  m_current_set.clear();
-  m_plan = 0;
+  HT_INFO_OUT << "Balance plan registered move " << m_plan->moves.size() << " ranges" <<
+      ", BalancePlan = " << *m_plan<< HT_END;
 }
 
 bool LoadBalancer::get_destination(const TableIdentifier &table, const RangeSpec &range, String &location) {

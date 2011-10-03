@@ -66,6 +66,7 @@ namespace Hypertable {
       TablePtr m_table;
       uint32_t m_num_servers;
       size_t m_num_ranges;
+      uint32_t m_num_empty_servers;
   }; // LoadBalancerBasicDistributeTableRanges
 
 

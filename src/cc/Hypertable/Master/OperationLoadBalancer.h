@@ -23,12 +23,14 @@
 #define HYPERTABLE_OPERATIONLOADBALANCER_H
 
 #include "Operation.h"
+#include "Hypertable/Lib/BalancePlan.h"
 
 namespace Hypertable {
 
   class OperationLoadBalancer : public Operation {
   public:
-    OperationLoadBalancer(ContextPtr &context, const String &algorithm=String());
+    OperationLoadBalancer(ContextPtr &context);
+    OperationLoadBalancer(ContextPtr &context, EventPtr &event);
     virtual ~OperationLoadBalancer() { }
 
     virtual void execute();
@@ -40,9 +42,12 @@ namespace Hypertable {
     virtual size_t encoded_state_length() const { return 0; }
     virtual void encode_state(uint8_t **bufp) const { }
     virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
+    virtual void decode_request(const uint8_t **bufp, size_t *remainp);
+    const String get_algorithm();
+
   private:
-    String m_algorithm;
+    void initialize_dependencies();
+    BalancePlanPtr m_plan;
   };
   typedef intrusive_ptr<OperationLoadBalancer> OperationLoadBalancerPtr;
 

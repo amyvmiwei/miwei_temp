@@ -127,14 +127,7 @@ void ConnectionHandler::handle(EventPtr &event) {
         operation = new OperationRelinquishAcknowledge(m_context, event);
         break;
       case MasterProtocol::COMMAND_BALANCE:
-        {
-          OperationBalancePtr operation_balance = new OperationBalance(m_context, event);
-          String algorithm = operation_balance->get_algorithm();
-          if (algorithm.size() != 0)
-            operation = new OperationLoadBalancer(m_context, algorithm);
-          else
-            operation = operation_balance;
-        }
+        operation = new OperationLoadBalancer(m_context, event);
         break;
       case MasterProtocol::COMMAND_SHUTDOWN:
         HT_INFO("Received shutdown command");

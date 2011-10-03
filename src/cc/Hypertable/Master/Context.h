@@ -56,6 +56,7 @@ namespace Hypertable {
   class LoadBalancer;
   class Operation;
   class OperationProcessor;
+  class OperationBalance;
   class ResponseManager;
   class RemovalManager;
 
@@ -97,6 +98,7 @@ namespace Hypertable {
     size_t conn_count;
     bool test_mode;
     OperationProcessor *op;
+    OperationBalance *op_balance;
     String location_hash;
     int32_t max_allowable_skew;
 
