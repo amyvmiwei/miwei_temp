@@ -24,6 +24,7 @@
 #include "Context.h"
 #include "LoadBalancer.h"
 #include "Operation.h"
+#include "OperationBalance.h"
 #include "RemovalManager.h"
 
 using namespace Hypertable;
@@ -42,7 +43,7 @@ void Context::add_server(RangeServerConnectionPtr &rsc) {
   pair<Sequence::iterator, bool> insert_result = m_server_list.push_back( RangeServerConnectionEntry(rsc) );
   if (!insert_result.second) {
     HT_INFOF("Tried to insert %s host=%s local=%s public=%s", rsc->location().c_str(),
-             rsc->hostname().c_str(), rsc->local_addr().format().c_str(), 
+             rsc->hostname().c_str(), rsc->local_addr().format().c_str(),
              rsc->public_addr().format().c_str());
     for (Sequence::iterator iter = m_server_list.begin(); iter != m_server_list.end(); ++iter) {
       HT_INFOF("Contains %s host=%s local=%s public=%s", iter->location().c_str(),
@@ -72,10 +73,10 @@ bool Context::connect_server(RangeServerConnectionPtr &rsc, const String &hostna
     retval = true;
   }
 
-  if (m_server_list_iter != m_server_list.end() && 
+  if (m_server_list_iter != m_server_list.end() &&
       m_server_list_iter->location() == rsc->location())
     ++m_server_list_iter;
-  
+
   // Remove this connection if already exists
   iter = hash_index.find(rsc->location());
   if (iter != hash_index.end())

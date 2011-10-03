@@ -23,29 +23,49 @@
 #include "Common/Error.h"
 
 #include "OperationLoadBalancer.h"
+#include "OperationBalance.h"
 #include "LoadBalancer.h"
 
 using namespace Hypertable;
 
-OperationLoadBalancer::OperationLoadBalancer(ContextPtr &context, const String &algorithm)
-  : Operation(context, MetaLog::EntityType::OPERATION_LOAD_BALANCER), m_algorithm(algorithm) {
+OperationLoadBalancer::OperationLoadBalancer(ContextPtr &context)
+  : Operation(context, MetaLog::EntityType::OPERATION_LOAD_BALANCER) {
+  m_plan = new BalancePlan();
+  initialize_dependencies();
+}
+
+OperationLoadBalancer::OperationLoadBalancer(ContextPtr &context, EventPtr &event)
+  : Operation(context, event, MetaLog::EntityType::OPERATION_LOAD_BALANCER) {
+  const uint8_t *ptr = event->payload;
+  size_t remaining = event->payload_len;
+  m_plan = new BalancePlan();
+  decode_request(&ptr, &remaining);
+  initialize_dependencies();
+}
+
+void OperationLoadBalancer::initialize_dependencies() {
   m_dependencies.insert(Dependency::INIT);
   m_dependencies.insert(Dependency::METADATA);
   m_dependencies.insert(Dependency::SYSTEM);
 }
 
-
 void OperationLoadBalancer::execute() {
-  HT_INFOF("Entering LoadBalancer-%lld algorithm=%s", (Lld)header.id, m_algorithm.c_str());
+  HT_INFOF("Entering LoadBalancer-%lld", (Lld)header.id);
 
   try {
-    m_context->balancer->balance(m_algorithm);
+    String algorithm = get_algorithm();
+    if (!m_plan->moves.empty())
+      m_context->op_balance->register_plan(m_plan);
+    else if (algorithm.size() > 0)
+      m_context->balancer->balance(algorithm);
+    else
+      m_context->balancer->balance();
   }
   catch (Exception &e) {
     HT_THROW2(e.code(), e, "Load Balancer");
   }
   complete_ok_no_log();
-  HT_INFOF("Leaving LoadBalancer-%lld algorithm=%s", (Lld)header.id, m_algorithm.c_str());
+  HT_INFOF("Leaving LoadBalancer-%lld", (Lld)header.id);
 }
 
 const String OperationLoadBalancer::name() {
@@ -56,3 +76,11 @@ const String OperationLoadBalancer::label() {
   return "LoadBalancer";
 }
 
+const String OperationLoadBalancer::get_algorithm() {
+  return m_plan->algorithm;
+}
+
+void OperationLoadBalancer::decode_request(const uint8_t **bufp, size_t *remainp) {
+
+  m_plan->decode(bufp, remainp);
+}

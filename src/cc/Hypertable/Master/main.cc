@@ -47,6 +47,7 @@ extern "C" {
 #include "OperationRecoverServer.h"
 #include "OperationSystemUpgrade.h"
 #include "OperationWaitForServers.h"
+#include "OperationBalance.h"
 #include "RemovalManager.h"
 #include "ResponseManager.h"
 
@@ -163,7 +164,6 @@ int main(int argc, char **argv) {
 
     int worker_count  = get_i32("workers");
     context->op = new OperationProcessor(context, worker_count);
-
     context->balancer = new LoadBalancerBasic(context);
 
     // First do System Upgrade
@@ -172,11 +172,17 @@ int main(int argc, char **argv) {
     context->op->wait_for_empty();
 
     // Then reconstruct state and start execution
+    context->op_balance = NULL;
     for (size_t i=0; i<entities.size(); i++) {
       operation = dynamic_cast<Operation *>(entities[i].get());
       if (operation) {
-	if (operation->remove_explicitly())
-	  context->removal_manager->add_operation(operation);
+        if (operation->remove_explicitly())
+          context->removal_manager->add_operation(operation);
+        if (dynamic_cast<OperationBalance *>(operation.get())) {
+          // there should be only one OPERATION_BALANCE
+          HT_ASSERT(context->op_balance == NULL);
+          context->op_balance = dynamic_cast<OperationBalance *>(operation.get());
+        }
         operations.push_back(operation);
       }
       else {
@@ -186,7 +192,6 @@ int main(int argc, char **argv) {
         operations.push_back( new OperationRecoverServer(context, rsc) );
       }
     }
-
     if (operations.empty()) {
       OperationInitializePtr init_op = new OperationInitialize(context);
       if (context->namemap->exists_mapping("/sys/METADATA", 0))
@@ -209,6 +214,11 @@ int main(int argc, char **argv) {
     // Add PERPETUAL operations
     operation = new OperationWaitForServers(context);
     operations.push_back(operation);
+    if (!context->op_balance) {
+      operation = new OperationBalance(context);
+      context->op_balance = dynamic_cast<OperationBalance *>(operation.get());
+      operations.push_back(operation);
+    }
 
     context->op->add_operations(operations);
 

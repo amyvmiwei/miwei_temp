@@ -46,8 +46,7 @@ void LoadBalancerBasic::balance(const String &algorithm) {
   try {
     calculate_balance_plan(algorithm, plan);
     if (plan->moves.size()>0) {
-      OperationPtr operation = new OperationBalance(m_context, plan);
-      m_context->op->add_operation(operation);
+      m_context->op_balance->register_plan(plan);
       ptime now = second_clock::local_time();
       m_last_balance_time = now;
     }
@@ -93,13 +92,21 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
 
     // when we see a new server wait for some time before scheduling a balance balance
     if (!m_waiting_for_servers) {
+      bool empty_server_found=false;
+      size_t total_ranges = 0;
       foreach(const RangeServerStatistics &server_stats, range_server_stats) {
-        if (server_stats.stats->live && server_stats.stats->range_count == 0) {
-          mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
-          m_wait_time_start = now;
-          m_waiting_for_servers = true;
-          break;
-        }
+        if (server_stats.stats->live && server_stats.stats->range_count == 0)
+          empty_server_found = true;
+        else
+          total_ranges += server_stats.stats->range_count;
+      }
+      // 3 ranges shd always be in the system (2 metadata, 1 rs_metrics)
+      if (empty_server_found && total_ranges > 3 + range_server_stats.size()) {
+        HT_INFO_OUT << "Found empty range server, total ranges =" << total_ranges
+                    << ", total rangeservers=" << range_server_stats.size() << HT_END;
+        mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
+        m_wait_time_start = now;
+        m_waiting_for_servers = true;
       }
     }
     else
@@ -136,8 +143,8 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
     }
     else
       HT_INFO_OUT << "LoadBalancerBasic mode=BALANCE_MODE_DISTRIBUTE_TABLE_RANGES" << HT_END;
-    HT_INFO_OUT << "Move " << balance_plan->moves.size() << " ranges, BalancePlan = "
-        << *balance_plan << HT_END;
+    HT_INFO_OUT << "BalancePlan created, move " << balance_plan->moves.size() << " ranges"
+                << HT_END;
   }
 }
 

@@ -65,7 +65,6 @@ namespace Hypertable {
     }
 
     virtual void register_plan(BalancePlanPtr &plan);
-    virtual void deregister_plan(BalancePlanPtr &plan);
     virtual bool get_destination(const TableIdentifier &table, const RangeSpec &range, String &location);
     virtual bool move_complete(const TableIdentifier &table, const RangeSpec &range, int32_t error=0);
     virtual bool wait_for_complete(RangeMoveSpecPtr &move, uint32_t timeout_millis);

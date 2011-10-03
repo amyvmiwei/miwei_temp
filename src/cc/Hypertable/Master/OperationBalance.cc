@@ -19,6 +19,7 @@
  * 02110-1301, USA.
  */
 
+
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/FailureInducer.h"
@@ -27,6 +28,8 @@
 #include "Common/Sweetener.h"
 #include "Common/System.h"
 #include "Common/md5.h"
+#include "Common/StringExt.h"
+#include "Common/ScopeGuard.h"
 
 #include "AsyncComm/ResponseCallback.h"
 
@@ -41,36 +44,53 @@
 using namespace Hypertable;
 using namespace Hyperspace;
 
-OperationBalance::OperationBalance(ContextPtr &context, BalancePlanPtr &plan)
-  : Operation(context, MetaLog::EntityType::OPERATION_BALANCE), m_plan(plan) {
+void do_block(OperationBalance *obj) {
+  obj->block();
+}
+
+const String OperationBalance::ms_name("OperationBalance");
+
+OperationBalance::OperationBalance(ContextPtr &context)
+  : Operation(context, MetaLog::EntityType::OPERATION_BALANCE) {
+  m_plan = new BalancePlan();
   initialize_dependencies();
-  // Clear table generations since they are not used
-  foreach (RangeMoveSpecPtr &move, m_plan->moves)
-    move->table.generation = 0;
 }
 
 OperationBalance::OperationBalance(ContextPtr &context,
                                    const MetaLog::EntityHeader &header_)
   : Operation(context, header_) {
-  m_hash_code = md5_hash("OperationBalance");
-}
 
-OperationBalance::OperationBalance(ContextPtr &context, EventPtr &event)
-  : Operation(context, event, MetaLog::EntityType::OPERATION_BALANCE) {
-  const uint8_t *ptr = event->payload;
-  size_t remaining = event->payload_len;
-  decode_request(&ptr, &remaining);
-  initialize_dependencies();
+  m_exclusivities.insert(ms_name);
+  m_hash_code = md5_hash(ms_name.c_str());
 }
 
 void OperationBalance::initialize_dependencies() {
+
+  m_exclusivities.insert(ms_name);
+  m_hash_code = md5_hash(ms_name.c_str());
+
+  m_dependencies.clear();
   m_dependencies.insert(Dependency::INIT);
-  m_hash_code = md5_hash("OperationBalance");
+  CstrSet addrs;
+  foreach (RangeMoveSpecPtr &move, m_plan->moves) {
+    if (addrs.find(move->source_location.c_str()) == addrs.end()) {
+      addrs.insert(move->source_location.c_str());
+      m_dependencies.insert(move->source_location);
+    }
+   if (addrs.find(move->dest_location.c_str()) == addrs.end()) {
+      addrs.insert(move->dest_location.c_str());
+      m_dependencies.insert(move->dest_location);
+    }
+  }
 }
 
 
+
 void OperationBalance::execute() {
+  HT_ON_SCOPE_EXIT(&do_block, this);
+
   int32_t state = get_state();
+  bool registered=false;
 
   HT_INFOF("Entering Balance-%lld state=%s",
            (Lld)header.id, OperationState::get_text(state));
@@ -79,12 +99,15 @@ void OperationBalance::execute() {
 
   case OperationState::INITIAL:
 
+    if (m_plan->moves.empty())
+      return;
+
     try {
       m_context->balancer->register_plan(m_plan);
+      registered = true;
     }
     catch (Exception &e) {
       HT_ERROR_OUT << e << HT_END;
-      complete_error(e);
       return;
     }
     set_state(OperationState::STARTED);
@@ -92,6 +115,15 @@ void OperationBalance::execute() {
 
   case OperationState::STARTED:
     {
+      try {
+        if (!registered)
+          m_context->balancer->register_plan(m_plan);
+      }
+      catch (Exception &e) {
+        HT_ERROR_OUT << e << HT_END;
+        return;
+      }
+
       RangeServerClient rsc(m_context->comm);
       CommAddress addr;
 
@@ -103,7 +135,6 @@ void OperationBalance::execute() {
           try {
             rsc.relinquish_range(addr, move->table, move->range);
             poll(0, 0, wait_millis);
-            //m_context->balancer->wait_for_complete(move, wait_millis);
           }
           catch (Exception &e) {
             move->complete = true;
@@ -114,10 +145,7 @@ void OperationBalance::execute() {
         foreach (RangeMoveSpecPtr &move, m_plan->moves)
           HT_INFO_OUT << *move << HT_END;
       }
-
-      m_context->balancer->deregister_plan(m_plan);
     }
-    complete_ok();
     break;
 
   default:
@@ -148,10 +176,11 @@ void OperationBalance::decode_state(const uint8_t **bufp, size_t *remainp) {
 void OperationBalance::decode_request(const uint8_t **bufp, size_t *remainp) {
   m_plan = new BalancePlan();
   m_plan->decode(bufp, remainp);
+  initialize_dependencies();
 }
 
 const String OperationBalance::name() {
-  return "OperationBalance";
+  return ms_name;
 }
 
 const String OperationBalance::label() {
@@ -160,4 +189,17 @@ const String OperationBalance::label() {
 
 const String OperationBalance::get_algorithm() {
   return m_plan->algorithm;
+}
+
+void OperationBalance::register_plan(BalancePlanPtr &plan) {
+  {
+    ScopedLock lock(m_mutex);
+    if (!m_blocked)
+      HT_THROW(Error::MASTER_OPERATION_IN_PROGRESS, "OperationBalance running");
+    m_plan = plan;
+    initialize_dependencies();
+    m_state = OperationState::INITIAL;
+  }
+  m_context->mml_writer->record_state(this);
+  m_context->op->unblock(ms_name);
 }

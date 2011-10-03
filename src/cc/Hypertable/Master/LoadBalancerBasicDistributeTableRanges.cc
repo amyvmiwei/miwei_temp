@@ -36,8 +36,8 @@ void LoadBalancerBasicDistributeTableRanges::compute_plan(vector<RangeServerStat
     return;
   compute_range_distribution(range_server_stats);
   m_num_servers = m_servers.size();
-  HT_INFO_OUT << "m_num_servers=" << m_num_servers << ", total ranges=" << m_num_ranges
-      << HT_END;
+  HT_INFO_OUT << "m_num_servers=" << m_num_servers << ", m_num_empty_servers="
+      << m_num_empty_servers << ", total ranges=" << m_num_ranges << HT_END;
   if (m_servers.size() <= 1)
     return;
   // Now scan thru METADATA Location and StartRow and come up with balance plan
@@ -192,6 +192,8 @@ void LoadBalancerBasicDistributeTableRanges::clear() {
   m_servers.clear();
   m_saturated_tables.clear();
   m_table_summaries.clear();
+  m_num_servers = m_num_empty_servers = 0;
+  m_num_ranges = 0;
 }
 
 void LoadBalancerBasicDistributeTableRanges::compute_range_distribution(vector<RangeServerStatistics> &range_server_stats) {
@@ -221,6 +223,7 @@ void LoadBalancerBasicDistributeTableRanges::compute_range_distribution(vector<R
       }
     }
     else {
+      ++m_num_empty_servers;
       HT_DEBUG_OUT << "Found empty server " << server_id << HT_END;
     }
   }
