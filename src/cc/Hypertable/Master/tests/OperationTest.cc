@@ -75,8 +75,6 @@ void OperationTest::execute() {
       m_results.push_back(m_name);
       set_state(OperationState::COMPLETE);
     }
-    else if (state == OperationState::BLOCKED)
-      return;
     else
       HT_ASSERT(!"Unknown state");
   }

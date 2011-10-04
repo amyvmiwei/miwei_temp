@@ -36,10 +36,12 @@ OperationRecoverServer::OperationRecoverServer(ContextPtr &context, RangeServerC
 
 void OperationRecoverServer::execute() {
 
-  if (!m_rsc->connected())
-    set_state(OperationState::BLOCKED);
-  else
-    set_state(OperationState::COMPLETE);
+  if (!m_rsc->connected()) {
+    block();
+    return;
+  }
+
+  set_state(OperationState::COMPLETE);
 
   HT_INFOF("Leaving RecoverServer-%lld('%s') state=%s",
            (Lld)header.id, m_rsc->location().c_str(), OperationState::get_text(get_state()));
