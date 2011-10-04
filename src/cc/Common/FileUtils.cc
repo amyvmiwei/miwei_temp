@@ -30,6 +30,7 @@ extern "C" {
 #include <errno.h>
 #include <pwd.h>
 #include <fcntl.h>
+#include <string.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -47,6 +48,9 @@ extern "C" {
 }
 
 #include <boost/shared_array.hpp>
+#include <boost/shared_ptr.hpp>
+
+#include <re2/re2.h>
 
 #include "FileUtils.h"
 #include "Logger.h"
@@ -506,6 +510,29 @@ bool FileUtils::expand_tilde(String &fname) {
   }
 
   return true;
+}
+
+using namespace re2;
+
+void FileUtils::readdir(const String &dirname, const String &fname_regex,
+			std::vector<struct dirent> &listing) {
+  int ret;
+  DIR *dirp = opendir(dirname.c_str());
+  struct dirent de, *dep;
+  boost::shared_ptr<RE2> regex(fname_regex.length() ? new RE2(fname_regex) : 0);
+
+  do {
+
+    if ((ret = readdir_r(dirp, &de, &dep)) != 0)
+      HT_FATALF("Problem reading directory '%s' - %s", dirname.c_str(), strerror(errno));
+
+    if (dep != 0 &&
+	(!regex || RE2::FullMatch(de.d_name, *regex)))
+      listing.push_back(de);
+
+  } while (dep != 0);
+
+  (void)closedir(dirp);
 }
 
 

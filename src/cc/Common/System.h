@@ -69,6 +69,8 @@ namespace Hypertable {
     static uint32_t rand32() { return ms_rng(); }
     static uint64_t rand64() { return (uint64_t)rand32() << 32 | rand32(); }
 
+    static int32_t get_drive_count();
+
     // system info objects
     static const CpuInfo &cpu_info();
     static const CpuStat &cpu_stat();

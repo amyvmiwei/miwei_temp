@@ -25,7 +25,9 @@
 #include <boost/filesystem.hpp>
 
 #include <iostream>
+#include <vector>
 
+#include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/Path.h"
 #include "Common/SystemInfo.h"
@@ -88,6 +90,32 @@ void System::_init(const String &install_directory) {
 
 int32_t System::get_processor_count() {
   return cpu_info().total_cores;
+}
+
+namespace {
+  int32_t drive_count = 0;
+}
+
+int32_t System::get_drive_count() {
+
+  if (drive_count > 0)
+    return drive_count;
+
+#if defined(__linux__)
+  String device_regex = "sd[a-z][a-z]?|hd[a-z][a-z]?";
+#elif defined(__APPLE__)
+  String device_regex = "disk[0-9][0-9]?";
+#else
+  ImplementMe;
+#endif
+
+  vector<struct dirent> listing;
+
+  FileUtils::readdir("/dev", device_regex, listing);
+
+  drive_count = listing.size();
+
+  return drive_count;
 }
 
 int32_t System::get_pid() {
