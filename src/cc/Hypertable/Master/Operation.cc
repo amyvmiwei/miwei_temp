@@ -39,7 +39,8 @@ const char *Dependency::SYSTEM = "SYSTEM";
 const char *OperationState::get_text(int32_t state);
 
 Operation::Operation(ContextPtr &context, int32_t type)
-  : MetaLog::Entity(type), m_context(context), m_state(OperationState::INITIAL), m_error(0) { 
+  : MetaLog::Entity(type), m_context(context), m_state(OperationState::INITIAL),
+    m_error(0), m_blocked(false) {
   int32_t timeout = m_context->props->get_i32("Hypertable.Request.Timeout");
   m_expiration_time.sec = time(0) + timeout/1000;
   m_expiration_time.nsec = (timeout%1000) * 1000000LL;
@@ -47,14 +48,16 @@ Operation::Operation(ContextPtr &context, int32_t type)
 }
 
 Operation::Operation(ContextPtr &context, EventPtr &event, int32_t type)
-  : MetaLog::Entity(type), m_context(context), m_event(event), m_state(OperationState::INITIAL), m_error(0) {
+  : MetaLog::Entity(type), m_context(context), m_event(event), m_state(OperationState::INITIAL),
+    m_error(0), m_blocked(false) {
   m_expiration_time.sec = time(0) + m_event->header.timeout_ms/1000;
   m_expiration_time.nsec = (m_event->header.timeout_ms%1000) * 1000000LL;
   m_hash_code = (int64_t)header.id;
 }
 
 Operation::Operation(ContextPtr &context, const MetaLog::EntityHeader &header_)
-  : MetaLog::Entity(header_), m_context(context), m_state(OperationState::INITIAL), m_error(0) {
+  : MetaLog::Entity(header_), m_context(context), m_state(OperationState::INITIAL),
+    m_error(0), m_blocked(false) {
   m_hash_code = (int64_t)header.id;
 }
 
@@ -267,6 +270,26 @@ void Operation::swap_sub_operations(std::vector<Operation *> &sub_ops) {
   sub_ops.swap(m_sub_ops);
 }
 
+
+bool Operation::block() {
+  ScopedLock lock(m_mutex);
+  if (!m_blocked) {
+    m_blocked = true;
+    return true;
+  }
+  return false;
+}
+
+bool Operation::unblock() {
+  ScopedLock lock(m_mutex);
+  if (m_blocked) {
+    m_blocked = false;
+    return true;
+  }
+  return false;
+}
+
+
 namespace {
   struct StateInfo {
     int32_t code;
@@ -276,7 +299,7 @@ namespace {
   StateInfo state_info[] = {
     { OperationState::INITIAL, "INITIAL" },
     { OperationState::COMPLETE, "COMPLETE" },
-    { OperationState::BLOCKED, "BLOCKED" },
+    { OperationState::UNUSED, "UNUSED" },
     { OperationState::STARTED, "STARTED" },
     { OperationState::ASSIGN_ID, "ASSIGN_ID" },
     { OperationState::ASSIGN_LOCATION,"ASSIGN_LOCATION" },

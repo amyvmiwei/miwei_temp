@@ -41,7 +41,7 @@ namespace Hypertable {
     enum {
       INITIAL = 0,
       COMPLETE = 1,
-      BLOCKED = 2,
+      UNUSED = 2,
       STARTED = 3,
       ASSIGN_ID = 4,
       ASSIGN_LOCATION = 5,
@@ -135,9 +135,10 @@ namespace Hypertable {
 
     int32_t get_state() { ScopedLock lock(m_mutex); return m_state; }
     void set_state(int32_t state) { ScopedLock lock(m_mutex); m_state = state; }
-    virtual void unblock() { ScopedLock lock(m_mutex); m_state = OperationState::STARTED; }
     virtual bool is_perpetual() { return false; }
-    bool is_blocked() { ScopedLock lock(m_mutex); return m_state == OperationState::BLOCKED; }
+    bool block();
+    bool unblock();
+    bool is_blocked() { ScopedLock lock(m_mutex); return m_blocked; }
     bool is_complete() { ScopedLock lock(m_mutex); return m_state == OperationState::COMPLETE; }
 
   protected:
@@ -146,6 +147,7 @@ namespace Hypertable {
     EventPtr m_event;
     int32_t m_state;
     int32_t m_error;
+    bool m_blocked;
     String m_error_msg;
     HiResTime m_expiration_time;
     int64_t m_hash_code;

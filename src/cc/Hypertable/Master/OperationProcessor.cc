@@ -172,12 +172,29 @@ void OperationProcessor::wake_up() {
 void OperationProcessor::unblock(const String &name) {
   ScopedLock lock(m_context.mutex);
   std::pair<DependencyIndex::iterator, DependencyIndex::iterator> bound;
+  bool unblocked_something = false;
 
   for (bound = m_context.obstruction_index.equal_range(name);
        bound.first != bound.second; ++bound.first)
-    m_context.ops[bound.first->second]->unblock();
-  m_context.need_order_recompute = true;
-  m_context.cond.notify_all();
+    if (m_context.ops[bound.first->second]->unblock())
+      unblocked_something = true;
+
+  for (bound = m_context.exclusivity_index.equal_range(name);
+       bound.first != bound.second; ++bound.first)
+    if (m_context.ops[bound.first->second]->unblock())
+      unblocked_something = true;
+
+  for (bound = m_context.dependency_index.equal_range(name);
+       bound.first != bound.second; ++bound.first)
+    if (m_context.ops[bound.first->second]->unblock())
+      unblocked_something = true;
+
+  if (unblocked_something) {
+    m_context.current_blocked = 0;
+    m_context.need_order_recompute = true;
+    m_context.cond.notify_all();
+  }
+
 }
 
 /**
@@ -233,7 +250,10 @@ void OperationProcessor::Worker::operator()() {
       }
 
       try {
-        operation->execute();
+
+        if (!operation->is_blocked())
+          operation->execute();
+
         {
           ScopedLock lock(m_context.mutex);
           m_context.busy[vertex] = false;

@@ -32,12 +32,17 @@ OperationWaitForServers::OperationWaitForServers(ContextPtr &context)
 }
 
 void OperationWaitForServers::execute() {
+
   HT_INFOF("Entering WaitForServers-%lld (state=%s)",
            (Lld)header.id, OperationState::get_text(get_state()));
-  if (m_context->connection_count() == 0)
-    set_state(OperationState::BLOCKED);
-  else
-    set_state(OperationState::COMPLETE);
+
+  if (m_context->connection_count() == 0) {
+    block();
+    return;
+  }
+
+  set_state(OperationState::COMPLETE);
+
   HT_INFOF("Leaving WaitForServers-%lld (state=%s)",
            (Lld)header.id, OperationState::get_text(get_state()));
 }
