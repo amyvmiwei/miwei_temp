@@ -99,7 +99,6 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   uint16_t port;
   m_cores = System::cpu_info().total_cores;
   HT_ASSERT(m_cores != 0);
-  uint32_t maintenance_threads = std::min(2, (int) m_cores);
   SubProperties cfg(props, "Hypertable.RangeServer.");
 
   m_verbose = props->get_bool("verbose");
@@ -113,8 +112,21 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::cellstore_target_size_max =
     Global::cellstore_target_size_min + cfg.get_i64("CellStore.TargetSize.Window");
   m_scanner_buffer_size = cfg.get_i64("Scanner.BufferSize");
-  maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
   port = cfg.get_i16("Port");
+
+  /** Compute maintenance threads **/
+  uint32_t maintenance_threads;
+  {
+    int32_t disk_count = System::get_drive_count();
+    if (disk_count > 0)
+      maintenance_threads = (disk_count * 3) / 2;
+    else
+      maintenance_threads = m_cores;
+    if (maintenance_threads < 2)
+      maintenance_threads = 2;
+    maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
+    cout << "drive count = " << disk_count << "\nmaintenance threads = " << maintenance_threads << endl;
+  }
 
   Global::toplevel_dir = props->get_str("Hypertable.Directory");
   boost::trim_if(Global::toplevel_dir, boost::is_any_of("/"));
