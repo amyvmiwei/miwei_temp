@@ -146,17 +146,22 @@ class User
   }
 
   public function sendTweet($tweet) {
+    $tid=$tweet->getId();
     HypertableConnection::insert('user', $this->_id, "my_stream",
-            $tweet->getId());
+            $tid);
     HypertableConnection::insert('user', $this->_id, 'my_stream_count',
             1);
+
+    // store in follow_stream, otherwise the user's own tweets would not
+    // be displayed in the timeline
+    HypertableConnection::insert('user', $this->_id, 'follow_stream',
+            $tid);
 
     // get followers
     $result=HypertableConnection::query("SELECT followers FROM ".
             "user WHERE ROW='".$this->_id."'");
 
     // foreach follower: store tweet id in their "follow-stream"
-    $tid=$tweet->getId();
     foreach ($result->cells as $cell) {
       $qualifier=$cell->key->column_qualifier;
       HypertableConnection::insert('user', $qualifier, 'follow_stream',

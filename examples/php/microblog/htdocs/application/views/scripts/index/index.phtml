@@ -17,7 +17,7 @@ This is the Hypertable microblog sample. It demonstrates how to create a
 <h2>Your Streams</h2>
 <div id="streams" style="background-color: #e9e9e9; padding: 5px;">
   <a <? if ($this->show=='') echo 'style="background-color: #bbb;" '; ?> 
-    href="/index">Favorites</a> -
+    href="/index">Timeline</a> -
   <a <? if ($this->show=='mine') echo 'style="background-color: #bbb;" '; ?> 
     href="/index/mine">Your tweets</a> -
   <a <? if ($this->show=='following') echo 'style="background-color: #bbb;" '; ?> 
@@ -28,10 +28,39 @@ This is the Hypertable microblog sample. It demonstrates how to create a
 <br />
 <div id="data">
 <?
-    if ($this->show=='' or $this->show=='mine' or $this->show=='all')
-      showTweets($this->data);
-    else 
-      showUsers($this->data);
+  if ($this->show=='') {
+?>
+  <script type="text/javascript">
+    //<![CDATA[
+    function updateAjax() {
+      microAjax("/index/count?old="+count, function (res) {
+        var r=parseInt(res);
+        if (init==0) {
+          init=1;
+          count=r;
+          updateAjax();
+        }
+        else {
+          var span=document.getElementById("count");
+          if (r>count)
+            span.innerHTML=r-count;
+          setTimeout("updateAjax()", 5000);
+        }
+      });
+    }
+    var count=0;
+    var init=0;
+    updateAjax();
+    //]]>
+  </script>
+ <span id="count">0</span> new tweets (<a href="/">reload</a>)
+<?
+  }
+
+  if ($this->show=='' or $this->show=='mine' or $this->show=='all')
+    showTweets($this->data);
+  else 
+    showUsers($this->data);
 ?>
 </div>
 <div id="pager" style="background-color: #f0f0f0; padding: 5px; text-align: right;">
