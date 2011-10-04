@@ -50,6 +50,19 @@ class IndexController extends Zend_Controller_Action
     return $this->render('index');
   }
 
+  // Ajax requests: return the number of tweets in the follow_stream
+  //
+  // This is a bit hackish because die() is intended for serious errors, but
+  // it really works fine for our purpose.
+  public function countAction() {
+    $profile=Zend_Auth::getInstance()->getIdentity();
+    $user=UserTable::load($profile->getId());
+    $newcount=$user->getFollowStreamCount();
+    // make sure that we close the database handles
+    HypertableConnection::close();
+    die(''.$newcount);
+  }
+
   // show 10 items from the "follow" stream
   public function indexAction() {
     $limit=10;

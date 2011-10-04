@@ -47,6 +47,15 @@ class LoginController extends Zend_Controller_Action
     ));
   }
 
+  public function handleError(Exception $e) {
+    echo "Failed to connect to the database. Please make sure that Hypertable ".
+         "is up and running. See <a href=\"/about\">About</a> for ".
+         "installation instructions.<br />".
+         "<br />".$e->getMessage()."<br />".
+        "<br /><pre>$e</pre>";
+    die ($e->getCode());
+  }
+
   public function getAuthAdapter(array $params) {
     require_once('MyAuthAdapter.php');
     return new MyAuthAdapter($params['username'], $params['password']);
@@ -90,7 +99,12 @@ class LoginController extends Zend_Controller_Action
     // Get our authentication adapter and check credentials
     $adapter = $this->getAuthAdapter($form->getValues());
     $auth  = Zend_Auth::getInstance();
-    $result  = $auth->authenticate($adapter);
+    try {
+      $result  = $auth->authenticate($adapter);
+    }
+    catch (Exception $e) {
+      $this->handleError($e);
+    }
     if (!$result->isValid()) {
       $form->setDescription('Invalid credentials provided');
       $this->view->loginForm = $form;
@@ -126,7 +140,12 @@ class LoginController extends Zend_Controller_Action
     // check if the username is unique. if yes: create the profile
     $ar=$form->getValues();
     $username=$ar['username'];
-    $usr = ProfileTable::load($username);
+    try {
+      $usr = ProfileTable::load($username);
+    }
+    catch (Exception $e) {
+      $this->handleError($e);
+    }
     if ($usr) { // already exists
       $form->setDescription('Username already exists, please choose '.
             'another one!');
