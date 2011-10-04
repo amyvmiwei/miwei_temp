@@ -370,13 +370,13 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
     ("Hypertable.RangeServer.CommitLog.Compressor",
-        str()->default_value("snappy"),
+        str()->default_value("quicklz"),
         "Commit log compressor to use (zlib, lzo, quicklz, snappy, bmz, none)")
     ("Hypertable.Metadata.Replication", i32()->default_value(-1),
         "Replication factor for commit log files")
     ("Hypertable.CommitLog.RollLimit", i64()->default_value(100*M),
         "Roll commit log after this many bytes")
-    ("Hypertable.CommitLog.Compressor", str()->default_value("snappy"),
+    ("Hypertable.CommitLog.Compressor", str()->default_value("quicklz"),
         "Commit log compressor to use (zlib, lzo, quicklz, snappy, bmz, none)")
     ("Hypertable.CommitLog.SkipErrors", boo()->default_value(false),
         "Skip over any corruption encountered in the commit log")
