@@ -91,8 +91,8 @@ void BlockCompressionHeader::decode(const uint8_t **bufp, size_t *remainp) {
   m_compression_type = decode_byte(bufp, remainp);
 
   if (m_compression_type >= BlockCompressionCodec::COMPRESSION_TYPE_LIMIT)
-    HT_THROWF(Error::BLOCK_COMPRESSOR_BAD_HEADER, "Bad compression type: %d",
-              (int)m_compression_type);
+    HT_THROWF(Error::BLOCK_COMPRESSOR_BAD_HEADER, "Unsupported compression type "
+              "(%d)", (int)m_compression_type);
 
   m_data_checksum = decode_i32(bufp, remainp);
   m_data_length = decode_i32(bufp, remainp);
