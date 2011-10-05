@@ -97,7 +97,6 @@ namespace Hypertable {
     size_t conn_count;
     bool test_mode;
     OperationProcessor *op;
-    std::set<int64_t> in_progress_ops;
     String location_hash;
     int32_t max_allowable_skew;
 
@@ -116,10 +115,6 @@ namespace Hypertable {
     size_t connection_count() { ScopedLock lock(mutex); return conn_count; }
     size_t server_count() { ScopedLock lock(mutex); return m_server_list.size(); }
     void get_servers(std::vector<RangeServerConnectionPtr> &servers);
-    bool in_progress(Operation *operation);
-    bool add_in_progress(Operation *operation);
-    void remove_in_progress(Operation *operation);
-    void clear_in_progress();
 
   private:
 
