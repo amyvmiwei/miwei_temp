@@ -95,6 +95,8 @@ void OperationMoveRange::execute() {
   HT_INFOF("Entering MoveRange-%lld %s state=%s",
            (Lld)header.id, m_range_name.c_str(), OperationState::get_text(state));
 
+  HT_MAYBE_FAIL_X("move-range-BALANCE-a", m_context->balancer->has_plan_moves());
+
   switch (state) {
 
   case OperationState::INITIAL:
