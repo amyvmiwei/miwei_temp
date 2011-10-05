@@ -56,6 +56,14 @@ namespace Hypertable {
 
     }
 
+    virtual bool has_plan_moves() {
+      ScopedLock lock(m_mutex);
+      if (!m_plan)
+        return false;
+      else
+        return (m_plan->moves.size()>0);
+    }
+
     virtual void register_plan(BalancePlanPtr &plan);
     virtual void deregister_plan(BalancePlanPtr &plan);
     virtual bool get_destination(const TableIdentifier &table, const RangeSpec &range, String &location);
