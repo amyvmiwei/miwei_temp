@@ -28,7 +28,31 @@
 
 #include "Operation.h"
 
+#include <list>
+
+#include <boost/thread/condition.hpp>
+
 namespace Hypertable {
+
+  class RemovalManagerContext {
+  public:
+    RemovalManagerContext() : shutdown(false) { }
+    class RemovalRec {
+    public:
+      RemovalRec() : approvals_remaining(0) { }
+      RemovalRec(Operation *_op, size_t needed_approvals)
+        : op(_op), approvals_remaining(needed_approvals) { }
+      OperationPtr op;
+      size_t approvals_remaining;
+    };
+    typedef hash_map<int64_t, RemovalRec> RemovalMapT;
+    Mutex mutex;
+    boost::condition cond;
+    MetaLog::WriterPtr mml_writer;
+    RemovalMapT map;
+    std::list<OperationPtr> removal_queue;
+    bool shutdown;
+  };
 
   /**
    * RemovalManager is a class that is used manage explicit removal operations.
@@ -39,33 +63,17 @@ namespace Hypertable {
    */
   class RemovalManager {
   public:
-    RemovalManager() { }
-    RemovalManager(MetaLog::WriterPtr &mlw) : m_metalog_writer(mlw) { }
-    void set_mml_writer(MetaLog::WriterPtr &mlw) {
-      ScopedLock lock(m_mutex);
-      m_metalog_writer = mlw;      
-    }
-    void add_operation(Operation *operation, size_t needed_approvals);
+    RemovalManager(MetaLog::WriterPtr &mml_writer);
+    void operator()();
+    void shutdown();
+    bool add_operation(OperationPtr &operation) { return add_operation(operation.get()); }
+    bool add_operation(Operation *operation);
     void approve_removal(int64_t hash_code);
-    bool is_present(int64_t hash_code);
-    void clear();
+    void approve_removal(OperationPtr &operation) { approve_removal(operation->hash_code()); }
 
   private:
-
-    class RemovalRec {
-    public:
-      RemovalRec() : approvals_remaining(0) { }
-      RemovalRec(Operation *_op, size_t needed_approvals)
-        : op(_op), approvals_remaining(needed_approvals) { }
-      OperationPtr op;
-      size_t approvals_remaining;
-    };
-
-    typedef hash_map<int64_t, RemovalRec> RemovalMapT;
-
-    Mutex m_mutex;
-    MetaLog::WriterPtr m_metalog_writer;
-    RemovalMapT m_map;
+    RemovalManagerContext *m_ctx;
+    Thread *m_thread;
   };
 
 

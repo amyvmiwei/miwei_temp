@@ -114,6 +114,7 @@ namespace Hypertable {
     HiResTime expiration_time() { ScopedLock lock(m_mutex); return m_expiration_time; }
 
     virtual bool remove_explicitly() { return false; }
+    virtual int remove_approvals_required() { return 0; }
 
     void complete_error(int error, const String &msg);
     void complete_error_no_log(int error, const String &msg);

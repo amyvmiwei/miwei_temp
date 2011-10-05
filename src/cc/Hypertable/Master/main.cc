@@ -139,8 +139,6 @@ int main(int argc, char **argv) {
       FailureInducer::instance->parse_option(get_str("induce-failure"));
     }
 
-    context->removal_manager = new RemovalManager();
-
     /**
      * Read/load MML
      */
@@ -156,7 +154,7 @@ int main(int argc, char **argv) {
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
                                               log_dir, entities);
 
-    context->removal_manager->set_mml_writer(context->mml_writer);
+    context->removal_manager = new RemovalManager(context->mml_writer);
 
     /** Response Manager */
     ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
@@ -176,8 +174,11 @@ int main(int argc, char **argv) {
     // Then reconstruct state and start execution
     for (size_t i=0; i<entities.size(); i++) {
       operation = dynamic_cast<Operation *>(entities[i].get());
-      if (operation)
+      if (operation) {
+	if (operation->remove_explicitly())
+	  context->removal_manager->add_operation(operation);
         operations.push_back(operation);
+      }
       else {
         rsc = dynamic_cast<RangeServerConnection *>(entities[i].get());
         context->add_server(rsc);
@@ -190,6 +191,7 @@ int main(int argc, char **argv) {
       OperationInitializePtr init_op = new OperationInitialize(context);
       if (context->namemap->exists_mapping("/sys/METADATA", 0))
 	init_op->set_state(OperationState::CREATE_RS_METRICS);
+      context->removal_manager->add_operation(init_op.get());
       operations.push_back( init_op );
     }
     else {
@@ -222,6 +224,9 @@ int main(int argc, char **argv) {
     response_manager_thread.join();
     delete rmctx;
     delete context->response_manager;
+
+    context->removal_manager->shutdown();
+    delete context->removal_manager;
 
     context = 0;
   }

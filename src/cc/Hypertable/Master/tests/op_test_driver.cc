@@ -104,9 +104,11 @@ namespace {
                                               log_dir + "/" + context->mml_definition->name(),
                                               entities);
     for (size_t i=0; i<entities.size(); i++) {
-      operation = dynamic_cast<Operation *>(entities[i].get());
-      if (operation && !operation->is_complete())
+      if ((operation = dynamic_cast<Operation *>(entities[i].get()))) {
+	if (operation->remove_explicitly())
+	  context->removal_manager->add_operation(operation);
         context->op->add_operation(operation);
+      }
     }
   }
 
@@ -129,9 +131,11 @@ namespace {
       FailureInducer::instance->parse_option(failure_point);
 
     for (size_t i=0; i<entities.size(); i++) {
-      operation = dynamic_cast<Operation *>(entities[i].get());
-      if (operation && !operation->is_complete())
+      if ((operation = dynamic_cast<Operation *>(entities[i].get()))) {
+	if (operation->remove_explicitly())
+	  context->removal_manager->add_operation(operation);
         operations.push_back(operation);
+      }
     }
     context->op->add_operations(operations);
 
@@ -139,8 +143,6 @@ namespace {
       context->op->wait_for_empty();
     else
       context->op->join();
-
-    context->clear_in_progress();
 
     context->mml_writer = 0;
     MetaLog::ReaderPtr mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition,

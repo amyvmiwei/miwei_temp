@@ -33,6 +33,7 @@
 #include "Hypertable/Master/Context.h"
 #include "Hypertable/Master/MetaLogDefinitionMaster.h"
 #include "Hypertable/Master/OperationProcessor.h"
+#include "Hypertable/Master/RemovalManager.h"
 #include "Hypertable/Master/ResponseManager.h"
 
 #include "OperationTest.h"
@@ -142,6 +143,8 @@ int main(int argc, char **argv) {
     ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
     context->response_manager = new ResponseManager(rmctx);
     Thread response_manager_thread(*context->response_manager);
+
+    context->removal_manager = new RemovalManager(context->mml_writer);
 
     context->op = new OperationProcessor(context, 4);
 
@@ -377,6 +380,9 @@ int main(int argc, char **argv) {
     response_manager_thread.join();
     delete rmctx;
     delete context->response_manager;
+
+    context->removal_manager->shutdown();
+    delete context->removal_manager;
 
   }
   catch (Exception &e) {

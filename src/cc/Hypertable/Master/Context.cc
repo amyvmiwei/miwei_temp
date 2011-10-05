@@ -214,29 +214,3 @@ void Context::get_servers(std::vector<RangeServerConnectionPtr> &servers) {
       servers.push_back(iter->rsc);
   }
 }
-
-bool Context::in_progress(Operation *operation) {
-  ScopedLock lock(mutex);
-  return in_progress_ops.count(operation->hash_code()) > 0;
-}
-
-bool Context::add_in_progress(Operation *operation) {
-  ScopedLock lock(mutex);
-  if (in_progress_ops.count(operation->hash_code()) > 0)
-    return false;
-  in_progress_ops.insert(operation->hash_code());
-  return true;
-}
-
-
-void Context::remove_in_progress(Operation *operation) {
-  ScopedLock lock(mutex);
-  if (in_progress_ops.count(operation->hash_code()) > 0)
-    in_progress_ops.erase(operation->hash_code());
-}
-
-void Context::clear_in_progress() {
-  ScopedLock lock(mutex);
-  in_progress_ops.clear();
-  removal_manager->clear();
-}

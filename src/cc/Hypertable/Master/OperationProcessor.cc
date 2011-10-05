@@ -69,7 +69,7 @@ void OperationProcessor::add_operation(OperationPtr &operation) {
     m_context.cond.notify_all();
   }
   else if (operation->remove_explicitly())
-    m_context.master_context->removal_manager->approve_removal(operation->hash_code());
+    m_context.master_context->removal_manager->approve_removal(operation);
   else
     m_context.master_context->response_manager->add_operation(operation);
 
@@ -88,7 +88,7 @@ void OperationProcessor::add_operations(std::vector<OperationPtr> &operations) {
       added = true;
     }
     else if (operations[i]->remove_explicitly())
-      m_context.master_context->removal_manager->approve_removal(operations[i]->hash_code());
+      m_context.master_context->removal_manager->approve_removal(operations[i]);
     else
       m_context.master_context->response_manager->add_operation(operations[i]);
   }
@@ -514,12 +514,11 @@ void OperationProcessor::Worker::retire_operation(Vertex v, OperationPtr &operat
     m_context.perpetual_ops.insert(operation);
   else {
     if (operation->remove_explicitly())
-      m_context.master_context->removal_manager->approve_removal(operation->hash_code());
+      m_context.master_context->removal_manager->approve_removal(operation);
     else
       m_context.master_context->response_manager->add_operation(operation);
   }
 
-  m_context.master_context->remove_in_progress(operation.get());
 }
 
 

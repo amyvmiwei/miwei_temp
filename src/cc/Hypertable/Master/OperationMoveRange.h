@@ -49,6 +49,7 @@ namespace Hypertable {
     virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
     virtual bool remove_explicitly() { return true; }
+    virtual int remove_approvals_required() { return 2; }
 
     String get_location() { return m_location; }
 

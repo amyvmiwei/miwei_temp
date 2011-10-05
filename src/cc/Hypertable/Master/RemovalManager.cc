@@ -26,35 +26,72 @@
 using namespace Hypertable;
 
 
-void RemovalManager::add_operation(Operation *operation, size_t needed_approvals) {
-  ScopedLock lock(m_mutex);
-
-  if (m_map.find(operation->hash_code()) != m_map.end())
-    return;
-
-  m_map[operation->hash_code()] = RemovalRec(operation, needed_approvals);
+RemovalManager::RemovalManager(MetaLog::WriterPtr &mml_writer) {
+  m_ctx = new RemovalManagerContext();
+  m_ctx->mml_writer = mml_writer;
+  m_thread = new Thread(*this);
 }
 
-void RemovalManager::approve_removal(int64_t hash_code) {
-  ScopedLock lock(m_mutex);
-  RemovalMapT::iterator iter = m_map.find(hash_code);
-  HT_ASSERT(iter != m_map.end());
-  HT_ASSERT((*iter).second.approvals_remaining > 0);
-  (*iter).second.approvals_remaining--;
-  if ((*iter).second.approvals_remaining == 0) {
-    m_metalog_writer->record_removal((*iter).second.op.get());
-    m_map.erase(iter);
+void RemovalManager::operator()() {
+  std::vector<MetaLog::Entity *> entities;
+  std::vector<OperationPtr> operations;
+
+  while (!m_ctx->shutdown) {
+
+    {
+      ScopedLock lock(m_ctx->mutex);
+
+      while (m_ctx->removal_queue.empty() && !m_ctx->shutdown)
+	m_ctx->cond.wait(lock);
+
+      if (!m_ctx->removal_queue.empty()) {
+	for (std::list<OperationPtr>::iterator iter=m_ctx->removal_queue.begin();
+	     iter != m_ctx->removal_queue.end(); ++iter) {
+	  operations.push_back(*iter);
+	  entities.push_back(iter->get());
+	}
+	m_ctx->removal_queue.clear();
+      }
+    }
+
+    if (!entities.empty()) {
+      m_ctx->mml_writer->record_removal(entities);
+      entities.clear();
+      operations.clear();
+    }
   }
 }
 
-
-bool RemovalManager::is_present(int64_t hash_code) {
-  ScopedLock lock(m_mutex);
-  return m_map.find(hash_code) != m_map.end();
+void RemovalManager::shutdown() {
+  {
+    ScopedLock lock(m_ctx->mutex);
+    m_ctx->shutdown = true;
+    m_ctx->cond.notify_all();
+  }
+  m_thread->join();
+  delete m_ctx;
 }
 
 
-void RemovalManager::clear() {
-  ScopedLock lock(m_mutex);
-  m_map.clear();
+bool RemovalManager::add_operation(Operation *operation) {
+  ScopedLock lock(m_ctx->mutex);
+
+  if (m_ctx->map.find(operation->hash_code()) != m_ctx->map.end())
+    return false;
+
+  m_ctx->map[operation->hash_code()] = RemovalManagerContext::RemovalRec(operation, operation->remove_approvals_required());
+  return true;
+}
+
+void RemovalManager::approve_removal(int64_t hash_code) {
+  ScopedLock lock(m_ctx->mutex);
+  RemovalManagerContext::RemovalMapT::iterator iter = m_ctx->map.find(hash_code);
+  HT_ASSERT(iter != m_ctx->map.end());
+  HT_ASSERT((*iter).second.approvals_remaining > 0);
+  (*iter).second.approvals_remaining--;
+  if ((*iter).second.approvals_remaining == 0) {
+    m_ctx->removal_queue.push_back((*iter).second.op);
+    m_ctx->map.erase(iter);
+    m_ctx->cond.notify_all();
+  }
 }
