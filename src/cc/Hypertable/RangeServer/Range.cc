@@ -77,7 +77,7 @@ Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
     m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
     m_split_threshold(0), m_split_off_high(false), m_added_inserts(0), m_range_set(range_set),
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
-    m_relinquish(false), m_maintenance_generation(0),
+    m_relinquish(false), m_removed_from_working_set(false), m_maintenance_generation(0),
     m_load_metrics(range_entity->table.id, range_entity->spec.start_row, range_entity->spec.end_row) {
   initialize();
 }
