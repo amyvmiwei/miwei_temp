@@ -118,6 +118,7 @@ TableIdCache.cc
 TableInfo.cc
 TableInfoMap.cc
 TimerHandler.cc
+UpdateThread.cc
 )
 
 if (USE_TCMALLOC)
