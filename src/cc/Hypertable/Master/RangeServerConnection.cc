@@ -31,7 +31,7 @@ using namespace Hypertable;
 RangeServerConnection::RangeServerConnection(MetaLog::WriterPtr &mml_writer, const String &location,
                                              const String &hostname, InetAddr public_addr) 
   : MetaLog::Entity(MetaLog::EntityType::RANGE_SERVER_CONNECTION), m_mml_writer(mml_writer),
-    m_location(location), m_hostname(hostname), m_state(RangeServerConnectionState::REGISTERED), m_removal_time(0),
+    m_location(location), m_hostname(hostname), m_state(0), m_removal_time(0),
     m_public_addr(public_addr), m_connected(false) {
   m_comm_addr.set_proxy(m_location);
   m_mml_writer->record_state(this);
@@ -65,24 +65,46 @@ bool RangeServerConnection::disconnect() {
   return false;
 }
 
-void RangeServerConnection::remove() {
+bool RangeServerConnection::get_removed() {
+  ScopedLock lock(m_mutex);
+  return m_state & RangeServerConnectionFlags::REMOVED;
+}
+
+void RangeServerConnection::set_removed() {
   ScopedLock lock(m_mutex);
   m_connected = false;
-  m_state = RangeServerConnectionState::REMOVED;
+  m_state |= RangeServerConnectionFlags::REMOVED;
   m_removal_time = time(0);
   m_mml_writer->record_state(this);
   m_cond.notify_all();
 }
 
-bool RangeServerConnection::removed() {
+bool RangeServerConnection::get_balanced() {
   ScopedLock lock(m_mutex);
-  return m_state == RangeServerConnectionState::REMOVED;
+  return m_state & RangeServerConnectionFlags::BALANCED;
 }
+
+
+bool RangeServerConnection::set_balanced(bool val) {
+  ScopedLock lock(m_mutex);
+  if (val) {
+    if (m_state & RangeServerConnectionFlags::BALANCED)
+      return false;
+    m_state |= RangeServerConnectionFlags::BALANCED;
+  }
+  else {
+    if ((m_state & RangeServerConnectionFlags::BALANCED) == 0)
+      return false;
+    m_state &= ~RangeServerConnectionFlags::BALANCED;
+  }
+  m_mml_writer->record_state(this);
+}
+
 
 bool RangeServerConnection::wait_for_connection() {
   ScopedLock lock(m_mutex);
   boost::xtime expire_time;
-  if (m_state == RangeServerConnectionState::REMOVED)
+  if (m_state & RangeServerConnectionFlags::REMOVED)
     return false;
   boost::xtime_get(&expire_time, boost::TIME_UTC);
   while (!m_connected) {
@@ -100,7 +122,23 @@ CommAddress RangeServerConnection::get_comm_address() {
 }
 
 void RangeServerConnection::display(std::ostream &os) {
-  os << " " << m_location << " ";
+  os << " " << m_location << " state=";
+  if (m_state) {
+    bool continuation = false;
+    if (m_state & RangeServerConnectionFlags::REMOVED) {
+      os << "REMOVED";
+      continuation = true;
+    }
+    if (m_state & RangeServerConnectionFlags::BALANCED) {
+      if (continuation)
+        os << "|";
+      os << "BALANCED";
+      continuation = true;
+    }
+  }
+  else
+    os << "0";
+  os << " ";
 }
 
 size_t RangeServerConnection::encoded_length() const {

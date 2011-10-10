@@ -129,7 +129,7 @@ namespace Hypertable {
       InetAddr public_addr() const { return rsc->public_addr(); }
       InetAddr local_addr() const { return rsc->local_addr(); }
       bool connected() const { return rsc->connected(); }
-      bool removed() const { return rsc->removed(); }
+      bool removed() const { return rsc->get_removed(); }
     };
 
     struct InetAddrHash {

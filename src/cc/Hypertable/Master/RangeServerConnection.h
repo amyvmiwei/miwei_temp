@@ -38,11 +38,10 @@
 
 namespace Hypertable {
 
-  namespace RangeServerConnectionState {
+  namespace RangeServerConnectionFlags {
     enum {
-      REGISTERED=0,
-      PARTICIPATING=1,
-      REMOVED=2
+      BALANCED = 0x01,
+      REMOVED  = 0x02
     };
   }
 
@@ -54,8 +53,10 @@ namespace Hypertable {
     virtual ~RangeServerConnection() { }
 
     bool connected() { ScopedLock lock(m_mutex); return m_connected; }
-    void remove();
-    bool removed();
+    bool get_removed();
+    void set_removed();
+    bool get_balanced();
+    bool set_balanced(bool val=true);
     bool wait_for_connection();
     CommAddress get_comm_address();
 
