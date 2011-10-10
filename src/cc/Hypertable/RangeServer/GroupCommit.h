@@ -53,7 +53,7 @@ namespace Hypertable {
   public:
     GroupCommit(RangeServer *range_server);
     virtual void add(EventPtr &event, SchemaPtr &schema, const TableIdentifier *table,
-                     uint32_t count, StaticBuffer &buffer, uint32_t flags, bool do_sync);
+                     uint32_t count, StaticBuffer &buffer, uint32_t flags);
     virtual void trigger();
 
   private:

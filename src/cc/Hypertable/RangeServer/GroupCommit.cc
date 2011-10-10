@@ -36,7 +36,7 @@ GroupCommit::GroupCommit(RangeServer *range_server) : m_range_server(range_serve
 
 
 void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier *table,
-                      uint32_t count, StaticBuffer &buffer, uint32_t flags, bool do_sync) {
+                      uint32_t count, StaticBuffer &buffer, uint32_t flags) {
   ScopedLock lock(m_mutex);
   TableUpdateMap::iterator iter;
   UpdateRequest *request = new UpdateRequest();
@@ -67,7 +67,6 @@ void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier 
 
   if (expire_time.sec > (*iter).second->expire_time.sec)
     (*iter).second->expire_time = expire_time;
-  (*iter).second->do_sync = do_sync;
   (*iter).second->total_count += count;
   (*iter).second->total_buffer_size += buffer.size;
   (*iter).second->requests.push_back(request);
@@ -99,15 +98,7 @@ void GroupCommit::trigger() {
       ++iter;
   }
 
-  if (!updates.empty()) {
+  if (!updates.empty())
     m_range_server->batch_update(updates, expire_time);
-
-    // Free objects
-    foreach (TableUpdate *table_update, updates) {
-      foreach (UpdateRequest *request, table_update->requests)
-        delete request;
-      delete table_update;
-    }
-  }
 
 }
