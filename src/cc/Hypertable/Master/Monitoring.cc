@@ -23,6 +23,7 @@
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/Path.h"
+#include "Common/md5.h"
 
 #include <algorithm>
 #include <cctype>
@@ -56,6 +57,9 @@ Monitoring::Monitoring(PropertiesPtr &props,NameIdMapperPtr &m_namemap) : m_last
   create_dir(m_monitoring_rs_dir);
   m_allowable_skew = props->get_i32("Hypertable.RangeServer.ClockSkew.Max");
   this->m_namemap_ptr = m_namemap;
+
+  memset(m_last_server_set_digest, 0, 16);
+
 }
 
 void Monitoring::create_dir(const String &dir) {
@@ -114,6 +118,9 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   RangeServerMap::iterator iter;
   double numerator, denominator;
   int32_t server_count = 0;
+  md5_context md5_ctx;
+
+  md5_starts(&md5_ctx);
   
   //to keep track max timestamp across rangeserver
   //this value is used to update table rrds
@@ -139,8 +146,11 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
       (*iter).second->fetch_timestamp = stats[i].fetch_timestamp;
       continue;
     }
-    else
+    else {
       server_count++;
+      md5_update(&md5_ctx, (const unsigned char *)stats[i].location.c_str(),
+		 stats[i].location.length());
+    }
 
     if ((*iter).second->stats) {
 
@@ -229,6 +239,11 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     (*iter).second->fetch_timestamp = stats[i].fetch_timestamp;
 
   }
+
+  // Calculate "server set" MD5 digest
+  unsigned char server_set_digest[16];
+  md5_finish(&md5_ctx, server_set_digest);
+
   // calcualte read rates from previous table stats map
 
   // finish compression ratio aggregation
@@ -266,9 +281,9 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     // calculate read rates and write rates
     prev_iter = m_prev_table_stat_map.find(ts_iter->first);
     if (prev_iter != m_prev_table_stat_map.end()) {
-      if (server_count != m_last_server_count) {
-	HT_INFOF("Statistics server count mismatch (cur %u != prev %u), using previous statistics",
-		 (unsigned)server_count, (unsigned)m_last_server_count);
+      if (server_count != m_last_server_count ||
+	  !memcmp(m_last_server_set_digest, server_set_digest, 16)) {
+	HT_INFO("Statistics server set mismatch, using previous statistics");
 	ts_iter->second.scan_rate = prev_iter->second.scan_rate;
 	ts_iter->second.update_rate = prev_iter->second.update_rate;
 	ts_iter->second.cell_read_rate = prev_iter->second.cell_read_rate;
@@ -276,6 +291,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
 	ts_iter->second.byte_read_rate = prev_iter->second.byte_read_rate;
 	ts_iter->second.byte_write_rate = prev_iter->second.byte_write_rate;
 	ts_iter->second.disk_read_rate = prev_iter->second.disk_read_rate;
+	memcpy(m_last_server_set_digest, server_set_digest, 16);
       }
       else {
 	double elapsed_time = (double)(ts_iter->second.fetch_timestamp - prev_iter->second.fetch_timestamp)/1000000000.0;
