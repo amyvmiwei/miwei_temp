@@ -29,7 +29,7 @@
 using namespace Hypertable;
 
 RangeServerConnection::RangeServerConnection(MetaLog::WriterPtr &mml_writer, const String &location,
-                                             const String &hostname, InetAddr public_addr) 
+                                             const String &hostname, InetAddr public_addr)
   : MetaLog::Entity(MetaLog::EntityType::RANGE_SERVER_CONNECTION), m_mml_writer(mml_writer),
     m_location(location), m_hostname(hostname), m_state(0), m_removal_time(0),
     m_public_addr(public_addr), m_connected(false) {
@@ -98,6 +98,7 @@ bool RangeServerConnection::set_balanced(bool val) {
     m_state &= ~RangeServerConnectionFlags::BALANCED;
   }
   m_mml_writer->record_state(this);
+  return true;
 }
 
 

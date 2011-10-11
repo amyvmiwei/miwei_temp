@@ -104,3 +104,8 @@ bool LoadBalancer::wait_for_complete(RangeMoveSpecPtr &move, uint32_t timeout_mi
 
   return true;
 }
+
+void LoadBalancer::set_balanced() {
+    m_context->set_servers_balanced(m_unbalanced_servers);
+}
+

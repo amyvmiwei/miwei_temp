@@ -114,6 +114,9 @@ namespace Hypertable {
     bool next_available_server(RangeServerConnectionPtr &rsc);
     bool reassigned(TableIdentifier *table, RangeSpec &range, String &location);
     bool is_connected(const String &location);
+    void get_unbalanced_servers(const std::vector<String> &locations,
+        std::vector<RangeServerConnectionPtr> &unbalanced);
+    void set_servers_balanced(const std::vector<RangeServerConnectionPtr> &servers);
     size_t connection_count() { ScopedLock lock(mutex); return conn_count; }
     size_t server_count() { ScopedLock lock(mutex); return m_server_list.size(); }
     void get_servers(std::vector<RangeServerConnectionPtr> &servers);
