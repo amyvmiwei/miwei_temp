@@ -160,6 +160,7 @@ namespace Hypertable {
     int32_t m_monitoring_interval;
     int32_t m_allowable_skew;
     int32_t m_last_server_count;
+    unsigned char m_last_server_set_digest[16];
     uint64_t table_stats_timestamp;
     NameIdMapperPtr m_namemap_ptr;
   };
