@@ -200,6 +200,7 @@ int main(int argc, char **argv) {
       operations.push_back( init_op );
     }
     else {
+      context->in_operation = true;
       if (context->metadata_table == 0)
         context->metadata_table = new Table(context->props, context->conn_manager,
                                             context->hyperspace, context->namemap,

@@ -64,7 +64,7 @@ namespace Hypertable {
   public:
     Context() : timer_interval(0), monitoring_interval(0), gc_interval(0),
                 next_monitoring_time(0), next_gc_time(0), conn_count(0),
-                test_mode(false) {
+                test_mode(false), in_operation(false) {
       m_server_list_iter = m_server_list.end();
       master_file_handle = 0;
     }
@@ -101,6 +101,7 @@ namespace Hypertable {
     OperationBalance *op_balance;
     String location_hash;
     int32_t max_allowable_skew;
+    bool in_operation;
 
     void add_server(RangeServerConnectionPtr &rsc);
     bool connect_server(RangeServerConnectionPtr &rsc, const String &hostname, InetAddr local_addr, InetAddr public_addr);

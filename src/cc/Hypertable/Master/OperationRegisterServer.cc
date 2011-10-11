@@ -70,8 +70,12 @@ void OperationRegisterServer::execute() {
       else
         m_location = format("rs-%s-%llu", m_context->location_hash.c_str(), (Llu)id);
     }
+    bool balanced = false;
+    if (!m_context->in_operation)
+      balanced = true;
     m_rsc = new RangeServerConnection(m_context->mml_writer, m_location,
-                                      m_system_stats.net_info.host_name, m_public_addr);
+                                      m_system_stats.net_info.host_name, m_public_addr,
+                                      balanced);
   }
 
   m_context->connect_server(m_rsc, m_system_stats.net_info.host_name,

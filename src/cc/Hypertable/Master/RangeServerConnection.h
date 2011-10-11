@@ -48,7 +48,7 @@ namespace Hypertable {
   class RangeServerConnection : public MetaLog::Entity {
   public:
     RangeServerConnection(MetaLog::WriterPtr &mml_writer, const String &location,
-                          const String &hostname, InetAddr public_addr);
+                          const String &hostname, InetAddr public_addr, bool balanced=false);
     RangeServerConnection(MetaLog::WriterPtr &mml_writer, const MetaLog::EntityHeader &header_);
     virtual ~RangeServerConnection() { }
 
@@ -66,7 +66,7 @@ namespace Hypertable {
     const String hostname() const { return m_hostname; }
     InetAddr local_addr() const { return m_local_addr; }
     InetAddr public_addr() const { return m_public_addr; }
-    
+
     virtual void display(std::ostream &os);
     virtual size_t encoded_length() const;
     virtual void encode(uint8_t **bufp) const;

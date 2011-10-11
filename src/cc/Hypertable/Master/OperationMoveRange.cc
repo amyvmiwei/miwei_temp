@@ -113,6 +113,10 @@ void OperationMoveRange::execute() {
     return;
 
   case OperationState::STARTED:
+
+    if (!m_context->in_operation)
+      m_context->in_operation = true;
+
     if (m_event) {
       try {
         ResponseCallback cb(m_context->comm, m_event);
