@@ -215,3 +215,26 @@ void Context::get_servers(std::vector<RangeServerConnectionPtr> &servers) {
       servers.push_back(iter->rsc);
   }
 }
+
+void Context::get_unbalanced_servers(const std::vector<String> &locations,
+    std::vector<RangeServerConnectionPtr> &unbalanced) {
+  ScopedLock lock(mutex);
+  LocationIndex &hash_index = m_server_list.get<1>();
+  LocationIndex::iterator lookup_iter;
+  RangeServerConnectionPtr rsc;
+
+  foreach(const String &location, locations) {
+    if ((lookup_iter = hash_index.find(location)) == hash_index.end())
+      continue;
+    rsc = lookup_iter->rsc;
+    if (!rsc->get_removed() && !rsc->get_balanced())
+      unbalanced.push_back(rsc);
+  }
+}
+
+void Context::set_servers_balanced(const std::vector<RangeServerConnectionPtr> &unbalanced) {
+  ScopedLock lock(mutex);
+  foreach( const RangeServerConnectionPtr rsc, unbalanced) {
+    rsc->set_balanced();
+  }
+}

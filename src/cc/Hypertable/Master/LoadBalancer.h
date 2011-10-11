@@ -69,6 +69,7 @@ namespace Hypertable {
     virtual bool move_complete(const TableIdentifier &table, const RangeSpec &range, int32_t error=0);
     virtual bool wait_for_complete(RangeMoveSpecPtr &move, uint32_t timeout_millis);
 
+    virtual void set_balanced();
     //String assign_to_server(TableIdentifier &tid, RangeIdentifier &rid) = 0;
     //void range_move_loaded(TableIdentifier &tid, RangeIdentifier &rid) = 0;
     //void range_relinquish_acknowledged(TableIdentifier &tid, RangeIdentifier &rid) = 0;
@@ -84,7 +85,7 @@ namespace Hypertable {
     time_duration m_balance_window_end;
     ptime m_last_balance_time;
     double m_balance_loadavg_threshold;
-
+    std::vector <RangeServerConnectionPtr> m_unbalanced_servers;
   private:
     struct lt_move_spec {
       bool operator()(const RangeMoveSpecPtr &ms1, const RangeMoveSpecPtr &ms2) const  {

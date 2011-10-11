@@ -54,6 +54,7 @@ namespace Hypertable {
       void distribute_load(const boost::posix_time::ptime &now, BalancePlanPtr &plan);
       void distribute_table_ranges(vector<RangeServerStatistics> &range_server_stats,
                                    BalancePlanPtr &plan);
+      void get_unbalanced_servers(const std::vector<RangeServerStatistics> &stats);
 
       Mutex m_data_mutex;
       bool m_enabled;
