@@ -1,6 +1,6 @@
 <?php
-if (isset($_ENV['PHPTHRIFT_ROOT']))
-    $GLOBALS['THRIFT_ROOT'] = $_ENV['PHPTHRIFT_ROOT'];
+if (!isset($GLOBALS['THRIFT_ROOT']))
+    $GLOBALS['THRIFT_ROOT'] = getenv('PHPTHRIFT_ROOT');
 
 require_once dirname(__FILE__).'/ThriftClient.php';
 
