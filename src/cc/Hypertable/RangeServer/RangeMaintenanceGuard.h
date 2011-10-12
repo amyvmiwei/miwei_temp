@@ -31,10 +31,12 @@ namespace Hypertable {
   class RangeMaintenanceGuard {
   public:
 
-    RangeMaintenanceGuard() : m_in_progress(false) {}
+    RangeMaintenanceGuard() : m_in_progress(false), m_disabled(false) {}
 
     void activate() {
       ScopedLock lock(m_mutex);
+      if (m_disabled)
+        HT_THROW(Error::RANGESERVER_RANGE_NOT_ACTIVE, "");
       if (m_in_progress)
         HT_THROW(Error::RANGESERVER_RANGE_BUSY, "");
       m_in_progress = true;
@@ -57,6 +59,11 @@ namespace Hypertable {
       return m_in_progress;
     }
 
+    void disable() {
+      ScopedLock lock(m_mutex);
+      m_disabled = true;
+    }
+
     class Activator {
     public:
       Activator(RangeMaintenanceGuard &guard) : m_guard(&guard) {
@@ -73,6 +80,7 @@ namespace Hypertable {
     Mutex m_mutex;
     boost::condition m_cond;
     bool m_in_progress;
+    bool m_disabled;
   };
 
 }
