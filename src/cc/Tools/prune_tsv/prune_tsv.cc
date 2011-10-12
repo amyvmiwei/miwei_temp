@@ -240,8 +240,8 @@ int main(int argc, char **argv) {
               line_time = (time_t)strtoll(base, &end, 10);
             else
               line_time = (time_t)(strtoll(base, &end, 10) / 1000000000LL);
-            if ((!newer && line_time < cutoff_time) ||
-                newer && line_time >= cutoff_time)
+            if ((!newer && (line_time < cutoff_time)) ||
+                (newer && (line_time >= cutoff_time)))
               continue;
           }
         }
