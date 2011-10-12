@@ -3427,6 +3427,17 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
 
   HT_INFO_OUT << "drop_range\n"<< *table << *range_spec << HT_END;
 
+  if (!m_replay_finished) {
+    if (table->is_metadata()) {
+      if (!wait_for_metadata_recovery_finish(cb->get_event()->expiration_time()))
+	return;
+    }
+    else {
+      if (!wait_for_recovery_finish(cb->get_event()->expiration_time()))
+	return;
+    }
+  }
+
   try {
 
     if (!m_live_map->get(table->id, table_info))
@@ -3456,6 +3467,17 @@ RangeServer::relinquish_range(ResponseCallback *cb, const TableIdentifier *table
   RangePtr range;
 
   HT_INFO_OUT << "relinquish_range\n"<< *table << *range_spec << HT_END;
+
+  if (!m_replay_finished) {
+    if (table->is_metadata()) {
+      if (!wait_for_metadata_recovery_finish(cb->get_event()->expiration_time()))
+	return;
+    }
+    else {
+      if (!wait_for_recovery_finish(cb->get_event()->expiration_time()))
+	return;
+    }
+  }
 
   try {
 
