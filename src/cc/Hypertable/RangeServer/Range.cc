@@ -712,6 +712,9 @@ void Range::relinquish_compact_and_finish() {
     HT_ERROR_OUT << "Master::relinquish_acknowledge() error - " << e << HT_END;
   }
 
+  // disables any further maintenance
+  m_maintenance_guard.disable();
+
 }
 
 
