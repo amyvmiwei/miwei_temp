@@ -37,6 +37,8 @@ namespace {
       cmdline_desc().add_options()
         ("no-log-sync", boo()->default_value(false),
          "Don't sync rangeserver commit logs on autoflush")
+        ("namespace", str()->default_value(""),
+         "Automatically use specified namespace when starting")
         ;
       alias("no-log-sync", "Hypertable.HqlInterpreter.Mutator.NoLogSync");
     }
@@ -60,6 +62,7 @@ int main(int argc, char **argv) {
     hypertable = new Hypertable::Client();
     interp = new HqlCommandInterpreter(hypertable);
     shell = new CommandShell("hypertable", interp, properties);
+    shell->set_namespace(get_str("namespace"));
     interp->set_silent(shell->silent());
     interp->set_test_mode(shell->test_mode());
 
