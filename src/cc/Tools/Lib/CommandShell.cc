@@ -216,6 +216,7 @@ int CommandShell::run() {
   String command;
   String timestamp_format;
   String source_commands;
+  String use_ns;
   const char *base, *ptr;
 
   ms_history_file = (String)getenv("HOME") + "/." + m_program_name + "_history";
@@ -251,7 +252,16 @@ int CommandShell::run() {
   m_accum = "";
   if (!m_batch_mode)
     using_history();
+
+  trim_if(m_namespace, boost::is_any_of(" \t\n\r;"));
+  if (m_namespace.size()) {
+    use_ns="USE \""+m_namespace+"\";";
+    line=use_ns.c_str();
+    goto process_line;
+  }
+
   while ((line = rl_gets()) != 0) {
+process_line:
     try {
 
       if (*line == 0)

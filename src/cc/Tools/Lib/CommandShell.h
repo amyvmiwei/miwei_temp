@@ -38,6 +38,7 @@ namespace Hypertable {
 
     bool silent() { return m_silent; }
     bool test_mode() { return m_test_mode; }
+    void set_namespace(const String &ns) { m_namespace=ns; }
 
     static void add_options(PropertiesDesc &);
 
@@ -66,6 +67,7 @@ namespace Hypertable {
     String m_prompt_str;
     String m_cmd_str;
     String m_cmd_file;
+    String m_namespace;
   };
 
   typedef intrusive_ptr<CommandShell> CommandShellPtr;
