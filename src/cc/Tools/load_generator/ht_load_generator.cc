@@ -75,7 +75,6 @@ namespace {
     static void init_options() {
       allow_unregistered_options(true);
       cmdline_desc(usage).add_options()
-        ("help,h", "Show this help message and exit")
         ("help-config", "Show help message for config properties")
         ("table", str()->default_value("LoadTest"), "Name of table to query/update")
         ("delete-percentage", i32(),
