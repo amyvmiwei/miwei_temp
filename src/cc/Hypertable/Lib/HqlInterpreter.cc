@@ -79,7 +79,7 @@ void cmd_help(ParserState &state, HqlInterpreter::Callback &cb) {
       cb.on_return(*text);
   }
   else
-    cb.on_return("\no help for '" + state.str);
+    cb.on_return("\nno help for '" + state.str + "'");
 }
 
 void
