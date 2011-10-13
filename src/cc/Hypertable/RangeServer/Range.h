@@ -168,6 +168,7 @@ namespace Hypertable {
     void purge_memory(MaintenanceFlag::Map &subtask_map);
 
     void schedule_relinquish() { m_relinquish = true; }
+    bool get_relinquish() const { return m_relinquish; }
 
     void recovery_initialize() {
       ScopedLock lock(m_mutex);
