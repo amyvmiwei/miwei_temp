@@ -668,9 +668,10 @@ void Range::relinquish_compact_and_finish() {
       Barrier::ScopedActivator block_updates(m_update_barrier);
       Barrier::ScopedActivator block_scans(m_scan_barrier);
 
-      if (!m_range_set->remove(m_metalog_entity->spec.end_row)) {
-	HT_ERROR_OUT << "Problem removing range " << m_name << HT_END;
-	HT_ABORT;
+      if (!m_range_set->remove(m_metalog_entity->spec.start_row,
+            m_metalog_entity->spec.end_row)) {
+        HT_ERROR_OUT << "Problem removing range " << m_name << HT_END;
+        HT_ABORT;
       }
       m_removed_from_working_set = true;
     }
@@ -994,8 +995,15 @@ void Range::split_compact_and_shrink() {
 
     // Shrink access groups
     if (m_split_off_high) {
-      if (!m_range_set->change_end_row(m_metalog_entity->spec.end_row, m_metalog_entity->state.split_point)) {
+      if (!m_range_set->change_end_row(m_metalog_entity->spec.start_row, m_metalog_entity->spec.end_row, m_metalog_entity->state.split_point)) {
         HT_ERROR_OUT << "Problem changing end row of range " << m_name
+                     << " to " << m_metalog_entity->state.split_point << HT_END;
+        HT_ABORT;
+      }
+    }
+    else {
+      if (!m_range_set->change_start_row(m_metalog_entity->spec.start_row, m_metalog_entity->state.split_point, m_metalog_entity->spec.end_row)) {
+        HT_ERROR_OUT << "Problem changing start row of range " << m_name
                      << " to " << m_metalog_entity->state.split_point << HT_END;
         HT_ABORT;
       }

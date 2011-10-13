@@ -22,7 +22,7 @@
 #ifndef HYPERTABLE_TABLEINFO_H
 #define HYPERTABLE_TABLEINFO_H
 
-#include <map>
+#include <set>
 #include <string>
 
 #include <boost/thread/mutex.hpp>
@@ -39,6 +39,37 @@
 namespace Hypertable {
 
   class Schema;
+
+  class RangeInfo {
+  public:
+    RangeInfo(const String &start_row_, const String &end_row_)
+       : start_row(start_row_), end_row(end_row_) { }
+    RangeInfo(const char *start_row_, const char *end_row_)
+       : start_row(start_row_), end_row(end_row_) { }
+    /**
+     * This is less if its end_row is less than other
+     * or its start_row is greater than other, ie sub-range is lesser.
+     */
+    bool operator < (const RangeInfo &other) const {
+      int cmp = end_row.compare(other.end_row);
+      if (cmp < 0)
+        return true;
+      else if (cmp > 0)
+        return false;
+      return (start_row < other.start_row);
+    }
+    const String &get_start_row() const { return start_row; }
+    const String &get_end_row() const { return end_row; }
+    RangePtr get_range() const { return range; }
+    void set_start_row(const String &start_row_) { start_row=start_row_; }
+    void set_end_row(const String &end_row_) { end_row=end_row_; }
+    void set_range(RangePtr &range_) { range = range_; }
+
+  private:
+    String start_row;
+    String end_row;
+    RangePtr range;
+  };
 
   class TableInfo : public RangeSet {
   public:
@@ -57,9 +88,12 @@ namespace Hypertable {
       HT_INFOF("%p: destructor", (void *)this);
     }
 
-    virtual bool remove(const String &end_row);
-    virtual bool change_end_row(const String &old_end_row,
+    virtual bool remove(const String &start_row, const String &end_row);
+    virtual bool change_end_row(const String &start_row, const String &old_end_row,
                                 const String &new_end_row);
+    virtual bool change_start_row(const String &old_start_row, const String &new_start_row,
+                                  const String &end_row);
+
 
     /**
      * Returns a pointer to the schema object
@@ -192,13 +226,14 @@ namespace Hypertable {
 
   private:
 
-    typedef std::map<String, RangePtr> RangeMap;
+    typedef std::set<RangeInfo> RangeInfoSet;
+    typedef std::pair<RangeInfoSet::iterator, bool> RangeInfoSetInsRec;
 
     Mutex                m_mutex;
     MasterClientPtr      m_master_client;
     TableIdentifierManaged m_identifier;
     SchemaPtr            m_schema;
-    RangeMap             m_range_map;
+    RangeInfoSet         m_range_set;
   };
 
   typedef intrusive_ptr<TableInfo> TableInfoPtr;
