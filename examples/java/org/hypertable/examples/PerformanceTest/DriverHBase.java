@@ -60,7 +60,7 @@ public class DriverHBase extends Driver {
       this.table.setWriteBufferSize(1024*1024*12);
 
       if (testType == Task.Type.WRITE) {
-        mCommon.fillRandomDataBuffer();
+        mCommon.initializeValueData();
       }
     }
     catch (IOException e) {
