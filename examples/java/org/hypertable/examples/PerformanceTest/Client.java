@@ -221,6 +221,9 @@ public class Client {
       if (message.type() != Message.Type.SETUP)
         throw new HypertableException(Error.FAILED_EXPECTATION, "Expected SETUP message");
 
+      String valueDataFile = ((MessageSetup)message).getValueData();
+      DriverCommon.VALUE_DATA_FILE = (valueDataFile == "") ? null : valueDataFile;
+
       String driverName = ((MessageSetup)message).getDriver();
 
       if (driverName.equals("hypertable"))

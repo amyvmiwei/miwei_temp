@@ -83,7 +83,7 @@ public class DriverHypertable extends Driver {
 
     try {
 
-      mCommon.fillRandomDataBuffer();
+      mCommon.initializeValueData();
 
       if (mParallelism > 0) {
         mThreadStates = new DriverThreadState[mParallelism];
@@ -101,6 +101,10 @@ public class DriverHypertable extends Driver {
       }
     }
     catch (ClientException e) {
+      e.printStackTrace();
+      System.exit(-1);
+    }
+    catch (IOException e) {
       e.printStackTrace();
       System.exit(-1);
     }

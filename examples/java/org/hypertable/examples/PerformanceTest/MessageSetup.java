@@ -31,33 +31,36 @@ public class MessageSetup extends Message {
     super(Message.Type.SETUP);
   }
 
-  public MessageSetup(String name, String driver, Task.Type tt, int parallelism) {
+  public MessageSetup(String name, String driver, String valueData, Task.Type tt, int parallelism) {
     super(Message.Type.SETUP);
     mTableName = name;
     mDriver = driver;
+    mValueData = valueData;
     mTestType = tt;
     mParallelism = parallelism;
   }
 
   public int encodedLength() {
     return Serialization.EncodedLengthString(mTableName) + 
-      Serialization.EncodedLengthString(mDriver) + 8;
+      Serialization.EncodedLengthString(mDriver) + Serialization.EncodedLengthString(mValueData) + 8;
   }
   public void encode(ByteBuffer buf) {
     Serialization.EncodeString(buf, mTableName);
     Serialization.EncodeString(buf, mDriver);
+    Serialization.EncodeString(buf, mValueData);
     buf.putInt(mTestType.ordinal());
     buf.putInt(mParallelism);
   }
   public void decode(ByteBuffer buf) {
     mTableName = Serialization.DecodeString(buf);
     mDriver = Serialization.DecodeString(buf);
+    mValueData = Serialization.DecodeString(buf);
     mTestType = Task.Type.values()[buf.getInt()];
     mParallelism = buf.getInt();
   }
 
   public String toString() {
-    return new String("MESSAGE:SETUP { table=" + mTableName + ", driver=" + mDriver + ", type=" + mTestType + ", parallelism=" + mParallelism + "}");
+    return new String("MESSAGE:SETUP { table=" + mTableName + ", driver=" + mDriver + ", valueData=" + mValueData + ", type=" + mTestType + ", parallelism=" + mParallelism + "}");
   }
 
   public void setTableName(String name) { mTableName = name; }
@@ -65,6 +68,9 @@ public class MessageSetup extends Message {
 
   public void setDriver(String name) { mDriver = name; }
   public String getDriver() { return mDriver; }
+
+  public void setValueData(String name) { mValueData = name; }
+  public String getValueData() { return mValueData; }
 
   public void setTestType(Task.Type t) { mTestType = t; }
   public Task.Type getTestType() { return mTestType; }
@@ -74,6 +80,7 @@ public class MessageSetup extends Message {
 
   private String mTableName;
   private String mDriver;
+  private String mValueData;
   private Task.Type mTestType;
   private int mParallelism;
 }
