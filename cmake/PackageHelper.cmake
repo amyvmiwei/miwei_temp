@@ -103,6 +103,16 @@ if (NOT PACKAGE_THRIFTBROKER)
   endif ()
 
   if (LDD_RETURN STREQUAL "0")
+    string(REGEX MATCH "[ \t](/[^ ]+/libdirectfb-[^ \n]+)" dummy ${LDD_OUT})
+    set(directfb_lib ${CMAKE_MATCH_1})
+    string(REGEX MATCH "[ \t](/[^ ]+/libfusion-[^ \n]+)" dummy ${LDD_OUT})
+    set(fusion_lib ${CMAKE_MATCH_1})
+    string(REGEX MATCH "[ \t](/[^ ]+/libdirect-[^ \n]+)" dummy ${LDD_OUT})
+    set(direct_lib ${CMAKE_MATCH_1})
+    string(REGEX MATCH "[ \t](/[^ ]+/libxcb-render\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(xcb_render_lib ${CMAKE_MATCH_1})
+    string(REGEX MATCH "[ \t](/[^ ]+/libxcb-render-util[^ \n]+)" dummy ${LDD_OUT})
+    set(xcb_render_util_lib ${CMAKE_MATCH_1})
     string(REGEX MATCH "[ \t](/[^ ]+/libpangocairo-[^ \n]+)" dummy ${LDD_OUT})
     set(pangocairo_lib ${CMAKE_MATCH_1})
     string(REGEX MATCH "[ \t](/[^ ]+/libpango-[^ \n]+)" dummy ${LDD_OUT})
@@ -137,7 +147,9 @@ if (NOT PACKAGE_THRIFTBROKER)
     set(Xau_lib ${CMAKE_MATCH_1})
     string(REGEX MATCH "[ \t](/[^ ]+/libXdmcp\\.[^ \n]+)" dummy ${LDD_OUT})
     set(Xdmcp_lib ${CMAKE_MATCH_1})
-    HT_INSTALL_LIBS(lib ${pangocairo_lib} ${pango_lib} ${cairo_lib}
+    HT_INSTALL_LIBS(lib ${directfb_lib} ${fusion_lib} ${direct_lib}
+                    ${xcb_render_util_lib} ${xcb_render_lib}
+                    ${pangocairo_lib} ${pango_lib} ${cairo_lib}
                     ${fontconfig_lib} ${Xrender_lib} ${X11_lib} ${xml2_lib}
                     ${pixman_lib} ${gobject_lib} ${gmodule_lib} ${glib_lib}
                     ${pangoft2_lib} ${xcb_xlib_lib} ${xcb_lib} ${pcre_lib}
