@@ -458,7 +458,7 @@ end
 desc "Stops test."
 task :stop_test, :roles => [:test_client, :test_dispatcher] do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master --no-rangeserver #{stop_test_args}
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-dfsbroker --no-master --no-rangeserver #{stop_test_args}
   CMD
 end
 
