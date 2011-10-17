@@ -233,7 +233,6 @@ int IntervalScanner::fetch_create_scanner_result(Timer &timer) {
 }
 
 bool IntervalScanner::next(Cell &cell) {
-  int error;
   SerializedKey serkey;
   ByteString value;
   Key key;
@@ -275,7 +274,7 @@ bool IntervalScanner::next(Cell &cell) {
         }
         else {
           m_fetch_outstanding = false;
-          error = m_scanblock.load(m_event);
+          m_scanblock.load(m_event);
           request_next_scanblock(m_range_info.addr);
         }
       }
@@ -284,17 +283,16 @@ bool IntervalScanner::next(Cell &cell) {
         m_range_server.fetch_scanblock(m_range_info.addr,
                    m_scanblock.get_scanner_id(), m_scanblock, timer);
       }
-
     }
   }
 
   if (m_scanblock.next(serkey, value)) {
     Schema::ColumnFamily *cf;
+
     if (!key.load(serkey))
       HT_THROW(Error::BAD_KEY, "");
 
     // check for end row
-
     if (!strcmp(key.row, Key::END_ROW_MARKER)) {
       if (!m_scanblock.eos())
         m_range_server.destroy_scanner(m_range_info.addr,
@@ -336,17 +334,16 @@ bool IntervalScanner::next(Cell &cell) {
       }
     }
 
-    cell.row_key = key.row;
-    cell.column_qualifier = key.column_qualifier;
     if ((cf = m_schema->get_column_family(key.column_family_code)) == 0) {
       if (key.flag != FLAG_DELETE_ROW)
-	HT_THROWF(Error::BAD_KEY, "Unexpected column family code %d",
-		  (int)key.column_family_code);
+        HT_THROWF(Error::BAD_KEY, "Unexpected column family code %d",
+                  (int)key.column_family_code);
       cell.column_family = "";
     }
     else
       cell.column_family = cf->name.c_str();
-
+    cell.row_key = key.row;
+    cell.column_qualifier = key.column_qualifier;
     cell.timestamp = key.timestamp;
     cell.revision = key.revision;
     cell.value_len = value.decode_length(&cell.value);

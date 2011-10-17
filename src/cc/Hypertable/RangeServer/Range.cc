@@ -259,14 +259,12 @@ void Range::load_cell_stores(Metadata *metadata) {
   String ag_name;
   String files;
   String file_str;
-  bool need_update;
   uint32_t nextcsid;
 
   metadata->reset_files_scan();
 
   while (metadata->get_next_files(ag_name, files, &nextcsid)) {
     csvec.clear();
-    need_update = false;
 
     if ((ag = m_access_group_map[ag_name]) == 0) {
       HT_ERRORF("Unrecognized access group name '%s' found in METADATA for "
@@ -290,7 +288,6 @@ void Range::load_cell_stores(Metadata *metadata) {
         if (file_str[0] == '#') {
           ++ptr;
           base = ptr;
-          need_update = true;
           continue;
         }
 
@@ -333,14 +330,7 @@ void Range::load_cell_stores(Metadata *metadata) {
 
       ag->add_cell_store(cellstore);
     }
-
-    /** this causes startup deadlock (and is not needed) ..
-    if (need_update)
-      metadata->write_files(ag_name, files);
-    */
-
   }
-
 }
 
 

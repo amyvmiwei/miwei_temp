@@ -54,7 +54,7 @@ endif ()
 
 # ThriftBroker
 add_executable(ThriftBroker ${ThriftBroker_SRCS})
-target_link_libraries(ThriftBroker HyperThriftConfig ${THRIFT_MALLOC_LIBRARY})
+target_link_libraries(ThriftBroker HyperThriftConfig HyperAppHelper ${THRIFT_MALLOC_LIBRARY})
 
 # Basic regression test
 add_executable(client_test tests/client_test.cc)

@@ -478,6 +478,7 @@ namespace Hypertable { namespace Serialization {
     char *buf;
     size_t len;
     HT_DECODE_VSTR(*bufp, *remainp, buf, len);
+    (void)len; // avoid warnings because len is assigned but never used
     return buf;
   }
 

@@ -196,7 +196,7 @@ MergeScannerRange::do_forward()
     if (m_skip_this_row)
       continue;
 
-    if (!m_cell_offset && m_row_limit || m_cell_limit_per_family) {
+    if ((!m_cell_offset && m_row_limit) || m_cell_limit_per_family) {
       if (new_row) {
         m_row_count++;
         if (m_row_limit && m_row_count > m_row_limit)

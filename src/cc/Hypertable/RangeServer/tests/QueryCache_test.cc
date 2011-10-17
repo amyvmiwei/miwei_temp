@@ -71,6 +71,8 @@ int main(int argc, char **argv) {
       seed = atoi(&argv[i][7]);
   }
 
+  System::seed(seed);
+
   cache = new QueryCache(MAX_MEMORY);
 
   md5_csum((unsigned char *)"aa", 2, key.digest);

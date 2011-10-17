@@ -21,6 +21,7 @@
 #include "Common/Logger.h"
 #include "Common/Mutex.h"
 #include "Common/Random.h"
+#include "HyperAppHelper/Unique.h"
 
 #include <iostream>
 #include <iomanip>
@@ -264,6 +265,26 @@ void convert_cell(const ThriftGen::Cell &tcell, Hypertable::Cell &hcell) {
   }
   if (tcell.key.__isset.flag)
     hcell.flag = tcell.key.flag;
+}
+
+void convert_key(const ThriftGen::Key &tkey, Hypertable::KeySpec &hkey) {
+  // shallow copy
+  if (tkey.__isset.row) {
+    hkey.row = tkey.row.c_str();
+    hkey.row_len = tkey.row.size();
+  }
+
+  if (tkey.__isset.column_family)
+    hkey.column_family = tkey.column_family.c_str();
+
+  if (tkey.__isset.column_qualifier)
+    hkey.column_qualifier = tkey.column_qualifier.c_str();
+
+  if (tkey.__isset.timestamp)
+    hkey.timestamp = tkey.timestamp;
+
+  if (tkey.__isset.revision)
+    hkey.revision = tkey.revision;
 }
 
 int32_t convert_cell(const Hypertable::Cell &hcell, ThriftGen::Cell &tcell) {
@@ -1415,13 +1436,41 @@ public:
 
   virtual void drop_table(const ThriftGen::Namespace ns, const String &table, const bool if_exists) {
     LOG_API_START("namespace=" << ns << " table="<< table <<" if_exists="<< if_exists);
-;
     try {
       NamespacePtr namespace_ptr = get_namespace(ns);
       namespace_ptr->drop_table(table, if_exists);
     }
     RETHROW("namespace=" << ns << " table="<< table <<" if_exists="<< if_exists)
     LOG_API_FINISH;
+  }
+
+  virtual void generate_guid(std::string& _return) {
+    LOG_API_START("");
+    try {
+      _return=HyperAppHelper::generate_guid();
+    }
+    RETHROW("")
+    LOG_API_FINISH;
+  }
+
+  virtual void create_cell_unique(std::string &_return, 
+          const ThriftGen::Namespace ns, const std::string& table_name, 
+          const ThriftGen::Key& tkey, const std::string& value) {
+    LOG_API_START("namespace=" << ns << " table=" << table_name 
+            << tkey << " value=" << value);
+    std::string guid;
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::KeySpec hkey;
+      convert_key(tkey, hkey);
+      TablePtr t = namespace_ptr->open_table(table_name);
+      HyperAppHelper::create_cell_unique(t, hkey, 
+              value.empty() ? guid : (std::string &)value);
+    }
+    RETHROW("namespace=" << ns << " table=" << table_name 
+            << tkey << " value=" << value);
+    LOG_API_FINISH;
+    _return=value.empty() ? guid : value;
   }
 
   // helper methods

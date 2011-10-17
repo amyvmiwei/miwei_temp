@@ -40,16 +40,19 @@ namespace Hypertable {
   class Key {
   public:
 
-    static const uint8_t HAVE_REVISION  = 0x80;
-    static const uint8_t HAVE_TIMESTAMP = 0x40;
-    static const uint8_t AUTO_TIMESTAMP = 0x20;
-    static const uint8_t REV_IS_TS      = 0x10;
+    static const uint8_t HAVE_REVISION      =  0x80;
+    static const uint8_t HAVE_TIMESTAMP     =  0x40;
+    static const uint8_t AUTO_TIMESTAMP     =  0x20;
+    static const uint8_t REV_IS_TS          =  0x10;
+    static const uint8_t TS_CHRONOLOGICAL   =   0x1;
 
     static const char *END_ROW_MARKER;
     static const char *END_ROOT_ROW;
 
-    static inline void encode_ts64(uint8_t **bufp, int64_t val) {
-      val = ~val;
+    static inline void encode_ts64(uint8_t **bufp, int64_t val,
+            bool ascending=true) {
+      if (ascending)
+        val = ~val;
 #ifdef HT_LITTLE_ENDIAN
       *(*bufp)++ = (uint8_t)(val >> 56);
       *(*bufp)++ = (uint8_t)(val >> 48);
@@ -65,7 +68,8 @@ namespace Hypertable {
 #endif
     }
 
-    static inline int64_t decode_ts64(const uint8_t **bufp) {
+    static inline int64_t decode_ts64(const uint8_t **bufp, 
+            bool ascending=true) {
       int64_t val;
 #ifdef HT_LITTLE_ENDIAN
       val = ((int64_t)*(*bufp)++ << 56);
@@ -80,7 +84,7 @@ namespace Hypertable {
       memcpy(&val, *bufp, 8);
       *bufp += 8;
 #endif
-      return ~val;
+      return (ascending ? ~val : val);
     }
 
     /**

@@ -67,7 +67,7 @@ find_library(PANGO_LIBRARY NAMES pango pango-1.0 NO_DEFAULT_PATH PATHS
     /lib64
     )
 
-find_library(CAIRO_LIBRARY NAMES cairo NO_DEFAULT_PATH PATHS
+find_library(CAIRO_LIBRARY NAMES cairo cairomm-1.0 NO_DEFAULT_PATH PATHS
     ${HT_DEPENDENCY_LIB_DIR}
     /opt/local/lib
     /usr/local/lib

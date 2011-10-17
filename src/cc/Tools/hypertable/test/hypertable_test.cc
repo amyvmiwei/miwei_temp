@@ -47,6 +47,8 @@ namespace {
     "./hypertable_test.tsv",
     "./offset_test.hql",
     "./offset_test.golden",
+    "./timeorder_test.hql",
+    "./timeorder_test.golden",
     0
   };
 }
@@ -92,6 +94,18 @@ int main(int argc, char **argv) {
     _exit(1);
 
   cmd_str = "diff offset_test.output offset_test.golden";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  /**
+   *  TIME_ORDER tests
+   */
+  cmd_str = "./hypertable --test-mode --config hypertable.cfg "
+      "< timeorder_test.hql > timeorder_test.output 2>&1";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  cmd_str = "diff timeorder_test.output timeorder_test.golden";
   if (system(cmd_str.c_str()) != 0)
     _exit(1);
 

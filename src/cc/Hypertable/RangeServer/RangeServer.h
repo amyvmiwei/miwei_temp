@@ -78,7 +78,7 @@ namespace Hypertable {
     void create_scanner(ResponseCallbackCreateScanner *,
                         const TableIdentifier *,
                         const  RangeSpec *, const ScanSpec *,
-			QueryCache::Key *);
+                        QueryCache::Key *);
     void destroy_scanner(ResponseCallback *cb, uint32_t scanner_id);
     void fetch_scanblock(ResponseCallbackFetchScanblock *, uint32_t scanner_id);
     void load_range(ResponseCallback *, const TableIdentifier *,
@@ -137,7 +137,7 @@ namespace Hypertable {
     bool wait_for_system_recovery_finish(boost::xtime expire_time);
     bool wait_for_recovery_finish(const TableIdentifier *table,
                                   const RangeSpec *range,
-				  boost::xtime expire_time);
+                                  boost::xtime expire_time);
     bool replay_finished() { return m_replay_finished; }
 
 
@@ -170,15 +170,16 @@ namespace Hypertable {
                            bool write_rsml, const TableSchemaMap *table_schemas);
     void verify_schema(TableInfoPtr &, uint32_t generation, const TableSchemaMap *table_schemas=0);
     void transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
-                       int64_t revision, int64_t *revisionp);
+                       int64_t revision, int64_t *revisionp,
+                       bool timeorder_desc);
 
     class UpdateContext {
     public:
       UpdateContext(std::vector<TableUpdate *> &tu, boost::xtime xt) : updates(tu), expire_time(xt),
           total_updates(0), total_added(0), total_syncs(0), total_bytes_added(0) { }
       ~UpdateContext() {
-	foreach(TableUpdate *u, updates)
-	  delete u;
+        foreach(TableUpdate *u, updates)
+          delete u;
       }
       std::vector<TableUpdate *> updates;
       boost::xtime expire_time;

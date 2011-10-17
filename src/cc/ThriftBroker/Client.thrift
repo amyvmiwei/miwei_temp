@@ -1163,4 +1163,34 @@ service ClientService {
    */
   void drop_table(1:Namespace ns, 2:string name, 3:bool if_exists = 1)
       throws (1:ClientException e),
+
+  /**
+   * Generate a GUID
+   *
+   * GUIDs are globally unique. The generated string is 36 bytes long and 
+   * has a format similar to "9cf7da31-307a-4bef-b65e-19fb05aa57d8".
+   */
+  string generate_guid();
+
+  /**
+   * Inserts a unique value into a table
+   *
+   * This function inserts a unique value into a table. The table must be
+   * created with TIME_ORDER DESC, MAX_VERSIONS 1 (although the latter is 
+   * optional). 
+   *
+   * If the value is empty then a new GUID will be assigned 
+   * (using @a generate_guid).
+   *
+   * @param ns - namespace id
+   * @param table_name - table name
+   * @param key - the Key of the value
+   * @param value - the unique value. Can be empty; in this case a new 
+   *    guid will be generated internally
+   *
+   * @return the inserted unique value (which is identical to the @a value 
+   *    parameter or a new guid, if value is empty)
+   */
+  string create_cell_unique(1:Namespace ns, 2:string table_name, 3:Key key,
+      4:string value) throws (1:ClientException e),
 }

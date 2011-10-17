@@ -357,6 +357,16 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("drop_table\n");
   }
 
+  void generate_guid(std::string& _return) {
+    // Your implementation goes here
+    printf("generate_guid\n");
+  }
+
+  void create_cell_unique(std::string& _return, const Namespace ns, const std::string& table_name, const Key& key, const std::string& value) {
+    // Your implementation goes here
+    printf("create_cell_unique\n");
+  }
+
 };
 
 int main(int argc, char **argv) {

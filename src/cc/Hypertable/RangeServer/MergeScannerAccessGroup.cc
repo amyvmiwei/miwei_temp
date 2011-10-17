@@ -243,7 +243,6 @@ MergeScannerAccessGroup::do_forward()
 {
   ScannerState sstate;
   Key key;
-  size_t len;
   bool counter;
   int64_t cell_cutoff, cur_bytes;
 
@@ -339,7 +338,6 @@ MergeScannerAccessGroup::do_forward()
           break;
       }
       else if (sstate.key.flag == FLAG_DELETE_CELL_VERSION) {
-        len = sstate.key.len_cell();
         if (matches_deleted_cell_version(sstate.key))
           m_deleted_cell_version_set.insert(sstate.key.timestamp);
         else

@@ -196,7 +196,8 @@ namespace Hypertable {
     flag = *key.ptr++;
 
     if (control & HAVE_TIMESTAMP) {
-      timestamp = decode_ts64((const uint8_t **)&key.ptr);
+      timestamp = decode_ts64((const uint8_t **)&key.ptr, 
+              control&TS_CHRONOLOGICAL ? false : true);
       if (control & REV_IS_TS) {
         revision = timestamp;
         assert(key.ptr == end_ptr);

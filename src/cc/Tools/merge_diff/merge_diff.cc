@@ -33,11 +33,7 @@ using namespace std;
 namespace {
 
   const char *usage[] = {
-    "usage: merge_diff [options] <file-a> <file-b>",
-    "",
-    "  options:",
-    "    --verify  Verify that each file is sorted along the way and report",
-    "              an error if they are not.",
+    "usage: merge_diff <file-a> <file-b>",
     "",
     "  This program performs a diff of two sorted files.  The files must be",
     "  sorted as if they had been created with the following commands:",
@@ -45,9 +41,7 @@ namespace {
     "  $ LC_ALL=C sort <input-a> > <file-a>",
     "  $ LC_ALL=C sort <input-b> > <file-b>",
     "",
-    "  The output is indeterminate if the files are not properly sorted.  To",
-    "  verify that the files are properly sorted and the output is valid,",
-    "  supply the --verify option",
+    "  The output is indeterminate if the files are not properly sorted. ",
     "",
     (const char *)0
   };
@@ -57,7 +51,6 @@ namespace {
 
 int main(int argc, char **argv) {
   const char *file_a=0, *file_b=0;
-  bool verify=false;
   std::ifstream in_a;
   std::ifstream in_b;
   string line_a, line_b;
@@ -69,9 +62,7 @@ int main(int argc, char **argv) {
   System::initialize(argv[0]);
 
   for (int i=1; i<argc; i++) {
-    if (!strcmp(argv[i], "--verify"))
-      verify = true;
-    else if (argv[i][0] == '-')
+    if (argv[i][0] == '-')
       Usage::dump_and_exit(usage);
     else if (file_a == 0)
       file_a = argv[i];

@@ -81,6 +81,8 @@ class ClientServiceIf {
   virtual void drop_namespace(const std::string& ns, const bool if_exists) = 0;
   virtual void rename_table(const Namespace ns, const std::string& name, const std::string& new_name) = 0;
   virtual void drop_table(const Namespace ns, const std::string& name, const bool if_exists) = 0;
+  virtual void generate_guid(std::string& _return) = 0;
+  virtual void create_cell_unique(std::string& _return, const Namespace ns, const std::string& table_name, const Key& key, const std::string& value) = 0;
 };
 
 class ClientServiceNull : virtual public ClientServiceIf {
@@ -297,6 +299,12 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return;
   }
   void drop_table(const Namespace /* ns */, const std::string& /* name */, const bool /* if_exists */) {
+    return;
+  }
+  void generate_guid(std::string& /* _return */) {
+    return;
+  }
+  void create_cell_unique(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */, const Key& /* key */, const std::string& /* value */) {
     return;
   }
 };
@@ -8480,6 +8488,245 @@ class ClientService_drop_table_presult {
 
 };
 
+
+class ClientService_generate_guid_args {
+ public:
+
+  ClientService_generate_guid_args() {
+  }
+
+  virtual ~ClientService_generate_guid_args() throw() {}
+
+
+  bool operator == (const ClientService_generate_guid_args & /* rhs */) const
+  {
+    return true;
+  }
+  bool operator != (const ClientService_generate_guid_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_generate_guid_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_generate_guid_pargs {
+ public:
+
+
+  virtual ~ClientService_generate_guid_pargs() throw() {}
+
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_generate_guid_result__isset {
+  _ClientService_generate_guid_result__isset() : success(false) {}
+  bool success;
+} _ClientService_generate_guid_result__isset;
+
+class ClientService_generate_guid_result {
+ public:
+
+  ClientService_generate_guid_result() : success("") {
+  }
+
+  virtual ~ClientService_generate_guid_result() throw() {}
+
+  std::string success;
+
+  _ClientService_generate_guid_result__isset __isset;
+
+  void __set_success(const std::string& val) {
+    success = val;
+  }
+
+  bool operator == (const ClientService_generate_guid_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_generate_guid_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_generate_guid_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_generate_guid_presult__isset {
+  _ClientService_generate_guid_presult__isset() : success(false) {}
+  bool success;
+} _ClientService_generate_guid_presult__isset;
+
+class ClientService_generate_guid_presult {
+ public:
+
+
+  virtual ~ClientService_generate_guid_presult() throw() {}
+
+  std::string* success;
+
+  _ClientService_generate_guid_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_create_cell_unique_args__isset {
+  _ClientService_create_cell_unique_args__isset() : ns(false), table_name(false), key(false), value(false) {}
+  bool ns;
+  bool table_name;
+  bool key;
+  bool value;
+} _ClientService_create_cell_unique_args__isset;
+
+class ClientService_create_cell_unique_args {
+ public:
+
+  ClientService_create_cell_unique_args() : ns(0), table_name(""), value("") {
+  }
+
+  virtual ~ClientService_create_cell_unique_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  Key key;
+  std::string value;
+
+  _ClientService_create_cell_unique_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_key(const Key& val) {
+    key = val;
+  }
+
+  void __set_value(const std::string& val) {
+    value = val;
+  }
+
+  bool operator == (const ClientService_create_cell_unique_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(key == rhs.key))
+      return false;
+    if (!(value == rhs.value))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_create_cell_unique_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_create_cell_unique_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_create_cell_unique_pargs {
+ public:
+
+
+  virtual ~ClientService_create_cell_unique_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const Key* key;
+  const std::string* value;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_create_cell_unique_result__isset {
+  _ClientService_create_cell_unique_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_create_cell_unique_result__isset;
+
+class ClientService_create_cell_unique_result {
+ public:
+
+  ClientService_create_cell_unique_result() : success("") {
+  }
+
+  virtual ~ClientService_create_cell_unique_result() throw() {}
+
+  std::string success;
+  ClientException e;
+
+  _ClientService_create_cell_unique_result__isset __isset;
+
+  void __set_success(const std::string& val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_create_cell_unique_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_create_cell_unique_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_create_cell_unique_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_create_cell_unique_presult__isset {
+  _ClientService_create_cell_unique_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_create_cell_unique_presult__isset;
+
+class ClientService_create_cell_unique_presult {
+ public:
+
+
+  virtual ~ClientService_create_cell_unique_presult() throw() {}
+
+  std::string* success;
+  ClientException e;
+
+  _ClientService_create_cell_unique_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientServiceClient : virtual public ClientServiceIf {
  public:
   ClientServiceClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) :
@@ -8701,6 +8948,12 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void drop_table(const Namespace ns, const std::string& name, const bool if_exists);
   void send_drop_table(const Namespace ns, const std::string& name, const bool if_exists);
   void recv_drop_table();
+  void generate_guid(std::string& _return);
+  void send_generate_guid();
+  void recv_generate_guid(std::string& _return);
+  void create_cell_unique(std::string& _return, const Namespace ns, const std::string& table_name, const Key& key, const std::string& value);
+  void send_create_cell_unique(const Namespace ns, const std::string& table_name, const Key& key, const std::string& value);
+  void recv_create_cell_unique(std::string& _return);
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;
@@ -8781,6 +9034,8 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_drop_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_rename_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_drop_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_generate_guid(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_create_cell_unique(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   ClientServiceProcessor(boost::shared_ptr<ClientServiceIf> iface) :
     iface_(iface) {
@@ -8851,6 +9106,8 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["drop_namespace"] = &ClientServiceProcessor::process_drop_namespace;
     processMap_["rename_table"] = &ClientServiceProcessor::process_rename_table;
     processMap_["drop_table"] = &ClientServiceProcessor::process_drop_table;
+    processMap_["generate_guid"] = &ClientServiceProcessor::process_generate_guid;
+    processMap_["create_cell_unique"] = &ClientServiceProcessor::process_create_cell_unique;
   }
 
   virtual bool process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot, void* callContext);
@@ -9498,6 +9755,30 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->drop_table(ns, name, if_exists);
+    }
+  }
+
+  void generate_guid(std::string& _return) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->generate_guid(_return);
+        return;
+      } else {
+        ifaces_[i]->generate_guid(_return);
+      }
+    }
+  }
+
+  void create_cell_unique(std::string& _return, const Namespace ns, const std::string& table_name, const Key& key, const std::string& value) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->create_cell_unique(_return, ns, table_name, key, value);
+        return;
+      } else {
+        ifaces_[i]->create_cell_unique(_return, ns, table_name, key, value);
+      }
     }
   }
 

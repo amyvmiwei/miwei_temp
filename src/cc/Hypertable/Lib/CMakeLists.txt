@@ -117,7 +117,7 @@ bmz/bmz.c
 
 add_library(Hypertable ${Hypertable_SRCS})
 add_dependencies(Hypertable HyperComm Hyperspace HyperCommon)
-target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperDfsBroker ${MALLOC_LIBRARY} HyperThirdParty)
+target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperAppHelper HyperDfsBroker ${MALLOC_LIBRARY} HyperThirdParty)
 
 # generate_test_data
 add_executable(generate_test_data generate_test_data.cc)

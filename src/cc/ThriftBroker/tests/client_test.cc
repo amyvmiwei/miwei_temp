@@ -365,9 +365,31 @@ struct BasicTest : HqlServiceIf {
     client->hql_query2(ret, ns, command);
   }
 
+  void generate_guid(std::string &command) {
+    client->generate_guid(command);
+  }
+
+  virtual void create_cell_unique(std::string &_return,
+          const ThriftGen::Namespace ns, const std::string& table_name, 
+          const ThriftGen::Key& tkey, const std::string& value) {
+    client->create_cell_unique(_return, ns, table_name, tkey, value);
+  }
+
+  virtual std::string create_cell_unique(const ThriftGen::Namespace ns, 
+          const std::string& table_name, const ThriftGen::Key& tkey, 
+          const std::string& value) {
+    std::string _return;
+    client->create_cell_unique(_return, ns, table_name, tkey, value);
+    return _return;
+  }
+
   void run() {
     try {
       std::ostream &out = std::cout;
+      out << "running test_guid" << std::endl;
+      test_guid(out);
+      out << "running test_unique" << std::endl;
+      test_unique(out);
       out << "running test_hql" << std::endl;
       test_hql(out);
       out << "running test_schema" << std::endl;
@@ -419,6 +441,66 @@ struct BasicTest : HqlServiceIf {
     get_schema_str_with_ids(str, ns, "foo_renamed");
     out << str << std::endl;
     drop_table(ns, "foo_renamed", false);
+    close_namespace(ns);
+  }
+
+  void test_guid(std::ostream &out) {
+    String s;
+    generate_guid(s);
+    out << "generate guid: " << s << std::endl;
+  }
+
+  void test_unique(std::ostream &out) {
+    HqlResult result;
+    if (!exists_namespace("test"))
+      create_namespace("test");
+    Namespace ns = open_namespace("test");
+    hql_query(result, ns, "drop table if exists UniqueTest");
+    hql_query(result, ns, "create table UniqueTest (cf1 TIME_ORDER DESC "
+            "MAX_VERSIONS 1, cf2)");
+    out << result << std::endl;
+
+    Key key;
+    key.column_family="cf1";
+    String value;
+    
+    key.row="row1";
+    generate_guid(value);
+    create_cell_unique(ns, "UniqueTest", key, value);
+    key.row="row2";
+    generate_guid(value);
+    create_cell_unique(ns, "UniqueTest", key, value);
+    key.row="row3";
+    generate_guid(value);
+    create_cell_unique(ns, "UniqueTest", key, value);
+    key.row="row4";
+    generate_guid(value);
+    create_cell_unique(ns, "UniqueTest", key, value);
+    key.row="row5";
+    generate_guid(value);
+    create_cell_unique(ns, "UniqueTest", key, value);
+    value="";
+    key.row="row6";
+    value=create_cell_unique(ns, "UniqueTest", key, value);
+    assert(!value.empty());
+    value="";
+    key.row="row7";
+    value=create_cell_unique(ns, "UniqueTest", key, value);
+    assert(!value.empty());
+    value="";
+    key.row="row8";
+    value=create_cell_unique(ns, "UniqueTest", key, value);
+    assert(!value.empty());
+    bool caught=false;
+    try {
+      generate_guid(value);
+      create_cell_unique(ns, "UniqueTest", key, value);
+    }
+    catch (ClientException &e) {
+      caught=true;
+    }
+    assert(caught);
+
     close_namespace(ns);
   }
 

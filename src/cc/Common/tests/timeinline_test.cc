@@ -23,6 +23,7 @@ int main(int ac, char *av[]) {
   try {
     ts = parse_ts("2011-01-01 00:00:00");
     ts = parse_ts("2011-12-31 23:59:59");
+    (void)ts; // avoid warning because ts is set but never used
   }
   catch (std::exception &e) {
     cout << e.what() << endl;

@@ -144,7 +144,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
     base_dir = data_dir / base_dir;
   }
 
-  m_base_dir = base_dir.directory_string();
+  m_base_dir = base_dir.string();
 
   HT_INFOF("BerkeleyDB base directory = '%s'", m_base_dir.c_str());
   m_lock_file = m_base_dir + "/lock";
@@ -1074,7 +1074,7 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
   SessionDataPtr session_data;
   String node;
   int error=0;
-  bool aborted=false, commited=false;
+  bool aborted=false;
   String error_msg;
   DynamicBuffer dbuf;
 
@@ -1087,7 +1087,7 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
 
   HT_BDBTXN_BEGIN() {
     // (re) initialize vars
-    aborted = false; commited = false;
+    aborted = false;
 
     // make sure session is still valid
     if (!m_bdb_fs->session_exists(txn, session_id)) {
@@ -1115,10 +1115,8 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
     txn_commit:
       if (aborted)
         txn.abort();
-      else {
+      else
         txn.commit(0);
-        commited = true;
-      }
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -1157,7 +1155,7 @@ Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
   SessionDataPtr session_data;
   String node;
   int error=0;
-  bool aborted=false, commited=false;
+  bool aborted=false;
   String error_msg;
   uint64_t attr_val;
 
@@ -1170,7 +1168,7 @@ Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
 
   HT_BDBTXN_BEGIN() {
     // (re) initialize vars
-    aborted = false; commited = false;
+    aborted = false;
 
     // make sure session is still valid
     if (!m_bdb_fs->session_exists(txn, session_id)) {
@@ -1198,10 +1196,8 @@ Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
     txn_commit:
       if (aborted)
         txn.abort();
-      else {
+      else
         txn.commit(0);
-        commited = true;
-      }
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -1485,7 +1481,7 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
   String node;
   int error = 0;
   String error_msg;
-  bool aborted=false, commited=false;
+  bool aborted=false;
   DirEntry dentry;
   std::vector<DirEntry> listing;
 
@@ -1519,10 +1515,8 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
     txn_commit:
       if (aborted)
         txn.abort();
-      else {
+      else
         txn.commit(0);
-        commited = true;
-      }
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -1554,7 +1548,7 @@ Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
   String node;
   int error = 0;
   String error_msg;
-  bool aborted=false, commited=false;
+  bool aborted=false;
   DirEntry dentry;
   std::vector<DirEntryAttr> listing;
 
@@ -1588,10 +1582,8 @@ Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
     txn_commit:
       if (aborted)
         txn.abort();
-      else {
+      else
         txn.commit(0);
-        commited = true;
-      }
   }
   HT_BDBTXN_END_CB(cb);
 
@@ -1624,7 +1616,7 @@ Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
   String node;
   int error = 0;
   String error_msg;
-  bool aborted=false, commited=false;
+  bool aborted=false;
   DirEntry dentry;
   std::vector<DirEntryAttr> listing;
 
@@ -1687,10 +1679,8 @@ Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
     txn_commit:
       if (aborted)
         txn.abort();
-      else {
+      else
         txn.commit(0);
-        commited = true;
-      }
   }
   HT_BDBTXN_END_CB(cb);
 

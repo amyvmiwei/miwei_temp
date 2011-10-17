@@ -44,12 +44,17 @@ namespace Hypertable {
   class Schema : public ReferenceCount {
   public:
     struct ColumnFamily {
-      ColumnFamily() : name(), ag(), id(0), max_versions(0), ttl(0), generation(0),
-                       deleted(false), renamed(false), new_name(), counter(false) { return; }
+      ColumnFamily() : name(), ag(), id(0), max_versions(0), 
+        time_order_desc(false), time_order_desc_set(false), 
+        ttl(0), generation(0), deleted(false), renamed(false), 
+        new_name(), counter(false) { return; }
+
       String   name;
       String   ag;
       uint32_t id;
       uint32_t max_versions;
+      bool time_order_desc;
+      bool time_order_desc_set;
       time_t   ttl;
       uint32_t generation;
       bool deleted;

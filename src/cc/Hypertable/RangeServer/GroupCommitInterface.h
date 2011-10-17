@@ -109,9 +109,9 @@ namespace Hypertable {
                     transfer_count(0), total_added(0), error(0) {}
     ~TableUpdate() {
       foreach (UpdateRequest *r, requests)
-	delete r;
+        delete r;
       for (hash_map<Range *, RangeUpdateList *>::iterator iter = range_map.begin(); iter != range_map.end(); ++iter)
-	delete (*iter).second;
+        delete (*iter).second;
     }
     TableIdentifier id;
     std::vector<UpdateRequest *> requests;

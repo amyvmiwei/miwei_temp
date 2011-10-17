@@ -190,13 +190,12 @@ bool LoadBalancerBasicDistributeLoad::check_move(const ServerMetricSummary &sour
     const ServerMetricSummary &destination, double range_loadestimate,
     double mean_loadavg) {
   // make sure that this move doesn't increase the loadavg of the target more than that of the source
-    double loadavg_destination = destination.loadavg;
-    double delta_source, delta_destination;
+  double loadavg_destination = destination.loadavg;
+  double delta_destination;
 
-    delta_source = source.loadavg_per_loadestimate * range_loadestimate;
-    delta_destination = destination.loadavg_per_loadestimate * range_loadestimate;
-    loadavg_destination += delta_destination;
-    return (loadavg_destination < m_loadavg_deviation_threshold + mean_loadavg);
+  delta_destination = destination.loadavg_per_loadestimate * range_loadestimate;
+  loadavg_destination += delta_destination;
+  return (loadavg_destination < m_loadavg_deviation_threshold + mean_loadavg);
 }
 
 ostream &Hypertable::operator<<(ostream &out,
