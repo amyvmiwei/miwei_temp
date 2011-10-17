@@ -10762,6 +10762,306 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_generate_guid_args;
+use base qw(Class::Accessor);
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_generate_guid_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_generate_guid_args');
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_generate_guid_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_generate_guid_result->mk_accessors( qw( success ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_generate_guid_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{success});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_generate_guid_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
+    $xfer += $output->writeString($self->{success});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_create_cell_unique_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_create_cell_unique_args->mk_accessors( qw( ns table_name key value ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{table_name} = undef;
+  $self->{key} = undef;
+  $self->{value} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
+    if (defined $vals->{table_name}) {
+      $self->{table_name} = $vals->{table_name};
+    }
+    if (defined $vals->{key}) {
+      $self->{key} = $vals->{key};
+    }
+    if (defined $vals->{value}) {
+      $self->{value} = $vals->{value};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_create_cell_unique_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{table_name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{key} = new Hypertable::ThriftGen::Key();
+        $xfer += $self->{key}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{value});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_create_cell_unique_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{table_name}) {
+    $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+    $xfer += $output->writeString($self->{table_name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{key}) {
+    $xfer += $output->writeFieldBegin('key', TType::STRUCT, 3);
+    $xfer += $self->{key}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{value}) {
+    $xfer += $output->writeFieldBegin('value', TType::STRING, 4);
+    $xfer += $output->writeString($self->{value});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_create_cell_unique_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_create_cell_unique_result->mk_accessors( qw( success ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_create_cell_unique_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{success});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_create_cell_unique_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
+    $xfer += $output->writeString($self->{success});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientServiceIf;
 
 use strict;
@@ -11299,6 +11599,22 @@ sub drop_table{
   my $ns = shift;
   my $name = shift;
   my $if_exists = shift;
+
+  die 'implement interface';
+}
+
+sub generate_guid{
+  my $self = shift;
+
+  die 'implement interface';
+}
+
+sub create_cell_unique{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $key = shift;
+  my $value = shift;
 
   die 'implement interface';
 }
@@ -11849,6 +12165,22 @@ sub drop_table{
   my $name = ($request->{'name'}) ? $request->{'name'} : undef;
   my $if_exists = ($request->{'if_exists'}) ? $request->{'if_exists'} : undef;
   return $self->{impl}->drop_table($ns, $name, $if_exists);
+}
+
+sub generate_guid{
+  my ($self, $request) = @_;
+
+  return $self->{impl}->generate_guid();
+}
+
+sub create_cell_unique{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
+  my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
+  my $key = ($request->{'key'}) ? $request->{'key'} : undef;
+  my $value = ($request->{'value'}) ? $request->{'value'} : undef;
+  return $self->{impl}->create_cell_unique($ns, $table_name, $key, $value);
 }
 
 package Hypertable::ThriftGen::ClientServiceClient;
@@ -15048,6 +15380,101 @@ sub recv_drop_table{
   }
   return;
 }
+sub generate_guid{
+  my $self = shift;
+
+    $self->send_generate_guid();
+  return $self->recv_generate_guid();
+}
+
+sub send_generate_guid{
+  my $self = shift;
+
+  $self->{output}->writeMessageBegin('generate_guid', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_generate_guid_args();
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_generate_guid{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_generate_guid_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  die "generate_guid failed: unknown result";
+}
+sub create_cell_unique{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $key = shift;
+  my $value = shift;
+
+    $self->send_create_cell_unique($ns, $table_name, $key, $value);
+  return $self->recv_create_cell_unique();
+}
+
+sub send_create_cell_unique{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $key = shift;
+  my $value = shift;
+
+  $self->{output}->writeMessageBegin('create_cell_unique', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_create_cell_unique_args();
+  $args->{ns} = $ns;
+  $args->{table_name} = $table_name;
+  $args->{key} = $key;
+  $args->{value} = $value;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_create_cell_unique{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_create_cell_unique_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "create_cell_unique failed: unknown result";
+}
 package Hypertable::ThriftGen::ClientServiceProcessor;
 
 use strict;
@@ -16212,6 +16639,36 @@ sub process_drop_table {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('drop_table', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_generate_guid {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_generate_guid_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_generate_guid_result();
+    $result->{success} = $self->{handler}->generate_guid();
+    $output->writeMessageBegin('generate_guid', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_create_cell_unique {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_create_cell_unique_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_create_cell_unique_result();
+    eval {
+      $result->{success} = $self->{handler}->create_cell_unique($args->ns, $args->table_name, $args->key, $args->value);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('create_cell_unique', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

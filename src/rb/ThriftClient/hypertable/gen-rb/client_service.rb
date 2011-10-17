@@ -1052,6 +1052,37 @@ require 'client_types'
                   return
                 end
 
+                def generate_guid()
+                  send_generate_guid()
+                  return recv_generate_guid()
+                end
+
+                def send_generate_guid()
+                  send_message('generate_guid', Generate_guid_args)
+                end
+
+                def recv_generate_guid()
+                  result = receive_message(Generate_guid_result)
+                  return result.success unless result.success.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'generate_guid failed: unknown result')
+                end
+
+                def create_cell_unique(ns, table_name, key, value)
+                  send_create_cell_unique(ns, table_name, key, value)
+                  return recv_create_cell_unique()
+                end
+
+                def send_create_cell_unique(ns, table_name, key, value)
+                  send_message('create_cell_unique', Create_cell_unique_args, :ns => ns, :table_name => table_name, :key => key, :value => value)
+                end
+
+                def recv_create_cell_unique()
+                  result = receive_message(Create_cell_unique_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'create_cell_unique failed: unknown result')
+                end
+
               end
 
               class Processor
@@ -1788,6 +1819,24 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'drop_table', seqid)
+                end
+
+                def process_generate_guid(seqid, iprot, oprot)
+                  args = read_args(iprot, Generate_guid_args)
+                  result = Generate_guid_result.new()
+                  result.success = @handler.generate_guid()
+                  write_result(result, oprot, 'generate_guid', seqid)
+                end
+
+                def process_create_cell_unique(seqid, iprot, oprot)
+                  args = read_args(iprot, Create_cell_unique_args)
+                  result = Create_cell_unique_result.new()
+                  begin
+                    result.success = @handler.create_cell_unique(args.ns, args.table_name, args.key, args.value)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'create_cell_unique', seqid)
                 end
 
               end
@@ -4129,6 +4178,77 @@ require 'client_types'
                 E = 1
 
                 FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Generate_guid_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+
+                FIELDS = {
+
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Generate_guid_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Create_cell_unique_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+                KEY = 3
+                VALUE = 4
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
+                  KEY => {:type => ::Thrift::Types::STRUCT, :name => 'key', :class => Hypertable::ThriftGen::Key},
+                  VALUE => {:type => ::Thrift::Types::STRING, :name => 'value'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Create_cell_unique_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

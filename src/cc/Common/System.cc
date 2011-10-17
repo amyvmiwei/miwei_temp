@@ -52,15 +52,15 @@ String System::_locate_install_dir(const char *argv0) {
   if (!install_dir.empty())
     return install_dir;
 
-  exe_name = Path(argv0).filename();
+  exe_name = Path(argv0).filename().c_str();
 
   Path exepath(proc_info().exe);
 
   // Detect install_dir/bin/exe_name: assumed install layout
   if (exepath.parent_path().filename() == "bin")
-    install_dir = exepath.parent_path().parent_path().directory_string();
+    install_dir = exepath.parent_path().parent_path().string();
   else
-    install_dir = exepath.parent_path().directory_string();
+    install_dir = exepath.parent_path().string();
 
   return install_dir;
 }
@@ -81,7 +81,7 @@ void System::_init(const String &install_directory) {
   }
 
   if (exe_name.empty())
-    exe_name = Path(proc_info().args[0]).filename();
+    exe_name = Path(proc_info().args[0]).filename().c_str();
 
   // initialize logging system
   Logger::initialize(exe_name);

@@ -484,10 +484,9 @@ void TableMutatorAsyncScatterBuffer::reset() {
 void TableMutatorAsyncScatterBuffer::finish() {
 
   int error = Error::OK;
-  bool has_retries=false, has_errors=false;
+  bool has_retries=false;
 
   if (m_completion_counter.has_errors()) {
-    has_errors = true;
     error = set_failed_mutations();
     // this prevents this mutation failure logic from being executed twice
     // if this method gets called again

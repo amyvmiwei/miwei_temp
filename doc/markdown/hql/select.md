@@ -45,6 +45,8 @@ SELECT
       | CELL_OFFSET cell_offset
       | CELL_LIMIT max_cells
       | CELL_LIMIT_PER_FAMILY max_cells_per_cf
+      | OFFSET row_offset
+      | CELL_OFFSET cell_offset
       | INTO FILE [file_location]filename[.gz]
       | DISPLAY_TIMESTAMPS
       | KEYS_ONLY
@@ -60,10 +62,16 @@ SELECT
  
 #### Description
 <p>
+SELECT is used to retrieve cells from a table. The retrieved cells are filtered
+with predicates for row keys, timestamps or cell values.
 The parser only accepts a single timestamp predicate.  The '=^' operator is the
 "starts with" operator.  It will return all rows that have the same prefix as
 the operand. Use of the value_predicate without the "CELLS" modifier to the
 "SELECT" command is deprecated.
+
+If your query selects several independent ranges by specifying multiple row
+predicates  (i.e. WHERE ROW < 'a' OR ROW > 'c') then the LIMIT, CELL_LIMIT,
+OFFSET, CELL_OFFSET predicates are applied to each range independently.
 
 #### Options
 <p>
@@ -103,6 +111,16 @@ Limits the total number of cells returned by the query to `max_cells`
 <p>
 Limits the number of cells returned per row per column family by the `SELECT` 
 statement to `max_cells_per_cf`.
+
+#### `OFFSET row_offset`
+<p>
+Skips the first `row_offset` rows returned by the SELECT statement.
+Not allowed in combination with CELL_OFFSET.
+
+#### `CELL_OFFSET cell_offset`
+<p>
+Skips the first `cell_offset` cells returned by the SELECT statement.
+Not allowed in combination with OFFSET.
 
 #### `INTO FILE [file://|dfs://]filename[.gz]`
 <p>

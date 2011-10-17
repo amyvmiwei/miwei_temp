@@ -386,8 +386,7 @@ void OperationProcessor::add_dependency(Vertex v, const String &name) {
     while (iter != m_context.perpetual_ops.end()) {
       (*iter)->obstructions(names);
       if (names.count(name) > 0) {
-        operation = *iter;
-        PerpetualSet::iterator rmiter = iter++;
+        operation = *iter++;
         operation->set_state(OperationState::INITIAL);
         add_operation_internal(operation);
       }

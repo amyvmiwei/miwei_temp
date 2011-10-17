@@ -324,7 +324,8 @@ void Schema::start_element_handler(void *userdata,
   else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
            || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
            || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
-           || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter"))
+           || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter")
+           || !strcasecmp(name, "TimeOrder"))
     ms_collected_text = "";
   else
     ms_schema->set_error_string(format("Unrecognized element - '%s'", name));
@@ -341,7 +342,8 @@ void Schema::end_element_handler(void *userdata, const XML_Char *name) {
   else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
            || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
            || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
-           || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter")) {
+           || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter")
+           || !strcasecmp(name, "TimeOrder")) {
     boost::trim(ms_collected_text);
     ms_schema->set_column_family_parameter(name, ms_collected_text.c_str());
   }
@@ -529,6 +531,12 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
         set_error_string((String)"Invalid value (" + value
                           + ") for MaxVersions");
     }
+    else if (!strcasecmp(param, "TimeOrder")) {
+      if (!strcasecmp(value, "desc"))
+        m_open_column_family->time_order_desc = true;
+      else
+        m_open_column_family->time_order_desc = false;
+    }
     else if (!strcasecmp(param, "Counter")) {
       if (!strcasecmp(value, "true"))
         m_open_column_family->counter = true;
@@ -673,6 +681,8 @@ void Schema::render(String &output, bool with_ids) {
       if (cf->max_versions != 0)
         output += format("      <MaxVersions>%u</MaxVersions>\n",
                          cf->max_versions);
+      if (cf->time_order_desc)
+        output += format("      <TimeOrder>DESC</TimeOrder>\n");
 
       if (cf->ttl != 0)
         output += format("      <ttl>%d</ttl>\n", (int)cf->ttl);
@@ -723,6 +733,9 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
     if (cf->max_versions != 0)
       output += format(" MAX_VERSIONS=%u", cf->max_versions);
+
+    if (cf->time_order_desc)
+      output += format(" TIME_ORDER DESC");
 
     if (cf->counter)
       output += format(" COUNTER");
@@ -878,7 +891,6 @@ bool Schema::access_group_exists(const String &name) const
 
 bool Schema::rename_column_family(const String &old_name, const String &new_name) {
   ColumnFamily *cf;
-  uint32_t cf_id;
   ColumnFamilyMap::iterator cf_map_it;
   ColumnFamilies::iterator cfs_it;
   ColumnFamilies::iterator ag_cfs_it;
@@ -892,7 +904,6 @@ bool Schema::rename_column_family(const String &old_name, const String &new_name
 
   if(old_name != new_name) {
     cf = cf_map_it->second;
-    cf_id = cf->id;
     cf->name = new_name;
     pair<ColumnFamilyMap::iterator, bool> res =
         m_column_family_map.insert(make_pair(cf->name, cf));
@@ -908,7 +919,6 @@ bool Schema::rename_column_family(const String &old_name, const String &new_name
 
 bool Schema::drop_column_family(const String &name) {
   ColumnFamily *cf;
-  uint32_t cf_id;
   ColumnFamilyMap::iterator cf_map_it = m_column_family_map.find(name);
   ColumnFamilies::iterator cfs_it;
   ColumnFamilies::iterator ag_cfs_it;
@@ -920,7 +930,6 @@ bool Schema::drop_column_family(const String &name) {
   }
 
   cf = cf_map_it->second;
-  cf_id = cf->id;
   AccessGroupMap::const_iterator ag_it = m_access_group_map.find(cf->ag);
 
   if (ag_it == m_access_group_map.end()) {

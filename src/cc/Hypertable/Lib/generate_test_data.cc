@@ -144,6 +144,8 @@ int main(int argc, char **argv) {
   if (tablename == "")
     Usage::dump_and_exit(usage);
 
+  System::seed(seed);
+
   client = new Client(System::locate_install_dir(argv[0]), cfgfile);
   ns = client->open_namespace("/");
 

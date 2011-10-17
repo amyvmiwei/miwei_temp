@@ -79,7 +79,7 @@ LocalBroker::LocalBroker(PropertiesPtr &cfg) {
     root = data_dir / root;
   }
 
-  m_rootdir = root.directory_string();
+  m_rootdir = root.string();
 
   // ensure that root directory exists
   if (!FileUtils::mkdirs(m_rootdir))

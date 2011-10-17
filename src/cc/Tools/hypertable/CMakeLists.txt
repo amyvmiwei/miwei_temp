@@ -38,6 +38,10 @@ configure_file(${SRC_DIR}/test/offset_test.golden
                ${DST_DIR}/offset_test.golden)
 configure_file(${SRC_DIR}/test/offset_test.hql
                ${DST_DIR}/offset_test.hql)
+configure_file(${SRC_DIR}/test/timeorder_test.golden
+               ${DST_DIR}/timeorder_test.golden)
+configure_file(${SRC_DIR}/test/timeorder_test.hql
+               ${DST_DIR}/timeorder_test.hql)
 configure_file(${SRC_DIR}/test/hypertable_test.golden
                ${DST_DIR}/hypertable_test.golden)
 configure_file(${SRC_DIR}/test/hypertable_select_gz_test.golden

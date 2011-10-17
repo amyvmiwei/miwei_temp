@@ -66,6 +66,7 @@ namespace Hypertable {
     static int32_t get_processor_count();
     static int32_t get_pid();
 
+    static void seed(uint32_t seed) { ms_rng.seed(seed); }
     static uint32_t rand32() { return ms_rng(); }
     static uint64_t rand64() { return (uint64_t)rand32() << 32 | rand32(); }
 

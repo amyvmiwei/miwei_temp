@@ -226,6 +226,10 @@ cmd_create_table(NamespacePtr &ns, ParserState &state,
         HT_THROWF(Error::HQL_PARSE_ERROR,
                   "Incompatible options (COUNTER & MAX_VERSIONS) specified for column '%s'",
                   cf->name.c_str());
+      if (!cf->time_order_desc_set) {
+        cf->time_order_desc = state.time_order_desc;
+        cf->time_order_desc_set = true;
+      }
       schema->add_column_family(cf);
     }
 
