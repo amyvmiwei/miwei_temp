@@ -60,8 +60,8 @@ namespace Hypertable {
      * @param end_row end row key for range
      * @return true if range found and end row changed, false otherwise
      */
-    virtual bool change_start_row(const String &old_start_row, const String &new_end_row,
-                                  const String &new_end_row) = 0;
+    virtual bool change_start_row(const String &old_start_row, const String &new_start_row,
+                                  const String &end_row) = 0;
 
   };
 
