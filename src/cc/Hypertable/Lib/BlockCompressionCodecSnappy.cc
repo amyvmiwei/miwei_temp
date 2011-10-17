@@ -57,13 +57,25 @@ BlockCompressionCodecSnappy::deflate(const DynamicBuffer &input,
   size_t outlen;
   snappy::RawCompress((const char *)input.base, input.fill(), 
                 (char *)output.base+header.length(), &outlen);
-  output.size=outlen;
 
-  header.set_compression_type(SNAPPY);
-  header.set_data_length(input.fill());
-  header.set_data_zlength(output.size);
+  HT_ASSERT(outlen+reserve <= output.size);
+
+  /* check for an incompressible block */
+  if (outlen >= input.fill()) {
+    header.set_compression_type(NONE);
+    memcpy(output.base+header.length(), input.base, input.fill());
+    header.set_data_length(input.fill());
+    header.set_data_zlength(input.fill());
+  }
+  else {
+    header.set_compression_type(SNAPPY);
+    header.set_data_length(input.fill());
+    header.set_data_zlength(outlen);
+  }
+
   header.set_data_checksum(fletcher32(output.base + header.length(),
                 header.get_data_zlength()));
+
   output.ptr = output.base;
   header.encode(&output.ptr);
   output.ptr += header.get_data_zlength();
