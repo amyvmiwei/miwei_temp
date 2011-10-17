@@ -1,3 +1,117 @@
+Version 0.9.5.1:
+(2011-10-17)
+
+    Added Snappy compression, made it default for CellStores
+    Upgraded to Thrift 0.7.0
+    Upgraded to Hadoop CDH3u1
+    Added CELL_LIMIT to ScanSpec and SELECT command
+    Renamed CELL_LIMIT to CELL_LIMIT_PER_FAMILY
+    Made range split size random value SplitSize + (RamdomNumber % SplitSize)
+    Fixed bug in RangeServer::local_recover()
+    Added check for clock skew in OperationRegisterServer
+    Added CPU statistics to range server monitoring graphs
+    Fixed bugs in Balance operation.
+    Fixed bug in LoadBalancerBasic.
+    Changed TableInfo to store range start and end row.
+    Fixed bug in RangeServer, whereby it was possible for it to incorrectly return TABLE_NOT_FOUND.
+    Fixed performance test Capfile so that Client can run on same machine as Master
+    Added support for pulling value data from file in PerformanceTest
+    Added dependent libs to fix missing shared object problem on Debian
+    Added scripts for setting up build env on CentOS, Debian, and OpenSUSE
+    Added new switch --namespace to the shell to automatically open a specified namespace
+    Fixed command line parameter -h which failed to display the help page
+    Fixed a compiler warning about missing parentheses
+    Fixed a typo when calling 'help' with an unknown argument
+    use getenv() instead of _ENV, since _ENV can be disabled in php.ini
+    Modified Range class to prevent further maintenance if relinquished
+    Added in_operation bit to master.
+    Fixed monitoring diff calcuations, only compute if server set same as previous
+    Changed the balance trigger on the master.
+    Changed RangeServerConnection state member to include BALANCED bit
+    Made OperationBalance a perpetual operation.
+    Added FailureInducer label to crash the master in the middle of executing a balance.
+    Added automatic update coalesce
+    Separate controls in Capfile for stop and clean prompt; Dropped countdown
+    issue 706: Fixed initialization problem of Range member removed_from_working_set
+    Changed a misleading error message.
+    Added Ajax counter which displays the number of new tweets. Also improved error reporting if HT is not running or no
+    issue 696: patch to previous fix
+    issue 704: fixed intermittent CellStore-garbage-collection test failure
+    Set default # of maintenance threads to 1.5 * number of drives in system
+    Changed commit log compressor back to quicklz
+    Got rid of BLOCKED state in Master operations in favor of blocked bit
+    issue 696: Fixed race condition in Master handling of relinquish acknowledge
+    Fixed monitoring rate calculation problem when get_statistics fails on some RSs
+    Added initial revision of the microblog php sample to the reporitory
+    Added table id to error message
+    Added cell_limit and cell_limit_per_family to Thrift ScanSpec operator <<
+    Future cancel individual scanners/mutators test added
+    Future issues fixed
+    Added ThriftBroker APIs cancel_mutator_async(mutator) and cancel_scanner_async(scanner)
+    Thrift API change. Removed flush argument from close_mutator call
+    Changed default compressors to snappy
+    Don't remove monitoring data in clean-database.sh
+    Fixed possible problem with request timeout calculation; Added bettter logging
+    Changed exception and api call logging in ThriftBroker.
+    Fixed bug in snappy codec
+    Got rid of arrival_clocks in favor of arrival_time in Comm layer
+    Fixed shutdown hook in HdfsBroker
+    Changed exit calls to _exit to prevent core dumps on async abrupt end tests
+    issue 691: During relinuish, if range removed from live set, set flag to prevent re-removal
+    Added property Hypertable.RangeServer.IgnoreClockSkewErrors to make RangeServer ignore clock skew errors.
+    Fixed a PHP warning because of an undefined variable (E_NONE)
+    Fixed library paths and names on Ubuntu 11.04 64bit
+    Removed a PHP warning if an environment variable is not set
+    Eliminated warning
+    Added regression test for balance operation when a new rangeserver is added.
+    Minor thriftbroker issues fixed
+    Fixed bug in TableScannerAsync
+    Enhanced FailureInducer to support throwing arbitrary exceptions.
+    Added FileUtils::mmap and use it to map source file in load_generator
+    Merging Sanjit's regex patch
+    Dropping tables before creating them; otherwise test fails if they already existed
+    Fixed wrong event timeouts on 32bit linux: clock_t is signed long but was compared against unsigned int. Also beauti
+    Refactored MergeScanner and split in two classes: MergeScannerAccessGroup and MergeScannerRange. No functional chang
+    Fixed intermittent NULL pointer dereference in master recently introduced
+    Fixed progress meter logic for large datasets (>4GB)
+    Copy libsnappy into installation
+    Fixed linker errors on ubuntu 11.04/cmake 2.8.3: thrift files were generated but neither compiled nor linked
+    Fixed sigar detection: link against ldl on Linux
+    Added missing files for snappy integration
+    Added support for google's snappy compression library
+    fixing more warnings about macros used with empty arguments
+    fixed warning about empty macros
+    fixes for ubuntu 11.04 (32bit)
+    always link with -ldl
+    Plumbed CELL_LIMIT_PER_FAMILY through ThriftBroker
+    Added version info to monitoring UI; Removed hardcoded monitoring dir reference
+    Reorganized library layout.
+    Added four levels to Maintenance queue to allow METADATA to be handled before USER, etc.
+    Fixed intermittent test failures
+    Fixed intermittent prune_tsv test failure
+    Added cmake support for BerkeleyDB 5.2
+    issue 688: Set proxy name member for comm layer TIMEOUT events
+    Added DUMP command to Hyperspace shell.
+    Made change to ThriftBroker to flush asynchronous mutators if there is enough to flush.
+    fixes to_full_key if FLAG_DELETE_ROW has been specified
+    - support bdb 5.2 (replication API changes)
+    Andy's patches for a few 0.9.5.0 issues.
+    Enabled use of DFS replication factor.
+    Added config param Hypertable.Master.Split.SoftLimitEnabled (true by default).
+    Fixed minor compilation issue
+    [Issue 640] Fixed  Have "cap cleandb" prompt for confirmation
+    issue 685: Changed assert to exception throw
+    Fixed issues 678 & 679 (assert in LoadBalancerBasicDistributeLoad and TableMutatorAsync)
+    Added latency measurment to Thrift API logging
+    Added support for -DPACKAGE_OS_SPECIFIC=1 cmake flag to build OS specific packages
+    [issue 661] Fixed ThriftBroker dies on RangeServer exception
+    [Issue 641] Create CellStoreBlockIndexArray and make it default. Implemented
+    Fixed CellStore-garbage-collection test on mac
+    Eliminated warning
+    issue 657: Fixed rs_metrics_table initialization problem
+    Fixed tcmalloc heap introspection call on 32-bit systems
+
+
 Version 0.9.5.0:
 (2011-07-24)
 
