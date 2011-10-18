@@ -74,7 +74,7 @@ if (NOT PACKAGE_THRIFTBROKER)
 endif ()
 
 # Need to include some "system" libraries as well
-exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+exec_program(${CMAKE_INSTALL_PREFIX}/bin/ldd.sh
              ARGS ${CMAKE_BINARY_DIR}/CMakeFiles/CompilerIdCXX/a.out
              OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
 
@@ -94,7 +94,7 @@ endif ()
 
 # Include other RRDTool dependencies found in Hypertable.Master
 if (NOT PACKAGE_THRIFTBROKER)
-  exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+  exec_program(${CMAKE_INSTALL_PREFIX}/bin/ldd.sh
                ARGS ${CMAKE_BINARY_DIR}/src/cc/Hypertable/Master/Hypertable.Master
                OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
 
@@ -147,15 +147,43 @@ if (NOT PACKAGE_THRIFTBROKER)
     set(Xau_lib ${CMAKE_MATCH_1})
     string(REGEX MATCH "[ \t](/[^ ]+/libXdmcp\\.[^ \n]+)" dummy ${LDD_OUT})
     set(Xdmcp_lib ${CMAKE_MATCH_1})
-    HT_INSTALL_LIBS(lib ${directfb_lib} ${fusion_lib} ${direct_lib}
-                    ${xcb_render_util_lib} ${xcb_render_lib}
-                    ${pangocairo_lib} ${pango_lib} ${cairo_lib}
-                    ${fontconfig_lib} ${Xrender_lib} ${X11_lib} ${xml2_lib}
-                    ${pixman_lib} ${gobject_lib} ${gmodule_lib} ${glib_lib}
-                    ${pangoft2_lib} ${xcb_xlib_lib} ${xcb_lib} ${pcre_lib}
-                    ${Xau_lib} ${Xdmcp_lib})
   endif ()
 endif ()
+
+exec_program(${CMAKE_INSTALL_PREFIX}/bin/ldd.sh
+             ARGS ${CMAKE_BINARY_DIR}/src/cc/ThriftBroker/ThriftBroker
+             OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
+
+if (HT_CMAKE_DEBUG)
+  message("ldd.sh output: ${LDD_OUT}")
+endif ()
+
+if (LDD_RETURN STREQUAL "0")
+  string(REGEX MATCH "[ \t](/[^ ]+/libssl\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(ssl_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libgssapi_krb5\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(gssapi_krb5_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libkrb5\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(krb5_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libcom_err\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(com_err_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libk5crypto\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(k5crypto_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libcrypto\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(crypto_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libkrb5support\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(krb5support_lib ${CMAKE_MATCH_1})
+endif ()
+
+HT_INSTALL_LIBS(lib ${directfb_lib} ${fusion_lib} ${direct_lib}
+                ${xcb_render_util_lib} ${xcb_render_lib}
+                ${pangocairo_lib} ${pango_lib} ${cairo_lib}
+                ${fontconfig_lib} ${Xrender_lib} ${X11_lib} ${xml2_lib}
+                ${pixman_lib} ${gobject_lib} ${gmodule_lib} ${glib_lib}
+                ${pangoft2_lib} ${xcb_xlib_lib} ${xcb_lib} ${pcre_lib}
+                ${Xau_lib} ${Xdmcp_lib} ${ssl_lib} ${gssapi_krb5_lib}
+                ${krb5_lib} ${com_err_lib} ${k5crypto_lib} ${crypto_lib}
+                ${krb5support_lib})
 
 # General package variables
 if (NOT CPACK_PACKAGE_NAME)
