@@ -67,10 +67,10 @@ HT_INSTALL_LIBS(lib ${BOOST_LIBS} ${Thrift_LIBS}
                 ${Kfs_LIBRARIES} ${LibEvent_LIB} ${Log4cpp_LIBRARIES}
                 ${EXPAT_LIBRARIES} ${BZIP2_LIBRARIES}
                 ${ZLIB_LIBRARIES} ${SNAPPY_LIBRARY} ${SIGAR_LIBRARY} ${Tcmalloc_LIBRARIES}
-                ${Jemalloc_LIBRARIES} ${Ceph_LIBRARIES} ${RE2_LIBRARIES})
+                ${Jemalloc_LIBRARIES} ${Ceph_LIBRARIES} ${RE2_LIBRARIES} ${READLINE_LIBRARIES})
 
 if (NOT PACKAGE_THRIFTBROKER)
-  HT_INSTALL_LIBS(lib ${BDB_LIBRARIES} ${RRD_LIBRARIES} ${READLINE_LIBRARIES})
+  HT_INSTALL_LIBS(lib ${BDB_LIBRARIES} ${RRD_LIBRARIES})
 endif ()
 
 # Need to include some "system" libraries as well
