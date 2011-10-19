@@ -45,14 +45,14 @@ fi
 
 # BerkeleyDB
 cd ~
-wget http://www.hypertable.org/pub/db-5.2.36.tar.gz
-tar -xzvf db-5.2.36.tar.gz
-cd db-5.2.36/build_unix/
+wget http://www.hypertable.org/pub/db-4.8.26.tar.gz
+tar -xzvf db-4.8.26.tar.gz
+cd db-4.8.26/build_unix/
 ../dist/configure --enable-cxx
 make
 make install
-sh -c "echo '/usr/local/BerkeleyDB.5.2/lib' > /etc/ld.so.conf.d/BerkeleyDB.5.2.conf"
-/bin/rm -rf ~/db-5.2.36*
+sh -c "echo '/usr/local/BerkeleyDB.4.8/lib' > /etc/ld.so.conf.d/BerkeleyDB.4.8.conf"
+cd ~; /bin/rm -rf ~/db-4.8.26*
 
 # Google RE2
 cd ~
