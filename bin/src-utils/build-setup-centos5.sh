@@ -41,14 +41,14 @@ fi
 
 # BerkeleyDB
 cd ~
-wget http://www.hypertable.org/pub/db-5.2.36.tar.gz
-tar -xzvf db-5.2.36.tar.gz
-cd db-5.2.36/build_unix/
+wget http://www.hypertable.org/pub/db-4.8.26.tar.gz
+tar -xzvf db-4.8.26.tar.gz
+cd db-4.8.26/build_unix/
 ../dist/configure --enable-cxx
 make
 make install
-sh -c "echo '/usr/local/BerkeleyDB.5.2/lib' > /etc/ld.so.conf.d/BerkeleyDB.5.2.conf"
-/bin/rm -rf ~/db-5.2.36*
+sh -c "echo '/usr/local/BerkeleyDB.4.8/lib' > /etc/ld.so.conf.d/BerkeleyDB.4.8.conf"
+cd ~; /bin/rm -rf ~/db-4.8.26*
 
 # Google RE2
 cd ~
@@ -60,15 +60,17 @@ make install
 /bin/rm -rf ~/re2*
 
 # libunwind
-cd ~
-wget http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
-tar xzvf libunwind-0.99-beta.tar.gz
-cd libunwind-0.99-beta
-./configure
-make
-make install
-cd ~
-/bin/rm -rf ~/libunwind-0.99-beta*
+if [ $ARCH -eq 64 ]; then
+  cd ~
+  wget http://download.savannah.gnu.org/releases/libunwind/libunwind-0.99-beta.tar.gz
+  tar xzvf libunwind-0.99-beta.tar.gz
+  cd libunwind-0.99-beta
+  ./configure
+  make
+  make install
+  cd ~
+  /bin/rm -rf ~/libunwind-0.99-beta*
+fi
 
 # Google Perftools
 cd ~
@@ -104,6 +106,9 @@ chmod 755 jdk-6u25-linux-$arch-rpm.bin
 ./jdk-6u25-linux-$arch-rpm.bin
 rm -rf ~/jdk-6u25-linux-$arch-rpm*
 
+alternatives --install /usr/bin/java java /usr/java/jdk1.6.0_25/bin/java 1500
+alternatives --install /usr/bin/javac javac /usr/java/jdk1.6.0_25/bin/javac 1500
+
 # Apache Ant
 cd ~
 wget http://apache.deathculture.net//ant/binaries/apache-ant-1.8.2-bin.zip
@@ -127,6 +132,7 @@ echo "gpgkey=http://dev.centos.org/centos/RPM-GPG-KEY-CentOS-testing" >> /etc/yu
 echo "includepkgs=php*" >> /etc/yum.repos.d/CentOS-Testing.repo
 
 yum -y install automake libtool flex bison pkgconfig libevent-devel ruby-devel perl-Bit-Vector php php-cli php-common php-devel
+yum -y install gcc gcc-c++ zlib-devel openssl openssl-devel readline-devel sqlite3-devel
 
 rpm -Uvh http://ftp.belnet.be/packages/dries.ulyssis.org/fedora/fc8/x86_64/RPMS.dries/perl-Class-Accessor-0.31-1.fc8.rf.noarch.rpm
 
@@ -146,7 +152,6 @@ yum -y install hadoop-0.20 dstat oprofile tcpdump doxygen rrdtool graphviz gdb e
 
 # Upgrade to ruby 1.8.7
 yum -y remove ruby
-yum -y install gcc gcc-c++ zlib-devel openssl-devel readline-devel sqlite3-devel
 wget http://ftp.ruby-lang.org/pub/ruby/1.8/ruby-1.8.7.tar.gz
 tar xzvf ruby-1.8.7.tar.gz
 cd ruby-1.8.7
