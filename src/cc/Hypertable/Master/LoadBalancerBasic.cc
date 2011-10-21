@@ -91,6 +91,13 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
 
   boost::to_upper(algorithm);
   if (algorithm.size() == 0) {
+    foreach(const RangeServerStatistics &server_stats, range_server_stats) {
+      if (!server_stats.stats->live) {
+        HT_INFO_OUT << "Found non-live server " << server_stats.location
+                    << " wait till all servers are live before trying balance" << HT_END;
+        return;
+      }
+    }
     // determine which balancer to use
     mode = BALANCE_MODE_DISTRIBUTE_LOAD;
 
@@ -99,9 +106,9 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
       size_t total_ranges = 0;
       get_unbalanced_servers(range_server_stats);
       size_t num_unbalanced_servers=m_unbalanced_servers.size();
-      foreach(const RangeServerStatistics &server_stats, range_server_stats)
-          total_ranges += server_stats.stats->range_count;
-
+      foreach(const RangeServerStatistics &server_stats, range_server_stats) {
+        total_ranges += server_stats.stats->range_count;
+      }
       // 3 ranges shd always be in the system (2 metadata, 1 rs_metrics)
       if (num_unbalanced_servers > 0 && total_ranges > 3 + range_server_stats.size()) {
         HT_INFO_OUT << "Found " << num_unbalanced_servers << " new/unbalanced servers, "

@@ -38,12 +38,18 @@ RangeServerConnection::RangeServerConnection(MetaLog::WriterPtr &mml_writer,
   if (balanced)
     m_state |= RangeServerConnectionFlags::BALANCED;
   m_comm_addr.set_proxy(m_location);
+  HT_ASSERT(m_mml_writer);
   m_mml_writer->record_state(this);
 }
 
 RangeServerConnection::RangeServerConnection(MetaLog::WriterPtr &mml_writer, const MetaLog::EntityHeader &header_)
   : MetaLog::Entity(header_), m_mml_writer(mml_writer), m_connected(false) {
   m_comm_addr.set_proxy(m_location);
+}
+
+void RangeServerConnection::set_mml_writer(MetaLog::WriterPtr &mml_writer) {
+  HT_ASSERT(mml_writer);
+  m_mml_writer = mml_writer;
 }
 
 bool RangeServerConnection::connect(const String &hostname, InetAddr local_addr, InetAddr public_addr) {
@@ -79,6 +85,7 @@ void RangeServerConnection::set_removed() {
   m_connected = false;
   m_state |= RangeServerConnectionFlags::REMOVED;
   m_removal_time = time(0);
+  HT_ASSERT(m_mml_writer);
   m_mml_writer->record_state(this);
   m_cond.notify_all();
 }
@@ -101,6 +108,7 @@ bool RangeServerConnection::set_balanced(bool val) {
       return false;
     m_state &= ~RangeServerConnectionFlags::BALANCED;
   }
+  HT_ASSERT(m_mml_writer);
   m_mml_writer->record_state(this);
   return true;
 }

@@ -187,6 +187,7 @@ int main(int argc, char **argv) {
       }
       else {
         rsc = dynamic_cast<RangeServerConnection *>(entities[i].get());
+        rsc->set_mml_writer(context->mml_writer);
         context->add_server(rsc);
         HT_ASSERT(rsc);
         operations.push_back( new OperationRecoverServer(context, rsc) );
