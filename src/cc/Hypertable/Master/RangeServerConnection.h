@@ -71,6 +71,7 @@ namespace Hypertable {
     virtual size_t encoded_length() const;
     virtual void encode(uint8_t **bufp) const;
     virtual void decode(const uint8_t **bufp, size_t *remainp);
+    virtual void set_mml_writer(MetaLog::WriterPtr &mml_writer);
 
     friend class Context;
 
