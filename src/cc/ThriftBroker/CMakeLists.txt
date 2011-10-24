@@ -68,6 +68,7 @@ if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
           ARCHIVE DESTINATION lib)
   install(FILES Client.h ThriftHelper.h Client.thrift Hql.thrift
           DESTINATION include/ThriftBroker)
+  install(DIRECTORY gen-cpp DESTINATION lib/cpp)
 endif ()
 
 if (PACKAGE_THRIFTBROKER)
