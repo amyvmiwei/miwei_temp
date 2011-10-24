@@ -1,3 +1,8 @@
+Version 0.9.5.2:
+(2011-10-24)
+
+    Fixed bug in balancer that caused Master crash on pre-existing DBs
+
 Version 0.9.5.1:
 (2011-10-17)
 
