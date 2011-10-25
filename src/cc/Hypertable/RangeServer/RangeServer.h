@@ -161,8 +161,14 @@ namespace Hypertable {
 
     void initialize(PropertiesPtr &);
     void local_recover();
+    typedef std::map<String, SchemaPtr> TableSchemaMap;
+    void get_table_schemas(TableSchemaMap &table_schemas);
+    static void map_table_schemas(const String &parent, const std::vector<DirEntryAttr> &listing,
+                                  TableSchemaMap &table_schemas);
     void replay_log(CommitLogReaderPtr &log_reader);
-    void verify_schema(TableInfoPtr &, uint32_t generation);
+    void replay_load_range(ResponseCallback *, MetaLog::EntityRange *,
+                           bool write_rsml, const TableSchemaMap *table_schemas);
+    void verify_schema(TableInfoPtr &, uint32_t generation, const TableSchemaMap *table_schemas=0);
     void transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
                        int64_t revision, int64_t *revisionp);
 
