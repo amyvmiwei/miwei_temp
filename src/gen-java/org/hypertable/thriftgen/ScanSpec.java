@@ -93,22 +93,22 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
   private static final org.apache.thrift.protocol.TField ROW_OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("row_offset", org.apache.thrift.protocol.TType.I32, (short)15);
   private static final org.apache.thrift.protocol.TField CELL_OFFSET_FIELD_DESC = new org.apache.thrift.protocol.TField("cell_offset", org.apache.thrift.protocol.TType.I32, (short)16);
 
-  public List<RowInterval> row_intervals;
-  public List<CellInterval> cell_intervals;
-  public boolean return_deletes;
-  public int revs;
-  public int row_limit;
-  public long start_time;
-  public long end_time;
-  public List<String> columns;
-  public boolean keys_only;
-  public int cell_limit;
-  public int cell_limit_per_family;
-  public String row_regexp;
-  public String value_regexp;
-  public boolean scan_and_filter_rows;
-  public int row_offset;
-  public int cell_offset;
+  public List<RowInterval> row_intervals; // required
+  public List<CellInterval> cell_intervals; // required
+  public boolean return_deletes; // required
+  public int revs; // required
+  public int row_limit; // required
+  public long start_time; // required
+  public long end_time; // required
+  public List<String> columns; // required
+  public boolean keys_only; // required
+  public int cell_limit; // required
+  public int cell_limit_per_family; // required
+  public String row_regexp; // required
+  public String value_regexp; // required
+  public boolean scan_and_filter_rows; // required
+  public int row_offset; // required
+  public int cell_offset; // required
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -967,10 +967,10 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       return Boolean.valueOf(isScan_and_filter_rows());
 
     case ROW_OFFSET:
-      return new Integer(getRow_offset());
+      return Integer.valueOf(getRow_offset());
 
     case CELL_OFFSET:
-      return new Integer(getCell_offset());
+      return Integer.valueOf(getCell_offset());
 
     }
     throw new IllegalStateException();

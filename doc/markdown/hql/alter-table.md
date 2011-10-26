@@ -43,6 +43,7 @@ ALTER TABLE
       bmz [ bmz_options ]
       | lzo
       | quicklz
+      | snappy
       | zlib [ zlib_options ]
       | none
 

@@ -622,11 +622,11 @@ class ScanSpec:
       oprot.writeFieldBegin('cell_limit', TType.I32, 14)
       oprot.writeI32(self.cell_limit)
       oprot.writeFieldEnd()
-    if self.row_offset != None:
+    if self.row_offset is not None:
       oprot.writeFieldBegin('row_offset', TType.I32, 15)
       oprot.writeI32(self.row_offset)
       oprot.writeFieldEnd()
-    if self.cell_offset != None:
+    if self.cell_offset is not None:
       oprot.writeFieldBegin('cell_offset', TType.I32, 16)
       oprot.writeI32(self.cell_offset)
       oprot.writeFieldEnd()

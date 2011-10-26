@@ -350,6 +350,16 @@ class ScanSpec {
     __isset.scan_and_filter_rows = true;
   }
 
+  void __set_row_offset(const int32_t val) {
+    row_offset = val;
+    __isset.row_offset = true;
+  }
+
+  void __set_cell_offset(const int32_t val) {
+    cell_offset = val;
+    __isset.cell_offset = true;
+  }
+
   bool operator == (const ScanSpec & rhs) const
   {
     if (__isset.row_intervals != rhs.__isset.row_intervals)

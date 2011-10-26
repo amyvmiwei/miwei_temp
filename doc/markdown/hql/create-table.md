@@ -334,10 +334,11 @@ compression codecs are available:
   * `bmz`
   * `lzo`
   * `quicklz`
+  * `snappy`
   * `zlib`
   * `none`
 
-The default code is `lzo` for cell store blocks.  The following tables describe
+The default code is `snappy` for cell store blocks.  The following tables describe
 the available options.
 
 <table border="1">
