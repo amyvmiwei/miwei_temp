@@ -157,21 +157,20 @@ MaintenancePrioritizer::schedule_splits_and_relinquishes(RangeStatsVector &range
 	  cs_data->shadow_cache_size;
     }
 
-    if (!range_data[i]->range->is_root() &&
-	range_data[i]->range->get_error() != Error::RANGESERVER_ROW_OVERFLOW) {
+    if (range_data[i]->range->get_error() != Error::RANGESERVER_ROW_OVERFLOW) {
       if (range_data[i]->relinquish) {
         HT_INFOF("Adding maintenance for range %s because marked for relinquish(%d)",
-                 range_data[i]->range->get_name().c_str(), range_data[i]->state);
+            range_data[i]->range->get_name().c_str(), range_data[i]->state);
         memory_state.decrement_needed(mem_total);
         range_data[i]->priority = priority++;
         range_data[i]->maintenance_flags |= MaintenanceFlag::RELINQUISH;
       }
-      else if (range_data[i]->needs_split) {
-	HT_INFOF("Adding maintenance for range %s because disk_total %d exceeds split threshold",
-		 range_data[i]->range->get_name().c_str(), (int)disk_total);
-	memory_state.decrement_needed(mem_total);
-	range_data[i]->priority = priority++;
-	range_data[i]->maintenance_flags |= MaintenanceFlag::SPLIT;
+      else if (range_data[i]->needs_split && !range_data[i]->range->is_root()) {
+        HT_INFOF("Adding maintenance for range %s because disk_total %d exceeds split threshold",
+            range_data[i]->range->get_name().c_str(), (int)disk_total);
+        memory_state.decrement_needed(mem_total);
+        range_data[i]->priority = priority++;
+        range_data[i]->maintenance_flags |= MaintenanceFlag::SPLIT;
       }
     }
   }
@@ -197,7 +196,7 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeStatsVector &range_d
     disk_total = 0;
 
     for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
-      
+
       // Schedule compaction for AGs that need garbage collection
       if (ag_data->gc_needed) {
         range_data[i]->maintenance_flags |= MaintenanceFlag::COMPACT;
@@ -281,7 +280,7 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeStatsVector &range_d
     }
   }
 
-  return memory_state.need_more();  
+  return memory_state.need_more();
 }
 
 
@@ -312,7 +311,7 @@ MaintenancePrioritizer::purge_shadow_caches(RangeStatsVector &range_data,
     struct ShadowCacheSortOrdering ordering;
     sort(csmd.begin(), csmd.end(), ordering);
   }
-  
+
   for (size_t i=0; i<csmd.size(); i++) {
     ag_data = (AccessGroup::MaintenanceData *)(csmd[i]->user_data);
     ag_data->maintenance_flags |= MaintenanceFlag::MEMORY_PURGE;

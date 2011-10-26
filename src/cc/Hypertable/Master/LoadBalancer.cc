@@ -109,3 +109,6 @@ void LoadBalancer::set_balanced() {
     m_context->set_servers_balanced(m_unbalanced_servers);
 }
 
+void LoadBalancer::get_root_location(String &location) {
+  location = Utility::root_range_location(m_context);
+}
