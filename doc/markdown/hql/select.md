@@ -40,7 +40,9 @@ SELECT
 
     options_spec:
       (REVS revision_count
+      | OFFSET row_offset
       | LIMIT row_count
+      | CELL_OFFSET cell_offset
       | CELL_LIMIT max_cells
       | CELL_LIMIT_PER_FAMILY max_cells_per_cf
       | INTO FILE [file_location]filename[.gz]
@@ -73,19 +75,34 @@ default all revisions of a cell are returned by the `SELECT` statement.  The
 cell revisions are stored in reverse-chronological order, so `REVS=1` will
 return the most recent version of the cell.
 
+#### `OFFSET row_offset`
+<p>
+Skips the first `row_offset` rows returned by the `SELECT` statement.  This
+option cannot be combined with `CELL_OFFSET` and currently applies
+independently to each row (or cell) interval supplied in the `WHERE` clause.
+
 #### `LIMIT row_count`
 <p>
 Limits the number of rows returned by the `SELECT` statement to `row_count`.
+The limit applies independently to each row (or cell) interval specified
+in the `WHERE` clause.
+
+#### `CELL_OFFSET cell_offset`
+<p>
+Skips the first cell_offset cells returned by the `SELECT` statement.
+This option cannot be combined with `OFFSET` and currently applies
+independently to each row (or cell) interval supplied in the WHERE clause.
+
+#### `CELL_LIMIT max_cells`
+<p>
+Limits the total number of cells returned by the query to `max_cells`
+(applied after `CELL_LIMIT_PER_FAMILY`).  The limit applies independently to each row
+(or cell) interval specified in the `WHERE` clause.
 
 #### `CELL_LIMIT_PER_FAMILY max_cells_per_cf`
 <p>
 Limits the number of cells returned per row per column family by the `SELECT` 
 statement to `max_cells_per_cf`.
-
-#### `CELL_LIMIT max_cells`
-<p>
-Limits the total number of cells returned by the query to `max_cells`
-(applied after `CELL_LIMIT_PER_FAMILY`).
 
 #### `INTO FILE [file://|dfs://]filename[.gz]`
 <p>
