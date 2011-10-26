@@ -70,6 +70,7 @@ namespace Hypertable {
     virtual bool wait_for_complete(RangeMoveSpecPtr &move, uint32_t timeout_millis);
 
     virtual void set_balanced();
+    virtual void get_root_location(String &location);
     //String assign_to_server(TableIdentifier &tid, RangeIdentifier &rid) = 0;
     //void range_move_loaded(TableIdentifier &tid, RangeIdentifier &rid) = 0;
     //void range_relinquish_acknowledged(TableIdentifier &tid, RangeIdentifier &rid) = 0;

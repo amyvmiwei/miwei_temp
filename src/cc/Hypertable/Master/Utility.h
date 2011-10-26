@@ -45,6 +45,7 @@ namespace Hypertable {
                                         bool needs_compaction);
     extern int64_t range_hash_code(const TableIdentifier &table, const RangeSpec &range, const char *qualifier=0);
     extern String range_hash_string(const TableIdentifier &table, const RangeSpec &range, const char *qualifier=0);
+    extern String root_range_location(ContextPtr &context);
 
   } // namespace Utility
 

@@ -302,5 +302,23 @@ String range_hash_string(const TableIdentifier &table, const RangeSpec &range, c
   return String("") + range_hash_code(table, range, qualifier);
 }
 
+String root_range_location(ContextPtr &context) {
+  DynamicBuffer value(0);
+  String location;
+  uint64_t root_handle=0;
+  String toplevel_dir = context->props->get_str("Hypertable.Directory");
+
+  try {
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, context->hyperspace, &root_handle);
+    root_handle = context->hyperspace->open(toplevel_dir + "/root", OPEN_FLAG_READ);
+    context->hyperspace->attr_get(root_handle, "Location", value);
+    location = (const char *)value.base;
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << "Unable to read root location -" << e.what() << HT_END;
+    HT_THROW(e.code(), e.what());
+  }
+  return location;
+}
 
 }}

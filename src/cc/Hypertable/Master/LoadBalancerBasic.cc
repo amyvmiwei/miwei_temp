@@ -25,6 +25,7 @@
 #include "LoadBalancerBasic.h"
 #include "LoadBalancerBasicDistributeLoad.h"
 #include "LoadBalancerBasicDistributeTableRanges.h"
+#include "LoadBalancerBasicOffloadServers.h"
 
 #include "OperationProcessor.h"
 #include "OperationBalance.h"
@@ -76,6 +77,7 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
   vector <RangeServerStatistics> range_server_stats;
   uint32_t mode = BALANCE_MODE_DISTRIBUTE_LOAD;
   ptime now = second_clock::local_time();
+  set<String> offload;
 
   {
     time_duration td = now - m_last_balance_time;
@@ -89,7 +91,8 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
     range_server_stats = m_range_server_stats;
   }
 
-  boost::to_upper(algorithm);
+  boost::trim(algorithm);
+  boost::to_lower(algorithm);
   if (algorithm.size() == 0) {
     foreach(const RangeServerStatistics &server_stats, range_server_stats) {
       if (!server_stats.stats->live) {
@@ -123,12 +126,18 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
       mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
   }
   else {
-    if (algorithm.compare("TABLE_RANGES")==0) {
+    if (algorithm.compare("table_ranges")==0) {
       mode = BALANCE_MODE_DISTRIBUTE_TABLE_RANGES;
       m_waiting_for_servers = false;
     }
-    else if (algorithm.compare("LOAD")==0)
+    else if (algorithm.compare("load")==0)
       mode = BALANCE_MODE_DISTRIBUTE_LOAD;
+    else if (boost::starts_with(algorithm, "offload ")) {
+      String list(algorithm, 8);
+      boost::trim(list);
+      boost::split(offload, list, boost::is_any_of(","));
+      mode = BALANCE_MODE_OFFLOAD_SERVERS;
+    }
     else
       HT_THROW(Error::NOT_IMPLEMENTED, (String)"Unknown LoadBalancer algorithm '" + algorithm
           + "' supported algorithms are 'TABLE_RANGES', 'LOAD'");
@@ -139,12 +148,15 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
   if (mode == BALANCE_MODE_DISTRIBUTE_LOAD && !m_waiting_for_servers) {
     distribute_load(now, balance_plan);
   }
-  else {
+  else if (mode == BALANCE_MODE_DISTRIBUTE_TABLE_RANGES) {
     time_duration td = now - m_wait_time_start;
     if (m_waiting_for_servers && td.total_milliseconds() > m_balance_wait)
       m_waiting_for_servers = false;
     if (!m_waiting_for_servers)
       distribute_table_ranges(range_server_stats, balance_plan);
+  }
+  else if (mode == BALANCE_MODE_OFFLOAD_SERVERS) {
+    offload_servers(range_server_stats, offload, balance_plan);
   }
 
   if (balance_plan->moves.size()) {
@@ -183,6 +195,16 @@ void LoadBalancerBasic::distribute_table_ranges(vector<RangeServerStatistics> &r
   // no need to check if its time to do balance, we have empty servers, so do balance
   LoadBalancerBasicDistributeTableRanges  planner(m_context->metadata_table);
   planner.compute_plan(range_server_stats, balance_plan);
+  return;
+}
+
+void LoadBalancerBasic::offload_servers(vector<RangeServerStatistics> &range_server_stats,
+    set<String> &offload, BalancePlanPtr &balance_plan) {
+  // no need to check if its time to do balance, we have empty servers, so do balance
+  LoadBalancerBasicOffloadServers planner(m_context->metadata_table);
+  String root_location;
+  get_root_location(root_location);
+  planner.compute_plan(range_server_stats, offload, root_location, balance_plan);
   return;
 }
 

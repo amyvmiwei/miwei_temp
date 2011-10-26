@@ -27,6 +27,7 @@ LoadBalancer.cc
 LoadBalancerBasic.cc
 LoadBalancerBasicDistributeTableRanges.cc
 LoadBalancerBasicDistributeLoad.cc
+LoadBalancerBasicOffloadServers.cc
 MetaLogDefinitionMaster.cc
 Monitoring.cc
 Operation.cc

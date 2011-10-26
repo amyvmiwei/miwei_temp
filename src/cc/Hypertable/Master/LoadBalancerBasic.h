@@ -23,6 +23,7 @@
 #define HYPERTABLE_LOADBALANCERBASIC_H
 
 #include <map>
+#include <set>
 #include <iostream>
 
 
@@ -38,7 +39,8 @@ namespace Hypertable {
     public:
     enum {
       BALANCE_MODE_DISTRIBUTE_LOAD             = 1,
-      BALANCE_MODE_DISTRIBUTE_TABLE_RANGES     = 2
+      BALANCE_MODE_DISTRIBUTE_TABLE_RANGES     = 2,
+      BALANCE_MODE_OFFLOAD_SERVERS             = 3
     };
     LoadBalancerBasic(ContextPtr context);
 
@@ -54,6 +56,9 @@ namespace Hypertable {
       void distribute_load(const boost::posix_time::ptime &now, BalancePlanPtr &plan);
       void distribute_table_ranges(vector<RangeServerStatistics> &range_server_stats,
                                    BalancePlanPtr &plan);
+      void offload_servers(vector<RangeServerStatistics> &range_server_stats,
+                           set<String> &offload, BalancePlanPtr &balance_plan);
+
       void get_unbalanced_servers(const std::vector<RangeServerStatistics> &stats);
 
       Mutex m_data_mutex;
