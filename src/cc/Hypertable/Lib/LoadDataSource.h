@@ -52,7 +52,7 @@ namespace Hypertable {
 
   public:
     LoadDataSource(const String &header_fname,
-		   int row_uniquify_chars = 0,
+                   int row_uniquify_chars = 0,
                    int load_flags = 0);
 
     virtual ~LoadDataSource() { delete [] m_type_mask; return; }
@@ -64,7 +64,8 @@ namespace Hypertable {
     virtual bool next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
                       bool *is_deletep, uint32_t *consumedp);
 
-    virtual void init(const std::vector<String> &key_columns, const String &timestamp_column);
+    virtual void init(const std::vector<String> &key_columns, 
+                      const String &timestamp_column);
 
     int64_t get_current_lineno() { return m_cur_line; }
     unsigned long get_source_size() const { return m_source_size; }
@@ -73,9 +74,9 @@ namespace Hypertable {
 
     bool get_next_line(String &line) {
       if (m_first_line_cached) {
-	       line = m_first_line;
-	       m_first_line_cached = false;
-	       return true;
+        line = m_first_line;
+        m_first_line_cached = false;
+        return true;
       }
       return getline(m_fin, line);
     }
@@ -89,7 +90,8 @@ namespace Hypertable {
     bool should_skip(int idx, const uint32_t *masks) {
       uint32_t bm = masks[idx];
       return bm && ((bm & TIMESTAMP) ||
-		    !(LoadDataFlags::duplicate_key_columns(m_load_flags) && (bm & ROW_KEY)));
+            !(LoadDataFlags::duplicate_key_columns(m_load_flags) 
+                && (bm & ROW_KEY)));
     }
 
     class KeyComponentInfo {
