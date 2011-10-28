@@ -1,0 +1,3 @@
+#dtg	status	callsign	origin	destination	origin_time	destination_time	longitude	latitude	type	altitude	speed	heading
+2011-08-23 00:46:25	lL	ABC\N123	ABC	XYZ	11	117	-87.75	41.79	ABC/Q	\N	9999	9999
+2011-08-23 00:46:25	lL	DEF123	ABC	XYZ	8	122	-121.59	38.7	ABC/G	\N	9999	9999
