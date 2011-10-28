@@ -1,0 +1,42 @@
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+
+USE "/";
+
+DROP TABLE IF EXISTS TestIssue719;
+
+CREATE TABLE TestIssue719 (
+dtg, status, callsign, origin, destination, origin_time,
+destination_time, longitude, latitude, type, altitude, speed, heading
+);
+
+LOAD DATA INFILE ROW_KEY_COLUMN=dtg "test.tsv" INTO TABLE TestIssue719;
+SELECT * FROM TestIssue719;
+2011-08-23 00:46:25	status	lL
+2011-08-23 00:46:25	status	lL
+2011-08-23 00:46:25	callsign	DEF123
+2011-08-23 00:46:25	callsign	ABC\\N123
+2011-08-23 00:46:25	origin	ABC
+2011-08-23 00:46:25	origin	ABC
+2011-08-23 00:46:25	destination	XYZ
+2011-08-23 00:46:25	destination	XYZ
+2011-08-23 00:46:25	origin_time	8
+2011-08-23 00:46:25	origin_time	11
+2011-08-23 00:46:25	destination_time	122
+2011-08-23 00:46:25	destination_time	117
+2011-08-23 00:46:25	longitude	-121.59
+2011-08-23 00:46:25	longitude	-87.75
+2011-08-23 00:46:25	latitude	38.7
+2011-08-23 00:46:25	latitude	41.79
+2011-08-23 00:46:25	type	ABC/G
+2011-08-23 00:46:25	type	ABC/Q
+2011-08-23 00:46:25	speed	9999
+2011-08-23 00:46:25	speed	9999
+2011-08-23 00:46:25	heading	9999
+2011-08-23 00:46:25	heading	9999
+
