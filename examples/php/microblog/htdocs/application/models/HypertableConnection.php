@@ -64,6 +64,17 @@ class HypertableConnection
     return sprintf("%s:%u", date("Y-m-d H:i:s", $epoch), $rem);
   }
 
+  // create and insert a unique value
+  public static function create_cell_unique($table, $row, $cf) {
+    self::initialize();
+
+    $k=new Key();
+    $k->row=$row;
+    $k->column_family=$cf;
+    return self::$_client->create_cell_unique(self::$_namespace, 
+                $table, $k, '');
+  }
+
   // Close the namespace to avoid leaks in the ThriftBroker
   public static function close() {
     if (self::$_namespace) {

@@ -33,7 +33,7 @@ class ProfileTable
     if (!$result or !count($result->cells))
         return null;
     $profile=new Profile();
-    $profile->setId($result->cells[0]->value);
+    $profile->setId($id);
     $profile->setDisplayName($result->cells[1]->value);
     $profile->setPasswordMd5($result->cells[2]->value);
     $profile->setEmail($result->cells[3]->value);
@@ -46,8 +46,6 @@ class ProfileTable
 
   // store a profile
   public function store($profile) {
-    HypertableConnection::insert('profile', $profile->getId(), 'guid',
-            $profile->getId());
     HypertableConnection::insert('profile', $profile->getId(), 'display_name',
             $profile->getDisplayName());
     HypertableConnection::insert('profile', $profile->getId(), 'password',
@@ -62,6 +60,28 @@ class ProfileTable
             $profile->getBio());
     HypertableConnection::insert('profile', $profile->getId(), 'webpage',
             $profile->getWebpage());
+  }
+
+  // create a new profile
+  //
+  // this function uses create_cell_unique() to insert a new cell. If that
+  // cell already exists the Thrift layer will throw an exception. In that
+  // case just return NULL, otherwise return the newly created object
+  public function create($username) {
+    try {
+      $guid=HypertableConnection::create_cell_unique('profile', $username,
+            'guid');
+      $profile = new Profile();
+      $profile->setGuid($guid);
+      $profile->setId($username);
+      return $profile;
+    }
+    catch (Exception $e) {
+      if($e->getCode()==48) // a cell with this username already exists
+        return null;
+      else
+        throw $e;
+    }
   }
 }
 

@@ -31,6 +31,14 @@ class Profile
     $this->_id=$id;
   }
 
+  public function getGuid() {
+    return ($this->_guid);
+  }
+
+  public function setGuid($guid) {
+    $this->_guid=$guid;
+  }
+
   public function getDisplayName() {
     return ($this->_display_name);
   }
@@ -97,6 +105,7 @@ class Profile
     $this->_bio=$bio;
   }
 
+  protected $_guid;
   protected $_id;
   protected $_display_name;
   protected $_password;
