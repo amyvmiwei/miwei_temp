@@ -98,9 +98,9 @@ class LoginController extends Zend_Controller_Action
 
     // Get our authentication adapter and check credentials
     $adapter = $this->getAuthAdapter($form->getValues());
-    $auth  = Zend_Auth::getInstance();
+    $auth = Zend_Auth::getInstance();
     try {
-      $result  = $auth->authenticate($adapter);
+      $result = $auth->authenticate($adapter);
     }
     catch (Exception $e) {
       $this->handleError($e);
@@ -137,24 +137,24 @@ class LoginController extends Zend_Controller_Action
       return $this->render('index');
     }
 
-    // check if the username is unique. if yes: create the profile
+    // create the new profile. this function will return null
+    // if the profile already exists
     $ar=$form->getValues();
     $username=$ar['username'];
     try {
-      $usr = ProfileTable::load($username);
+      $profile = ProfileTable::create($username);
     }
     catch (Exception $e) {
       $this->handleError($e);
     }
-    if ($usr) { // already exists
+    if (!$profile) { // already exists
       $form->setDescription('Username already exists, please choose '.
             'another one!');
       $this->view->loginForm = $this->getLoginForm();
       $this->view->signupForm = $form;
       return $this->render('index');
     }
-    else { // does not exist - create a new one with an empty password
-      $profile = new Profile();
+    else { // initialize with an empty password
       $profile->setId($username);
       $profile->setPasswordPlain('');
       ProfileTable::store($profile);

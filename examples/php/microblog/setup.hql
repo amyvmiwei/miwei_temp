@@ -2,14 +2,14 @@ CREATE NAMESPACE "/hypertable-samples/microblog";
 
 USE "/hypertable-samples/microblog";
 
-CREATE TABLE profile ('guid' MAX_VERSIONS=1, 
-                      'display_name' MAX_VERSIONS=1, 
-                      'password' MAX_VERSIONS=1, 
-                      'email' MAX_VERSIONS=1, 
-                      'avatar' MAX_VERSIONS=1,
-                      'location' MAX_VERSIONS=1, 
-                      'webpage' MAX_VERSIONS=1, 
-                      'bio' MAX_VERSIONS=1);
+CREATE TABLE profile ('guid' MAX_VERSIONS 1 TIME_ORDER DESC, 
+                      'display_name' MAX_VERSIONS 1, 
+                      'password' MAX_VERSIONS 1, 
+                      'email' MAX_VERSIONS 1, 
+                      'avatar' MAX_VERSIONS 1,
+                      'location' MAX_VERSIONS 1, 
+                      'webpage' MAX_VERSIONS 1, 
+                      'bio' MAX_VERSIONS 1);
 
 # user 'alice', password is "123"
 INSERT INTO profile VALUES ('alice', 
@@ -65,10 +65,10 @@ INSERT INTO profile VALUES ('carl',
 INSERT INTO profile VALUES ('carl', 
             'avatar', 'http://assets.sbnation.com/assets/668221/Carl_waving.gif');
 
-CREATE TABLE user ('following' MAX_VERSIONS=1, 
+CREATE TABLE user ('following' MAX_VERSIONS 1, 
                    'following_history',
                    'following_count' COUNTER,
-                   'followers' MAX_VERSIONS=1, 
+                   'followers' MAX_VERSIONS 1, 
                    'followers_history',
                    'followers_count' COUNTER,
                    'follow_stream', 
