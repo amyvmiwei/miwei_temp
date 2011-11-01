@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.logging.Logger;
 import java.util.Random;
 
+import org.apache.hadoop.conf.Configuration;
+
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Get;
 import org.apache.hadoop.hbase.client.HBaseAdmin;
@@ -36,7 +38,7 @@ import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.ResultScanner;
 import org.apache.hadoop.hbase.client.Scan;
-import org.apache.hadoop.hbase.io.Cell;
+import org.apache.hadoop.hbase.KeyValue;
 
 import org.hypertable.Common.Checksum;
 import org.hypertable.Common.DiscreteRandomGeneratorZipf;
@@ -48,8 +50,8 @@ public class DriverHBase extends Driver {
   static final Logger log = Logger.getLogger("org.hypertable.examples.PerformanceTest");
 
   public DriverHBase() throws IOException {
-    this.conf  = new HBaseConfiguration();
-    this.admin = new HBaseAdmin(this.conf);
+      this.conf = HBaseConfiguration.create();
+      this.admin = new HBaseAdmin( this.conf );
   }
 
   public void setup(String tableName, Task.Type testType, int parallelism) {
@@ -78,7 +80,7 @@ public class DriverHBase extends Driver {
     ByteBuffer keyByteBuf = ByteBuffer.allocate(8);
     byte [] keyBuf = keyByteBuf.array();
     DiscreteRandomGeneratorZipf zipf = null;
-    org.apache.hadoop.hbase.io.Cell [] cells = null;
+    org.apache.hadoop.hbase.KeyValue [] kvs = null;
 
     if (task.distribution == Task.Distribution.ZIPFIAN)
       zipf = new DiscreteRandomGeneratorZipf((int)task.start, (int)task.end, 1, 0.8);
@@ -137,20 +139,20 @@ public class DriverHBase extends Driver {
           get.addColumn(mCommon.COLUMN_FAMILY_BYTES, mCommon.COLUMN_QUALIFIER_BYTES);
           result = table.get(get);
           if (result != null) {
-            cells = result.getCellValues();
-            if (cells != null) {
-              for (Cell cell : cells) {
-                mResult.itemsReturned++;
-                mResult.valueBytesReturned += cell.getValue().length;
-              }
-            }
+	      kvs = result.raw();
+	      if (kvs != null) {
+		  for (KeyValue kv : kvs) {
+		      mResult.itemsReturned++;
+		      mResult.valueBytesReturned += kv.getValueLength();
+		  }
+	      }
           }
         }
       }
       catch (Exception e) {
         e.printStackTrace();
         log.severe(e.toString());
-        throw new IOException("Unable to set cell via thrift - " + e.toString());
+        throw new IOException("Unable to set KeyValue via thrift - " + e.toString());
       }
     }
     else if (task.type == Task.Type.SCAN) {
@@ -163,14 +165,14 @@ public class DriverHBase extends Driver {
 
       result = scanner.next();
       while (result != null) {
-        cells = result.getCellValues();
-        if (cells != null) {
-          for (Cell cell : cells) {
-            mResult.itemsReturned++;
-            mResult.valueBytesReturned += cell.getValue().length;
-          }
-        }
-        result = scanner.next();
+	  kvs = result.raw();
+	  if (kvs != null) {
+	      for (KeyValue kv : kvs) {
+		  mResult.itemsReturned++;
+		  mResult.valueBytesReturned += kv.getValueLength();
+	      }
+	  }
+	  result = scanner.next();
       }
       scanner.close();
     }
@@ -179,7 +181,7 @@ public class DriverHBase extends Driver {
     mResult.elapsedMillis += System.currentTimeMillis() - startTime;
   }
 
-  protected volatile HBaseConfiguration conf;
+  protected volatile Configuration conf;
   protected HBaseAdmin admin;
   protected HTable table;
   protected String mTableName;

@@ -326,7 +326,7 @@ public class Dispatcher {
         client.close_namespace(namespace);
       }
       else if (driver.equals("hbase")) {
-        HBaseAdmin admin = new HBaseAdmin( new HBaseConfiguration() );
+        HBaseAdmin admin = new HBaseAdmin( HBaseConfiguration.create() );
         if (!admin.tableExists("perftest")) {
           System.out.println("Table 'perftest' does not exist, exiting...");
           System.exit(1);
