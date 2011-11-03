@@ -63,6 +63,9 @@ void OperationRenameTable::initialize_dependencies() {
 
 void OperationRenameTable::execute() {
   int32_t state = get_state();
+  String id;
+  String old_index;
+  String new_index;
 
   HT_INFOF("Entering RenameTable-%lld(%s, %s) state=%s",
            (Lld)header.id, m_old_name.c_str(), m_new_name.c_str(), OperationState::get_text(state));
@@ -74,12 +77,49 @@ void OperationRenameTable::execute() {
       complete_error(Error::TABLE_NOT_FOUND, m_old_name);
       return;
     }
+
+    // check if an index table exists; if yes then create a sub-operation
+    old_index = Filesystem::dirname(m_old_name) 
+                   + "/^" + Filesystem::basename(m_old_name);
+    boost::trim_if(old_index, boost::is_any_of("/ "));
+    if (Utility::table_exists(m_context, old_index, id)) {
+      new_index = Filesystem::dirname(m_new_name) 
+                     + "/^" + Filesystem::basename(m_new_name);
+      boost::trim_if(new_index, boost::is_any_of("/ "));
+
+      Operation *op = new OperationRenameTable(m_context, old_index, new_index);
+      op->add_obstruction(old_index + "-rename-index");
+
+      ScopedLock lock(m_mutex);
+      add_dependency(old_index + "-rename-index");
+      m_sub_ops.push_back(op);
+    }
+
+    // and now the same for a qualified index
+    old_index = Filesystem::dirname(m_old_name) 
+                   + "/^^" + Filesystem::basename(m_old_name);
+    boost::trim_if(old_index, boost::is_any_of("/ "));
+    if (Utility::table_exists(m_context, old_index, id)) {
+      new_index = Filesystem::dirname(m_new_name) 
+                     + "/^^" + Filesystem::basename(m_new_name);
+      boost::trim_if(new_index, boost::is_any_of("/ "));
+
+      Operation *op = new OperationRenameTable(m_context, old_index, new_index);
+      op->add_obstruction(old_index + "-rename-qualified-index");
+
+      ScopedLock lock(m_mutex);
+      add_dependency(old_index + "-rename-qualified-index");
+      m_sub_ops.push_back(op);
+    }
+
     set_state(OperationState::STARTED);
     m_context->mml_writer->record_state(this);
+    break;
 
   case OperationState::STARTED:
     m_context->namemap->rename(m_old_name, m_new_name);
     m_context->monitoring->change_id_mapping(m_id, m_new_name);
+
     HT_MAYBE_FAIL("rename-table-STARTED");
     complete_ok();
     break;
@@ -90,12 +130,12 @@ void OperationRenameTable::execute() {
 
   HT_INFOF("Leaving RenameTable-%lld(%s, %s)",
            (Lld)header.id, m_old_name.c_str(), m_new_name.c_str());
-
 }
 
 
 void OperationRenameTable::display_state(std::ostream &os) {
-  os << " old_name=" << m_old_name << " new_name=" << m_new_name << " id=" << m_id << " ";
+  os << " old_name=" << m_old_name << " new_name=" << m_new_name 
+     << " id=" << m_id << " ";
 }
 
 size_t OperationRenameTable::encoded_state_length() const {

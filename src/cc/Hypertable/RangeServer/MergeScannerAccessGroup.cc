@@ -20,19 +20,18 @@
  */
 
 #include "Common/Compat.h"
-#include <cassert>
-
 #include "Common/Logger.h"
 
 #include "Hypertable/Lib/Key.h"
+#include "Hypertable/Lib/Schema.h"
 
 #include "MergeScannerAccessGroup.h"
 
 using namespace Hypertable;
 
 
-MergeScannerAccessGroup::MergeScannerAccessGroup(ScanContextPtr &scan_ctx, 
-    bool return_deletes)
+MergeScannerAccessGroup::MergeScannerAccessGroup(String &table_name,
+        ScanContextPtr &scan_ctx, bool return_deletes, bool is_compaction)
   : MergeScanner(scan_ctx), m_return_deletes(return_deletes),
     m_revs_count(0), m_revs_limit(0), m_prev_key(0), m_prev_cf(-1),
     m_no_forward(false), m_count_present(false), 
@@ -41,9 +40,35 @@ MergeScannerAccessGroup::MergeScannerAccessGroup(ScanContextPtr &scan_ctx,
     m_deleted_column_family(0), m_deleted_cell(0), m_deleted_cell_version(0),
     m_scan_context(scan_ctx.get())
 { 
-  m_start_timestamp = m_scan_context->time_interval.first;
-  m_end_timestamp = m_scan_context->time_interval.second;
-  m_revision = m_scan_context->revision;
+  m_start_timestamp = scan_ctx->time_interval.first;
+  m_end_timestamp = scan_ctx->time_interval.second;
+  m_revision = scan_ctx->revision;
+
+  bool has_index = false;
+  bool has_qualifier_index = false;
+
+  if (is_compaction) {
+    // check if there are any indices in this schema
+    foreach (Schema::ColumnFamily *cf, scan_ctx->schema->get_column_families()){
+      if (!cf || cf->deleted)
+        continue;
+      if (cf->has_index) {
+        HT_INFO("Compaction scan has cell value index");
+        has_index = true;
+      }
+      if (cf->has_qualifier_index) {
+        HT_INFO("Compaction scan has column qualifier index");
+        has_qualifier_index = true;
+      }
+
+      if (has_index && has_qualifier_index)
+        break;
+    }
+  }
+
+  if (has_index || has_qualifier_index)
+    m_index_updater = IndexUpdaterFactory::create(table_name, scan_ctx->schema,
+                                has_index, has_qualifier_index);
 }
 
 bool 
@@ -71,12 +96,14 @@ void
 MergeScannerAccessGroup::do_initialize()
 {
   ScannerState sstate;
-  int64_t cur_bytes=0;
+  bool counter;
+  int64_t cell_cutoff, cur_bytes = 0;
 
   while (!m_queue.empty()) {
     sstate = m_queue.top();
 
-    CellFilterInfo& cfi = m_scan_context->family_info[sstate.key.column_family_code];
+    CellFilterInfo &cfi = m_scan_context->family_info[
+                sstate.key.column_family_code];
 
     // update I/O tracking
     cur_bytes = sstate.key.length + sstate.value.length();
@@ -84,9 +111,16 @@ MergeScannerAccessGroup::do_initialize()
 
     // Only need to worry about counters if this scanner scans over a 
     // single access group since no counter will span multiple access grps
+    cell_cutoff = m_scan_context_ptr->family_info[
+                sstate.key.column_family_code].cutoff_time;
+    counter = m_scan_context_ptr->family_info[
+                sstate.key.column_family_code].counter;
 
-    if (sstate.key.timestamp < cfi.cutoff_time
-        || sstate.key.timestamp < m_start_timestamp) {
+
+    if (sstate.key.timestamp < cell_cutoff
+        || (sstate.key.timestamp < m_start_timestamp)) {
+      if (m_index_updater && sstate.key.flag == FLAG_INSERT)
+        purge_from_index(sstate.key, sstate.value);
       m_queue.pop();
       sstate.scanner->forward();
       if (sstate.scanner->get(sstate.key, sstate.value))
@@ -128,7 +162,9 @@ MergeScannerAccessGroup::do_initialize()
     else if (sstate.key.flag == FLAG_INSERT) {
       if (sstate.key.revision > m_revision
           || (sstate.key.timestamp >= m_end_timestamp 
-            && !m_return_deletes)) {
+            && (!m_return_deletes || sstate.key.flag == FLAG_INSERT))) {
+        if (m_index_updater && sstate.key.flag == FLAG_INSERT)
+          purge_from_index(sstate.key, sstate.value);
         m_queue.pop();
         sstate.scanner->forward();
         if (sstate.scanner->get(sstate.key, sstate.value))
@@ -155,7 +191,9 @@ MergeScannerAccessGroup::do_initialize()
         m_revs_limit = cfi.max_versions;
       }
       m_revs_count++;
-      if (m_revs_limit && m_revs_count > m_revs_limit && !cfi.counter) {
+      if (m_revs_limit && m_revs_count > m_revs_limit && !counter) {
+        if (m_index_updater && sstate.key.flag == FLAG_INSERT)
+          purge_from_index(sstate.key, sstate.value);
         m_queue.pop();
         sstate.scanner->forward();
         if (sstate.scanner->get(sstate.key, sstate.value))
@@ -177,6 +215,39 @@ MergeScannerAccessGroup::do_initialize()
           continue;
         }
       }
+      // value match (exact match or prefix match)
+      if (m_scan_context_ptr->spec 
+            && m_scan_context_ptr->spec->column_predicates.size()) {
+        bool fail = false;
+        foreach (const ColumnPredicate &cp, 
+                m_scan_context_ptr->spec->column_predicates) {
+          const uint8_t *dptr;
+          size_t len = sstate.value.decode_length(&dptr);
+          switch (cp.operation) {
+            case ColumnPredicate::EXACT_MATCH:
+              if (cp.value_len != len || 
+                    memcmp(cp.value, sstate.value.str(), cp.value_len))
+                fail = true;
+              break;
+            case ColumnPredicate::PREFIX_MATCH:
+              if (cp.value_len > len || 
+                    memcmp(cp.value, sstate.value.str(), cp.value_len))
+                fail = true;
+              break;
+            default:
+              continue;
+          }
+          if (fail)
+            break;
+        }
+        if (fail) {
+          m_queue.pop();
+          sstate.scanner->forward();
+          if (sstate.scanner->get(sstate.key, sstate.value))
+            m_queue.push(sstate);
+          continue;
+        }
+      }
       // row regexp
       if (m_scan_context->row_regexp)
         if (!RE2::PartialMatch(sstate.key.row, 
@@ -188,7 +259,8 @@ MergeScannerAccessGroup::do_initialize()
           continue;
         }
       // column qualifier doesn't match
-      if (!cfi.qualifier_matches(sstate.key.column_qualifier)) {
+      if (!cfi.qualifier_matches(sstate.key.column_qualifier, 
+                  sstate.key.column_qualifier_len)) {
         m_queue.pop();
         sstate.scanner->forward();
         if (sstate.scanner->get(sstate.key, sstate.value))
@@ -196,7 +268,7 @@ MergeScannerAccessGroup::do_initialize()
         continue;
       }
       // filter by value regexp last since its probly the most expensive
-      if (m_scan_context->value_regexp && !cfi.counter) {
+      if (m_scan_context->value_regexp && !counter) {
         const uint8_t *dptr;
         if (!RE2::PartialMatch(re2::StringPiece((const char *)sstate.value.str(),
                             sstate.value.decode_length(&dptr)), 
@@ -216,7 +288,7 @@ MergeScannerAccessGroup::do_initialize()
       m_revs_limit = cfi.max_versions;
 
       // if counter then keep incrementing till we are ready with 1st kv pair
-      if (cfi.counter) {
+      if (counter) {
         start_count(sstate.key, sstate.value);
         forward();
         m_initialized = true;
@@ -236,7 +308,7 @@ MergeScannerAccessGroup::do_forward()
   ScannerState sstate;
   Key key;
   bool counter;
-  int64_t cur_bytes;
+  int64_t cell_cutoff, cur_bytes = 0;
 
   if (m_queue.empty()) {
     if (m_count_present)
@@ -279,21 +351,33 @@ MergeScannerAccessGroup::do_forward()
       cur_bytes = sstate.key.length + sstate.value.length();
       io_add_input_cell(cur_bytes);
 
-      CellFilterInfo& cfi = m_scan_context->family_info[sstate.key.column_family_code];
+      CellFilterInfo &cfi = m_scan_context->family_info[
+                sstate.key.column_family_code];
 
       // we only need to care about counters for a MergeScanner which is 
       // merging over a single access group since no counter will span 
       // multiple access groups
-      counter = cfi.counter;
+      cell_cutoff = m_scan_context_ptr->family_info[
+                sstate.key.column_family_code].cutoff_time;
+      counter = m_scan_context_ptr->family_info[
+                sstate.key.column_family_code].counter;
 
       // apply the various filters...
-      if(sstate.key.timestamp < cfi.cutoff_time
-         || sstate.key.timestamp < m_start_timestamp) {
+      if (sstate.key.timestamp < cell_cutoff) {
+        if (m_index_updater && sstate.key.flag == FLAG_INSERT)
+          purge_from_index(sstate.key, sstate.value);
+        continue;
+      }
+      else if (sstate.key.timestamp < m_start_timestamp) {
+        if (m_index_updater && sstate.key.flag == FLAG_INSERT)
+          purge_from_index(sstate.key, sstate.value);
         continue;
       }
       else if (sstate.key.revision > m_revision
           || (sstate.key.timestamp >= m_end_timestamp 
             && (!m_return_deletes || sstate.key.flag == FLAG_INSERT))) {
+        if (m_index_updater && sstate.key.flag == FLAG_INSERT)
+          purge_from_index(sstate.key, sstate.value);
         continue;
       }
       else if (sstate.key.flag == FLAG_DELETE_ROW) {
@@ -327,8 +411,9 @@ MergeScannerAccessGroup::do_forward()
           break;
       }
       else if (sstate.key.flag == FLAG_DELETE_CELL_VERSION) {
-        if (matches_deleted_cell_version(sstate.key))
+        if (matches_deleted_cell_version(sstate.key)) {
           m_deleted_cell_version_set.insert(sstate.key.timestamp);
+        }
         else
           update_deleted_cell_version(sstate.key);
         if (m_return_deletes)
@@ -345,33 +430,45 @@ MergeScannerAccessGroup::do_forward()
               m_deleted_cell_version_set.clear();
             }
             else if (m_deleted_cell_version_set.find(sstate.key.timestamp) !=
-                     m_deleted_cell_version_set.end())
+                     m_deleted_cell_version_set.end()) {
               // apply previously seen delete cell version to this cell
+              if (m_index_updater)
+                purge_from_index(sstate.key, sstate.value);
               continue;
+            }
           }
           if (m_deleted_cell.fill() > 0) {
             if (!matches_deleted_cell(sstate.key))
               // we wont see the previously seen deleted cell again
               m_deleted_cell.clear();
-            else if (sstate.key.timestamp <= m_deleted_cell_timestamp)
+            else if (sstate.key.timestamp <= m_deleted_cell_timestamp) {
               // apply previously seen delete cell to this cell
+              if (m_index_updater)
+                purge_from_index(sstate.key, sstate.value);
               continue;
+            }
           }
           if (m_deleted_column_family.fill() > 0) {
             if (!matches_deleted_column_family(sstate.key))
               // we wont see the previously seen deleted column family again
               m_deleted_column_family.clear();
-            else if (sstate.key.timestamp <= m_deleted_column_family_timestamp)
+            else if (sstate.key.timestamp <= m_deleted_column_family_timestamp){
               // apply previously seen delete column family to this cell
+              if (m_index_updater)
+                purge_from_index(sstate.key, sstate.value);
               continue;
+            }
           }
           if (m_deleted_row.fill() > 0) {
             if (!matches_deleted_row(sstate.key))
               // we wont see the previously seen deleted row family again
               m_deleted_row.clear();
-            else if (sstate.key.timestamp <= m_deleted_row_timestamp)
+            else if (sstate.key.timestamp <= m_deleted_row_timestamp) {
               // apply previously seen delete row family to this cell
+              if (m_index_updater)
+                purge_from_index(sstate.key, sstate.value);
               continue;
+            }
           }
           if (m_deleted_cell_version.fill() == 0 
               && m_deleted_cell.fill() == 0 
@@ -413,6 +510,34 @@ MergeScannerAccessGroup::do_forward()
           if (cmp > 0)
             continue;
         }
+        // value match (exact match or prefix match)
+        if (m_scan_context_ptr->spec 
+              && m_scan_context_ptr->spec->column_predicates.size()) {
+          bool fail = false;
+          foreach (const ColumnPredicate &cp, 
+                  m_scan_context_ptr->spec->column_predicates) {
+            const uint8_t *dptr;
+            size_t len = sstate.value.decode_length(&dptr);
+            switch (cp.operation) {
+              case ColumnPredicate::EXACT_MATCH:
+                if (cp.value_len != len || 
+                      memcmp(cp.value, sstate.value.str(), cp.value_len))
+                  fail = true;
+                break;
+              case ColumnPredicate::PREFIX_MATCH:
+                if (cp.value_len > len || 
+                      memcmp(cp.value, sstate.value.str(), cp.value_len))
+                  fail = true;
+                break;
+              default:
+                continue;
+            }
+            if (fail)
+              break;
+          }
+          if (fail)
+            continue;
+        }
         // row regexp
         if (m_scan_context->row_regexp) {
           bool cached, match;
@@ -431,14 +556,16 @@ MergeScannerAccessGroup::do_forward()
           m_regexp_cache.check_column(sstate.key.column_family_code,
               sstate.key.column_qualifier, &cached, &match);
           if (!cached) {
-            match = cfi.qualifier_matches(sstate.key.column_qualifier);
+            match = cfi.qualifier_matches(sstate.key.column_qualifier, 
+                    sstate.key.column_qualifier_len);
             m_regexp_cache.set_column(sstate.key.column_family_code,
                 sstate.key.column_qualifier, match);
           }
           if (!match)
             continue;
         }
-        else if (!cfi.qualifier_matches(sstate.key.column_qualifier)) {
+        else if (!cfi.qualifier_matches(sstate.key.column_qualifier, 
+                    sstate.key.column_qualifier_len)) {
           continue;
         }
 

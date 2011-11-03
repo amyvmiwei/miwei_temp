@@ -35,6 +35,7 @@ namespace Hypertable {
     static bool enabled() { return (bool)instance; }
     void parse_option(String option);
     void maybe_fail(const String &label);
+    bool failure_signalled(const String &label);
     void clear();
 
   private:
@@ -61,6 +62,8 @@ namespace Hypertable {
     Hypertable::FailureInducer::instance->maybe_fail(_label_); \
   }
 
-
+#define HT_FAILURE_SIGNALLED(_label_) \
+  Hypertable::FailureInducer::enabled() && \
+    Hypertable::FailureInducer::instance->failure_signalled(_label_)
 
 #endif // HYPERTABLE_FAILUREINDUCER_H

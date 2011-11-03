@@ -34,6 +34,8 @@
 
 namespace Hypertable {
 
+  class Client;
+
   class NamespaceCache : public ReferenceCount {
   public:
 
@@ -41,7 +43,7 @@ namespace Hypertable {
                    ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
                    ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap,
                    MasterClientPtr &master_client, TableCachePtr &table_cache,
-                   uint32_t default_timeout_ms);
+                   uint32_t default_timeout_ms, Client *client);
 
     /**
      * @param name namespace name
@@ -70,7 +72,7 @@ namespace Hypertable {
     uint32_t                m_timeout_ms;
     Mutex                   m_mutex;
     NamespaceMap            m_namespace_map;
-
+    Client                 *m_client;
   };
 
   typedef intrusive_ptr<NamespaceCache> NamespaceCachePtr;

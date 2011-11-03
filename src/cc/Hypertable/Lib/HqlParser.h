@@ -124,7 +124,8 @@ namespace Hypertable {
     enum {
       NO_QUALIFIER=1,
       EXACT_QUALIFIER,
-      REGEXP_QUALIFIER
+      REGEXP_QUALIFIER,
+      PREFIX_QUALIFIER
     };
 
     class InsertRecord {
@@ -729,8 +730,8 @@ namespace Hypertable {
       ParserState &state;
     };
 
-    struct add_column_family {
-      add_column_family(ParserState &state) : state(state) { }
+    struct access_group_add_column_family {
+      access_group_add_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         String name(str, end-str);
         trim_if(name, is_any_of("'\""));
@@ -753,6 +754,46 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct create_index {
+      create_index(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String name(str, end-str);
+        trim_if(name, is_any_of("'\""));
+        Schema::ColumnFamilyMap::iterator it = state.cf_map.find(name);
+        if (it == state.cf_map.end())
+          HT_THROWF(Error::HQL_PARSE_ERROR, "Unknown column family '%s'", 
+                    name.c_str());
+
+        Schema::ColumnFamily *cf = it->second;
+        if (cf->has_index)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Index for column family '%s' multiply defined", 
+                    name.c_str());
+        cf->has_index = true;
+      }
+      ParserState &state;
+    };
+
+    struct create_qualifier_index {
+      create_qualifier_index(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String name(str, end-str);
+        trim_if(name, is_any_of("'\""));
+        Schema::ColumnFamilyMap::iterator it = state.cf_map.find(name);
+        if (it == state.cf_map.end())
+          HT_THROWF(Error::HQL_PARSE_ERROR, "Unknown column family '%s'", 
+                    name.c_str());
+
+        Schema::ColumnFamily *cf = it->second;
+        if (cf->has_qualifier_index)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Qualifier Index for column family '%s' multiply defined", 
+                    name.c_str());
+        cf->has_qualifier_index = true;
+      }
+      ParserState &state;
+    };
+
     struct scan_set_row_regexp {
       scan_set_row_regexp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -771,6 +812,31 @@ namespace Hypertable {
         state.scan.builder.set_value_regexp(regexp.c_str());
        }
        ParserState &state;
+    };
+
+    struct scan_set_column_predicate_name {
+      scan_set_column_predicate_name(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String s(str, end-str);
+        trim_if(s, boost::is_any_of("'\""));
+        if (state.current_column_family != s)
+          HT_THROW(Error::HQL_PARSE_ERROR, "Column predicate name not "
+                  "identical with selected column");
+       }
+       ParserState &state;
+    };
+
+    struct scan_set_column_predicate_value {
+      scan_set_column_predicate_value(ParserState &state, uint32_t operation) 
+          : state(state), operation(operation) { }
+      void operator()(char const *str, char const *end) const {
+        String s(str, end-str);
+        trim_if(s, boost::is_any_of("'\""));
+        state.scan.builder.add_column_predicate(state.current_column_family.c_str(), 
+                    operation, s.c_str());
+       }
+       ParserState &state;
+       uint32_t operation;
     };
 
     struct set_table_compressor {
@@ -984,13 +1050,19 @@ namespace Hypertable {
     };
 
     struct scan_add_column_qualifier {
-      scan_add_column_qualifier(ParserState &state, int qualifier_flag) : state(state){ }
+      scan_add_column_qualifier(ParserState &state, int _qualifier_flag) 
+          : state(state), qualifier_flag(_qualifier_flag) { }
       void operator()(char const *str, char const *end) const {
         String qualifier(str, end-str);
-        String qualified_column = state.current_column_family + ':' + qualifier;
+        String qualified_column = state.current_column_family 
+            + (qualifier_flag == PREFIX_QUALIFIER
+                ? ":^"
+                : ":")
+            + qualifier;
         state.scan.builder.add_column(qualified_column.c_str());
       }
       ParserState &state;
+      int qualifier_flag;
     };
 
 
@@ -1720,7 +1792,8 @@ namespace Hypertable {
             "Start_time", "end_time", "END_TIME", "End_Time", "End_time",
             "into", "INTO", "Into", "table", "TABLE", "Table", "NAMESPACE", "Namespace",
             "cells", "CELLS", "value", "VALUE", "regexp", "REGEXP", "wait", "WAIT"
-            "for", "FOR", "maintenance", "MAINTENANCE";
+            "for", "FOR", "maintenance", "MAINTENANCE", "index", "INDEX", 
+            "qualifier", "QUALIFIER";
 
           /**
            * OPERATORS
@@ -1744,6 +1817,7 @@ namespace Hypertable {
           strlit<>    GE(">=");
           chlit<>     GT('>');
           strlit<>    SW("=^");
+          strlit<>    QUALPREFIX(":^");
           chlit<>     LPAREN('(');
           chlit<>     RPAREN(')');
           chlit<>     LBRACK('[');
@@ -1794,6 +1868,8 @@ namespace Hypertable {
           Token BLOCKSIZE    = as_lower_d["blocksize"];
           Token ACCESS       = as_lower_d["access"];
           Token GROUP        = as_lower_d["group"];
+          Token INDEX        = as_lower_d["index"];
+          Token QUALIFIER    = as_lower_d["qualifier"];
           Token DESCRIBE     = as_lower_d["describe"];
           Token SHOW         = as_lower_d["show"];
           Token GET          = as_lower_d["get"];
@@ -2264,6 +2340,7 @@ namespace Hypertable {
           create_definition
             = column_definition
               | access_group_definition
+              | index_definition
             ;
 
           add_column_definitions
@@ -2275,6 +2352,7 @@ namespace Hypertable {
           add_column_definition
             = column_definition
               | access_group_definition
+              | index_definition
             ;
 
           drop_column_definitions
@@ -2336,9 +2414,16 @@ namespace Hypertable {
             = ACCESS >> GROUP
               >> user_identifier[create_access_group(self.state)]
               >> *(access_group_option)
-              >> !(LPAREN >> column_name[add_column_family(self.state)]
-              >> *(COMMA >> column_name[add_column_family(self.state)])
+              >> !(LPAREN >> column_name[access_group_add_column_family(self.state)]
+              >> *(COMMA >> column_name[access_group_add_column_family(self.state)])
               >> RPAREN)
+            ;
+
+          index_definition
+            = QUALIFIER >> INDEX
+              >> user_identifier[create_qualifier_index(self.state)]
+            | INDEX
+              >> user_identifier[create_index(self.state)]
             ;
 
           access_group_option
@@ -2372,15 +2457,17 @@ namespace Hypertable {
 
           select_statement
             = SELECT >> !(CELLS)
-              >> ('*' | (column_predicate >> *(COMMA >> column_predicate)))
+              >> ('*' | (column_selection >> *(COMMA >> column_selection)))
               >> FROM >> user_identifier[set_table_name(self.state)]
               >> !where_clause
               >> *(option_spec)
             ;
 
-          column_predicate
-            = longest_d[(identifier[scan_add_column_family(self.state, 
-                        NO_QUALIFIER)])
+          column_selection
+            = (identifier[scan_add_column_family(self.state, 
+                        EXACT_QUALIFIER)] >> QUALPREFIX >>
+                        user_identifier[scan_add_column_qualifier(self.state, 
+                            PREFIX_QUALIFIER)])
             | (identifier[scan_add_column_family(self.state, 
                         EXACT_QUALIFIER)] >> COLON >>
                         user_identifier[scan_add_column_qualifier(self.state, 
@@ -2388,7 +2475,9 @@ namespace Hypertable {
             | (identifier[scan_add_column_family(self.state, 
                         REGEXP_QUALIFIER)] >> COLON >>
                         regexp_literal[scan_add_column_qualifier(self.state, 
-                            REGEXP_QUALIFIER)])]
+                            REGEXP_QUALIFIER)])
+            | (identifier[scan_add_column_family(self.state, 
+                        NO_QUALIFIER)])
             ;
 
           where_clause
@@ -2443,11 +2532,23 @@ namespace Hypertable {
             = VALUE >> REGEXP >> string_literal[scan_set_value_regexp(self.state)]
             ;
 
+          column_predicate
+            = identifier[scan_set_column_predicate_name(self.state)] 
+                >> '=' 
+                >> string_literal[scan_set_column_predicate_value(self.state, 
+                        ColumnPredicate::EXACT_MATCH)]
+            | identifier[scan_set_column_predicate_name(self.state)] 
+                >> SW
+                >> string_literal[scan_set_column_predicate_value(self.state, 
+                        ColumnPredicate::PREFIX_MATCH)]
+            ;
+
           where_predicate
             = cell_predicate
             | row_predicate
             | time_predicate
             | value_predicate
+            | column_predicate
             ;
 
           dump_where_predicate
@@ -2568,6 +2669,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(column_name);
           BOOST_SPIRIT_DEBUG_RULE(column_option);
           BOOST_SPIRIT_DEBUG_RULE(column_predicate);
+          BOOST_SPIRIT_DEBUG_RULE(column_selection);
           BOOST_SPIRIT_DEBUG_RULE(create_definition);
           BOOST_SPIRIT_DEBUG_RULE(create_definitions);
           BOOST_SPIRIT_DEBUG_RULE(add_column_definition);
@@ -2593,6 +2695,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(ttl_option);
           BOOST_SPIRIT_DEBUG_RULE(counter_option);
           BOOST_SPIRIT_DEBUG_RULE(access_group_definition);
+          BOOST_SPIRIT_DEBUG_RULE(index_definition);
           BOOST_SPIRIT_DEBUG_RULE(access_group_option);
           BOOST_SPIRIT_DEBUG_RULE(bloom_filter_option);
           BOOST_SPIRIT_DEBUG_RULE(in_memory_option);
@@ -2681,13 +2784,13 @@ namespace Hypertable {
           max_versions_option, time_order_option, statement,
           single_string_literal, double_string_literal, string_literal, 
           parameter_list, regexp_literal, ttl_option, counter_option, 
-          access_group_definition, access_group_option,
+          access_group_definition, index_definition, access_group_option,
           bloom_filter_option, in_memory_option,
           blocksize_option, replication_option, help_statement,
           describe_table_statement, show_statement, select_statement,
           where_clause, where_predicate,
           time_predicate, relop, row_interval, row_predicate, column_predicate,
-          value_predicate,
+          value_predicate, column_selection,
           option_spec, date_expression, unused_tokens, datetime, date, time, year,
           load_data_statement, load_data_input, load_data_option, insert_statement,
           insert_value_list, insert_value, delete_statement,

@@ -33,6 +33,9 @@ extern "C" {
 #include "ResultCallback.h"
 #include "TableMutatorSyncDispatchHandler.h"
 #include "Table.h"
+#include "TableMutator.h"
+#include "LoadDataEscape.h"
+#include "IndexMutatorCallback.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -53,27 +56,30 @@ void TableMutatorAsync::handle_send_exceptions() {
 }
 
 
-TableMutatorAsync::TableMutatorAsync(PropertiesPtr &props, Comm *comm,
-    ApplicationQueuePtr &app_queue, Table *table, RangeLocatorPtr &range_locator,
-    uint32_t timeout_ms, ResultCallback *cb,  uint32_t flags,
-    bool explicit_block_only)
-  : m_comm(comm), m_app_queue(app_queue), m_table(table), m_range_locator(range_locator),
-    m_memory_used(0), m_resends(0), m_timeout_ms(timeout_ms), m_cb(cb), m_flags(flags),
-    m_mutex(m_buffer_mutex), m_cond(m_buffer_cond), m_explicit_block_only(explicit_block_only),
-    m_next_buffer_id(0), m_cancelled(false), m_mutated(false) {
+TableMutatorAsync::TableMutatorAsync(PropertiesPtr &props, Comm *comm, 
+        ApplicationQueuePtr &app_queue, Table *table, 
+        RangeLocatorPtr &range_locator, uint32_t timeout_ms, 
+        ResultCallback *cb,  uint32_t flags, bool explicit_block_only)
+  : m_comm(comm), m_app_queue(app_queue), m_table(table), 
+    m_range_locator(range_locator), m_memory_used(0), m_resends(0), 
+    m_timeout_ms(timeout_ms), m_cb(cb), m_flags(flags), m_mutex(m_buffer_mutex),
+    m_cond(m_buffer_cond), m_explicit_block_only(explicit_block_only),
+    m_next_buffer_id(0), m_cancelled(false), m_mutated(false), m_imc(0), 
+    m_use_index(false) {
   initialize(props);
 }
 
 
-TableMutatorAsync::TableMutatorAsync(Mutex &mutex, boost::condition &cond, PropertiesPtr &props,
-				     Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
-				     RangeLocatorPtr &range_locator, uint32_t timeout_ms,
-				     ResultCallback *cb, uint32_t flags,
-				     bool explicit_block_only)
-  : m_comm(comm), m_app_queue(app_queue), m_table(table), m_range_locator(range_locator),
-    m_memory_used(0), m_resends(0), m_timeout_ms(timeout_ms), m_cb(cb), m_flags(flags),
-    m_mutex(mutex), m_cond(cond), m_explicit_block_only(explicit_block_only), m_next_buffer_id(0),
-    m_cancelled(false), m_mutated(false) {
+TableMutatorAsync::TableMutatorAsync(Mutex &mutex, boost::condition &cond, 
+        PropertiesPtr &props, Comm *comm, ApplicationQueuePtr &app_queue, 
+        Table *table, RangeLocatorPtr &range_locator, uint32_t timeout_ms, 
+        ResultCallback *cb, uint32_t flags, bool explicit_block_only)
+  : m_comm(comm), m_app_queue(app_queue), m_table(table), 
+    m_range_locator(range_locator), m_memory_used(0), m_resends(0), 
+    m_timeout_ms(timeout_ms), m_cb(cb), m_flags(flags), m_mutex(mutex), 
+    m_cond(cond), m_explicit_block_only(explicit_block_only), 
+    m_next_buffer_id(0), m_cancelled(false), m_mutated(false), m_imc(0),
+    m_use_index(false) {
   initialize(props);
 }
 
@@ -84,9 +90,13 @@ void TableMutatorAsync::initialize(PropertiesPtr &props) {
   m_max_memory = props->get_i64("Hypertable.Mutator.ScatterBuffer.FlushLimit.Aggregate");
 
   uint32_t buffer_id = ++m_next_buffer_id;
-  m_current_buffer = new TableMutatorAsyncScatterBuffer(m_comm, m_app_queue, this,
-      &m_table_identifier, m_schema, m_range_locator, m_table->auto_refresh(), m_timeout_ms,
-      buffer_id);
+  m_current_buffer = new TableMutatorAsyncScatterBuffer(m_comm, m_app_queue, 
+          this, &m_table_identifier, m_schema, m_range_locator, 
+          m_table->auto_refresh(), m_timeout_ms, buffer_id);
+
+  // if there are indices then initialize the index mutators
+  initialize_indices(props);
+
   if (m_cb)
     m_cb->register_mutator(this);
 }
@@ -96,6 +106,7 @@ TableMutatorAsync::~TableMutatorAsync() {
   try {
     // call sync on any unsynced rangeservers and flush current buffer if needed
     flush();
+
     if (!m_explicit_block_only)
       wait_for_completion();
     if (m_cb)
@@ -104,20 +115,145 @@ TableMutatorAsync::~TableMutatorAsync() {
   catch (Exception &e) {
     HT_ERROR_OUT << e.what() << HT_END;
   }
+
+  // once more make sure that index mutators are deleted
+  if (m_index_mutator)
+    m_index_mutator = 0;
+  if (m_qualifier_index_mutator)
+    m_qualifier_index_mutator = 0;
+}
+
+void TableMutatorAsync::initialize_indices(PropertiesPtr &props)
+{
+  if (!m_table->has_index_table() && !m_table->has_qualifier_index_table()) {
+    m_use_index = false;
+    return;
+  }
+
+  m_use_index = true;
+
+  m_imc = new IndexMutatorCallback(this, m_cb, m_max_memory);
+  m_cb = &(*m_imc);
+
+  // create new index mutator
+  if (m_table->has_index_table())
+    m_index_mutator = new TableMutatorAsync(props, m_comm, m_app_queue, 
+            m_table->get_index_table().get(), 
+            m_range_locator, m_timeout_ms, m_cb, m_flags);
+  // create new qualifier index mutator
+  if (m_table->has_qualifier_index_table())
+    m_qualifier_index_mutator = new TableMutatorAsync(props, m_comm, 
+            m_app_queue, m_table->get_qualifier_index_table().get(), 
+            m_range_locator, m_timeout_ms, m_cb, m_flags);
 }
 
 void TableMutatorAsync::wait_for_completion() {
   ScopedLock lock(m_mutex);
-  while(m_outstanding_buffers.size()>0)
+  while (m_outstanding_buffers.size() > 0)
     m_cond.wait(lock);
 }
 
+bool
+TableMutatorAsync::key_uses_index(Key &key) {
+  Schema::ColumnFamily *cf=m_schema->get_column_family(key.column_family_code);
+  if (!cf || (!cf->has_index && !cf->has_qualifier_index))
+    return false;
+  return true;
+}
+
 void
-TableMutatorAsync::set(const KeySpec &key, const void *value, uint32_t value_len) {
+TableMutatorAsync::update_with_index(Key &key, const void *value, 
+        uint32_t value_len) {
+  HT_ASSERT(m_use_index == true);
+  HT_ASSERT(key_uses_index(key) == true);
+
+  // indexed keys get an auto-assigned timestamp to make sure that the 
+  // index key and the original key have identical timestamps
+  if (key.flag == FLAG_INSERT && key.timestamp == AUTO_ASSIGN)
+    key.timestamp = get_ts64();
+
+  // first store the original key in our callback
+  m_imc->buffer_key(key, value, value_len);
+
+  // if this is a DELETE then return, otherwise update the index
+  if (key.flag != FLAG_INSERT)
+    return;
+
+  Schema::ColumnFamily *cf=m_schema->get_column_family(key.column_family_code);
+
+  // now create the key for the index
+  KeySpec k;
+  k.timestamp = key.timestamp;
+  k.flag = key.flag;
+  k.column_family = "v1";
+
+  // every \t in the original row key gets escaped
+  const char *row;
+  size_t rowlen;
+  LoadDataEscape lde, ldev;
+  lde.escape(key.row, key.row_len, &row, &rowlen);
+
+  // in a normal (non-qualifier) index the format of the new row
+  // key is "value\trow"
+  //
+  // if value has a 0 byte then we also have to escape it
+  if (cf->has_index) {
+    const char *val_ptr = (const char *)value;
+    for (const char *v = val_ptr; v < val_ptr + value_len; v++) {
+      if (*v == '\0') {
+        const char *outp;
+        ldev.escape(val_ptr, (size_t)value_len, 
+                    &outp, (size_t *)&value_len);
+        value = outp;
+        break;
+      }
+    }
+    StaticBuffer sb(4 + value_len + rowlen + 1 + 1);
+    char *p = (char *)sb.base;
+    sprintf(p, "%d,", (int)cf->id);
+    p     += strlen(p);
+    memcpy(p, value, value_len);
+    p     += value_len;
+    *p++  = '\t';
+    memcpy(p, row, rowlen);
+    p     += rowlen;
+    *p++  = '\0';
+    k.row = sb.base;
+    k.row_len = p - 1 - (const char *)sb.base; /* w/o the terminating zero */
+
+    // and insert it
+    m_index_mutator->set(k, 0, 0);
+  }
+
+  // in a qualifier index the format of the new row key is "qualifier\trow"
+  if (cf->has_qualifier_index) {
+    size_t qlen = key.column_qualifier ? strlen(key.column_qualifier) : 0;
+    StaticBuffer sb(4 + qlen + rowlen + 1 + 1);
+    char *p = (char *)sb.base;
+    sprintf(p, "%d,", (int)cf->id);
+    p     += strlen(p);
+    if (qlen) {
+      memcpy(p, key.column_qualifier, qlen);
+      p   += qlen;
+    }
+    *p++  = '\t';
+    memcpy(p, row, rowlen);
+    p     += rowlen;
+    *p++  = '\0';
+    k.row = sb.base;
+    k.row_len = p - 1 - (const char *)sb.base; /* w/o the terminating zero */
+
+    // and insert it
+    m_qualifier_index_mutator->set(k, 0, 0);
+  }
+}
+
+void
+TableMutatorAsync::set(const KeySpec &key, const void *value, 
+        uint32_t value_len) {
   ScopedLock lock(m_member_mutex);
   bool unknown_cf;
-  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS) ;
-  size_t incr_mem;
+  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS);
 
   try {
     key.sanity_check();
@@ -126,9 +262,17 @@ TableMutatorAsync::set(const KeySpec &key, const void *value, uint32_t value_len
     to_full_key(key, full_key, unknown_cf);
     if (ignore_unknown_cfs && unknown_cf)
       return;
-    incr_mem = 20 + key.row_len + key.column_qualifier_len + value_len;
-    m_current_buffer->set(full_key, value, value_len, incr_mem);
-    m_memory_used += incr_mem;
+
+    // if there's an index: buffer the key and update the index
+    full_key.row_len = key.row_len;
+    if (key.flag == FLAG_INSERT && m_use_index && key_uses_index(full_key)) {
+      update_with_index(full_key, value, value_len);
+      if (m_imc->needs_flush())
+        flush();
+    }
+    else {
+      update_without_index(full_key, value, value_len);
+    }
   }
   catch (...) {
     handle_send_exceptions();
@@ -137,11 +281,68 @@ TableMutatorAsync::set(const KeySpec &key, const void *value, uint32_t value_len
 }
 
 void
-TableMutatorAsync::set_cells(Cells::const_iterator it, Cells::const_iterator end) {
+TableMutatorAsync::update_without_index(const Cell &cell)
+{
+  size_t row_key_len = 0;
+  if (cell.row_key)
+    row_key_len = strlen(cell.row_key);
+  size_t column_qualifier_len = 0;
+  if (cell.column_qualifier)
+    column_qualifier_len = strlen(cell.column_qualifier);
+
+  Schema::ColumnFamily *cf = m_schema->get_column_family(cell.column_family);
+  if (!cf)
+    HT_THROW(Error::BAD_KEY, "Invalid column family");
+
+  Key k;
+  k.flag = cell.flag;
+  k.column_family_code = cf->id;
+  k.row_key_set = true;
+  k.row = cell.row_key;
+  k.column_qualifier = cell.column_qualifier;
+  k.row_len = row_key_len;
+  k.column_qualifier_len = column_qualifier_len;
+  k.timestamp = cell.timestamp;
+  k.revision = cell.revision;
+
+  size_t incr_mem = 20 + row_key_len + column_qualifier_len;
+  m_current_buffer->set(k, cell.value, cell.value_len, incr_mem);
+  m_memory_used += incr_mem;
+}
+
+void
+TableMutatorAsync::update_without_index(Key &full_key, const Cell &cell)
+{
+  // assuming all inserts for now
+  size_t incr_mem = 20 + full_key.row_len
+          + (cell.column_qualifier ? strlen(cell.column_qualifier) : 0);
+  m_current_buffer->set(full_key, cell.value, cell.value_len, incr_mem);
+  m_memory_used += incr_mem;
+}
+
+void
+TableMutatorAsync::update_without_index(Key &full_key, const void *value, 
+        size_t value_len)
+{
+  if (full_key.flag != FLAG_INSERT) {
+    size_t incr_mem = 20 + full_key.row_len + full_key.column_qualifier_len;
+    m_current_buffer->set_delete(full_key, incr_mem);
+    m_memory_used += incr_mem;
+  }
+  else {
+    size_t incr_mem = 20 + full_key.row_len + full_key.column_qualifier_len 
+      + value_len;
+    m_current_buffer->set(full_key, value, value_len, incr_mem);
+    m_memory_used += incr_mem;
+  }
+}
+
+void
+TableMutatorAsync::set_cells(Cells::const_iterator it, 
+        Cells::const_iterator end) {
   ScopedLock lock(m_member_mutex);
   bool unknown_cf;
-  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS) ;
-  size_t incr_mem;
+  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS);
 
   try {
     for (; it != end; ++it) {
@@ -152,8 +353,8 @@ TableMutatorAsync::set_cells(Cells::const_iterator it, Cells::const_iterator end
       if (!cell.column_family) {
         if (cell.flag != FLAG_DELETE_ROW)
           HT_THROW(Error::BAD_KEY,
-              (String)"Column family not specified in non-delete row set on row="
-              + (String)cell.row_key);
+              (String)"Column family not specified in non-delete row set "
+              "on row=" + (String)cell.row_key);
         full_key.row = cell.row_key;
         full_key.timestamp = cell.timestamp;
         full_key.revision = cell.revision;
@@ -164,11 +365,19 @@ TableMutatorAsync::set_cells(Cells::const_iterator it, Cells::const_iterator end
         if (ignore_unknown_cfs && unknown_cf)
           continue;
       }
-      // assuming all inserts for now
-      incr_mem = 20 + strlen(cell.row_key)
-                + (cell.column_qualifier ? strlen(cell.column_qualifier) : 0);
-      m_current_buffer->set(full_key, cell.value, cell.value_len, incr_mem);
-      m_memory_used += incr_mem;
+
+      if (cell.row_key)
+        full_key.row_len = strlen(cell.row_key);
+
+      // if there's an index: buffer the key and update the index
+      if (cell.flag == FLAG_INSERT && m_use_index && key_uses_index(full_key)) {
+        update_with_index(full_key, cell.value, cell.value_len);
+        if (m_imc->needs_flush())
+          flush();
+      }
+      else {
+        update_without_index(full_key, cell);
+      }
     }
   }
   catch (...) {
@@ -181,8 +390,8 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
   ScopedLock lock(m_member_mutex);
   Key full_key;
   bool unknown_cf;
-  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS) ;
-  size_t incr_mem;
+  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS);
+
   try {
     key.sanity_check();
 
@@ -197,9 +406,16 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
       if (ignore_unknown_cfs && unknown_cf)
         return;
     }
-    incr_mem = 20 + key.row_len + key.column_qualifier_len;
-    m_current_buffer->set_delete(full_key, incr_mem);
-    m_memory_used += incr_mem;
+
+    // if there's an index: buffer the key and update the index
+    if (m_use_index && key_uses_index(full_key)) {
+      update_with_index(full_key, 0, 0);
+      if (m_imc->needs_flush())
+        flush();
+    }
+    else {
+      update_without_index(full_key, 0, 0);
+    }
   }
   catch (...) {
     handle_send_exceptions();
@@ -208,9 +424,9 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
 }
 
 void
-TableMutatorAsync::to_full_key(const void *row, const char *column_family,
-    const void *column_qualifier, int64_t timestamp, int64_t revision,
-    uint8_t flag, Key &full_key, bool &unknown_cf) {
+TableMutatorAsync::to_full_key(const void *row, const char *column_family, 
+        const void *column_qualifier, int64_t timestamp, int64_t revision, 
+        uint8_t flag, Key &full_key, bool &unknown_cf) {
   bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS);
 
   unknown_cf = false;
@@ -254,7 +470,7 @@ TableMutatorAsync::to_full_key(const void *row, const char *column_family,
 
 void TableMutatorAsync::cancel() {
   ScopedLock lock(m_member_mutex);
-  m_cancelled=true;
+  m_cancelled = true;
 }
 
 bool TableMutatorAsync::is_cancelled() {
@@ -266,10 +482,52 @@ bool TableMutatorAsync::needs_flush() {
   ScopedLock lock(m_member_mutex);
   if (m_current_buffer->full() || m_memory_used > m_max_memory)
     return true;
+  if (m_use_index)
+    return m_imc->needs_flush();
   return false;
 }
 
 void TableMutatorAsync::flush(bool sync) {
+  flush_with_tablequeue(0, sync);
+}
+
+void TableMutatorAsync::flush_with_tablequeue(TableMutator *mutator, bool sync) {
+  // if an index is used: make sure that the index is updated
+  // BEFORE the primary table is flushed!
+  if (m_use_index) {
+    if (m_index_mutator) {
+      m_index_mutator->flush();
+      if (mutator)
+        mutator->wait_for_flush_completion(&(*m_index_mutator));
+      m_index_mutator->wait_for_completion();
+    }
+    if (m_qualifier_index_mutator) {
+      m_qualifier_index_mutator->flush();
+      if (mutator)
+        mutator->wait_for_flush_completion(&(*m_qualifier_index_mutator));
+      m_qualifier_index_mutator->wait_for_completion();
+    }
+
+    if (is_cancelled())
+      return;
+
+    // propagate all index failures to the original callback
+    m_imc->propagate_failures();
+
+    ScopedLock lock(m_imc->get_mutex());
+
+    // now write all keys to the buffer of the primary table
+    IndexMutatorCallback::KeyMap &map = m_imc->get_keymap();
+    IndexMutatorCallback::KeyMap::iterator it;
+    for (it = map.begin(); it != map.end(); ++it) {
+      update_without_index(it->second);
+    }
+
+    // and clear the internal buffers in the callback
+    m_imc->clear();
+    
+    // then fall through
+  }
 
   if (is_cancelled())
     return;
@@ -286,10 +544,11 @@ void TableMutatorAsync::flush(bool sync) {
         if (m_outstanding_buffers.size() == 0 && m_cb)
           m_cb->increment_outstanding();
         m_outstanding_buffers[m_current_buffer->get_id()] = m_current_buffer;
-	m_current_buffer = new TableMutatorAsyncScatterBuffer(m_comm, m_app_queue, this,
-                &m_table_identifier, m_schema, m_range_locator, m_table->auto_refresh(),
-	         m_timeout_ms, buffer_id);
-	m_memory_used = 0;
+        m_current_buffer = new TableMutatorAsyncScatterBuffer(m_comm, 
+                m_app_queue, this, &m_table_identifier, m_schema, 
+                m_range_locator, m_table->auto_refresh(), m_timeout_ms, 
+                buffer_id);
+        m_memory_used = 0;
       }
     }
 
@@ -319,7 +578,8 @@ void TableMutatorAsync::do_sync() {
 
   // sync unsynced rangeservers
   try {
-    TableMutatorSyncDispatchHandler sync_handler(m_comm, table_identifier, m_timeout_ms);
+    TableMutatorSyncDispatchHandler sync_handler(m_comm, table_identifier, 
+            m_timeout_ms);
 
     {
       ScopedLock lock(m_member_mutex);
@@ -359,9 +619,10 @@ void TableMutatorAsync::do_sync() {
       if (retry_failed) {
         sync_handler.get_errors(errors);
         String error_str;
-        error_str =  (String) "commit log sync error '" + errors[0].msg.c_str() + "' '" +
-          Error::get_text(errors[0].error) + "' max retry limit=" +
-          ms_max_sync_retries + " hit";
+        error_str =  (String) "commit log sync error '" 
+            + errors[0].msg.c_str() + "' '" + 
+            Error::get_text(errors[0].error) + "' max retry limit=" + 
+            ms_max_sync_retries + " hit";
         HT_THROW(errors[0].error, error_str);
       }
     }

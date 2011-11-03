@@ -2171,6 +2171,22 @@ void RangeServer::update_qualify_and_transform() {
           key.ptr = mod;
           row = key.row();
 
+          // error inducer for tests/integration/fail-index-mutator
+          if (HT_FAILURE_SIGNALLED("fail-index-mutator-0")) {
+            if (!strcmp(row, "1,+9RfmqoH62hPVvDTh6EC4zpTNfzNr8\t01918")) {
+              uc->send_back.count++;
+              uc->send_back.error = Error::INDUCED_FAILURE;
+              uc->send_back.offset = mod - request->buffer.base;
+              uc->send_back.len = strlen(row);
+              request->send_back_vector.push_back(uc->send_back);
+              memset(&uc->send_back, 0, sizeof(uc->send_back));
+              key.next(); // skip key
+              key.next(); // skip value;
+              mod = key.ptr;
+              continue;
+            }
+          }
+
           // If the row key starts with '\0' then the buffer is probably
           // corrupt, so mark the remaing key/value pairs as bad
           if (*row == 0) {
@@ -2186,7 +2202,7 @@ void RangeServer::update_qualify_and_transform() {
 
           // Look for containing range, add to stop mods if not found
           if (!table_update->table_info->find_containing_range(row, range,
-                                                               start_row, end_row)) {
+                                                        start_row, end_row)) {
             if (uc->send_back.error != Error::RANGESERVER_OUT_OF_RANGE
                 && uc->send_back.count > 0) {
               request->send_back_vector.push_back(uc->send_back);

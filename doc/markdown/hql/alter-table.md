@@ -11,16 +11,17 @@ ALTER TABLE
       | RENAME COLUMN FAMILY 
 
     alter_definition:
-      add_cf_definition
-      | drop_cf_definition
+      add_definition
+      | drop_definition
       | rename_cf_definition
 
-    add_cf_definition:
+    add_definition:
       column_family_name [MAX_VERSIONS '=' int] [TTL '=' duration]
       | ACCESS GROUP name [access_group_option ...]
         ['(' [column_family_name, ...] ')']
     
-    drop_cf_definition:    column_family_name
+    drop_definition:    
+      column_family_name
     
     rename_cf_definition:    (old)column_family_name, (new)column_family_name
 
@@ -70,11 +71,11 @@ ALTER TABLE
 #### Description
 <p>
 The `ALTER TABLE` command provides a way to alter a table by adding access
-groups and column families or removing column families or renaming column families.  See
-[`CREATE TABLE`](create-table.html) for a description of the column family
-and access group options.  Column families that are not explicitly
-included in an access group specification will go into the "default"
-access group.
+groups and column families or removing column families or renaming 
+column families.  See [`CREATE TABLE`](create-table.html) for a description 
+of the column family and access group options.
+Column families that are not explicitly included in an access group 
+specification will go into the "default" access group.
 
 #### Example
 <p>

@@ -46,6 +46,7 @@ namespace Hypertable {
 
   class Comm;
   class HqlInterpreter;
+  class Client;
 
   class Namespace: public ReferenceCount {
   public:
@@ -58,7 +59,7 @@ namespace Hypertable {
               ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
               ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap,
               MasterClientPtr &master_client, RangeLocatorPtr &range_locator,
-              TableCachePtr &table_cache, uint32_t timeout);
+              TableCachePtr &table_cache, uint32_t timeout, Client *client);
 
     ~Namespace() {}
 
@@ -253,7 +254,26 @@ namespace Hypertable {
      */
     void get_table_splits(const String &name, TableSplitsContainer &splits);
 
+    /**
+     * Returns a pointer to the client object which created this Namespace
+     */
+    Client *get_client() {
+      return m_client;
+    }
+
   private:
+    String get_index_table_name(const String &table_name) {
+      String s="^";
+      return (s+table_name);
+    }
+
+    String get_qualifier_index_table_name(const String &table_name) {
+      String s="^^";
+      return (s+table_name);
+    }
+
+    void create_index_table(const String &primary_table_name);
+
     typedef hash_map<String, TablePtr> TableCache;
     typedef boost::tokenizer<boost::char_separator<char> > Tokenizer;
     String get_full_name(const String &sub_name);
@@ -276,6 +296,7 @@ namespace Hypertable {
     Mutex                   m_mutex;
     TableCachePtr           m_table_cache;
     uint32_t                m_timeout_ms;
+    Client                 *m_client;
   };
 
   typedef intrusive_ptr<Namespace> NamespacePtr;

@@ -861,14 +861,14 @@ public class Result implements org.apache.thrift.TBase<Result, Result._Fields>, 
           case 7: // CELLS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list24 = iprot.readListBegin();
-                struct.cells = new ArrayList<Cell>(_list24.size);
-                for (int _i25 = 0; _i25 < _list24.size; ++_i25)
+                org.apache.thrift.protocol.TList _list32 = iprot.readListBegin();
+                struct.cells = new ArrayList<Cell>(_list32.size);
+                for (int _i33 = 0; _i33 < _list32.size; ++_i33)
                 {
-                  Cell _elem26; // required
-                  _elem26 = new Cell();
-                  _elem26.read(iprot);
-                  struct.cells.add(_elem26);
+                  Cell _elem34; // required
+                  _elem34 = new Cell();
+                  _elem34.read(iprot);
+                  struct.cells.add(_elem34);
                 }
                 iprot.readListEnd();
               }
@@ -933,9 +933,9 @@ public class Result implements org.apache.thrift.TBase<Result, Result._Fields>, 
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.cells.size()));
-            for (Cell _iter27 : struct.cells)
+            for (Cell _iter35 : struct.cells)
             {
-              _iter27.write(oprot);
+              _iter35.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -983,9 +983,9 @@ public class Result implements org.apache.thrift.TBase<Result, Result._Fields>, 
       if (struct.isSetCells()) {
         {
           oprot.writeI32(struct.cells.size());
-          for (Cell _iter28 : struct.cells)
+          for (Cell _iter36 : struct.cells)
           {
-            _iter28.write(oprot);
+            _iter36.write(oprot);
           }
         }
       }
@@ -1013,14 +1013,14 @@ public class Result implements org.apache.thrift.TBase<Result, Result._Fields>, 
       }
       if (incoming.get(2)) {
         {
-          org.apache.thrift.protocol.TList _list29 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.cells = new ArrayList<Cell>(_list29.size);
-          for (int _i30 = 0; _i30 < _list29.size; ++_i30)
+          org.apache.thrift.protocol.TList _list37 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.cells = new ArrayList<Cell>(_list37.size);
+          for (int _i38 = 0; _i38 < _list37.size; ++_i38)
           {
-            Cell _elem31; // required
-            _elem31 = new Cell();
-            _elem31.read(iprot);
-            struct.cells.add(_elem31);
+            Cell _elem39; // required
+            _elem39 = new Cell();
+            _elem39.read(iprot);
+            struct.cells.add(_elem39);
           }
         }
         struct.setCellsIsSet(true);

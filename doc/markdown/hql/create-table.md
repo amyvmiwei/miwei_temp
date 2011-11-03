@@ -7,6 +7,8 @@ CREATE TABLE
 
     create_definition:
       column_family_name [column_family_option ...]
+      | INDEX column_family_name
+      | QUALIFIER INDEX column_family_name
       | ACCESS GROUP name [access_group_option ...]
         ['(' [column_family_name, ...] ')']
 
@@ -90,6 +92,48 @@ may be inserted for a single row.
 The column family is represented internally as a single byte, so there is a
 limit of 255 column families (the 0 value is reserved) which may be supplied in
 the `CREATE TABLE` statement.
+### Secondary Indices
+<p>
+Tables can also have one or more indices, each indexing a single 
+column family.  Two types of indices exist: a cell value index, which 
+optimizes scans on a single column family that do an excact
+match or prefix match of the cell value, and a qualifier index, which 
+optimizes scans on a single column family that do an exact match or
+prefix match of the column qualifier. The use of indices is optional.
+<p>
+The indices are stored in an index table which is created in the same 
+namespace as the primary table and has the same name with one (cell value 
+index) or two (qualifier index) caret signs (`^`) as a prefix.
+<p>
+A column family can have both types of indices (cell value index and qualifier 
+index) at the same time.  The following HQL command creates a table with 
+three column families (a, b and c).  Column family a has a cell value index,
+column family b has a qualifier index and c has both.
+<p>
+<pre><code>
+ CREATE TABLE foo (
+   a,
+   b,
+   c,
+   INDEX a,
+   QUALIFIER INDEX b,
+   INDEX c,
+   QUALIFIER INDEX c,
+ )
+</code></pre>
+<p>
+Indices speed up some queries that match on column families.
+Accessing columns which are indexed is nearly as fast as accessing them by
+their row key. On the downside they require additional disk storage and
+cause a very small performance impact when inserting data to an indexed column.
+<p>
+Cell value indices are used when selecting cells by value 
+(`SELECT a FROM TABLE t WHERE a = "cell-value" ...`) or by a value prefix
+(`SELECT a FROM TABLE t WHERE a =^ "cell-prefix" ...`).
+<p>
+Qualifier indices are used when selecting cells from a qualified column 
+family (`SELECT a:foo FROM TABLE t ...`) or selecting all cells with a 
+qualifier prefix (`SELECT a:^prefix FROM TABLE t ...`).
 ### Access Groups
 <p>
 Tables consist of one or more access groups, each containing some number of

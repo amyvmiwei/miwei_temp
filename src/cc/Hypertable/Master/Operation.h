@@ -56,7 +56,9 @@ namespace Hypertable {
       ISSUE_REQUESTS = 14,
       UPDATE_HYPERSPACE = 15,
       ACKNOWLEDGE = 16,
-      FINALIZE = 17
+      FINALIZE = 17,
+      CREATE_INDEX = 18,
+      CREATE_QUALIFIER_INDEX = 19
     };
     const char *get_text(int state);
   }

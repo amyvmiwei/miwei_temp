@@ -56,13 +56,17 @@ public:
     }
   }
   void get_cell_unchecked(Cell &cc, size_t ii) { m_cells->get_cell(cc, ii); }
-  void set_eos() { m_eos = true; }
+  void set_eos(bool eos = true) { m_eos = eos; }
   bool get_eos() const { return m_eos; }
   size_t size() const {
     if (m_cells)
       return m_cells->size();
     else
       return 0;
+  }
+
+  bool empty() const {
+    return size() == 0;
   }
 
   size_t memory_used() const {
@@ -76,6 +80,7 @@ public:
 protected:
 
   friend class IntervalScannerAsync;
+  friend class IndexScannerCallback;
 
   /**
    * @param event the event that contains the scan results
@@ -84,6 +89,11 @@ protected:
    */
   bool add(EventPtr &event, int *scanner_id);
 
+  /**
+   * adds a new cell to the internal cell buffer
+   * this is an internal method required by IndexScannerCallback
+   */
+  void add(Cell &cell, bool own = true);
 
   /**
    * @param schema is the schema for the table being scanned

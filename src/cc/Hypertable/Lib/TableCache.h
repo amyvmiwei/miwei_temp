@@ -37,8 +37,8 @@ namespace Hypertable {
   public:
 
     TableCache(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
-               Hyperspace::SessionPtr &, ApplicationQueuePtr &, NameIdMapperPtr &namemap,
-               uint32_t default_timeout_ms);
+               Hyperspace::SessionPtr &, ApplicationQueuePtr &, 
+               NameIdMapperPtr &namemap, uint32_t default_timeout_ms);
 
     /**
      *
@@ -80,7 +80,6 @@ namespace Hypertable {
     uint32_t                m_timeout_ms;
     Mutex                   m_mutex;
     TableMap                m_table_map;
-
   };
 
   typedef intrusive_ptr<TableCache> TableCachePtr;

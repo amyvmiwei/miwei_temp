@@ -30,7 +30,11 @@
 using namespace Hypertable;
 
 namespace {
-  enum { FAILURE_TYPE_EXIT, FAILURE_TYPE_THROW };
+  enum { 
+    FAILURE_TYPE_EXIT, 
+    FAILURE_TYPE_THROW,
+    FAILURE_TYPE_SIGNAL
+  };
 }
 
 FailureInducer *FailureInducer::instance = 0;
@@ -47,6 +51,8 @@ void FailureInducer::parse_option(String option) {
   failure_inducer_state *statep = new failure_inducer_state;
   if (!strcmp(failure_type, "exit"))
     statep->failure_type = FAILURE_TYPE_EXIT;
+  else if (!strcmp(failure_type, "signal"))
+    statep->failure_type = FAILURE_TYPE_SIGNAL;
   else if (boost::algorithm::starts_with(failure_type, "throw")) {
     statep->failure_type = FAILURE_TYPE_THROW;
     statep->error_code = Error::INDUCED_FAILURE;
@@ -81,7 +87,8 @@ void FailureInducer::maybe_fail(const String &label) {
       }
       else {
         HT_ERRORF("induced failure code '%d' '%s' iteration=%u",
-                 (*iter).second->error_code, (*iter).first.c_str(), (*iter).second->iteration);
+                 (*iter).second->error_code, (*iter).first.c_str(), 
+                 (*iter).second->iteration);
         _exit(1);
       }
     }
@@ -90,9 +97,22 @@ void FailureInducer::maybe_fail(const String &label) {
   }
 }
 
+bool FailureInducer::failure_signalled(const String &label) {
+  ScopedLock lock(m_mutex);
+  StateMap::iterator iter = m_state_map.find(label);
+  if (iter == m_state_map.end())
+    return false;
+  if ((*iter).second->failure_type == FAILURE_TYPE_SIGNAL
+        && (*iter).second->iteration == (*iter).second->trigger_iteration)
+      return true;
+  (*iter).second->iteration++;
+  return false;
+}
+
 void FailureInducer::clear() {
   ScopedLock lock(m_mutex);
-  for (StateMap::iterator iter = m_state_map.begin(); iter != m_state_map.end(); ++iter)
+  for (StateMap::iterator iter = m_state_map.begin(); 
+          iter != m_state_map.end(); ++iter)
     delete iter->second;
   m_state_map.clear();
 }

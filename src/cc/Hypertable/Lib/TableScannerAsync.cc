@@ -27,6 +27,8 @@
 
 #include "Table.h"
 #include "TableScannerAsync.h"
+#include "IndexScannerCallback.h"
+#include "LoadDataEscape.h"
 
 extern "C" {
 #include <poll.h>
@@ -38,23 +40,187 @@ using namespace Hypertable;
 /**
  *
  */
-TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
-    RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
-    uint32_t timeout_ms, ResultCallback *cb)
-  : m_bytes_scanned(0), m_cb(cb), m_current_scanner(0),
-    m_outstanding(0), m_error(Error::OK), m_table(table), m_scan_spec_builder(scan_spec),
-    m_cancelled(false) {
-
+TableScannerAsync::TableScannerAsync(Comm *comm, 
+      ApplicationQueuePtr &app_queue, Table *table,
+      RangeLocatorPtr &range_locator, const ScanSpec &scan_spec, 
+      uint32_t timeout_ms, ResultCallback *cb, int flags)
+  : m_bytes_scanned(0), m_current_scanner(0), m_outstanding(0), 
+    m_error(Error::OK), m_cancelled(false), m_use_index(false)
+{
   ScopedLock lock(m_mutex);
+  ScanSpecBuilder index_spec;
+  bool use_qualifier = false;
+  const ScanSpec *pspec = &scan_spec;
 
   HT_ASSERT(timeout_ms);
+
+  // can we optimize this query with an index?
+  if (!(flags&Table::SCANNER_FLAG_IGNORE_INDEX)
+      && (table->has_index_table() || table->has_qualifier_index_table())
+      && use_index(table, scan_spec, index_spec, &use_qualifier)) {
+    pspec = &index_spec.get();
+    m_use_index = true;
+
+    // create a ResultCallback object which will load the keys from
+    // the index, then sort and verify them
+    cb = new IndexScannerCallback(table, scan_spec, cb, timeout_ms, 
+                        use_qualifier);
+
+    // get the index table
+    if (use_qualifier)
+      table = table->get_qualifier_index_table().get();
+    else
+      table = table->get_index_table().get();
+
+    // fall through and retrieve values from the primary table. the 
+    // IndexScannerCallback object will then transform the results and forward 
+    // them to the original callback
+  }
+
+  m_cb = cb;
+  m_table = table;
+  m_scan_spec_builder = *pspec;
+
+  init(comm, app_queue, table, range_locator, *pspec, timeout_ms, cb);
+}
+
+bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec, 
+                ScanSpecBuilder &index_spec, bool *use_qualifier)
+{
+  HT_ASSERT(!table->schema()->need_id_assignment());
+
+  index_spec.set_keys_only(true);
+  if (primary_spec.value_regexp)
+    index_spec.set_value_regexp(primary_spec.value_regexp);
+  index_spec.add_column("v1");
+
+  // if a column qualifier is specified then make sure that all columns have
+  // a qualifier index. only support prefix column qualifiers or exact
+  // qualifiers, but not the regexp qualifier
+  if (primary_spec.columns.size()) {
+    for (size_t i = 0; i < primary_spec.columns.size(); i++) {
+      Schema::ColumnFamily *cf = 0;
+      const char *qualifier = strchr(primary_spec.columns[i], ':');
+      if (!qualifier) {
+        *use_qualifier = false;
+        break;
+      }
+
+      String column(primary_spec.columns[i], qualifier);
+      cf = table->schema()->get_column_family(column);
+      if (!cf || !cf->has_qualifier_index) {
+        *use_qualifier = false;
+        break;
+      }
+      qualifier++;
+      if (qualifier[0] == '/') {
+        *use_qualifier = false;
+        break;
+      }
+
+      // prefix match: create row interval ["%d,qualifier", ..)
+      if (qualifier[0] == '^') {
+        String q(qualifier + 1);
+        trim_if(q, boost::algorithm::is_any_of("'\""));
+        String s = format("%d,%s", (int)cf->id, q.c_str());
+        add_index_row(index_spec, s.c_str());
+      }
+      // exact match:  create row interval ["%d,qualifier\t", ..)
+      else {
+        String s = format("%d,%s\t", (int)cf->id, qualifier);
+        add_index_row(index_spec, s.c_str());
+      }
+
+      *use_qualifier = true;
+    }
+  }
+
+  if (*use_qualifier)
+    return true;
+
+  index_spec.get().row_regexp = 0;
+  index_spec.get().columns.resize(0);
+
+  // for value prefix queries we require normal indicies for ALL scanned columns
+  if (primary_spec.column_predicates.size() && primary_spec.columns.size()) {
+    HT_ASSERT(primary_spec.column_predicates.size() == 1);
+
+    foreach (const ColumnPredicate &cp, primary_spec.column_predicates) {
+      Schema::ColumnFamily *cf=table->schema()->get_column_family(
+                                cp.column_family);
+      if (!cf || !cf->has_index)
+        return false;
+
+      HT_ASSERT(cp.operation == ColumnPredicate::EXACT_MATCH
+                 || cp.operation == ColumnPredicate::PREFIX_MATCH);
+
+      // every \t in the original value gets escaped
+      const char *value;
+      size_t valuelen;
+      LoadDataEscape lde;
+      lde.escape(cp.value, cp.value_len, &value, &valuelen);
+
+      // exact match:  create row interval ["%d,value\t", ..)
+      // prefix match: create row interval ["%d,value", ..)
+      StaticBuffer sb(valuelen + 5);
+      char *p = (char *)sb.base;
+      sprintf(p, "%d,", (int)cf->id);
+      p     += strlen(p);
+      memcpy(p, value, valuelen);
+      p     += valuelen;
+      if (cp.operation == ColumnPredicate::EXACT_MATCH)
+        *p++  = '\t';
+      *p++  = '\0';
+
+      add_index_row(index_spec, (const char *)sb.base);
+    }
+
+    *use_qualifier = false;
+    return true;
+  }
+
+  return false;
+}
+
+void TableScannerAsync::add_index_row(ScanSpecBuilder &ssb, const char *row)
+{
+  // this code is identical to the RELOP_SW handler in HqlParser.h
+  String tmp;
+  RowInterval ri;
+  ri.start = row;
+  ri.start_inclusive = true;
+  const char *str = row;
+  const char *end = str + strlen(row);
+  const char *ptr;
+  for (ptr = end - 1; ptr > str; --ptr) {
+    if (::uint8_t(*ptr) < 0xffu) {
+      tmp = String(str, ptr - str);
+      tmp.append(1, (*ptr)+1);
+      ri.end = tmp.c_str();
+      ri.end_inclusive = false;
+      break;
+    }
+  }
+  if (ptr == str) {
+    tmp = row;
+    tmp.append(4, (char)0xff);
+    ri.end = tmp.c_str();
+    ri.end_inclusive = false;
+  }
+  ssb.add_row_interval(ri.start, ri.start_inclusive,
+                    ri.end, ri.end_inclusive);
+}
+
+void TableScannerAsync::init(Comm *comm, ApplicationQueuePtr &app_queue, 
+        Table *table, RangeLocatorPtr &range_locator, 
+        const ScanSpec &scan_spec, uint32_t timeout_ms, ResultCallback *cb)
+{
   int scanner_id = 0;
   IntervalScannerAsyncPtr ri_scanner;
   ScanSpec interval_scan_spec;
   Timer timer(timeout_ms);
   bool current_set = false;
 
-  m_table_name = table->get_name();
   m_cb->increment_outstanding();
   m_cb->register_scanner(this);
 
@@ -62,8 +228,9 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
     if (scan_spec.row_intervals.empty()) {
       if (scan_spec.cell_intervals.empty()) {
         ri_scanner = 0;
-        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator, scan_spec,
-                                              timeout_ms, !current_set, this, scanner_id++);
+        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, 
+                        range_locator, scan_spec, timeout_ms, 
+                        !current_set, this, scanner_id++);
 
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
@@ -75,9 +242,9 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
           interval_scan_spec.cell_intervals.push_back(
               scan_spec.cell_intervals[i]);
           ri_scanner = 0;
-          ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
-                                                interval_scan_spec, timeout_ms,
-                                                !current_set, this, scanner_id++);
+          ri_scanner = new IntervalScannerAsync(comm, app_queue, table, 
+                        range_locator, interval_scan_spec, timeout_ms,
+                        !current_set, this, scanner_id++);
           current_set = true;
           m_interval_scanners.push_back(ri_scanner);
           m_outstanding++;
@@ -93,9 +260,9 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
           scan_spec.base_copy(interval_scan_spec);
           interval_scan_spec.row_intervals.push_back(ri);
           ri_scanner = 0;
-          ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
-                                                interval_scan_spec, timeout_ms, !current_set,
-                                                this, scanner_id++);
+          ri_scanner = new IntervalScannerAsync(comm, app_queue, table,
+                        range_locator, interval_scan_spec, timeout_ms,
+                        !current_set, this, scanner_id++);
           current_set = true;
           m_interval_scanners.push_back(ri_scanner);
           m_outstanding++;
@@ -104,10 +271,10 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
           rowset_scan_spec.row_intervals.push_back(ri);
       }
       if (rowset_scan_spec.row_intervals.size()) {
-       ri_scanner = 0;
-       ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
-                                             rowset_scan_spec, timeout_ms, !current_set,
-            this, scanner_id++);
+        ri_scanner = 0;
+        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, 
+                        range_locator, rowset_scan_spec, timeout_ms, 
+                        !current_set, this, scanner_id++);
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
         m_outstanding++;
@@ -118,9 +285,9 @@ TableScannerAsync::TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
         scan_spec.base_copy(interval_scan_spec);
         interval_scan_spec.row_intervals.push_back(scan_spec.row_intervals[i]);
         ri_scanner = 0;
-        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, range_locator,
-                                              interval_scan_spec, timeout_ms, !current_set,
-                                              this, scanner_id++);
+        ri_scanner = new IntervalScannerAsync(comm, app_queue, table, 
+                        range_locator, interval_scan_spec, timeout_ms, 
+                        !current_set, this, scanner_id++);
         current_set = true;
         m_interval_scanners.push_back(ri_scanner);
         m_outstanding++;
@@ -146,6 +313,10 @@ TableScannerAsync::~TableScannerAsync() {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+  }
+  if (m_use_index) {
+    delete m_cb;
+    m_cb = 0;
   }
 }
 

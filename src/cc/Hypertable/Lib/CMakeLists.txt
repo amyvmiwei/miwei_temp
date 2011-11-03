@@ -194,6 +194,10 @@ target_link_libraries(future_test Hypertable)
 add_executable(scan_spec_test tests/scan_spec_test.cc)
 target_link_libraries(scan_spec_test Hypertable)
 
+# indices_test
+add_executable(indices_test tests/indices_test.cc)
+target_link_libraries(indices_test Hypertable)
+
 # row_delete_test
 add_executable(row_delete_test tests/row_delete_test.cc)
 target_link_libraries(row_delete_test Hypertable)
@@ -239,6 +243,7 @@ configure_file(${SRC_DIR}/good-schema-1.xml ${DST_DIR}/good-schema-1.xml
 configure_file(${HYPERTABLE_SOURCE_DIR}/tests/data/random.dat
                ${DST_DIR}/random.dat COPYONLY)
 configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
+configure_file(${SRC_DIR}/indices_test.golden ${DST_DIR}/indices_test.golden)
 configure_file(${SRC_DIR}/locationCacheTest.golden
                ${DST_DIR}/locationCacheTest.golden)
 configure_file(${SRC_DIR}/asyncApiTest.golden
@@ -284,7 +289,8 @@ add_test(Client-row-delete row_delete_test)
 add_test(Client-periodic-flush periodic_flush_test)
 add_test(NameIdMapper name_id_mapper_test --config=${DST_DIR}/name_id_mapper_test.cfg)
 add_test(StatsRangeServer-serialize rangeserver_serialize_test)
-add_test(ScenSpec-basic-tests scan_spec_test)
+add_test(ScanSpec-basic-tests scan_spec_test)
+add_test(Secondary-Indices-tests indices_test)
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)

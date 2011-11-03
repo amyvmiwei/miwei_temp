@@ -13,6 +13,7 @@ SELECT
     where_predicate:
       cell_predicate
       | row_predicate
+      | column_value_predicate
       | timestamp_predicate
 
     relop: '=' | '<' | '<=' | '>' | '>=' | '=^'
@@ -21,6 +22,7 @@ SELECT
       = column_family
       | column_family ':' column_qualifer
       | column_family ':' '/' column_qualifier_regexp '/'
+      | column_family ':' '^' column_qualifier_prefix
 
     cell_spec: row ',' column
 
@@ -34,6 +36,10 @@ SELECT
       | '(' [row_key relop] ROW relop row_key
               (OR [row_key relop] ROW relop row_key)* ')'
       | ROW REGEXP '"'row_regexp'"'
+
+    column_value_predicate:
+      column_family '=' value
+      | column_family '=' '^' value
 
     timestamp_predicate:
       [timestamp relop] TIMESTAMP relop timestamp
@@ -68,10 +74,28 @@ The parser only accepts a single timestamp predicate.  The '=^' operator is the
 "starts with" operator.  It will return all rows that have the same prefix as
 the operand. Use of the value_predicate without the "CELLS" modifier to the
 "SELECT" command is deprecated.
-
+<p>
 If your query selects several independent ranges by specifying multiple row
 predicates  (i.e. WHERE ROW < 'a' OR ROW > 'c') then the LIMIT, CELL_LIMIT,
 OFFSET, CELL_OFFSET predicates are applied to each range independently.
+<p>
+When specifying a column value predicate, the column family must be identical 
+to the column family used in the SELECT clause, and exactly one column family
+must be selected.  The following examples are valid: 
+<pre><code>
+    SELECT col FROM test WHERE col = "foo";
+    SELECT col FROM test WHERE col =^ "prefix";
+</code></pre>
+<p>
+The following examples are NOT valid because they select more than one 
+column family or because the column family in the select clause is different 
+from the one in the predicate (these limitations will be removed in future 
+versions of Hypertable):
+<pre><code>
+    SELECT * FROM test WHERE col = "foo";
+    SELECT col, col2 FROM test WHERE col =^ "prefix";
+    SELECT foo FROM test WHERE bar = "value";
+</code></pre>
 
 #### Options
 <p>
@@ -236,8 +260,11 @@ network roundtrips required when the number of rows requested is very large.
                                CELL = "cow","tag:Ab" OR
                                CELL =^ "foo","tag:acya");
     SELECT * FROM test INTO FILE "dfs:///tmp/foo";
-    SELECT col2:"bird" from RegexpTest WHERE ROW REGEXP "http://.*"; 
-    SELECT col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP "m.*\s\S";
-    SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE VALUE REGEXP \"l.*e\";
-    SELECT CELLS col1:/^w[^a-zA-Z]*$/ from RegexpTest WHERE ROW REGEXP \"^\\D+\" 
+    SELECT col2:"bird" FROM RegexpTest WHERE ROW REGEXP "http://.*"; 
+    SELECT col1:/^w[^a-zA-Z]*$/ FROM RegexpTest WHERE ROW REGEXP "m.*\s\S";
+    SELECT CELLS col1:/^w[^a-zA-Z]*$/ FROM RegexpTest WHERE VALUE REGEXP \"l.*e\";
+    SELECT CELLS col1:/^w[^a-zA-Z]*$/ FROM RegexpTest WHERE ROW REGEXP \"^\\D+\" 
         AND VALUE REGEXP \"l.*e\";",
+    SELECT col FROM test WHERE col = "foo";
+    SELECT col FROM test WHERE col =^ "prefix";
+    SELECT tags:^prefix FROM test;

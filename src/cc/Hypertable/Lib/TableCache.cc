@@ -28,14 +28,14 @@ using namespace std;
 
 TableCache::TableCache(PropertiesPtr &props, RangeLocatorPtr &range_locator,
     ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-    ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, uint32_t default_timeout_ms)
-  : m_props(props), m_range_locator(range_locator), m_comm(conn_manager->get_comm()),
-    m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_app_queue(app_queue),
+    ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, 
+    uint32_t default_timeout_ms)
+  : m_props(props), m_range_locator(range_locator), 
+    m_comm(conn_manager->get_comm()), m_conn_manager(conn_manager), 
+    m_hyperspace(hyperspace), m_app_queue(app_queue),
     m_namemap(namemap), m_timeout_ms(default_timeout_ms) {
-
   HT_ASSERT(m_props && m_range_locator && conn_manager && m_hyperspace &&
             m_app_queue && m_namemap);
-
 }
 
 TablePtr TableCache::get(const String &table_name, int32_t flags) {
@@ -49,8 +49,9 @@ TablePtr TableCache::get(const String &table_name, int32_t flags) {
     return it->second;
   }
 
-  TablePtr table = new Table(m_props, m_range_locator, m_conn_manager, m_hyperspace,
-                             m_app_queue, m_namemap, table_name, flags, m_timeout_ms);
+  TablePtr table = new Table(m_props, m_range_locator, m_conn_manager, 
+                             m_hyperspace, m_app_queue, m_namemap, table_name, 
+                             flags, m_timeout_ms);
 
   m_table_map.insert(make_pair(table_name, table));
 

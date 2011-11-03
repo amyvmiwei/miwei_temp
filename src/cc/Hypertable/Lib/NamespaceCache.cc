@@ -28,11 +28,11 @@ using namespace std;
 NamespaceCache::NamespaceCache(PropertiesPtr &props, RangeLocatorPtr &range_locator,
     ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
     ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, MasterClientPtr &master_client,
-    TableCachePtr &table_cache, uint32_t default_timeout_ms)
+    TableCachePtr &table_cache, uint32_t default_timeout_ms, Client *client)
   : m_props(props), m_range_locator(range_locator), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_app_queue(app_queue),
     m_namemap(namemap), m_master_client(master_client), m_table_cache(table_cache),
-    m_timeout_ms(default_timeout_ms) {
+    m_timeout_ms(default_timeout_ms), m_client(client) {
 
     HT_ASSERT(m_props && m_range_locator && conn_manager && m_hyperspace &&
               m_app_queue && m_namemap && m_master_client && m_table_cache);
@@ -54,7 +54,7 @@ NamespacePtr NamespaceCache::get(const String &name) {
 
   ns = new Namespace(name, id, m_props, m_conn_manager, m_hyperspace,
                      m_app_queue, m_namemap, m_master_client, m_range_locator,
-                     m_table_cache, m_timeout_ms);
+                     m_table_cache, m_timeout_ms, m_client);
   m_namespace_map.insert(make_pair(name, ns));
   return ns;
 }

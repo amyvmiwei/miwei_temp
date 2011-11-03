@@ -34,6 +34,7 @@
 #include "Schema.h"
 #include "Types.h"
 #include "ResultCallback.h"
+#include "Table.h"
 
 namespace Hypertable {
 
@@ -57,7 +58,7 @@ namespace Hypertable {
     TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
                       RangeLocatorPtr &range_locator,
                       const ScanSpec &scan_spec, uint32_t timeout_ms,
-                      ResultCallback *cb);
+                      ResultCallback *cb, int flags = 0);
 
     ~TableScannerAsync();
 
@@ -126,10 +127,19 @@ namespace Hypertable {
      */
     const ScanSpec &get_scan_spec() { return m_scan_spec_builder.get(); }
   private:
-    void maybe_callback_ok(int scanner_id, bool next, bool do_callback, ScanCellsPtr &cells);
+    friend class IndexScannerCallback;
+
+    void init(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
+            RangeLocatorPtr &range_locator, const ScanSpec &scan_spec, 
+            uint32_t timeout_ms, ResultCallback *cb);
+    void maybe_callback_ok(int scanner_id, bool next, 
+            bool do_callback, ScanCellsPtr &cells);
     void maybe_callback_error(int scanner_id, bool next);
     void wait_for_completion();
     void move_to_next_interval_scanner(int current_scanner, bool cancelled);
+    bool use_index(TablePtr table, const ScanSpec &primary_spec, 
+            ScanSpecBuilder &index_spec, bool *use_qualifier);
+    void add_index_row(ScanSpecBuilder &ssb, const char *row);
 
     std::vector<IntervalScannerAsyncPtr>  m_interval_scanners;
     uint32_t            m_timeout_ms;
@@ -144,10 +154,10 @@ namespace Hypertable {
     int                 m_outstanding;
     int                 m_error;
     String              m_error_msg;
-    String              m_table_name;
     Table              *m_table;
     ScanSpecBuilder     m_scan_spec_builder;
     bool                m_cancelled;
+    bool                m_use_index;
   };
 
   typedef intrusive_ptr<TableScannerAsync> TableScannerAsyncPtr;

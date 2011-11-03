@@ -468,6 +468,17 @@ namespace Hypertable {
      */
     virtual void debug(int32_t command, StaticBuffer &serialized_parameters,
                        DispatchHandler *handler) = 0;
+
+    /** 
+     * A posix-compliant dirname() 
+     */
+    static String dirname(String name, char separator = '/');
+
+    /** 
+     * A posix-compliant basename() 
+     */
+    static String basename(String name, char separator = '/');
+
   };
 
   typedef intrusive_ptr<Filesystem> FilesystemPtr;

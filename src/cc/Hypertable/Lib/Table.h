@@ -45,6 +45,10 @@ namespace Hypertable {
   class TableScanner;
   class TableMutator;
   class TableMutatorAsync;
+  class Namespace;
+
+  class Table;
+  typedef intrusive_ptr<Table> TablePtr;
 
   /** Represents an open table.
    */
@@ -55,7 +59,9 @@ namespace Hypertable {
     enum {
       OPEN_FLAG_BYPASS_TABLE_CACHE           = 0x01,
       OPEN_FLAG_REFRESH_TABLE_CACHE          = 0x02,
-      OPEN_FLAG_NO_AUTO_TABLE_REFRESH        = 0x04
+      OPEN_FLAG_NO_AUTO_TABLE_REFRESH        = 0x04,
+
+      SCANNER_FLAG_IGNORE_INDEX              = 0x01
     };
 
     enum {
@@ -66,7 +72,7 @@ namespace Hypertable {
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
           NameIdMapperPtr &namemap, const String &name, int32_t flags=0);
     Table(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
-          Hyperspace::SessionPtr &, ApplicationQueuePtr &, NameIdMapperPtr &namemap,
+          Hyperspace::SessionPtr &, ApplicationQueuePtr &, NameIdMapperPtr &,
           const String &name, int32_t flags, uint32_t default_timeout_ms);
     virtual ~Table();
 
@@ -165,6 +171,73 @@ namespace Hypertable {
 
     int32_t get_flags() { return m_flags; }
 
+    /** returns true if this table requires a index table */
+    bool needs_index_table() {
+      ScopedLock lock(m_mutex);
+      foreach (Schema::ColumnFamily *cf, m_schema->get_column_families()) {
+        if (cf->deleted)
+          continue;
+        if (cf->has_index)
+          return true;
+      }
+      return false;
+    }
+
+    /** returns true if this table requires a qualifier index table */
+    bool needs_qualifier_index_table() {
+      ScopedLock lock(m_mutex);
+      foreach (Schema::ColumnFamily *cf, m_schema->get_column_families()) {
+        if (cf->deleted)
+          continue;
+        if (cf->has_qualifier_index)
+          return true;
+      }
+      return false;
+    }
+
+    /** returns true if this table has an index */
+    bool has_index_table() {
+      ScopedLock lock(m_mutex);
+      return (m_index_table!=0);
+    }
+
+    /** returns true if this table has a qualifier index */
+    bool has_qualifier_index_table() {
+      ScopedLock lock(m_mutex);
+      return (m_qualifier_index_table != 0);
+    }
+
+    /** sets the index table. The index table is created by the Namespace,
+     * because it's the only object with access to the TableCache  */
+    void set_index_table(TablePtr idx) {
+      ScopedLock lock(m_mutex);
+      HT_ASSERT(idx != 0 ? m_index_table == 0 : 1);
+      m_index_table = idx;
+    }
+
+    /** sets the qualifier index table */
+    void set_qualifier_index_table(TablePtr idx) {
+      ScopedLock lock(m_mutex);
+      HT_ASSERT(idx != 0 ? m_qualifier_index_table == 0 : 1);
+      m_qualifier_index_table = idx;
+    }
+
+    TablePtr get_index_table() {
+      return m_index_table;
+    }
+
+    TablePtr get_qualifier_index_table() {
+      return m_qualifier_index_table;
+    }
+
+    void set_namespace(Namespace *ns) {
+      m_namespace = ns;
+    }
+
+    Namespace *get_namespace() {
+      return m_namespace;
+    }
+
   private:
     void initialize();
 
@@ -184,10 +257,11 @@ namespace Hypertable {
     bool                   m_stale;
     String                 m_toplevel_dir;
     size_t                 m_scanner_queue_size;
+    TablePtr               m_index_table;
+    TablePtr               m_qualifier_index_table;
+    Namespace             *m_namespace;
   };
 
-  typedef intrusive_ptr<Table> TablePtr;
-
-} // namesapce Hypertable
+} // namespace Hypertable
 
 #endif // HYPERTABLE_TABLE_H

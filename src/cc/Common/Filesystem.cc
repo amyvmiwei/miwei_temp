@@ -189,3 +189,73 @@ Filesystem::decode_response(EventPtr &event_ptr) {
 
   return decode_i32(&decode_ptr, &decode_remain);
 }
+
+static String &
+remove_trailing_duplicates(String &s, char separator)
+{
+  while (s.size() > 1) {
+    if (s[s.size()-1]==separator)
+      s.resize(s.size()-1);
+    else
+      break;
+  }
+
+  return s;
+}
+
+/** 
+ */
+String Filesystem::dirname(String name, char separator)
+{
+  if (name.size() == 1 && name[0] == separator)
+    return name;
+
+  // Remove trailing separators
+  std::string::size_type cur = name.length();
+  while (cur > 0 && name[cur - 1] == separator)
+    --cur;
+  name.resize(cur);
+
+  // Find last separator
+  std::string::size_type pos = name.rfind(separator);
+
+  if (pos == std::string::npos)
+    name = "."; // No separators
+  else if (pos == 0 && name.length() == 1 && name[0] == separator)
+    name = separator; // Only separators
+  else if (pos == 0 && name.length() > 1 && name[0] == separator)
+    name = "/";
+  else
+    name.resize(pos);
+
+  // Remove any duplicate adjacent path separators
+  return remove_trailing_duplicates(name, separator);
+}
+
+/** 
+ */
+String Filesystem::basename(String name, char separator)
+{
+  if (name.size() == 1 && name[0] == separator)
+    return name;
+
+  // Remove trailing separators
+  std::string::size_type cur = name.length();
+  while (cur > 0 && name[cur - 1] == separator)
+    --cur;
+  name.resize(cur);
+
+  // Find last separator
+  std::string::size_type pos = name.rfind(separator);
+
+  std::string ret;
+  if (pos == std::string::npos)
+    ; // No separators
+  else if (pos == 0 && name.length() == 1 && name[0] == separator)
+    name = separator; // Only separators
+  else
+    name = name.substr(pos + 1); // Basename only
+
+  // Remove any duplicate adjacent path separators
+  return remove_trailing_duplicates(name, separator);
+}

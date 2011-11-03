@@ -196,7 +196,7 @@ int main(int argc, char **argv) {
     if (operations.empty()) {
       OperationInitializePtr init_op = new OperationInitialize(context);
       if (context->namemap->exists_mapping("/sys/METADATA", 0))
-	init_op->set_state(OperationState::CREATE_RS_METRICS);
+        init_op->set_state(OperationState::CREATE_RS_METRICS);
       context->removal_manager->add_operation(init_op.get());
       operations.push_back( init_op );
     }

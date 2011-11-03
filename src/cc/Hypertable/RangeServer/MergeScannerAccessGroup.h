@@ -31,6 +31,7 @@
 #include "Common/DynamicBuffer.h"
 
 #include "MergeScanner.h"
+#include "IndexUpdater.h"
 
 
 namespace Hypertable {
@@ -80,8 +81,8 @@ namespace Hypertable {
     };
 
   public:
-    MergeScannerAccessGroup(ScanContextPtr &scan_ctx, 
-        bool return_deletes=false);
+    MergeScannerAccessGroup(String &table_name, ScanContextPtr &scan_ctx, 
+        bool return_deletes = false, bool is_compaction = false);
 
   protected:
     virtual bool do_get(Key &key, ByteString &value);
@@ -233,6 +234,14 @@ namespace Hypertable {
       increment_count(key, value);
     }
 
+    inline void purge_from_index(const Key &key, const ByteString &value) {
+      HT_ASSERT(key.flag == FLAG_INSERT);
+      CellFilterInfo &cfi =
+                m_scan_context_ptr->family_info[key.column_family_code];
+      if (cfi.has_index || cfi.has_qualifier_index)
+        m_index_updater->purge(key, value);
+    }
+
     // if this is true, return a delete even if it doesn't satisfy
     // the ScanSpec timestamp/version requirement
     bool          m_return_deletes;
@@ -266,6 +275,7 @@ namespace Hypertable {
     int64_t       m_deleted_cell_timestamp;
     DynamicBuffer m_deleted_cell_version;
     std::set<int64_t> m_deleted_cell_version_set;
+    IndexUpdaterPtr m_index_updater;
 
     ScanContext*  m_scan_context;
 

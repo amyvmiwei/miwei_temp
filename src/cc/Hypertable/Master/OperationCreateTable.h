@@ -44,6 +44,9 @@ namespace Hypertable {
 
   private:
     void initialize_dependencies();
+
+    void requires_indices(bool &needs_index, bool &needs_qualifier_index);
+
     String m_name;
     String m_schema;
     TableIdentifierManaged m_table;

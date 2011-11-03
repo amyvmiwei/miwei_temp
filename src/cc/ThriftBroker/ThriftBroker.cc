@@ -241,6 +241,10 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
 
   foreach(const std::string &col, tss.columns)
     hss.columns.push_back(col.c_str());
+
+  foreach(const ThriftGen::ColumnPredicate &cp, tss.column_predicates)
+    hss.column_predicates.push_back(Hypertable::ColumnPredicate(
+        cp.column_family.c_str(), cp.operation, cp.value.c_str()));
 }
 
 void convert_cell(const ThriftGen::Cell &tcell, Hypertable::Cell &hcell) {

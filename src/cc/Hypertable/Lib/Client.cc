@@ -234,5 +234,5 @@ void Client::initialize() {
                                   m_app_queue, m_namemap, m_timeout_ms);
   m_namespace_cache = new NamespaceCache(m_props, m_range_locator, m_conn_manager, m_hyperspace,
                                          m_app_queue, m_namemap, m_master_client,
-                                         m_table_cache, m_timeout_ms);
+                                         m_table_cache, m_timeout_ms, this);
 }

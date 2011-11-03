@@ -7,6 +7,13 @@
 
 module Hypertable
   module ThriftGen
+        module ColumnPredicateOperation
+          EXACT_MATCH = 1
+          PREFIX_MATCH = 2
+          VALUE_MAP = {1 => "EXACT_MATCH", 2 => "PREFIX_MATCH"}
+          VALID_VALUES = Set.new([EXACT_MATCH, PREFIX_MATCH]).freeze
+        end
+
         module KeyFlag
           DELETE_ROW = 0
           DELETE_CF = 1
@@ -110,6 +117,47 @@ module Hypertable
           ::Thrift::Struct.generate_accessors self
         end
 
+        # Specifies a column predicate
+        #     ... WHERE column = "value"
+        #   or
+        #     ... WHERE column =^ "prefix"
+        # 
+        # <dl>
+        #   <dt>column_family</dt>
+        #   <dd>The name of the column family</dd>
+        # 
+        #   <dt>operation</dt>
+        #   <dd>The predicate operation; either EXACT_MATCH or PREFIX_MATCH</dd>
+        # 
+        #   <dt>value</dt>
+        #   <dd>The cell value or cell prefix, depending on the operation</dd>
+        # 
+        #   <dt>value_len</dt>
+        #   <dd>The size of the value</dd>
+        # </dl>
+        class ColumnPredicate
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          COLUMN_FAMILY = 1
+          OPERATION = 2
+          VALUE = 3
+
+          FIELDS = {
+            COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family', :optional => true},
+            OPERATION => {:type => ::Thrift::Types::I32, :name => 'operation', :enum_class => Hypertable::ThriftGen::ColumnPredicateOperation},
+            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+            unless @operation.nil? || Hypertable::ThriftGen::ColumnPredicateOperation::VALID_VALUES.include?(@operation)
+              raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Invalid value of field operation!')
+            end
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
         # Specifies options for a scan
         # 
         # <dl>
@@ -179,6 +227,7 @@ module Hypertable
           SCAN_AND_FILTER_ROWS = 13
           ROW_OFFSET = 15
           CELL_OFFSET = 16
+          COLUMN_PREDICATES = 17
 
           FIELDS = {
             ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
@@ -196,7 +245,8 @@ module Hypertable
             VALUE_REGEXP => {:type => ::Thrift::Types::STRING, :name => 'value_regexp', :optional => true},
             SCAN_AND_FILTER_ROWS => {:type => ::Thrift::Types::BOOL, :name => 'scan_and_filter_rows', :default => false, :optional => true},
             ROW_OFFSET => {:type => ::Thrift::Types::I32, :name => 'row_offset', :default => 0, :optional => true},
-            CELL_OFFSET => {:type => ::Thrift::Types::I32, :name => 'cell_offset', :default => 0, :optional => true}
+            CELL_OFFSET => {:type => ::Thrift::Types::I32, :name => 'cell_offset', :default => 0, :optional => true},
+            COLUMN_PREDICATES => {:type => ::Thrift::Types::LIST, :name => 'column_predicates', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnPredicate}, :optional => true}
           }
 
           def struct_fields; FIELDS; end

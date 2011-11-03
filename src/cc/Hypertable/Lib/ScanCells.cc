@@ -107,3 +107,8 @@ bool ScanCells::load(SchemaPtr &schema,
   return false;
 }
 
+void ScanCells::add(Cell &cell, bool own) {
+  if (!m_cells)
+    m_cells = new CellsBuilder();
+  m_cells->add(cell, own);
+}

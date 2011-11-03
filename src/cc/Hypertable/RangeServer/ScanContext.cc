@@ -43,7 +43,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   boost::xtime xtnow;
   int64_t now;
   String family, qualifier;
-  bool has_qualifier, is_regexp;
+  bool has_qualifier, is_regexp, is_prefix;
 
   boost::xtime_get(&xtnow, boost::TIME_UTC);
   now = ((int64_t)xtnow.sec * 1000000000LL) + (int64_t)xtnow.nsec;
@@ -76,7 +76,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     if (spec && spec->columns.size() > 0) {
 
       foreach(const char *cfstr, spec->columns) {
-        ScanSpec::parse_column(cfstr, family, qualifier, &has_qualifier, &is_regexp);
+        ScanSpec::parse_column(cfstr, family, qualifier, &has_qualifier, 
+                &is_regexp, &is_prefix);
         cf = schema->get_column_family(family.c_str());
 
         if (cf == 0)
@@ -84,7 +85,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
         family_mask[cf->id] = true;
         if (has_qualifier) {
-          family_info[cf->id].add_qualifier(qualifier.c_str(), is_regexp);
+          family_info[cf->id].add_qualifier(qualifier.c_str(), 
+                  is_regexp, is_prefix);
         }
         if (cf->ttl == 0)
           family_info[cf->id].cutoff_time = TIMESTAMP_MIN;
@@ -121,6 +123,10 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
             continue;
           }
           family_mask[(*cf_it)->id] = true;
+          if ((*cf_it)->has_index)
+            family_info[(*cf_it)->id].has_index = true;
+          if ((*cf_it)->has_qualifier_index)
+            family_info[(*cf_it)->id].has_qualifier_index = true;
           if ((*cf_it)->ttl == 0)
             family_info[(*cf_it)->id].cutoff_time = TIMESTAMP_MIN;
           else

@@ -32,7 +32,7 @@ void TableCallback::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {
 }
 
 void TableCallback::scan_error(TableScannerAsync *scanner, int error,
-                                          const String &error_msg, bool eos) {
+                               const String &error_msg, bool eos) {
   m_scanner->scan_error(error, error_msg);
 }
 
@@ -41,7 +41,7 @@ void TableCallback::update_ok(TableMutatorAsync *mutator) {
 }
 
 void TableCallback::update_error(TableMutatorAsync *mutator, int error,
-    FailedMutations &failures) {
+                                FailedMutations &failures) {
   m_mutator->update_error(error, failures);
 }
 

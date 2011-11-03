@@ -49,6 +49,8 @@ namespace {
     "./offset_test.golden",
     "./timeorder_test.hql",
     "./timeorder_test.golden",
+    "./indices_test.hql",
+    "./indices_test.golden",
     0
   };
 }
@@ -66,22 +68,14 @@ int main(int argc, char **argv) {
   }
 
   /**
-   *  hypertable_test
+   *  secondary INDEX tests
    */
   cmd_str = "./hypertable --test-mode --config hypertable.cfg "
-      "< hypertable_test.hql > hypertable_test.output 2>&1";
+      "< indices_test.hql > indices_test.output 2>&1";
   if (system(cmd_str.c_str()) != 0)
     _exit(1);
 
-  cmd_str = "diff hypertable_test.output hypertable_test.golden";
-  if (system(cmd_str.c_str()) != 0)
-    _exit(1);
-
-  cmd_str = "gunzip -f hypertable_select_gz_test.output.gz";
-  if (system(cmd_str.c_str()) != 0)
-    _exit(1);
-
-  cmd_str = "diff hypertable_select_gz_test.output hypertable_select_gz_test.golden";
+  cmd_str = "diff indices_test.output indices_test.golden";
   if (system(cmd_str.c_str()) != 0)
     _exit(1);
 
@@ -106,6 +100,26 @@ int main(int argc, char **argv) {
     _exit(1);
 
   cmd_str = "diff timeorder_test.output timeorder_test.golden";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  /**
+   *  hypertable_test
+   */
+  cmd_str = "./hypertable --test-mode --config hypertable.cfg "
+      "< hypertable_test.hql > hypertable_test.output 2>&1";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  cmd_str = "diff hypertable_test.output hypertable_test.golden";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  cmd_str = "gunzip -f hypertable_select_gz_test.output.gz";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  cmd_str = "diff hypertable_select_gz_test.output hypertable_select_gz_test.golden";
   if (system(cmd_str.c_str()) != 0)
     _exit(1);
 

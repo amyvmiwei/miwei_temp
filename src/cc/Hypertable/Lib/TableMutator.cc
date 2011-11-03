@@ -151,12 +151,13 @@ void TableMutator::auto_flush() {
     if (!m_mutator->needs_flush())
       return;
 
-    wait_for_flush_completion();
+    wait_for_flush_completion(m_mutator.get());
 
     if (m_flush_delay)
       poll(0, 0, m_flush_delay);
 
-    m_mutator->flush(!(m_flags & Table::MUTATOR_FLAG_NO_LOG_SYNC));
+    m_mutator->flush_with_tablequeue(this,
+            !(m_flags & Table::MUTATOR_FLAG_NO_LOG_SYNC));
   }
   catch (...) {
     m_last_op = FLUSH;
@@ -170,11 +171,11 @@ void TableMutator::flush() {
   try {
     set_last_error(Error::OK);
 
-    wait_for_flush_completion();
+    wait_for_flush_completion(&(*m_mutator));
 
-    m_mutator->flush();
+    m_mutator->flush_with_tablequeue(this);
 
-    wait_for_flush_completion();
+    wait_for_flush_completion(&(*m_mutator));
 
     m_unflushed_updates = false;
   }
@@ -190,28 +191,32 @@ void TableMutator::flush() {
   }
 }
 
-void TableMutator::wait_for_flush_completion() {
-  ApplicationHandler *app_handler;
+void TableMutator::wait_for_flush_completion(TableMutatorAsync *mutator) {
+  int last_error = 0;
+  ApplicationHandler *app_handler = 0;
   while (true) {
     {
       ScopedLock lock(m_queue_mutex);
-      if (m_mutator->has_outstanding_unlocked()) {
-	m_queue->wait_for_buffer(lock, &app_handler);
+      if (mutator->has_outstanding_unlocked()) {
+        m_queue->wait_for_buffer(lock, &app_handler);
         {
           ScopedLock lock(m_mutex);
-          if (m_last_error != Error::OK)
-            HT_THROW(m_last_error, "");
+          last_error = m_last_error;
         }
       }
-      else
-	return;
+      else {
+        if (last_error != Error::OK)
+          HT_THROW(m_last_error, "");
+        return;
+      }
     }
     app_handler->run();
     delete app_handler;
+
+    if (last_error != Error::OK)
+      HT_THROW(m_last_error, "");
   }
 }
-
-
 
 bool TableMutator::retry(uint32_t timeout_ms) {
   uint32_t save_timeout = m_timeout_ms;

@@ -67,13 +67,34 @@ void OperationCreateTable::initialize_dependencies() {
   m_dependencies.insert(Dependency::SYSTEM);
 }
 
+void OperationCreateTable::requires_indices(bool &needs_index, 
+        bool &needs_qualifier_index) {
+  SchemaPtr s;
+
+  s = Schema::new_instance(m_schema.c_str(), m_schema.size());
+  foreach (Schema::ColumnFamily *cf, s->get_column_families()) {
+    if (cf && !cf->deleted) {
+     if (cf->has_index)
+       needs_index = true;
+     if (cf->has_qualifier_index)
+       needs_qualifier_index = true;
+    }
+    if (needs_index && needs_qualifier_index)
+      return;
+  }
+}
+
 void OperationCreateTable::execute() {
-  bool is_namespace;
-  RangeSpec range;
+  bool is_namespace; 
+  RangeSpec range, index_range, qualifier_index_range;
   int32_t state = get_state();
+  bool has_index = false;
+  bool has_qualifier_index = false;
+  bool initialized = false;
 
   HT_INFOF("Entering CreateTable-%lld(%s, location=%s) state=%s",
-           (Lld)header.id, m_name.c_str(), m_location.c_str(), OperationState::get_text(state));
+           (Lld)header.id, m_name.c_str(), m_location.c_str(), 
+           OperationState::get_text(state));
 
   switch (state) {
 
@@ -81,13 +102,16 @@ void OperationCreateTable::execute() {
     // Check to see if namespace exists
     if (m_context->namemap->exists_mapping(m_name, &is_namespace))
       complete_error(Error::NAME_ALREADY_IN_USE, "");
+
     set_state(OperationState::ASSIGN_ID);
     m_context->mml_writer->record_state(this);
     HT_MAYBE_FAIL("create-table-INITIAL");
+    break;
 
   case OperationState::ASSIGN_ID:
     try {
-      Utility::create_table_in_hyperspace(m_context, m_name, m_schema, &m_table);
+      Utility::create_table_in_hyperspace(m_context, m_name, m_schema, 
+              &m_table);
     }
     catch (Exception &e) {
       if (e.code() == Error::INDUCED_FAILURE)
@@ -97,13 +121,95 @@ void OperationCreateTable::execute() {
       complete_error(e);
       return;
     }
+
     HT_MAYBE_FAIL("create-table-ASSIGN_ID");
+    set_state(OperationState::CREATE_INDEX);
+    // fall through
+
+  case OperationState::CREATE_INDEX:
+    requires_indices(has_index, has_qualifier_index);
+    initialized = true;
+
+    if (has_index) {
+      try {
+        String index_name;
+        String index_schema;
+        Operation *op = 0;
+
+        HT_INFOF("  creating index for table %s", m_name.c_str()); 
+        Utility::prepare_index(m_context, m_name, m_schema, 
+                        false, index_name, index_schema);
+        op = new OperationCreateTable(m_context, 
+                index_name, index_schema);
+        op->add_obstruction(m_name + "-create-index");
+
+        ScopedLock lock(m_mutex);
+        add_dependency(m_name + "-create-index");
+        m_sub_ops.push_back(op);
+      }
+      catch (Exception &e) {
+        if (e.code() == Error::INDUCED_FAILURE)
+          throw;
+        if (e.code() != Error::NAMESPACE_DOES_NOT_EXIST)
+          HT_ERROR_OUT << e << HT_END;
+        complete_error(e);
+        return;
+      }
+
+      HT_MAYBE_FAIL("create-table-CREATE_INDEX");
+      set_state(OperationState::CREATE_QUALIFIER_INDEX);
+      return;
+    }
+
+    set_state(OperationState::CREATE_QUALIFIER_INDEX);
+
+    // fall through
+
+  case OperationState::CREATE_QUALIFIER_INDEX:
+    if (!initialized)
+      requires_indices(has_index, has_qualifier_index);
+
+    if (has_qualifier_index) {
+      try {
+        String index_name;
+        String index_schema;
+        Operation *op = 0;
+
+        HT_INFOF("  creating qualifier index for table %s", m_name.c_str()); 
+        Utility::prepare_index(m_context, m_name, m_schema, 
+                        true, index_name, index_schema);
+        op = new OperationCreateTable(m_context, 
+                index_name, index_schema);
+        op->add_obstruction(m_name + "-create-qualifier-index");
+
+        ScopedLock lock(m_mutex);
+        add_dependency(m_name + "-create-qualifier-index");
+        m_sub_ops.push_back(op);
+      }
+      catch (Exception &e) {
+        if (e.code() == Error::INDUCED_FAILURE)
+          throw;
+        if (e.code() != Error::NAMESPACE_DOES_NOT_EXIST)
+          HT_ERROR_OUT << e << HT_END;
+        complete_error(e);
+        return;
+      }
+
+      HT_MAYBE_FAIL("create-table-CREATE_QUALIFIER_INDEX");
+      set_state(OperationState::WRITE_METADATA);
+      return;
+    }
+
     set_state(OperationState::WRITE_METADATA);
+    
+    // fall through
 
   case OperationState::WRITE_METADATA:
     Utility::create_table_write_metadata(m_context, &m_table);
     HT_MAYBE_FAIL("create-table-WRITE_METADATA-a");
-    m_range_name = format("%s[..%s]", m_table.id, Key::END_ROW_MARKER);
+
+    m_range_name = format("%s[..%s]", 
+            m_table.id, Key::END_ROW_MARKER);
     {
       ScopedLock lock(m_mutex);
       m_dependencies.clear();
@@ -137,15 +243,18 @@ void OperationCreateTable::execute() {
     try {
       range.start_row = 0;
       range.end_row = Key::END_ROW_MARKER;
-      Utility::create_table_load_range(m_context, m_location, &m_table, range, false);
+      Utility::create_table_load_range(m_context, m_location, &m_table, 
+              range, false);
       HT_MAYBE_FAIL("create-table-LOAD_RANGE-a");
     }
     catch (Exception &e) {
       if (!m_context->reassigned(&m_table, range, m_location))
         HT_THROW2(e.code(), e, format("Loading %s range %s on server %s",
-                                      m_name.c_str(), m_range_name.c_str(), m_location.c_str()));
+                                      m_name.c_str(), m_range_name.c_str(), 
+                                      m_location.c_str()));
       // if reassigned, it was properly loaded and then moved, so continue on
     }
+
     {
       ScopedLock lock(m_mutex);
       m_dependencies.clear();
@@ -158,7 +267,15 @@ void OperationCreateTable::execute() {
     {
       String tablefile = m_context->toplevel_dir + "/tables/" + m_table.id;
       m_context->hyperspace->attr_set(tablefile, "x", "", 0);
+
+      uint64_t handle = 0;
+      HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_context->hyperspace, 
+              &handle);
+      handle = m_context->hyperspace->open(tablefile, 
+              OPEN_FLAG_READ|OPEN_FLAG_WRITE);
+      m_context->hyperspace->attr_set(handle, "x", "", 0);
     }
+    HT_MAYBE_FAIL("create-table-FINALIZE");
     complete_ok();
     break;
 
@@ -167,8 +284,8 @@ void OperationCreateTable::execute() {
   }
 
   HT_INFOF("Leaving CreateTable-%lld(%s, id=%s, generation=%u)",
-           (Lld)header.id, m_name.c_str(), m_table.id, (unsigned)m_table.generation);
-
+           (Lld)header.id, m_name.c_str(), 
+           m_table.id, (unsigned)m_table.generation);
 }
 
 

@@ -50,6 +50,7 @@ OperationInitialize::OperationInitialize(ContextPtr &context,
 void OperationInitialize::execute() {
   std::vector<Entity *> entities;
   Operation *operation = 0;
+  Operation *operation2 = 0;
   String filename, schema;
   uint64_t handle = 0;
   RangeSpec range;
@@ -191,16 +192,21 @@ void OperationInitialize::execute() {
     filename = System::install_dir + "/conf/RS_METRICS.xml";
     schema = FileUtils::file_to_string(filename);
     operation = new OperationCreateTable(m_context, "/sys/RS_METRICS", schema);
-    operation->add_obstruction("initialize[1]");
+    operation->add_obstruction("initialize[2]");
+    operation->add_obstruction("initialize[3]");
     {
       ScopedLock lock(m_mutex);
-      m_dependencies.insert("initialize[1]");
+      m_dependencies.insert("initialize[2]");
       m_state = OperationState::FINALIZE;
       m_sub_ops.push_back(operation);
     }
     entities.clear();
     entities.push_back(operation);
     entities.push_back(this);
+    operation2 = new OperationCreateNamespace(m_context, "/tmp", 0);
+    operation2->add_dependency("initialize[3]");
+    m_sub_ops.push_back(operation2);
+    entities.push_back(operation2);
     m_context->mml_writer->record_state(entities);
     HT_MAYBE_FAIL("initialize-CREATE_RS_METRICS");
     return;

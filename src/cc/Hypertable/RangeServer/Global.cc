@@ -70,4 +70,5 @@ namespace Hypertable {
   int32_t                Global::metrics_interval = 0;
   int32_t                Global::merge_cellstore_run_length_threshold = 0;
   bool                   Global::ignore_clock_skew_errors = false;
+  ConnectionManagerPtr   Global::conn_manager;
 }

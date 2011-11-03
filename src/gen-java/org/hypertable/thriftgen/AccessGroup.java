@@ -856,14 +856,14 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
           case 7: // COLUMNS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list48 = iprot.readListBegin();
-                struct.columns = new ArrayList<ColumnFamily>(_list48.size);
-                for (int _i49 = 0; _i49 < _list48.size; ++_i49)
+                org.apache.thrift.protocol.TList _list56 = iprot.readListBegin();
+                struct.columns = new ArrayList<ColumnFamily>(_list56.size);
+                for (int _i57 = 0; _i57 < _list56.size; ++_i57)
                 {
-                  ColumnFamily _elem50; // required
-                  _elem50 = new ColumnFamily();
-                  _elem50.read(iprot);
-                  struct.columns.add(_elem50);
+                  ColumnFamily _elem58; // required
+                  _elem58 = new ColumnFamily();
+                  _elem58.read(iprot);
+                  struct.columns.add(_elem58);
                 }
                 iprot.readListEnd();
               }
@@ -928,9 +928,9 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
           oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.columns.size()));
-            for (ColumnFamily _iter51 : struct.columns)
+            for (ColumnFamily _iter59 : struct.columns)
             {
-              _iter51.write(oprot);
+              _iter59.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -998,9 +998,9 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
       if (struct.isSetColumns()) {
         {
           oprot.writeI32(struct.columns.size());
-          for (ColumnFamily _iter52 : struct.columns)
+          for (ColumnFamily _iter60 : struct.columns)
           {
-            _iter52.write(oprot);
+            _iter60.write(oprot);
           }
         }
       }
@@ -1036,14 +1036,14 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
       }
       if (incoming.get(6)) {
         {
-          org.apache.thrift.protocol.TList _list53 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.columns = new ArrayList<ColumnFamily>(_list53.size);
-          for (int _i54 = 0; _i54 < _list53.size; ++_i54)
+          org.apache.thrift.protocol.TList _list61 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.columns = new ArrayList<ColumnFamily>(_list61.size);
+          for (int _i62 = 0; _i62 < _list61.size; ++_i62)
           {
-            ColumnFamily _elem55; // required
-            _elem55 = new ColumnFamily();
-            _elem55.read(iprot);
-            struct.columns.add(_elem55);
+            ColumnFamily _elem63; // required
+            _elem63 = new ColumnFamily();
+            _elem63.read(iprot);
+            struct.columns.add(_elem63);
           }
         }
         struct.setColumnsIsSet(true);
