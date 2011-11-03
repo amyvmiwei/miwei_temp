@@ -57,11 +57,13 @@ using namespace Config;
 Namespace::Namespace(const String &name, const String &id, PropertiesPtr &props,
     ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
     ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, MasterClientPtr &master_client,
-    RangeLocatorPtr &range_locator, TableCachePtr &table_cache, uint32_t timeout)
+    RangeLocatorPtr &range_locator, TableCachePtr &table_cache, 
+    uint32_t timeout, Client *client)
   : m_name(name), m_id(id), m_props(props),
     m_comm(conn_manager->get_comm()), m_conn_manager(conn_manager), m_hyperspace(hyperspace),
     m_app_queue(app_queue), m_namemap(namemap), m_master_client(master_client),
-    m_range_locator(range_locator), m_table_cache(table_cache), m_timeout_ms(timeout) {
+    m_range_locator(range_locator), m_table_cache(table_cache), 
+    m_timeout_ms(timeout), m_client(client) {
 
   HT_ASSERT(m_props && conn_manager && m_hyperspace && m_app_queue && m_namemap &&
             m_master_client && m_range_locator && m_table_cache);
@@ -101,30 +103,32 @@ void Namespace::canonicalize(String *original) {
   *original = output;
 }
 
-
 void Namespace::create_table(const String &table_name, const String &schema) {
+  String name = Filesystem::basename(table_name);
+  if (name.size() && name[0]=='^')
+    HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
+
   String full_name = get_full_name(table_name);
   m_master_client->create_table(full_name, schema);
 }
-
 
 void Namespace::alter_table(const String &table_name, const String &alter_schema_str) {
   // Construct a new schema which is a merge of the existing schema
   // and the desired alterations.
   String full_name = get_full_name(table_name);
 
-  SchemaPtr schema, alter_schema, final_schema;
   Schema::AccessGroup *final_ag;
   Schema::ColumnFamily *final_cf;
   String final_schema_str;
   TablePtr table = open_table(table_name, Table::OPEN_FLAG_BYPASS_TABLE_CACHE);
 
-  schema = table->schema();
-  alter_schema = Schema::new_instance(alter_schema_str, alter_schema_str.length());
+  SchemaPtr schema = table->schema();
+  SchemaPtr alter_schema = Schema::new_instance(alter_schema_str, 
+          alter_schema_str.length());
   if (!alter_schema->is_valid())
     HT_THROW(Error::BAD_SCHEMA, alter_schema->get_error_string());
 
-  final_schema = new Schema(*(schema.get()));
+  SchemaPtr final_schema = new Schema(*(schema.get()));
   final_schema->incr_generation();
 
   foreach(Schema::AccessGroup *alter_ag, alter_schema->get_access_groups()) {
@@ -178,21 +182,31 @@ void Namespace::alter_table(const String &table_name, const String &alter_schema
 
   final_schema->render(final_schema_str, true);
   m_master_client->alter_table(full_name, final_schema_str);
-
 }
 
 
 TablePtr Namespace::open_table(const String &table_name, int32_t flags) {
   String full_name = get_full_name(table_name);
-  return _open_table(full_name, flags);
+  TablePtr table = _open_table(full_name, flags);
+
+  if (table->needs_index_table() 
+          && !table->has_index_table()) 
+    table->set_index_table(open_table(get_index_table_name(table_name)));
+  if (table->needs_qualifier_index_table() 
+          && !table->has_qualifier_index_table()) 
+    table->set_qualifier_index_table(open_table(get_qualifier_index_table_name(table_name)));
+  return table;
 }
 
 TablePtr Namespace::_open_table(const String &full_name, int32_t flags) {
+  TablePtr t;
   if (flags & Table::OPEN_FLAG_BYPASS_TABLE_CACHE)
-    return new Table(m_props, m_range_locator, m_conn_manager, m_hyperspace,
+    t=new Table(m_props, m_range_locator, m_conn_manager, m_hyperspace,
                      m_app_queue, m_namemap, full_name, flags, m_timeout_ms);
   else
-    return m_table_cache->get(full_name, flags);
+    t=m_table_cache->get(full_name, flags);
+  t->set_namespace(this);
+  return (t);
 }
 
 void Namespace::refresh_table(const String &table_name) {
@@ -265,13 +279,29 @@ void Namespace::rename_table(const String &old_name, const String &new_name) {
   m_master_client->rename_table(full_old_name, full_new_name);
 
   m_table_cache->remove(full_old_name);
+
+  // also remove the index table from the cache
+  String index_name=get_index_table_name(old_name);
+  m_table_cache->remove(get_full_name(index_name));
+  index_name=get_qualifier_index_table_name(old_name);
+  m_table_cache->remove(get_full_name(index_name));
 }
 
 void Namespace::drop_table(const String &table_name, bool if_exists) {
+  String name = Filesystem::basename(table_name);
+  if (name.size() && name[0]=='^')
+    HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
+
   String full_name = get_full_name(table_name);
 
   m_master_client->drop_table(full_name, if_exists);
   m_table_cache->remove(full_name);
+
+  // also remove the index tables from the cache
+  String index_name=get_index_table_name(table_name);
+  m_table_cache->remove(get_full_name(index_name));
+  index_name=get_qualifier_index_table_name(table_name);
+  m_table_cache->remove(get_full_name(index_name));
 }
 
 void Namespace::get_listing(bool include_sub_entries, std::vector<NamespaceListing> &listing) {
@@ -363,6 +393,4 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
   }
   tsbuilder.set_end_row(Key::END_ROW_MARKER);
   splits.push_back(tsbuilder.get());
-
-
 }

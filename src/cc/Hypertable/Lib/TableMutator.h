@@ -180,7 +180,10 @@ namespace Hypertable {
   private:
 
     void auto_flush();
-    void wait_for_flush_completion();
+
+    friend class TableMutatorAsync;
+    void wait_for_flush_completion(TableMutatorAsync *mutator);
+
     void set_last_error(int32_t error) {
       ScopedLock lock(m_mutex);
       m_last_error = error;

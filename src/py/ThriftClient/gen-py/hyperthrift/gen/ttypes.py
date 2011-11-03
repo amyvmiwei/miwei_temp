@@ -16,6 +16,28 @@ except:
   fastbinary = None
 
 
+class ColumnPredicateOperation(object):
+  """
+  The "operation" for a ColumnPredicate
+
+  EXACT_MATCH: compares the cell value for identity
+      (... WHERE column = "value")
+  PREFIX_MATCH: compares the cell value for a prefix match
+      (... WHERE column =^ "prefix")
+  """
+  EXACT_MATCH = 1
+  PREFIX_MATCH = 2
+
+  _VALUES_TO_NAMES = {
+    1: "EXACT_MATCH",
+    2: "PREFIX_MATCH",
+  }
+
+  _NAMES_TO_VALUES = {
+    "EXACT_MATCH": 1,
+    "PREFIX_MATCH": 2,
+  }
+
 class KeyFlag(object):
   """
   State flags for a key
@@ -332,6 +354,109 @@ class CellInterval(object):
   def __ne__(self, other):
     return not (self == other)
 
+class ColumnPredicate(object):
+  """
+  Specifies a column predicate
+      ... WHERE column = "value"
+    or
+      ... WHERE column =^ "prefix"
+
+  <dl>
+    <dt>column_family</dt>
+    <dd>The name of the column family</dd>
+
+    <dt>operation</dt>
+    <dd>The predicate operation; either EXACT_MATCH or PREFIX_MATCH</dd>
+
+    <dt>value</dt>
+    <dd>The cell value or cell prefix, depending on the operation</dd>
+
+    <dt>value_len</dt>
+    <dd>The size of the value</dd>
+  </dl>
+
+  Attributes:
+   - column_family
+   - operation
+   - value
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'column_family', None, None, ), # 1
+    (2, TType.I32, 'operation', None, None, ), # 2
+    (3, TType.STRING, 'value', None, None, ), # 3
+  )
+
+  def __init__(self, column_family=None, operation=None, value=None,):
+    self.column_family = column_family
+    self.operation = operation
+    self.value = value
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.column_family = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.operation = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRING:
+          self.value = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('ColumnPredicate')
+    if self.column_family is not None:
+      oprot.writeFieldBegin('column_family', TType.STRING, 1)
+      oprot.writeString(self.column_family)
+      oprot.writeFieldEnd()
+    if self.operation is not None:
+      oprot.writeFieldBegin('operation', TType.I32, 2)
+      oprot.writeI32(self.operation)
+      oprot.writeFieldEnd()
+    if self.value is not None:
+      oprot.writeFieldBegin('value', TType.STRING, 3)
+      oprot.writeString(self.value)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class ScanSpec(object):
   """
   Specifies options for a scan
@@ -403,6 +528,7 @@ class ScanSpec(object):
    - scan_and_filter_rows
    - row_offset
    - cell_offset
+   - column_predicates
   """
 
   thrift_spec = (
@@ -423,9 +549,10 @@ class ScanSpec(object):
     (14, TType.I32, 'cell_limit', None, 0, ), # 14
     (15, TType.I32, 'row_offset', None, 0, ), # 15
     (16, TType.I32, 'cell_offset', None, 0, ), # 16
+    (17, TType.LIST, 'column_predicates', (TType.STRUCT,(ColumnPredicate, ColumnPredicate.thrift_spec)), None, ), # 17
   )
 
-  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], versions=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[14][4], cell_limit_per_family=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4], row_offset=thrift_spec[15][4], cell_offset=thrift_spec[16][4],):
+  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], versions=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[14][4], cell_limit_per_family=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4], row_offset=thrift_spec[15][4], cell_offset=thrift_spec[16][4], column_predicates=None,):
     self.row_intervals = row_intervals
     self.cell_intervals = cell_intervals
     self.return_deletes = return_deletes
@@ -442,6 +569,7 @@ class ScanSpec(object):
     self.scan_and_filter_rows = scan_and_filter_rows
     self.row_offset = row_offset
     self.cell_offset = cell_offset
+    self.column_predicates = column_predicates
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -549,6 +677,17 @@ class ScanSpec(object):
           self.cell_offset = iprot.readI32();
         else:
           iprot.skip(ftype)
+      elif fid == 17:
+        if ftype == TType.LIST:
+          self.column_predicates = []
+          (_etype21, _size18) = iprot.readListBegin()
+          for _i22 in xrange(_size18):
+            _elem23 = ColumnPredicate()
+            _elem23.read(iprot)
+            self.column_predicates.append(_elem23)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -562,15 +701,15 @@ class ScanSpec(object):
     if self.row_intervals is not None:
       oprot.writeFieldBegin('row_intervals', TType.LIST, 1)
       oprot.writeListBegin(TType.STRUCT, len(self.row_intervals))
-      for iter18 in self.row_intervals:
-        iter18.write(oprot)
+      for iter24 in self.row_intervals:
+        iter24.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.cell_intervals is not None:
       oprot.writeFieldBegin('cell_intervals', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.cell_intervals))
-      for iter19 in self.cell_intervals:
-        iter19.write(oprot)
+      for iter25 in self.cell_intervals:
+        iter25.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.return_deletes is not None:
@@ -596,8 +735,8 @@ class ScanSpec(object):
     if self.columns is not None:
       oprot.writeFieldBegin('columns', TType.LIST, 8)
       oprot.writeListBegin(TType.STRING, len(self.columns))
-      for iter20 in self.columns:
-        oprot.writeString(iter20)
+      for iter26 in self.columns:
+        oprot.writeString(iter26)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.keys_only is not None:
@@ -631,6 +770,13 @@ class ScanSpec(object):
     if self.cell_offset is not None:
       oprot.writeFieldBegin('cell_offset', TType.I32, 16)
       oprot.writeI32(self.cell_offset)
+      oprot.writeFieldEnd()
+    if self.column_predicates is not None:
+      oprot.writeFieldBegin('column_predicates', TType.LIST, 17)
+      oprot.writeListBegin(TType.STRUCT, len(self.column_predicates))
+      for iter27 in self.column_predicates:
+        iter27.write(oprot)
+      oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -1080,11 +1226,11 @@ class Result(object):
       elif fid == 7:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype24, _size21) = iprot.readListBegin()
-          for _i25 in xrange(_size21):
-            _elem26 = Cell()
-            _elem26.read(iprot)
-            self.cells.append(_elem26)
+          (_etype31, _size28) = iprot.readListBegin()
+          for _i32 in xrange(_size28):
+            _elem33 = Cell()
+            _elem33.read(iprot)
+            self.cells.append(_elem33)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -1125,8 +1271,8 @@ class Result(object):
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 7)
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
-      for iter27 in self.cells:
-        iter27.write(oprot)
+      for iter34 in self.cells:
+        iter34.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -1255,15 +1401,15 @@ class ResultAsArrays(object):
       elif fid == 7:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype31, _size28) = iprot.readListBegin()
-          for _i32 in xrange(_size28):
-            _elem33 = []
-            (_etype37, _size34) = iprot.readListBegin()
-            for _i38 in xrange(_size34):
-              _elem39 = iprot.readString();
-              _elem33.append(_elem39)
+          (_etype38, _size35) = iprot.readListBegin()
+          for _i39 in xrange(_size35):
+            _elem40 = []
+            (_etype44, _size41) = iprot.readListBegin()
+            for _i45 in xrange(_size41):
+              _elem46 = iprot.readString();
+              _elem40.append(_elem46)
             iprot.readListEnd()
-            self.cells.append(_elem33)
+            self.cells.append(_elem40)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -1304,10 +1450,10 @@ class ResultAsArrays(object):
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 7)
       oprot.writeListBegin(TType.LIST, len(self.cells))
-      for iter40 in self.cells:
-        oprot.writeListBegin(TType.STRING, len(iter40))
-        for iter41 in iter40:
-          oprot.writeString(iter41)
+      for iter47 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter47))
+        for iter48 in iter47:
+          oprot.writeString(iter48)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -1925,11 +2071,11 @@ class AccessGroup(object):
       elif fid == 7:
         if ftype == TType.LIST:
           self.columns = []
-          (_etype45, _size42) = iprot.readListBegin()
-          for _i46 in xrange(_size42):
-            _elem47 = ColumnFamily()
-            _elem47.read(iprot)
-            self.columns.append(_elem47)
+          (_etype52, _size49) = iprot.readListBegin()
+          for _i53 in xrange(_size49):
+            _elem54 = ColumnFamily()
+            _elem54.read(iprot)
+            self.columns.append(_elem54)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -1970,8 +2116,8 @@ class AccessGroup(object):
     if self.columns is not None:
       oprot.writeFieldBegin('columns', TType.LIST, 7)
       oprot.writeListBegin(TType.STRUCT, len(self.columns))
-      for iter48 in self.columns:
-        iter48.write(oprot)
+      for iter55 in self.columns:
+        iter55.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -2045,24 +2191,24 @@ class Schema(object):
       if fid == 1:
         if ftype == TType.MAP:
           self.access_groups = {}
-          (_ktype50, _vtype51, _size49 ) = iprot.readMapBegin() 
-          for _i53 in xrange(_size49):
-            _key54 = iprot.readString();
-            _val55 = AccessGroup()
-            _val55.read(iprot)
-            self.access_groups[_key54] = _val55
+          (_ktype57, _vtype58, _size56 ) = iprot.readMapBegin() 
+          for _i60 in xrange(_size56):
+            _key61 = iprot.readString();
+            _val62 = AccessGroup()
+            _val62.read(iprot)
+            self.access_groups[_key61] = _val62
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
       elif fid == 2:
         if ftype == TType.MAP:
           self.column_families = {}
-          (_ktype57, _vtype58, _size56 ) = iprot.readMapBegin() 
-          for _i60 in xrange(_size56):
-            _key61 = iprot.readString();
-            _val62 = ColumnFamily()
-            _val62.read(iprot)
-            self.column_families[_key61] = _val62
+          (_ktype64, _vtype65, _size63 ) = iprot.readMapBegin() 
+          for _i67 in xrange(_size63):
+            _key68 = iprot.readString();
+            _val69 = ColumnFamily()
+            _val69.read(iprot)
+            self.column_families[_key68] = _val69
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
@@ -2079,17 +2225,17 @@ class Schema(object):
     if self.access_groups is not None:
       oprot.writeFieldBegin('access_groups', TType.MAP, 1)
       oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.access_groups))
-      for kiter63,viter64 in self.access_groups.items():
-        oprot.writeString(kiter63)
-        viter64.write(oprot)
+      for kiter70,viter71 in self.access_groups.items():
+        oprot.writeString(kiter70)
+        viter71.write(oprot)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     if self.column_families is not None:
       oprot.writeFieldBegin('column_families', TType.MAP, 2)
       oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.column_families))
-      for kiter65,viter66 in self.column_families.items():
-        oprot.writeString(kiter65)
-        viter66.write(oprot)
+      for kiter72,viter73 in self.column_families.items():
+        oprot.writeString(kiter72)
+        viter73.write(oprot)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

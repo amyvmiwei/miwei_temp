@@ -410,7 +410,6 @@ void test_async(Thrift::Client *client, std::ostream &out) {
   ss.row_intervals.push_back(ri_apple);
   ss.row_intervals.push_back(ri_kiwi);
   ss.row_intervals.push_back(ri_pomegranate);
-
   ss.__isset.row_intervals = true;
 
   Future ff = client->future_open(0);
@@ -532,6 +531,35 @@ void test_async(Thrift::Client *client, std::ostream &out) {
   }
 
   out << "Asynchronous scans finished" << std::endl;
+
+  // -------------------------------------------------------------------
+  out << "Testing ColumnPredicates" << std::endl;
+  ScanSpec spec;
+  ColumnPredicate cp;
+  cp.column_family = "data";
+  cp.__isset.column_family = true;
+  cp.operation = ColumnPredicateOperation::PREFIX_MATCH;
+  cp.__isset.operation = true;
+  cp.value = "red";
+  cp.__isset.value = true;
+  spec.column_predicates.push_back(cp);
+  spec.__isset.column_predicates = true;
+
+  ScannerAsync cp_scanner = client->scanner_open(ns, "FruitColor", spec);
+  while (true) {
+    std::vector<Hypertable::ThriftGen::Cell> cells;
+    client->next_cells(cells, cp_scanner);
+    if (cells.empty())
+      break;
+    assert(cells.size()==1);
+    foreach(const Hypertable::ThriftGen::Cell &cell, cells) {
+      out << cell << std::endl;
+      assert(cell.key.row == "apple");
+      assert(cell.value == "red");
+    }
+  } 
+  client->scanner_close(cp_scanner);
+  // -------------------------------------------------------------------
 
   client->async_scanner_close(color_scanner);
   client->async_scanner_close(location_scanner);

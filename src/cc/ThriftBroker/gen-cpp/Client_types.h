@@ -16,6 +16,15 @@
 
 namespace Hypertable { namespace ThriftGen {
 
+struct ColumnPredicateOperation {
+  enum type {
+    EXACT_MATCH = 1,
+    PREFIX_MATCH = 2
+  };
+};
+
+extern const std::map<int, const char*> _ColumnPredicateOperation_VALUES_TO_NAMES;
+
 struct KeyFlag {
   enum type {
     DELETE_ROW = 0,
@@ -231,8 +240,71 @@ class CellInterval {
 
 };
 
+typedef struct _ColumnPredicate__isset {
+  _ColumnPredicate__isset() : column_family(false), operation(false), value(false) {}
+  bool column_family;
+  bool operation;
+  bool value;
+} _ColumnPredicate__isset;
+
+class ColumnPredicate {
+ public:
+
+  static const char* ascii_fingerprint; // = "14018043915C33E523FDD5E9D2954D73";
+  static const uint8_t binary_fingerprint[16]; // = {0x14,0x01,0x80,0x43,0x91,0x5C,0x33,0xE5,0x23,0xFD,0xD5,0xE9,0xD2,0x95,0x4D,0x73};
+
+  ColumnPredicate() : column_family(""), operation((ColumnPredicateOperation::type)0), value("") {
+  }
+
+  virtual ~ColumnPredicate() throw() {}
+
+  std::string column_family;
+  ColumnPredicateOperation::type operation;
+  std::string value;
+
+  _ColumnPredicate__isset __isset;
+
+  void __set_column_family(const std::string& val) {
+    column_family = val;
+    __isset.column_family = true;
+  }
+
+  void __set_operation(const ColumnPredicateOperation::type val) {
+    operation = val;
+  }
+
+  void __set_value(const std::string& val) {
+    value = val;
+    __isset.value = true;
+  }
+
+  bool operator == (const ColumnPredicate & rhs) const
+  {
+    if (__isset.column_family != rhs.__isset.column_family)
+      return false;
+    else if (__isset.column_family && !(column_family == rhs.column_family))
+      return false;
+    if (!(operation == rhs.operation))
+      return false;
+    if (__isset.value != rhs.__isset.value)
+      return false;
+    else if (__isset.value && !(value == rhs.value))
+      return false;
+    return true;
+  }
+  bool operator != (const ColumnPredicate &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ColumnPredicate & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
 typedef struct _ScanSpec__isset {
-  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), versions(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), cell_limit_per_family(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false), row_offset(false), cell_offset(false) {}
+  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), versions(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), cell_limit_per_family(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false), row_offset(false), cell_offset(false), column_predicates(false) {}
   bool row_intervals;
   bool cell_intervals;
   bool return_deletes;
@@ -249,13 +321,14 @@ typedef struct _ScanSpec__isset {
   bool scan_and_filter_rows;
   bool row_offset;
   bool cell_offset;
+  bool column_predicates;
 } _ScanSpec__isset;
 
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "06910BA995D9609370329554F16A7F0D";
-  static const uint8_t binary_fingerprint[16]; // = {0x06,0x91,0x0B,0xA9,0x95,0xD9,0x60,0x93,0x70,0x32,0x95,0x54,0xF1,0x6A,0x7F,0x0D};
+  static const char* ascii_fingerprint; // = "92CF20B9610E41C0EA89E9A70DB156E0";
+  static const uint8_t binary_fingerprint[16]; // = {0x92,0xCF,0x20,0xB9,0x61,0x0E,0x41,0xC0,0xEA,0x89,0xE9,0xA7,0x0D,0xB1,0x56,0xE0};
 
   ScanSpec() : return_deletes(false), versions(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), cell_limit_per_family(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false), row_offset(0), cell_offset(0) {
   }
@@ -278,6 +351,7 @@ class ScanSpec {
   bool scan_and_filter_rows;
   int32_t row_offset;
   int32_t cell_offset;
+  std::vector<ColumnPredicate>  column_predicates;
 
   _ScanSpec__isset __isset;
 
@@ -361,6 +435,11 @@ class ScanSpec {
     __isset.cell_offset = true;
   }
 
+  void __set_column_predicates(const std::vector<ColumnPredicate> & val) {
+    column_predicates = val;
+    __isset.column_predicates = true;
+  }
+
   bool operator == (const ScanSpec & rhs) const
   {
     if (__isset.row_intervals != rhs.__isset.row_intervals)
@@ -426,6 +505,10 @@ class ScanSpec {
     if (__isset.cell_offset != rhs.__isset.cell_offset)
       return false;
     else if (__isset.cell_offset && !(cell_offset == rhs.cell_offset))
+      return false;
+    if (__isset.column_predicates != rhs.__isset.column_predicates)
+      return false;
+    else if (__isset.column_predicates && !(column_predicates == rhs.column_predicates))
       return false;
     return true;
   }

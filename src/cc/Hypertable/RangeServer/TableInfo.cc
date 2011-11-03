@@ -227,7 +227,6 @@ void TableInfo::unstage_range(const RangeSpec *range_spec) {
   m_range_set.erase(iter);
 }
 
-
 void TableInfo::add_staged_range(RangePtr &range) {
   ScopedLock lock(m_mutex);
   RangeInfo range_info(range->start_row(), range->end_row());

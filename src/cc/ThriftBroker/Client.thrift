@@ -129,6 +129,43 @@ struct CellInterval {
   6: optional bool end_inclusive = 1
 }
 
+/** The "operation" for a ColumnPredicate
+ *
+ *  EXACT_MATCH: compares the cell value for identity 
+ *      (... WHERE column = "value")
+ *  PREFIX_MATCH: compares the cell value for a prefix match 
+ *      (... WHERE column =^ "prefix")
+ */
+enum ColumnPredicateOperation {
+  EXACT_MATCH = 1,
+  PREFIX_MATCH = 2
+}
+
+/** Specifies a column predicate
+ *     ... WHERE column = "value"
+ *   or
+ *     ... WHERE column =^ "prefix"
+ *
+ * <dl>
+ *   <dt>column_family</dt>
+ *   <dd>The name of the column family</dd>
+ *
+ *   <dt>operation</dt>
+ *   <dd>The predicate operation; either EXACT_MATCH or PREFIX_MATCH</dd>
+ *
+ *   <dt>value</dt>
+ *   <dd>The cell value or cell prefix, depending on the operation</dd>
+ *
+ *   <dt>value_len</dt>
+ *   <dd>The size of the value</dd>
+ * </dl>
+ */
+struct ColumnPredicate {
+  1: optional string column_family
+  2: ColumnPredicateOperation operation
+  3: optional string value
+}
+
 /** Specifies options for a scan
  *
  * <dl>
@@ -198,6 +235,7 @@ struct ScanSpec {
   13:optional bool scan_and_filter_rows = 0
   15:optional i32 row_offset = 0
   16:optional i32 cell_offset = 0 
+  17:optional list<ColumnPredicate> column_predicates
 }
 
 

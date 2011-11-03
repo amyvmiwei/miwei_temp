@@ -163,7 +163,8 @@ void AccessGroup::add(const Key &key, const ByteString value) {
 
 CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
   bool all = scan_context->spec ? scan_context->spec->return_deletes : false;
-  MergeScanner *scanner = new MergeScannerAccessGroup(scan_context, all);
+  MergeScanner *scanner = new MergeScannerAccessGroup(m_table_name, 
+          scan_context, all);
 
   CellStoreReleaseCallback callback(this);
 
@@ -309,13 +310,13 @@ uint64_t AccessGroup::purge_memory(MaintenanceFlag::Map &subtask_map) {
     for (size_t i=0; i<m_stores.size(); i++) {
       flags = subtask_map.flags(m_stores[i].cs.get());
       if (MaintenanceFlag::purge_shadow_cache(flags) &&
-	  m_stores[i].shadow_cache) {
-	memory_purged += m_stores[i].shadow_cache->memory_allocated();
-	m_stores[i].shadow_cache = 0;
+          m_stores[i].shadow_cache) {
+        memory_purged += m_stores[i].shadow_cache->memory_allocated();
+        m_stores[i].shadow_cache = 0;
       }
       if (m_outstanding_scanner_count == 0 &&
-	  MaintenanceFlag::purge_cellstore(flags))
-	memory_purged += m_stores[i].cs->purge_indexes();
+          MaintenanceFlag::purge_cellstore(flags))
+        memory_purged += m_stores[i].cs->purge_indexes();
     }
   }
 
@@ -437,7 +438,8 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore) {
 
 void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp) {
   ScanContextPtr scan_context = new ScanContext(m_schema);
-  MergeScannerPtr mscanner = new MergeScannerAccessGroup(scan_context);
+  MergeScannerPtr mscanner = new MergeScannerAccessGroup(m_table_name,
+                scan_context);
   ByteString value;
   Key key;
 
@@ -573,13 +575,14 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       max_num_entries = m_cell_cache_manager->immutable_items();
 
       if (m_in_memory) {
-        mscanner = new MergeScannerAccessGroup(scan_context);
+        mscanner = new MergeScannerAccessGroup(m_table_name, scan_context);
         scanner = mscanner;
         m_cell_cache_manager->add_immutable_scanner(mscanner, scan_context);
         filtered_cache = new CellCache();
       }
       else if (merging) {
-        mscanner = new MergeScannerAccessGroup(scan_context, true);
+        mscanner = new MergeScannerAccessGroup(m_table_name, 
+                        scan_context, true, true);
         scanner = mscanner;
         max_num_entries = 0;
         for (size_t i=merge_offset; i<merge_offset+merge_length; i++) {
@@ -591,7 +594,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
       }
       else if (major || gc) {
-        mscanner = new MergeScannerAccessGroup(scan_context);
+        mscanner = new MergeScannerAccessGroup(m_table_name, scan_context, 
+                        false, true);
         scanner = mscanner;
         m_cell_cache_manager->add_immutable_scanner(mscanner, scan_context);
         for (size_t i=0; i<m_stores.size(); i++) {
@@ -1091,8 +1095,8 @@ void AccessGroup::dump_keys(std::ofstream &out) {
     if (*(*iter).column_qualifier)
       out << ":" << (*iter).column_qualifier;
     out << " 0x" << std::hex << (int)(*iter).flag << std::dec
-	<< " ts=" << (*iter).timestamp
-	<< " rev=" << (*iter).revision << "\n";
+        << " ts=" << (*iter).timestamp
+        << " rev=" << (*iter).revision << "\n";
   }
 }
 

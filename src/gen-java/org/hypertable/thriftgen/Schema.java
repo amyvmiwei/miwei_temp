@@ -463,16 +463,16 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
           case 1: // ACCESS_GROUPS
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                org.apache.thrift.protocol.TMap _map56 = iprot.readMapBegin();
-                struct.access_groups = new HashMap<String,AccessGroup>(2*_map56.size);
-                for (int _i57 = 0; _i57 < _map56.size; ++_i57)
+                org.apache.thrift.protocol.TMap _map64 = iprot.readMapBegin();
+                struct.access_groups = new HashMap<String,AccessGroup>(2*_map64.size);
+                for (int _i65 = 0; _i65 < _map64.size; ++_i65)
                 {
-                  String _key58; // required
-                  AccessGroup _val59; // required
-                  _key58 = iprot.readString();
-                  _val59 = new AccessGroup();
-                  _val59.read(iprot);
-                  struct.access_groups.put(_key58, _val59);
+                  String _key66; // required
+                  AccessGroup _val67; // required
+                  _key66 = iprot.readString();
+                  _val67 = new AccessGroup();
+                  _val67.read(iprot);
+                  struct.access_groups.put(_key66, _val67);
                 }
                 iprot.readMapEnd();
               }
@@ -484,16 +484,16 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
           case 2: // COLUMN_FAMILIES
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                org.apache.thrift.protocol.TMap _map60 = iprot.readMapBegin();
-                struct.column_families = new HashMap<String,ColumnFamily>(2*_map60.size);
-                for (int _i61 = 0; _i61 < _map60.size; ++_i61)
+                org.apache.thrift.protocol.TMap _map68 = iprot.readMapBegin();
+                struct.column_families = new HashMap<String,ColumnFamily>(2*_map68.size);
+                for (int _i69 = 0; _i69 < _map68.size; ++_i69)
                 {
-                  String _key62; // required
-                  ColumnFamily _val63; // required
-                  _key62 = iprot.readString();
-                  _val63 = new ColumnFamily();
-                  _val63.read(iprot);
-                  struct.column_families.put(_key62, _val63);
+                  String _key70; // required
+                  ColumnFamily _val71; // required
+                  _key70 = iprot.readString();
+                  _val71 = new ColumnFamily();
+                  _val71.read(iprot);
+                  struct.column_families.put(_key70, _val71);
                 }
                 iprot.readMapEnd();
               }
@@ -522,10 +522,10 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
           oprot.writeFieldBegin(ACCESS_GROUPS_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.access_groups.size()));
-            for (Map.Entry<String, AccessGroup> _iter64 : struct.access_groups.entrySet())
+            for (Map.Entry<String, AccessGroup> _iter72 : struct.access_groups.entrySet())
             {
-              oprot.writeString(_iter64.getKey());
-              _iter64.getValue().write(oprot);
+              oprot.writeString(_iter72.getKey());
+              _iter72.getValue().write(oprot);
             }
             oprot.writeMapEnd();
           }
@@ -537,10 +537,10 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
           oprot.writeFieldBegin(COLUMN_FAMILIES_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.column_families.size()));
-            for (Map.Entry<String, ColumnFamily> _iter65 : struct.column_families.entrySet())
+            for (Map.Entry<String, ColumnFamily> _iter73 : struct.column_families.entrySet())
             {
-              oprot.writeString(_iter65.getKey());
-              _iter65.getValue().write(oprot);
+              oprot.writeString(_iter73.getKey());
+              _iter73.getValue().write(oprot);
             }
             oprot.writeMapEnd();
           }
@@ -575,20 +575,20 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
       if (struct.isSetAccess_groups()) {
         {
           oprot.writeI32(struct.access_groups.size());
-          for (Map.Entry<String, AccessGroup> _iter66 : struct.access_groups.entrySet())
+          for (Map.Entry<String, AccessGroup> _iter74 : struct.access_groups.entrySet())
           {
-            oprot.writeString(_iter66.getKey());
-            _iter66.getValue().write(oprot);
+            oprot.writeString(_iter74.getKey());
+            _iter74.getValue().write(oprot);
           }
         }
       }
       if (struct.isSetColumn_families()) {
         {
           oprot.writeI32(struct.column_families.size());
-          for (Map.Entry<String, ColumnFamily> _iter67 : struct.column_families.entrySet())
+          for (Map.Entry<String, ColumnFamily> _iter75 : struct.column_families.entrySet())
           {
-            oprot.writeString(_iter67.getKey());
-            _iter67.getValue().write(oprot);
+            oprot.writeString(_iter75.getKey());
+            _iter75.getValue().write(oprot);
           }
         }
       }
@@ -600,32 +600,32 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
       BitSet incoming = iprot.readBitSet(2);
       if (incoming.get(0)) {
         {
-          org.apache.thrift.protocol.TMap _map68 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.access_groups = new HashMap<String,AccessGroup>(2*_map68.size);
-          for (int _i69 = 0; _i69 < _map68.size; ++_i69)
+          org.apache.thrift.protocol.TMap _map76 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.access_groups = new HashMap<String,AccessGroup>(2*_map76.size);
+          for (int _i77 = 0; _i77 < _map76.size; ++_i77)
           {
-            String _key70; // required
-            AccessGroup _val71; // required
-            _key70 = iprot.readString();
-            _val71 = new AccessGroup();
-            _val71.read(iprot);
-            struct.access_groups.put(_key70, _val71);
+            String _key78; // required
+            AccessGroup _val79; // required
+            _key78 = iprot.readString();
+            _val79 = new AccessGroup();
+            _val79.read(iprot);
+            struct.access_groups.put(_key78, _val79);
           }
         }
         struct.setAccess_groupsIsSet(true);
       }
       if (incoming.get(1)) {
         {
-          org.apache.thrift.protocol.TMap _map72 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.column_families = new HashMap<String,ColumnFamily>(2*_map72.size);
-          for (int _i73 = 0; _i73 < _map72.size; ++_i73)
+          org.apache.thrift.protocol.TMap _map80 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.column_families = new HashMap<String,ColumnFamily>(2*_map80.size);
+          for (int _i81 = 0; _i81 < _map80.size; ++_i81)
           {
-            String _key74; // required
-            ColumnFamily _val75; // required
-            _key74 = iprot.readString();
-            _val75 = new ColumnFamily();
-            _val75.read(iprot);
-            struct.column_families.put(_key74, _val75);
+            String _key82; // required
+            ColumnFamily _val83; // required
+            _key82 = iprot.readString();
+            _val83 = new ColumnFamily();
+            _val83.read(iprot);
+            struct.column_families.put(_key82, _val83);
           }
         }
         struct.setColumn_familiesIsSet(true);

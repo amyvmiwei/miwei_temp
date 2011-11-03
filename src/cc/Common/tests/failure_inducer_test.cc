@@ -37,11 +37,14 @@ const char *required_files[] = {
   0
 };
 
-void hit_labels() {
+void hit_labels(ofstream &os) {
   HT_MAYBE_FAIL("label-1");
   HT_MAYBE_FAIL("label-2");
   HT_MAYBE_FAIL("label-3");
-  HT_MAYBE_FAIL("label-4")
+  HT_MAYBE_FAIL("label-4");
+  if (HT_FAILURE_SIGNALLED("label-5")) {
+    os << "Failure signalled with label 'label-5'" << endl;
+  }
 }
 
 void test(const String &outfile) {
@@ -50,12 +53,13 @@ void test(const String &outfile) {
   FailureInducer::instance->parse_option("label-1:throw:1");
   FailureInducer::instance->parse_option("label-2:throw(4):2");
   FailureInducer::instance->parse_option("label-3:throw(0x5001B):3");
+  FailureInducer::instance->parse_option("label-5:signal:6");
 
   ofstream os(outfile.c_str());
 
   for (int ii=0; ii < 10; ++ii) {
     try {
-      hit_labels();
+      hit_labels(os);
     }
     catch (Exception &e) {
       os << "Caught exception with code " << e.code() << "-" << e.what() << endl;

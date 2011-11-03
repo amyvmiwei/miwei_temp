@@ -44,13 +44,15 @@ namespace Hypertable {
   class Schema : public ReferenceCount {
   public:
     struct ColumnFamily {
-      ColumnFamily() : name(), ag(), id(0), max_versions(0), 
-        time_order_desc(false), time_order_desc_set(false), 
-        ttl(0), generation(0), deleted(false), renamed(false), 
-        new_name(), counter(false) { return; }
+      ColumnFamily() : name(), ag(), has_index(false), has_qualifier_index(0), 
+        id(0), max_versions(0), time_order_desc(false), 
+        time_order_desc_set(false), ttl(0), generation(0), deleted(false), 
+        renamed(false), new_name(), counter(false) { return; }
 
       String   name;
       String   ag;
+      bool has_index;
+      bool has_qualifier_index;
       uint32_t id;
       uint32_t max_versions;
       bool time_order_desc;
@@ -66,8 +68,9 @@ namespace Hypertable {
     typedef std::vector<ColumnFamily *> ColumnFamilies;
 
     struct AccessGroup {
-      AccessGroup() : name(), in_memory(false), counter(false), replication(-1), blocksize(0),
-          bloom_filter(), columns() { }
+      AccessGroup() : name(), in_memory(false), counter(false), 
+        replication(-1), blocksize(0),
+        bloom_filter(), columns() { }
 
       String   name;
       bool     in_memory;
@@ -133,13 +136,13 @@ namespace Hypertable {
 
     AccessGroup *
     get_access_group(const String &name) { return m_access_group_map[name]; }
+
     ColumnFamilies &
     get_column_families() { return m_column_families; }
 
     ColumnFamily *
     get_column_family(const String &name, bool get_deleted=false) {
       ColumnFamilyMap::iterator iter = m_column_family_map.find(name);
-
       if (iter != m_column_family_map.end()) {
         if (get_deleted || iter->second->deleted == false)
           return (iter->second);
@@ -157,11 +160,10 @@ namespace Hypertable {
       return (ColumnFamily*) 0;
     }
 
-    bool column_family_exists(uint32_t id, bool get_deleted = false) const;
     bool access_group_exists(const String &ag_name) const;
-
     bool add_access_group(AccessGroup *ag);
 
+    bool column_family_exists(uint32_t id, bool get_deleted = false) const;
     bool add_column_family(ColumnFamily *cf);
     bool drop_column_family(const String& name);
     bool rename_column_family(const String& old_name, const String& new_name);

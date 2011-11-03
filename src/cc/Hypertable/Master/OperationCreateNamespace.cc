@@ -53,7 +53,7 @@ void OperationCreateNamespace::initialize_dependencies() {
   boost::trim_if(m_name, boost::is_any_of("/ "));
   m_name = String("/") + m_name;
   m_exclusivities.insert(m_name);
-  if (m_name != "/sys")
+  if (m_name != "/sys" && m_name != "/tmp")
     m_dependencies.insert(Dependency::INIT);
 }
 

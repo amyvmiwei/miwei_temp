@@ -8,6 +8,9 @@ use strict;
 use warnings;
 use Thrift;
 
+package Hypertable::ThriftGen::ColumnPredicateOperation;
+use constant EXACT_MATCH => 1;
+use constant PREFIX_MATCH => 2;
 package Hypertable::ThriftGen::KeyFlag;
 use constant DELETE_ROW => 0;
 use constant DELETE_CF => 1;
@@ -265,9 +268,103 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ColumnPredicate;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ColumnPredicate->mk_accessors( qw( column_family operation value ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{column_family} = undef;
+  $self->{operation} = undef;
+  $self->{value} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{column_family}) {
+      $self->{column_family} = $vals->{column_family};
+    }
+    if (defined $vals->{operation}) {
+      $self->{operation} = $vals->{operation};
+    }
+    if (defined $vals->{value}) {
+      $self->{value} = $vals->{value};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ColumnPredicate';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{column_family});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{operation});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{value});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ColumnPredicate');
+  if (defined $self->{column_family}) {
+    $xfer += $output->writeFieldBegin('column_family', TType::STRING, 1);
+    $xfer += $output->writeString($self->{column_family});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{operation}) {
+    $xfer += $output->writeFieldBegin('operation', TType::I32, 2);
+    $xfer += $output->writeI32($self->{operation});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{value}) {
+    $xfer += $output->writeFieldBegin('value', TType::STRING, 3);
+    $xfer += $output->writeString($self->{value});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ScanSpec;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes versions row_limit start_time end_time columns keys_only cell_limit cell_limit_per_family row_regexp value_regexp scan_and_filter_rows row_offset cell_offset ) );
+Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes versions row_limit start_time end_time columns keys_only cell_limit cell_limit_per_family row_regexp value_regexp scan_and_filter_rows row_offset cell_offset column_predicates ) );
 
 sub new {
   my $classname = shift;
@@ -289,6 +386,7 @@ sub new {
   $self->{scan_and_filter_rows} = 0;
   $self->{row_offset} = 0;
   $self->{cell_offset} = 0;
+  $self->{column_predicates} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{row_intervals}) {
       $self->{row_intervals} = $vals->{row_intervals};
@@ -337,6 +435,9 @@ sub new {
     }
     if (defined $vals->{cell_offset}) {
       $self->{cell_offset} = $vals->{cell_offset};
+    }
+    if (defined $vals->{column_predicates}) {
+      $self->{column_predicates} = $vals->{column_predicates};
     }
   }
   return bless ($self, $classname);
@@ -495,6 +596,25 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^17$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size18 = 0;
+          $self->{column_predicates} = [];
+          my $_etype21 = 0;
+          $xfer += $input->readListBegin(\$_etype21, \$_size18);
+          for (my $_i22 = 0; $_i22 < $_size18; ++$_i22)
+          {
+            my $elem23 = undef;
+            $elem23 = new Hypertable::ThriftGen::ColumnPredicate();
+            $xfer += $elem23->read($input);
+            push(@{$self->{column_predicates}},$elem23);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -512,9 +632,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{row_intervals}}));
       {
-        foreach my $iter18 (@{$self->{row_intervals}}) 
+        foreach my $iter24 (@{$self->{row_intervals}}) 
         {
-          $xfer += ${iter18}->write($output);
+          $xfer += ${iter24}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -526,9 +646,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cell_intervals}}));
       {
-        foreach my $iter19 (@{$self->{cell_intervals}}) 
+        foreach my $iter25 (@{$self->{cell_intervals}}) 
         {
-          $xfer += ${iter19}->write($output);
+          $xfer += ${iter25}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -565,9 +685,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{columns}}));
       {
-        foreach my $iter20 (@{$self->{columns}}) 
+        foreach my $iter26 (@{$self->{columns}}) 
         {
-          $xfer += $output->writeString($iter20);
+          $xfer += $output->writeString($iter26);
         }
       }
       $xfer += $output->writeListEnd();
@@ -612,6 +732,20 @@ sub write {
   if (defined $self->{cell_offset}) {
     $xfer += $output->writeFieldBegin('cell_offset', TType::I32, 16);
     $xfer += $output->writeI32($self->{cell_offset});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{column_predicates}) {
+    $xfer += $output->writeFieldBegin('column_predicates', TType::LIST, 17);
+    {
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{column_predicates}}));
+      {
+        foreach my $iter27 (@{$self->{column_predicates}}) 
+        {
+          $xfer += ${iter27}->write($output);
+        }
+      }
+      $xfer += $output->writeListEnd();
+    }
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -1030,16 +1164,16 @@ sub read {
       last; };
       /^7$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size21 = 0;
+          my $_size28 = 0;
           $self->{cells} = [];
-          my $_etype24 = 0;
-          $xfer += $input->readListBegin(\$_etype24, \$_size21);
-          for (my $_i25 = 0; $_i25 < $_size21; ++$_i25)
+          my $_etype31 = 0;
+          $xfer += $input->readListBegin(\$_etype31, \$_size28);
+          for (my $_i32 = 0; $_i32 < $_size28; ++$_i32)
           {
-            my $elem26 = undef;
-            $elem26 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem26->read($input);
-            push(@{$self->{cells}},$elem26);
+            my $elem33 = undef;
+            $elem33 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem33->read($input);
+            push(@{$self->{cells}},$elem33);
           }
           $xfer += $input->readListEnd();
         }
@@ -1094,9 +1228,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter27 (@{$self->{cells}}) 
+        foreach my $iter34 (@{$self->{cells}}) 
         {
-          $xfer += ${iter27}->write($output);
+          $xfer += ${iter34}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -1206,27 +1340,27 @@ sub read {
       last; };
       /^7$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size28 = 0;
+          my $_size35 = 0;
           $self->{cells} = [];
-          my $_etype31 = 0;
-          $xfer += $input->readListBegin(\$_etype31, \$_size28);
-          for (my $_i32 = 0; $_i32 < $_size28; ++$_i32)
+          my $_etype38 = 0;
+          $xfer += $input->readListBegin(\$_etype38, \$_size35);
+          for (my $_i39 = 0; $_i39 < $_size35; ++$_i39)
           {
-            my $elem33 = undef;
+            my $elem40 = undef;
             {
-              my $_size34 = 0;
-              $elem33 = [];
-              my $_etype37 = 0;
-              $xfer += $input->readListBegin(\$_etype37, \$_size34);
-              for (my $_i38 = 0; $_i38 < $_size34; ++$_i38)
+              my $_size41 = 0;
+              $elem40 = [];
+              my $_etype44 = 0;
+              $xfer += $input->readListBegin(\$_etype44, \$_size41);
+              for (my $_i45 = 0; $_i45 < $_size41; ++$_i45)
               {
-                my $elem39 = undef;
-                $xfer += $input->readString(\$elem39);
-                push(@{$elem33},$elem39);
+                my $elem46 = undef;
+                $xfer += $input->readString(\$elem46);
+                push(@{$elem40},$elem46);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{cells}},$elem33);
+            push(@{$self->{cells}},$elem40);
           }
           $xfer += $input->readListEnd();
         }
@@ -1281,14 +1415,14 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
-        foreach my $iter40 (@{$self->{cells}}) 
+        foreach my $iter47 (@{$self->{cells}}) 
         {
           {
-            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter40}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter47}}));
             {
-              foreach my $iter41 (@{${iter40}}) 
+              foreach my $iter48 (@{${iter47}}) 
               {
-                $xfer += $output->writeString($iter41);
+                $xfer += $output->writeString($iter48);
               }
             }
             $xfer += $output->writeListEnd();
@@ -1868,16 +2002,16 @@ sub read {
       last; };
       /^7$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size42 = 0;
+          my $_size49 = 0;
           $self->{columns} = [];
-          my $_etype45 = 0;
-          $xfer += $input->readListBegin(\$_etype45, \$_size42);
-          for (my $_i46 = 0; $_i46 < $_size42; ++$_i46)
+          my $_etype52 = 0;
+          $xfer += $input->readListBegin(\$_etype52, \$_size49);
+          for (my $_i53 = 0; $_i53 < $_size49; ++$_i53)
           {
-            my $elem47 = undef;
-            $elem47 = new Hypertable::ThriftGen::ColumnFamily();
-            $xfer += $elem47->read($input);
-            push(@{$self->{columns}},$elem47);
+            my $elem54 = undef;
+            $elem54 = new Hypertable::ThriftGen::ColumnFamily();
+            $xfer += $elem54->read($input);
+            push(@{$self->{columns}},$elem54);
           }
           $xfer += $input->readListEnd();
         }
@@ -1932,9 +2066,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{columns}}));
       {
-        foreach my $iter48 (@{$self->{columns}}) 
+        foreach my $iter55 (@{$self->{columns}}) 
         {
-          $xfer += ${iter48}->write($output);
+          $xfer += ${iter55}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -1988,19 +2122,19 @@ sub read {
     {
       /^1$/ && do{      if ($ftype == TType::MAP) {
         {
-          my $_size49 = 0;
+          my $_size56 = 0;
           $self->{access_groups} = {};
-          my $_ktype50 = 0;
-          my $_vtype51 = 0;
-          $xfer += $input->readMapBegin(\$_ktype50, \$_vtype51, \$_size49);
-          for (my $_i53 = 0; $_i53 < $_size49; ++$_i53)
+          my $_ktype57 = 0;
+          my $_vtype58 = 0;
+          $xfer += $input->readMapBegin(\$_ktype57, \$_vtype58, \$_size56);
+          for (my $_i60 = 0; $_i60 < $_size56; ++$_i60)
           {
-            my $key54 = '';
-            my $val55 = new Hypertable::ThriftGen::AccessGroup();
-            $xfer += $input->readString(\$key54);
-            $val55 = new Hypertable::ThriftGen::AccessGroup();
-            $xfer += $val55->read($input);
-            $self->{access_groups}->{$key54} = $val55;
+            my $key61 = '';
+            my $val62 = new Hypertable::ThriftGen::AccessGroup();
+            $xfer += $input->readString(\$key61);
+            $val62 = new Hypertable::ThriftGen::AccessGroup();
+            $xfer += $val62->read($input);
+            $self->{access_groups}->{$key61} = $val62;
           }
           $xfer += $input->readMapEnd();
         }
@@ -2010,19 +2144,19 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::MAP) {
         {
-          my $_size56 = 0;
+          my $_size63 = 0;
           $self->{column_families} = {};
-          my $_ktype57 = 0;
-          my $_vtype58 = 0;
-          $xfer += $input->readMapBegin(\$_ktype57, \$_vtype58, \$_size56);
-          for (my $_i60 = 0; $_i60 < $_size56; ++$_i60)
+          my $_ktype64 = 0;
+          my $_vtype65 = 0;
+          $xfer += $input->readMapBegin(\$_ktype64, \$_vtype65, \$_size63);
+          for (my $_i67 = 0; $_i67 < $_size63; ++$_i67)
           {
-            my $key61 = '';
-            my $val62 = new Hypertable::ThriftGen::ColumnFamily();
-            $xfer += $input->readString(\$key61);
-            $val62 = new Hypertable::ThriftGen::ColumnFamily();
-            $xfer += $val62->read($input);
-            $self->{column_families}->{$key61} = $val62;
+            my $key68 = '';
+            my $val69 = new Hypertable::ThriftGen::ColumnFamily();
+            $xfer += $input->readString(\$key68);
+            $val69 = new Hypertable::ThriftGen::ColumnFamily();
+            $xfer += $val69->read($input);
+            $self->{column_families}->{$key68} = $val69;
           }
           $xfer += $input->readMapEnd();
         }
@@ -2047,10 +2181,10 @@ sub write {
     {
       $xfer += $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{access_groups}}));
       {
-        while( my ($kiter63,$viter64) = each %{$self->{access_groups}}) 
+        while( my ($kiter70,$viter71) = each %{$self->{access_groups}}) 
         {
-          $xfer += $output->writeString($kiter63);
-          $xfer += ${viter64}->write($output);
+          $xfer += $output->writeString($kiter70);
+          $xfer += ${viter71}->write($output);
         }
       }
       $xfer += $output->writeMapEnd();
@@ -2062,10 +2196,10 @@ sub write {
     {
       $xfer += $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{column_families}}));
       {
-        while( my ($kiter65,$viter66) = each %{$self->{column_families}}) 
+        while( my ($kiter72,$viter73) = each %{$self->{column_families}}) 
         {
-          $xfer += $output->writeString($kiter65);
-          $xfer += ${viter66}->write($output);
+          $xfer += $output->writeString($kiter72);
+          $xfer += ${viter73}->write($output);
         }
       }
       $xfer += $output->writeMapEnd();

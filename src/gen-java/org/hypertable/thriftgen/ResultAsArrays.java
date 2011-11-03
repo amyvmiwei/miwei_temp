@@ -861,23 +861,23 @@ public class ResultAsArrays implements org.apache.thrift.TBase<ResultAsArrays, R
           case 7: // CELLS
             if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list32 = iprot.readListBegin();
-                struct.cells = new ArrayList<List<String>>(_list32.size);
-                for (int _i33 = 0; _i33 < _list32.size; ++_i33)
+                org.apache.thrift.protocol.TList _list40 = iprot.readListBegin();
+                struct.cells = new ArrayList<List<String>>(_list40.size);
+                for (int _i41 = 0; _i41 < _list40.size; ++_i41)
                 {
-                  List<String> _elem34; // required
+                  List<String> _elem42; // required
                   {
-                    org.apache.thrift.protocol.TList _list35 = iprot.readListBegin();
-                    _elem34 = new ArrayList<String>(_list35.size);
-                    for (int _i36 = 0; _i36 < _list35.size; ++_i36)
+                    org.apache.thrift.protocol.TList _list43 = iprot.readListBegin();
+                    _elem42 = new ArrayList<String>(_list43.size);
+                    for (int _i44 = 0; _i44 < _list43.size; ++_i44)
                     {
-                      String _elem37; // required
-                      _elem37 = iprot.readString();
-                      _elem34.add(_elem37);
+                      String _elem45; // required
+                      _elem45 = iprot.readString();
+                      _elem42.add(_elem45);
                     }
                     iprot.readListEnd();
                   }
-                  struct.cells.add(_elem34);
+                  struct.cells.add(_elem42);
                 }
                 iprot.readListEnd();
               }
@@ -942,13 +942,13 @@ public class ResultAsArrays implements org.apache.thrift.TBase<ResultAsArrays, R
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.cells.size()));
-            for (List<String> _iter38 : struct.cells)
+            for (List<String> _iter46 : struct.cells)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter38.size()));
-                for (String _iter39 : _iter38)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter46.size()));
+                for (String _iter47 : _iter46)
                 {
-                  oprot.writeString(_iter39);
+                  oprot.writeString(_iter47);
                 }
                 oprot.writeListEnd();
               }
@@ -999,13 +999,13 @@ public class ResultAsArrays implements org.apache.thrift.TBase<ResultAsArrays, R
       if (struct.isSetCells()) {
         {
           oprot.writeI32(struct.cells.size());
-          for (List<String> _iter40 : struct.cells)
+          for (List<String> _iter48 : struct.cells)
           {
             {
-              oprot.writeI32(_iter40.size());
-              for (String _iter41 : _iter40)
+              oprot.writeI32(_iter48.size());
+              for (String _iter49 : _iter48)
               {
-                oprot.writeString(_iter41);
+                oprot.writeString(_iter49);
               }
             }
           }
@@ -1035,22 +1035,22 @@ public class ResultAsArrays implements org.apache.thrift.TBase<ResultAsArrays, R
       }
       if (incoming.get(2)) {
         {
-          org.apache.thrift.protocol.TList _list42 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-          struct.cells = new ArrayList<List<String>>(_list42.size);
-          for (int _i43 = 0; _i43 < _list42.size; ++_i43)
+          org.apache.thrift.protocol.TList _list50 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+          struct.cells = new ArrayList<List<String>>(_list50.size);
+          for (int _i51 = 0; _i51 < _list50.size; ++_i51)
           {
-            List<String> _elem44; // required
+            List<String> _elem52; // required
             {
-              org.apache.thrift.protocol.TList _list45 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-              _elem44 = new ArrayList<String>(_list45.size);
-              for (int _i46 = 0; _i46 < _list45.size; ++_i46)
+              org.apache.thrift.protocol.TList _list53 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+              _elem52 = new ArrayList<String>(_list53.size);
+              for (int _i54 = 0; _i54 < _list53.size; ++_i54)
               {
-                String _elem47; // required
-                _elem47 = iprot.readString();
-                _elem44.add(_elem47);
+                String _elem55; // required
+                _elem55 = iprot.readString();
+                _elem52.add(_elem55);
               }
             }
-            struct.cells.add(_elem44);
+            struct.cells.add(_elem52);
           }
         }
         struct.setCellsIsSet(true);

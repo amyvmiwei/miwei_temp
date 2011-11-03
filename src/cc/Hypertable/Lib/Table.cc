@@ -46,9 +46,8 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
              Hyperspace::SessionPtr &hyperspace, NameIdMapperPtr &namemap,
              const String &name, int32_t flags)
   : m_props(props), m_comm(conn_manager->get_comm()),
-    m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_namemap(namemap), m_name(name),
-    m_flags(flags), m_stale(true) {
-
+    m_conn_manager(conn_manager), m_hyperspace(hyperspace), m_namemap(namemap),
+    m_name(name), m_flags(flags), m_stale(true), m_namespace(0) {
   m_timeout_ms = props->get_i32("Hypertable.Request.Timeout");
   initialize();
 
@@ -60,13 +59,15 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
 
 
 Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
-             ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-             ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, const String &name,
+             ConnectionManagerPtr &conn_manager, 
+             Hyperspace::SessionPtr &hyperspace, ApplicationQueuePtr &app_queue,
+             NameIdMapperPtr &namemap, const String &name, 
              int32_t flags, uint32_t timeout_ms)
   : m_props(props), m_comm(conn_manager->get_comm()),
     m_conn_manager(conn_manager), m_hyperspace(hyperspace),
     m_range_locator(range_locator), m_app_queue(app_queue), m_namemap(namemap),
-    m_name(name), m_flags(flags), m_timeout_ms(timeout_ms), m_stale(true) {
+    m_name(name), m_flags(flags), m_timeout_ms(timeout_ms), m_stale(true),
+    m_namespace(0) {
   initialize();
 }
 
@@ -161,6 +162,9 @@ Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
                       uint32_t flush_interval_ms) {
   uint32_t timeout = timeout_ms ? timeout_ms : m_timeout_ms;
 
+  HT_ASSERT(needs_index_table() ? has_index_table() : true);
+  HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
+
   if (flush_interval_ms) {
     return new TableMutatorShared(m_props, m_comm, this, m_range_locator,
                                   m_app_queue, timeout, flush_interval_ms, flags);
@@ -171,6 +175,9 @@ Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
 TableMutatorAsync *
 Table::create_mutator_async(ResultCallback *cb, uint32_t timeout_ms, uint32_t flags) {
   uint32_t timeout = timeout_ms ? timeout_ms : m_timeout_ms;
+
+  HT_ASSERT(needs_index_table() ? has_index_table() : true);
+  HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
 
   return new TableMutatorAsync(m_props, m_comm, m_app_queue, this, m_range_locator, timeout,
       cb, flags);
@@ -186,6 +193,10 @@ Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms,
 TableScannerAsync *
 Table::create_scanner_async(ResultCallback *cb, const ScanSpec &scan_spec, uint32_t timeout_ms,
                             int32_t flags) {
+  HT_ASSERT(needs_index_table() ? has_index_table() : true);
+  HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
+
   return new TableScannerAsync(m_comm, m_app_queue, this, m_range_locator, scan_spec,
-                                timeout_ms ? timeout_ms : m_timeout_ms, cb);
+                                timeout_ms ? timeout_ms : m_timeout_ms, cb,
+                                flags);
 }

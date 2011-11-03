@@ -72,6 +72,7 @@ namespace {
                    "  create_namespace\n"
                    "  drop_namespace\n"
                    "  create_table\n"
+                   "  create_table_with_index\n"
                    "  rename_table\n"
                    "  move_range\n"
                    "\nOptions");
@@ -213,6 +214,7 @@ namespace {
 void create_namespace_test(ContextPtr &context);
 void drop_namespace_test(ContextPtr &context);
 void create_table_test(ContextPtr &context);
+void create_table_with_index_test(ContextPtr &context);
 void rename_table_test(ContextPtr &context);
 void master_initialize_test(ContextPtr &context);
 void system_upgrade_test(ContextPtr &context);
@@ -273,6 +275,8 @@ int main(int argc, char **argv) {
       drop_namespace_test(context);
     else if (testname == "create_table")
       create_table_test(context);
+    else if (testname == "create_table_with_index")
+      create_table_with_index_test(context);
     else if (testname == "rename_table")
       rename_table_test(context);
     else if (testname == "move_range")
@@ -377,6 +381,19 @@ namespace {
     "    </ColumnFamily>\n"
     "  </AccessGroup>\n"
     "</Schema>";
+
+  const char *index_schema_str = "<Schema>\n"
+    "  <AccessGroup name=\"default\">\n"
+    "    <ColumnFamily>\n"
+    "      <Name>a</Name>\n"
+    "      <Index>true</Index>\n"
+    "    </ColumnFamily>\n"
+    "    <ColumnFamily>\n"
+    "      <Name>b</Name>\n"
+    "      <QualifierIndex>true</QualifierIndex>\n"
+    "    </ColumnFamily>\n"
+    "  </AccessGroup>\n"
+    "</Schema>";
 }
 
 
@@ -445,6 +462,83 @@ void create_table_test(ContextPtr &context) {
   expected_operations.clear();
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
   run_test(context, log_dir, entities, "create-table-LOAD_RANGE-b:throw:0",
+           expected_operations, expected_servers);
+
+  context->disconnect_server(rsc1);
+  initialize_test(context, log_dir, entities, "");
+  poll(0,0,100);
+  context->connect_server(rsc1, "foo.hypertable.com", InetAddr("localhost", 30267),
+                          InetAddr("localhost", 38060));
+  context->op->wait_for_empty();
+
+  context->op->shutdown();
+  context->op->join();
+
+  context = 0;
+  _exit(0);
+}
+
+
+void create_table_with_index_test(ContextPtr &context) {
+  std::vector<MetaLog::EntityPtr> entities;
+  ExpectedResultsMap expected_operations;
+  std::vector<String> expected_servers;
+  String log_dir = context->toplevel_dir + "/servers/master/log";
+  RangeServerConnectionPtr rsc1, rsc2;
+
+  context->mml_writer = new MetaLog::Writer(context->dfs, 
+                                        context->mml_definition,
+                                        log_dir + "/" + 
+                                            context->mml_definition->name(),
+                                        entities);
+
+  rsc1 = new RangeServerConnection(context->mml_writer, "rs1", 
+          "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+  rsc2 = new RangeServerConnection(context->mml_writer, "rs2", 
+          "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+
+  context->connect_server(rsc1, "foo.hypertable.com", 
+          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
+  context->connect_server(rsc2, "bar.hypertable.com", 
+          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+
+  expected_servers.push_back("rs1");
+  expected_servers.push_back("rs2");
+
+  entities.push_back(new OperationCreateTable(context, 
+                            "tablefoo_index", index_schema_str));
+
+  expected_operations.insert(std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
+  run_test(context, log_dir, entities, "create-table-INITIAL:throw:0",
+           expected_operations, expected_servers);
+
+  expected_operations.clear();
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
+  run_test(context, log_dir, entities, "create-table-CREATE_INDEX:throw:0",
+           expected_operations, expected_servers);
+
+  expected_operations.clear();
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
+  run_test(context, log_dir, entities, "create-table-CREATE_QUALIFIER_INDEX:throw:0",
+           expected_operations, expected_servers);
+
+  expected_operations.clear();
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
+  run_test(context, log_dir, entities, "create-table-FINALIZE:throw:0",
+           expected_operations, expected_servers);
+
+  expected_operations.clear();
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
+  run_test(context, log_dir, entities, "create-table-FINALIZE:throw:1",
            expected_operations, expected_servers);
 
   context->disconnect_server(rsc1);
@@ -555,6 +649,7 @@ void master_initialize_test(ContextPtr &context) {
 
   expected_operations.clear();
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::INITIAL) );
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::INITIAL) );
   expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::FINALIZE) );
   run_test(context, log_dir, entities, "initialize-CREATE_RS_METRICS:throw:0",
@@ -562,6 +657,7 @@ void master_initialize_test(ContextPtr &context) {
 
   expected_operations.clear();
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::INITIAL) );
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
   expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::COMPLETE) );
   run_test(context, log_dir, entities, "", expected_operations, expected_servers);

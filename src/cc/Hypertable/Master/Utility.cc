@@ -145,7 +145,7 @@ void create_table_in_hyperspace(ContextPtr &context, const String &name,
                                 const String &schema_str, TableIdentifierManaged *table) {
   String table_name = name;
 
-  // String leading '/'
+  // Strip leading '/'
   if (table_name[0] == '/')
     table_name = table_name.substr(1);
 
@@ -184,7 +184,7 @@ void create_table_in_hyperspace(ContextPtr &context, const String &name,
 
   HT_MAYBE_FAIL("Utility-create-table-in-hyperspace-2");
 
-  // Create /hypertable/tables/&lt;table&gt;/&lt;accessGroup&gt; directories
+  // Create /hypertable/tables/<table>/<accessGroup> directories
   // for this table in DFS
   String table_basedir = context->toplevel_dir + "/tables/" + table_id + "/";
 
@@ -192,9 +192,54 @@ void create_table_in_hyperspace(ContextPtr &context, const String &name,
     String agdir = table_basedir + ag->name;
     context->dfs->mkdirs(agdir);
   }
-
 }
 
+void prepare_index(ContextPtr &context, const String &name,
+                   const String &schema_str, bool qualifier,
+                   String &index_name, String &index_schema_str)
+{
+  // load the schema of the primary table
+  SchemaPtr primary_schema = Schema::new_instance(schema_str.c_str(), 
+          schema_str.size());
+  if (primary_schema->need_id_assignment())
+    primary_schema->assign_ids();
+
+  // create a new schema and fill it 
+  Schema::AccessGroup *ag = new Schema::AccessGroup;
+  ag->name = "default";
+  Schema *index_schema = new Schema;
+  index_schema->add_access_group(ag);
+  index_schema->set_group_commit_interval(
+          primary_schema->get_group_commit_interval());
+
+  Schema::ColumnFamily *new_cf = new Schema::ColumnFamily;
+  new_cf->name = "v1";
+  new_cf->max_versions = 1;
+  new_cf->ag = "default";
+  index_schema->add_column_family(new_cf);
+
+  HT_ASSERT(index_schema->is_valid());
+
+  // the index table name is prepended with ^, and the qualified
+  // index with ^^
+  index_name = Filesystem::dirname(name);
+  if (qualifier) {
+    if (index_name == "/")
+      index_name += String("^^") + Filesystem::basename(name);
+    else
+      index_name += String("/^^") + Filesystem::basename(name);
+  }
+  else {
+    if (index_name == "/")
+      index_name += String("^") + Filesystem::basename(name);
+    else
+      index_name += String("/^") + Filesystem::basename(name);
+  }
+
+  index_schema_str.clear();
+  index_schema->render(index_schema_str);
+  delete index_schema;
+}
 
 void create_table_write_metadata(ContextPtr &context, TableIdentifier *table) {
 

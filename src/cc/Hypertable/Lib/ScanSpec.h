@@ -32,6 +32,40 @@
 namespace Hypertable {
 
 /**
+ * Represents a column predicate (... WHERE cf = "value").  
+ * c-string data members are not managed so caller must handle (de)allocation.
+ */
+class ColumnPredicate {
+public:
+  enum {
+    NO_OPERATION=0,
+    EXACT_MATCH,
+    PREFIX_MATCH
+  };
+
+  ColumnPredicate() : column_family(0), operation(0), value(0) { }
+  ColumnPredicate(const char *_column_family, uint32_t _operation, 
+          const char *_value, uint32_t value_len = 0)
+    : column_family(_column_family), operation(_operation), value(_value),
+        value_len(0) { 
+    if (!value_len && value) 
+      value_len = strlen(value); 
+  }
+  ColumnPredicate(const uint8_t **bufp, size_t *remainp) {
+    decode(bufp, remainp);
+  }
+
+  size_t encoded_length() const;
+  void encode(uint8_t **bufp) const;
+  void decode(const uint8_t **bufp, size_t *remainp);
+
+  const char *column_family;
+  uint32_t operation;
+  const char *value;
+  uint32_t value_len;
+};
+
+/**
  * Represents a row interval.  c-string data members are not managed
  * so caller must handle (de)allocation.
  */
@@ -97,6 +131,9 @@ typedef std::vector<CellInterval, CellIntervalAlloc> CellIntervals;
 typedef PageArenaAllocator<const char *> CstrAlloc;
 typedef std::vector<const char *, CstrAlloc> CstrColumns;
 
+typedef PageArenaAllocator<ColumnPredicate> ColumnPredicateAlloc;
+typedef std::vector<ColumnPredicate, ColumnPredicateAlloc> ColumnPredicates;
+
 /**
  * Represents a scan predicate.
  */
@@ -113,6 +150,7 @@ public:
       row_offset(0), cell_offset(0), max_versions(0), columns(CstrAlloc(arena)),
       row_intervals(RowIntervalAlloc(arena)),
       cell_intervals(CellIntervalAlloc(arena)),
+      column_predicates(ColumnPredicateAlloc(arena)),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
       return_deletes(false), keys_only(false),
       row_regexp(0), value_regexp(0), scan_and_filter_rows(false) { }
@@ -133,6 +171,7 @@ public:
     columns.clear();
     row_intervals.clear();
     cell_intervals.clear();
+    column_predicates.clear();
     time_interval.first = TIMESTAMP_MIN;
     time_interval.second = TIMESTAMP_MAX;
     keys_only = false;
@@ -142,7 +181,14 @@ public:
     scan_and_filter_rows = false;
   }
 
-  /** Initialize 'other' ScanSpec with this copy sans the intervals */
+  /** 
+   * Initialize 'other' ScanSpec with this copy sans the intervals 
+   *
+   * !!
+   * This function performs a "shallow copy" of the column_predicate vector.
+   * If other.column_predicate is destroyed, the pointers of the column
+   * predicates might become invalid.
+   */
   void base_copy(ScanSpec &other) const {
     other.row_limit = row_limit;
     other.cell_limit = cell_limit;
@@ -156,9 +202,11 @@ public:
     other.return_deletes = return_deletes;
     other.row_intervals.clear();
     other.cell_intervals.clear();
+    other.column_predicates.clear();
     other.row_regexp = row_regexp;
     other.value_regexp = value_regexp;
     other.scan_and_filter_rows = scan_and_filter_rows;
+    other.column_predicates = column_predicates;
   }
 
   bool cacheable() {
@@ -195,10 +243,13 @@ public:
    * @param column column specified string
    * @param family family name
    * @param qualifier column qualifier
-   * @param regexp true if the qualifier string is a regexp
+   * @param is_regexp true if the qualifier string is a regexp
+   * @param is_prefix true if the qualifier string is a prefix search
    *
    */
-  static void parse_column(const char *column, String &family, String &qualifier, bool *has_qualifier, bool *regexp);
+  static void parse_column(const char *column_str, String &family, 
+                String &qualifier, bool *has_qualifier, bool *is_regexp, 
+                bool *is_prefix);
 
   void add_row(CharArena &arena, const char *str) {
     if (cell_intervals.size())
@@ -264,6 +315,21 @@ public:
     cell_intervals.push_back(ci);
   }
 
+  void add_column_predicate(CharArena &arena, const char *column_family,
+          uint32_t operation, const char *value, uint32_t value_len = 0) {
+    if (column_predicates.size())
+      HT_THROW(Error::BAD_SCAN_SPEC, "column_predicate already specified");
+
+    ColumnPredicate cp;
+    cp.column_family = arena.dup(column_family);
+    cp.value = arena.dup(value);
+    cp.operation = operation;
+    cp.value_len = value_len;
+    if (!cp.value_len)
+      cp.value_len = strlen(cp.value);
+    column_predicates.push_back(cp);
+  }
+
   void set_time_interval(int64_t start, int64_t end) {
     time_interval.first = start;
     time_interval.second = end;
@@ -286,6 +352,7 @@ public:
   CstrColumns columns;
   RowIntervals row_intervals;
   CellIntervals cell_intervals;
+  ColumnPredicates column_predicates;
   std::pair<int64_t,int64_t> time_interval;
   bool return_deletes;
   bool keys_only;
@@ -385,6 +452,22 @@ public:
   }
 
   void reserve_columns(size_t s) { m_scan_spec.columns.reserve(s); }
+
+  /**
+   * Adds a column predicate to the scan
+   *
+   * @param column_family the column family
+   * @param operation the operation: ColumnPredicate::EXACT_MATCH or  
+   *    ColumnPredicate::PREFIX_MATCH
+   * @param value the cell value
+   * @param value_len the length of the value, in bytes. If 0 then 
+   *    the length will automatically be assigned using strlen(value)
+   */
+  void add_column_predicate(const char *column_family, uint32_t operation, 
+          const char *value, uint32_t value_len = 0) {
+    m_scan_spec.add_column_predicate(m_arena, column_family, operation, 
+            value, value_len);
+  }
 
   /**
    * Adds a row to be returned in the scan

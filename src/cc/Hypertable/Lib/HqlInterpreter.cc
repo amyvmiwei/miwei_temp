@@ -271,7 +271,6 @@ cmd_alter_table(NamespacePtr &ns, ParserState &state,
   }
 
   const char *error_str = schema->get_error_string();
-
   if (error_str)
     HT_THROW(Error::HQL_PARSE_ERROR, error_str);
 

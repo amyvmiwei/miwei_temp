@@ -35,6 +35,27 @@ using namespace std;
 using namespace Hypertable;
 using namespace Serialization;
 
+size_t ColumnPredicate::encoded_length() const {
+  return 2 * sizeof(uint32_t)
+            + encoded_length_vstr(column_family) 
+            + encoded_length_vstr(value);
+}
+
+void ColumnPredicate::encode(uint8_t **bufp) const {
+  encode_vstr(bufp, column_family);
+  encode_i32(bufp, operation);
+  encode_i32(bufp, value_len);
+  encode_vstr(bufp, value, value_len);
+}
+
+void ColumnPredicate::decode(const uint8_t **bufp, size_t *remainp) {
+  HT_TRY("decoding column predicate",
+    column_family = decode_vstr(bufp, remainp);
+    operation = decode_i32(bufp, remainp);
+    value_len = decode_i32(bufp, remainp);
+    value = decode_vstr(bufp, remainp));
+}
+
 size_t RowInterval::encoded_length() const {
   return 2 + encoded_length_vstr(start) + encoded_length_vstr(end);
 }
@@ -88,6 +109,7 @@ size_t ScanSpec::encoded_length() const {
                encoded_length_vi32(columns.size()) +
                encoded_length_vi32(row_intervals.size()) +
                encoded_length_vi32(cell_intervals.size()) +
+               encoded_length_vi32(column_predicates.size()) +
                encoded_length_vstr(row_regexp) +
                encoded_length_vstr(value_regexp) +
                encoded_length_vi32(row_offset) +
@@ -96,6 +118,7 @@ size_t ScanSpec::encoded_length() const {
   foreach(const char *c, columns) len += encoded_length_vstr(c);
   foreach(const RowInterval &ri, row_intervals) len += ri.encoded_length();
   foreach(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
+  foreach(const ColumnPredicate &cp, column_predicates) len += cp.encoded_length();
 
   return len + 8 + 8 + 3;
 }
@@ -111,6 +134,8 @@ void ScanSpec::encode(uint8_t **bufp) const {
   foreach(const RowInterval &ri, row_intervals) ri.encode(bufp);
   encode_vi32(bufp, cell_intervals.size());
   foreach(const CellInterval &ci, cell_intervals) ci.encode(bufp);
+  encode_vi32(bufp, column_predicates.size());
+  foreach(const ColumnPredicate &cp, column_predicates) cp.encode(bufp);
   encode_i64(bufp, time_interval.first);
   encode_i64(bufp, time_interval.second);
   encode_bool(bufp, return_deletes);
@@ -125,6 +150,7 @@ void ScanSpec::encode(uint8_t **bufp) const {
 void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
   RowInterval ri;
   CellInterval ci;
+  ColumnPredicate cp;
   HT_TRY("decoding scan spec",
     row_limit = decode_vi32(bufp, remainp);
     cell_limit = decode_vi32(bufp, remainp);
@@ -139,6 +165,10 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     for (size_t nci = decode_vi32(bufp, remainp); nci--;) {
       ci.decode(bufp, remainp);
       cell_intervals.push_back(ci);
+    }
+    for (size_t nri = decode_vi32(bufp, remainp); nri--;) {
+      cp.decode(bufp, remainp);
+      column_predicates.push_back(cp);
     }
     time_interval.first = decode_i64(bufp, remainp);
     time_interval.second = decode_i64(bufp, remainp);
@@ -220,6 +250,12 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
     foreach(const CellInterval &ci, scan_spec.cell_intervals)
       os << " " << ci;
   }
+  if (!scan_spec.column_predicates.empty()) {
+    os << "\n column_predicates=";
+    foreach(const ColumnPredicate &cp, scan_spec.column_predicates)
+      os << " (" << cp.column_family << " " << cp.operation << " " 
+         << cp.value << ")";
+  }
   if (!scan_spec.columns.empty()) {
     os << "\n columns=(";
     foreach (const char *c, scan_spec.columns)
@@ -240,6 +276,7 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
     max_versions(ss.max_versions), columns(CstrAlloc(arena)), 
     row_intervals(RowIntervalAlloc(arena)),
     cell_intervals(CellIntervalAlloc(arena)),
+    column_predicates(ColumnPredicateAlloc(arena)),
     time_interval(ss.time_interval.first, ss.time_interval.second),
     return_deletes(ss.return_deletes), keys_only(ss.keys_only),
     row_regexp(arena.dup(ss.row_regexp)), value_regexp(arena.dup(ss.value_regexp)),
@@ -247,6 +284,7 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
   columns.reserve(ss.columns.size());
   row_intervals.reserve(ss.row_intervals.size());
   cell_intervals.reserve(ss.cell_intervals.size());
+  column_predicates.reserve(ss.column_predicates.size());
 
   foreach(const char *c, ss.columns)
     add_column(arena, c);
@@ -258,16 +296,21 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
   foreach(const CellInterval &ci, ss.cell_intervals)
     add_cell_interval(arena, ci.start_row, ci.start_column, ci.start_inclusive,
                       ci.end_row, ci.end_column, ci.end_inclusive);
+
+  foreach(const ColumnPredicate &cp, ss.column_predicates)
+    add_column_predicate(arena, cp.column_family, cp.operation, cp.value);
 }
 
-void ScanSpec::parse_column(const char *column_str, String &family, String &qualifier,
-    bool *has_qualifier, bool *regexp)
+void ScanSpec::parse_column(const char *column_str, String &family, 
+        String &qualifier, bool *has_qualifier, bool *is_regexp, 
+        bool *is_prefix)
 {
   String column = column_str;
   size_t pos = column.find_first_of(':');
   qualifier.clear();
   *has_qualifier = pos != String::npos;
-  *regexp = false;
+  *is_regexp = false;
+  *is_prefix = false;
 
   if (!*has_qualifier) {
     family = column;
@@ -276,13 +319,22 @@ void ScanSpec::parse_column(const char *column_str, String &family, String &qual
     family = column.substr(0, pos);
     if (column.length() > pos+1) {
       // has qualifier
-      qualifier = column.substr(pos+1);
       if (column[pos+1] == '/') {
-        *regexp = true;
+        *is_regexp = true;
+        qualifier = column.substr(pos+1);
         boost::trim_if(qualifier, boost::is_any_of("/"));
       }
-      else if (column[pos+1] == '\"' || column[pos+1] == '\'') {
-        boost::trim_if(qualifier, boost::is_any_of("\""));
+      else {
+        if (column[pos+1] == '^') {
+          *is_prefix = true;
+          qualifier = column.substr(pos+2);
+          boost::trim_if(qualifier, boost::is_any_of("\""));
+        }
+        else {
+          qualifier = column.substr(pos+1);
+          if (column[pos+1] == '\"' || column[pos+1] == '\'')
+            boost::trim_if(qualifier, boost::is_any_of("\"\'"));
+        }
       }
     }
   }

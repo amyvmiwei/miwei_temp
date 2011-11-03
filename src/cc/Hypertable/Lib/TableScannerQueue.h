@@ -76,9 +76,11 @@ namespace Hypertable {
             m_cells_queue.pop_front();
             break;
           }
-          while (m_work_queue.empty()) {
+          while (m_work_queue.empty() && m_cells_queue.empty()) {
             m_cond.wait(lock);
           }
+          if (!m_work_queue.size())
+            continue;
           app_handler = m_work_queue.front();
           HT_ASSERT(app_handler);
           m_work_queue.pop_front();
@@ -96,10 +98,13 @@ namespace Hypertable {
 
 
     void add_cells(ScanCellsPtr &cells) {
+      ScopedLock lock(m_mutex);
       m_cells_queue.push_back(cells);
+      m_cond.notify_one();
     }
 
     void set_error(int error, const String &error_msg) {
+      ScopedLock lock(m_mutex);
       m_error = error;
       m_error_msg = error_msg;
       m_error_shown = false;

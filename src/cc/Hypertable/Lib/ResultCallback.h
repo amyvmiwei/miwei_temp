@@ -148,6 +148,6 @@ namespace Hypertable {
     boost::condition m_outstanding_cond;
   };
   typedef intrusive_ptr<ResultCallback> ResultCallbackPtr;
-} // namesapce Hypertable
+} // namespace Hypertable
 
 #endif // HYPERTABLE_RESULTCALLBACKINTERFACE_H

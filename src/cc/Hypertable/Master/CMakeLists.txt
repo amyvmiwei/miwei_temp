@@ -92,6 +92,8 @@ add_test(MasterOperation-SystemUpgrade op_test_driver system_upgrade)
 add_test(MasterOperation-CreateNamespace op_test_driver create_namespace)
 add_test(MasterOperation-DropNamespace op_test_driver drop_namespace)
 add_test(MasterOperation-CreateTable op_test_driver create_table)
+add_test(MasterOperation-CreateTableWithIndex op_test_driver
+    create_table_with_index)
 add_test(MasterOperation-RenameTable op_test_driver rename_table)
 add_test(MasterOperation-MoveRange op_test_driver move_range)
 

@@ -44,6 +44,7 @@
 #include "HyperspaceSessionHandler.h"
 #include "RangeServer.h"
 #include "TimerHandler.h"
+#include "IndexUpdater.h"
 
 using namespace Hypertable;
 using namespace Config;
@@ -69,7 +70,8 @@ int main(int argc, char **argv) {
     }
 
     Comm *comm = Comm::instance();
-    ConnectionManagerPtr conn_manager= new ConnectionManager(comm);
+    ConnectionManagerPtr conn_manager = new ConnectionManager(comm);
+    Global::conn_manager = conn_manager;
 
     int worker_count = get_i32("Hypertable.RangeServer.Workers");
     ApplicationQueuePtr app_queue = new ApplicationQueue(worker_count);
@@ -95,8 +97,9 @@ int main(int argc, char **argv) {
 
     app_queue->join();
 
-    HT_ERROR("Exiting RangeServer.");
+    IndexUpdaterFactory::close();
 
+    HT_ERROR("Exiting RangeServer.");
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

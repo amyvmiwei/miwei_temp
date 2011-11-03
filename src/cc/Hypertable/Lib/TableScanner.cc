@@ -27,6 +27,7 @@
 
 #include "Table.h"
 #include "TableScanner.h"
+#include "TableScannerQueue.h"
 
 extern "C" {
 #include <poll.h>
@@ -39,13 +40,12 @@ TableScanner::TableScanner(Comm *comm, Table *table,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
     uint32_t timeout_ms)
   : m_callback(this), m_cur_cells(0), m_cur_cells_index(0), m_cur_cells_size(0),
-    m_error(Error::OK),
-    m_eos(false), m_bytes_scanned(0) {
+    m_error(Error::OK), m_eos(false), m_bytes_scanned(0) {
 
   m_queue = new TableScannerQueue;
   ApplicationQueuePtr app_queue = (ApplicationQueue *)m_queue.get();
-  m_scanner = new TableScannerAsync(comm, app_queue, table, range_locator, scan_spec,
-                                    timeout_ms, &m_callback);
+  m_scanner = new TableScannerAsync(comm, app_queue, table, range_locator, 
+                                    scan_spec, timeout_ms, &m_callback);
 }
 
 
@@ -71,8 +71,9 @@ bool TableScanner::next(Cell &cell) {
 
     if (m_cur_cells != 0) {
       m_eos = m_cur_cells->get_eos();
-      if (m_eos)
+      if (m_eos) {
         return false;
+      }
     }
 
     m_queue->next_result(m_cur_cells, &m_error, m_error_msg);
@@ -80,8 +81,9 @@ bool TableScanner::next(Cell &cell) {
       m_eos = true;
       HT_THROW(m_error, m_error_msg);
     }
+
     m_cur_cells_size = m_cur_cells->size();
-    m_cur_cells_index=0;
+    m_cur_cells_index= 0;
   }
 }
 
@@ -99,7 +101,6 @@ void TableScanner::scan_ok(ScanCellsPtr &cells) {
 void TableScanner::scan_error(int error, const String &error_msg) {
   m_queue->set_error(error, error_msg);
 }
-
 
 void Hypertable::copy(TableScanner &scanner, CellsBuilder &b) {
   Cell cell;

@@ -325,7 +325,8 @@ void Schema::start_element_handler(void *userdata,
            || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
            || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
            || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter")
-           || !strcasecmp(name, "TimeOrder"))
+           || !strcasecmp(name, "TimeOrder") || !strcasecmp(name, "Index")
+           || !strcasecmp(name, "QualifierIndex"))
     ms_collected_text = "";
   else
     ms_schema->set_error_string(format("Unrecognized element - '%s'", name));
@@ -343,7 +344,8 @@ void Schema::end_element_handler(void *userdata, const XML_Char *name) {
            || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
            || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
            || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter")
-           || !strcasecmp(name, "TimeOrder")) {
+           || !strcasecmp(name, "TimeOrder") || !strcasecmp(name, "Index")
+           || !strcasecmp(name, "QualifierIndex")) {
     boost::trim(ms_collected_text);
     ms_schema->set_column_family_parameter(name, ms_collected_text.c_str());
   }
@@ -525,6 +527,18 @@ void Schema::set_column_family_parameter(const char *param, const char *value) {
     else if (!strcasecmp(param, "NewName")) {
       m_open_column_family->new_name = value;
     }
+    else if (!strcasecmp(param, "Index")) {
+      if (!strcasecmp(value, "true"))
+        m_open_column_family->has_index = true;
+      else
+        m_open_column_family->has_index = false;
+    }
+    else if (!strcasecmp(param, "QualifierIndex")) {
+      if (!strcasecmp(value, "true"))
+        m_open_column_family->has_qualifier_index = true;
+      else
+        m_open_column_family->has_qualifier_index = false;
+    }
     else if (!strcasecmp(param, "MaxVersions")) {
       m_open_column_family->max_versions = atoi(value);
       if (m_open_column_family->max_versions == 0)
@@ -695,6 +709,11 @@ void Schema::render(String &output, bool with_ids) {
         output += format("      <renamed>true</renamed>\n");
         output += format("      <NewName>%s</NewName>\n", cf->new_name.c_str());
       }
+      if (cf->has_index)
+        output += format("      <Index>true</Index>\n");
+      if (cf->has_qualifier_index)
+        output += format("      <QualifierIndex>true</QualifierIndex>\n");
+
       output += "    </ColumnFamily>\n";
     }
     output += "  </AccessGroup>\n";
@@ -742,6 +761,19 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
 
     if (cf->ttl != 0)
       output += format(" TTL=%d", (int)cf->ttl);
+
+    if (cf->has_index) {
+      if (hql_needs_quotes(cf->name.c_str()))
+        output += format(", INDEX '%s'", cf->name.c_str());
+      else
+        output += format(", INDEX %s", cf->name.c_str());
+    }
+    if (cf->has_qualifier_index) {
+      if (hql_needs_quotes(cf->name.c_str()))
+        output += format(", QUALIFIER INDEX '%s'", cf->name.c_str());
+      else
+        output += format(", QUALIFIER INDEX %s", cf->name.c_str());
+    }
 
     output += ",\n";
   }

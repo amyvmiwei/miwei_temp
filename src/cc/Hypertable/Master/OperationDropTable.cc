@@ -67,6 +67,18 @@ void OperationDropTable::initialize_dependencies() {
 
 void OperationDropTable::execute() {
   String filename;
+  String index_id;
+  String qualifier_index_id;
+  String index_name = Filesystem::dirname(m_name);
+  if (index_name == "/")
+    index_name += String("^") + Filesystem::basename(m_name);
+  else
+    index_name += String("/^") + Filesystem::basename(m_name);
+  String qualifier_index_name = Filesystem::dirname(m_name);
+  if (qualifier_index_name == "/")
+    qualifier_index_name += String("^^") + Filesystem::basename(m_name);
+  else
+    qualifier_index_name += String("/^^") + Filesystem::basename(m_name);
   bool is_namespace;
   StringSet servers;
   DispatchHandlerOperationPtr op_handler;
@@ -86,8 +98,6 @@ void OperationDropTable::execute() {
         complete_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_name.c_str()));
         return;
       }
-      set_state(OperationState::SCAN_METADATA);
-      m_context->mml_writer->record_state(this);
     }
     else {
       if (m_if_exists)
@@ -96,7 +106,40 @@ void OperationDropTable::execute() {
         complete_error(Error::TABLE_NOT_FOUND, m_name);
       return;
     }
+
+    // issue another request for an index table
+    if (m_context->namemap->name_to_id(index_name, index_id)) {
+      HT_INFOF("  Dropping index table %s (id %s)", 
+           index_name.c_str(), index_id.c_str());
+      Operation *op = new OperationDropTable(m_context, index_name, false);
+      op->add_obstruction(index_name + "-drop-index");
+
+      ScopedLock lock(m_mutex);
+      add_dependency(index_name + "-drop-index");
+      m_sub_ops.push_back(op);
+    }
+
+    // ... and for the qualifier index
+    if (m_context->namemap->name_to_id(qualifier_index_name, 
+                qualifier_index_id)) {
+      HT_INFOF("  Dropping qualifier index table %s (id %s)", 
+           qualifier_index_name.c_str(), qualifier_index_id.c_str());
+      Operation *op = new OperationDropTable(m_context, qualifier_index_name, 
+              false);
+      op->add_obstruction(qualifier_index_name + "-drop-qualifier-index");
+
+      ScopedLock lock(m_mutex);
+      add_dependency(qualifier_index_name + "-drop-qualifier-index");
+      m_sub_ops.push_back(op);
+    }
+
+    set_state(OperationState::SCAN_METADATA);
+    m_context->mml_writer->record_state(this);
+
     HT_MAYBE_FAIL("drop-table-INITIAL");
+    break;
+
+    // fall through
 
   case OperationState::SCAN_METADATA:
     servers.clear();
@@ -117,7 +160,7 @@ void OperationDropTable::execute() {
     m_context->mml_writer->record_state(this);
     return;
 
-  case OperationState::ISSUE_REQUESTS:
+  case OperationState::ISSUE_REQUESTS: {
     table.id = m_id.c_str();
     table.generation = 0;
     {
@@ -150,6 +193,7 @@ void OperationDropTable::execute() {
       return;
     }
 
+    // now drop the "primary" table
     try {
       m_context->namemap->drop_mapping(m_name);
       filename = m_context->toplevel_dir + "/tables/" + m_id;
@@ -158,11 +202,13 @@ void OperationDropTable::execute() {
     catch (Exception &e) {
       if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND &&
           e.code() != Error::HYPERSPACE_BAD_PATHNAME)
-        HT_THROW2F(e.code(), e, "Error executing DropTable %s", m_name.c_str());
+        HT_THROW2F(e.code(), e, "Error executing DropTable %s", 
+                m_name.c_str());
     }
     m_context->monitoring->invalidate_id_mapping(m_id);
     complete_ok();
     break;
+  }
 
   default:
     HT_FATALF("Unrecognized state %d", state);

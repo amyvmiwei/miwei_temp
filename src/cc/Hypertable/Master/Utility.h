@@ -38,6 +38,9 @@ namespace Hypertable {
     extern void verify_table_name_availability(ContextPtr &context, const String &name, String &id);
     extern void create_table_in_hyperspace(ContextPtr &context, const String &name,
                                            const String &schema_str, TableIdentifierManaged *table);
+    extern void prepare_index(ContextPtr &context, const String &name,
+                              const String &schema_str, bool qualifier,
+                              String &index_name, String &index_schema);
     extern void create_table_write_metadata(ContextPtr &context, TableIdentifier *table);
     extern bool next_available_server(ContextPtr &context, String &location);
     extern void create_table_load_range(ContextPtr &context, const String &location,

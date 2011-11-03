@@ -103,6 +103,7 @@ namespace {
         ("thrift", boo()->zero_tokens()->default_value(false),
          "Generate load via Thrift interface instead of C++ client library")
         ("version", "Show version information and exit")
+        ("overwrite-delete-flag", str(), "Force delete flag (DELETE_ROW, DELETE_CELL, DELETE_COLUMN_FAMILY)")
         ;
       alias("delete-percentage", "DataGenerator.DeletePercentage");
       alias("max-bytes", "DataGenerator.MaxBytes");
@@ -331,6 +332,19 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 
     load_client_ptr->create_mutator(tablename, mutator_flags);
 
+    unsigned delete_flag = (unsigned)-1;
+    if (has("overwrite-delete-flag")) {
+      String delete_flag_str = get_str("overwrite-delete-flag");
+      if (delete_flag_str == "DELETE_ROW")
+        delete_flag = FLAG_DELETE_ROW;
+      else if (delete_flag_str == "DELETE_CELL")
+        delete_flag = FLAG_DELETE_CELL;
+      else if (delete_flag_str == "DELETE_COLUMN_FAMILY")
+        delete_flag = FLAG_DELETE_COLUMN_FAMILY;
+      else if (delete_flag_str != "")
+        HT_FATAL("unknown delete flag");
+    }
+
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); total_bytes+=iter.last_data_size(),++iter) {
 
       if (delete_pct != 0 && (::random() % 100) < delete_pct) {
@@ -349,6 +363,20 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
         }
         key.timestamp = (*iter).timestamp;
         key.revision = (*iter).revision;
+
+        if (delete_flag == FLAG_DELETE_ROW) {
+          key.column_family = 0;
+          key.column_qualifier = 0;
+          key.column_qualifier_len = 0;
+          key.flag = delete_flag;
+        }
+        else if (delete_flag == FLAG_DELETE_COLUMN_FAMILY) {
+          key.flag = delete_flag;
+        }
+        else if (delete_flag == FLAG_DELETE_CELL) {
+          key.flag = delete_flag;
+        }
+
         if (flush)
           start_clocks = clock();
         load_client_ptr->set_delete(key);
