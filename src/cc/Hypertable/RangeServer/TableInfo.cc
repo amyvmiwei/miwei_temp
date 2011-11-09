@@ -270,8 +270,15 @@ TableInfo::find_containing_range(const String &row, RangePtr &range,
 
   if (iter == m_range_set.end())
     return false;
+
+  int num_matches=0;
+  RangeInfoSet::iterator tmp = iter;
+  for (tmp=tmp; tmp != m_range_set.end() && tmp->get_start_row() < row; tmp++)
+    if (tmp->get_range())
+      num_matches++;
+
   for (iter=iter; iter != m_range_set.end() && iter->get_start_row()<row ; iter++) {
-    if (iter->get_range() && !iter->get_range()->get_relinquish()) {
+    if (iter->get_range() && (num_matches == 1 || !iter->get_range()->get_relinquish())) {
       start_row = iter->get_start_row();
       end_row = iter->get_end_row();
       range = iter->get_range();
@@ -290,9 +297,16 @@ TableInfo::find_containing_range(const String &row, RangePtr &range,
 
   if (iter == m_range_set.end())
     return false;
+
+  int num_matches=0;
+  RangeInfoSet::const_iterator tmp = iter;
+  for (tmp=tmp; tmp != m_range_set.end() && tmp->get_start_row() < row; tmp++)
+    if (tmp->get_range())
+      num_matches++;
+
   for (iter=iter; iter != m_range_set.end() && iter->get_start_row()<row ; iter++) {
     range = iter->get_range();
-    if (range && !range->get_relinquish()) {
+    if (range && (num_matches==1 || !range->get_relinquish())) {
       *start_rowp = range->start_row_cstring();
       *end_rowp = range->end_row_cstring();
       HT_ASSERT(row <= *end_rowp);
@@ -310,9 +324,14 @@ bool TableInfo::includes_row(const String &row) const {
 
   if (iter == m_range_set.end())
     return false;
+  int num_matches=0;
+  RangeInfoSet::const_iterator tmp = iter;
+  for (tmp=tmp; tmp != m_range_set.end() && tmp->get_start_row() < row; tmp++)
+    if (tmp->get_range())
+      num_matches++;
 
   for (iter=iter; iter != m_range_set.end() && iter->get_start_row() < row; iter++) {
-    if (iter->get_range() && !iter->get_range()->get_relinquish()) {
+    if (iter->get_range() && (num_matches == 1 || !iter->get_range()->get_relinquish())) {
       HT_ASSERT(row <= iter->get_end_row());
       return true;
     }
