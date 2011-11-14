@@ -148,6 +148,8 @@ if (NOT PACKAGE_THRIFTBROKER)
     set(Xau_lib ${CMAKE_MATCH_1})
     string(REGEX MATCH "[ \t](/[^ ]+/libXdmcp\\.[^ \n]+)" dummy ${LDD_OUT})
     set(Xdmcp_lib ${CMAKE_MATCH_1})
+    string(REGEX MATCH "[ \t](/[^ ]+/librrd\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(rrd_lib ${CMAKE_MATCH_1})
   endif ()
 endif ()
 
@@ -184,7 +186,7 @@ HT_INSTALL_LIBS(lib ${directfb_lib} ${fusion_lib} ${direct_lib}
                 ${pangoft2_lib} ${xcb_xlib_lib} ${xcb_lib} ${pcre_lib}
                 ${Xau_lib} ${Xdmcp_lib} ${ssl_lib} ${gssapi_krb5_lib}
                 ${krb5_lib} ${com_err_lib} ${k5crypto_lib} ${crypto_lib}
-                ${krb5support_lib})
+                ${krb5support_lib} ${Xrender_lib} ${rrd_lib})
 
 # General package variables
 if (NOT CPACK_PACKAGE_NAME)
