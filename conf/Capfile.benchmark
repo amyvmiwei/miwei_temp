@@ -24,11 +24,11 @@ role :test_dispatcher, "test000"
 ######################### END OF USER CONFIGURATION ############################
 
 def supported_pkgs
-  {"rpm"=>1, "deb"=>1}
+  {"bz2"=>1, "deb"=>1, "rpm"=>1}
 end
 
 def pkg_regex
-  '.*\.(deb|rpm)$'
+  '.*\.(bz2|deb|rpm)$'
 end
 
 set(:pkg) do
@@ -157,12 +157,22 @@ task :install_package, :roles => [:master, :hyperspace, :slave, :thriftbroker, :
   if (/-#{hypertable_version}-/ =~ pkg_basename).nil?
     raise "Package #{pkg} doesn't match version #{hypertable_version}"
   end
-    run("rsync -e \"ssh -o StrictHostKeyChecking=no\" #{source_machine}:#{pkg} #{install_dir}/")
+
+  run("rsync -e \"ssh -o StrictHostKeyChecking=no\" #{source_machine}:#{pkg} #{install_dir}/")
    
   if (pkg_type == "deb")
     run("dpkg -i #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}") 
-  else 
+  elsif (pkg_type == "rpm")
     run("rpm -ivh --replacepkgs --nomd5 #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}")
+  else
+    ext_index = pkg_basename.index(".tar.bz2")
+    if ext_index.nil?
+      raise "Package #{pkg} is not a .tar.bz2 archive"
+    end
+    dir_basename = pkg_basename[0..ext_index-1]
+    run("tar -xjv -f #{install_dir}/#{pkg_basename} -C #{install_dir}")
+    run("mv #{install_dir}/#{dir_basename}/opt/hypertable/#{hypertable_version} #{install_dir}");
+    run("/bin/rm -rf #{install_dir}/#{dir_basename}");
   end
 end
 
