@@ -42,12 +42,29 @@ void RequestHandlerAttrSet::run() {
   const uint8_t *decode_ptr = m_event_ptr->payload;
 
   try {
-    uint64_t handle = decode_i64(&decode_ptr, &decode_remain);
-    const char *name = decode_vstr(&decode_ptr, &decode_remain);
-    uint32_t value_len;
-    void *value = decode_vstr(&decode_ptr, &decode_remain, &value_len);
+    bool has_name = decode_bool(&decode_ptr, &decode_remain);
+    uint64_t handle = 0;
+    const char* name = 0;
+    uint32_t oflags = 0;
+    if (has_name) {
+      name = decode_vstr(&decode_ptr, &decode_remain);
+      oflags = decode_i32(&decode_ptr, &decode_remain);
+    }
+    else
+      handle = decode_i64(&decode_ptr, &decode_remain);
 
-    m_master->attr_set(&cb, m_session_id, handle, name, value, value_len);
+    Attribute attr;
+    std::vector<Attribute> attrs;
+    uint32_t attr_count = decode_i32(&decode_ptr, &decode_remain);
+    attrs.reserve(attr_count);
+
+    while (attr_count--) {
+      attr.name = decode_vstr(&decode_ptr, &decode_remain);
+      attr.value = decode_vstr(&decode_ptr, &decode_remain, &attr.value_len);
+      attrs.push_back(attr);
+    }
+
+    m_master->attr_set(&cb, m_session_id, handle, name, oflags, attrs);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

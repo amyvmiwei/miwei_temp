@@ -261,8 +261,7 @@ void obtain_master_lock(ContextPtr &context) {
     /**
      *  Create TOPLEVEL directory if not exist
      */
-    if (!context->hyperspace->exists(context->toplevel_dir))
-      context->hyperspace->mkdirs(context->toplevel_dir);
+    context->hyperspace->mkdirs(context->toplevel_dir);
 
     /**
      * Create /hypertable/master if not exist
@@ -313,11 +312,8 @@ void obtain_master_lock(ContextPtr &context) {
         context->hyperspace->attr_set(context->master_file_handle, "next_server_id", "1", 2);
     }
 
-    if (!context->hyperspace->exists(context->toplevel_dir + "/servers"))
-      context->hyperspace->mkdir(context->toplevel_dir + "/servers");
-
-    if (!context->hyperspace->exists(context->toplevel_dir + "/tables"))
-      context->hyperspace->mkdir(context->toplevel_dir + "/tables");
+    context->hyperspace->mkdirs(context->toplevel_dir + "/servers");
+    context->hyperspace->mkdirs(context->toplevel_dir + "/tables");
 
     /**
      *  Create /hypertable/root

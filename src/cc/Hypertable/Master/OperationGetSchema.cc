@@ -60,12 +60,9 @@ void OperationGetSchema::initialize_dependencies() {
 }
 
 void OperationGetSchema::execute() {
-  uint64_t handle = 0;
   String table_id, filename;
   DynamicBuffer dbuf;
   int32_t state = get_state();
-
-  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_context->hyperspace, &handle);
 
   HT_INFOF("Entering GetSchema-%lld(%s) state=%s",
            header.id, m_name.c_str(), OperationState::get_text(state));
@@ -78,8 +75,7 @@ void OperationGetSchema::execute() {
       return;
     }
     filename = m_context->toplevel_dir + "/tables/" + table_id;
-    handle = m_context->hyperspace->open(filename, OPEN_FLAG_READ);
-    m_context->hyperspace->attr_get(handle, "schema", dbuf);
+    m_context->hyperspace->attr_get(filename, "schema", dbuf);
     m_schema = String((const char *)dbuf.base);
     complete_ok_no_log();
     break;

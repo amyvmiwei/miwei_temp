@@ -20,6 +20,8 @@
  */
 
 #include "Common/Compat.h"
+#include <boost/algorithm/string.hpp>
+#include <boost/tokenizer.hpp>
 #include <algorithm>
 #include <cstring>
 
@@ -499,65 +501,16 @@ void Master::remove_expired_sessions() {
  * > Send out CHILD_NODE_ADDED notifications
  */
 void
-Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
-  String abs_name, parent_node;
-  String child_name;
-  uint64_t event_id;
-  HyperspaceEventPtr child_added_event;
-  NotificationMap child_added_notifications;
-  bool persisted_notifications = false;
-  bool commited = false, aborted=false;
-  int error=0;
-  String error_msg;
-
-  if (m_verbose) {
-    HT_INFOF("mkdir(session_id=%llu, name=%s)", (Llu)session_id, name);
-  }
-
-  if (!find_parent_node(name, parent_node, child_name) || strlen(name)==0) {
-    cb->error(Error::HYPERSPACE_FILE_EXISTS, "directory '/' exists");
-    return;
-  }
-
-  if (name[0] != '/' || name[strlen(name)-1] == '/') {
-    cb->error(Error::HYPERSPACE_BAD_PATHNAME, (String)"directory '" + name + "' bad");
-  }
-
+Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name, const std::vector<Attribute>& init_attrs) {
+  bool commited = false;
+  CommandContext ctx("mkdir", session_id);
   HT_BDBTXN_BEGIN() {
-    // make sure parent node data is setup
-    if (!validate_and_create_node_data(txn, parent_node)) {
-      error = Error::HYPERSPACE_FILE_NOT_FOUND;
-      error_msg = (String)"' parent node: '" + parent_node + "'";
-      aborted = true;
-      goto txn_commit;
-    }
-
-    // make sure this node doesn't exist already
-    if (m_bdb_fs->exists(txn, name)) {
-      error = Error::HYPERSPACE_FILE_EXISTS;
-      error_msg = (String)"node: '" + name + "'";
-      aborted = true;
-      goto txn_commit;
-    }
-
-    // create event and persist notifications
-    event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
-    m_bdb_fs->create_event(txn, EVENT_TYPE_NAMED, event_id, EVENT_MASK_CHILD_NODE_ADDED,
-                           child_name);
-    child_added_event = new EventNamed(event_id, EVENT_MASK_CHILD_NODE_ADDED, child_name);
-    if (m_bdb_fs->get_node_event_notification_map(txn, parent_node,
-        EVENT_MASK_CHILD_NODE_ADDED, child_added_notifications)) {
-      persist_event_notifications(txn, event_id, child_added_notifications);
-      persisted_notifications = true;
-    }
-    // create node
-    m_bdb_fs->mkdir(txn, name);
-
-    // create node data
-    m_bdb_fs->create_node(txn, name, false, 1);
-
-    txn_commit:
-    if (aborted)
+    commited = false;
+    ctx.reset(&txn);
+    mkdir(ctx, name);
+    if (init_attrs.size() && !ctx.aborted)
+      attr_set(ctx, 0, name, init_attrs);
+    if (ctx.aborted)
       txn.abort();
     else {
       txn.commit(0);
@@ -567,20 +520,86 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
   HT_BDBTXN_END_CB(cb);
 
   // check for errors
-  if (aborted) {
-    cb->error(error, error_msg);
-    HT_ERROR_OUT << Error::get_text(error) << " - " << error_msg << HT_END;
+  if (ctx.aborted) {
+    cb->error(ctx.error, ctx.error_msg);
+    if (ctx.error == Error::HYPERSPACE_FILE_EXISTS) { // info should be sufficient
+        HT_INFO_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    }
+    else {
+        HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    }
     return;
   }
 
   // Deliver notifications if needed
-  if (commited && persisted_notifications) {
-    deliver_event_notifications(child_added_event, child_added_notifications);
-  }
+  if (commited)
+    deliver_event_notifications(ctx);
 
-  cb->response_ok();
+  if ((ctx.error = cb->response_ok()) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
+void
+Master::mkdirs(ResponseCallback *cb, uint64_t session_id, const char *name, const std::vector<Attribute>& init_attrs) {
+  std::vector<EventContext> evts;
+  bool commited = false;
+  CommandContext ctx("mkdirs", session_id);
+  HT_BDBTXN_BEGIN() {
+    commited = false;
+    ctx.reset(&txn);
+    bool file_exists;
+    exists(ctx, name, file_exists);
+    if (!ctx.aborted && !file_exists) {
+      typedef boost::tokenizer<boost::char_separator<char> > tokenizer;
+      boost::char_separator<char> sep("/");
+      std::vector<String> name_components;
+      String path(name);
+      tokenizer tokens(path, sep);
+      for (tokenizer::iterator tok_iter = tokens.begin();
+            tok_iter != tokens.end(); ++tok_iter)
+        name_components.push_back(*tok_iter);
+
+      path.clear();
+      for (size_t i=0; i<name_components.size(); i++) {
+        path += String("/") + name_components[i];
+        mkdir(ctx, path.c_str());
+        if (ctx.aborted && ctx.error != Error::HYPERSPACE_FILE_EXISTS)
+          break;
+        if (init_attrs.size() && !ctx.aborted &&
+            i == name_components.size() - 1)
+          attr_set(ctx, 0, name, init_attrs);
+        ctx.reset_error();
+      }
+    }
+
+    if (ctx.aborted)
+      txn.abort();
+    else {
+      txn.commit(0);
+      commited = true;
+    }
+  }
+  HT_BDBTXN_END_CB(cb);
+
+  // check for errors
+  if (ctx.aborted) {
+    cb->error(ctx.error, ctx.error_msg);
+    if (ctx.error == Error::HYPERSPACE_FILE_EXISTS) { // info should be sufficient
+        HT_INFO_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    }
+    else {
+        HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    }
+    return;
+  }
+
+  // Deliver notifications if needed
+  if (commited)
+    deliver_event_notifications(ctx);
+
+  if ((ctx.error = cb->response_ok()) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
+}
 
 /**
  * Unlink
@@ -597,100 +616,36 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name) {
  */
 void
 Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
-  String child_name, parent_node;
-  String node=name;
-  bool has_refs;
-  uint64_t event_id;
-  HyperspaceEventPtr child_removed_event;
-  NotificationMap child_removed_notifications;
-  bool persisted_notifications = false;
-  bool aborted = false;
   bool commited = false;
-  String error_msg;
-  int error = 0;
-
-  if (m_verbose) {
-    HT_INFOF("unlink(session_id=%llu, name=%s)", (Llu)session_id, name);
-  }
-
-  if (!strcmp(name, "/")) {
-    cb->error(Error::HYPERSPACE_PERMISSION_DENIED,
-              "Cannot remove '/' directory");
-    return;
-  }
-
-  if (!find_parent_node(node, parent_node, child_name)) {
-    cb->error(Error::HYPERSPACE_BAD_PATHNAME, name);
-    return;
-  }
-
+  CommandContext ctx("unlink", session_id);
   HT_BDBTXN_BEGIN() {
-    // make sure parent node data is setup
-    if (!validate_and_create_node_data(txn, parent_node)) {
-      error = Error::HYPERSPACE_FILE_NOT_FOUND;
-      error_msg = (String)" node: '" + node;
-      aborted = true;
-      goto txn_commit;
+    commited = false;
+    ctx.reset(&txn);
+    unlink(ctx, name);
+    if (ctx.aborted)
+      txn.abort();
+    else {
+      txn.commit(0);
+      commited = true;
     }
-
-    // make sure file & node data exist
-    if (!validate_and_create_node_data(txn, node)) {
-      error = Error::HYPERSPACE_FILE_NOT_FOUND;
-      error_msg = node;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    has_refs = m_bdb_fs->node_has_open_handles(txn, node);
-
-    if (has_refs) {
-      error = Error::HYPERSPACE_FILE_OPEN;
-      error_msg = "File is still open and referred to by some handle";
-      aborted = true;
-      goto txn_commit;
-    }
-    // Sanity check
-    HT_ASSERT(name[0] == '/' && name[strlen(name)-1] != '/');
-
-    // Create event and persist notifications
-    event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
-    m_bdb_fs->create_event(txn, EVENT_TYPE_NAMED, event_id, EVENT_MASK_CHILD_NODE_REMOVED,
-                           child_name);
-    child_removed_event = new EventNamed(event_id, EVENT_MASK_CHILD_NODE_REMOVED, child_name);
-    if (m_bdb_fs->get_node_event_notification_map(txn, parent_node,
-        EVENT_MASK_CHILD_NODE_REMOVED, child_removed_notifications)) {
-      persist_event_notifications(txn, event_id, child_removed_notifications);
-      persisted_notifications = true;
-    }
-
-    // Delete node
-    m_bdb_fs->unlink(txn, name);
-
-    // Delete node data
-    m_bdb_fs->delete_node(txn, node);
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else {
-        txn.commit(0);
-        commited = true;
-      }
   }
   HT_BDBTXN_END_CB(cb);
 
   // check for errors
-  if (aborted) {
-    cb->error(error, error_msg);
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
   // Deliver notifications if needed
-  if (commited && persisted_notifications) {
-    deliver_event_notifications(child_removed_event, child_removed_notifications);
-  }
-  cb->response_ok();
+  if (commited)
+    deliver_event_notifications(ctx);
+
+  if ((ctx.error = cb->response_ok()) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
+
 
 /**
  * Open
@@ -700,262 +655,104 @@ void
 Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
     uint32_t flags, uint32_t event_mask, std::vector<Attribute> &init_attrs) {
 
-  SessionDataPtr session_data;
-  String child_name, node = name, parent_node;
-  bool created = false;
-  bool is_dir = false;
-  bool existed;
+  bool commited = false;
   uint64_t handle = 0;
-  bool lock_notify = false;
-  uint32_t cur_lock_mode = 0;
-  uint32_t lock_mode = 0;
+  bool created = false;
   uint64_t lock_generation = 0;
-  bool aborted=false, commited=false;
-  String error_msg = "";
-  int error = 0;
-  uint64_t child_added_event_id;
-  HyperspaceEventPtr child_added_event;
-  NotificationMap child_added_notifications;
-  bool persisted_child_added_notifications = false;
-  uint64_t lock_acquired_event_id;
-  HyperspaceEventPtr lock_acquired_event;
-  NotificationMap lock_acquired_notifications;
-  bool persisted_lock_acquired_notifications = false;
-
-  HT_ASSERT(name[0] == '/');
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-  if (m_verbose) {
-    HT_INFOF("open(session_id=%llu, session_name = %s, fname=%s, flags=0x%x, event_mask=0x%x)",
-             (Llu)session_id, session_data->get_name(), name, flags, event_mask);
-  }
-
-  if (!find_parent_node(name, parent_node, child_name))
-    HT_THROW(Error::HYPERSPACE_BAD_PATHNAME, name);
-
-  if (!init_attrs.empty() && !(flags & OPEN_FLAG_CREATE))
-    HT_THROW(Error::HYPERSPACE_CREATE_FAILED,
-             "initial attributes can only be supplied on CREATE");
-
+  CommandContext ctx("open", session_id);
   HT_BDBTXN_BEGIN() {
-    // initialize vars since this runs in a loop
-    aborted = false; commited = false; created = false; is_dir = false; lock_notify = false;
-    persisted_lock_acquired_notifications = false; persisted_child_added_notifications = false;
-    lock_mode = 0; cur_lock_mode = 0; lock_generation = 0;
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
+    commited = false;
+    handle = 0;
+    created = false;
+    lock_generation = 0;
+    ctx.reset(&txn);
+    open(ctx, name, flags, event_mask, init_attrs, handle, created, lock_generation);
+    if (ctx.aborted)
+      txn.abort();
+    else {
+      txn.commit(0);
+      commited = true;
     }
-
-    // make sure parent node is valid and create node_data if needed
-    if (!validate_and_create_node_data(txn, parent_node)) {
-      error = Error::HYPERSPACE_FILE_NOT_FOUND;
-      error_msg = (String)" node: '" + node + "' parent node: '" + parent_node + "'";
-      aborted = true;
-      goto txn_commit;
-    }
-
-    existed = m_bdb_fs->exists(txn, name, &is_dir);
-    if (existed) { // node exists in DB already
-      // check flags
-      if ((flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL)) {
-        error = Error::HYPERSPACE_FILE_EXISTS;
-        error_msg = (String)"mode=CREATE|EXCL";
-        aborted = true;
-        goto txn_commit;
-      }
-
-      if ((flags & OPEN_FLAG_TEMP)) {
-        error = Error::HYPERSPACE_FILE_EXISTS;
-        error_msg = (String) "Unable to open TEMP file " + node + "because it already exists";
-        aborted = true;
-        goto txn_commit;
-      }
-
-      // create node data if it doesn't exist and set lock generation
-      validate_and_create_node_data(txn, node);
-
-      // check for lock mode conflicts
-      cur_lock_mode = m_bdb_fs->get_node_cur_lock_mode(txn, node);
-      if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED) {
-        if (cur_lock_mode == LOCK_MODE_EXCLUSIVE) {
-          error = Error::HYPERSPACE_LOCK_CONFLICT;
-          error_msg = node + "";
-          aborted = true;
-          goto txn_commit;
-        }
-        lock_mode = LOCK_MODE_SHARED;
-        if (!m_bdb_fs->node_has_shared_lock_handles(txn, node))
-          lock_notify = true;
-      }
-      else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE) {
-        if (cur_lock_mode == LOCK_MODE_SHARED || cur_lock_mode == LOCK_MODE_EXCLUSIVE) {
-          error = Error::HYPERSPACE_LOCK_CONFLICT;
-          error_msg = node + "";
-          aborted = true;
-          goto txn_commit;
-        }
-        lock_mode = LOCK_MODE_EXCLUSIVE;
-        lock_notify = true;
-      }
-    } // node exists in DB already
-    else { // node doesn't exist in DB
-      if (!(flags & OPEN_FLAG_CREATE)) {
-        error = Error::HYPERSPACE_FILE_NOT_FOUND;
-        error_msg = name;
-        aborted = true;
-        goto txn_commit;
-      }
-      // create new node
-      lock_generation = 1;
-      m_bdb_fs->create(txn, name, (flags & OPEN_FLAG_TEMP));
-      m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
-                              lock_generation);
-
-      // create a new node data object in hyperspace
-      m_bdb_fs->create_node(txn, node, (flags & OPEN_FLAG_TEMP), lock_generation);
-
-      // Set the initial attributes
-      for (size_t i=0; i<init_attrs.size(); i++)
-        m_bdb_fs->set_xattr(txn, name, init_attrs[i].name,
-                            init_attrs[i].value, init_attrs[i].value_len);
-      created = true;
-    } // node doesn't exist in DB
-    handle = m_bdb_fs->get_next_id_i64(txn, HANDLE_ID, true);
-    m_bdb_fs->create_handle(txn, handle, node, flags, event_mask, session_id, false,
-                            HANDLE_NOT_DEL);
-    m_bdb_fs->add_session_handle(txn, session_id, handle);
-
-    // create node added event and persist notifications
-    child_added_event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
-    m_bdb_fs->create_event(txn, EVENT_TYPE_NAMED, child_added_event_id,
-                           EVENT_MASK_CHILD_NODE_ADDED, child_name);
-    child_added_event = new EventNamed(child_added_event_id, EVENT_MASK_CHILD_NODE_ADDED,
-                                       child_name);
-    if (m_bdb_fs->get_node_event_notification_map(txn, parent_node,
-        EVENT_MASK_CHILD_NODE_ADDED, child_added_notifications)) {
-      persist_event_notifications(txn, child_added_event_id, child_added_notifications);
-      persisted_child_added_notifications = true;
-    }
-
-    /**
-     * If open flags LOCK_SHARED or LOCK_EXCLUSIVE, then obtain lock
-     */
-    if (lock_mode != 0) {
-      lock_generation = m_bdb_fs->incr_node_lock_generation(txn, node);
-      m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
-                              lock_generation);
-
-      m_bdb_fs->set_node_cur_lock_mode(txn, node, lock_mode);
-      lock_handle(txn, handle, lock_mode, node);
-
-      // create and persist lock acquired event
-      // deliver notification to handles to this same node
-      if (lock_notify) {
-        lock_acquired_event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
-
-        m_bdb_fs->create_event(txn, EVENT_TYPE_LOCK_ACQUIRED, lock_acquired_event_id,
-                               EVENT_MASK_LOCK_ACQUIRED, lock_mode);
-        lock_acquired_event = new EventLockAcquired(lock_acquired_event_id, lock_mode);
-
-        if (m_bdb_fs->get_node_event_notification_map(txn, node, EVENT_MASK_LOCK_ACQUIRED,
-                                                  lock_acquired_notifications)) {
-          persist_event_notifications(txn, lock_acquired_event_id,
-                                      lock_acquired_notifications);
-          persisted_lock_acquired_notifications = true;
-        }
-      }
-    }
-
-    m_bdb_fs->add_node_handle(txn, node, handle);
-
-    HT_INFOF("handle %llu created ('%s', session=%llu(%s), flags=0x%x, mask=0x%x)",
-             (Llu)handle, node.c_str(), (Llu)session_id, session_data->get_name(),
-             flags, event_mask);
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else {
-        txn.commit(0);
-        commited = true;
-      }
   }
   HT_BDBTXN_END_CB(cb);
 
   // check for errors
-  if (aborted) {
-    HT_THROW(error, error_msg);
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
+    return;
   }
 
-  // deliver persisted notifications
-  if (commited) {
-    if (persisted_child_added_notifications) {
-      deliver_event_notifications(child_added_event, child_added_notifications);
-    }
-    if (persisted_lock_acquired_notifications) {
-      deliver_event_notifications(lock_acquired_event, lock_acquired_notifications);
-    }
-  }
+  // Deliver notifications if needed
+  if (commited)
+    deliver_event_notifications(ctx);
 
-  if (m_verbose) {
+  if (m_verbose)
     HT_INFOF("exitting open(session_id=%llu, session_name = %s, fname=%s, flags=0x%x, event_mask=0x%x)",
-        (Llu)session_id, session_data->get_name(), name, flags, event_mask);
-  }
+        (Llu)ctx.session_id, ctx.session_data->get_name(), name, flags, event_mask);
 
-  cb->response(handle, created, lock_generation);
+  if ((ctx.error = cb->response(handle, created, lock_generation)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
+
 
 /**
  * Close
  */
 void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
-  SessionDataPtr session_data;
-  int error;
-  String errmsg;
-  bool aborted=false;
-
-  if (!get_session(session_id, session_data)) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, "");
-    return;
-  }
-
-  if (m_verbose) {
-    HT_INFOF("close(session=%llu(%s), handle=%llu)", (Llu)session_id,
-             session_data->get_name(), (Llu)handle);
-  }
-
-  // delete handle from set of open session handles
+  CommandContext ctx("close", session_id);
   HT_BDBTXN_BEGIN() {
-    if (m_bdb_fs->session_exists(txn, session_id))
-      m_bdb_fs->delete_session_handle(txn, session_id, handle);
+    ctx.reset(&txn);
+    close(ctx, handle);
+    if (ctx.aborted)
+      txn.abort();
     else
-      aborted = true;
-    txn.commit(0);
+      txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
-  if (aborted) {
-    cb->error(Error::HYPERSPACE_EXPIRED_SESSION, (String)"Session " + session_id
-              + session_data->get_name() + " does not exist");
-    return;
-  }
-  // if handle was open then destroy it (release lock if any, grant next
-  // pending lock, delete ephemeral etc.)
-  if (!destroy_handle(handle, error, errmsg)) {
-    cb->error(error, errmsg);
+  // check for errors
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
-  if ((error = cb->response_ok()) != Error::OK) {
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+  // if handle was open then destroy it (release lock if any, grant next
+  // pending lock, delete ephemeral etc.)
+  if (!destroy_handle(handle, ctx.error, ctx.error_msg)) {
+    cb->error(ctx.error, ctx.error_msg);
+    return;
   }
+
+  if ((ctx.error = cb->response_ok()) != Error::OK) {
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
+  }
+}
+
+void Master::close(CommandContext &ctx, uint64_t handle)
+{
+  if (!ctx.session_data) {
+    if (!get_session(ctx.session_id, ctx.session_data)) {
+      ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
+      return;
+    }
+  }
+
+  if (m_verbose)
+    HT_INFOF("close(session=%llu(%s), handle=%llu)", (Llu)ctx.session_id,
+             ctx.session_data->get_name(), (Llu)handle);
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  if (!m_bdb_fs->session_exists(txn, ctx.session_id)) {
+    ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, (String)"Session " + ctx.session_id
+              + ctx.session_data->get_name() + " does not exist");
+    return;
+  }
+
+  m_bdb_fs->delete_session_handle(txn, ctx.session_id, handle);
 }
 
 /**
@@ -973,87 +770,58 @@ void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
  */
 void
 Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
-                 const char *name, const void *value, size_t value_len) {
-  SessionDataPtr session_data;
-  int error = 0;
-  String error_msg;
-  String node;
-  uint64_t event_id;
-  HyperspaceEventPtr attr_set_event;
-  NotificationMap attr_set_notifications;
-  bool persisted_notifications = false;
-  bool aborted = false, commited = false;
+                 const char *name, uint32_t oflags, const std::vector<Attribute> &attrs) {
 
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-  if (m_verbose) {
-    HT_INFOF("attrset(session=%llu(%s), handle=%llu, name=%s, value_len=%d)",
-             (Llu)session_id, session_data->get_name(), (Llu)handle, name, (int)value_len);
-  }
-
+  bool commited = false;
+  uint64_t opened_handle = 0;
+  CommandContext ctx("attrset", session_id);
   HT_BDBTXN_BEGIN() {
-    //(re) initialize vars
-    persisted_notifications = false; aborted = false; commited = false;
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    if (!m_bdb_fs->handle_exists(txn, handle)) {
-      error = Error::HYPERSPACE_INVALID_HANDLE;
-      error_msg = (String) "handle=" + handle;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    m_bdb_fs->get_handle_node(txn, handle, node);
-    m_bdb_fs->set_xattr(txn, node, name, value, value_len);
-
-    // create event notification and persist
-    event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
-    m_bdb_fs->create_event(txn, EVENT_TYPE_NAMED, event_id, EVENT_MASK_ATTR_SET, name);
-    attr_set_event = new EventNamed(event_id, EVENT_MASK_ATTR_SET, name);
-
-    if (m_bdb_fs->get_node_event_notification_map(txn, node, EVENT_MASK_ATTR_SET,
-                                                  attr_set_notifications)) {
-      persist_event_notifications(txn, event_id, attr_set_notifications);
-      persisted_notifications = true;
-    }
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else {
-        txn.commit(0);
-        commited = true;
+    commited = false;
+    opened_handle = 0;
+    ctx.reset(&txn);
+    if (!(name && *name) || !(oflags & ~(OPEN_FLAG_READ|OPEN_FLAG_WRITE)))
+      attr_set(ctx, handle, name, attrs);
+    else {
+      bool created;
+      uint64_t lock_generation;
+      std::vector<Attribute> none;
+      open(ctx, name, oflags, 0, none, opened_handle, created, lock_generation);
+      if (!ctx.aborted) {
+        attr_set(ctx, opened_handle, 0, attrs);
+        close(ctx, opened_handle);
       }
+    }
+    if (ctx.aborted)
+      txn.abort();
+    else {
+      txn.commit(0);
+      commited = true;
+    }
   }
   HT_BDBTXN_END_CB(cb);
 
   // check for errors
-  if (aborted) {
-    HT_THROW(error, error_msg);
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
+    return;
   }
 
   // deliver notifications
-  if (commited && persisted_notifications) {
-    deliver_event_notifications(attr_set_event, attr_set_notifications);
+  if (commited)
+    deliver_event_notifications(ctx);
+
+  // if handle was open then destroy it (release lock if any, grant next
+  // pending lock, delete ephemeral etc.)
+  if (opened_handle) {
+    if (!destroy_handle(opened_handle, ctx.error, ctx.error_msg)) {
+      cb->error(ctx.error, ctx.error_msg);
+      return;
+    }
   }
 
-  if ((error = cb->response_ok()) != Error::OK)
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
-
-  if (m_verbose) {
-    HT_INFOF("exitting attrset(session=%llu(%s), handle=%llu, name=%s, value_len=%d)",
-             (Llu)session_id, session_data->get_name(), (Llu)handle, name, (int)value_len);
-  }
-
+  if ((ctx.error = cb->response_ok()) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
 /**
@@ -1070,71 +838,33 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
  */
 void
 Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
-                 uint64_t handle, const char *name) {
-  SessionDataPtr session_data;
-  String node;
-  int error=0;
-  bool aborted=false;
-  String error_msg;
+                 uint64_t handle, const char *name, const char *attr) {
+
   DynamicBuffer dbuf;
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-  if (m_verbose)
-    HT_INFOF("attrget(session=%llu(%s), handle=%llu, name=%s)",
-             (Llu)session_id, session_data->get_name(), (Llu)handle, name);
-
+  CommandContext ctx("attrget", session_id);
   HT_BDBTXN_BEGIN() {
-    // (re) initialize vars
-    aborted = false;
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    if (!m_bdb_fs->handle_exists(txn, handle)) {
-      error = Error::HYPERSPACE_INVALID_HANDLE;
-      error_msg = (String) "handle=" + handle;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    m_bdb_fs->get_handle_node(txn, handle, node);
-    if (!m_bdb_fs->get_xattr(txn, node, name, dbuf)) {
-      error = Error::HYPERSPACE_ATTR_NOT_FOUND;
-      error_msg = name;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else
-        txn.commit(0);
+    ctx.reset(&txn);
+    attr_get(ctx, handle, name, attr, dbuf);
+    if (ctx.aborted)
+      txn.abort();
+    else
+      txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
-  if (aborted) {
-    HT_DEBUG_OUT << "attrget(session=" << session_id << ", handle=" << handle << ", name='"
-                 << name << "' ERROR = " << Error::get_text(error) << " " << error_msg
-                 << HT_END;
-    cb->error(error,error_msg);
+  if (ctx.aborted) {
+    if (ctx.error == Error::HYPERSPACE_ATTR_NOT_FOUND ||
+        ctx.error == Error::HYPERSPACE_FILE_NOT_FOUND)
+      HT_DEBUG_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    else
+      HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
   StaticBuffer buffer(dbuf);
-
-  HT_DEBUG_OUT << "attrget(session=" << session_id << ", handle=" << handle << ", name='"
-               << name << "', value="<< (char *)buffer.base << HT_END;
-
-  if ((error = cb->response(buffer)) != Error::OK)
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+  if ((ctx.error = cb->response(buffer)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
 /**
@@ -1151,70 +881,30 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
  */
 void
 Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
-                 uint64_t handle, const char *name) {
-  SessionDataPtr session_data;
-  String node;
-  int error=0;
-  bool aborted=false;
-  String error_msg;
+                 uint64_t handle, const char *name, const char* attr) {
+
   uint64_t attr_val;
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-  if (m_verbose)
-    HT_INFOF("attrincr(session=%llu(%s), handle=%llu, name=%s)",
-             (Llu)session_id, session_data->get_name(), (Llu)handle, name);
-
+  CommandContext ctx("attrincr", session_id);
   HT_BDBTXN_BEGIN() {
-    // (re) initialize vars
-    aborted = false;
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    if (!m_bdb_fs->handle_exists(txn, handle)) {
-      error = Error::HYPERSPACE_INVALID_HANDLE;
-      error_msg = (String) "handle=" + handle;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    m_bdb_fs->get_handle_node(txn, handle, node);
-    if (!m_bdb_fs->incr_attr(txn, node, name, &attr_val)) {
-      error = Error::HYPERSPACE_ATTR_NOT_FOUND;
-      error_msg = name;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else
-        txn.commit(0);
+    ctx.reset(&txn);
+    attr_incr(ctx, handle, name, attr, attr_val);
+    if (ctx.aborted)
+      txn.abort();
+    else
+      txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
-  if (aborted) {
-    HT_DEBUG_OUT << "attrget(session=" << session_id << ", handle=" << handle << ", name='"
-                 << name << "' ERROR = " << Error::get_text(error) << " " << error_msg
-                 << HT_END;
-    cb->error(error,error_msg);
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
-  HT_DEBUG_OUT << "attrincr(session=" << session_id << ", handle=" << handle << ", name='"
-               << name << "', value="<< attr_val << HT_END;
-
-  if ((error = cb->response(attr_val)) != Error::OK)
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+  if ((ctx.error = cb->response(attr_val)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
+
 /**
  * attr_del does the following:
  *
@@ -1230,204 +920,85 @@ Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
 void
 Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
                  const char *name) {
-  SessionDataPtr session_data;
-  String node;
-  int error=0;
-  String error_msg;
-  bool aborted=false, commited=false;
-  uint64_t event_id;
-  HyperspaceEventPtr attr_del_event;
-  NotificationMap attr_del_notifications;
-  bool persisted_notifications = false;
-
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-  if (m_verbose)
-    HT_INFOF("attrdel(session=%llu(%s), handle=%llu, name=%s)",
-             (Llu)session_id, session_data->get_name(), (Llu)handle, name);
-
+  bool commited = false;
+  CommandContext ctx("attrdel", session_id);
   HT_BDBTXN_BEGIN() {
-    // (re) initialize vars
-    persisted_notifications = false; aborted = false; commited = false;
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
+    commited = false;
+    ctx.reset(&txn);
+    attr_del(ctx, handle, name);
+    if (ctx.aborted)
+      txn.abort();
+    else {
+      txn.commit(0);
+      commited = true;
     }
-
-    if (!m_bdb_fs->handle_exists(txn, handle)) {
-      error = Error::HYPERSPACE_INVALID_HANDLE;
-      aborted = true;
-      error_msg = (String)"handle=" + handle;
-      goto txn_commit;
-    }
-
-    m_bdb_fs->get_handle_node(txn, handle, node);
-    m_bdb_fs->del_xattr(txn, node, name);
-
-    // create event notification and persist
-    event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
-    m_bdb_fs->create_event(txn, EVENT_TYPE_NAMED, event_id, EVENT_MASK_ATTR_DEL, name);
-    attr_del_event = new EventNamed(event_id, EVENT_MASK_ATTR_DEL, name);
-    if (m_bdb_fs->get_node_event_notification_map(txn, node, EVENT_MASK_ATTR_DEL,
-                                                  attr_del_notifications)) {
-      persist_event_notifications(txn, event_id, attr_del_notifications);
-      persisted_notifications = true;
-    }
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else {
-        txn.commit(0);
-        commited = true;
-      }
   }
   HT_BDBTXN_END_CB(cb);
 
   // check for errors
-  if (aborted) {
-    cb->error(error, error_msg);
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
   // deliver notifications
-  if (commited && persisted_notifications) {
-    deliver_event_notifications(attr_del_event, attr_del_notifications);
-  }
+  if (commited)
+    deliver_event_notifications(ctx);
 
-  if ((error = cb->response_ok()) != Error::OK)
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+  if ((ctx.error = cb->response_ok()) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
 void
 Master::attr_exists(ResponseCallbackAttrExists *cb, uint64_t session_id, uint64_t handle,
-                    const char *name)
+                    const char *name, const char *attr)
 {
-  SessionDataPtr session_data;
-  String node;
-  int error = Error::OK;
-  String error_msg;
-  bool exists=false;
-  bool aborted = false;
-
-  if (m_verbose)
-    HT_INFOF("attr_exists(session=%llu, handle=%llu, name=%s)",
-             (Llu)session_id, (Llu)handle, name);
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
+  bool exists = false;
+  CommandContext ctx("attrexists", session_id);
   HT_BDBTXN_BEGIN() {
-    // (re) initialize vars
-    aborted = false; exists = false;
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    if (!m_bdb_fs->handle_exists(txn, handle)) {
-      error = Error::HYPERSPACE_INVALID_HANDLE;
-      error_msg = (String) "handle=" + handle;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    m_bdb_fs->get_handle_node(txn, handle, node);
-
-    if (m_bdb_fs->exists_xattr(txn, node, name))
-      exists = true;
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else
-        txn.commit(0);
+    ctx.reset(&txn);
+    attr_exists(ctx, handle, name, attr, exists);
+    if (ctx.aborted)
+      txn.abort();
+    else
+      txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
-  if (aborted) {
-    HT_ERROR_OUT << Error::get_text(error) << " - " << error_msg << HT_END;
-    cb->error(error, error_msg);
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
-  if ((error = cb->response(exists)) != Error::OK)
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+  if ((ctx.error = cb->response(exists)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
 void
 Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t handle)
 {
-  SessionDataPtr session_data;
-  String node;
-  int error = 0;
-  String error_msg;
   std::vector<String> attributes;
-  bool aborted = false;
-
-  m_verbose = true;
-
-  if (m_verbose)
-    HT_INFOF("attr_list(session=%llu, handle=%llu)", (Llu)session_id, (Llu)handle);
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-
+  CommandContext ctx("attrlist", session_id);
   HT_BDBTXN_BEGIN() {
-    aborted = false;
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    if (!m_bdb_fs->handle_exists(txn, handle)) {
-      error = Error::HYPERSPACE_INVALID_HANDLE;
-      error_msg = (String) "handle=" + handle;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    m_bdb_fs->get_handle_node(txn, handle, node);
-
-    if (!m_bdb_fs->list_xattr(txn, node, attributes)) {
-      error = Error::HYPERSPACE_ATTR_NOT_FOUND;
-      error_msg = (String) "handle=" + handle + " node=" + node;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else
-        txn.commit(0);
+    ctx.reset(&txn);
+    attr_list(ctx, handle, attributes);
+    if (ctx.aborted)
+      txn.abort();
+    else
+      txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
-  if (aborted) {
-    HT_ERROR_OUT << Error::get_text(error) << " - " << error_msg << HT_END;
-    cb->error(error, error_msg);
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
-  if ((error = cb->response(attributes)) != Error::OK)
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
-
+  if ((ctx.error = cb->response(attributes)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
 /**
@@ -1441,26 +1012,27 @@ Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t ha
 void
 Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
                const char *name) {
-  int error;
-  bool file_exists;
 
-  if (m_verbose)
-    HT_INFOF("exists(session_id=%llu, name=%s)", (Llu)session_id, name);
-
-  HT_ASSERT(name[0] == '/' && name[strlen(name)-1] != '/');
-
+  bool file_exists = false;
+  CommandContext ctx("exists", session_id);
   HT_BDBTXN_BEGIN() {
-    file_exists = m_bdb_fs->exists(txn, name);
-    txn.commit(0);
+    ctx.reset(&txn);
+    exists(ctx, name, file_exists);
+    if (ctx.aborted)
+      txn.abort();
+    else
+      txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
-  if ((error = cb->response(file_exists)) != Error::OK)
-    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
+    return;
+  }
 
-  if (m_verbose)
-    HT_INFOF("exitting exists(session_id=%llu, name=%s)", (Llu)session_id, name);
-
+  if ((ctx.error = cb->response(file_exists)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
 /**
@@ -1476,58 +1048,26 @@ Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
 void
 Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
                 uint64_t handle) {
-  std::string abs_name;
-  SessionDataPtr session_data;
-  String node;
-  int error = 0;
-  String error_msg;
-  bool aborted=false;
-  DirEntry dentry;
   std::vector<DirEntry> listing;
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-  if (m_verbose)
-    HT_INFOF("readdir(session=%llu(%s), handle=%llu)",
-             (Llu)session_id, session_data->get_name(),(Llu)handle);
-
+  CommandContext ctx("readdir", session_id);
   HT_BDBTXN_BEGIN() {
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    if (!m_bdb_fs->handle_exists(txn, handle)) {
-      error = Error::HYPERSPACE_INVALID_HANDLE;
-      error_msg = (String) "handle=" + handle;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    m_bdb_fs->get_handle_node(txn, handle, node);
-    m_bdb_fs->get_directory_listing(txn, node, listing);
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else
-        txn.commit(0);
+    ctx.reset(&txn);
+    readdir(ctx, handle, listing);
+    if (ctx.aborted)
+      txn.abort();
+    else
+      txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
-  // check for errors
-  if (aborted) {
-    HT_ERROR_OUT << Error::get_text(error) << " - " << error_msg << HT_END;
-    cb->error(error, error_msg);
+  if (ctx.aborted) {
+    HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
-  cb->response(listing);
+  if ((ctx.error = cb->response(listing)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
 /**
@@ -1542,59 +1082,30 @@ Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
  */
 void
 Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
-                     uint64_t handle, const char *name, bool include_sub_entries) {
-  std::string abs_name;
-  SessionDataPtr session_data;
-  String node;
-  int error = 0;
-  String error_msg;
-  bool aborted=false;
-  DirEntry dentry;
+                     uint64_t handle, const char *name, const char *attr, bool include_sub_entries) {
   std::vector<DirEntryAttr> listing;
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-  if (m_verbose)
-    HT_INFOF("readdir_attr(session=%llu(%s), handle=%llu, attr=%s)",
-             (Llu)session_id, session_data->get_name(),(Llu)handle, name);
-
+  CommandContext ctx("readdirattr", session_id);
   HT_BDBTXN_BEGIN() {
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    if (!m_bdb_fs->handle_exists(txn, handle)) {
-      error = Error::HYPERSPACE_INVALID_HANDLE;
-      error_msg = (String) "handle=" + handle;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    m_bdb_fs->get_handle_node(txn, handle, node);
-    m_bdb_fs->get_directory_attr_listing(txn, node, name, include_sub_entries, listing);
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else
-        txn.commit(0);
+    ctx.reset(&txn);
+    readdir_attr(ctx, handle, name, attr, include_sub_entries, listing);
+    if (ctx.aborted)
+      txn.abort();
+    else
+      txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
-  // check for errors
-  if (aborted) {
-    HT_ERROR_OUT << Error::get_text(error) << " - " << error_msg << HT_END;
-    cb->error(error, error_msg);
+  if (ctx.aborted) {
+    if (ctx.error == Error::HYPERSPACE_FILE_NOT_FOUND)
+      HT_DEBUG_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    else
+      HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
-  cb->response(listing);
+  if ((ctx.error = cb->response(listing)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
 /**
@@ -1609,89 +1120,30 @@ Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
  */
 void
 Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
-                      uint64_t handle, const char *name) {
-  std::string abs_name;
-  bool node_is_dir;
-  SessionDataPtr session_data;
-  String node;
-  int error = 0;
-  String error_msg;
-  bool aborted=false;
-  DirEntry dentry;
+                      uint64_t handle, const char *name, const char *attr) {
   std::vector<DirEntryAttr> listing;
-
-  if (!get_session(session_id, session_data))
-    HT_THROWF(Error::HYPERSPACE_EXPIRED_SESSION, "%llu", (Llu)session_id);
-
-  if (m_verbose)
-    HT_INFOF("readpath_attr(session=%llu(%s), handle=%llu, attr=%s)",
-             (Llu)session_id, session_data->get_name(),(Llu)handle, name);
-
+  CommandContext ctx("readpathattr", session_id);
   HT_BDBTXN_BEGIN() {
-    size_t pos = 0;
-    String path_component;
-    DynamicBuffer attr_buf;
-    DirEntryAttr entry;
-
-    // make sure session is still valid
-    if (!m_bdb_fs->session_exists(txn, session_id)) {
-      error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    if (!m_bdb_fs->handle_exists(txn, handle)) {
-      error = Error::HYPERSPACE_INVALID_HANDLE;
-      error_msg = (String) "handle=" + handle;
-      aborted = true;
-      goto txn_commit;
-    }
-
-    m_bdb_fs->get_handle_node(txn, handle, node);
-    m_bdb_fs->exists(txn, node, &node_is_dir);
-
-    // iterate over all path components and get attribute value if present
-    while (pos != string::npos) {
-      pos = node.find('/', pos);
-      entry.is_dir = true;
-
-      if (pos == string::npos)
-        entry.is_dir = node_is_dir;
-      else
-        pos++;
-
-      path_component = node.substr(0, pos);
-      entry.name = path_component;
-
-      // insert entry to result list if it has the attribute
-      if (m_bdb_fs->get_xattr(txn, path_component, name, attr_buf)) {
-        entry.attr = attr_buf;
-        entry.has_attr = true;
-      }
-      else {
-        entry.attr.free();
-        entry.has_attr = false;
-      }
-      listing.push_back(entry);
-    }
-
-    txn_commit:
-      if (aborted)
-        txn.abort();
-      else
-        txn.commit(0);
+    ctx.reset(&txn);
+    readpath_attr(ctx, handle, name, attr, listing);
+    if (ctx.aborted)
+      txn.abort();
+    else
+      txn.commit(0);
   }
   HT_BDBTXN_END_CB(cb);
 
-  // check for errors
-  if (aborted) {
-    HT_ERROR_OUT << Error::get_text(error) << " - " << error_msg << HT_END;
-    cb->error(error, error_msg);
+  if (ctx.aborted) {
+    if (ctx.error == Error::HYPERSPACE_FILE_NOT_FOUND)
+      HT_DEBUG_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    else
+      HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+    cb->error(ctx.error, ctx.error_msg);
     return;
   }
 
-  cb->response(listing);
+  if ((ctx.error = cb->response(listing)) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
 /**
@@ -2333,6 +1785,610 @@ void Master::do_maintenance() {
     m_maintenance_outstanding = false;
   }
 
+}
+
+void Master::mkdir(CommandContext &ctx, const char *name) {
+  if (m_verbose) {
+    HT_INFOF("%s(session_id=%llu, name=%s)", ctx.friendly_name, (Llu)ctx.session_id, name);
+  }
+
+  String parent_node, child_name;
+  if (!find_parent_node(name, parent_node, child_name) || strlen(name)==0) {
+    ctx.set_error(Error::HYPERSPACE_FILE_EXISTS, "directory '/' exists");
+    return;
+  }
+
+  if (name[0] != '/' || name[strlen(name)-1] == '/') {
+    ctx.set_error(Error::HYPERSPACE_BAD_PATHNAME, (String)"directory '" + name + "' bad");
+    return;
+  }
+
+  if (!ctx.session_data) {
+    if (!get_session(ctx.session_id, ctx.session_data)) {
+      ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
+      return;
+    }
+  }
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  // make sure parent node data is setup
+  if (!validate_and_create_node_data(txn, parent_node)) {
+    ctx.set_error(Error::HYPERSPACE_FILE_NOT_FOUND, (String)"' parent node: '" + parent_node + "'");
+    return;
+  }
+
+  // make sure this node doesn't exist already
+  if (m_bdb_fs->exists(txn, name)) {
+    ctx.set_error(Error::HYPERSPACE_FILE_EXISTS, (String)"node: '" + name + "'");
+    return;
+  }
+
+  // create event and persist notifications
+  create_event(ctx, parent_node, EVENT_MASK_CHILD_NODE_ADDED, child_name);
+
+  // create node
+  m_bdb_fs->mkdir(txn, name);
+
+  // create node data
+  m_bdb_fs->create_node(txn, name, false, 1);
+}
+
+
+
+void Master::open(CommandContext &ctx, const char *name,
+          uint32_t flags, uint32_t event_mask,
+          std::vector<Attribute> &init_attrs, uint64_t& handle,
+          bool& created, uint64_t& lock_generation) {
+
+  handle = 0;
+  created = false;
+  lock_generation = 0;
+
+  String child_name, node = name, parent_node;
+  bool lock_notify = false;
+  uint32_t lock_mode = 0;
+
+  HT_ASSERT(name[0] == '/');
+
+  if (!ctx.session_data) {
+    if (!get_session(ctx.session_id, ctx.session_data)) {
+      ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
+      return;
+    }
+  }
+
+  if (m_verbose) {
+    HT_INFOF("open(session_id=%llu, session_name = %s, fname=%s, flags=0x%x, event_mask=0x%x)",
+             (Llu)ctx.session_id,ctx. session_data->get_name(), name, flags, event_mask);
+  }
+
+  if (!find_parent_node(name, parent_node, child_name)) {
+    ctx.set_error(Error::HYPERSPACE_BAD_PATHNAME, name);
+    return;
+  }
+
+  if (!init_attrs.empty() && !(flags & OPEN_FLAG_CREATE)) {
+    ctx.set_error(Error::HYPERSPACE_CREATE_FAILED, "initial attributes can only be supplied on CREATE");
+    return;
+  }
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  // make sure session is still valid
+  if (!m_bdb_fs->session_exists(txn, ctx.session_id)) {
+    ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
+    return;
+  }
+
+  // make sure parent node is valid and create node_data if needed
+  if (!validate_and_create_node_data(txn, parent_node)) {
+    ctx.set_error(Error::HYPERSPACE_FILE_NOT_FOUND, (String)" node: '" + node + "' parent node: '" + parent_node + "'");
+    return;
+  }
+
+  bool existed = m_bdb_fs->exists(txn, name);
+  if (existed) { // node exists in DB already
+    // check flags
+    if ((flags & OPEN_FLAG_CREATE) && (flags & OPEN_FLAG_EXCL)) {
+      ctx.set_error(Error::HYPERSPACE_FILE_EXISTS, "mode=CREATE|EXCL");
+      return;
+    }
+
+    if ((flags & OPEN_FLAG_TEMP)) {
+      ctx.set_error(Error::HYPERSPACE_FILE_EXISTS, (String) "Unable to open TEMP file " + node + "because it already exists");
+      return;
+    }
+
+    // create node data if it doesn't exist and set lock generation
+    validate_and_create_node_data(txn, node);
+
+    // check for lock mode conflicts
+    if (flags & (OPEN_FLAG_LOCK_SHARED|OPEN_FLAG_LOCK_EXCLUSIVE)) {
+      uint32_t cur_lock_mode = m_bdb_fs->get_node_cur_lock_mode(txn, node);
+      if ((flags & OPEN_FLAG_LOCK_SHARED) == OPEN_FLAG_LOCK_SHARED) {
+        if (cur_lock_mode == LOCK_MODE_EXCLUSIVE) {
+          ctx.set_error(Error::HYPERSPACE_LOCK_CONFLICT, node);
+          return;
+        }
+        lock_mode = LOCK_MODE_SHARED;
+        if (!m_bdb_fs->node_has_shared_lock_handles(txn, node))
+          lock_notify = true;
+      }
+      else if ((flags & OPEN_FLAG_LOCK_EXCLUSIVE) == OPEN_FLAG_LOCK_EXCLUSIVE) {
+        if (cur_lock_mode == LOCK_MODE_SHARED || cur_lock_mode == LOCK_MODE_EXCLUSIVE) {
+          ctx.set_error(Error::HYPERSPACE_LOCK_CONFLICT, node);
+          return;
+        }
+        lock_mode = LOCK_MODE_EXCLUSIVE;
+        lock_notify = true;
+      }
+    }
+  } // node exists in DB already
+  else { // node doesn't exist in DB
+    if (!(flags & OPEN_FLAG_CREATE)) {
+      ctx.set_error(Error::HYPERSPACE_FILE_NOT_FOUND, name);
+      return;
+    }
+    // create new node
+    lock_generation = 1;
+    m_bdb_fs->create(txn, name, (flags & OPEN_FLAG_TEMP) > 0);
+    m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
+                            lock_generation);
+
+    // create a new node data object in hyperspace
+    m_bdb_fs->create_node(txn, node, (flags & OPEN_FLAG_TEMP) > 0, lock_generation);
+
+    // Set the initial attributes
+    for (size_t i=0; i<init_attrs.size(); i++)
+      m_bdb_fs->set_xattr(txn, name, init_attrs[i].name,
+                          init_attrs[i].value, init_attrs[i].value_len);
+    created = true;
+  } // node doesn't exist in DB
+  handle = m_bdb_fs->get_next_id_i64(txn, HANDLE_ID, true);
+  m_bdb_fs->create_handle(txn, handle, node, flags, event_mask, ctx.session_id, false,
+                          HANDLE_NOT_DEL);
+  m_bdb_fs->add_session_handle(txn, ctx.session_id, handle);
+
+  // create node added event and persist notifications
+  create_event(ctx, parent_node, EVENT_MASK_CHILD_NODE_ADDED, child_name);
+
+  /**
+    * If open flags LOCK_SHARED or LOCK_EXCLUSIVE, then obtain lock
+    */
+  if (lock_mode != 0) {
+    lock_generation = m_bdb_fs->incr_node_lock_generation(txn, node);
+    m_bdb_fs->set_xattr_i64(txn, name, "lock.generation",
+                            lock_generation);
+
+    m_bdb_fs->set_node_cur_lock_mode(txn, node, lock_mode);
+    lock_handle(txn, handle, lock_mode, node);
+
+    // create and persist lock acquired event
+    // deliver notification to handles to this same node
+    if (lock_notify) {
+      uint64_t lock_acquired_event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
+
+      m_bdb_fs->create_event(txn, EVENT_TYPE_LOCK_ACQUIRED, lock_acquired_event_id,
+                              EVENT_MASK_LOCK_ACQUIRED, lock_mode);
+
+      std::vector<EventContext>::iterator it = ctx.evts.insert(ctx.evts.end(),
+        EventContext(new EventLockAcquired(lock_acquired_event_id, lock_mode)));
+
+      if (m_bdb_fs->get_node_event_notification_map(txn, node, EVENT_MASK_LOCK_ACQUIRED,
+                                                it->notifications)) {
+        persist_event_notifications(txn, lock_acquired_event_id,
+                                    it->notifications);
+        it->persisted_notifications = true;
+      }
+    }
+  }
+
+  m_bdb_fs->add_node_handle(txn, node, handle);
+
+  HT_INFOF("handle %llu created ('%s', session=%llu(%s), flags=0x%x, mask=0x%x)",
+            (Llu)handle, node.c_str(), (Llu)ctx.session_id, ctx.session_data->get_name(),
+            flags, event_mask);
+}
+
+void Master::unlink(CommandContext &ctx, const char *name) {
+  if (m_verbose) {
+    HT_INFOF("%s(session_id=%llu, name=%s)", ctx.friendly_name, (Llu)ctx.session_id, name);
+  }
+
+  if (!strcmp(name, "/")) {
+    ctx.set_error(Error::HYPERSPACE_PERMISSION_DENIED,
+              "Cannot remove '/' directory");
+    return;
+  }
+
+  if (!ctx.session_data) {
+    if (!get_session(ctx.session_id, ctx.session_data)) {
+      ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
+      return;
+    }
+  }
+
+  String node=name;
+  String child_name, parent_node;
+  if (!find_parent_node(node, parent_node, child_name)) {
+    ctx.set_error(Error::HYPERSPACE_BAD_PATHNAME, name);
+    return;
+  }
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  // make sure parent node data is setup
+  if (!validate_and_create_node_data(txn, parent_node)) {
+    ctx.set_error(Error::HYPERSPACE_FILE_NOT_FOUND, (String)" node: '" + node);
+    return;
+  }
+
+  // make sure file & node data exist
+  if (!validate_and_create_node_data(txn, node)) {
+    ctx.set_error(Error::HYPERSPACE_FILE_NOT_FOUND, node);
+    return;
+  }
+
+  bool has_refs = m_bdb_fs->node_has_open_handles(txn, node);
+  if (has_refs) {
+    ctx.set_error(Error::HYPERSPACE_FILE_OPEN, "File is still open and referred to by some handle");
+    return;
+  }
+
+  // Sanity check
+  HT_ASSERT(name[0] == '/' && name[strlen(name)-1] != '/');
+
+  // Create event and persist notifications
+  create_event(ctx, parent_node, EVENT_MASK_CHILD_NODE_REMOVED, child_name);
+
+  // Delete node
+  m_bdb_fs->unlink(txn, name);
+
+  // Delete node data
+  m_bdb_fs->delete_node(txn, node);
+}
+
+void Master::attr_set(CommandContext &ctx, uint64_t handle,
+                      const char *name, const std::vector<Attribute> &attrs) {
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  std::string attr_names;
+  size_t total_value_len = 0;
+  if (m_verbose) {
+    foreach (const Attribute& attr, attrs) {
+      attr_names += attr.name;
+      attr_names += ",";
+      total_value_len += attr.value_len;
+    }
+    boost::trim_right_if(attr_names, boost::is_any_of(","));
+  }
+
+  String node;
+  if (name && *name) {
+    if (!get_named_node(ctx, name, attr_names.c_str(), node))
+      return;
+  }
+  else
+    if (!get_handle_node(ctx, handle, attr_names.c_str(), node))
+      return;
+
+  foreach (const Attribute& attr, attrs) {
+    m_bdb_fs->set_xattr(txn, node, attr.name, attr.value, attr.value_len);
+    // create event notification and persist
+    create_event(ctx, node, EVENT_MASK_ATTR_SET, attr.name);
+  }
+
+  if (m_verbose) {
+    HT_INFOF("exitting attrset(session=%llu(%s), handle=%llu, name=%s, value_len=%d)",
+             (Llu)ctx.session_id, ctx.session_data->get_name(), (Llu)handle, attr_names.c_str(), (int)total_value_len);
+  }
+}
+
+void Master::attr_get(CommandContext &ctx, uint64_t handle,
+                      const char *name, const char *attr, DynamicBuffer &dbuf) {
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  String node;
+  if (name && *name) {
+    if (!get_named_node(ctx, name, attr, node))
+      return;
+  }
+  else
+    if (!get_handle_node(ctx, handle, attr, node))
+      return;
+
+  if (!m_bdb_fs->get_xattr(txn, node, attr, dbuf)) {
+    ctx.set_error(Error::HYPERSPACE_ATTR_NOT_FOUND, attr);
+    return;
+  }
+}
+
+void Master::attr_incr(CommandContext &ctx, uint64_t handle,
+                       const char *name, const char* attr, uint64_t& attr_val) {
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  String node;
+  if (name && *name) {
+    if (!get_named_node(ctx, name, attr, node))
+      return;
+  }
+  else
+    if (!get_handle_node(ctx, handle, attr, node))
+      return;
+
+  if (!m_bdb_fs->incr_attr(txn, node, attr, &attr_val)) {
+    ctx.set_error(Error::HYPERSPACE_ATTR_NOT_FOUND, attr);
+    return;
+  }
+}
+
+void Master::attr_del(CommandContext &ctx, uint64_t handle, const char *name) {
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  String node;
+  if (!get_handle_node(ctx, handle, name, node))
+    return;
+  m_bdb_fs->del_xattr(txn, node, name);
+
+  // create event notification and persist
+  create_event(ctx, node, EVENT_MASK_ATTR_DEL, name);
+}
+
+void Master::attr_exists(CommandContext& ctx, uint64_t handle,
+                         const char *name, const char *attr, bool& exists) {
+  exists = false;
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  String node;
+  if (name && *name) {
+    if (!get_named_node(ctx, name, attr, node))
+      return;
+  }
+  else
+    if (!get_handle_node(ctx, handle, attr, node))
+      return;
+
+  if (m_bdb_fs->exists_xattr(txn, node, attr))
+    exists = true;
+}
+
+void Master::attr_list(CommandContext& ctx, uint64_t handle, std::vector<String>& attributes) {
+  attributes.clear();
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  String node;
+  if (!get_handle_node(ctx, handle, 0, node))
+    return;
+
+  if (!m_bdb_fs->list_xattr(txn, node, attributes)) {
+    ctx.set_error(Error::HYPERSPACE_ATTR_NOT_FOUND, (String) "handle=" + handle + " node=" + node);
+    return;
+  }
+}
+
+void Master::exists(CommandContext& ctx, const char *name, bool& file_exists) {
+  file_exists = false;
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  if (m_verbose)
+    HT_INFOF("exists(session_id=%llu, name=%s)", (Llu)ctx.session_id, name);
+
+  HT_ASSERT(name[0] == '/' && (name[1] == '\0' || name[strlen(name)-1] != '/'));
+  file_exists = m_bdb_fs->exists(txn, name);
+
+  if (m_verbose)
+    HT_INFOF("exitting exists(session_id=%llu, name=%s)", (Llu)ctx.session_id, name);
+}
+
+void Master::readdir(CommandContext& ctx, uint64_t handle, std::vector<DirEntry>& listing) {
+  listing.clear();
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  String node;
+  if (!get_handle_node(ctx, handle, 0, node))
+    return;
+
+  m_bdb_fs->get_directory_listing(txn, node, listing);
+}
+
+void Master::readdir_attr(CommandContext& ctx, uint64_t handle, const char *name, const char *attr,
+                          bool include_sub_entries, std::vector<DirEntryAttr>& listing) {
+  listing.clear();
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  String node;
+  if (name && *name) {
+    if (!get_named_node(ctx, name, attr, node))
+      return;
+  }
+  else
+    if (!get_handle_node(ctx, handle, attr, node))
+      return;
+
+  m_bdb_fs->get_directory_attr_listing(txn, node, attr, include_sub_entries, listing);
+}
+
+void Master::readpath_attr(CommandContext& ctx, uint64_t handle, const char *name, const char *attr,
+                           std::vector<DirEntryAttr>& listing) {
+  listing.clear();
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  String node;
+  bool node_is_dir;
+  if (name && *name) {
+    if (!get_named_node(ctx, name, attr, node, &node_is_dir))
+      return;
+  }
+  else {
+    if (!get_handle_node(ctx, handle, attr, node))
+      return;
+    m_bdb_fs->exists(txn, node, &node_is_dir);
+  }
+
+  size_t pos = 0;
+  String path_component;
+  DynamicBuffer attr_buf;
+  DirEntryAttr entry;
+
+  // iterate over all path components and get attribute value if present
+  while (pos != string::npos) {
+    pos = node.find('/', pos);
+    entry.is_dir = true;
+
+    if (pos == string::npos)
+      entry.is_dir = node_is_dir;
+    else
+      pos++;
+
+    path_component = node.substr(0, pos);
+    entry.name = path_component;
+
+    // insert entry to result list if it has the attribute
+    if (m_bdb_fs->get_xattr(txn, path_component, attr, attr_buf)) {
+      entry.attr = attr_buf;
+      entry.has_attr = true;
+    }
+    else {
+      entry.attr.free();
+      entry.has_attr = false;
+    }
+    listing.push_back(entry);
+  }
+}
+
+/**
+ * Validates the session and returns the node for the handle specified
+ */
+bool Master::get_handle_node(CommandContext &ctx, uint64_t handle, const char* attr, String &node) {
+  if (!ctx.session_data) {
+    if (!get_session(ctx.session_id, ctx.session_data)) {
+      ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
+      return false;
+    }
+  }
+
+  if (m_verbose)
+    if (attr && *attr)
+      HT_INFOF("%s(session=%llu(%s), handle=%llu, attr=%s)", ctx.friendly_name,
+               (Llu)ctx.session_id, ctx.session_data->get_name(), (Llu)handle, attr);
+    else
+      HT_INFOF("%s(session=%llu(%s), handle=%llu)", ctx.friendly_name,
+               (Llu)ctx.session_id, ctx.session_data->get_name(), (Llu)handle);
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  // make sure session is still valid
+  if (!m_bdb_fs->session_exists(txn, ctx.session_id)) {
+    ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
+    return false;
+  }
+
+  if (!m_bdb_fs->handle_exists(txn, handle)) {
+    ctx.set_error(Error::HYPERSPACE_INVALID_HANDLE,
+                  format("Session %llu, handle=%llu", (Llu)ctx.session_id, (Llu)handle));
+    return false;
+  }
+
+  m_bdb_fs->get_handle_node(txn, handle, node);
+  return true;
+}
+
+/**
+ * Validates the session and returns the node for the name specified
+ */
+bool Master::get_named_node(CommandContext &ctx, const char *name, const char* attr, String &node, bool *is_dir) {
+  if (!ctx.session_data) {
+    if (!get_session(ctx.session_id, ctx.session_data)) {
+      ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
+      return false;
+    }
+  }
+
+  if (m_verbose)
+    if (attr && *attr)
+      HT_INFOF("%s(session=%llu(%s), name=%s, attr=%s)", ctx.friendly_name,
+                 (Llu)ctx.session_id, ctx.session_data->get_name(), name, attr);
+    else
+      HT_INFOF("%s(session=%llu(%s), name=%s)", ctx.friendly_name,
+                 (Llu)ctx.session_id, ctx.session_data->get_name(), name);
+
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  node = name;
+  String child_name, parent_node;
+  if (!find_parent_node(node, parent_node, child_name)) {
+    ctx.set_error(Error::HYPERSPACE_BAD_PATHNAME, name);
+    return false;
+  }
+  boost::trim_right_if(node, boost::is_any_of("/"));
+
+  // make sure node exists
+  if (!m_bdb_fs->exists(txn, node, is_dir)) {
+    ctx.set_error(Error::HYPERSPACE_FILE_NOT_FOUND, (String)"node: '" + name + "'");
+    return false;
+  }
+
+  // make sure session is still valid
+  if (!m_bdb_fs->session_exists(txn, ctx.session_id)) {
+    ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, format("Session %llu", (Llu)ctx.session_id));
+    return false;
+  }
+  return true;
+}
+
+/**
+ */
+void Master::create_event(CommandContext &ctx, const String &node, uint32_t event_mask, const String &name) {
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  uint64_t event_id = m_bdb_fs->get_next_id_i64(txn, EVENT_ID, true);
+  m_bdb_fs->create_event(txn, EVENT_TYPE_NAMED, event_id, event_mask, name);
+
+  std::vector<EventContext>::iterator it = ctx.evts.insert(ctx.evts.end(),
+    EventContext(new EventNamed(event_id, event_mask, name)));
+
+  if (m_bdb_fs->get_node_event_notification_map(txn, node, event_mask,
+                                                it->notifications)) {
+    persist_event_notifications(txn, event_id, it->notifications);
+    it->persisted_notifications = true;
+  }
+  else
+    it->persisted_notifications = false;
+}
+
+/**
+ */
+void Master::deliver_event_notifications(CommandContext &ctx, bool wait_for_notify) {
+  foreach(EventContext& evt, ctx.evts)
+    if (evt.persisted_notifications)
+      deliver_event_notifications(evt, wait_for_notify);
+}
+
+void Master::deliver_event_notifications(EventContext &evt, bool wait_for_notify) {
+  deliver_event_notifications(evt.event, evt.notifications, wait_for_notify);
 }
 
 /**

@@ -213,15 +213,8 @@ bool Namespace::exists_table(const String &table_name) {
 
   String table_file = m_toplevel_dir + "/tables/" + table_id;
 
-  DynamicBuffer value_buf(0);
-  Hyperspace::HandleCallbackPtr null_handle_callback;
-  uint64_t handle = 0;
-
-  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_hyperspace, &handle);
-
   try {
-    handle = m_hyperspace->open(table_file, OPEN_FLAG_READ, null_handle_callback);
-    if (!m_hyperspace->attr_exists(handle, "x"))
+    if (!m_hyperspace->attr_exists(table_file, "x"))
       return false;
   }
   catch(Exception &e) {

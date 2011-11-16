@@ -48,19 +48,20 @@ const char *Hyperspace::Protocol::command_strs[COMMAND_MAX] = {
   "mkdir",
   "attrset",
   "attrget",
-  "attrincr",
   "attrdel",
-  "attrlist",
   "attrexists",
+  "attrlist",
   "exists",
   "delete",
   "readdir",
-  "readdirattr",
-  "readpathattr",
   "lock",
   "release",
   "checksequencer",
-  "status"
+  "status",
+  "redirect",
+  "readdirattr",
+  "attrincr",
+  "readpathattr",
 };
 
 
@@ -153,7 +154,7 @@ CommBuf *Hyperspace::Protocol::create_handshake_request(uint64_t session_id,
 CommBuf *
 Hyperspace::Protocol::create_open_request(const std::string &name,
     uint32_t flags, HandleCallbackPtr &callback,
-    std::vector<Attribute> &init_attrs) {
+    const std::vector<Attribute> &init_attrs) {
   size_t len = 12 + encoded_length_vstr(name.size());
   CommHeader header(COMMAND_OPEN);
   for (size_t i=0; i<init_attrs.size(); i++)
@@ -188,11 +189,26 @@ CommBuf *Hyperspace::Protocol::create_close_request(uint64_t handle) {
   return cbuf;
 }
 
-CommBuf *Hyperspace::Protocol::create_mkdir_request(const std::string &name) {
+CommBuf *Hyperspace::Protocol::create_mkdir_request(const std::string &name, bool create_intermediate, const std::vector<Attribute> *init_attrs) {
+  size_t attrs_len = 4;
+  if (init_attrs)
+    foreach (const Attribute& attr, *init_attrs)
+      attrs_len += encoded_length_vstr(attr.name)
+             + encoded_length_vstr(attr.value_len);
   CommHeader header(COMMAND_MKDIR);
   header.gid = filename_to_group(name);
-  CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(name.size()));
+  CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(name.size()) + 1 + attrs_len);
   cbuf->append_vstr(name);
+  cbuf->append_bool(create_intermediate);
+  if (init_attrs) {
+    cbuf->append_i32(init_attrs->size());
+    foreach (const Attribute& attr, *init_attrs) {
+      cbuf->append_vstr(attr.name);
+      cbuf->append_vstr(attr.value, attr.value_len);
+    }
+  }
+  else
+    cbuf->append_i32(0);
   return cbuf;
 }
 
@@ -207,37 +223,107 @@ CommBuf *Hyperspace::Protocol::create_delete_request(const std::string &name) {
 
 
 CommBuf *
-Hyperspace::Protocol::create_attr_set_request(uint64_t handle,
-    const std::string &name, const void *value, size_t value_len) {
+Hyperspace::Protocol::create_attr_set_request(uint64_t handle, const std::string *name,
+    uint32_t oflags, const std::string &attr, const void *value, size_t value_len) {
+  size_t attr_len = 4 + encoded_length_vstr(attr.size())
+                      + encoded_length_vstr(value_len);
   CommHeader header(COMMAND_ATTRSET);
-  header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
-  CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_vstr(name.size())
-                              + encoded_length_vstr(value_len));
-  cbuf->append_i64(handle);
-  cbuf->append_vstr(name);
+  CommBuf *cbuf;
+  if (name && !name->empty()) {
+    header.gid = filename_to_group(*name);
+    cbuf = new CommBuf(header, 1 + encoded_length_vstr(name->size()) + 4
+                                 + attr_len);
+    cbuf->append_bool(true);
+    cbuf->append_vstr(*name);
+    cbuf->append_i32(oflags);
+  }
+  else {
+    header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+    cbuf = new CommBuf(header, 1 + 8 + attr_len);
+    cbuf->append_bool(false);
+    cbuf->append_i64(handle);
+  }
+  cbuf->append_i32(1); // one attribute follows
+  cbuf->append_vstr(attr);
   cbuf->append_vstr(value, value_len);
   return cbuf;
 }
 
 CommBuf *
+Hyperspace::Protocol::create_attr_set_request(uint64_t handle, const std::string *name,
+    uint32_t oflags, const std::vector<Attribute> &attrs) {
+  size_t attrs_len = 4;
+  foreach (const Attribute& attr, attrs)
+    attrs_len += encoded_length_vstr(attr.name)
+           + encoded_length_vstr(attr.value_len);
+
+  CommHeader header(COMMAND_ATTRSET);
+  CommBuf *cbuf;
+  if (name && !name->empty()) {
+    header.gid = filename_to_group(*name);
+    cbuf = new CommBuf(header, 1 + encoded_length_vstr(name->size()) + 4
+                                 + attrs_len);
+    cbuf->append_bool(true);
+    cbuf->append_vstr(*name);
+    cbuf->append_i32(oflags);
+  }
+  else {
+    header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+    cbuf = new CommBuf(header, 1 + 8 + attrs_len);
+    cbuf->append_bool(false);
+    cbuf->append_i64(handle);
+  }
+  cbuf->append_i32(attrs.size());
+  foreach (const Attribute& attr, attrs) {
+    cbuf->append_vstr(attr.name);
+    cbuf->append_vstr(attr.value, attr.value_len);
+  }
+  return cbuf;
+}
+
+CommBuf *
 Hyperspace::Protocol::create_attr_incr_request(uint64_t handle,
-                                               const std::string &name) {
+                                               const std::string *name,
+                                               const std::string &attr) {
   CommHeader header(COMMAND_ATTRINCR);
-  header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
-  CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_vstr(name.size()));
-  cbuf->append_i64(handle);
-  cbuf->append_vstr(name);
+  CommBuf *cbuf;
+  if (name && !name->empty()) {
+    header.gid = filename_to_group(*name);
+    cbuf = new CommBuf(header, 1 + encoded_length_vstr(name->size())
+                       + encoded_length_vstr(attr.size()));
+    cbuf->append_bool(true);
+    cbuf->append_vstr(*name);
+  }
+  else {
+    header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+    cbuf = new CommBuf(header, 1 + 8 + encoded_length_vstr(attr.size()));
+    cbuf->append_bool(false);
+    cbuf->append_i64(handle);
+  }
+  cbuf->append_vstr(attr);
   return cbuf;
 }
 
 CommBuf *
 Hyperspace::Protocol::create_attr_get_request(uint64_t handle,
-                                              const std::string &name) {
+                                              const std::string *name,
+                                              const std::string &attr) {
   CommHeader header(COMMAND_ATTRGET);
-  header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
-  CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_vstr(name.size()));
-  cbuf->append_i64(handle);
-  cbuf->append_vstr(name);
+  CommBuf *cbuf;
+  if (name && !name->empty()) {
+    header.gid = filename_to_group(*name);
+    cbuf = new CommBuf(header, 1 + encoded_length_vstr(name->size())
+                       + encoded_length_vstr(attr.size()));
+    cbuf->append_bool(true);
+    cbuf->append_vstr(*name);
+  }
+  else {
+    header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+    cbuf = new CommBuf(header, 1 + 8 + encoded_length_vstr(attr.size()));
+    cbuf->append_bool(false);
+    cbuf->append_i64(handle);
+  }
+  cbuf->append_vstr(attr);
   return cbuf;
 }
 
@@ -254,12 +340,24 @@ Hyperspace::Protocol::create_attr_del_request(uint64_t handle,
 }
 
 CommBuf *
-Hyperspace::Protocol::create_attr_exists_request(uint64_t handle, const std::string &name) {
+Hyperspace::Protocol::create_attr_exists_request(uint64_t handle, const std::string *name,
+                                                 const std::string &attr) {
   CommHeader header(COMMAND_ATTREXISTS);
-  header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
-  CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_vstr(name.size()));
-  cbuf->append_i64(handle);
-  cbuf->append_vstr(name);
+  CommBuf *cbuf;
+  if (name && !name->empty()) {
+    header.gid = filename_to_group(*name);
+    cbuf = new CommBuf(header, 1 + encoded_length_vstr(name->size())
+                       + encoded_length_vstr(attr.size()));
+    cbuf->append_bool(true);
+    cbuf->append_vstr(*name);
+  }
+  else {
+    header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+    cbuf = new CommBuf(header, 1 + 8 + encoded_length_vstr(attr.size()));
+    cbuf->append_bool(false);
+    cbuf->append_i64(handle);
+  }
+  cbuf->append_vstr(attr);
   return cbuf;
 }
 
@@ -281,23 +379,45 @@ CommBuf *Hyperspace::Protocol::create_readdir_request(uint64_t handle) {
 }
 
 CommBuf *Hyperspace::Protocol::create_readdir_attr_request(uint64_t handle,
-    const std::string &name, bool include_sub_entries) {
+    const std::string *name, const std::string &attr, bool include_sub_entries) {
   CommHeader header(COMMAND_READDIRATTR);
-  header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
-  CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_vstr(name.size()) + 1);
-  cbuf->append_i64(handle);
-  cbuf->append_vstr(name);
+  CommBuf *cbuf;
+  if (name && !name->empty()) {
+    header.gid = filename_to_group(*name);
+    cbuf = new CommBuf(header, 1 + encoded_length_vstr(name->size()) +
+                       encoded_length_vstr(attr.size()) + 1);
+    cbuf->append_bool(true);
+    cbuf->append_vstr(*name);
+  }
+  else {
+    header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+    cbuf = new CommBuf(header, 1 + 8 + encoded_length_vstr(attr.size()) + 1);
+    cbuf->append_bool(false);
+    cbuf->append_i64(handle);
+  }
+  cbuf->append_vstr(attr);
   cbuf->append_bool(include_sub_entries);
   return cbuf;
 }
 
 CommBuf *Hyperspace::Protocol::create_readpath_attr_request(uint64_t handle,
-    const std::string &name) {
+    const std::string *name, const std::string &attr) {
   CommHeader header(COMMAND_READPATHATTR);
-  header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
-  CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_vstr(name.size()));
-  cbuf->append_i64(handle);
-  cbuf->append_vstr(name);
+  CommBuf *cbuf;
+  if (name && !name->empty()) {
+    header.gid = filename_to_group(*name);
+    cbuf = new CommBuf(header, 1 + encoded_length_vstr(name->size()) +
+                       encoded_length_vstr(attr.size()));
+    cbuf->append_bool(true);
+    cbuf->append_vstr(*name);
+  }
+  else {
+    header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+    cbuf = new CommBuf(header, 1 + 8 + encoded_length_vstr(attr.size()));
+    cbuf->append_bool(false);
+    cbuf->append_i64(handle);
+  }
+  cbuf->append_vstr(attr);
   return cbuf;
 }
 

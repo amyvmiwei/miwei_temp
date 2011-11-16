@@ -156,11 +156,8 @@ void OperationCreateTable::execute() {
 
   case OperationState::FINALIZE:
     {
-      uint64_t handle = 0;
-      HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_context->hyperspace, &handle);
       String tablefile = m_context->toplevel_dir + "/tables/" + m_table.id;
-      handle = m_context->hyperspace->open(tablefile, OPEN_FLAG_READ|OPEN_FLAG_WRITE);
-      m_context->hyperspace->attr_set(handle, "x", "", 0);
+      m_context->hyperspace->attr_set(tablefile, "x", "", 0);
     }
     complete_ok();
     break;
