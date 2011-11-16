@@ -421,14 +421,8 @@ RangeServer::~RangeServer() {
  * - Open the commit log
  */
 void RangeServer::initialize(PropertiesPtr &props) {
-
-  if (!m_hyperspace->exists(Global::toplevel_dir + "/servers")) {
-    if (!m_hyperspace->exists(Global::toplevel_dir))
-      m_hyperspace->mkdir(Global::toplevel_dir);
-    m_hyperspace->mkdir(Global::toplevel_dir + "/servers");
-  }
-
   String top_dir = Global::toplevel_dir + "/servers/";
+  m_hyperspace->mkdirs(top_dir);
   top_dir += Global::location_initializer->get();
 
   /**
@@ -836,10 +830,8 @@ void RangeServer::local_recover() {
 void RangeServer::get_table_schemas(TableSchemaMap &table_schemas) {
   table_schemas.clear();
   try {
-    uint64_t handle = m_hyperspace->open(Global::toplevel_dir + "/tables", OPEN_FLAG_READ);
     std::vector<DirEntryAttr> listing;
-    m_hyperspace->readdir_attr(handle, "schema", true, listing);
-    m_hyperspace->close(handle);
+    m_hyperspace->readdir_attr(Global::toplevel_dir + "/tables", "schema", true, listing);
     map_table_schemas("", listing, table_schemas);
   }
   catch (Exception &e) {
@@ -1702,17 +1694,14 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       mutator->flush();
     }
     else {  //root
-      uint64_t handle;
       uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_CREATE;
 
       HT_INFO("Loading root METADATA range");
 
       try {
-        handle = m_hyperspace->open(Global::toplevel_dir + "/root", oflags);
         location = Global::location_initializer->get();
-        m_hyperspace->attr_set(handle, "Location", location.c_str(),
-                               location.length());
-        m_hyperspace->close(handle);
+        m_hyperspace->attr_set(Global::toplevel_dir + "/root", oflags, "Location",
+                               location.c_str(), location.length());
       }
       catch (Exception &e) {
         HT_ERROR_OUT << "Problem setting attribute 'location' on Hyperspace "
@@ -3652,7 +3641,6 @@ RangeServer::replay_load_range(ResponseCallback *cb,
 void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation,
                                 const TableSchemaMap *table_schemas) {
   DynamicBuffer valbuf;
-  uint64_t handle;
   SchemaPtr schema = table_info->get_schema();
 
   if (schema.get() == 0 || schema->get_generation() < generation) {
@@ -3664,9 +3652,7 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation,
 
     if (schema.get() == 0) {
       String tablefile = Global::toplevel_dir + "/tables/" + table_info->identifier().id;
-      handle = m_hyperspace->open(tablefile.c_str(), OPEN_FLAG_READ);
-      m_hyperspace->attr_get(handle, "schema", valbuf);
-      m_hyperspace->close(handle);
+      m_hyperspace->attr_get(tablefile, "schema", valbuf);
       schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
     }
 

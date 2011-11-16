@@ -226,7 +226,7 @@ namespace Hyperspace {
      */
     uint64_t create(const std::string &name, uint32_t flags,
                     HandleCallbackPtr &callback,
-                    std::vector<Attribute> &init_attrs, Timer *timer=0);
+                    const std::vector<Attribute> &init_attrs, Timer *timer=0);
 
     /*
     int cancel(uint64_t handle);
@@ -259,6 +259,19 @@ namespace Hyperspace {
     void mkdir(const std::string &name, Timer *timer=0);
 
     /**
+     * Creates a directory.  The name
+     * argument should be the absolute path to the file.  All of the directories
+     * up to, but not including, the last path component must be valid.
+     * Otherwise, Error::HYPERSPACE_BAD_PATHNAME will be returned.
+     *
+     * @param name absolute pathname of directory to create
+     * @param init_attrs vector of attributes to be atomically set when the
+     *        directory is created
+     * @param timer maximum wait timer
+     */
+    void mkdir(const std::string &name, const std::vector<Attribute> &init_attrs, Timer *timer=0);
+
+    /**
      * Creates a directory, including all intermediate paths.  The name
      * argument should be the absolute path to the file.
      *
@@ -267,34 +280,97 @@ namespace Hyperspace {
      */
     void mkdirs(const std::string &name, Timer *timer=0);
 
+    /**
+     * Creates a directory, including all intermediate paths.  The name
+     * argument should be the absolute path to the file.
+     *
+     * @param name absolute pathname of directory to create
+     * @param init_attrs vector of attributes to be atomically set when the
+     *        directory is created (applies not to the intermediates)
+     * @param timer maximum wait timer
+     */
+    void mkdirs(const std::string &name, const std::vector<Attribute> &init_attrs, Timer *timer=0);
+
     /** Sets an extended attribute of a file.
      *
      * @param handle file handle
-     * @param name name of extended attribute
+     * @param attr name of extended attribute
      * @param value pointer to new value
      * @param value_len length of new value
      * @param timer maximum wait timer
      */
-    void attr_set(uint64_t handle, const std::string &name,
+    void attr_set(uint64_t handle, const std::string &attr,
                   const void *value, size_t value_len, Timer *timer=0);
+
+    /** Sets an extended attribute of a file.
+     *
+     * @param handle file handle
+     * @param attrs vector of attributes to be atomically set
+     * @param timer maximum wait timer
+     */
+    void attr_set(uint64_t handle, const std::vector<Attribute> &attrs,
+                  Timer *timer=0);
+
+    /** Sets an extended attribute of a file.
+     *
+     * @param name absolute path name of the file/directory
+     * @param attr name of extended attribute
+     * @param value pointer to new value
+     * @param value_len length of new value
+     * @param timer maximum wait timer
+     */
+    void attr_set(const std::string &name, const std::string &attr,
+                  const void *value, size_t value_len, Timer *timer=0);
+
+    /** Sets an extended attribute of a file.
+     *
+     * @param name absolute path name of the file/directory
+     * @param oflags OR'ed together set of open flags (see \ref OpenFlags)
+     * @param attr name of extended attribute
+     * @param value pointer to new value
+     * @param value_len length of new value
+     * @param timer maximum wait timer
+     */
+    void attr_set(const std::string &name, uint32_t oflags, const std::string &attr,
+                  const void *value, size_t value_len, Timer *timer=0);
+
+    /** Sets extended attributes of a file.
+     *
+     * @param name absolute path name of the file/directory
+     * @param oflags OR'ed together set of open flags (see \ref OpenFlags)
+     * @param attrs vector of attributes to be atomically set
+     * @param timer maximum wait timer
+     */
+    void attr_set(const std::string &name, uint32_t oflags,
+                  const std::vector<Attribute> &attrs, Timer *timer=0);
 
     /** Atomically increments the attribute and returns pre-incremented value
      * Attribute is assumed to be a uint64_t
      *
      * @param handle file handle
-     * @param name name of extended attribute
+     * @param attr name of extended attribute
      * @param timer maximum wait timer
      */
-    uint64_t attr_incr(uint64_t handle, const std::string &name, Timer *timer=0);
+    uint64_t attr_incr(uint64_t handle, const std::string &attr, Timer *timer=0);
+
+    /** Atomically increments the attribute and returns pre-incremented value
+     * Attribute is assumed to be a uint64_t
+     *
+     * @param name absolute path name of the file/directory
+     * @param attr name of extended attribute
+     * @param timer maximum wait timer
+     */
+    uint64_t attr_incr(const std::string &name, const std::string &attr, Timer *timer=0);
 
     /** Lists all extended attributes of a file.
      *
      * @param handle file handle
      * @param anames vector of atribute names
      */
-    void attr_list(uint64_t handle, vector<String> &anames,Timer *timer=0);
+    void attr_list(uint64_t handle, vector<String> &anames, Timer *timer=0);
 
-    bool attr_exists(uint64_t handle, const std::string& name,Timer *timer=0);
+    bool attr_exists(uint64_t handle, const std::string& attr, Timer *timer=0);
+    bool attr_exists(const std::string &name, const std::string& attr, Timer *timer=0);
 
     /** Gets an extended attribute of a file.  A '\0' character is written
      * just past the end of the value, but not included in the value size.
@@ -302,12 +378,39 @@ namespace Hyperspace {
      * simply casting the base pointer:  (const char *)value.base
      *
      * @param handle file handle
+     * @param attr name of extended attribute
+     * @param value reference to DynamicBuffer to hold returned value
+     * @param timer maximum wait timer
+     */
+    void attr_get(uint64_t handle, const std::string &attr,
+                  DynamicBuffer &value, Timer *timer=0);
+
+    /** Gets an extended attribute of a file.  A '\0' character is written
+     * just past the end of the value, but not included in the value size.
+     * If the value is a character string, it can be accessed easily by
+     * simply casting the base pointer:  (const char *)value.base
+     *
+     * @param name absolute path name of the file/directory
      * @param name name of extended attribute
      * @param value reference to DynamicBuffer to hold returned value
      * @param timer maximum wait timer
      */
-    void attr_get(uint64_t handle, const std::string &name,
+    void attr_get(const std::string &name, const std::string &attr,
                   DynamicBuffer &value, Timer *timer=0);
+
+    /** Gets an extended attribute of a file.  A '\0' character is written
+     * just past the end of the value, but not included in the value size.
+     * If the value is a character string, it can be accessed easily by
+     * simply casting the base pointer:  (const char *)value.base
+     *
+     * @param name absolute path name of the file/directory
+     * @param attr name of extended attribute
+     * @param attr_exists flag indicating if the attribute exists or not
+     * @param value reference to DynamicBuffer to hold returned value
+     * @param timer maximum wait timer
+     */
+    void attr_get(const std::string &name, const std::string &attr,
+                  bool& attr_exists, DynamicBuffer &value, Timer *timer=0);
 
     /** Deletes an extended attribute of a file.
      *
@@ -358,6 +461,20 @@ namespace Hyperspace {
     void readdir_attr(uint64_t handle, const std::string &attr, bool include_sub_entries,
                       std::vector<DirEntryAttr> &listing, Timer *timer=0);
 
+    /** Gets a listing of all entries in a directory which have a certain attribute .
+     * The listing comes back as a vector of
+     * DirEntryAttr which contains a name, attr and boolean flag indicating if the
+     * entry is a directory or not.
+     *
+     * @param name absolute path name of directory to scan
+     * @param attr attribute name
+     * @param include_sub_entries include or not include all sub entries
+     * @param listing reference to vector of DirEntry structures to hold result
+     * @param timer maximum wait timer
+     */
+    void readdir_attr(const std::string &name, const std::string &attr, bool include_sub_entries,
+                      std::vector<DirEntryAttr> &listing, Timer *timer=0);
+
     /** Gets a listing of the value of a specified atribute for each path components
      * of the file/dir name.
      * The listing comes back as a vector of
@@ -370,6 +487,20 @@ namespace Hyperspace {
      * @param timer maximum wait timer
      */
     void readpath_attr(uint64_t handle, const std::string &attr,
+                       std::vector<DirEntryAttr> &listing, Timer *timer=0);
+
+    /** Gets a listing of the value of a specified atribute for each path components
+     * of the file/dir name.
+     * The listing comes back as a vector of
+     * DirEntryAttr which contains a name, attr and boolean flag indicating if the
+     * entry is a directory or not.
+     *
+     * @param name absolute path name of the file/directory to scan
+     * @param attr attribute name
+     * @param listing reference to vector of DirEntry structures to hold result
+     * @param timer maximum wait timer
+     */
+    void readpath_attr(const std::string &name, const std::string &attr,
                        std::vector<DirEntryAttr> &listing, Timer *timer=0);
 
     /** Locks a file.  The mode argument indicates the type of lock to be
@@ -512,6 +643,9 @@ namespace Hyperspace {
 
     typedef hash_map<uint64_t, SessionCallback *> CallbackMap;
 
+    void mkdir(const std::string &name, bool create_intermediate, const std::vector<Attribute> *init_attrs, Timer *timer);
+    void decode_listing(Hypertable::EventPtr& event_ptr, std::vector<DirEntryAttr> &listing);
+    void decode_value(Hypertable::EventPtr& event_ptr, DynamicBuffer &value);
     bool wait_for_safe();
     int send_message(CommBufPtr &, DispatchHandler *, Timer *timer);
     void normalize_name(const std::string &name, std::string &normal);

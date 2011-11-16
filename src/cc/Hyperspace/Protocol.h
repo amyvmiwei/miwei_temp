@@ -64,24 +64,30 @@ namespace Hyperspace {
     static CommBuf *create_handshake_request(uint64_t session_id, const std::string &name);
     static CommBuf *
     create_open_request(const std::string &name, uint32_t flags,
-        HandleCallbackPtr &callback, std::vector<Attribute> &init_attrs);
+        HandleCallbackPtr &callback, const std::vector<Attribute> &init_attrs);
     static CommBuf *create_close_request(uint64_t handle);
-    static CommBuf *create_mkdir_request(const std::string &name);
+    static CommBuf *create_mkdir_request(const std::string &name, bool create_intermediate, const std::vector<Attribute> *init_attrs);
     static CommBuf *create_delete_request(const std::string &name);
     static CommBuf *
-    create_attr_set_request(uint64_t handle, const std::string &name,
-                            const void *value, size_t value_len);
+    create_attr_set_request(uint64_t handle, const std::string *name, uint32_t oflags,
+                            const std::string &attr, const void *value, size_t value_len);
     static CommBuf *
-    create_attr_incr_request(uint64_t handle, const std::string &name);
+    create_attr_set_request(uint64_t handle, const std::string *name, uint32_t oflags,
+                            const std::vector<Attribute> &attrs);
     static CommBuf *
-    create_attr_get_request(uint64_t handle, const std::string &name);
+    create_attr_incr_request(uint64_t handle, const std::string *name, const std::string &attr);
+    static CommBuf *
+    create_attr_get_request(uint64_t handle, const std::string *name, const std::string &attr);
     static CommBuf *
     create_attr_del_request(uint64_t handle, const std::string &name);
-    static CommBuf *create_attr_exists_request(uint64_t handle, const std::string &name);
+    static CommBuf *create_attr_exists_request(uint64_t handle, const std::string *name,
+                                               const std::string &attr);
     static CommBuf *create_attr_list_request(uint64_t handle);
     static CommBuf *create_readdir_request(uint64_t handle);
-    static CommBuf *create_readdir_attr_request(uint64_t handle, const std::string &name, bool include_sub_entries);
-    static CommBuf *create_readpath_attr_request(uint64_t handle, const std::string &name);
+    static CommBuf *create_readdir_attr_request(uint64_t handle, const std::string *name,
+                                                const std::string &attr, bool include_sub_entries);
+    static CommBuf *create_readpath_attr_request(uint64_t handle, const std::string *name,
+                                                 const std::string &attr);
     static CommBuf *create_exists_request(const std::string &name);
 
     static CommBuf *

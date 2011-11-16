@@ -100,10 +100,7 @@ void OperationAlterTable::execute() {
       SchemaPtr alter_schema;
       SchemaPtr existing_schema;
       DynamicBuffer value_buf;
-      uint64_t handle = 0;
       String filename;
-
-      HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_context->hyperspace, &handle);
 
       alter_schema = Schema::new_instance(m_schema, m_schema.length());
       if (!alter_schema->is_valid())
@@ -113,10 +110,7 @@ void OperationAlterTable::execute() {
 
       filename = m_context->toplevel_dir + "/tables/" + m_id;
 
-      handle = m_context->hyperspace->open(filename,
-                   OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE);
-
-      m_context->hyperspace->attr_get(handle, "schema", value_buf);
+      m_context->hyperspace->attr_get(filename, "schema", value_buf);
       existing_schema = Schema::new_instance((char *)value_buf.base,
                                              strlen((char *)value_buf.base));
       value_buf.clear();
@@ -191,15 +185,9 @@ void OperationAlterTable::execute() {
 
   case OperationState::UPDATE_HYPERSPACE:
     {
-      uint64_t handle = 0;
       String filename = m_context->toplevel_dir + "/tables/" + m_id;
-
-      HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_context->hyperspace, &handle);
-
-      handle = m_context->hyperspace->open(filename,
-                   OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE);
-      m_context->hyperspace->attr_set(handle, "schema", m_schema.c_str(),
-                                      m_schema.length());
+      m_context->hyperspace->attr_set(filename, OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE,
+                                      "schema", m_schema.c_str(), m_schema.length());
     }
     complete_ok();
     break;

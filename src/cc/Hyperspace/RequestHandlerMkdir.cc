@@ -45,8 +45,23 @@ void RequestHandlerMkdir::run() {
 
   try {
     const char *name = decode_vstr(&decode_ptr, &decode_remain);
+    bool create_intermediate = decode_bool(&decode_ptr, &decode_remain);
 
-    m_master->mkdir(&cb, m_session_id, name);
+    Attribute attr;
+    std::vector<Attribute> init_attrs;
+    uint32_t attr_count = decode_i32(&decode_ptr, &decode_remain);
+    init_attrs.reserve(attr_count);
+
+    while (attr_count--) {
+      attr.name = decode_vstr(&decode_ptr, &decode_remain);
+      attr.value = decode_vstr(&decode_ptr, &decode_remain, &attr.value_len);
+      init_attrs.push_back(attr);
+    }
+
+    if (create_intermediate)
+      m_master->mkdirs(&cb, m_session_id, name, init_attrs);
+    else
+      m_master->mkdir(&cb, m_session_id, name, init_attrs);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

@@ -86,13 +86,8 @@ bool table_exists(ContextPtr &context, const String &name, String &id) {
   String tablefile = context->toplevel_dir + "/tables/" + id;
 
   try {
-    uint64_t handle = 0;
-    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, context->hyperspace, &handle);
-    if (context->hyperspace->exists(tablefile)) {
-      handle = context->hyperspace->open(tablefile, OPEN_FLAG_READ);
-      if (context->hyperspace->attr_exists(handle, "x"))
-        return true;
-    }
+    if (context->hyperspace->attr_exists(tablefile, "x"))
+      return true;
   }
   catch (Exception &e) {
     if (e.code() == Error::HYPERSPACE_FILE_NOT_FOUND ||
@@ -109,13 +104,8 @@ bool table_exists(ContextPtr &context, const String &id) {
   String tablefile = context->toplevel_dir + "/tables/" + id;
 
   try {
-    uint64_t handle = 0;
-    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, context->hyperspace, &handle);
-    if (context->hyperspace->exists(tablefile)) {
-      handle = context->hyperspace->open(tablefile, OPEN_FLAG_READ);
-      if (context->hyperspace->attr_exists(handle, "x"))
-        return true;
-    }
+    if (context->hyperspace->attr_exists(tablefile, "x"))
+      return true;
   }
   catch (Exception &e) {
     if (e.code() == Error::HYPERSPACE_FILE_NOT_FOUND ||
@@ -140,23 +130,20 @@ void verify_table_name_availability(ContextPtr &context, const String &name, Str
 
   String tablefile = context->toplevel_dir + "/tables/" + id;
 
-  uint64_t handle = 0;
-  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, context->hyperspace, &handle);
-  if (context->hyperspace->exists(tablefile)) {
-    handle = context->hyperspace->open(tablefile, Hyperspace::OPEN_FLAG_READ);
-    if (context->hyperspace->attr_exists(handle, "x"))
+  try {
+    if (context->hyperspace->attr_exists(tablefile, "x"))
       HT_THROW(Error::MASTER_TABLE_EXISTS, name);
   }
-
+  catch (Exception &e) {
+    if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND)
+      HT_THROW2(e.code(), e, id);
+  }
 }
 
 
 void create_table_in_hyperspace(ContextPtr &context, const String &name,
                                 const String &schema_str, TableIdentifierManaged *table) {
-  uint64_t handle = 0;
   String table_name = name;
-
-  HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, context->hyperspace, &handle);
 
   // String leading '/'
   if (table_name[0] == '/')
@@ -190,13 +177,12 @@ void create_table_in_hyperspace(ContextPtr &context, const String &name,
   // Create table file
   String tablefile = context->toplevel_dir + "/tables/" + table_id;
   int oflags = OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE;
-  handle = context->hyperspace->open(tablefile, oflags);
-
-  HT_MAYBE_FAIL("Utility-create-table-in-hyperspace-2");
 
   // Write schema attribute
-  context->hyperspace->attr_set(handle, "schema", finalschema.c_str(),
+  context->hyperspace->attr_set(tablefile, oflags, "schema", finalschema.c_str(),
                          finalschema.length());
+
+  HT_MAYBE_FAIL("Utility-create-table-in-hyperspace-2");
 
   // Create /hypertable/tables/&lt;table&gt;/&lt;accessGroup&gt; directories
   // for this table in DFS

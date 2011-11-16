@@ -43,11 +43,18 @@ void RequestHandlerReaddirAttr::run() {
   const uint8_t *decode_ptr = m_event_ptr->payload;
 
   try {
-    uint64_t handle = decode_i64(&decode_ptr, &decode_remain);
-    const char *name = decode_vstr(&decode_ptr, &decode_remain);
+    bool has_name = decode_bool(&decode_ptr, &decode_remain);
+    uint64_t handle = 0;
+    const char* name = 0;
+    if (has_name)
+      name = decode_vstr(&decode_ptr, &decode_remain);
+    else
+      handle = decode_i64(&decode_ptr, &decode_remain);
+    const char *attr = decode_vstr(&decode_ptr, &decode_remain);
     bool include_sub_entries = decode_bool(&decode_ptr, &decode_remain);
 
-    m_master->readdir_attr(&cb, m_session_id, handle, name, include_sub_entries);
+    m_master->readdir_attr(&cb, m_session_id, handle, name,
+                           attr, include_sub_entries);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

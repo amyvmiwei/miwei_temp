@@ -66,12 +66,8 @@ void OperationInitialize::execute() {
     {
       handle = 0;
       HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_context->hyperspace, &handle);
-      if (!m_context->hyperspace->exists(m_context->toplevel_dir))
-        m_context->hyperspace->mkdirs(m_context->toplevel_dir);
-      if (!m_context->hyperspace->exists(m_context->toplevel_dir + "/servers"))
-        m_context->hyperspace->mkdir(m_context->toplevel_dir + "/servers");
-      if (!m_context->hyperspace->exists(m_context->toplevel_dir + "/tables"))
-        m_context->hyperspace->mkdir(m_context->toplevel_dir + "/tables");
+      m_context->hyperspace->mkdirs(m_context->toplevel_dir + "/servers");
+      m_context->hyperspace->mkdirs(m_context->toplevel_dir + "/tables");
       handle = m_context->hyperspace->open(m_context->toplevel_dir + "/master",
                                            OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
       m_context->hyperspace->close(handle);
@@ -176,11 +172,8 @@ void OperationInitialize::execute() {
                                           TableIdentifier::METADATA_NAME);
     Utility::create_table_write_metadata(m_context, &m_table);
     {
-      uint64_t handle = 0;
-      HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_context->hyperspace, &handle);
       String tablefile = m_context->toplevel_dir + "/tables/" + m_table.id;
-      handle = m_context->hyperspace->open(tablefile, OPEN_FLAG_READ|OPEN_FLAG_WRITE);
-      m_context->hyperspace->attr_set(handle, "x", "", 0);
+      m_context->hyperspace->attr_set(tablefile, "x", "", 0);
     }
     HT_MAYBE_FAIL("initialize-WRITE_METADATA");
     {

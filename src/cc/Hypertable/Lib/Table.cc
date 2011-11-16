@@ -74,7 +74,6 @@ Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
 void Table::initialize() {
   String tablefile;
   DynamicBuffer value_buf(0);
-  uint64_t handle;
   String errmsg;
   String table_id;
 
@@ -97,12 +96,13 @@ void Table::initialize() {
 
   tablefile = m_toplevel_dir + "/tables/" + m_table.id;
 
-  // TODO: issue 11
   /**
-   * Open table file
+   * Get schema attribute
    */
+  value_buf.clear();
+  // TODO: issue 11
   try {
-    handle = m_hyperspace->open(tablefile, OPEN_FLAG_READ);
+    m_hyperspace->attr_get(tablefile, "schema", value_buf);
   }
   catch (Exception &e) {
     if (e.code() == Error::HYPERSPACE_BAD_PATHNAME)
@@ -110,14 +110,6 @@ void Table::initialize() {
     HT_THROW2F(e.code(), e, "Unable to open Hyperspace table file '%s'",
                tablefile.c_str());
   }
-
-  /**
-   * Get schema attribute
-   */
-  value_buf.clear();
-  m_hyperspace->attr_get(handle, "schema", value_buf);
-
-  m_hyperspace->close(handle);
 
   m_schema = Schema::new_instance((const char *)value_buf.base,
                                   strlen((const char *)value_buf.base));
