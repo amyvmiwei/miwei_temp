@@ -226,7 +226,20 @@ if (PACKAGE_OS_SPECIFIC)
   string(TOLOWER "${CPACK_PACKAGE_NAME}-${VERSION}-${OS_VERSION}-${MACH}"
          CPACK_PACKAGE_FILE_NAME)
 else ()
-  string(TOLOWER "${CPACK_PACKAGE_NAME}-${VERSION}-${CMAKE_SYSTEM_NAME}-${MACH}"
+  if (APPLE)
+    string(REGEX MATCH "^([0-9]+)\\." dummy ${CMAKE_SYSTEM_VERSION})
+    set(darwin_version ${CMAKE_MATCH_1})
+    if (${darwin_version} EQUAL 10)
+      set(system_name "osx_10.6")
+    elseif (${darwin_version} EQUAL 11)
+      set(system_name "osx_10.7")
+    else ()
+      message(FATAL_ERROR "Unknown OSX version (${CMAKE_SYSTEM})")
+    endif ()
+  else ()
+    set(system_name ${CMAKE_SYSTEM_NAME})
+  endif ()
+  string(TOLOWER "${CPACK_PACKAGE_NAME}-${VERSION}-${system_name}-${MACH}"
          CPACK_PACKAGE_FILE_NAME)
 endif ()
 
