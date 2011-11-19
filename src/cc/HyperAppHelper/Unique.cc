@@ -25,18 +25,16 @@
 #include "Hypertable/Lib/TableMutator.h"
 #include "Hypertable/Lib/TableScanner.h"
 
-#include <uuid/uuid.h>
-
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
 
 namespace Hypertable { namespace HyperAppHelper {
 
 String generate_guid()
 {
-  char buf[64];
-  uuid_t out;
-  uuid_generate(out);
-  uuid_unparse(out, &buf[0]);
-  return (String(&buf[0]));
+  boost::uuids::uuid u;
+  return boost::lexical_cast<string>(u);
 }
 
 void 

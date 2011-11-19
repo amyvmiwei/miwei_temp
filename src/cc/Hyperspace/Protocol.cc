@@ -191,10 +191,11 @@ CommBuf *Hyperspace::Protocol::create_close_request(uint64_t handle) {
 
 CommBuf *Hyperspace::Protocol::create_mkdir_request(const std::string &name, bool create_intermediate, const std::vector<Attribute> *init_attrs) {
   size_t attrs_len = 4;
-  if (init_attrs)
+  if (init_attrs) {
     foreach (const Attribute& attr, *init_attrs)
       attrs_len += encoded_length_vstr(attr.name)
              + encoded_length_vstr(attr.value_len);
+  }
   CommHeader header(COMMAND_MKDIR);
   header.gid = filename_to_group(name);
   CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(name.size()) + 1 + attrs_len);
