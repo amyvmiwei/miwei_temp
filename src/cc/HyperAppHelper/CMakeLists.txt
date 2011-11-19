@@ -26,7 +26,7 @@ Unique.cc
 
 add_library(HyperAppHelper ${Helper_SRCS})
 target_link_libraries(HyperAppHelper Hypertable HyperCommon ${BOOST_LIBS} ${Log4cpp_LIBRARIES}
-    ${ZLIB_LIBRARIES} ${SIGAR_LIBRARIES} ${NCURSES_LIBRARY} ${UUID_LIBRARY}
+    ${ZLIB_LIBRARIES} ${SIGAR_LIBRARIES} ${NCURSES_LIBRARY}
     ${CMAKE_THREAD_LIBS_INIT} ${MALLOC_LIBRARY})
 
 # tests

@@ -2287,13 +2287,14 @@ bool Master::get_handle_node(CommandContext &ctx, uint64_t handle, const char* a
     }
   }
 
-  if (m_verbose)
+  if (m_verbose) {
     if (attr && *attr)
       HT_INFOF("%s(session=%llu(%s), handle=%llu, attr=%s)", ctx.friendly_name,
                (Llu)ctx.session_id, ctx.session_data->get_name(), (Llu)handle, attr);
     else
       HT_INFOF("%s(session=%llu(%s), handle=%llu)", ctx.friendly_name,
                (Llu)ctx.session_id, ctx.session_data->get_name(), (Llu)handle);
+  }
 
   HT_ASSERT(ctx.txn);
   BDbTxn &txn = *ctx.txn;
@@ -2325,13 +2326,14 @@ bool Master::get_named_node(CommandContext &ctx, const char *name, const char* a
     }
   }
 
-  if (m_verbose)
+  if (m_verbose) {
     if (attr && *attr)
       HT_INFOF("%s(session=%llu(%s), name=%s, attr=%s)", ctx.friendly_name,
                  (Llu)ctx.session_id, ctx.session_data->get_name(), name, attr);
     else
       HT_INFOF("%s(session=%llu(%s), name=%s)", ctx.friendly_name,
                  (Llu)ctx.session_id, ctx.session_data->get_name(), name);
+  }
 
   HT_ASSERT(ctx.txn);
   BDbTxn &txn = *ctx.txn;
