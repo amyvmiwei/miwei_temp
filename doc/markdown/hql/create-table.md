@@ -12,6 +12,7 @@ CREATE TABLE
 
     column_family_option:
       MAX_VERSIONS '=' int
+      | TIME_ORDER DESC
       | TTL '=' duration
       | COUNTER
 
@@ -168,15 +169,18 @@ the nearest multiple of this property value.
 The following column family options are supported:
 
   * `MAX_VERSIONS '=' int`
+  * `TIME_ORDER DESC`
   * `TTL '=' duration`
   * `COUNTER`
 
 Cells in a table are specified by not only a row key and a qualified column,
 but also a timestamp.  This allows for essentially multiple timestamped version
-s of each cell.  Cells are kept stored in reverse chronological order of
-timestamp and the `MAX_VERSIONS` allows you to specify that you only want to
+s of each cell.  If TIME_ORDER is not specified (or set to ASC) then the Cells
+are kept stored in reverse chronological order of timestamp and the
+`MAX_VERSIONS` allows you to specify that you only want to
 keep the n most recent versions of each cell.  Older versions are lazily
-garbage collected through the normal compaction process.
+garbage collected through the normal compaction process.  If TIME_ORDER is
+DESC (descending) then the Cells are kept stored in chronological order.
 
 The `TTL` option allows you to specify that you only want to keep cell versions
 that fall within some time window in the immediate past.  For example, you can
