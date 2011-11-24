@@ -132,8 +132,11 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
     if (scan_spec.cell_intervals[0].start_column == 0)
       HT_THROW(Error::BAD_SCAN_SPEC,
                "Bad cell interval (start_column == NULL)");
-    end_row = (scan_spec.cell_intervals[0].end_row == 0) ? Key::END_ROW_MARKER
-        : scan_spec.cell_intervals[0].end_row;
+    if (scan_spec.cell_intervals[0].end_row == 0 ||
+        scan_spec.cell_intervals[0].end_row[0] == 0)
+      end_row = Key::END_ROW_MARKER;
+    else
+      end_row = scan_spec.cell_intervals[0].end_row;
     if (scan_spec.cell_intervals[0].end_column == 0)
       HT_THROW(Error::BAD_SCAN_SPEC,
                "Bad cell interval (end_column == NULL)");
@@ -152,8 +155,9 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
         scan_spec.cell_intervals[0].start_inclusive,
         end_row, scan_spec.cell_intervals[0].end_column,
         scan_spec.cell_intervals[0].end_inclusive);
-    m_start_row = scan_spec.cell_intervals[0].start_row;
-    m_end_row = scan_spec.cell_intervals[0].end_row;
+
+    m_start_row = start_row;
+    m_end_row = end_row;
     m_end_inclusive = true;
   }
   else {
