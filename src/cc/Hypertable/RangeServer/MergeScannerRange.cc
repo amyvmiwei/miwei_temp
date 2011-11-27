@@ -114,6 +114,7 @@ MergeScannerRange::do_forward()
   ScannerState sstate;
   Key key;
 
+forward:
   // empty queue? return to caller
   if (m_queue.empty())
     return;
@@ -223,8 +224,7 @@ MergeScannerRange::do_forward()
     // more cells
     if (m_cell_offset != 0 && m_cell_skipped < m_cell_offset) {
       m_cell_skipped++;
-      do_forward();
-      return;
+      goto forward;
     }
 
     if (m_cell_limit)
