@@ -232,7 +232,7 @@ public class Dispatcher {
     int scanBufferSize = 65536;
     boolean randomizeTasks = false;
     String argString = "";
-    String valueData = "";
+    String valueData = null;
     int parallel = 0;
 
     if (args.length == 1 && args[0].equals("--help"))

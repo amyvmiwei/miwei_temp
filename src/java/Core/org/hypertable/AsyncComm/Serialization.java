@@ -134,12 +134,13 @@ public class Serialization {
         if (buf.remaining() < 3)
             return null;
         short len = buf.getShort();
-        if (len == 0)
+        if (len == 0) {
+	    buf.get(); // skip \0 terminator
             return new String("");
+	}
         byte [] sbytes = new byte [ len ];
         buf.get(sbytes);
-        // skip '\0' terminator
-        buf.get();
+        buf.get();  // skip '\0' terminator
         try {
             return new String(sbytes, "UTF-8");
         }
