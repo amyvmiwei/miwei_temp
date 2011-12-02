@@ -50,9 +50,15 @@ void RequestHandlerAttrGet::run() {
       name = decode_vstr(&decode_ptr, &decode_remain);
     else
       handle = decode_i64(&decode_ptr, &decode_remain);
-    const char *attr = decode_vstr(&decode_ptr, &decode_remain);
 
-    m_master->attr_get(&cb, m_session_id, handle, name, attr);
+    std::vector<String> attrs;
+    uint32_t attr_cnt = decode_i32(&decode_ptr, &decode_remain);
+    attrs.reserve(attr_cnt);
+    while (attr_cnt-- > 0) {
+      const char *attr = decode_vstr(&decode_ptr, &decode_remain);
+      attrs.push_back(attr);
+    }
+    m_master->attr_get(&cb, m_session_id, handle, name, attrs);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

@@ -37,7 +37,7 @@ namespace Hyperspace {
                             Hypertable::EventPtr &event_ptr)
       : Hypertable::ResponseCallback(comm, event_ptr) { }
 
-    int response(Hypertable::StaticBuffer &buffer);
+    int response(const std::vector<Hypertable::DynamicBufferPtr> &buffers);
   };
 
 }

@@ -79,6 +79,8 @@ namespace Hyperspace {
     static CommBuf *
     create_attr_get_request(uint64_t handle, const std::string *name, const std::string &attr);
     static CommBuf *
+    create_attrs_get_request(uint64_t handle, const std::string *name, const std::vector<std::string> &attrs);
+    static CommBuf *
     create_attr_del_request(uint64_t handle, const std::string &name);
     static CommBuf *create_attr_exists_request(uint64_t handle, const std::string *name,
                                                const std::string &attr);

@@ -93,7 +93,7 @@ namespace Hyperspace {
     void attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
                   const char *name, uint32_t oflags, const std::vector<Attribute> &attrs);
     void attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
-                  uint64_t handle, const char *name, const char *attr);
+                  uint64_t handle, const char *name, const std::vector<String> &attrs);
     void attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
                    uint64_t handle, const char *name, const char *attr);
     void attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
@@ -238,6 +238,9 @@ namespace Hyperspace {
                   const char *name, const std::vector<Attribute> &attrs);
     void attr_get(CommandContext &ctx, uint64_t handle,
                   const char *name, const char *attr, DynamicBuffer &dbuf);
+    void attr_get(CommandContext &ctx, uint64_t handle,
+                  const char *name, const std::vector<String> &attrs,
+                  std::vector<DynamicBufferPtr> &dbufs);
     void attr_incr(CommandContext &ctx, uint64_t handle,
                    const char *name, const char *attr, uint64_t& attr_val);
     void attr_del(CommandContext &ctx, uint64_t handle, const char *name);

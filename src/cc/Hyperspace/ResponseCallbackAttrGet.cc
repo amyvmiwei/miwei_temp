@@ -32,12 +32,33 @@ using namespace Hypertable;
 /**
  *
  */
-int ResponseCallbackAttrGet::response(StaticBuffer &buffer) {
+int ResponseCallbackAttrGet::response(const std::vector<DynamicBufferPtr> &buffers) {
   CommHeader header;
   header.initialize_from_request_header(m_event_ptr->header);
-  CommBufPtr cbp(new CommBuf(header, 8, buffer));
+  if (buffers.size() == 1 && buffers.front()) {
+    StaticBuffer buffer(*buffers.front());
+    CommBufPtr cbp(new CommBuf(header, 12, buffer));
+    cbp->append_i32(Error::OK);
+    cbp->append_i32(1);
+    cbp->append_i32(buffer.size);
+    return m_comm->send_response(m_event_ptr->addr, cbp);
+  }
+
+  size_t len = 0;
+  foreach (const DynamicBufferPtr &pdb, buffers) {
+    if (pdb)
+      len += pdb->fill();
+  }
+
+  CommBufPtr cbp(new CommBuf(header, 8 + 4 * buffers.size() + len));
   cbp->append_i32(Error::OK);
-  cbp->append_i32(buffer.size);
+  cbp->append_i32(buffers.size());
+  foreach (const DynamicBufferPtr &pdb, buffers) {
+    if (pdb)
+      Serialization::encode_bytes32(cbp->get_data_ptr_address(), pdb->base, pdb->fill());
+    else
+      cbp->append_i32(0);
+  }
   return m_comm->send_response(m_event_ptr->addr, cbp);
 }
 
