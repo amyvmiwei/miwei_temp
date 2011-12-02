@@ -570,6 +570,64 @@ Session::attr_get(const std::string &name, const std::string &attr,
     }
 }
 
+void
+Session::attrs_get(uint64_t handle, const std::vector<std::string> &attrs,
+                  std::vector<DynamicBufferPtr> &values, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  Hypertable::EventPtr event_ptr;
+  CommBufPtr cbuf_ptr(Protocol::create_attrs_get_request(handle, 0, attrs));
+
+ try_again:
+  if (!wait_for_safe())
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
+
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
+  if (error == Error::OK) {
+    if (!sync_handler.wait_for_reply(event_ptr)) {
+      ClientHandleStatePtr handle_state;
+      String fname = "UNKNOWN";
+      if (m_keepalive_handler_ptr->get_handle_state(handle, handle_state))
+        fname = handle_state->normal_name.c_str();
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+                "Problem getting attributes of hyperspace file '%s'",
+                fname.c_str());
+    }
+    else
+      decode_values(event_ptr, values);
+  }
+  else {
+    state_transition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+}
+
+void
+Session::attrs_get(const std::string &name, const std::vector<std::string> &attrs,
+                  std::vector<DynamicBufferPtr> &values, Timer *timer) {
+  DispatchHandlerSynchronizer sync_handler;
+  Hypertable::EventPtr event_ptr;
+  CommBufPtr cbuf_ptr(Protocol::create_attrs_get_request(0, &name, attrs));
+
+ try_again:
+  if (!wait_for_safe())
+    HT_THROW(Error::HYPERSPACE_EXPIRED_SESSION, "");
+
+  int error = send_message(cbuf_ptr, &sync_handler, timer);
+  if (error == Error::OK) {
+    if (!sync_handler.wait_for_reply(event_ptr)) {
+      HT_THROWF((int)Protocol::response_code(event_ptr.get()),
+                "Problem getting attributes of hyperspace file '%s'",
+                 name.c_str());
+    }
+    else
+      decode_values(event_ptr, values);
+  }
+  else {
+    state_transition(Session::STATE_JEOPARDY);
+    goto try_again;
+  }
+}
+
 bool
 Session::attr_exists(uint64_t handle, const std::string& attr, Timer *timer)
 {
@@ -1180,15 +1238,46 @@ void Session::mkdir(const std::string &name, bool create_intermediate, const std
 
 void Session::decode_value(Hypertable::EventPtr& event_ptr, DynamicBuffer &value) {
   uint32_t attr_val_len = 0;
+  const uint8_t *decode_ptr = event_ptr->payload + 8;
+  size_t decode_remain = event_ptr->payload_len - 8;
+  try {
+    void *attr_val = decode_bytes32(&decode_ptr, &decode_remain,
+                                    &attr_val_len);
+    value.clear();
+    value.ensure(attr_val_len+1);
+    value.add_unchecked(attr_val, attr_val_len);
+    // nul-terminate to make caller's lives easier
+    *value.ptr = 0;
+  }
+  catch (Exception &e) {
+    HT_THROW2(Error::PROTOCOL_ERROR, e, "");
+  }
+}
+
+void Session::decode_values(Hypertable::EventPtr& event_ptr, std::vector<DynamicBufferPtr> &values) {
+  values.clear();
+  uint32_t attr_val_len = 0;
   const uint8_t *decode_ptr = event_ptr->payload + 4;
   size_t decode_remain = event_ptr->payload_len - 4;
-  void *attr_val = decode_bytes32(&decode_ptr, &decode_remain,
-                                  &attr_val_len);
-  value.clear();
-  value.ensure(attr_val_len+1);
-  value.add_unchecked(attr_val, attr_val_len);
-  // nul-terminate to make caller's lives easier
-  *value.ptr = 0;
+  try {
+    uint32_t attr_val_cnt = decode_i32(&decode_ptr, &decode_remain);
+    values.reserve(attr_val_cnt);
+    while (attr_val_cnt-- > 0) {
+      DynamicBufferPtr value;
+      void *attr_val = decode_bytes32(&decode_ptr, &decode_remain,
+                                      &attr_val_len);
+      if (attr_val_len) {
+        value = new DynamicBuffer(attr_val_len+1);
+        value->add_unchecked(attr_val, attr_val_len);
+        // nul-terminate to make caller's lives easier
+        *value->ptr = 0;
+      }
+      values.push_back(value);
+    }
+  }
+  catch (Exception &e) {
+    HT_THROW2(Error::PROTOCOL_ERROR, e, "");
+  }
 }
 
 void Session::decode_listing(Hypertable::EventPtr& event_ptr, std::vector<DirEntryAttr> &listing) {

@@ -69,35 +69,31 @@ void MetadataRoot::reset_files_scan() {
 bool MetadataRoot::get_next_files(String &ag_name, String &files, uint32_t *nextcsidp) {
 
   while (m_next < m_agnames.size()) {
-    DynamicBuffer value(0);
-    String files_attrname = (String)"files." + m_agnames[m_next];
-    String nextcsid_attrname = (String)"nextcsid." + m_agnames[m_next];
+    std::vector<String> attrs;
+    attrs.push_back((String)"files." + m_agnames[m_next]);
+    attrs.push_back((String)"nextcsid." + m_agnames[m_next]);
     ag_name = m_agnames[m_next];
     m_next++;
 
     *nextcsidp = 0;
 
-    // Read nextcsid
+    // Read files and nextcsid
     try {
-      Global::hyperspace->attr_get(m_handle, nextcsid_attrname.c_str(), value);
-      *nextcsidp = atoi((const char *)value.base);
+      std::vector<DynamicBufferPtr> values;
+      Global::hyperspace->attrs_get(m_handle, attrs, values);
+      if (values.front()) {
+        if (values.back())
+          *nextcsidp = atoi((const char *)values.back()->base);
+        files = (const char *)values.front()->base;
+        return true;
+      }
     }
     catch (Exception &e) {
-    }
-
-    try {
-      Global::hyperspace->attr_get(m_handle, files_attrname.c_str(), value);
-    }
-    catch (Exception &e) {
-      if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND)
-        continue;
-      HT_ERRORF("Problem getting attribute '%s' on Hyperspace file "
-                "'%s/root' - %s", Global::toplevel_dir.c_str(), files_attrname.c_str(),
-                Error::get_text(e.code()));
+      HT_ERRORF("Problem getting attributes %s/%s on Hyperspace file "
+                "'%s/root' - %s", attrs.front().c_str(), attrs.back().c_str(),
+                Global::toplevel_dir.c_str(), Error::get_text(e.code()));
       return false;
     }
-    files = (const char *)value.base;
-    return true;
   }
 
   return false;
@@ -120,20 +116,22 @@ void MetadataRoot::write_files(const String &ag_name, const String &files) {
 }
 
 void MetadataRoot::write_files(const String &ag_name, const String &files, uint32_t nextcsid) {
-  String attrname = (String)"nextcsid." + ag_name;
+  String files_attrname = (String)"files." + ag_name;
+  String nextcsid_attrname = (String)"nextcsid." + ag_name;
   char buf[32];
-
   sprintf(buf, "%u", (unsigned)nextcsid);
 
-  write_files(ag_name, files);
+  std::vector<Attribute> attrs;
+  attrs.push_back(Attribute(files_attrname.c_str(), files.c_str(), files.length()));
+  attrs.push_back(Attribute(nextcsid_attrname.c_str(), buf, strlen(buf)));
 
-  // Write "nextcsid"
+  // Write "files" and "nextcsid"
   try {
-    Global::hyperspace->attr_set(m_handle, attrname.c_str(), buf, strlen(buf));
+    Global::hyperspace->attr_set(m_handle, attrs);
   }
   catch (Exception &e) {
-    HT_THROW2(e.code(), e, (String)"Problem creating attribute '" + attrname
-              + "' on Hyperspace file '/hypertable/root'");
+    HT_THROW2(e.code(), e, (String)"Problem creating attribute '" + files_attrname
+              + "/" + nextcsid_attrname + "' on Hyperspace file '/hypertable/root'");
   }
 
 }

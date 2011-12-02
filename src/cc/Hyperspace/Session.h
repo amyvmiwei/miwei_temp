@@ -412,6 +412,32 @@ namespace Hyperspace {
     void attr_get(const std::string &name, const std::string &attr,
                   bool& attr_exists, DynamicBuffer &value, Timer *timer=0);
 
+    /** Gets extended attributes of a file.  A '\0' character is written
+     * just past the end of the values, but not included in the value size.
+     * If the value is a character string, it can be accessed easily by
+     * simply casting the base pointer:  (const char *)value.base
+     *
+     * @param handle file handle
+     * @param attrs names of extended attribute
+     * @param values reference to DynamicBuffer to hold returned value
+     * @param timer maximum wait timer
+     */
+    void attrs_get(uint64_t handle, const std::vector<std::string> &attrs,
+                  std::vector<DynamicBufferPtr> &values, Timer *timer=0);
+
+    /** Gets an extended attribute of a file.  A '\0' character is written
+     * just past the end of the value, but not included in the value size.
+     * If the value is a character string, it can be accessed easily by
+     * simply casting the base pointer:  (const char *)value.base
+     *
+     * @param name absolute path name of the file/directory
+     * @param name name of extended attribute
+     * @param value reference to DynamicBuffer to hold returned value
+     * @param timer maximum wait timer
+     */
+    void attrs_get(const std::string &name, const std::vector<std::string> &attrs,
+                  std::vector<DynamicBufferPtr> &values, Timer *timer=0);
+
     /** Deletes an extended attribute of a file.
      *
      * @param handle file handle
@@ -646,6 +672,7 @@ namespace Hyperspace {
     void mkdir(const std::string &name, bool create_intermediate, const std::vector<Attribute> *init_attrs, Timer *timer);
     void decode_listing(Hypertable::EventPtr& event_ptr, std::vector<DirEntryAttr> &listing);
     void decode_value(Hypertable::EventPtr& event_ptr, DynamicBuffer &value);
+    void decode_values(Hypertable::EventPtr& event_ptr, std::vector<DynamicBufferPtr> &values);
     bool wait_for_safe();
     int send_message(CommBufPtr &, DispatchHandler *, Timer *timer);
     void normalize_name(const std::string &name, std::string &normal);

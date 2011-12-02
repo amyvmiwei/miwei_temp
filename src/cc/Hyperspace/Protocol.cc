@@ -314,17 +314,47 @@ Hyperspace::Protocol::create_attr_get_request(uint64_t handle,
   if (name && !name->empty()) {
     header.gid = filename_to_group(*name);
     cbuf = new CommBuf(header, 1 + encoded_length_vstr(name->size())
-                       + encoded_length_vstr(attr.size()));
+                       + 4 + encoded_length_vstr(attr.size()));
     cbuf->append_bool(true);
     cbuf->append_vstr(*name);
   }
   else {
     header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
-    cbuf = new CommBuf(header, 1 + 8 + encoded_length_vstr(attr.size()));
+    cbuf = new CommBuf(header, 1 + 8 + 4 + encoded_length_vstr(attr.size()));
     cbuf->append_bool(false);
     cbuf->append_i64(handle);
   }
+  cbuf->append_i32(1); // one attr follows
   cbuf->append_vstr(attr);
+  return cbuf;
+}
+
+CommBuf *
+Hyperspace::Protocol::create_attrs_get_request(uint64_t handle,
+                                              const std::string *name,
+                                              const std::vector<std::string> &attrs) {
+  size_t len = 0;
+  foreach (const std::string& attr, attrs)
+    len += encoded_length_vstr(attr.size());
+
+  CommHeader header(COMMAND_ATTRGET);
+  CommBuf *cbuf;
+  if (name && !name->empty()) {
+    header.gid = filename_to_group(*name);
+    cbuf = new CommBuf(header, 1 + encoded_length_vstr(name->size())
+                       + 4 + len);
+    cbuf->append_bool(true);
+    cbuf->append_vstr(*name);
+  }
+  else {
+    header.gid = (uint32_t)((handle ^ (handle >> 32)) & 0x0FFFFFFFFLL);
+    cbuf = new CommBuf(header, 1 + 8 + 4 + len);
+    cbuf->append_bool(false);
+    cbuf->append_i64(handle);
+  }
+  cbuf->append_i32(attrs.size());
+  foreach (const std::string& attr, attrs)
+    cbuf->append_vstr(attr);
   return cbuf;
 }
 

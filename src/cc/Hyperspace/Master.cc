@@ -838,13 +838,22 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
  */
 void
 Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
-                 uint64_t handle, const char *name, const char *attr) {
+                 uint64_t handle, const char *name,
+                 const std::vector<String> &attrs) {
 
-  DynamicBuffer dbuf;
+  std::vector<DynamicBufferPtr> dbufs;
+  dbufs.reserve(attrs.size());
   CommandContext ctx("attrget", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);
-    attr_get(ctx, handle, name, attr, dbuf);
+    dbufs.clear();
+    if (attrs.size() == 1) { // if only one attr it might return HYPERSPACE_ATTR_NOT_FOUND
+      dbufs.push_back(new DynamicBuffer());
+      attr_get(ctx, handle, name, attrs.front().c_str(), *dbufs.back());
+    }
+    else
+      attr_get(ctx, handle, name, attrs, dbufs);
+
     if (ctx.aborted)
       txn.abort();
     else
@@ -862,8 +871,7 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
     return;
   }
 
-  StaticBuffer buffer(dbuf);
-  if ((ctx.error = cb->response(buffer)) != Error::OK)
+  if ((ctx.error = cb->response(dbufs)) != Error::OK)
     HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
 }
 
@@ -2106,6 +2114,30 @@ void Master::attr_get(CommandContext &ctx, uint64_t handle,
   if (!m_bdb_fs->get_xattr(txn, node, attr, dbuf)) {
     ctx.set_error(Error::HYPERSPACE_ATTR_NOT_FOUND, attr);
     return;
+  }
+}
+
+void Master::attr_get(CommandContext &ctx, uint64_t handle,
+                      const char *name, const std::vector<String> &attrs,
+                      std::vector<DynamicBufferPtr> &dbufs) {
+  dbufs.clear();
+  HT_ASSERT(ctx.txn);
+  BDbTxn &txn = *ctx.txn;
+
+  String node;
+  if (name && *name) {
+    if (!get_named_node(ctx, name, 0, node))
+      return;
+  }
+  else
+    if (!get_handle_node(ctx, handle, 0, node))
+      return;
+
+  dbufs.reserve(attrs.size());
+  foreach (const String &attr, attrs) {
+    dbufs.push_back(new DynamicBuffer());
+    if (!m_bdb_fs->get_xattr(txn, node, attr, *dbufs.back()))
+      dbufs.back() = 0; // attr not found
   }
 }
 
