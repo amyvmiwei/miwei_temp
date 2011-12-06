@@ -28,13 +28,15 @@
 #include <boost/uuid/uuid.hpp>
 #include <boost/uuid/uuid_generators.hpp>
 #include <boost/uuid/uuid_io.hpp>
+#include <boost/lexical_cast.hpp>
 
 namespace Hypertable { namespace HyperAppHelper {
 
 String generate_guid()
 {
-  boost::uuids::uuid u;
-  return boost::lexical_cast<string>(u);
+  boost::uuids::random_generator gen;
+  boost::uuids::uuid u(gen());
+  return boost::lexical_cast<String>(u);
 }
 
 void 
