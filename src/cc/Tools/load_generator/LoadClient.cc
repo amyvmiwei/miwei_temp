@@ -103,7 +103,7 @@ LoadClient::set_cells(const Cells &cells)
           string((const char*)cell.value, cell.value_len), cell.timestamp, cell.revision,
           (ThriftGen::KeyFlag::type) cell.flag));
     }
-    m_thrift_client->set_cells(m_thrift_mutator, thrift_cells);
+    m_thrift_client->mutator_set_cells(m_thrift_mutator, thrift_cells);
 #endif
   }
   else {
@@ -130,7 +130,7 @@ LoadClient::set_delete(const KeySpec &key) {
         key.column_family, key.column_qualifier, std::string(""),
         key.timestamp, key.revision, flag));
 
-    m_thrift_client->set_cells(m_thrift_mutator, thrift_cells);
+    m_thrift_client->mutator_set_cells(m_thrift_mutator, thrift_cells);
 #endif
   }
   else {

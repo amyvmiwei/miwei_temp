@@ -541,7 +541,7 @@ public:
     hql_exec2(result, ns, hql, false, false);
   }
 
-  virtual void create_namespace(const String &ns) {
+  virtual void namespace_create(const String &ns) {
     LOG_API_START("namespace=" << ns);
     try {
       m_client->create_namespace(ns, NULL);
@@ -549,7 +549,11 @@ public:
     LOG_API_FINISH;
   }
 
-  virtual void create_table(const ThriftGen::Namespace ns, const String &table, const String &schema) {
+  virtual void create_namespace(const String &ns) {
+    namespace_create(ns);
+  }
+
+  virtual void table_create(const ThriftGen::Namespace ns, const String &table, const String &schema) {
     LOG_API_START("namespace=" << ns << " table="<< table <<" schema="<< schema);
 
     try {
@@ -559,8 +563,11 @@ public:
 
     LOG_API_FINISH;
   }
+  virtual void create_table(const ThriftGen::Namespace ns, const String &table, const String &schema) {
+    table_create(ns, table, schema);
+  }
 
-  virtual void alter_table(const ThriftGen::Namespace ns, const String &table, const String &schema) {
+  virtual void table_alter(const ThriftGen::Namespace ns, const String &table, const String &schema) {
     LOG_API_START("namespace=" << ns << " table="<< table <<" schema="<< schema);
 
     try {
@@ -570,9 +577,12 @@ public:
 
     LOG_API_FINISH;
   }
+  virtual void alter_table(const ThriftGen::Namespace ns, const String &table, const String &schema) {
+    table_alter(ns, table, schema);
+  }
 
   virtual Scanner
-  open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss) {
+  scanner_open(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss) {
     Scanner id;
     LOG_API_START("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
     try {
@@ -581,9 +591,14 @@ public:
     LOG_API_FINISH_E(" scanner="<<id);
     return id;
   }
+  virtual Scanner
+  open_scanner(const ThriftGen::Namespace ns, const String &table, const ThriftGen::ScanSpec &ss) {
+    return scanner_open(ns, table, ss);
+  }
+
 
   virtual ScannerAsync
-  open_scanner_async(const ThriftGen::Namespace ns, const String &table,
+  async_scanner_open(const ThriftGen::Namespace ns, const String &table,
                      const ThriftGen::Future ff,
                      const ThriftGen::ScanSpec &ss) {
     ScannerAsync id;
@@ -595,25 +610,37 @@ public:
     LOG_API_FINISH_E(" scanner=" << id);
     return id;
   }
+  virtual ScannerAsync
+  open_scanner_async(const ThriftGen::Namespace ns, const String &table,
+                     const ThriftGen::Future ff,
+                     const ThriftGen::ScanSpec &ss) {
+    return async_scanner_open(ns, table, ff, ss);
+  }
 
 
-  virtual void close_namespace(const ThriftGen::Namespace ns) {
+  virtual void namespace_close(const ThriftGen::Namespace ns) {
     LOG_API_START("namespace="<< ns);
     try {
       remove_namespace_from_map(ns);
     } RETHROW("namespace="<< ns)
     LOG_API_FINISH;
   }
+  virtual void close_namespace(const ThriftGen::Namespace ns) {
+    namespace_close(ns);
+  }
 
-  virtual void close_scanner(const Scanner scanner) {
+  virtual void scanner_close(const Scanner scanner) {
     LOG_API_START("scanner="<< scanner);
     try {
       remove_scanner(scanner);
     } RETHROW("scanner="<< scanner)
     LOG_API_FINISH;
   }
+  virtual void close_scanner(const Scanner scanner) {
+    scanner_close(scanner);
+  }
 
-  virtual void cancel_scanner_async(const ScannerAsync scanner) {
+  virtual void async_scanner_cancel(const ScannerAsync scanner) {
     LOG_API_START("scanner="<< scanner);
 
     try {
@@ -622,17 +649,23 @@ public:
 
     LOG_API_FINISH_E(" cancelled");
   }
+  virtual void cancel_scanner_async(const ScannerAsync scanner) {
+    async_scanner_cancel(scanner);
+  }
 
 
-  virtual void close_scanner_async(const ScannerAsync scanner_async) {
+  virtual void async_scanner_close(const ScannerAsync scanner_async) {
     LOG_API_START("scanner_async="<< scanner_async);
     try {
       remove_scanner_async(scanner_async);
     } RETHROW("scanner_async="<< scanner_async)
     LOG_API_FINISH;
   }
+  virtual void close_scanner_async(const ScannerAsync scanner_async) {
+    async_scanner_close(scanner_async);
+  }
 
-  virtual void next_cells(ThriftCells &result, const Scanner scanner_id) {
+  virtual void scanner_get_cells(ThriftCells &result, const Scanner scanner_id) {
 
     LOG_API_START("scanner="<< scanner_id);
     try {
@@ -641,9 +674,12 @@ public:
     } RETHROW("scanner="<< scanner_id)
     LOG_API_FINISH_E(" result.size=" << result.size());
   }
+  virtual void next_cells(ThriftCells &result, const Scanner scanner_id) {
+    scanner_get_cells(result, scanner_id);
+  }
 
   virtual void
-  next_cells_as_arrays(ThriftCellsAsArrays &result, const Scanner scanner_id) {
+  scanner_get_cells_as_arrays(ThriftCellsAsArrays &result, const Scanner scanner_id) {
 
     LOG_API_START("scanner="<< scanner_id);
     try {
@@ -652,9 +688,13 @@ public:
     } RETHROW("scanner="<< scanner_id <<" result.size="<< result.size())
     LOG_API_FINISH_E("result.size="<< result.size());
   }
+  virtual void
+  next_cells_as_arrays(ThriftCellsAsArrays &result, const Scanner scanner_id) {
+    scanner_get_cells_as_arrays(result, scanner_id);
+  }
 
   virtual void
-  next_cells_serialized(CellsSerialized& result, const Scanner scanner_id) {
+  scanner_get_cells_serialized(CellsSerialized& result, const Scanner scanner_id) {
 
     LOG_API_START("scanner="<< scanner_id);
 
@@ -682,9 +722,13 @@ public:
     } RETHROW("scanner="<< scanner_id);
     LOG_API_FINISH_E("result.size="<< result.size());
   }
+  virtual void
+  next_cells_serialized(CellsSerialized& result, const Scanner scanner_id) {
+    scanner_get_cells_serialized(result, scanner_id);
+  }
 
 
-  virtual void next_row(ThriftCells &result, const Scanner scanner_id) {
+  virtual void scanner_get_row(ThriftCells &result, const Scanner scanner_id) {
 
     LOG_API_START("scanner="<< scanner_id <<" result.size="<< result.size());
     try {
@@ -694,9 +738,12 @@ public:
 
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
+  virtual void next_row(ThriftCells &result, const Scanner scanner_id) {
+    scanner_get_row(result, scanner_id);
+  }
 
   virtual void
-  next_row_as_arrays(ThriftCellsAsArrays &result, const Scanner scanner_id) {
+  scanner_get_row_as_arrays(ThriftCellsAsArrays &result, const Scanner scanner_id) {
 
     LOG_API_START("scanner="<< scanner_id);
     try {
@@ -705,9 +752,14 @@ public:
     } RETHROW(" result.size=" << result.size())
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
+  virtual void
+  next_row_as_arrays(ThriftCellsAsArrays &result, const Scanner scanner_id) {
+    scanner_get_row_as_arrays(result, scanner_id);
+  }
+
 
   virtual void
-  next_row_serialized(CellsSerialized& result, const Scanner scanner_id) {
+  scanner_get_row_serialized(CellsSerialized& result, const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
 
     try {
@@ -744,6 +796,11 @@ public:
     } RETHROW("scanner="<< scanner_id)
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
+  virtual void
+  next_row_serialized(CellsSerialized& result, const Scanner scanner_id) {
+    scanner_get_row_serialized(result, scanner_id);
+  }
+
 
   virtual void
   get_row(ThriftCells &result, const ThriftGen::Namespace ns, const String &table, const String &row) {
@@ -907,7 +964,7 @@ public:
     LOG_API_FINISH_E(" cell.size="<< cell.size());
   }
 
-  virtual ThriftGen::Future open_future(int queue_size) {
+  virtual ThriftGen::Future future_open(int queue_size) {
     ThriftGen::Future id;
     LOG_API_START("queue_size=" << queue_size);
     try {
@@ -918,9 +975,12 @@ public:
     LOG_API_FINISH_E(" future=" << id);
     return id;
   }
+  virtual ThriftGen::Future open_future(int queue_size) {
+    return future_open(queue_size);
+  }
 
   virtual void
-  get_future_result(ThriftGen::Result &tresult, ThriftGen::Future ff) {
+  future_get_result(ThriftGen::Result &tresult, ThriftGen::Future ff) {
 
     LOG_API_START("future=" << ff);
 
@@ -940,9 +1000,14 @@ public:
       }
     } RETHROW("future=" << ff)
   }
+  virtual void
+  get_future_result(ThriftGen::Result &tresult, ThriftGen::Future ff) {
+    future_get_result(tresult, ff);
+  }
+
 
   virtual void
-  get_future_result_as_arrays(ThriftGen::ResultAsArrays &tresult, ThriftGen::Future ff) {
+  future_get_result_as_arrays(ThriftGen::ResultAsArrays &tresult, ThriftGen::Future ff) {
 
     LOG_API_START("future=" << ff);
     try {
@@ -961,9 +1026,13 @@ public:
       }
     } RETHROW("future=" << ff)
   }
+  virtual void
+  get_future_result_as_arrays(ThriftGen::ResultAsArrays &tresult, ThriftGen::Future ff) {
+    future_get_result_as_arrays(tresult, ff);
+  }
 
   virtual void
-  get_future_result_serialized(ThriftGen::ResultSerialized &tresult, ThriftGen::Future ff) {
+  future_get_result_serialized(ThriftGen::ResultSerialized &tresult, ThriftGen::Future ff) {
 
     LOG_API_START("future=" << ff);
 
@@ -984,9 +1053,14 @@ public:
       }
     } RETHROW("future=" << ff)
   }
+  virtual void
+  get_future_result_serialized(ThriftGen::ResultSerialized &tresult, ThriftGen::Future ff) {
+    future_get_result_serialized(tresult, ff);
+  }
+
 
   virtual void
-  cancel_future(ThriftGen::Future ff) {
+  future_cancel(ThriftGen::Future ff) {
     LOG_API_START("future=" << ff);
 
     try {
@@ -994,6 +1068,10 @@ public:
       future_ptr->cancel();
     } RETHROW("future=" << ff)
     LOG_API_FINISH;
+  }
+  virtual void
+  cancel_future(ThriftGen::Future ff) {
+    future_cancel(ff);
   }
 
   virtual bool
@@ -1046,7 +1124,7 @@ public:
     return has_outstanding;
   }
 
-  virtual void close_future(const ThriftGen::Future ff) {
+  virtual void future_close(const ThriftGen::Future ff) {
 
     LOG_API_START("future="<< ff);
     try {
@@ -1054,8 +1132,11 @@ public:
     } RETHROW(" future=" << ff)
     LOG_API_FINISH;
   }
+  virtual void close_future(const ThriftGen::Future ff) {
+    future_close(ff);
+  }
 
-  virtual ThriftGen::Namespace open_namespace(const String &ns) {
+  virtual ThriftGen::Namespace namespace_open(const String &ns) {
     ThriftGen::Namespace id;
     LOG_API_START("namespace name=" << ns);
     try {
@@ -1066,8 +1147,12 @@ public:
     return id;
   }
 
+  virtual ThriftGen::Namespace open_namespace(const String &ns) {
+    return namespace_open(ns);
+  }
+
   virtual MutatorAsync
-  open_mutator_async(const ThriftGen::Namespace ns, const String &table,
+  async_mutator_open(const ThriftGen::Namespace ns, const String &table,
                      const ThriftGen::Future ff, ::int32_t flags) {
     LOG_API_START("namespace=" << ns << " table="<< table << " future=" << ff <<" flags="<< flags);
     MutatorAsync id;
@@ -1077,8 +1162,13 @@ public:
     LOG_API_FINISH_E(" mutator=" << id);
     return id;
   }
+  virtual MutatorAsync
+  open_mutator_async(const ThriftGen::Namespace ns, const String &table,
+                     const ThriftGen::Future ff, ::int32_t flags) {
+    return async_mutator_open(ns, table, ff, flags);
+  }
 
-  virtual Mutator open_mutator(const ThriftGen::Namespace ns, const String &table, ::int32_t flags,
+  virtual Mutator mutator_open(const ThriftGen::Namespace ns, const String &table, ::int32_t flags,
                                ::int32_t flush_interval) {
     LOG_API_START("namespace=" << ns << "table="<< table <<" flags="<< flags << " flush_interval="<< flush_interval);
     Mutator id;
@@ -1087,28 +1177,39 @@ public:
       TablePtr t = namespace_ptr->open_table(table);
       id =  get_mutator_id(t->create_mutator(0, flags, flush_interval));
     } RETHROW(" namespace=" << ns << "table="<< table <<" flags="<< flags << " flush_interval="<< flush_interval)
-    LOG_API_FINISH_E(" mutator_async=" << id);
+    LOG_API_FINISH_E(" async_mutator=" << id);
     return id;
   }
+  virtual Mutator open_mutator(const ThriftGen::Namespace ns, const String &table, ::int32_t flags,
+                               ::int32_t flush_interval) {
+    return mutator_open(ns, table, flags, flush_interval);
+  }
 
-  virtual void flush_mutator(const Mutator mutator) {
+
+  virtual void mutator_flush(const Mutator mutator) {
     LOG_API_START("mutator="<< mutator);
     try {
       get_mutator(mutator)->flush();
     } RETHROW(" mutator=" << mutator)
     LOG_API_FINISH_E(" done");
   }
+  virtual void flush_mutator(const Mutator mutator) {
+    mutator_flush(mutator);
+  }
 
-  virtual void flush_mutator_async(const MutatorAsync mutator) {
+  virtual void async_mutator_flush(const MutatorAsync mutator) {
     LOG_API_START("mutator="<< mutator);
     try {
       get_mutator_async(mutator)->flush();
     } RETHROW(" mutator=" << mutator)
     LOG_API_FINISH_E(" done");
   }
+  virtual void flush_mutator_async(const MutatorAsync mutator) {
+    async_mutator_flush(mutator);
+  }
 
 
-  virtual void close_mutator(const Mutator mutator) {
+  virtual void mutator_close(const Mutator mutator) {
 
     LOG_API_START("mutator="<< mutator);
     try {
@@ -1117,8 +1218,11 @@ public:
     } RETHROW(" mutator=" << mutator)
     LOG_API_FINISH;
   }
+  virtual void close_mutator(const Mutator mutator) {
+    mutator_close(mutator);
+  }
 
-  virtual void cancel_mutator_async(const MutatorAsync mutator) {
+  virtual void async_mutator_cancel(const MutatorAsync mutator) {
     LOG_API_START("mutator="<< mutator);
 
     try {
@@ -1127,8 +1231,11 @@ public:
 
     LOG_API_FINISH_E(" cancelled");
   }
+  virtual void cancel_mutator_async(const MutatorAsync mutator) {
+    async_mutator_cancel(mutator);
+  }
 
-  virtual void close_mutator_async(const MutatorAsync mutator) {
+  virtual void async_mutator_close(const MutatorAsync mutator) {
 
     LOG_API_START("mutator="<< mutator);
     try {
@@ -1137,8 +1244,11 @@ public:
     } RETHROW(" mutator" << mutator)
     LOG_API_FINISH;
   }
+  virtual void close_mutator_async(const MutatorAsync mutator) {
+    async_mutator_close(mutator);
+  }
 
-  virtual void set_cells(const Mutator mutator, const ThriftCells &cells) {
+  virtual void mutator_set_cells(const Mutator mutator, const ThriftCells &cells) {
 
     LOG_API_START("mutator="<< mutator <<" cell.size="<< cells.size());
     try {
@@ -1147,7 +1257,7 @@ public:
     LOG_API_FINISH;
   }
 
-  virtual void set_cell(const Mutator mutator, const ThriftGen::Cell &cell) {
+  virtual void mutator_set_cell(const Mutator mutator, const ThriftGen::Cell &cell) {
 
     LOG_API_START("mutator="<< mutator <<" cell="<< cell);
     try {
@@ -1157,7 +1267,7 @@ public:
   }
 
   virtual void
-  set_cells_as_arrays(const Mutator mutator, const ThriftCellsAsArrays &cells) {
+  mutator_set_cells_as_arrays(const Mutator mutator, const ThriftCellsAsArrays &cells) {
 
     LOG_API_START("mutator="<< mutator <<" cell.size="<< cells.size());
     try {
@@ -1167,7 +1277,7 @@ public:
   }
 
   virtual void
-  set_cell_as_array(const Mutator mutator, const CellAsArray &cell) {
+  mutator_set_cell_as_array(const Mutator mutator, const CellAsArray &cell) {
     // gcc 4.0.1 cannot seems to handle << cell here (see ThriftHelper.h)
 
     LOG_API_START("mutator="<< mutator <<" cell_as_array.size="<< cell.size());
@@ -1178,7 +1288,7 @@ public:
   }
 
   virtual void
-  set_cells_serialized(const Mutator mutator, const CellsSerialized &cells, const bool flush) {
+  mutator_set_cells_serialized(const Mutator mutator, const CellsSerialized &cells, const bool flush) {
 
     LOG_API_START("mutator="<< mutator <<" cell.size="<< cells.size());
     try {
@@ -1197,16 +1307,99 @@ public:
     LOG_API_FINISH;
   }
 
-  virtual void set_cells_async(const MutatorAsync mutator, const ThriftCells &cells) {
 
-    LOG_API_START("mutator="<< mutator <<" cell.size="<< cells.size());
+  virtual void set_cell(const ThriftGen::Namespace ns, const String& table,
+                        const ThriftGen::Cell &cell) {
+    LOG_API_START("ns="<< ns <<" table=" << table<<" cell="<< cell);
     try {
-      _set_cells_async(mutator, cells);
-    } RETHROW(" mutator="<< mutator <<" cell.size="<< cells.size())
+      TableMutatorPtr mutator = _open_mutator(ns, table);
+      CellsBuilder cb;
+      Hypertable::Cell hcell;
+      convert_cell(cell, hcell);
+      cb.add(hcell, false);
+      mutator->set_cells(cb.get());
+    } RETHROW(" ns="<< ns <<" table=" << table<<" cell="<< cell);
     LOG_API_FINISH;
   }
 
-  virtual void set_cell_async(const MutatorAsync mutator, const ThriftGen::Cell &cell) {
+  virtual void set_cells(const ThriftGen::Namespace ns, const String& table,
+                         const ThriftCells &cells) {
+    LOG_API_START("ns="<< ns <<" table=" << table<<" cell.size="<< cells.size());
+    try {
+      TableMutatorPtr mutator = _open_mutator(ns, table);
+      Hypertable::Cells hcells;
+      convert_cells(cells, hcells);
+      mutator->set_cells(hcells);
+    } RETHROW(" ns="<< ns <<" table=" << table<<" cell.size="<< cells.size());
+    LOG_API_FINISH;
+  }
+
+  virtual void
+  set_cells_as_arrays(const ThriftGen::Namespace ns, const String& table,
+                      const ThriftCellsAsArrays &cells) {
+    LOG_API_START("ns="<< ns <<" table=" << table<<" cell.size="<< cells.size());
+
+    try {
+      TableMutatorPtr mutator = _open_mutator(ns, table);
+      Hypertable::Cells hcells;      
+      convert_cells(cells, hcells);
+      mutator->set_cells(hcells);
+    } RETHROW(" ns="<< ns <<" table=" << table<<" cell.size="<< cells.size());
+    LOG_API_FINISH;
+  }
+
+  virtual void
+  set_cell_as_array(const ThriftGen::Namespace ns, const String& table,
+                    const CellAsArray &cell) {
+    // gcc 4.0.1 cannot seems to handle << cell here (see ThriftHelper.h)
+
+    LOG_API_START("ns="<< ns <<" table=" << table<<" cell_as_array.size="<< cell.size());
+    try {
+      TableMutatorPtr mutator = _open_mutator(ns, table);
+      CellsBuilder cb;
+      Hypertable::Cell hcell;
+      convert_cell(cell, hcell);
+      cb.add(hcell, false);
+      mutator->set_cells(cb.get());
+    } RETHROW(" ns="<< ns <<" table=" << table<<" cell_as_array.size="<< cell.size());
+    LOG_API_FINISH;
+  }
+
+  virtual void
+  set_cells_serialized(const ThriftGen::Namespace ns, const String& table,
+                       const CellsSerialized &cells, const bool flush) {
+
+    LOG_API_START("ns="<< ns <<" table=" << table<<" cell_serialized.size="<< cells.size()<<" flush="<<flush);
+    try {
+      TableMutatorPtr mutator = _open_mutator(ns, table);
+      CellsBuilder cb;
+      Hypertable::Cell hcell;
+      SerializedCellsReader reader((void *)cells.c_str(), (uint32_t)cells.length());
+      while (reader.next()) {
+        reader.get(hcell);
+        cb.add(hcell, false);
+      }
+      mutator->set_cells(cb.get());
+      if (flush || reader.flush())
+        mutator->flush();
+    } RETHROW(" ns="<< ns <<" table=" << table<<" cell_serialized.size="<< cells.size()<<" flush="<<flush);
+
+    LOG_API_FINISH;
+  }
+
+  virtual void async_mutator_set_cells(const MutatorAsync mutator, const ThriftCells &cells) {
+
+    LOG_API_START("mutator="<< mutator <<" cells.size="<< cells.size());
+    try {
+      _set_cells_async(mutator, cells);
+    } RETHROW(" mutator="<< mutator <<" cells.size="<< cells.size())
+    LOG_API_FINISH;
+  }
+  virtual void set_cells_async(const MutatorAsync mutator, const ThriftCells &cells) {
+    async_mutator_set_cells(mutator, cells);
+  }
+
+  virtual void async_mutator_set_cell(const MutatorAsync mutator, const ThriftGen::Cell &cell) {
 
     LOG_API_START("mutator="<< mutator <<" cell="<< cell);
     try {
@@ -1214,19 +1407,26 @@ public:
     } RETHROW(" mutator="<< mutator <<" cell="<< cell);
     LOG_API_FINISH;
   }
-
-  virtual void
-  set_cells_as_arrays_async(const MutatorAsync mutator, const ThriftCellsAsArrays &cells) {
-
-    LOG_API_START("mutator="<< mutator <<" cell.size="<< cells.size());
-    try {
-      _set_cells_async(mutator, cells);
-    } RETHROW(" mutator="<< mutator <<" cell.size="<< cells.size())
-    LOG_API_FINISH;
+  virtual void set_cell_async(const MutatorAsync mutator, const ThriftGen::Cell &cell) {
+    async_mutator_set_cell(mutator, cell);
   }
 
   virtual void
-  set_cell_as_array_async(const MutatorAsync mutator, const CellAsArray &cell) {
+  async_mutator_set_cells_as_arrays(const MutatorAsync mutator, const ThriftCellsAsArrays &cells) {
+
+    LOG_API_START("mutator="<< mutator <<" cells.size="<< cells.size());
+    try {
+      _set_cells_async(mutator, cells);
+    } RETHROW(" mutator="<< mutator <<" cells.size="<< cells.size())
+    LOG_API_FINISH;
+  }
+  virtual void
+  set_cells_as_arrays_async(const MutatorAsync mutator, const ThriftCellsAsArrays &cells) {
+    async_mutator_set_cells_as_arrays(mutator, cells);
+  }
+
+  virtual void
+  async_mutator_set_cell_as_array(const MutatorAsync mutator, const CellAsArray &cell) {
     // gcc 4.0.1 cannot seems to handle << cell here (see ThriftHelper.h)
     LOG_API_START("mutator="<< mutator <<" cell_as_array.size="<< cell.size());
     try {
@@ -1234,11 +1434,15 @@ public:
     } RETHROW(" mutator="<< mutator <<" cell_as_array.size="<< cell.size())
     LOG_API_FINISH;
   }
+  virtual void
+  set_cell_as_array_async(const MutatorAsync mutator, const CellAsArray &cell) {
+    async_mutator_set_cell_as_array(mutator, cell);
+  }
 
   virtual void
-  set_cells_serialized_async(const MutatorAsync mutator, const CellsSerialized &cells,
+  async_mutator_set_cells_serialized(const MutatorAsync mutator, const CellsSerialized &cells,
       const bool flush) {
-   LOG_API_START("mutator="<< mutator <<" cell.size="<< cells.size());
+   LOG_API_START("mutator="<< mutator <<" cells.size="<< cells.size());
     try {
       CellsBuilder cb;
       Hypertable::Cell hcell;
@@ -1252,11 +1456,17 @@ public:
       if (flush || reader.flush() || mutator_ptr->needs_flush())
         mutator_ptr->flush();
 
-    } RETHROW(" mutator="<< mutator <<" cell.size="<< cells.size());
+    } RETHROW(" mutator="<< mutator <<" cells.size="<< cells.size());
     LOG_API_FINISH;
   }
+  virtual void
+  set_cells_serialized_async(const MutatorAsync mutator, const CellsSerialized &cells,
+      const bool flush) {
+    async_mutator_set_cells_serialized(mutator, cells, flush);
+  }
 
-  virtual bool exists_namespace(const String &ns) {
+
+  virtual bool namespace_exists(const String &ns) {
     bool exists;
     LOG_API_START("namespace=" << ns);
     try {
@@ -1266,7 +1476,11 @@ public:
     return exists;
   }
 
-  virtual bool exists_table(const ThriftGen::Namespace ns, const String &table) {
+  virtual bool exists_namespace(const String &ns) {
+    return namespace_exists(ns);
+  }
+
+  virtual bool table_exists(const ThriftGen::Namespace ns, const String &table) {
 
     LOG_API_START("namespace=" << ns << " table="<< table);
     bool exists;
@@ -1277,8 +1491,11 @@ public:
     LOG_API_FINISH_E(" exists=" << exists);
     return exists;
   }
+  virtual bool exists_table(const ThriftGen::Namespace ns, const String &table) {
+    return table_exists(ns, table);
+  }
 
-  virtual void get_table_id(String &result, const ThriftGen::Namespace ns, const String &table) {
+  virtual void table_get_id(String &result, const ThriftGen::Namespace ns, const String &table) {
 
     LOG_API_START("namespace=" << ns << " table="<< table);
     try {
@@ -1287,8 +1504,11 @@ public:
     } RETHROW(" namespace=" << ns << " table="<< table)
     LOG_API_FINISH_E(" id=" << result);
   }
+  virtual void get_table_id(String &result, const ThriftGen::Namespace ns, const String &table) {
+    table_get_id(result, ns, table);
+  }
 
-  virtual void get_schema_str(String &result, const ThriftGen::Namespace ns, const String &table) {
+  virtual void table_get_schema_str(String &result, const ThriftGen::Namespace ns, const String &table) {
 
     LOG_API_START("namespace=" << ns << " table="<< table);
     try {
@@ -1297,8 +1517,11 @@ public:
     } RETHROW(" namespace=" << ns << " table="<< table)
     LOG_API_FINISH_E(" schema=" << result);
   }
+  virtual void get_schema_str(String &result, const ThriftGen::Namespace ns, const String &table) {
+    table_get_schema_str(result, ns, table);
+  }
 
-  virtual void get_schema_str_with_ids(String &result, const ThriftGen::Namespace ns,
+  virtual void table_get_schema_str_with_ids(String &result, const ThriftGen::Namespace ns,
       const String &table) {
 
     LOG_API_START("namespace=" << ns << " table="<< table);
@@ -1308,9 +1531,12 @@ public:
     } RETHROW(" namespace=" << ns << " table="<< table)
     LOG_API_FINISH_E(" schema=" << result);
   }
+  virtual void get_schema_str_with_ids(String &result, const ThriftGen::Namespace ns,
+      const String &table) {
+    table_get_schema_str_with_ids(result, ns, table);
+  }
 
-
-  virtual void get_schema(ThriftGen::Schema &result, const ThriftGen::Namespace ns, const String &table) {
+  virtual void table_get_schema(ThriftGen::Schema &result, const ThriftGen::Namespace ns, const String &table) {
 
     LOG_API_START("namespace=" << ns << " table="<< table);
     try {
@@ -1358,6 +1584,10 @@ public:
     } RETHROW(" namespace=" << ns << " table="<< table)
     LOG_API_FINISH;
   }
+  virtual void get_schema(ThriftGen::Schema &result, const ThriftGen::Namespace ns, const String &table) {
+    table_get_schema(result, ns, table);
+  }
+
 
   virtual void get_tables(std::vector<String> &tables, const ThriftGen::Namespace ns) {
     LOG_API_START("namespace=" << ns);
@@ -1375,7 +1605,7 @@ public:
     LOG_API_FINISH_E(" tables.size=" << tables.size());
   }
 
-  virtual void get_listing(std::vector<ThriftGen::NamespaceListing>& _return, const ThriftGen::Namespace ns) {
+  virtual void namespace_get_listing(std::vector<ThriftGen::NamespaceListing>& _return, const ThriftGen::Namespace ns) {
 
     LOG_API_START("namespace=" << ns);
     try {
@@ -1394,7 +1624,11 @@ public:
 
     LOG_API_FINISH_E(" listing.size="<< _return.size());
   }
-  virtual void get_table_splits(std::vector<ThriftGen::TableSplit> & _return, const ThriftGen::Namespace ns,  const String &table) {
+  virtual void get_listing(std::vector<ThriftGen::NamespaceListing>& _return, const ThriftGen::Namespace ns) {
+    namespace_get_listing(_return, ns);
+  }
+
+  virtual void table_get_splits(std::vector<ThriftGen::TableSplit> & _return, const ThriftGen::Namespace ns,  const String &table) {
 
     TableSplitsContainer splits;
     LOG_API_START("namespace=" << ns << " table="<< table<< " splits.size="<< _return.size());
@@ -1411,8 +1645,12 @@ public:
 
     LOG_API_FINISH_E(" splits.size=" << splits.size());
   }
+  virtual void get_table_splits(std::vector<ThriftGen::TableSplit> & _return, const ThriftGen::Namespace ns,  const String &table) {
+    table_get_splits(_return, ns, table);
+  }
 
-  virtual void drop_namespace(const String &ns, const bool if_exists) {
+
+  virtual void namespace_drop(const String &ns, const bool if_exists) {
 
     LOG_API_START("namespace=" << ns << " if_exists="<< if_exists);
     try {
@@ -1422,7 +1660,11 @@ public:
     LOG_API_FINISH;
   }
 
-  virtual void rename_table(const ThriftGen::Namespace ns, const String &table,
+  virtual void drop_namespace(const String &ns, const bool if_exists) {
+    namespace_drop(ns, if_exists);
+  }
+
+  virtual void table_rename(const ThriftGen::Namespace ns, const String &table,
                             const String &new_table_name) {
     LOG_API_START("namespace=" << ns << " table="<< table << " new_table_name=" << new_table_name << " done");
 
@@ -1433,8 +1675,12 @@ public:
     RETHROW(" namespace=" << ns << " table="<< table << " new_table_name=" << new_table_name << " done")
     LOG_API_FINISH;
   }
+  virtual void rename_table(const ThriftGen::Namespace ns, const String &table,
+                            const String &new_table_name) {
+    table_rename(ns, table, new_table_name);
+  }
 
-  virtual void drop_table(const ThriftGen::Namespace ns, const String &table, const bool if_exists) {
+  virtual void table_drop(const ThriftGen::Namespace ns, const String &table, const bool if_exists) {
     LOG_API_START("namespace=" << ns << " table="<< table <<" if_exists="<< if_exists);
     try {
       NamespacePtr namespace_ptr = get_namespace(ns);
@@ -1442,6 +1688,9 @@ public:
     }
     RETHROW("namespace=" << ns << " table="<< table <<" if_exists="<< if_exists)
     LOG_API_FINISH;
+  }
+  virtual void drop_table(const ThriftGen::Namespace ns, const String &table, const bool if_exists) {
+    table_drop(ns, table, if_exists);
   }
 
   virtual void generate_guid(std::string& _return) {
@@ -1586,6 +1835,13 @@ public:
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
     return t->create_scanner(hss, 0);
+  }
+
+  TableMutatorPtr
+  _open_mutator(const ThriftGen::Namespace ns, const String &table) {
+    NamespacePtr namespace_ptr = get_namespace(ns);
+    TablePtr t = namespace_ptr->open_table(table);
+    return t->create_mutator();
   }
 
   template <class CellT>

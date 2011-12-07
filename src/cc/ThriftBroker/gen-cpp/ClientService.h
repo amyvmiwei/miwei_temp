@@ -14,31 +14,53 @@ namespace Hypertable { namespace ThriftGen {
 class ClientServiceIf {
  public:
   virtual ~ClientServiceIf() {}
+  virtual void namespace_create(const std::string& ns) = 0;
   virtual void create_namespace(const std::string& ns) = 0;
   virtual void create_table(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
+  virtual void table_create(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
   virtual void alter_table(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
+  virtual void table_alter(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
+  virtual Namespace namespace_open(const std::string& ns) = 0;
   virtual Namespace open_namespace(const std::string& ns) = 0;
+  virtual void namespace_close(const Namespace ns) = 0;
   virtual void close_namespace(const Namespace ns) = 0;
+  virtual Future future_open(const int32_t queue_size) = 0;
   virtual Future open_future(const int32_t queue_size) = 0;
+  virtual void future_cancel(const Future ff) = 0;
   virtual void cancel_future(const Future ff) = 0;
+  virtual void future_get_result(Result& _return, const Future ff) = 0;
   virtual void get_future_result(Result& _return, const Future ff) = 0;
+  virtual void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff) = 0;
   virtual void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) = 0;
+  virtual void future_get_result_serialized(ResultSerialized& _return, const Future ff) = 0;
   virtual void get_future_result_serialized(ResultSerialized& _return, const Future ff) = 0;
   virtual bool future_is_empty(const Future ff) = 0;
   virtual bool future_is_full(const Future ff) = 0;
   virtual bool future_is_cancelled(const Future ff) = 0;
   virtual bool future_has_outstanding(const Future ff) = 0;
+  virtual void future_close(const Future ff) = 0;
   virtual void close_future(const Future ff) = 0;
+  virtual Scanner scanner_open(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) = 0;
   virtual Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) = 0;
+  virtual ScannerAsync async_scanner_open(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec) = 0;
   virtual ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec) = 0;
+  virtual void scanner_close(const Scanner scanner) = 0;
   virtual void close_scanner(const Scanner scanner) = 0;
+  virtual void async_scanner_cancel(const ScannerAsync scanner) = 0;
   virtual void cancel_scanner_async(const ScannerAsync scanner) = 0;
+  virtual void async_scanner_close(const ScannerAsync scanner) = 0;
   virtual void close_scanner_async(const ScannerAsync scanner) = 0;
+  virtual void scanner_get_cells(std::vector<Cell> & _return, const Scanner scanner) = 0;
   virtual void next_cells(std::vector<Cell> & _return, const Scanner scanner) = 0;
+  virtual void scanner_get_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
   virtual void next_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
+  virtual void scanner_get_cells_serialized(CellsSerialized& _return, const Scanner scanner) = 0;
   virtual void next_cells_serialized(CellsSerialized& _return, const Scanner scanner) = 0;
+  virtual void scanner_get_row(std::vector<Cell> & _return, const Scanner scanner) = 0;
   virtual void next_row(std::vector<Cell> & _return, const Scanner scanner) = 0;
+  virtual void scanner_get_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
   virtual void next_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) = 0;
+  virtual void scanner_get_row_serialized(CellsSerialized& _return, const Scanner scanner) = 0;
   virtual void next_row_serialized(CellsSerialized& _return, const Scanner scanner) = 0;
   virtual void get_row(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const std::string& row) = 0;
   virtual void get_row_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const std::string& row) = 0;
@@ -52,35 +74,63 @@ class ClientServiceIf {
   virtual void offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) = 0;
   virtual void offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) = 0;
   virtual void offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) = 0;
+  virtual Mutator mutator_open(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) = 0;
   virtual Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) = 0;
+  virtual MutatorAsync async_mutator_open(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags) = 0;
   virtual MutatorAsync open_mutator_async(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags) = 0;
+  virtual void mutator_close(const Mutator mutator) = 0;
   virtual void close_mutator(const Mutator mutator) = 0;
+  virtual void async_mutator_cancel(const MutatorAsync mutator) = 0;
   virtual void cancel_mutator_async(const MutatorAsync mutator) = 0;
+  virtual void async_mutator_close(const MutatorAsync mutator) = 0;
   virtual void close_mutator_async(const MutatorAsync mutator) = 0;
-  virtual void set_cell(const Mutator mutator, const Cell& cell) = 0;
-  virtual void set_cell_as_array(const Mutator mutator, const CellAsArray& cell) = 0;
-  virtual void set_cells(const Mutator mutator, const std::vector<Cell> & cells) = 0;
-  virtual void set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells) = 0;
-  virtual void set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush) = 0;
+  virtual void mutator_set_cell(const Mutator mutator, const Cell& cell) = 0;
+  virtual void set_cell(const Namespace ns, const std::string& table_name, const Cell& cell) = 0;
+  virtual void mutator_set_cell_as_array(const Mutator mutator, const CellAsArray& cell) = 0;
+  virtual void set_cell_as_array(const Namespace ns, const std::string& table_name, const CellAsArray& cell) = 0;
+  virtual void mutator_set_cells(const Mutator mutator, const std::vector<Cell> & cells) = 0;
+  virtual void set_cells(const Namespace ns, const std::string& table_name, const std::vector<Cell> & cells) = 0;
+  virtual void mutator_set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells) = 0;
+  virtual void set_cells_as_arrays(const Namespace ns, const std::string& table_name, const std::vector<CellAsArray> & cells) = 0;
+  virtual void mutator_set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush) = 0;
+  virtual void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush) = 0;
+  virtual void mutator_flush(const Mutator mutator) = 0;
   virtual void flush_mutator(const Mutator mutator) = 0;
+  virtual void async_mutator_set_cell(const MutatorAsync mutator, const Cell& cell) = 0;
   virtual void set_cell_async(const MutatorAsync mutator, const Cell& cell) = 0;
+  virtual void async_mutator_set_cell_as_array(const MutatorAsync mutator, const CellAsArray& cell) = 0;
   virtual void set_cell_as_array_async(const MutatorAsync mutator, const CellAsArray& cell) = 0;
+  virtual void async_mutator_set_cells(const MutatorAsync mutator, const std::vector<Cell> & cells) = 0;
   virtual void set_cells_async(const MutatorAsync mutator, const std::vector<Cell> & cells) = 0;
+  virtual void async_mutator_set_cells_as_arrays(const MutatorAsync mutator, const std::vector<CellAsArray> & cells) = 0;
   virtual void set_cells_as_arrays_async(const MutatorAsync mutator, const std::vector<CellAsArray> & cells) = 0;
+  virtual void async_mutator_set_cells_serialized(const MutatorAsync mutator, const CellsSerialized& cells, const bool flush) = 0;
   virtual void set_cells_serialized_async(const MutatorAsync mutator, const CellsSerialized& cells, const bool flush) = 0;
+  virtual void async_mutator_flush(const MutatorAsync mutator) = 0;
   virtual void flush_mutator_async(const MutatorAsync mutator) = 0;
+  virtual bool namespace_exists(const std::string& ns) = 0;
   virtual bool exists_namespace(const std::string& ns) = 0;
   virtual bool exists_table(const Namespace ns, const std::string& name) = 0;
+  virtual bool table_exists(const Namespace ns, const std::string& name) = 0;
+  virtual void table_get_id(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void get_table_id(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
+  virtual void table_get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
+  virtual void table_get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name) = 0;
+  virtual void table_get_schema(Schema& _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void get_schema(Schema& _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void get_tables(std::vector<std::string> & _return, const Namespace ns) = 0;
+  virtual void namespace_get_listing(std::vector<NamespaceListing> & _return, const Namespace ns) = 0;
   virtual void get_listing(std::vector<NamespaceListing> & _return, const Namespace ns) = 0;
+  virtual void table_get_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name) = 0;
   virtual void get_table_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name) = 0;
+  virtual void namespace_drop(const std::string& ns, const bool if_exists) = 0;
   virtual void drop_namespace(const std::string& ns, const bool if_exists) = 0;
   virtual void rename_table(const Namespace ns, const std::string& name, const std::string& new_name) = 0;
+  virtual void table_rename(const Namespace ns, const std::string& name, const std::string& new_name) = 0;
   virtual void drop_table(const Namespace ns, const std::string& name, const bool if_exists) = 0;
+  virtual void table_drop(const Namespace ns, const std::string& name, const bool if_exists) = 0;
   virtual void generate_guid(std::string& _return) = 0;
   virtual void create_cell_unique(std::string& _return, const Namespace ns, const std::string& table_name, const Key& key, const std::string& value) = 0;
 };
@@ -88,33 +138,65 @@ class ClientServiceIf {
 class ClientServiceNull : virtual public ClientServiceIf {
  public:
   virtual ~ClientServiceNull() {}
+  void namespace_create(const std::string& /* ns */) {
+    return;
+  }
   void create_namespace(const std::string& /* ns */) {
     return;
   }
   void create_table(const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* schema */) {
     return;
   }
+  void table_create(const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* schema */) {
+    return;
+  }
   void alter_table(const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* schema */) {
     return;
+  }
+  void table_alter(const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* schema */) {
+    return;
+  }
+  Namespace namespace_open(const std::string& /* ns */) {
+    Namespace _return = 0;
+    return _return;
   }
   Namespace open_namespace(const std::string& /* ns */) {
     Namespace _return = 0;
     return _return;
   }
+  void namespace_close(const Namespace /* ns */) {
+    return;
+  }
   void close_namespace(const Namespace /* ns */) {
     return;
+  }
+  Future future_open(const int32_t /* queue_size */) {
+    Future _return = 0;
+    return _return;
   }
   Future open_future(const int32_t /* queue_size */) {
     Future _return = 0;
     return _return;
   }
+  void future_cancel(const Future /* ff */) {
+    return;
+  }
   void cancel_future(const Future /* ff */) {
+    return;
+  }
+  void future_get_result(Result& /* _return */, const Future /* ff */) {
     return;
   }
   void get_future_result(Result& /* _return */, const Future /* ff */) {
     return;
   }
+  void future_get_result_as_arrays(ResultAsArrays& /* _return */, const Future /* ff */) {
+    return;
+  }
   void get_future_result_as_arrays(ResultAsArrays& /* _return */, const Future /* ff */) {
+    return;
+  }
+  void future_get_result_serialized(ResultSerialized& /* _return */, const Future /* ff */) {
     return;
   }
   void get_future_result_serialized(ResultSerialized& /* _return */, const Future /* ff */) {
@@ -136,39 +218,77 @@ class ClientServiceNull : virtual public ClientServiceIf {
     bool _return = false;
     return _return;
   }
+  void future_close(const Future /* ff */) {
+    return;
+  }
   void close_future(const Future /* ff */) {
     return;
   }
+  Scanner scanner_open(const Namespace /* ns */, const std::string& /* table_name */, const ScanSpec& /* scan_spec */) {
+    Scanner _return = 0;
+    return _return;
+  }
   Scanner open_scanner(const Namespace /* ns */, const std::string& /* table_name */, const ScanSpec& /* scan_spec */) {
     Scanner _return = 0;
+    return _return;
+  }
+  ScannerAsync async_scanner_open(const Namespace /* ns */, const std::string& /* table_name */, const Future /* future */, const ScanSpec& /* scan_spec */) {
+    ScannerAsync _return = 0;
     return _return;
   }
   ScannerAsync open_scanner_async(const Namespace /* ns */, const std::string& /* table_name */, const Future /* future */, const ScanSpec& /* scan_spec */) {
     ScannerAsync _return = 0;
     return _return;
   }
+  void scanner_close(const Scanner /* scanner */) {
+    return;
+  }
   void close_scanner(const Scanner /* scanner */) {
+    return;
+  }
+  void async_scanner_cancel(const ScannerAsync /* scanner */) {
     return;
   }
   void cancel_scanner_async(const ScannerAsync /* scanner */) {
     return;
   }
+  void async_scanner_close(const ScannerAsync /* scanner */) {
+    return;
+  }
   void close_scanner_async(const ScannerAsync /* scanner */) {
+    return;
+  }
+  void scanner_get_cells(std::vector<Cell> & /* _return */, const Scanner /* scanner */) {
     return;
   }
   void next_cells(std::vector<Cell> & /* _return */, const Scanner /* scanner */) {
     return;
   }
+  void scanner_get_cells_as_arrays(std::vector<CellAsArray> & /* _return */, const Scanner /* scanner */) {
+    return;
+  }
   void next_cells_as_arrays(std::vector<CellAsArray> & /* _return */, const Scanner /* scanner */) {
+    return;
+  }
+  void scanner_get_cells_serialized(CellsSerialized& /* _return */, const Scanner /* scanner */) {
     return;
   }
   void next_cells_serialized(CellsSerialized& /* _return */, const Scanner /* scanner */) {
     return;
   }
+  void scanner_get_row(std::vector<Cell> & /* _return */, const Scanner /* scanner */) {
+    return;
+  }
   void next_row(std::vector<Cell> & /* _return */, const Scanner /* scanner */) {
     return;
   }
+  void scanner_get_row_as_arrays(std::vector<CellAsArray> & /* _return */, const Scanner /* scanner */) {
+    return;
+  }
   void next_row_as_arrays(std::vector<CellAsArray> & /* _return */, const Scanner /* scanner */) {
+    return;
+  }
+  void scanner_get_row_serialized(CellsSerialized& /* _return */, const Scanner /* scanner */) {
     return;
   }
   void next_row_serialized(CellsSerialized& /* _return */, const Scanner /* scanner */) {
@@ -210,58 +330,115 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void offer_cell_as_array(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const CellAsArray& /* cell */) {
     return;
   }
+  Mutator mutator_open(const Namespace /* ns */, const std::string& /* table_name */, const int32_t /* flags */, const int32_t /* flush_interval */) {
+    Mutator _return = 0;
+    return _return;
+  }
   Mutator open_mutator(const Namespace /* ns */, const std::string& /* table_name */, const int32_t /* flags */, const int32_t /* flush_interval */) {
     Mutator _return = 0;
+    return _return;
+  }
+  MutatorAsync async_mutator_open(const Namespace /* ns */, const std::string& /* table_name */, const Future /* future */, const int32_t /* flags */) {
+    MutatorAsync _return = 0;
     return _return;
   }
   MutatorAsync open_mutator_async(const Namespace /* ns */, const std::string& /* table_name */, const Future /* future */, const int32_t /* flags */) {
     MutatorAsync _return = 0;
     return _return;
   }
+  void mutator_close(const Mutator /* mutator */) {
+    return;
+  }
   void close_mutator(const Mutator /* mutator */) {
+    return;
+  }
+  void async_mutator_cancel(const MutatorAsync /* mutator */) {
     return;
   }
   void cancel_mutator_async(const MutatorAsync /* mutator */) {
     return;
   }
+  void async_mutator_close(const MutatorAsync /* mutator */) {
+    return;
+  }
   void close_mutator_async(const MutatorAsync /* mutator */) {
     return;
   }
-  void set_cell(const Mutator /* mutator */, const Cell& /* cell */) {
+  void mutator_set_cell(const Mutator /* mutator */, const Cell& /* cell */) {
     return;
   }
-  void set_cell_as_array(const Mutator /* mutator */, const CellAsArray& /* cell */) {
+  void set_cell(const Namespace /* ns */, const std::string& /* table_name */, const Cell& /* cell */) {
     return;
   }
-  void set_cells(const Mutator /* mutator */, const std::vector<Cell> & /* cells */) {
+  void mutator_set_cell_as_array(const Mutator /* mutator */, const CellAsArray& /* cell */) {
     return;
   }
-  void set_cells_as_arrays(const Mutator /* mutator */, const std::vector<CellAsArray> & /* cells */) {
+  void set_cell_as_array(const Namespace /* ns */, const std::string& /* table_name */, const CellAsArray& /* cell */) {
     return;
   }
-  void set_cells_serialized(const Mutator /* mutator */, const CellsSerialized& /* cells */, const bool /* flush */) {
+  void mutator_set_cells(const Mutator /* mutator */, const std::vector<Cell> & /* cells */) {
+    return;
+  }
+  void set_cells(const Namespace /* ns */, const std::string& /* table_name */, const std::vector<Cell> & /* cells */) {
+    return;
+  }
+  void mutator_set_cells_as_arrays(const Mutator /* mutator */, const std::vector<CellAsArray> & /* cells */) {
+    return;
+  }
+  void set_cells_as_arrays(const Namespace /* ns */, const std::string& /* table_name */, const std::vector<CellAsArray> & /* cells */) {
+    return;
+  }
+  void mutator_set_cells_serialized(const Mutator /* mutator */, const CellsSerialized& /* cells */, const bool /* flush */) {
+    return;
+  }
+  void set_cells_serialized(const Namespace /* ns */, const std::string& /* table_name */, const CellsSerialized& /* cells */, const bool /* flush */) {
+    return;
+  }
+  void mutator_flush(const Mutator /* mutator */) {
     return;
   }
   void flush_mutator(const Mutator /* mutator */) {
     return;
   }
+  void async_mutator_set_cell(const MutatorAsync /* mutator */, const Cell& /* cell */) {
+    return;
+  }
   void set_cell_async(const MutatorAsync /* mutator */, const Cell& /* cell */) {
+    return;
+  }
+  void async_mutator_set_cell_as_array(const MutatorAsync /* mutator */, const CellAsArray& /* cell */) {
     return;
   }
   void set_cell_as_array_async(const MutatorAsync /* mutator */, const CellAsArray& /* cell */) {
     return;
   }
+  void async_mutator_set_cells(const MutatorAsync /* mutator */, const std::vector<Cell> & /* cells */) {
+    return;
+  }
   void set_cells_async(const MutatorAsync /* mutator */, const std::vector<Cell> & /* cells */) {
+    return;
+  }
+  void async_mutator_set_cells_as_arrays(const MutatorAsync /* mutator */, const std::vector<CellAsArray> & /* cells */) {
     return;
   }
   void set_cells_as_arrays_async(const MutatorAsync /* mutator */, const std::vector<CellAsArray> & /* cells */) {
     return;
   }
+  void async_mutator_set_cells_serialized(const MutatorAsync /* mutator */, const CellsSerialized& /* cells */, const bool /* flush */) {
+    return;
+  }
   void set_cells_serialized_async(const MutatorAsync /* mutator */, const CellsSerialized& /* cells */, const bool /* flush */) {
+    return;
+  }
+  void async_mutator_flush(const MutatorAsync /* mutator */) {
     return;
   }
   void flush_mutator_async(const MutatorAsync /* mutator */) {
     return;
+  }
+  bool namespace_exists(const std::string& /* ns */) {
+    bool _return = false;
+    return _return;
   }
   bool exists_namespace(const std::string& /* ns */) {
     bool _return = false;
@@ -271,13 +448,29 @@ class ClientServiceNull : virtual public ClientServiceIf {
     bool _return = false;
     return _return;
   }
+  bool table_exists(const Namespace /* ns */, const std::string& /* name */) {
+    bool _return = false;
+    return _return;
+  }
+  void table_get_id(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
+    return;
+  }
   void get_table_id(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
+    return;
+  }
+  void table_get_schema_str(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
     return;
   }
   void get_schema_str(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
     return;
   }
+  void table_get_schema_str_with_ids(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
+    return;
+  }
   void get_schema_str_with_ids(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
+    return;
+  }
+  void table_get_schema(Schema& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
     return;
   }
   void get_schema(Schema& /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
@@ -286,10 +479,19 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void get_tables(std::vector<std::string> & /* _return */, const Namespace /* ns */) {
     return;
   }
+  void namespace_get_listing(std::vector<NamespaceListing> & /* _return */, const Namespace /* ns */) {
+    return;
+  }
   void get_listing(std::vector<NamespaceListing> & /* _return */, const Namespace /* ns */) {
     return;
   }
+  void table_get_splits(std::vector<TableSplit> & /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
+    return;
+  }
   void get_table_splits(std::vector<TableSplit> & /* _return */, const Namespace /* ns */, const std::string& /* table_name */) {
+    return;
+  }
+  void namespace_drop(const std::string& /* ns */, const bool /* if_exists */) {
     return;
   }
   void drop_namespace(const std::string& /* ns */, const bool /* if_exists */) {
@@ -298,7 +500,13 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void rename_table(const Namespace /* ns */, const std::string& /* name */, const std::string& /* new_name */) {
     return;
   }
+  void table_rename(const Namespace /* ns */, const std::string& /* name */, const std::string& /* new_name */) {
+    return;
+  }
   void drop_table(const Namespace /* ns */, const std::string& /* name */, const bool /* if_exists */) {
+    return;
+  }
+  void table_drop(const Namespace /* ns */, const std::string& /* name */, const bool /* if_exists */) {
     return;
   }
   void generate_guid(std::string& /* _return */) {
@@ -307,6 +515,114 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void create_cell_unique(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */, const Key& /* key */, const std::string& /* value */) {
     return;
   }
+};
+
+typedef struct _ClientService_namespace_create_args__isset {
+  _ClientService_namespace_create_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_namespace_create_args__isset;
+
+class ClientService_namespace_create_args {
+ public:
+
+  ClientService_namespace_create_args() : ns("") {
+  }
+
+  virtual ~ClientService_namespace_create_args() throw() {}
+
+  std::string ns;
+
+  _ClientService_namespace_create_args__isset __isset;
+
+  void __set_ns(const std::string& val) {
+    ns = val;
+  }
+
+  bool operator == (const ClientService_namespace_create_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_create_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_create_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_namespace_create_pargs {
+ public:
+
+
+  virtual ~ClientService_namespace_create_pargs() throw() {}
+
+  const std::string* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_create_result__isset {
+  _ClientService_namespace_create_result__isset() : e(false) {}
+  bool e;
+} _ClientService_namespace_create_result__isset;
+
+class ClientService_namespace_create_result {
+ public:
+
+  ClientService_namespace_create_result() {
+  }
+
+  virtual ~ClientService_namespace_create_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_namespace_create_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_namespace_create_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_create_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_create_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_create_presult__isset {
+  _ClientService_namespace_create_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_namespace_create_presult__isset;
+
+class ClientService_namespace_create_presult {
+ public:
+
+
+  virtual ~ClientService_namespace_create_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_namespace_create_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
 };
 
 typedef struct _ClientService_create_namespace_args__isset {
@@ -543,6 +859,132 @@ class ClientService_create_table_presult {
 
 };
 
+typedef struct _ClientService_table_create_args__isset {
+  _ClientService_table_create_args__isset() : ns(false), table_name(false), schema(false) {}
+  bool ns;
+  bool table_name;
+  bool schema;
+} _ClientService_table_create_args__isset;
+
+class ClientService_table_create_args {
+ public:
+
+  ClientService_table_create_args() : ns(0), table_name(""), schema("") {
+  }
+
+  virtual ~ClientService_table_create_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  std::string schema;
+
+  _ClientService_table_create_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_schema(const std::string& val) {
+    schema = val;
+  }
+
+  bool operator == (const ClientService_table_create_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(schema == rhs.schema))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_create_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_create_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_create_pargs {
+ public:
+
+
+  virtual ~ClientService_table_create_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const std::string* schema;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_create_result__isset {
+  _ClientService_table_create_result__isset() : e(false) {}
+  bool e;
+} _ClientService_table_create_result__isset;
+
+class ClientService_table_create_result {
+ public:
+
+  ClientService_table_create_result() {
+  }
+
+  virtual ~ClientService_table_create_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_table_create_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_create_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_create_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_create_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_create_presult__isset {
+  _ClientService_table_create_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_table_create_presult__isset;
+
+class ClientService_table_create_presult {
+ public:
+
+
+  virtual ~ClientService_table_create_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_table_create_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_alter_table_args__isset {
   _ClientService_alter_table_args__isset() : ns(false), table_name(false), schema(false) {}
   bool ns;
@@ -669,6 +1111,250 @@ class ClientService_alter_table_presult {
 
 };
 
+typedef struct _ClientService_table_alter_args__isset {
+  _ClientService_table_alter_args__isset() : ns(false), table_name(false), schema(false) {}
+  bool ns;
+  bool table_name;
+  bool schema;
+} _ClientService_table_alter_args__isset;
+
+class ClientService_table_alter_args {
+ public:
+
+  ClientService_table_alter_args() : ns(0), table_name(""), schema("") {
+  }
+
+  virtual ~ClientService_table_alter_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  std::string schema;
+
+  _ClientService_table_alter_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_schema(const std::string& val) {
+    schema = val;
+  }
+
+  bool operator == (const ClientService_table_alter_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(schema == rhs.schema))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_alter_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_alter_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_alter_pargs {
+ public:
+
+
+  virtual ~ClientService_table_alter_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const std::string* schema;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_alter_result__isset {
+  _ClientService_table_alter_result__isset() : e(false) {}
+  bool e;
+} _ClientService_table_alter_result__isset;
+
+class ClientService_table_alter_result {
+ public:
+
+  ClientService_table_alter_result() {
+  }
+
+  virtual ~ClientService_table_alter_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_table_alter_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_alter_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_alter_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_alter_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_alter_presult__isset {
+  _ClientService_table_alter_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_table_alter_presult__isset;
+
+class ClientService_table_alter_presult {
+ public:
+
+
+  virtual ~ClientService_table_alter_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_table_alter_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_namespace_open_args__isset {
+  _ClientService_namespace_open_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_namespace_open_args__isset;
+
+class ClientService_namespace_open_args {
+ public:
+
+  ClientService_namespace_open_args() : ns("") {
+  }
+
+  virtual ~ClientService_namespace_open_args() throw() {}
+
+  std::string ns;
+
+  _ClientService_namespace_open_args__isset __isset;
+
+  void __set_ns(const std::string& val) {
+    ns = val;
+  }
+
+  bool operator == (const ClientService_namespace_open_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_open_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_open_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_namespace_open_pargs {
+ public:
+
+
+  virtual ~ClientService_namespace_open_pargs() throw() {}
+
+  const std::string* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_open_result__isset {
+  _ClientService_namespace_open_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_namespace_open_result__isset;
+
+class ClientService_namespace_open_result {
+ public:
+
+  ClientService_namespace_open_result() : success(0) {
+  }
+
+  virtual ~ClientService_namespace_open_result() throw() {}
+
+  Namespace success;
+  ClientException e;
+
+  _ClientService_namespace_open_result__isset __isset;
+
+  void __set_success(const Namespace val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_namespace_open_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_open_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_open_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_open_presult__isset {
+  _ClientService_namespace_open_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_namespace_open_presult__isset;
+
+class ClientService_namespace_open_presult {
+ public:
+
+
+  virtual ~ClientService_namespace_open_presult() throw() {}
+
+  Namespace* success;
+  ClientException e;
+
+  _ClientService_namespace_open_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_open_namespace_args__isset {
   _ClientService_open_namespace_args__isset() : ns(false) {}
   bool ns;
@@ -787,6 +1473,114 @@ class ClientService_open_namespace_presult {
 
 };
 
+typedef struct _ClientService_namespace_close_args__isset {
+  _ClientService_namespace_close_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_namespace_close_args__isset;
+
+class ClientService_namespace_close_args {
+ public:
+
+  ClientService_namespace_close_args() : ns(0) {
+  }
+
+  virtual ~ClientService_namespace_close_args() throw() {}
+
+  Namespace ns;
+
+  _ClientService_namespace_close_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  bool operator == (const ClientService_namespace_close_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_close_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_close_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_namespace_close_pargs {
+ public:
+
+
+  virtual ~ClientService_namespace_close_pargs() throw() {}
+
+  const Namespace* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_close_result__isset {
+  _ClientService_namespace_close_result__isset() : e(false) {}
+  bool e;
+} _ClientService_namespace_close_result__isset;
+
+class ClientService_namespace_close_result {
+ public:
+
+  ClientService_namespace_close_result() {
+  }
+
+  virtual ~ClientService_namespace_close_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_namespace_close_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_namespace_close_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_close_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_close_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_close_presult__isset {
+  _ClientService_namespace_close_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_namespace_close_presult__isset;
+
+class ClientService_namespace_close_presult {
+ public:
+
+
+  virtual ~ClientService_namespace_close_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_namespace_close_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_close_namespace_args__isset {
   _ClientService_close_namespace_args__isset() : ns(false) {}
   bool ns;
@@ -890,6 +1684,124 @@ class ClientService_close_namespace_presult {
   ClientException e;
 
   _ClientService_close_namespace_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_future_open_args__isset {
+  _ClientService_future_open_args__isset() : queue_size(false) {}
+  bool queue_size;
+} _ClientService_future_open_args__isset;
+
+class ClientService_future_open_args {
+ public:
+
+  ClientService_future_open_args() : queue_size(0) {
+  }
+
+  virtual ~ClientService_future_open_args() throw() {}
+
+  int32_t queue_size;
+
+  _ClientService_future_open_args__isset __isset;
+
+  void __set_queue_size(const int32_t val) {
+    queue_size = val;
+  }
+
+  bool operator == (const ClientService_future_open_args & rhs) const
+  {
+    if (!(queue_size == rhs.queue_size))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_open_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_open_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_future_open_pargs {
+ public:
+
+
+  virtual ~ClientService_future_open_pargs() throw() {}
+
+  const int32_t* queue_size;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_open_result__isset {
+  _ClientService_future_open_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_future_open_result__isset;
+
+class ClientService_future_open_result {
+ public:
+
+  ClientService_future_open_result() : success(0) {
+  }
+
+  virtual ~ClientService_future_open_result() throw() {}
+
+  Future success;
+  ClientException e;
+
+  _ClientService_future_open_result__isset __isset;
+
+  void __set_success(const Future val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_future_open_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_open_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_open_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_open_presult__isset {
+  _ClientService_future_open_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_future_open_presult__isset;
+
+class ClientService_future_open_presult {
+ public:
+
+
+  virtual ~ClientService_future_open_presult() throw() {}
+
+  Future* success;
+  ClientException e;
+
+  _ClientService_future_open_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -1013,6 +1925,114 @@ class ClientService_open_future_presult {
 
 };
 
+typedef struct _ClientService_future_cancel_args__isset {
+  _ClientService_future_cancel_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_future_cancel_args__isset;
+
+class ClientService_future_cancel_args {
+ public:
+
+  ClientService_future_cancel_args() : ff(0) {
+  }
+
+  virtual ~ClientService_future_cancel_args() throw() {}
+
+  Future ff;
+
+  _ClientService_future_cancel_args__isset __isset;
+
+  void __set_ff(const Future val) {
+    ff = val;
+  }
+
+  bool operator == (const ClientService_future_cancel_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_cancel_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_cancel_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_future_cancel_pargs {
+ public:
+
+
+  virtual ~ClientService_future_cancel_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_cancel_result__isset {
+  _ClientService_future_cancel_result__isset() : e(false) {}
+  bool e;
+} _ClientService_future_cancel_result__isset;
+
+class ClientService_future_cancel_result {
+ public:
+
+  ClientService_future_cancel_result() {
+  }
+
+  virtual ~ClientService_future_cancel_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_future_cancel_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_future_cancel_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_cancel_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_cancel_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_cancel_presult__isset {
+  _ClientService_future_cancel_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_future_cancel_presult__isset;
+
+class ClientService_future_cancel_presult {
+ public:
+
+
+  virtual ~ClientService_future_cancel_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_future_cancel_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_cancel_future_args__isset {
   _ClientService_cancel_future_args__isset() : ff(false) {}
   bool ff;
@@ -1116,6 +2136,124 @@ class ClientService_cancel_future_presult {
   ClientException e;
 
   _ClientService_cancel_future_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_future_get_result_args__isset {
+  _ClientService_future_get_result_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_future_get_result_args__isset;
+
+class ClientService_future_get_result_args {
+ public:
+
+  ClientService_future_get_result_args() : ff(0) {
+  }
+
+  virtual ~ClientService_future_get_result_args() throw() {}
+
+  Future ff;
+
+  _ClientService_future_get_result_args__isset __isset;
+
+  void __set_ff(const Future val) {
+    ff = val;
+  }
+
+  bool operator == (const ClientService_future_get_result_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_get_result_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_get_result_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_future_get_result_pargs {
+ public:
+
+
+  virtual ~ClientService_future_get_result_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_get_result_result__isset {
+  _ClientService_future_get_result_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_future_get_result_result__isset;
+
+class ClientService_future_get_result_result {
+ public:
+
+  ClientService_future_get_result_result() {
+  }
+
+  virtual ~ClientService_future_get_result_result() throw() {}
+
+  Result success;
+  ClientException e;
+
+  _ClientService_future_get_result_result__isset __isset;
+
+  void __set_success(const Result& val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_future_get_result_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_get_result_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_get_result_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_get_result_presult__isset {
+  _ClientService_future_get_result_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_future_get_result_presult__isset;
+
+class ClientService_future_get_result_presult {
+ public:
+
+
+  virtual ~ClientService_future_get_result_presult() throw() {}
+
+  Result* success;
+  ClientException e;
+
+  _ClientService_future_get_result_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -1239,6 +2377,124 @@ class ClientService_get_future_result_presult {
 
 };
 
+typedef struct _ClientService_future_get_result_as_arrays_args__isset {
+  _ClientService_future_get_result_as_arrays_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_future_get_result_as_arrays_args__isset;
+
+class ClientService_future_get_result_as_arrays_args {
+ public:
+
+  ClientService_future_get_result_as_arrays_args() : ff(0) {
+  }
+
+  virtual ~ClientService_future_get_result_as_arrays_args() throw() {}
+
+  Future ff;
+
+  _ClientService_future_get_result_as_arrays_args__isset __isset;
+
+  void __set_ff(const Future val) {
+    ff = val;
+  }
+
+  bool operator == (const ClientService_future_get_result_as_arrays_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_get_result_as_arrays_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_get_result_as_arrays_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_future_get_result_as_arrays_pargs {
+ public:
+
+
+  virtual ~ClientService_future_get_result_as_arrays_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_get_result_as_arrays_result__isset {
+  _ClientService_future_get_result_as_arrays_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_future_get_result_as_arrays_result__isset;
+
+class ClientService_future_get_result_as_arrays_result {
+ public:
+
+  ClientService_future_get_result_as_arrays_result() {
+  }
+
+  virtual ~ClientService_future_get_result_as_arrays_result() throw() {}
+
+  ResultAsArrays success;
+  ClientException e;
+
+  _ClientService_future_get_result_as_arrays_result__isset __isset;
+
+  void __set_success(const ResultAsArrays& val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_future_get_result_as_arrays_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_get_result_as_arrays_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_get_result_as_arrays_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_get_result_as_arrays_presult__isset {
+  _ClientService_future_get_result_as_arrays_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_future_get_result_as_arrays_presult__isset;
+
+class ClientService_future_get_result_as_arrays_presult {
+ public:
+
+
+  virtual ~ClientService_future_get_result_as_arrays_presult() throw() {}
+
+  ResultAsArrays* success;
+  ClientException e;
+
+  _ClientService_future_get_result_as_arrays_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_get_future_result_as_arrays_args__isset {
   _ClientService_get_future_result_as_arrays_args__isset() : ff(false) {}
   bool ff;
@@ -1352,6 +2608,124 @@ class ClientService_get_future_result_as_arrays_presult {
   ClientException e;
 
   _ClientService_get_future_result_as_arrays_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_future_get_result_serialized_args__isset {
+  _ClientService_future_get_result_serialized_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_future_get_result_serialized_args__isset;
+
+class ClientService_future_get_result_serialized_args {
+ public:
+
+  ClientService_future_get_result_serialized_args() : ff(0) {
+  }
+
+  virtual ~ClientService_future_get_result_serialized_args() throw() {}
+
+  Future ff;
+
+  _ClientService_future_get_result_serialized_args__isset __isset;
+
+  void __set_ff(const Future val) {
+    ff = val;
+  }
+
+  bool operator == (const ClientService_future_get_result_serialized_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_get_result_serialized_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_get_result_serialized_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_future_get_result_serialized_pargs {
+ public:
+
+
+  virtual ~ClientService_future_get_result_serialized_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_get_result_serialized_result__isset {
+  _ClientService_future_get_result_serialized_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_future_get_result_serialized_result__isset;
+
+class ClientService_future_get_result_serialized_result {
+ public:
+
+  ClientService_future_get_result_serialized_result() {
+  }
+
+  virtual ~ClientService_future_get_result_serialized_result() throw() {}
+
+  ResultSerialized success;
+  ClientException e;
+
+  _ClientService_future_get_result_serialized_result__isset __isset;
+
+  void __set_success(const ResultSerialized& val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_future_get_result_serialized_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_get_result_serialized_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_get_result_serialized_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_get_result_serialized_presult__isset {
+  _ClientService_future_get_result_serialized_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_future_get_result_serialized_presult__isset;
+
+class ClientService_future_get_result_serialized_presult {
+ public:
+
+
+  virtual ~ClientService_future_get_result_serialized_presult() throw() {}
+
+  ResultSerialized* success;
+  ClientException e;
+
+  _ClientService_future_get_result_serialized_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -1947,6 +3321,114 @@ class ClientService_future_has_outstanding_presult {
 
 };
 
+typedef struct _ClientService_future_close_args__isset {
+  _ClientService_future_close_args__isset() : ff(false) {}
+  bool ff;
+} _ClientService_future_close_args__isset;
+
+class ClientService_future_close_args {
+ public:
+
+  ClientService_future_close_args() : ff(0) {
+  }
+
+  virtual ~ClientService_future_close_args() throw() {}
+
+  Future ff;
+
+  _ClientService_future_close_args__isset __isset;
+
+  void __set_ff(const Future val) {
+    ff = val;
+  }
+
+  bool operator == (const ClientService_future_close_args & rhs) const
+  {
+    if (!(ff == rhs.ff))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_close_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_close_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_future_close_pargs {
+ public:
+
+
+  virtual ~ClientService_future_close_pargs() throw() {}
+
+  const Future* ff;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_close_result__isset {
+  _ClientService_future_close_result__isset() : e(false) {}
+  bool e;
+} _ClientService_future_close_result__isset;
+
+class ClientService_future_close_result {
+ public:
+
+  ClientService_future_close_result() {
+  }
+
+  virtual ~ClientService_future_close_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_future_close_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_future_close_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_future_close_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_future_close_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_future_close_presult__isset {
+  _ClientService_future_close_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_future_close_presult__isset;
+
+class ClientService_future_close_presult {
+ public:
+
+
+  virtual ~ClientService_future_close_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_future_close_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_close_future_args__isset {
   _ClientService_close_future_args__isset() : ff(false) {}
   bool ff;
@@ -2050,6 +3532,142 @@ class ClientService_close_future_presult {
   ClientException e;
 
   _ClientService_close_future_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_scanner_open_args__isset {
+  _ClientService_scanner_open_args__isset() : ns(false), table_name(false), scan_spec(false) {}
+  bool ns;
+  bool table_name;
+  bool scan_spec;
+} _ClientService_scanner_open_args__isset;
+
+class ClientService_scanner_open_args {
+ public:
+
+  ClientService_scanner_open_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_scanner_open_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  ScanSpec scan_spec;
+
+  _ClientService_scanner_open_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_scan_spec(const ScanSpec& val) {
+    scan_spec = val;
+  }
+
+  bool operator == (const ClientService_scanner_open_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(scan_spec == rhs.scan_spec))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_open_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_open_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_scanner_open_pargs {
+ public:
+
+
+  virtual ~ClientService_scanner_open_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const ScanSpec* scan_spec;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_open_result__isset {
+  _ClientService_scanner_open_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_open_result__isset;
+
+class ClientService_scanner_open_result {
+ public:
+
+  ClientService_scanner_open_result() : success(0) {
+  }
+
+  virtual ~ClientService_scanner_open_result() throw() {}
+
+  Scanner success;
+  ClientException e;
+
+  _ClientService_scanner_open_result__isset __isset;
+
+  void __set_success(const Scanner val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_scanner_open_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_open_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_open_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_open_presult__isset {
+  _ClientService_scanner_open_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_open_presult__isset;
+
+class ClientService_scanner_open_presult {
+ public:
+
+
+  virtual ~ClientService_scanner_open_presult() throw() {}
+
+  Scanner* success;
+  ClientException e;
+
+  _ClientService_scanner_open_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -2186,6 +3804,151 @@ class ClientService_open_scanner_presult {
   ClientException e;
 
   _ClientService_open_scanner_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_async_scanner_open_args__isset {
+  _ClientService_async_scanner_open_args__isset() : ns(false), table_name(false), future(false), scan_spec(false) {}
+  bool ns;
+  bool table_name;
+  bool future;
+  bool scan_spec;
+} _ClientService_async_scanner_open_args__isset;
+
+class ClientService_async_scanner_open_args {
+ public:
+
+  ClientService_async_scanner_open_args() : ns(0), table_name(""), future(0) {
+  }
+
+  virtual ~ClientService_async_scanner_open_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  Future future;
+  ScanSpec scan_spec;
+
+  _ClientService_async_scanner_open_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_future(const Future val) {
+    future = val;
+  }
+
+  void __set_scan_spec(const ScanSpec& val) {
+    scan_spec = val;
+  }
+
+  bool operator == (const ClientService_async_scanner_open_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(future == rhs.future))
+      return false;
+    if (!(scan_spec == rhs.scan_spec))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_scanner_open_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_scanner_open_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_scanner_open_pargs {
+ public:
+
+
+  virtual ~ClientService_async_scanner_open_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const Future* future;
+  const ScanSpec* scan_spec;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_scanner_open_result__isset {
+  _ClientService_async_scanner_open_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_async_scanner_open_result__isset;
+
+class ClientService_async_scanner_open_result {
+ public:
+
+  ClientService_async_scanner_open_result() : success(0) {
+  }
+
+  virtual ~ClientService_async_scanner_open_result() throw() {}
+
+  ScannerAsync success;
+  ClientException e;
+
+  _ClientService_async_scanner_open_result__isset __isset;
+
+  void __set_success(const ScannerAsync val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_scanner_open_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_scanner_open_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_scanner_open_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_scanner_open_presult__isset {
+  _ClientService_async_scanner_open_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_async_scanner_open_presult__isset;
+
+class ClientService_async_scanner_open_presult {
+ public:
+
+
+  virtual ~ClientService_async_scanner_open_presult() throw() {}
+
+  ScannerAsync* success;
+  ClientException e;
+
+  _ClientService_async_scanner_open_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -2336,6 +4099,114 @@ class ClientService_open_scanner_async_presult {
 
 };
 
+typedef struct _ClientService_scanner_close_args__isset {
+  _ClientService_scanner_close_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_scanner_close_args__isset;
+
+class ClientService_scanner_close_args {
+ public:
+
+  ClientService_scanner_close_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_scanner_close_args() throw() {}
+
+  Scanner scanner;
+
+  _ClientService_scanner_close_args__isset __isset;
+
+  void __set_scanner(const Scanner val) {
+    scanner = val;
+  }
+
+  bool operator == (const ClientService_scanner_close_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_close_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_close_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_scanner_close_pargs {
+ public:
+
+
+  virtual ~ClientService_scanner_close_pargs() throw() {}
+
+  const Scanner* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_close_result__isset {
+  _ClientService_scanner_close_result__isset() : e(false) {}
+  bool e;
+} _ClientService_scanner_close_result__isset;
+
+class ClientService_scanner_close_result {
+ public:
+
+  ClientService_scanner_close_result() {
+  }
+
+  virtual ~ClientService_scanner_close_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_scanner_close_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_scanner_close_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_close_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_close_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_close_presult__isset {
+  _ClientService_scanner_close_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_scanner_close_presult__isset;
+
+class ClientService_scanner_close_presult {
+ public:
+
+
+  virtual ~ClientService_scanner_close_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_scanner_close_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_close_scanner_args__isset {
   _ClientService_close_scanner_args__isset() : scanner(false) {}
   bool scanner;
@@ -2439,6 +4310,114 @@ class ClientService_close_scanner_presult {
   ClientException e;
 
   _ClientService_close_scanner_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_async_scanner_cancel_args__isset {
+  _ClientService_async_scanner_cancel_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_async_scanner_cancel_args__isset;
+
+class ClientService_async_scanner_cancel_args {
+ public:
+
+  ClientService_async_scanner_cancel_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_async_scanner_cancel_args() throw() {}
+
+  ScannerAsync scanner;
+
+  _ClientService_async_scanner_cancel_args__isset __isset;
+
+  void __set_scanner(const ScannerAsync val) {
+    scanner = val;
+  }
+
+  bool operator == (const ClientService_async_scanner_cancel_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_scanner_cancel_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_scanner_cancel_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_scanner_cancel_pargs {
+ public:
+
+
+  virtual ~ClientService_async_scanner_cancel_pargs() throw() {}
+
+  const ScannerAsync* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_scanner_cancel_result__isset {
+  _ClientService_async_scanner_cancel_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_scanner_cancel_result__isset;
+
+class ClientService_async_scanner_cancel_result {
+ public:
+
+  ClientService_async_scanner_cancel_result() {
+  }
+
+  virtual ~ClientService_async_scanner_cancel_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_scanner_cancel_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_scanner_cancel_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_scanner_cancel_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_scanner_cancel_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_scanner_cancel_presult__isset {
+  _ClientService_async_scanner_cancel_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_scanner_cancel_presult__isset;
+
+class ClientService_async_scanner_cancel_presult {
+ public:
+
+
+  virtual ~ClientService_async_scanner_cancel_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_scanner_cancel_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -2552,6 +4531,114 @@ class ClientService_cancel_scanner_async_presult {
 
 };
 
+typedef struct _ClientService_async_scanner_close_args__isset {
+  _ClientService_async_scanner_close_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_async_scanner_close_args__isset;
+
+class ClientService_async_scanner_close_args {
+ public:
+
+  ClientService_async_scanner_close_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_async_scanner_close_args() throw() {}
+
+  ScannerAsync scanner;
+
+  _ClientService_async_scanner_close_args__isset __isset;
+
+  void __set_scanner(const ScannerAsync val) {
+    scanner = val;
+  }
+
+  bool operator == (const ClientService_async_scanner_close_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_scanner_close_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_scanner_close_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_scanner_close_pargs {
+ public:
+
+
+  virtual ~ClientService_async_scanner_close_pargs() throw() {}
+
+  const ScannerAsync* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_scanner_close_result__isset {
+  _ClientService_async_scanner_close_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_scanner_close_result__isset;
+
+class ClientService_async_scanner_close_result {
+ public:
+
+  ClientService_async_scanner_close_result() {
+  }
+
+  virtual ~ClientService_async_scanner_close_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_scanner_close_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_scanner_close_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_scanner_close_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_scanner_close_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_scanner_close_presult__isset {
+  _ClientService_async_scanner_close_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_scanner_close_presult__isset;
+
+class ClientService_async_scanner_close_presult {
+ public:
+
+
+  virtual ~ClientService_async_scanner_close_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_scanner_close_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_close_scanner_async_args__isset {
   _ClientService_close_scanner_async_args__isset() : scanner(false) {}
   bool scanner;
@@ -2655,6 +4742,124 @@ class ClientService_close_scanner_async_presult {
   ClientException e;
 
   _ClientService_close_scanner_async_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_scanner_get_cells_args__isset {
+  _ClientService_scanner_get_cells_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_scanner_get_cells_args__isset;
+
+class ClientService_scanner_get_cells_args {
+ public:
+
+  ClientService_scanner_get_cells_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_scanner_get_cells_args() throw() {}
+
+  Scanner scanner;
+
+  _ClientService_scanner_get_cells_args__isset __isset;
+
+  void __set_scanner(const Scanner val) {
+    scanner = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_cells_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_cells_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_cells_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_scanner_get_cells_pargs {
+ public:
+
+
+  virtual ~ClientService_scanner_get_cells_pargs() throw() {}
+
+  const Scanner* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_cells_result__isset {
+  _ClientService_scanner_get_cells_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_cells_result__isset;
+
+class ClientService_scanner_get_cells_result {
+ public:
+
+  ClientService_scanner_get_cells_result() {
+  }
+
+  virtual ~ClientService_scanner_get_cells_result() throw() {}
+
+  std::vector<Cell>  success;
+  ClientException e;
+
+  _ClientService_scanner_get_cells_result__isset __isset;
+
+  void __set_success(const std::vector<Cell> & val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_cells_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_cells_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_cells_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_cells_presult__isset {
+  _ClientService_scanner_get_cells_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_cells_presult__isset;
+
+class ClientService_scanner_get_cells_presult {
+ public:
+
+
+  virtual ~ClientService_scanner_get_cells_presult() throw() {}
+
+  std::vector<Cell> * success;
+  ClientException e;
+
+  _ClientService_scanner_get_cells_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -2778,6 +4983,124 @@ class ClientService_next_cells_presult {
 
 };
 
+typedef struct _ClientService_scanner_get_cells_as_arrays_args__isset {
+  _ClientService_scanner_get_cells_as_arrays_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_scanner_get_cells_as_arrays_args__isset;
+
+class ClientService_scanner_get_cells_as_arrays_args {
+ public:
+
+  ClientService_scanner_get_cells_as_arrays_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_scanner_get_cells_as_arrays_args() throw() {}
+
+  Scanner scanner;
+
+  _ClientService_scanner_get_cells_as_arrays_args__isset __isset;
+
+  void __set_scanner(const Scanner val) {
+    scanner = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_cells_as_arrays_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_cells_as_arrays_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_cells_as_arrays_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_scanner_get_cells_as_arrays_pargs {
+ public:
+
+
+  virtual ~ClientService_scanner_get_cells_as_arrays_pargs() throw() {}
+
+  const Scanner* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_cells_as_arrays_result__isset {
+  _ClientService_scanner_get_cells_as_arrays_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_cells_as_arrays_result__isset;
+
+class ClientService_scanner_get_cells_as_arrays_result {
+ public:
+
+  ClientService_scanner_get_cells_as_arrays_result() {
+  }
+
+  virtual ~ClientService_scanner_get_cells_as_arrays_result() throw() {}
+
+  std::vector<CellAsArray>  success;
+  ClientException e;
+
+  _ClientService_scanner_get_cells_as_arrays_result__isset __isset;
+
+  void __set_success(const std::vector<CellAsArray> & val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_cells_as_arrays_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_cells_as_arrays_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_cells_as_arrays_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_cells_as_arrays_presult__isset {
+  _ClientService_scanner_get_cells_as_arrays_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_cells_as_arrays_presult__isset;
+
+class ClientService_scanner_get_cells_as_arrays_presult {
+ public:
+
+
+  virtual ~ClientService_scanner_get_cells_as_arrays_presult() throw() {}
+
+  std::vector<CellAsArray> * success;
+  ClientException e;
+
+  _ClientService_scanner_get_cells_as_arrays_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_next_cells_as_arrays_args__isset {
   _ClientService_next_cells_as_arrays_args__isset() : scanner(false) {}
   bool scanner;
@@ -2896,6 +5219,114 @@ class ClientService_next_cells_as_arrays_presult {
 
 };
 
+typedef struct _ClientService_scanner_get_cells_serialized_args__isset {
+  _ClientService_scanner_get_cells_serialized_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_scanner_get_cells_serialized_args__isset;
+
+class ClientService_scanner_get_cells_serialized_args {
+ public:
+
+  ClientService_scanner_get_cells_serialized_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_scanner_get_cells_serialized_args() throw() {}
+
+  Scanner scanner;
+
+  _ClientService_scanner_get_cells_serialized_args__isset __isset;
+
+  void __set_scanner(const Scanner val) {
+    scanner = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_cells_serialized_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_cells_serialized_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_cells_serialized_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_scanner_get_cells_serialized_pargs {
+ public:
+
+
+  virtual ~ClientService_scanner_get_cells_serialized_pargs() throw() {}
+
+  const Scanner* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_cells_serialized_result__isset {
+  _ClientService_scanner_get_cells_serialized_result__isset() : success(false) {}
+  bool success;
+} _ClientService_scanner_get_cells_serialized_result__isset;
+
+class ClientService_scanner_get_cells_serialized_result {
+ public:
+
+  ClientService_scanner_get_cells_serialized_result() : success("") {
+  }
+
+  virtual ~ClientService_scanner_get_cells_serialized_result() throw() {}
+
+  CellsSerialized success;
+
+  _ClientService_scanner_get_cells_serialized_result__isset __isset;
+
+  void __set_success(const CellsSerialized& val) {
+    success = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_cells_serialized_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_cells_serialized_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_cells_serialized_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_cells_serialized_presult__isset {
+  _ClientService_scanner_get_cells_serialized_presult__isset() : success(false) {}
+  bool success;
+} _ClientService_scanner_get_cells_serialized_presult__isset;
+
+class ClientService_scanner_get_cells_serialized_presult {
+ public:
+
+
+  virtual ~ClientService_scanner_get_cells_serialized_presult() throw() {}
+
+  CellsSerialized* success;
+
+  _ClientService_scanner_get_cells_serialized_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_next_cells_serialized_args__isset {
   _ClientService_next_cells_serialized_args__isset() : scanner(false) {}
   bool scanner;
@@ -2999,6 +5430,124 @@ class ClientService_next_cells_serialized_presult {
   CellsSerialized* success;
 
   _ClientService_next_cells_serialized_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_scanner_get_row_args__isset {
+  _ClientService_scanner_get_row_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_scanner_get_row_args__isset;
+
+class ClientService_scanner_get_row_args {
+ public:
+
+  ClientService_scanner_get_row_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_scanner_get_row_args() throw() {}
+
+  Scanner scanner;
+
+  _ClientService_scanner_get_row_args__isset __isset;
+
+  void __set_scanner(const Scanner val) {
+    scanner = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_row_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_row_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_row_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_scanner_get_row_pargs {
+ public:
+
+
+  virtual ~ClientService_scanner_get_row_pargs() throw() {}
+
+  const Scanner* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_row_result__isset {
+  _ClientService_scanner_get_row_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_row_result__isset;
+
+class ClientService_scanner_get_row_result {
+ public:
+
+  ClientService_scanner_get_row_result() {
+  }
+
+  virtual ~ClientService_scanner_get_row_result() throw() {}
+
+  std::vector<Cell>  success;
+  ClientException e;
+
+  _ClientService_scanner_get_row_result__isset __isset;
+
+  void __set_success(const std::vector<Cell> & val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_row_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_row_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_row_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_row_presult__isset {
+  _ClientService_scanner_get_row_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_row_presult__isset;
+
+class ClientService_scanner_get_row_presult {
+ public:
+
+
+  virtual ~ClientService_scanner_get_row_presult() throw() {}
+
+  std::vector<Cell> * success;
+  ClientException e;
+
+  _ClientService_scanner_get_row_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -3122,6 +5671,124 @@ class ClientService_next_row_presult {
 
 };
 
+typedef struct _ClientService_scanner_get_row_as_arrays_args__isset {
+  _ClientService_scanner_get_row_as_arrays_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_scanner_get_row_as_arrays_args__isset;
+
+class ClientService_scanner_get_row_as_arrays_args {
+ public:
+
+  ClientService_scanner_get_row_as_arrays_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_scanner_get_row_as_arrays_args() throw() {}
+
+  Scanner scanner;
+
+  _ClientService_scanner_get_row_as_arrays_args__isset __isset;
+
+  void __set_scanner(const Scanner val) {
+    scanner = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_row_as_arrays_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_row_as_arrays_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_row_as_arrays_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_scanner_get_row_as_arrays_pargs {
+ public:
+
+
+  virtual ~ClientService_scanner_get_row_as_arrays_pargs() throw() {}
+
+  const Scanner* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_row_as_arrays_result__isset {
+  _ClientService_scanner_get_row_as_arrays_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_row_as_arrays_result__isset;
+
+class ClientService_scanner_get_row_as_arrays_result {
+ public:
+
+  ClientService_scanner_get_row_as_arrays_result() {
+  }
+
+  virtual ~ClientService_scanner_get_row_as_arrays_result() throw() {}
+
+  std::vector<CellAsArray>  success;
+  ClientException e;
+
+  _ClientService_scanner_get_row_as_arrays_result__isset __isset;
+
+  void __set_success(const std::vector<CellAsArray> & val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_row_as_arrays_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_row_as_arrays_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_row_as_arrays_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_row_as_arrays_presult__isset {
+  _ClientService_scanner_get_row_as_arrays_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_row_as_arrays_presult__isset;
+
+class ClientService_scanner_get_row_as_arrays_presult {
+ public:
+
+
+  virtual ~ClientService_scanner_get_row_as_arrays_presult() throw() {}
+
+  std::vector<CellAsArray> * success;
+  ClientException e;
+
+  _ClientService_scanner_get_row_as_arrays_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_next_row_as_arrays_args__isset {
   _ClientService_next_row_as_arrays_args__isset() : scanner(false) {}
   bool scanner;
@@ -3235,6 +5902,124 @@ class ClientService_next_row_as_arrays_presult {
   ClientException e;
 
   _ClientService_next_row_as_arrays_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_scanner_get_row_serialized_args__isset {
+  _ClientService_scanner_get_row_serialized_args__isset() : scanner(false) {}
+  bool scanner;
+} _ClientService_scanner_get_row_serialized_args__isset;
+
+class ClientService_scanner_get_row_serialized_args {
+ public:
+
+  ClientService_scanner_get_row_serialized_args() : scanner(0) {
+  }
+
+  virtual ~ClientService_scanner_get_row_serialized_args() throw() {}
+
+  Scanner scanner;
+
+  _ClientService_scanner_get_row_serialized_args__isset __isset;
+
+  void __set_scanner(const Scanner val) {
+    scanner = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_row_serialized_args & rhs) const
+  {
+    if (!(scanner == rhs.scanner))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_row_serialized_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_row_serialized_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_scanner_get_row_serialized_pargs {
+ public:
+
+
+  virtual ~ClientService_scanner_get_row_serialized_pargs() throw() {}
+
+  const Scanner* scanner;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_row_serialized_result__isset {
+  _ClientService_scanner_get_row_serialized_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_row_serialized_result__isset;
+
+class ClientService_scanner_get_row_serialized_result {
+ public:
+
+  ClientService_scanner_get_row_serialized_result() : success("") {
+  }
+
+  virtual ~ClientService_scanner_get_row_serialized_result() throw() {}
+
+  CellsSerialized success;
+  ClientException e;
+
+  _ClientService_scanner_get_row_serialized_result__isset __isset;
+
+  void __set_success(const CellsSerialized& val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_scanner_get_row_serialized_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_scanner_get_row_serialized_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_scanner_get_row_serialized_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_scanner_get_row_serialized_presult__isset {
+  _ClientService_scanner_get_row_serialized_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_scanner_get_row_serialized_presult__isset;
+
+class ClientService_scanner_get_row_serialized_presult {
+ public:
+
+
+  virtual ~ClientService_scanner_get_row_serialized_presult() throw() {}
+
+  CellsSerialized* success;
+  ClientException e;
+
+  _ClientService_scanner_get_row_serialized_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -4985,6 +7770,151 @@ class ClientService_offer_cell_as_array_presult {
 
 };
 
+typedef struct _ClientService_mutator_open_args__isset {
+  _ClientService_mutator_open_args__isset() : ns(false), table_name(false), flags(false), flush_interval(false) {}
+  bool ns;
+  bool table_name;
+  bool flags;
+  bool flush_interval;
+} _ClientService_mutator_open_args__isset;
+
+class ClientService_mutator_open_args {
+ public:
+
+  ClientService_mutator_open_args() : ns(0), table_name(""), flags(0), flush_interval(0) {
+  }
+
+  virtual ~ClientService_mutator_open_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  int32_t flags;
+  int32_t flush_interval;
+
+  _ClientService_mutator_open_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_flags(const int32_t val) {
+    flags = val;
+  }
+
+  void __set_flush_interval(const int32_t val) {
+    flush_interval = val;
+  }
+
+  bool operator == (const ClientService_mutator_open_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(flags == rhs.flags))
+      return false;
+    if (!(flush_interval == rhs.flush_interval))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_open_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_open_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_mutator_open_pargs {
+ public:
+
+
+  virtual ~ClientService_mutator_open_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const int32_t* flags;
+  const int32_t* flush_interval;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_open_result__isset {
+  _ClientService_mutator_open_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_mutator_open_result__isset;
+
+class ClientService_mutator_open_result {
+ public:
+
+  ClientService_mutator_open_result() : success(0) {
+  }
+
+  virtual ~ClientService_mutator_open_result() throw() {}
+
+  Mutator success;
+  ClientException e;
+
+  _ClientService_mutator_open_result__isset __isset;
+
+  void __set_success(const Mutator val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_mutator_open_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_open_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_open_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_open_presult__isset {
+  _ClientService_mutator_open_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_mutator_open_presult__isset;
+
+class ClientService_mutator_open_presult {
+ public:
+
+
+  virtual ~ClientService_mutator_open_presult() throw() {}
+
+  Mutator* success;
+  ClientException e;
+
+  _ClientService_mutator_open_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_open_mutator_args__isset {
   _ClientService_open_mutator_args__isset() : ns(false), table_name(false), flags(false), flush_interval(false) {}
   bool ns;
@@ -5125,6 +8055,151 @@ class ClientService_open_mutator_presult {
   ClientException e;
 
   _ClientService_open_mutator_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_async_mutator_open_args__isset {
+  _ClientService_async_mutator_open_args__isset() : ns(false), table_name(false), future(false), flags(false) {}
+  bool ns;
+  bool table_name;
+  bool future;
+  bool flags;
+} _ClientService_async_mutator_open_args__isset;
+
+class ClientService_async_mutator_open_args {
+ public:
+
+  ClientService_async_mutator_open_args() : ns(0), table_name(""), future(0), flags(0) {
+  }
+
+  virtual ~ClientService_async_mutator_open_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  Future future;
+  int32_t flags;
+
+  _ClientService_async_mutator_open_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_future(const Future val) {
+    future = val;
+  }
+
+  void __set_flags(const int32_t val) {
+    flags = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_open_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(future == rhs.future))
+      return false;
+    if (!(flags == rhs.flags))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_open_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_open_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_mutator_open_pargs {
+ public:
+
+
+  virtual ~ClientService_async_mutator_open_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const Future* future;
+  const int32_t* flags;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_open_result__isset {
+  _ClientService_async_mutator_open_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_async_mutator_open_result__isset;
+
+class ClientService_async_mutator_open_result {
+ public:
+
+  ClientService_async_mutator_open_result() : success(0) {
+  }
+
+  virtual ~ClientService_async_mutator_open_result() throw() {}
+
+  MutatorAsync success;
+  ClientException e;
+
+  _ClientService_async_mutator_open_result__isset __isset;
+
+  void __set_success(const MutatorAsync val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_open_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_open_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_open_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_open_presult__isset {
+  _ClientService_async_mutator_open_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_async_mutator_open_presult__isset;
+
+class ClientService_async_mutator_open_presult {
+ public:
+
+
+  virtual ~ClientService_async_mutator_open_presult() throw() {}
+
+  MutatorAsync* success;
+  ClientException e;
+
+  _ClientService_async_mutator_open_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -5275,6 +8350,114 @@ class ClientService_open_mutator_async_presult {
 
 };
 
+typedef struct _ClientService_mutator_close_args__isset {
+  _ClientService_mutator_close_args__isset() : mutator(false) {}
+  bool mutator;
+} _ClientService_mutator_close_args__isset;
+
+class ClientService_mutator_close_args {
+ public:
+
+  ClientService_mutator_close_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_mutator_close_args() throw() {}
+
+  Mutator mutator;
+
+  _ClientService_mutator_close_args__isset __isset;
+
+  void __set_mutator(const Mutator val) {
+    mutator = val;
+  }
+
+  bool operator == (const ClientService_mutator_close_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_close_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_close_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_mutator_close_pargs {
+ public:
+
+
+  virtual ~ClientService_mutator_close_pargs() throw() {}
+
+  const Mutator* mutator;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_close_result__isset {
+  _ClientService_mutator_close_result__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_close_result__isset;
+
+class ClientService_mutator_close_result {
+ public:
+
+  ClientService_mutator_close_result() {
+  }
+
+  virtual ~ClientService_mutator_close_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_close_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_mutator_close_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_close_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_close_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_close_presult__isset {
+  _ClientService_mutator_close_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_close_presult__isset;
+
+class ClientService_mutator_close_presult {
+ public:
+
+
+  virtual ~ClientService_mutator_close_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_close_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_close_mutator_args__isset {
   _ClientService_close_mutator_args__isset() : mutator(false) {}
   bool mutator;
@@ -5378,6 +8561,114 @@ class ClientService_close_mutator_presult {
   ClientException e;
 
   _ClientService_close_mutator_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_async_mutator_cancel_args__isset {
+  _ClientService_async_mutator_cancel_args__isset() : mutator(false) {}
+  bool mutator;
+} _ClientService_async_mutator_cancel_args__isset;
+
+class ClientService_async_mutator_cancel_args {
+ public:
+
+  ClientService_async_mutator_cancel_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_async_mutator_cancel_args() throw() {}
+
+  MutatorAsync mutator;
+
+  _ClientService_async_mutator_cancel_args__isset __isset;
+
+  void __set_mutator(const MutatorAsync val) {
+    mutator = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_cancel_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_cancel_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_cancel_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_mutator_cancel_pargs {
+ public:
+
+
+  virtual ~ClientService_async_mutator_cancel_pargs() throw() {}
+
+  const MutatorAsync* mutator;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_cancel_result__isset {
+  _ClientService_async_mutator_cancel_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_cancel_result__isset;
+
+class ClientService_async_mutator_cancel_result {
+ public:
+
+  ClientService_async_mutator_cancel_result() {
+  }
+
+  virtual ~ClientService_async_mutator_cancel_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_cancel_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_cancel_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_cancel_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_cancel_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_cancel_presult__isset {
+  _ClientService_async_mutator_cancel_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_cancel_presult__isset;
+
+class ClientService_async_mutator_cancel_presult {
+ public:
+
+
+  virtual ~ClientService_async_mutator_cancel_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_cancel_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -5491,6 +8782,114 @@ class ClientService_cancel_mutator_async_presult {
 
 };
 
+typedef struct _ClientService_async_mutator_close_args__isset {
+  _ClientService_async_mutator_close_args__isset() : mutator(false) {}
+  bool mutator;
+} _ClientService_async_mutator_close_args__isset;
+
+class ClientService_async_mutator_close_args {
+ public:
+
+  ClientService_async_mutator_close_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_async_mutator_close_args() throw() {}
+
+  MutatorAsync mutator;
+
+  _ClientService_async_mutator_close_args__isset __isset;
+
+  void __set_mutator(const MutatorAsync val) {
+    mutator = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_close_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_close_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_close_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_mutator_close_pargs {
+ public:
+
+
+  virtual ~ClientService_async_mutator_close_pargs() throw() {}
+
+  const MutatorAsync* mutator;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_close_result__isset {
+  _ClientService_async_mutator_close_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_close_result__isset;
+
+class ClientService_async_mutator_close_result {
+ public:
+
+  ClientService_async_mutator_close_result() {
+  }
+
+  virtual ~ClientService_async_mutator_close_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_close_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_close_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_close_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_close_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_close_presult__isset {
+  _ClientService_async_mutator_close_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_close_presult__isset;
+
+class ClientService_async_mutator_close_presult {
+ public:
+
+
+  virtual ~ClientService_async_mutator_close_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_close_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_close_mutator_async_args__isset {
   _ClientService_close_mutator_async_args__isset() : mutator(false) {}
   bool mutator;
@@ -5599,24 +8998,24 @@ class ClientService_close_mutator_async_presult {
 
 };
 
-typedef struct _ClientService_set_cell_args__isset {
-  _ClientService_set_cell_args__isset() : mutator(false), cell(false) {}
+typedef struct _ClientService_mutator_set_cell_args__isset {
+  _ClientService_mutator_set_cell_args__isset() : mutator(false), cell(false) {}
   bool mutator;
   bool cell;
-} _ClientService_set_cell_args__isset;
+} _ClientService_mutator_set_cell_args__isset;
 
-class ClientService_set_cell_args {
+class ClientService_mutator_set_cell_args {
  public:
 
-  ClientService_set_cell_args() : mutator(0) {
+  ClientService_mutator_set_cell_args() : mutator(0) {
   }
 
-  virtual ~ClientService_set_cell_args() throw() {}
+  virtual ~ClientService_mutator_set_cell_args() throw() {}
 
   Mutator mutator;
   Cell cell;
 
-  _ClientService_set_cell_args__isset __isset;
+  _ClientService_mutator_set_cell_args__isset __isset;
 
   void __set_mutator(const Mutator val) {
     mutator = val;
@@ -5626,9 +9025,134 @@ class ClientService_set_cell_args {
     cell = val;
   }
 
-  bool operator == (const ClientService_set_cell_args & rhs) const
+  bool operator == (const ClientService_mutator_set_cell_args & rhs) const
   {
     if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cell == rhs.cell))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cell_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cell_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_mutator_set_cell_pargs {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cell_pargs() throw() {}
+
+  const Mutator* mutator;
+  const Cell* cell;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cell_result__isset {
+  _ClientService_mutator_set_cell_result__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cell_result__isset;
+
+class ClientService_mutator_set_cell_result {
+ public:
+
+  ClientService_mutator_set_cell_result() {
+  }
+
+  virtual ~ClientService_mutator_set_cell_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cell_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_mutator_set_cell_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cell_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cell_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cell_presult__isset {
+  _ClientService_mutator_set_cell_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cell_presult__isset;
+
+class ClientService_mutator_set_cell_presult {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cell_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cell_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_set_cell_args__isset {
+  _ClientService_set_cell_args__isset() : ns(false), table_name(false), cell(false) {}
+  bool ns;
+  bool table_name;
+  bool cell;
+} _ClientService_set_cell_args__isset;
+
+class ClientService_set_cell_args {
+ public:
+
+  ClientService_set_cell_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_set_cell_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  Cell cell;
+
+  _ClientService_set_cell_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_cell(const Cell& val) {
+    cell = val;
+  }
+
+  bool operator == (const ClientService_set_cell_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(cell == rhs.cell))
       return false;
@@ -5652,7 +9176,8 @@ class ClientService_set_cell_pargs {
 
   virtual ~ClientService_set_cell_pargs() throw() {}
 
-  const Mutator* mutator;
+  const Namespace* ns;
+  const std::string* table_name;
   const Cell* cell;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -5716,24 +9241,24 @@ class ClientService_set_cell_presult {
 
 };
 
-typedef struct _ClientService_set_cell_as_array_args__isset {
-  _ClientService_set_cell_as_array_args__isset() : mutator(false), cell(false) {}
+typedef struct _ClientService_mutator_set_cell_as_array_args__isset {
+  _ClientService_mutator_set_cell_as_array_args__isset() : mutator(false), cell(false) {}
   bool mutator;
   bool cell;
-} _ClientService_set_cell_as_array_args__isset;
+} _ClientService_mutator_set_cell_as_array_args__isset;
 
-class ClientService_set_cell_as_array_args {
+class ClientService_mutator_set_cell_as_array_args {
  public:
 
-  ClientService_set_cell_as_array_args() : mutator(0) {
+  ClientService_mutator_set_cell_as_array_args() : mutator(0) {
   }
 
-  virtual ~ClientService_set_cell_as_array_args() throw() {}
+  virtual ~ClientService_mutator_set_cell_as_array_args() throw() {}
 
   Mutator mutator;
   CellAsArray cell;
 
-  _ClientService_set_cell_as_array_args__isset __isset;
+  _ClientService_mutator_set_cell_as_array_args__isset __isset;
 
   void __set_mutator(const Mutator val) {
     mutator = val;
@@ -5743,9 +9268,134 @@ class ClientService_set_cell_as_array_args {
     cell = val;
   }
 
-  bool operator == (const ClientService_set_cell_as_array_args & rhs) const
+  bool operator == (const ClientService_mutator_set_cell_as_array_args & rhs) const
   {
     if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cell == rhs.cell))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cell_as_array_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cell_as_array_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_mutator_set_cell_as_array_pargs {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cell_as_array_pargs() throw() {}
+
+  const Mutator* mutator;
+  const CellAsArray* cell;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cell_as_array_result__isset {
+  _ClientService_mutator_set_cell_as_array_result__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cell_as_array_result__isset;
+
+class ClientService_mutator_set_cell_as_array_result {
+ public:
+
+  ClientService_mutator_set_cell_as_array_result() {
+  }
+
+  virtual ~ClientService_mutator_set_cell_as_array_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cell_as_array_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_mutator_set_cell_as_array_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cell_as_array_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cell_as_array_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cell_as_array_presult__isset {
+  _ClientService_mutator_set_cell_as_array_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cell_as_array_presult__isset;
+
+class ClientService_mutator_set_cell_as_array_presult {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cell_as_array_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cell_as_array_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_set_cell_as_array_args__isset {
+  _ClientService_set_cell_as_array_args__isset() : ns(false), table_name(false), cell(false) {}
+  bool ns;
+  bool table_name;
+  bool cell;
+} _ClientService_set_cell_as_array_args__isset;
+
+class ClientService_set_cell_as_array_args {
+ public:
+
+  ClientService_set_cell_as_array_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_set_cell_as_array_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  CellAsArray cell;
+
+  _ClientService_set_cell_as_array_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_cell(const CellAsArray& val) {
+    cell = val;
+  }
+
+  bool operator == (const ClientService_set_cell_as_array_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(cell == rhs.cell))
       return false;
@@ -5769,7 +9419,8 @@ class ClientService_set_cell_as_array_pargs {
 
   virtual ~ClientService_set_cell_as_array_pargs() throw() {}
 
-  const Mutator* mutator;
+  const Namespace* ns;
+  const std::string* table_name;
   const CellAsArray* cell;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -5833,24 +9484,24 @@ class ClientService_set_cell_as_array_presult {
 
 };
 
-typedef struct _ClientService_set_cells_args__isset {
-  _ClientService_set_cells_args__isset() : mutator(false), cells(false) {}
+typedef struct _ClientService_mutator_set_cells_args__isset {
+  _ClientService_mutator_set_cells_args__isset() : mutator(false), cells(false) {}
   bool mutator;
   bool cells;
-} _ClientService_set_cells_args__isset;
+} _ClientService_mutator_set_cells_args__isset;
 
-class ClientService_set_cells_args {
+class ClientService_mutator_set_cells_args {
  public:
 
-  ClientService_set_cells_args() : mutator(0) {
+  ClientService_mutator_set_cells_args() : mutator(0) {
   }
 
-  virtual ~ClientService_set_cells_args() throw() {}
+  virtual ~ClientService_mutator_set_cells_args() throw() {}
 
   Mutator mutator;
   std::vector<Cell>  cells;
 
-  _ClientService_set_cells_args__isset __isset;
+  _ClientService_mutator_set_cells_args__isset __isset;
 
   void __set_mutator(const Mutator val) {
     mutator = val;
@@ -5860,9 +9511,134 @@ class ClientService_set_cells_args {
     cells = val;
   }
 
-  bool operator == (const ClientService_set_cells_args & rhs) const
+  bool operator == (const ClientService_mutator_set_cells_args & rhs) const
   {
     if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cells_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cells_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_mutator_set_cells_pargs {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cells_pargs() throw() {}
+
+  const Mutator* mutator;
+  const std::vector<Cell> * cells;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cells_result__isset {
+  _ClientService_mutator_set_cells_result__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cells_result__isset;
+
+class ClientService_mutator_set_cells_result {
+ public:
+
+  ClientService_mutator_set_cells_result() {
+  }
+
+  virtual ~ClientService_mutator_set_cells_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cells_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_mutator_set_cells_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cells_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cells_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cells_presult__isset {
+  _ClientService_mutator_set_cells_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cells_presult__isset;
+
+class ClientService_mutator_set_cells_presult {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cells_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cells_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_set_cells_args__isset {
+  _ClientService_set_cells_args__isset() : ns(false), table_name(false), cells(false) {}
+  bool ns;
+  bool table_name;
+  bool cells;
+} _ClientService_set_cells_args__isset;
+
+class ClientService_set_cells_args {
+ public:
+
+  ClientService_set_cells_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_set_cells_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  std::vector<Cell>  cells;
+
+  _ClientService_set_cells_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_cells(const std::vector<Cell> & val) {
+    cells = val;
+  }
+
+  bool operator == (const ClientService_set_cells_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(cells == rhs.cells))
       return false;
@@ -5886,7 +9662,8 @@ class ClientService_set_cells_pargs {
 
   virtual ~ClientService_set_cells_pargs() throw() {}
 
-  const Mutator* mutator;
+  const Namespace* ns;
+  const std::string* table_name;
   const std::vector<Cell> * cells;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -5950,24 +9727,24 @@ class ClientService_set_cells_presult {
 
 };
 
-typedef struct _ClientService_set_cells_as_arrays_args__isset {
-  _ClientService_set_cells_as_arrays_args__isset() : mutator(false), cells(false) {}
+typedef struct _ClientService_mutator_set_cells_as_arrays_args__isset {
+  _ClientService_mutator_set_cells_as_arrays_args__isset() : mutator(false), cells(false) {}
   bool mutator;
   bool cells;
-} _ClientService_set_cells_as_arrays_args__isset;
+} _ClientService_mutator_set_cells_as_arrays_args__isset;
 
-class ClientService_set_cells_as_arrays_args {
+class ClientService_mutator_set_cells_as_arrays_args {
  public:
 
-  ClientService_set_cells_as_arrays_args() : mutator(0) {
+  ClientService_mutator_set_cells_as_arrays_args() : mutator(0) {
   }
 
-  virtual ~ClientService_set_cells_as_arrays_args() throw() {}
+  virtual ~ClientService_mutator_set_cells_as_arrays_args() throw() {}
 
   Mutator mutator;
   std::vector<CellAsArray>  cells;
 
-  _ClientService_set_cells_as_arrays_args__isset __isset;
+  _ClientService_mutator_set_cells_as_arrays_args__isset __isset;
 
   void __set_mutator(const Mutator val) {
     mutator = val;
@@ -5977,9 +9754,134 @@ class ClientService_set_cells_as_arrays_args {
     cells = val;
   }
 
-  bool operator == (const ClientService_set_cells_as_arrays_args & rhs) const
+  bool operator == (const ClientService_mutator_set_cells_as_arrays_args & rhs) const
   {
     if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cells_as_arrays_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cells_as_arrays_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_mutator_set_cells_as_arrays_pargs {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cells_as_arrays_pargs() throw() {}
+
+  const Mutator* mutator;
+  const std::vector<CellAsArray> * cells;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cells_as_arrays_result__isset {
+  _ClientService_mutator_set_cells_as_arrays_result__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cells_as_arrays_result__isset;
+
+class ClientService_mutator_set_cells_as_arrays_result {
+ public:
+
+  ClientService_mutator_set_cells_as_arrays_result() {
+  }
+
+  virtual ~ClientService_mutator_set_cells_as_arrays_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cells_as_arrays_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_mutator_set_cells_as_arrays_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cells_as_arrays_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cells_as_arrays_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cells_as_arrays_presult__isset {
+  _ClientService_mutator_set_cells_as_arrays_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cells_as_arrays_presult__isset;
+
+class ClientService_mutator_set_cells_as_arrays_presult {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cells_as_arrays_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cells_as_arrays_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_set_cells_as_arrays_args__isset {
+  _ClientService_set_cells_as_arrays_args__isset() : ns(false), table_name(false), cells(false) {}
+  bool ns;
+  bool table_name;
+  bool cells;
+} _ClientService_set_cells_as_arrays_args__isset;
+
+class ClientService_set_cells_as_arrays_args {
+ public:
+
+  ClientService_set_cells_as_arrays_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_set_cells_as_arrays_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  std::vector<CellAsArray>  cells;
+
+  _ClientService_set_cells_as_arrays_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_cells(const std::vector<CellAsArray> & val) {
+    cells = val;
+  }
+
+  bool operator == (const ClientService_set_cells_as_arrays_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(cells == rhs.cells))
       return false;
@@ -6003,7 +9905,8 @@ class ClientService_set_cells_as_arrays_pargs {
 
   virtual ~ClientService_set_cells_as_arrays_pargs() throw() {}
 
-  const Mutator* mutator;
+  const Namespace* ns;
+  const std::string* table_name;
   const std::vector<CellAsArray> * cells;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -6067,26 +9970,26 @@ class ClientService_set_cells_as_arrays_presult {
 
 };
 
-typedef struct _ClientService_set_cells_serialized_args__isset {
-  _ClientService_set_cells_serialized_args__isset() : mutator(false), cells(false), flush(false) {}
+typedef struct _ClientService_mutator_set_cells_serialized_args__isset {
+  _ClientService_mutator_set_cells_serialized_args__isset() : mutator(false), cells(false), flush(false) {}
   bool mutator;
   bool cells;
   bool flush;
-} _ClientService_set_cells_serialized_args__isset;
+} _ClientService_mutator_set_cells_serialized_args__isset;
 
-class ClientService_set_cells_serialized_args {
+class ClientService_mutator_set_cells_serialized_args {
  public:
 
-  ClientService_set_cells_serialized_args() : mutator(0), cells(""), flush(false) {
+  ClientService_mutator_set_cells_serialized_args() : mutator(0), cells(""), flush(false) {
   }
 
-  virtual ~ClientService_set_cells_serialized_args() throw() {}
+  virtual ~ClientService_mutator_set_cells_serialized_args() throw() {}
 
   Mutator mutator;
   CellsSerialized cells;
   bool flush;
 
-  _ClientService_set_cells_serialized_args__isset __isset;
+  _ClientService_mutator_set_cells_serialized_args__isset __isset;
 
   void __set_mutator(const Mutator val) {
     mutator = val;
@@ -6100,9 +10003,143 @@ class ClientService_set_cells_serialized_args {
     flush = val;
   }
 
-  bool operator == (const ClientService_set_cells_serialized_args & rhs) const
+  bool operator == (const ClientService_mutator_set_cells_serialized_args & rhs) const
   {
     if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    if (!(flush == rhs.flush))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cells_serialized_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cells_serialized_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_mutator_set_cells_serialized_pargs {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cells_serialized_pargs() throw() {}
+
+  const Mutator* mutator;
+  const CellsSerialized* cells;
+  const bool* flush;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cells_serialized_result__isset {
+  _ClientService_mutator_set_cells_serialized_result__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cells_serialized_result__isset;
+
+class ClientService_mutator_set_cells_serialized_result {
+ public:
+
+  ClientService_mutator_set_cells_serialized_result() {
+  }
+
+  virtual ~ClientService_mutator_set_cells_serialized_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cells_serialized_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_mutator_set_cells_serialized_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_set_cells_serialized_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_set_cells_serialized_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_set_cells_serialized_presult__isset {
+  _ClientService_mutator_set_cells_serialized_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_set_cells_serialized_presult__isset;
+
+class ClientService_mutator_set_cells_serialized_presult {
+ public:
+
+
+  virtual ~ClientService_mutator_set_cells_serialized_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_set_cells_serialized_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_set_cells_serialized_args__isset {
+  _ClientService_set_cells_serialized_args__isset() : ns(false), table_name(false), cells(false), flush(false) {}
+  bool ns;
+  bool table_name;
+  bool cells;
+  bool flush;
+} _ClientService_set_cells_serialized_args__isset;
+
+class ClientService_set_cells_serialized_args {
+ public:
+
+  ClientService_set_cells_serialized_args() : ns(0), table_name(""), cells(""), flush(false) {
+  }
+
+  virtual ~ClientService_set_cells_serialized_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  CellsSerialized cells;
+  bool flush;
+
+  _ClientService_set_cells_serialized_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_cells(const CellsSerialized& val) {
+    cells = val;
+  }
+
+  void __set_flush(const bool val) {
+    flush = val;
+  }
+
+  bool operator == (const ClientService_set_cells_serialized_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
       return false;
     if (!(cells == rhs.cells))
       return false;
@@ -6128,7 +10165,8 @@ class ClientService_set_cells_serialized_pargs {
 
   virtual ~ClientService_set_cells_serialized_pargs() throw() {}
 
-  const Mutator* mutator;
+  const Namespace* ns;
+  const std::string* table_name;
   const CellsSerialized* cells;
   const bool* flush;
 
@@ -6188,6 +10226,114 @@ class ClientService_set_cells_serialized_presult {
   ClientException e;
 
   _ClientService_set_cells_serialized_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_mutator_flush_args__isset {
+  _ClientService_mutator_flush_args__isset() : mutator(false) {}
+  bool mutator;
+} _ClientService_mutator_flush_args__isset;
+
+class ClientService_mutator_flush_args {
+ public:
+
+  ClientService_mutator_flush_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_mutator_flush_args() throw() {}
+
+  Mutator mutator;
+
+  _ClientService_mutator_flush_args__isset __isset;
+
+  void __set_mutator(const Mutator val) {
+    mutator = val;
+  }
+
+  bool operator == (const ClientService_mutator_flush_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_flush_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_flush_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_mutator_flush_pargs {
+ public:
+
+
+  virtual ~ClientService_mutator_flush_pargs() throw() {}
+
+  const Mutator* mutator;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_flush_result__isset {
+  _ClientService_mutator_flush_result__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_flush_result__isset;
+
+class ClientService_mutator_flush_result {
+ public:
+
+  ClientService_mutator_flush_result() {
+  }
+
+  virtual ~ClientService_mutator_flush_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_flush_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_mutator_flush_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_mutator_flush_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_mutator_flush_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_mutator_flush_presult__isset {
+  _ClientService_mutator_flush_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_mutator_flush_presult__isset;
+
+class ClientService_mutator_flush_presult {
+ public:
+
+
+  virtual ~ClientService_mutator_flush_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_mutator_flush_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -6296,6 +10442,123 @@ class ClientService_flush_mutator_presult {
   ClientException e;
 
   _ClientService_flush_mutator_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_async_mutator_set_cell_args__isset {
+  _ClientService_async_mutator_set_cell_args__isset() : mutator(false), cell(false) {}
+  bool mutator;
+  bool cell;
+} _ClientService_async_mutator_set_cell_args__isset;
+
+class ClientService_async_mutator_set_cell_args {
+ public:
+
+  ClientService_async_mutator_set_cell_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_async_mutator_set_cell_args() throw() {}
+
+  MutatorAsync mutator;
+  Cell cell;
+
+  _ClientService_async_mutator_set_cell_args__isset __isset;
+
+  void __set_mutator(const MutatorAsync val) {
+    mutator = val;
+  }
+
+  void __set_cell(const Cell& val) {
+    cell = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cell_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cell == rhs.cell))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cell_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cell_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_mutator_set_cell_pargs {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cell_pargs() throw() {}
+
+  const MutatorAsync* mutator;
+  const Cell* cell;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cell_result__isset {
+  _ClientService_async_mutator_set_cell_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cell_result__isset;
+
+class ClientService_async_mutator_set_cell_result {
+ public:
+
+  ClientService_async_mutator_set_cell_result() {
+  }
+
+  virtual ~ClientService_async_mutator_set_cell_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cell_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cell_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cell_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cell_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cell_presult__isset {
+  _ClientService_async_mutator_set_cell_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cell_presult__isset;
+
+class ClientService_async_mutator_set_cell_presult {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cell_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cell_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -6418,6 +10681,123 @@ class ClientService_set_cell_async_presult {
 
 };
 
+typedef struct _ClientService_async_mutator_set_cell_as_array_args__isset {
+  _ClientService_async_mutator_set_cell_as_array_args__isset() : mutator(false), cell(false) {}
+  bool mutator;
+  bool cell;
+} _ClientService_async_mutator_set_cell_as_array_args__isset;
+
+class ClientService_async_mutator_set_cell_as_array_args {
+ public:
+
+  ClientService_async_mutator_set_cell_as_array_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_async_mutator_set_cell_as_array_args() throw() {}
+
+  MutatorAsync mutator;
+  CellAsArray cell;
+
+  _ClientService_async_mutator_set_cell_as_array_args__isset __isset;
+
+  void __set_mutator(const MutatorAsync val) {
+    mutator = val;
+  }
+
+  void __set_cell(const CellAsArray& val) {
+    cell = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cell_as_array_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cell == rhs.cell))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cell_as_array_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cell_as_array_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_mutator_set_cell_as_array_pargs {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cell_as_array_pargs() throw() {}
+
+  const MutatorAsync* mutator;
+  const CellAsArray* cell;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cell_as_array_result__isset {
+  _ClientService_async_mutator_set_cell_as_array_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cell_as_array_result__isset;
+
+class ClientService_async_mutator_set_cell_as_array_result {
+ public:
+
+  ClientService_async_mutator_set_cell_as_array_result() {
+  }
+
+  virtual ~ClientService_async_mutator_set_cell_as_array_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cell_as_array_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cell_as_array_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cell_as_array_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cell_as_array_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cell_as_array_presult__isset {
+  _ClientService_async_mutator_set_cell_as_array_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cell_as_array_presult__isset;
+
+class ClientService_async_mutator_set_cell_as_array_presult {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cell_as_array_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cell_as_array_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_set_cell_as_array_async_args__isset {
   _ClientService_set_cell_as_array_async_args__isset() : mutator(false), cell(false) {}
   bool mutator;
@@ -6530,6 +10910,123 @@ class ClientService_set_cell_as_array_async_presult {
   ClientException e;
 
   _ClientService_set_cell_as_array_async_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_async_mutator_set_cells_args__isset {
+  _ClientService_async_mutator_set_cells_args__isset() : mutator(false), cells(false) {}
+  bool mutator;
+  bool cells;
+} _ClientService_async_mutator_set_cells_args__isset;
+
+class ClientService_async_mutator_set_cells_args {
+ public:
+
+  ClientService_async_mutator_set_cells_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_async_mutator_set_cells_args() throw() {}
+
+  MutatorAsync mutator;
+  std::vector<Cell>  cells;
+
+  _ClientService_async_mutator_set_cells_args__isset __isset;
+
+  void __set_mutator(const MutatorAsync val) {
+    mutator = val;
+  }
+
+  void __set_cells(const std::vector<Cell> & val) {
+    cells = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cells_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cells_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cells_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_mutator_set_cells_pargs {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cells_pargs() throw() {}
+
+  const MutatorAsync* mutator;
+  const std::vector<Cell> * cells;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cells_result__isset {
+  _ClientService_async_mutator_set_cells_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cells_result__isset;
+
+class ClientService_async_mutator_set_cells_result {
+ public:
+
+  ClientService_async_mutator_set_cells_result() {
+  }
+
+  virtual ~ClientService_async_mutator_set_cells_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cells_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cells_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cells_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cells_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cells_presult__isset {
+  _ClientService_async_mutator_set_cells_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cells_presult__isset;
+
+class ClientService_async_mutator_set_cells_presult {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cells_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cells_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -6652,6 +11149,123 @@ class ClientService_set_cells_async_presult {
 
 };
 
+typedef struct _ClientService_async_mutator_set_cells_as_arrays_args__isset {
+  _ClientService_async_mutator_set_cells_as_arrays_args__isset() : mutator(false), cells(false) {}
+  bool mutator;
+  bool cells;
+} _ClientService_async_mutator_set_cells_as_arrays_args__isset;
+
+class ClientService_async_mutator_set_cells_as_arrays_args {
+ public:
+
+  ClientService_async_mutator_set_cells_as_arrays_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_async_mutator_set_cells_as_arrays_args() throw() {}
+
+  MutatorAsync mutator;
+  std::vector<CellAsArray>  cells;
+
+  _ClientService_async_mutator_set_cells_as_arrays_args__isset __isset;
+
+  void __set_mutator(const MutatorAsync val) {
+    mutator = val;
+  }
+
+  void __set_cells(const std::vector<CellAsArray> & val) {
+    cells = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cells_as_arrays_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cells_as_arrays_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cells_as_arrays_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_mutator_set_cells_as_arrays_pargs {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cells_as_arrays_pargs() throw() {}
+
+  const MutatorAsync* mutator;
+  const std::vector<CellAsArray> * cells;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cells_as_arrays_result__isset {
+  _ClientService_async_mutator_set_cells_as_arrays_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cells_as_arrays_result__isset;
+
+class ClientService_async_mutator_set_cells_as_arrays_result {
+ public:
+
+  ClientService_async_mutator_set_cells_as_arrays_result() {
+  }
+
+  virtual ~ClientService_async_mutator_set_cells_as_arrays_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cells_as_arrays_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cells_as_arrays_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cells_as_arrays_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cells_as_arrays_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cells_as_arrays_presult__isset {
+  _ClientService_async_mutator_set_cells_as_arrays_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cells_as_arrays_presult__isset;
+
+class ClientService_async_mutator_set_cells_as_arrays_presult {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cells_as_arrays_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cells_as_arrays_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_set_cells_as_arrays_async_args__isset {
   _ClientService_set_cells_as_arrays_async_args__isset() : mutator(false), cells(false) {}
   bool mutator;
@@ -6764,6 +11378,132 @@ class ClientService_set_cells_as_arrays_async_presult {
   ClientException e;
 
   _ClientService_set_cells_as_arrays_async_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_async_mutator_set_cells_serialized_args__isset {
+  _ClientService_async_mutator_set_cells_serialized_args__isset() : mutator(false), cells(false), flush(false) {}
+  bool mutator;
+  bool cells;
+  bool flush;
+} _ClientService_async_mutator_set_cells_serialized_args__isset;
+
+class ClientService_async_mutator_set_cells_serialized_args {
+ public:
+
+  ClientService_async_mutator_set_cells_serialized_args() : mutator(0), cells(""), flush(false) {
+  }
+
+  virtual ~ClientService_async_mutator_set_cells_serialized_args() throw() {}
+
+  MutatorAsync mutator;
+  CellsSerialized cells;
+  bool flush;
+
+  _ClientService_async_mutator_set_cells_serialized_args__isset __isset;
+
+  void __set_mutator(const MutatorAsync val) {
+    mutator = val;
+  }
+
+  void __set_cells(const CellsSerialized& val) {
+    cells = val;
+  }
+
+  void __set_flush(const bool val) {
+    flush = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cells_serialized_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    if (!(flush == rhs.flush))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cells_serialized_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cells_serialized_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_mutator_set_cells_serialized_pargs {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cells_serialized_pargs() throw() {}
+
+  const MutatorAsync* mutator;
+  const CellsSerialized* cells;
+  const bool* flush;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cells_serialized_result__isset {
+  _ClientService_async_mutator_set_cells_serialized_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cells_serialized_result__isset;
+
+class ClientService_async_mutator_set_cells_serialized_result {
+ public:
+
+  ClientService_async_mutator_set_cells_serialized_result() {
+  }
+
+  virtual ~ClientService_async_mutator_set_cells_serialized_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cells_serialized_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_set_cells_serialized_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_set_cells_serialized_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_set_cells_serialized_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_set_cells_serialized_presult__isset {
+  _ClientService_async_mutator_set_cells_serialized_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_set_cells_serialized_presult__isset;
+
+class ClientService_async_mutator_set_cells_serialized_presult {
+ public:
+
+
+  virtual ~ClientService_async_mutator_set_cells_serialized_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_set_cells_serialized_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -6895,6 +11635,114 @@ class ClientService_set_cells_serialized_async_presult {
 
 };
 
+typedef struct _ClientService_async_mutator_flush_args__isset {
+  _ClientService_async_mutator_flush_args__isset() : mutator(false) {}
+  bool mutator;
+} _ClientService_async_mutator_flush_args__isset;
+
+class ClientService_async_mutator_flush_args {
+ public:
+
+  ClientService_async_mutator_flush_args() : mutator(0) {
+  }
+
+  virtual ~ClientService_async_mutator_flush_args() throw() {}
+
+  MutatorAsync mutator;
+
+  _ClientService_async_mutator_flush_args__isset __isset;
+
+  void __set_mutator(const MutatorAsync val) {
+    mutator = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_flush_args & rhs) const
+  {
+    if (!(mutator == rhs.mutator))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_flush_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_flush_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_async_mutator_flush_pargs {
+ public:
+
+
+  virtual ~ClientService_async_mutator_flush_pargs() throw() {}
+
+  const MutatorAsync* mutator;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_flush_result__isset {
+  _ClientService_async_mutator_flush_result__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_flush_result__isset;
+
+class ClientService_async_mutator_flush_result {
+ public:
+
+  ClientService_async_mutator_flush_result() {
+  }
+
+  virtual ~ClientService_async_mutator_flush_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_flush_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_async_mutator_flush_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_async_mutator_flush_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_async_mutator_flush_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_async_mutator_flush_presult__isset {
+  _ClientService_async_mutator_flush_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_async_mutator_flush_presult__isset;
+
+class ClientService_async_mutator_flush_presult {
+ public:
+
+
+  virtual ~ClientService_async_mutator_flush_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_async_mutator_flush_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_flush_mutator_async_args__isset {
   _ClientService_flush_mutator_async_args__isset() : mutator(false) {}
   bool mutator;
@@ -6998,6 +11846,124 @@ class ClientService_flush_mutator_async_presult {
   ClientException e;
 
   _ClientService_flush_mutator_async_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_namespace_exists_args__isset {
+  _ClientService_namespace_exists_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_namespace_exists_args__isset;
+
+class ClientService_namespace_exists_args {
+ public:
+
+  ClientService_namespace_exists_args() : ns("") {
+  }
+
+  virtual ~ClientService_namespace_exists_args() throw() {}
+
+  std::string ns;
+
+  _ClientService_namespace_exists_args__isset __isset;
+
+  void __set_ns(const std::string& val) {
+    ns = val;
+  }
+
+  bool operator == (const ClientService_namespace_exists_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_exists_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_exists_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_namespace_exists_pargs {
+ public:
+
+
+  virtual ~ClientService_namespace_exists_pargs() throw() {}
+
+  const std::string* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_exists_result__isset {
+  _ClientService_namespace_exists_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_namespace_exists_result__isset;
+
+class ClientService_namespace_exists_result {
+ public:
+
+  ClientService_namespace_exists_result() : success(0) {
+  }
+
+  virtual ~ClientService_namespace_exists_result() throw() {}
+
+  bool success;
+  ClientException e;
+
+  _ClientService_namespace_exists_result__isset __isset;
+
+  void __set_success(const bool val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_namespace_exists_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_exists_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_exists_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_exists_presult__isset {
+  _ClientService_namespace_exists_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_namespace_exists_presult__isset;
+
+class ClientService_namespace_exists_presult {
+ public:
+
+
+  virtual ~ClientService_namespace_exists_presult() throw() {}
+
+  bool* success;
+  ClientException e;
+
+  _ClientService_namespace_exists_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -7248,6 +12214,260 @@ class ClientService_exists_table_presult {
 
 };
 
+typedef struct _ClientService_table_exists_args__isset {
+  _ClientService_table_exists_args__isset() : ns(false), name(false) {}
+  bool ns;
+  bool name;
+} _ClientService_table_exists_args__isset;
+
+class ClientService_table_exists_args {
+ public:
+
+  ClientService_table_exists_args() : ns(0), name("") {
+  }
+
+  virtual ~ClientService_table_exists_args() throw() {}
+
+  Namespace ns;
+  std::string name;
+
+  _ClientService_table_exists_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_name(const std::string& val) {
+    name = val;
+  }
+
+  bool operator == (const ClientService_table_exists_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(name == rhs.name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_exists_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_exists_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_exists_pargs {
+ public:
+
+
+  virtual ~ClientService_table_exists_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_exists_result__isset {
+  _ClientService_table_exists_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_exists_result__isset;
+
+class ClientService_table_exists_result {
+ public:
+
+  ClientService_table_exists_result() : success(0) {
+  }
+
+  virtual ~ClientService_table_exists_result() throw() {}
+
+  bool success;
+  ClientException e;
+
+  _ClientService_table_exists_result__isset __isset;
+
+  void __set_success(const bool val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_exists_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_exists_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_exists_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_exists_presult__isset {
+  _ClientService_table_exists_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_exists_presult__isset;
+
+class ClientService_table_exists_presult {
+ public:
+
+
+  virtual ~ClientService_table_exists_presult() throw() {}
+
+  bool* success;
+  ClientException e;
+
+  _ClientService_table_exists_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_table_get_id_args__isset {
+  _ClientService_table_get_id_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_table_get_id_args__isset;
+
+class ClientService_table_get_id_args {
+ public:
+
+  ClientService_table_get_id_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_table_get_id_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+
+  _ClientService_table_get_id_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  bool operator == (const ClientService_table_get_id_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_id_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_id_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_get_id_pargs {
+ public:
+
+
+  virtual ~ClientService_table_get_id_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_id_result__isset {
+  _ClientService_table_get_id_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_id_result__isset;
+
+class ClientService_table_get_id_result {
+ public:
+
+  ClientService_table_get_id_result() : success("") {
+  }
+
+  virtual ~ClientService_table_get_id_result() throw() {}
+
+  std::string success;
+  ClientException e;
+
+  _ClientService_table_get_id_result__isset __isset;
+
+  void __set_success(const std::string& val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_get_id_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_id_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_id_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_id_presult__isset {
+  _ClientService_table_get_id_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_id_presult__isset;
+
+class ClientService_table_get_id_presult {
+ public:
+
+
+  virtual ~ClientService_table_get_id_presult() throw() {}
+
+  std::string* success;
+  ClientException e;
+
+  _ClientService_table_get_id_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_get_table_id_args__isset {
   _ClientService_get_table_id_args__isset() : ns(false), table_name(false) {}
   bool ns;
@@ -7370,6 +12590,133 @@ class ClientService_get_table_id_presult {
   ClientException e;
 
   _ClientService_get_table_id_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_table_get_schema_str_args__isset {
+  _ClientService_table_get_schema_str_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_table_get_schema_str_args__isset;
+
+class ClientService_table_get_schema_str_args {
+ public:
+
+  ClientService_table_get_schema_str_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_table_get_schema_str_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+
+  _ClientService_table_get_schema_str_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  bool operator == (const ClientService_table_get_schema_str_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_schema_str_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_schema_str_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_get_schema_str_pargs {
+ public:
+
+
+  virtual ~ClientService_table_get_schema_str_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_schema_str_result__isset {
+  _ClientService_table_get_schema_str_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_schema_str_result__isset;
+
+class ClientService_table_get_schema_str_result {
+ public:
+
+  ClientService_table_get_schema_str_result() : success("") {
+  }
+
+  virtual ~ClientService_table_get_schema_str_result() throw() {}
+
+  std::string success;
+  ClientException e;
+
+  _ClientService_table_get_schema_str_result__isset __isset;
+
+  void __set_success(const std::string& val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_get_schema_str_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_schema_str_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_schema_str_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_schema_str_presult__isset {
+  _ClientService_table_get_schema_str_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_schema_str_presult__isset;
+
+class ClientService_table_get_schema_str_presult {
+ public:
+
+
+  virtual ~ClientService_table_get_schema_str_presult() throw() {}
+
+  std::string* success;
+  ClientException e;
+
+  _ClientService_table_get_schema_str_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -7502,6 +12849,133 @@ class ClientService_get_schema_str_presult {
 
 };
 
+typedef struct _ClientService_table_get_schema_str_with_ids_args__isset {
+  _ClientService_table_get_schema_str_with_ids_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_table_get_schema_str_with_ids_args__isset;
+
+class ClientService_table_get_schema_str_with_ids_args {
+ public:
+
+  ClientService_table_get_schema_str_with_ids_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_table_get_schema_str_with_ids_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+
+  _ClientService_table_get_schema_str_with_ids_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  bool operator == (const ClientService_table_get_schema_str_with_ids_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_schema_str_with_ids_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_schema_str_with_ids_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_get_schema_str_with_ids_pargs {
+ public:
+
+
+  virtual ~ClientService_table_get_schema_str_with_ids_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_schema_str_with_ids_result__isset {
+  _ClientService_table_get_schema_str_with_ids_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_schema_str_with_ids_result__isset;
+
+class ClientService_table_get_schema_str_with_ids_result {
+ public:
+
+  ClientService_table_get_schema_str_with_ids_result() : success("") {
+  }
+
+  virtual ~ClientService_table_get_schema_str_with_ids_result() throw() {}
+
+  std::string success;
+  ClientException e;
+
+  _ClientService_table_get_schema_str_with_ids_result__isset __isset;
+
+  void __set_success(const std::string& val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_get_schema_str_with_ids_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_schema_str_with_ids_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_schema_str_with_ids_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_schema_str_with_ids_presult__isset {
+  _ClientService_table_get_schema_str_with_ids_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_schema_str_with_ids_presult__isset;
+
+class ClientService_table_get_schema_str_with_ids_presult {
+ public:
+
+
+  virtual ~ClientService_table_get_schema_str_with_ids_presult() throw() {}
+
+  std::string* success;
+  ClientException e;
+
+  _ClientService_table_get_schema_str_with_ids_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_get_schema_str_with_ids_args__isset {
   _ClientService_get_schema_str_with_ids_args__isset() : ns(false), table_name(false) {}
   bool ns;
@@ -7624,6 +13098,133 @@ class ClientService_get_schema_str_with_ids_presult {
   ClientException e;
 
   _ClientService_get_schema_str_with_ids_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_table_get_schema_args__isset {
+  _ClientService_table_get_schema_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_table_get_schema_args__isset;
+
+class ClientService_table_get_schema_args {
+ public:
+
+  ClientService_table_get_schema_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_table_get_schema_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+
+  _ClientService_table_get_schema_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  bool operator == (const ClientService_table_get_schema_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_schema_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_schema_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_get_schema_pargs {
+ public:
+
+
+  virtual ~ClientService_table_get_schema_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_schema_result__isset {
+  _ClientService_table_get_schema_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_schema_result__isset;
+
+class ClientService_table_get_schema_result {
+ public:
+
+  ClientService_table_get_schema_result() {
+  }
+
+  virtual ~ClientService_table_get_schema_result() throw() {}
+
+  Schema success;
+  ClientException e;
+
+  _ClientService_table_get_schema_result__isset __isset;
+
+  void __set_success(const Schema& val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_get_schema_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_schema_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_schema_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_schema_presult__isset {
+  _ClientService_table_get_schema_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_schema_presult__isset;
+
+class ClientService_table_get_schema_presult {
+ public:
+
+
+  virtual ~ClientService_table_get_schema_presult() throw() {}
+
+  Schema* success;
+  ClientException e;
+
+  _ClientService_table_get_schema_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -7874,6 +13475,124 @@ class ClientService_get_tables_presult {
 
 };
 
+typedef struct _ClientService_namespace_get_listing_args__isset {
+  _ClientService_namespace_get_listing_args__isset() : ns(false) {}
+  bool ns;
+} _ClientService_namespace_get_listing_args__isset;
+
+class ClientService_namespace_get_listing_args {
+ public:
+
+  ClientService_namespace_get_listing_args() : ns(0) {
+  }
+
+  virtual ~ClientService_namespace_get_listing_args() throw() {}
+
+  Namespace ns;
+
+  _ClientService_namespace_get_listing_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  bool operator == (const ClientService_namespace_get_listing_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_get_listing_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_get_listing_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_namespace_get_listing_pargs {
+ public:
+
+
+  virtual ~ClientService_namespace_get_listing_pargs() throw() {}
+
+  const Namespace* ns;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_get_listing_result__isset {
+  _ClientService_namespace_get_listing_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_namespace_get_listing_result__isset;
+
+class ClientService_namespace_get_listing_result {
+ public:
+
+  ClientService_namespace_get_listing_result() {
+  }
+
+  virtual ~ClientService_namespace_get_listing_result() throw() {}
+
+  std::vector<NamespaceListing>  success;
+  ClientException e;
+
+  _ClientService_namespace_get_listing_result__isset __isset;
+
+  void __set_success(const std::vector<NamespaceListing> & val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_namespace_get_listing_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_get_listing_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_get_listing_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_get_listing_presult__isset {
+  _ClientService_namespace_get_listing_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_namespace_get_listing_presult__isset;
+
+class ClientService_namespace_get_listing_presult {
+ public:
+
+
+  virtual ~ClientService_namespace_get_listing_presult() throw() {}
+
+  std::vector<NamespaceListing> * success;
+  ClientException e;
+
+  _ClientService_namespace_get_listing_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_get_listing_args__isset {
   _ClientService_get_listing_args__isset() : ns(false) {}
   bool ns;
@@ -7987,6 +13706,133 @@ class ClientService_get_listing_presult {
   ClientException e;
 
   _ClientService_get_listing_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_table_get_splits_args__isset {
+  _ClientService_table_get_splits_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_table_get_splits_args__isset;
+
+class ClientService_table_get_splits_args {
+ public:
+
+  ClientService_table_get_splits_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_table_get_splits_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+
+  _ClientService_table_get_splits_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  bool operator == (const ClientService_table_get_splits_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_splits_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_splits_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_get_splits_pargs {
+ public:
+
+
+  virtual ~ClientService_table_get_splits_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_splits_result__isset {
+  _ClientService_table_get_splits_result__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_splits_result__isset;
+
+class ClientService_table_get_splits_result {
+ public:
+
+  ClientService_table_get_splits_result() {
+  }
+
+  virtual ~ClientService_table_get_splits_result() throw() {}
+
+  std::vector<TableSplit>  success;
+  ClientException e;
+
+  _ClientService_table_get_splits_result__isset __isset;
+
+  void __set_success(const std::vector<TableSplit> & val) {
+    success = val;
+  }
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_get_splits_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_get_splits_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_get_splits_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_get_splits_presult__isset {
+  _ClientService_table_get_splits_presult__isset() : success(false), e(false) {}
+  bool success;
+  bool e;
+} _ClientService_table_get_splits_presult__isset;
+
+class ClientService_table_get_splits_presult {
+ public:
+
+
+  virtual ~ClientService_table_get_splits_presult() throw() {}
+
+  std::vector<TableSplit> * success;
+  ClientException e;
+
+  _ClientService_table_get_splits_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -8114,6 +13960,123 @@ class ClientService_get_table_splits_presult {
   ClientException e;
 
   _ClientService_get_table_splits_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_namespace_drop_args__isset {
+  _ClientService_namespace_drop_args__isset() : ns(false), if_exists(false) {}
+  bool ns;
+  bool if_exists;
+} _ClientService_namespace_drop_args__isset;
+
+class ClientService_namespace_drop_args {
+ public:
+
+  ClientService_namespace_drop_args() : ns(""), if_exists(true) {
+  }
+
+  virtual ~ClientService_namespace_drop_args() throw() {}
+
+  std::string ns;
+  bool if_exists;
+
+  _ClientService_namespace_drop_args__isset __isset;
+
+  void __set_ns(const std::string& val) {
+    ns = val;
+  }
+
+  void __set_if_exists(const bool val) {
+    if_exists = val;
+  }
+
+  bool operator == (const ClientService_namespace_drop_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(if_exists == rhs.if_exists))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_drop_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_drop_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_namespace_drop_pargs {
+ public:
+
+
+  virtual ~ClientService_namespace_drop_pargs() throw() {}
+
+  const std::string* ns;
+  const bool* if_exists;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_drop_result__isset {
+  _ClientService_namespace_drop_result__isset() : e(false) {}
+  bool e;
+} _ClientService_namespace_drop_result__isset;
+
+class ClientService_namespace_drop_result {
+ public:
+
+  ClientService_namespace_drop_result() {
+  }
+
+  virtual ~ClientService_namespace_drop_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_namespace_drop_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_namespace_drop_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_namespace_drop_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_namespace_drop_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_namespace_drop_presult__isset {
+  _ClientService_namespace_drop_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_namespace_drop_presult__isset;
+
+class ClientService_namespace_drop_presult {
+ public:
+
+
+  virtual ~ClientService_namespace_drop_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_namespace_drop_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -8362,6 +14325,132 @@ class ClientService_rename_table_presult {
 
 };
 
+typedef struct _ClientService_table_rename_args__isset {
+  _ClientService_table_rename_args__isset() : ns(false), name(false), new_name(false) {}
+  bool ns;
+  bool name;
+  bool new_name;
+} _ClientService_table_rename_args__isset;
+
+class ClientService_table_rename_args {
+ public:
+
+  ClientService_table_rename_args() : ns(0), name(""), new_name("") {
+  }
+
+  virtual ~ClientService_table_rename_args() throw() {}
+
+  Namespace ns;
+  std::string name;
+  std::string new_name;
+
+  _ClientService_table_rename_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_name(const std::string& val) {
+    name = val;
+  }
+
+  void __set_new_name(const std::string& val) {
+    new_name = val;
+  }
+
+  bool operator == (const ClientService_table_rename_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(name == rhs.name))
+      return false;
+    if (!(new_name == rhs.new_name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_rename_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_rename_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_rename_pargs {
+ public:
+
+
+  virtual ~ClientService_table_rename_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* name;
+  const std::string* new_name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_rename_result__isset {
+  _ClientService_table_rename_result__isset() : e(false) {}
+  bool e;
+} _ClientService_table_rename_result__isset;
+
+class ClientService_table_rename_result {
+ public:
+
+  ClientService_table_rename_result() {
+  }
+
+  virtual ~ClientService_table_rename_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_table_rename_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_rename_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_rename_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_rename_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_rename_presult__isset {
+  _ClientService_table_rename_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_table_rename_presult__isset;
+
+class ClientService_table_rename_presult {
+ public:
+
+
+  virtual ~ClientService_table_rename_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_table_rename_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_drop_table_args__isset {
   _ClientService_drop_table_args__isset() : ns(false), name(false), if_exists(false) {}
   bool ns;
@@ -8483,6 +14572,132 @@ class ClientService_drop_table_presult {
   ClientException e;
 
   _ClientService_drop_table_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_table_drop_args__isset {
+  _ClientService_table_drop_args__isset() : ns(false), name(false), if_exists(false) {}
+  bool ns;
+  bool name;
+  bool if_exists;
+} _ClientService_table_drop_args__isset;
+
+class ClientService_table_drop_args {
+ public:
+
+  ClientService_table_drop_args() : ns(0), name(""), if_exists(true) {
+  }
+
+  virtual ~ClientService_table_drop_args() throw() {}
+
+  Namespace ns;
+  std::string name;
+  bool if_exists;
+
+  _ClientService_table_drop_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_name(const std::string& val) {
+    name = val;
+  }
+
+  void __set_if_exists(const bool val) {
+    if_exists = val;
+  }
+
+  bool operator == (const ClientService_table_drop_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(name == rhs.name))
+      return false;
+    if (!(if_exists == rhs.if_exists))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_drop_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_drop_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_table_drop_pargs {
+ public:
+
+
+  virtual ~ClientService_table_drop_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* name;
+  const bool* if_exists;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_drop_result__isset {
+  _ClientService_table_drop_result__isset() : e(false) {}
+  bool e;
+} _ClientService_table_drop_result__isset;
+
+class ClientService_table_drop_result {
+ public:
+
+  ClientService_table_drop_result() {
+  }
+
+  virtual ~ClientService_table_drop_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_table_drop_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_table_drop_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_table_drop_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_table_drop_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_table_drop_presult__isset {
+  _ClientService_table_drop_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_table_drop_presult__isset;
+
+class ClientService_table_drop_presult {
+ public:
+
+
+  virtual ~ClientService_table_drop_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_table_drop_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -8747,33 +14962,63 @@ class ClientServiceClient : virtual public ClientServiceIf {
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> getOutputProtocol() {
     return poprot_;
   }
+  void namespace_create(const std::string& ns);
+  void send_namespace_create(const std::string& ns);
+  void recv_namespace_create();
   void create_namespace(const std::string& ns);
   void send_create_namespace(const std::string& ns);
   void recv_create_namespace();
   void create_table(const Namespace ns, const std::string& table_name, const std::string& schema);
   void send_create_table(const Namespace ns, const std::string& table_name, const std::string& schema);
   void recv_create_table();
+  void table_create(const Namespace ns, const std::string& table_name, const std::string& schema);
+  void send_table_create(const Namespace ns, const std::string& table_name, const std::string& schema);
+  void recv_table_create();
   void alter_table(const Namespace ns, const std::string& table_name, const std::string& schema);
   void send_alter_table(const Namespace ns, const std::string& table_name, const std::string& schema);
   void recv_alter_table();
+  void table_alter(const Namespace ns, const std::string& table_name, const std::string& schema);
+  void send_table_alter(const Namespace ns, const std::string& table_name, const std::string& schema);
+  void recv_table_alter();
+  Namespace namespace_open(const std::string& ns);
+  void send_namespace_open(const std::string& ns);
+  Namespace recv_namespace_open();
   Namespace open_namespace(const std::string& ns);
   void send_open_namespace(const std::string& ns);
   Namespace recv_open_namespace();
+  void namespace_close(const Namespace ns);
+  void send_namespace_close(const Namespace ns);
+  void recv_namespace_close();
   void close_namespace(const Namespace ns);
   void send_close_namespace(const Namespace ns);
   void recv_close_namespace();
+  Future future_open(const int32_t queue_size);
+  void send_future_open(const int32_t queue_size);
+  Future recv_future_open();
   Future open_future(const int32_t queue_size);
   void send_open_future(const int32_t queue_size);
   Future recv_open_future();
+  void future_cancel(const Future ff);
+  void send_future_cancel(const Future ff);
+  void recv_future_cancel();
   void cancel_future(const Future ff);
   void send_cancel_future(const Future ff);
   void recv_cancel_future();
+  void future_get_result(Result& _return, const Future ff);
+  void send_future_get_result(const Future ff);
+  void recv_future_get_result(Result& _return);
   void get_future_result(Result& _return, const Future ff);
   void send_get_future_result(const Future ff);
   void recv_get_future_result(Result& _return);
+  void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff);
+  void send_future_get_result_as_arrays(const Future ff);
+  void recv_future_get_result_as_arrays(ResultAsArrays& _return);
   void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff);
   void send_get_future_result_as_arrays(const Future ff);
   void recv_get_future_result_as_arrays(ResultAsArrays& _return);
+  void future_get_result_serialized(ResultSerialized& _return, const Future ff);
+  void send_future_get_result_serialized(const Future ff);
+  void recv_future_get_result_serialized(ResultSerialized& _return);
   void get_future_result_serialized(ResultSerialized& _return, const Future ff);
   void send_get_future_result_serialized(const Future ff);
   void recv_get_future_result_serialized(ResultSerialized& _return);
@@ -8789,39 +15034,75 @@ class ClientServiceClient : virtual public ClientServiceIf {
   bool future_has_outstanding(const Future ff);
   void send_future_has_outstanding(const Future ff);
   bool recv_future_has_outstanding();
+  void future_close(const Future ff);
+  void send_future_close(const Future ff);
+  void recv_future_close();
   void close_future(const Future ff);
   void send_close_future(const Future ff);
   void recv_close_future();
+  Scanner scanner_open(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec);
+  void send_scanner_open(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec);
+  Scanner recv_scanner_open();
   Scanner open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec);
   void send_open_scanner(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec);
   Scanner recv_open_scanner();
+  ScannerAsync async_scanner_open(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec);
+  void send_async_scanner_open(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec);
+  ScannerAsync recv_async_scanner_open();
   ScannerAsync open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec);
   void send_open_scanner_async(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec);
   ScannerAsync recv_open_scanner_async();
+  void scanner_close(const Scanner scanner);
+  void send_scanner_close(const Scanner scanner);
+  void recv_scanner_close();
   void close_scanner(const Scanner scanner);
   void send_close_scanner(const Scanner scanner);
   void recv_close_scanner();
+  void async_scanner_cancel(const ScannerAsync scanner);
+  void send_async_scanner_cancel(const ScannerAsync scanner);
+  void recv_async_scanner_cancel();
   void cancel_scanner_async(const ScannerAsync scanner);
   void send_cancel_scanner_async(const ScannerAsync scanner);
   void recv_cancel_scanner_async();
+  void async_scanner_close(const ScannerAsync scanner);
+  void send_async_scanner_close(const ScannerAsync scanner);
+  void recv_async_scanner_close();
   void close_scanner_async(const ScannerAsync scanner);
   void send_close_scanner_async(const ScannerAsync scanner);
   void recv_close_scanner_async();
+  void scanner_get_cells(std::vector<Cell> & _return, const Scanner scanner);
+  void send_scanner_get_cells(const Scanner scanner);
+  void recv_scanner_get_cells(std::vector<Cell> & _return);
   void next_cells(std::vector<Cell> & _return, const Scanner scanner);
   void send_next_cells(const Scanner scanner);
   void recv_next_cells(std::vector<Cell> & _return);
+  void scanner_get_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner);
+  void send_scanner_get_cells_as_arrays(const Scanner scanner);
+  void recv_scanner_get_cells_as_arrays(std::vector<CellAsArray> & _return);
   void next_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner);
   void send_next_cells_as_arrays(const Scanner scanner);
   void recv_next_cells_as_arrays(std::vector<CellAsArray> & _return);
+  void scanner_get_cells_serialized(CellsSerialized& _return, const Scanner scanner);
+  void send_scanner_get_cells_serialized(const Scanner scanner);
+  void recv_scanner_get_cells_serialized(CellsSerialized& _return);
   void next_cells_serialized(CellsSerialized& _return, const Scanner scanner);
   void send_next_cells_serialized(const Scanner scanner);
   void recv_next_cells_serialized(CellsSerialized& _return);
+  void scanner_get_row(std::vector<Cell> & _return, const Scanner scanner);
+  void send_scanner_get_row(const Scanner scanner);
+  void recv_scanner_get_row(std::vector<Cell> & _return);
   void next_row(std::vector<Cell> & _return, const Scanner scanner);
   void send_next_row(const Scanner scanner);
   void recv_next_row(std::vector<Cell> & _return);
+  void scanner_get_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner);
+  void send_scanner_get_row_as_arrays(const Scanner scanner);
+  void recv_scanner_get_row_as_arrays(std::vector<CellAsArray> & _return);
   void next_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner);
   void send_next_row_as_arrays(const Scanner scanner);
   void recv_next_row_as_arrays(std::vector<CellAsArray> & _return);
+  void scanner_get_row_serialized(CellsSerialized& _return, const Scanner scanner);
+  void send_scanner_get_row_serialized(const Scanner scanner);
+  void recv_scanner_get_row_serialized(CellsSerialized& _return);
   void next_row_serialized(CellsSerialized& _return, const Scanner scanner);
   void send_next_row_serialized(const Scanner scanner);
   void recv_next_row_serialized(CellsSerialized& _return);
@@ -8861,93 +15142,177 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell);
   void send_offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell);
   void recv_offer_cell_as_array();
+  Mutator mutator_open(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval);
+  void send_mutator_open(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval);
+  Mutator recv_mutator_open();
   Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval);
   void send_open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval);
   Mutator recv_open_mutator();
+  MutatorAsync async_mutator_open(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags);
+  void send_async_mutator_open(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags);
+  MutatorAsync recv_async_mutator_open();
   MutatorAsync open_mutator_async(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags);
   void send_open_mutator_async(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags);
   MutatorAsync recv_open_mutator_async();
+  void mutator_close(const Mutator mutator);
+  void send_mutator_close(const Mutator mutator);
+  void recv_mutator_close();
   void close_mutator(const Mutator mutator);
   void send_close_mutator(const Mutator mutator);
   void recv_close_mutator();
+  void async_mutator_cancel(const MutatorAsync mutator);
+  void send_async_mutator_cancel(const MutatorAsync mutator);
+  void recv_async_mutator_cancel();
   void cancel_mutator_async(const MutatorAsync mutator);
   void send_cancel_mutator_async(const MutatorAsync mutator);
   void recv_cancel_mutator_async();
+  void async_mutator_close(const MutatorAsync mutator);
+  void send_async_mutator_close(const MutatorAsync mutator);
+  void recv_async_mutator_close();
   void close_mutator_async(const MutatorAsync mutator);
   void send_close_mutator_async(const MutatorAsync mutator);
   void recv_close_mutator_async();
-  void set_cell(const Mutator mutator, const Cell& cell);
-  void send_set_cell(const Mutator mutator, const Cell& cell);
+  void mutator_set_cell(const Mutator mutator, const Cell& cell);
+  void send_mutator_set_cell(const Mutator mutator, const Cell& cell);
+  void recv_mutator_set_cell();
+  void set_cell(const Namespace ns, const std::string& table_name, const Cell& cell);
+  void send_set_cell(const Namespace ns, const std::string& table_name, const Cell& cell);
   void recv_set_cell();
-  void set_cell_as_array(const Mutator mutator, const CellAsArray& cell);
-  void send_set_cell_as_array(const Mutator mutator, const CellAsArray& cell);
+  void mutator_set_cell_as_array(const Mutator mutator, const CellAsArray& cell);
+  void send_mutator_set_cell_as_array(const Mutator mutator, const CellAsArray& cell);
+  void recv_mutator_set_cell_as_array();
+  void set_cell_as_array(const Namespace ns, const std::string& table_name, const CellAsArray& cell);
+  void send_set_cell_as_array(const Namespace ns, const std::string& table_name, const CellAsArray& cell);
   void recv_set_cell_as_array();
-  void set_cells(const Mutator mutator, const std::vector<Cell> & cells);
-  void send_set_cells(const Mutator mutator, const std::vector<Cell> & cells);
+  void mutator_set_cells(const Mutator mutator, const std::vector<Cell> & cells);
+  void send_mutator_set_cells(const Mutator mutator, const std::vector<Cell> & cells);
+  void recv_mutator_set_cells();
+  void set_cells(const Namespace ns, const std::string& table_name, const std::vector<Cell> & cells);
+  void send_set_cells(const Namespace ns, const std::string& table_name, const std::vector<Cell> & cells);
   void recv_set_cells();
-  void set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells);
-  void send_set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells);
+  void mutator_set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells);
+  void send_mutator_set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells);
+  void recv_mutator_set_cells_as_arrays();
+  void set_cells_as_arrays(const Namespace ns, const std::string& table_name, const std::vector<CellAsArray> & cells);
+  void send_set_cells_as_arrays(const Namespace ns, const std::string& table_name, const std::vector<CellAsArray> & cells);
   void recv_set_cells_as_arrays();
-  void set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush);
-  void send_set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush);
+  void mutator_set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush);
+  void send_mutator_set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush);
+  void recv_mutator_set_cells_serialized();
+  void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush);
+  void send_set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush);
   void recv_set_cells_serialized();
+  void mutator_flush(const Mutator mutator);
+  void send_mutator_flush(const Mutator mutator);
+  void recv_mutator_flush();
   void flush_mutator(const Mutator mutator);
   void send_flush_mutator(const Mutator mutator);
   void recv_flush_mutator();
+  void async_mutator_set_cell(const MutatorAsync mutator, const Cell& cell);
+  void send_async_mutator_set_cell(const MutatorAsync mutator, const Cell& cell);
+  void recv_async_mutator_set_cell();
   void set_cell_async(const MutatorAsync mutator, const Cell& cell);
   void send_set_cell_async(const MutatorAsync mutator, const Cell& cell);
   void recv_set_cell_async();
+  void async_mutator_set_cell_as_array(const MutatorAsync mutator, const CellAsArray& cell);
+  void send_async_mutator_set_cell_as_array(const MutatorAsync mutator, const CellAsArray& cell);
+  void recv_async_mutator_set_cell_as_array();
   void set_cell_as_array_async(const MutatorAsync mutator, const CellAsArray& cell);
   void send_set_cell_as_array_async(const MutatorAsync mutator, const CellAsArray& cell);
   void recv_set_cell_as_array_async();
+  void async_mutator_set_cells(const MutatorAsync mutator, const std::vector<Cell> & cells);
+  void send_async_mutator_set_cells(const MutatorAsync mutator, const std::vector<Cell> & cells);
+  void recv_async_mutator_set_cells();
   void set_cells_async(const MutatorAsync mutator, const std::vector<Cell> & cells);
   void send_set_cells_async(const MutatorAsync mutator, const std::vector<Cell> & cells);
   void recv_set_cells_async();
+  void async_mutator_set_cells_as_arrays(const MutatorAsync mutator, const std::vector<CellAsArray> & cells);
+  void send_async_mutator_set_cells_as_arrays(const MutatorAsync mutator, const std::vector<CellAsArray> & cells);
+  void recv_async_mutator_set_cells_as_arrays();
   void set_cells_as_arrays_async(const MutatorAsync mutator, const std::vector<CellAsArray> & cells);
   void send_set_cells_as_arrays_async(const MutatorAsync mutator, const std::vector<CellAsArray> & cells);
   void recv_set_cells_as_arrays_async();
+  void async_mutator_set_cells_serialized(const MutatorAsync mutator, const CellsSerialized& cells, const bool flush);
+  void send_async_mutator_set_cells_serialized(const MutatorAsync mutator, const CellsSerialized& cells, const bool flush);
+  void recv_async_mutator_set_cells_serialized();
   void set_cells_serialized_async(const MutatorAsync mutator, const CellsSerialized& cells, const bool flush);
   void send_set_cells_serialized_async(const MutatorAsync mutator, const CellsSerialized& cells, const bool flush);
   void recv_set_cells_serialized_async();
+  void async_mutator_flush(const MutatorAsync mutator);
+  void send_async_mutator_flush(const MutatorAsync mutator);
+  void recv_async_mutator_flush();
   void flush_mutator_async(const MutatorAsync mutator);
   void send_flush_mutator_async(const MutatorAsync mutator);
   void recv_flush_mutator_async();
+  bool namespace_exists(const std::string& ns);
+  void send_namespace_exists(const std::string& ns);
+  bool recv_namespace_exists();
   bool exists_namespace(const std::string& ns);
   void send_exists_namespace(const std::string& ns);
   bool recv_exists_namespace();
   bool exists_table(const Namespace ns, const std::string& name);
   void send_exists_table(const Namespace ns, const std::string& name);
   bool recv_exists_table();
+  bool table_exists(const Namespace ns, const std::string& name);
+  void send_table_exists(const Namespace ns, const std::string& name);
+  bool recv_table_exists();
+  void table_get_id(std::string& _return, const Namespace ns, const std::string& table_name);
+  void send_table_get_id(const Namespace ns, const std::string& table_name);
+  void recv_table_get_id(std::string& _return);
   void get_table_id(std::string& _return, const Namespace ns, const std::string& table_name);
   void send_get_table_id(const Namespace ns, const std::string& table_name);
   void recv_get_table_id(std::string& _return);
+  void table_get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name);
+  void send_table_get_schema_str(const Namespace ns, const std::string& table_name);
+  void recv_table_get_schema_str(std::string& _return);
   void get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name);
   void send_get_schema_str(const Namespace ns, const std::string& table_name);
   void recv_get_schema_str(std::string& _return);
+  void table_get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name);
+  void send_table_get_schema_str_with_ids(const Namespace ns, const std::string& table_name);
+  void recv_table_get_schema_str_with_ids(std::string& _return);
   void get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name);
   void send_get_schema_str_with_ids(const Namespace ns, const std::string& table_name);
   void recv_get_schema_str_with_ids(std::string& _return);
+  void table_get_schema(Schema& _return, const Namespace ns, const std::string& table_name);
+  void send_table_get_schema(const Namespace ns, const std::string& table_name);
+  void recv_table_get_schema(Schema& _return);
   void get_schema(Schema& _return, const Namespace ns, const std::string& table_name);
   void send_get_schema(const Namespace ns, const std::string& table_name);
   void recv_get_schema(Schema& _return);
   void get_tables(std::vector<std::string> & _return, const Namespace ns);
   void send_get_tables(const Namespace ns);
   void recv_get_tables(std::vector<std::string> & _return);
+  void namespace_get_listing(std::vector<NamespaceListing> & _return, const Namespace ns);
+  void send_namespace_get_listing(const Namespace ns);
+  void recv_namespace_get_listing(std::vector<NamespaceListing> & _return);
   void get_listing(std::vector<NamespaceListing> & _return, const Namespace ns);
   void send_get_listing(const Namespace ns);
   void recv_get_listing(std::vector<NamespaceListing> & _return);
+  void table_get_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name);
+  void send_table_get_splits(const Namespace ns, const std::string& table_name);
+  void recv_table_get_splits(std::vector<TableSplit> & _return);
   void get_table_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name);
   void send_get_table_splits(const Namespace ns, const std::string& table_name);
   void recv_get_table_splits(std::vector<TableSplit> & _return);
+  void namespace_drop(const std::string& ns, const bool if_exists);
+  void send_namespace_drop(const std::string& ns, const bool if_exists);
+  void recv_namespace_drop();
   void drop_namespace(const std::string& ns, const bool if_exists);
   void send_drop_namespace(const std::string& ns, const bool if_exists);
   void recv_drop_namespace();
   void rename_table(const Namespace ns, const std::string& name, const std::string& new_name);
   void send_rename_table(const Namespace ns, const std::string& name, const std::string& new_name);
   void recv_rename_table();
+  void table_rename(const Namespace ns, const std::string& name, const std::string& new_name);
+  void send_table_rename(const Namespace ns, const std::string& name, const std::string& new_name);
+  void recv_table_rename();
   void drop_table(const Namespace ns, const std::string& name, const bool if_exists);
   void send_drop_table(const Namespace ns, const std::string& name, const bool if_exists);
   void recv_drop_table();
+  void table_drop(const Namespace ns, const std::string& name, const bool if_exists);
+  void send_table_drop(const Namespace ns, const std::string& name, const bool if_exists);
+  void recv_table_drop();
   void generate_guid(std::string& _return);
   void send_generate_guid();
   void recv_generate_guid(std::string& _return);
@@ -8967,31 +15332,53 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   virtual bool process_fn(::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, std::string& fname, int32_t seqid, void* callContext);
  private:
   std::map<std::string, void (ClientServiceProcessor::*)(int32_t, ::apache::thrift::protocol::TProtocol*, ::apache::thrift::protocol::TProtocol*, void*)> processMap_;
+  void process_namespace_create(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_create_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_create_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_create(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_alter_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_alter(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_namespace_open(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_namespace_close(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_future_open(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_future_cancel(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_cancel_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_future_get_result(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_future_result(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_future_get_result_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_future_result_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_future_get_result_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_future_result_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_future_is_empty(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_future_is_full(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_future_is_cancelled(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_future_has_outstanding(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_future_close(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_future(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_scanner_open(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_scanner_open(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_scanner_close(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_scanner(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_scanner_cancel(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_cancel_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_scanner_close(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_scanner_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_scanner_get_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_next_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_scanner_get_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_next_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_scanner_get_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_next_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_scanner_get_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_next_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_scanner_get_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_next_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_scanner_get_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_next_row_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_row(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_row_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -9005,65 +15392,115 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_offer_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_offer_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_offer_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_mutator_open(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_mutator_open(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_mutator_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_mutator_close(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_mutator_cancel(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_cancel_mutator_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_mutator_close(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_close_mutator_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_mutator_set_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_mutator_set_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_mutator_set_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_mutator_set_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_mutator_set_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_mutator_flush(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_flush_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_mutator_set_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cell_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_mutator_set_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cell_as_array_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_mutator_set_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cells_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_mutator_set_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cells_as_arrays_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_mutator_set_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_set_cells_serialized_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_async_mutator_flush(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_flush_mutator_async(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_namespace_exists(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_exists_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_exists_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_exists(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_get_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_table_id(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_get_schema_str(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_schema_str(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_get_schema_str_with_ids(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_schema_str_with_ids(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_schema(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_tables(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_namespace_get_listing(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_listing(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_get_splits(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_table_splits(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_namespace_drop(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_drop_namespace(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_rename_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_rename(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_drop_table(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_table_drop(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_generate_guid(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_create_cell_unique(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   ClientServiceProcessor(boost::shared_ptr<ClientServiceIf> iface) :
     iface_(iface) {
+    processMap_["namespace_create"] = &ClientServiceProcessor::process_namespace_create;
     processMap_["create_namespace"] = &ClientServiceProcessor::process_create_namespace;
     processMap_["create_table"] = &ClientServiceProcessor::process_create_table;
+    processMap_["table_create"] = &ClientServiceProcessor::process_table_create;
     processMap_["alter_table"] = &ClientServiceProcessor::process_alter_table;
+    processMap_["table_alter"] = &ClientServiceProcessor::process_table_alter;
+    processMap_["namespace_open"] = &ClientServiceProcessor::process_namespace_open;
     processMap_["open_namespace"] = &ClientServiceProcessor::process_open_namespace;
+    processMap_["namespace_close"] = &ClientServiceProcessor::process_namespace_close;
     processMap_["close_namespace"] = &ClientServiceProcessor::process_close_namespace;
+    processMap_["future_open"] = &ClientServiceProcessor::process_future_open;
     processMap_["open_future"] = &ClientServiceProcessor::process_open_future;
+    processMap_["future_cancel"] = &ClientServiceProcessor::process_future_cancel;
     processMap_["cancel_future"] = &ClientServiceProcessor::process_cancel_future;
+    processMap_["future_get_result"] = &ClientServiceProcessor::process_future_get_result;
     processMap_["get_future_result"] = &ClientServiceProcessor::process_get_future_result;
+    processMap_["future_get_result_as_arrays"] = &ClientServiceProcessor::process_future_get_result_as_arrays;
     processMap_["get_future_result_as_arrays"] = &ClientServiceProcessor::process_get_future_result_as_arrays;
+    processMap_["future_get_result_serialized"] = &ClientServiceProcessor::process_future_get_result_serialized;
     processMap_["get_future_result_serialized"] = &ClientServiceProcessor::process_get_future_result_serialized;
     processMap_["future_is_empty"] = &ClientServiceProcessor::process_future_is_empty;
     processMap_["future_is_full"] = &ClientServiceProcessor::process_future_is_full;
     processMap_["future_is_cancelled"] = &ClientServiceProcessor::process_future_is_cancelled;
     processMap_["future_has_outstanding"] = &ClientServiceProcessor::process_future_has_outstanding;
+    processMap_["future_close"] = &ClientServiceProcessor::process_future_close;
     processMap_["close_future"] = &ClientServiceProcessor::process_close_future;
+    processMap_["scanner_open"] = &ClientServiceProcessor::process_scanner_open;
     processMap_["open_scanner"] = &ClientServiceProcessor::process_open_scanner;
+    processMap_["async_scanner_open"] = &ClientServiceProcessor::process_async_scanner_open;
     processMap_["open_scanner_async"] = &ClientServiceProcessor::process_open_scanner_async;
+    processMap_["scanner_close"] = &ClientServiceProcessor::process_scanner_close;
     processMap_["close_scanner"] = &ClientServiceProcessor::process_close_scanner;
+    processMap_["async_scanner_cancel"] = &ClientServiceProcessor::process_async_scanner_cancel;
     processMap_["cancel_scanner_async"] = &ClientServiceProcessor::process_cancel_scanner_async;
+    processMap_["async_scanner_close"] = &ClientServiceProcessor::process_async_scanner_close;
     processMap_["close_scanner_async"] = &ClientServiceProcessor::process_close_scanner_async;
+    processMap_["scanner_get_cells"] = &ClientServiceProcessor::process_scanner_get_cells;
     processMap_["next_cells"] = &ClientServiceProcessor::process_next_cells;
+    processMap_["scanner_get_cells_as_arrays"] = &ClientServiceProcessor::process_scanner_get_cells_as_arrays;
     processMap_["next_cells_as_arrays"] = &ClientServiceProcessor::process_next_cells_as_arrays;
+    processMap_["scanner_get_cells_serialized"] = &ClientServiceProcessor::process_scanner_get_cells_serialized;
     processMap_["next_cells_serialized"] = &ClientServiceProcessor::process_next_cells_serialized;
+    processMap_["scanner_get_row"] = &ClientServiceProcessor::process_scanner_get_row;
     processMap_["next_row"] = &ClientServiceProcessor::process_next_row;
+    processMap_["scanner_get_row_as_arrays"] = &ClientServiceProcessor::process_scanner_get_row_as_arrays;
     processMap_["next_row_as_arrays"] = &ClientServiceProcessor::process_next_row_as_arrays;
+    processMap_["scanner_get_row_serialized"] = &ClientServiceProcessor::process_scanner_get_row_serialized;
     processMap_["next_row_serialized"] = &ClientServiceProcessor::process_next_row_serialized;
     processMap_["get_row"] = &ClientServiceProcessor::process_get_row;
     processMap_["get_row_as_arrays"] = &ClientServiceProcessor::process_get_row_as_arrays;
@@ -9077,35 +15514,63 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["offer_cells_as_arrays"] = &ClientServiceProcessor::process_offer_cells_as_arrays;
     processMap_["offer_cell"] = &ClientServiceProcessor::process_offer_cell;
     processMap_["offer_cell_as_array"] = &ClientServiceProcessor::process_offer_cell_as_array;
+    processMap_["mutator_open"] = &ClientServiceProcessor::process_mutator_open;
     processMap_["open_mutator"] = &ClientServiceProcessor::process_open_mutator;
+    processMap_["async_mutator_open"] = &ClientServiceProcessor::process_async_mutator_open;
     processMap_["open_mutator_async"] = &ClientServiceProcessor::process_open_mutator_async;
+    processMap_["mutator_close"] = &ClientServiceProcessor::process_mutator_close;
     processMap_["close_mutator"] = &ClientServiceProcessor::process_close_mutator;
+    processMap_["async_mutator_cancel"] = &ClientServiceProcessor::process_async_mutator_cancel;
     processMap_["cancel_mutator_async"] = &ClientServiceProcessor::process_cancel_mutator_async;
+    processMap_["async_mutator_close"] = &ClientServiceProcessor::process_async_mutator_close;
     processMap_["close_mutator_async"] = &ClientServiceProcessor::process_close_mutator_async;
+    processMap_["mutator_set_cell"] = &ClientServiceProcessor::process_mutator_set_cell;
     processMap_["set_cell"] = &ClientServiceProcessor::process_set_cell;
+    processMap_["mutator_set_cell_as_array"] = &ClientServiceProcessor::process_mutator_set_cell_as_array;
     processMap_["set_cell_as_array"] = &ClientServiceProcessor::process_set_cell_as_array;
+    processMap_["mutator_set_cells"] = &ClientServiceProcessor::process_mutator_set_cells;
     processMap_["set_cells"] = &ClientServiceProcessor::process_set_cells;
+    processMap_["mutator_set_cells_as_arrays"] = &ClientServiceProcessor::process_mutator_set_cells_as_arrays;
     processMap_["set_cells_as_arrays"] = &ClientServiceProcessor::process_set_cells_as_arrays;
+    processMap_["mutator_set_cells_serialized"] = &ClientServiceProcessor::process_mutator_set_cells_serialized;
     processMap_["set_cells_serialized"] = &ClientServiceProcessor::process_set_cells_serialized;
+    processMap_["mutator_flush"] = &ClientServiceProcessor::process_mutator_flush;
     processMap_["flush_mutator"] = &ClientServiceProcessor::process_flush_mutator;
+    processMap_["async_mutator_set_cell"] = &ClientServiceProcessor::process_async_mutator_set_cell;
     processMap_["set_cell_async"] = &ClientServiceProcessor::process_set_cell_async;
+    processMap_["async_mutator_set_cell_as_array"] = &ClientServiceProcessor::process_async_mutator_set_cell_as_array;
     processMap_["set_cell_as_array_async"] = &ClientServiceProcessor::process_set_cell_as_array_async;
+    processMap_["async_mutator_set_cells"] = &ClientServiceProcessor::process_async_mutator_set_cells;
     processMap_["set_cells_async"] = &ClientServiceProcessor::process_set_cells_async;
+    processMap_["async_mutator_set_cells_as_arrays"] = &ClientServiceProcessor::process_async_mutator_set_cells_as_arrays;
     processMap_["set_cells_as_arrays_async"] = &ClientServiceProcessor::process_set_cells_as_arrays_async;
+    processMap_["async_mutator_set_cells_serialized"] = &ClientServiceProcessor::process_async_mutator_set_cells_serialized;
     processMap_["set_cells_serialized_async"] = &ClientServiceProcessor::process_set_cells_serialized_async;
+    processMap_["async_mutator_flush"] = &ClientServiceProcessor::process_async_mutator_flush;
     processMap_["flush_mutator_async"] = &ClientServiceProcessor::process_flush_mutator_async;
+    processMap_["namespace_exists"] = &ClientServiceProcessor::process_namespace_exists;
     processMap_["exists_namespace"] = &ClientServiceProcessor::process_exists_namespace;
     processMap_["exists_table"] = &ClientServiceProcessor::process_exists_table;
+    processMap_["table_exists"] = &ClientServiceProcessor::process_table_exists;
+    processMap_["table_get_id"] = &ClientServiceProcessor::process_table_get_id;
     processMap_["get_table_id"] = &ClientServiceProcessor::process_get_table_id;
+    processMap_["table_get_schema_str"] = &ClientServiceProcessor::process_table_get_schema_str;
     processMap_["get_schema_str"] = &ClientServiceProcessor::process_get_schema_str;
+    processMap_["table_get_schema_str_with_ids"] = &ClientServiceProcessor::process_table_get_schema_str_with_ids;
     processMap_["get_schema_str_with_ids"] = &ClientServiceProcessor::process_get_schema_str_with_ids;
+    processMap_["table_get_schema"] = &ClientServiceProcessor::process_table_get_schema;
     processMap_["get_schema"] = &ClientServiceProcessor::process_get_schema;
     processMap_["get_tables"] = &ClientServiceProcessor::process_get_tables;
+    processMap_["namespace_get_listing"] = &ClientServiceProcessor::process_namespace_get_listing;
     processMap_["get_listing"] = &ClientServiceProcessor::process_get_listing;
+    processMap_["table_get_splits"] = &ClientServiceProcessor::process_table_get_splits;
     processMap_["get_table_splits"] = &ClientServiceProcessor::process_get_table_splits;
+    processMap_["namespace_drop"] = &ClientServiceProcessor::process_namespace_drop;
     processMap_["drop_namespace"] = &ClientServiceProcessor::process_drop_namespace;
     processMap_["rename_table"] = &ClientServiceProcessor::process_rename_table;
+    processMap_["table_rename"] = &ClientServiceProcessor::process_table_rename;
     processMap_["drop_table"] = &ClientServiceProcessor::process_drop_table;
+    processMap_["table_drop"] = &ClientServiceProcessor::process_table_drop;
     processMap_["generate_guid"] = &ClientServiceProcessor::process_generate_guid;
     processMap_["create_cell_unique"] = &ClientServiceProcessor::process_create_cell_unique;
   }
@@ -9126,6 +15591,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     ifaces_.push_back(iface);
   }
  public:
+  void namespace_create(const std::string& ns) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->namespace_create(ns);
+    }
+  }
+
   void create_namespace(const std::string& ns) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9140,10 +15612,35 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void table_create(const Namespace ns, const std::string& table_name, const std::string& schema) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->table_create(ns, table_name, schema);
+    }
+  }
+
   void alter_table(const Namespace ns, const std::string& table_name, const std::string& schema) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->alter_table(ns, table_name, schema);
+    }
+  }
+
+  void table_alter(const Namespace ns, const std::string& table_name, const std::string& schema) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->table_alter(ns, table_name, schema);
+    }
+  }
+
+  Namespace namespace_open(const std::string& ns) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->namespace_open(ns);
+      } else {
+        ifaces_[i]->namespace_open(ns);
+      }
     }
   }
 
@@ -9158,10 +15655,28 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void namespace_close(const Namespace ns) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->namespace_close(ns);
+    }
+  }
+
   void close_namespace(const Namespace ns) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->close_namespace(ns);
+    }
+  }
+
+  Future future_open(const int32_t queue_size) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->future_open(queue_size);
+      } else {
+        ifaces_[i]->future_open(queue_size);
+      }
     }
   }
 
@@ -9176,10 +15691,29 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void future_cancel(const Future ff) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->future_cancel(ff);
+    }
+  }
+
   void cancel_future(const Future ff) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->cancel_future(ff);
+    }
+  }
+
+  void future_get_result(Result& _return, const Future ff) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->future_get_result(_return, ff);
+        return;
+      } else {
+        ifaces_[i]->future_get_result(_return, ff);
+      }
     }
   }
 
@@ -9195,6 +15729,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->future_get_result_as_arrays(_return, ff);
+        return;
+      } else {
+        ifaces_[i]->future_get_result_as_arrays(_return, ff);
+      }
+    }
+  }
+
   void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9203,6 +15749,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->get_future_result_as_arrays(_return, ff);
+      }
+    }
+  }
+
+  void future_get_result_serialized(ResultSerialized& _return, const Future ff) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->future_get_result_serialized(_return, ff);
+        return;
+      } else {
+        ifaces_[i]->future_get_result_serialized(_return, ff);
       }
     }
   }
@@ -9263,10 +15821,28 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void future_close(const Future ff) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->future_close(ff);
+    }
+  }
+
   void close_future(const Future ff) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->close_future(ff);
+    }
+  }
+
+  Scanner scanner_open(const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->scanner_open(ns, table_name, scan_spec);
+      } else {
+        ifaces_[i]->scanner_open(ns, table_name, scan_spec);
+      }
     }
   }
 
@@ -9277,6 +15853,17 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return ifaces_[i]->open_scanner(ns, table_name, scan_spec);
       } else {
         ifaces_[i]->open_scanner(ns, table_name, scan_spec);
+      }
+    }
+  }
+
+  ScannerAsync async_scanner_open(const Namespace ns, const std::string& table_name, const Future future, const ScanSpec& scan_spec) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->async_scanner_open(ns, table_name, future, scan_spec);
+      } else {
+        ifaces_[i]->async_scanner_open(ns, table_name, future, scan_spec);
       }
     }
   }
@@ -9292,10 +15879,24 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void scanner_close(const Scanner scanner) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->scanner_close(scanner);
+    }
+  }
+
   void close_scanner(const Scanner scanner) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->close_scanner(scanner);
+    }
+  }
+
+  void async_scanner_cancel(const ScannerAsync scanner) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_scanner_cancel(scanner);
     }
   }
 
@@ -9306,10 +15907,29 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void async_scanner_close(const ScannerAsync scanner) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_scanner_close(scanner);
+    }
+  }
+
   void close_scanner_async(const ScannerAsync scanner) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->close_scanner_async(scanner);
+    }
+  }
+
+  void scanner_get_cells(std::vector<Cell> & _return, const Scanner scanner) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->scanner_get_cells(_return, scanner);
+        return;
+      } else {
+        ifaces_[i]->scanner_get_cells(_return, scanner);
+      }
     }
   }
 
@@ -9321,6 +15941,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->next_cells(_return, scanner);
+      }
+    }
+  }
+
+  void scanner_get_cells_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->scanner_get_cells_as_arrays(_return, scanner);
+        return;
+      } else {
+        ifaces_[i]->scanner_get_cells_as_arrays(_return, scanner);
       }
     }
   }
@@ -9337,6 +15969,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void scanner_get_cells_serialized(CellsSerialized& _return, const Scanner scanner) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->scanner_get_cells_serialized(_return, scanner);
+        return;
+      } else {
+        ifaces_[i]->scanner_get_cells_serialized(_return, scanner);
+      }
+    }
+  }
+
   void next_cells_serialized(CellsSerialized& _return, const Scanner scanner) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9345,6 +15989,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->next_cells_serialized(_return, scanner);
+      }
+    }
+  }
+
+  void scanner_get_row(std::vector<Cell> & _return, const Scanner scanner) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->scanner_get_row(_return, scanner);
+        return;
+      } else {
+        ifaces_[i]->scanner_get_row(_return, scanner);
       }
     }
   }
@@ -9361,6 +16017,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void scanner_get_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->scanner_get_row_as_arrays(_return, scanner);
+        return;
+      } else {
+        ifaces_[i]->scanner_get_row_as_arrays(_return, scanner);
+      }
+    }
+  }
+
   void next_row_as_arrays(std::vector<CellAsArray> & _return, const Scanner scanner) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9369,6 +16037,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->next_row_as_arrays(_return, scanner);
+      }
+    }
+  }
+
+  void scanner_get_row_serialized(CellsSerialized& _return, const Scanner scanner) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->scanner_get_row_serialized(_return, scanner);
+        return;
+      } else {
+        ifaces_[i]->scanner_get_row_serialized(_return, scanner);
       }
     }
   }
@@ -9504,6 +16184,17 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  Mutator mutator_open(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->mutator_open(ns, table_name, flags, flush_interval);
+      } else {
+        ifaces_[i]->mutator_open(ns, table_name, flags, flush_interval);
+      }
+    }
+  }
+
   Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9511,6 +16202,17 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return ifaces_[i]->open_mutator(ns, table_name, flags, flush_interval);
       } else {
         ifaces_[i]->open_mutator(ns, table_name, flags, flush_interval);
+      }
+    }
+  }
+
+  MutatorAsync async_mutator_open(const Namespace ns, const std::string& table_name, const Future future, const int32_t flags) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->async_mutator_open(ns, table_name, future, flags);
+      } else {
+        ifaces_[i]->async_mutator_open(ns, table_name, future, flags);
       }
     }
   }
@@ -9526,10 +16228,24 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void mutator_close(const Mutator mutator) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->mutator_close(mutator);
+    }
+  }
+
   void close_mutator(const Mutator mutator) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->close_mutator(mutator);
+    }
+  }
+
+  void async_mutator_cancel(const MutatorAsync mutator) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_mutator_cancel(mutator);
     }
   }
 
@@ -9540,6 +16256,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void async_mutator_close(const MutatorAsync mutator) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_mutator_close(mutator);
+    }
+  }
+
   void close_mutator_async(const MutatorAsync mutator) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9547,38 +16270,80 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  void set_cell(const Mutator mutator, const Cell& cell) {
+  void mutator_set_cell(const Mutator mutator, const Cell& cell) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
-      ifaces_[i]->set_cell(mutator, cell);
+      ifaces_[i]->mutator_set_cell(mutator, cell);
     }
   }
 
-  void set_cell_as_array(const Mutator mutator, const CellAsArray& cell) {
+  void set_cell(const Namespace ns, const std::string& table_name, const Cell& cell) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
-      ifaces_[i]->set_cell_as_array(mutator, cell);
+      ifaces_[i]->set_cell(ns, table_name, cell);
     }
   }
 
-  void set_cells(const Mutator mutator, const std::vector<Cell> & cells) {
+  void mutator_set_cell_as_array(const Mutator mutator, const CellAsArray& cell) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
-      ifaces_[i]->set_cells(mutator, cells);
+      ifaces_[i]->mutator_set_cell_as_array(mutator, cell);
     }
   }
 
-  void set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells) {
+  void set_cell_as_array(const Namespace ns, const std::string& table_name, const CellAsArray& cell) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
-      ifaces_[i]->set_cells_as_arrays(mutator, cells);
+      ifaces_[i]->set_cell_as_array(ns, table_name, cell);
     }
   }
 
-  void set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush) {
+  void mutator_set_cells(const Mutator mutator, const std::vector<Cell> & cells) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
-      ifaces_[i]->set_cells_serialized(mutator, cells, flush);
+      ifaces_[i]->mutator_set_cells(mutator, cells);
+    }
+  }
+
+  void set_cells(const Namespace ns, const std::string& table_name, const std::vector<Cell> & cells) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->set_cells(ns, table_name, cells);
+    }
+  }
+
+  void mutator_set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->mutator_set_cells_as_arrays(mutator, cells);
+    }
+  }
+
+  void set_cells_as_arrays(const Namespace ns, const std::string& table_name, const std::vector<CellAsArray> & cells) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->set_cells_as_arrays(ns, table_name, cells);
+    }
+  }
+
+  void mutator_set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->mutator_set_cells_serialized(mutator, cells, flush);
+    }
+  }
+
+  void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->set_cells_serialized(ns, table_name, cells, flush);
+    }
+  }
+
+  void mutator_flush(const Mutator mutator) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->mutator_flush(mutator);
     }
   }
 
@@ -9589,10 +16354,24 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void async_mutator_set_cell(const MutatorAsync mutator, const Cell& cell) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_mutator_set_cell(mutator, cell);
+    }
+  }
+
   void set_cell_async(const MutatorAsync mutator, const Cell& cell) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->set_cell_async(mutator, cell);
+    }
+  }
+
+  void async_mutator_set_cell_as_array(const MutatorAsync mutator, const CellAsArray& cell) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_mutator_set_cell_as_array(mutator, cell);
     }
   }
 
@@ -9603,10 +16382,24 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void async_mutator_set_cells(const MutatorAsync mutator, const std::vector<Cell> & cells) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_mutator_set_cells(mutator, cells);
+    }
+  }
+
   void set_cells_async(const MutatorAsync mutator, const std::vector<Cell> & cells) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->set_cells_async(mutator, cells);
+    }
+  }
+
+  void async_mutator_set_cells_as_arrays(const MutatorAsync mutator, const std::vector<CellAsArray> & cells) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_mutator_set_cells_as_arrays(mutator, cells);
     }
   }
 
@@ -9617,6 +16410,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void async_mutator_set_cells_serialized(const MutatorAsync mutator, const CellsSerialized& cells, const bool flush) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_mutator_set_cells_serialized(mutator, cells, flush);
+    }
+  }
+
   void set_cells_serialized_async(const MutatorAsync mutator, const CellsSerialized& cells, const bool flush) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9624,10 +16424,28 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void async_mutator_flush(const MutatorAsync mutator) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->async_mutator_flush(mutator);
+    }
+  }
+
   void flush_mutator_async(const MutatorAsync mutator) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->flush_mutator_async(mutator);
+    }
+  }
+
+  bool namespace_exists(const std::string& ns) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->namespace_exists(ns);
+      } else {
+        ifaces_[i]->namespace_exists(ns);
+      }
     }
   }
 
@@ -9653,6 +16471,29 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  bool table_exists(const Namespace ns, const std::string& name) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        return ifaces_[i]->table_exists(ns, name);
+      } else {
+        ifaces_[i]->table_exists(ns, name);
+      }
+    }
+  }
+
+  void table_get_id(std::string& _return, const Namespace ns, const std::string& table_name) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->table_get_id(_return, ns, table_name);
+        return;
+      } else {
+        ifaces_[i]->table_get_id(_return, ns, table_name);
+      }
+    }
+  }
+
   void get_table_id(std::string& _return, const Namespace ns, const std::string& table_name) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9661,6 +16502,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->get_table_id(_return, ns, table_name);
+      }
+    }
+  }
+
+  void table_get_schema_str(std::string& _return, const Namespace ns, const std::string& table_name) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->table_get_schema_str(_return, ns, table_name);
+        return;
+      } else {
+        ifaces_[i]->table_get_schema_str(_return, ns, table_name);
       }
     }
   }
@@ -9677,6 +16530,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void table_get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->table_get_schema_str_with_ids(_return, ns, table_name);
+        return;
+      } else {
+        ifaces_[i]->table_get_schema_str_with_ids(_return, ns, table_name);
+      }
+    }
+  }
+
   void get_schema_str_with_ids(std::string& _return, const Namespace ns, const std::string& table_name) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9685,6 +16550,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->get_schema_str_with_ids(_return, ns, table_name);
+      }
+    }
+  }
+
+  void table_get_schema(Schema& _return, const Namespace ns, const std::string& table_name) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->table_get_schema(_return, ns, table_name);
+        return;
+      } else {
+        ifaces_[i]->table_get_schema(_return, ns, table_name);
       }
     }
   }
@@ -9713,6 +16590,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void namespace_get_listing(std::vector<NamespaceListing> & _return, const Namespace ns) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->namespace_get_listing(_return, ns);
+        return;
+      } else {
+        ifaces_[i]->namespace_get_listing(_return, ns);
+      }
+    }
+  }
+
   void get_listing(std::vector<NamespaceListing> & _return, const Namespace ns) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -9721,6 +16610,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->get_listing(_return, ns);
+      }
+    }
+  }
+
+  void table_get_splits(std::vector<TableSplit> & _return, const Namespace ns, const std::string& table_name) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->table_get_splits(_return, ns, table_name);
+        return;
+      } else {
+        ifaces_[i]->table_get_splits(_return, ns, table_name);
       }
     }
   }
@@ -9734,6 +16635,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
       } else {
         ifaces_[i]->get_table_splits(_return, ns, table_name);
       }
+    }
+  }
+
+  void namespace_drop(const std::string& ns, const bool if_exists) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->namespace_drop(ns, if_exists);
     }
   }
 
@@ -9751,10 +16659,24 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void table_rename(const Namespace ns, const std::string& name, const std::string& new_name) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->table_rename(ns, name, new_name);
+    }
+  }
+
   void drop_table(const Namespace ns, const std::string& name, const bool if_exists) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->drop_table(ns, name, if_exists);
+    }
+  }
+
+  void table_drop(const Namespace ns, const std::string& name, const bool if_exists) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->table_drop(ns, name, if_exists);
     }
   }
 

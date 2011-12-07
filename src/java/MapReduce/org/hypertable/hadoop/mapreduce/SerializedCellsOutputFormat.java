@@ -131,7 +131,7 @@ public class SerializedCellsOutputFormat
     @Override
     public void write(NullWritable key, BytesWritable value) throws IOException {
       try {
-        mClient.set_cells_serialized(mMutator, ByteBuffer.wrap(value.getBytes()), false);
+        mClient.mutator_set_cells_serialized(mMutator, ByteBuffer.wrap(value.getBytes()), false);
       }
       catch (Exception e) {
         log.error(e);
