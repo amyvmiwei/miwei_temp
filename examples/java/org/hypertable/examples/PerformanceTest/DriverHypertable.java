@@ -52,7 +52,7 @@ public class DriverHypertable extends Driver {
     if (mParallelism == 0) {
       try {
         if (mNamespaceId != 0)
-          mClient.close_namespace(mNamespaceId);
+          mClient.namespace_close(mNamespaceId);
       }
       catch (Exception e) {
         System.out.println("Unable to close namespace - " + mNamespace +
@@ -71,7 +71,7 @@ public class DriverHypertable extends Driver {
       try {
         mClient = ThriftClient.create("localhost", 38080);
         mNamespace = "/";
-        mNamespaceId = mClient.open_namespace(mNamespace);
+        mNamespaceId = mClient.namespace_open(mNamespace);
       }
       catch (Exception e) {
         System.out.println("Unable to establish connection to ThriftBroker at localhost:38080 " +
@@ -97,7 +97,7 @@ public class DriverHypertable extends Driver {
       else {
         mCellsWriter.clear();
         if (testType == Task.Type.WRITE || testType == Task.Type.INCR)
-          mMutator = mClient.open_mutator(mNamespaceId, mTableName, 0, 0);
+          mMutator = mClient.mutator_open(mNamespaceId, mTableName, 0, 0);
       }
     }
     catch (ClientException e) {
@@ -172,16 +172,16 @@ public class DriverHypertable extends Driver {
                                      qualifier, 0, qualifier.length,
                                      SerializedCellsFlag.AUTO_ASSIGN,
                                      value, 0, value.length, SerializedCellsFlag.FLAG_INSERT)) {
-              mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+              mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
               mCellsWriter.clear();
             }
           }
         }
         if (mParallelism == 0) {
           if (!mCellsWriter.isEmpty())
-            mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
+            mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
           else
-            mClient.flush_mutator(mMutator);
+            mClient.mutator_flush(mMutator);
         }
       }
       catch (Exception e) {
@@ -232,16 +232,16 @@ public class DriverHypertable extends Driver {
                                      qualifier, 0, qualifier.length,
                                      SerializedCellsFlag.AUTO_ASSIGN,
                                      value, 0, value.length, SerializedCellsFlag.FLAG_INSERT)) {
-              mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+              mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
               mCellsWriter.clear();
             }
           }
         }
         if (mParallelism == 0) {
           if (!mCellsWriter.isEmpty())
-            mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
+            mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
           else
-            mClient.flush_mutator(mMutator);
+            mClient.mutator_flush(mMutator);
         }
       }
       catch (Exception e) {
@@ -310,16 +310,16 @@ public class DriverHypertable extends Driver {
       scan_spec.addToRow_intervals(ri);
 
       try {
-        long scanner = mClient.open_scanner(mNamespaceId, mTableName, scan_spec);
+        long scanner = mClient.scanner_open(mNamespaceId, mTableName, scan_spec);
         while (!eos) {
-          reader.reset( mClient.next_cells_serialized(scanner) );
+          reader.reset( mClient.scanner_get_cells_serialized(scanner) );
           while (reader.next()) {
             mResult.itemsReturned++;
             mResult.valueBytesReturned += reader.get_value_length();
           }
           eos = reader.eos();
         }
-        mClient.close_scanner(scanner);
+        mClient.scanner_close(scanner);
       }
       catch (Exception e) {
         e.printStackTrace();

@@ -343,8 +343,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       m_tablename = tablename;
       m_scan_spec = scan_spec;
       try {
-        m_ns = m_client.open_namespace(m_namespace);
-        m_scanner = m_client.open_scanner(m_ns, m_tablename, m_scan_spec);
+        m_ns = m_client.namespace_open(m_namespace);
+        m_scanner = m_client.scanner_open(m_ns, m_tablename, m_scan_spec);
       }
       catch (TTransportException e) {
         e.printStackTrace();
@@ -371,9 +371,9 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
     public void close() {
       try {
-        m_client.close_scanner(m_scanner);
+        m_client.scanner_close(m_scanner);
         if (m_ns != 0)
-          m_client.close_namespace(m_ns);
+          m_client.namespace_close(m_ns);
       }
       catch (Exception e) {
         e.printStackTrace();
@@ -439,7 +439,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         if (m_eos)
           return false;
         if (m_cells == null || !m_iter.hasNext()) {
-          m_cells = m_client.next_cells(m_scanner);
+          m_cells = m_client.scanner_get_cells(m_scanner);
           if (m_cells.isEmpty()) {
             m_eos = true;
             return false;
@@ -530,9 +530,9 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         }
       }
 
-      ns = m_client.open_namespace(namespace);
+      ns = m_client.namespace_open(namespace);
       List<org.hypertable.thriftgen.TableSplit> tsplits =
-          m_client.get_table_splits(ns, tablename);
+          m_client.table_get_splits(ns, tablename);
       List<InputSplit> splits = new ArrayList<InputSplit>(tsplits.size());
 
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
@@ -569,7 +569,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
     finally {
       if (ns != 0) {
         try {
-          m_client.close_namespace(ns);
+          m_client.namespace_close(ns);
         }
         catch (Exception e) {
           e.printStackTrace();

@@ -20,7 +20,7 @@ public class BasicClientTest {
     long ns = -1;
     try {
       client = ThriftClient.create("localhost", 38080);
-      ns = client.open_namespace("test");
+      ns = client.namespace_open("test");
       // HQL examples
       show(client.hql_query(ns, "show tables").toString());
       show(client.hql_query(ns, "select * from thrift_test").toString());
@@ -41,7 +41,7 @@ public class BasicClientTest {
       }
 
       // mutator examples
-      long mutator = client.open_mutator(ns, "thrift_test", 0, 0);
+      long mutator = client.mutator_open(ns, "thrift_test", 0, 0);
 
       try {
         Cell cell = new Cell();
@@ -51,10 +51,10 @@ public class BasicClientTest {
         cell.setKey(key);
         String vtmp = "java-v1";
         cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
-        client.set_cell(mutator, cell);
+        client.mutator_set_cell(mutator, cell);
       }
       finally {
-        client.close_mutator(mutator);
+        client.mutator_close(mutator);
       }
 
       // shared mutator example
@@ -87,35 +87,35 @@ public class BasicClientTest {
       // scanner examples
       System.out.println("Full scan");
       ScanSpec scanSpec = new ScanSpec(); // empty scan spec select all
-      long scanner = client.open_scanner(ns, "thrift_test", scanSpec);
+      long scanner = client.scanner_open(ns, "thrift_test", scanSpec);
 
       try {
-        List<Cell> cells = client.next_cells(scanner);
+        List<Cell> cells = client.scanner_get_cells(scanner);
 
         while (cells.size() > 0) {
           show(cells.toString());
-          cells = client.next_cells(scanner);
+          cells = client.scanner_get_cells(scanner);
         }
       }
       finally {
-        client.close_scanner(scanner);
+        client.scanner_close(scanner);
       }
       // restricted scanspec
       scanSpec.addToColumns("col:/^.*$/");
       scanSpec.setRow_regexp("java.*");
       scanSpec.setValue_regexp("v2");
-      scanner = client.open_scanner(ns, "thrift_test", scanSpec);
+      scanner = client.scanner_open(ns, "thrift_test", scanSpec);
       System.out.println("Restricted scan");
       try {
-        List<Cell> cells = client.next_cells(scanner);
+        List<Cell> cells = client.scanner_get_cells(scanner);
 
         while (cells.size() > 0) {
           show(cells.toString());
-          cells = client.next_cells(scanner);
+          cells = client.scanner_get_cells(scanner);
         }
       }
       finally {
-        client.close_scanner(scanner);
+        client.scanner_close(scanner);
       }
 
       // asynchronous api
@@ -130,9 +130,9 @@ public class BasicClientTest {
 
       try {
         System.out.println("Asynchronous mutator");
-        future = client.open_future(0);
-        mutator_async_1 = client.open_mutator_async(ns, "thrift_test", future, 0);
-        mutator_async_2 = client.open_mutator_async(ns, "thrift_test", future, 0);
+        future = client.future_open(0);
+        mutator_async_1 = client.async_mutator_open(ns, "thrift_test", future, 0);
+        mutator_async_2 = client.async_mutator_open(ns, "thrift_test", future, 0);
         Result result;
 
         Cell cell = new Cell();
@@ -144,7 +144,7 @@ public class BasicClientTest {
         cell.setKey(key);
         String vtmp = "java-async-put-v1";
         cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
-        client.set_cell_async(mutator_async_1, cell);
+        client.async_mutator_set_cell(mutator_async_1, cell);
 
         key = new Key();
         key.setRow("java-put2");
@@ -152,14 +152,14 @@ public class BasicClientTest {
         cell.setKey(key);
         vtmp = "java-async-put-v2";
         cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
-        client.set_cell_async(mutator_async_2, cell);
+        client.async_mutator_set_cell(mutator_async_2, cell);
 
-        client.flush_mutator_async(mutator_async_1);
-        client.flush_mutator_async(mutator_async_2);
+        client.async_mutator_flush(mutator_async_1);
+        client.async_mutator_flush(mutator_async_2);
 
         int num_flushes=0;
         while (true) {
-          result = client.get_future_result(future);
+          result = client.future_get_result(future);
           if (result.is_empty || result.is_error || result.is_scan)
             break;
           num_flushes++;
@@ -175,19 +175,19 @@ public class BasicClientTest {
         }
       }
       finally {
-        client.close_mutator_async(mutator_async_1);
-        client.close_mutator_async(mutator_async_2);
+        client.async_mutator_close(mutator_async_1);
+        client.async_mutator_close(mutator_async_2);
       }
 
       try {
         System.out.println("Asynchronous scan");
         ScanSpec ss = new ScanSpec();
-        color_scanner = client.open_scanner_async(ns, "FruitColor", future, ss);
-        location_scanner = client.open_scanner_async(ns, "FruitLocation", future, ss);
-        energy_scanner = client.open_scanner_async(ns, "FruitEnergy", future, ss);
+        color_scanner = client.async_scanner_open(ns, "FruitColor", future, ss);
+        location_scanner = client.async_scanner_open(ns, "FruitLocation", future, ss);
+        energy_scanner = client.async_scanner_open(ns, "FruitEnergy", future, ss);
         Result result;
         while (true) {
-          result = client.get_future_result(future);
+          result = client.future_get_result(future);
           if (result.is_empty || result.is_error || !result.is_scan)
             break;
           for(int ii=0; ii< result.cells.size(); ++ii) {
@@ -195,7 +195,7 @@ public class BasicClientTest {
             num_cells++;
           }
           if (num_cells >=6) {
-            client.cancel_future(future);
+            client.future_cancel(future);
             break;
           }
         }
@@ -205,10 +205,10 @@ public class BasicClientTest {
         }
       }
       finally {
-        client.close_scanner_async(color_scanner);
-        client.close_scanner_async(location_scanner);
-        client.close_scanner_async(energy_scanner);
-        client.close_future(future);
+        client.async_scanner_close(color_scanner);
+        client.async_scanner_close(location_scanner);
+        client.async_scanner_close(energy_scanner);
+        client.future_close(future);
       }
       if (num_cells != 6) {
         System.out.println("Expected " + expected_cells + " cells got " + num_cells);
@@ -225,7 +225,7 @@ public class BasicClientTest {
         client.hql_query(ns, "drop table if exists java_thrift_test");
         client.hql_query(ns, "create table java_thrift_test ( c1, c2, c3 )");
 
-        mutator = client.open_mutator(ns, "java_thrift_test", 0, 0);
+        mutator = client.mutator_open(ns, "java_thrift_test", 0, 0);
 
         cell = new Cell();
         key = new Key();
@@ -235,7 +235,7 @@ public class BasicClientTest {
         cell.setKey(key);
         str = "foo";
         cell.setValue( ByteBuffer.wrap(str.getBytes()) );
-        client.set_cell(mutator, cell);
+        client.mutator_set_cell(mutator, cell);
 
         cell = new Cell();
         key = new Key();
@@ -244,9 +244,9 @@ public class BasicClientTest {
         cell.setKey(key);
         str = "bar";
         cell.setValue( ByteBuffer.wrap(str.getBytes()) );
-        client.set_cell(mutator, cell);
+        client.mutator_set_cell(mutator, cell);
 
-        client.close_mutator(mutator);
+        client.mutator_close(mutator);
 
         HqlResult result = client.hql_query(ns, "select * from java_thrift_test");
         List<Cell> cells = result.cells;
@@ -258,19 +258,19 @@ public class BasicClientTest {
 
         if (qualifier_count != 1) {
           System.out.println("ERROR: Expected qualifier_count of 1, got " + qualifier_count);
-          client.close_namespace(ns);
+          client.namespace_close(ns);
           System.exit(1);
         }
       }
 
-      client.close_namespace(ns);
+      client.namespace_close(ns);
 
     }
     catch (Exception e) {
       e.printStackTrace();
       try {
         if (client != null && ns != -1)
-          client.close_namespace(ns);
+          client.namespace_close(ns);
       }
       catch (Exception ce) {
         System.err.println("Problen closing namespace \"test\" - " + e.getMessage());

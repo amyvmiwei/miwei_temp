@@ -73,7 +73,7 @@ public class DriverThreadHypertable extends Thread {
           while (!mState.updates.isEmpty()) {
             try {
               SerializedCellsWriter writer = mState.updates.remove();
-              mClient.set_cells_serialized(mMutator, writer.buffer(), true);
+              mClient.mutator_set_cells_serialized(mMutator, writer.buffer(), true);
             }
             catch (Exception e) {
               e.printStackTrace();

@@ -109,8 +109,8 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
         this.namespace = namespace;
         this.table = table;
         mClient = ThriftClient.create("localhost", 38080);
-        mNamespaceId = mClient.open_namespace(namespace);
-        mMutator = mClient.open_mutator(mNamespaceId, table, flags, flush_interval);
+        mNamespaceId = mClient.namespace_open(namespace);
+        mMutator = mClient.mutator_open(mNamespaceId, table, flags, flush_interval);
 
       }
       catch (Exception e) {
@@ -140,12 +140,12 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
     public void close(Reporter reporter) throws IOException {
       try {
         if (!mCellsWriter.isEmpty()) {
-          mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+          mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
           mCellsWriter.clear();
         }
         if (mNamespaceId != 0)
-          mClient.close_namespace(mNamespaceId);
-        mClient.close_mutator(mMutator);
+          mClient.namespace_close(mNamespaceId);
+        mClient.mutator_close(mMutator);
       }
       catch (Exception e) {
         log.error(e);
@@ -229,7 +229,7 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
                               byte_array, qualifier_offset, qualifier_length,
                               timestamp, byte_array, value_offset, value_length,
                               SerializedCellsFlag.FLAG_INSERT)) {
-          mClient.set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+          mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
           mCellsWriter.clear();
           if ((row_length+family_length+qualifier_length+value_length+32) > mCellsWriter.capacity())
             mCellsWriter = new SerializedCellsWriter(row_length+family_length+qualifier_length+value_length+32);
@@ -278,7 +278,7 @@ public class TextTableOutputFormat implements org.apache.hadoop.mapred.OutputFor
     public void checkOutputSpecs(FileSystem ignore, JobConf conf)
       throws IOException {
     try {
-      //mClient.get_table_id();
+      //mClient.table_get_id();
     }
     catch (Exception e) {
       log.error(e);
