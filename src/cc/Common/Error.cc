@@ -24,6 +24,8 @@
 
 #include "Error.h"
 
+#include <iomanip>
+
 namespace Hypertable { namespace Logger {
     extern bool show_line_numbers;
   }
@@ -66,6 +68,8 @@ namespace {
         "HYPERTABLE block compressor bad magic string" },
     { Error::BLOCK_COMPRESSOR_CHECKSUM_MISMATCH,
         "HYPERTABLE block compressor block checksum mismatch" },
+    { Error::BLOCK_COMPRESSOR_DEFLATE_ERROR,
+        "HYPERTABLE block compressor deflate error" },
     { Error::BLOCK_COMPRESSOR_INFLATE_ERROR,
         "HYPERTABLE block compressor inflate error" },
     { Error::BLOCK_COMPRESSOR_INIT_ERROR,
@@ -195,7 +199,7 @@ namespace {
     { Error::MASTER_NOT_RUNNING,          "MASTER not running" },
     { Error::MASTER_NO_RANGESERVERS,      "MASTER no range servers" },
     { Error::MASTER_FILE_NOT_LOCKED,      "MASTER file not locked" },
-    { Error::MASTER_RANGESERVER_ALREADY_REGISTERED ,
+    { Error::MASTER_RANGESERVER_ALREADY_REGISTERED,
         "MASTER range server with same location already registered" },
     { Error::MASTER_BAD_COLUMN_FAMILY,    "MASTER bad column family" },
     { Error::MASTER_SCHEMA_GENERATION_MISMATCH,
@@ -249,6 +253,7 @@ namespace {
     { Error::RANGESERVER_SHORT_CELLSTORE_READ, "RANGE SERVER short cellstore read" },
     { Error::RANGESERVER_RANGE_NOT_ACTIVE, "RANGE SERVER range no longer active" },
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
+    { Error::METALOG_VERSION_MISMATCH, "METALOG version mismatch" },
     { Error::METALOG_BAD_RS_HEADER, "METALOG bad range server metalog header" },
     { Error::METALOG_BAD_HEADER,  "METALOG bad metalog header" },
     { Error::METALOG_ENTRY_TRUNCATED,   "METALOG entry truncated" },
@@ -261,8 +266,8 @@ namespace {
     { Error::SERIALIZATION_BAD_VSTR,      "SERIALIZATION bad vstr encoding" },
     { Error::THRIFTBROKER_BAD_SCANNER_ID, "THRIFT BROKER bad scanner id" },
     { Error::THRIFTBROKER_BAD_MUTATOR_ID, "THRIFT BROKER bad mutator id" },
-    { Error::THRIFTBROKER_BAD_NAMESPACE_ID , "THRIFT BROKER bad namespace id" },
-    { Error::THRIFTBROKER_BAD_FUTURE_ID ,    "THRIFT BROKER bad future id" },
+    { Error::THRIFTBROKER_BAD_NAMESPACE_ID, "THRIFT BROKER bad namespace id" },
+    { Error::THRIFTBROKER_BAD_FUTURE_ID,    "THRIFT BROKER bad future id" },
     { 0, 0 }
   };
 
@@ -284,6 +289,23 @@ const char *Error::get_text(int error) {
   if (text == 0)
     return "ERROR NOT REGISTERED";
   return text;
+}
+
+void Error::generate_html_error_code_documentation(std::ostream &out) {
+  out << "<table border=\"1\" cellpadding=\"4\" cellspacing=\"1\" style=\"width: 720px; \">\n";
+  out << "<thead><tr><th scope=\"col\">Code<br />(hexidecimal)</th>\n";
+  out << "<th scope=\"col\">Code<br />(decimal)</th>\n";
+  out << "<th scope=\"col\">Description</th></tr></thead><tbody>\n";
+
+  for (size_t i=0; error_info[i].text; i++) {
+    if (error_info[i].code >= 0)
+      out << "<tr><td style=\"text-align: right; \"><code>0x" << std::hex << error_info[i].code << "</code></td>\n";
+    else
+      out << "<tr><td style=\"text-align: right; \"><code></code></td>\n";
+    out << "<td style=\"text-align: right; \"><code>" << std::dec << error_info[i].code << "</code></td>\n";
+    out << "<td>" << error_info[i].text << "</td></tr>\n";
+  }
+  out << "</tbody></table>\n" << std::flush;
 }
 
 namespace Hypertable {

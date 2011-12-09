@@ -91,7 +91,7 @@ namespace Hypertable {
       COMM_BROKEN_CONNECTION         = 0x00010002,
       COMM_CONNECT_ERROR             = 0x00010003,
       COMM_ALREADY_CONNECTED         = 0x00010004,
-      //COMM_REQUEST_TIMEOUT           = 0x00010005,
+
       COMM_SEND_ERROR                = 0x00010006,
       COMM_RECEIVE_ERROR             = 0x00010007,
       COMM_POLL_ERROR                = 0x00010008,
@@ -220,6 +220,7 @@ namespace Hypertable {
     };
 
     const char *get_text(int error);
+    void generate_html_error_code_documentation(std::ostream &out);
 
   } // namespace Error
 
