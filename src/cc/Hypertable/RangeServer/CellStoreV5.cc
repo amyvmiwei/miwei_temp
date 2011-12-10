@@ -663,7 +663,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
       zbuf.ptr += HT_IO_ALIGNMENT_PADDING(zbuf.fill());
     }
     send_buf = zbuf;
-    m_filesys->append(m_fd, send_buf);
+    m_filesys->append(m_fd, send_buf, 0, &m_sync_handler);
     m_outstanding_appends++;
     zlen = zbuf.fill();
     m_offset += zlen;

@@ -341,6 +341,7 @@ bool TableInfo::includes_row(const String &row) const {
 
 void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
   ScopedLock lock(m_mutex);
+  range_vec.reserve(range_vec.size() + m_range_set.size());
   for (RangeInfoSet::iterator iter = m_range_set.begin();
        iter != m_range_set.end(); ++iter) {
     if (iter->get_range())

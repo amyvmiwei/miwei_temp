@@ -95,11 +95,15 @@ MaintenancePrioritizerLowMemory::prioritize(RangeStatsVector &range_data,
    * Assign priority for USER ranges
    */
   if (!range_data_user.empty()) {
-    assign_priorities_all(range_data_user, Global::user_log, prune_threshold,
-                          memory_state, priority, trace_str);
-    assign_priorities_user(range_data_user, memory_state, priority, trace_str);
-  }
 
+    if (schedule_inprogress_operations(range_data_user, memory_state, priority, trace_str))
+      schedule_splits_and_relinquishes(range_data, memory_state, priority, trace_str);
+
+    assign_priorities_user(range_data_user, memory_state, priority, trace_str);
+
+    schedule_necessary_compactions(range_data_user, Global::user_log, prune_threshold,
+                                   memory_state, priority, trace_str);
+  }
 
 }
 
