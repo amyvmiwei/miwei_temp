@@ -192,8 +192,8 @@ void RangeLocator::initialize() {
   SchemaPtr schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
 
   if (!schema->is_valid()) {
-    HT_ERRORF("Schema Parse Error for table METADATA : %s",
-              schema->get_error_string());
+    HT_ERRORF("Schema Parse Error for table METADATA : %s (%s)",
+              schema->get_error_string(), (char *)valbuf.base);
     HT_THROW_(Error::RANGESERVER_SCHEMA_PARSE_ERROR);
   }
 

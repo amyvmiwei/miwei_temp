@@ -272,6 +272,11 @@ namespace Hypertable {
       return m_state.pending.size();
     }
 
+    size_t in_progress() {
+      ScopedLock lock(m_state.mutex);
+      return m_state.in_progress.size();
+    }
+
     void wait_for_empty() {
       ScopedLock lock(m_state.mutex);
       while (!m_state.queue.empty() || !m_state.in_progress.empty())

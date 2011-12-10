@@ -57,6 +57,8 @@ namespace Hypertable {
     bool          m_low_physical_memory;
     boost::xtime  m_last_maintenance;
     bool          m_maintenance_outstanding;
+    int32_t       m_maintenance_queue_workers;
+    int32_t       m_app_queue_paused_ticks;
 
     void restart_app_queue();
     bool low_memory_mode();
