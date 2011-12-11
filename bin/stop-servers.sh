@@ -118,7 +118,7 @@ if [ $STOP_MASTER == "true" ] ; then
   echo 'shutdown;quit;' | $HYPERTABLE_HOME/bin/ht master_client --batch
   # wait for master shutdown
   wait_for_server_shutdown master "master" "$@"
-  if [ $FORCE == "true" ] ; then
+  if [ $? != 0 ] ; then
       stop_server master
   fi
 fi
@@ -131,8 +131,8 @@ if [ $STOP_RANGESERVER == "true" ] ; then
   echo 'shutdown;quit' | $HYPERTABLE_HOME/bin/ht rsclient --batch --no-hyperspace
   # wait for rangeserver shutdown
   wait_for_server_shutdown rangeserver "range server" "$@"
-  if [ $FORCE == "true" ] ; then
-      stop_server rangeserver
+  if [ $? != 0 ] ; then
+      stop_server master
   fi
 fi
 
@@ -141,6 +141,8 @@ fi
 # Stop DFSBroker
 #
 if [ $STOP_DFSBROKER == "true" ] ; then
+  echo "Sending shutdown command to DFS broker"
+  echo 'shutdown' | $HYPERTABLE_HOME/bin/ht dfsclient --nowait --batch
   stop_server dfsbroker
 fi
 

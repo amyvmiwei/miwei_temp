@@ -95,8 +95,7 @@ public class ConnectionHandler implements DispatchHandler {
                                                           event);
                 break;
             case Protocol.COMMAND_SHUTDOWN:
-                requestHandler = new RequestHandlerShutdown(mComm, mAppQueue,
-                                                            event);
+              requestHandler = new RequestHandlerShutdown(mComm, mAppQueue, mBroker, event);
                 break;
             case Protocol.COMMAND_STATUS:
                 requestHandler = new RequestHandlerStatus(mComm, mAppQueue,

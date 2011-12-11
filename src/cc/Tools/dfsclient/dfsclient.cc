@@ -51,6 +51,8 @@ extern "C" {
 #include "CommandShutdown.h"
 #include "CommandExists.h"
 
+#include <boost/algorithm/string.hpp>
+
 using namespace Hypertable;
 using namespace Config;
 using namespace std;
@@ -63,7 +65,9 @@ namespace {
       cmdline_desc("Usage: %s [Options]\n\n"
         "This is a command line interface to the DFS broker.\n\n"
         "Options").add_options()
+        ("batch", "Don't print interactive messages")
         ("eval,e", str(), "Evalute semicolon separted commands")
+        ("nowait", "Don't wait for certain commands to complete (e.g. shutdown)")
         ;
     }
   };
@@ -71,12 +75,21 @@ namespace {
   typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
 
   char *line_read = 0;
+  bool batch_mode = false;
+  String input_str;
 
   char *rl_gets () {
 
     if (line_read) {
       free (line_read);
       line_read = (char *)NULL;
+    }
+
+    if (batch_mode) {
+      if (!getline(cin, input_str))
+	return 0;
+      boost::trim(input_str);
+      return (char *)input_str.c_str();
     }
 
     /* Get a line from the user. */
@@ -95,17 +108,31 @@ namespace {
 int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
-
+    InetAddr addr;
     String host = get_str("DfsBroker.Host");
     ::uint16_t port = get_i16("DfsBroker.Port");
     ::uint32_t timeout_ms;
+    bool nowait = has("nowait");
+
+    batch_mode = has("batch");
 
     if (has("timeout"))
       timeout_ms = get_i32("timeout");
     else
       timeout_ms = get_i32("Hypertable.Request.Timeout");
 
-    DfsBroker::Client *client = new DfsBroker::Client(host, port, timeout_ms);
+    InetAddr::initialize(&addr, host.c_str(), port);
+    DispatchHandlerSynchronizer *sync_handler = new DispatchHandlerSynchronizer();
+    DispatchHandlerPtr default_handler(sync_handler);
+    EventPtr event;
+    Comm *comm = Comm::instance();
+
+    comm->connect(addr, default_handler);
+    sync_handler->wait_for_reply(event);
+
+    bool connected = !(event->type == Event::DISCONNECT && event->error == Error::COMM_CONNECT_ERROR);
+
+    DfsBroker::Client *client = new DfsBroker::Client(comm, addr, timeout_ms);
 
     vector<InteractiveCommand *>  commands;
     commands.push_back(new CommandCopyFromLocal(client));
@@ -114,7 +141,7 @@ int main(int argc, char **argv) {
     commands.push_back(new CommandMkdirs(client));
     commands.push_back(new CommandRemove(client));
     commands.push_back(new CommandRmdir(client));
-    commands.push_back(new CommandShutdown(client));
+    commands.push_back(new CommandShutdown(client, nowait, connected));
     commands.push_back(new CommandExists(client));
 
     /**
@@ -145,8 +172,9 @@ int main(int argc, char **argv) {
       return 0;
     }
 
-    cout <<"Welcome to dsftool, a command-line interface to the DFS broker.\n"
-         <<"Type 'help' for a description of commands.\n" << endl;
+    if (!batch_mode)
+      cout <<"Welcome to dsftool, a command-line interface to the DFS broker.\n"
+	   <<"Type 'help' for a description of commands.\n" << endl;
 
     using_history();
     const char *line;

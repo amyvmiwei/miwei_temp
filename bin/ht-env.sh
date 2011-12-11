@@ -130,6 +130,7 @@ wait_for_server() {
     return 1
   else
     show_success "$server_desc" "$become"
+    return 0
   fi
 }
 
