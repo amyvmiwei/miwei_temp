@@ -32,7 +32,8 @@ namespace Hypertable {
 
   class CommandShutdown : public InteractiveCommand {
   public:
-    CommandShutdown(DfsBroker::Client *client) : m_client(client) { return; }
+  CommandShutdown(DfsBroker::Client *client, bool nowait, bool connected) 
+    : m_client(client), m_nowait(nowait), m_connected(connected) { return; }
     virtual const char *command_text() { return "shutdown"; }
     virtual const char **usage() { return ms_usage; }
     virtual void run();
@@ -41,6 +42,8 @@ namespace Hypertable {
     static const char *ms_usage[];
 
     DfsBroker::Client *m_client;
+    bool m_nowait;
+    bool m_connected;
   };
 }
 

@@ -42,9 +42,11 @@ const char *CommandShutdown::ms_usage[] = {
 
 
 void CommandShutdown::run() {
-  DispatchHandlerSynchronizer sync_handler;
   uint16_t flags = 0;
   EventPtr event_ptr;
+
+  if (!m_connected)
+    return;
 
   if (m_args.size() > 0) {
     if (m_args[0].first == "now")
@@ -54,9 +56,13 @@ void CommandShutdown::run() {
                 m_args[0].first.c_str());
   }
 
-  m_client->shutdown(flags, &sync_handler);
-
-  sync_handler.wait_for_reply(event_ptr);
+  if (m_nowait)
+    m_client->shutdown(flags, 0);
+  else {
+    DispatchHandlerSynchronizer sync_handler;
+    m_client->shutdown(flags, &sync_handler);
+    sync_handler.wait_for_reply(event_ptr);
+  }
 
 }
 

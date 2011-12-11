@@ -36,10 +36,11 @@ public class RequestHandlerShutdown extends ApplicationHandler {
         "org.hypertable.DfsBroker.hadoop");
 
     public RequestHandlerShutdown(Comm comm, ApplicationQueue appQueue,
-                                  Event event) {
+                                  HdfsBroker broker, Event event) {
         super(event);
         mComm = comm;
         mAppQueue = appQueue;
+        mBroker = broker;
     }
 
     public void run() {
@@ -50,14 +51,16 @@ public class RequestHandlerShutdown extends ApplicationHandler {
             if (mEvent.payload.remaining() < 2)
                 throw new ProtocolException("Truncated message");
 
+            mAppQueue.Shutdown();
+
+            mBroker.GetOpenFileMap().RemoveAll();
+
             short flags = mEvent.payload.getShort();
 
             if ((flags & Protocol.SHUTDOWN_FLAG_IMMEDIATE) != 0) {
                 log.info("Immediate shutdown.");
                 System.exit(0);
             }
-
-            mAppQueue.Shutdown();
 
             cb.response_ok();
 
@@ -77,6 +80,7 @@ public class RequestHandlerShutdown extends ApplicationHandler {
         }
     }
 
-    private Comm              mComm;
-    private ApplicationQueue  mAppQueue;
+  private Comm              mComm;
+  private ApplicationQueue  mAppQueue;
+  private HdfsBroker        mBroker;
 }
