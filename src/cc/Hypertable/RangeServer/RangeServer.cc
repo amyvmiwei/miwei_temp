@@ -122,10 +122,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   uint32_t maintenance_threads;
   {
     int32_t disk_count = System::get_drive_count();
-    if (disk_count > 0)
-      maintenance_threads = (disk_count * 3) / 2;
-    else
-      maintenance_threads = m_cores;
+    maintenance_threads = std::max(((disk_count*3)/2), (int32_t)m_cores);
     if (maintenance_threads < 2)
       maintenance_threads = 2;
     maintenance_threads = cfg.get_i32("MaintenanceThreads", maintenance_threads);
