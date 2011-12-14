@@ -40,7 +40,7 @@ public class DriverCommon {
   public static final byte [] INCREMENT_VALUE_BYTES = "1".getBytes();
 
   public void initializeValueData() throws IOException {
-      if (VALUE_DATA_FILE == null) {
+      if (VALUE_DATA_FILE == null || VALUE_DATA_FILE.equals("")) {
 	  byte [] randomData = new byte [ 262144 ];
 	  random.nextBytes(randomData);
 	  valueData = ByteBuffer.wrap(randomData);
