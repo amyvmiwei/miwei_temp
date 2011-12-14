@@ -222,7 +222,7 @@ public class Client {
         throw new HypertableException(Error.FAILED_EXPECTATION, "Expected SETUP message");
 
       String valueDataFile = ((MessageSetup)message).getValueData();
-      DriverCommon.VALUE_DATA_FILE = (valueDataFile == "") ? null : valueDataFile;
+      DriverCommon.VALUE_DATA_FILE = valueDataFile;
 
       String driverName = ((MessageSetup)message).getDriver();
 

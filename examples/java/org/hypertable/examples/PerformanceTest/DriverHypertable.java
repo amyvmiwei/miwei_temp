@@ -141,7 +141,7 @@ public class DriverHypertable extends Driver {
       try {
         for (long i=task.start; i<task.end; i++) {
           if (task.order == Task.Order.RANDOM) {
-            if (task.keyCount > Integer.MAX_VALUE)
+	    if (task.keyCount > Integer.MAX_VALUE || task.keyMax > Integer.MAX_VALUE)
               randi = mCommon.random.nextLong();
             else
               randi = mCommon.random.nextInt();
@@ -323,7 +323,7 @@ public class DriverHypertable extends Driver {
       }
       catch (Exception e) {
         e.printStackTrace();
-        throw new IOException("Unable to set cell via thrift - " + e.toString());
+        throw new IOException("Problem fetching scan results via thrift - " + e.toString());
       }
     }
 

@@ -146,7 +146,7 @@ public class Dispatcher {
 
   static String usage[] = {
     "",
-    "usage: Dispatcher [OPTIONS] read|write|scan|incr <keyCount> <valueSize>",
+    "usage: Dispatcher [OPTIONS] read|write|scan|incr <keySize> <valueSize> <totalDataSize>",
     "",
     "OPTIONS:",
     "  --help                  Display this help text and exit",
@@ -154,7 +154,7 @@ public class Dispatcher {
     "  --driver=<s>            Which DB driver to use.  Valid values include:",
     "                          hypertable, hbase (default = hypertable)",
     "  --key-max=<n>           When generating random keys, modulo resulting key by <n>",
-    "  --key-size=<n>          Key size (default = 10)",
+    "                          (default is keycount * 10)",
     "  --measure-latency       Measure request latency (default is false)",
     "  --output-dir=<dir>      Directory to write test report into (default is cwd)",
     "  --parallel=<n>          Run test in parallel mode by spawning <n> threads per client",
@@ -181,7 +181,6 @@ public class Dispatcher {
   };
 
   static final int DEFAULT_PORT = 11256;
-  static final int DEFAULT_KEY_SIZE = 10;
 
   public static String testTypeString(Task.Order order, Task.Type testType) {
     String orderStr = "";
@@ -227,8 +226,9 @@ public class Dispatcher {
     long submitAtMost = -1;
     long keysSubmitted = 0;
     long keyMax = -1;
-    int keySize = DEFAULT_KEY_SIZE;
+    int keySize = -1;
     int valueSize = -1;
+    long totalDataSize = -1;
     int scanBufferSize = 65536;
     boolean randomizeTasks = false;
     String argString = "";
@@ -249,8 +249,6 @@ public class Dispatcher {
         parallel = Integer.parseInt(args[i].substring(11));
       else if (args[i].startsWith("--key-max="))
         keyMax = Long.parseLong(args[i].substring(10));
-      else if (args[i].startsWith("--key-size="))
-        keySize = Integer.parseInt(args[i].substring(11));
       else if (args[i].startsWith("--submit-at-most="))
         submitAtMost = Long.parseLong(args[i].substring(17));
       else if (args[i].startsWith("--submit-exactly="))
@@ -284,19 +282,21 @@ public class Dispatcher {
           Usage.DumpAndExit(usage);
         testTypeSet = true;
       }
-      else if (keyCount == -1) {
-        keyCount = Long.parseLong(args[i]);
-      }
+      else if (keySize == -1)
+	keySize = Integer.parseInt(args[i]);
       else if (valueSize == -1)
         valueSize = Integer.parseInt(args[i]);
+      else if (totalDataSize == -1)
+	totalDataSize = Long.parseLong(args[i]);
       else
         Usage.DumpAndExit(usage);
       argString += args[i] + " ";
     }
 
-    if (keyCount == -1 ||
-        testType == Task.Type.WRITE && valueSize == -1)
+    if (totalDataSize == -1)
       Usage.DumpAndExit(usage);
+
+    keyCount = totalDataSize / (keySize+valueSize);
 
     if (submitExactly != -1 && submitAtMost != -1) {
       System.out.println("ERROR:  Only one of --submit-exactly and --submit-at-most may be supplied");
@@ -373,15 +373,28 @@ public class Dispatcher {
       pendingResults = connections;
       progressReadySkip = connections;
 
+      if (keyMax == -1)
+	  keyMax = keyCount * 10;
+
       long nranges = 10 * connections;
-      long rangesize = keyCount / nranges;
       Task task;
-      while (keysSubmitted < submitExactly) {
-        for (long start=0,end=rangesize; start<keyCount && keysSubmitted<submitExactly; start=end,end+=rangesize) {
-          keysSubmitted += end-start;
-          task = new Task(testType, keyMax, keySize, valueSize, keyCount, order, distribution, start, end, scanBufferSize);
-          taskVector.add( task );
-        }
+      if (testType == Task.Type.SCAN) {
+	  long rangesize = keyMax / nranges;
+	  for (long start=0,end=rangesize; start<keyMax; start=end,end+=rangesize) {
+	      keysSubmitted += end-start;
+	      task = new Task(testType, keyMax, keySize, valueSize, keyCount, order, distribution, start, end, scanBufferSize);
+	      taskVector.add( task );
+	  }
+      }
+      else {
+	  long rangesize = keyCount / nranges;
+	  while (keysSubmitted < submitExactly) {
+	      for (long start=0,end=rangesize; start<keyCount && keysSubmitted<submitExactly; start=end,end+=rangesize) {
+		  keysSubmitted += end-start;
+		  task = new Task(testType, keyMax, keySize, valueSize, keyCount, order, distribution, start, end, scanBufferSize);
+		  taskVector.add( task );
+	      }
+	  }
       }
 
       if (randomizeTasks) {
