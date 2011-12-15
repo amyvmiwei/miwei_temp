@@ -1761,8 +1761,8 @@ uint32_t ClientService_future_open_args::read(::apache::thrift::protocol::TProto
     {
       case 1:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->queue_size);
-          this->__isset.queue_size = true;
+          xfer += iprot->readI32(this->capacity);
+          this->__isset.capacity = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -1782,8 +1782,8 @@ uint32_t ClientService_future_open_args::read(::apache::thrift::protocol::TProto
 uint32_t ClientService_future_open_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_future_open_args");
-  xfer += oprot->writeFieldBegin("queue_size", ::apache::thrift::protocol::T_I32, 1);
-  xfer += oprot->writeI32(this->queue_size);
+  xfer += oprot->writeFieldBegin("capacity", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32(this->capacity);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -1793,8 +1793,8 @@ uint32_t ClientService_future_open_args::write(::apache::thrift::protocol::TProt
 uint32_t ClientService_future_open_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_future_open_pargs");
-  xfer += oprot->writeFieldBegin("queue_size", ::apache::thrift::protocol::T_I32, 1);
-  xfer += oprot->writeI32((*(this->queue_size)));
+  xfer += oprot->writeFieldBegin("capacity", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32((*(this->capacity)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -1939,8 +1939,8 @@ uint32_t ClientService_open_future_args::read(::apache::thrift::protocol::TProto
     {
       case 1:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->queue_size);
-          this->__isset.queue_size = true;
+          xfer += iprot->readI32(this->capacity);
+          this->__isset.capacity = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -1960,8 +1960,8 @@ uint32_t ClientService_open_future_args::read(::apache::thrift::protocol::TProto
 uint32_t ClientService_open_future_args::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_open_future_args");
-  xfer += oprot->writeFieldBegin("queue_size", ::apache::thrift::protocol::T_I32, 1);
-  xfer += oprot->writeI32(this->queue_size);
+  xfer += oprot->writeFieldBegin("capacity", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32(this->capacity);
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -1971,8 +1971,8 @@ uint32_t ClientService_open_future_args::write(::apache::thrift::protocol::TProt
 uint32_t ClientService_open_future_pargs::write(::apache::thrift::protocol::TProtocol* oprot) const {
   uint32_t xfer = 0;
   xfer += oprot->writeStructBegin("ClientService_open_future_pargs");
-  xfer += oprot->writeFieldBegin("queue_size", ::apache::thrift::protocol::T_I32, 1);
-  xfer += oprot->writeI32((*(this->queue_size)));
+  xfer += oprot->writeFieldBegin("capacity", ::apache::thrift::protocol::T_I32, 1);
+  xfer += oprot->writeI32((*(this->capacity)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -2439,6 +2439,14 @@ uint32_t ClientService_future_get_result_args::read(::apache::thrift::protocol::
           xfer += iprot->skip(ftype);
         }
         break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->timeout_millis);
+          this->__isset.timeout_millis = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -2457,6 +2465,9 @@ uint32_t ClientService_future_get_result_args::write(::apache::thrift::protocol:
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ff);
   xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->timeout_millis);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -2467,6 +2478,9 @@ uint32_t ClientService_future_get_result_pargs::write(::apache::thrift::protocol
   xfer += oprot->writeStructBegin("ClientService_future_get_result_pargs");
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32((*(this->timeout_millis)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -2617,6 +2631,14 @@ uint32_t ClientService_get_future_result_args::read(::apache::thrift::protocol::
           xfer += iprot->skip(ftype);
         }
         break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->timeout_millis);
+          this->__isset.timeout_millis = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -2635,6 +2657,9 @@ uint32_t ClientService_get_future_result_args::write(::apache::thrift::protocol:
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ff);
   xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->timeout_millis);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -2645,6 +2670,9 @@ uint32_t ClientService_get_future_result_pargs::write(::apache::thrift::protocol
   xfer += oprot->writeStructBegin("ClientService_get_future_result_pargs");
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32((*(this->timeout_millis)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -2795,6 +2823,14 @@ uint32_t ClientService_future_get_result_as_arrays_args::read(::apache::thrift::
           xfer += iprot->skip(ftype);
         }
         break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->timeout_millis);
+          this->__isset.timeout_millis = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -2813,6 +2849,9 @@ uint32_t ClientService_future_get_result_as_arrays_args::write(::apache::thrift:
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ff);
   xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->timeout_millis);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -2823,6 +2862,9 @@ uint32_t ClientService_future_get_result_as_arrays_pargs::write(::apache::thrift
   xfer += oprot->writeStructBegin("ClientService_future_get_result_as_arrays_pargs");
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32((*(this->timeout_millis)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -2973,6 +3015,14 @@ uint32_t ClientService_get_future_result_as_arrays_args::read(::apache::thrift::
           xfer += iprot->skip(ftype);
         }
         break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->timeout_millis);
+          this->__isset.timeout_millis = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -2991,6 +3041,9 @@ uint32_t ClientService_get_future_result_as_arrays_args::write(::apache::thrift:
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ff);
   xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->timeout_millis);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -3001,6 +3054,9 @@ uint32_t ClientService_get_future_result_as_arrays_pargs::write(::apache::thrift
   xfer += oprot->writeStructBegin("ClientService_get_future_result_as_arrays_pargs");
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32((*(this->timeout_millis)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -3151,6 +3207,14 @@ uint32_t ClientService_future_get_result_serialized_args::read(::apache::thrift:
           xfer += iprot->skip(ftype);
         }
         break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->timeout_millis);
+          this->__isset.timeout_millis = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -3169,6 +3233,9 @@ uint32_t ClientService_future_get_result_serialized_args::write(::apache::thrift
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ff);
   xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->timeout_millis);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -3179,6 +3246,9 @@ uint32_t ClientService_future_get_result_serialized_pargs::write(::apache::thrif
   xfer += oprot->writeStructBegin("ClientService_future_get_result_serialized_pargs");
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32((*(this->timeout_millis)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -3329,6 +3399,14 @@ uint32_t ClientService_get_future_result_serialized_args::read(::apache::thrift:
           xfer += iprot->skip(ftype);
         }
         break;
+      case 2:
+        if (ftype == ::apache::thrift::protocol::T_I32) {
+          xfer += iprot->readI32(this->timeout_millis);
+          this->__isset.timeout_millis = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -3347,6 +3425,9 @@ uint32_t ClientService_get_future_result_serialized_args::write(::apache::thrift
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64(this->ff);
   xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32(this->timeout_millis);
+  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -3357,6 +3438,9 @@ uint32_t ClientService_get_future_result_serialized_pargs::write(::apache::thrif
   xfer += oprot->writeStructBegin("ClientService_get_future_result_serialized_pargs");
   xfer += oprot->writeFieldBegin("ff", ::apache::thrift::protocol::T_I64, 1);
   xfer += oprot->writeI64((*(this->ff)));
+  xfer += oprot->writeFieldEnd();
+  xfer += oprot->writeFieldBegin("timeout_millis", ::apache::thrift::protocol::T_I32, 2);
+  xfer += oprot->writeI32((*(this->timeout_millis)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -7301,6 +7385,14 @@ uint32_t ClientService_scanner_get_cells_serialized_result::read(::apache::thrif
           xfer += iprot->skip(ftype);
         }
         break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -7322,6 +7414,10 @@ uint32_t ClientService_scanner_get_cells_serialized_result::write(::apache::thri
   if (this->__isset.success) {
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
     xfer += oprot->writeBinary(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -7353,6 +7449,14 @@ uint32_t ClientService_scanner_get_cells_serialized_presult::read(::apache::thri
         if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readBinary((*(this->success)));
           this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -7459,6 +7563,14 @@ uint32_t ClientService_next_cells_serialized_result::read(::apache::thrift::prot
           xfer += iprot->skip(ftype);
         }
         break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -7480,6 +7592,10 @@ uint32_t ClientService_next_cells_serialized_result::write(::apache::thrift::pro
   if (this->__isset.success) {
     xfer += oprot->writeFieldBegin("success", ::apache::thrift::protocol::T_STRING, 0);
     xfer += oprot->writeBinary(this->success);
+    xfer += oprot->writeFieldEnd();
+  } else if (this->__isset.e) {
+    xfer += oprot->writeFieldBegin("e", ::apache::thrift::protocol::T_STRUCT, 1);
+    xfer += this->e.write(oprot);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -7511,6 +7627,14 @@ uint32_t ClientService_next_cells_serialized_presult::read(::apache::thrift::pro
         if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readBinary((*(this->success)));
           this->__isset.success = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 1:
+        if (ftype == ::apache::thrift::protocol::T_STRUCT) {
+          xfer += this->e.read(iprot);
+          this->__isset.e = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -15247,14 +15371,6 @@ uint32_t ClientService_set_cells_serialized_args::read(::apache::thrift::protoco
           xfer += iprot->skip(ftype);
         }
         break;
-      case 4:
-        if (ftype == ::apache::thrift::protocol::T_BOOL) {
-          xfer += iprot->readBool(this->flush);
-          this->__isset.flush = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -15279,9 +15395,6 @@ uint32_t ClientService_set_cells_serialized_args::write(::apache::thrift::protoc
   xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeBinary(this->cells);
   xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush", ::apache::thrift::protocol::T_BOOL, 4);
-  xfer += oprot->writeBool(this->flush);
-  xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
@@ -15298,9 +15411,6 @@ uint32_t ClientService_set_cells_serialized_pargs::write(::apache::thrift::proto
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_STRING, 3);
   xfer += oprot->writeBinary((*(this->cells)));
-  xfer += oprot->writeFieldEnd();
-  xfer += oprot->writeFieldBegin("flush", ::apache::thrift::protocol::T_BOOL, 4);
-  xfer += oprot->writeBool((*(this->flush)));
   xfer += oprot->writeFieldEnd();
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
@@ -23391,19 +23501,19 @@ void ClientServiceClient::recv_close_namespace()
   return;
 }
 
-Future ClientServiceClient::future_open(const int32_t queue_size)
+Future ClientServiceClient::future_open(const int32_t capacity)
 {
-  send_future_open(queue_size);
+  send_future_open(capacity);
   return recv_future_open();
 }
 
-void ClientServiceClient::send_future_open(const int32_t queue_size)
+void ClientServiceClient::send_future_open(const int32_t capacity)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("future_open", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_future_open_pargs args;
-  args.queue_size = &queue_size;
+  args.capacity = &capacity;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -23452,19 +23562,19 @@ Future ClientServiceClient::recv_future_open()
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "future_open failed: unknown result");
 }
 
-Future ClientServiceClient::open_future(const int32_t queue_size)
+Future ClientServiceClient::open_future(const int32_t capacity)
 {
-  send_open_future(queue_size);
+  send_open_future(capacity);
   return recv_open_future();
 }
 
-void ClientServiceClient::send_open_future(const int32_t queue_size)
+void ClientServiceClient::send_open_future(const int32_t capacity)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("open_future", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_open_future_pargs args;
-  args.queue_size = &queue_size;
+  args.capacity = &capacity;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -23625,19 +23735,20 @@ void ClientServiceClient::recv_cancel_future()
   return;
 }
 
-void ClientServiceClient::future_get_result(Result& _return, const Future ff)
+void ClientServiceClient::future_get_result(Result& _return, const Future ff, const int32_t timeout_millis)
 {
-  send_future_get_result(ff);
+  send_future_get_result(ff, timeout_millis);
   recv_future_get_result(_return);
 }
 
-void ClientServiceClient::send_future_get_result(const Future ff)
+void ClientServiceClient::send_future_get_result(const Future ff, const int32_t timeout_millis)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("future_get_result", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_future_get_result_pargs args;
   args.ff = &ff;
+  args.timeout_millis = &timeout_millis;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -23686,19 +23797,20 @@ void ClientServiceClient::recv_future_get_result(Result& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "future_get_result failed: unknown result");
 }
 
-void ClientServiceClient::get_future_result(Result& _return, const Future ff)
+void ClientServiceClient::get_future_result(Result& _return, const Future ff, const int32_t timeout_millis)
 {
-  send_get_future_result(ff);
+  send_get_future_result(ff, timeout_millis);
   recv_get_future_result(_return);
 }
 
-void ClientServiceClient::send_get_future_result(const Future ff)
+void ClientServiceClient::send_get_future_result(const Future ff, const int32_t timeout_millis)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("get_future_result", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_future_result_pargs args;
   args.ff = &ff;
+  args.timeout_millis = &timeout_millis;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -23747,19 +23859,20 @@ void ClientServiceClient::recv_get_future_result(Result& _return)
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_future_result failed: unknown result");
 }
 
-void ClientServiceClient::future_get_result_as_arrays(ResultAsArrays& _return, const Future ff)
+void ClientServiceClient::future_get_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis)
 {
-  send_future_get_result_as_arrays(ff);
+  send_future_get_result_as_arrays(ff, timeout_millis);
   recv_future_get_result_as_arrays(_return);
 }
 
-void ClientServiceClient::send_future_get_result_as_arrays(const Future ff)
+void ClientServiceClient::send_future_get_result_as_arrays(const Future ff, const int32_t timeout_millis)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("future_get_result_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_future_get_result_as_arrays_pargs args;
   args.ff = &ff;
+  args.timeout_millis = &timeout_millis;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -23808,19 +23921,20 @@ void ClientServiceClient::recv_future_get_result_as_arrays(ResultAsArrays& _retu
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "future_get_result_as_arrays failed: unknown result");
 }
 
-void ClientServiceClient::get_future_result_as_arrays(ResultAsArrays& _return, const Future ff)
+void ClientServiceClient::get_future_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis)
 {
-  send_get_future_result_as_arrays(ff);
+  send_get_future_result_as_arrays(ff, timeout_millis);
   recv_get_future_result_as_arrays(_return);
 }
 
-void ClientServiceClient::send_get_future_result_as_arrays(const Future ff)
+void ClientServiceClient::send_get_future_result_as_arrays(const Future ff, const int32_t timeout_millis)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("get_future_result_as_arrays", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_future_result_as_arrays_pargs args;
   args.ff = &ff;
+  args.timeout_millis = &timeout_millis;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -23869,19 +23983,20 @@ void ClientServiceClient::recv_get_future_result_as_arrays(ResultAsArrays& _retu
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "get_future_result_as_arrays failed: unknown result");
 }
 
-void ClientServiceClient::future_get_result_serialized(ResultSerialized& _return, const Future ff)
+void ClientServiceClient::future_get_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis)
 {
-  send_future_get_result_serialized(ff);
+  send_future_get_result_serialized(ff, timeout_millis);
   recv_future_get_result_serialized(_return);
 }
 
-void ClientServiceClient::send_future_get_result_serialized(const Future ff)
+void ClientServiceClient::send_future_get_result_serialized(const Future ff, const int32_t timeout_millis)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("future_get_result_serialized", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_future_get_result_serialized_pargs args;
   args.ff = &ff;
+  args.timeout_millis = &timeout_millis;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -23930,19 +24045,20 @@ void ClientServiceClient::recv_future_get_result_serialized(ResultSerialized& _r
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "future_get_result_serialized failed: unknown result");
 }
 
-void ClientServiceClient::get_future_result_serialized(ResultSerialized& _return, const Future ff)
+void ClientServiceClient::get_future_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis)
 {
-  send_get_future_result_serialized(ff);
+  send_get_future_result_serialized(ff, timeout_millis);
   recv_get_future_result_serialized(_return);
 }
 
-void ClientServiceClient::send_get_future_result_serialized(const Future ff)
+void ClientServiceClient::send_get_future_result_serialized(const Future ff, const int32_t timeout_millis)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("get_future_result_serialized", ::apache::thrift::protocol::T_CALL, cseqid);
 
   ClientService_get_future_result_serialized_pargs args;
   args.ff = &ff;
+  args.timeout_millis = &timeout_millis;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -25236,6 +25352,9 @@ void ClientServiceClient::recv_scanner_get_cells_serialized(CellsSerialized& _re
     // _return pointer has now been filled
     return;
   }
+  if (result.__isset.e) {
+    throw result.e;
+  }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "scanner_get_cells_serialized failed: unknown result");
 }
 
@@ -25293,6 +25412,9 @@ void ClientServiceClient::recv_next_cells_serialized(CellsSerialized& _return)
   if (result.__isset.success) {
     // _return pointer has now been filled
     return;
+  }
+  if (result.__isset.e) {
+    throw result.e;
   }
   throw ::apache::thrift::TApplicationException(::apache::thrift::TApplicationException::MISSING_RESULT, "next_cells_serialized failed: unknown result");
 }
@@ -27509,13 +27631,13 @@ void ClientServiceClient::recv_mutator_set_cells_serialized()
   return;
 }
 
-void ClientServiceClient::set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush)
+void ClientServiceClient::set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells)
 {
-  send_set_cells_serialized(ns, table_name, cells, flush);
+  send_set_cells_serialized(ns, table_name, cells);
   recv_set_cells_serialized();
 }
 
-void ClientServiceClient::send_set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush)
+void ClientServiceClient::send_set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells)
 {
   int32_t cseqid = 0;
   oprot_->writeMessageBegin("set_cells_serialized", ::apache::thrift::protocol::T_CALL, cseqid);
@@ -27524,7 +27646,6 @@ void ClientServiceClient::send_set_cells_serialized(const Namespace ns, const st
   args.ns = &ns;
   args.table_name = &table_name;
   args.cells = &cells;
-  args.flush = &flush;
   args.write(oprot_);
 
   oprot_->writeMessageEnd();
@@ -30510,7 +30631,7 @@ void ClientServiceProcessor::process_future_open(int32_t seqid, ::apache::thrift
 
   ClientService_future_open_result result;
   try {
-    result.success = iface_->future_open(args.queue_size);
+    result.success = iface_->future_open(args.capacity);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
@@ -30567,7 +30688,7 @@ void ClientServiceProcessor::process_open_future(int32_t seqid, ::apache::thrift
 
   ClientService_open_future_result result;
   try {
-    result.success = iface_->open_future(args.queue_size);
+    result.success = iface_->open_future(args.capacity);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
@@ -30736,7 +30857,7 @@ void ClientServiceProcessor::process_future_get_result(int32_t seqid, ::apache::
 
   ClientService_future_get_result_result result;
   try {
-    iface_->future_get_result(result.success, args.ff);
+    iface_->future_get_result(result.success, args.ff, args.timeout_millis);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
@@ -30793,7 +30914,7 @@ void ClientServiceProcessor::process_get_future_result(int32_t seqid, ::apache::
 
   ClientService_get_future_result_result result;
   try {
-    iface_->get_future_result(result.success, args.ff);
+    iface_->get_future_result(result.success, args.ff, args.timeout_millis);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
@@ -30850,7 +30971,7 @@ void ClientServiceProcessor::process_future_get_result_as_arrays(int32_t seqid, 
 
   ClientService_future_get_result_as_arrays_result result;
   try {
-    iface_->future_get_result_as_arrays(result.success, args.ff);
+    iface_->future_get_result_as_arrays(result.success, args.ff, args.timeout_millis);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
@@ -30907,7 +31028,7 @@ void ClientServiceProcessor::process_get_future_result_as_arrays(int32_t seqid, 
 
   ClientService_get_future_result_as_arrays_result result;
   try {
-    iface_->get_future_result_as_arrays(result.success, args.ff);
+    iface_->get_future_result_as_arrays(result.success, args.ff, args.timeout_millis);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
@@ -30964,7 +31085,7 @@ void ClientServiceProcessor::process_future_get_result_serialized(int32_t seqid,
 
   ClientService_future_get_result_serialized_result result;
   try {
-    iface_->future_get_result_serialized(result.success, args.ff);
+    iface_->future_get_result_serialized(result.success, args.ff, args.timeout_millis);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
@@ -31021,7 +31142,7 @@ void ClientServiceProcessor::process_get_future_result_serialized(int32_t seqid,
 
   ClientService_get_future_result_serialized_result result;
   try {
-    iface_->get_future_result_serialized(result.success, args.ff);
+    iface_->get_future_result_serialized(result.success, args.ff, args.timeout_millis);
     result.__isset.success = true;
   } catch (ClientException &e) {
     result.e = e;
@@ -32212,6 +32333,9 @@ void ClientServiceProcessor::process_scanner_get_cells_serialized(int32_t seqid,
   try {
     iface_->scanner_get_cells_serialized(result.success, args.scanner);
     result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
   } catch (const std::exception& e) {
     if (eventHandler_.get() != NULL) {
       eventHandler_->handlerError(ctx, "ClientService.scanner_get_cells_serialized");
@@ -32266,6 +32390,9 @@ void ClientServiceProcessor::process_next_cells_serialized(int32_t seqid, ::apac
   try {
     iface_->next_cells_serialized(result.success, args.scanner);
     result.__isset.success = true;
+  } catch (ClientException &e) {
+    result.e = e;
+    result.__isset.e = true;
   } catch (const std::exception& e) {
     if (eventHandler_.get() != NULL) {
       eventHandler_->handlerError(ctx, "ClientService.next_cells_serialized");
@@ -34407,7 +34534,7 @@ void ClientServiceProcessor::process_set_cells_serialized(int32_t seqid, ::apach
 
   ClientService_set_cells_serialized_result result;
   try {
-    iface_->set_cells_serialized(args.ns, args.table_name, args.cells, args.flush);
+    iface_->set_cells_serialized(args.ns, args.table_name, args.cells);
   } catch (ClientException &e) {
     result.e = e;
     result.__isset.e = true;

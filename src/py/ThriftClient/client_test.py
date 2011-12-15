@@ -52,7 +52,7 @@ try:
 
   num_results=0;
   while True:
-    result = client.future_get_result(future);
+    result = client.future_get_result(future, 0);
     if(result.is_empty):
       break
     num_results+=1;
@@ -83,7 +83,7 @@ try:
   num_cells = 0;
 
   while True:
-    result = client.future_get_result(future);
+    result = client.future_get_result(future, 0);
     print result;
     if (result.is_empty or result.is_error or not(result.is_scan) ):
       print "Unexpected result\n"

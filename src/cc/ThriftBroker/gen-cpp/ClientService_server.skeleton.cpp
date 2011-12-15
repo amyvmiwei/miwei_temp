@@ -72,12 +72,12 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("close_namespace\n");
   }
 
-  Future future_open(const int32_t queue_size) {
+  Future future_open(const int32_t capacity) {
     // Your implementation goes here
     printf("future_open\n");
   }
 
-  Future open_future(const int32_t queue_size) {
+  Future open_future(const int32_t capacity) {
     // Your implementation goes here
     printf("open_future\n");
   }
@@ -92,32 +92,32 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("cancel_future\n");
   }
 
-  void future_get_result(Result& _return, const Future ff) {
+  void future_get_result(Result& _return, const Future ff, const int32_t timeout_millis) {
     // Your implementation goes here
     printf("future_get_result\n");
   }
 
-  void get_future_result(Result& _return, const Future ff) {
+  void get_future_result(Result& _return, const Future ff, const int32_t timeout_millis) {
     // Your implementation goes here
     printf("get_future_result\n");
   }
 
-  void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff) {
+  void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis) {
     // Your implementation goes here
     printf("future_get_result_as_arrays\n");
   }
 
-  void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) {
+  void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis) {
     // Your implementation goes here
     printf("get_future_result_as_arrays\n");
   }
 
-  void future_get_result_serialized(ResultSerialized& _return, const Future ff) {
+  void future_get_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis) {
     // Your implementation goes here
     printf("future_get_result_serialized\n");
   }
 
-  void get_future_result_serialized(ResultSerialized& _return, const Future ff) {
+  void get_future_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis) {
     // Your implementation goes here
     printf("get_future_result_serialized\n");
   }
@@ -417,7 +417,7 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("mutator_set_cells_serialized\n");
   }
 
-  void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush) {
+  void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells) {
     // Your implementation goes here
     printf("set_cells_serialized\n");
   }

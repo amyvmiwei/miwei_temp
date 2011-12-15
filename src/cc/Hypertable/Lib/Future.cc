@@ -70,53 +70,60 @@ bool Future::get(ResultPtr &result) {
 }
 
 bool Future::get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out) {
-  ScopedRecLock lock(m_outstanding_mutex);
 
-  size_t mem_result=0;
-  timed_out = false;
+  if (timeout_ms == 0)
+    return get(result);
 
-  boost::xtime wait_time;
-  boost::xtime_get(&wait_time, boost::TIME_UTC);
-  xtime_add_millis(wait_time, timeout_ms);
+  {
+    ScopedRecLock lock(m_outstanding_mutex);
 
-  while (true) {
-    // wait till we have results to serve
-    while(_is_empty() && !is_done() && !is_cancelled()) {
-      timed_out = m_outstanding_cond.timed_wait(lock, wait_time);
-      if (timed_out)
-        return is_done();
+    timed_out = false;
+
+
+    size_t mem_result=0;
+    boost::xtime wait_time;
+    boost::xtime_get(&wait_time, boost::TIME_UTC);
+    xtime_add_millis(wait_time, timeout_ms);
+
+    while (true) {
+      // wait till we have results to serve
+      while(_is_empty() && !is_done() && !is_cancelled()) {
+	timed_out = m_outstanding_cond.timed_wait(lock, wait_time);
+	if (timed_out)
+	  return is_done();
+      }
+      if (is_cancelled())
+	return false;
+      if (_is_empty() && is_done())
+	return false;
+      result = m_queue.front();
+      mem_result = result->memory_used();
+      m_queue.pop_front();
+      m_memory_used -= mem_result;
+      HT_ASSERT(m_memory_used >= 0);
+      // wake a thread blocked on queue space
+      m_outstanding_cond.notify_one();
+
+      if (result->is_error())
+	break;
+      if (result->is_scan()) {
+	TableScannerAsync *scanner = result->get_scanner();
+	// ignore result if scanner has been cancelled
+	if (!scanner || !scanner->is_cancelled()) // scanner must be alive
+	  break;
+      }
+      else if (result->is_update()) {
+	TableMutatorAsync *mutator = result->get_mutator();
+	// check if alive mutator has been cancelled
+	if (!mutator || m_mutator_map.find((uint64_t)mutator) == m_mutator_map.end() ||
+	    !mutator->is_cancelled())
+	  break;
+      }
     }
-    if (is_cancelled())
-      return false;
-    if (_is_empty() && is_done())
-      return false;
-    result = m_queue.front();
-    mem_result = result->memory_used();
-    m_queue.pop_front();
-    m_memory_used -= mem_result;
-    HT_ASSERT(m_memory_used >= 0);
     // wake a thread blocked on queue space
     m_outstanding_cond.notify_one();
-
-    if (result->is_error())
-      break;
-    if (result->is_scan()) {
-      TableScannerAsync *scanner = result->get_scanner();
-      // ignore result if scanner has been cancelled
-      if (!scanner || !scanner->is_cancelled()) // scanner must be alive
-        break;
-    }
-    else if (result->is_update()) {
-      TableMutatorAsync *mutator = result->get_mutator();
-      // check if alive mutator has been cancelled
-      if (!mutator || m_mutator_map.find((uint64_t)mutator) == m_mutator_map.end() ||
-        !mutator->is_cancelled())
-        break;
-    }
+    return true;
   }
-  // wake a thread blocked on queue space
-  m_outstanding_cond.notify_one();
-  return true;
 }
 
 void Future::scan_ok(TableScannerAsync *scanner, ScanCellsPtr &cells) {

@@ -76,7 +76,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
           job.set(SCAN_SPEC, (new ScanSpec()).toSerializedText());
         }
         m_base_spec = ScanSpec.serializedTextToScanSpec( job.get(SCAN_SPEC) );
-        m_base_spec.setRevs(1);
+        m_base_spec.setVersions(1);
       }
     }
     catch (Exception e) {
@@ -86,7 +86,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
 
   public void set_scan_spec(ScanSpec spec) {
     m_base_spec = spec;
-    m_base_spec.setRevs(1);
+    m_base_spec.setVersions(1);
   }
 
   public void set_namespace(String namespace) {

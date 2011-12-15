@@ -322,8 +322,8 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 4:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          xfer += iprot->readI32(this->revs);
-          this->__isset.revs = true;
+          xfer += iprot->readI32(this->versions);
+          this->__isset.versions = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -482,9 +482,9 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeBool(this->return_deletes);
     xfer += oprot->writeFieldEnd();
   }
-  if (this->__isset.revs) {
-    xfer += oprot->writeFieldBegin("revs", ::apache::thrift::protocol::T_I32, 4);
-    xfer += oprot->writeI32(this->revs);
+  if (this->__isset.versions) {
+    xfer += oprot->writeFieldBegin("versions", ::apache::thrift::protocol::T_I32, 4);
+    xfer += oprot->writeI32(this->versions);
     xfer += oprot->writeFieldEnd();
   }
   if (this->__isset.row_limit) {

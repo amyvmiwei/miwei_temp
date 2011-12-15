@@ -267,7 +267,7 @@ sub write {
 
 package Hypertable::ThriftGen::ScanSpec;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes revs row_limit start_time end_time columns keys_only cell_limit cell_limit_per_family row_regexp value_regexp scan_and_filter_rows row_offset cell_offset ) );
+Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes versions row_limit start_time end_time columns keys_only cell_limit cell_limit_per_family row_regexp value_regexp scan_and_filter_rows row_offset cell_offset ) );
 
 sub new {
   my $classname = shift;
@@ -276,7 +276,7 @@ sub new {
   $self->{row_intervals} = undef;
   $self->{cell_intervals} = undef;
   $self->{return_deletes} = 0;
-  $self->{revs} = 0;
+  $self->{versions} = 0;
   $self->{row_limit} = 0;
   $self->{start_time} = undef;
   $self->{end_time} = undef;
@@ -299,8 +299,8 @@ sub new {
     if (defined $vals->{return_deletes}) {
       $self->{return_deletes} = $vals->{return_deletes};
     }
-    if (defined $vals->{revs}) {
-      $self->{revs} = $vals->{revs};
+    if (defined $vals->{versions}) {
+      $self->{versions} = $vals->{versions};
     }
     if (defined $vals->{row_limit}) {
       $self->{row_limit} = $vals->{row_limit};
@@ -406,7 +406,7 @@ sub read {
       }
       last; };
       /^4$/ && do{      if ($ftype == TType::I32) {
-        $xfer += $input->readI32(\$self->{revs});
+        $xfer += $input->readI32(\$self->{versions});
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -540,9 +540,9 @@ sub write {
     $xfer += $output->writeBool($self->{return_deletes});
     $xfer += $output->writeFieldEnd();
   }
-  if (defined $self->{revs}) {
-    $xfer += $output->writeFieldBegin('revs', TType::I32, 4);
-    $xfer += $output->writeI32($self->{revs});
+  if (defined $self->{versions}) {
+    $xfer += $output->writeFieldBegin('versions', TType::I32, 4);
+    $xfer += $output->writeI32($self->{versions});
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{row_limit}) {

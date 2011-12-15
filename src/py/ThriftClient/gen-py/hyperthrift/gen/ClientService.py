@@ -123,20 +123,20 @@ class Iface:
     """
     pass
 
-  def future_open(self, queue_size):
+  def future_open(self, capacity):
     """
     Open a future object
-    @param queue_size - num of results the future object can enqueue without blocking threads
+    @param capacity - Amount of result data the future object can enqueue without blocking threads
 
     Parameters:
-     - queue_size
+     - capacity
     """
     pass
 
-  def open_future(self, queue_size):
+  def open_future(self, capacity):
     """
     Parameters:
-     - queue_size
+     - capacity
     """
     pass
 
@@ -157,7 +157,7 @@ class Iface:
     """
     pass
 
-  def future_get_result(self, ff):
+  def future_get_result(self, ff, timeout_millis):
     """
     Fetch asynchronous results
     @param ff - Future object which has the asynchronous results
@@ -165,17 +165,19 @@ class Iface:
 
     Parameters:
      - ff
+     - timeout_millis
     """
     pass
 
-  def get_future_result(self, ff):
+  def get_future_result(self, ff, timeout_millis):
     """
     Parameters:
      - ff
+     - timeout_millis
     """
     pass
 
-  def future_get_result_as_arrays(self, ff):
+  def future_get_result_as_arrays(self, ff, timeout_millis):
     """
     Fetch asynchronous results
     @param ff - Future object which has the asynchronous results
@@ -183,17 +185,19 @@ class Iface:
 
     Parameters:
      - ff
+     - timeout_millis
     """
     pass
 
-  def get_future_result_as_arrays(self, ff):
+  def get_future_result_as_arrays(self, ff, timeout_millis):
     """
     Parameters:
      - ff
+     - timeout_millis
     """
     pass
 
-  def future_get_result_serialized(self, ff):
+  def future_get_result_serialized(self, ff, timeout_millis):
     """
     Fetch asynchronous results
     @param ff - Future object which has the asynchronous results
@@ -201,13 +205,15 @@ class Iface:
 
     Parameters:
      - ff
+     - timeout_millis
     """
     pass
 
-  def get_future_result_serialized(self, ff):
+  def get_future_result_serialized(self, ff, timeout_millis):
     """
     Parameters:
      - ff
+     - timeout_millis
     """
     pass
 
@@ -894,7 +900,7 @@ class Iface:
     """
     pass
 
-  def set_cells_serialized(self, ns, table_name, cells, flush):
+  def set_cells_serialized(self, ns, table_name, cells):
     """
     Alternative interface using buffer of serialized cells
 
@@ -902,7 +908,6 @@ class Iface:
      - ns
      - table_name
      - cells
-     - flush
     """
     pass
 
@@ -1704,21 +1709,21 @@ class Client(Iface):
       raise result.e
     return
 
-  def future_open(self, queue_size):
+  def future_open(self, capacity):
     """
     Open a future object
-    @param queue_size - num of results the future object can enqueue without blocking threads
+    @param capacity - Amount of result data the future object can enqueue without blocking threads
 
     Parameters:
-     - queue_size
+     - capacity
     """
-    self.send_future_open(queue_size)
+    self.send_future_open(capacity)
     return self.recv_future_open()
 
-  def send_future_open(self, queue_size):
+  def send_future_open(self, capacity):
     self._oprot.writeMessageBegin('future_open', TMessageType.CALL, self._seqid)
     args = future_open_args()
-    args.queue_size = queue_size
+    args.capacity = capacity
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1739,18 +1744,18 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "future_open failed: unknown result");
 
-  def open_future(self, queue_size):
+  def open_future(self, capacity):
     """
     Parameters:
-     - queue_size
+     - capacity
     """
-    self.send_open_future(queue_size)
+    self.send_open_future(capacity)
     return self.recv_open_future()
 
-  def send_open_future(self, queue_size):
+  def send_open_future(self, capacity):
     self._oprot.writeMessageBegin('open_future', TMessageType.CALL, self._seqid)
     args = open_future_args()
-    args.queue_size = queue_size
+    args.capacity = capacity
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1834,7 +1839,7 @@ class Client(Iface):
       raise result.e
     return
 
-  def future_get_result(self, ff):
+  def future_get_result(self, ff, timeout_millis):
     """
     Fetch asynchronous results
     @param ff - Future object which has the asynchronous results
@@ -1842,14 +1847,16 @@ class Client(Iface):
 
     Parameters:
      - ff
+     - timeout_millis
     """
-    self.send_future_get_result(ff)
+    self.send_future_get_result(ff, timeout_millis)
     return self.recv_future_get_result()
 
-  def send_future_get_result(self, ff):
+  def send_future_get_result(self, ff, timeout_millis):
     self._oprot.writeMessageBegin('future_get_result', TMessageType.CALL, self._seqid)
     args = future_get_result_args()
     args.ff = ff
+    args.timeout_millis = timeout_millis
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1870,18 +1877,20 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "future_get_result failed: unknown result");
 
-  def get_future_result(self, ff):
+  def get_future_result(self, ff, timeout_millis):
     """
     Parameters:
      - ff
+     - timeout_millis
     """
-    self.send_get_future_result(ff)
+    self.send_get_future_result(ff, timeout_millis)
     return self.recv_get_future_result()
 
-  def send_get_future_result(self, ff):
+  def send_get_future_result(self, ff, timeout_millis):
     self._oprot.writeMessageBegin('get_future_result', TMessageType.CALL, self._seqid)
     args = get_future_result_args()
     args.ff = ff
+    args.timeout_millis = timeout_millis
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1902,7 +1911,7 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_future_result failed: unknown result");
 
-  def future_get_result_as_arrays(self, ff):
+  def future_get_result_as_arrays(self, ff, timeout_millis):
     """
     Fetch asynchronous results
     @param ff - Future object which has the asynchronous results
@@ -1910,14 +1919,16 @@ class Client(Iface):
 
     Parameters:
      - ff
+     - timeout_millis
     """
-    self.send_future_get_result_as_arrays(ff)
+    self.send_future_get_result_as_arrays(ff, timeout_millis)
     return self.recv_future_get_result_as_arrays()
 
-  def send_future_get_result_as_arrays(self, ff):
+  def send_future_get_result_as_arrays(self, ff, timeout_millis):
     self._oprot.writeMessageBegin('future_get_result_as_arrays', TMessageType.CALL, self._seqid)
     args = future_get_result_as_arrays_args()
     args.ff = ff
+    args.timeout_millis = timeout_millis
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1938,18 +1949,20 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "future_get_result_as_arrays failed: unknown result");
 
-  def get_future_result_as_arrays(self, ff):
+  def get_future_result_as_arrays(self, ff, timeout_millis):
     """
     Parameters:
      - ff
+     - timeout_millis
     """
-    self.send_get_future_result_as_arrays(ff)
+    self.send_get_future_result_as_arrays(ff, timeout_millis)
     return self.recv_get_future_result_as_arrays()
 
-  def send_get_future_result_as_arrays(self, ff):
+  def send_get_future_result_as_arrays(self, ff, timeout_millis):
     self._oprot.writeMessageBegin('get_future_result_as_arrays', TMessageType.CALL, self._seqid)
     args = get_future_result_as_arrays_args()
     args.ff = ff
+    args.timeout_millis = timeout_millis
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -1970,7 +1983,7 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_future_result_as_arrays failed: unknown result");
 
-  def future_get_result_serialized(self, ff):
+  def future_get_result_serialized(self, ff, timeout_millis):
     """
     Fetch asynchronous results
     @param ff - Future object which has the asynchronous results
@@ -1978,14 +1991,16 @@ class Client(Iface):
 
     Parameters:
      - ff
+     - timeout_millis
     """
-    self.send_future_get_result_serialized(ff)
+    self.send_future_get_result_serialized(ff, timeout_millis)
     return self.recv_future_get_result_serialized()
 
-  def send_future_get_result_serialized(self, ff):
+  def send_future_get_result_serialized(self, ff, timeout_millis):
     self._oprot.writeMessageBegin('future_get_result_serialized', TMessageType.CALL, self._seqid)
     args = future_get_result_serialized_args()
     args.ff = ff
+    args.timeout_millis = timeout_millis
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -2006,18 +2021,20 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "future_get_result_serialized failed: unknown result");
 
-  def get_future_result_serialized(self, ff):
+  def get_future_result_serialized(self, ff, timeout_millis):
     """
     Parameters:
      - ff
+     - timeout_millis
     """
-    self.send_get_future_result_serialized(ff)
+    self.send_get_future_result_serialized(ff, timeout_millis)
     return self.recv_get_future_result_serialized()
 
-  def send_get_future_result_serialized(self, ff):
+  def send_get_future_result_serialized(self, ff, timeout_millis):
     self._oprot.writeMessageBegin('get_future_result_serialized', TMessageType.CALL, self._seqid)
     args = get_future_result_serialized_args()
     args.ff = ff
+    args.timeout_millis = timeout_millis
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -2750,6 +2767,8 @@ class Client(Iface):
     self._iprot.readMessageEnd()
     if result.success is not None:
       return result.success
+    if result.e is not None:
+      raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "scanner_get_cells_serialized failed: unknown result");
 
   def next_cells_serialized(self, scanner):
@@ -2780,6 +2799,8 @@ class Client(Iface):
     self._iprot.readMessageEnd()
     if result.success is not None:
       return result.success
+    if result.e is not None:
+      raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "next_cells_serialized failed: unknown result");
 
   def scanner_get_row(self, scanner):
@@ -4201,7 +4222,7 @@ class Client(Iface):
       raise result.e
     return
 
-  def set_cells_serialized(self, ns, table_name, cells, flush):
+  def set_cells_serialized(self, ns, table_name, cells):
     """
     Alternative interface using buffer of serialized cells
 
@@ -4209,18 +4230,16 @@ class Client(Iface):
      - ns
      - table_name
      - cells
-     - flush
     """
-    self.send_set_cells_serialized(ns, table_name, cells, flush)
+    self.send_set_cells_serialized(ns, table_name, cells)
     self.recv_set_cells_serialized()
 
-  def send_set_cells_serialized(self, ns, table_name, cells, flush):
+  def send_set_cells_serialized(self, ns, table_name, cells):
     self._oprot.writeMessageBegin('set_cells_serialized', TMessageType.CALL, self._seqid)
     args = set_cells_serialized_args()
     args.ns = ns
     args.table_name = table_name
     args.cells = cells
-    args.flush = flush
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -5935,7 +5954,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = future_open_result()
     try:
-      result.success = self._handler.future_open(args.queue_size)
+      result.success = self._handler.future_open(args.capacity)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("future_open", TMessageType.REPLY, seqid)
@@ -5949,7 +5968,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = open_future_result()
     try:
-      result.success = self._handler.open_future(args.queue_size)
+      result.success = self._handler.open_future(args.capacity)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("open_future", TMessageType.REPLY, seqid)
@@ -5991,7 +6010,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = future_get_result_result()
     try:
-      result.success = self._handler.future_get_result(args.ff)
+      result.success = self._handler.future_get_result(args.ff, args.timeout_millis)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("future_get_result", TMessageType.REPLY, seqid)
@@ -6005,7 +6024,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_future_result_result()
     try:
-      result.success = self._handler.get_future_result(args.ff)
+      result.success = self._handler.get_future_result(args.ff, args.timeout_millis)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_future_result", TMessageType.REPLY, seqid)
@@ -6019,7 +6038,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = future_get_result_as_arrays_result()
     try:
-      result.success = self._handler.future_get_result_as_arrays(args.ff)
+      result.success = self._handler.future_get_result_as_arrays(args.ff, args.timeout_millis)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("future_get_result_as_arrays", TMessageType.REPLY, seqid)
@@ -6033,7 +6052,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_future_result_as_arrays_result()
     try:
-      result.success = self._handler.get_future_result_as_arrays(args.ff)
+      result.success = self._handler.get_future_result_as_arrays(args.ff, args.timeout_millis)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_future_result_as_arrays", TMessageType.REPLY, seqid)
@@ -6047,7 +6066,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = future_get_result_serialized_result()
     try:
-      result.success = self._handler.future_get_result_serialized(args.ff)
+      result.success = self._handler.future_get_result_serialized(args.ff, args.timeout_millis)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("future_get_result_serialized", TMessageType.REPLY, seqid)
@@ -6061,7 +6080,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = get_future_result_serialized_result()
     try:
-      result.success = self._handler.get_future_result_serialized(args.ff)
+      result.success = self._handler.get_future_result_serialized(args.ff, args.timeout_millis)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("get_future_result_serialized", TMessageType.REPLY, seqid)
@@ -6354,7 +6373,10 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = scanner_get_cells_serialized_result()
-    result.success = self._handler.scanner_get_cells_serialized(args.scanner)
+    try:
+      result.success = self._handler.scanner_get_cells_serialized(args.scanner)
+    except ClientException, e:
+      result.e = e
     oprot.writeMessageBegin("scanner_get_cells_serialized", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -6365,7 +6387,10 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = next_cells_serialized_result()
-    result.success = self._handler.next_cells_serialized(args.scanner)
+    try:
+      result.success = self._handler.next_cells_serialized(args.scanner)
+    except ClientException, e:
+      result.e = e
     oprot.writeMessageBegin("next_cells_serialized", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -6895,7 +6920,7 @@ class Processor(Iface, TProcessor):
     iprot.readMessageEnd()
     result = set_cells_serialized_result()
     try:
-      self._handler.set_cells_serialized(args.ns, args.table_name, args.cells, args.flush)
+      self._handler.set_cells_serialized(args.ns, args.table_name, args.cells)
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("set_cells_serialized", TMessageType.REPLY, seqid)
@@ -8780,16 +8805,16 @@ class close_namespace_result:
 class future_open_args:
   """
   Attributes:
-   - queue_size
+   - capacity
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'queue_size', None, 0, ), # 1
+    (1, TType.I32, 'capacity', None, 0, ), # 1
   )
 
-  def __init__(self, queue_size=thrift_spec[1][4],):
-    self.queue_size = queue_size
+  def __init__(self, capacity=thrift_spec[1][4],):
+    self.capacity = capacity
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -8802,7 +8827,7 @@ class future_open_args:
         break
       if fid == 1:
         if ftype == TType.I32:
-          self.queue_size = iprot.readI32();
+          self.capacity = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -8815,9 +8840,9 @@ class future_open_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('future_open_args')
-    if self.queue_size is not None:
-      oprot.writeFieldBegin('queue_size', TType.I32, 1)
-      oprot.writeI32(self.queue_size)
+    if self.capacity is not None:
+      oprot.writeFieldBegin('capacity', TType.I32, 1)
+      oprot.writeI32(self.capacity)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -8912,16 +8937,16 @@ class future_open_result:
 class open_future_args:
   """
   Attributes:
-   - queue_size
+   - capacity
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'queue_size', None, 0, ), # 1
+    (1, TType.I32, 'capacity', None, 0, ), # 1
   )
 
-  def __init__(self, queue_size=thrift_spec[1][4],):
-    self.queue_size = queue_size
+  def __init__(self, capacity=thrift_spec[1][4],):
+    self.capacity = capacity
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -8934,7 +8959,7 @@ class open_future_args:
         break
       if fid == 1:
         if ftype == TType.I32:
-          self.queue_size = iprot.readI32();
+          self.capacity = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -8947,9 +8972,9 @@ class open_future_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('open_future_args')
-    if self.queue_size is not None:
-      oprot.writeFieldBegin('queue_size', TType.I32, 1)
-      oprot.writeI32(self.queue_size)
+    if self.capacity is not None:
+      oprot.writeFieldBegin('capacity', TType.I32, 1)
+      oprot.writeI32(self.capacity)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -9287,15 +9312,18 @@ class future_get_result_args:
   """
   Attributes:
    - ff
+   - timeout_millis
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'ff', None, None, ), # 1
+    (2, TType.I32, 'timeout_millis', None, 0, ), # 2
   )
 
-  def __init__(self, ff=None,):
+  def __init__(self, ff=None, timeout_millis=thrift_spec[2][4],):
     self.ff = ff
+    self.timeout_millis = timeout_millis
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -9311,6 +9339,11 @@ class future_get_result_args:
           self.ff = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.timeout_millis = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -9324,6 +9357,10 @@ class future_get_result_args:
     if self.ff is not None:
       oprot.writeFieldBegin('ff', TType.I64, 1)
       oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    if self.timeout_millis is not None:
+      oprot.writeFieldBegin('timeout_millis', TType.I32, 2)
+      oprot.writeI32(self.timeout_millis)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -9420,15 +9457,18 @@ class get_future_result_args:
   """
   Attributes:
    - ff
+   - timeout_millis
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'ff', None, None, ), # 1
+    (2, TType.I32, 'timeout_millis', None, 0, ), # 2
   )
 
-  def __init__(self, ff=None,):
+  def __init__(self, ff=None, timeout_millis=thrift_spec[2][4],):
     self.ff = ff
+    self.timeout_millis = timeout_millis
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -9444,6 +9484,11 @@ class get_future_result_args:
           self.ff = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.timeout_millis = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -9457,6 +9502,10 @@ class get_future_result_args:
     if self.ff is not None:
       oprot.writeFieldBegin('ff', TType.I64, 1)
       oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    if self.timeout_millis is not None:
+      oprot.writeFieldBegin('timeout_millis', TType.I32, 2)
+      oprot.writeI32(self.timeout_millis)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -9553,15 +9602,18 @@ class future_get_result_as_arrays_args:
   """
   Attributes:
    - ff
+   - timeout_millis
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'ff', None, None, ), # 1
+    (2, TType.I32, 'timeout_millis', None, 0, ), # 2
   )
 
-  def __init__(self, ff=None,):
+  def __init__(self, ff=None, timeout_millis=thrift_spec[2][4],):
     self.ff = ff
+    self.timeout_millis = timeout_millis
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -9577,6 +9629,11 @@ class future_get_result_as_arrays_args:
           self.ff = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.timeout_millis = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -9590,6 +9647,10 @@ class future_get_result_as_arrays_args:
     if self.ff is not None:
       oprot.writeFieldBegin('ff', TType.I64, 1)
       oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    if self.timeout_millis is not None:
+      oprot.writeFieldBegin('timeout_millis', TType.I32, 2)
+      oprot.writeI32(self.timeout_millis)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -9686,15 +9747,18 @@ class get_future_result_as_arrays_args:
   """
   Attributes:
    - ff
+   - timeout_millis
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'ff', None, None, ), # 1
+    (2, TType.I32, 'timeout_millis', None, 0, ), # 2
   )
 
-  def __init__(self, ff=None,):
+  def __init__(self, ff=None, timeout_millis=thrift_spec[2][4],):
     self.ff = ff
+    self.timeout_millis = timeout_millis
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -9710,6 +9774,11 @@ class get_future_result_as_arrays_args:
           self.ff = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.timeout_millis = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -9723,6 +9792,10 @@ class get_future_result_as_arrays_args:
     if self.ff is not None:
       oprot.writeFieldBegin('ff', TType.I64, 1)
       oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    if self.timeout_millis is not None:
+      oprot.writeFieldBegin('timeout_millis', TType.I32, 2)
+      oprot.writeI32(self.timeout_millis)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -9819,15 +9892,18 @@ class future_get_result_serialized_args:
   """
   Attributes:
    - ff
+   - timeout_millis
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'ff', None, None, ), # 1
+    (2, TType.I32, 'timeout_millis', None, 0, ), # 2
   )
 
-  def __init__(self, ff=None,):
+  def __init__(self, ff=None, timeout_millis=thrift_spec[2][4],):
     self.ff = ff
+    self.timeout_millis = timeout_millis
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -9843,6 +9919,11 @@ class future_get_result_serialized_args:
           self.ff = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.timeout_millis = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -9856,6 +9937,10 @@ class future_get_result_serialized_args:
     if self.ff is not None:
       oprot.writeFieldBegin('ff', TType.I64, 1)
       oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    if self.timeout_millis is not None:
+      oprot.writeFieldBegin('timeout_millis', TType.I32, 2)
+      oprot.writeI32(self.timeout_millis)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -9952,15 +10037,18 @@ class get_future_result_serialized_args:
   """
   Attributes:
    - ff
+   - timeout_millis
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'ff', None, None, ), # 1
+    (2, TType.I32, 'timeout_millis', None, 0, ), # 2
   )
 
-  def __init__(self, ff=None,):
+  def __init__(self, ff=None, timeout_millis=thrift_spec[2][4],):
     self.ff = ff
+    self.timeout_millis = timeout_millis
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -9976,6 +10064,11 @@ class get_future_result_serialized_args:
           self.ff = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.timeout_millis = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -9989,6 +10082,10 @@ class get_future_result_serialized_args:
     if self.ff is not None:
       oprot.writeFieldBegin('ff', TType.I64, 1)
       oprot.writeI64(self.ff)
+      oprot.writeFieldEnd()
+    if self.timeout_millis is not None:
+      oprot.writeFieldBegin('timeout_millis', TType.I32, 2)
+      oprot.writeI32(self.timeout_millis)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -12871,14 +12968,17 @@ class scanner_get_cells_serialized_result:
   """
   Attributes:
    - success
+   - e
   """
 
   thrift_spec = (
     (0, TType.STRING, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
   )
 
-  def __init__(self, success=None,):
+  def __init__(self, success=None, e=None,):
     self.success = success
+    self.e = e
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -12894,6 +12994,12 @@ class scanner_get_cells_serialized_result:
           self.success = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -12907,6 +13013,10 @@ class scanner_get_cells_serialized_result:
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.STRING, 0)
       oprot.writeString(self.success)
+      oprot.writeFieldEnd()
+    if self.e is not None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -12990,14 +13100,17 @@ class next_cells_serialized_result:
   """
   Attributes:
    - success
+   - e
   """
 
   thrift_spec = (
     (0, TType.STRING, 'success', None, None, ), # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
   )
 
-  def __init__(self, success=None,):
+  def __init__(self, success=None, e=None,):
     self.success = success
+    self.e = e
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -13013,6 +13126,12 @@ class next_cells_serialized_result:
           self.success = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -13026,6 +13145,10 @@ class next_cells_serialized_result:
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.STRING, 0)
       oprot.writeString(self.success)
+      oprot.writeFieldEnd()
+    if self.e is not None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -18585,7 +18708,6 @@ class set_cells_serialized_args:
    - ns
    - table_name
    - cells
-   - flush
   """
 
   thrift_spec = (
@@ -18593,14 +18715,12 @@ class set_cells_serialized_args:
     (1, TType.I64, 'ns', None, None, ), # 1
     (2, TType.STRING, 'table_name', None, None, ), # 2
     (3, TType.STRING, 'cells', None, None, ), # 3
-    (4, TType.BOOL, 'flush', None, False, ), # 4
   )
 
-  def __init__(self, ns=None, table_name=None, cells=None, flush=thrift_spec[4][4],):
+  def __init__(self, ns=None, table_name=None, cells=None,):
     self.ns = ns
     self.table_name = table_name
     self.cells = cells
-    self.flush = flush
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -18626,11 +18746,6 @@ class set_cells_serialized_args:
           self.cells = iprot.readString();
         else:
           iprot.skip(ftype)
-      elif fid == 4:
-        if ftype == TType.BOOL:
-          self.flush = iprot.readBool();
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -18652,10 +18767,6 @@ class set_cells_serialized_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.STRING, 3)
       oprot.writeString(self.cells)
-      oprot.writeFieldEnd()
-    if self.flush is not None:
-      oprot.writeFieldBegin('flush', TType.BOOL, 4)
-      oprot.writeBool(self.flush)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

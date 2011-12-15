@@ -354,7 +354,7 @@ class ScanSpec {
   public $row_intervals = null;
   public $cell_intervals = null;
   public $return_deletes = false;
-  public $revs = 0;
+  public $versions = 0;
   public $row_limit = 0;
   public $start_time = null;
   public $end_time = null;
@@ -394,7 +394,7 @@ class ScanSpec {
           'type' => TType::BOOL,
           ),
         4 => array(
-          'var' => 'revs',
+          'var' => 'versions',
           'type' => TType::I32,
           ),
         5 => array(
@@ -461,8 +461,8 @@ class ScanSpec {
       if (isset($vals['return_deletes'])) {
         $this->return_deletes = $vals['return_deletes'];
       }
-      if (isset($vals['revs'])) {
-        $this->revs = $vals['revs'];
+      if (isset($vals['versions'])) {
+        $this->versions = $vals['versions'];
       }
       if (isset($vals['row_limit'])) {
         $this->row_limit = $vals['row_limit'];
@@ -567,7 +567,7 @@ class ScanSpec {
           break;
         case 4:
           if ($ftype == TType::I32) {
-            $xfer += $input->readI32($this->revs);
+            $xfer += $input->readI32($this->versions);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -718,9 +718,9 @@ class ScanSpec {
       $xfer += $output->writeBool($this->return_deletes);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->revs !== null) {
-      $xfer += $output->writeFieldBegin('revs', TType::I32, 4);
-      $xfer += $output->writeI32($this->revs);
+    if ($this->versions !== null) {
+      $xfer += $output->writeFieldBegin('versions', TType::I32, 4);
+      $xfer += $output->writeI32($this->versions);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->row_limit !== null) {

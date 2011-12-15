@@ -19,16 +19,16 @@ interface ClientServiceIf {
   public function open_namespace($ns);
   public function namespace_close($ns);
   public function close_namespace($ns);
-  public function future_open($queue_size);
-  public function open_future($queue_size);
+  public function future_open($capacity);
+  public function open_future($capacity);
   public function future_cancel($ff);
   public function cancel_future($ff);
-  public function future_get_result($ff);
-  public function get_future_result($ff);
-  public function future_get_result_as_arrays($ff);
-  public function get_future_result_as_arrays($ff);
-  public function future_get_result_serialized($ff);
-  public function get_future_result_serialized($ff);
+  public function future_get_result($ff, $timeout_millis);
+  public function get_future_result($ff, $timeout_millis);
+  public function future_get_result_as_arrays($ff, $timeout_millis);
+  public function get_future_result_as_arrays($ff, $timeout_millis);
+  public function future_get_result_serialized($ff, $timeout_millis);
+  public function get_future_result_serialized($ff, $timeout_millis);
   public function future_is_empty($ff);
   public function future_is_full($ff);
   public function future_is_cancelled($ff);
@@ -88,7 +88,7 @@ interface ClientServiceIf {
   public function mutator_set_cells_as_arrays($mutator, $cells);
   public function set_cells_as_arrays($ns, $table_name, $cells);
   public function mutator_set_cells_serialized($mutator, $cells, $flush);
-  public function set_cells_serialized($ns, $table_name, $cells, $flush);
+  public function set_cells_serialized($ns, $table_name, $cells);
   public function mutator_flush($mutator);
   public function flush_mutator($mutator);
   public function async_mutator_set_cell($mutator, $cell);
@@ -665,16 +665,16 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
-  public function future_open($queue_size)
+  public function future_open($capacity)
   {
-    $this->send_future_open($queue_size);
+    $this->send_future_open($capacity);
     return $this->recv_future_open();
   }
 
-  public function send_future_open($queue_size)
+  public function send_future_open($capacity)
   {
     $args = new ClientService_future_open_args();
-    $args->queue_size = $queue_size;
+    $args->capacity = $capacity;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -719,16 +719,16 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("future_open failed: unknown result");
   }
 
-  public function open_future($queue_size)
+  public function open_future($capacity)
   {
-    $this->send_open_future($queue_size);
+    $this->send_open_future($capacity);
     return $this->recv_open_future();
   }
 
-  public function send_open_future($queue_size)
+  public function send_open_future($capacity)
   {
     $args = new ClientService_open_future_args();
-    $args->queue_size = $queue_size;
+    $args->capacity = $capacity;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -875,16 +875,17 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
-  public function future_get_result($ff)
+  public function future_get_result($ff, $timeout_millis)
   {
-    $this->send_future_get_result($ff);
+    $this->send_future_get_result($ff, $timeout_millis);
     return $this->recv_future_get_result();
   }
 
-  public function send_future_get_result($ff)
+  public function send_future_get_result($ff, $timeout_millis)
   {
     $args = new ClientService_future_get_result_args();
     $args->ff = $ff;
+    $args->timeout_millis = $timeout_millis;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -929,16 +930,17 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("future_get_result failed: unknown result");
   }
 
-  public function get_future_result($ff)
+  public function get_future_result($ff, $timeout_millis)
   {
-    $this->send_get_future_result($ff);
+    $this->send_get_future_result($ff, $timeout_millis);
     return $this->recv_get_future_result();
   }
 
-  public function send_get_future_result($ff)
+  public function send_get_future_result($ff, $timeout_millis)
   {
     $args = new ClientService_get_future_result_args();
     $args->ff = $ff;
+    $args->timeout_millis = $timeout_millis;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -983,16 +985,17 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("get_future_result failed: unknown result");
   }
 
-  public function future_get_result_as_arrays($ff)
+  public function future_get_result_as_arrays($ff, $timeout_millis)
   {
-    $this->send_future_get_result_as_arrays($ff);
+    $this->send_future_get_result_as_arrays($ff, $timeout_millis);
     return $this->recv_future_get_result_as_arrays();
   }
 
-  public function send_future_get_result_as_arrays($ff)
+  public function send_future_get_result_as_arrays($ff, $timeout_millis)
   {
     $args = new ClientService_future_get_result_as_arrays_args();
     $args->ff = $ff;
+    $args->timeout_millis = $timeout_millis;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -1037,16 +1040,17 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("future_get_result_as_arrays failed: unknown result");
   }
 
-  public function get_future_result_as_arrays($ff)
+  public function get_future_result_as_arrays($ff, $timeout_millis)
   {
-    $this->send_get_future_result_as_arrays($ff);
+    $this->send_get_future_result_as_arrays($ff, $timeout_millis);
     return $this->recv_get_future_result_as_arrays();
   }
 
-  public function send_get_future_result_as_arrays($ff)
+  public function send_get_future_result_as_arrays($ff, $timeout_millis)
   {
     $args = new ClientService_get_future_result_as_arrays_args();
     $args->ff = $ff;
+    $args->timeout_millis = $timeout_millis;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -1091,16 +1095,17 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("get_future_result_as_arrays failed: unknown result");
   }
 
-  public function future_get_result_serialized($ff)
+  public function future_get_result_serialized($ff, $timeout_millis)
   {
-    $this->send_future_get_result_serialized($ff);
+    $this->send_future_get_result_serialized($ff, $timeout_millis);
     return $this->recv_future_get_result_serialized();
   }
 
-  public function send_future_get_result_serialized($ff)
+  public function send_future_get_result_serialized($ff, $timeout_millis)
   {
     $args = new ClientService_future_get_result_serialized_args();
     $args->ff = $ff;
+    $args->timeout_millis = $timeout_millis;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -1145,16 +1150,17 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("future_get_result_serialized failed: unknown result");
   }
 
-  public function get_future_result_serialized($ff)
+  public function get_future_result_serialized($ff, $timeout_millis)
   {
-    $this->send_get_future_result_serialized($ff);
+    $this->send_get_future_result_serialized($ff, $timeout_millis);
     return $this->recv_get_future_result_serialized();
   }
 
-  public function send_get_future_result_serialized($ff)
+  public function send_get_future_result_serialized($ff, $timeout_millis)
   {
     $args = new ClientService_get_future_result_serialized_args();
     $args->ff = $ff;
+    $args->timeout_millis = $timeout_millis;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -2313,6 +2319,9 @@ class ClientServiceClient implements ClientServiceIf {
     if ($result->success !== null) {
       return $result->success;
     }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
     throw new Exception("scanner_get_cells_serialized failed: unknown result");
   }
 
@@ -2363,6 +2372,9 @@ class ClientServiceClient implements ClientServiceIf {
     }
     if ($result->success !== null) {
       return $result->success;
+    }
+    if ($result->e !== null) {
+      throw $result->e;
     }
     throw new Exception("next_cells_serialized failed: unknown result");
   }
@@ -4360,19 +4372,18 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
-  public function set_cells_serialized($ns, $table_name, $cells, $flush)
+  public function set_cells_serialized($ns, $table_name, $cells)
   {
-    $this->send_set_cells_serialized($ns, $table_name, $cells, $flush);
+    $this->send_set_cells_serialized($ns, $table_name, $cells);
     $this->recv_set_cells_serialized();
   }
 
-  public function send_set_cells_serialized($ns, $table_name, $cells, $flush)
+  public function send_set_cells_serialized($ns, $table_name, $cells)
   {
     $args = new ClientService_set_cells_serialized_args();
     $args->ns = $ns;
     $args->table_name = $table_name;
     $args->cells = $cells;
-    $args->flush = $flush;
     $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
     if ($bin_accel)
     {
@@ -8160,20 +8171,20 @@ class ClientService_close_namespace_result {
 class ClientService_future_open_args {
   static $_TSPEC;
 
-  public $queue_size = 0;
+  public $capacity = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
       self::$_TSPEC = array(
         1 => array(
-          'var' => 'queue_size',
+          'var' => 'capacity',
           'type' => TType::I32,
           ),
         );
     }
     if (is_array($vals)) {
-      if (isset($vals['queue_size'])) {
-        $this->queue_size = $vals['queue_size'];
+      if (isset($vals['capacity'])) {
+        $this->capacity = $vals['capacity'];
       }
     }
   }
@@ -8199,7 +8210,7 @@ class ClientService_future_open_args {
       {
         case 1:
           if ($ftype == TType::I32) {
-            $xfer += $input->readI32($this->queue_size);
+            $xfer += $input->readI32($this->capacity);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -8217,9 +8228,9 @@ class ClientService_future_open_args {
   public function write($output) {
     $xfer = 0;
     $xfer += $output->writeStructBegin('ClientService_future_open_args');
-    if ($this->queue_size !== null) {
-      $xfer += $output->writeFieldBegin('queue_size', TType::I32, 1);
-      $xfer += $output->writeI32($this->queue_size);
+    if ($this->capacity !== null) {
+      $xfer += $output->writeFieldBegin('capacity', TType::I32, 1);
+      $xfer += $output->writeI32($this->capacity);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -8326,20 +8337,20 @@ class ClientService_future_open_result {
 class ClientService_open_future_args {
   static $_TSPEC;
 
-  public $queue_size = 0;
+  public $capacity = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
       self::$_TSPEC = array(
         1 => array(
-          'var' => 'queue_size',
+          'var' => 'capacity',
           'type' => TType::I32,
           ),
         );
     }
     if (is_array($vals)) {
-      if (isset($vals['queue_size'])) {
-        $this->queue_size = $vals['queue_size'];
+      if (isset($vals['capacity'])) {
+        $this->capacity = $vals['capacity'];
       }
     }
   }
@@ -8365,7 +8376,7 @@ class ClientService_open_future_args {
       {
         case 1:
           if ($ftype == TType::I32) {
-            $xfer += $input->readI32($this->queue_size);
+            $xfer += $input->readI32($this->capacity);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -8383,9 +8394,9 @@ class ClientService_open_future_args {
   public function write($output) {
     $xfer = 0;
     $xfer += $output->writeStructBegin('ClientService_open_future_args');
-    if ($this->queue_size !== null) {
-      $xfer += $output->writeFieldBegin('queue_size', TType::I32, 1);
-      $xfer += $output->writeI32($this->queue_size);
+    if ($this->capacity !== null) {
+      $xfer += $output->writeFieldBegin('capacity', TType::I32, 1);
+      $xfer += $output->writeI32($this->capacity);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -8785,6 +8796,7 @@ class ClientService_future_get_result_args {
   static $_TSPEC;
 
   public $ff = null;
+  public $timeout_millis = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -8793,11 +8805,18 @@ class ClientService_future_get_result_args {
           'var' => 'ff',
           'type' => TType::I64,
           ),
+        2 => array(
+          'var' => 'timeout_millis',
+          'type' => TType::I32,
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['ff'])) {
         $this->ff = $vals['ff'];
+      }
+      if (isset($vals['timeout_millis'])) {
+        $this->timeout_millis = $vals['timeout_millis'];
       }
     }
   }
@@ -8828,6 +8847,13 @@ class ClientService_future_get_result_args {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->timeout_millis);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -8844,6 +8870,11 @@ class ClientService_future_get_result_args {
     if ($this->ff !== null) {
       $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
       $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->timeout_millis !== null) {
+      $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+      $xfer += $output->writeI32($this->timeout_millis);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -8956,6 +8987,7 @@ class ClientService_get_future_result_args {
   static $_TSPEC;
 
   public $ff = null;
+  public $timeout_millis = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -8964,11 +8996,18 @@ class ClientService_get_future_result_args {
           'var' => 'ff',
           'type' => TType::I64,
           ),
+        2 => array(
+          'var' => 'timeout_millis',
+          'type' => TType::I32,
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['ff'])) {
         $this->ff = $vals['ff'];
+      }
+      if (isset($vals['timeout_millis'])) {
+        $this->timeout_millis = $vals['timeout_millis'];
       }
     }
   }
@@ -8999,6 +9038,13 @@ class ClientService_get_future_result_args {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->timeout_millis);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -9015,6 +9061,11 @@ class ClientService_get_future_result_args {
     if ($this->ff !== null) {
       $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
       $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->timeout_millis !== null) {
+      $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+      $xfer += $output->writeI32($this->timeout_millis);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -9127,6 +9178,7 @@ class ClientService_future_get_result_as_arrays_args {
   static $_TSPEC;
 
   public $ff = null;
+  public $timeout_millis = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -9135,11 +9187,18 @@ class ClientService_future_get_result_as_arrays_args {
           'var' => 'ff',
           'type' => TType::I64,
           ),
+        2 => array(
+          'var' => 'timeout_millis',
+          'type' => TType::I32,
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['ff'])) {
         $this->ff = $vals['ff'];
+      }
+      if (isset($vals['timeout_millis'])) {
+        $this->timeout_millis = $vals['timeout_millis'];
       }
     }
   }
@@ -9170,6 +9229,13 @@ class ClientService_future_get_result_as_arrays_args {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->timeout_millis);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -9186,6 +9252,11 @@ class ClientService_future_get_result_as_arrays_args {
     if ($this->ff !== null) {
       $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
       $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->timeout_millis !== null) {
+      $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+      $xfer += $output->writeI32($this->timeout_millis);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -9298,6 +9369,7 @@ class ClientService_get_future_result_as_arrays_args {
   static $_TSPEC;
 
   public $ff = null;
+  public $timeout_millis = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -9306,11 +9378,18 @@ class ClientService_get_future_result_as_arrays_args {
           'var' => 'ff',
           'type' => TType::I64,
           ),
+        2 => array(
+          'var' => 'timeout_millis',
+          'type' => TType::I32,
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['ff'])) {
         $this->ff = $vals['ff'];
+      }
+      if (isset($vals['timeout_millis'])) {
+        $this->timeout_millis = $vals['timeout_millis'];
       }
     }
   }
@@ -9341,6 +9420,13 @@ class ClientService_get_future_result_as_arrays_args {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->timeout_millis);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -9357,6 +9443,11 @@ class ClientService_get_future_result_as_arrays_args {
     if ($this->ff !== null) {
       $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
       $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->timeout_millis !== null) {
+      $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+      $xfer += $output->writeI32($this->timeout_millis);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -9469,6 +9560,7 @@ class ClientService_future_get_result_serialized_args {
   static $_TSPEC;
 
   public $ff = null;
+  public $timeout_millis = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -9477,11 +9569,18 @@ class ClientService_future_get_result_serialized_args {
           'var' => 'ff',
           'type' => TType::I64,
           ),
+        2 => array(
+          'var' => 'timeout_millis',
+          'type' => TType::I32,
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['ff'])) {
         $this->ff = $vals['ff'];
+      }
+      if (isset($vals['timeout_millis'])) {
+        $this->timeout_millis = $vals['timeout_millis'];
       }
     }
   }
@@ -9512,6 +9611,13 @@ class ClientService_future_get_result_serialized_args {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->timeout_millis);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -9528,6 +9634,11 @@ class ClientService_future_get_result_serialized_args {
     if ($this->ff !== null) {
       $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
       $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->timeout_millis !== null) {
+      $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+      $xfer += $output->writeI32($this->timeout_millis);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -9640,6 +9751,7 @@ class ClientService_get_future_result_serialized_args {
   static $_TSPEC;
 
   public $ff = null;
+  public $timeout_millis = 0;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -9648,11 +9760,18 @@ class ClientService_get_future_result_serialized_args {
           'var' => 'ff',
           'type' => TType::I64,
           ),
+        2 => array(
+          'var' => 'timeout_millis',
+          'type' => TType::I32,
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['ff'])) {
         $this->ff = $vals['ff'];
+      }
+      if (isset($vals['timeout_millis'])) {
+        $this->timeout_millis = $vals['timeout_millis'];
       }
     }
   }
@@ -9683,6 +9802,13 @@ class ClientService_get_future_result_serialized_args {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->timeout_millis);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -9699,6 +9825,11 @@ class ClientService_get_future_result_serialized_args {
     if ($this->ff !== null) {
       $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
       $xfer += $output->writeI64($this->ff);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->timeout_millis !== null) {
+      $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+      $xfer += $output->writeI32($this->timeout_millis);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -13417,6 +13548,7 @@ class ClientService_scanner_get_cells_serialized_result {
   static $_TSPEC;
 
   public $success = null;
+  public $e = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -13425,11 +13557,19 @@ class ClientService_scanner_get_cells_serialized_result {
           'var' => 'success',
           'type' => TType::STRING,
           ),
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'ClientException',
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['success'])) {
         $this->success = $vals['success'];
+      }
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
       }
     }
   }
@@ -13460,6 +13600,14 @@ class ClientService_scanner_get_cells_serialized_result {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -13476,6 +13624,11 @@ class ClientService_scanner_get_cells_serialized_result {
     if ($this->success !== null) {
       $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
       $xfer += $output->writeString($this->success);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -13561,6 +13714,7 @@ class ClientService_next_cells_serialized_result {
   static $_TSPEC;
 
   public $success = null;
+  public $e = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -13569,11 +13723,19 @@ class ClientService_next_cells_serialized_result {
           'var' => 'success',
           'type' => TType::STRING,
           ),
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'ClientException',
+          ),
         );
     }
     if (is_array($vals)) {
       if (isset($vals['success'])) {
         $this->success = $vals['success'];
+      }
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
       }
     }
   }
@@ -13604,6 +13766,14 @@ class ClientService_next_cells_serialized_result {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -13620,6 +13790,11 @@ class ClientService_next_cells_serialized_result {
     if ($this->success !== null) {
       $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
       $xfer += $output->writeString($this->success);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -21149,7 +21324,6 @@ class ClientService_set_cells_serialized_args {
   public $ns = null;
   public $table_name = null;
   public $cells = null;
-  public $flush = false;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -21166,10 +21340,6 @@ class ClientService_set_cells_serialized_args {
           'var' => 'cells',
           'type' => TType::STRING,
           ),
-        4 => array(
-          'var' => 'flush',
-          'type' => TType::BOOL,
-          ),
         );
     }
     if (is_array($vals)) {
@@ -21181,9 +21351,6 @@ class ClientService_set_cells_serialized_args {
       }
       if (isset($vals['cells'])) {
         $this->cells = $vals['cells'];
-      }
-      if (isset($vals['flush'])) {
-        $this->flush = $vals['flush'];
       }
     }
   }
@@ -21228,13 +21395,6 @@ class ClientService_set_cells_serialized_args {
             $xfer += $input->skip($ftype);
           }
           break;
-        case 4:
-          if ($ftype == TType::BOOL) {
-            $xfer += $input->readBool($this->flush);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -21261,11 +21421,6 @@ class ClientService_set_cells_serialized_args {
     if ($this->cells !== null) {
       $xfer += $output->writeFieldBegin('cells', TType::STRING, 3);
       $xfer += $output->writeString($this->cells);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->flush !== null) {
-      $xfer += $output->writeFieldBegin('flush', TType::BOOL, 4);
-      $xfer += $output->writeBool($this->flush);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

@@ -165,13 +165,13 @@ require 'client_types'
                   return
                 end
 
-                def future_open(queue_size)
-                  send_future_open(queue_size)
+                def future_open(capacity)
+                  send_future_open(capacity)
                   return recv_future_open()
                 end
 
-                def send_future_open(queue_size)
-                  send_message('future_open', Future_open_args, :queue_size => queue_size)
+                def send_future_open(capacity)
+                  send_message('future_open', Future_open_args, :capacity => capacity)
                 end
 
                 def recv_future_open()
@@ -181,13 +181,13 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'future_open failed: unknown result')
                 end
 
-                def open_future(queue_size)
-                  send_open_future(queue_size)
+                def open_future(capacity)
+                  send_open_future(capacity)
                   return recv_open_future()
                 end
 
-                def send_open_future(queue_size)
-                  send_message('open_future', Open_future_args, :queue_size => queue_size)
+                def send_open_future(capacity)
+                  send_message('open_future', Open_future_args, :capacity => capacity)
                 end
 
                 def recv_open_future()
@@ -227,13 +227,13 @@ require 'client_types'
                   return
                 end
 
-                def future_get_result(ff)
-                  send_future_get_result(ff)
+                def future_get_result(ff, timeout_millis)
+                  send_future_get_result(ff, timeout_millis)
                   return recv_future_get_result()
                 end
 
-                def send_future_get_result(ff)
-                  send_message('future_get_result', Future_get_result_args, :ff => ff)
+                def send_future_get_result(ff, timeout_millis)
+                  send_message('future_get_result', Future_get_result_args, :ff => ff, :timeout_millis => timeout_millis)
                 end
 
                 def recv_future_get_result()
@@ -243,13 +243,13 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'future_get_result failed: unknown result')
                 end
 
-                def get_future_result(ff)
-                  send_get_future_result(ff)
+                def get_future_result(ff, timeout_millis)
+                  send_get_future_result(ff, timeout_millis)
                   return recv_get_future_result()
                 end
 
-                def send_get_future_result(ff)
-                  send_message('get_future_result', Get_future_result_args, :ff => ff)
+                def send_get_future_result(ff, timeout_millis)
+                  send_message('get_future_result', Get_future_result_args, :ff => ff, :timeout_millis => timeout_millis)
                 end
 
                 def recv_get_future_result()
@@ -259,13 +259,13 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_future_result failed: unknown result')
                 end
 
-                def future_get_result_as_arrays(ff)
-                  send_future_get_result_as_arrays(ff)
+                def future_get_result_as_arrays(ff, timeout_millis)
+                  send_future_get_result_as_arrays(ff, timeout_millis)
                   return recv_future_get_result_as_arrays()
                 end
 
-                def send_future_get_result_as_arrays(ff)
-                  send_message('future_get_result_as_arrays', Future_get_result_as_arrays_args, :ff => ff)
+                def send_future_get_result_as_arrays(ff, timeout_millis)
+                  send_message('future_get_result_as_arrays', Future_get_result_as_arrays_args, :ff => ff, :timeout_millis => timeout_millis)
                 end
 
                 def recv_future_get_result_as_arrays()
@@ -275,13 +275,13 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'future_get_result_as_arrays failed: unknown result')
                 end
 
-                def get_future_result_as_arrays(ff)
-                  send_get_future_result_as_arrays(ff)
+                def get_future_result_as_arrays(ff, timeout_millis)
+                  send_get_future_result_as_arrays(ff, timeout_millis)
                   return recv_get_future_result_as_arrays()
                 end
 
-                def send_get_future_result_as_arrays(ff)
-                  send_message('get_future_result_as_arrays', Get_future_result_as_arrays_args, :ff => ff)
+                def send_get_future_result_as_arrays(ff, timeout_millis)
+                  send_message('get_future_result_as_arrays', Get_future_result_as_arrays_args, :ff => ff, :timeout_millis => timeout_millis)
                 end
 
                 def recv_get_future_result_as_arrays()
@@ -291,13 +291,13 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_future_result_as_arrays failed: unknown result')
                 end
 
-                def future_get_result_serialized(ff)
-                  send_future_get_result_serialized(ff)
+                def future_get_result_serialized(ff, timeout_millis)
+                  send_future_get_result_serialized(ff, timeout_millis)
                   return recv_future_get_result_serialized()
                 end
 
-                def send_future_get_result_serialized(ff)
-                  send_message('future_get_result_serialized', Future_get_result_serialized_args, :ff => ff)
+                def send_future_get_result_serialized(ff, timeout_millis)
+                  send_message('future_get_result_serialized', Future_get_result_serialized_args, :ff => ff, :timeout_millis => timeout_millis)
                 end
 
                 def recv_future_get_result_serialized()
@@ -307,13 +307,13 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'future_get_result_serialized failed: unknown result')
                 end
 
-                def get_future_result_serialized(ff)
-                  send_get_future_result_serialized(ff)
+                def get_future_result_serialized(ff, timeout_millis)
+                  send_get_future_result_serialized(ff, timeout_millis)
                   return recv_get_future_result_serialized()
                 end
 
-                def send_get_future_result_serialized(ff)
-                  send_message('get_future_result_serialized', Get_future_result_serialized_args, :ff => ff)
+                def send_get_future_result_serialized(ff, timeout_millis)
+                  send_message('get_future_result_serialized', Get_future_result_serialized_args, :ff => ff, :timeout_millis => timeout_millis)
                 end
 
                 def recv_get_future_result_serialized()
@@ -647,6 +647,7 @@ require 'client_types'
                 def recv_scanner_get_cells_serialized()
                   result = receive_message(Scanner_get_cells_serialized_result)
                   return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'scanner_get_cells_serialized failed: unknown result')
                 end
 
@@ -662,6 +663,7 @@ require 'client_types'
                 def recv_next_cells_serialized()
                   result = receive_message(Next_cells_serialized_result)
                   return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'next_cells_serialized failed: unknown result')
                 end
 
@@ -1237,13 +1239,13 @@ require 'client_types'
                   return
                 end
 
-                def set_cells_serialized(ns, table_name, cells, flush)
-                  send_set_cells_serialized(ns, table_name, cells, flush)
+                def set_cells_serialized(ns, table_name, cells)
+                  send_set_cells_serialized(ns, table_name, cells)
                   recv_set_cells_serialized()
                 end
 
-                def send_set_cells_serialized(ns, table_name, cells, flush)
-                  send_message('set_cells_serialized', Set_cells_serialized_args, :ns => ns, :table_name => table_name, :cells => cells, :flush => flush)
+                def send_set_cells_serialized(ns, table_name, cells)
+                  send_message('set_cells_serialized', Set_cells_serialized_args, :ns => ns, :table_name => table_name, :cells => cells)
                 end
 
                 def recv_set_cells_serialized()
@@ -1974,7 +1976,7 @@ require 'client_types'
                   args = read_args(iprot, Future_open_args)
                   result = Future_open_result.new()
                   begin
-                    result.success = @handler.future_open(args.queue_size)
+                    result.success = @handler.future_open(args.capacity)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -1985,7 +1987,7 @@ require 'client_types'
                   args = read_args(iprot, Open_future_args)
                   result = Open_future_result.new()
                   begin
-                    result.success = @handler.open_future(args.queue_size)
+                    result.success = @handler.open_future(args.capacity)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -2018,7 +2020,7 @@ require 'client_types'
                   args = read_args(iprot, Future_get_result_args)
                   result = Future_get_result_result.new()
                   begin
-                    result.success = @handler.future_get_result(args.ff)
+                    result.success = @handler.future_get_result(args.ff, args.timeout_millis)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -2029,7 +2031,7 @@ require 'client_types'
                   args = read_args(iprot, Get_future_result_args)
                   result = Get_future_result_result.new()
                   begin
-                    result.success = @handler.get_future_result(args.ff)
+                    result.success = @handler.get_future_result(args.ff, args.timeout_millis)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -2040,7 +2042,7 @@ require 'client_types'
                   args = read_args(iprot, Future_get_result_as_arrays_args)
                   result = Future_get_result_as_arrays_result.new()
                   begin
-                    result.success = @handler.future_get_result_as_arrays(args.ff)
+                    result.success = @handler.future_get_result_as_arrays(args.ff, args.timeout_millis)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -2051,7 +2053,7 @@ require 'client_types'
                   args = read_args(iprot, Get_future_result_as_arrays_args)
                   result = Get_future_result_as_arrays_result.new()
                   begin
-                    result.success = @handler.get_future_result_as_arrays(args.ff)
+                    result.success = @handler.get_future_result_as_arrays(args.ff, args.timeout_millis)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -2062,7 +2064,7 @@ require 'client_types'
                   args = read_args(iprot, Future_get_result_serialized_args)
                   result = Future_get_result_serialized_result.new()
                   begin
-                    result.success = @handler.future_get_result_serialized(args.ff)
+                    result.success = @handler.future_get_result_serialized(args.ff, args.timeout_millis)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -2073,7 +2075,7 @@ require 'client_types'
                   args = read_args(iprot, Get_future_result_serialized_args)
                   result = Get_future_result_serialized_result.new()
                   begin
-                    result.success = @handler.get_future_result_serialized(args.ff)
+                    result.success = @handler.get_future_result_serialized(args.ff, args.timeout_millis)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -2303,14 +2305,22 @@ require 'client_types'
                 def process_scanner_get_cells_serialized(seqid, iprot, oprot)
                   args = read_args(iprot, Scanner_get_cells_serialized_args)
                   result = Scanner_get_cells_serialized_result.new()
-                  result.success = @handler.scanner_get_cells_serialized(args.scanner)
+                  begin
+                    result.success = @handler.scanner_get_cells_serialized(args.scanner)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
                   write_result(result, oprot, 'scanner_get_cells_serialized', seqid)
                 end
 
                 def process_next_cells_serialized(seqid, iprot, oprot)
                   args = read_args(iprot, Next_cells_serialized_args)
                   result = Next_cells_serialized_result.new()
-                  result.success = @handler.next_cells_serialized(args.scanner)
+                  begin
+                    result.success = @handler.next_cells_serialized(args.scanner)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
                   write_result(result, oprot, 'next_cells_serialized', seqid)
                 end
 
@@ -2725,7 +2735,7 @@ require 'client_types'
                   args = read_args(iprot, Set_cells_serialized_args)
                   result = Set_cells_serialized_result.new()
                   begin
-                    @handler.set_cells_serialized(args.ns, args.table_name, args.cells, args.flush)
+                    @handler.set_cells_serialized(args.ns, args.table_name, args.cells)
                   rescue Hypertable::ThriftGen::ClientException => e
                     result.e = e
                   end
@@ -3503,10 +3513,10 @@ require 'client_types'
 
               class Future_open_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
-                QUEUE_SIZE = 1
+                CAPACITY = 1
 
                 FIELDS = {
-                  QUEUE_SIZE => {:type => ::Thrift::Types::I32, :name => 'queue_size', :default => 0}
+                  CAPACITY => {:type => ::Thrift::Types::I32, :name => 'capacity', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end
@@ -3537,10 +3547,10 @@ require 'client_types'
 
               class Open_future_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
-                QUEUE_SIZE = 1
+                CAPACITY = 1
 
                 FIELDS = {
-                  QUEUE_SIZE => {:type => ::Thrift::Types::I32, :name => 'queue_size', :default => 0}
+                  CAPACITY => {:type => ::Thrift::Types::I32, :name => 'capacity', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end
@@ -3636,9 +3646,11 @@ require 'client_types'
               class Future_get_result_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 FF = 1
+                TIMEOUT_MILLIS = 2
 
                 FIELDS = {
-                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'},
+                  TIMEOUT_MILLIS => {:type => ::Thrift::Types::I32, :name => 'timeout_millis', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end
@@ -3670,9 +3682,11 @@ require 'client_types'
               class Get_future_result_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 FF = 1
+                TIMEOUT_MILLIS = 2
 
                 FIELDS = {
-                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'},
+                  TIMEOUT_MILLIS => {:type => ::Thrift::Types::I32, :name => 'timeout_millis', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end
@@ -3704,9 +3718,11 @@ require 'client_types'
               class Future_get_result_as_arrays_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 FF = 1
+                TIMEOUT_MILLIS = 2
 
                 FIELDS = {
-                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'},
+                  TIMEOUT_MILLIS => {:type => ::Thrift::Types::I32, :name => 'timeout_millis', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end
@@ -3738,9 +3754,11 @@ require 'client_types'
               class Get_future_result_as_arrays_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 FF = 1
+                TIMEOUT_MILLIS = 2
 
                 FIELDS = {
-                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'},
+                  TIMEOUT_MILLIS => {:type => ::Thrift::Types::I32, :name => 'timeout_millis', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end
@@ -3772,9 +3790,11 @@ require 'client_types'
               class Future_get_result_serialized_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 FF = 1
+                TIMEOUT_MILLIS = 2
 
                 FIELDS = {
-                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'},
+                  TIMEOUT_MILLIS => {:type => ::Thrift::Types::I32, :name => 'timeout_millis', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end
@@ -3806,9 +3826,11 @@ require 'client_types'
               class Get_future_result_serialized_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 FF = 1
+                TIMEOUT_MILLIS = 2
 
                 FIELDS = {
-                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'}
+                  FF => {:type => ::Thrift::Types::I64, :name => 'ff'},
+                  TIMEOUT_MILLIS => {:type => ::Thrift::Types::I32, :name => 'timeout_millis', :default => 0}
                 }
 
                 def struct_fields; FIELDS; end
@@ -4540,9 +4562,11 @@ require 'client_types'
               class Scanner_get_cells_serialized_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 SUCCESS = 0
+                E = 1
 
                 FIELDS = {
-                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success', :binary => true}
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success', :binary => true},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -4572,9 +4596,11 @@ require 'client_types'
               class Next_cells_serialized_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 SUCCESS = 0
+                E = 1
 
                 FIELDS = {
-                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success', :binary => true}
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success', :binary => true},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 
                 def struct_fields; FIELDS; end
@@ -5918,13 +5944,11 @@ require 'client_types'
                 NS = 1
                 TABLE_NAME = 2
                 CELLS = 3
-                FLUSH = 4
 
                 FIELDS = {
                   NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
                   TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
-                  CELLS => {:type => ::Thrift::Types::STRING, :name => 'cells', :binary => true},
-                  FLUSH => {:type => ::Thrift::Types::BOOL, :name => 'flush', :default => false}
+                  CELLS => {:type => ::Thrift::Types::STRING, :name => 'cells', :binary => true}
                 }
 
                 def struct_fields; FIELDS; end

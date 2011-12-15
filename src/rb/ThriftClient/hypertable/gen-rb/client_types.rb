@@ -166,7 +166,7 @@ module Hypertable
           ROW_INTERVALS = 1
           CELL_INTERVALS = 2
           RETURN_DELETES = 3
-          REVS = 4
+          VERSIONS = 4
           ROW_LIMIT = 5
           START_TIME = 6
           END_TIME = 7
@@ -184,7 +184,7 @@ module Hypertable
             ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
             CELL_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'cell_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::CellInterval}, :optional => true},
             RETURN_DELETES => {:type => ::Thrift::Types::BOOL, :name => 'return_deletes', :default => false, :optional => true},
-            REVS => {:type => ::Thrift::Types::I32, :name => 'revs', :default => 0, :optional => true},
+            VERSIONS => {:type => ::Thrift::Types::I32, :name => 'versions', :default => 0, :optional => true},
             ROW_LIMIT => {:type => ::Thrift::Types::I32, :name => 'row_limit', :default => 0, :optional => true},
             START_TIME => {:type => ::Thrift::Types::I64, :name => 'start_time', :optional => true},
             END_TIME => {:type => ::Thrift::Types::I64, :name => 'end_time', :optional => true},

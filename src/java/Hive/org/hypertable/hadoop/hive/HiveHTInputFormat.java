@@ -135,7 +135,7 @@ public class HiveHTInputFormat<K extends BytesWritable, V extends Row>
     if (keys_only)
       scanspec.setKeys_only(true);
 
-    scanspec.setRevs(1);
+    scanspec.setVersions(1);
 
     ScanSpec spec = htSplit.getSplit().createScanSpec(scanspec);
 
@@ -214,7 +214,7 @@ public class HiveHTInputFormat<K extends BytesWritable, V extends Row>
     // ask HT to return keys only
     if (keys_only)
       scanspec.setKeys_only(true);
-    scanspec.setRevs(1);
+    scanspec.setVersions(1);
 
     htRowInputFormat.set_scan_spec(scanspec);
 
