@@ -12,12 +12,12 @@ if (len(sys.argv) < 4):
 try:
   client = ThriftClient("localhost", 38080)
 
-  namespace = client.open_namespace("/")
+  namespace = client.namespace_open("/")
 
-  mutator = client.open_mutator(namespace, sys.argv[1], 0, 0)
+  mutator = client.mutator_open(namespace, sys.argv[1], 0, 0)
 
-  client.set_cell(mutator, Cell(Key(sys.argv[2], sys.argv[3], None), "thrift_insert.py"))
-  client.flush_mutator(mutator);
+  client.mutator_set_cell(mutator, Cell(Key(sys.argv[2], sys.argv[3], None), "thrift_insert.py"))
+  client.mutator_flush(mutator);
 
   client.close_namespace(namespace)
 
