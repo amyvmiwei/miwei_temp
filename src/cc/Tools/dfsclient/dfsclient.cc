@@ -209,7 +209,7 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    return 1;
+    _exit(1);
   }
-  return 0;
+  _exit(0);
 }
