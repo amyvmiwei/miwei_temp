@@ -115,11 +115,11 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
       setReturn_deletesIsSet(true);
       return_deletes = in.readBoolean();
     }
-    /** revs **/
+    /** versions **/
     isset = in.readBoolean();
     if (isset) {
-      setRevsIsSet(true);
-      revs = in.readInt();
+      setVersionsIsSet(true);
+      versions = in.readInt();
     }
     /** row_limit **/
     isset = in.readBoolean();
@@ -233,10 +233,10 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
       }
       else
         out.writeBoolean(false);
-      /** revs **/
-      if (isSetRevs()) {
+      /** versions **/
+      if (isSetVersions()) {
         out.writeBoolean(true);
-        out.writeInt(revs);
+        out.writeInt(versions);
       }
       else
         out.writeBoolean(false);

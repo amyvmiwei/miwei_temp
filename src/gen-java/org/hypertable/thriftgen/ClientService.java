@@ -94,13 +94,13 @@ public class ClientService {
 
     /**
      * Open a future object
-     * @param queue_size - num of results the future object can enqueue without blocking threads
+     * @param capacity - Amount of result data the future object can enqueue without blocking threads
      * 
-     * @param queue_size
+     * @param capacity
      */
-    public long future_open(int queue_size) throws ClientException, org.apache.thrift.TException;
+    public long future_open(int capacity) throws ClientException, org.apache.thrift.TException;
 
-    public long open_future(int queue_size) throws ClientException, org.apache.thrift.TException;
+    public long open_future(int capacity) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Cancel tasks outstanding in a future object
@@ -118,10 +118,11 @@ public class ClientService {
      * @return - result from async scanner/mutator
      * 
      * @param ff
+     * @param timeout_millis
      */
-    public Result future_get_result(long ff) throws ClientException, org.apache.thrift.TException;
+    public Result future_get_result(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException;
 
-    public Result get_future_result(long ff) throws ClientException, org.apache.thrift.TException;
+    public Result get_future_result(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Fetch asynchronous results
@@ -129,10 +130,11 @@ public class ClientService {
      * @return - result from async scanner/mutator
      * 
      * @param ff
+     * @param timeout_millis
      */
-    public ResultAsArrays future_get_result_as_arrays(long ff) throws ClientException, org.apache.thrift.TException;
+    public ResultAsArrays future_get_result_as_arrays(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException;
 
-    public ResultAsArrays get_future_result_as_arrays(long ff) throws ClientException, org.apache.thrift.TException;
+    public ResultAsArrays get_future_result_as_arrays(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Fetch asynchronous results
@@ -140,10 +142,11 @@ public class ClientService {
      * @return - result from async scanner/mutator
      * 
      * @param ff
+     * @param timeout_millis
      */
-    public ResultSerialized future_get_result_serialized(long ff) throws ClientException, org.apache.thrift.TException;
+    public ResultSerialized future_get_result_serialized(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException;
 
-    public ResultSerialized get_future_result_serialized(long ff) throws ClientException, org.apache.thrift.TException;
+    public ResultSerialized get_future_result_serialized(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Check if future object's queue is empty
@@ -266,9 +269,9 @@ public class ClientService {
      * 
      * @param scanner
      */
-    public ByteBuffer scanner_get_cells_serialized(long scanner) throws org.apache.thrift.TException;
+    public ByteBuffer scanner_get_cells_serialized(long scanner) throws ClientException, org.apache.thrift.TException;
 
-    public ByteBuffer next_cells_serialized(long scanner) throws org.apache.thrift.TException;
+    public ByteBuffer next_cells_serialized(long scanner) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Iterate over rows of a scanner
@@ -651,9 +654,8 @@ public class ClientService {
      * @param ns
      * @param table_name
      * @param cells
-     * @param flush
      */
-    public void set_cells_serialized(long ns, String table_name, ByteBuffer cells, boolean flush) throws ClientException, org.apache.thrift.TException;
+    public void set_cells_serialized(long ns, String table_name, ByteBuffer cells) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Flush mutator buffers
@@ -972,25 +974,25 @@ public class ClientService {
 
     public void close_namespace(long ns, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.close_namespace_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void future_open(int queue_size, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_open_call> resultHandler) throws org.apache.thrift.TException;
+    public void future_open(int capacity, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_open_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void open_future(int queue_size, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.open_future_call> resultHandler) throws org.apache.thrift.TException;
+    public void open_future(int capacity, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.open_future_call> resultHandler) throws org.apache.thrift.TException;
 
     public void future_cancel(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_cancel_call> resultHandler) throws org.apache.thrift.TException;
 
     public void cancel_future(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.cancel_future_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void future_get_result(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_get_result_call> resultHandler) throws org.apache.thrift.TException;
+    public void future_get_result(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_get_result_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void get_future_result(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_future_result_call> resultHandler) throws org.apache.thrift.TException;
+    public void get_future_result(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_future_result_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void future_get_result_as_arrays(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_get_result_as_arrays_call> resultHandler) throws org.apache.thrift.TException;
+    public void future_get_result_as_arrays(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_get_result_as_arrays_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void get_future_result_as_arrays(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_future_result_as_arrays_call> resultHandler) throws org.apache.thrift.TException;
+    public void get_future_result_as_arrays(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_future_result_as_arrays_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void future_get_result_serialized(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_get_result_serialized_call> resultHandler) throws org.apache.thrift.TException;
+    public void future_get_result_serialized(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_get_result_serialized_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void get_future_result_serialized(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_future_result_serialized_call> resultHandler) throws org.apache.thrift.TException;
+    public void get_future_result_serialized(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_future_result_serialized_call> resultHandler) throws org.apache.thrift.TException;
 
     public void future_is_empty(long ff, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.future_is_empty_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -1110,7 +1112,7 @@ public class ClientService {
 
     public void mutator_set_cells_serialized(long mutator, ByteBuffer cells, boolean flush, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.mutator_set_cells_serialized_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void set_cells_serialized(long ns, String table_name, ByteBuffer cells, boolean flush, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.set_cells_serialized_call> resultHandler) throws org.apache.thrift.TException;
+    public void set_cells_serialized(long ns, String table_name, ByteBuffer cells, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.set_cells_serialized_call> resultHandler) throws org.apache.thrift.TException;
 
     public void mutator_flush(long mutator, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.mutator_flush_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -1456,16 +1458,16 @@ public class ClientService {
       return;
     }
 
-    public long future_open(int queue_size) throws ClientException, org.apache.thrift.TException
+    public long future_open(int capacity) throws ClientException, org.apache.thrift.TException
     {
-      send_future_open(queue_size);
+      send_future_open(capacity);
       return recv_future_open();
     }
 
-    public void send_future_open(int queue_size) throws org.apache.thrift.TException
+    public void send_future_open(int capacity) throws org.apache.thrift.TException
     {
       future_open_args args = new future_open_args();
-      args.setQueue_size(queue_size);
+      args.setCapacity(capacity);
       sendBase("future_open", args);
     }
 
@@ -1482,16 +1484,16 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "future_open failed: unknown result");
     }
 
-    public long open_future(int queue_size) throws ClientException, org.apache.thrift.TException
+    public long open_future(int capacity) throws ClientException, org.apache.thrift.TException
     {
-      send_open_future(queue_size);
+      send_open_future(capacity);
       return recv_open_future();
     }
 
-    public void send_open_future(int queue_size) throws org.apache.thrift.TException
+    public void send_open_future(int capacity) throws org.apache.thrift.TException
     {
       open_future_args args = new open_future_args();
-      args.setQueue_size(queue_size);
+      args.setCapacity(capacity);
       sendBase("open_future", args);
     }
 
@@ -1554,16 +1556,17 @@ public class ClientService {
       return;
     }
 
-    public Result future_get_result(long ff) throws ClientException, org.apache.thrift.TException
+    public Result future_get_result(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException
     {
-      send_future_get_result(ff);
+      send_future_get_result(ff, timeout_millis);
       return recv_future_get_result();
     }
 
-    public void send_future_get_result(long ff) throws org.apache.thrift.TException
+    public void send_future_get_result(long ff, int timeout_millis) throws org.apache.thrift.TException
     {
       future_get_result_args args = new future_get_result_args();
       args.setFf(ff);
+      args.setTimeout_millis(timeout_millis);
       sendBase("future_get_result", args);
     }
 
@@ -1580,16 +1583,17 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "future_get_result failed: unknown result");
     }
 
-    public Result get_future_result(long ff) throws ClientException, org.apache.thrift.TException
+    public Result get_future_result(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException
     {
-      send_get_future_result(ff);
+      send_get_future_result(ff, timeout_millis);
       return recv_get_future_result();
     }
 
-    public void send_get_future_result(long ff) throws org.apache.thrift.TException
+    public void send_get_future_result(long ff, int timeout_millis) throws org.apache.thrift.TException
     {
       get_future_result_args args = new get_future_result_args();
       args.setFf(ff);
+      args.setTimeout_millis(timeout_millis);
       sendBase("get_future_result", args);
     }
 
@@ -1606,16 +1610,17 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get_future_result failed: unknown result");
     }
 
-    public ResultAsArrays future_get_result_as_arrays(long ff) throws ClientException, org.apache.thrift.TException
+    public ResultAsArrays future_get_result_as_arrays(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException
     {
-      send_future_get_result_as_arrays(ff);
+      send_future_get_result_as_arrays(ff, timeout_millis);
       return recv_future_get_result_as_arrays();
     }
 
-    public void send_future_get_result_as_arrays(long ff) throws org.apache.thrift.TException
+    public void send_future_get_result_as_arrays(long ff, int timeout_millis) throws org.apache.thrift.TException
     {
       future_get_result_as_arrays_args args = new future_get_result_as_arrays_args();
       args.setFf(ff);
+      args.setTimeout_millis(timeout_millis);
       sendBase("future_get_result_as_arrays", args);
     }
 
@@ -1632,16 +1637,17 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "future_get_result_as_arrays failed: unknown result");
     }
 
-    public ResultAsArrays get_future_result_as_arrays(long ff) throws ClientException, org.apache.thrift.TException
+    public ResultAsArrays get_future_result_as_arrays(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException
     {
-      send_get_future_result_as_arrays(ff);
+      send_get_future_result_as_arrays(ff, timeout_millis);
       return recv_get_future_result_as_arrays();
     }
 
-    public void send_get_future_result_as_arrays(long ff) throws org.apache.thrift.TException
+    public void send_get_future_result_as_arrays(long ff, int timeout_millis) throws org.apache.thrift.TException
     {
       get_future_result_as_arrays_args args = new get_future_result_as_arrays_args();
       args.setFf(ff);
+      args.setTimeout_millis(timeout_millis);
       sendBase("get_future_result_as_arrays", args);
     }
 
@@ -1658,16 +1664,17 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get_future_result_as_arrays failed: unknown result");
     }
 
-    public ResultSerialized future_get_result_serialized(long ff) throws ClientException, org.apache.thrift.TException
+    public ResultSerialized future_get_result_serialized(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException
     {
-      send_future_get_result_serialized(ff);
+      send_future_get_result_serialized(ff, timeout_millis);
       return recv_future_get_result_serialized();
     }
 
-    public void send_future_get_result_serialized(long ff) throws org.apache.thrift.TException
+    public void send_future_get_result_serialized(long ff, int timeout_millis) throws org.apache.thrift.TException
     {
       future_get_result_serialized_args args = new future_get_result_serialized_args();
       args.setFf(ff);
+      args.setTimeout_millis(timeout_millis);
       sendBase("future_get_result_serialized", args);
     }
 
@@ -1684,16 +1691,17 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "future_get_result_serialized failed: unknown result");
     }
 
-    public ResultSerialized get_future_result_serialized(long ff) throws ClientException, org.apache.thrift.TException
+    public ResultSerialized get_future_result_serialized(long ff, int timeout_millis) throws ClientException, org.apache.thrift.TException
     {
-      send_get_future_result_serialized(ff);
+      send_get_future_result_serialized(ff, timeout_millis);
       return recv_get_future_result_serialized();
     }
 
-    public void send_get_future_result_serialized(long ff) throws org.apache.thrift.TException
+    public void send_get_future_result_serialized(long ff, int timeout_millis) throws org.apache.thrift.TException
     {
       get_future_result_serialized_args args = new get_future_result_serialized_args();
       args.setFf(ff);
+      args.setTimeout_millis(timeout_millis);
       sendBase("get_future_result_serialized", args);
     }
 
@@ -2216,7 +2224,7 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "next_cells_as_arrays failed: unknown result");
     }
 
-    public ByteBuffer scanner_get_cells_serialized(long scanner) throws org.apache.thrift.TException
+    public ByteBuffer scanner_get_cells_serialized(long scanner) throws ClientException, org.apache.thrift.TException
     {
       send_scanner_get_cells_serialized(scanner);
       return recv_scanner_get_cells_serialized();
@@ -2229,17 +2237,20 @@ public class ClientService {
       sendBase("scanner_get_cells_serialized", args);
     }
 
-    public ByteBuffer recv_scanner_get_cells_serialized() throws org.apache.thrift.TException
+    public ByteBuffer recv_scanner_get_cells_serialized() throws ClientException, org.apache.thrift.TException
     {
       scanner_get_cells_serialized_result result = new scanner_get_cells_serialized_result();
       receiveBase(result, "scanner_get_cells_serialized");
       if (result.isSetSuccess()) {
         return result.success;
       }
+      if (result.e != null) {
+        throw result.e;
+      }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "scanner_get_cells_serialized failed: unknown result");
     }
 
-    public ByteBuffer next_cells_serialized(long scanner) throws org.apache.thrift.TException
+    public ByteBuffer next_cells_serialized(long scanner) throws ClientException, org.apache.thrift.TException
     {
       send_next_cells_serialized(scanner);
       return recv_next_cells_serialized();
@@ -2252,12 +2263,15 @@ public class ClientService {
       sendBase("next_cells_serialized", args);
     }
 
-    public ByteBuffer recv_next_cells_serialized() throws org.apache.thrift.TException
+    public ByteBuffer recv_next_cells_serialized() throws ClientException, org.apache.thrift.TException
     {
       next_cells_serialized_result result = new next_cells_serialized_result();
       receiveBase(result, "next_cells_serialized");
       if (result.isSetSuccess()) {
         return result.success;
+      }
+      if (result.e != null) {
+        throw result.e;
       }
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "next_cells_serialized failed: unknown result");
     }
@@ -3219,19 +3233,18 @@ public class ClientService {
       return;
     }
 
-    public void set_cells_serialized(long ns, String table_name, ByteBuffer cells, boolean flush) throws ClientException, org.apache.thrift.TException
+    public void set_cells_serialized(long ns, String table_name, ByteBuffer cells) throws ClientException, org.apache.thrift.TException
     {
-      send_set_cells_serialized(ns, table_name, cells, flush);
+      send_set_cells_serialized(ns, table_name, cells);
       recv_set_cells_serialized();
     }
 
-    public void send_set_cells_serialized(long ns, String table_name, ByteBuffer cells, boolean flush) throws org.apache.thrift.TException
+    public void send_set_cells_serialized(long ns, String table_name, ByteBuffer cells) throws org.apache.thrift.TException
     {
       set_cells_serialized_args args = new set_cells_serialized_args();
       args.setNs(ns);
       args.setTable_name(table_name);
       args.setCells(cells);
-      args.setFlush(flush);
       sendBase("set_cells_serialized", args);
     }
 
@@ -4594,24 +4607,24 @@ public class ClientService {
       }
     }
 
-    public void future_open(int queue_size, org.apache.thrift.async.AsyncMethodCallback<future_open_call> resultHandler) throws org.apache.thrift.TException {
+    public void future_open(int capacity, org.apache.thrift.async.AsyncMethodCallback<future_open_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      future_open_call method_call = new future_open_call(queue_size, resultHandler, this, ___protocolFactory, ___transport);
+      future_open_call method_call = new future_open_call(capacity, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class future_open_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private int queue_size;
-      public future_open_call(int queue_size, org.apache.thrift.async.AsyncMethodCallback<future_open_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int capacity;
+      public future_open_call(int capacity, org.apache.thrift.async.AsyncMethodCallback<future_open_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
-        this.queue_size = queue_size;
+        this.capacity = capacity;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("future_open", org.apache.thrift.protocol.TMessageType.CALL, 0));
         future_open_args args = new future_open_args();
-        args.setQueue_size(queue_size);
+        args.setCapacity(capacity);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -4626,24 +4639,24 @@ public class ClientService {
       }
     }
 
-    public void open_future(int queue_size, org.apache.thrift.async.AsyncMethodCallback<open_future_call> resultHandler) throws org.apache.thrift.TException {
+    public void open_future(int capacity, org.apache.thrift.async.AsyncMethodCallback<open_future_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      open_future_call method_call = new open_future_call(queue_size, resultHandler, this, ___protocolFactory, ___transport);
+      open_future_call method_call = new open_future_call(capacity, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class open_future_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private int queue_size;
-      public open_future_call(int queue_size, org.apache.thrift.async.AsyncMethodCallback<open_future_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int capacity;
+      public open_future_call(int capacity, org.apache.thrift.async.AsyncMethodCallback<open_future_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
-        this.queue_size = queue_size;
+        this.capacity = capacity;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("open_future", org.apache.thrift.protocol.TMessageType.CALL, 0));
         open_future_args args = new open_future_args();
-        args.setQueue_size(queue_size);
+        args.setCapacity(capacity);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -4722,24 +4735,27 @@ public class ClientService {
       }
     }
 
-    public void future_get_result(long ff, org.apache.thrift.async.AsyncMethodCallback<future_get_result_call> resultHandler) throws org.apache.thrift.TException {
+    public void future_get_result(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<future_get_result_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      future_get_result_call method_call = new future_get_result_call(ff, resultHandler, this, ___protocolFactory, ___transport);
+      future_get_result_call method_call = new future_get_result_call(ff, timeout_millis, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class future_get_result_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ff;
-      public future_get_result_call(long ff, org.apache.thrift.async.AsyncMethodCallback<future_get_result_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int timeout_millis;
+      public future_get_result_call(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<future_get_result_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ff = ff;
+        this.timeout_millis = timeout_millis;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("future_get_result", org.apache.thrift.protocol.TMessageType.CALL, 0));
         future_get_result_args args = new future_get_result_args();
         args.setFf(ff);
+        args.setTimeout_millis(timeout_millis);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -4754,24 +4770,27 @@ public class ClientService {
       }
     }
 
-    public void get_future_result(long ff, org.apache.thrift.async.AsyncMethodCallback<get_future_result_call> resultHandler) throws org.apache.thrift.TException {
+    public void get_future_result(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<get_future_result_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      get_future_result_call method_call = new get_future_result_call(ff, resultHandler, this, ___protocolFactory, ___transport);
+      get_future_result_call method_call = new get_future_result_call(ff, timeout_millis, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class get_future_result_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ff;
-      public get_future_result_call(long ff, org.apache.thrift.async.AsyncMethodCallback<get_future_result_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int timeout_millis;
+      public get_future_result_call(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<get_future_result_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ff = ff;
+        this.timeout_millis = timeout_millis;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("get_future_result", org.apache.thrift.protocol.TMessageType.CALL, 0));
         get_future_result_args args = new get_future_result_args();
         args.setFf(ff);
+        args.setTimeout_millis(timeout_millis);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -4786,24 +4805,27 @@ public class ClientService {
       }
     }
 
-    public void future_get_result_as_arrays(long ff, org.apache.thrift.async.AsyncMethodCallback<future_get_result_as_arrays_call> resultHandler) throws org.apache.thrift.TException {
+    public void future_get_result_as_arrays(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<future_get_result_as_arrays_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      future_get_result_as_arrays_call method_call = new future_get_result_as_arrays_call(ff, resultHandler, this, ___protocolFactory, ___transport);
+      future_get_result_as_arrays_call method_call = new future_get_result_as_arrays_call(ff, timeout_millis, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class future_get_result_as_arrays_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ff;
-      public future_get_result_as_arrays_call(long ff, org.apache.thrift.async.AsyncMethodCallback<future_get_result_as_arrays_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int timeout_millis;
+      public future_get_result_as_arrays_call(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<future_get_result_as_arrays_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ff = ff;
+        this.timeout_millis = timeout_millis;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("future_get_result_as_arrays", org.apache.thrift.protocol.TMessageType.CALL, 0));
         future_get_result_as_arrays_args args = new future_get_result_as_arrays_args();
         args.setFf(ff);
+        args.setTimeout_millis(timeout_millis);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -4818,24 +4840,27 @@ public class ClientService {
       }
     }
 
-    public void get_future_result_as_arrays(long ff, org.apache.thrift.async.AsyncMethodCallback<get_future_result_as_arrays_call> resultHandler) throws org.apache.thrift.TException {
+    public void get_future_result_as_arrays(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<get_future_result_as_arrays_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      get_future_result_as_arrays_call method_call = new get_future_result_as_arrays_call(ff, resultHandler, this, ___protocolFactory, ___transport);
+      get_future_result_as_arrays_call method_call = new get_future_result_as_arrays_call(ff, timeout_millis, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class get_future_result_as_arrays_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ff;
-      public get_future_result_as_arrays_call(long ff, org.apache.thrift.async.AsyncMethodCallback<get_future_result_as_arrays_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int timeout_millis;
+      public get_future_result_as_arrays_call(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<get_future_result_as_arrays_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ff = ff;
+        this.timeout_millis = timeout_millis;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("get_future_result_as_arrays", org.apache.thrift.protocol.TMessageType.CALL, 0));
         get_future_result_as_arrays_args args = new get_future_result_as_arrays_args();
         args.setFf(ff);
+        args.setTimeout_millis(timeout_millis);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -4850,24 +4875,27 @@ public class ClientService {
       }
     }
 
-    public void future_get_result_serialized(long ff, org.apache.thrift.async.AsyncMethodCallback<future_get_result_serialized_call> resultHandler) throws org.apache.thrift.TException {
+    public void future_get_result_serialized(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<future_get_result_serialized_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      future_get_result_serialized_call method_call = new future_get_result_serialized_call(ff, resultHandler, this, ___protocolFactory, ___transport);
+      future_get_result_serialized_call method_call = new future_get_result_serialized_call(ff, timeout_millis, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class future_get_result_serialized_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ff;
-      public future_get_result_serialized_call(long ff, org.apache.thrift.async.AsyncMethodCallback<future_get_result_serialized_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int timeout_millis;
+      public future_get_result_serialized_call(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<future_get_result_serialized_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ff = ff;
+        this.timeout_millis = timeout_millis;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("future_get_result_serialized", org.apache.thrift.protocol.TMessageType.CALL, 0));
         future_get_result_serialized_args args = new future_get_result_serialized_args();
         args.setFf(ff);
+        args.setTimeout_millis(timeout_millis);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -4882,24 +4910,27 @@ public class ClientService {
       }
     }
 
-    public void get_future_result_serialized(long ff, org.apache.thrift.async.AsyncMethodCallback<get_future_result_serialized_call> resultHandler) throws org.apache.thrift.TException {
+    public void get_future_result_serialized(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<get_future_result_serialized_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      get_future_result_serialized_call method_call = new get_future_result_serialized_call(ff, resultHandler, this, ___protocolFactory, ___transport);
+      get_future_result_serialized_call method_call = new get_future_result_serialized_call(ff, timeout_millis, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
 
     public static class get_future_result_serialized_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ff;
-      public get_future_result_serialized_call(long ff, org.apache.thrift.async.AsyncMethodCallback<get_future_result_serialized_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private int timeout_millis;
+      public get_future_result_serialized_call(long ff, int timeout_millis, org.apache.thrift.async.AsyncMethodCallback<get_future_result_serialized_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ff = ff;
+        this.timeout_millis = timeout_millis;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
         prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("get_future_result_serialized", org.apache.thrift.protocol.TMessageType.CALL, 0));
         get_future_result_serialized_args args = new get_future_result_serialized_args();
         args.setFf(ff);
+        args.setTimeout_millis(timeout_millis);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -5606,7 +5637,7 @@ public class ClientService {
         prot.writeMessageEnd();
       }
 
-      public ByteBuffer getResult() throws org.apache.thrift.TException {
+      public ByteBuffer getResult() throws ClientException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -5638,7 +5669,7 @@ public class ClientService {
         prot.writeMessageEnd();
       }
 
-      public ByteBuffer getResult() throws org.apache.thrift.TException {
+      public ByteBuffer getResult() throws ClientException, org.apache.thrift.TException {
         if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
           throw new IllegalStateException("Method call not finished!");
         }
@@ -6997,9 +7028,9 @@ public class ClientService {
       }
     }
 
-    public void set_cells_serialized(long ns, String table_name, ByteBuffer cells, boolean flush, org.apache.thrift.async.AsyncMethodCallback<set_cells_serialized_call> resultHandler) throws org.apache.thrift.TException {
+    public void set_cells_serialized(long ns, String table_name, ByteBuffer cells, org.apache.thrift.async.AsyncMethodCallback<set_cells_serialized_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
-      set_cells_serialized_call method_call = new set_cells_serialized_call(ns, table_name, cells, flush, resultHandler, this, ___protocolFactory, ___transport);
+      set_cells_serialized_call method_call = new set_cells_serialized_call(ns, table_name, cells, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
       ___manager.call(method_call);
     }
@@ -7008,13 +7039,11 @@ public class ClientService {
       private long ns;
       private String table_name;
       private ByteBuffer cells;
-      private boolean flush;
-      public set_cells_serialized_call(long ns, String table_name, ByteBuffer cells, boolean flush, org.apache.thrift.async.AsyncMethodCallback<set_cells_serialized_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      public set_cells_serialized_call(long ns, String table_name, ByteBuffer cells, org.apache.thrift.async.AsyncMethodCallback<set_cells_serialized_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.table_name = table_name;
         this.cells = cells;
-        this.flush = flush;
       }
 
       public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
@@ -7023,7 +7052,6 @@ public class ClientService {
         args.setNs(ns);
         args.setTable_name(table_name);
         args.setCells(cells);
-        args.setFlush(flush);
         args.write(prot);
         prot.writeMessageEnd();
       }
@@ -8743,7 +8771,7 @@ public class ClientService {
       protected future_open_result getResult(I iface, future_open_args args) throws org.apache.thrift.TException {
         future_open_result result = new future_open_result();
         try {
-          result.success = iface.future_open(args.queue_size);
+          result.success = iface.future_open(args.capacity);
           result.setSuccessIsSet(true);
         } catch (ClientException e) {
           result.e = e;
@@ -8764,7 +8792,7 @@ public class ClientService {
       protected open_future_result getResult(I iface, open_future_args args) throws org.apache.thrift.TException {
         open_future_result result = new open_future_result();
         try {
-          result.success = iface.open_future(args.queue_size);
+          result.success = iface.open_future(args.capacity);
           result.setSuccessIsSet(true);
         } catch (ClientException e) {
           result.e = e;
@@ -8825,7 +8853,7 @@ public class ClientService {
       protected future_get_result_result getResult(I iface, future_get_result_args args) throws org.apache.thrift.TException {
         future_get_result_result result = new future_get_result_result();
         try {
-          result.success = iface.future_get_result(args.ff);
+          result.success = iface.future_get_result(args.ff, args.timeout_millis);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -8845,7 +8873,7 @@ public class ClientService {
       protected get_future_result_result getResult(I iface, get_future_result_args args) throws org.apache.thrift.TException {
         get_future_result_result result = new get_future_result_result();
         try {
-          result.success = iface.get_future_result(args.ff);
+          result.success = iface.get_future_result(args.ff, args.timeout_millis);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -8865,7 +8893,7 @@ public class ClientService {
       protected future_get_result_as_arrays_result getResult(I iface, future_get_result_as_arrays_args args) throws org.apache.thrift.TException {
         future_get_result_as_arrays_result result = new future_get_result_as_arrays_result();
         try {
-          result.success = iface.future_get_result_as_arrays(args.ff);
+          result.success = iface.future_get_result_as_arrays(args.ff, args.timeout_millis);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -8885,7 +8913,7 @@ public class ClientService {
       protected get_future_result_as_arrays_result getResult(I iface, get_future_result_as_arrays_args args) throws org.apache.thrift.TException {
         get_future_result_as_arrays_result result = new get_future_result_as_arrays_result();
         try {
-          result.success = iface.get_future_result_as_arrays(args.ff);
+          result.success = iface.get_future_result_as_arrays(args.ff, args.timeout_millis);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -8905,7 +8933,7 @@ public class ClientService {
       protected future_get_result_serialized_result getResult(I iface, future_get_result_serialized_args args) throws org.apache.thrift.TException {
         future_get_result_serialized_result result = new future_get_result_serialized_result();
         try {
-          result.success = iface.future_get_result_serialized(args.ff);
+          result.success = iface.future_get_result_serialized(args.ff, args.timeout_millis);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -8925,7 +8953,7 @@ public class ClientService {
       protected get_future_result_serialized_result getResult(I iface, get_future_result_serialized_args args) throws org.apache.thrift.TException {
         get_future_result_serialized_result result = new get_future_result_serialized_result();
         try {
-          result.success = iface.get_future_result_serialized(args.ff);
+          result.success = iface.get_future_result_serialized(args.ff, args.timeout_millis);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -9352,7 +9380,11 @@ public class ClientService {
 
       protected scanner_get_cells_serialized_result getResult(I iface, scanner_get_cells_serialized_args args) throws org.apache.thrift.TException {
         scanner_get_cells_serialized_result result = new scanner_get_cells_serialized_result();
-        result.success = iface.scanner_get_cells_serialized(args.scanner);
+        try {
+          result.success = iface.scanner_get_cells_serialized(args.scanner);
+        } catch (ClientException e) {
+          result.e = e;
+        }
         return result;
       }
     }
@@ -9368,7 +9400,11 @@ public class ClientService {
 
       protected next_cells_serialized_result getResult(I iface, next_cells_serialized_args args) throws org.apache.thrift.TException {
         next_cells_serialized_result result = new next_cells_serialized_result();
-        result.success = iface.next_cells_serialized(args.scanner);
+        try {
+          result.success = iface.next_cells_serialized(args.scanner);
+        } catch (ClientException e) {
+          result.e = e;
+        }
         return result;
       }
     }
@@ -10129,7 +10165,7 @@ public class ClientService {
       protected set_cells_serialized_result getResult(I iface, set_cells_serialized_args args) throws org.apache.thrift.TException {
         set_cells_serialized_result result = new set_cells_serialized_result();
         try {
-          iface.set_cells_serialized(args.ns, args.table_name, args.cells, args.flush);
+          iface.set_cells_serialized(args.ns, args.table_name, args.cells);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -16842,6 +16878,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -17744,13 +17782,13 @@ public class ClientService {
   public static class future_open_args implements org.apache.thrift.TBase<future_open_args, future_open_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("future_open_args");
 
-    private static final org.apache.thrift.protocol.TField QUEUE_SIZE_FIELD_DESC = new org.apache.thrift.protocol.TField("queue_size", org.apache.thrift.protocol.TType.I32, (short)1);
+    private static final org.apache.thrift.protocol.TField CAPACITY_FIELD_DESC = new org.apache.thrift.protocol.TField("capacity", org.apache.thrift.protocol.TType.I32, (short)1);
 
-    public int queue_size; // required
+    public int capacity; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      QUEUE_SIZE((short)1, "queue_size");
+      CAPACITY((short)1, "capacity");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -17765,8 +17803,8 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // QUEUE_SIZE
-            return QUEUE_SIZE;
+          case 1: // CAPACITY
+            return CAPACITY;
           default:
             return null;
         }
@@ -17807,29 +17845,29 @@ public class ClientService {
     }
 
     // isset id assignments
-    private static final int __QUEUE_SIZE_ISSET_ID = 0;
+    private static final int __CAPACITY_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.QUEUE_SIZE, new org.apache.thrift.meta_data.FieldMetaData("queue_size", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.CAPACITY, new org.apache.thrift.meta_data.FieldMetaData("capacity", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(future_open_args.class, metaDataMap);
     }
 
     public future_open_args() {
-      this.queue_size = 0;
+      this.capacity = 0;
 
     }
 
     public future_open_args(
-      int queue_size)
+      int capacity)
     {
       this();
-      this.queue_size = queue_size;
-      setQueue_sizeIsSet(true);
+      this.capacity = capacity;
+      setCapacityIsSet(true);
     }
 
     /**
@@ -17838,7 +17876,7 @@ public class ClientService {
     public future_open_args(future_open_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
-      this.queue_size = other.queue_size;
+      this.capacity = other.capacity;
     }
 
     public future_open_args deepCopy() {
@@ -17847,40 +17885,40 @@ public class ClientService {
 
     @Override
     public void clear() {
-      this.queue_size = 0;
+      this.capacity = 0;
 
     }
 
-    public int getQueue_size() {
-      return this.queue_size;
+    public int getCapacity() {
+      return this.capacity;
     }
 
-    public future_open_args setQueue_size(int queue_size) {
-      this.queue_size = queue_size;
-      setQueue_sizeIsSet(true);
+    public future_open_args setCapacity(int capacity) {
+      this.capacity = capacity;
+      setCapacityIsSet(true);
       return this;
     }
 
-    public void unsetQueue_size() {
-      __isset_bit_vector.clear(__QUEUE_SIZE_ISSET_ID);
+    public void unsetCapacity() {
+      __isset_bit_vector.clear(__CAPACITY_ISSET_ID);
     }
 
-    /** Returns true if field queue_size is set (has been assigned a value) and false otherwise */
-    public boolean isSetQueue_size() {
-      return __isset_bit_vector.get(__QUEUE_SIZE_ISSET_ID);
+    /** Returns true if field capacity is set (has been assigned a value) and false otherwise */
+    public boolean isSetCapacity() {
+      return __isset_bit_vector.get(__CAPACITY_ISSET_ID);
     }
 
-    public void setQueue_sizeIsSet(boolean value) {
-      __isset_bit_vector.set(__QUEUE_SIZE_ISSET_ID, value);
+    public void setCapacityIsSet(boolean value) {
+      __isset_bit_vector.set(__CAPACITY_ISSET_ID, value);
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case QUEUE_SIZE:
+      case CAPACITY:
         if (value == null) {
-          unsetQueue_size();
+          unsetCapacity();
         } else {
-          setQueue_size((Integer)value);
+          setCapacity((Integer)value);
         }
         break;
 
@@ -17889,8 +17927,8 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case QUEUE_SIZE:
-        return Integer.valueOf(getQueue_size());
+      case CAPACITY:
+        return Integer.valueOf(getCapacity());
 
       }
       throw new IllegalStateException();
@@ -17903,8 +17941,8 @@ public class ClientService {
       }
 
       switch (field) {
-      case QUEUE_SIZE:
-        return isSetQueue_size();
+      case CAPACITY:
+        return isSetCapacity();
       }
       throw new IllegalStateException();
     }
@@ -17922,12 +17960,12 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_queue_size = true;
-      boolean that_present_queue_size = true;
-      if (this_present_queue_size || that_present_queue_size) {
-        if (!(this_present_queue_size && that_present_queue_size))
+      boolean this_present_capacity = true;
+      boolean that_present_capacity = true;
+      if (this_present_capacity || that_present_capacity) {
+        if (!(this_present_capacity && that_present_capacity))
           return false;
-        if (this.queue_size != that.queue_size)
+        if (this.capacity != that.capacity)
           return false;
       }
 
@@ -17947,12 +17985,12 @@ public class ClientService {
       int lastComparison = 0;
       future_open_args typedOther = (future_open_args)other;
 
-      lastComparison = Boolean.valueOf(isSetQueue_size()).compareTo(typedOther.isSetQueue_size());
+      lastComparison = Boolean.valueOf(isSetCapacity()).compareTo(typedOther.isSetCapacity());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetQueue_size()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.queue_size, typedOther.queue_size);
+      if (isSetCapacity()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.capacity, typedOther.capacity);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -17974,10 +18012,10 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // QUEUE_SIZE
+          case 1: // CAPACITY
             if (field.type == org.apache.thrift.protocol.TType.I32) {
-              this.queue_size = iprot.readI32();
-              setQueue_sizeIsSet(true);
+              this.capacity = iprot.readI32();
+              setCapacityIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
@@ -17997,8 +18035,8 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      oprot.writeFieldBegin(QUEUE_SIZE_FIELD_DESC);
-      oprot.writeI32(this.queue_size);
+      oprot.writeFieldBegin(CAPACITY_FIELD_DESC);
+      oprot.writeI32(this.capacity);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -18009,8 +18047,8 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("future_open_args(");
       boolean first = true;
 
-      sb.append("queue_size:");
-      sb.append(this.queue_size);
+      sb.append("capacity:");
+      sb.append(this.capacity);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -18426,13 +18464,13 @@ public class ClientService {
   public static class open_future_args implements org.apache.thrift.TBase<open_future_args, open_future_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("open_future_args");
 
-    private static final org.apache.thrift.protocol.TField QUEUE_SIZE_FIELD_DESC = new org.apache.thrift.protocol.TField("queue_size", org.apache.thrift.protocol.TType.I32, (short)1);
+    private static final org.apache.thrift.protocol.TField CAPACITY_FIELD_DESC = new org.apache.thrift.protocol.TField("capacity", org.apache.thrift.protocol.TType.I32, (short)1);
 
-    public int queue_size; // required
+    public int capacity; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      QUEUE_SIZE((short)1, "queue_size");
+      CAPACITY((short)1, "capacity");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -18447,8 +18485,8 @@ public class ClientService {
        */
       public static _Fields findByThriftId(int fieldId) {
         switch(fieldId) {
-          case 1: // QUEUE_SIZE
-            return QUEUE_SIZE;
+          case 1: // CAPACITY
+            return CAPACITY;
           default:
             return null;
         }
@@ -18489,29 +18527,29 @@ public class ClientService {
     }
 
     // isset id assignments
-    private static final int __QUEUE_SIZE_ISSET_ID = 0;
+    private static final int __CAPACITY_ISSET_ID = 0;
     private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.QUEUE_SIZE, new org.apache.thrift.meta_data.FieldMetaData("queue_size", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+      tmpMap.put(_Fields.CAPACITY, new org.apache.thrift.meta_data.FieldMetaData("capacity", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(open_future_args.class, metaDataMap);
     }
 
     public open_future_args() {
-      this.queue_size = 0;
+      this.capacity = 0;
 
     }
 
     public open_future_args(
-      int queue_size)
+      int capacity)
     {
       this();
-      this.queue_size = queue_size;
-      setQueue_sizeIsSet(true);
+      this.capacity = capacity;
+      setCapacityIsSet(true);
     }
 
     /**
@@ -18520,7 +18558,7 @@ public class ClientService {
     public open_future_args(open_future_args other) {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
-      this.queue_size = other.queue_size;
+      this.capacity = other.capacity;
     }
 
     public open_future_args deepCopy() {
@@ -18529,40 +18567,40 @@ public class ClientService {
 
     @Override
     public void clear() {
-      this.queue_size = 0;
+      this.capacity = 0;
 
     }
 
-    public int getQueue_size() {
-      return this.queue_size;
+    public int getCapacity() {
+      return this.capacity;
     }
 
-    public open_future_args setQueue_size(int queue_size) {
-      this.queue_size = queue_size;
-      setQueue_sizeIsSet(true);
+    public open_future_args setCapacity(int capacity) {
+      this.capacity = capacity;
+      setCapacityIsSet(true);
       return this;
     }
 
-    public void unsetQueue_size() {
-      __isset_bit_vector.clear(__QUEUE_SIZE_ISSET_ID);
+    public void unsetCapacity() {
+      __isset_bit_vector.clear(__CAPACITY_ISSET_ID);
     }
 
-    /** Returns true if field queue_size is set (has been assigned a value) and false otherwise */
-    public boolean isSetQueue_size() {
-      return __isset_bit_vector.get(__QUEUE_SIZE_ISSET_ID);
+    /** Returns true if field capacity is set (has been assigned a value) and false otherwise */
+    public boolean isSetCapacity() {
+      return __isset_bit_vector.get(__CAPACITY_ISSET_ID);
     }
 
-    public void setQueue_sizeIsSet(boolean value) {
-      __isset_bit_vector.set(__QUEUE_SIZE_ISSET_ID, value);
+    public void setCapacityIsSet(boolean value) {
+      __isset_bit_vector.set(__CAPACITY_ISSET_ID, value);
     }
 
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
-      case QUEUE_SIZE:
+      case CAPACITY:
         if (value == null) {
-          unsetQueue_size();
+          unsetCapacity();
         } else {
-          setQueue_size((Integer)value);
+          setCapacity((Integer)value);
         }
         break;
 
@@ -18571,8 +18609,8 @@ public class ClientService {
 
     public Object getFieldValue(_Fields field) {
       switch (field) {
-      case QUEUE_SIZE:
-        return Integer.valueOf(getQueue_size());
+      case CAPACITY:
+        return Integer.valueOf(getCapacity());
 
       }
       throw new IllegalStateException();
@@ -18585,8 +18623,8 @@ public class ClientService {
       }
 
       switch (field) {
-      case QUEUE_SIZE:
-        return isSetQueue_size();
+      case CAPACITY:
+        return isSetCapacity();
       }
       throw new IllegalStateException();
     }
@@ -18604,12 +18642,12 @@ public class ClientService {
       if (that == null)
         return false;
 
-      boolean this_present_queue_size = true;
-      boolean that_present_queue_size = true;
-      if (this_present_queue_size || that_present_queue_size) {
-        if (!(this_present_queue_size && that_present_queue_size))
+      boolean this_present_capacity = true;
+      boolean that_present_capacity = true;
+      if (this_present_capacity || that_present_capacity) {
+        if (!(this_present_capacity && that_present_capacity))
           return false;
-        if (this.queue_size != that.queue_size)
+        if (this.capacity != that.capacity)
           return false;
       }
 
@@ -18629,12 +18667,12 @@ public class ClientService {
       int lastComparison = 0;
       open_future_args typedOther = (open_future_args)other;
 
-      lastComparison = Boolean.valueOf(isSetQueue_size()).compareTo(typedOther.isSetQueue_size());
+      lastComparison = Boolean.valueOf(isSetCapacity()).compareTo(typedOther.isSetCapacity());
       if (lastComparison != 0) {
         return lastComparison;
       }
-      if (isSetQueue_size()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.queue_size, typedOther.queue_size);
+      if (isSetCapacity()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.capacity, typedOther.capacity);
         if (lastComparison != 0) {
           return lastComparison;
         }
@@ -18656,10 +18694,10 @@ public class ClientService {
           break;
         }
         switch (field.id) {
-          case 1: // QUEUE_SIZE
+          case 1: // CAPACITY
             if (field.type == org.apache.thrift.protocol.TType.I32) {
-              this.queue_size = iprot.readI32();
-              setQueue_sizeIsSet(true);
+              this.capacity = iprot.readI32();
+              setCapacityIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
@@ -18679,8 +18717,8 @@ public class ClientService {
       validate();
 
       oprot.writeStructBegin(STRUCT_DESC);
-      oprot.writeFieldBegin(QUEUE_SIZE_FIELD_DESC);
-      oprot.writeI32(this.queue_size);
+      oprot.writeFieldBegin(CAPACITY_FIELD_DESC);
+      oprot.writeI32(this.capacity);
       oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -18691,8 +18729,8 @@ public class ClientService {
       StringBuilder sb = new StringBuilder("open_future_args(");
       boolean first = true;
 
-      sb.append("queue_size:");
-      sb.append(this.queue_size);
+      sb.append("capacity:");
+      sb.append(this.capacity);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -20299,12 +20337,15 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("future_get_result_args");
 
     private static final org.apache.thrift.protocol.TField FF_FIELD_DESC = new org.apache.thrift.protocol.TField("ff", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TIMEOUT_MILLIS_FIELD_DESC = new org.apache.thrift.protocol.TField("timeout_millis", org.apache.thrift.protocol.TType.I32, (short)2);
 
     public long ff; // required
+    public int timeout_millis; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      FF((short)1, "ff");
+      FF((short)1, "ff"),
+      TIMEOUT_MILLIS((short)2, "timeout_millis");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -20321,6 +20362,8 @@ public class ClientService {
         switch(fieldId) {
           case 1: // FF
             return FF;
+          case 2: // TIMEOUT_MILLIS
+            return TIMEOUT_MILLIS;
           default:
             return null;
         }
@@ -20362,26 +20405,34 @@ public class ClientService {
 
     // isset id assignments
     private static final int __FF_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __TIMEOUT_MILLIS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.FF, new org.apache.thrift.meta_data.FieldMetaData("ff", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Future")));
+      tmpMap.put(_Fields.TIMEOUT_MILLIS, new org.apache.thrift.meta_data.FieldMetaData("timeout_millis", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(future_get_result_args.class, metaDataMap);
     }
 
     public future_get_result_args() {
+      this.timeout_millis = 0;
+
     }
 
     public future_get_result_args(
-      long ff)
+      long ff,
+      int timeout_millis)
     {
       this();
       this.ff = ff;
       setFfIsSet(true);
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
     }
 
     /**
@@ -20391,6 +20442,7 @@ public class ClientService {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ff = other.ff;
+      this.timeout_millis = other.timeout_millis;
     }
 
     public future_get_result_args deepCopy() {
@@ -20401,6 +20453,8 @@ public class ClientService {
     public void clear() {
       setFfIsSet(false);
       this.ff = 0;
+      this.timeout_millis = 0;
+
     }
 
     public long getFf() {
@@ -20426,6 +20480,29 @@ public class ClientService {
       __isset_bit_vector.set(__FF_ISSET_ID, value);
     }
 
+    public int getTimeout_millis() {
+      return this.timeout_millis;
+    }
+
+    public future_get_result_args setTimeout_millis(int timeout_millis) {
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
+      return this;
+    }
+
+    public void unsetTimeout_millis() {
+      __isset_bit_vector.clear(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    /** Returns true if field timeout_millis is set (has been assigned a value) and false otherwise */
+    public boolean isSetTimeout_millis() {
+      return __isset_bit_vector.get(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    public void setTimeout_millisIsSet(boolean value) {
+      __isset_bit_vector.set(__TIMEOUT_MILLIS_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case FF:
@@ -20436,6 +20513,14 @@ public class ClientService {
         }
         break;
 
+      case TIMEOUT_MILLIS:
+        if (value == null) {
+          unsetTimeout_millis();
+        } else {
+          setTimeout_millis((Integer)value);
+        }
+        break;
+
       }
     }
 
@@ -20443,6 +20528,9 @@ public class ClientService {
       switch (field) {
       case FF:
         return Long.valueOf(getFf());
+
+      case TIMEOUT_MILLIS:
+        return Integer.valueOf(getTimeout_millis());
 
       }
       throw new IllegalStateException();
@@ -20457,6 +20545,8 @@ public class ClientService {
       switch (field) {
       case FF:
         return isSetFf();
+      case TIMEOUT_MILLIS:
+        return isSetTimeout_millis();
       }
       throw new IllegalStateException();
     }
@@ -20480,6 +20570,15 @@ public class ClientService {
         if (!(this_present_ff && that_present_ff))
           return false;
         if (this.ff != that.ff)
+          return false;
+      }
+
+      boolean this_present_timeout_millis = true;
+      boolean that_present_timeout_millis = true;
+      if (this_present_timeout_millis || that_present_timeout_millis) {
+        if (!(this_present_timeout_millis && that_present_timeout_millis))
+          return false;
+        if (this.timeout_millis != that.timeout_millis)
           return false;
       }
 
@@ -20509,6 +20608,16 @@ public class ClientService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetTimeout_millis()).compareTo(typedOther.isSetTimeout_millis());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTimeout_millis()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timeout_millis, typedOther.timeout_millis);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -20534,6 +20643,14 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case 2: // TIMEOUT_MILLIS
+            if (field.type == org.apache.thrift.protocol.TType.I32) {
+              this.timeout_millis = iprot.readI32();
+              setTimeout_millisIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -20552,6 +20669,9 @@ public class ClientService {
       oprot.writeFieldBegin(FF_FIELD_DESC);
       oprot.writeI64(this.ff);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(TIMEOUT_MILLIS_FIELD_DESC);
+      oprot.writeI32(this.timeout_millis);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -20563,6 +20683,10 @@ public class ClientService {
 
       sb.append("ff:");
       sb.append(this.ff);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("timeout_millis:");
+      sb.append(this.timeout_millis);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -20980,12 +21104,15 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_future_result_args");
 
     private static final org.apache.thrift.protocol.TField FF_FIELD_DESC = new org.apache.thrift.protocol.TField("ff", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TIMEOUT_MILLIS_FIELD_DESC = new org.apache.thrift.protocol.TField("timeout_millis", org.apache.thrift.protocol.TType.I32, (short)2);
 
     public long ff; // required
+    public int timeout_millis; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      FF((short)1, "ff");
+      FF((short)1, "ff"),
+      TIMEOUT_MILLIS((short)2, "timeout_millis");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -21002,6 +21129,8 @@ public class ClientService {
         switch(fieldId) {
           case 1: // FF
             return FF;
+          case 2: // TIMEOUT_MILLIS
+            return TIMEOUT_MILLIS;
           default:
             return null;
         }
@@ -21043,26 +21172,34 @@ public class ClientService {
 
     // isset id assignments
     private static final int __FF_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __TIMEOUT_MILLIS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.FF, new org.apache.thrift.meta_data.FieldMetaData("ff", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Future")));
+      tmpMap.put(_Fields.TIMEOUT_MILLIS, new org.apache.thrift.meta_data.FieldMetaData("timeout_millis", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_future_result_args.class, metaDataMap);
     }
 
     public get_future_result_args() {
+      this.timeout_millis = 0;
+
     }
 
     public get_future_result_args(
-      long ff)
+      long ff,
+      int timeout_millis)
     {
       this();
       this.ff = ff;
       setFfIsSet(true);
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
     }
 
     /**
@@ -21072,6 +21209,7 @@ public class ClientService {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ff = other.ff;
+      this.timeout_millis = other.timeout_millis;
     }
 
     public get_future_result_args deepCopy() {
@@ -21082,6 +21220,8 @@ public class ClientService {
     public void clear() {
       setFfIsSet(false);
       this.ff = 0;
+      this.timeout_millis = 0;
+
     }
 
     public long getFf() {
@@ -21107,6 +21247,29 @@ public class ClientService {
       __isset_bit_vector.set(__FF_ISSET_ID, value);
     }
 
+    public int getTimeout_millis() {
+      return this.timeout_millis;
+    }
+
+    public get_future_result_args setTimeout_millis(int timeout_millis) {
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
+      return this;
+    }
+
+    public void unsetTimeout_millis() {
+      __isset_bit_vector.clear(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    /** Returns true if field timeout_millis is set (has been assigned a value) and false otherwise */
+    public boolean isSetTimeout_millis() {
+      return __isset_bit_vector.get(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    public void setTimeout_millisIsSet(boolean value) {
+      __isset_bit_vector.set(__TIMEOUT_MILLIS_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case FF:
@@ -21117,6 +21280,14 @@ public class ClientService {
         }
         break;
 
+      case TIMEOUT_MILLIS:
+        if (value == null) {
+          unsetTimeout_millis();
+        } else {
+          setTimeout_millis((Integer)value);
+        }
+        break;
+
       }
     }
 
@@ -21124,6 +21295,9 @@ public class ClientService {
       switch (field) {
       case FF:
         return Long.valueOf(getFf());
+
+      case TIMEOUT_MILLIS:
+        return Integer.valueOf(getTimeout_millis());
 
       }
       throw new IllegalStateException();
@@ -21138,6 +21312,8 @@ public class ClientService {
       switch (field) {
       case FF:
         return isSetFf();
+      case TIMEOUT_MILLIS:
+        return isSetTimeout_millis();
       }
       throw new IllegalStateException();
     }
@@ -21161,6 +21337,15 @@ public class ClientService {
         if (!(this_present_ff && that_present_ff))
           return false;
         if (this.ff != that.ff)
+          return false;
+      }
+
+      boolean this_present_timeout_millis = true;
+      boolean that_present_timeout_millis = true;
+      if (this_present_timeout_millis || that_present_timeout_millis) {
+        if (!(this_present_timeout_millis && that_present_timeout_millis))
+          return false;
+        if (this.timeout_millis != that.timeout_millis)
           return false;
       }
 
@@ -21190,6 +21375,16 @@ public class ClientService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetTimeout_millis()).compareTo(typedOther.isSetTimeout_millis());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTimeout_millis()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timeout_millis, typedOther.timeout_millis);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -21215,6 +21410,14 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case 2: // TIMEOUT_MILLIS
+            if (field.type == org.apache.thrift.protocol.TType.I32) {
+              this.timeout_millis = iprot.readI32();
+              setTimeout_millisIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -21233,6 +21436,9 @@ public class ClientService {
       oprot.writeFieldBegin(FF_FIELD_DESC);
       oprot.writeI64(this.ff);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(TIMEOUT_MILLIS_FIELD_DESC);
+      oprot.writeI32(this.timeout_millis);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -21244,6 +21450,10 @@ public class ClientService {
 
       sb.append("ff:");
       sb.append(this.ff);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("timeout_millis:");
+      sb.append(this.timeout_millis);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -21663,12 +21873,15 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("future_get_result_as_arrays_args");
 
     private static final org.apache.thrift.protocol.TField FF_FIELD_DESC = new org.apache.thrift.protocol.TField("ff", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TIMEOUT_MILLIS_FIELD_DESC = new org.apache.thrift.protocol.TField("timeout_millis", org.apache.thrift.protocol.TType.I32, (short)2);
 
     public long ff; // required
+    public int timeout_millis; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      FF((short)1, "ff");
+      FF((short)1, "ff"),
+      TIMEOUT_MILLIS((short)2, "timeout_millis");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -21685,6 +21898,8 @@ public class ClientService {
         switch(fieldId) {
           case 1: // FF
             return FF;
+          case 2: // TIMEOUT_MILLIS
+            return TIMEOUT_MILLIS;
           default:
             return null;
         }
@@ -21726,26 +21941,34 @@ public class ClientService {
 
     // isset id assignments
     private static final int __FF_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __TIMEOUT_MILLIS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.FF, new org.apache.thrift.meta_data.FieldMetaData("ff", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Future")));
+      tmpMap.put(_Fields.TIMEOUT_MILLIS, new org.apache.thrift.meta_data.FieldMetaData("timeout_millis", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(future_get_result_as_arrays_args.class, metaDataMap);
     }
 
     public future_get_result_as_arrays_args() {
+      this.timeout_millis = 0;
+
     }
 
     public future_get_result_as_arrays_args(
-      long ff)
+      long ff,
+      int timeout_millis)
     {
       this();
       this.ff = ff;
       setFfIsSet(true);
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
     }
 
     /**
@@ -21755,6 +21978,7 @@ public class ClientService {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ff = other.ff;
+      this.timeout_millis = other.timeout_millis;
     }
 
     public future_get_result_as_arrays_args deepCopy() {
@@ -21765,6 +21989,8 @@ public class ClientService {
     public void clear() {
       setFfIsSet(false);
       this.ff = 0;
+      this.timeout_millis = 0;
+
     }
 
     public long getFf() {
@@ -21790,6 +22016,29 @@ public class ClientService {
       __isset_bit_vector.set(__FF_ISSET_ID, value);
     }
 
+    public int getTimeout_millis() {
+      return this.timeout_millis;
+    }
+
+    public future_get_result_as_arrays_args setTimeout_millis(int timeout_millis) {
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
+      return this;
+    }
+
+    public void unsetTimeout_millis() {
+      __isset_bit_vector.clear(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    /** Returns true if field timeout_millis is set (has been assigned a value) and false otherwise */
+    public boolean isSetTimeout_millis() {
+      return __isset_bit_vector.get(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    public void setTimeout_millisIsSet(boolean value) {
+      __isset_bit_vector.set(__TIMEOUT_MILLIS_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case FF:
@@ -21800,6 +22049,14 @@ public class ClientService {
         }
         break;
 
+      case TIMEOUT_MILLIS:
+        if (value == null) {
+          unsetTimeout_millis();
+        } else {
+          setTimeout_millis((Integer)value);
+        }
+        break;
+
       }
     }
 
@@ -21807,6 +22064,9 @@ public class ClientService {
       switch (field) {
       case FF:
         return Long.valueOf(getFf());
+
+      case TIMEOUT_MILLIS:
+        return Integer.valueOf(getTimeout_millis());
 
       }
       throw new IllegalStateException();
@@ -21821,6 +22081,8 @@ public class ClientService {
       switch (field) {
       case FF:
         return isSetFf();
+      case TIMEOUT_MILLIS:
+        return isSetTimeout_millis();
       }
       throw new IllegalStateException();
     }
@@ -21844,6 +22106,15 @@ public class ClientService {
         if (!(this_present_ff && that_present_ff))
           return false;
         if (this.ff != that.ff)
+          return false;
+      }
+
+      boolean this_present_timeout_millis = true;
+      boolean that_present_timeout_millis = true;
+      if (this_present_timeout_millis || that_present_timeout_millis) {
+        if (!(this_present_timeout_millis && that_present_timeout_millis))
+          return false;
+        if (this.timeout_millis != that.timeout_millis)
           return false;
       }
 
@@ -21873,6 +22144,16 @@ public class ClientService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetTimeout_millis()).compareTo(typedOther.isSetTimeout_millis());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTimeout_millis()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timeout_millis, typedOther.timeout_millis);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -21898,6 +22179,14 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case 2: // TIMEOUT_MILLIS
+            if (field.type == org.apache.thrift.protocol.TType.I32) {
+              this.timeout_millis = iprot.readI32();
+              setTimeout_millisIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -21916,6 +22205,9 @@ public class ClientService {
       oprot.writeFieldBegin(FF_FIELD_DESC);
       oprot.writeI64(this.ff);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(TIMEOUT_MILLIS_FIELD_DESC);
+      oprot.writeI32(this.timeout_millis);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -21927,6 +22219,10 @@ public class ClientService {
 
       sb.append("ff:");
       sb.append(this.ff);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("timeout_millis:");
+      sb.append(this.timeout_millis);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -21946,8 +22242,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -22346,12 +22640,15 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_future_result_as_arrays_args");
 
     private static final org.apache.thrift.protocol.TField FF_FIELD_DESC = new org.apache.thrift.protocol.TField("ff", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TIMEOUT_MILLIS_FIELD_DESC = new org.apache.thrift.protocol.TField("timeout_millis", org.apache.thrift.protocol.TType.I32, (short)2);
 
     public long ff; // required
+    public int timeout_millis; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      FF((short)1, "ff");
+      FF((short)1, "ff"),
+      TIMEOUT_MILLIS((short)2, "timeout_millis");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -22368,6 +22665,8 @@ public class ClientService {
         switch(fieldId) {
           case 1: // FF
             return FF;
+          case 2: // TIMEOUT_MILLIS
+            return TIMEOUT_MILLIS;
           default:
             return null;
         }
@@ -22409,26 +22708,34 @@ public class ClientService {
 
     // isset id assignments
     private static final int __FF_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __TIMEOUT_MILLIS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.FF, new org.apache.thrift.meta_data.FieldMetaData("ff", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Future")));
+      tmpMap.put(_Fields.TIMEOUT_MILLIS, new org.apache.thrift.meta_data.FieldMetaData("timeout_millis", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_future_result_as_arrays_args.class, metaDataMap);
     }
 
     public get_future_result_as_arrays_args() {
+      this.timeout_millis = 0;
+
     }
 
     public get_future_result_as_arrays_args(
-      long ff)
+      long ff,
+      int timeout_millis)
     {
       this();
       this.ff = ff;
       setFfIsSet(true);
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
     }
 
     /**
@@ -22438,6 +22745,7 @@ public class ClientService {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ff = other.ff;
+      this.timeout_millis = other.timeout_millis;
     }
 
     public get_future_result_as_arrays_args deepCopy() {
@@ -22448,6 +22756,8 @@ public class ClientService {
     public void clear() {
       setFfIsSet(false);
       this.ff = 0;
+      this.timeout_millis = 0;
+
     }
 
     public long getFf() {
@@ -22473,6 +22783,29 @@ public class ClientService {
       __isset_bit_vector.set(__FF_ISSET_ID, value);
     }
 
+    public int getTimeout_millis() {
+      return this.timeout_millis;
+    }
+
+    public get_future_result_as_arrays_args setTimeout_millis(int timeout_millis) {
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
+      return this;
+    }
+
+    public void unsetTimeout_millis() {
+      __isset_bit_vector.clear(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    /** Returns true if field timeout_millis is set (has been assigned a value) and false otherwise */
+    public boolean isSetTimeout_millis() {
+      return __isset_bit_vector.get(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    public void setTimeout_millisIsSet(boolean value) {
+      __isset_bit_vector.set(__TIMEOUT_MILLIS_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case FF:
@@ -22483,6 +22816,14 @@ public class ClientService {
         }
         break;
 
+      case TIMEOUT_MILLIS:
+        if (value == null) {
+          unsetTimeout_millis();
+        } else {
+          setTimeout_millis((Integer)value);
+        }
+        break;
+
       }
     }
 
@@ -22490,6 +22831,9 @@ public class ClientService {
       switch (field) {
       case FF:
         return Long.valueOf(getFf());
+
+      case TIMEOUT_MILLIS:
+        return Integer.valueOf(getTimeout_millis());
 
       }
       throw new IllegalStateException();
@@ -22504,6 +22848,8 @@ public class ClientService {
       switch (field) {
       case FF:
         return isSetFf();
+      case TIMEOUT_MILLIS:
+        return isSetTimeout_millis();
       }
       throw new IllegalStateException();
     }
@@ -22527,6 +22873,15 @@ public class ClientService {
         if (!(this_present_ff && that_present_ff))
           return false;
         if (this.ff != that.ff)
+          return false;
+      }
+
+      boolean this_present_timeout_millis = true;
+      boolean that_present_timeout_millis = true;
+      if (this_present_timeout_millis || that_present_timeout_millis) {
+        if (!(this_present_timeout_millis && that_present_timeout_millis))
+          return false;
+        if (this.timeout_millis != that.timeout_millis)
           return false;
       }
 
@@ -22556,6 +22911,16 @@ public class ClientService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetTimeout_millis()).compareTo(typedOther.isSetTimeout_millis());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTimeout_millis()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timeout_millis, typedOther.timeout_millis);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -22581,6 +22946,14 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case 2: // TIMEOUT_MILLIS
+            if (field.type == org.apache.thrift.protocol.TType.I32) {
+              this.timeout_millis = iprot.readI32();
+              setTimeout_millisIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -22599,6 +22972,9 @@ public class ClientService {
       oprot.writeFieldBegin(FF_FIELD_DESC);
       oprot.writeI64(this.ff);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(TIMEOUT_MILLIS_FIELD_DESC);
+      oprot.writeI32(this.timeout_millis);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -22610,6 +22986,10 @@ public class ClientService {
 
       sb.append("ff:");
       sb.append(this.ff);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("timeout_millis:");
+      sb.append(this.timeout_millis);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -23029,12 +23409,15 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("future_get_result_serialized_args");
 
     private static final org.apache.thrift.protocol.TField FF_FIELD_DESC = new org.apache.thrift.protocol.TField("ff", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TIMEOUT_MILLIS_FIELD_DESC = new org.apache.thrift.protocol.TField("timeout_millis", org.apache.thrift.protocol.TType.I32, (short)2);
 
     public long ff; // required
+    public int timeout_millis; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      FF((short)1, "ff");
+      FF((short)1, "ff"),
+      TIMEOUT_MILLIS((short)2, "timeout_millis");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -23051,6 +23434,8 @@ public class ClientService {
         switch(fieldId) {
           case 1: // FF
             return FF;
+          case 2: // TIMEOUT_MILLIS
+            return TIMEOUT_MILLIS;
           default:
             return null;
         }
@@ -23092,26 +23477,34 @@ public class ClientService {
 
     // isset id assignments
     private static final int __FF_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __TIMEOUT_MILLIS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.FF, new org.apache.thrift.meta_data.FieldMetaData("ff", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Future")));
+      tmpMap.put(_Fields.TIMEOUT_MILLIS, new org.apache.thrift.meta_data.FieldMetaData("timeout_millis", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(future_get_result_serialized_args.class, metaDataMap);
     }
 
     public future_get_result_serialized_args() {
+      this.timeout_millis = 0;
+
     }
 
     public future_get_result_serialized_args(
-      long ff)
+      long ff,
+      int timeout_millis)
     {
       this();
       this.ff = ff;
       setFfIsSet(true);
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
     }
 
     /**
@@ -23121,6 +23514,7 @@ public class ClientService {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ff = other.ff;
+      this.timeout_millis = other.timeout_millis;
     }
 
     public future_get_result_serialized_args deepCopy() {
@@ -23131,6 +23525,8 @@ public class ClientService {
     public void clear() {
       setFfIsSet(false);
       this.ff = 0;
+      this.timeout_millis = 0;
+
     }
 
     public long getFf() {
@@ -23156,6 +23552,29 @@ public class ClientService {
       __isset_bit_vector.set(__FF_ISSET_ID, value);
     }
 
+    public int getTimeout_millis() {
+      return this.timeout_millis;
+    }
+
+    public future_get_result_serialized_args setTimeout_millis(int timeout_millis) {
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
+      return this;
+    }
+
+    public void unsetTimeout_millis() {
+      __isset_bit_vector.clear(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    /** Returns true if field timeout_millis is set (has been assigned a value) and false otherwise */
+    public boolean isSetTimeout_millis() {
+      return __isset_bit_vector.get(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    public void setTimeout_millisIsSet(boolean value) {
+      __isset_bit_vector.set(__TIMEOUT_MILLIS_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case FF:
@@ -23166,6 +23585,14 @@ public class ClientService {
         }
         break;
 
+      case TIMEOUT_MILLIS:
+        if (value == null) {
+          unsetTimeout_millis();
+        } else {
+          setTimeout_millis((Integer)value);
+        }
+        break;
+
       }
     }
 
@@ -23173,6 +23600,9 @@ public class ClientService {
       switch (field) {
       case FF:
         return Long.valueOf(getFf());
+
+      case TIMEOUT_MILLIS:
+        return Integer.valueOf(getTimeout_millis());
 
       }
       throw new IllegalStateException();
@@ -23187,6 +23617,8 @@ public class ClientService {
       switch (field) {
       case FF:
         return isSetFf();
+      case TIMEOUT_MILLIS:
+        return isSetTimeout_millis();
       }
       throw new IllegalStateException();
     }
@@ -23210,6 +23642,15 @@ public class ClientService {
         if (!(this_present_ff && that_present_ff))
           return false;
         if (this.ff != that.ff)
+          return false;
+      }
+
+      boolean this_present_timeout_millis = true;
+      boolean that_present_timeout_millis = true;
+      if (this_present_timeout_millis || that_present_timeout_millis) {
+        if (!(this_present_timeout_millis && that_present_timeout_millis))
+          return false;
+        if (this.timeout_millis != that.timeout_millis)
           return false;
       }
 
@@ -23239,6 +23680,16 @@ public class ClientService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetTimeout_millis()).compareTo(typedOther.isSetTimeout_millis());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTimeout_millis()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timeout_millis, typedOther.timeout_millis);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -23264,6 +23715,14 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case 2: // TIMEOUT_MILLIS
+            if (field.type == org.apache.thrift.protocol.TType.I32) {
+              this.timeout_millis = iprot.readI32();
+              setTimeout_millisIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -23282,6 +23741,9 @@ public class ClientService {
       oprot.writeFieldBegin(FF_FIELD_DESC);
       oprot.writeI64(this.ff);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(TIMEOUT_MILLIS_FIELD_DESC);
+      oprot.writeI32(this.timeout_millis);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -23293,6 +23755,10 @@ public class ClientService {
 
       sb.append("ff:");
       sb.append(this.ff);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("timeout_millis:");
+      sb.append(this.timeout_millis);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -23712,12 +24178,15 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("get_future_result_serialized_args");
 
     private static final org.apache.thrift.protocol.TField FF_FIELD_DESC = new org.apache.thrift.protocol.TField("ff", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TIMEOUT_MILLIS_FIELD_DESC = new org.apache.thrift.protocol.TField("timeout_millis", org.apache.thrift.protocol.TType.I32, (short)2);
 
     public long ff; // required
+    public int timeout_millis; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      FF((short)1, "ff");
+      FF((short)1, "ff"),
+      TIMEOUT_MILLIS((short)2, "timeout_millis");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -23734,6 +24203,8 @@ public class ClientService {
         switch(fieldId) {
           case 1: // FF
             return FF;
+          case 2: // TIMEOUT_MILLIS
+            return TIMEOUT_MILLIS;
           default:
             return null;
         }
@@ -23775,26 +24246,34 @@ public class ClientService {
 
     // isset id assignments
     private static final int __FF_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
+    private static final int __TIMEOUT_MILLIS_ISSET_ID = 1;
+    private BitSet __isset_bit_vector = new BitSet(2);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.FF, new org.apache.thrift.meta_data.FieldMetaData("ff", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Future")));
+      tmpMap.put(_Fields.TIMEOUT_MILLIS, new org.apache.thrift.meta_data.FieldMetaData("timeout_millis", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(get_future_result_serialized_args.class, metaDataMap);
     }
 
     public get_future_result_serialized_args() {
+      this.timeout_millis = 0;
+
     }
 
     public get_future_result_serialized_args(
-      long ff)
+      long ff,
+      int timeout_millis)
     {
       this();
       this.ff = ff;
       setFfIsSet(true);
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
     }
 
     /**
@@ -23804,6 +24283,7 @@ public class ClientService {
       __isset_bit_vector.clear();
       __isset_bit_vector.or(other.__isset_bit_vector);
       this.ff = other.ff;
+      this.timeout_millis = other.timeout_millis;
     }
 
     public get_future_result_serialized_args deepCopy() {
@@ -23814,6 +24294,8 @@ public class ClientService {
     public void clear() {
       setFfIsSet(false);
       this.ff = 0;
+      this.timeout_millis = 0;
+
     }
 
     public long getFf() {
@@ -23839,6 +24321,29 @@ public class ClientService {
       __isset_bit_vector.set(__FF_ISSET_ID, value);
     }
 
+    public int getTimeout_millis() {
+      return this.timeout_millis;
+    }
+
+    public get_future_result_serialized_args setTimeout_millis(int timeout_millis) {
+      this.timeout_millis = timeout_millis;
+      setTimeout_millisIsSet(true);
+      return this;
+    }
+
+    public void unsetTimeout_millis() {
+      __isset_bit_vector.clear(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    /** Returns true if field timeout_millis is set (has been assigned a value) and false otherwise */
+    public boolean isSetTimeout_millis() {
+      return __isset_bit_vector.get(__TIMEOUT_MILLIS_ISSET_ID);
+    }
+
+    public void setTimeout_millisIsSet(boolean value) {
+      __isset_bit_vector.set(__TIMEOUT_MILLIS_ISSET_ID, value);
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case FF:
@@ -23849,6 +24354,14 @@ public class ClientService {
         }
         break;
 
+      case TIMEOUT_MILLIS:
+        if (value == null) {
+          unsetTimeout_millis();
+        } else {
+          setTimeout_millis((Integer)value);
+        }
+        break;
+
       }
     }
 
@@ -23856,6 +24369,9 @@ public class ClientService {
       switch (field) {
       case FF:
         return Long.valueOf(getFf());
+
+      case TIMEOUT_MILLIS:
+        return Integer.valueOf(getTimeout_millis());
 
       }
       throw new IllegalStateException();
@@ -23870,6 +24386,8 @@ public class ClientService {
       switch (field) {
       case FF:
         return isSetFf();
+      case TIMEOUT_MILLIS:
+        return isSetTimeout_millis();
       }
       throw new IllegalStateException();
     }
@@ -23893,6 +24411,15 @@ public class ClientService {
         if (!(this_present_ff && that_present_ff))
           return false;
         if (this.ff != that.ff)
+          return false;
+      }
+
+      boolean this_present_timeout_millis = true;
+      boolean that_present_timeout_millis = true;
+      if (this_present_timeout_millis || that_present_timeout_millis) {
+        if (!(this_present_timeout_millis && that_present_timeout_millis))
+          return false;
+        if (this.timeout_millis != that.timeout_millis)
           return false;
       }
 
@@ -23922,6 +24449,16 @@ public class ClientService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetTimeout_millis()).compareTo(typedOther.isSetTimeout_millis());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTimeout_millis()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.timeout_millis, typedOther.timeout_millis);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -23947,6 +24484,14 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case 2: // TIMEOUT_MILLIS
+            if (field.type == org.apache.thrift.protocol.TType.I32) {
+              this.timeout_millis = iprot.readI32();
+              setTimeout_millisIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -23965,6 +24510,9 @@ public class ClientService {
       oprot.writeFieldBegin(FF_FIELD_DESC);
       oprot.writeI64(this.ff);
       oprot.writeFieldEnd();
+      oprot.writeFieldBegin(TIMEOUT_MILLIS_FIELD_DESC);
+      oprot.writeI32(this.timeout_millis);
+      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -23976,6 +24524,10 @@ public class ClientService {
 
       sb.append("ff:");
       sb.append(this.ff);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("timeout_millis:");
+      sb.append(this.timeout_millis);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -28773,8 +29325,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -30579,8 +31129,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -33394,6 +33942,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -34578,6 +35128,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -38690,12 +39242,15 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("scanner_get_cells_serialized_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     public ByteBuffer success; // required
+    public ClientException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -38712,6 +39267,8 @@ public class ClientService {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // E
+            return E;
           default:
             return null;
         }
@@ -38758,6 +39315,8 @@ public class ClientService {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , "CellsSerialized")));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(scanner_get_cells_serialized_result.class, metaDataMap);
     }
@@ -38766,10 +39325,12 @@ public class ClientService {
     }
 
     public scanner_get_cells_serialized_result(
-      ByteBuffer success)
+      ByteBuffer success,
+      ClientException e)
     {
       this();
       this.success = success;
+      this.e = e;
     }
 
     /**
@@ -38778,6 +39339,9 @@ public class ClientService {
     public scanner_get_cells_serialized_result(scanner_get_cells_serialized_result other) {
       if (other.isSetSuccess()) {
         this.success = other.success;
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
       }
     }
 
@@ -38788,6 +39352,7 @@ public class ClientService {
     @Override
     public void clear() {
       this.success = null;
+      this.e = null;
     }
 
     public byte[] getSuccess() {
@@ -38824,6 +39389,30 @@ public class ClientService {
       }
     }
 
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public scanner_get_cells_serialized_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -38834,6 +39423,14 @@ public class ClientService {
         }
         break;
 
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
       }
     }
 
@@ -38841,6 +39438,9 @@ public class ClientService {
       switch (field) {
       case SUCCESS:
         return getSuccess();
+
+      case E:
+        return getE();
 
       }
       throw new IllegalStateException();
@@ -38855,6 +39455,8 @@ public class ClientService {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case E:
+        return isSetE();
       }
       throw new IllegalStateException();
     }
@@ -38878,6 +39480,15 @@ public class ClientService {
         if (!(this_present_success && that_present_success))
           return false;
         if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
           return false;
       }
 
@@ -38907,6 +39518,16 @@ public class ClientService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -38931,6 +39552,14 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case 1: // E
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -38949,6 +39578,10 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         oprot.writeBinary(this.success);
         oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -38964,6 +39597,14 @@ public class ClientService {
         sb.append("null");
       } else {
         sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
       }
       first = false;
       sb.append(")");
@@ -39293,12 +39934,15 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("next_cells_serialized_result");
 
     private static final org.apache.thrift.protocol.TField SUCCESS_FIELD_DESC = new org.apache.thrift.protocol.TField("success", org.apache.thrift.protocol.TType.STRING, (short)0);
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
 
     public ByteBuffer success; // required
+    public ClientException e; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      SUCCESS((short)0, "success");
+      SUCCESS((short)0, "success"),
+      E((short)1, "e");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -39315,6 +39959,8 @@ public class ClientService {
         switch(fieldId) {
           case 0: // SUCCESS
             return SUCCESS;
+          case 1: // E
+            return E;
           default:
             return null;
         }
@@ -39361,6 +40007,8 @@ public class ClientService {
       Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
       tmpMap.put(_Fields.SUCCESS, new org.apache.thrift.meta_data.FieldMetaData("success", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , "CellsSerialized")));
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(next_cells_serialized_result.class, metaDataMap);
     }
@@ -39369,10 +40017,12 @@ public class ClientService {
     }
 
     public next_cells_serialized_result(
-      ByteBuffer success)
+      ByteBuffer success,
+      ClientException e)
     {
       this();
       this.success = success;
+      this.e = e;
     }
 
     /**
@@ -39381,6 +40031,9 @@ public class ClientService {
     public next_cells_serialized_result(next_cells_serialized_result other) {
       if (other.isSetSuccess()) {
         this.success = other.success;
+      }
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
       }
     }
 
@@ -39391,6 +40044,7 @@ public class ClientService {
     @Override
     public void clear() {
       this.success = null;
+      this.e = null;
     }
 
     public byte[] getSuccess() {
@@ -39427,6 +40081,30 @@ public class ClientService {
       }
     }
 
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public next_cells_serialized_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case SUCCESS:
@@ -39437,6 +40115,14 @@ public class ClientService {
         }
         break;
 
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
       }
     }
 
@@ -39444,6 +40130,9 @@ public class ClientService {
       switch (field) {
       case SUCCESS:
         return getSuccess();
+
+      case E:
+        return getE();
 
       }
       throw new IllegalStateException();
@@ -39458,6 +40147,8 @@ public class ClientService {
       switch (field) {
       case SUCCESS:
         return isSetSuccess();
+      case E:
+        return isSetE();
       }
       throw new IllegalStateException();
     }
@@ -39481,6 +40172,15 @@ public class ClientService {
         if (!(this_present_success && that_present_success))
           return false;
         if (!this.success.equals(that.success))
+          return false;
+      }
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
           return false;
       }
 
@@ -39510,6 +40210,16 @@ public class ClientService {
           return lastComparison;
         }
       }
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
       return 0;
     }
 
@@ -39534,6 +40244,14 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
+          case 1: // E
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -39552,6 +40270,10 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         oprot.writeBinary(this.success);
         oprot.writeFieldEnd();
+      } else if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -39567,6 +40289,14 @@ public class ClientService {
         sb.append("null");
       } else {
         sb.append(this.success);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
       }
       first = false;
       sb.append(")");
@@ -44356,8 +45086,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -62258,6 +62986,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -63029,8 +63759,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -68730,19 +69458,16 @@ public class ClientService {
     private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
     private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
     private static final org.apache.thrift.protocol.TField CELLS_FIELD_DESC = new org.apache.thrift.protocol.TField("cells", org.apache.thrift.protocol.TType.STRING, (short)3);
-    private static final org.apache.thrift.protocol.TField FLUSH_FIELD_DESC = new org.apache.thrift.protocol.TField("flush", org.apache.thrift.protocol.TType.BOOL, (short)4);
 
     public long ns; // required
     public String table_name; // required
     public ByteBuffer cells; // required
-    public boolean flush; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
       NS((short)1, "ns"),
       TABLE_NAME((short)2, "table_name"),
-      CELLS((short)3, "cells"),
-      FLUSH((short)4, "flush");
+      CELLS((short)3, "cells");
 
       private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -68763,8 +69488,6 @@ public class ClientService {
             return TABLE_NAME;
           case 3: // CELLS
             return CELLS;
-          case 4: // FLUSH
-            return FLUSH;
           default:
             return null;
         }
@@ -68806,8 +69529,7 @@ public class ClientService {
 
     // isset id assignments
     private static final int __NS_ISSET_ID = 0;
-    private static final int __FLUSH_ISSET_ID = 1;
-    private BitSet __isset_bit_vector = new BitSet(2);
+    private BitSet __isset_bit_vector = new BitSet(1);
 
     public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
     static {
@@ -68818,30 +69540,23 @@ public class ClientService {
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.CELLS, new org.apache.thrift.meta_data.FieldMetaData("cells", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING          , "CellsSerialized")));
-      tmpMap.put(_Fields.FLUSH, new org.apache.thrift.meta_data.FieldMetaData("flush", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(set_cells_serialized_args.class, metaDataMap);
     }
 
     public set_cells_serialized_args() {
-      this.flush = false;
-
     }
 
     public set_cells_serialized_args(
       long ns,
       String table_name,
-      ByteBuffer cells,
-      boolean flush)
+      ByteBuffer cells)
     {
       this();
       this.ns = ns;
       setNsIsSet(true);
       this.table_name = table_name;
       this.cells = cells;
-      this.flush = flush;
-      setFlushIsSet(true);
     }
 
     /**
@@ -68857,7 +69572,6 @@ public class ClientService {
       if (other.isSetCells()) {
         this.cells = other.cells;
       }
-      this.flush = other.flush;
     }
 
     public set_cells_serialized_args deepCopy() {
@@ -68870,8 +69584,6 @@ public class ClientService {
       this.ns = 0;
       this.table_name = null;
       this.cells = null;
-      this.flush = false;
-
     }
 
     public long getNs() {
@@ -68955,29 +69667,6 @@ public class ClientService {
       }
     }
 
-    public boolean isFlush() {
-      return this.flush;
-    }
-
-    public set_cells_serialized_args setFlush(boolean flush) {
-      this.flush = flush;
-      setFlushIsSet(true);
-      return this;
-    }
-
-    public void unsetFlush() {
-      __isset_bit_vector.clear(__FLUSH_ISSET_ID);
-    }
-
-    /** Returns true if field flush is set (has been assigned a value) and false otherwise */
-    public boolean isSetFlush() {
-      return __isset_bit_vector.get(__FLUSH_ISSET_ID);
-    }
-
-    public void setFlushIsSet(boolean value) {
-      __isset_bit_vector.set(__FLUSH_ISSET_ID, value);
-    }
-
     public void setFieldValue(_Fields field, Object value) {
       switch (field) {
       case NS:
@@ -69004,14 +69693,6 @@ public class ClientService {
         }
         break;
 
-      case FLUSH:
-        if (value == null) {
-          unsetFlush();
-        } else {
-          setFlush((Boolean)value);
-        }
-        break;
-
       }
     }
 
@@ -69025,9 +69706,6 @@ public class ClientService {
 
       case CELLS:
         return getCells();
-
-      case FLUSH:
-        return Boolean.valueOf(isFlush());
 
       }
       throw new IllegalStateException();
@@ -69046,8 +69724,6 @@ public class ClientService {
         return isSetTable_name();
       case CELLS:
         return isSetCells();
-      case FLUSH:
-        return isSetFlush();
       }
       throw new IllegalStateException();
     }
@@ -69089,15 +69765,6 @@ public class ClientService {
         if (!(this_present_cells && that_present_cells))
           return false;
         if (!this.cells.equals(that.cells))
-          return false;
-      }
-
-      boolean this_present_flush = true;
-      boolean that_present_flush = true;
-      if (this_present_flush || that_present_flush) {
-        if (!(this_present_flush && that_present_flush))
-          return false;
-        if (this.flush != that.flush)
           return false;
       }
 
@@ -69147,16 +69814,6 @@ public class ClientService {
           return lastComparison;
         }
       }
-      lastComparison = Boolean.valueOf(isSetFlush()).compareTo(typedOther.isSetFlush());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetFlush()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.flush, typedOther.flush);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
       return 0;
     }
 
@@ -69196,14 +69853,6 @@ public class ClientService {
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
             }
             break;
-          case 4: // FLUSH
-            if (field.type == org.apache.thrift.protocol.TType.BOOL) {
-              this.flush = iprot.readBool();
-              setFlushIsSet(true);
-            } else { 
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
-            }
-            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
         }
@@ -69232,9 +69881,6 @@ public class ClientService {
         oprot.writeBinary(this.cells);
         oprot.writeFieldEnd();
       }
-      oprot.writeFieldBegin(FLUSH_FIELD_DESC);
-      oprot.writeBool(this.flush);
-      oprot.writeFieldEnd();
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -69262,10 +69908,6 @@ public class ClientService {
       } else {
         sb.append(this.cells);
       }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("flush:");
-      sb.append(this.flush);
       first = false;
       sb.append(")");
       return sb.toString();
@@ -80976,8 +81618,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -82518,8 +83158,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -84060,8 +84698,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -85602,8 +86238,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -89316,6 +89950,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);

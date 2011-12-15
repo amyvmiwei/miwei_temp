@@ -24,16 +24,16 @@ class ClientServiceIf {
   virtual Namespace open_namespace(const std::string& ns) = 0;
   virtual void namespace_close(const Namespace ns) = 0;
   virtual void close_namespace(const Namespace ns) = 0;
-  virtual Future future_open(const int32_t queue_size) = 0;
-  virtual Future open_future(const int32_t queue_size) = 0;
+  virtual Future future_open(const int32_t capacity) = 0;
+  virtual Future open_future(const int32_t capacity) = 0;
   virtual void future_cancel(const Future ff) = 0;
   virtual void cancel_future(const Future ff) = 0;
-  virtual void future_get_result(Result& _return, const Future ff) = 0;
-  virtual void get_future_result(Result& _return, const Future ff) = 0;
-  virtual void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff) = 0;
-  virtual void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) = 0;
-  virtual void future_get_result_serialized(ResultSerialized& _return, const Future ff) = 0;
-  virtual void get_future_result_serialized(ResultSerialized& _return, const Future ff) = 0;
+  virtual void future_get_result(Result& _return, const Future ff, const int32_t timeout_millis) = 0;
+  virtual void get_future_result(Result& _return, const Future ff, const int32_t timeout_millis) = 0;
+  virtual void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis) = 0;
+  virtual void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis) = 0;
+  virtual void future_get_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis) = 0;
+  virtual void get_future_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis) = 0;
   virtual bool future_is_empty(const Future ff) = 0;
   virtual bool future_is_full(const Future ff) = 0;
   virtual bool future_is_cancelled(const Future ff) = 0;
@@ -93,7 +93,7 @@ class ClientServiceIf {
   virtual void mutator_set_cells_as_arrays(const Mutator mutator, const std::vector<CellAsArray> & cells) = 0;
   virtual void set_cells_as_arrays(const Namespace ns, const std::string& table_name, const std::vector<CellAsArray> & cells) = 0;
   virtual void mutator_set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush) = 0;
-  virtual void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush) = 0;
+  virtual void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells) = 0;
   virtual void mutator_flush(const Mutator mutator) = 0;
   virtual void flush_mutator(const Mutator mutator) = 0;
   virtual void async_mutator_set_cell(const MutatorAsync mutator, const Cell& cell) = 0;
@@ -170,11 +170,11 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void close_namespace(const Namespace /* ns */) {
     return;
   }
-  Future future_open(const int32_t /* queue_size */) {
+  Future future_open(const int32_t /* capacity */) {
     Future _return = 0;
     return _return;
   }
-  Future open_future(const int32_t /* queue_size */) {
+  Future open_future(const int32_t /* capacity */) {
     Future _return = 0;
     return _return;
   }
@@ -184,22 +184,22 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void cancel_future(const Future /* ff */) {
     return;
   }
-  void future_get_result(Result& /* _return */, const Future /* ff */) {
+  void future_get_result(Result& /* _return */, const Future /* ff */, const int32_t /* timeout_millis */) {
     return;
   }
-  void get_future_result(Result& /* _return */, const Future /* ff */) {
+  void get_future_result(Result& /* _return */, const Future /* ff */, const int32_t /* timeout_millis */) {
     return;
   }
-  void future_get_result_as_arrays(ResultAsArrays& /* _return */, const Future /* ff */) {
+  void future_get_result_as_arrays(ResultAsArrays& /* _return */, const Future /* ff */, const int32_t /* timeout_millis */) {
     return;
   }
-  void get_future_result_as_arrays(ResultAsArrays& /* _return */, const Future /* ff */) {
+  void get_future_result_as_arrays(ResultAsArrays& /* _return */, const Future /* ff */, const int32_t /* timeout_millis */) {
     return;
   }
-  void future_get_result_serialized(ResultSerialized& /* _return */, const Future /* ff */) {
+  void future_get_result_serialized(ResultSerialized& /* _return */, const Future /* ff */, const int32_t /* timeout_millis */) {
     return;
   }
-  void get_future_result_serialized(ResultSerialized& /* _return */, const Future /* ff */) {
+  void get_future_result_serialized(ResultSerialized& /* _return */, const Future /* ff */, const int32_t /* timeout_millis */) {
     return;
   }
   bool future_is_empty(const Future /* ff */) {
@@ -391,7 +391,7 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void mutator_set_cells_serialized(const Mutator /* mutator */, const CellsSerialized& /* cells */, const bool /* flush */) {
     return;
   }
-  void set_cells_serialized(const Namespace /* ns */, const std::string& /* table_name */, const CellsSerialized& /* cells */, const bool /* flush */) {
+  void set_cells_serialized(const Namespace /* ns */, const std::string& /* table_name */, const CellsSerialized& /* cells */) {
     return;
   }
   void mutator_flush(const Mutator /* mutator */) {
@@ -1690,29 +1690,29 @@ class ClientService_close_namespace_presult {
 };
 
 typedef struct _ClientService_future_open_args__isset {
-  _ClientService_future_open_args__isset() : queue_size(false) {}
-  bool queue_size;
+  _ClientService_future_open_args__isset() : capacity(false) {}
+  bool capacity;
 } _ClientService_future_open_args__isset;
 
 class ClientService_future_open_args {
  public:
 
-  ClientService_future_open_args() : queue_size(0) {
+  ClientService_future_open_args() : capacity(0) {
   }
 
   virtual ~ClientService_future_open_args() throw() {}
 
-  int32_t queue_size;
+  int32_t capacity;
 
   _ClientService_future_open_args__isset __isset;
 
-  void __set_queue_size(const int32_t val) {
-    queue_size = val;
+  void __set_capacity(const int32_t val) {
+    capacity = val;
   }
 
   bool operator == (const ClientService_future_open_args & rhs) const
   {
-    if (!(queue_size == rhs.queue_size))
+    if (!(capacity == rhs.capacity))
       return false;
     return true;
   }
@@ -1734,7 +1734,7 @@ class ClientService_future_open_pargs {
 
   virtual ~ClientService_future_open_pargs() throw() {}
 
-  const int32_t* queue_size;
+  const int32_t* capacity;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -1808,29 +1808,29 @@ class ClientService_future_open_presult {
 };
 
 typedef struct _ClientService_open_future_args__isset {
-  _ClientService_open_future_args__isset() : queue_size(false) {}
-  bool queue_size;
+  _ClientService_open_future_args__isset() : capacity(false) {}
+  bool capacity;
 } _ClientService_open_future_args__isset;
 
 class ClientService_open_future_args {
  public:
 
-  ClientService_open_future_args() : queue_size(0) {
+  ClientService_open_future_args() : capacity(0) {
   }
 
   virtual ~ClientService_open_future_args() throw() {}
 
-  int32_t queue_size;
+  int32_t capacity;
 
   _ClientService_open_future_args__isset __isset;
 
-  void __set_queue_size(const int32_t val) {
-    queue_size = val;
+  void __set_capacity(const int32_t val) {
+    capacity = val;
   }
 
   bool operator == (const ClientService_open_future_args & rhs) const
   {
-    if (!(queue_size == rhs.queue_size))
+    if (!(capacity == rhs.capacity))
       return false;
     return true;
   }
@@ -1852,7 +1852,7 @@ class ClientService_open_future_pargs {
 
   virtual ~ClientService_open_future_pargs() throw() {}
 
-  const int32_t* queue_size;
+  const int32_t* capacity;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2142,19 +2142,21 @@ class ClientService_cancel_future_presult {
 };
 
 typedef struct _ClientService_future_get_result_args__isset {
-  _ClientService_future_get_result_args__isset() : ff(false) {}
+  _ClientService_future_get_result_args__isset() : ff(false), timeout_millis(false) {}
   bool ff;
+  bool timeout_millis;
 } _ClientService_future_get_result_args__isset;
 
 class ClientService_future_get_result_args {
  public:
 
-  ClientService_future_get_result_args() : ff(0) {
+  ClientService_future_get_result_args() : ff(0), timeout_millis(0) {
   }
 
   virtual ~ClientService_future_get_result_args() throw() {}
 
   Future ff;
+  int32_t timeout_millis;
 
   _ClientService_future_get_result_args__isset __isset;
 
@@ -2162,9 +2164,15 @@ class ClientService_future_get_result_args {
     ff = val;
   }
 
+  void __set_timeout_millis(const int32_t val) {
+    timeout_millis = val;
+  }
+
   bool operator == (const ClientService_future_get_result_args & rhs) const
   {
     if (!(ff == rhs.ff))
+      return false;
+    if (!(timeout_millis == rhs.timeout_millis))
       return false;
     return true;
   }
@@ -2187,6 +2195,7 @@ class ClientService_future_get_result_pargs {
   virtual ~ClientService_future_get_result_pargs() throw() {}
 
   const Future* ff;
+  const int32_t* timeout_millis;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2260,19 +2269,21 @@ class ClientService_future_get_result_presult {
 };
 
 typedef struct _ClientService_get_future_result_args__isset {
-  _ClientService_get_future_result_args__isset() : ff(false) {}
+  _ClientService_get_future_result_args__isset() : ff(false), timeout_millis(false) {}
   bool ff;
+  bool timeout_millis;
 } _ClientService_get_future_result_args__isset;
 
 class ClientService_get_future_result_args {
  public:
 
-  ClientService_get_future_result_args() : ff(0) {
+  ClientService_get_future_result_args() : ff(0), timeout_millis(0) {
   }
 
   virtual ~ClientService_get_future_result_args() throw() {}
 
   Future ff;
+  int32_t timeout_millis;
 
   _ClientService_get_future_result_args__isset __isset;
 
@@ -2280,9 +2291,15 @@ class ClientService_get_future_result_args {
     ff = val;
   }
 
+  void __set_timeout_millis(const int32_t val) {
+    timeout_millis = val;
+  }
+
   bool operator == (const ClientService_get_future_result_args & rhs) const
   {
     if (!(ff == rhs.ff))
+      return false;
+    if (!(timeout_millis == rhs.timeout_millis))
       return false;
     return true;
   }
@@ -2305,6 +2322,7 @@ class ClientService_get_future_result_pargs {
   virtual ~ClientService_get_future_result_pargs() throw() {}
 
   const Future* ff;
+  const int32_t* timeout_millis;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2378,19 +2396,21 @@ class ClientService_get_future_result_presult {
 };
 
 typedef struct _ClientService_future_get_result_as_arrays_args__isset {
-  _ClientService_future_get_result_as_arrays_args__isset() : ff(false) {}
+  _ClientService_future_get_result_as_arrays_args__isset() : ff(false), timeout_millis(false) {}
   bool ff;
+  bool timeout_millis;
 } _ClientService_future_get_result_as_arrays_args__isset;
 
 class ClientService_future_get_result_as_arrays_args {
  public:
 
-  ClientService_future_get_result_as_arrays_args() : ff(0) {
+  ClientService_future_get_result_as_arrays_args() : ff(0), timeout_millis(0) {
   }
 
   virtual ~ClientService_future_get_result_as_arrays_args() throw() {}
 
   Future ff;
+  int32_t timeout_millis;
 
   _ClientService_future_get_result_as_arrays_args__isset __isset;
 
@@ -2398,9 +2418,15 @@ class ClientService_future_get_result_as_arrays_args {
     ff = val;
   }
 
+  void __set_timeout_millis(const int32_t val) {
+    timeout_millis = val;
+  }
+
   bool operator == (const ClientService_future_get_result_as_arrays_args & rhs) const
   {
     if (!(ff == rhs.ff))
+      return false;
+    if (!(timeout_millis == rhs.timeout_millis))
       return false;
     return true;
   }
@@ -2423,6 +2449,7 @@ class ClientService_future_get_result_as_arrays_pargs {
   virtual ~ClientService_future_get_result_as_arrays_pargs() throw() {}
 
   const Future* ff;
+  const int32_t* timeout_millis;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2496,19 +2523,21 @@ class ClientService_future_get_result_as_arrays_presult {
 };
 
 typedef struct _ClientService_get_future_result_as_arrays_args__isset {
-  _ClientService_get_future_result_as_arrays_args__isset() : ff(false) {}
+  _ClientService_get_future_result_as_arrays_args__isset() : ff(false), timeout_millis(false) {}
   bool ff;
+  bool timeout_millis;
 } _ClientService_get_future_result_as_arrays_args__isset;
 
 class ClientService_get_future_result_as_arrays_args {
  public:
 
-  ClientService_get_future_result_as_arrays_args() : ff(0) {
+  ClientService_get_future_result_as_arrays_args() : ff(0), timeout_millis(0) {
   }
 
   virtual ~ClientService_get_future_result_as_arrays_args() throw() {}
 
   Future ff;
+  int32_t timeout_millis;
 
   _ClientService_get_future_result_as_arrays_args__isset __isset;
 
@@ -2516,9 +2545,15 @@ class ClientService_get_future_result_as_arrays_args {
     ff = val;
   }
 
+  void __set_timeout_millis(const int32_t val) {
+    timeout_millis = val;
+  }
+
   bool operator == (const ClientService_get_future_result_as_arrays_args & rhs) const
   {
     if (!(ff == rhs.ff))
+      return false;
+    if (!(timeout_millis == rhs.timeout_millis))
       return false;
     return true;
   }
@@ -2541,6 +2576,7 @@ class ClientService_get_future_result_as_arrays_pargs {
   virtual ~ClientService_get_future_result_as_arrays_pargs() throw() {}
 
   const Future* ff;
+  const int32_t* timeout_millis;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2614,19 +2650,21 @@ class ClientService_get_future_result_as_arrays_presult {
 };
 
 typedef struct _ClientService_future_get_result_serialized_args__isset {
-  _ClientService_future_get_result_serialized_args__isset() : ff(false) {}
+  _ClientService_future_get_result_serialized_args__isset() : ff(false), timeout_millis(false) {}
   bool ff;
+  bool timeout_millis;
 } _ClientService_future_get_result_serialized_args__isset;
 
 class ClientService_future_get_result_serialized_args {
  public:
 
-  ClientService_future_get_result_serialized_args() : ff(0) {
+  ClientService_future_get_result_serialized_args() : ff(0), timeout_millis(0) {
   }
 
   virtual ~ClientService_future_get_result_serialized_args() throw() {}
 
   Future ff;
+  int32_t timeout_millis;
 
   _ClientService_future_get_result_serialized_args__isset __isset;
 
@@ -2634,9 +2672,15 @@ class ClientService_future_get_result_serialized_args {
     ff = val;
   }
 
+  void __set_timeout_millis(const int32_t val) {
+    timeout_millis = val;
+  }
+
   bool operator == (const ClientService_future_get_result_serialized_args & rhs) const
   {
     if (!(ff == rhs.ff))
+      return false;
+    if (!(timeout_millis == rhs.timeout_millis))
       return false;
     return true;
   }
@@ -2659,6 +2703,7 @@ class ClientService_future_get_result_serialized_pargs {
   virtual ~ClientService_future_get_result_serialized_pargs() throw() {}
 
   const Future* ff;
+  const int32_t* timeout_millis;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -2732,19 +2777,21 @@ class ClientService_future_get_result_serialized_presult {
 };
 
 typedef struct _ClientService_get_future_result_serialized_args__isset {
-  _ClientService_get_future_result_serialized_args__isset() : ff(false) {}
+  _ClientService_get_future_result_serialized_args__isset() : ff(false), timeout_millis(false) {}
   bool ff;
+  bool timeout_millis;
 } _ClientService_get_future_result_serialized_args__isset;
 
 class ClientService_get_future_result_serialized_args {
  public:
 
-  ClientService_get_future_result_serialized_args() : ff(0) {
+  ClientService_get_future_result_serialized_args() : ff(0), timeout_millis(0) {
   }
 
   virtual ~ClientService_get_future_result_serialized_args() throw() {}
 
   Future ff;
+  int32_t timeout_millis;
 
   _ClientService_get_future_result_serialized_args__isset __isset;
 
@@ -2752,9 +2799,15 @@ class ClientService_get_future_result_serialized_args {
     ff = val;
   }
 
+  void __set_timeout_millis(const int32_t val) {
+    timeout_millis = val;
+  }
+
   bool operator == (const ClientService_get_future_result_serialized_args & rhs) const
   {
     if (!(ff == rhs.ff))
+      return false;
+    if (!(timeout_millis == rhs.timeout_millis))
       return false;
     return true;
   }
@@ -2777,6 +2830,7 @@ class ClientService_get_future_result_serialized_pargs {
   virtual ~ClientService_get_future_result_serialized_pargs() throw() {}
 
   const Future* ff;
+  const int32_t* timeout_millis;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -5271,8 +5325,9 @@ class ClientService_scanner_get_cells_serialized_pargs {
 };
 
 typedef struct _ClientService_scanner_get_cells_serialized_result__isset {
-  _ClientService_scanner_get_cells_serialized_result__isset() : success(false) {}
+  _ClientService_scanner_get_cells_serialized_result__isset() : success(false), e(false) {}
   bool success;
+  bool e;
 } _ClientService_scanner_get_cells_serialized_result__isset;
 
 class ClientService_scanner_get_cells_serialized_result {
@@ -5284,6 +5339,7 @@ class ClientService_scanner_get_cells_serialized_result {
   virtual ~ClientService_scanner_get_cells_serialized_result() throw() {}
 
   CellsSerialized success;
+  ClientException e;
 
   _ClientService_scanner_get_cells_serialized_result__isset __isset;
 
@@ -5291,9 +5347,15 @@ class ClientService_scanner_get_cells_serialized_result {
     success = val;
   }
 
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
   bool operator == (const ClientService_scanner_get_cells_serialized_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
       return false;
     return true;
   }
@@ -5309,8 +5371,9 @@ class ClientService_scanner_get_cells_serialized_result {
 };
 
 typedef struct _ClientService_scanner_get_cells_serialized_presult__isset {
-  _ClientService_scanner_get_cells_serialized_presult__isset() : success(false) {}
+  _ClientService_scanner_get_cells_serialized_presult__isset() : success(false), e(false) {}
   bool success;
+  bool e;
 } _ClientService_scanner_get_cells_serialized_presult__isset;
 
 class ClientService_scanner_get_cells_serialized_presult {
@@ -5320,6 +5383,7 @@ class ClientService_scanner_get_cells_serialized_presult {
   virtual ~ClientService_scanner_get_cells_serialized_presult() throw() {}
 
   CellsSerialized* success;
+  ClientException e;
 
   _ClientService_scanner_get_cells_serialized_presult__isset __isset;
 
@@ -5379,8 +5443,9 @@ class ClientService_next_cells_serialized_pargs {
 };
 
 typedef struct _ClientService_next_cells_serialized_result__isset {
-  _ClientService_next_cells_serialized_result__isset() : success(false) {}
+  _ClientService_next_cells_serialized_result__isset() : success(false), e(false) {}
   bool success;
+  bool e;
 } _ClientService_next_cells_serialized_result__isset;
 
 class ClientService_next_cells_serialized_result {
@@ -5392,6 +5457,7 @@ class ClientService_next_cells_serialized_result {
   virtual ~ClientService_next_cells_serialized_result() throw() {}
 
   CellsSerialized success;
+  ClientException e;
 
   _ClientService_next_cells_serialized_result__isset __isset;
 
@@ -5399,9 +5465,15 @@ class ClientService_next_cells_serialized_result {
     success = val;
   }
 
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
   bool operator == (const ClientService_next_cells_serialized_result & rhs) const
   {
     if (!(success == rhs.success))
+      return false;
+    if (!(e == rhs.e))
       return false;
     return true;
   }
@@ -5417,8 +5489,9 @@ class ClientService_next_cells_serialized_result {
 };
 
 typedef struct _ClientService_next_cells_serialized_presult__isset {
-  _ClientService_next_cells_serialized_presult__isset() : success(false) {}
+  _ClientService_next_cells_serialized_presult__isset() : success(false), e(false) {}
   bool success;
+  bool e;
 } _ClientService_next_cells_serialized_presult__isset;
 
 class ClientService_next_cells_serialized_presult {
@@ -5428,6 +5501,7 @@ class ClientService_next_cells_serialized_presult {
   virtual ~ClientService_next_cells_serialized_presult() throw() {}
 
   CellsSerialized* success;
+  ClientException e;
 
   _ClientService_next_cells_serialized_presult__isset __isset;
 
@@ -10097,17 +10171,16 @@ class ClientService_mutator_set_cells_serialized_presult {
 };
 
 typedef struct _ClientService_set_cells_serialized_args__isset {
-  _ClientService_set_cells_serialized_args__isset() : ns(false), table_name(false), cells(false), flush(false) {}
+  _ClientService_set_cells_serialized_args__isset() : ns(false), table_name(false), cells(false) {}
   bool ns;
   bool table_name;
   bool cells;
-  bool flush;
 } _ClientService_set_cells_serialized_args__isset;
 
 class ClientService_set_cells_serialized_args {
  public:
 
-  ClientService_set_cells_serialized_args() : ns(0), table_name(""), cells(""), flush(false) {
+  ClientService_set_cells_serialized_args() : ns(0), table_name(""), cells("") {
   }
 
   virtual ~ClientService_set_cells_serialized_args() throw() {}
@@ -10115,7 +10188,6 @@ class ClientService_set_cells_serialized_args {
   Namespace ns;
   std::string table_name;
   CellsSerialized cells;
-  bool flush;
 
   _ClientService_set_cells_serialized_args__isset __isset;
 
@@ -10131,10 +10203,6 @@ class ClientService_set_cells_serialized_args {
     cells = val;
   }
 
-  void __set_flush(const bool val) {
-    flush = val;
-  }
-
   bool operator == (const ClientService_set_cells_serialized_args & rhs) const
   {
     if (!(ns == rhs.ns))
@@ -10142,8 +10210,6 @@ class ClientService_set_cells_serialized_args {
     if (!(table_name == rhs.table_name))
       return false;
     if (!(cells == rhs.cells))
-      return false;
-    if (!(flush == rhs.flush))
       return false;
     return true;
   }
@@ -10168,7 +10234,6 @@ class ClientService_set_cells_serialized_pargs {
   const Namespace* ns;
   const std::string* table_name;
   const CellsSerialized* cells;
-  const bool* flush;
 
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
@@ -14992,11 +15057,11 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void close_namespace(const Namespace ns);
   void send_close_namespace(const Namespace ns);
   void recv_close_namespace();
-  Future future_open(const int32_t queue_size);
-  void send_future_open(const int32_t queue_size);
+  Future future_open(const int32_t capacity);
+  void send_future_open(const int32_t capacity);
   Future recv_future_open();
-  Future open_future(const int32_t queue_size);
-  void send_open_future(const int32_t queue_size);
+  Future open_future(const int32_t capacity);
+  void send_open_future(const int32_t capacity);
   Future recv_open_future();
   void future_cancel(const Future ff);
   void send_future_cancel(const Future ff);
@@ -15004,23 +15069,23 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void cancel_future(const Future ff);
   void send_cancel_future(const Future ff);
   void recv_cancel_future();
-  void future_get_result(Result& _return, const Future ff);
-  void send_future_get_result(const Future ff);
+  void future_get_result(Result& _return, const Future ff, const int32_t timeout_millis);
+  void send_future_get_result(const Future ff, const int32_t timeout_millis);
   void recv_future_get_result(Result& _return);
-  void get_future_result(Result& _return, const Future ff);
-  void send_get_future_result(const Future ff);
+  void get_future_result(Result& _return, const Future ff, const int32_t timeout_millis);
+  void send_get_future_result(const Future ff, const int32_t timeout_millis);
   void recv_get_future_result(Result& _return);
-  void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff);
-  void send_future_get_result_as_arrays(const Future ff);
+  void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis);
+  void send_future_get_result_as_arrays(const Future ff, const int32_t timeout_millis);
   void recv_future_get_result_as_arrays(ResultAsArrays& _return);
-  void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff);
-  void send_get_future_result_as_arrays(const Future ff);
+  void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis);
+  void send_get_future_result_as_arrays(const Future ff, const int32_t timeout_millis);
   void recv_get_future_result_as_arrays(ResultAsArrays& _return);
-  void future_get_result_serialized(ResultSerialized& _return, const Future ff);
-  void send_future_get_result_serialized(const Future ff);
+  void future_get_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis);
+  void send_future_get_result_serialized(const Future ff, const int32_t timeout_millis);
   void recv_future_get_result_serialized(ResultSerialized& _return);
-  void get_future_result_serialized(ResultSerialized& _return, const Future ff);
-  void send_get_future_result_serialized(const Future ff);
+  void get_future_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis);
+  void send_get_future_result_serialized(const Future ff, const int32_t timeout_millis);
   void recv_get_future_result_serialized(ResultSerialized& _return);
   bool future_is_empty(const Future ff);
   void send_future_is_empty(const Future ff);
@@ -15199,8 +15264,8 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void mutator_set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush);
   void send_mutator_set_cells_serialized(const Mutator mutator, const CellsSerialized& cells, const bool flush);
   void recv_mutator_set_cells_serialized();
-  void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush);
-  void send_set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush);
+  void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells);
+  void send_set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells);
   void recv_set_cells_serialized();
   void mutator_flush(const Mutator mutator);
   void send_mutator_flush(const Mutator mutator);
@@ -15669,24 +15734,24 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  Future future_open(const int32_t queue_size) {
+  Future future_open(const int32_t capacity) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->future_open(queue_size);
+        return ifaces_[i]->future_open(capacity);
       } else {
-        ifaces_[i]->future_open(queue_size);
+        ifaces_[i]->future_open(capacity);
       }
     }
   }
 
-  Future open_future(const int32_t queue_size) {
+  Future open_future(const int32_t capacity) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        return ifaces_[i]->open_future(queue_size);
+        return ifaces_[i]->open_future(capacity);
       } else {
-        ifaces_[i]->open_future(queue_size);
+        ifaces_[i]->open_future(capacity);
       }
     }
   }
@@ -15705,74 +15770,74 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  void future_get_result(Result& _return, const Future ff) {
+  void future_get_result(Result& _return, const Future ff, const int32_t timeout_millis) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->future_get_result(_return, ff);
+        ifaces_[i]->future_get_result(_return, ff, timeout_millis);
         return;
       } else {
-        ifaces_[i]->future_get_result(_return, ff);
+        ifaces_[i]->future_get_result(_return, ff, timeout_millis);
       }
     }
   }
 
-  void get_future_result(Result& _return, const Future ff) {
+  void get_future_result(Result& _return, const Future ff, const int32_t timeout_millis) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_future_result(_return, ff);
+        ifaces_[i]->get_future_result(_return, ff, timeout_millis);
         return;
       } else {
-        ifaces_[i]->get_future_result(_return, ff);
+        ifaces_[i]->get_future_result(_return, ff, timeout_millis);
       }
     }
   }
 
-  void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff) {
+  void future_get_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->future_get_result_as_arrays(_return, ff);
+        ifaces_[i]->future_get_result_as_arrays(_return, ff, timeout_millis);
         return;
       } else {
-        ifaces_[i]->future_get_result_as_arrays(_return, ff);
+        ifaces_[i]->future_get_result_as_arrays(_return, ff, timeout_millis);
       }
     }
   }
 
-  void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff) {
+  void get_future_result_as_arrays(ResultAsArrays& _return, const Future ff, const int32_t timeout_millis) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_future_result_as_arrays(_return, ff);
+        ifaces_[i]->get_future_result_as_arrays(_return, ff, timeout_millis);
         return;
       } else {
-        ifaces_[i]->get_future_result_as_arrays(_return, ff);
+        ifaces_[i]->get_future_result_as_arrays(_return, ff, timeout_millis);
       }
     }
   }
 
-  void future_get_result_serialized(ResultSerialized& _return, const Future ff) {
+  void future_get_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->future_get_result_serialized(_return, ff);
+        ifaces_[i]->future_get_result_serialized(_return, ff, timeout_millis);
         return;
       } else {
-        ifaces_[i]->future_get_result_serialized(_return, ff);
+        ifaces_[i]->future_get_result_serialized(_return, ff, timeout_millis);
       }
     }
   }
 
-  void get_future_result_serialized(ResultSerialized& _return, const Future ff) {
+  void get_future_result_serialized(ResultSerialized& _return, const Future ff, const int32_t timeout_millis) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       if (i == sz - 1) {
-        ifaces_[i]->get_future_result_serialized(_return, ff);
+        ifaces_[i]->get_future_result_serialized(_return, ff, timeout_millis);
         return;
       } else {
-        ifaces_[i]->get_future_result_serialized(_return, ff);
+        ifaces_[i]->get_future_result_serialized(_return, ff, timeout_millis);
       }
     }
   }
@@ -16333,10 +16398,10 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
-  void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells, const bool flush) {
+  void set_cells_serialized(const Namespace ns, const std::string& table_name, const CellsSerialized& cells) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
-      ifaces_[i]->set_cells_serialized(ns, table_name, cells, flush);
+      ifaces_[i]->set_cells_serialized(ns, table_name, cells);
     }
   }
 

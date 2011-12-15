@@ -45,7 +45,7 @@ begin
       client.async_mutator_flush(mutator_async_2)
       num_results=0
       while (true)
-        result = client.future_get_result(future)
+        result = client.future_get_result(future, 0)
         if result.is_empty || result.is_error || result.is_scan
           break
         end
@@ -70,7 +70,7 @@ begin
       expected_cells=6
       num_cells=0
       while (true)
-        result = client.future_get_result(future)
+        result = client.future_get_result(future, 0)
         if result.is_empty || result.is_error || !result.is_scan
           break
         end

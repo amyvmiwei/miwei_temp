@@ -92,7 +92,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
           if (i==strs.length)
             throw new ParseException("Bad OPTIONS spec", i);
           int value = Integer.parseInt(strs[i]);
-          m_base_spec.setRevs(value);
+          m_base_spec.setVersions(value);
         }
         else if (strs[i].equals("CELL_LIMIT")) {
           i++;

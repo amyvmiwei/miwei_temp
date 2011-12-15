@@ -198,8 +198,8 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
   if (tss.__isset.cell_limit_per_family)
     hss.cell_limit_per_family = tss.cell_limit_per_family;
 
-  if (tss.__isset.revs)
-    hss.max_versions = tss.revs;
+  if (tss.__isset.versions)
+    hss.max_versions = tss.versions;
 
   if (tss.__isset.start_time)
     hss.time_interval.first = tss.start_time;
@@ -496,7 +496,7 @@ public:
     m_client = new Hypertable::Client();
     m_next_namespace_id = 1;
     m_next_future_id = 1;
-    m_future_queue_size = Config::get_i32("ThriftBroker.Future.QueueSize");
+    m_future_capacity = Config::get_i32("ThriftBroker.Future.Capacity");
   }
 
   virtual void
@@ -964,30 +964,33 @@ public:
     LOG_API_FINISH_E(" cell.size="<< cell.size());
   }
 
-  virtual ThriftGen::Future future_open(int queue_size) {
+  virtual ThriftGen::Future future_open(int capacity) {
     ThriftGen::Future id;
-    LOG_API_START("queue_size=" << queue_size);
+    LOG_API_START("capacity=" << capacity);
     try {
-      queue_size = (queue_size <= 0) ? m_future_queue_size : queue_size;
-      FuturePtr future_ptr = new Hypertable::Future(queue_size);
+      capacity = (capacity <= 0) ? m_future_capacity : capacity;
+      FuturePtr future_ptr = new Hypertable::Future(capacity);
       id = get_future_id(&future_ptr);
-    } RETHROW("queue_size=" << queue_size)
+    } RETHROW("capacity=" << capacity)
     LOG_API_FINISH_E(" future=" << id);
     return id;
   }
-  virtual ThriftGen::Future open_future(int queue_size) {
-    return future_open(queue_size);
+  virtual ThriftGen::Future open_future(int capacity) {
+    return future_open(capacity);
   }
 
   virtual void
-  future_get_result(ThriftGen::Result &tresult, ThriftGen::Future ff) {
+  future_get_result(ThriftGen::Result &tresult, ThriftGen::Future ff, int timeout_millis) {
 
     LOG_API_START("future=" << ff);
 
     try {
       FuturePtr future_ptr = get_future(ff);
       ResultPtr hresult;
-      bool done = !(future_ptr->get(hresult));
+      bool timed_out = false;
+      bool done = !(future_ptr->get(hresult, (uint32_t)timeout_millis, timed_out));
+      if (timed_out)
+	THROW_TE(Error::REQUEST_TIMEOUT, "Failed to fetch Future result");
       if (done) {
         tresult.is_empty = true;
         tresult.id = 0;
@@ -1001,19 +1004,22 @@ public:
     } RETHROW("future=" << ff)
   }
   virtual void
-  get_future_result(ThriftGen::Result &tresult, ThriftGen::Future ff) {
-    future_get_result(tresult, ff);
+  get_future_result(ThriftGen::Result &tresult, ThriftGen::Future ff, int timeout_millis) {
+    future_get_result(tresult, ff, timeout_millis);
   }
 
 
   virtual void
-  future_get_result_as_arrays(ThriftGen::ResultAsArrays &tresult, ThriftGen::Future ff) {
+  future_get_result_as_arrays(ThriftGen::ResultAsArrays &tresult, ThriftGen::Future ff, int timeout_millis) {
 
     LOG_API_START("future=" << ff);
     try {
       FuturePtr future_ptr = get_future(ff);
       ResultPtr hresult;
-      bool done = !(future_ptr->get(hresult));
+      bool timed_out = false;
+      bool done = !(future_ptr->get(hresult, (uint32_t)timeout_millis, timed_out));
+      if (timed_out)
+	THROW_TE(Error::REQUEST_TIMEOUT, "Failed to fetch Future result");
       if (done) {
         tresult.is_empty = true;
         tresult.id = 0;
@@ -1027,19 +1033,22 @@ public:
     } RETHROW("future=" << ff)
   }
   virtual void
-  get_future_result_as_arrays(ThriftGen::ResultAsArrays &tresult, ThriftGen::Future ff) {
-    future_get_result_as_arrays(tresult, ff);
+  get_future_result_as_arrays(ThriftGen::ResultAsArrays &tresult, ThriftGen::Future ff, int timeout_millis) {
+    future_get_result_as_arrays(tresult, ff, timeout_millis);
   }
 
   virtual void
-  future_get_result_serialized(ThriftGen::ResultSerialized &tresult, ThriftGen::Future ff) {
+  future_get_result_serialized(ThriftGen::ResultSerialized &tresult, ThriftGen::Future ff, int timeout_millis) {
 
     LOG_API_START("future=" << ff);
 
     try {
       FuturePtr future_ptr = get_future(ff);
       ResultPtr hresult;
-      bool done = !(future_ptr->get(hresult));
+      bool timed_out = false;
+      bool done = !(future_ptr->get(hresult, (uint32_t)timeout_millis, timed_out));
+      if (timed_out)
+	THROW_TE(Error::REQUEST_TIMEOUT, "Failed to fetch Future result");
       if (done) {
         tresult.is_empty = true;
         tresult.id = 0;
@@ -1054,8 +1063,8 @@ public:
     } RETHROW("future=" << ff)
   }
   virtual void
-  get_future_result_serialized(ThriftGen::ResultSerialized &tresult, ThriftGen::Future ff) {
-    future_get_result_serialized(tresult, ff);
+  get_future_result_serialized(ThriftGen::ResultSerialized &tresult, ThriftGen::Future ff, int timeout_millis) {
+    future_get_result_serialized(tresult, ff, timeout_millis);
   }
 
 
@@ -1367,7 +1376,7 @@ public:
 
   virtual void
   set_cells_serialized(const ThriftGen::Namespace ns, const String& table,
-                       const CellsSerialized &cells, const bool flush) {
+                       const CellsSerialized &cells) {
 
     LOG_API_START("ns="<< ns <<" table=" << table<<" cell_serialized.size="<< cells.size()<<" flush="<<flush);
     try {
@@ -1380,8 +1389,6 @@ public:
         cb.add(hcell, false);
       }
       mutator->set_cells(cb.get());
-      if (flush || reader.flush())
-        mutator->flush();
     } RETHROW(" ns="<< ns <<" table=" << table<<" cell_serialized.size="<< cells.size()<<" flush="<<flush);
 
     LOG_API_FINISH;
@@ -2255,7 +2262,7 @@ private:
   ::int64_t        m_next_future_id;
   FutureMap        m_future_map;
   Mutex            m_future_mutex;
-  ::int32_t        m_future_queue_size;
+  ::int32_t        m_future_capacity;
   SharedMutatorMap m_shared_mutator_map;
   ::int32_t        m_next_threshold;
   ClientPtr        m_client;

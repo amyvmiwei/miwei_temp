@@ -159,7 +159,7 @@ public class BasicClientTest {
 
         int num_flushes=0;
         while (true) {
-          result = client.future_get_result(future);
+	  result = client.future_get_result(future, 0);
           if (result.is_empty || result.is_error || result.is_scan)
             break;
           num_flushes++;
@@ -187,7 +187,7 @@ public class BasicClientTest {
         energy_scanner = client.async_scanner_open(ns, "FruitEnergy", future, ss);
         Result result;
         while (true) {
-          result = client.future_get_result(future);
+	  result = client.future_get_result(future, 0);
           if (result.is_empty || result.is_error || !result.is_scan)
             break;
           for(int ii=0; ii< result.cells.size(); ++ii) {

@@ -388,7 +388,7 @@ class ScanSpec:
    - row_intervals
    - cell_intervals
    - return_deletes
-   - revs
+   - versions
    - row_limit
    - start_time
    - end_time
@@ -408,7 +408,7 @@ class ScanSpec:
     (1, TType.LIST, 'row_intervals', (TType.STRUCT,(RowInterval, RowInterval.thrift_spec)), None, ), # 1
     (2, TType.LIST, 'cell_intervals', (TType.STRUCT,(CellInterval, CellInterval.thrift_spec)), None, ), # 2
     (3, TType.BOOL, 'return_deletes', None, False, ), # 3
-    (4, TType.I32, 'revs', None, 0, ), # 4
+    (4, TType.I32, 'versions', None, 0, ), # 4
     (5, TType.I32, 'row_limit', None, 0, ), # 5
     (6, TType.I64, 'start_time', None, None, ), # 6
     (7, TType.I64, 'end_time', None, None, ), # 7
@@ -423,11 +423,11 @@ class ScanSpec:
     (16, TType.I32, 'cell_offset', None, 0, ), # 16
   )
 
-  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], revs=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[14][4], cell_limit_per_family=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4], row_offset=thrift_spec[15][4], cell_offset=thrift_spec[16][4],):
+  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], versions=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[14][4], cell_limit_per_family=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4], row_offset=thrift_spec[15][4], cell_offset=thrift_spec[16][4],):
     self.row_intervals = row_intervals
     self.cell_intervals = cell_intervals
     self.return_deletes = return_deletes
-    self.revs = revs
+    self.versions = versions
     self.row_limit = row_limit
     self.start_time = start_time
     self.end_time = end_time
@@ -479,7 +479,7 @@ class ScanSpec:
           iprot.skip(ftype)
       elif fid == 4:
         if ftype == TType.I32:
-          self.revs = iprot.readI32();
+          self.versions = iprot.readI32();
         else:
           iprot.skip(ftype)
       elif fid == 5:
@@ -575,9 +575,9 @@ class ScanSpec:
       oprot.writeFieldBegin('return_deletes', TType.BOOL, 3)
       oprot.writeBool(self.return_deletes)
       oprot.writeFieldEnd()
-    if self.revs is not None:
-      oprot.writeFieldBegin('revs', TType.I32, 4)
-      oprot.writeI32(self.revs)
+    if self.versions is not None:
+      oprot.writeFieldBegin('versions', TType.I32, 4)
+      oprot.writeI32(self.versions)
       oprot.writeFieldEnd()
     if self.row_limit is not None:
       oprot.writeFieldBegin('row_limit', TType.I32, 5)

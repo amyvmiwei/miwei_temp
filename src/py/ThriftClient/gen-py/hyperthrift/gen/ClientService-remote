@@ -31,16 +31,16 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  Namespace open_namespace(string ns)'
   print '  void namespace_close(Namespace ns)'
   print '  void close_namespace(Namespace ns)'
-  print '  Future future_open(i32 queue_size)'
-  print '  Future open_future(i32 queue_size)'
+  print '  Future future_open(i32 capacity)'
+  print '  Future open_future(i32 capacity)'
   print '  void future_cancel(Future ff)'
   print '  void cancel_future(Future ff)'
-  print '  Result future_get_result(Future ff)'
-  print '  Result get_future_result(Future ff)'
-  print '  ResultAsArrays future_get_result_as_arrays(Future ff)'
-  print '  ResultAsArrays get_future_result_as_arrays(Future ff)'
-  print '  ResultSerialized future_get_result_serialized(Future ff)'
-  print '  ResultSerialized get_future_result_serialized(Future ff)'
+  print '  Result future_get_result(Future ff, i32 timeout_millis)'
+  print '  Result get_future_result(Future ff, i32 timeout_millis)'
+  print '  ResultAsArrays future_get_result_as_arrays(Future ff, i32 timeout_millis)'
+  print '  ResultAsArrays get_future_result_as_arrays(Future ff, i32 timeout_millis)'
+  print '  ResultSerialized future_get_result_serialized(Future ff, i32 timeout_millis)'
+  print '  ResultSerialized get_future_result_serialized(Future ff, i32 timeout_millis)'
   print '  bool future_is_empty(Future ff)'
   print '  bool future_is_full(Future ff)'
   print '  bool future_is_cancelled(Future ff)'
@@ -100,7 +100,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void mutator_set_cells_as_arrays(Mutator mutator,  cells)'
   print '  void set_cells_as_arrays(Namespace ns, string table_name,  cells)'
   print '  void mutator_set_cells_serialized(Mutator mutator, CellsSerialized cells, bool flush)'
-  print '  void set_cells_serialized(Namespace ns, string table_name, CellsSerialized cells, bool flush)'
+  print '  void set_cells_serialized(Namespace ns, string table_name, CellsSerialized cells)'
   print '  void mutator_flush(Mutator mutator)'
   print '  void flush_mutator(Mutator mutator)'
   print '  void async_mutator_set_cell(MutatorAsync mutator, Cell cell)'
@@ -275,40 +275,40 @@ elif cmd == 'cancel_future':
   pp.pprint(client.cancel_future(eval(args[0]),))
 
 elif cmd == 'future_get_result':
-  if len(args) != 1:
-    print 'future_get_result requires 1 args'
+  if len(args) != 2:
+    print 'future_get_result requires 2 args'
     sys.exit(1)
-  pp.pprint(client.future_get_result(eval(args[0]),))
+  pp.pprint(client.future_get_result(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'get_future_result':
-  if len(args) != 1:
-    print 'get_future_result requires 1 args'
+  if len(args) != 2:
+    print 'get_future_result requires 2 args'
     sys.exit(1)
-  pp.pprint(client.get_future_result(eval(args[0]),))
+  pp.pprint(client.get_future_result(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'future_get_result_as_arrays':
-  if len(args) != 1:
-    print 'future_get_result_as_arrays requires 1 args'
+  if len(args) != 2:
+    print 'future_get_result_as_arrays requires 2 args'
     sys.exit(1)
-  pp.pprint(client.future_get_result_as_arrays(eval(args[0]),))
+  pp.pprint(client.future_get_result_as_arrays(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'get_future_result_as_arrays':
-  if len(args) != 1:
-    print 'get_future_result_as_arrays requires 1 args'
+  if len(args) != 2:
+    print 'get_future_result_as_arrays requires 2 args'
     sys.exit(1)
-  pp.pprint(client.get_future_result_as_arrays(eval(args[0]),))
+  pp.pprint(client.get_future_result_as_arrays(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'future_get_result_serialized':
-  if len(args) != 1:
-    print 'future_get_result_serialized requires 1 args'
+  if len(args) != 2:
+    print 'future_get_result_serialized requires 2 args'
     sys.exit(1)
-  pp.pprint(client.future_get_result_serialized(eval(args[0]),))
+  pp.pprint(client.future_get_result_serialized(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'get_future_result_serialized':
-  if len(args) != 1:
-    print 'get_future_result_serialized requires 1 args'
+  if len(args) != 2:
+    print 'get_future_result_serialized requires 2 args'
     sys.exit(1)
-  pp.pprint(client.get_future_result_serialized(eval(args[0]),))
+  pp.pprint(client.get_future_result_serialized(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'future_is_empty':
   if len(args) != 1:
@@ -665,10 +665,10 @@ elif cmd == 'mutator_set_cells_serialized':
   pp.pprint(client.mutator_set_cells_serialized(eval(args[0]),eval(args[1]),eval(args[2]),))
 
 elif cmd == 'set_cells_serialized':
-  if len(args) != 4:
-    print 'set_cells_serialized requires 4 args'
+  if len(args) != 3:
+    print 'set_cells_serialized requires 3 args'
     sys.exit(1)
-  pp.pprint(client.set_cells_serialized(eval(args[0]),args[1],eval(args[2]),eval(args[3]),))
+  pp.pprint(client.set_cells_serialized(eval(args[0]),args[1],eval(args[2]),))
 
 elif cmd == 'mutator_flush':
   if len(args) != 1:

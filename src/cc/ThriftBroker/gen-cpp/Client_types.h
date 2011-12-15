@@ -231,11 +231,11 @@ class CellInterval {
 };
 
 typedef struct _ScanSpec__isset {
-  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), revs(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), cell_limit_per_family(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false), row_offset(false), cell_offset(false) {}
+  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), versions(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), cell_limit_per_family(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false), row_offset(false), cell_offset(false) {}
   bool row_intervals;
   bool cell_intervals;
   bool return_deletes;
-  bool revs;
+  bool versions;
   bool row_limit;
   bool start_time;
   bool end_time;
@@ -256,7 +256,7 @@ class ScanSpec {
   static const char* ascii_fingerprint; // = "06910BA995D9609370329554F16A7F0D";
   static const uint8_t binary_fingerprint[16]; // = {0x06,0x91,0x0B,0xA9,0x95,0xD9,0x60,0x93,0x70,0x32,0x95,0x54,0xF1,0x6A,0x7F,0x0D};
 
-  ScanSpec() : return_deletes(false), revs(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), cell_limit_per_family(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false), row_offset(0), cell_offset(0) {
+  ScanSpec() : return_deletes(false), versions(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), cell_limit_per_family(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false), row_offset(0), cell_offset(0) {
   }
 
   virtual ~ScanSpec() throw() {}
@@ -264,7 +264,7 @@ class ScanSpec {
   std::vector<RowInterval>  row_intervals;
   std::vector<CellInterval>  cell_intervals;
   bool return_deletes;
-  int32_t revs;
+  int32_t versions;
   int32_t row_limit;
   int64_t start_time;
   int64_t end_time;
@@ -295,9 +295,9 @@ class ScanSpec {
     __isset.return_deletes = true;
   }
 
-  void __set_revs(const int32_t val) {
-    revs = val;
-    __isset.revs = true;
+  void __set_versions(const int32_t val) {
+    versions = val;
+    __isset.versions = true;
   }
 
   void __set_row_limit(const int32_t val) {
@@ -374,9 +374,9 @@ class ScanSpec {
       return false;
     else if (__isset.return_deletes && !(return_deletes == rhs.return_deletes))
       return false;
-    if (__isset.revs != rhs.__isset.revs)
+    if (__isset.versions != rhs.__isset.versions)
       return false;
-    else if (__isset.revs && !(revs == rhs.revs))
+    else if (__isset.versions && !(versions == rhs.versions))
       return false;
     if (__isset.row_limit != rhs.__isset.row_limit)
       return false;

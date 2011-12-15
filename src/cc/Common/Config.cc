@@ -411,8 +411,8 @@ void DefaultPolicy::init_options() {
     ("ThriftBroker.Timeout", i32(), "Timeout (ms) for thrift broker")
     ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "
         "thrift broker")
-    ("ThriftBroker.Future.QueueSize", i32()->default_value(10), "Capacity "
-        "of result queue for Future objects")
+    ("ThriftBroker.Future.Capacity", i32()->default_value(50*M), "Capacity "
+        "of result queue (in bytes) for Future objects")
     ("ThriftBroker.NextThreshold", i32()->default_value(128*K), "Total size  "
         "threshold for (size of cell data) for thrift broker next calls")
     ("ThriftBroker.API.Logging", boo()->default_value(false), "Enable or "

@@ -185,7 +185,7 @@ struct ScanSpec {
   1: optional list<RowInterval> row_intervals
   2: optional list<CellInterval> cell_intervals
   3: optional bool return_deletes = 0
-  4: optional i32 revs = 0
+  4: optional i32 versions = 0
   5: optional i32 row_limit = 0
   6: optional i64 start_time
   7: optional i64 end_time
@@ -635,11 +635,11 @@ service ClientService {
   
   /**
    * Open a future object 
-   * @param queue_size - num of results the future object can enqueue without blocking threads  
+   * @param capacity - Amount of result data the future object can enqueue without blocking threads  
    */
-  Future future_open(1:i32 queue_size = 0)
+  Future future_open(1:i32 capacity = 0)
       throws (1:ClientException e),
-  Future open_future(1:i32 queue_size = 0)
+  Future open_future(1:i32 capacity = 0)
       throws (1:ClientException e),
   
   /**
@@ -656,24 +656,24 @@ service ClientService {
    * @param ff - Future object which has the asynchronous results
    * @return - result from async scanner/mutator
    */
-  Result future_get_result(1:Future ff) throws (1:ClientException e),
-  Result get_future_result(1:Future ff) throws (1:ClientException e),
+  Result future_get_result(1:Future ff, 2:i32 timeout_millis = 0) throws (1:ClientException e),
+  Result get_future_result(1:Future ff, 2:i32 timeout_millis = 0) throws (1:ClientException e),
   
   /**
    * Fetch asynchronous results 
    * @param ff - Future object which has the asynchronous results
    * @return - result from async scanner/mutator
    */
-  ResultAsArrays future_get_result_as_arrays(1:Future ff) throws (1:ClientException e),
-  ResultAsArrays get_future_result_as_arrays(1:Future ff) throws (1:ClientException e),
+  ResultAsArrays future_get_result_as_arrays(1:Future ff, 2:i32 timeout_millis = 0) throws (1:ClientException e),
+  ResultAsArrays get_future_result_as_arrays(1:Future ff, 2:i32 timeout_millis = 0) throws (1:ClientException e),
   
   /**
    * Fetch asynchronous results 
    * @param ff - Future object which has the asynchronous results
    * @return - result from async scanner/mutator
    */
-  ResultSerialized future_get_result_serialized(1:Future ff) throws (1:ClientException e),
-  ResultSerialized get_future_result_serialized(1:Future ff) throws (1:ClientException e),
+  ResultSerialized future_get_result_serialized(1:Future ff, 2:i32 timeout_millis = 0) throws (1:ClientException e),
+  ResultSerialized get_future_result_serialized(1:Future ff, 2:i32 timeout_millis = 0) throws (1:ClientException e),
   
   /**
    * Check if future object's queue is empty
@@ -770,8 +770,8 @@ service ClientService {
   /**
    * Alternative interface returning buffer of serialized cells
    */
-  CellsSerialized scanner_get_cells_serialized(1:Scanner scanner)
-  CellsSerialized next_cells_serialized(1:Scanner scanner)
+  CellsSerialized scanner_get_cells_serialized(1:Scanner scanner) throws (1:ClientException e),
+  CellsSerialized next_cells_serialized(1:Scanner scanner) throws (1:ClientException e),
 
   /**
    * Iterate over rows of a scanner
@@ -1069,7 +1069,7 @@ service ClientService {
   /**
    * Alternative interface using buffer of serialized cells
    */
-   void set_cells_serialized(1:Namespace ns, 2:string table_name, 3:CellsSerialized cells, 4:bool flush = 0)
+   void set_cells_serialized(1:Namespace ns, 2:string table_name, 3:CellsSerialized cells)
       throws (1:ClientException e),
 
   /**

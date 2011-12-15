@@ -1454,16 +1454,16 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_future_open_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_future_open_args->mk_accessors( qw( queue_size ) );
+Hypertable::ThriftGen::ClientService_future_open_args->mk_accessors( qw( capacity ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
-  $self->{queue_size} = 0;
+  $self->{capacity} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
-    if (defined $vals->{queue_size}) {
-      $self->{queue_size} = $vals->{queue_size};
+    if (defined $vals->{capacity}) {
+      $self->{capacity} = $vals->{capacity};
     }
   }
   return bless ($self, $classname);
@@ -1489,7 +1489,7 @@ sub read {
     SWITCH: for($fid)
     {
       /^1$/ && do{      if ($ftype == TType::I32) {
-        $xfer += $input->readI32(\$self->{queue_size});
+        $xfer += $input->readI32(\$self->{capacity});
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -1506,9 +1506,9 @@ sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ClientService_future_open_args');
-  if (defined $self->{queue_size}) {
-    $xfer += $output->writeFieldBegin('queue_size', TType::I32, 1);
-    $xfer += $output->writeI32($self->{queue_size});
+  if (defined $self->{capacity}) {
+    $xfer += $output->writeFieldBegin('capacity', TType::I32, 1);
+    $xfer += $output->writeI32($self->{capacity});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -1598,16 +1598,16 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_open_future_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_open_future_args->mk_accessors( qw( queue_size ) );
+Hypertable::ThriftGen::ClientService_open_future_args->mk_accessors( qw( capacity ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
-  $self->{queue_size} = 0;
+  $self->{capacity} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
-    if (defined $vals->{queue_size}) {
-      $self->{queue_size} = $vals->{queue_size};
+    if (defined $vals->{capacity}) {
+      $self->{capacity} = $vals->{capacity};
     }
   }
   return bless ($self, $classname);
@@ -1633,7 +1633,7 @@ sub read {
     SWITCH: for($fid)
     {
       /^1$/ && do{      if ($ftype == TType::I32) {
-        $xfer += $input->readI32(\$self->{queue_size});
+        $xfer += $input->readI32(\$self->{capacity});
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -1650,9 +1650,9 @@ sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ClientService_open_future_args');
-  if (defined $self->{queue_size}) {
-    $xfer += $output->writeFieldBegin('queue_size', TType::I32, 1);
-    $xfer += $output->writeI32($self->{queue_size});
+  if (defined $self->{capacity}) {
+    $xfer += $output->writeFieldBegin('capacity', TType::I32, 1);
+    $xfer += $output->writeI32($self->{capacity});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -2000,16 +2000,20 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_future_get_result_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_future_get_result_args->mk_accessors( qw( ff ) );
+Hypertable::ThriftGen::ClientService_future_get_result_args->mk_accessors( qw( ff timeout_millis ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
   $self->{ff} = undef;
+  $self->{timeout_millis} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{ff}) {
       $self->{ff} = $vals->{ff};
+    }
+    if (defined $vals->{timeout_millis}) {
+      $self->{timeout_millis} = $vals->{timeout_millis};
     }
   }
   return bless ($self, $classname);
@@ -2040,6 +2044,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{timeout_millis});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -2055,6 +2065,11 @@ sub write {
   if (defined $self->{ff}) {
     $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
     $xfer += $output->writeI64($self->{ff});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{timeout_millis}) {
+    $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+    $xfer += $output->writeI32($self->{timeout_millis});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -2145,16 +2160,20 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_get_future_result_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_get_future_result_args->mk_accessors( qw( ff ) );
+Hypertable::ThriftGen::ClientService_get_future_result_args->mk_accessors( qw( ff timeout_millis ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
   $self->{ff} = undef;
+  $self->{timeout_millis} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{ff}) {
       $self->{ff} = $vals->{ff};
+    }
+    if (defined $vals->{timeout_millis}) {
+      $self->{timeout_millis} = $vals->{timeout_millis};
     }
   }
   return bless ($self, $classname);
@@ -2185,6 +2204,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{timeout_millis});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -2200,6 +2225,11 @@ sub write {
   if (defined $self->{ff}) {
     $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
     $xfer += $output->writeI64($self->{ff});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{timeout_millis}) {
+    $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+    $xfer += $output->writeI32($self->{timeout_millis});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -2290,16 +2320,20 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_future_get_result_as_arrays_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_future_get_result_as_arrays_args->mk_accessors( qw( ff ) );
+Hypertable::ThriftGen::ClientService_future_get_result_as_arrays_args->mk_accessors( qw( ff timeout_millis ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
   $self->{ff} = undef;
+  $self->{timeout_millis} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{ff}) {
       $self->{ff} = $vals->{ff};
+    }
+    if (defined $vals->{timeout_millis}) {
+      $self->{timeout_millis} = $vals->{timeout_millis};
     }
   }
   return bless ($self, $classname);
@@ -2330,6 +2364,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{timeout_millis});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -2345,6 +2385,11 @@ sub write {
   if (defined $self->{ff}) {
     $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
     $xfer += $output->writeI64($self->{ff});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{timeout_millis}) {
+    $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+    $xfer += $output->writeI32($self->{timeout_millis});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -2435,16 +2480,20 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_get_future_result_as_arrays_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_get_future_result_as_arrays_args->mk_accessors( qw( ff ) );
+Hypertable::ThriftGen::ClientService_get_future_result_as_arrays_args->mk_accessors( qw( ff timeout_millis ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
   $self->{ff} = undef;
+  $self->{timeout_millis} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{ff}) {
       $self->{ff} = $vals->{ff};
+    }
+    if (defined $vals->{timeout_millis}) {
+      $self->{timeout_millis} = $vals->{timeout_millis};
     }
   }
   return bless ($self, $classname);
@@ -2475,6 +2524,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{timeout_millis});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -2490,6 +2545,11 @@ sub write {
   if (defined $self->{ff}) {
     $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
     $xfer += $output->writeI64($self->{ff});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{timeout_millis}) {
+    $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+    $xfer += $output->writeI32($self->{timeout_millis});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -2580,16 +2640,20 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_future_get_result_serialized_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_future_get_result_serialized_args->mk_accessors( qw( ff ) );
+Hypertable::ThriftGen::ClientService_future_get_result_serialized_args->mk_accessors( qw( ff timeout_millis ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
   $self->{ff} = undef;
+  $self->{timeout_millis} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{ff}) {
       $self->{ff} = $vals->{ff};
+    }
+    if (defined $vals->{timeout_millis}) {
+      $self->{timeout_millis} = $vals->{timeout_millis};
     }
   }
   return bless ($self, $classname);
@@ -2620,6 +2684,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{timeout_millis});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -2635,6 +2705,11 @@ sub write {
   if (defined $self->{ff}) {
     $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
     $xfer += $output->writeI64($self->{ff});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{timeout_millis}) {
+    $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+    $xfer += $output->writeI32($self->{timeout_millis});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -2725,16 +2800,20 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_get_future_result_serialized_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_get_future_result_serialized_args->mk_accessors( qw( ff ) );
+Hypertable::ThriftGen::ClientService_get_future_result_serialized_args->mk_accessors( qw( ff timeout_millis ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
   $self->{ff} = undef;
+  $self->{timeout_millis} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{ff}) {
       $self->{ff} = $vals->{ff};
+    }
+    if (defined $vals->{timeout_millis}) {
+      $self->{timeout_millis} = $vals->{timeout_millis};
     }
   }
   return bless ($self, $classname);
@@ -2765,6 +2844,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{timeout_millis});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -2780,6 +2865,11 @@ sub write {
   if (defined $self->{ff}) {
     $xfer += $output->writeFieldBegin('ff', TType::I64, 1);
     $xfer += $output->writeI64($self->{ff});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{timeout_millis}) {
+    $xfer += $output->writeFieldBegin('timeout_millis', TType::I32, 2);
+    $xfer += $output->writeI32($self->{timeout_millis});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -5983,9 +6073,13 @@ sub new {
   my $self      = {};
   my $vals      = shift || {};
   $self->{success} = undef;
+  $self->{e} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{success}) {
       $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
     }
   }
   return bless ($self, $classname);
@@ -6016,6 +6110,13 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -6031,6 +6132,11 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
     $xfer += $output->writeString($self->{success});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -6111,9 +6217,13 @@ sub new {
   my $self      = {};
   my $vals      = shift || {};
   $self->{success} = undef;
+  $self->{e} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{success}) {
       $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
     }
   }
   return bless ($self, $classname);
@@ -6144,6 +6254,13 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -6159,6 +6276,11 @@ sub write {
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
     $xfer += $output->writeString($self->{success});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -12543,7 +12665,7 @@ sub write {
 
 package Hypertable::ThriftGen::ClientService_set_cells_serialized_args;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ClientService_set_cells_serialized_args->mk_accessors( qw( ns table_name cells flush ) );
+Hypertable::ThriftGen::ClientService_set_cells_serialized_args->mk_accessors( qw( ns table_name cells ) );
 
 sub new {
   my $classname = shift;
@@ -12552,7 +12674,6 @@ sub new {
   $self->{ns} = undef;
   $self->{table_name} = undef;
   $self->{cells} = undef;
-  $self->{flush} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{ns}) {
       $self->{ns} = $vals->{ns};
@@ -12562,9 +12683,6 @@ sub new {
     }
     if (defined $vals->{cells}) {
       $self->{cells} = $vals->{cells};
-    }
-    if (defined $vals->{flush}) {
-      $self->{flush} = $vals->{flush};
     }
   }
   return bless ($self, $classname);
@@ -12607,12 +12725,6 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^4$/ && do{      if ($ftype == TType::BOOL) {
-        $xfer += $input->readBool(\$self->{flush});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -12638,11 +12750,6 @@ sub write {
   if (defined $self->{cells}) {
     $xfer += $output->writeFieldBegin('cells', TType::STRING, 3);
     $xfer += $output->writeString($self->{cells});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{flush}) {
-    $xfer += $output->writeFieldBegin('flush', TType::BOOL, 4);
-    $xfer += $output->writeBool($self->{flush});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -18921,14 +19028,14 @@ sub close_namespace{
 
 sub future_open{
   my $self = shift;
-  my $queue_size = shift;
+  my $capacity = shift;
 
   die 'implement interface';
 }
 
 sub open_future{
   my $self = shift;
-  my $queue_size = shift;
+  my $capacity = shift;
 
   die 'implement interface';
 }
@@ -18950,6 +19057,7 @@ sub cancel_future{
 sub future_get_result{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   die 'implement interface';
 }
@@ -18957,6 +19065,7 @@ sub future_get_result{
 sub get_future_result{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   die 'implement interface';
 }
@@ -18964,6 +19073,7 @@ sub get_future_result{
 sub future_get_result_as_arrays{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   die 'implement interface';
 }
@@ -18971,6 +19081,7 @@ sub future_get_result_as_arrays{
 sub get_future_result_as_arrays{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   die 'implement interface';
 }
@@ -18978,6 +19089,7 @@ sub get_future_result_as_arrays{
 sub future_get_result_serialized{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   die 'implement interface';
 }
@@ -18985,6 +19097,7 @@ sub future_get_result_serialized{
 sub get_future_result_serialized{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   die 'implement interface';
 }
@@ -19472,7 +19585,6 @@ sub set_cells_serialized{
   my $ns = shift;
   my $table_name = shift;
   my $cells = shift;
-  my $flush = shift;
 
   die 'implement interface';
 }
@@ -19879,15 +19991,15 @@ sub close_namespace{
 sub future_open{
   my ($self, $request) = @_;
 
-  my $queue_size = ($request->{'queue_size'}) ? $request->{'queue_size'} : undef;
-  return $self->{impl}->future_open($queue_size);
+  my $capacity = ($request->{'capacity'}) ? $request->{'capacity'} : undef;
+  return $self->{impl}->future_open($capacity);
 }
 
 sub open_future{
   my ($self, $request) = @_;
 
-  my $queue_size = ($request->{'queue_size'}) ? $request->{'queue_size'} : undef;
-  return $self->{impl}->open_future($queue_size);
+  my $capacity = ($request->{'capacity'}) ? $request->{'capacity'} : undef;
+  return $self->{impl}->open_future($capacity);
 }
 
 sub future_cancel{
@@ -19908,42 +20020,48 @@ sub future_get_result{
   my ($self, $request) = @_;
 
   my $ff = ($request->{'ff'}) ? $request->{'ff'} : undef;
-  return $self->{impl}->future_get_result($ff);
+  my $timeout_millis = ($request->{'timeout_millis'}) ? $request->{'timeout_millis'} : undef;
+  return $self->{impl}->future_get_result($ff, $timeout_millis);
 }
 
 sub get_future_result{
   my ($self, $request) = @_;
 
   my $ff = ($request->{'ff'}) ? $request->{'ff'} : undef;
-  return $self->{impl}->get_future_result($ff);
+  my $timeout_millis = ($request->{'timeout_millis'}) ? $request->{'timeout_millis'} : undef;
+  return $self->{impl}->get_future_result($ff, $timeout_millis);
 }
 
 sub future_get_result_as_arrays{
   my ($self, $request) = @_;
 
   my $ff = ($request->{'ff'}) ? $request->{'ff'} : undef;
-  return $self->{impl}->future_get_result_as_arrays($ff);
+  my $timeout_millis = ($request->{'timeout_millis'}) ? $request->{'timeout_millis'} : undef;
+  return $self->{impl}->future_get_result_as_arrays($ff, $timeout_millis);
 }
 
 sub get_future_result_as_arrays{
   my ($self, $request) = @_;
 
   my $ff = ($request->{'ff'}) ? $request->{'ff'} : undef;
-  return $self->{impl}->get_future_result_as_arrays($ff);
+  my $timeout_millis = ($request->{'timeout_millis'}) ? $request->{'timeout_millis'} : undef;
+  return $self->{impl}->get_future_result_as_arrays($ff, $timeout_millis);
 }
 
 sub future_get_result_serialized{
   my ($self, $request) = @_;
 
   my $ff = ($request->{'ff'}) ? $request->{'ff'} : undef;
-  return $self->{impl}->future_get_result_serialized($ff);
+  my $timeout_millis = ($request->{'timeout_millis'}) ? $request->{'timeout_millis'} : undef;
+  return $self->{impl}->future_get_result_serialized($ff, $timeout_millis);
 }
 
 sub get_future_result_serialized{
   my ($self, $request) = @_;
 
   my $ff = ($request->{'ff'}) ? $request->{'ff'} : undef;
-  return $self->{impl}->get_future_result_serialized($ff);
+  my $timeout_millis = ($request->{'timeout_millis'}) ? $request->{'timeout_millis'} : undef;
+  return $self->{impl}->get_future_result_serialized($ff, $timeout_millis);
 }
 
 sub future_is_empty{
@@ -20430,8 +20548,7 @@ sub set_cells_serialized{
   my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
   my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
   my $cells = ($request->{'cells'}) ? $request->{'cells'} : undef;
-  my $flush = ($request->{'flush'}) ? $request->{'flush'} : undef;
-  return $self->{impl}->set_cells_serialized($ns, $table_name, $cells, $flush);
+  return $self->{impl}->set_cells_serialized($ns, $table_name, $cells);
 }
 
 sub mutator_flush{
@@ -21218,19 +21335,19 @@ sub recv_close_namespace{
 }
 sub future_open{
   my $self = shift;
-  my $queue_size = shift;
+  my $capacity = shift;
 
-    $self->send_future_open($queue_size);
+    $self->send_future_open($capacity);
   return $self->recv_future_open();
 }
 
 sub send_future_open{
   my $self = shift;
-  my $queue_size = shift;
+  my $capacity = shift;
 
   $self->{output}->writeMessageBegin('future_open', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_future_open_args();
-  $args->{queue_size} = $queue_size;
+  $args->{capacity} = $capacity;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -21264,19 +21381,19 @@ sub recv_future_open{
 }
 sub open_future{
   my $self = shift;
-  my $queue_size = shift;
+  my $capacity = shift;
 
-    $self->send_open_future($queue_size);
+    $self->send_open_future($capacity);
   return $self->recv_open_future();
 }
 
 sub send_open_future{
   my $self = shift;
-  my $queue_size = shift;
+  my $capacity = shift;
 
   $self->{output}->writeMessageBegin('open_future', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_open_future_args();
-  $args->{queue_size} = $queue_size;
+  $args->{capacity} = $capacity;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -21397,18 +21514,21 @@ sub recv_cancel_future{
 sub future_get_result{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
-    $self->send_future_get_result($ff);
+    $self->send_future_get_result($ff, $timeout_millis);
   return $self->recv_future_get_result();
 }
 
 sub send_future_get_result{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   $self->{output}->writeMessageBegin('future_get_result', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_future_get_result_args();
   $args->{ff} = $ff;
+  $args->{timeout_millis} = $timeout_millis;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -21443,18 +21563,21 @@ sub recv_future_get_result{
 sub get_future_result{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
-    $self->send_get_future_result($ff);
+    $self->send_get_future_result($ff, $timeout_millis);
   return $self->recv_get_future_result();
 }
 
 sub send_get_future_result{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   $self->{output}->writeMessageBegin('get_future_result', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_get_future_result_args();
   $args->{ff} = $ff;
+  $args->{timeout_millis} = $timeout_millis;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -21489,18 +21612,21 @@ sub recv_get_future_result{
 sub future_get_result_as_arrays{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
-    $self->send_future_get_result_as_arrays($ff);
+    $self->send_future_get_result_as_arrays($ff, $timeout_millis);
   return $self->recv_future_get_result_as_arrays();
 }
 
 sub send_future_get_result_as_arrays{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   $self->{output}->writeMessageBegin('future_get_result_as_arrays', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_future_get_result_as_arrays_args();
   $args->{ff} = $ff;
+  $args->{timeout_millis} = $timeout_millis;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -21535,18 +21661,21 @@ sub recv_future_get_result_as_arrays{
 sub get_future_result_as_arrays{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
-    $self->send_get_future_result_as_arrays($ff);
+    $self->send_get_future_result_as_arrays($ff, $timeout_millis);
   return $self->recv_get_future_result_as_arrays();
 }
 
 sub send_get_future_result_as_arrays{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   $self->{output}->writeMessageBegin('get_future_result_as_arrays', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_get_future_result_as_arrays_args();
   $args->{ff} = $ff;
+  $args->{timeout_millis} = $timeout_millis;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -21581,18 +21710,21 @@ sub recv_get_future_result_as_arrays{
 sub future_get_result_serialized{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
-    $self->send_future_get_result_serialized($ff);
+    $self->send_future_get_result_serialized($ff, $timeout_millis);
   return $self->recv_future_get_result_serialized();
 }
 
 sub send_future_get_result_serialized{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   $self->{output}->writeMessageBegin('future_get_result_serialized', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_future_get_result_serialized_args();
   $args->{ff} = $ff;
+  $args->{timeout_millis} = $timeout_millis;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -21627,18 +21759,21 @@ sub recv_future_get_result_serialized{
 sub get_future_result_serialized{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
-    $self->send_get_future_result_serialized($ff);
+    $self->send_get_future_result_serialized($ff, $timeout_millis);
   return $self->recv_get_future_result_serialized();
 }
 
 sub send_get_future_result_serialized{
   my $self = shift;
   my $ff = shift;
+  my $timeout_millis = shift;
 
   $self->{output}->writeMessageBegin('get_future_result_serialized', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_get_future_result_serialized_args();
   $args->{ff} = $ff;
+  $args->{timeout_millis} = $timeout_millis;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -22637,6 +22772,9 @@ sub recv_scanner_get_cells_serialized{
   if (defined $result->{success} ) {
     return $result->{success};
   }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
   die "scanner_get_cells_serialized failed: unknown result";
 }
 sub next_cells_serialized{
@@ -22679,6 +22817,9 @@ sub recv_next_cells_serialized{
 
   if (defined $result->{success} ) {
     return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
   }
   die "next_cells_serialized failed: unknown result";
 }
@@ -24494,9 +24635,8 @@ sub set_cells_serialized{
   my $ns = shift;
   my $table_name = shift;
   my $cells = shift;
-  my $flush = shift;
 
-    $self->send_set_cells_serialized($ns, $table_name, $cells, $flush);
+    $self->send_set_cells_serialized($ns, $table_name, $cells);
   $self->recv_set_cells_serialized();
 }
 
@@ -24505,14 +24645,12 @@ sub send_set_cells_serialized{
   my $ns = shift;
   my $table_name = shift;
   my $cells = shift;
-  my $flush = shift;
 
   $self->{output}->writeMessageBegin('set_cells_serialized', TMessageType::CALL, $self->{seqid});
   my $args = new Hypertable::ThriftGen::ClientService_set_cells_serialized_args();
   $args->{ns} = $ns;
   $args->{table_name} = $table_name;
   $args->{cells} = $cells;
-  $args->{flush} = $flush;
   $args->write($self->{output});
   $self->{output}->writeMessageEnd();
   $self->{output}->getTransport()->flush();
@@ -26591,7 +26729,7 @@ sub process_future_open {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_future_open_result();
     eval {
-      $result->{success} = $self->{handler}->future_open($args->queue_size);
+      $result->{success} = $self->{handler}->future_open($args->capacity);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
@@ -26608,7 +26746,7 @@ sub process_open_future {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_open_future_result();
     eval {
-      $result->{success} = $self->{handler}->open_future($args->queue_size);
+      $result->{success} = $self->{handler}->open_future($args->capacity);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
@@ -26659,7 +26797,7 @@ sub process_future_get_result {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_future_get_result_result();
     eval {
-      $result->{success} = $self->{handler}->future_get_result($args->ff);
+      $result->{success} = $self->{handler}->future_get_result($args->ff, $args->timeout_millis);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
@@ -26676,7 +26814,7 @@ sub process_get_future_result {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_get_future_result_result();
     eval {
-      $result->{success} = $self->{handler}->get_future_result($args->ff);
+      $result->{success} = $self->{handler}->get_future_result($args->ff, $args->timeout_millis);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
@@ -26693,7 +26831,7 @@ sub process_future_get_result_as_arrays {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_future_get_result_as_arrays_result();
     eval {
-      $result->{success} = $self->{handler}->future_get_result_as_arrays($args->ff);
+      $result->{success} = $self->{handler}->future_get_result_as_arrays($args->ff, $args->timeout_millis);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
@@ -26710,7 +26848,7 @@ sub process_get_future_result_as_arrays {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_get_future_result_as_arrays_result();
     eval {
-      $result->{success} = $self->{handler}->get_future_result_as_arrays($args->ff);
+      $result->{success} = $self->{handler}->get_future_result_as_arrays($args->ff, $args->timeout_millis);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
@@ -26727,7 +26865,7 @@ sub process_future_get_result_serialized {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_future_get_result_serialized_result();
     eval {
-      $result->{success} = $self->{handler}->future_get_result_serialized($args->ff);
+      $result->{success} = $self->{handler}->future_get_result_serialized($args->ff, $args->timeout_millis);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
@@ -26744,7 +26882,7 @@ sub process_get_future_result_serialized {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_get_future_result_serialized_result();
     eval {
-      $result->{success} = $self->{handler}->get_future_result_serialized($args->ff);
+      $result->{success} = $self->{handler}->get_future_result_serialized($args->ff, $args->timeout_millis);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }
@@ -27100,7 +27238,11 @@ sub process_scanner_get_cells_serialized {
     $args->read($input);
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_scanner_get_cells_serialized_result();
-    $result->{success} = $self->{handler}->scanner_get_cells_serialized($args->scanner);
+    eval {
+      $result->{success} = $self->{handler}->scanner_get_cells_serialized($args->scanner);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
     $output->writeMessageBegin('scanner_get_cells_serialized', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
@@ -27113,7 +27255,11 @@ sub process_next_cells_serialized {
     $args->read($input);
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_next_cells_serialized_result();
-    $result->{success} = $self->{handler}->next_cells_serialized($args->scanner);
+    eval {
+      $result->{success} = $self->{handler}->next_cells_serialized($args->scanner);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
     $output->writeMessageBegin('next_cells_serialized', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
@@ -27756,7 +27902,7 @@ sub process_set_cells_serialized {
     $input->readMessageEnd();
     my $result = new Hypertable::ThriftGen::ClientService_set_cells_serialized_result();
     eval {
-      $self->{handler}->set_cells_serialized($args->ns, $args->table_name, $args->cells, $args->flush);
+      $self->{handler}->set_cells_serialized($args->ns, $args->table_name, $args->cells);
     }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
       $result->{e} = $@;
     }

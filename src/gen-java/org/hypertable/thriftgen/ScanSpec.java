@@ -79,7 +79,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
   private static final org.apache.thrift.protocol.TField ROW_INTERVALS_FIELD_DESC = new org.apache.thrift.protocol.TField("row_intervals", org.apache.thrift.protocol.TType.LIST, (short)1);
   private static final org.apache.thrift.protocol.TField CELL_INTERVALS_FIELD_DESC = new org.apache.thrift.protocol.TField("cell_intervals", org.apache.thrift.protocol.TType.LIST, (short)2);
   private static final org.apache.thrift.protocol.TField RETURN_DELETES_FIELD_DESC = new org.apache.thrift.protocol.TField("return_deletes", org.apache.thrift.protocol.TType.BOOL, (short)3);
-  private static final org.apache.thrift.protocol.TField REVS_FIELD_DESC = new org.apache.thrift.protocol.TField("revs", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField VERSIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("versions", org.apache.thrift.protocol.TType.I32, (short)4);
   private static final org.apache.thrift.protocol.TField ROW_LIMIT_FIELD_DESC = new org.apache.thrift.protocol.TField("row_limit", org.apache.thrift.protocol.TType.I32, (short)5);
   private static final org.apache.thrift.protocol.TField START_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("start_time", org.apache.thrift.protocol.TType.I64, (short)6);
   private static final org.apache.thrift.protocol.TField END_TIME_FIELD_DESC = new org.apache.thrift.protocol.TField("end_time", org.apache.thrift.protocol.TType.I64, (short)7);
@@ -96,7 +96,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
   public List<RowInterval> row_intervals; // required
   public List<CellInterval> cell_intervals; // required
   public boolean return_deletes; // required
-  public int revs; // required
+  public int versions; // required
   public int row_limit; // required
   public long start_time; // required
   public long end_time; // required
@@ -115,7 +115,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     ROW_INTERVALS((short)1, "row_intervals"),
     CELL_INTERVALS((short)2, "cell_intervals"),
     RETURN_DELETES((short)3, "return_deletes"),
-    REVS((short)4, "revs"),
+    VERSIONS((short)4, "versions"),
     ROW_LIMIT((short)5, "row_limit"),
     START_TIME((short)6, "start_time"),
     END_TIME((short)7, "end_time"),
@@ -148,8 +148,8 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
           return CELL_INTERVALS;
         case 3: // RETURN_DELETES
           return RETURN_DELETES;
-        case 4: // REVS
-          return REVS;
+        case 4: // VERSIONS
+          return VERSIONS;
         case 5: // ROW_LIMIT
           return ROW_LIMIT;
         case 6: // START_TIME
@@ -215,7 +215,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
 
   // isset id assignments
   private static final int __RETURN_DELETES_ISSET_ID = 0;
-  private static final int __REVS_ISSET_ID = 1;
+  private static final int __VERSIONS_ISSET_ID = 1;
   private static final int __ROW_LIMIT_ISSET_ID = 2;
   private static final int __START_TIME_ISSET_ID = 3;
   private static final int __END_TIME_ISSET_ID = 4;
@@ -238,7 +238,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
             new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, CellInterval.class))));
     tmpMap.put(_Fields.RETURN_DELETES, new org.apache.thrift.meta_data.FieldMetaData("return_deletes", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
-    tmpMap.put(_Fields.REVS, new org.apache.thrift.meta_data.FieldMetaData("revs", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.VERSIONS, new org.apache.thrift.meta_data.FieldMetaData("versions", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     tmpMap.put(_Fields.ROW_LIMIT, new org.apache.thrift.meta_data.FieldMetaData("row_limit", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
@@ -272,7 +272,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
   public ScanSpec() {
     this.return_deletes = false;
 
-    this.revs = 0;
+    this.versions = 0;
 
     this.row_limit = 0;
 
@@ -311,7 +311,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       this.cell_intervals = __this__cell_intervals;
     }
     this.return_deletes = other.return_deletes;
-    this.revs = other.revs;
+    this.versions = other.versions;
     this.row_limit = other.row_limit;
     this.start_time = other.start_time;
     this.end_time = other.end_time;
@@ -346,7 +346,7 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     this.cell_intervals = null;
     this.return_deletes = false;
 
-    this.revs = 0;
+    this.versions = 0;
 
     this.row_limit = 0;
 
@@ -472,27 +472,27 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     __isset_bit_vector.set(__RETURN_DELETES_ISSET_ID, value);
   }
 
-  public int getRevs() {
-    return this.revs;
+  public int getVersions() {
+    return this.versions;
   }
 
-  public ScanSpec setRevs(int revs) {
-    this.revs = revs;
-    setRevsIsSet(true);
+  public ScanSpec setVersions(int versions) {
+    this.versions = versions;
+    setVersionsIsSet(true);
     return this;
   }
 
-  public void unsetRevs() {
-    __isset_bit_vector.clear(__REVS_ISSET_ID);
+  public void unsetVersions() {
+    __isset_bit_vector.clear(__VERSIONS_ISSET_ID);
   }
 
-  /** Returns true if field revs is set (has been assigned a value) and false otherwise */
-  public boolean isSetRevs() {
-    return __isset_bit_vector.get(__REVS_ISSET_ID);
+  /** Returns true if field versions is set (has been assigned a value) and false otherwise */
+  public boolean isSetVersions() {
+    return __isset_bit_vector.get(__VERSIONS_ISSET_ID);
   }
 
-  public void setRevsIsSet(boolean value) {
-    __isset_bit_vector.set(__REVS_ISSET_ID, value);
+  public void setVersionsIsSet(boolean value) {
+    __isset_bit_vector.set(__VERSIONS_ISSET_ID, value);
   }
 
   public int getRow_limit() {
@@ -815,11 +815,11 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       }
       break;
 
-    case REVS:
+    case VERSIONS:
       if (value == null) {
-        unsetRevs();
+        unsetVersions();
       } else {
-        setRevs((Integer)value);
+        setVersions((Integer)value);
       }
       break;
 
@@ -933,8 +933,8 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
     case RETURN_DELETES:
       return Boolean.valueOf(isReturn_deletes());
 
-    case REVS:
-      return Integer.valueOf(getRevs());
+    case VERSIONS:
+      return Integer.valueOf(getVersions());
 
     case ROW_LIMIT:
       return Integer.valueOf(getRow_limit());
@@ -989,8 +989,8 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       return isSetCell_intervals();
     case RETURN_DELETES:
       return isSetReturn_deletes();
-    case REVS:
-      return isSetRevs();
+    case VERSIONS:
+      return isSetVersions();
     case ROW_LIMIT:
       return isSetRow_limit();
     case START_TIME:
@@ -1059,12 +1059,12 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
         return false;
     }
 
-    boolean this_present_revs = true && this.isSetRevs();
-    boolean that_present_revs = true && that.isSetRevs();
-    if (this_present_revs || that_present_revs) {
-      if (!(this_present_revs && that_present_revs))
+    boolean this_present_versions = true && this.isSetVersions();
+    boolean that_present_versions = true && that.isSetVersions();
+    if (this_present_versions || that_present_versions) {
+      if (!(this_present_versions && that_present_versions))
         return false;
-      if (this.revs != that.revs)
+      if (this.versions != that.versions)
         return false;
     }
 
@@ -1222,12 +1222,12 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetRevs()).compareTo(typedOther.isSetRevs());
+    lastComparison = Boolean.valueOf(isSetVersions()).compareTo(typedOther.isSetVersions());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetRevs()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.revs, typedOther.revs);
+    if (isSetVersions()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.versions, typedOther.versions);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -1413,10 +1413,10 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
           break;
-        case 4: // REVS
+        case 4: // VERSIONS
           if (field.type == org.apache.thrift.protocol.TType.I32) {
-            this.revs = iprot.readI32();
-            setRevsIsSet(true);
+            this.versions = iprot.readI32();
+            setVersionsIsSet(true);
           } else { 
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
           }
@@ -1572,9 +1572,9 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       oprot.writeBool(this.return_deletes);
       oprot.writeFieldEnd();
     }
-    if (isSetRevs()) {
-      oprot.writeFieldBegin(REVS_FIELD_DESC);
-      oprot.writeI32(this.revs);
+    if (isSetVersions()) {
+      oprot.writeFieldBegin(VERSIONS_FIELD_DESC);
+      oprot.writeI32(this.versions);
       oprot.writeFieldEnd();
     }
     if (isSetRow_limit()) {
@@ -1684,10 +1684,10 @@ public class ScanSpec implements org.apache.thrift.TBase<ScanSpec, ScanSpec._Fie
       sb.append(this.return_deletes);
       first = false;
     }
-    if (isSetRevs()) {
+    if (isSetVersions()) {
       if (!first) sb.append(", ");
-      sb.append("revs:");
-      sb.append(this.revs);
+      sb.append("versions:");
+      sb.append(this.versions);
       first = false;
     }
     if (isSetRow_limit()) {

@@ -328,7 +328,7 @@ void test_async(Thrift::Client *client, std::ostream &out) {
     Result result;
     int num_results=0;
     while (true) {
-      client->future_get_result(result, ff);
+      client->future_get_result(result, ff, 0);
       ++num_results;
       if (result.is_empty)
         break;
@@ -399,7 +399,7 @@ void test_async(Thrift::Client *client, std::ostream &out) {
 
   while (true) {
     if (num_results<2) {
-      client->future_get_result(result, ff);
+      client->future_get_result(result, ff, 0);
       if (result.is_empty)
         break;
       if (result.is_scan == false) {
@@ -429,7 +429,7 @@ void test_async(Thrift::Client *client, std::ostream &out) {
       }
     }
     else if (num_results < 4) {
-      client->future_get_result_as_arrays(result_as_arrays, ff);
+      client->future_get_result_as_arrays(result_as_arrays, ff, 0);
       if (result_as_arrays.is_empty)
         break;
       if (result_as_arrays.is_scan == false) {
@@ -466,7 +466,7 @@ void test_async(Thrift::Client *client, std::ostream &out) {
       }
     }
     else if (num_results < 6){
-      client->future_get_result_serialized(result_serialized, ff);
+      client->future_get_result_serialized(result_serialized, ff, 0);
       if (result_serialized.is_empty)
         break;
       if (result_serialized.is_scan == false) {
