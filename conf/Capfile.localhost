@@ -17,6 +17,8 @@ role :localhost, "localhost"
 set :prompt_stop, 1
 set :prompt_clean, 1
 
+ssh_options[:forward_agent] = true
+
 def supported_pkgs
   {"bz2"=>1, "deb"=>1, "rpm"=>1}
 end
