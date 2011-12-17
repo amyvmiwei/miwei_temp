@@ -879,6 +879,8 @@ service ClientService {
    * @param mutate_spec - mutator specification
    *
    */
+  void shared_mutator_refresh(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec) 
+      throws (1:ClientException e),
   void refresh_shared_mutator(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec) 
       throws (1:ClientException e),
 
@@ -896,12 +898,16 @@ service ClientService {
    *
    * @param cells - set of cells to be written 
    */
+  void shared_mutator_set_cells(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:list<Cell> cells)
+      throws (1:ClientException e),
   void offer_cells(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:list<Cell> cells)
       throws (1:ClientException e),
   
   /**
    * Alternative to offer_cell interface using array as cell
    */
+  void shared_mutator_set_cells_as_arrays(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
+                           4:list<CellAsArray> cells) throws (1:ClientException e),
   void offer_cells_as_arrays(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
                            4:list<CellAsArray> cells) throws (1:ClientException e),
   
@@ -919,12 +925,16 @@ service ClientService {
    *
    * @param cell - cell to be written 
    */
+  void shared_mutator_set_cell(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:Cell cell) 
+      throws (1:ClientException e),
   void offer_cell(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 4:Cell cell) 
       throws (1:ClientException e),
   
   /**
    * Alternative to offer_cell interface using array as cell
    */
+  void shared_mutator_set_cell_as_array(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
+      4:CellAsArray cell) throws (1:ClientException e),
   void offer_cell_as_array(1:Namespace ns, 2:string table_name, 3:MutateSpec mutate_spec, 
       4:CellAsArray cell) throws (1:ClientException e),
 

@@ -579,7 +579,7 @@ class Iface:
     """
     pass
 
-  def refresh_shared_mutator(self, ns, table_name, mutate_spec):
+  def shared_mutator_refresh(self, ns, table_name, mutate_spec):
     """
     Create a shared mutator with specified MutateSpec.
     Delete and recreate it if the mutator exists.
@@ -598,7 +598,16 @@ class Iface:
     """
     pass
 
-  def offer_cells(self, ns, table_name, mutate_spec, cells):
+  def refresh_shared_mutator(self, ns, table_name, mutate_spec):
+    """
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+    """
+    pass
+
+  def shared_mutator_set_cells(self, ns, table_name, mutate_spec, cells):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
@@ -621,7 +630,17 @@ class Iface:
     """
     pass
 
-  def offer_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
+  def offer_cells(self, ns, table_name, mutate_spec, cells):
+    """
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+     - cells
+    """
+    pass
+
+  def shared_mutator_set_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
     """
     Alternative to offer_cell interface using array as cell
 
@@ -633,7 +652,17 @@ class Iface:
     """
     pass
 
-  def offer_cell(self, ns, table_name, mutate_spec, cell):
+  def offer_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
+    """
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+     - cells
+    """
+    pass
+
+  def shared_mutator_set_cell(self, ns, table_name, mutate_spec, cell):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
@@ -656,10 +685,30 @@ class Iface:
     """
     pass
 
-  def offer_cell_as_array(self, ns, table_name, mutate_spec, cell):
+  def offer_cell(self, ns, table_name, mutate_spec, cell):
+    """
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+     - cell
+    """
+    pass
+
+  def shared_mutator_set_cell_as_array(self, ns, table_name, mutate_spec, cell):
     """
     Alternative to offer_cell interface using array as cell
 
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+     - cell
+    """
+    pass
+
+  def offer_cell_as_array(self, ns, table_name, mutate_spec, cell):
+    """
     Parameters:
      - ns
      - table_name
@@ -3301,7 +3350,7 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "get_cells_serialized failed: unknown result");
 
-  def refresh_shared_mutator(self, ns, table_name, mutate_spec):
+  def shared_mutator_refresh(self, ns, table_name, mutate_spec):
     """
     Create a shared mutator with specified MutateSpec.
     Delete and recreate it if the mutator exists.
@@ -3313,6 +3362,40 @@ class Client(Iface):
     @param mutate_spec - mutator specification
 
 
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+    """
+    self.send_shared_mutator_refresh(ns, table_name, mutate_spec)
+    self.recv_shared_mutator_refresh()
+
+  def send_shared_mutator_refresh(self, ns, table_name, mutate_spec):
+    self._oprot.writeMessageBegin('shared_mutator_refresh', TMessageType.CALL, self._seqid)
+    args = shared_mutator_refresh_args()
+    args.ns = ns
+    args.table_name = table_name
+    args.mutate_spec = mutate_spec
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_shared_mutator_refresh(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = shared_mutator_refresh_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e is not None:
+      raise result.e
+    return
+
+  def refresh_shared_mutator(self, ns, table_name, mutate_spec):
+    """
     Parameters:
      - ns
      - table_name
@@ -3345,7 +3428,7 @@ class Client(Iface):
       raise result.e
     return
 
-  def offer_cells(self, ns, table_name, mutate_spec, cells):
+  def shared_mutator_set_cells(self, ns, table_name, mutate_spec, cells):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
@@ -3360,6 +3443,42 @@ class Client(Iface):
 
     @param cells - set of cells to be written
 
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+     - cells
+    """
+    self.send_shared_mutator_set_cells(ns, table_name, mutate_spec, cells)
+    self.recv_shared_mutator_set_cells()
+
+  def send_shared_mutator_set_cells(self, ns, table_name, mutate_spec, cells):
+    self._oprot.writeMessageBegin('shared_mutator_set_cells', TMessageType.CALL, self._seqid)
+    args = shared_mutator_set_cells_args()
+    args.ns = ns
+    args.table_name = table_name
+    args.mutate_spec = mutate_spec
+    args.cells = cells
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_shared_mutator_set_cells(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = shared_mutator_set_cells_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e is not None:
+      raise result.e
+    return
+
+  def offer_cells(self, ns, table_name, mutate_spec, cells):
+    """
     Parameters:
      - ns
      - table_name
@@ -3394,10 +3513,46 @@ class Client(Iface):
       raise result.e
     return
 
-  def offer_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
+  def shared_mutator_set_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
     """
     Alternative to offer_cell interface using array as cell
 
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+     - cells
+    """
+    self.send_shared_mutator_set_cells_as_arrays(ns, table_name, mutate_spec, cells)
+    self.recv_shared_mutator_set_cells_as_arrays()
+
+  def send_shared_mutator_set_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
+    self._oprot.writeMessageBegin('shared_mutator_set_cells_as_arrays', TMessageType.CALL, self._seqid)
+    args = shared_mutator_set_cells_as_arrays_args()
+    args.ns = ns
+    args.table_name = table_name
+    args.mutate_spec = mutate_spec
+    args.cells = cells
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_shared_mutator_set_cells_as_arrays(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = shared_mutator_set_cells_as_arrays_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e is not None:
+      raise result.e
+    return
+
+  def offer_cells_as_arrays(self, ns, table_name, mutate_spec, cells):
+    """
     Parameters:
      - ns
      - table_name
@@ -3432,7 +3587,7 @@ class Client(Iface):
       raise result.e
     return
 
-  def offer_cell(self, ns, table_name, mutate_spec, cell):
+  def shared_mutator_set_cell(self, ns, table_name, mutate_spec, cell):
     """
     Open a shared periodic mutator which causes cells to be written asyncronously.
     Users beware: calling this method merely writes
@@ -3447,6 +3602,42 @@ class Client(Iface):
 
     @param cell - cell to be written
 
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+     - cell
+    """
+    self.send_shared_mutator_set_cell(ns, table_name, mutate_spec, cell)
+    self.recv_shared_mutator_set_cell()
+
+  def send_shared_mutator_set_cell(self, ns, table_name, mutate_spec, cell):
+    self._oprot.writeMessageBegin('shared_mutator_set_cell', TMessageType.CALL, self._seqid)
+    args = shared_mutator_set_cell_args()
+    args.ns = ns
+    args.table_name = table_name
+    args.mutate_spec = mutate_spec
+    args.cell = cell
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_shared_mutator_set_cell(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = shared_mutator_set_cell_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e is not None:
+      raise result.e
+    return
+
+  def offer_cell(self, ns, table_name, mutate_spec, cell):
+    """
     Parameters:
      - ns
      - table_name
@@ -3481,10 +3672,46 @@ class Client(Iface):
       raise result.e
     return
 
-  def offer_cell_as_array(self, ns, table_name, mutate_spec, cell):
+  def shared_mutator_set_cell_as_array(self, ns, table_name, mutate_spec, cell):
     """
     Alternative to offer_cell interface using array as cell
 
+    Parameters:
+     - ns
+     - table_name
+     - mutate_spec
+     - cell
+    """
+    self.send_shared_mutator_set_cell_as_array(ns, table_name, mutate_spec, cell)
+    self.recv_shared_mutator_set_cell_as_array()
+
+  def send_shared_mutator_set_cell_as_array(self, ns, table_name, mutate_spec, cell):
+    self._oprot.writeMessageBegin('shared_mutator_set_cell_as_array', TMessageType.CALL, self._seqid)
+    args = shared_mutator_set_cell_as_array_args()
+    args.ns = ns
+    args.table_name = table_name
+    args.mutate_spec = mutate_spec
+    args.cell = cell
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_shared_mutator_set_cell_as_array(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = shared_mutator_set_cell_as_array_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.e is not None:
+      raise result.e
+    return
+
+  def offer_cell_as_array(self, ns, table_name, mutate_spec, cell):
+    """
     Parameters:
      - ns
      - table_name
@@ -5728,10 +5955,15 @@ class Processor(Iface, TProcessor):
     self._processMap["get_cells"] = Processor.process_get_cells
     self._processMap["get_cells_as_arrays"] = Processor.process_get_cells_as_arrays
     self._processMap["get_cells_serialized"] = Processor.process_get_cells_serialized
+    self._processMap["shared_mutator_refresh"] = Processor.process_shared_mutator_refresh
     self._processMap["refresh_shared_mutator"] = Processor.process_refresh_shared_mutator
+    self._processMap["shared_mutator_set_cells"] = Processor.process_shared_mutator_set_cells
     self._processMap["offer_cells"] = Processor.process_offer_cells
+    self._processMap["shared_mutator_set_cells_as_arrays"] = Processor.process_shared_mutator_set_cells_as_arrays
     self._processMap["offer_cells_as_arrays"] = Processor.process_offer_cells_as_arrays
+    self._processMap["shared_mutator_set_cell"] = Processor.process_shared_mutator_set_cell
     self._processMap["offer_cell"] = Processor.process_offer_cell
+    self._processMap["shared_mutator_set_cell_as_array"] = Processor.process_shared_mutator_set_cell_as_array
     self._processMap["offer_cell_as_array"] = Processor.process_offer_cell_as_array
     self._processMap["mutator_open"] = Processor.process_mutator_open
     self._processMap["open_mutator"] = Processor.process_open_mutator
@@ -6578,6 +6810,20 @@ class Processor(Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
+  def process_shared_mutator_refresh(self, seqid, iprot, oprot):
+    args = shared_mutator_refresh_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = shared_mutator_refresh_result()
+    try:
+      self._handler.shared_mutator_refresh(args.ns, args.table_name, args.mutate_spec)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("shared_mutator_refresh", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
   def process_refresh_shared_mutator(self, seqid, iprot, oprot):
     args = refresh_shared_mutator_args()
     args.read(iprot)
@@ -6588,6 +6834,20 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("refresh_shared_mutator", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_shared_mutator_set_cells(self, seqid, iprot, oprot):
+    args = shared_mutator_set_cells_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = shared_mutator_set_cells_result()
+    try:
+      self._handler.shared_mutator_set_cells(args.ns, args.table_name, args.mutate_spec, args.cells)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("shared_mutator_set_cells", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -6606,6 +6866,20 @@ class Processor(Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
+  def process_shared_mutator_set_cells_as_arrays(self, seqid, iprot, oprot):
+    args = shared_mutator_set_cells_as_arrays_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = shared_mutator_set_cells_as_arrays_result()
+    try:
+      self._handler.shared_mutator_set_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("shared_mutator_set_cells_as_arrays", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
   def process_offer_cells_as_arrays(self, seqid, iprot, oprot):
     args = offer_cells_as_arrays_args()
     args.read(iprot)
@@ -6620,6 +6894,20 @@ class Processor(Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
+  def process_shared_mutator_set_cell(self, seqid, iprot, oprot):
+    args = shared_mutator_set_cell_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = shared_mutator_set_cell_result()
+    try:
+      self._handler.shared_mutator_set_cell(args.ns, args.table_name, args.mutate_spec, args.cell)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("shared_mutator_set_cell", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
   def process_offer_cell(self, seqid, iprot, oprot):
     args = offer_cell_args()
     args.read(iprot)
@@ -6630,6 +6918,20 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("offer_cell", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_shared_mutator_set_cell_as_array(self, seqid, iprot, oprot):
+    args = shared_mutator_set_cell_as_array_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = shared_mutator_set_cell_as_array_result()
+    try:
+      self._handler.shared_mutator_set_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell)
+    except ClientException, e:
+      result.e = e
+    oprot.writeMessageBegin("shared_mutator_set_cell_as_array", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -15167,6 +15469,152 @@ class get_cells_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
+class shared_mutator_refresh_args:
+  """
+  Attributes:
+   - ns
+   - table_name
+   - mutate_spec
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
+  )
+
+  def __init__(self, ns=None, table_name=None, mutate_spec=None,):
+    self.ns = ns
+    self.table_name = table_name
+    self.mutate_spec = mutate_spec
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('shared_mutator_refresh_args')
+    if self.ns is not None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name is not None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
+      oprot.writeFieldEnd()
+    if self.mutate_spec is not None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class shared_mutator_refresh_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('shared_mutator_refresh_result')
+    if self.e is not None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class refresh_shared_mutator_args:
   """
   Attributes:
@@ -15313,7 +15761,7 @@ class refresh_shared_mutator_result:
   def __ne__(self, other):
     return not (self == other)
 
-class offer_cells_args:
+class shared_mutator_set_cells_args:
   """
   Attributes:
    - ns
@@ -15381,7 +15829,7 @@ class offer_cells_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('offer_cells_args')
+    oprot.writeStructBegin('shared_mutator_set_cells_args')
     if self.ns is not None:
       oprot.writeFieldBegin('ns', TType.I64, 1)
       oprot.writeI64(self.ns)
@@ -15399,6 +15847,173 @@ class offer_cells_args:
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
       for iter199 in self.cells:
         iter199.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class shared_mutator_set_cells_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('shared_mutator_set_cells_result')
+    if self.e is not None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class offer_cells_args:
+  """
+  Attributes:
+   - ns
+   - table_name
+   - mutate_spec
+   - cells
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
+    (4, TType.LIST, 'cells', (TType.STRUCT,(Cell, Cell.thrift_spec)), None, ), # 4
+  )
+
+  def __init__(self, ns=None, table_name=None, mutate_spec=None, cells=None,):
+    self.ns = ns
+    self.table_name = table_name
+    self.mutate_spec = mutate_spec
+    self.cells = cells
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.LIST:
+          self.cells = []
+          (_etype203, _size200) = iprot.readListBegin()
+          for _i204 in xrange(_size200):
+            _elem205 = Cell()
+            _elem205.read(iprot)
+            self.cells.append(_elem205)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('offer_cells_args')
+    if self.ns is not None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name is not None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
+      oprot.writeFieldEnd()
+    if self.mutate_spec is not None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    if self.cells is not None:
+      oprot.writeFieldBegin('cells', TType.LIST, 4)
+      oprot.writeListBegin(TType.STRUCT, len(self.cells))
+      for iter206 in self.cells:
+        iter206.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -15480,6 +16095,180 @@ class offer_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
+class shared_mutator_set_cells_as_arrays_args:
+  """
+  Attributes:
+   - ns
+   - table_name
+   - mutate_spec
+   - cells
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
+    (4, TType.LIST, 'cells', (TType.LIST,(TType.STRING,None)), None, ), # 4
+  )
+
+  def __init__(self, ns=None, table_name=None, mutate_spec=None, cells=None,):
+    self.ns = ns
+    self.table_name = table_name
+    self.mutate_spec = mutate_spec
+    self.cells = cells
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.LIST:
+          self.cells = []
+          (_etype210, _size207) = iprot.readListBegin()
+          for _i211 in xrange(_size207):
+            _elem212 = []
+            (_etype216, _size213) = iprot.readListBegin()
+            for _i217 in xrange(_size213):
+              _elem218 = iprot.readString();
+              _elem212.append(_elem218)
+            iprot.readListEnd()
+            self.cells.append(_elem212)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('shared_mutator_set_cells_as_arrays_args')
+    if self.ns is not None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name is not None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
+      oprot.writeFieldEnd()
+    if self.mutate_spec is not None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    if self.cells is not None:
+      oprot.writeFieldBegin('cells', TType.LIST, 4)
+      oprot.writeListBegin(TType.LIST, len(self.cells))
+      for iter219 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter219))
+        for iter220 in iter219:
+          oprot.writeString(iter220)
+        oprot.writeListEnd()
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class shared_mutator_set_cells_as_arrays_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('shared_mutator_set_cells_as_arrays_result')
+    if self.e is not None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class offer_cells_as_arrays_args:
   """
   Attributes:
@@ -15531,15 +16320,15 @@ class offer_cells_as_arrays_args:
       elif fid == 4:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype203, _size200) = iprot.readListBegin()
-          for _i204 in xrange(_size200):
-            _elem205 = []
-            (_etype209, _size206) = iprot.readListBegin()
-            for _i210 in xrange(_size206):
-              _elem211 = iprot.readString();
-              _elem205.append(_elem211)
+          (_etype224, _size221) = iprot.readListBegin()
+          for _i225 in xrange(_size221):
+            _elem226 = []
+            (_etype230, _size227) = iprot.readListBegin()
+            for _i231 in xrange(_size227):
+              _elem232 = iprot.readString();
+              _elem226.append(_elem232)
             iprot.readListEnd()
-            self.cells.append(_elem205)
+            self.cells.append(_elem226)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -15568,10 +16357,10 @@ class offer_cells_as_arrays_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 4)
       oprot.writeListBegin(TType.LIST, len(self.cells))
-      for iter212 in self.cells:
-        oprot.writeListBegin(TType.STRING, len(iter212))
-        for iter213 in iter212:
-          oprot.writeString(iter213)
+      for iter233 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter233))
+        for iter234 in iter233:
+          oprot.writeString(iter234)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -15632,6 +16421,165 @@ class offer_cells_as_arrays_result:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('offer_cells_as_arrays_result')
+    if self.e is not None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class shared_mutator_set_cell_args:
+  """
+  Attributes:
+   - ns
+   - table_name
+   - mutate_spec
+   - cell
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
+    (4, TType.STRUCT, 'cell', (Cell, Cell.thrift_spec), None, ), # 4
+  )
+
+  def __init__(self, ns=None, table_name=None, mutate_spec=None, cell=None,):
+    self.ns = ns
+    self.table_name = table_name
+    self.mutate_spec = mutate_spec
+    self.cell = cell
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRUCT:
+          self.cell = Cell()
+          self.cell.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('shared_mutator_set_cell_args')
+    if self.ns is not None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name is not None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
+      oprot.writeFieldEnd()
+    if self.mutate_spec is not None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    if self.cell is not None:
+      oprot.writeFieldBegin('cell', TType.STRUCT, 4)
+      self.cell.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class shared_mutator_set_cell_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('shared_mutator_set_cell_result')
     if self.e is not None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)
@@ -15813,6 +16761,172 @@ class offer_cell_result:
   def __ne__(self, other):
     return not (self == other)
 
+class shared_mutator_set_cell_as_array_args:
+  """
+  Attributes:
+   - ns
+   - table_name
+   - mutate_spec
+   - cell
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'ns', None, None, ), # 1
+    (2, TType.STRING, 'table_name', None, None, ), # 2
+    (3, TType.STRUCT, 'mutate_spec', (MutateSpec, MutateSpec.thrift_spec), None, ), # 3
+    (4, TType.LIST, 'cell', (TType.STRING,None), None, ), # 4
+  )
+
+  def __init__(self, ns=None, table_name=None, mutate_spec=None, cell=None,):
+    self.ns = ns
+    self.table_name = table_name
+    self.mutate_spec = mutate_spec
+    self.cell = cell
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.ns = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.table_name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRUCT:
+          self.mutate_spec = MutateSpec()
+          self.mutate_spec.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.LIST:
+          self.cell = []
+          (_etype238, _size235) = iprot.readListBegin()
+          for _i239 in xrange(_size235):
+            _elem240 = iprot.readString();
+            self.cell.append(_elem240)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('shared_mutator_set_cell_as_array_args')
+    if self.ns is not None:
+      oprot.writeFieldBegin('ns', TType.I64, 1)
+      oprot.writeI64(self.ns)
+      oprot.writeFieldEnd()
+    if self.table_name is not None:
+      oprot.writeFieldBegin('table_name', TType.STRING, 2)
+      oprot.writeString(self.table_name)
+      oprot.writeFieldEnd()
+    if self.mutate_spec is not None:
+      oprot.writeFieldBegin('mutate_spec', TType.STRUCT, 3)
+      self.mutate_spec.write(oprot)
+      oprot.writeFieldEnd()
+    if self.cell is not None:
+      oprot.writeFieldBegin('cell', TType.LIST, 4)
+      oprot.writeListBegin(TType.STRING, len(self.cell))
+      for iter241 in self.cell:
+        oprot.writeString(iter241)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class shared_mutator_set_cell_as_array_result:
+  """
+  Attributes:
+   - e
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'e', (ClientException, ClientException.thrift_spec), None, ), # 1
+  )
+
+  def __init__(self, e=None,):
+    self.e = e
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.e = ClientException()
+          self.e.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('shared_mutator_set_cell_as_array_result')
+    if self.e is not None:
+      oprot.writeFieldBegin('e', TType.STRUCT, 1)
+      self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
 class offer_cell_as_array_args:
   """
   Attributes:
@@ -15864,10 +16978,10 @@ class offer_cell_as_array_args:
       elif fid == 4:
         if ftype == TType.LIST:
           self.cell = []
-          (_etype217, _size214) = iprot.readListBegin()
-          for _i218 in xrange(_size214):
-            _elem219 = iprot.readString();
-            self.cell.append(_elem219)
+          (_etype245, _size242) = iprot.readListBegin()
+          for _i246 in xrange(_size242):
+            _elem247 = iprot.readString();
+            self.cell.append(_elem247)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -15896,8 +17010,8 @@ class offer_cell_as_array_args:
     if self.cell is not None:
       oprot.writeFieldBegin('cell', TType.LIST, 4)
       oprot.writeListBegin(TType.STRING, len(self.cell))
-      for iter220 in self.cell:
-        oprot.writeString(iter220)
+      for iter248 in self.cell:
+        oprot.writeString(iter248)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -17691,10 +18805,10 @@ class mutator_set_cell_as_array_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cell = []
-          (_etype224, _size221) = iprot.readListBegin()
-          for _i225 in xrange(_size221):
-            _elem226 = iprot.readString();
-            self.cell.append(_elem226)
+          (_etype252, _size249) = iprot.readListBegin()
+          for _i253 in xrange(_size249):
+            _elem254 = iprot.readString();
+            self.cell.append(_elem254)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -17715,8 +18829,8 @@ class mutator_set_cell_as_array_args:
     if self.cell is not None:
       oprot.writeFieldBegin('cell', TType.LIST, 2)
       oprot.writeListBegin(TType.STRING, len(self.cell))
-      for iter227 in self.cell:
-        oprot.writeString(iter227)
+      for iter255 in self.cell:
+        oprot.writeString(iter255)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -17840,10 +18954,10 @@ class set_cell_as_array_args:
       elif fid == 3:
         if ftype == TType.LIST:
           self.cell = []
-          (_etype231, _size228) = iprot.readListBegin()
-          for _i232 in xrange(_size228):
-            _elem233 = iprot.readString();
-            self.cell.append(_elem233)
+          (_etype259, _size256) = iprot.readListBegin()
+          for _i260 in xrange(_size256):
+            _elem261 = iprot.readString();
+            self.cell.append(_elem261)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -17868,8 +18982,8 @@ class set_cell_as_array_args:
     if self.cell is not None:
       oprot.writeFieldBegin('cell', TType.LIST, 3)
       oprot.writeListBegin(TType.STRING, len(self.cell))
-      for iter234 in self.cell:
-        oprot.writeString(iter234)
+      for iter262 in self.cell:
+        oprot.writeString(iter262)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -17985,11 +19099,11 @@ class mutator_set_cells_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype238, _size235) = iprot.readListBegin()
-          for _i239 in xrange(_size235):
-            _elem240 = Cell()
-            _elem240.read(iprot)
-            self.cells.append(_elem240)
+          (_etype266, _size263) = iprot.readListBegin()
+          for _i267 in xrange(_size263):
+            _elem268 = Cell()
+            _elem268.read(iprot)
+            self.cells.append(_elem268)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -18010,8 +19124,8 @@ class mutator_set_cells_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
-      for iter241 in self.cells:
-        iter241.write(oprot)
+      for iter269 in self.cells:
+        iter269.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -18135,11 +19249,11 @@ class set_cells_args:
       elif fid == 3:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype245, _size242) = iprot.readListBegin()
-          for _i246 in xrange(_size242):
-            _elem247 = Cell()
-            _elem247.read(iprot)
-            self.cells.append(_elem247)
+          (_etype273, _size270) = iprot.readListBegin()
+          for _i274 in xrange(_size270):
+            _elem275 = Cell()
+            _elem275.read(iprot)
+            self.cells.append(_elem275)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -18164,8 +19278,8 @@ class set_cells_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 3)
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
-      for iter248 in self.cells:
-        iter248.write(oprot)
+      for iter276 in self.cells:
+        iter276.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -18281,15 +19395,15 @@ class mutator_set_cells_as_arrays_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype252, _size249) = iprot.readListBegin()
-          for _i253 in xrange(_size249):
-            _elem254 = []
-            (_etype258, _size255) = iprot.readListBegin()
-            for _i259 in xrange(_size255):
-              _elem260 = iprot.readString();
-              _elem254.append(_elem260)
+          (_etype280, _size277) = iprot.readListBegin()
+          for _i281 in xrange(_size277):
+            _elem282 = []
+            (_etype286, _size283) = iprot.readListBegin()
+            for _i287 in xrange(_size283):
+              _elem288 = iprot.readString();
+              _elem282.append(_elem288)
             iprot.readListEnd()
-            self.cells.append(_elem254)
+            self.cells.append(_elem282)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -18310,10 +19424,10 @@ class mutator_set_cells_as_arrays_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.LIST, len(self.cells))
-      for iter261 in self.cells:
-        oprot.writeListBegin(TType.STRING, len(iter261))
-        for iter262 in iter261:
-          oprot.writeString(iter262)
+      for iter289 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter289))
+        for iter290 in iter289:
+          oprot.writeString(iter290)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -18438,15 +19552,15 @@ class set_cells_as_arrays_args:
       elif fid == 3:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype266, _size263) = iprot.readListBegin()
-          for _i267 in xrange(_size263):
-            _elem268 = []
-            (_etype272, _size269) = iprot.readListBegin()
-            for _i273 in xrange(_size269):
-              _elem274 = iprot.readString();
-              _elem268.append(_elem274)
+          (_etype294, _size291) = iprot.readListBegin()
+          for _i295 in xrange(_size291):
+            _elem296 = []
+            (_etype300, _size297) = iprot.readListBegin()
+            for _i301 in xrange(_size297):
+              _elem302 = iprot.readString();
+              _elem296.append(_elem302)
             iprot.readListEnd()
-            self.cells.append(_elem268)
+            self.cells.append(_elem296)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -18471,10 +19585,10 @@ class set_cells_as_arrays_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 3)
       oprot.writeListBegin(TType.LIST, len(self.cells))
-      for iter275 in self.cells:
-        oprot.writeListBegin(TType.STRING, len(iter275))
-        for iter276 in iter275:
-          oprot.writeString(iter276)
+      for iter303 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter303))
+        for iter304 in iter303:
+          oprot.writeString(iter304)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -19391,10 +20505,10 @@ class async_mutator_set_cell_as_array_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cell = []
-          (_etype280, _size277) = iprot.readListBegin()
-          for _i281 in xrange(_size277):
-            _elem282 = iprot.readString();
-            self.cell.append(_elem282)
+          (_etype308, _size305) = iprot.readListBegin()
+          for _i309 in xrange(_size305):
+            _elem310 = iprot.readString();
+            self.cell.append(_elem310)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -19415,8 +20529,8 @@ class async_mutator_set_cell_as_array_args:
     if self.cell is not None:
       oprot.writeFieldBegin('cell', TType.LIST, 2)
       oprot.writeListBegin(TType.STRING, len(self.cell))
-      for iter283 in self.cell:
-        oprot.writeString(iter283)
+      for iter311 in self.cell:
+        oprot.writeString(iter311)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -19532,10 +20646,10 @@ class set_cell_as_array_async_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cell = []
-          (_etype287, _size284) = iprot.readListBegin()
-          for _i288 in xrange(_size284):
-            _elem289 = iprot.readString();
-            self.cell.append(_elem289)
+          (_etype315, _size312) = iprot.readListBegin()
+          for _i316 in xrange(_size312):
+            _elem317 = iprot.readString();
+            self.cell.append(_elem317)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -19556,8 +20670,8 @@ class set_cell_as_array_async_args:
     if self.cell is not None:
       oprot.writeFieldBegin('cell', TType.LIST, 2)
       oprot.writeListBegin(TType.STRING, len(self.cell))
-      for iter290 in self.cell:
-        oprot.writeString(iter290)
+      for iter318 in self.cell:
+        oprot.writeString(iter318)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -19673,11 +20787,11 @@ class async_mutator_set_cells_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype294, _size291) = iprot.readListBegin()
-          for _i295 in xrange(_size291):
-            _elem296 = Cell()
-            _elem296.read(iprot)
-            self.cells.append(_elem296)
+          (_etype322, _size319) = iprot.readListBegin()
+          for _i323 in xrange(_size319):
+            _elem324 = Cell()
+            _elem324.read(iprot)
+            self.cells.append(_elem324)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -19698,8 +20812,8 @@ class async_mutator_set_cells_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
-      for iter297 in self.cells:
-        iter297.write(oprot)
+      for iter325 in self.cells:
+        iter325.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -19815,11 +20929,11 @@ class set_cells_async_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype301, _size298) = iprot.readListBegin()
-          for _i302 in xrange(_size298):
-            _elem303 = Cell()
-            _elem303.read(iprot)
-            self.cells.append(_elem303)
+          (_etype329, _size326) = iprot.readListBegin()
+          for _i330 in xrange(_size326):
+            _elem331 = Cell()
+            _elem331.read(iprot)
+            self.cells.append(_elem331)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -19840,8 +20954,8 @@ class set_cells_async_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.cells))
-      for iter304 in self.cells:
-        iter304.write(oprot)
+      for iter332 in self.cells:
+        iter332.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
@@ -19957,15 +21071,15 @@ class async_mutator_set_cells_as_arrays_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype308, _size305) = iprot.readListBegin()
-          for _i309 in xrange(_size305):
-            _elem310 = []
-            (_etype314, _size311) = iprot.readListBegin()
-            for _i315 in xrange(_size311):
-              _elem316 = iprot.readString();
-              _elem310.append(_elem316)
+          (_etype336, _size333) = iprot.readListBegin()
+          for _i337 in xrange(_size333):
+            _elem338 = []
+            (_etype342, _size339) = iprot.readListBegin()
+            for _i343 in xrange(_size339):
+              _elem344 = iprot.readString();
+              _elem338.append(_elem344)
             iprot.readListEnd()
-            self.cells.append(_elem310)
+            self.cells.append(_elem338)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -19986,10 +21100,10 @@ class async_mutator_set_cells_as_arrays_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.LIST, len(self.cells))
-      for iter317 in self.cells:
-        oprot.writeListBegin(TType.STRING, len(iter317))
-        for iter318 in iter317:
-          oprot.writeString(iter318)
+      for iter345 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter345))
+        for iter346 in iter345:
+          oprot.writeString(iter346)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -20106,15 +21220,15 @@ class set_cells_as_arrays_async_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.cells = []
-          (_etype322, _size319) = iprot.readListBegin()
-          for _i323 in xrange(_size319):
-            _elem324 = []
-            (_etype328, _size325) = iprot.readListBegin()
-            for _i329 in xrange(_size325):
-              _elem330 = iprot.readString();
-              _elem324.append(_elem330)
+          (_etype350, _size347) = iprot.readListBegin()
+          for _i351 in xrange(_size347):
+            _elem352 = []
+            (_etype356, _size353) = iprot.readListBegin()
+            for _i357 in xrange(_size353):
+              _elem358 = iprot.readString();
+              _elem352.append(_elem358)
             iprot.readListEnd()
-            self.cells.append(_elem324)
+            self.cells.append(_elem352)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -20135,10 +21249,10 @@ class set_cells_as_arrays_async_args:
     if self.cells is not None:
       oprot.writeFieldBegin('cells', TType.LIST, 2)
       oprot.writeListBegin(TType.LIST, len(self.cells))
-      for iter331 in self.cells:
-        oprot.writeListBegin(TType.STRING, len(iter331))
-        for iter332 in iter331:
-          oprot.writeString(iter332)
+      for iter359 in self.cells:
+        oprot.writeListBegin(TType.STRING, len(iter359))
+        for iter360 in iter359:
+          oprot.writeString(iter360)
         oprot.writeListEnd()
       oprot.writeListEnd()
       oprot.writeFieldEnd()
@@ -22547,10 +23661,10 @@ class get_tables_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype336, _size333) = iprot.readListBegin()
-          for _i337 in xrange(_size333):
-            _elem338 = iprot.readString();
-            self.success.append(_elem338)
+          (_etype364, _size361) = iprot.readListBegin()
+          for _i365 in xrange(_size361):
+            _elem366 = iprot.readString();
+            self.success.append(_elem366)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -22573,8 +23687,8 @@ class get_tables_result:
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRING, len(self.success))
-      for iter339 in self.success:
-        oprot.writeString(iter339)
+      for iter367 in self.success:
+        oprot.writeString(iter367)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e is not None:
@@ -22687,11 +23801,11 @@ class namespace_get_listing_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype343, _size340) = iprot.readListBegin()
-          for _i344 in xrange(_size340):
-            _elem345 = NamespaceListing()
-            _elem345.read(iprot)
-            self.success.append(_elem345)
+          (_etype371, _size368) = iprot.readListBegin()
+          for _i372 in xrange(_size368):
+            _elem373 = NamespaceListing()
+            _elem373.read(iprot)
+            self.success.append(_elem373)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -22714,8 +23828,8 @@ class namespace_get_listing_result:
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter346 in self.success:
-        iter346.write(oprot)
+      for iter374 in self.success:
+        iter374.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e is not None:
@@ -22828,11 +23942,11 @@ class get_listing_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype350, _size347) = iprot.readListBegin()
-          for _i351 in xrange(_size347):
-            _elem352 = NamespaceListing()
-            _elem352.read(iprot)
-            self.success.append(_elem352)
+          (_etype378, _size375) = iprot.readListBegin()
+          for _i379 in xrange(_size375):
+            _elem380 = NamespaceListing()
+            _elem380.read(iprot)
+            self.success.append(_elem380)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -22855,8 +23969,8 @@ class get_listing_result:
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter353 in self.success:
-        iter353.write(oprot)
+      for iter381 in self.success:
+        iter381.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e is not None:
@@ -22981,11 +24095,11 @@ class table_get_splits_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype357, _size354) = iprot.readListBegin()
-          for _i358 in xrange(_size354):
-            _elem359 = TableSplit()
-            _elem359.read(iprot)
-            self.success.append(_elem359)
+          (_etype385, _size382) = iprot.readListBegin()
+          for _i386 in xrange(_size382):
+            _elem387 = TableSplit()
+            _elem387.read(iprot)
+            self.success.append(_elem387)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -23008,8 +24122,8 @@ class table_get_splits_result:
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter360 in self.success:
-        iter360.write(oprot)
+      for iter388 in self.success:
+        iter388.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e is not None:
@@ -23134,11 +24248,11 @@ class get_table_splits_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype364, _size361) = iprot.readListBegin()
-          for _i365 in xrange(_size361):
-            _elem366 = TableSplit()
-            _elem366.read(iprot)
-            self.success.append(_elem366)
+          (_etype392, _size389) = iprot.readListBegin()
+          for _i393 in xrange(_size389):
+            _elem394 = TableSplit()
+            _elem394.read(iprot)
+            self.success.append(_elem394)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -23161,8 +24275,8 @@ class get_table_splits_result:
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter367 in self.success:
-        iter367.write(oprot)
+      for iter395 in self.success:
+        iter395.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.e is not None:

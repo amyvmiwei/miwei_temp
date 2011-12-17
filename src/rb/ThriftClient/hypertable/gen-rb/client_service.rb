@@ -875,6 +875,21 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'get_cells_serialized failed: unknown result')
                 end
 
+                def shared_mutator_refresh(ns, table_name, mutate_spec)
+                  send_shared_mutator_refresh(ns, table_name, mutate_spec)
+                  recv_shared_mutator_refresh()
+                end
+
+                def send_shared_mutator_refresh(ns, table_name, mutate_spec)
+                  send_message('shared_mutator_refresh', Shared_mutator_refresh_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec)
+                end
+
+                def recv_shared_mutator_refresh()
+                  result = receive_message(Shared_mutator_refresh_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def refresh_shared_mutator(ns, table_name, mutate_spec)
                   send_refresh_shared_mutator(ns, table_name, mutate_spec)
                   recv_refresh_shared_mutator()
@@ -886,6 +901,21 @@ require 'client_types'
 
                 def recv_refresh_shared_mutator()
                   result = receive_message(Refresh_shared_mutator_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def shared_mutator_set_cells(ns, table_name, mutate_spec, cells)
+                  send_shared_mutator_set_cells(ns, table_name, mutate_spec, cells)
+                  recv_shared_mutator_set_cells()
+                end
+
+                def send_shared_mutator_set_cells(ns, table_name, mutate_spec, cells)
+                  send_message('shared_mutator_set_cells', Shared_mutator_set_cells_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cells => cells)
+                end
+
+                def recv_shared_mutator_set_cells()
+                  result = receive_message(Shared_mutator_set_cells_result)
                   raise result.e unless result.e.nil?
                   return
                 end
@@ -905,6 +935,21 @@ require 'client_types'
                   return
                 end
 
+                def shared_mutator_set_cells_as_arrays(ns, table_name, mutate_spec, cells)
+                  send_shared_mutator_set_cells_as_arrays(ns, table_name, mutate_spec, cells)
+                  recv_shared_mutator_set_cells_as_arrays()
+                end
+
+                def send_shared_mutator_set_cells_as_arrays(ns, table_name, mutate_spec, cells)
+                  send_message('shared_mutator_set_cells_as_arrays', Shared_mutator_set_cells_as_arrays_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cells => cells)
+                end
+
+                def recv_shared_mutator_set_cells_as_arrays()
+                  result = receive_message(Shared_mutator_set_cells_as_arrays_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def offer_cells_as_arrays(ns, table_name, mutate_spec, cells)
                   send_offer_cells_as_arrays(ns, table_name, mutate_spec, cells)
                   recv_offer_cells_as_arrays()
@@ -920,6 +965,21 @@ require 'client_types'
                   return
                 end
 
+                def shared_mutator_set_cell(ns, table_name, mutate_spec, cell)
+                  send_shared_mutator_set_cell(ns, table_name, mutate_spec, cell)
+                  recv_shared_mutator_set_cell()
+                end
+
+                def send_shared_mutator_set_cell(ns, table_name, mutate_spec, cell)
+                  send_message('shared_mutator_set_cell', Shared_mutator_set_cell_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cell => cell)
+                end
+
+                def recv_shared_mutator_set_cell()
+                  result = receive_message(Shared_mutator_set_cell_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def offer_cell(ns, table_name, mutate_spec, cell)
                   send_offer_cell(ns, table_name, mutate_spec, cell)
                   recv_offer_cell()
@@ -931,6 +991,21 @@ require 'client_types'
 
                 def recv_offer_cell()
                   result = receive_message(Offer_cell_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
+                def shared_mutator_set_cell_as_array(ns, table_name, mutate_spec, cell)
+                  send_shared_mutator_set_cell_as_array(ns, table_name, mutate_spec, cell)
+                  recv_shared_mutator_set_cell_as_array()
+                end
+
+                def send_shared_mutator_set_cell_as_array(ns, table_name, mutate_spec, cell)
+                  send_message('shared_mutator_set_cell_as_array', Shared_mutator_set_cell_as_array_args, :ns => ns, :table_name => table_name, :mutate_spec => mutate_spec, :cell => cell)
+                end
+
+                def recv_shared_mutator_set_cell_as_array()
+                  result = receive_message(Shared_mutator_set_cell_as_array_result)
                   raise result.e unless result.e.nil?
                   return
                 end
@@ -2467,6 +2542,17 @@ require 'client_types'
                   write_result(result, oprot, 'get_cells_serialized', seqid)
                 end
 
+                def process_shared_mutator_refresh(seqid, iprot, oprot)
+                  args = read_args(iprot, Shared_mutator_refresh_args)
+                  result = Shared_mutator_refresh_result.new()
+                  begin
+                    @handler.shared_mutator_refresh(args.ns, args.table_name, args.mutate_spec)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'shared_mutator_refresh', seqid)
+                end
+
                 def process_refresh_shared_mutator(seqid, iprot, oprot)
                   args = read_args(iprot, Refresh_shared_mutator_args)
                   result = Refresh_shared_mutator_result.new()
@@ -2476,6 +2562,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'refresh_shared_mutator', seqid)
+                end
+
+                def process_shared_mutator_set_cells(seqid, iprot, oprot)
+                  args = read_args(iprot, Shared_mutator_set_cells_args)
+                  result = Shared_mutator_set_cells_result.new()
+                  begin
+                    @handler.shared_mutator_set_cells(args.ns, args.table_name, args.mutate_spec, args.cells)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'shared_mutator_set_cells', seqid)
                 end
 
                 def process_offer_cells(seqid, iprot, oprot)
@@ -2489,6 +2586,17 @@ require 'client_types'
                   write_result(result, oprot, 'offer_cells', seqid)
                 end
 
+                def process_shared_mutator_set_cells_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Shared_mutator_set_cells_as_arrays_args)
+                  result = Shared_mutator_set_cells_as_arrays_result.new()
+                  begin
+                    @handler.shared_mutator_set_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'shared_mutator_set_cells_as_arrays', seqid)
+                end
+
                 def process_offer_cells_as_arrays(seqid, iprot, oprot)
                   args = read_args(iprot, Offer_cells_as_arrays_args)
                   result = Offer_cells_as_arrays_result.new()
@@ -2500,6 +2608,17 @@ require 'client_types'
                   write_result(result, oprot, 'offer_cells_as_arrays', seqid)
                 end
 
+                def process_shared_mutator_set_cell(seqid, iprot, oprot)
+                  args = read_args(iprot, Shared_mutator_set_cell_args)
+                  result = Shared_mutator_set_cell_result.new()
+                  begin
+                    @handler.shared_mutator_set_cell(args.ns, args.table_name, args.mutate_spec, args.cell)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'shared_mutator_set_cell', seqid)
+                end
+
                 def process_offer_cell(seqid, iprot, oprot)
                   args = read_args(iprot, Offer_cell_args)
                   result = Offer_cell_result.new()
@@ -2509,6 +2628,17 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'offer_cell', seqid)
+                end
+
+                def process_shared_mutator_set_cell_as_array(seqid, iprot, oprot)
+                  args = read_args(iprot, Shared_mutator_set_cell_as_array_args)
+                  result = Shared_mutator_set_cell_as_array_result.new()
+                  begin
+                    @handler.shared_mutator_set_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'shared_mutator_set_cell_as_array', seqid)
                 end
 
                 def process_offer_cell_as_array(seqid, iprot, oprot)
@@ -5083,6 +5213,42 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
+              class Shared_mutator_refresh_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+                MUTATE_SPEC = 3
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
+                  MUTATE_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'mutate_spec', :class => Hypertable::ThriftGen::MutateSpec}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Shared_mutator_refresh_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
               class Refresh_shared_mutator_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
@@ -5104,6 +5270,44 @@ require 'client_types'
               end
 
               class Refresh_shared_mutator_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Shared_mutator_set_cells_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+                MUTATE_SPEC = 3
+                CELLS = 4
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
+                  MUTATE_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'mutate_spec', :class => Hypertable::ThriftGen::MutateSpec},
+                  CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::Cell}}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Shared_mutator_set_cells_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 
@@ -5157,6 +5361,44 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
+              class Shared_mutator_set_cells_as_arrays_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+                MUTATE_SPEC = 3
+                CELLS = 4
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
+                  MUTATE_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'mutate_spec', :class => Hypertable::ThriftGen::MutateSpec},
+                  CELLS => {:type => ::Thrift::Types::LIST, :name => 'cells', :element => {:type => ::Thrift::Types::LIST, :element => {:type => ::Thrift::Types::STRING}}}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Shared_mutator_set_cells_as_arrays_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
               class Offer_cells_as_arrays_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
@@ -5195,6 +5437,44 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
+              class Shared_mutator_set_cell_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+                MUTATE_SPEC = 3
+                CELL = 4
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
+                  MUTATE_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'mutate_spec', :class => Hypertable::ThriftGen::MutateSpec},
+                  CELL => {:type => ::Thrift::Types::STRUCT, :name => 'cell', :class => Hypertable::ThriftGen::Cell}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Shared_mutator_set_cell_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
               class Offer_cell_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
@@ -5218,6 +5498,44 @@ require 'client_types'
               end
 
               class Offer_cell_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Shared_mutator_set_cell_as_array_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+                MUTATE_SPEC = 3
+                CELL = 4
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
+                  MUTATE_SPEC => {:type => ::Thrift::Types::STRUCT, :name => 'mutate_spec', :class => Hypertable::ThriftGen::MutateSpec},
+                  CELL => {:type => ::Thrift::Types::LIST, :name => 'cell', :element => {:type => ::Thrift::Types::STRING}}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Shared_mutator_set_cell_as_array_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 

@@ -32,9 +32,19 @@ class HqlServiceHandler : virtual public HqlServiceIf {
     printf("hql_query\n");
   }
 
+  void hql_exec_as_arrays(HqlResultAsArrays& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) {
+    // Your implementation goes here
+    printf("hql_exec_as_arrays\n");
+  }
+
   void hql_exec2(HqlResult2& _return, const int64_t ns, const std::string& command, const bool noflush, const bool unbuffered) {
     // Your implementation goes here
     printf("hql_exec2\n");
+  }
+
+  void hql_query_as_arrays(HqlResultAsArrays& _return, const int64_t ns, const std::string& command) {
+    // Your implementation goes here
+    printf("hql_query_as_arrays\n");
   }
 
   void hql_query2(HqlResult2& _return, const int64_t ns, const std::string& command) {

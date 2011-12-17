@@ -46,6 +46,22 @@ require 'hql_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'hql_query failed: unknown result')
                 end
 
+                def hql_exec_as_arrays(ns, command, noflush, unbuffered)
+                  send_hql_exec_as_arrays(ns, command, noflush, unbuffered)
+                  return recv_hql_exec_as_arrays()
+                end
+
+                def send_hql_exec_as_arrays(ns, command, noflush, unbuffered)
+                  send_message('hql_exec_as_arrays', Hql_exec_as_arrays_args, :ns => ns, :command => command, :noflush => noflush, :unbuffered => unbuffered)
+                end
+
+                def recv_hql_exec_as_arrays()
+                  result = receive_message(Hql_exec_as_arrays_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'hql_exec_as_arrays failed: unknown result')
+                end
+
                 def hql_exec2(ns, command, noflush, unbuffered)
                   send_hql_exec2(ns, command, noflush, unbuffered)
                   return recv_hql_exec2()
@@ -60,6 +76,22 @@ require 'hql_types'
                   return result.success unless result.success.nil?
                   raise result.e unless result.e.nil?
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'hql_exec2 failed: unknown result')
+                end
+
+                def hql_query_as_arrays(ns, command)
+                  send_hql_query_as_arrays(ns, command)
+                  return recv_hql_query_as_arrays()
+                end
+
+                def send_hql_query_as_arrays(ns, command)
+                  send_message('hql_query_as_arrays', Hql_query_as_arrays_args, :ns => ns, :command => command)
+                end
+
+                def recv_hql_query_as_arrays()
+                  result = receive_message(Hql_query_as_arrays_result)
+                  return result.success unless result.success.nil?
+                  raise result.e unless result.e.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'hql_query_as_arrays failed: unknown result')
                 end
 
                 def hql_query2(ns, command)
@@ -105,6 +137,17 @@ require 'hql_types'
                   write_result(result, oprot, 'hql_query', seqid)
                 end
 
+                def process_hql_exec_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Hql_exec_as_arrays_args)
+                  result = Hql_exec_as_arrays_result.new()
+                  begin
+                    result.success = @handler.hql_exec_as_arrays(args.ns, args.command, args.noflush, args.unbuffered)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'hql_exec_as_arrays', seqid)
+                end
+
                 def process_hql_exec2(seqid, iprot, oprot)
                   args = read_args(iprot, Hql_exec2_args)
                   result = Hql_exec2_result.new()
@@ -114,6 +157,17 @@ require 'hql_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'hql_exec2', seqid)
+                end
+
+                def process_hql_query_as_arrays(seqid, iprot, oprot)
+                  args = read_args(iprot, Hql_query_as_arrays_args)
+                  result = Hql_query_as_arrays_result.new()
+                  begin
+                    result.success = @handler.hql_query_as_arrays(args.ns, args.command)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'hql_query_as_arrays', seqid)
                 end
 
                 def process_hql_query2(seqid, iprot, oprot)
@@ -207,6 +261,46 @@ require 'hql_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
+              class Hql_exec_as_arrays_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                COMMAND = 2
+                NOFLUSH = 3
+                UNBUFFERED = 4
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'},
+                  NOFLUSH => {:type => ::Thrift::Types::BOOL, :name => 'noflush', :default => false},
+                  UNBUFFERED => {:type => ::Thrift::Types::BOOL, :name => 'unbuffered', :default => false}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Hql_exec_as_arrays_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResultAsArrays},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
               class Hql_exec2_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
@@ -236,6 +330,42 @@ require 'hql_types'
 
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResult2},
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Hql_query_as_arrays_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                COMMAND = 2
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  COMMAND => {:type => ::Thrift::Types::STRING, :name => 'command'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Hql_query_as_arrays_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+                E = 1
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRUCT, :name => 'success', :class => Hypertable::ThriftGen::HqlResultAsArrays},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
                 }
 

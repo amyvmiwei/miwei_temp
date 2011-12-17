@@ -187,9 +187,9 @@ void test_hql(Thrift::Client *client, std::ostream &out) {
   client->hql_query(result, ns, "select * from thrift_test");
   out << result << std::endl;
 
-  HqlResult2 result2;
-  client->hql_query2(result2, ns, "select * from thrift_test");
-  out << result2 << std::endl;
+  HqlResultAsArrays result_as_arrays;
+  client->hql_query_as_arrays(result_as_arrays, ns, "select * from thrift_test");
+  out << result_as_arrays << std::endl;
   client->namespace_close(ns);
 }
 

@@ -64,10 +64,15 @@ interface ClientServiceIf {
   public function get_cells($ns, $table_name, $scan_spec);
   public function get_cells_as_arrays($ns, $name, $scan_spec);
   public function get_cells_serialized($ns, $name, $scan_spec);
+  public function shared_mutator_refresh($ns, $table_name, $mutate_spec);
   public function refresh_shared_mutator($ns, $table_name, $mutate_spec);
+  public function shared_mutator_set_cells($ns, $table_name, $mutate_spec, $cells);
   public function offer_cells($ns, $table_name, $mutate_spec, $cells);
+  public function shared_mutator_set_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
   public function offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
+  public function shared_mutator_set_cell($ns, $table_name, $mutate_spec, $cell);
   public function offer_cell($ns, $table_name, $mutate_spec, $cell);
+  public function shared_mutator_set_cell_as_array($ns, $table_name, $mutate_spec, $cell);
   public function offer_cell_as_array($ns, $table_name, $mutate_spec, $cell);
   public function mutator_open($ns, $table_name, $flags, $flush_interval);
   public function open_mutator($ns, $table_name, $flags, $flush_interval);
@@ -3096,6 +3101,59 @@ class ClientServiceClient implements ClientServiceIf {
     throw new Exception("get_cells_serialized failed: unknown result");
   }
 
+  public function shared_mutator_refresh($ns, $table_name, $mutate_spec)
+  {
+    $this->send_shared_mutator_refresh($ns, $table_name, $mutate_spec);
+    $this->recv_shared_mutator_refresh();
+  }
+
+  public function send_shared_mutator_refresh($ns, $table_name, $mutate_spec)
+  {
+    $args = new ClientService_shared_mutator_refresh_args();
+    $args->ns = $ns;
+    $args->table_name = $table_name;
+    $args->mutate_spec = $mutate_spec;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'shared_mutator_refresh', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('shared_mutator_refresh', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_shared_mutator_refresh()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_shared_mutator_refresh_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new ClientService_shared_mutator_refresh_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
   public function refresh_shared_mutator($ns, $table_name, $mutate_spec)
   {
     $this->send_refresh_shared_mutator($ns, $table_name, $mutate_spec);
@@ -3140,6 +3198,60 @@ class ClientServiceClient implements ClientServiceIf {
         throw $x;
       }
       $result = new ClientService_refresh_shared_mutator_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
+  public function shared_mutator_set_cells($ns, $table_name, $mutate_spec, $cells)
+  {
+    $this->send_shared_mutator_set_cells($ns, $table_name, $mutate_spec, $cells);
+    $this->recv_shared_mutator_set_cells();
+  }
+
+  public function send_shared_mutator_set_cells($ns, $table_name, $mutate_spec, $cells)
+  {
+    $args = new ClientService_shared_mutator_set_cells_args();
+    $args->ns = $ns;
+    $args->table_name = $table_name;
+    $args->mutate_spec = $mutate_spec;
+    $args->cells = $cells;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'shared_mutator_set_cells', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('shared_mutator_set_cells', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_shared_mutator_set_cells()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_shared_mutator_set_cells_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new ClientService_shared_mutator_set_cells_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -3203,6 +3315,60 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
+  public function shared_mutator_set_cells_as_arrays($ns, $table_name, $mutate_spec, $cells)
+  {
+    $this->send_shared_mutator_set_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
+    $this->recv_shared_mutator_set_cells_as_arrays();
+  }
+
+  public function send_shared_mutator_set_cells_as_arrays($ns, $table_name, $mutate_spec, $cells)
+  {
+    $args = new ClientService_shared_mutator_set_cells_as_arrays_args();
+    $args->ns = $ns;
+    $args->table_name = $table_name;
+    $args->mutate_spec = $mutate_spec;
+    $args->cells = $cells;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'shared_mutator_set_cells_as_arrays', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('shared_mutator_set_cells_as_arrays', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_shared_mutator_set_cells_as_arrays()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_shared_mutator_set_cells_as_arrays_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new ClientService_shared_mutator_set_cells_as_arrays_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
   public function offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells)
   {
     $this->send_offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
@@ -3257,6 +3423,60 @@ class ClientServiceClient implements ClientServiceIf {
     return;
   }
 
+  public function shared_mutator_set_cell($ns, $table_name, $mutate_spec, $cell)
+  {
+    $this->send_shared_mutator_set_cell($ns, $table_name, $mutate_spec, $cell);
+    $this->recv_shared_mutator_set_cell();
+  }
+
+  public function send_shared_mutator_set_cell($ns, $table_name, $mutate_spec, $cell)
+  {
+    $args = new ClientService_shared_mutator_set_cell_args();
+    $args->ns = $ns;
+    $args->table_name = $table_name;
+    $args->mutate_spec = $mutate_spec;
+    $args->cell = $cell;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'shared_mutator_set_cell', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('shared_mutator_set_cell', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_shared_mutator_set_cell()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_shared_mutator_set_cell_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new ClientService_shared_mutator_set_cell_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
   public function offer_cell($ns, $table_name, $mutate_spec, $cell)
   {
     $this->send_offer_cell($ns, $table_name, $mutate_spec, $cell);
@@ -3302,6 +3522,60 @@ class ClientServiceClient implements ClientServiceIf {
         throw $x;
       }
       $result = new ClientService_offer_cell_result();
+      $result->read($this->input_);
+      $this->input_->readMessageEnd();
+    }
+    if ($result->e !== null) {
+      throw $result->e;
+    }
+    return;
+  }
+
+  public function shared_mutator_set_cell_as_array($ns, $table_name, $mutate_spec, $cell)
+  {
+    $this->send_shared_mutator_set_cell_as_array($ns, $table_name, $mutate_spec, $cell);
+    $this->recv_shared_mutator_set_cell_as_array();
+  }
+
+  public function send_shared_mutator_set_cell_as_array($ns, $table_name, $mutate_spec, $cell)
+  {
+    $args = new ClientService_shared_mutator_set_cell_as_array_args();
+    $args->ns = $ns;
+    $args->table_name = $table_name;
+    $args->mutate_spec = $mutate_spec;
+    $args->cell = $cell;
+    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
+    if ($bin_accel)
+    {
+      thrift_protocol_write_binary($this->output_, 'shared_mutator_set_cell_as_array', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
+    }
+    else
+    {
+      $this->output_->writeMessageBegin('shared_mutator_set_cell_as_array', TMessageType::CALL, $this->seqid_);
+      $args->write($this->output_);
+      $this->output_->writeMessageEnd();
+      $this->output_->getTransport()->flush();
+    }
+  }
+
+  public function recv_shared_mutator_set_cell_as_array()
+  {
+    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
+    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'ClientService_shared_mutator_set_cell_as_array_result', $this->input_->isStrictRead());
+    else
+    {
+      $rseqid = 0;
+      $fname = null;
+      $mtype = 0;
+
+      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
+      if ($mtype == TMessageType::EXCEPTION) {
+        $x = new TApplicationException();
+        $x->read($this->input_);
+        $this->input_->readMessageEnd();
+        throw $x;
+      }
+      $result = new ClientService_shared_mutator_set_cell_as_array_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -16585,6 +16859,197 @@ class ClientService_get_cells_serialized_result {
 
 }
 
+class ClientService_shared_mutator_refresh_args {
+  static $_TSPEC;
+
+  public $ns = null;
+  public $table_name = null;
+  public $mutate_spec = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ns',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'table_name',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'mutate_spec',
+          'type' => TType::STRUCT,
+          'class' => 'MutateSpec',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ns'])) {
+        $this->ns = $vals['ns'];
+      }
+      if (isset($vals['table_name'])) {
+        $this->table_name = $vals['table_name'];
+      }
+      if (isset($vals['mutate_spec'])) {
+        $this->mutate_spec = $vals['mutate_spec'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_refresh_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ns);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->table_name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::STRUCT) {
+            $this->mutate_spec = new MutateSpec();
+            $xfer += $this->mutate_spec->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_refresh_args');
+    if ($this->ns !== null) {
+      $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+      $xfer += $output->writeI64($this->ns);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->table_name !== null) {
+      $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+      $xfer += $output->writeString($this->table_name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->mutate_spec !== null) {
+      if (!is_object($this->mutate_spec)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+      $xfer += $this->mutate_spec->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class ClientService_shared_mutator_refresh_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_refresh_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_refresh_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class ClientService_refresh_shared_mutator_args {
   static $_TSPEC;
 
@@ -16776,6 +17241,245 @@ class ClientService_refresh_shared_mutator_result {
 
 }
 
+class ClientService_shared_mutator_set_cells_args {
+  static $_TSPEC;
+
+  public $ns = null;
+  public $table_name = null;
+  public $mutate_spec = null;
+  public $cells = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ns',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'table_name',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'mutate_spec',
+          'type' => TType::STRUCT,
+          'class' => 'MutateSpec',
+          ),
+        4 => array(
+          'var' => 'cells',
+          'type' => TType::LST,
+          'etype' => TType::STRUCT,
+          'elem' => array(
+            'type' => TType::STRUCT,
+            'class' => 'Cell',
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ns'])) {
+        $this->ns = $vals['ns'];
+      }
+      if (isset($vals['table_name'])) {
+        $this->table_name = $vals['table_name'];
+      }
+      if (isset($vals['mutate_spec'])) {
+        $this->mutate_spec = $vals['mutate_spec'];
+      }
+      if (isset($vals['cells'])) {
+        $this->cells = $vals['cells'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_set_cells_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ns);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->table_name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::STRUCT) {
+            $this->mutate_spec = new MutateSpec();
+            $xfer += $this->mutate_spec->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::LST) {
+            $this->cells = array();
+            $_size193 = 0;
+            $_etype196 = 0;
+            $xfer += $input->readListBegin($_etype196, $_size193);
+            for ($_i197 = 0; $_i197 < $_size193; ++$_i197)
+            {
+              $elem198 = null;
+              $elem198 = new Cell();
+              $xfer += $elem198->read($input);
+              $this->cells []= $elem198;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cells_args');
+    if ($this->ns !== null) {
+      $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+      $xfer += $output->writeI64($this->ns);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->table_name !== null) {
+      $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+      $xfer += $output->writeString($this->table_name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->mutate_spec !== null) {
+      if (!is_object($this->mutate_spec)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+      $xfer += $this->mutate_spec->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cells !== null) {
+      if (!is_array($this->cells)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cells', TType::LST, 4);
+      {
+        $output->writeListBegin(TType::STRUCT, count($this->cells));
+        {
+          foreach ($this->cells as $iter199)
+          {
+            $xfer += $iter199->write($output);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class ClientService_shared_mutator_set_cells_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_set_cells_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cells_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class ClientService_offer_cells_args {
   static $_TSPEC;
 
@@ -16871,15 +17575,15 @@ class ClientService_offer_cells_args {
         case 4:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size193 = 0;
-            $_etype196 = 0;
-            $xfer += $input->readListBegin($_etype196, $_size193);
-            for ($_i197 = 0; $_i197 < $_size193; ++$_i197)
+            $_size200 = 0;
+            $_etype203 = 0;
+            $xfer += $input->readListBegin($_etype203, $_size200);
+            for ($_i204 = 0; $_i204 < $_size200; ++$_i204)
             {
-              $elem198 = null;
-              $elem198 = new Cell();
-              $xfer += $elem198->read($input);
-              $this->cells []= $elem198;
+              $elem205 = null;
+              $elem205 = new Cell();
+              $xfer += $elem205->read($input);
+              $this->cells []= $elem205;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -16925,9 +17629,9 @@ class ClientService_offer_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter199)
+          foreach ($this->cells as $iter206)
           {
-            $xfer += $iter199->write($output);
+            $xfer += $iter206->write($output);
           }
         }
         $output->writeListEnd();
@@ -17003,6 +17707,266 @@ class ClientService_offer_cells_result {
   public function write($output) {
     $xfer = 0;
     $xfer += $output->writeStructBegin('ClientService_offer_cells_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class ClientService_shared_mutator_set_cells_as_arrays_args {
+  static $_TSPEC;
+
+  public $ns = null;
+  public $table_name = null;
+  public $mutate_spec = null;
+  public $cells = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ns',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'table_name',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'mutate_spec',
+          'type' => TType::STRUCT,
+          'class' => 'MutateSpec',
+          ),
+        4 => array(
+          'var' => 'cells',
+          'type' => TType::LST,
+          'etype' => TType::LST,
+          'elem' => array(
+            'type' => TType::LST,
+            'etype' => TType::STRING,
+            'elem' => array(
+              'type' => TType::STRING,
+              ),
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ns'])) {
+        $this->ns = $vals['ns'];
+      }
+      if (isset($vals['table_name'])) {
+        $this->table_name = $vals['table_name'];
+      }
+      if (isset($vals['mutate_spec'])) {
+        $this->mutate_spec = $vals['mutate_spec'];
+      }
+      if (isset($vals['cells'])) {
+        $this->cells = $vals['cells'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_set_cells_as_arrays_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ns);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->table_name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::STRUCT) {
+            $this->mutate_spec = new MutateSpec();
+            $xfer += $this->mutate_spec->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::LST) {
+            $this->cells = array();
+            $_size207 = 0;
+            $_etype210 = 0;
+            $xfer += $input->readListBegin($_etype210, $_size207);
+            for ($_i211 = 0; $_i211 < $_size207; ++$_i211)
+            {
+              $elem212 = null;
+              $elem212 = array();
+              $_size213 = 0;
+              $_etype216 = 0;
+              $xfer += $input->readListBegin($_etype216, $_size213);
+              for ($_i217 = 0; $_i217 < $_size213; ++$_i217)
+              {
+                $elem218 = null;
+                $xfer += $input->readString($elem218);
+                $elem212 []= $elem218;
+              }
+              $xfer += $input->readListEnd();
+              $this->cells []= $elem212;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cells_as_arrays_args');
+    if ($this->ns !== null) {
+      $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+      $xfer += $output->writeI64($this->ns);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->table_name !== null) {
+      $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+      $xfer += $output->writeString($this->table_name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->mutate_spec !== null) {
+      if (!is_object($this->mutate_spec)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+      $xfer += $this->mutate_spec->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cells !== null) {
+      if (!is_array($this->cells)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cells', TType::LST, 4);
+      {
+        $output->writeListBegin(TType::LST, count($this->cells));
+        {
+          foreach ($this->cells as $iter219)
+          {
+            {
+              $output->writeListBegin(TType::STRING, count($iter219));
+              {
+                foreach ($iter219 as $iter220)
+                {
+                  $xfer += $output->writeString($iter220);
+                }
+              }
+              $output->writeListEnd();
+            }
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class ClientService_shared_mutator_set_cells_as_arrays_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_set_cells_as_arrays_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cells_as_arrays_result');
     if ($this->e !== null) {
       $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
       $xfer += $this->e->write($output);
@@ -17113,24 +18077,24 @@ class ClientService_offer_cells_as_arrays_args {
         case 4:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size200 = 0;
-            $_etype203 = 0;
-            $xfer += $input->readListBegin($_etype203, $_size200);
-            for ($_i204 = 0; $_i204 < $_size200; ++$_i204)
+            $_size221 = 0;
+            $_etype224 = 0;
+            $xfer += $input->readListBegin($_etype224, $_size221);
+            for ($_i225 = 0; $_i225 < $_size221; ++$_i225)
             {
-              $elem205 = null;
-              $elem205 = array();
-              $_size206 = 0;
-              $_etype209 = 0;
-              $xfer += $input->readListBegin($_etype209, $_size206);
-              for ($_i210 = 0; $_i210 < $_size206; ++$_i210)
+              $elem226 = null;
+              $elem226 = array();
+              $_size227 = 0;
+              $_etype230 = 0;
+              $xfer += $input->readListBegin($_etype230, $_size227);
+              for ($_i231 = 0; $_i231 < $_size227; ++$_i231)
               {
-                $elem211 = null;
-                $xfer += $input->readString($elem211);
-                $elem205 []= $elem211;
+                $elem232 = null;
+                $xfer += $input->readString($elem232);
+                $elem226 []= $elem232;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem205;
+              $this->cells []= $elem226;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -17176,14 +18140,14 @@ class ClientService_offer_cells_as_arrays_args {
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter212)
+          foreach ($this->cells as $iter233)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter212));
+              $output->writeListBegin(TType::STRING, count($iter233));
               {
-                foreach ($iter212 as $iter213)
+                foreach ($iter233 as $iter234)
                 {
-                  $xfer += $output->writeString($iter213);
+                  $xfer += $output->writeString($iter234);
                 }
               }
               $output->writeListEnd();
@@ -17263,6 +18227,222 @@ class ClientService_offer_cells_as_arrays_result {
   public function write($output) {
     $xfer = 0;
     $xfer += $output->writeStructBegin('ClientService_offer_cells_as_arrays_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class ClientService_shared_mutator_set_cell_args {
+  static $_TSPEC;
+
+  public $ns = null;
+  public $table_name = null;
+  public $mutate_spec = null;
+  public $cell = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ns',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'table_name',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'mutate_spec',
+          'type' => TType::STRUCT,
+          'class' => 'MutateSpec',
+          ),
+        4 => array(
+          'var' => 'cell',
+          'type' => TType::STRUCT,
+          'class' => 'Cell',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ns'])) {
+        $this->ns = $vals['ns'];
+      }
+      if (isset($vals['table_name'])) {
+        $this->table_name = $vals['table_name'];
+      }
+      if (isset($vals['mutate_spec'])) {
+        $this->mutate_spec = $vals['mutate_spec'];
+      }
+      if (isset($vals['cell'])) {
+        $this->cell = $vals['cell'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_set_cell_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ns);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->table_name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::STRUCT) {
+            $this->mutate_spec = new MutateSpec();
+            $xfer += $this->mutate_spec->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::STRUCT) {
+            $this->cell = new Cell();
+            $xfer += $this->cell->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cell_args');
+    if ($this->ns !== null) {
+      $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+      $xfer += $output->writeI64($this->ns);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->table_name !== null) {
+      $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+      $xfer += $output->writeString($this->table_name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->mutate_spec !== null) {
+      if (!is_object($this->mutate_spec)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+      $xfer += $this->mutate_spec->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cell !== null) {
+      if (!is_object($this->cell)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cell', TType::STRUCT, 4);
+      $xfer += $this->cell->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class ClientService_shared_mutator_set_cell_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_set_cell_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cell_result');
     if ($this->e !== null) {
       $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
       $xfer += $this->e->write($output);
@@ -17491,6 +18671,243 @@ class ClientService_offer_cell_result {
 
 }
 
+class ClientService_shared_mutator_set_cell_as_array_args {
+  static $_TSPEC;
+
+  public $ns = null;
+  public $table_name = null;
+  public $mutate_spec = null;
+  public $cell = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'ns',
+          'type' => TType::I64,
+          ),
+        2 => array(
+          'var' => 'table_name',
+          'type' => TType::STRING,
+          ),
+        3 => array(
+          'var' => 'mutate_spec',
+          'type' => TType::STRUCT,
+          'class' => 'MutateSpec',
+          ),
+        4 => array(
+          'var' => 'cell',
+          'type' => TType::LST,
+          'etype' => TType::STRING,
+          'elem' => array(
+            'type' => TType::STRING,
+            ),
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['ns'])) {
+        $this->ns = $vals['ns'];
+      }
+      if (isset($vals['table_name'])) {
+        $this->table_name = $vals['table_name'];
+      }
+      if (isset($vals['mutate_spec'])) {
+        $this->mutate_spec = $vals['mutate_spec'];
+      }
+      if (isset($vals['cell'])) {
+        $this->cell = $vals['cell'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_set_cell_as_array_args';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->ns);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->table_name);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::STRUCT) {
+            $this->mutate_spec = new MutateSpec();
+            $xfer += $this->mutate_spec->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::LST) {
+            $this->cell = array();
+            $_size235 = 0;
+            $_etype238 = 0;
+            $xfer += $input->readListBegin($_etype238, $_size235);
+            for ($_i239 = 0; $_i239 < $_size235; ++$_i239)
+            {
+              $elem240 = null;
+              $xfer += $input->readString($elem240);
+              $this->cell []= $elem240;
+            }
+            $xfer += $input->readListEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cell_as_array_args');
+    if ($this->ns !== null) {
+      $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+      $xfer += $output->writeI64($this->ns);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->table_name !== null) {
+      $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+      $xfer += $output->writeString($this->table_name);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->mutate_spec !== null) {
+      if (!is_object($this->mutate_spec)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+      $xfer += $this->mutate_spec->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->cell !== null) {
+      if (!is_array($this->cell)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('cell', TType::LST, 4);
+      {
+        $output->writeListBegin(TType::STRING, count($this->cell));
+        {
+          foreach ($this->cell as $iter241)
+          {
+            $xfer += $output->writeString($iter241);
+          }
+        }
+        $output->writeListEnd();
+      }
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class ClientService_shared_mutator_set_cell_as_array_result {
+  static $_TSPEC;
+
+  public $e = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'e',
+          'type' => TType::STRUCT,
+          'class' => 'ClientException',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['e'])) {
+        $this->e = $vals['e'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ClientService_shared_mutator_set_cell_as_array_result';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::STRUCT) {
+            $this->e = new ClientException();
+            $xfer += $this->e->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cell_as_array_result');
+    if ($this->e !== null) {
+      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+      $xfer += $this->e->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
 class ClientService_offer_cell_as_array_args {
   static $_TSPEC;
 
@@ -17585,14 +19002,14 @@ class ClientService_offer_cell_as_array_args {
         case 4:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size214 = 0;
-            $_etype217 = 0;
-            $xfer += $input->readListBegin($_etype217, $_size214);
-            for ($_i218 = 0; $_i218 < $_size214; ++$_i218)
+            $_size242 = 0;
+            $_etype245 = 0;
+            $xfer += $input->readListBegin($_etype245, $_size242);
+            for ($_i246 = 0; $_i246 < $_size242; ++$_i246)
             {
-              $elem219 = null;
-              $xfer += $input->readString($elem219);
-              $this->cell []= $elem219;
+              $elem247 = null;
+              $xfer += $input->readString($elem247);
+              $this->cell []= $elem247;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -17638,9 +19055,9 @@ class ClientService_offer_cell_as_array_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter220)
+          foreach ($this->cell as $iter248)
           {
-            $xfer += $output->writeString($iter220);
+            $xfer += $output->writeString($iter248);
           }
         }
         $output->writeListEnd();
@@ -19932,14 +21349,14 @@ class ClientService_mutator_set_cell_as_array_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size221 = 0;
-            $_etype224 = 0;
-            $xfer += $input->readListBegin($_etype224, $_size221);
-            for ($_i225 = 0; $_i225 < $_size221; ++$_i225)
+            $_size249 = 0;
+            $_etype252 = 0;
+            $xfer += $input->readListBegin($_etype252, $_size249);
+            for ($_i253 = 0; $_i253 < $_size249; ++$_i253)
             {
-              $elem226 = null;
-              $xfer += $input->readString($elem226);
-              $this->cell []= $elem226;
+              $elem254 = null;
+              $xfer += $input->readString($elem254);
+              $this->cell []= $elem254;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -19972,9 +21389,9 @@ class ClientService_mutator_set_cell_as_array_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter227)
+          foreach ($this->cell as $iter255)
           {
-            $xfer += $output->writeString($iter227);
+            $xfer += $output->writeString($iter255);
           }
         }
         $output->writeListEnd();
@@ -20139,14 +21556,14 @@ class ClientService_set_cell_as_array_args {
         case 3:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size228 = 0;
-            $_etype231 = 0;
-            $xfer += $input->readListBegin($_etype231, $_size228);
-            for ($_i232 = 0; $_i232 < $_size228; ++$_i232)
+            $_size256 = 0;
+            $_etype259 = 0;
+            $xfer += $input->readListBegin($_etype259, $_size256);
+            for ($_i260 = 0; $_i260 < $_size256; ++$_i260)
             {
-              $elem233 = null;
-              $xfer += $input->readString($elem233);
-              $this->cell []= $elem233;
+              $elem261 = null;
+              $xfer += $input->readString($elem261);
+              $this->cell []= $elem261;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -20184,9 +21601,9 @@ class ClientService_set_cell_as_array_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter234)
+          foreach ($this->cell as $iter262)
           {
-            $xfer += $output->writeString($iter234);
+            $xfer += $output->writeString($iter262);
           }
         }
         $output->writeListEnd();
@@ -20337,15 +21754,15 @@ class ClientService_mutator_set_cells_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size235 = 0;
-            $_etype238 = 0;
-            $xfer += $input->readListBegin($_etype238, $_size235);
-            for ($_i239 = 0; $_i239 < $_size235; ++$_i239)
+            $_size263 = 0;
+            $_etype266 = 0;
+            $xfer += $input->readListBegin($_etype266, $_size263);
+            for ($_i267 = 0; $_i267 < $_size263; ++$_i267)
             {
-              $elem240 = null;
-              $elem240 = new Cell();
-              $xfer += $elem240->read($input);
-              $this->cells []= $elem240;
+              $elem268 = null;
+              $elem268 = new Cell();
+              $xfer += $elem268->read($input);
+              $this->cells []= $elem268;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -20378,9 +21795,9 @@ class ClientService_mutator_set_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter241)
+          foreach ($this->cells as $iter269)
           {
-            $xfer += $iter241->write($output);
+            $xfer += $iter269->write($output);
           }
         }
         $output->writeListEnd();
@@ -20546,15 +21963,15 @@ class ClientService_set_cells_args {
         case 3:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size242 = 0;
-            $_etype245 = 0;
-            $xfer += $input->readListBegin($_etype245, $_size242);
-            for ($_i246 = 0; $_i246 < $_size242; ++$_i246)
+            $_size270 = 0;
+            $_etype273 = 0;
+            $xfer += $input->readListBegin($_etype273, $_size270);
+            for ($_i274 = 0; $_i274 < $_size270; ++$_i274)
             {
-              $elem247 = null;
-              $elem247 = new Cell();
-              $xfer += $elem247->read($input);
-              $this->cells []= $elem247;
+              $elem275 = null;
+              $elem275 = new Cell();
+              $xfer += $elem275->read($input);
+              $this->cells []= $elem275;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -20592,9 +22009,9 @@ class ClientService_set_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter248)
+          foreach ($this->cells as $iter276)
           {
-            $xfer += $iter248->write($output);
+            $xfer += $iter276->write($output);
           }
         }
         $output->writeListEnd();
@@ -20748,24 +22165,24 @@ class ClientService_mutator_set_cells_as_arrays_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size249 = 0;
-            $_etype252 = 0;
-            $xfer += $input->readListBegin($_etype252, $_size249);
-            for ($_i253 = 0; $_i253 < $_size249; ++$_i253)
+            $_size277 = 0;
+            $_etype280 = 0;
+            $xfer += $input->readListBegin($_etype280, $_size277);
+            for ($_i281 = 0; $_i281 < $_size277; ++$_i281)
             {
-              $elem254 = null;
-              $elem254 = array();
-              $_size255 = 0;
-              $_etype258 = 0;
-              $xfer += $input->readListBegin($_etype258, $_size255);
-              for ($_i259 = 0; $_i259 < $_size255; ++$_i259)
+              $elem282 = null;
+              $elem282 = array();
+              $_size283 = 0;
+              $_etype286 = 0;
+              $xfer += $input->readListBegin($_etype286, $_size283);
+              for ($_i287 = 0; $_i287 < $_size283; ++$_i287)
               {
-                $elem260 = null;
-                $xfer += $input->readString($elem260);
-                $elem254 []= $elem260;
+                $elem288 = null;
+                $xfer += $input->readString($elem288);
+                $elem282 []= $elem288;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem254;
+              $this->cells []= $elem282;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -20798,14 +22215,14 @@ class ClientService_mutator_set_cells_as_arrays_args {
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter261)
+          foreach ($this->cells as $iter289)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter261));
+              $output->writeListBegin(TType::STRING, count($iter289));
               {
-                foreach ($iter261 as $iter262)
+                foreach ($iter289 as $iter290)
                 {
-                  $xfer += $output->writeString($iter262);
+                  $xfer += $output->writeString($iter290);
                 }
               }
               $output->writeListEnd();
@@ -20978,24 +22395,24 @@ class ClientService_set_cells_as_arrays_args {
         case 3:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size263 = 0;
-            $_etype266 = 0;
-            $xfer += $input->readListBegin($_etype266, $_size263);
-            for ($_i267 = 0; $_i267 < $_size263; ++$_i267)
+            $_size291 = 0;
+            $_etype294 = 0;
+            $xfer += $input->readListBegin($_etype294, $_size291);
+            for ($_i295 = 0; $_i295 < $_size291; ++$_i295)
             {
-              $elem268 = null;
-              $elem268 = array();
-              $_size269 = 0;
-              $_etype272 = 0;
-              $xfer += $input->readListBegin($_etype272, $_size269);
-              for ($_i273 = 0; $_i273 < $_size269; ++$_i273)
+              $elem296 = null;
+              $elem296 = array();
+              $_size297 = 0;
+              $_etype300 = 0;
+              $xfer += $input->readListBegin($_etype300, $_size297);
+              for ($_i301 = 0; $_i301 < $_size297; ++$_i301)
               {
-                $elem274 = null;
-                $xfer += $input->readString($elem274);
-                $elem268 []= $elem274;
+                $elem302 = null;
+                $xfer += $input->readString($elem302);
+                $elem296 []= $elem302;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem268;
+              $this->cells []= $elem296;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -21033,14 +22450,14 @@ class ClientService_set_cells_as_arrays_args {
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter275)
+          foreach ($this->cells as $iter303)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter275));
+              $output->writeListBegin(TType::STRING, count($iter303));
               {
-                foreach ($iter275 as $iter276)
+                foreach ($iter303 as $iter304)
                 {
-                  $xfer += $output->writeString($iter276);
+                  $xfer += $output->writeString($iter304);
                 }
               }
               $output->writeListEnd();
@@ -22200,14 +23617,14 @@ class ClientService_async_mutator_set_cell_as_array_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size277 = 0;
-            $_etype280 = 0;
-            $xfer += $input->readListBegin($_etype280, $_size277);
-            for ($_i281 = 0; $_i281 < $_size277; ++$_i281)
+            $_size305 = 0;
+            $_etype308 = 0;
+            $xfer += $input->readListBegin($_etype308, $_size305);
+            for ($_i309 = 0; $_i309 < $_size305; ++$_i309)
             {
-              $elem282 = null;
-              $xfer += $input->readString($elem282);
-              $this->cell []= $elem282;
+              $elem310 = null;
+              $xfer += $input->readString($elem310);
+              $this->cell []= $elem310;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -22240,9 +23657,9 @@ class ClientService_async_mutator_set_cell_as_array_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter283)
+          foreach ($this->cell as $iter311)
           {
-            $xfer += $output->writeString($iter283);
+            $xfer += $output->writeString($iter311);
           }
         }
         $output->writeListEnd();
@@ -22392,14 +23809,14 @@ class ClientService_set_cell_as_array_async_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size284 = 0;
-            $_etype287 = 0;
-            $xfer += $input->readListBegin($_etype287, $_size284);
-            for ($_i288 = 0; $_i288 < $_size284; ++$_i288)
+            $_size312 = 0;
+            $_etype315 = 0;
+            $xfer += $input->readListBegin($_etype315, $_size312);
+            for ($_i316 = 0; $_i316 < $_size312; ++$_i316)
             {
-              $elem289 = null;
-              $xfer += $input->readString($elem289);
-              $this->cell []= $elem289;
+              $elem317 = null;
+              $xfer += $input->readString($elem317);
+              $this->cell []= $elem317;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -22432,9 +23849,9 @@ class ClientService_set_cell_as_array_async_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter290)
+          foreach ($this->cell as $iter318)
           {
-            $xfer += $output->writeString($iter290);
+            $xfer += $output->writeString($iter318);
           }
         }
         $output->writeListEnd();
@@ -22585,15 +24002,15 @@ class ClientService_async_mutator_set_cells_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size291 = 0;
-            $_etype294 = 0;
-            $xfer += $input->readListBegin($_etype294, $_size291);
-            for ($_i295 = 0; $_i295 < $_size291; ++$_i295)
+            $_size319 = 0;
+            $_etype322 = 0;
+            $xfer += $input->readListBegin($_etype322, $_size319);
+            for ($_i323 = 0; $_i323 < $_size319; ++$_i323)
             {
-              $elem296 = null;
-              $elem296 = new Cell();
-              $xfer += $elem296->read($input);
-              $this->cells []= $elem296;
+              $elem324 = null;
+              $elem324 = new Cell();
+              $xfer += $elem324->read($input);
+              $this->cells []= $elem324;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -22626,9 +24043,9 @@ class ClientService_async_mutator_set_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter297)
+          foreach ($this->cells as $iter325)
           {
-            $xfer += $iter297->write($output);
+            $xfer += $iter325->write($output);
           }
         }
         $output->writeListEnd();
@@ -22779,15 +24196,15 @@ class ClientService_set_cells_async_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size298 = 0;
-            $_etype301 = 0;
-            $xfer += $input->readListBegin($_etype301, $_size298);
-            for ($_i302 = 0; $_i302 < $_size298; ++$_i302)
+            $_size326 = 0;
+            $_etype329 = 0;
+            $xfer += $input->readListBegin($_etype329, $_size326);
+            for ($_i330 = 0; $_i330 < $_size326; ++$_i330)
             {
-              $elem303 = null;
-              $elem303 = new Cell();
-              $xfer += $elem303->read($input);
-              $this->cells []= $elem303;
+              $elem331 = null;
+              $elem331 = new Cell();
+              $xfer += $elem331->read($input);
+              $this->cells []= $elem331;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -22820,9 +24237,9 @@ class ClientService_set_cells_async_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter304)
+          foreach ($this->cells as $iter332)
           {
-            $xfer += $iter304->write($output);
+            $xfer += $iter332->write($output);
           }
         }
         $output->writeListEnd();
@@ -22976,24 +24393,24 @@ class ClientService_async_mutator_set_cells_as_arrays_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size305 = 0;
-            $_etype308 = 0;
-            $xfer += $input->readListBegin($_etype308, $_size305);
-            for ($_i309 = 0; $_i309 < $_size305; ++$_i309)
+            $_size333 = 0;
+            $_etype336 = 0;
+            $xfer += $input->readListBegin($_etype336, $_size333);
+            for ($_i337 = 0; $_i337 < $_size333; ++$_i337)
             {
-              $elem310 = null;
-              $elem310 = array();
-              $_size311 = 0;
-              $_etype314 = 0;
-              $xfer += $input->readListBegin($_etype314, $_size311);
-              for ($_i315 = 0; $_i315 < $_size311; ++$_i315)
+              $elem338 = null;
+              $elem338 = array();
+              $_size339 = 0;
+              $_etype342 = 0;
+              $xfer += $input->readListBegin($_etype342, $_size339);
+              for ($_i343 = 0; $_i343 < $_size339; ++$_i343)
               {
-                $elem316 = null;
-                $xfer += $input->readString($elem316);
-                $elem310 []= $elem316;
+                $elem344 = null;
+                $xfer += $input->readString($elem344);
+                $elem338 []= $elem344;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem310;
+              $this->cells []= $elem338;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -23026,14 +24443,14 @@ class ClientService_async_mutator_set_cells_as_arrays_args {
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter317)
+          foreach ($this->cells as $iter345)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter317));
+              $output->writeListBegin(TType::STRING, count($iter345));
               {
-                foreach ($iter317 as $iter318)
+                foreach ($iter345 as $iter346)
                 {
-                  $xfer += $output->writeString($iter318);
+                  $xfer += $output->writeString($iter346);
                 }
               }
               $output->writeListEnd();
@@ -23191,24 +24608,24 @@ class ClientService_set_cells_as_arrays_async_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size319 = 0;
-            $_etype322 = 0;
-            $xfer += $input->readListBegin($_etype322, $_size319);
-            for ($_i323 = 0; $_i323 < $_size319; ++$_i323)
+            $_size347 = 0;
+            $_etype350 = 0;
+            $xfer += $input->readListBegin($_etype350, $_size347);
+            for ($_i351 = 0; $_i351 < $_size347; ++$_i351)
             {
-              $elem324 = null;
-              $elem324 = array();
-              $_size325 = 0;
-              $_etype328 = 0;
-              $xfer += $input->readListBegin($_etype328, $_size325);
-              for ($_i329 = 0; $_i329 < $_size325; ++$_i329)
+              $elem352 = null;
+              $elem352 = array();
+              $_size353 = 0;
+              $_etype356 = 0;
+              $xfer += $input->readListBegin($_etype356, $_size353);
+              for ($_i357 = 0; $_i357 < $_size353; ++$_i357)
               {
-                $elem330 = null;
-                $xfer += $input->readString($elem330);
-                $elem324 []= $elem330;
+                $elem358 = null;
+                $xfer += $input->readString($elem358);
+                $elem352 []= $elem358;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem324;
+              $this->cells []= $elem352;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -23241,14 +24658,14 @@ class ClientService_set_cells_as_arrays_async_args {
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter331)
+          foreach ($this->cells as $iter359)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter331));
+              $output->writeListBegin(TType::STRING, count($iter359));
               {
-                foreach ($iter331 as $iter332)
+                foreach ($iter359 as $iter360)
                 {
-                  $xfer += $output->writeString($iter332);
+                  $xfer += $output->writeString($iter360);
                 }
               }
               $output->writeListEnd();
@@ -26334,14 +27751,14 @@ class ClientService_get_tables_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size333 = 0;
-            $_etype336 = 0;
-            $xfer += $input->readListBegin($_etype336, $_size333);
-            for ($_i337 = 0; $_i337 < $_size333; ++$_i337)
+            $_size361 = 0;
+            $_etype364 = 0;
+            $xfer += $input->readListBegin($_etype364, $_size361);
+            for ($_i365 = 0; $_i365 < $_size361; ++$_i365)
             {
-              $elem338 = null;
-              $xfer += $input->readString($elem338);
-              $this->success []= $elem338;
+              $elem366 = null;
+              $xfer += $input->readString($elem366);
+              $this->success []= $elem366;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -26377,9 +27794,9 @@ class ClientService_get_tables_result {
       {
         $output->writeListBegin(TType::STRING, count($this->success));
         {
-          foreach ($this->success as $iter339)
+          foreach ($this->success as $iter367)
           {
-            $xfer += $output->writeString($iter339);
+            $xfer += $output->writeString($iter367);
           }
         }
         $output->writeListEnd();
@@ -26527,15 +27944,15 @@ class ClientService_namespace_get_listing_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size340 = 0;
-            $_etype343 = 0;
-            $xfer += $input->readListBegin($_etype343, $_size340);
-            for ($_i344 = 0; $_i344 < $_size340; ++$_i344)
+            $_size368 = 0;
+            $_etype371 = 0;
+            $xfer += $input->readListBegin($_etype371, $_size368);
+            for ($_i372 = 0; $_i372 < $_size368; ++$_i372)
             {
-              $elem345 = null;
-              $elem345 = new NamespaceListing();
-              $xfer += $elem345->read($input);
-              $this->success []= $elem345;
+              $elem373 = null;
+              $elem373 = new NamespaceListing();
+              $xfer += $elem373->read($input);
+              $this->success []= $elem373;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -26571,9 +27988,9 @@ class ClientService_namespace_get_listing_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter346)
+          foreach ($this->success as $iter374)
           {
-            $xfer += $iter346->write($output);
+            $xfer += $iter374->write($output);
           }
         }
         $output->writeListEnd();
@@ -26721,15 +28138,15 @@ class ClientService_get_listing_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size347 = 0;
-            $_etype350 = 0;
-            $xfer += $input->readListBegin($_etype350, $_size347);
-            for ($_i351 = 0; $_i351 < $_size347; ++$_i351)
+            $_size375 = 0;
+            $_etype378 = 0;
+            $xfer += $input->readListBegin($_etype378, $_size375);
+            for ($_i379 = 0; $_i379 < $_size375; ++$_i379)
             {
-              $elem352 = null;
-              $elem352 = new NamespaceListing();
-              $xfer += $elem352->read($input);
-              $this->success []= $elem352;
+              $elem380 = null;
+              $elem380 = new NamespaceListing();
+              $xfer += $elem380->read($input);
+              $this->success []= $elem380;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -26765,9 +28182,9 @@ class ClientService_get_listing_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter353)
+          foreach ($this->success as $iter381)
           {
-            $xfer += $iter353->write($output);
+            $xfer += $iter381->write($output);
           }
         }
         $output->writeListEnd();
@@ -26935,15 +28352,15 @@ class ClientService_table_get_splits_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size354 = 0;
-            $_etype357 = 0;
-            $xfer += $input->readListBegin($_etype357, $_size354);
-            for ($_i358 = 0; $_i358 < $_size354; ++$_i358)
+            $_size382 = 0;
+            $_etype385 = 0;
+            $xfer += $input->readListBegin($_etype385, $_size382);
+            for ($_i386 = 0; $_i386 < $_size382; ++$_i386)
             {
-              $elem359 = null;
-              $elem359 = new TableSplit();
-              $xfer += $elem359->read($input);
-              $this->success []= $elem359;
+              $elem387 = null;
+              $elem387 = new TableSplit();
+              $xfer += $elem387->read($input);
+              $this->success []= $elem387;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -26979,9 +28396,9 @@ class ClientService_table_get_splits_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter360)
+          foreach ($this->success as $iter388)
           {
-            $xfer += $iter360->write($output);
+            $xfer += $iter388->write($output);
           }
         }
         $output->writeListEnd();
@@ -27149,15 +28566,15 @@ class ClientService_get_table_splits_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size361 = 0;
-            $_etype364 = 0;
-            $xfer += $input->readListBegin($_etype364, $_size361);
-            for ($_i365 = 0; $_i365 < $_size361; ++$_i365)
+            $_size389 = 0;
+            $_etype392 = 0;
+            $xfer += $input->readListBegin($_etype392, $_size389);
+            for ($_i393 = 0; $_i393 < $_size389; ++$_i393)
             {
-              $elem366 = null;
-              $elem366 = new TableSplit();
-              $xfer += $elem366->read($input);
-              $this->success []= $elem366;
+              $elem394 = null;
+              $elem394 = new TableSplit();
+              $xfer += $elem394->read($input);
+              $this->success []= $elem394;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -27193,9 +28610,9 @@ class ClientService_get_table_splits_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter367)
+          foreach ($this->success as $iter395)
           {
-            $xfer += $iter367->write($output);
+            $xfer += $iter395->write($output);
           }
         }
         $output->writeListEnd();

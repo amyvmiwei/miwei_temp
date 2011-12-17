@@ -537,8 +537,28 @@ public:
   }
 
   virtual void
+  hql_exec_as_arrays(HqlResultAsArrays& result, const ThriftGen::Namespace ns, const String &hql, bool noflush,
+                     bool unbuffered) {
+    LOG_API_START("namespace=" << ns << " hql="<< hql <<" noflush="<< noflush <<
+                   " unbuffered="<< unbuffered);
+    try {
+      HqlCallback<HqlResultAsArrays, CellAsArray>
+          cb(result, this, !noflush, !unbuffered);
+      get_hql_interp(ns)->execute(hql, cb);
+      //LOG_HQL_RESULT(result);
+    } RETHROW("namespace=" << ns << " hql="<< hql <<" noflush="<< noflush <<
+              " unbuffered="<< unbuffered)
+    LOG_API_FINISH;
+  }
+
+  virtual void
   hql_query2(HqlResult2& result, const ThriftGen::Namespace ns, const String &hql) {
     hql_exec2(result, ns, hql, false, false);
+  }
+
+  virtual void
+  hql_query_as_arrays(HqlResultAsArrays& result, const ThriftGen::Namespace ns, const String &hql) {
+    hql_exec_as_arrays(result, ns, hql, false, false);
   }
 
   virtual void namespace_create(const String &ns) {
@@ -915,8 +935,8 @@ public:
   }
 
   virtual void
-  offer_cells(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
-            const ThriftCells &cells) {
+  shared_mutator_set_cells(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
+                           const ThriftCells &cells) {
 
     LOG_API_START("namespace=" << ns << " table=" << table <<" mutate_spec.appname="<< mutate_spec.appname);
 
@@ -925,10 +945,16 @@ public:
     } RETHROW("namespace=" << ns << " table=" << table <<" mutate_spec.appname="<< mutate_spec.appname)
     LOG_API_FINISH_E(" cells.size="<< cells.size());
   }
+  virtual void
+  offer_cells(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
+            const ThriftCells &cells) {
+    shared_mutator_set_cells(ns, table, mutate_spec, cells);
+  }
+
 
   virtual void
-  offer_cell(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
-            const ThriftGen::Cell &cell) {
+  shared_mutator_set_cell(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
+                          const ThriftGen::Cell &cell) {
 
     LOG_API_START(" namespace=" << ns << " table=" << table <<" mutate_spec.appname="<< mutate_spec.appname);
 
@@ -937,9 +963,14 @@ public:
     } RETHROW(" namespace=" << ns << " table=" << table <<" mutate_spec.appname="<< mutate_spec.appname)
     LOG_API_FINISH_E(" cell="<< cell);
   }
+  virtual void
+  offer_cell(const ThriftGen::Namespace ns, const String &table, const ThriftGen::MutateSpec &mutate_spec,
+            const ThriftGen::Cell &cell) {
+    shared_mutator_set_cell(ns, table, mutate_spec, cell);
+  }
 
   virtual void
-  offer_cells_as_arrays(const ThriftGen::Namespace ns, const String &table,
+  shared_mutator_set_cells_as_arrays(const ThriftGen::Namespace ns, const String &table,
       const ThriftGen::MutateSpec &mutate_spec, const ThriftCellsAsArrays &cells) {
 
     LOG_API_START(" namespace=" << ns << " table=" << table << " mutate_spec.appname="<< mutate_spec.appname);
@@ -950,10 +981,16 @@ public:
     } RETHROW(" namespace=" << ns << " table=" << table << " mutate_spec.appname="<< mutate_spec.appname)
     LOG_API_FINISH_E(" cells.size="<< cells.size());
   }
+  virtual void
+  offer_cells_as_arrays(const ThriftGen::Namespace ns, const String &table,
+                        const ThriftGen::MutateSpec &mutate_spec, const ThriftCellsAsArrays &cells) {
+    shared_mutator_set_cells_as_arrays(ns, table, mutate_spec, cells);
+  }
+
 
   virtual void
-  offer_cell_as_array(const ThriftGen::Namespace ns, const String &table,
-      const ThriftGen::MutateSpec &mutate_spec, const CellAsArray &cell) {
+  shared_mutator_set_cell_as_array(const ThriftGen::Namespace ns, const String &table,
+                                   const ThriftGen::MutateSpec &mutate_spec, const CellAsArray &cell) {
     // gcc 4.0.1 cannot seems to handle << cell here (see ThriftHelper.h)
     LOG_API_START("namespace=" << ns << " table=" << table << " mutate_spec.appname="<< mutate_spec.appname);
 
@@ -963,6 +1000,12 @@ public:
     } RETHROW("namespace=" << ns << " table=" << table << " mutate_spec.appname="<< mutate_spec.appname)
     LOG_API_FINISH_E(" cell.size="<< cell.size());
   }
+  virtual void
+  offer_cell_as_array(const ThriftGen::Namespace ns, const String &table,
+                      const ThriftGen::MutateSpec &mutate_spec, const CellAsArray &cell) {
+    shared_mutator_set_cell_as_array(ns, table, mutate_spec, cell);
+  }
+
 
   virtual ThriftGen::Future future_open(int capacity) {
     ThriftGen::Future id;
@@ -2115,7 +2158,7 @@ public:
   }
 
 
-  virtual void refresh_shared_mutator(const ThriftGen::Namespace ns, const String &table,
+  virtual void shared_mutator_refresh(const ThriftGen::Namespace ns, const String &table,
       const ThriftGen::MutateSpec &mutate_spec) {
     ScopedLock lock(m_shared_mutator_mutex);
     SharedMutatorMapKey skey(ns, table, mutate_spec);
@@ -2138,6 +2181,10 @@ public:
     TableMutatorPtr mutator = t->create_mutator(0, mutate_spec.flags, mutate_spec.flush_interval);
     m_shared_mutator_map[skey] = mutator;
     return;
+  }
+  virtual void refresh_shared_mutator(const ThriftGen::Namespace ns, const String &table,
+      const ThriftGen::MutateSpec &mutate_spec) {
+    shared_mutator_refresh(ns, table, mutate_spec);
   }
 
 
