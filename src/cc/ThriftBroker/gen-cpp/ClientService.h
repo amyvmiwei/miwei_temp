@@ -69,10 +69,15 @@ class ClientServiceIf {
   virtual void get_cells(std::vector<Cell> & _return, const Namespace ns, const std::string& table_name, const ScanSpec& scan_spec) = 0;
   virtual void get_cells_as_arrays(std::vector<CellAsArray> & _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec) = 0;
   virtual void get_cells_serialized(CellsSerialized& _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec) = 0;
+  virtual void shared_mutator_refresh(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec) = 0;
   virtual void refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec) = 0;
+  virtual void shared_mutator_set_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) = 0;
   virtual void offer_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) = 0;
+  virtual void shared_mutator_set_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) = 0;
   virtual void offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) = 0;
+  virtual void shared_mutator_set_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) = 0;
   virtual void offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) = 0;
+  virtual void shared_mutator_set_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) = 0;
   virtual void offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) = 0;
   virtual Mutator mutator_open(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) = 0;
   virtual Mutator open_mutator(const Namespace ns, const std::string& table_name, const int32_t flags, const int32_t flush_interval) = 0;
@@ -315,16 +320,31 @@ class ClientServiceNull : virtual public ClientServiceIf {
   void get_cells_serialized(CellsSerialized& /* _return */, const Namespace /* ns */, const std::string& /* name */, const ScanSpec& /* scan_spec */) {
     return;
   }
+  void shared_mutator_refresh(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */) {
+    return;
+  }
   void refresh_shared_mutator(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */) {
+    return;
+  }
+  void shared_mutator_set_cells(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const std::vector<Cell> & /* cells */) {
     return;
   }
   void offer_cells(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const std::vector<Cell> & /* cells */) {
     return;
   }
+  void shared_mutator_set_cells_as_arrays(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const std::vector<CellAsArray> & /* cells */) {
+    return;
+  }
   void offer_cells_as_arrays(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const std::vector<CellAsArray> & /* cells */) {
     return;
   }
+  void shared_mutator_set_cell(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const Cell& /* cell */) {
+    return;
+  }
   void offer_cell(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const Cell& /* cell */) {
+    return;
+  }
+  void shared_mutator_set_cell_as_array(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const CellAsArray& /* cell */) {
     return;
   }
   void offer_cell_as_array(const Namespace /* ns */, const std::string& /* table_name */, const MutateSpec& /* mutate_spec */, const CellAsArray& /* cell */) {
@@ -7178,6 +7198,132 @@ class ClientService_get_cells_serialized_presult {
 
 };
 
+typedef struct _ClientService_shared_mutator_refresh_args__isset {
+  _ClientService_shared_mutator_refresh_args__isset() : ns(false), table_name(false), mutate_spec(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+} _ClientService_shared_mutator_refresh_args__isset;
+
+class ClientService_shared_mutator_refresh_args {
+ public:
+
+  ClientService_shared_mutator_refresh_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_shared_mutator_refresh_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  MutateSpec mutate_spec;
+
+  _ClientService_shared_mutator_refresh_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_mutate_spec(const MutateSpec& val) {
+    mutate_spec = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_refresh_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(mutate_spec == rhs.mutate_spec))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_refresh_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_refresh_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_shared_mutator_refresh_pargs {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_refresh_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const MutateSpec* mutate_spec;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_refresh_result__isset {
+  _ClientService_shared_mutator_refresh_result__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_refresh_result__isset;
+
+class ClientService_shared_mutator_refresh_result {
+ public:
+
+  ClientService_shared_mutator_refresh_result() {
+  }
+
+  virtual ~ClientService_shared_mutator_refresh_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_refresh_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_refresh_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_refresh_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_refresh_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_refresh_presult__isset {
+  _ClientService_shared_mutator_refresh_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_refresh_presult__isset;
+
+class ClientService_shared_mutator_refresh_presult {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_refresh_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_refresh_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_refresh_shared_mutator_args__isset {
   _ClientService_refresh_shared_mutator_args__isset() : ns(false), table_name(false), mutate_spec(false) {}
   bool ns;
@@ -7299,6 +7445,141 @@ class ClientService_refresh_shared_mutator_presult {
   ClientException e;
 
   _ClientService_refresh_shared_mutator_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cells_args__isset {
+  _ClientService_shared_mutator_set_cells_args__isset() : ns(false), table_name(false), mutate_spec(false), cells(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+  bool cells;
+} _ClientService_shared_mutator_set_cells_args__isset;
+
+class ClientService_shared_mutator_set_cells_args {
+ public:
+
+  ClientService_shared_mutator_set_cells_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_shared_mutator_set_cells_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  MutateSpec mutate_spec;
+  std::vector<Cell>  cells;
+
+  _ClientService_shared_mutator_set_cells_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_mutate_spec(const MutateSpec& val) {
+    mutate_spec = val;
+  }
+
+  void __set_cells(const std::vector<Cell> & val) {
+    cells = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_set_cells_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(mutate_spec == rhs.mutate_spec))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_set_cells_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_set_cells_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_shared_mutator_set_cells_pargs {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_set_cells_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const MutateSpec* mutate_spec;
+  const std::vector<Cell> * cells;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cells_result__isset {
+  _ClientService_shared_mutator_set_cells_result__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_set_cells_result__isset;
+
+class ClientService_shared_mutator_set_cells_result {
+ public:
+
+  ClientService_shared_mutator_set_cells_result() {
+  }
+
+  virtual ~ClientService_shared_mutator_set_cells_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_set_cells_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_set_cells_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_set_cells_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_set_cells_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cells_presult__isset {
+  _ClientService_shared_mutator_set_cells_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_set_cells_presult__isset;
+
+class ClientService_shared_mutator_set_cells_presult {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_set_cells_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_set_cells_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -7439,6 +7720,141 @@ class ClientService_offer_cells_presult {
 
 };
 
+typedef struct _ClientService_shared_mutator_set_cells_as_arrays_args__isset {
+  _ClientService_shared_mutator_set_cells_as_arrays_args__isset() : ns(false), table_name(false), mutate_spec(false), cells(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+  bool cells;
+} _ClientService_shared_mutator_set_cells_as_arrays_args__isset;
+
+class ClientService_shared_mutator_set_cells_as_arrays_args {
+ public:
+
+  ClientService_shared_mutator_set_cells_as_arrays_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_shared_mutator_set_cells_as_arrays_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  MutateSpec mutate_spec;
+  std::vector<CellAsArray>  cells;
+
+  _ClientService_shared_mutator_set_cells_as_arrays_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_mutate_spec(const MutateSpec& val) {
+    mutate_spec = val;
+  }
+
+  void __set_cells(const std::vector<CellAsArray> & val) {
+    cells = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_set_cells_as_arrays_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(mutate_spec == rhs.mutate_spec))
+      return false;
+    if (!(cells == rhs.cells))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_set_cells_as_arrays_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_set_cells_as_arrays_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_shared_mutator_set_cells_as_arrays_pargs {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_set_cells_as_arrays_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const MutateSpec* mutate_spec;
+  const std::vector<CellAsArray> * cells;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cells_as_arrays_result__isset {
+  _ClientService_shared_mutator_set_cells_as_arrays_result__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_set_cells_as_arrays_result__isset;
+
+class ClientService_shared_mutator_set_cells_as_arrays_result {
+ public:
+
+  ClientService_shared_mutator_set_cells_as_arrays_result() {
+  }
+
+  virtual ~ClientService_shared_mutator_set_cells_as_arrays_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_set_cells_as_arrays_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_set_cells_as_arrays_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_set_cells_as_arrays_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_set_cells_as_arrays_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cells_as_arrays_presult__isset {
+  _ClientService_shared_mutator_set_cells_as_arrays_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_set_cells_as_arrays_presult__isset;
+
+class ClientService_shared_mutator_set_cells_as_arrays_presult {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_set_cells_as_arrays_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_set_cells_as_arrays_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_offer_cells_as_arrays_args__isset {
   _ClientService_offer_cells_as_arrays_args__isset() : ns(false), table_name(false), mutate_spec(false), cells(false) {}
   bool ns;
@@ -7574,6 +7990,141 @@ class ClientService_offer_cells_as_arrays_presult {
 
 };
 
+typedef struct _ClientService_shared_mutator_set_cell_args__isset {
+  _ClientService_shared_mutator_set_cell_args__isset() : ns(false), table_name(false), mutate_spec(false), cell(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+  bool cell;
+} _ClientService_shared_mutator_set_cell_args__isset;
+
+class ClientService_shared_mutator_set_cell_args {
+ public:
+
+  ClientService_shared_mutator_set_cell_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_shared_mutator_set_cell_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  MutateSpec mutate_spec;
+  Cell cell;
+
+  _ClientService_shared_mutator_set_cell_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_mutate_spec(const MutateSpec& val) {
+    mutate_spec = val;
+  }
+
+  void __set_cell(const Cell& val) {
+    cell = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_set_cell_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(mutate_spec == rhs.mutate_spec))
+      return false;
+    if (!(cell == rhs.cell))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_set_cell_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_set_cell_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_shared_mutator_set_cell_pargs {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_set_cell_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const MutateSpec* mutate_spec;
+  const Cell* cell;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cell_result__isset {
+  _ClientService_shared_mutator_set_cell_result__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_set_cell_result__isset;
+
+class ClientService_shared_mutator_set_cell_result {
+ public:
+
+  ClientService_shared_mutator_set_cell_result() {
+  }
+
+  virtual ~ClientService_shared_mutator_set_cell_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_set_cell_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_set_cell_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_set_cell_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_set_cell_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cell_presult__isset {
+  _ClientService_shared_mutator_set_cell_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_set_cell_presult__isset;
+
+class ClientService_shared_mutator_set_cell_presult {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_set_cell_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_set_cell_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 typedef struct _ClientService_offer_cell_args__isset {
   _ClientService_offer_cell_args__isset() : ns(false), table_name(false), mutate_spec(false), cell(false) {}
   bool ns;
@@ -7704,6 +8255,141 @@ class ClientService_offer_cell_presult {
   ClientException e;
 
   _ClientService_offer_cell_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cell_as_array_args__isset {
+  _ClientService_shared_mutator_set_cell_as_array_args__isset() : ns(false), table_name(false), mutate_spec(false), cell(false) {}
+  bool ns;
+  bool table_name;
+  bool mutate_spec;
+  bool cell;
+} _ClientService_shared_mutator_set_cell_as_array_args__isset;
+
+class ClientService_shared_mutator_set_cell_as_array_args {
+ public:
+
+  ClientService_shared_mutator_set_cell_as_array_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_shared_mutator_set_cell_as_array_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+  MutateSpec mutate_spec;
+  CellAsArray cell;
+
+  _ClientService_shared_mutator_set_cell_as_array_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  void __set_mutate_spec(const MutateSpec& val) {
+    mutate_spec = val;
+  }
+
+  void __set_cell(const CellAsArray& val) {
+    cell = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_set_cell_as_array_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    if (!(mutate_spec == rhs.mutate_spec))
+      return false;
+    if (!(cell == rhs.cell))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_set_cell_as_array_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_set_cell_as_array_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_shared_mutator_set_cell_as_array_pargs {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_set_cell_as_array_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+  const MutateSpec* mutate_spec;
+  const CellAsArray* cell;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cell_as_array_result__isset {
+  _ClientService_shared_mutator_set_cell_as_array_result__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_set_cell_as_array_result__isset;
+
+class ClientService_shared_mutator_set_cell_as_array_result {
+ public:
+
+  ClientService_shared_mutator_set_cell_as_array_result() {
+  }
+
+  virtual ~ClientService_shared_mutator_set_cell_as_array_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_set_cell_as_array_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_shared_mutator_set_cell_as_array_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_shared_mutator_set_cell_as_array_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_shared_mutator_set_cell_as_array_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_shared_mutator_set_cell_as_array_presult__isset {
+  _ClientService_shared_mutator_set_cell_as_array_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_shared_mutator_set_cell_as_array_presult__isset;
+
+class ClientService_shared_mutator_set_cell_as_array_presult {
+ public:
+
+
+  virtual ~ClientService_shared_mutator_set_cell_as_array_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_shared_mutator_set_cell_as_array_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -15192,18 +15878,33 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void get_cells_serialized(CellsSerialized& _return, const Namespace ns, const std::string& name, const ScanSpec& scan_spec);
   void send_get_cells_serialized(const Namespace ns, const std::string& name, const ScanSpec& scan_spec);
   void recv_get_cells_serialized(CellsSerialized& _return);
+  void shared_mutator_refresh(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec);
+  void send_shared_mutator_refresh(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec);
+  void recv_shared_mutator_refresh();
   void refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec);
   void send_refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec);
   void recv_refresh_shared_mutator();
+  void shared_mutator_set_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
+  void send_shared_mutator_set_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
+  void recv_shared_mutator_set_cells();
   void offer_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
   void send_offer_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells);
   void recv_offer_cells();
+  void shared_mutator_set_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
+  void send_shared_mutator_set_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
+  void recv_shared_mutator_set_cells_as_arrays();
   void offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
   void send_offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells);
   void recv_offer_cells_as_arrays();
+  void shared_mutator_set_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell);
+  void send_shared_mutator_set_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell);
+  void recv_shared_mutator_set_cell();
   void offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell);
   void send_offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell);
   void recv_offer_cell();
+  void shared_mutator_set_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell);
+  void send_shared_mutator_set_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell);
+  void recv_shared_mutator_set_cell_as_array();
   void offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell);
   void send_offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell);
   void recv_offer_cell_as_array();
@@ -15452,10 +16153,15 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_get_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_get_cells_serialized(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_shared_mutator_refresh(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_refresh_shared_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_shared_mutator_set_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_offer_cells(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_shared_mutator_set_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_offer_cells_as_arrays(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_shared_mutator_set_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_offer_cell(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_shared_mutator_set_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_offer_cell_as_array(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_mutator_open(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_mutator(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -15574,10 +16280,15 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["get_cells"] = &ClientServiceProcessor::process_get_cells;
     processMap_["get_cells_as_arrays"] = &ClientServiceProcessor::process_get_cells_as_arrays;
     processMap_["get_cells_serialized"] = &ClientServiceProcessor::process_get_cells_serialized;
+    processMap_["shared_mutator_refresh"] = &ClientServiceProcessor::process_shared_mutator_refresh;
     processMap_["refresh_shared_mutator"] = &ClientServiceProcessor::process_refresh_shared_mutator;
+    processMap_["shared_mutator_set_cells"] = &ClientServiceProcessor::process_shared_mutator_set_cells;
     processMap_["offer_cells"] = &ClientServiceProcessor::process_offer_cells;
+    processMap_["shared_mutator_set_cells_as_arrays"] = &ClientServiceProcessor::process_shared_mutator_set_cells_as_arrays;
     processMap_["offer_cells_as_arrays"] = &ClientServiceProcessor::process_offer_cells_as_arrays;
+    processMap_["shared_mutator_set_cell"] = &ClientServiceProcessor::process_shared_mutator_set_cell;
     processMap_["offer_cell"] = &ClientServiceProcessor::process_offer_cell;
+    processMap_["shared_mutator_set_cell_as_array"] = &ClientServiceProcessor::process_shared_mutator_set_cell_as_array;
     processMap_["offer_cell_as_array"] = &ClientServiceProcessor::process_offer_cell_as_array;
     processMap_["mutator_open"] = &ClientServiceProcessor::process_mutator_open;
     processMap_["open_mutator"] = &ClientServiceProcessor::process_open_mutator;
@@ -16214,10 +16925,24 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void shared_mutator_refresh(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->shared_mutator_refresh(ns, table_name, mutate_spec);
+    }
+  }
+
   void refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->refresh_shared_mutator(ns, table_name, mutate_spec);
+    }
+  }
+
+  void shared_mutator_set_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->shared_mutator_set_cells(ns, table_name, mutate_spec, cells);
     }
   }
 
@@ -16228,6 +16953,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void shared_mutator_set_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->shared_mutator_set_cells_as_arrays(ns, table_name, mutate_spec, cells);
+    }
+  }
+
   void offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
@@ -16235,10 +16967,24 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     }
   }
 
+  void shared_mutator_set_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->shared_mutator_set_cell(ns, table_name, mutate_spec, cell);
+    }
+  }
+
   void offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->offer_cell(ns, table_name, mutate_spec, cell);
+    }
+  }
+
+  void shared_mutator_set_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->shared_mutator_set_cell_as_array(ns, table_name, mutate_spec, cell);
     }
   }
 

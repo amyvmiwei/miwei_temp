@@ -244,6 +244,30 @@ std::ostream &operator<<(std::ostream &out, const HqlResult2 &hr) {
   return out <<'}';
 }
 
+std::ostream &operator<<(std::ostream &out, const HqlResultAsArrays &hr) {
+  out <<"{HqlResultAsArrays:";
+
+  if (hr.__isset.results) {
+    out <<" results=[";
+    foreach(const std::string &s, hr.results)
+      out <<"  '"<< s <<"'\n";
+    out <<"  ]\n";
+  }
+  if (hr.__isset.cells) {
+    out <<" cells=[\n";
+    foreach(const CellAsArray &cell, hr.cells)
+      out <<"  "<< cell <<"\n";
+    out <<"  ]\n";
+  }
+  if (hr.__isset.scanner)
+    out <<" scanner="<< hr.scanner;
+
+  if (hr.__isset.mutator)
+    out <<" mutator="<< hr.mutator;
+
+  return out <<'}';
+}
+
 std::ostream &operator<<(std::ostream &out, const ClientException &e) {
   return out <<"{ClientException: code="<< e.code
              <<" message='"<< e.message <<"'}";

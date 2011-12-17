@@ -8644,6 +8644,166 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_shared_mutator_refresh_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_refresh_args->mk_accessors( qw( ns table_name mutate_spec ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{table_name} = undef;
+  $self->{mutate_spec} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
+    if (defined $vals->{table_name}) {
+      $self->{table_name} = $vals->{table_name};
+    }
+    if (defined $vals->{mutate_spec}) {
+      $self->{mutate_spec} = $vals->{mutate_spec};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_refresh_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{table_name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{mutate_spec} = new Hypertable::ThriftGen::MutateSpec();
+        $xfer += $self->{mutate_spec}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_refresh_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{table_name}) {
+    $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+    $xfer += $output->writeString($self->{table_name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{mutate_spec}) {
+    $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+    $xfer += $self->{mutate_spec}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_shared_mutator_refresh_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_refresh_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_refresh_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_refresh_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_refresh_shared_mutator_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientService_refresh_shared_mutator_args->mk_accessors( qw( ns table_name mutate_spec ) );
@@ -8804,6 +8964,203 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_args->mk_accessors( qw( ns table_name mutate_spec cells ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{table_name} = undef;
+  $self->{mutate_spec} = undef;
+  $self->{cells} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
+    if (defined $vals->{table_name}) {
+      $self->{table_name} = $vals->{table_name};
+    }
+    if (defined $vals->{mutate_spec}) {
+      $self->{mutate_spec} = $vals->{mutate_spec};
+    }
+    if (defined $vals->{cells}) {
+      $self->{cells} = $vals->{cells};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_set_cells_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{table_name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{mutate_spec} = new Hypertable::ThriftGen::MutateSpec();
+        $xfer += $self->{mutate_spec}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size193 = 0;
+          $self->{cells} = [];
+          my $_etype196 = 0;
+          $xfer += $input->readListBegin(\$_etype196, \$_size193);
+          for (my $_i197 = 0; $_i197 < $_size193; ++$_i197)
+          {
+            my $elem198 = undef;
+            $elem198 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem198->read($input);
+            push(@{$self->{cells}},$elem198);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cells_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{table_name}) {
+    $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+    $xfer += $output->writeString($self->{table_name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{mutate_spec}) {
+    $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+    $xfer += $self->{mutate_spec}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cells}) {
+    $xfer += $output->writeFieldBegin('cells', TType::LIST, 4);
+    {
+      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
+      {
+        foreach my $iter199 (@{$self->{cells}}) 
+        {
+          $xfer += ${iter199}->write($output);
+        }
+      }
+      $xfer += $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_set_cells_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cells_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_offer_cells_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientService_offer_cells_args->mk_accessors( qw( ns table_name mutate_spec cells ) );
@@ -8873,16 +9230,16 @@ sub read {
       last; };
       /^4$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size193 = 0;
+          my $_size200 = 0;
           $self->{cells} = [];
-          my $_etype196 = 0;
-          $xfer += $input->readListBegin(\$_etype196, \$_size193);
-          for (my $_i197 = 0; $_i197 < $_size193; ++$_i197)
+          my $_etype203 = 0;
+          $xfer += $input->readListBegin(\$_etype203, \$_size200);
+          for (my $_i204 = 0; $_i204 < $_size200; ++$_i204)
           {
-            my $elem198 = undef;
-            $elem198 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem198->read($input);
-            push(@{$self->{cells}},$elem198);
+            my $elem205 = undef;
+            $elem205 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem205->read($input);
+            push(@{$self->{cells}},$elem205);
           }
           $xfer += $input->readListEnd();
         }
@@ -8922,9 +9279,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter199 (@{$self->{cells}}) 
+        foreach my $iter206 (@{$self->{cells}}) 
         {
-          $xfer += ${iter199}->write($output);
+          $xfer += ${iter206}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -8991,6 +9348,223 @@ sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ClientService_offer_cells_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_as_arrays_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_as_arrays_args->mk_accessors( qw( ns table_name mutate_spec cells ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{table_name} = undef;
+  $self->{mutate_spec} = undef;
+  $self->{cells} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
+    if (defined $vals->{table_name}) {
+      $self->{table_name} = $vals->{table_name};
+    }
+    if (defined $vals->{mutate_spec}) {
+      $self->{mutate_spec} = $vals->{mutate_spec};
+    }
+    if (defined $vals->{cells}) {
+      $self->{cells} = $vals->{cells};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_set_cells_as_arrays_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{table_name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{mutate_spec} = new Hypertable::ThriftGen::MutateSpec();
+        $xfer += $self->{mutate_spec}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size207 = 0;
+          $self->{cells} = [];
+          my $_etype210 = 0;
+          $xfer += $input->readListBegin(\$_etype210, \$_size207);
+          for (my $_i211 = 0; $_i211 < $_size207; ++$_i211)
+          {
+            my $elem212 = undef;
+            {
+              my $_size213 = 0;
+              $elem212 = [];
+              my $_etype216 = 0;
+              $xfer += $input->readListBegin(\$_etype216, \$_size213);
+              for (my $_i217 = 0; $_i217 < $_size213; ++$_i217)
+              {
+                my $elem218 = undef;
+                $xfer += $input->readString(\$elem218);
+                push(@{$elem212},$elem218);
+              }
+              $xfer += $input->readListEnd();
+            }
+            push(@{$self->{cells}},$elem212);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cells_as_arrays_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{table_name}) {
+    $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+    $xfer += $output->writeString($self->{table_name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{mutate_spec}) {
+    $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+    $xfer += $self->{mutate_spec}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cells}) {
+    $xfer += $output->writeFieldBegin('cells', TType::LIST, 4);
+    {
+      $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
+      {
+        foreach my $iter219 (@{$self->{cells}}) 
+        {
+          {
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter219}}));
+            {
+              foreach my $iter220 (@{${iter219}}) 
+              {
+                $xfer += $output->writeString($iter220);
+              }
+            }
+            $xfer += $output->writeListEnd();
+          }
+        }
+      }
+      $xfer += $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_as_arrays_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_as_arrays_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_set_cells_as_arrays_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cells_as_arrays_result');
   if (defined $self->{e}) {
     $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
     $xfer += $self->{e}->write($output);
@@ -9070,27 +9644,27 @@ sub read {
       last; };
       /^4$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size200 = 0;
+          my $_size221 = 0;
           $self->{cells} = [];
-          my $_etype203 = 0;
-          $xfer += $input->readListBegin(\$_etype203, \$_size200);
-          for (my $_i204 = 0; $_i204 < $_size200; ++$_i204)
+          my $_etype224 = 0;
+          $xfer += $input->readListBegin(\$_etype224, \$_size221);
+          for (my $_i225 = 0; $_i225 < $_size221; ++$_i225)
           {
-            my $elem205 = undef;
+            my $elem226 = undef;
             {
-              my $_size206 = 0;
-              $elem205 = [];
-              my $_etype209 = 0;
-              $xfer += $input->readListBegin(\$_etype209, \$_size206);
-              for (my $_i210 = 0; $_i210 < $_size206; ++$_i210)
+              my $_size227 = 0;
+              $elem226 = [];
+              my $_etype230 = 0;
+              $xfer += $input->readListBegin(\$_etype230, \$_size227);
+              for (my $_i231 = 0; $_i231 < $_size227; ++$_i231)
               {
-                my $elem211 = undef;
-                $xfer += $input->readString(\$elem211);
-                push(@{$elem205},$elem211);
+                my $elem232 = undef;
+                $xfer += $input->readString(\$elem232);
+                push(@{$elem226},$elem232);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{cells}},$elem205);
+            push(@{$self->{cells}},$elem226);
           }
           $xfer += $input->readListEnd();
         }
@@ -9130,14 +9704,14 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
-        foreach my $iter212 (@{$self->{cells}}) 
+        foreach my $iter233 (@{$self->{cells}}) 
         {
           {
-            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter212}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter233}}));
             {
-              foreach my $iter213 (@{${iter212}}) 
+              foreach my $iter234 (@{${iter233}}) 
               {
-                $xfer += $output->writeString($iter213);
+                $xfer += $output->writeString($iter234);
               }
             }
             $xfer += $output->writeListEnd();
@@ -9208,6 +9782,182 @@ sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('ClientService_offer_cells_as_arrays_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_args->mk_accessors( qw( ns table_name mutate_spec cell ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{table_name} = undef;
+  $self->{mutate_spec} = undef;
+  $self->{cell} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
+    if (defined $vals->{table_name}) {
+      $self->{table_name} = $vals->{table_name};
+    }
+    if (defined $vals->{mutate_spec}) {
+      $self->{mutate_spec} = $vals->{mutate_spec};
+    }
+    if (defined $vals->{cell}) {
+      $self->{cell} = $vals->{cell};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_set_cell_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{table_name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{mutate_spec} = new Hypertable::ThriftGen::MutateSpec();
+        $xfer += $self->{mutate_spec}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{cell} = new Hypertable::ThriftGen::Cell();
+        $xfer += $self->{cell}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cell_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{table_name}) {
+    $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+    $xfer += $output->writeString($self->{table_name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{mutate_spec}) {
+    $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+    $xfer += $self->{mutate_spec}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cell}) {
+    $xfer += $output->writeFieldBegin('cell', TType::STRUCT, 4);
+    $xfer += $self->{cell}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_set_cell_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cell_result');
   if (defined $self->{e}) {
     $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
     $xfer += $self->{e}->write($output);
@@ -9394,6 +10144,202 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_as_array_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_as_array_args->mk_accessors( qw( ns table_name mutate_spec cell ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{table_name} = undef;
+  $self->{mutate_spec} = undef;
+  $self->{cell} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
+    if (defined $vals->{table_name}) {
+      $self->{table_name} = $vals->{table_name};
+    }
+    if (defined $vals->{mutate_spec}) {
+      $self->{mutate_spec} = $vals->{mutate_spec};
+    }
+    if (defined $vals->{cell}) {
+      $self->{cell} = $vals->{cell};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_set_cell_as_array_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{table_name});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{mutate_spec} = new Hypertable::ThriftGen::MutateSpec();
+        $xfer += $self->{mutate_spec}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::LIST) {
+        {
+          my $_size235 = 0;
+          $self->{cell} = [];
+          my $_etype238 = 0;
+          $xfer += $input->readListBegin(\$_etype238, \$_size235);
+          for (my $_i239 = 0; $_i239 < $_size235; ++$_i239)
+          {
+            my $elem240 = undef;
+            $xfer += $input->readString(\$elem240);
+            push(@{$self->{cell}},$elem240);
+          }
+          $xfer += $input->readListEnd();
+        }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cell_as_array_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{table_name}) {
+    $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
+    $xfer += $output->writeString($self->{table_name});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{mutate_spec}) {
+    $xfer += $output->writeFieldBegin('mutate_spec', TType::STRUCT, 3);
+    $xfer += $self->{mutate_spec}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{cell}) {
+    $xfer += $output->writeFieldBegin('cell', TType::LIST, 4);
+    {
+      $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
+      {
+        foreach my $iter241 (@{$self->{cell}}) 
+        {
+          $xfer += $output->writeString($iter241);
+        }
+      }
+      $xfer += $output->writeListEnd();
+    }
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_as_array_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_as_array_result->mk_accessors( qw( ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_shared_mutator_set_cell_as_array_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_shared_mutator_set_cell_as_array_result');
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientService_offer_cell_as_array_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientService_offer_cell_as_array_args->mk_accessors( qw( ns table_name mutate_spec cell ) );
@@ -9463,15 +10409,15 @@ sub read {
       last; };
       /^4$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size214 = 0;
+          my $_size242 = 0;
           $self->{cell} = [];
-          my $_etype217 = 0;
-          $xfer += $input->readListBegin(\$_etype217, \$_size214);
-          for (my $_i218 = 0; $_i218 < $_size214; ++$_i218)
+          my $_etype245 = 0;
+          $xfer += $input->readListBegin(\$_etype245, \$_size242);
+          for (my $_i246 = 0; $_i246 < $_size242; ++$_i246)
           {
-            my $elem219 = undef;
-            $xfer += $input->readString(\$elem219);
-            push(@{$self->{cell}},$elem219);
+            my $elem247 = undef;
+            $xfer += $input->readString(\$elem247);
+            push(@{$self->{cell}},$elem247);
           }
           $xfer += $input->readListEnd();
         }
@@ -9511,9 +10457,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
       {
-        foreach my $iter220 (@{$self->{cell}}) 
+        foreach my $iter248 (@{$self->{cell}}) 
         {
-          $xfer += $output->writeString($iter220);
+          $xfer += $output->writeString($iter248);
         }
       }
       $xfer += $output->writeListEnd();
@@ -11473,15 +12419,15 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size221 = 0;
+          my $_size249 = 0;
           $self->{cell} = [];
-          my $_etype224 = 0;
-          $xfer += $input->readListBegin(\$_etype224, \$_size221);
-          for (my $_i225 = 0; $_i225 < $_size221; ++$_i225)
+          my $_etype252 = 0;
+          $xfer += $input->readListBegin(\$_etype252, \$_size249);
+          for (my $_i253 = 0; $_i253 < $_size249; ++$_i253)
           {
-            my $elem226 = undef;
-            $xfer += $input->readString(\$elem226);
-            push(@{$self->{cell}},$elem226);
+            my $elem254 = undef;
+            $xfer += $input->readString(\$elem254);
+            push(@{$self->{cell}},$elem254);
           }
           $xfer += $input->readListEnd();
         }
@@ -11511,9 +12457,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
       {
-        foreach my $iter227 (@{$self->{cell}}) 
+        foreach my $iter255 (@{$self->{cell}}) 
         {
-          $xfer += $output->writeString($iter227);
+          $xfer += $output->writeString($iter255);
         }
       }
       $xfer += $output->writeListEnd();
@@ -11648,15 +12594,15 @@ sub read {
       last; };
       /^3$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size228 = 0;
+          my $_size256 = 0;
           $self->{cell} = [];
-          my $_etype231 = 0;
-          $xfer += $input->readListBegin(\$_etype231, \$_size228);
-          for (my $_i232 = 0; $_i232 < $_size228; ++$_i232)
+          my $_etype259 = 0;
+          $xfer += $input->readListBegin(\$_etype259, \$_size256);
+          for (my $_i260 = 0; $_i260 < $_size256; ++$_i260)
           {
-            my $elem233 = undef;
-            $xfer += $input->readString(\$elem233);
-            push(@{$self->{cell}},$elem233);
+            my $elem261 = undef;
+            $xfer += $input->readString(\$elem261);
+            push(@{$self->{cell}},$elem261);
           }
           $xfer += $input->readListEnd();
         }
@@ -11691,9 +12637,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
       {
-        foreach my $iter234 (@{$self->{cell}}) 
+        foreach my $iter262 (@{$self->{cell}}) 
         {
-          $xfer += $output->writeString($iter234);
+          $xfer += $output->writeString($iter262);
         }
       }
       $xfer += $output->writeListEnd();
@@ -11818,16 +12764,16 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size235 = 0;
+          my $_size263 = 0;
           $self->{cells} = [];
-          my $_etype238 = 0;
-          $xfer += $input->readListBegin(\$_etype238, \$_size235);
-          for (my $_i239 = 0; $_i239 < $_size235; ++$_i239)
+          my $_etype266 = 0;
+          $xfer += $input->readListBegin(\$_etype266, \$_size263);
+          for (my $_i267 = 0; $_i267 < $_size263; ++$_i267)
           {
-            my $elem240 = undef;
-            $elem240 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem240->read($input);
-            push(@{$self->{cells}},$elem240);
+            my $elem268 = undef;
+            $elem268 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem268->read($input);
+            push(@{$self->{cells}},$elem268);
           }
           $xfer += $input->readListEnd();
         }
@@ -11857,9 +12803,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter241 (@{$self->{cells}}) 
+        foreach my $iter269 (@{$self->{cells}}) 
         {
-          $xfer += ${iter241}->write($output);
+          $xfer += ${iter269}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -11994,16 +12940,16 @@ sub read {
       last; };
       /^3$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size242 = 0;
+          my $_size270 = 0;
           $self->{cells} = [];
-          my $_etype245 = 0;
-          $xfer += $input->readListBegin(\$_etype245, \$_size242);
-          for (my $_i246 = 0; $_i246 < $_size242; ++$_i246)
+          my $_etype273 = 0;
+          $xfer += $input->readListBegin(\$_etype273, \$_size270);
+          for (my $_i274 = 0; $_i274 < $_size270; ++$_i274)
           {
-            my $elem247 = undef;
-            $elem247 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem247->read($input);
-            push(@{$self->{cells}},$elem247);
+            my $elem275 = undef;
+            $elem275 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem275->read($input);
+            push(@{$self->{cells}},$elem275);
           }
           $xfer += $input->readListEnd();
         }
@@ -12038,9 +12984,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter248 (@{$self->{cells}}) 
+        foreach my $iter276 (@{$self->{cells}}) 
         {
-          $xfer += ${iter248}->write($output);
+          $xfer += ${iter276}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -12165,27 +13111,27 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size249 = 0;
+          my $_size277 = 0;
           $self->{cells} = [];
-          my $_etype252 = 0;
-          $xfer += $input->readListBegin(\$_etype252, \$_size249);
-          for (my $_i253 = 0; $_i253 < $_size249; ++$_i253)
+          my $_etype280 = 0;
+          $xfer += $input->readListBegin(\$_etype280, \$_size277);
+          for (my $_i281 = 0; $_i281 < $_size277; ++$_i281)
           {
-            my $elem254 = undef;
+            my $elem282 = undef;
             {
-              my $_size255 = 0;
-              $elem254 = [];
-              my $_etype258 = 0;
-              $xfer += $input->readListBegin(\$_etype258, \$_size255);
-              for (my $_i259 = 0; $_i259 < $_size255; ++$_i259)
+              my $_size283 = 0;
+              $elem282 = [];
+              my $_etype286 = 0;
+              $xfer += $input->readListBegin(\$_etype286, \$_size283);
+              for (my $_i287 = 0; $_i287 < $_size283; ++$_i287)
               {
-                my $elem260 = undef;
-                $xfer += $input->readString(\$elem260);
-                push(@{$elem254},$elem260);
+                my $elem288 = undef;
+                $xfer += $input->readString(\$elem288);
+                push(@{$elem282},$elem288);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{cells}},$elem254);
+            push(@{$self->{cells}},$elem282);
           }
           $xfer += $input->readListEnd();
         }
@@ -12215,14 +13161,14 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
-        foreach my $iter261 (@{$self->{cells}}) 
+        foreach my $iter289 (@{$self->{cells}}) 
         {
           {
-            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter261}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter289}}));
             {
-              foreach my $iter262 (@{${iter261}}) 
+              foreach my $iter290 (@{${iter289}}) 
               {
-                $xfer += $output->writeString($iter262);
+                $xfer += $output->writeString($iter290);
               }
             }
             $xfer += $output->writeListEnd();
@@ -12361,27 +13307,27 @@ sub read {
       last; };
       /^3$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size263 = 0;
+          my $_size291 = 0;
           $self->{cells} = [];
-          my $_etype266 = 0;
-          $xfer += $input->readListBegin(\$_etype266, \$_size263);
-          for (my $_i267 = 0; $_i267 < $_size263; ++$_i267)
+          my $_etype294 = 0;
+          $xfer += $input->readListBegin(\$_etype294, \$_size291);
+          for (my $_i295 = 0; $_i295 < $_size291; ++$_i295)
           {
-            my $elem268 = undef;
+            my $elem296 = undef;
             {
-              my $_size269 = 0;
-              $elem268 = [];
-              my $_etype272 = 0;
-              $xfer += $input->readListBegin(\$_etype272, \$_size269);
-              for (my $_i273 = 0; $_i273 < $_size269; ++$_i273)
+              my $_size297 = 0;
+              $elem296 = [];
+              my $_etype300 = 0;
+              $xfer += $input->readListBegin(\$_etype300, \$_size297);
+              for (my $_i301 = 0; $_i301 < $_size297; ++$_i301)
               {
-                my $elem274 = undef;
-                $xfer += $input->readString(\$elem274);
-                push(@{$elem268},$elem274);
+                my $elem302 = undef;
+                $xfer += $input->readString(\$elem302);
+                push(@{$elem296},$elem302);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{cells}},$elem268);
+            push(@{$self->{cells}},$elem296);
           }
           $xfer += $input->readListEnd();
         }
@@ -12416,14 +13362,14 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
-        foreach my $iter275 (@{$self->{cells}}) 
+        foreach my $iter303 (@{$self->{cells}}) 
         {
           {
-            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter275}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter303}}));
             {
-              foreach my $iter276 (@{${iter275}}) 
+              foreach my $iter304 (@{${iter303}}) 
               {
-                $xfer += $output->writeString($iter276);
+                $xfer += $output->writeString($iter304);
               }
             }
             $xfer += $output->writeListEnd();
@@ -13418,15 +14364,15 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size277 = 0;
+          my $_size305 = 0;
           $self->{cell} = [];
-          my $_etype280 = 0;
-          $xfer += $input->readListBegin(\$_etype280, \$_size277);
-          for (my $_i281 = 0; $_i281 < $_size277; ++$_i281)
+          my $_etype308 = 0;
+          $xfer += $input->readListBegin(\$_etype308, \$_size305);
+          for (my $_i309 = 0; $_i309 < $_size305; ++$_i309)
           {
-            my $elem282 = undef;
-            $xfer += $input->readString(\$elem282);
-            push(@{$self->{cell}},$elem282);
+            my $elem310 = undef;
+            $xfer += $input->readString(\$elem310);
+            push(@{$self->{cell}},$elem310);
           }
           $xfer += $input->readListEnd();
         }
@@ -13456,9 +14402,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
       {
-        foreach my $iter283 (@{$self->{cell}}) 
+        foreach my $iter311 (@{$self->{cell}}) 
         {
-          $xfer += $output->writeString($iter283);
+          $xfer += $output->writeString($iter311);
         }
       }
       $xfer += $output->writeListEnd();
@@ -13583,15 +14529,15 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size284 = 0;
+          my $_size312 = 0;
           $self->{cell} = [];
-          my $_etype287 = 0;
-          $xfer += $input->readListBegin(\$_etype287, \$_size284);
-          for (my $_i288 = 0; $_i288 < $_size284; ++$_i288)
+          my $_etype315 = 0;
+          $xfer += $input->readListBegin(\$_etype315, \$_size312);
+          for (my $_i316 = 0; $_i316 < $_size312; ++$_i316)
           {
-            my $elem289 = undef;
-            $xfer += $input->readString(\$elem289);
-            push(@{$self->{cell}},$elem289);
+            my $elem317 = undef;
+            $xfer += $input->readString(\$elem317);
+            push(@{$self->{cell}},$elem317);
           }
           $xfer += $input->readListEnd();
         }
@@ -13621,9 +14567,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{cell}}));
       {
-        foreach my $iter290 (@{$self->{cell}}) 
+        foreach my $iter318 (@{$self->{cell}}) 
         {
-          $xfer += $output->writeString($iter290);
+          $xfer += $output->writeString($iter318);
         }
       }
       $xfer += $output->writeListEnd();
@@ -13748,16 +14694,16 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size291 = 0;
+          my $_size319 = 0;
           $self->{cells} = [];
-          my $_etype294 = 0;
-          $xfer += $input->readListBegin(\$_etype294, \$_size291);
-          for (my $_i295 = 0; $_i295 < $_size291; ++$_i295)
+          my $_etype322 = 0;
+          $xfer += $input->readListBegin(\$_etype322, \$_size319);
+          for (my $_i323 = 0; $_i323 < $_size319; ++$_i323)
           {
-            my $elem296 = undef;
-            $elem296 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem296->read($input);
-            push(@{$self->{cells}},$elem296);
+            my $elem324 = undef;
+            $elem324 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem324->read($input);
+            push(@{$self->{cells}},$elem324);
           }
           $xfer += $input->readListEnd();
         }
@@ -13787,9 +14733,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter297 (@{$self->{cells}}) 
+        foreach my $iter325 (@{$self->{cells}}) 
         {
-          $xfer += ${iter297}->write($output);
+          $xfer += ${iter325}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -13914,16 +14860,16 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size298 = 0;
+          my $_size326 = 0;
           $self->{cells} = [];
-          my $_etype301 = 0;
-          $xfer += $input->readListBegin(\$_etype301, \$_size298);
-          for (my $_i302 = 0; $_i302 < $_size298; ++$_i302)
+          my $_etype329 = 0;
+          $xfer += $input->readListBegin(\$_etype329, \$_size326);
+          for (my $_i330 = 0; $_i330 < $_size326; ++$_i330)
           {
-            my $elem303 = undef;
-            $elem303 = new Hypertable::ThriftGen::Cell();
-            $xfer += $elem303->read($input);
-            push(@{$self->{cells}},$elem303);
+            my $elem331 = undef;
+            $elem331 = new Hypertable::ThriftGen::Cell();
+            $xfer += $elem331->read($input);
+            push(@{$self->{cells}},$elem331);
           }
           $xfer += $input->readListEnd();
         }
@@ -13953,9 +14899,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{cells}}));
       {
-        foreach my $iter304 (@{$self->{cells}}) 
+        foreach my $iter332 (@{$self->{cells}}) 
         {
-          $xfer += ${iter304}->write($output);
+          $xfer += ${iter332}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -14080,27 +15026,27 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size305 = 0;
+          my $_size333 = 0;
           $self->{cells} = [];
-          my $_etype308 = 0;
-          $xfer += $input->readListBegin(\$_etype308, \$_size305);
-          for (my $_i309 = 0; $_i309 < $_size305; ++$_i309)
+          my $_etype336 = 0;
+          $xfer += $input->readListBegin(\$_etype336, \$_size333);
+          for (my $_i337 = 0; $_i337 < $_size333; ++$_i337)
           {
-            my $elem310 = undef;
+            my $elem338 = undef;
             {
-              my $_size311 = 0;
-              $elem310 = [];
-              my $_etype314 = 0;
-              $xfer += $input->readListBegin(\$_etype314, \$_size311);
-              for (my $_i315 = 0; $_i315 < $_size311; ++$_i315)
+              my $_size339 = 0;
+              $elem338 = [];
+              my $_etype342 = 0;
+              $xfer += $input->readListBegin(\$_etype342, \$_size339);
+              for (my $_i343 = 0; $_i343 < $_size339; ++$_i343)
               {
-                my $elem316 = undef;
-                $xfer += $input->readString(\$elem316);
-                push(@{$elem310},$elem316);
+                my $elem344 = undef;
+                $xfer += $input->readString(\$elem344);
+                push(@{$elem338},$elem344);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{cells}},$elem310);
+            push(@{$self->{cells}},$elem338);
           }
           $xfer += $input->readListEnd();
         }
@@ -14130,14 +15076,14 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
-        foreach my $iter317 (@{$self->{cells}}) 
+        foreach my $iter345 (@{$self->{cells}}) 
         {
           {
-            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter317}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter345}}));
             {
-              foreach my $iter318 (@{${iter317}}) 
+              foreach my $iter346 (@{${iter345}}) 
               {
-                $xfer += $output->writeString($iter318);
+                $xfer += $output->writeString($iter346);
               }
             }
             $xfer += $output->writeListEnd();
@@ -14266,27 +15212,27 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size319 = 0;
+          my $_size347 = 0;
           $self->{cells} = [];
-          my $_etype322 = 0;
-          $xfer += $input->readListBegin(\$_etype322, \$_size319);
-          for (my $_i323 = 0; $_i323 < $_size319; ++$_i323)
+          my $_etype350 = 0;
+          $xfer += $input->readListBegin(\$_etype350, \$_size347);
+          for (my $_i351 = 0; $_i351 < $_size347; ++$_i351)
           {
-            my $elem324 = undef;
+            my $elem352 = undef;
             {
-              my $_size325 = 0;
-              $elem324 = [];
-              my $_etype328 = 0;
-              $xfer += $input->readListBegin(\$_etype328, \$_size325);
-              for (my $_i329 = 0; $_i329 < $_size325; ++$_i329)
+              my $_size353 = 0;
+              $elem352 = [];
+              my $_etype356 = 0;
+              $xfer += $input->readListBegin(\$_etype356, \$_size353);
+              for (my $_i357 = 0; $_i357 < $_size353; ++$_i357)
               {
-                my $elem330 = undef;
-                $xfer += $input->readString(\$elem330);
-                push(@{$elem324},$elem330);
+                my $elem358 = undef;
+                $xfer += $input->readString(\$elem358);
+                push(@{$elem352},$elem358);
               }
               $xfer += $input->readListEnd();
             }
-            push(@{$self->{cells}},$elem324);
+            push(@{$self->{cells}},$elem352);
           }
           $xfer += $input->readListEnd();
         }
@@ -14316,14 +15262,14 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::LIST, scalar(@{$self->{cells}}));
       {
-        foreach my $iter331 (@{$self->{cells}}) 
+        foreach my $iter359 (@{$self->{cells}}) 
         {
           {
-            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter331}}));
+            $xfer += $output->writeListBegin(TType::STRING, scalar(@{${iter359}}));
             {
-              foreach my $iter332 (@{${iter331}}) 
+              foreach my $iter360 (@{${iter359}}) 
               {
-                $xfer += $output->writeString($iter332);
+                $xfer += $output->writeString($iter360);
               }
             }
             $xfer += $output->writeListEnd();
@@ -16966,15 +17912,15 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size333 = 0;
+          my $_size361 = 0;
           $self->{success} = [];
-          my $_etype336 = 0;
-          $xfer += $input->readListBegin(\$_etype336, \$_size333);
-          for (my $_i337 = 0; $_i337 < $_size333; ++$_i337)
+          my $_etype364 = 0;
+          $xfer += $input->readListBegin(\$_etype364, \$_size361);
+          for (my $_i365 = 0; $_i365 < $_size361; ++$_i365)
           {
-            my $elem338 = undef;
-            $xfer += $input->readString(\$elem338);
-            push(@{$self->{success}},$elem338);
+            my $elem366 = undef;
+            $xfer += $input->readString(\$elem366);
+            push(@{$self->{success}},$elem366);
           }
           $xfer += $input->readListEnd();
         }
@@ -17006,9 +17952,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRING, scalar(@{$self->{success}}));
       {
-        foreach my $iter339 (@{$self->{success}}) 
+        foreach my $iter367 (@{$self->{success}}) 
         {
-          $xfer += $output->writeString($iter339);
+          $xfer += $output->writeString($iter367);
         }
       }
       $xfer += $output->writeListEnd();
@@ -17131,16 +18077,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size340 = 0;
+          my $_size368 = 0;
           $self->{success} = [];
-          my $_etype343 = 0;
-          $xfer += $input->readListBegin(\$_etype343, \$_size340);
-          for (my $_i344 = 0; $_i344 < $_size340; ++$_i344)
+          my $_etype371 = 0;
+          $xfer += $input->readListBegin(\$_etype371, \$_size368);
+          for (my $_i372 = 0; $_i372 < $_size368; ++$_i372)
           {
-            my $elem345 = undef;
-            $elem345 = new Hypertable::ThriftGen::NamespaceListing();
-            $xfer += $elem345->read($input);
-            push(@{$self->{success}},$elem345);
+            my $elem373 = undef;
+            $elem373 = new Hypertable::ThriftGen::NamespaceListing();
+            $xfer += $elem373->read($input);
+            push(@{$self->{success}},$elem373);
           }
           $xfer += $input->readListEnd();
         }
@@ -17172,9 +18118,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter346 (@{$self->{success}}) 
+        foreach my $iter374 (@{$self->{success}}) 
         {
-          $xfer += ${iter346}->write($output);
+          $xfer += ${iter374}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -17297,16 +18243,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size347 = 0;
+          my $_size375 = 0;
           $self->{success} = [];
-          my $_etype350 = 0;
-          $xfer += $input->readListBegin(\$_etype350, \$_size347);
-          for (my $_i351 = 0; $_i351 < $_size347; ++$_i351)
+          my $_etype378 = 0;
+          $xfer += $input->readListBegin(\$_etype378, \$_size375);
+          for (my $_i379 = 0; $_i379 < $_size375; ++$_i379)
           {
-            my $elem352 = undef;
-            $elem352 = new Hypertable::ThriftGen::NamespaceListing();
-            $xfer += $elem352->read($input);
-            push(@{$self->{success}},$elem352);
+            my $elem380 = undef;
+            $elem380 = new Hypertable::ThriftGen::NamespaceListing();
+            $xfer += $elem380->read($input);
+            push(@{$self->{success}},$elem380);
           }
           $xfer += $input->readListEnd();
         }
@@ -17338,9 +18284,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter353 (@{$self->{success}}) 
+        foreach my $iter381 (@{$self->{success}}) 
         {
-          $xfer += ${iter353}->write($output);
+          $xfer += ${iter381}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -17478,16 +18424,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size354 = 0;
+          my $_size382 = 0;
           $self->{success} = [];
-          my $_etype357 = 0;
-          $xfer += $input->readListBegin(\$_etype357, \$_size354);
-          for (my $_i358 = 0; $_i358 < $_size354; ++$_i358)
+          my $_etype385 = 0;
+          $xfer += $input->readListBegin(\$_etype385, \$_size382);
+          for (my $_i386 = 0; $_i386 < $_size382; ++$_i386)
           {
-            my $elem359 = undef;
-            $elem359 = new Hypertable::ThriftGen::TableSplit();
-            $xfer += $elem359->read($input);
-            push(@{$self->{success}},$elem359);
+            my $elem387 = undef;
+            $elem387 = new Hypertable::ThriftGen::TableSplit();
+            $xfer += $elem387->read($input);
+            push(@{$self->{success}},$elem387);
           }
           $xfer += $input->readListEnd();
         }
@@ -17519,9 +18465,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter360 (@{$self->{success}}) 
+        foreach my $iter388 (@{$self->{success}}) 
         {
-          $xfer += ${iter360}->write($output);
+          $xfer += ${iter388}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -17659,16 +18605,16 @@ sub read {
     {
       /^0$/ && do{      if ($ftype == TType::LIST) {
         {
-          my $_size361 = 0;
+          my $_size389 = 0;
           $self->{success} = [];
-          my $_etype364 = 0;
-          $xfer += $input->readListBegin(\$_etype364, \$_size361);
-          for (my $_i365 = 0; $_i365 < $_size361; ++$_i365)
+          my $_etype392 = 0;
+          $xfer += $input->readListBegin(\$_etype392, \$_size389);
+          for (my $_i393 = 0; $_i393 < $_size389; ++$_i393)
           {
-            my $elem366 = undef;
-            $elem366 = new Hypertable::ThriftGen::TableSplit();
-            $xfer += $elem366->read($input);
-            push(@{$self->{success}},$elem366);
+            my $elem394 = undef;
+            $elem394 = new Hypertable::ThriftGen::TableSplit();
+            $xfer += $elem394->read($input);
+            push(@{$self->{success}},$elem394);
           }
           $xfer += $input->readListEnd();
         }
@@ -17700,9 +18646,9 @@ sub write {
     {
       $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{success}}));
       {
-        foreach my $iter367 (@{$self->{success}}) 
+        foreach my $iter395 (@{$self->{success}}) 
         {
-          $xfer += ${iter367}->write($output);
+          $xfer += ${iter395}->write($output);
         }
       }
       $xfer += $output->writeListEnd();
@@ -19372,6 +20318,15 @@ sub get_cells_serialized{
   die 'implement interface';
 }
 
+sub shared_mutator_refresh{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+
+  die 'implement interface';
+}
+
 sub refresh_shared_mutator{
   my $self = shift;
   my $ns = shift;
@@ -19381,7 +20336,27 @@ sub refresh_shared_mutator{
   die 'implement interface';
 }
 
+sub shared_mutator_set_cells{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cells = shift;
+
+  die 'implement interface';
+}
+
 sub offer_cells{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cells = shift;
+
+  die 'implement interface';
+}
+
+sub shared_mutator_set_cells_as_arrays{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
@@ -19401,7 +20376,27 @@ sub offer_cells_as_arrays{
   die 'implement interface';
 }
 
+sub shared_mutator_set_cell{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cell = shift;
+
+  die 'implement interface';
+}
+
 sub offer_cell{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cell = shift;
+
+  die 'implement interface';
+}
+
+sub shared_mutator_set_cell_as_array{
   my $self = shift;
   my $ns = shift;
   my $table_name = shift;
@@ -20334,6 +21329,15 @@ sub get_cells_serialized{
   return $self->{impl}->get_cells_serialized($ns, $name, $scan_spec);
 }
 
+sub shared_mutator_refresh{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
+  my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
+  my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
+  return $self->{impl}->shared_mutator_refresh($ns, $table_name, $mutate_spec);
+}
+
 sub refresh_shared_mutator{
   my ($self, $request) = @_;
 
@@ -20341,6 +21345,16 @@ sub refresh_shared_mutator{
   my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
   my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
   return $self->{impl}->refresh_shared_mutator($ns, $table_name, $mutate_spec);
+}
+
+sub shared_mutator_set_cells{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
+  my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
+  my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
+  my $cells = ($request->{'cells'}) ? $request->{'cells'} : undef;
+  return $self->{impl}->shared_mutator_set_cells($ns, $table_name, $mutate_spec, $cells);
 }
 
 sub offer_cells{
@@ -20353,6 +21367,16 @@ sub offer_cells{
   return $self->{impl}->offer_cells($ns, $table_name, $mutate_spec, $cells);
 }
 
+sub shared_mutator_set_cells_as_arrays{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
+  my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
+  my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
+  my $cells = ($request->{'cells'}) ? $request->{'cells'} : undef;
+  return $self->{impl}->shared_mutator_set_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
+}
+
 sub offer_cells_as_arrays{
   my ($self, $request) = @_;
 
@@ -20363,6 +21387,16 @@ sub offer_cells_as_arrays{
   return $self->{impl}->offer_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
 }
 
+sub shared_mutator_set_cell{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
+  my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
+  my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
+  my $cell = ($request->{'cell'}) ? $request->{'cell'} : undef;
+  return $self->{impl}->shared_mutator_set_cell($ns, $table_name, $mutate_spec, $cell);
+}
+
 sub offer_cell{
   my ($self, $request) = @_;
 
@@ -20371,6 +21405,16 @@ sub offer_cell{
   my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
   my $cell = ($request->{'cell'}) ? $request->{'cell'} : undef;
   return $self->{impl}->offer_cell($ns, $table_name, $mutate_spec, $cell);
+}
+
+sub shared_mutator_set_cell_as_array{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
+  my $table_name = ($request->{'table_name'}) ? $request->{'table_name'} : undef;
+  my $mutate_spec = ($request->{'mutate_spec'}) ? $request->{'mutate_spec'} : undef;
+  my $cell = ($request->{'cell'}) ? $request->{'cell'} : undef;
+  return $self->{impl}->shared_mutator_set_cell_as_array($ns, $table_name, $mutate_spec, $cell);
 }
 
 sub offer_cell_as_array{
@@ -23466,6 +24510,55 @@ sub recv_get_cells_serialized{
   }
   die "get_cells_serialized failed: unknown result";
 }
+sub shared_mutator_refresh{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+
+    $self->send_shared_mutator_refresh($ns, $table_name, $mutate_spec);
+  $self->recv_shared_mutator_refresh();
+}
+
+sub send_shared_mutator_refresh{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+
+  $self->{output}->writeMessageBegin('shared_mutator_refresh', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_refresh_args();
+  $args->{ns} = $ns;
+  $args->{table_name} = $table_name;
+  $args->{mutate_spec} = $mutate_spec;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_shared_mutator_refresh{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_refresh_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
 sub refresh_shared_mutator{
   my $self = shift;
   my $ns = shift;
@@ -23507,6 +24600,58 @@ sub recv_refresh_shared_mutator{
     die $x;
   }
   my $result = new Hypertable::ThriftGen::ClientService_refresh_shared_mutator_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
+sub shared_mutator_set_cells{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cells = shift;
+
+    $self->send_shared_mutator_set_cells($ns, $table_name, $mutate_spec, $cells);
+  $self->recv_shared_mutator_set_cells();
+}
+
+sub send_shared_mutator_set_cells{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cells = shift;
+
+  $self->{output}->writeMessageBegin('shared_mutator_set_cells', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_args();
+  $args->{ns} = $ns;
+  $args->{table_name} = $table_name;
+  $args->{mutate_spec} = $mutate_spec;
+  $args->{cells} = $cells;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_shared_mutator_set_cells{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_result();
   $result->read($self->{input});
   $self->{input}->readMessageEnd();
 
@@ -23567,6 +24712,58 @@ sub recv_offer_cells{
   }
   return;
 }
+sub shared_mutator_set_cells_as_arrays{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cells = shift;
+
+    $self->send_shared_mutator_set_cells_as_arrays($ns, $table_name, $mutate_spec, $cells);
+  $self->recv_shared_mutator_set_cells_as_arrays();
+}
+
+sub send_shared_mutator_set_cells_as_arrays{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cells = shift;
+
+  $self->{output}->writeMessageBegin('shared_mutator_set_cells_as_arrays', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_as_arrays_args();
+  $args->{ns} = $ns;
+  $args->{table_name} = $table_name;
+  $args->{mutate_spec} = $mutate_spec;
+  $args->{cells} = $cells;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_shared_mutator_set_cells_as_arrays{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_as_arrays_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
 sub offer_cells_as_arrays{
   my $self = shift;
   my $ns = shift;
@@ -23619,6 +24816,58 @@ sub recv_offer_cells_as_arrays{
   }
   return;
 }
+sub shared_mutator_set_cell{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cell = shift;
+
+    $self->send_shared_mutator_set_cell($ns, $table_name, $mutate_spec, $cell);
+  $self->recv_shared_mutator_set_cell();
+}
+
+sub send_shared_mutator_set_cell{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cell = shift;
+
+  $self->{output}->writeMessageBegin('shared_mutator_set_cell', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_args();
+  $args->{ns} = $ns;
+  $args->{table_name} = $table_name;
+  $args->{mutate_spec} = $mutate_spec;
+  $args->{cell} = $cell;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_shared_mutator_set_cell{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
 sub offer_cell{
   my $self = shift;
   my $ns = shift;
@@ -23663,6 +24912,58 @@ sub recv_offer_cell{
     die $x;
   }
   my $result = new Hypertable::ThriftGen::ClientService_offer_cell_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  return;
+}
+sub shared_mutator_set_cell_as_array{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cell = shift;
+
+    $self->send_shared_mutator_set_cell_as_array($ns, $table_name, $mutate_spec, $cell);
+  $self->recv_shared_mutator_set_cell_as_array();
+}
+
+sub send_shared_mutator_set_cell_as_array{
+  my $self = shift;
+  my $ns = shift;
+  my $table_name = shift;
+  my $mutate_spec = shift;
+  my $cell = shift;
+
+  $self->{output}->writeMessageBegin('shared_mutator_set_cell_as_array', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_as_array_args();
+  $args->{ns} = $ns;
+  $args->{table_name} = $table_name;
+  $args->{mutate_spec} = $mutate_spec;
+  $args->{cell} = $cell;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_shared_mutator_set_cell_as_array{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_as_array_result();
   $result->read($self->{input});
   $self->{input}->readMessageEnd();
 
@@ -27487,6 +28788,23 @@ sub process_get_cells_serialized {
     $output->getTransport()->flush();
 }
 
+sub process_shared_mutator_refresh {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_refresh_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_refresh_result();
+    eval {
+      $self->{handler}->shared_mutator_refresh($args->ns, $args->table_name, $args->mutate_spec);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('shared_mutator_refresh', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
 sub process_refresh_shared_mutator {
     my ($self, $seqid, $input, $output) = @_;
     my $args = new Hypertable::ThriftGen::ClientService_refresh_shared_mutator_args();
@@ -27499,6 +28817,23 @@ sub process_refresh_shared_mutator {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('refresh_shared_mutator', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_shared_mutator_set_cells {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_result();
+    eval {
+      $self->{handler}->shared_mutator_set_cells($args->ns, $args->table_name, $args->mutate_spec, $args->cells);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('shared_mutator_set_cells', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();
@@ -27521,6 +28856,23 @@ sub process_offer_cells {
     $output->getTransport()->flush();
 }
 
+sub process_shared_mutator_set_cells_as_arrays {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_as_arrays_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cells_as_arrays_result();
+    eval {
+      $self->{handler}->shared_mutator_set_cells_as_arrays($args->ns, $args->table_name, $args->mutate_spec, $args->cells);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('shared_mutator_set_cells_as_arrays', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
 sub process_offer_cells_as_arrays {
     my ($self, $seqid, $input, $output) = @_;
     my $args = new Hypertable::ThriftGen::ClientService_offer_cells_as_arrays_args();
@@ -27538,6 +28890,23 @@ sub process_offer_cells_as_arrays {
     $output->getTransport()->flush();
 }
 
+sub process_shared_mutator_set_cell {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_result();
+    eval {
+      $self->{handler}->shared_mutator_set_cell($args->ns, $args->table_name, $args->mutate_spec, $args->cell);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('shared_mutator_set_cell', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
 sub process_offer_cell {
     my ($self, $seqid, $input, $output) = @_;
     my $args = new Hypertable::ThriftGen::ClientService_offer_cell_args();
@@ -27550,6 +28919,23 @@ sub process_offer_cell {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('offer_cell', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_shared_mutator_set_cell_as_array {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_as_array_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_shared_mutator_set_cell_as_array_result();
+    eval {
+      $self->{handler}->shared_mutator_set_cell_as_array($args->ns, $args->table_name, $args->mutate_spec, $args->cell);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('shared_mutator_set_cell_as_array', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

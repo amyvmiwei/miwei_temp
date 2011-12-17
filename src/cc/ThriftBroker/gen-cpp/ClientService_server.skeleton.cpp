@@ -297,9 +297,19 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("get_cells_serialized\n");
   }
 
+  void shared_mutator_refresh(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec) {
+    // Your implementation goes here
+    printf("shared_mutator_refresh\n");
+  }
+
   void refresh_shared_mutator(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec) {
     // Your implementation goes here
     printf("refresh_shared_mutator\n");
+  }
+
+  void shared_mutator_set_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
+    // Your implementation goes here
+    printf("shared_mutator_set_cells\n");
   }
 
   void offer_cells(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<Cell> & cells) {
@@ -307,14 +317,29 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("offer_cells\n");
   }
 
+  void shared_mutator_set_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
+    // Your implementation goes here
+    printf("shared_mutator_set_cells_as_arrays\n");
+  }
+
   void offer_cells_as_arrays(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const std::vector<CellAsArray> & cells) {
     // Your implementation goes here
     printf("offer_cells_as_arrays\n");
   }
 
+  void shared_mutator_set_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) {
+    // Your implementation goes here
+    printf("shared_mutator_set_cell\n");
+  }
+
   void offer_cell(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const Cell& cell) {
     // Your implementation goes here
     printf("offer_cell\n");
+  }
+
+  void shared_mutator_set_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) {
+    // Your implementation goes here
+    printf("shared_mutator_set_cell_as_array\n");
   }
 
   void offer_cell_as_array(const Namespace ns, const std::string& table_name, const MutateSpec& mutate_spec, const CellAsArray& cell) {

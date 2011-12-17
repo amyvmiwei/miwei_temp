@@ -363,6 +363,196 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen2::HqlService_hql_exec_as_arrays_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen2::HqlService_hql_exec_as_arrays_args->mk_accessors( qw( ns command noflush unbuffered ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{command} = undef;
+  $self->{noflush} = 0;
+  $self->{unbuffered} = 0;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
+    if (defined $vals->{command}) {
+      $self->{command} = $vals->{command};
+    }
+    if (defined $vals->{noflush}) {
+      $self->{noflush} = $vals->{noflush};
+    }
+    if (defined $vals->{unbuffered}) {
+      $self->{unbuffered} = $vals->{unbuffered};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'HqlService_hql_exec_as_arrays_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{command});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{noflush});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{unbuffered});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('HqlService_hql_exec_as_arrays_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{command}) {
+    $xfer += $output->writeFieldBegin('command', TType::STRING, 2);
+    $xfer += $output->writeString($self->{command});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{noflush}) {
+    $xfer += $output->writeFieldBegin('noflush', TType::BOOL, 3);
+    $xfer += $output->writeBool($self->{noflush});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{unbuffered}) {
+    $xfer += $output->writeFieldBegin('unbuffered', TType::BOOL, 4);
+    $xfer += $output->writeBool($self->{unbuffered});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen2::HqlService_hql_exec_as_arrays_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen2::HqlService_hql_exec_as_arrays_result->mk_accessors( qw( success ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'HqlService_hql_exec_as_arrays_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{success} = new Hypertable::ThriftGen2::HqlResultAsArrays();
+        $xfer += $self->{success}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('HqlService_hql_exec_as_arrays_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::STRUCT, 0);
+    $xfer += $self->{success}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen2::HqlService_hql_exec2_args;
 use base qw(Class::Accessor);
 Hypertable::ThriftGen2::HqlService_hql_exec2_args->mk_accessors( qw( ns command noflush unbuffered ) );
@@ -538,6 +728,166 @@ sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
   $xfer += $output->writeStructBegin('HqlService_hql_exec2_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::STRUCT, 0);
+    $xfer += $self->{success}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{e}) {
+    $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
+    $xfer += $self->{e}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen2::HqlService_hql_query_as_arrays_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen2::HqlService_hql_query_as_arrays_args->mk_accessors( qw( ns command ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{ns} = undef;
+  $self->{command} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{ns}) {
+      $self->{ns} = $vals->{ns};
+    }
+    if (defined $vals->{command}) {
+      $self->{command} = $vals->{command};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'HqlService_hql_query_as_arrays_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{ns});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{command});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('HqlService_hql_query_as_arrays_args');
+  if (defined $self->{ns}) {
+    $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
+    $xfer += $output->writeI64($self->{ns});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{command}) {
+    $xfer += $output->writeFieldBegin('command', TType::STRING, 2);
+    $xfer += $output->writeString($self->{command});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen2::HqlService_hql_query_as_arrays_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen2::HqlService_hql_query_as_arrays_result->mk_accessors( qw( success ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  $self->{e} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+    if (defined $vals->{e}) {
+      $self->{e} = $vals->{e};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'HqlService_hql_query_as_arrays_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{success} = new Hypertable::ThriftGen2::HqlResultAsArrays();
+        $xfer += $self->{success}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^1$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{e} = new Hypertable::ThriftGen::ClientException();
+        $xfer += $self->{e}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('HqlService_hql_query_as_arrays_result');
   if (defined $self->{success}) {
     $xfer += $output->writeFieldBegin('success', TType::STRUCT, 0);
     $xfer += $self->{success}->write($output);
@@ -736,12 +1086,30 @@ sub hql_query{
   die 'implement interface';
 }
 
+sub hql_exec_as_arrays{
+  my $self = shift;
+  my $ns = shift;
+  my $command = shift;
+  my $noflush = shift;
+  my $unbuffered = shift;
+
+  die 'implement interface';
+}
+
 sub hql_exec2{
   my $self = shift;
   my $ns = shift;
   my $command = shift;
   my $noflush = shift;
   my $unbuffered = shift;
+
+  die 'implement interface';
+}
+
+sub hql_query_as_arrays{
+  my $self = shift;
+  my $ns = shift;
+  my $command = shift;
 
   die 'implement interface';
 }
@@ -777,6 +1145,16 @@ sub hql_query{
   return $self->{impl}->hql_query($ns, $command);
 }
 
+sub hql_exec_as_arrays{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
+  my $command = ($request->{'command'}) ? $request->{'command'} : undef;
+  my $noflush = ($request->{'noflush'}) ? $request->{'noflush'} : undef;
+  my $unbuffered = ($request->{'unbuffered'}) ? $request->{'unbuffered'} : undef;
+  return $self->{impl}->hql_exec_as_arrays($ns, $command, $noflush, $unbuffered);
+}
+
 sub hql_exec2{
   my ($self, $request) = @_;
 
@@ -785,6 +1163,14 @@ sub hql_exec2{
   my $noflush = ($request->{'noflush'}) ? $request->{'noflush'} : undef;
   my $unbuffered = ($request->{'unbuffered'}) ? $request->{'unbuffered'} : undef;
   return $self->{impl}->hql_exec2($ns, $command, $noflush, $unbuffered);
+}
+
+sub hql_query_as_arrays{
+  my ($self, $request) = @_;
+
+  my $ns = ($request->{'ns'}) ? $request->{'ns'} : undef;
+  my $command = ($request->{'command'}) ? $request->{'command'} : undef;
+  return $self->{impl}->hql_query_as_arrays($ns, $command);
 }
 
 sub hql_query2{
@@ -910,6 +1296,61 @@ sub recv_hql_query{
   }
   die "hql_query failed: unknown result";
 }
+sub hql_exec_as_arrays{
+  my $self = shift;
+  my $ns = shift;
+  my $command = shift;
+  my $noflush = shift;
+  my $unbuffered = shift;
+
+    $self->send_hql_exec_as_arrays($ns, $command, $noflush, $unbuffered);
+  return $self->recv_hql_exec_as_arrays();
+}
+
+sub send_hql_exec_as_arrays{
+  my $self = shift;
+  my $ns = shift;
+  my $command = shift;
+  my $noflush = shift;
+  my $unbuffered = shift;
+
+  $self->{output}->writeMessageBegin('hql_exec_as_arrays', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen2::HqlService_hql_exec_as_arrays_args();
+  $args->{ns} = $ns;
+  $args->{command} = $command;
+  $args->{noflush} = $noflush;
+  $args->{unbuffered} = $unbuffered;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_hql_exec_as_arrays{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen2::HqlService_hql_exec_as_arrays_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "hql_exec_as_arrays failed: unknown result";
+}
 sub hql_exec2{
   my $self = shift;
   my $ns = shift;
@@ -964,6 +1405,55 @@ sub recv_hql_exec2{
     die $result->{e};
   }
   die "hql_exec2 failed: unknown result";
+}
+sub hql_query_as_arrays{
+  my $self = shift;
+  my $ns = shift;
+  my $command = shift;
+
+    $self->send_hql_query_as_arrays($ns, $command);
+  return $self->recv_hql_query_as_arrays();
+}
+
+sub send_hql_query_as_arrays{
+  my $self = shift;
+  my $ns = shift;
+  my $command = shift;
+
+  $self->{output}->writeMessageBegin('hql_query_as_arrays', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen2::HqlService_hql_query_as_arrays_args();
+  $args->{ns} = $ns;
+  $args->{command} = $command;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_hql_query_as_arrays{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen2::HqlService_hql_query_as_arrays_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  if (defined $result->{e}) {
+    die $result->{e};
+  }
+  die "hql_query_as_arrays failed: unknown result";
 }
 sub hql_query2{
   my $self = shift;
@@ -1075,6 +1565,23 @@ sub process_hql_query {
     $output->getTransport()->flush();
 }
 
+sub process_hql_exec_as_arrays {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen2::HqlService_hql_exec_as_arrays_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen2::HqlService_hql_exec_as_arrays_result();
+    eval {
+      $result->{success} = $self->{handler}->hql_exec_as_arrays($args->ns, $args->command, $args->noflush, $args->unbuffered);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('hql_exec_as_arrays', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
 sub process_hql_exec2 {
     my ($self, $seqid, $input, $output) = @_;
     my $args = new Hypertable::ThriftGen2::HqlService_hql_exec2_args();
@@ -1087,6 +1594,23 @@ sub process_hql_exec2 {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('hql_exec2', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_hql_query_as_arrays {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen2::HqlService_hql_query_as_arrays_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen2::HqlService_hql_query_as_arrays_result();
+    eval {
+      $result->{success} = $self->{handler}->hql_query_as_arrays($args->ns, $args->command);
+    }; if( UNIVERSAL::isa($@,'Hypertable::ThriftGen::ClientException') ){ 
+      $result->{e} = $@;
+    }
+    $output->writeMessageBegin('hql_query_as_arrays', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

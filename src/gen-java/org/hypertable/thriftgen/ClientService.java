@@ -411,6 +411,8 @@ public class ClientService {
      * @param table_name
      * @param mutate_spec
      */
+    public void shared_mutator_refresh(long ns, String table_name, MutateSpec mutate_spec) throws ClientException, org.apache.thrift.TException;
+
     public void refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec) throws ClientException, org.apache.thrift.TException;
 
     /**
@@ -432,6 +434,8 @@ public class ClientService {
      * @param mutate_spec
      * @param cells
      */
+    public void shared_mutator_set_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, org.apache.thrift.TException;
+
     public void offer_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, org.apache.thrift.TException;
 
     /**
@@ -442,6 +446,8 @@ public class ClientService {
      * @param mutate_spec
      * @param cells
      */
+    public void shared_mutator_set_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, org.apache.thrift.TException;
+
     public void offer_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, org.apache.thrift.TException;
 
     /**
@@ -463,6 +469,8 @@ public class ClientService {
      * @param mutate_spec
      * @param cell
      */
+    public void shared_mutator_set_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, org.apache.thrift.TException;
+
     public void offer_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, org.apache.thrift.TException;
 
     /**
@@ -473,6 +481,8 @@ public class ClientService {
      * @param mutate_spec
      * @param cell
      */
+    public void shared_mutator_set_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws ClientException, org.apache.thrift.TException;
+
     public void offer_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws ClientException, org.apache.thrift.TException;
 
     /**
@@ -1064,13 +1074,23 @@ public class ClientService {
 
     public void get_cells_serialized(long ns, String name, ScanSpec scan_spec, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.get_cells_serialized_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void shared_mutator_refresh(long ns, String table_name, MutateSpec mutate_spec, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.shared_mutator_refresh_call> resultHandler) throws org.apache.thrift.TException;
+
     public void refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.refresh_shared_mutator_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void shared_mutator_set_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.shared_mutator_set_cells_call> resultHandler) throws org.apache.thrift.TException;
 
     public void offer_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.offer_cells_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void shared_mutator_set_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.shared_mutator_set_cells_as_arrays_call> resultHandler) throws org.apache.thrift.TException;
+
     public void offer_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.offer_cells_as_arrays_call> resultHandler) throws org.apache.thrift.TException;
 
+    public void shared_mutator_set_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.shared_mutator_set_cell_call> resultHandler) throws org.apache.thrift.TException;
+
     public void offer_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.offer_cell_call> resultHandler) throws org.apache.thrift.TException;
+
+    public void shared_mutator_set_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.shared_mutator_set_cell_as_array_call> resultHandler) throws org.apache.thrift.TException;
 
     public void offer_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.offer_cell_as_array_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -2629,6 +2649,31 @@ public class ClientService {
       throw new org.apache.thrift.TApplicationException(org.apache.thrift.TApplicationException.MISSING_RESULT, "get_cells_serialized failed: unknown result");
     }
 
+    public void shared_mutator_refresh(long ns, String table_name, MutateSpec mutate_spec) throws ClientException, org.apache.thrift.TException
+    {
+      send_shared_mutator_refresh(ns, table_name, mutate_spec);
+      recv_shared_mutator_refresh();
+    }
+
+    public void send_shared_mutator_refresh(long ns, String table_name, MutateSpec mutate_spec) throws org.apache.thrift.TException
+    {
+      shared_mutator_refresh_args args = new shared_mutator_refresh_args();
+      args.setNs(ns);
+      args.setTable_name(table_name);
+      args.setMutate_spec(mutate_spec);
+      sendBase("shared_mutator_refresh", args);
+    }
+
+    public void recv_shared_mutator_refresh() throws ClientException, org.apache.thrift.TException
+    {
+      shared_mutator_refresh_result result = new shared_mutator_refresh_result();
+      receiveBase(result, "shared_mutator_refresh");
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
     public void refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec) throws ClientException, org.apache.thrift.TException
     {
       send_refresh_shared_mutator(ns, table_name, mutate_spec);
@@ -2648,6 +2693,32 @@ public class ClientService {
     {
       refresh_shared_mutator_result result = new refresh_shared_mutator_result();
       receiveBase(result, "refresh_shared_mutator");
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void shared_mutator_set_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws ClientException, org.apache.thrift.TException
+    {
+      send_shared_mutator_set_cells(ns, table_name, mutate_spec, cells);
+      recv_shared_mutator_set_cells();
+    }
+
+    public void send_shared_mutator_set_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells) throws org.apache.thrift.TException
+    {
+      shared_mutator_set_cells_args args = new shared_mutator_set_cells_args();
+      args.setNs(ns);
+      args.setTable_name(table_name);
+      args.setMutate_spec(mutate_spec);
+      args.setCells(cells);
+      sendBase("shared_mutator_set_cells", args);
+    }
+
+    public void recv_shared_mutator_set_cells() throws ClientException, org.apache.thrift.TException
+    {
+      shared_mutator_set_cells_result result = new shared_mutator_set_cells_result();
+      receiveBase(result, "shared_mutator_set_cells");
       if (result.e != null) {
         throw result.e;
       }
@@ -2680,6 +2751,32 @@ public class ClientService {
       return;
     }
 
+    public void shared_mutator_set_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, org.apache.thrift.TException
+    {
+      send_shared_mutator_set_cells_as_arrays(ns, table_name, mutate_spec, cells);
+      recv_shared_mutator_set_cells_as_arrays();
+    }
+
+    public void send_shared_mutator_set_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws org.apache.thrift.TException
+    {
+      shared_mutator_set_cells_as_arrays_args args = new shared_mutator_set_cells_as_arrays_args();
+      args.setNs(ns);
+      args.setTable_name(table_name);
+      args.setMutate_spec(mutate_spec);
+      args.setCells(cells);
+      sendBase("shared_mutator_set_cells_as_arrays", args);
+    }
+
+    public void recv_shared_mutator_set_cells_as_arrays() throws ClientException, org.apache.thrift.TException
+    {
+      shared_mutator_set_cells_as_arrays_result result = new shared_mutator_set_cells_as_arrays_result();
+      receiveBase(result, "shared_mutator_set_cells_as_arrays");
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
     public void offer_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells) throws ClientException, org.apache.thrift.TException
     {
       send_offer_cells_as_arrays(ns, table_name, mutate_spec, cells);
@@ -2706,6 +2803,32 @@ public class ClientService {
       return;
     }
 
+    public void shared_mutator_set_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, org.apache.thrift.TException
+    {
+      send_shared_mutator_set_cell(ns, table_name, mutate_spec, cell);
+      recv_shared_mutator_set_cell();
+    }
+
+    public void send_shared_mutator_set_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws org.apache.thrift.TException
+    {
+      shared_mutator_set_cell_args args = new shared_mutator_set_cell_args();
+      args.setNs(ns);
+      args.setTable_name(table_name);
+      args.setMutate_spec(mutate_spec);
+      args.setCell(cell);
+      sendBase("shared_mutator_set_cell", args);
+    }
+
+    public void recv_shared_mutator_set_cell() throws ClientException, org.apache.thrift.TException
+    {
+      shared_mutator_set_cell_result result = new shared_mutator_set_cell_result();
+      receiveBase(result, "shared_mutator_set_cell");
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
     public void offer_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell) throws ClientException, org.apache.thrift.TException
     {
       send_offer_cell(ns, table_name, mutate_spec, cell);
@@ -2726,6 +2849,32 @@ public class ClientService {
     {
       offer_cell_result result = new offer_cell_result();
       receiveBase(result, "offer_cell");
+      if (result.e != null) {
+        throw result.e;
+      }
+      return;
+    }
+
+    public void shared_mutator_set_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws ClientException, org.apache.thrift.TException
+    {
+      send_shared_mutator_set_cell_as_array(ns, table_name, mutate_spec, cell);
+      recv_shared_mutator_set_cell_as_array();
+    }
+
+    public void send_shared_mutator_set_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell) throws org.apache.thrift.TException
+    {
+      shared_mutator_set_cell_as_array_args args = new shared_mutator_set_cell_as_array_args();
+      args.setNs(ns);
+      args.setTable_name(table_name);
+      args.setMutate_spec(mutate_spec);
+      args.setCell(cell);
+      sendBase("shared_mutator_set_cell_as_array", args);
+    }
+
+    public void recv_shared_mutator_set_cell_as_array() throws ClientException, org.apache.thrift.TException
+    {
+      shared_mutator_set_cell_as_array_result result = new shared_mutator_set_cell_as_array_result();
+      receiveBase(result, "shared_mutator_set_cell_as_array");
       if (result.e != null) {
         throw result.e;
       }
@@ -6140,6 +6289,44 @@ public class ClientService {
       }
     }
 
+    public void shared_mutator_refresh(long ns, String table_name, MutateSpec mutate_spec, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_refresh_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      shared_mutator_refresh_call method_call = new shared_mutator_refresh_call(ns, table_name, mutate_spec, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class shared_mutator_refresh_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      public shared_mutator_refresh_call(long ns, String table_name, MutateSpec mutate_spec, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_refresh_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("shared_mutator_refresh", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        shared_mutator_refresh_args args = new shared_mutator_refresh_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_shared_mutator_refresh();
+      }
+    }
+
     public void refresh_shared_mutator(long ns, String table_name, MutateSpec mutate_spec, org.apache.thrift.async.AsyncMethodCallback<refresh_shared_mutator_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       refresh_shared_mutator_call method_call = new refresh_shared_mutator_call(ns, table_name, mutate_spec, resultHandler, this, ___protocolFactory, ___transport);
@@ -6175,6 +6362,47 @@ public class ClientService {
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         (new Client(prot)).recv_refresh_shared_mutator();
+      }
+    }
+
+    public void shared_mutator_set_cells(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_set_cells_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      shared_mutator_set_cells_call method_call = new shared_mutator_set_cells_call(ns, table_name, mutate_spec, cells, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class shared_mutator_set_cells_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      private List<Cell> cells;
+      public shared_mutator_set_cells_call(long ns, String table_name, MutateSpec mutate_spec, List<Cell> cells, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_set_cells_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+        this.cells = cells;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("shared_mutator_set_cells", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        shared_mutator_set_cells_args args = new shared_mutator_set_cells_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.setCells(cells);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_shared_mutator_set_cells();
       }
     }
 
@@ -6219,6 +6447,47 @@ public class ClientService {
       }
     }
 
+    public void shared_mutator_set_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_set_cells_as_arrays_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      shared_mutator_set_cells_as_arrays_call method_call = new shared_mutator_set_cells_as_arrays_call(ns, table_name, mutate_spec, cells, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class shared_mutator_set_cells_as_arrays_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      private List<List<String>> cells;
+      public shared_mutator_set_cells_as_arrays_call(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_set_cells_as_arrays_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+        this.cells = cells;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("shared_mutator_set_cells_as_arrays", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        shared_mutator_set_cells_as_arrays_args args = new shared_mutator_set_cells_as_arrays_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.setCells(cells);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_shared_mutator_set_cells_as_arrays();
+      }
+    }
+
     public void offer_cells_as_arrays(long ns, String table_name, MutateSpec mutate_spec, List<List<String>> cells, org.apache.thrift.async.AsyncMethodCallback<offer_cells_as_arrays_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       offer_cells_as_arrays_call method_call = new offer_cells_as_arrays_call(ns, table_name, mutate_spec, cells, resultHandler, this, ___protocolFactory, ___transport);
@@ -6260,6 +6529,47 @@ public class ClientService {
       }
     }
 
+    public void shared_mutator_set_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_set_cell_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      shared_mutator_set_cell_call method_call = new shared_mutator_set_cell_call(ns, table_name, mutate_spec, cell, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class shared_mutator_set_cell_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      private Cell cell;
+      public shared_mutator_set_cell_call(long ns, String table_name, MutateSpec mutate_spec, Cell cell, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_set_cell_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+        this.cell = cell;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("shared_mutator_set_cell", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        shared_mutator_set_cell_args args = new shared_mutator_set_cell_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.setCell(cell);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_shared_mutator_set_cell();
+      }
+    }
+
     public void offer_cell(long ns, String table_name, MutateSpec mutate_spec, Cell cell, org.apache.thrift.async.AsyncMethodCallback<offer_cell_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       offer_cell_call method_call = new offer_cell_call(ns, table_name, mutate_spec, cell, resultHandler, this, ___protocolFactory, ___transport);
@@ -6298,6 +6608,47 @@ public class ClientService {
         org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
         org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
         (new Client(prot)).recv_offer_cell();
+      }
+    }
+
+    public void shared_mutator_set_cell_as_array(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_set_cell_as_array_call> resultHandler) throws org.apache.thrift.TException {
+      checkReady();
+      shared_mutator_set_cell_as_array_call method_call = new shared_mutator_set_cell_as_array_call(ns, table_name, mutate_spec, cell, resultHandler, this, ___protocolFactory, ___transport);
+      this.___currentMethod = method_call;
+      ___manager.call(method_call);
+    }
+
+    public static class shared_mutator_set_cell_as_array_call extends org.apache.thrift.async.TAsyncMethodCall {
+      private long ns;
+      private String table_name;
+      private MutateSpec mutate_spec;
+      private List<String> cell;
+      public shared_mutator_set_cell_as_array_call(long ns, String table_name, MutateSpec mutate_spec, List<String> cell, org.apache.thrift.async.AsyncMethodCallback<shared_mutator_set_cell_as_array_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+        super(client, protocolFactory, transport, resultHandler, false);
+        this.ns = ns;
+        this.table_name = table_name;
+        this.mutate_spec = mutate_spec;
+        this.cell = cell;
+      }
+
+      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
+        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("shared_mutator_set_cell_as_array", org.apache.thrift.protocol.TMessageType.CALL, 0));
+        shared_mutator_set_cell_as_array_args args = new shared_mutator_set_cell_as_array_args();
+        args.setNs(ns);
+        args.setTable_name(table_name);
+        args.setMutate_spec(mutate_spec);
+        args.setCell(cell);
+        args.write(prot);
+        prot.writeMessageEnd();
+      }
+
+      public void getResult() throws ClientException, org.apache.thrift.TException {
+        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
+          throw new IllegalStateException("Method call not finished!");
+        }
+        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
+        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
+        (new Client(prot)).recv_shared_mutator_set_cell_as_array();
       }
     }
 
@@ -8490,10 +8841,15 @@ public class ClientService {
       processMap.put("get_cells", new get_cells());
       processMap.put("get_cells_as_arrays", new get_cells_as_arrays());
       processMap.put("get_cells_serialized", new get_cells_serialized());
+      processMap.put("shared_mutator_refresh", new shared_mutator_refresh());
       processMap.put("refresh_shared_mutator", new refresh_shared_mutator());
+      processMap.put("shared_mutator_set_cells", new shared_mutator_set_cells());
       processMap.put("offer_cells", new offer_cells());
+      processMap.put("shared_mutator_set_cells_as_arrays", new shared_mutator_set_cells_as_arrays());
       processMap.put("offer_cells_as_arrays", new offer_cells_as_arrays());
+      processMap.put("shared_mutator_set_cell", new shared_mutator_set_cell());
       processMap.put("offer_cell", new offer_cell());
+      processMap.put("shared_mutator_set_cell_as_array", new shared_mutator_set_cell_as_array());
       processMap.put("offer_cell_as_array", new offer_cell_as_array());
       processMap.put("mutator_open", new mutator_open());
       processMap.put("open_mutator", new open_mutator());
@@ -9669,6 +10025,26 @@ public class ClientService {
       }
     }
 
+    private static class shared_mutator_refresh<I extends Iface> extends org.apache.thrift.ProcessFunction<I, shared_mutator_refresh_args> {
+      public shared_mutator_refresh() {
+        super("shared_mutator_refresh");
+      }
+
+      protected shared_mutator_refresh_args getEmptyArgsInstance() {
+        return new shared_mutator_refresh_args();
+      }
+
+      protected shared_mutator_refresh_result getResult(I iface, shared_mutator_refresh_args args) throws org.apache.thrift.TException {
+        shared_mutator_refresh_result result = new shared_mutator_refresh_result();
+        try {
+          iface.shared_mutator_refresh(args.ns, args.table_name, args.mutate_spec);
+        } catch (ClientException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
     private static class refresh_shared_mutator<I extends Iface> extends org.apache.thrift.ProcessFunction<I, refresh_shared_mutator_args> {
       public refresh_shared_mutator() {
         super("refresh_shared_mutator");
@@ -9682,6 +10058,26 @@ public class ClientService {
         refresh_shared_mutator_result result = new refresh_shared_mutator_result();
         try {
           iface.refresh_shared_mutator(args.ns, args.table_name, args.mutate_spec);
+        } catch (ClientException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class shared_mutator_set_cells<I extends Iface> extends org.apache.thrift.ProcessFunction<I, shared_mutator_set_cells_args> {
+      public shared_mutator_set_cells() {
+        super("shared_mutator_set_cells");
+      }
+
+      protected shared_mutator_set_cells_args getEmptyArgsInstance() {
+        return new shared_mutator_set_cells_args();
+      }
+
+      protected shared_mutator_set_cells_result getResult(I iface, shared_mutator_set_cells_args args) throws org.apache.thrift.TException {
+        shared_mutator_set_cells_result result = new shared_mutator_set_cells_result();
+        try {
+          iface.shared_mutator_set_cells(args.ns, args.table_name, args.mutate_spec, args.cells);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -9709,6 +10105,26 @@ public class ClientService {
       }
     }
 
+    private static class shared_mutator_set_cells_as_arrays<I extends Iface> extends org.apache.thrift.ProcessFunction<I, shared_mutator_set_cells_as_arrays_args> {
+      public shared_mutator_set_cells_as_arrays() {
+        super("shared_mutator_set_cells_as_arrays");
+      }
+
+      protected shared_mutator_set_cells_as_arrays_args getEmptyArgsInstance() {
+        return new shared_mutator_set_cells_as_arrays_args();
+      }
+
+      protected shared_mutator_set_cells_as_arrays_result getResult(I iface, shared_mutator_set_cells_as_arrays_args args) throws org.apache.thrift.TException {
+        shared_mutator_set_cells_as_arrays_result result = new shared_mutator_set_cells_as_arrays_result();
+        try {
+          iface.shared_mutator_set_cells_as_arrays(args.ns, args.table_name, args.mutate_spec, args.cells);
+        } catch (ClientException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
     private static class offer_cells_as_arrays<I extends Iface> extends org.apache.thrift.ProcessFunction<I, offer_cells_as_arrays_args> {
       public offer_cells_as_arrays() {
         super("offer_cells_as_arrays");
@@ -9729,6 +10145,26 @@ public class ClientService {
       }
     }
 
+    private static class shared_mutator_set_cell<I extends Iface> extends org.apache.thrift.ProcessFunction<I, shared_mutator_set_cell_args> {
+      public shared_mutator_set_cell() {
+        super("shared_mutator_set_cell");
+      }
+
+      protected shared_mutator_set_cell_args getEmptyArgsInstance() {
+        return new shared_mutator_set_cell_args();
+      }
+
+      protected shared_mutator_set_cell_result getResult(I iface, shared_mutator_set_cell_args args) throws org.apache.thrift.TException {
+        shared_mutator_set_cell_result result = new shared_mutator_set_cell_result();
+        try {
+          iface.shared_mutator_set_cell(args.ns, args.table_name, args.mutate_spec, args.cell);
+        } catch (ClientException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
     private static class offer_cell<I extends Iface> extends org.apache.thrift.ProcessFunction<I, offer_cell_args> {
       public offer_cell() {
         super("offer_cell");
@@ -9742,6 +10178,26 @@ public class ClientService {
         offer_cell_result result = new offer_cell_result();
         try {
           iface.offer_cell(args.ns, args.table_name, args.mutate_spec, args.cell);
+        } catch (ClientException e) {
+          result.e = e;
+        }
+        return result;
+      }
+    }
+
+    private static class shared_mutator_set_cell_as_array<I extends Iface> extends org.apache.thrift.ProcessFunction<I, shared_mutator_set_cell_as_array_args> {
+      public shared_mutator_set_cell_as_array() {
+        super("shared_mutator_set_cell_as_array");
+      }
+
+      protected shared_mutator_set_cell_as_array_args getEmptyArgsInstance() {
+        return new shared_mutator_set_cell_as_array_args();
+      }
+
+      protected shared_mutator_set_cell_as_array_result getResult(I iface, shared_mutator_set_cell_as_array_args args) throws org.apache.thrift.TException {
+        shared_mutator_set_cell_as_array_result result = new shared_mutator_set_cell_as_array_result();
+        try {
+          iface.shared_mutator_set_cell_as_array(args.ns, args.table_name, args.mutate_spec, args.cell);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -50941,6 +51397,777 @@ public class ClientService {
 
   }
 
+  public static class shared_mutator_refresh_args implements org.apache.thrift.TBase<shared_mutator_refresh_args, shared_mutator_refresh_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_refresh_args");
+
+    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField MUTATE_SPEC_FIELD_DESC = new org.apache.thrift.protocol.TField("mutate_spec", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+
+    public long ns; // required
+    public String table_name; // required
+    public MutateSpec mutate_spec; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new org.apache.thrift.meta_data.FieldMetaData("table_name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.MUTATE_SPEC, new org.apache.thrift.meta_data.FieldMetaData("mutate_spec", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, MutateSpec.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_refresh_args.class, metaDataMap);
+    }
+
+    public shared_mutator_refresh_args() {
+    }
+
+    public shared_mutator_refresh_args(
+      long ns,
+      String table_name,
+      MutateSpec mutate_spec)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
+      this.mutate_spec = mutate_spec;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_refresh_args(shared_mutator_refresh_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+    }
+
+    public shared_mutator_refresh_args deepCopy() {
+      return new shared_mutator_refresh_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public shared_mutator_refresh_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public shared_mutator_refresh_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been assigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
+      if (!value) {
+        this.table_name = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public shared_mutator_refresh_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    /** Returns true if field mutate_spec is set (has been assigned a value) and false otherwise */
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return Long.valueOf(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_refresh_args)
+        return this.equals((shared_mutator_refresh_args)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_refresh_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_refresh_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_refresh_args typedOther = (shared_mutator_refresh_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMutate_spec()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_refresh_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table_name);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class shared_mutator_refresh_result implements org.apache.thrift.TBase<shared_mutator_refresh_result, shared_mutator_refresh_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_refresh_result");
+
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    public ClientException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_refresh_result.class, metaDataMap);
+    }
+
+    public shared_mutator_refresh_result() {
+    }
+
+    public shared_mutator_refresh_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_refresh_result(shared_mutator_refresh_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public shared_mutator_refresh_result deepCopy() {
+      return new shared_mutator_refresh_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public shared_mutator_refresh_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_refresh_result)
+        return this.equals((shared_mutator_refresh_result)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_refresh_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_refresh_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_refresh_result typedOther = (shared_mutator_refresh_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_refresh_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
   public static class refresh_shared_mutator_args implements org.apache.thrift.TBase<refresh_shared_mutator_args, refresh_shared_mutator_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("refresh_shared_mutator_args");
 
@@ -51407,6 +52634,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -51677,6 +52906,904 @@ public class ClientService {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("refresh_shared_mutator_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class shared_mutator_set_cells_args implements org.apache.thrift.TBase<shared_mutator_set_cells_args, shared_mutator_set_cells_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_set_cells_args");
+
+    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField MUTATE_SPEC_FIELD_DESC = new org.apache.thrift.protocol.TField("mutate_spec", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+    private static final org.apache.thrift.protocol.TField CELLS_FIELD_DESC = new org.apache.thrift.protocol.TField("cells", org.apache.thrift.protocol.TType.LIST, (short)4);
+
+    public long ns; // required
+    public String table_name; // required
+    public MutateSpec mutate_spec; // required
+    public List<Cell> cells; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec"),
+      CELLS((short)4, "cells");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          case 4: // CELLS
+            return CELLS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new org.apache.thrift.meta_data.FieldMetaData("table_name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.MUTATE_SPEC, new org.apache.thrift.meta_data.FieldMetaData("mutate_spec", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, MutateSpec.class)));
+      tmpMap.put(_Fields.CELLS, new org.apache.thrift.meta_data.FieldMetaData("cells", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Cell.class))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_set_cells_args.class, metaDataMap);
+    }
+
+    public shared_mutator_set_cells_args() {
+    }
+
+    public shared_mutator_set_cells_args(
+      long ns,
+      String table_name,
+      MutateSpec mutate_spec,
+      List<Cell> cells)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
+      this.mutate_spec = mutate_spec;
+      this.cells = cells;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_set_cells_args(shared_mutator_set_cells_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+      if (other.isSetCells()) {
+        List<Cell> __this__cells = new ArrayList<Cell>();
+        for (Cell other_element : other.cells) {
+          __this__cells.add(new Cell(other_element));
+        }
+        this.cells = __this__cells;
+      }
+    }
+
+    public shared_mutator_set_cells_args deepCopy() {
+      return new shared_mutator_set_cells_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
+      this.cells = null;
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public shared_mutator_set_cells_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public shared_mutator_set_cells_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been assigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
+      if (!value) {
+        this.table_name = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public shared_mutator_set_cells_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    /** Returns true if field mutate_spec is set (has been assigned a value) and false otherwise */
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public int getCellsSize() {
+      return (this.cells == null) ? 0 : this.cells.size();
+    }
+
+    public java.util.Iterator<Cell> getCellsIterator() {
+      return (this.cells == null) ? null : this.cells.iterator();
+    }
+
+    public void addToCells(Cell elem) {
+      if (this.cells == null) {
+        this.cells = new ArrayList<Cell>();
+      }
+      this.cells.add(elem);
+    }
+
+    public List<Cell> getCells() {
+      return this.cells;
+    }
+
+    public shared_mutator_set_cells_args setCells(List<Cell> cells) {
+      this.cells = cells;
+      return this;
+    }
+
+    public void unsetCells() {
+      this.cells = null;
+    }
+
+    /** Returns true if field cells is set (has been assigned a value) and false otherwise */
+    public boolean isSetCells() {
+      return this.cells != null;
+    }
+
+    public void setCellsIsSet(boolean value) {
+      if (!value) {
+        this.cells = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      case CELLS:
+        if (value == null) {
+          unsetCells();
+        } else {
+          setCells((List<Cell>)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return Long.valueOf(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      case CELLS:
+        return getCells();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      case CELLS:
+        return isSetCells();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_set_cells_args)
+        return this.equals((shared_mutator_set_cells_args)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_set_cells_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      boolean this_present_cells = true && this.isSetCells();
+      boolean that_present_cells = true && that.isSetCells();
+      if (this_present_cells || that_present_cells) {
+        if (!(this_present_cells && that_present_cells))
+          return false;
+        if (!this.cells.equals(that.cells))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_set_cells_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_set_cells_args typedOther = (shared_mutator_set_cells_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMutate_spec()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCells()).compareTo(typedOther.isSetCells());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetCells()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cells, typedOther.cells);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 4: // CELLS
+            if (field.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list110 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list110.size);
+                for (int _i111 = 0; _i111 < _list110.size; ++_i111)
+                {
+                  Cell _elem112; // required
+                  _elem112 = new Cell();
+                  _elem112.read(iprot);
+                  this.cells.add(_elem112);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      if (this.cells != null) {
+        oprot.writeFieldBegin(CELLS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.cells.size()));
+          for (Cell _iter113 : this.cells)
+          {
+            _iter113.write(oprot);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_set_cells_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table_name);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("cells:");
+      if (this.cells == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cells);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class shared_mutator_set_cells_result implements org.apache.thrift.TBase<shared_mutator_set_cells_result, shared_mutator_set_cells_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_set_cells_result");
+
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    public ClientException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_set_cells_result.class, metaDataMap);
+    }
+
+    public shared_mutator_set_cells_result() {
+    }
+
+    public shared_mutator_set_cells_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_set_cells_result(shared_mutator_set_cells_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public shared_mutator_set_cells_result deepCopy() {
+      return new shared_mutator_set_cells_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public shared_mutator_set_cells_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_set_cells_result)
+        return this.equals((shared_mutator_set_cells_result)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_set_cells_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_set_cells_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_set_cells_result typedOther = (shared_mutator_set_cells_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_set_cells_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -52196,14 +54323,14 @@ public class ClientService {
           case 4: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list110 = iprot.readListBegin();
-                this.cells = new ArrayList<Cell>(_list110.size);
-                for (int _i111 = 0; _i111 < _list110.size; ++_i111)
+                org.apache.thrift.protocol.TList _list114 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list114.size);
+                for (int _i115 = 0; _i115 < _list114.size; ++_i115)
                 {
-                  Cell _elem112; // required
-                  _elem112 = new Cell();
-                  _elem112.read(iprot);
-                  this.cells.add(_elem112);
+                  Cell _elem116; // required
+                  _elem116 = new Cell();
+                  _elem116.read(iprot);
+                  this.cells.add(_elem116);
                 }
                 iprot.readListEnd();
               }
@@ -52243,9 +54370,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.cells.size()));
-          for (Cell _iter113 : this.cells)
+          for (Cell _iter117 : this.cells)
           {
-            _iter113.write(oprot);
+            _iter117.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -52305,6 +54432,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -52575,6 +54704,922 @@ public class ClientService {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("offer_cells_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class shared_mutator_set_cells_as_arrays_args implements org.apache.thrift.TBase<shared_mutator_set_cells_as_arrays_args, shared_mutator_set_cells_as_arrays_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_set_cells_as_arrays_args");
+
+    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField MUTATE_SPEC_FIELD_DESC = new org.apache.thrift.protocol.TField("mutate_spec", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+    private static final org.apache.thrift.protocol.TField CELLS_FIELD_DESC = new org.apache.thrift.protocol.TField("cells", org.apache.thrift.protocol.TType.LIST, (short)4);
+
+    public long ns; // required
+    public String table_name; // required
+    public MutateSpec mutate_spec; // required
+    public List<List<String>> cells; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec"),
+      CELLS((short)4, "cells");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          case 4: // CELLS
+            return CELLS;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new org.apache.thrift.meta_data.FieldMetaData("table_name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.MUTATE_SPEC, new org.apache.thrift.meta_data.FieldMetaData("mutate_spec", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, MutateSpec.class)));
+      tmpMap.put(_Fields.CELLS, new org.apache.thrift.meta_data.FieldMetaData("cells", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
+              new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.LIST              , "CellAsArray"))));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_set_cells_as_arrays_args.class, metaDataMap);
+    }
+
+    public shared_mutator_set_cells_as_arrays_args() {
+    }
+
+    public shared_mutator_set_cells_as_arrays_args(
+      long ns,
+      String table_name,
+      MutateSpec mutate_spec,
+      List<List<String>> cells)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
+      this.mutate_spec = mutate_spec;
+      this.cells = cells;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_set_cells_as_arrays_args(shared_mutator_set_cells_as_arrays_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+      if (other.isSetCells()) {
+        List<List<String>> __this__cells = new ArrayList<List<String>>();
+        for (List<String> other_element : other.cells) {
+          __this__cells.add(other_element);
+        }
+        this.cells = __this__cells;
+      }
+    }
+
+    public shared_mutator_set_cells_as_arrays_args deepCopy() {
+      return new shared_mutator_set_cells_as_arrays_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
+      this.cells = null;
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public shared_mutator_set_cells_as_arrays_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public shared_mutator_set_cells_as_arrays_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been assigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
+      if (!value) {
+        this.table_name = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public shared_mutator_set_cells_as_arrays_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    /** Returns true if field mutate_spec is set (has been assigned a value) and false otherwise */
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public int getCellsSize() {
+      return (this.cells == null) ? 0 : this.cells.size();
+    }
+
+    public java.util.Iterator<List<String>> getCellsIterator() {
+      return (this.cells == null) ? null : this.cells.iterator();
+    }
+
+    public void addToCells(List<String> elem) {
+      if (this.cells == null) {
+        this.cells = new ArrayList<List<String>>();
+      }
+      this.cells.add(elem);
+    }
+
+    public List<List<String>> getCells() {
+      return this.cells;
+    }
+
+    public shared_mutator_set_cells_as_arrays_args setCells(List<List<String>> cells) {
+      this.cells = cells;
+      return this;
+    }
+
+    public void unsetCells() {
+      this.cells = null;
+    }
+
+    /** Returns true if field cells is set (has been assigned a value) and false otherwise */
+    public boolean isSetCells() {
+      return this.cells != null;
+    }
+
+    public void setCellsIsSet(boolean value) {
+      if (!value) {
+        this.cells = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      case CELLS:
+        if (value == null) {
+          unsetCells();
+        } else {
+          setCells((List<List<String>>)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return Long.valueOf(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      case CELLS:
+        return getCells();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      case CELLS:
+        return isSetCells();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_set_cells_as_arrays_args)
+        return this.equals((shared_mutator_set_cells_as_arrays_args)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_set_cells_as_arrays_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      boolean this_present_cells = true && this.isSetCells();
+      boolean that_present_cells = true && that.isSetCells();
+      if (this_present_cells || that_present_cells) {
+        if (!(this_present_cells && that_present_cells))
+          return false;
+        if (!this.cells.equals(that.cells))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_set_cells_as_arrays_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_set_cells_as_arrays_args typedOther = (shared_mutator_set_cells_as_arrays_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMutate_spec()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCells()).compareTo(typedOther.isSetCells());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetCells()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cells, typedOther.cells);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 4: // CELLS
+            if (field.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list118 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list118.size);
+                for (int _i119 = 0; _i119 < _list118.size; ++_i119)
+                {
+                  List<String> _elem120; // required
+                  {
+                    org.apache.thrift.protocol.TList _list121 = iprot.readListBegin();
+                    _elem120 = new ArrayList<String>(_list121.size);
+                    for (int _i122 = 0; _i122 < _list121.size; ++_i122)
+                    {
+                      String _elem123; // required
+                      _elem123 = iprot.readString();
+                      _elem120.add(_elem123);
+                    }
+                    iprot.readListEnd();
+                  }
+                  this.cells.add(_elem120);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      if (this.cells != null) {
+        oprot.writeFieldBegin(CELLS_FIELD_DESC);
+        {
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, this.cells.size()));
+          for (List<String> _iter124 : this.cells)
+          {
+            {
+              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter124.size()));
+              for (String _iter125 : _iter124)
+              {
+                oprot.writeString(_iter125);
+              }
+              oprot.writeListEnd();
+            }
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_set_cells_as_arrays_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table_name);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("cells:");
+      if (this.cells == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cells);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class shared_mutator_set_cells_as_arrays_result implements org.apache.thrift.TBase<shared_mutator_set_cells_as_arrays_result, shared_mutator_set_cells_as_arrays_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_set_cells_as_arrays_result");
+
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    public ClientException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_set_cells_as_arrays_result.class, metaDataMap);
+    }
+
+    public shared_mutator_set_cells_as_arrays_result() {
+    }
+
+    public shared_mutator_set_cells_as_arrays_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_set_cells_as_arrays_result(shared_mutator_set_cells_as_arrays_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public shared_mutator_set_cells_as_arrays_result deepCopy() {
+      return new shared_mutator_set_cells_as_arrays_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public shared_mutator_set_cells_as_arrays_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_set_cells_as_arrays_result)
+        return this.equals((shared_mutator_set_cells_as_arrays_result)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_set_cells_as_arrays_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_set_cells_as_arrays_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_set_cells_as_arrays_result typedOther = (shared_mutator_set_cells_as_arrays_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_set_cells_as_arrays_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -53094,23 +56139,23 @@ public class ClientService {
           case 4: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list114 = iprot.readListBegin();
-                this.cells = new ArrayList<List<String>>(_list114.size);
-                for (int _i115 = 0; _i115 < _list114.size; ++_i115)
+                org.apache.thrift.protocol.TList _list126 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list126.size);
+                for (int _i127 = 0; _i127 < _list126.size; ++_i127)
                 {
-                  List<String> _elem116; // required
+                  List<String> _elem128; // required
                   {
-                    org.apache.thrift.protocol.TList _list117 = iprot.readListBegin();
-                    _elem116 = new ArrayList<String>(_list117.size);
-                    for (int _i118 = 0; _i118 < _list117.size; ++_i118)
+                    org.apache.thrift.protocol.TList _list129 = iprot.readListBegin();
+                    _elem128 = new ArrayList<String>(_list129.size);
+                    for (int _i130 = 0; _i130 < _list129.size; ++_i130)
                     {
-                      String _elem119; // required
-                      _elem119 = iprot.readString();
-                      _elem116.add(_elem119);
+                      String _elem131; // required
+                      _elem131 = iprot.readString();
+                      _elem128.add(_elem131);
                     }
                     iprot.readListEnd();
                   }
-                  this.cells.add(_elem116);
+                  this.cells.add(_elem128);
                 }
                 iprot.readListEnd();
               }
@@ -53150,13 +56195,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, this.cells.size()));
-          for (List<String> _iter120 : this.cells)
+          for (List<String> _iter132 : this.cells)
           {
             {
-              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter120.size()));
-              for (String _iter121 : _iter120)
+              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter132.size()));
+              for (String _iter133 : _iter132)
               {
-                oprot.writeString(_iter121);
+                oprot.writeString(_iter133);
               }
               oprot.writeListEnd();
             }
@@ -53491,6 +56536,867 @@ public class ClientService {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("offer_cells_as_arrays_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class shared_mutator_set_cell_args implements org.apache.thrift.TBase<shared_mutator_set_cell_args, shared_mutator_set_cell_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_set_cell_args");
+
+    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField MUTATE_SPEC_FIELD_DESC = new org.apache.thrift.protocol.TField("mutate_spec", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+    private static final org.apache.thrift.protocol.TField CELL_FIELD_DESC = new org.apache.thrift.protocol.TField("cell", org.apache.thrift.protocol.TType.STRUCT, (short)4);
+
+    public long ns; // required
+    public String table_name; // required
+    public MutateSpec mutate_spec; // required
+    public Cell cell; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec"),
+      CELL((short)4, "cell");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          case 4: // CELL
+            return CELL;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new org.apache.thrift.meta_data.FieldMetaData("table_name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.MUTATE_SPEC, new org.apache.thrift.meta_data.FieldMetaData("mutate_spec", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, MutateSpec.class)));
+      tmpMap.put(_Fields.CELL, new org.apache.thrift.meta_data.FieldMetaData("cell", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Cell.class)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_set_cell_args.class, metaDataMap);
+    }
+
+    public shared_mutator_set_cell_args() {
+    }
+
+    public shared_mutator_set_cell_args(
+      long ns,
+      String table_name,
+      MutateSpec mutate_spec,
+      Cell cell)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
+      this.mutate_spec = mutate_spec;
+      this.cell = cell;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_set_cell_args(shared_mutator_set_cell_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+      if (other.isSetCell()) {
+        this.cell = new Cell(other.cell);
+      }
+    }
+
+    public shared_mutator_set_cell_args deepCopy() {
+      return new shared_mutator_set_cell_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
+      this.cell = null;
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public shared_mutator_set_cell_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public shared_mutator_set_cell_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been assigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
+      if (!value) {
+        this.table_name = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public shared_mutator_set_cell_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    /** Returns true if field mutate_spec is set (has been assigned a value) and false otherwise */
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public Cell getCell() {
+      return this.cell;
+    }
+
+    public shared_mutator_set_cell_args setCell(Cell cell) {
+      this.cell = cell;
+      return this;
+    }
+
+    public void unsetCell() {
+      this.cell = null;
+    }
+
+    /** Returns true if field cell is set (has been assigned a value) and false otherwise */
+    public boolean isSetCell() {
+      return this.cell != null;
+    }
+
+    public void setCellIsSet(boolean value) {
+      if (!value) {
+        this.cell = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      case CELL:
+        if (value == null) {
+          unsetCell();
+        } else {
+          setCell((Cell)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return Long.valueOf(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      case CELL:
+        return getCell();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      case CELL:
+        return isSetCell();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_set_cell_args)
+        return this.equals((shared_mutator_set_cell_args)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_set_cell_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      boolean this_present_cell = true && this.isSetCell();
+      boolean that_present_cell = true && that.isSetCell();
+      if (this_present_cell || that_present_cell) {
+        if (!(this_present_cell && that_present_cell))
+          return false;
+        if (!this.cell.equals(that.cell))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_set_cell_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_set_cell_args typedOther = (shared_mutator_set_cell_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMutate_spec()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCell()).compareTo(typedOther.isSetCell());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetCell()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cell, typedOther.cell);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 4: // CELL
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.cell = new Cell();
+              this.cell.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      if (this.cell != null) {
+        oprot.writeFieldBegin(CELL_FIELD_DESC);
+        this.cell.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_set_cell_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table_name);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("cell:");
+      if (this.cell == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cell);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class shared_mutator_set_cell_result implements org.apache.thrift.TBase<shared_mutator_set_cell_result, shared_mutator_set_cell_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_set_cell_result");
+
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    public ClientException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_set_cell_result.class, metaDataMap);
+    }
+
+    public shared_mutator_set_cell_result() {
+    }
+
+    public shared_mutator_set_cell_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_set_cell_result(shared_mutator_set_cell_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public shared_mutator_set_cell_result deepCopy() {
+      return new shared_mutator_set_cell_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public shared_mutator_set_cell_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_set_cell_result)
+        return this.equals((shared_mutator_set_cell_result)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_set_cell_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_set_cell_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_set_cell_result typedOther = (shared_mutator_set_cell_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_set_cell_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -54082,6 +57988,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -54352,6 +58260,900 @@ public class ClientService {
     @Override
     public String toString() {
       StringBuilder sb = new StringBuilder("offer_cell_result(");
+      boolean first = true;
+
+      sb.append("e:");
+      if (this.e == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.e);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class shared_mutator_set_cell_as_array_args implements org.apache.thrift.TBase<shared_mutator_set_cell_as_array_args, shared_mutator_set_cell_as_array_args._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_set_cell_as_array_args");
+
+    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
+    private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
+    private static final org.apache.thrift.protocol.TField MUTATE_SPEC_FIELD_DESC = new org.apache.thrift.protocol.TField("mutate_spec", org.apache.thrift.protocol.TType.STRUCT, (short)3);
+    private static final org.apache.thrift.protocol.TField CELL_FIELD_DESC = new org.apache.thrift.protocol.TField("cell", org.apache.thrift.protocol.TType.LIST, (short)4);
+
+    public long ns; // required
+    public String table_name; // required
+    public MutateSpec mutate_spec; // required
+    public List<String> cell; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      NS((short)1, "ns"),
+      TABLE_NAME((short)2, "table_name"),
+      MUTATE_SPEC((short)3, "mutate_spec"),
+      CELL((short)4, "cell");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // NS
+            return NS;
+          case 2: // TABLE_NAME
+            return TABLE_NAME;
+          case 3: // MUTATE_SPEC
+            return MUTATE_SPEC;
+          case 4: // CELL
+            return CELL;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+    private static final int __NS_ISSET_ID = 0;
+    private BitSet __isset_bit_vector = new BitSet(1);
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Namespace")));
+      tmpMap.put(_Fields.TABLE_NAME, new org.apache.thrift.meta_data.FieldMetaData("table_name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+      tmpMap.put(_Fields.MUTATE_SPEC, new org.apache.thrift.meta_data.FieldMetaData("mutate_spec", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, MutateSpec.class)));
+      tmpMap.put(_Fields.CELL, new org.apache.thrift.meta_data.FieldMetaData("cell", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.LIST          , "CellAsArray")));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_set_cell_as_array_args.class, metaDataMap);
+    }
+
+    public shared_mutator_set_cell_as_array_args() {
+    }
+
+    public shared_mutator_set_cell_as_array_args(
+      long ns,
+      String table_name,
+      MutateSpec mutate_spec,
+      List<String> cell)
+    {
+      this();
+      this.ns = ns;
+      setNsIsSet(true);
+      this.table_name = table_name;
+      this.mutate_spec = mutate_spec;
+      this.cell = cell;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_set_cell_as_array_args(shared_mutator_set_cell_as_array_args other) {
+      __isset_bit_vector.clear();
+      __isset_bit_vector.or(other.__isset_bit_vector);
+      this.ns = other.ns;
+      if (other.isSetTable_name()) {
+        this.table_name = other.table_name;
+      }
+      if (other.isSetMutate_spec()) {
+        this.mutate_spec = new MutateSpec(other.mutate_spec);
+      }
+      if (other.isSetCell()) {
+        this.cell = other.cell;
+      }
+    }
+
+    public shared_mutator_set_cell_as_array_args deepCopy() {
+      return new shared_mutator_set_cell_as_array_args(this);
+    }
+
+    @Override
+    public void clear() {
+      setNsIsSet(false);
+      this.ns = 0;
+      this.table_name = null;
+      this.mutate_spec = null;
+      this.cell = null;
+    }
+
+    public long getNs() {
+      return this.ns;
+    }
+
+    public shared_mutator_set_cell_as_array_args setNs(long ns) {
+      this.ns = ns;
+      setNsIsSet(true);
+      return this;
+    }
+
+    public void unsetNs() {
+      __isset_bit_vector.clear(__NS_ISSET_ID);
+    }
+
+    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
+    public boolean isSetNs() {
+      return __isset_bit_vector.get(__NS_ISSET_ID);
+    }
+
+    public void setNsIsSet(boolean value) {
+      __isset_bit_vector.set(__NS_ISSET_ID, value);
+    }
+
+    public String getTable_name() {
+      return this.table_name;
+    }
+
+    public shared_mutator_set_cell_as_array_args setTable_name(String table_name) {
+      this.table_name = table_name;
+      return this;
+    }
+
+    public void unsetTable_name() {
+      this.table_name = null;
+    }
+
+    /** Returns true if field table_name is set (has been assigned a value) and false otherwise */
+    public boolean isSetTable_name() {
+      return this.table_name != null;
+    }
+
+    public void setTable_nameIsSet(boolean value) {
+      if (!value) {
+        this.table_name = null;
+      }
+    }
+
+    public MutateSpec getMutate_spec() {
+      return this.mutate_spec;
+    }
+
+    public shared_mutator_set_cell_as_array_args setMutate_spec(MutateSpec mutate_spec) {
+      this.mutate_spec = mutate_spec;
+      return this;
+    }
+
+    public void unsetMutate_spec() {
+      this.mutate_spec = null;
+    }
+
+    /** Returns true if field mutate_spec is set (has been assigned a value) and false otherwise */
+    public boolean isSetMutate_spec() {
+      return this.mutate_spec != null;
+    }
+
+    public void setMutate_specIsSet(boolean value) {
+      if (!value) {
+        this.mutate_spec = null;
+      }
+    }
+
+    public int getCellSize() {
+      return (this.cell == null) ? 0 : this.cell.size();
+    }
+
+    public java.util.Iterator<String> getCellIterator() {
+      return (this.cell == null) ? null : this.cell.iterator();
+    }
+
+    public void addToCell(String elem) {
+      if (this.cell == null) {
+        this.cell = new ArrayList<String>();
+      }
+      this.cell.add(elem);
+    }
+
+    public List<String> getCell() {
+      return this.cell;
+    }
+
+    public shared_mutator_set_cell_as_array_args setCell(List<String> cell) {
+      this.cell = cell;
+      return this;
+    }
+
+    public void unsetCell() {
+      this.cell = null;
+    }
+
+    /** Returns true if field cell is set (has been assigned a value) and false otherwise */
+    public boolean isSetCell() {
+      return this.cell != null;
+    }
+
+    public void setCellIsSet(boolean value) {
+      if (!value) {
+        this.cell = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case NS:
+        if (value == null) {
+          unsetNs();
+        } else {
+          setNs((Long)value);
+        }
+        break;
+
+      case TABLE_NAME:
+        if (value == null) {
+          unsetTable_name();
+        } else {
+          setTable_name((String)value);
+        }
+        break;
+
+      case MUTATE_SPEC:
+        if (value == null) {
+          unsetMutate_spec();
+        } else {
+          setMutate_spec((MutateSpec)value);
+        }
+        break;
+
+      case CELL:
+        if (value == null) {
+          unsetCell();
+        } else {
+          setCell((List<String>)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case NS:
+        return Long.valueOf(getNs());
+
+      case TABLE_NAME:
+        return getTable_name();
+
+      case MUTATE_SPEC:
+        return getMutate_spec();
+
+      case CELL:
+        return getCell();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case NS:
+        return isSetNs();
+      case TABLE_NAME:
+        return isSetTable_name();
+      case MUTATE_SPEC:
+        return isSetMutate_spec();
+      case CELL:
+        return isSetCell();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_set_cell_as_array_args)
+        return this.equals((shared_mutator_set_cell_as_array_args)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_set_cell_as_array_args that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_ns = true;
+      boolean that_present_ns = true;
+      if (this_present_ns || that_present_ns) {
+        if (!(this_present_ns && that_present_ns))
+          return false;
+        if (this.ns != that.ns)
+          return false;
+      }
+
+      boolean this_present_table_name = true && this.isSetTable_name();
+      boolean that_present_table_name = true && that.isSetTable_name();
+      if (this_present_table_name || that_present_table_name) {
+        if (!(this_present_table_name && that_present_table_name))
+          return false;
+        if (!this.table_name.equals(that.table_name))
+          return false;
+      }
+
+      boolean this_present_mutate_spec = true && this.isSetMutate_spec();
+      boolean that_present_mutate_spec = true && that.isSetMutate_spec();
+      if (this_present_mutate_spec || that_present_mutate_spec) {
+        if (!(this_present_mutate_spec && that_present_mutate_spec))
+          return false;
+        if (!this.mutate_spec.equals(that.mutate_spec))
+          return false;
+      }
+
+      boolean this_present_cell = true && this.isSetCell();
+      boolean that_present_cell = true && that.isSetCell();
+      if (this_present_cell || that_present_cell) {
+        if (!(this_present_cell && that_present_cell))
+          return false;
+        if (!this.cell.equals(that.cell))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_set_cell_as_array_args other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_set_cell_as_array_args typedOther = (shared_mutator_set_cell_as_array_args)other;
+
+      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetNs()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetTable_name()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table_name, typedOther.table_name);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetMutate_spec()).compareTo(typedOther.isSetMutate_spec());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetMutate_spec()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.mutate_spec, typedOther.mutate_spec);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      lastComparison = Boolean.valueOf(isSetCell()).compareTo(typedOther.isSetCell());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetCell()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.cell, typedOther.cell);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // NS
+            if (field.type == org.apache.thrift.protocol.TType.I64) {
+              this.ns = iprot.readI64();
+              setNsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 2: // TABLE_NAME
+            if (field.type == org.apache.thrift.protocol.TType.STRING) {
+              this.table_name = iprot.readString();
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 3: // MUTATE_SPEC
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.mutate_spec = new MutateSpec();
+              this.mutate_spec.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          case 4: // CELL
+            if (field.type == org.apache.thrift.protocol.TType.LIST) {
+              {
+                org.apache.thrift.protocol.TList _list134 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list134.size);
+                for (int _i135 = 0; _i135 < _list134.size; ++_i135)
+                {
+                  String _elem136; // required
+                  _elem136 = iprot.readString();
+                  this.cell.add(_elem136);
+                }
+                iprot.readListEnd();
+              }
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      validate();
+
+      oprot.writeStructBegin(STRUCT_DESC);
+      oprot.writeFieldBegin(NS_FIELD_DESC);
+      oprot.writeI64(this.ns);
+      oprot.writeFieldEnd();
+      if (this.table_name != null) {
+        oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
+        oprot.writeString(this.table_name);
+        oprot.writeFieldEnd();
+      }
+      if (this.mutate_spec != null) {
+        oprot.writeFieldBegin(MUTATE_SPEC_FIELD_DESC);
+        this.mutate_spec.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      if (this.cell != null) {
+        oprot.writeFieldBegin(CELL_FIELD_DESC);
+        {
+          oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.cell.size()));
+          for (String _iter137 : this.cell)
+          {
+            oprot.writeString(_iter137);
+          }
+          oprot.writeListEnd();
+        }
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_set_cell_as_array_args(");
+      boolean first = true;
+
+      sb.append("ns:");
+      sb.append(this.ns);
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("table_name:");
+      if (this.table_name == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.table_name);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("mutate_spec:");
+      if (this.mutate_spec == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.mutate_spec);
+      }
+      first = false;
+      if (!first) sb.append(", ");
+      sb.append("cell:");
+      if (this.cell == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.cell);
+      }
+      first = false;
+      sb.append(")");
+      return sb.toString();
+    }
+
+    public void validate() throws org.apache.thrift.TException {
+      // check for required fields
+    }
+
+    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
+      try {
+        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
+      try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
+        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
+      } catch (org.apache.thrift.TException te) {
+        throw new java.io.IOException(te);
+      }
+    }
+
+  }
+
+  public static class shared_mutator_set_cell_as_array_result implements org.apache.thrift.TBase<shared_mutator_set_cell_as_array_result, shared_mutator_set_cell_as_array_result._Fields>, java.io.Serializable, Cloneable   {
+    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("shared_mutator_set_cell_as_array_result");
+
+    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
+
+    public ClientException e; // required
+
+    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
+    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
+      E((short)1, "e");
+
+      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
+
+      static {
+        for (_Fields field : EnumSet.allOf(_Fields.class)) {
+          byName.put(field.getFieldName(), field);
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, or null if its not found.
+       */
+      public static _Fields findByThriftId(int fieldId) {
+        switch(fieldId) {
+          case 1: // E
+            return E;
+          default:
+            return null;
+        }
+      }
+
+      /**
+       * Find the _Fields constant that matches fieldId, throwing an exception
+       * if it is not found.
+       */
+      public static _Fields findByThriftIdOrThrow(int fieldId) {
+        _Fields fields = findByThriftId(fieldId);
+        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
+        return fields;
+      }
+
+      /**
+       * Find the _Fields constant that matches name, or null if its not found.
+       */
+      public static _Fields findByName(String name) {
+        return byName.get(name);
+      }
+
+      private final short _thriftId;
+      private final String _fieldName;
+
+      _Fields(short thriftId, String fieldName) {
+        _thriftId = thriftId;
+        _fieldName = fieldName;
+      }
+
+      public short getThriftFieldId() {
+        return _thriftId;
+      }
+
+      public String getFieldName() {
+        return _fieldName;
+      }
+    }
+
+    // isset id assignments
+
+    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
+    static {
+      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
+      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
+          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
+      metaDataMap = Collections.unmodifiableMap(tmpMap);
+      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(shared_mutator_set_cell_as_array_result.class, metaDataMap);
+    }
+
+    public shared_mutator_set_cell_as_array_result() {
+    }
+
+    public shared_mutator_set_cell_as_array_result(
+      ClientException e)
+    {
+      this();
+      this.e = e;
+    }
+
+    /**
+     * Performs a deep copy on <i>other</i>.
+     */
+    public shared_mutator_set_cell_as_array_result(shared_mutator_set_cell_as_array_result other) {
+      if (other.isSetE()) {
+        this.e = new ClientException(other.e);
+      }
+    }
+
+    public shared_mutator_set_cell_as_array_result deepCopy() {
+      return new shared_mutator_set_cell_as_array_result(this);
+    }
+
+    @Override
+    public void clear() {
+      this.e = null;
+    }
+
+    public ClientException getE() {
+      return this.e;
+    }
+
+    public shared_mutator_set_cell_as_array_result setE(ClientException e) {
+      this.e = e;
+      return this;
+    }
+
+    public void unsetE() {
+      this.e = null;
+    }
+
+    /** Returns true if field e is set (has been assigned a value) and false otherwise */
+    public boolean isSetE() {
+      return this.e != null;
+    }
+
+    public void setEIsSet(boolean value) {
+      if (!value) {
+        this.e = null;
+      }
+    }
+
+    public void setFieldValue(_Fields field, Object value) {
+      switch (field) {
+      case E:
+        if (value == null) {
+          unsetE();
+        } else {
+          setE((ClientException)value);
+        }
+        break;
+
+      }
+    }
+
+    public Object getFieldValue(_Fields field) {
+      switch (field) {
+      case E:
+        return getE();
+
+      }
+      throw new IllegalStateException();
+    }
+
+    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
+    public boolean isSet(_Fields field) {
+      if (field == null) {
+        throw new IllegalArgumentException();
+      }
+
+      switch (field) {
+      case E:
+        return isSetE();
+      }
+      throw new IllegalStateException();
+    }
+
+    @Override
+    public boolean equals(Object that) {
+      if (that == null)
+        return false;
+      if (that instanceof shared_mutator_set_cell_as_array_result)
+        return this.equals((shared_mutator_set_cell_as_array_result)that);
+      return false;
+    }
+
+    public boolean equals(shared_mutator_set_cell_as_array_result that) {
+      if (that == null)
+        return false;
+
+      boolean this_present_e = true && this.isSetE();
+      boolean that_present_e = true && that.isSetE();
+      if (this_present_e || that_present_e) {
+        if (!(this_present_e && that_present_e))
+          return false;
+        if (!this.e.equals(that.e))
+          return false;
+      }
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      return 0;
+    }
+
+    public int compareTo(shared_mutator_set_cell_as_array_result other) {
+      if (!getClass().equals(other.getClass())) {
+        return getClass().getName().compareTo(other.getClass().getName());
+      }
+
+      int lastComparison = 0;
+      shared_mutator_set_cell_as_array_result typedOther = (shared_mutator_set_cell_as_array_result)other;
+
+      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+      if (isSetE()) {
+        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
+        if (lastComparison != 0) {
+          return lastComparison;
+        }
+      }
+      return 0;
+    }
+
+    public _Fields fieldForId(int fieldId) {
+      return _Fields.findByThriftId(fieldId);
+    }
+
+    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
+      org.apache.thrift.protocol.TField field;
+      iprot.readStructBegin();
+      while (true)
+      {
+        field = iprot.readFieldBegin();
+        if (field.type == org.apache.thrift.protocol.TType.STOP) { 
+          break;
+        }
+        switch (field.id) {
+          case 1: // E
+            if (field.type == org.apache.thrift.protocol.TType.STRUCT) {
+              this.e = new ClientException();
+              this.e.read(iprot);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+            }
+            break;
+          default:
+            org.apache.thrift.protocol.TProtocolUtil.skip(iprot, field.type);
+        }
+        iprot.readFieldEnd();
+      }
+      iprot.readStructEnd();
+
+      // check for required fields of primitive type, which can't be checked in the validate method
+      validate();
+    }
+
+    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
+      oprot.writeStructBegin(STRUCT_DESC);
+
+      if (this.isSetE()) {
+        oprot.writeFieldBegin(E_FIELD_DESC);
+        this.e.write(oprot);
+        oprot.writeFieldEnd();
+      }
+      oprot.writeFieldStop();
+      oprot.writeStructEnd();
+    }
+
+    @Override
+    public String toString() {
+      StringBuilder sb = new StringBuilder("shared_mutator_set_cell_as_array_result(");
       boolean first = true;
 
       sb.append("e:");
@@ -54866,13 +59668,13 @@ public class ClientService {
           case 4: // CELL
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list122 = iprot.readListBegin();
-                this.cell = new ArrayList<String>(_list122.size);
-                for (int _i123 = 0; _i123 < _list122.size; ++_i123)
+                org.apache.thrift.protocol.TList _list138 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list138.size);
+                for (int _i139 = 0; _i139 < _list138.size; ++_i139)
                 {
-                  String _elem124; // required
-                  _elem124 = iprot.readString();
-                  this.cell.add(_elem124);
+                  String _elem140; // required
+                  _elem140 = iprot.readString();
+                  this.cell.add(_elem140);
                 }
                 iprot.readListEnd();
               }
@@ -54912,9 +59714,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.cell.size()));
-          for (String _iter125 : this.cell)
+          for (String _iter141 : this.cell)
           {
-            oprot.writeString(_iter125);
+            oprot.writeString(_iter141);
           }
           oprot.writeListEnd();
         }
@@ -57711,8 +62513,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -59928,6 +64728,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -64390,13 +69192,13 @@ public class ClientService {
           case 2: // CELL
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list126 = iprot.readListBegin();
-                this.cell = new ArrayList<String>(_list126.size);
-                for (int _i127 = 0; _i127 < _list126.size; ++_i127)
+                org.apache.thrift.protocol.TList _list142 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list142.size);
+                for (int _i143 = 0; _i143 < _list142.size; ++_i143)
                 {
-                  String _elem128; // required
-                  _elem128 = iprot.readString();
-                  this.cell.add(_elem128);
+                  String _elem144; // required
+                  _elem144 = iprot.readString();
+                  this.cell.add(_elem144);
                 }
                 iprot.readListEnd();
               }
@@ -64426,9 +69228,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.cell.size()));
-          for (String _iter129 : this.cell)
+          for (String _iter145 : this.cell)
           {
-            oprot.writeString(_iter129);
+            oprot.writeString(_iter145);
           }
           oprot.writeListEnd();
         }
@@ -65181,13 +69983,13 @@ public class ClientService {
           case 3: // CELL
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list130 = iprot.readListBegin();
-                this.cell = new ArrayList<String>(_list130.size);
-                for (int _i131 = 0; _i131 < _list130.size; ++_i131)
+                org.apache.thrift.protocol.TList _list146 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list146.size);
+                for (int _i147 = 0; _i147 < _list146.size; ++_i147)
                 {
-                  String _elem132; // required
-                  _elem132 = iprot.readString();
-                  this.cell.add(_elem132);
+                  String _elem148; // required
+                  _elem148 = iprot.readString();
+                  this.cell.add(_elem148);
                 }
                 iprot.readListEnd();
               }
@@ -65222,9 +70024,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.cell.size()));
-          for (String _iter133 : this.cell)
+          for (String _iter149 : this.cell)
           {
-            oprot.writeString(_iter133);
+            oprot.writeString(_iter149);
           }
           oprot.writeListEnd();
         }
@@ -65914,14 +70716,14 @@ public class ClientService {
           case 2: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list134 = iprot.readListBegin();
-                this.cells = new ArrayList<Cell>(_list134.size);
-                for (int _i135 = 0; _i135 < _list134.size; ++_i135)
+                org.apache.thrift.protocol.TList _list150 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list150.size);
+                for (int _i151 = 0; _i151 < _list150.size; ++_i151)
                 {
-                  Cell _elem136; // required
-                  _elem136 = new Cell();
-                  _elem136.read(iprot);
-                  this.cells.add(_elem136);
+                  Cell _elem152; // required
+                  _elem152 = new Cell();
+                  _elem152.read(iprot);
+                  this.cells.add(_elem152);
                 }
                 iprot.readListEnd();
               }
@@ -65951,9 +70753,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.cells.size()));
-          for (Cell _iter137 : this.cells)
+          for (Cell _iter153 : this.cells)
           {
-            _iter137.write(oprot);
+            _iter153.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -66709,14 +71511,14 @@ public class ClientService {
           case 3: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list138 = iprot.readListBegin();
-                this.cells = new ArrayList<Cell>(_list138.size);
-                for (int _i139 = 0; _i139 < _list138.size; ++_i139)
+                org.apache.thrift.protocol.TList _list154 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list154.size);
+                for (int _i155 = 0; _i155 < _list154.size; ++_i155)
                 {
-                  Cell _elem140; // required
-                  _elem140 = new Cell();
-                  _elem140.read(iprot);
-                  this.cells.add(_elem140);
+                  Cell _elem156; // required
+                  _elem156 = new Cell();
+                  _elem156.read(iprot);
+                  this.cells.add(_elem156);
                 }
                 iprot.readListEnd();
               }
@@ -66751,9 +71553,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.cells.size()));
-          for (Cell _iter141 : this.cells)
+          for (Cell _iter157 : this.cells)
           {
-            _iter141.write(oprot);
+            _iter157.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -67441,23 +72243,23 @@ public class ClientService {
           case 2: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list142 = iprot.readListBegin();
-                this.cells = new ArrayList<List<String>>(_list142.size);
-                for (int _i143 = 0; _i143 < _list142.size; ++_i143)
+                org.apache.thrift.protocol.TList _list158 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list158.size);
+                for (int _i159 = 0; _i159 < _list158.size; ++_i159)
                 {
-                  List<String> _elem144; // required
+                  List<String> _elem160; // required
                   {
-                    org.apache.thrift.protocol.TList _list145 = iprot.readListBegin();
-                    _elem144 = new ArrayList<String>(_list145.size);
-                    for (int _i146 = 0; _i146 < _list145.size; ++_i146)
+                    org.apache.thrift.protocol.TList _list161 = iprot.readListBegin();
+                    _elem160 = new ArrayList<String>(_list161.size);
+                    for (int _i162 = 0; _i162 < _list161.size; ++_i162)
                     {
-                      String _elem147; // required
-                      _elem147 = iprot.readString();
-                      _elem144.add(_elem147);
+                      String _elem163; // required
+                      _elem163 = iprot.readString();
+                      _elem160.add(_elem163);
                     }
                     iprot.readListEnd();
                   }
-                  this.cells.add(_elem144);
+                  this.cells.add(_elem160);
                 }
                 iprot.readListEnd();
               }
@@ -67487,13 +72289,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, this.cells.size()));
-          for (List<String> _iter148 : this.cells)
+          for (List<String> _iter164 : this.cells)
           {
             {
-              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter148.size()));
-              for (String _iter149 : _iter148)
+              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter164.size()));
+              for (String _iter165 : _iter164)
               {
-                oprot.writeString(_iter149);
+                oprot.writeString(_iter165);
               }
               oprot.writeListEnd();
             }
@@ -68254,23 +73056,23 @@ public class ClientService {
           case 3: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list150 = iprot.readListBegin();
-                this.cells = new ArrayList<List<String>>(_list150.size);
-                for (int _i151 = 0; _i151 < _list150.size; ++_i151)
+                org.apache.thrift.protocol.TList _list166 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list166.size);
+                for (int _i167 = 0; _i167 < _list166.size; ++_i167)
                 {
-                  List<String> _elem152; // required
+                  List<String> _elem168; // required
                   {
-                    org.apache.thrift.protocol.TList _list153 = iprot.readListBegin();
-                    _elem152 = new ArrayList<String>(_list153.size);
-                    for (int _i154 = 0; _i154 < _list153.size; ++_i154)
+                    org.apache.thrift.protocol.TList _list169 = iprot.readListBegin();
+                    _elem168 = new ArrayList<String>(_list169.size);
+                    for (int _i170 = 0; _i170 < _list169.size; ++_i170)
                     {
-                      String _elem155; // required
-                      _elem155 = iprot.readString();
-                      _elem152.add(_elem155);
+                      String _elem171; // required
+                      _elem171 = iprot.readString();
+                      _elem168.add(_elem171);
                     }
                     iprot.readListEnd();
                   }
-                  this.cells.add(_elem152);
+                  this.cells.add(_elem168);
                 }
                 iprot.readListEnd();
               }
@@ -68305,13 +73107,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, this.cells.size()));
-          for (List<String> _iter156 : this.cells)
+          for (List<String> _iter172 : this.cells)
           {
             {
-              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter156.size()));
-              for (String _iter157 : _iter156)
+              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter172.size()));
+              for (String _iter173 : _iter172)
               {
-                oprot.writeString(_iter157);
+                oprot.writeString(_iter173);
               }
               oprot.writeListEnd();
             }
@@ -73114,13 +77916,13 @@ public class ClientService {
           case 2: // CELL
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list158 = iprot.readListBegin();
-                this.cell = new ArrayList<String>(_list158.size);
-                for (int _i159 = 0; _i159 < _list158.size; ++_i159)
+                org.apache.thrift.protocol.TList _list174 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list174.size);
+                for (int _i175 = 0; _i175 < _list174.size; ++_i175)
                 {
-                  String _elem160; // required
-                  _elem160 = iprot.readString();
-                  this.cell.add(_elem160);
+                  String _elem176; // required
+                  _elem176 = iprot.readString();
+                  this.cell.add(_elem176);
                 }
                 iprot.readListEnd();
               }
@@ -73150,9 +77952,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.cell.size()));
-          for (String _iter161 : this.cell)
+          for (String _iter177 : this.cell)
           {
-            oprot.writeString(_iter161);
+            oprot.writeString(_iter177);
           }
           oprot.writeListEnd();
         }
@@ -73829,13 +78631,13 @@ public class ClientService {
           case 2: // CELL
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list162 = iprot.readListBegin();
-                this.cell = new ArrayList<String>(_list162.size);
-                for (int _i163 = 0; _i163 < _list162.size; ++_i163)
+                org.apache.thrift.protocol.TList _list178 = iprot.readListBegin();
+                this.cell = new ArrayList<String>(_list178.size);
+                for (int _i179 = 0; _i179 < _list178.size; ++_i179)
                 {
-                  String _elem164; // required
-                  _elem164 = iprot.readString();
-                  this.cell.add(_elem164);
+                  String _elem180; // required
+                  _elem180 = iprot.readString();
+                  this.cell.add(_elem180);
                 }
                 iprot.readListEnd();
               }
@@ -73865,9 +78667,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELL_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.cell.size()));
-          for (String _iter165 : this.cell)
+          for (String _iter181 : this.cell)
           {
-            oprot.writeString(_iter165);
+            oprot.writeString(_iter181);
           }
           oprot.writeListEnd();
         }
@@ -74549,14 +79351,14 @@ public class ClientService {
           case 2: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list166 = iprot.readListBegin();
-                this.cells = new ArrayList<Cell>(_list166.size);
-                for (int _i167 = 0; _i167 < _list166.size; ++_i167)
+                org.apache.thrift.protocol.TList _list182 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list182.size);
+                for (int _i183 = 0; _i183 < _list182.size; ++_i183)
                 {
-                  Cell _elem168; // required
-                  _elem168 = new Cell();
-                  _elem168.read(iprot);
-                  this.cells.add(_elem168);
+                  Cell _elem184; // required
+                  _elem184 = new Cell();
+                  _elem184.read(iprot);
+                  this.cells.add(_elem184);
                 }
                 iprot.readListEnd();
               }
@@ -74586,9 +79388,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.cells.size()));
-          for (Cell _iter169 : this.cells)
+          for (Cell _iter185 : this.cells)
           {
-            _iter169.write(oprot);
+            _iter185.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -75268,14 +80070,14 @@ public class ClientService {
           case 2: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list170 = iprot.readListBegin();
-                this.cells = new ArrayList<Cell>(_list170.size);
-                for (int _i171 = 0; _i171 < _list170.size; ++_i171)
+                org.apache.thrift.protocol.TList _list186 = iprot.readListBegin();
+                this.cells = new ArrayList<Cell>(_list186.size);
+                for (int _i187 = 0; _i187 < _list186.size; ++_i187)
                 {
-                  Cell _elem172; // required
-                  _elem172 = new Cell();
-                  _elem172.read(iprot);
-                  this.cells.add(_elem172);
+                  Cell _elem188; // required
+                  _elem188 = new Cell();
+                  _elem188.read(iprot);
+                  this.cells.add(_elem188);
                 }
                 iprot.readListEnd();
               }
@@ -75305,9 +80107,9 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.cells.size()));
-          for (Cell _iter173 : this.cells)
+          for (Cell _iter189 : this.cells)
           {
-            _iter173.write(oprot);
+            _iter189.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -75989,23 +80791,23 @@ public class ClientService {
           case 2: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list174 = iprot.readListBegin();
-                this.cells = new ArrayList<List<String>>(_list174.size);
-                for (int _i175 = 0; _i175 < _list174.size; ++_i175)
+                org.apache.thrift.protocol.TList _list190 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list190.size);
+                for (int _i191 = 0; _i191 < _list190.size; ++_i191)
                 {
-                  List<String> _elem176; // required
+                  List<String> _elem192; // required
                   {
-                    org.apache.thrift.protocol.TList _list177 = iprot.readListBegin();
-                    _elem176 = new ArrayList<String>(_list177.size);
-                    for (int _i178 = 0; _i178 < _list177.size; ++_i178)
+                    org.apache.thrift.protocol.TList _list193 = iprot.readListBegin();
+                    _elem192 = new ArrayList<String>(_list193.size);
+                    for (int _i194 = 0; _i194 < _list193.size; ++_i194)
                     {
-                      String _elem179; // required
-                      _elem179 = iprot.readString();
-                      _elem176.add(_elem179);
+                      String _elem195; // required
+                      _elem195 = iprot.readString();
+                      _elem192.add(_elem195);
                     }
                     iprot.readListEnd();
                   }
-                  this.cells.add(_elem176);
+                  this.cells.add(_elem192);
                 }
                 iprot.readListEnd();
               }
@@ -76035,13 +80837,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, this.cells.size()));
-          for (List<String> _iter180 : this.cells)
+          for (List<String> _iter196 : this.cells)
           {
             {
-              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter180.size()));
-              for (String _iter181 : _iter180)
+              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter196.size()));
+              for (String _iter197 : _iter196)
               {
-                oprot.writeString(_iter181);
+                oprot.writeString(_iter197);
               }
               oprot.writeListEnd();
             }
@@ -76726,23 +81528,23 @@ public class ClientService {
           case 2: // CELLS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list182 = iprot.readListBegin();
-                this.cells = new ArrayList<List<String>>(_list182.size);
-                for (int _i183 = 0; _i183 < _list182.size; ++_i183)
+                org.apache.thrift.protocol.TList _list198 = iprot.readListBegin();
+                this.cells = new ArrayList<List<String>>(_list198.size);
+                for (int _i199 = 0; _i199 < _list198.size; ++_i199)
                 {
-                  List<String> _elem184; // required
+                  List<String> _elem200; // required
                   {
-                    org.apache.thrift.protocol.TList _list185 = iprot.readListBegin();
-                    _elem184 = new ArrayList<String>(_list185.size);
-                    for (int _i186 = 0; _i186 < _list185.size; ++_i186)
+                    org.apache.thrift.protocol.TList _list201 = iprot.readListBegin();
+                    _elem200 = new ArrayList<String>(_list201.size);
+                    for (int _i202 = 0; _i202 < _list201.size; ++_i202)
                     {
-                      String _elem187; // required
-                      _elem187 = iprot.readString();
-                      _elem184.add(_elem187);
+                      String _elem203; // required
+                      _elem203 = iprot.readString();
+                      _elem200.add(_elem203);
                     }
                     iprot.readListEnd();
                   }
-                  this.cells.add(_elem184);
+                  this.cells.add(_elem200);
                 }
                 iprot.readListEnd();
               }
@@ -76772,13 +81574,13 @@ public class ClientService {
         oprot.writeFieldBegin(CELLS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, this.cells.size()));
-          for (List<String> _iter188 : this.cells)
+          for (List<String> _iter204 : this.cells)
           {
             {
-              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter188.size()));
-              for (String _iter189 : _iter188)
+              oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter204.size()));
+              for (String _iter205 : _iter204)
               {
-                oprot.writeString(_iter189);
+                oprot.writeString(_iter205);
               }
               oprot.writeListEnd();
             }
@@ -89561,13 +94363,13 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list190 = iprot.readListBegin();
-                this.success = new ArrayList<String>(_list190.size);
-                for (int _i191 = 0; _i191 < _list190.size; ++_i191)
+                org.apache.thrift.protocol.TList _list206 = iprot.readListBegin();
+                this.success = new ArrayList<String>(_list206.size);
+                for (int _i207 = 0; _i207 < _list206.size; ++_i207)
                 {
-                  String _elem192; // required
-                  _elem192 = iprot.readString();
-                  this.success.add(_elem192);
+                  String _elem208; // required
+                  _elem208 = iprot.readString();
+                  this.success.add(_elem208);
                 }
                 iprot.readListEnd();
               }
@@ -89601,9 +94403,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, this.success.size()));
-          for (String _iter193 : this.success)
+          for (String _iter209 : this.success)
           {
-            oprot.writeString(_iter193);
+            oprot.writeString(_iter209);
           }
           oprot.writeListEnd();
         }
@@ -90280,14 +95082,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list194 = iprot.readListBegin();
-                this.success = new ArrayList<NamespaceListing>(_list194.size);
-                for (int _i195 = 0; _i195 < _list194.size; ++_i195)
+                org.apache.thrift.protocol.TList _list210 = iprot.readListBegin();
+                this.success = new ArrayList<NamespaceListing>(_list210.size);
+                for (int _i211 = 0; _i211 < _list210.size; ++_i211)
                 {
-                  NamespaceListing _elem196; // required
-                  _elem196 = new NamespaceListing();
-                  _elem196.read(iprot);
-                  this.success.add(_elem196);
+                  NamespaceListing _elem212; // required
+                  _elem212 = new NamespaceListing();
+                  _elem212.read(iprot);
+                  this.success.add(_elem212);
                 }
                 iprot.readListEnd();
               }
@@ -90321,9 +95123,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
-          for (NamespaceListing _iter197 : this.success)
+          for (NamespaceListing _iter213 : this.success)
           {
-            _iter197.write(oprot);
+            _iter213.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -91000,14 +95802,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list198 = iprot.readListBegin();
-                this.success = new ArrayList<NamespaceListing>(_list198.size);
-                for (int _i199 = 0; _i199 < _list198.size; ++_i199)
+                org.apache.thrift.protocol.TList _list214 = iprot.readListBegin();
+                this.success = new ArrayList<NamespaceListing>(_list214.size);
+                for (int _i215 = 0; _i215 < _list214.size; ++_i215)
                 {
-                  NamespaceListing _elem200; // required
-                  _elem200 = new NamespaceListing();
-                  _elem200.read(iprot);
-                  this.success.add(_elem200);
+                  NamespaceListing _elem216; // required
+                  _elem216 = new NamespaceListing();
+                  _elem216.read(iprot);
+                  this.success.add(_elem216);
                 }
                 iprot.readListEnd();
               }
@@ -91041,9 +95843,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
-          for (NamespaceListing _iter201 : this.success)
+          for (NamespaceListing _iter217 : this.success)
           {
-            _iter201.write(oprot);
+            _iter217.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -91809,14 +96611,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list202 = iprot.readListBegin();
-                this.success = new ArrayList<TableSplit>(_list202.size);
-                for (int _i203 = 0; _i203 < _list202.size; ++_i203)
+                org.apache.thrift.protocol.TList _list218 = iprot.readListBegin();
+                this.success = new ArrayList<TableSplit>(_list218.size);
+                for (int _i219 = 0; _i219 < _list218.size; ++_i219)
                 {
-                  TableSplit _elem204; // required
-                  _elem204 = new TableSplit();
-                  _elem204.read(iprot);
-                  this.success.add(_elem204);
+                  TableSplit _elem220; // required
+                  _elem220 = new TableSplit();
+                  _elem220.read(iprot);
+                  this.success.add(_elem220);
                 }
                 iprot.readListEnd();
               }
@@ -91850,9 +96652,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
-          for (TableSplit _iter205 : this.success)
+          for (TableSplit _iter221 : this.success)
           {
-            _iter205.write(oprot);
+            _iter221.write(oprot);
           }
           oprot.writeListEnd();
         }
@@ -92618,14 +97420,14 @@ public class ClientService {
           case 0: // SUCCESS
             if (field.type == org.apache.thrift.protocol.TType.LIST) {
               {
-                org.apache.thrift.protocol.TList _list206 = iprot.readListBegin();
-                this.success = new ArrayList<TableSplit>(_list206.size);
-                for (int _i207 = 0; _i207 < _list206.size; ++_i207)
+                org.apache.thrift.protocol.TList _list222 = iprot.readListBegin();
+                this.success = new ArrayList<TableSplit>(_list222.size);
+                for (int _i223 = 0; _i223 < _list222.size; ++_i223)
                 {
-                  TableSplit _elem208; // required
-                  _elem208 = new TableSplit();
-                  _elem208.read(iprot);
-                  this.success.add(_elem208);
+                  TableSplit _elem224; // required
+                  _elem224 = new TableSplit();
+                  _elem224.read(iprot);
+                  this.success.add(_elem224);
                 }
                 iprot.readListEnd();
               }
@@ -92659,9 +97461,9 @@ public class ClientService {
         oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
         {
           oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, this.success.size()));
-          for (TableSplit _iter209 : this.success)
+          for (TableSplit _iter225 : this.success)
           {
-            _iter209.write(oprot);
+            _iter225.write(oprot);
           }
           oprot.writeListEnd();
         }
