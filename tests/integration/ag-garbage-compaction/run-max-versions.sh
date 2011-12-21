@@ -4,11 +4,12 @@ HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 HYPERTABLE_HOME=${HT_HOME}
 PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
 HT_SHELL=$HT_HOME/bin/hypertable
+HT_TEST_DFS=${HT_TEST_DFS:-local}
 SCRIPT_DIR=`dirname $0`
 
 . $HT_HOME/bin/ht-env.sh
 
-$HT_HOME/bin/start-dfsbroker.sh local
+$HT_HOME/bin/start-dfsbroker.sh ${HT_TEST_DFS}
 $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker --clear
 
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \

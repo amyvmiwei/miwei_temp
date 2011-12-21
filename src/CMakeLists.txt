@@ -31,3 +31,7 @@ endif ()
 if (Ceph_FOUND)
    add_subdirectory(cc/DfsBroker/ceph)
 endif ()
+
+if (Mapr_FOUND)
+   add_subdirectory(cc/DfsBroker/mapr)
+endif ()

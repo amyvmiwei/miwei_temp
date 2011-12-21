@@ -10,8 +10,7 @@ BALANCE_OUTPUT_FILE="balance_plans.out"
 BALANCE_GOLDEN_FILE="${SCRIPT_DIR}/balance_plans.golden"
 TEST_RS_METRICS_FILE="${SCRIPT_DIR}/rs_metrics.txt"
 
-$HT_HOME/bin/clean-database.sh
-$HT_HOME/bin/start-all-servers.sh local
+$HT_HOME/bin/start-test-servers.sh --clean
 
 if [ -e $BALANCE_OUTPUT_FILE ]; then
   rm $BALANCE_OUTPUT_FILE 

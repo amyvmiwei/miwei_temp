@@ -64,7 +64,7 @@ endmacro()
 
 # Dependent libraries
 HT_INSTALL_LIBS(lib ${BOOST_LIBS} ${Thrift_LIBS}
-                ${Kfs_LIBRARIES} ${LibEvent_LIB} ${Log4cpp_LIBRARIES}
+                ${Kfs_LIBRARIES} ${Mapr_LIBRARIES} ${LibEvent_LIB} ${Log4cpp_LIBRARIES}
                 ${EXPAT_LIBRARIES} ${BZIP2_LIBRARIES}
                 ${ZLIB_LIBRARIES} ${SNAPPY_LIBRARY} ${SIGAR_LIBRARY} ${Tcmalloc_LIBRARIES}
                 ${Jemalloc_LIBRARIES} ${Ceph_LIBRARIES} ${RE2_LIBRARIES}
