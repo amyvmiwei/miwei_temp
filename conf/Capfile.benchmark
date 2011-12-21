@@ -1,7 +1,7 @@
 set :source_machine, "mothercompiler"
 set :install_dir,  "/opt/hypertable"
-set :hypertable_version, "0.9.5.3"
-set :default_pkg, "/tmp/hypertable-0.9.5.3-linux-x86_64.deb"
+set :hypertable_version, "0.9.5.4"
+set :default_pkg, "/tmp/hypertable-0.9.5.4-linux-x86_64.deb"
 set :default_dfs, "hadoop"
 set :default_config, "/opt/hypertable/dev-hypertable.cfg"
 set :default_additional_args, ""
@@ -23,7 +23,7 @@ role :test_dispatcher, "test000"
 
 ######################### END OF USER CONFIGURATION ############################
 
-ssh_options[:forward_agent] = true
+#ssh_options[:forward_agent] = true
 
 def supported_pkgs
   {"bz2"=>1, "deb"=>1, "rpm"=>1}
