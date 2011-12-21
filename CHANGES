@@ -1,3 +1,28 @@
+Version 0.9.5.4:
+(2011-12-21)
+
+    Added MapR broker
+    Patch to fix hang problem in low memory condition
+    Atomically get multiple attribute values in Hyperspace
+    issue 744: Renamed thriftbroker package to thriftbroker-only
+    Thrift API name changes
+    More Thrift API Name changes (hql_ and offer_ to shared_mutator_)
+    Fixed segfault on dfsclient with shutdown command
+    issue 732: Fix to stop-servers.sh to shut down DFS broker cleanly
+    Changed # of maint. threads to max(1.5*disks, cpu_core_count)
+    issue 745: Hack to copy missing libintl.8.dylib on mac
+    Fixed thrift-table-refresh test (forgot to reflect Thrift API changes)
+    More fixes to PerformanceTest code
+    Got rid of recursion (and possible stack overflow) in MergeScanner
+    Added generate_error_code_doc tool for auto-generating Error Codes docs
+    Cleaned up Thrift API Names
+    Added elapsed seconds to java vertical progress meter
+    Fixed bug in Boost uuid wrapper
+    Fixed bug in java String de-serialization routine
+    Fix for crash in scan with cell_interval and end_row=0
+    Added TIME_ORDER DESC markdown documentation
+    issue 728: Use Boost UUID generation libaray
+
 Version 0.9.5.3:
 (2011-11-21)
 
