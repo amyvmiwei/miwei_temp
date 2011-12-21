@@ -1,12 +1,12 @@
 #!/usr/bin/env bash
 
 HYPERTABLE_HOME=/opt/hypertable/current
+HT_TEST_DFS=${HT_TEST_DFS:-local}
 
 PIDFILE=$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
 
-$HYPERTABLE_HOME/bin/start-dfsbroker.sh local
-$HYPERTABLE_HOME/bin/clean-database.sh
-$HYPERTABLE_HOME/bin/start-all-servers.sh --no-thriftbroker local
+$HYPERTABLE_HOME/bin/start-dfsbroker.sh $HT_TEST_DFS
+$HYPERTABLE_HOME/bin/start-test-servers.sh --clean --no-thriftbroker
 
 sleep 5
 

@@ -41,7 +41,7 @@ usage() {
   echo "  --no-master             do not launch the Hypertable master"
   echo "  --no-thriftbroker       do not launch the ThriftBroker"
   echo ""
-  echo "DFS choices: kfs, hadoop, local"
+  echo "DFS choices: kfs, hadoop, mapr, local"
   echo ""
 }
 

@@ -191,6 +191,10 @@ void DefaultPolicy::init_options() {
     ("HdfsBroker.fs.default.name", str(), "Hadoop Filesystem "
         "default name, same as fs.default.name property in Hadoop config "
         "(e.g. hdfs://localhost:9000)")
+    ("DfsBroker.Hdfs.NameNode.Host", str()->default_value("default"),
+        "Name of host on which HDFS NameNode is running")
+    ("DfsBroker.Hdfs.NameNode.Port", i16()->default_value(0),
+        "Port number on which HDFS NameNode is running")
     ("HdfsBroker.Workers", i32(),
         "Number of HDFS broker worker threads created")
     ("HdfsBroker.Reactors", i32(),
