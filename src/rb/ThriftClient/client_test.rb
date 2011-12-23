@@ -118,7 +118,7 @@ begin
     cell = Cell.new
     cell.key = key
     cell.value = "ruby-put-v1"
-    client.offer_cell(ns, "thrift_test", mutate_spec, cell);
+    client.shared_mutator_set_cell(ns, "thrift_test", mutate_spec, cell);
 
     key = Key.new
     key.row = "ruby-put-k2"
@@ -127,8 +127,8 @@ begin
     cell = Cell.new
     cell.key = key
     cell.value = "ruby-put-v2"
-    client.refresh_shared_mutator(ns, "thrift_test", mutate_spec);
-    client.offer_cell(ns, "thrift_test", mutate_spec, cell);
+    client.shared_mutator_refresh(ns, "thrift_test", mutate_spec);
+    client.shared_mutator_set_cell(ns, "thrift_test", mutate_spec, cell);
    
     client.with_mutator(ns, "thrift_test") do |mutator|
       key = Key.new

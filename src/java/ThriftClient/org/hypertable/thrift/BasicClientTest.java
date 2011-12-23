@@ -26,7 +26,7 @@ public class BasicClientTest {
       show(client.hql_query(ns, "select * from thrift_test").toString());
       // Schema example
       Schema schema = new Schema();
-      schema = client.get_schema(ns, "thrift_test");
+      schema = client.table_get_schema(ns, "thrift_test");
 
       Iterator ag_it = schema.access_groups.keySet().iterator();
       show("Access groups:");
@@ -79,8 +79,8 @@ public class BasicClientTest {
         cell.setKey(key);
         vtmp = "java-put-v2";
         cell.setValue( ByteBuffer.wrap(vtmp.getBytes()) );
-        client.refresh_shared_mutator(ns, "thrift_test", mutate_spec);
-        client.offer_cell(ns, "thrift_test", mutate_spec, cell);
+        client.shared_mutator_refresh(ns, "thrift_test", mutate_spec);
+        client.shared_mutator_set_cell(ns, "thrift_test", mutate_spec, cell);
         Thread.sleep(2000);
       }
 
