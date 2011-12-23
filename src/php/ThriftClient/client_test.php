@@ -26,12 +26,12 @@ $mutate_spec = new MutateSpec(array('appname'=>"test-php",
 
 $key = new Key(array('row'=> 'php-put-k1', 'column_family'=> 'col'));
 $cell = new Cell(array('key' => $key, 'value'=> 'php-put-v1'));
-$client->offer_cell($namespace, "thrift_test", $mutate_spec, $cell);
+$client->shared_mutator_set_cell($namespace, "thrift_test", $mutate_spec, $cell);
 
 $key = new Key(array('row'=> 'php-put-k2', 'column_family'=> 'col'));
 $cell = new Cell(array('key' => $key, 'value'=> 'php-put-v2'));
-$client->refresh_shared_mutator($namespace, "thrift_test", $mutate_spec);
-$client->offer_cell($namespace, "thrift_test", $mutate_spec, $cell);
+$client->shared_mutator_refresh($namespace, "thrift_test", $mutate_spec);
+$client->shared_mutator_set_cell($namespace, "thrift_test", $mutate_spec, $cell);
 sleep(2);
 
 echo "scanner examples\n";
