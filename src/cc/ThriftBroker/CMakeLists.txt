@@ -66,9 +66,9 @@ if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)
-  install(FILES Client.h ThriftHelper.h Client.thrift Hql.thrift
+  install(FILES Client.h ThriftHelper.h SerializedCellsFlag.h SerializedCellsReader.h SerializedCellsWriter.h Client.thrift Hql.thrift
           DESTINATION include/ThriftBroker)
-  install(DIRECTORY gen-cpp DESTINATION lib/cpp)
+  install(DIRECTORY gen-cpp DESTINATION include/ThriftBroker)
 endif ()
 
 if (PACKAGE_THRIFTBROKER)

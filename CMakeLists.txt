@@ -196,6 +196,17 @@ install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
           DESTINATION lib/java OPTIONAL)
 install(PROGRAMS bin/jrun DESTINATION bin)
 
+file(GLOB PHPFILES ${PHPTHRIFT_ROOT}/*.php)
+
+# Copy PHP Thrift files
+install(FILES ${PHPFILES} DESTINATION lib/php)
+install(DIRECTORY ${PHPTHRIFT_ROOT}/protocol ${PHPTHRIFT_ROOT}/server ${PHPTHRIFT_ROOT}/transport
+        DESTINATION lib/php USE_SOURCE_PERMISSIONS)
+
+# Copy C++ Thrift files
+install(DIRECTORY ${Thrift_INCLUDE_DIR} DESTINATION include USE_SOURCE_PERMISSIONS)
+install(DIRECTORY ${Log4cpp_INCLUDE_DIR}/log4cpp DESTINATION include USE_SOURCE_PERMISSIONS)
+
 if (NOT HT_COMPONENT_INSTALL)
   install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}-examples.jar
           DESTINATION lib/java OPTIONAL)
