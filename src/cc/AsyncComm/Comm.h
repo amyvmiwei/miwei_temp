@@ -296,6 +296,7 @@ namespace Hypertable {
     static Mutex   ms_mutex;
     HandlerMapPtr  m_handler_map;
     ReactorPtr     m_timer_reactor;
+    InetAddr       m_local_addr;
   };
 
 } // namespace Hypertable

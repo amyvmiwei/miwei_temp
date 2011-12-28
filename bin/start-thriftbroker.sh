@@ -34,14 +34,20 @@ usage() {
   echo ""
 }
 
+PIDBASE="ThriftBroker"
+
 while [ "$1" != "${1##[-+]}" ]; do
   case $1 in
     --valgrind)
       VALGRIND="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
+      shift;;
+    --pidbase)
+      shift
+      PIDBASE=$1
       shift;;
     *)
       break;;
   esac
 done
 
-start_server thriftbroker ThriftBroker ThriftBroker "$@"
+start_server thriftbroker ThriftBroker $PIDBASE "$@"

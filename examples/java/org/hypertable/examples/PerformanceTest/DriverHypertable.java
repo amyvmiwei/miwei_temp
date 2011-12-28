@@ -45,7 +45,13 @@ public class DriverHypertable extends Driver {
 
   public static final int CLIENT_BUFFER_SIZE = 1024*1024*12;
 
+  public static final int DEFAULT_THRIFTBROKER_PORT = 38080;
+
   public DriverHypertable() throws TTransportException, TException {
+  }
+
+  public DriverHypertable(int broker_port) {
+      mThriftBrokerPort = broker_port;
   }
 
   protected void finalize() {
@@ -69,7 +75,7 @@ public class DriverHypertable extends Driver {
     if (mParallelism == 0) {
       mCellsWriter = new SerializedCellsWriter(CLIENT_BUFFER_SIZE);
       try {
-        mClient = ThriftClient.create("localhost", 38080);
+        mClient = ThriftClient.create("localhost", mThriftBrokerPort);
         mNamespace = "/";
         mNamespaceId = mClient.namespace_open(mNamespace);
       }
@@ -355,4 +361,5 @@ public class DriverHypertable extends Driver {
   int mParallelism=0;
   DriverThreadState [] mThreadStates;
   int mThreadNext = 0;
+  int mThriftBrokerPort = DEFAULT_THRIFTBROKER_PORT;
 }

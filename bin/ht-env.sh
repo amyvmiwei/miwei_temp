@@ -36,7 +36,7 @@ server_pidfile() {
     dfsbroker)          echo $RUNTIME_ROOT/run/DfsBroker.*.pid | grep -v "*";;
     master)             echo $RUNTIME_ROOT/run/Hypertable.Master.pid;;
     rangeserver)        echo $RUNTIME_ROOT/run/Hypertable.RangeServer.pid;;
-    thriftbroker)       echo $RUNTIME_ROOT/run/ThriftBroker.pid;;
+    thriftbroker)       echo $RUNTIME_ROOT/run/ThriftBroker*.pid | grep -v "*";;
     testclient)         echo $RUNTIME_ROOT/run/Hypertable.TestClient*.pid | grep -v "*";;
     testdispatcher)     echo $RUNTIME_ROOT/run/Hypertable.TestDispatcher.pid;;
     *) echo "unknown";  echo "ERROR: unknown service: $1" >&2; return 1

@@ -21,6 +21,7 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
 JRUN_OPTS=
 COUNT=1
+THRIFTBROKER_COUNT=1
 
 usage() {
   echo ""
@@ -39,6 +40,10 @@ while [ $# -gt 1 ] ; do
     shift
     JRUN_OPTS="$JRUN_OPTS $1"
     shift
+  elif [ "--thriftbroker-count" = "$1" ] ; then
+    shift
+    THRIFTBROKER_COUNT=$1
+    shift
   elif [ "--count" = "$1" ] ; then
     shift
     COUNT=$1
@@ -54,7 +59,8 @@ fi
 let j=$COUNT
 
 while [ $j -gt 0 ] ; do
-  start_server_no_check test_client jrun Hypertable.TestClient-$j $JRUN_OPTS org.hypertable.examples.PerformanceTest.Client "$@"
+  let tbport=38080+j%THRIFTBROKER_COUNT
+  start_server_no_check test_client jrun Hypertable.TestClient-$j $JRUN_OPTS org.hypertable.examples.PerformanceTest.Client --thriftbroker-port=$tbport "$@"
   let j--
 done
 

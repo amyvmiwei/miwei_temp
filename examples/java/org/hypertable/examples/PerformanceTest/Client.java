@@ -53,8 +53,9 @@ public class Client {
     "usage: Client [OPTIONS] <host>[:<port>]",
     "",
     "OPTIONS:",
-    "  --timeout=<t>  Specifies the connectin timeout value",
-    "  --reactors=<n>  Specifies the number of reactors",
+    "  --thriftbroker-port=<n>  Specifies the ThriftBroker port",
+    "  --timeout=<t>            Specifies the connection timeout value",
+    "  --reactors=<n>           Specifies the number of reactors",
     "",
     "This program is part of a performance test suite.  It acts as a single client",
     "supplying load to a Bigtable cluster and gets work from a dispatcher process.",
@@ -139,6 +140,7 @@ public class Client {
     throws InterruptedException, IOException {
     Integer waitObj = new Integer(0);
     int port = DEFAULT_PORT;
+    int thriftbroker_port = DriverHypertable.DEFAULT_THRIFTBROKER_PORT;
     String host = null;
     long timeout = 0;
 
@@ -151,6 +153,8 @@ public class Client {
     for (int i=0; i<args.length; i++) {
       if (args[i].startsWith("--timeout="))
         timeout = Integer.parseInt(args[i].substring(10));
+      if (args[i].startsWith("--thriftbroker-port="))
+        thriftbroker_port = Integer.parseInt(args[i].substring(20));
       else if (host == null) {
         int colon = args[i].indexOf(':');
         if (colon == -1)
@@ -226,8 +230,9 @@ public class Client {
 
       String driverName = ((MessageSetup)message).getDriver();
 
-      if (driverName.equals("hypertable"))
-        driver = new DriverHypertable();
+      if (driverName.equals("hypertable")) {
+        driver = new DriverHypertable(thriftbroker_port);
+      }
       else if (driverName.equals("hbase"))
         driver = new DriverHBase();
       else {
