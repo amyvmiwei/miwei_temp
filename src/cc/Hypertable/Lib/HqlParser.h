@@ -2095,7 +2095,7 @@ namespace Hypertable {
             ;
 
           dump_table_option_spec
-            = MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
+            = MAX_VERSIONS >> *EQUAL >> uint_p[scan_set_max_versions(self.state)]
             | BUCKETS >> uint_p[scan_set_buckets(self.state)]
             | REVS >> !EQUAL >> uint_p[scan_set_max_versions(self.state)]
             | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
@@ -2310,7 +2310,7 @@ namespace Hypertable {
             ;
 
           max_versions_option
-	        = (MAX_VERSIONS | REVS) >> !EQUAL
+	        = (MAX_VERSIONS | REVS) >> *EQUAL
               >> lexeme_d[(+digit_p)[set_max_versions(self.state)]]
             ;
 
@@ -2457,7 +2457,7 @@ namespace Hypertable {
             ;
 
           option_spec
-            = MAX_VERSIONS >> EQUAL >> uint_p[scan_set_max_versions(self.state)]
+            = MAX_VERSIONS >> *EQUAL >> uint_p[scan_set_max_versions(self.state)]
             | REVS >> !EQUAL >> uint_p[scan_set_max_versions(self.state)]
             | LIMIT >> EQUAL >> uint_p[scan_set_row_limit(self.state)]
             | LIMIT >> uint_p[scan_set_row_limit(self.state)]
