@@ -228,7 +228,7 @@ SELECT * from test WHERE "foo","tag" <= CELL < "foo","phone";
 #
 # Issue 154
 #
-CREATE TABLE bug ( F MAX_VERSIONS=1 );
+CREATE TABLE bug ( F MAX_VERSIONS 1 );
 SELECT * FROM bug;
 INSERT INTO bug VALUES ('R','F:Q','V1');
 SELECT * FROM bug;
@@ -253,7 +253,7 @@ SELECT * FROM bug;
 INSERT INTO bug VALUES ('R','F:Q','V6');
 SELECT * FROM bug;
 DROP TABLE bug;
-CREATE TABLE bug ( F MAX_VERSIONS=2 );
+CREATE TABLE bug ( F MAX_VERSIONS 2 );
 SELECT * FROM bug;
 INSERT INTO bug VALUES ('R','F:Q','V1');
 SELECT * FROM bug;
@@ -385,10 +385,10 @@ SELECT * FROM Fruits INTO FILE 'hypertable_select_gz_test.output.gz';
 DROP table if exists Fruits;
 CREATE TABLE Fruits (
   apple TTL=2 DAYS,
-  banana MAX_VERSIONS=2,
+  banana MAX_VERSIONS 2,
   carrot,
   ACCESS GROUP foo BLOCKSIZE=20000 ( banana )
-) IN_MEMORY BLOCKSIZE=10000 TTL=1 WEEK MAX_VERSIONS=3;
+) IN_MEMORY BLOCKSIZE=10000 TTL=1 WEEK MAX_VERSIONS 3;
 SHOW CREATE TABLE Fruits;
 
 DROP TABLE IF EXISTS test;
@@ -465,7 +465,7 @@ INSERT INTO CounterTest VALUES ('row2', 'cf2', 'Foo2');
 INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '6');
 INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '7');
 SELECT * from CounterTest WHERE ROW >= 'row1';
-SELECT * from CounterTest WHERE CELL > 'row0','cf1:cq2' LIMIT=2 CELL_LIMIT_PER_FAMILY=1 MAX_VERSIONS=2;
+SELECT * from CounterTest WHERE CELL > 'row0','cf1:cq2' LIMIT=2 CELL_LIMIT_PER_FAMILY=1 MAX_VERSIONS 2;
 INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '=3');
 INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '+2');
 INSERT INTO CounterTest VALUES ('row1', 'cf1:cq1', '7');
@@ -532,13 +532,13 @@ SELECT * from RegexpTest WHERE (ROW = 'Suitability' OR ROW = 'moss Berry' OR ROW
 # test max_versions with other predicates
 INSERT INTO RegexpTest VALUES('version_test_0', 'col2', '000');
 INSERT INTO RegexpTest VALUES('version_test_0', 'col2', '100');
-SELECT col2 from RegexpTest WHERE ROW = 'version_test_0' AND VALUE REGEXP "000" MAX_VERSIONS=1;
-SELECT col2 from RegexpTest WHERE ROW = 'version_test_0' AND VALUE REGEXP "000" MAX_VERSIONS=2;
+SELECT col2 from RegexpTest WHERE ROW = 'version_test_0' AND VALUE REGEXP "000" MAX_VERSIONS 1;
+SELECT col2 from RegexpTest WHERE ROW = 'version_test_0' AND VALUE REGEXP "000" MAX_VERSIONS 2;
 INSERT INTO RegexpTest VALUES('2007-12-02 08:00:00', 'version_test_1', 'col2:000', '000');
 INSERT INTO RegexpTest VALUES('2007-12-02 09:00:00', 'version_test_1', 'col2:000', '100');
 INSERT INTO RegexpTest VALUES('2007-12-02 08:00:00', 'version_test_1', 'col2:100', '000');
-SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "000" MAX_VERSIONS=1;
-SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "000"  AND '2007-12-02 07:30:00' < TIMESTAMP <= '2007-12-02 08:30:00' MAX_VERSIONS=1 DISPLAY_TIMESTAMPS;
+SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "000" MAX_VERSIONS 1;
+SELECT col2:/00/ from RegexpTest WHERE ROW = 'version_test_1' AND VALUE REGEXP "000"  AND '2007-12-02 07:30:00' < TIMESTAMP <= '2007-12-02 08:30:00' MAX_VERSIONS 1 DISPLAY_TIMESTAMPS;
 
 # negative tests with OFFSET and CELL_OFFSET
 SELECT col2 from RegexpTest OFFSET 1 CELL_OFFSET 2;
