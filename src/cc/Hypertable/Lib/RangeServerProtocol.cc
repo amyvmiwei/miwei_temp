@@ -301,6 +301,7 @@ namespace Hypertable {
   RangeServerProtocol::create_request_acknowledge_load(const TableIdentifier &table,
                                                        const RangeSpec &range) {
     CommHeader header(COMMAND_ACKNOWLEDGE_LOAD);
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
     CommBuf *cbuf = new CommBuf(header, table.encoded_length()
                                 + range.encoded_length());
     table.encode(cbuf->get_data_ptr_address());
