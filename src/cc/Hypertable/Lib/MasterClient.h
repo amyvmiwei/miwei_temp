@@ -66,6 +66,7 @@ namespace Hypertable {
     MasterClient(ConnectionManagerPtr &, Hyperspace::SessionPtr &,
                  const String &toplevel_dir, uint32_t timeout_ms,
                  ApplicationQueuePtr &);
+    MasterClient(ConnectionManagerPtr &, InetAddr &addr, uint32_t timeout_ms);
     MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms);
     ~MasterClient();
 

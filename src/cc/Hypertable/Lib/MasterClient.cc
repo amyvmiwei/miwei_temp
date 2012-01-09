@@ -68,6 +68,18 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
 }
 
 
+MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr, InetAddr &addr, 
+                            uint32_t timeout_ms)
+  : m_conn_manager(conn_mgr), m_master_addr(addr), m_timeout_ms(timeout_ms) {
+  m_comm = m_conn_manager->get_comm();
+  m_retry_interval = Config::properties->get_i32("Hypertable.Connection.Retry.Interval");
+
+  m_conn_manager->add_with_initializer(m_master_addr, m_retry_interval, "Master",
+                                       m_dispatcher_handler, 
+                                       m_connection_initializer);
+}
+
+
 MasterClient::MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms)
   : m_comm(comm), m_master_addr(addr), m_timeout_ms(timeout_ms) {
   m_retry_interval = Config::properties->get_i32("Hypertable.Connection.Retry.Interval");
