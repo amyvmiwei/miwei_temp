@@ -66,13 +66,19 @@ namespace {
     "Description:\n"
     "  This program checks to see if the server, specified by <server-name>\n"
     "  is up. return 0 if true, 1 otherwise. <server-name> may be one of the\n"
-    "  following values: dfsbroker, hyperspace, master rangeserver\n\n"
+    "  following values: dfsbroker, hyperspace, master, global-master, \n"
+    "  rangeserver, thriftbroker\n\n"
+    "  master: checks for a master running on localhost\n"
+    "  global-master: checks for a master running in the cluster (address is\n"
+    "    fetched from hyperspace)\n"
     "Options";
 
   struct AppPolicy : Config::Policy {
     static void init_options() {
       cmdline_desc(usage).add_options()
-          ("wait", i32()->default_value(2000), "Check wait time in ms");
+          ("wait", i32()->default_value(2000), "Check wait time in ms")
+          ("host", str(), "Specifies the hostname of the server(s)")
+          ;
       cmdline_hidden_desc().add_options()("server-name", str(), "");
       cmdline_positional_desc().add("server-name", -1);
     }
@@ -109,6 +115,9 @@ namespace {
     HT_DEBUG_OUT <<"Checking dfsbroker at "<< get_str("dfs-host")
                  <<':'<< get_i16("dfs-port") << HT_END;
 
+    if (properties->has("host"))
+      properties->set("DfsBroker.Host", properties->get_str("host"));
+
     DfsBroker::ClientPtr dfs = new DfsBroker::Client(conn_mgr, properties);
 
     if (!dfs->wait_for_connection(wait_ms))
@@ -124,6 +133,13 @@ namespace {
     HT_DEBUG_OUT <<"Checking hyperspace"<< HT_END;
     Timer timer(max_wait_ms, true);
     int error;
+
+    if (properties->has("host")) {
+      std::vector<String> vec;
+      vec.push_back(properties->get_str("host"));
+      properties->set("Hyperspace.Replica.Host", vec);
+    }
+
     hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
 
     if (!hyperspace->wait_for_connection(max_wait_ms))
@@ -135,7 +151,7 @@ namespace {
     }
   }
 
-  void check_master(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
+  void check_global_master(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
     HT_DEBUG_OUT <<"Checking master via hyperspace"<< HT_END;
     Timer timer(wait_ms, true);
 
@@ -164,9 +180,34 @@ namespace {
     master->status(&timer);
   }
 
+  void check_master(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
+    Timer timer(wait_ms, true);
+    uint16_t port = properties->get_i16("Hypertable.Master.Port");
+
+    const char *host;
+    if (properties->has("host"))
+      host = properties->get_str("host").c_str();
+    else
+      host = "localhost";
+    HT_DEBUG_OUT << "Checking master on localhost:" << port << HT_END;
+    InetAddr addr(host, port);
+
+    MasterClient *master = new MasterClient(conn_mgr, addr, wait_ms);
+    master->set_verbose_flag(get_bool("verbose"));
+
+    if (!master->wait_for_connection(wait_ms))
+      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to master");
+
+    master->status(&timer);
+  }
+
   void check_rangeserver(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
     HT_DEBUG_OUT <<"Checking rangeserver at "<< get_str("rs-host")
                  <<':'<< get_i16("rs-port") << HT_END;
+
+    if (properties->has("host"))
+      properties->set("rs-host", properties->get_str("host"));
+
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
 
     wait_for_connection("range server", conn_mgr, addr, wait_ms, wait_ms);
@@ -179,6 +220,9 @@ namespace {
 
   void check_thriftbroker(ConnectionManagerPtr &conn_mgr, int wait_ms) {
 #ifdef HT_WITH_THRIFT
+    if (properties->has("host"))
+      properties->set("thrift-host", properties->get_str("host"));
+
     String table_id;
     InetAddr addr(get_str("thrift-host"), get_i16("thrift-port"));
 
@@ -236,6 +280,9 @@ int main(int argc, char **argv) {
     else if (server_name == "hyperspace") {
       CHECK_SERVER(hyperspace);
     }
+    else if (server_name == "global-master") {
+      CHECK_SERVER(global_master);
+    }
     else if (server_name == "master") {
       CHECK_SERVER(master);
     }
@@ -248,7 +295,8 @@ int main(int argc, char **argv) {
     else {
       CHECK_SERVER(dfsbroker);
       CHECK_SERVER(hyperspace);
-      CHECK_SERVER(master);
+      //CHECK_SERVER(master);
+      CHECK_SERVER(global_master);
       CHECK_SERVER(rangeserver);
 #ifdef HT_WITH_THRIFT
       CHECK_SERVER(thriftbroker);
