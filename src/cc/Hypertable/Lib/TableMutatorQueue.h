@@ -45,7 +45,7 @@ namespace Hypertable {
     /**
      *
      */
-    TableMutatorQueue() { }
+    TableMutatorQueue(Mutex &mutex, boost::condition &cond) : m_mutex(mutex), m_cond(cond) { }
 
     ~TableMutatorQueue () { }
 
@@ -57,20 +57,15 @@ namespace Hypertable {
       m_cond.notify_one();
     }
 
-    void wait_for_buffer() {
-      ApplicationHandler *app_handler;
+    void wait_for_buffer(ScopedLock &lock, ApplicationHandler **app_handlerp) {
       {
-        ScopedLock lock(m_mutex);
         while (m_work_queue.empty()) {
           m_cond.wait(lock);
         }
-        app_handler = m_work_queue.front();
-        HT_ASSERT(app_handler);
+        *app_handlerp = m_work_queue.front();
+        HT_ASSERT(*app_handlerp);
         m_work_queue.pop_front();
       }
-      app_handler->run();
-      delete app_handler;
-      return;
     }
 
     /**
@@ -84,8 +79,8 @@ namespace Hypertable {
   private:
 
     typedef std::list<ApplicationHandler *> WorkQueue;
-    Mutex                  m_mutex;
-    boost::condition       m_cond;
+    Mutex                  &m_mutex;
+    boost::condition       &m_cond;
     WorkQueue              m_work_queue;
   };
 

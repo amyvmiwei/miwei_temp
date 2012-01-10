@@ -68,9 +68,14 @@ namespace Hypertable {
      *     wait_for_completion unless explicitly told to do so by caller
      */
     TableMutatorAsync(PropertiesPtr &props, Comm *comm,
-                 ApplicationQueuePtr &app_queue, Table *table,
-                 RangeLocatorPtr &range_locator, uint32_t timeout_ms, ResultCallback *cb,
-                 uint32_t flags = 0, bool explicit_block_only=false);
+		      ApplicationQueuePtr &app_queue, Table *table,
+		      RangeLocatorPtr &range_locator, uint32_t timeout_ms, ResultCallback *cb,
+		      uint32_t flags = 0, bool explicit_block_only=false);
+
+    TableMutatorAsync(Mutex &mutex, boost::condition &cond, PropertiesPtr &props, Comm *comm,
+		      ApplicationQueuePtr &app_queue, Table *table,
+		      RangeLocatorPtr &range_locator, uint32_t timeout_ms, ResultCallback *cb,
+		      uint32_t flags = 0, bool explicit_block_only=false);
 
     /**
      * Destructor for TableMutator object
@@ -171,8 +176,11 @@ namespace Hypertable {
       failed_mutations = m_failed_mutations;
     }
     bool has_outstanding() {
-      ScopedLock lock(m_buffer_mutex);
-      return (m_outstanding_buffers.size() !=0);
+      ScopedLock lock(m_mutex);
+      return m_outstanding_buffers.size();
+    }
+    bool has_outstanding_unlocked() {
+      return m_outstanding_buffers.size();
     }
     bool needs_flush();
 
@@ -180,6 +188,9 @@ namespace Hypertable {
     void wait_for_completion();
 
   private:
+
+    void initialize(PropertiesPtr &props);
+
     enum Operation {
       SET = 1,
       SET_CELLS,
@@ -230,9 +241,11 @@ namespace Hypertable {
     Cells::const_iterator m_last_cells_end;
     const static uint32_t ms_max_sync_retries = 5;
 
-    Mutex      m_cancel_mutex;
     Mutex      m_buffer_mutex;
-    boost::condition m_cond;
+    Mutex      &m_mutex;
+    Mutex      m_cancel_mutex;
+    boost::condition m_buffer_cond;
+    boost::condition &m_cond;
     bool       m_explicit_block_only;
     uint32_t   m_next_buffer_id;
     bool       m_cancelled;

@@ -62,11 +62,11 @@ TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table,
   : m_callback(this), m_timeout_ms(timeout_ms), m_flags(flags), m_flush_delay(0),
     m_last_error(Error::OK), m_last_op(0), m_unflushed_updates(false) {
   HT_ASSERT(timeout_ms);
-  m_queue = new TableMutatorQueue;
+  m_queue = new TableMutatorQueue(m_mutex, m_cond);
   ApplicationQueuePtr app_queue = (ApplicationQueue *)m_queue.get();
 
   m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
-  m_mutator  = new TableMutatorAsync(props, comm, app_queue, table, range_locator, timeout_ms,
+  m_mutator  = new TableMutatorAsync(m_mutex, m_cond, props, comm, app_queue, table, range_locator, timeout_ms,
       &m_callback, flags, false);
 }
 
@@ -147,13 +147,11 @@ void TableMutator::set_delete(const KeySpec &key) {
 
 void TableMutator::auto_flush() {
   try {
+
     if (!m_mutator->needs_flush())
       return;
-    while(m_mutator->has_outstanding()) {
-      m_queue->wait_for_buffer();
-      if (m_last_error != Error::OK)
-        HT_THROW(m_last_error, "");
-    }
+
+    wait_for_flush_completion();
 
     if (m_flush_delay)
       poll(0, 0, m_flush_delay);
@@ -171,17 +169,13 @@ void TableMutator::auto_flush() {
 void TableMutator::flush() {
   try {
     m_last_error = Error::OK;
-    while(m_mutator->has_outstanding()) {
-      m_queue->wait_for_buffer();
-      if (m_last_error != Error::OK)
-        HT_THROW(m_last_error, "");
-    }
+
+    wait_for_flush_completion();
+
     m_mutator->flush();
-    while(m_mutator->has_outstanding()) {
-      m_queue->wait_for_buffer();
-      if (m_last_error != Error::OK)
-        HT_THROW(m_last_error, "");
-    }
+
+    wait_for_flush_completion();
+
     m_unflushed_updates = false;
   }
   catch (Exception &e) {
@@ -195,6 +189,25 @@ void TableMutator::flush() {
     throw;
   }
 }
+
+void TableMutator::wait_for_flush_completion() {
+  ApplicationHandler *app_handler;
+  while (true) {
+    {
+      ScopedLock lock(m_mutex);
+      if (m_mutator->has_outstanding_unlocked()) {
+	m_queue->wait_for_buffer(lock, &app_handler);
+	if (m_last_error != Error::OK)
+	  HT_THROW(m_last_error, "");
+      }
+      else
+	return;
+    }
+    app_handler->run();
+    delete app_handler;
+  }
+}
+
 
 
 bool TableMutator::retry(uint32_t timeout_ms) {
