@@ -134,9 +134,6 @@ public:
    */
   void interval_flush();
 
-protected:
-  virtual void auto_flush();
-
 private:
   RecMutex      m_mutex;
   uint32_t      m_flush_interval;
