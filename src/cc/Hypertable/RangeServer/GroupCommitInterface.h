@@ -123,7 +123,6 @@ namespace Hypertable {
     TableInfoPtr table_info;
     boost::xtime expire_time;
     hash_map<Range *, RangeUpdateList *> range_map;
-    std::set<Range *> wait_ranges;
     DynamicBuffer go_buf;
     bool wait_for_metadata_recovery;
     bool wait_for_system_recovery;

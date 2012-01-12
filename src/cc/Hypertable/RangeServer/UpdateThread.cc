@@ -31,9 +31,12 @@ void UpdateThread::operator()() {
   try {
     switch (m_sequence_number) {
     case 0:
-      m_range_server->update_qualify_and_transform();
+      m_range_server->update_qualify_and_transform(true);  // METADATA
       break;
     case 1:
+      m_range_server->update_qualify_and_transform(false);
+      break;
+    case 2:
       m_range_server->update_add_and_respond();
       break;
     default:
