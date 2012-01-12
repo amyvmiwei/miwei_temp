@@ -310,7 +310,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   initialize(props);
 
   // Create "update" threads
-  for (int i=0; i<3; i++)
+  for (int i=0; i<4; i++)
     m_update_threads.push_back( new Thread(UpdateThread(this, i)) );
 
   local_recover();
@@ -358,6 +358,7 @@ void RangeServer::shutdown() {
     // Kill update threads
     m_shutdown = true;
     m_update_qualify_queue_cond.notify_all();
+    m_update_qualify_metadata_queue_cond.notify_all();
     m_update_commit_queue_cond.notify_all();
     m_update_response_queue_cond.notify_all();
     foreach (Thread *thread, m_update_threads)
@@ -2058,15 +2059,31 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
   // Enqueue update
   {
     ScopedLock lock(m_update_qualify_queue_mutex);
-    m_update_qualify_queue.push_back(uc);
-    m_update_qualify_queue_cond.notify_all();
+    HT_ASSERT(!updates.empty());
+    if (updates[0]->id.is_metadata()) {
+      m_update_qualify_metadata_queue.push_back(uc);
+      m_update_qualify_metadata_queue_cond.notify_all();
+    }
+    else {
+      m_update_qualify_queue.push_back(uc);
+      m_update_qualify_queue_cond.notify_all();
+    }
   }
 
 }
 
+namespace {
 
-void RangeServer::update_qualify_and_transform() {
-  ScopedLock method_lock(m_update_qualify_mutex);
+  struct ltRangePtr {
+    bool operator()(const RangePtr &rp1, const RangePtr &rp2) const {
+      return rp1.get() < rp2.get();
+    }
+  };
+
+}
+
+
+void RangeServer::update_qualify_and_transform(bool metadata) {
   UpdateContext *uc;
   SerializedKey key;
   const uint8_t *mod, *mod_end;
@@ -2084,18 +2101,28 @@ void RangeServer::update_qualify_and_transform() {
   CommitLogPtr transfer_log;
   RangeUpdate range_update;
   RangePtr range;
+  Mutex &mutex = metadata ? m_update_qualify_metadata_queue_mutex : m_update_qualify_queue_mutex;
+  boost::condition &cond = metadata ? m_update_qualify_metadata_queue_cond : m_update_qualify_queue_cond;
+  std::list<UpdateContext *> &queue = metadata ? m_update_qualify_metadata_queue : m_update_qualify_queue;
+  std::set<RangePtr, ltRangePtr> wait_set;
 
   while (true) {
 
-    // Dequeue next update
+    // wait for maintenance
+    if (!wait_set.empty()) {
+      foreach(const RangePtr &range, wait_set)
+        range->wait_for_maintenance_to_complete();
+      wait_set.clear();
+    }
+
     {
-      ScopedLock lock(m_update_qualify_queue_mutex);
-      while (m_update_qualify_queue.empty() && !m_shutdown)
-        m_update_qualify_queue_cond.wait(lock);
+      ScopedLock lock(mutex);
+      while (queue.empty() && !m_shutdown)
+        cond.wait(lock);
       if (m_shutdown)
         return;
-      uc = m_update_qualify_queue.front();
-      m_update_qualify_queue.pop_front();
+      uc = queue.front();
+      queue.pop_front();
     }
 
     rulist = 0;
@@ -2276,8 +2303,8 @@ void RangeServer::update_qualify_and_transform() {
             bool wait_for_maintenance;
             transfer_pending = rulist->range->get_transfer_info(transfer_info, transfer_log,
                                                                 &latest_range_revision, wait_for_maintenance);
-            if (wait_for_maintenance)
-              table_update->wait_ranges.insert(rulist->range.get());
+            if (!metadata && wait_for_maintenance)
+	      wait_set.insert(rulist->range);
           }
 
           if (rulist->transfer_log.get() == 0)
@@ -2478,7 +2505,6 @@ void RangeServer::update_qualify_and_transform() {
 
 
 void RangeServer::update_commit() {
-  ScopedLock method_lock(m_update_commit_mutex);
   UpdateContext *uc;
   SerializedKey key;
   std::list<UpdateContext *> coalesce_queue;
@@ -2613,7 +2639,6 @@ void RangeServer::update_commit() {
 
 
 void RangeServer::update_add_and_respond() {
-  ScopedLock method_lock(m_update_response_mutex);
   UpdateContext *uc;
   SerializedKey key;
   int error = Error::OK;
@@ -2704,9 +2729,6 @@ void RangeServer::update_add_and_respond() {
           break;
         }
       }
-
-      foreach(Range *rangep, table_update->wait_ranges)
-        rangep->wait_for_maintenance_to_complete();
 
       foreach (UpdateRequest *request, table_update->requests) {
         ResponseCallbackUpdate cb(m_comm, request->event);
@@ -3503,6 +3525,7 @@ void RangeServer::close(ResponseCallback *cb) {
   // Kill update threads
   m_shutdown = true;
   m_update_qualify_queue_cond.notify_all();
+  m_update_qualify_metadata_queue_cond.notify_all();
   m_update_commit_queue_cond.notify_all();
   m_update_response_queue_cond.notify_all();
   foreach (Thread *thread, m_update_threads)

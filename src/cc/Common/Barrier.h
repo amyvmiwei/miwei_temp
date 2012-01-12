@@ -48,6 +48,7 @@ namespace Hypertable {
      */
     void exit() {
       ScopedLock lock(m_mutex);
+      HT_ASSERT(m_counter > 0);
       m_counter--;
       if (m_hold && m_counter == 0)
         m_quiesced_cond.notify_one();
@@ -57,6 +58,8 @@ namespace Hypertable {
      */
     void put_up() {
       ScopedLock lock(m_mutex);
+      while (m_hold)
+        m_unblocked_cond.wait(lock);
       m_hold = true;
       while (m_counter > 0)
         m_quiesced_cond.wait(lock);
