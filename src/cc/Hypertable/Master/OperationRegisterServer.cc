@@ -81,7 +81,7 @@ void OperationRegisterServer::execute() {
   m_context->connect_server(m_rsc, m_system_stats.net_info.host_name,
                             m_local_addr, m_public_addr);
   int32_t difference = (int32_t)abs((m_received_ts - m_register_ts)/ 1000LL);
-  if (difference > m_context->max_allowable_skew) {
+  if (difference > (3000000+m_context->max_allowable_skew)) {
     m_error = Error::RANGESERVER_CLOCK_SKEW;
     m_error_msg = format("Detected clock skew while registering server %s(%s), as location %s register_ts=%llu, received_ts=%llu, difference=%d > allowable skew %d",
         m_system_stats.net_info.host_name.c_str(), m_public_addr.format().c_str(),
