@@ -150,6 +150,10 @@ if (NOT PACKAGE_THRIFTBROKER)
     set(Xdmcp_lib ${CMAKE_MATCH_1})
     string(REGEX MATCH "[ \t](/[^ ]+/librrd\\.[^ \n]+)" dummy ${LDD_OUT})
     set(rrd_lib ${CMAKE_MATCH_1})
+    string(REGEX MATCH "[ \t](/[^ ]+/libintl\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(intl_lib ${CMAKE_MATCH_1})
+    string(REGEX MATCH "[ \t](/[^ ]+/libfreetype\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(freetype_lib ${CMAKE_MATCH_1})
   endif ()
 endif ()
 
@@ -186,12 +190,8 @@ HT_INSTALL_LIBS(lib ${directfb_lib} ${fusion_lib} ${direct_lib}
                 ${pangoft2_lib} ${xcb_xlib_lib} ${xcb_lib} ${pcre_lib}
                 ${Xau_lib} ${Xdmcp_lib} ${ssl_lib} ${gssapi_krb5_lib}
                 ${krb5_lib} ${com_err_lib} ${k5crypto_lib} ${crypto_lib}
-                ${krb5support_lib} ${Xrender_lib} ${rrd_lib})
-
-# Hack for issue 745
-if (APPLE AND EXISTS "/opt/local/lib/libintl.8.dylib")
-  HT_INSTALL_LIBS(lib "/opt/local/lib/libintl.8.dylib")
-endif ()
+                ${krb5support_lib} ${Xrender_lib} ${rrd_lib} ${intl_lib}
+                ${freetype_lib})
 
 # General package variables
 if (NOT CPACK_PACKAGE_NAME)

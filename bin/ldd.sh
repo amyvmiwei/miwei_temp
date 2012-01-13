@@ -21,9 +21,11 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
+DARWIN=
+
 # Do ldd on several platforms
 case `uname -s` in
-  Darwin)     ldd='otool -L';;
+  Darwin)     ldd='otool -L'; DARWIN="yes";;
   *)          ldd=ldd;;
 esac
 case $1 in
@@ -32,4 +34,24 @@ case $1 in
   *)          file=$HYPERTABLE_HOME/bin/$1;;
 esac
 
-exec $ldd "$file"
+if [ $DARWIN == "yes" ] ; then
+  $ldd "$file" > /tmp/ldd-step1-$$
+
+  lineno=0
+  while read line ; do
+  if [ $lineno -ne 0 ] ; then
+    line=`echo $line | cut -f 1 -d' '`
+    expr $line : "^/" > /dev/null
+    if [ $? == 0 ] ; then
+      $ldd $line | tail -n+2 >> /tmp/ldd-step2-$$
+    fi
+  fi
+  lineno=$(($lineno+1));
+  done < "/tmp/ldd-step1-$$"
+  head -n 1 /tmp/ldd-step1-$$
+  sort /tmp/ldd-step2-$$ | uniq
+  /bin/rm -f /tmp/ldd-step1-$$ /tmp/ldd-step2-$$
+else
+  exec $ldd "$file"
+fi
+
