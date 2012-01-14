@@ -163,6 +163,7 @@ public class Dispatcher {
     "                          (default = 5000)",
     "  --random                Generate random keys",
     "  --randomize-tasks       Randomize the task queue before starting test",
+    "  --distribution-range=<n> Range of random number distribution.  Scaled to keyMax.",
     "  --scan-buffer-size=<n>  Size of scan result transfer buffer in number of bytes",
     "                          (default = 65K)",
     "  --submit-at-most=<n>    Submit no more than <n> keys, regardless of <keyCount>",
@@ -182,23 +183,23 @@ public class Dispatcher {
 
   static final int DEFAULT_PORT = 11256;
 
-  public static String testTypeString(Task.Order order, Task.Type testType) {
+  public static String testTypeString(Setup.Order order, Setup.Type testType) {
     String orderStr = "";
     String typeStr = "";
-    if (testType == Task.Type.READ)
+    if (testType == Setup.Type.READ)
       typeStr = "read";
-    else if (testType == Task.Type.WRITE)
+    else if (testType == Setup.Type.WRITE)
       typeStr = "write";
-    else if (testType == Task.Type.SCAN)
+    else if (testType == Setup.Type.SCAN)
       typeStr = "scan";
-    else if (testType == Task.Type.INCR)
+    else if (testType == Setup.Type.INCR)
       typeStr = "incr";
     else
       typeStr = "unknown";
-    if (testType != Task.Type.SCAN) {
-      if (order == Task.Order.SEQUENTIAL)
+    if (testType != Setup.Type.SCAN) {
+      if (order == Setup.Order.SEQUENTIAL)
         orderStr = "sequential-";
-      else if (order == Task.Order.RANDOM)
+      else if (order == Setup.Order.RANDOM)
         orderStr = "random-";
       else
         orderStr = "unknown-";
@@ -214,26 +215,24 @@ public class Dispatcher {
     CommHeader header;
     long timeout = 15000;
     int clients = 0;
-    Task.Type testType = Task.Type.READ;
-    Task.Order order = Task.Order.SEQUENTIAL;
-    Task.Distribution distribution = Task.Distribution.UNIFORM;
-    String driver = "hypertable";
+
     String outputDir = null;
     String testName = null;
     boolean testTypeSet = false;
-    long keyCount = -1;
+
     long submitExactly = -1;
     long submitAtMost = -1;
     long keysSubmitted = 0;
-    long keyMax = -1;
-    int keySize = -1;
-    int valueSize = -1;
+
     long totalDataSize = -1;
-    int scanBufferSize = 65536;
+
     boolean randomizeTasks = false;
     String argString = "";
     String valueData = null;
-    int parallel = 0;
+
+    Setup setup = new Setup();
+
+    setup.tableName="perftest";
 
     if (args.length == 1 && args[0].equals("--help"))
       Usage.DumpAndExit(usage);
@@ -244,11 +243,11 @@ public class Dispatcher {
       else if (args[i].startsWith("--clients="))
         clients = Integer.parseInt(args[i].substring(10));
       else if (args[i].startsWith("--driver="))
-        driver = args[i].substring(9);
+        setup.driver = args[i].substring(9);
       else if (args[i].startsWith("--parallel="))
-        parallel = Integer.parseInt(args[i].substring(11));
+        setup.parallelism = Integer.parseInt(args[i].substring(11));
       else if (args[i].startsWith("--key-max="))
-        keyMax = Long.parseLong(args[i].substring(10));
+        setup.keyMax = Long.parseLong(args[i].substring(10));
       else if (args[i].startsWith("--submit-at-most="))
         submitAtMost = Long.parseLong(args[i].substring(17));
       else if (args[i].startsWith("--submit-exactly="))
@@ -256,36 +255,38 @@ public class Dispatcher {
       else if (args[i].startsWith("--output-dir="))
         outputDir = args[i].substring(13);
       else if (args[i].equals("--random"))
-        order = Task.Order.RANDOM;
+        setup.order = Setup.Order.RANDOM;
       else if (args[i].equals("--randomize-tasks"))
         randomizeTasks = true;
+      else if (args[i].startsWith("--distribution-range="))
+        setup.distributionRange = Long.parseLong(args[i].substring(21));
       else if (args[i].equals("--timeout="))
         timeout = Long.parseLong(args[i].substring(10));
       else if (args[i].startsWith("--scan-buffer-size="))
-        scanBufferSize = Integer.parseInt(args[i].substring(19));
+        setup.scanBufferSize = Integer.parseInt(args[i].substring(19));
       else if (args[i].startsWith("--test-name="))
         testName = args[i].substring(12);
       else if (args[i].startsWith("--value-data="))
 	valueData = args[i].substring(13);
       else if (args[i].equals("--zipf"))
-        distribution = Task.Distribution.ZIPFIAN;
+        setup.distribution = Setup.Distribution.ZIPFIAN;
       else if (testTypeSet == false) {
         if (args[i].equals("read"))
-          testType = Task.Type.READ;
+          setup.type = Setup.Type.READ;
         else if (args[i].equals("write"))
-          testType = Task.Type.WRITE;
+          setup.type = Setup.Type.WRITE;
         else if (args[i].equals("scan"))
-          testType = Task.Type.SCAN;
+          setup.type = Setup.Type.SCAN;
         else if (args[i].equals("incr"))
-          testType = Task.Type.INCR;
+          setup.type = Setup.Type.INCR;
         else
           Usage.DumpAndExit(usage);
         testTypeSet = true;
       }
-      else if (keySize == -1)
-	keySize = Integer.parseInt(args[i]);
-      else if (valueSize == -1)
-        valueSize = Integer.parseInt(args[i]);
+      else if (setup.keySize == -1)
+	setup.keySize = Integer.parseInt(args[i]);
+      else if (setup.valueSize == -1)
+        setup.valueSize = Integer.parseInt(args[i]);
       else if (totalDataSize == -1)
 	totalDataSize = Long.parseLong(args[i]);
       else
@@ -296,7 +297,7 @@ public class Dispatcher {
     if (totalDataSize == -1)
       Usage.DumpAndExit(usage);
 
-    keyCount = totalDataSize / (keySize+valueSize);
+    setup.keyCount = totalDataSize / (setup.keySize+setup.valueSize);
 
     if (submitExactly != -1 && submitAtMost != -1) {
       System.out.println("ERROR:  Only one of --submit-exactly and --submit-at-most may be supplied");
@@ -304,18 +305,18 @@ public class Dispatcher {
     }
 
     if (submitAtMost != -1) {
-      submitExactly = (submitAtMost > keyCount) ? keyCount : submitAtMost;
+      submitExactly = (submitAtMost > setup.keyCount) ? setup.keyCount : submitAtMost;
     }
     else if (submitExactly == -1)
-      submitExactly = keyCount;
+      submitExactly = setup.keyCount;
 
-    if (testType == Task.Type.INCR && valueSize != -1) {
+    if (setup.type == Setup.Type.INCR && setup.valueSize != -1) {
       System.out.println("WARNING: Value size ignored for INCR test type");
-      valueSize = -1;
+      setup.valueSize = -1;
     }
 
     try {
-      if (driver.equals("hypertable")) {
+      if (setup.driver.equals("hypertable")) {
         ThriftClient client = ThriftClient.create("localhost", 38080);
         long namespace = client.open_namespace("/");
         if (!client.exists_table(namespace, "perftest")) {
@@ -325,7 +326,7 @@ public class Dispatcher {
         }
         client.close_namespace(namespace);
       }
-      else if (driver.equals("hbase")) {
+      else if (setup.driver.equals("hbase")) {
         HBaseAdmin admin = new HBaseAdmin( HBaseConfiguration.create() );
         if (!admin.tableExists("perftest")) {
           System.out.println("Table 'perftest' does not exist, exiting...");
@@ -347,7 +348,7 @@ public class Dispatcher {
       RequestHandler requestHandler = new RequestHandler(timeout);
       HandlerFactory handlerFactory = new HandlerFactory(requestHandler);
       Map<String, Result> resultMap = new HashMap<String, Result>();
-      MessageSetup messageSetup = new MessageSetup("perftest", driver, valueData, testType, parallel);
+      MessageSetup messageSetup;
       Message message;
       Comm comm = new Comm(0);
       CommBuf cbuf;
@@ -373,28 +374,25 @@ public class Dispatcher {
       pendingResults = connections;
       progressReadySkip = connections;
 
-      if (keyMax == -1)
-	  keyMax = keyCount * 10;
+      if (setup.keyMax == -1)
+        setup.keyMax = setup.keyCount * 10;
 
       long nranges = 10 * connections;
       Task task;
-      if (testType == Task.Type.SCAN) {
-	  long rangesize = keyMax / nranges;
-	  for (long start=0,end=rangesize; start<keyMax; start=end,end+=rangesize) {
-	      keysSubmitted += end-start;
-	      task = new Task(testType, keyMax, keySize, valueSize, keyCount, order, distribution, start, end, scanBufferSize);
-	      taskVector.add( task );
-	  }
+      if (setup.type == Setup.Type.SCAN) {
+        long rangesize = setup.keyMax / nranges;
+        for (long start=0,end=rangesize; start<setup.keyMax; start=end,end+=rangesize) {
+          taskVector.add( new Task(start, end) );
+        }
       }
       else {
-	  long rangesize = keyCount / nranges;
-	  while (keysSubmitted < submitExactly) {
-	      for (long start=0,end=rangesize; start<keyCount && keysSubmitted<submitExactly; start=end,end+=rangesize) {
-		  keysSubmitted += end-start;
-		  task = new Task(testType, keyMax, keySize, valueSize, keyCount, order, distribution, start, end, scanBufferSize);
-		  taskVector.add( task );
-	      }
-	  }
+        long rangesize = submitExactly / nranges;
+        while (keysSubmitted < submitExactly) {
+          for (long start=0,end=rangesize; start<setup.keyCount && keysSubmitted<submitExactly; start=end,end+=rangesize) {
+            keysSubmitted += end-start;
+            taskVector.add( new Task(start, end) );
+          }
+        }
       }
 
       if (randomizeTasks) {
@@ -412,6 +410,8 @@ public class Dispatcher {
       for (Task t : taskVector) {
         messageQueue.offer( new MessageTask(t) );
       }
+
+      messageSetup = new MessageSetup(setup);
 
       System.out.println();
       progress = new ProgressMeterVertical( (long)messageQueue.size() );
@@ -477,8 +477,10 @@ public class Dispatcher {
       stopTime = System.currentTimeMillis();
 
       long itemCount = 0;
+      long requestCount = 0;
       long elapsedMillis = 0;
       long bytesReturned = 0;
+      long cumulativeLatency = 0;
       Result result;
 
       Iterator it = resultMap.entrySet().iterator();
@@ -486,9 +488,11 @@ public class Dispatcher {
         Map.Entry pairs = (Map.Entry)it.next();
         //System.out.println(pairs.getKey() + " = " + pairs.getValue());
         result = (Result)pairs.getValue();
-        if (testType == Task.Type.READ || testType == Task.Type.SCAN) {
+        if (setup.type == Setup.Type.READ || setup.type == Setup.Type.SCAN) {
           itemCount += result.itemsReturned;
+          requestCount += result.requestCount;
           bytesReturned += result.valueBytesReturned;
+          cumulativeLatency += result.cumulativeLatency;
         }
         else
           itemCount += result.itemsSubmitted;
@@ -499,16 +503,16 @@ public class Dispatcher {
       String summaryLine = null;
 
       System.out.println();
-      summary.add("Test: " + testTypeString(order, testType));
-      if (testType == Task.Type.READ)
-        summary.add("Distribution: " + ((distribution==Task.Distribution.ZIPFIAN) ? "zipfian" : "uniform"));
-      summary.add("Driver: " + driver);
+      summary.add("Test: " + testTypeString(setup.order, setup.type));
+      if (setup.type == Setup.Type.READ)
+        summary.add("Distribution: " + ((setup.distribution==Setup.Distribution.ZIPFIAN) ? "zipfian" : "uniform"));
+      summary.add("Driver: " + setup.driver);
       summary.add("Args: " + argString);
-      summary.add("Key Count: " + keyCount);
-      summary.add("Key Size: " + keySize);
-      summary.add("Value size: " + valueSize);
+      summary.add("Key Count: " + setup.keyCount);
+      summary.add("Key Size: " + setup.keySize);
+      summary.add("Value size: " + setup.valueSize);
       summary.add("Keys Submitted: " + keysSubmitted);
-      if (testType == Task.Type.READ || testType == Task.Type.SCAN) {
+      if (setup.type == Setup.Type.READ || setup.type == Setup.Type.SCAN) {
         summary.add("Items Returned: " + itemCount);
         summary.add("Value Bytes Returned: " + bytesReturned);
       }
@@ -518,29 +522,29 @@ public class Dispatcher {
       summary.add("Wall time: " + ((stopTime - startTime) / 1000.0) + " s");
       summary.add("Test time: " + (elapsedMillis / 1000) + " s");
 
-      if (testType == Task.Type.READ || testType == Task.Type.SCAN)
-        bytesReturned += itemCount*keySize;  // add in key space
+      if (setup.type == Setup.Type.READ || setup.type == Setup.Type.SCAN)
+        bytesReturned += itemCount*setup.keySize;  // add in key space
       else
-        bytesReturned = itemCount*(keySize+valueSize);
+        bytesReturned = itemCount*(setup.keySize+setup.valueSize);
 
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream ps = new PrintStream(baos);
-      if (testType == Task.Type.INCR)
+      if (setup.type == Setup.Type.INCR)
         ps.format("Client Throughput: %.2f incr/s", ((double)keysSubmitted / (double)(elapsedMillis/1000)));
       else
         ps.format("Client Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000)));
       summary.add(baos.toString());
 
       baos.reset();
-      if (testType == Task.Type.INCR)
+      if (setup.type == Setup.Type.INCR)
         ps.format("Aggregate Throughput: %.2f incr/s", ((double)keysSubmitted / (double)(elapsedMillis/1000))*(double)connections);
       else
         ps.format("Aggregate Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000))*(double)connections);        
       summary.add(baos.toString());
 
-      if (testType == Task.Type.READ) {
+      if (setup.type == Setup.Type.READ) {
         baos.reset();
-        ps.format("Average Latency: %.3f milliseconds", (double)elapsedMillis/(double)itemCount);
+        ps.format("Average Latency: %.3f milliseconds", (double)cumulativeLatency/(double)requestCount);
         summary.add(baos.toString());
       }
 
@@ -567,11 +571,11 @@ public class Dispatcher {
         summaryFileName = "";
       if (testName != null)
         summaryFileName += testName + "-";
-      summaryFileName += driver + "-" + testTypeString(order, testType) + "-";
+      summaryFileName += setup.driver + "-" + testTypeString(setup.order, setup.type) + "-";
 
-      if (testType == Task.Type.READ && order == Task.Order.RANDOM)
-        summaryFileName += ((distribution==Task.Distribution.ZIPFIAN) ? "zipfian" : "uniform") + "-";
-      summaryFileName += keyCount + "-" +  keySize + "-" + valueSize + "-" + clients + "clients.txt";
+      if (setup.type == Setup.Type.READ && setup.order == Setup.Order.RANDOM)
+        summaryFileName += ((setup.distribution==Setup.Distribution.ZIPFIAN) ? "zipfian" : "uniform") + "-";
+      summaryFileName += setup.keyCount + "-" +  setup.keySize + "-" + setup.valueSize + "-" + clients + "clients.txt";
 
       BufferedWriter writer = new BufferedWriter(new FileWriter(summaryFileName));
       for (Iterator<String> i = summary.iterator( ); i.hasNext( ); ) {
@@ -582,9 +586,7 @@ public class Dispatcher {
       writer.flush();
       writer.close();
 
-
       ReactorFactory.Shutdown();
-
     }
     catch (Exception e) {
       e.printStackTrace();

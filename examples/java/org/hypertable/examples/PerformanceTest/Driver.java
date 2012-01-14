@@ -22,13 +22,33 @@
 package org.hypertable.examples.PerformanceTest;
 
 import java.io.IOException;
+import java.lang.Math;
 import java.util.logging.Logger;
+
+import org.hypertable.Common.DiscreteRandomGeneratorZipf;
 
 public abstract class Driver {
 
   static final Logger log = Logger.getLogger("org.hypertable.examples.PerformanceTest");
 
-  public abstract void setup(String tableName, Task.Type testType, int parallelism);
+  public void setup(Setup setup) {
+    mSetup = setup;
+    mResult = new Result();
+
+    if (mSetup.distribution == Setup.Distribution.ZIPFIAN) {
+      if (mSetup.distributionRange == 0) {
+        System.out.println("Distribution range must be specified for Zipfian random distribution");
+        System.exit(-1);
+      }
+      mZipf = new DiscreteRandomGeneratorZipf(0, (int)mSetup.distributionRange, 1, 0.8);
+      mZipf.setSeed( System.nanoTime() );
+      mZipfianMultiplier = mSetup.keyMax / mSetup.distributionRange;
+    }
+  }
+
+  protected long getRandomLong() {
+    return Math.abs(mCommon.random.nextLong());
+  }
 
   public abstract void teardown();
 
@@ -38,4 +58,7 @@ public abstract class Driver {
 
   protected Result mResult;
   protected DriverCommon mCommon = new DriverCommon();
+  protected Setup mSetup;
+  protected DiscreteRandomGeneratorZipf mZipf;
+  protected long mZipfianMultiplier = 0;
 }
