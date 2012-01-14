@@ -28,28 +28,35 @@ import org.hypertable.AsyncComm.Serialization;
 public class Result {
 
   public int encodedLength() {
-    return 32;
+    return 48;
   }
   public void encode(ByteBuffer buf) {
     buf.putLong(itemsSubmitted);
     buf.putLong(itemsReturned);
+    buf.putLong(requestCount);
     buf.putLong(valueBytesReturned);
     buf.putLong(elapsedMillis);
+    buf.putLong(cumulativeLatency);
   }
   public void decode(ByteBuffer buf) {
     itemsSubmitted = buf.getLong();
     itemsReturned = buf.getLong();
+    requestCount = buf.getLong();
     valueBytesReturned = buf.getLong();
     elapsedMillis = buf.getLong();
+    cumulativeLatency = buf.getLong();
   }
 
   public String toString() {
     return new String("(items-submitted=" + itemsSubmitted + ", items-returned=" + itemsReturned +
-                      "value-bytes-returned=" + valueBytesReturned + ", elapsed-millis=" + elapsedMillis + ")");
+                      "requestCount=" + requestCount + "value-bytes-returned=" + valueBytesReturned +
+                      ", elapsed-millis=" + elapsedMillis + ", cumulativeLatency=" + cumulativeLatency + ")");
   }
 
-  public long itemsSubmitted;
-  public long itemsReturned;
-  public long valueBytesReturned;
-  public long elapsedMillis;
+  public long itemsSubmitted = 0;
+  public long itemsReturned = 0;
+  public long requestCount = 0;
+  public long valueBytesReturned = 0;
+  public long elapsedMillis = 0;
+  public long cumulativeLatency = 0;
 }

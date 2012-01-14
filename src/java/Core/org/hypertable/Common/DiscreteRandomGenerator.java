@@ -32,6 +32,12 @@ public abstract class DiscreteRandomGenerator {
     mRandom = new Random(seed);
   }
 
+  public void setSeed(long seed) {
+    if (mCmf == null)
+      generateCmf();
+    mRandom.setSeed(seed);
+  }
+
   public long getSample() {
 
     if (mCmf == null)
@@ -76,7 +82,15 @@ public abstract class DiscreteRandomGenerator {
     mCmf = new double [ mValueCount + 1 ];
 
     for (int i=0; i<mValueCount; i++)
-      mNumbers[i] = mMinValue + (Math.abs(mRandom.nextLong()) % mValueCount);
+      mNumbers[i] = i;
+
+    long tmpval;
+    for (int i=0; i<mValueCount; i++) {
+      tmpval = mNumbers[i];
+      ii = Math.abs(mRandom.nextInt()) % mValueCount;
+      mNumbers[i] = mNumbers[ii];
+      mNumbers[ii] = tmpval;
+    }
 
     mCmf[0] = pmf(0);
     for (ii=1; ii < mValueCount+1 ;++ii) {

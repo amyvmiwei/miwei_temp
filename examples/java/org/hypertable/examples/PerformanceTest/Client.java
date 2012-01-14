@@ -225,18 +225,17 @@ public class Client {
       if (message.type() != Message.Type.SETUP)
         throw new HypertableException(Error.FAILED_EXPECTATION, "Expected SETUP message");
 
-      String valueDataFile = ((MessageSetup)message).getValueData();
-      DriverCommon.VALUE_DATA_FILE = valueDataFile;
+      Setup setup = ((MessageSetup)message).setup;
 
-      String driverName = ((MessageSetup)message).getDriver();
+      DriverCommon.VALUE_DATA_FILE = setup.valueData;
 
-      if (driverName.equals("hypertable")) {
+      if (setup.driver.equals("hypertable")) {
         driver = new DriverHypertable(thriftbroker_port);
       }
-      else if (driverName.equals("hbase"))
+      else if (setup.driver.equals("hbase"))
         driver = new DriverHBase();
       else {
-        MessageError messageError = new MessageError("Unrecognized driver: " + driverName);
+        MessageError messageError = new MessageError("Unrecognized driver: " + setup.driver);
         cbuf = messageError.createCommBuf(header);
         SendRequest(cbuf);
         synchronized (waitObj) {
@@ -246,9 +245,7 @@ public class Client {
         System.exit(1);
       }
 
-      driver.setup(((MessageSetup)message).getTableName(),
-                   ((MessageSetup)message).getTestType(),
-                   ((MessageSetup)message).getParallelism());
+      driver.setup(setup);
 
       /**
        * Create and send READY message

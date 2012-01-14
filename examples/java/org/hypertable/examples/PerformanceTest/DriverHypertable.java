@@ -31,7 +31,6 @@ import java.util.Vector;
 import org.apache.thrift.transport.TTransportException;
 import org.apache.thrift.TException;
 
-import org.hypertable.Common.DiscreteRandomGeneratorZipf;
 import org.hypertable.Common.Checksum;
 import org.hypertable.thriftgen.*;
 import org.hypertable.thrift.SerializedCellsFlag;
@@ -55,7 +54,7 @@ public class DriverHypertable extends Driver {
   }
 
   protected void finalize() {
-    if (mParallelism == 0) {
+    if (mSetup.parallelism == 0) {
       try {
         if (mNamespaceId != 0)
           mClient.namespace_close(mNamespaceId);
@@ -68,11 +67,10 @@ public class DriverHypertable extends Driver {
     }
   }
 
-  public void setup(String tableName, Task.Type testType, int parallelism) {
-    mParallelism = parallelism;
-    mTableName = tableName;
+  public void setup(Setup setup) {
+    super.setup(setup);
 
-    if (mParallelism == 0) {
+    if (mSetup.parallelism == 0) {
       mCellsWriter = new SerializedCellsWriter(CLIENT_BUFFER_SIZE);
       try {
         mClient = ThriftClient.create("localhost", mThriftBrokerPort);
@@ -91,19 +89,19 @@ public class DriverHypertable extends Driver {
 
       mCommon.initializeValueData();
 
-      if (mParallelism > 0) {
-        mThreadStates = new DriverThreadState[mParallelism];
-        for (int i=0; i<mParallelism; i++) {
+      if (mSetup.parallelism > 0) {
+        mThreadStates = new DriverThreadState[mSetup.parallelism];
+        for (int i=0; i<mSetup.parallelism; i++) {
           mThreadStates[i] = new DriverThreadState();
           mThreadStates[i].common = mCommon;
-          mThreadStates[i].thread = new DriverThreadHypertable("/", mTableName, mThreadStates[i]);
+          mThreadStates[i].thread = new DriverThreadHypertable("/", mSetup.tableName, mThreadStates[i]);
           mThreadStates[i].thread.start();
         }
       }
       else {
         mCellsWriter.clear();
-        if (testType == Task.Type.WRITE || testType == Task.Type.INCR)
-          mMutator = mClient.mutator_open(mNamespaceId, mTableName, 0, 0);
+        if (mSetup.type == Setup.Type.WRITE || mSetup.type == Setup.Type.INCR)
+          mMutator = mClient.mutator_open(mNamespaceId, mSetup.tableName, 0, 0);
       }
     }
     catch (ClientException e) {
@@ -118,7 +116,6 @@ public class DriverHypertable extends Driver {
       e.printStackTrace();
       System.exit(-1);
     }
-    mResult = new Result();
   }
 
   public void teardown() {
@@ -128,39 +125,32 @@ public class DriverHypertable extends Driver {
     long randi;
     ByteBuffer keyByteBuf = ByteBuffer.allocate(8);
     byte [] keyBuf = keyByteBuf.array();
-    DiscreteRandomGeneratorZipf zipf = null;
 
-    if (task.distribution == Task.Distribution.ZIPFIAN)
-      zipf = new DiscreteRandomGeneratorZipf((int)task.start, (int)task.end, 1, 0.8);
+    long taskStartTime = System.currentTimeMillis();
 
-    long startTime = System.currentTimeMillis();
-
-    if (task.type == Task.Type.WRITE) {
-      byte [] row = new byte [ task.keySize ];
+    if (mSetup.type == Setup.Type.WRITE) {
+      byte [] row = new byte [ mSetup.keySize ];
       byte [] family = mCommon.COLUMN_FAMILY_BYTES;
       byte [] qualifier = mCommon.COLUMN_QUALIFIER_BYTES;
-      byte [] value = new byte [ task.valueSize ];
+      byte [] value = new byte [ mSetup.valueSize ];
 
-      if (mParallelism == 0)
+      if (mSetup.parallelism == 0)
         mCellsWriter.clear();
 
       try {
         for (long i=task.start; i<task.end; i++) {
-          if (task.order == Task.Order.RANDOM) {
-	    if (task.keyCount > Integer.MAX_VALUE || task.keyMax > Integer.MAX_VALUE)
-              randi = mCommon.random.nextLong();
-            else
-              randi = mCommon.random.nextInt();
-            if (task.keyMax != -1)
-              randi %= task.keyMax;
-            mCommon.formatRowKey(randi, task.keySize, row);
+          if (mSetup.order == Setup.Order.RANDOM) {
+            randi = getRandomLong();
+            if (mSetup.keyMax != -1)
+              randi %= mSetup.keyMax;
+            mCommon.formatRowKey(randi, mSetup.keySize, row);
           }
           else
-            mCommon.formatRowKey(i, task.keySize, row);
+            mCommon.formatRowKey(i, mSetup.keySize, row);
           mCommon.fillValueBuffer(value);
-          if (mParallelism > 0) {
-            mCellsWriter = new SerializedCellsWriter(task.keySize + family.length + qualifier.length + value.length + 32);
-            if (!mCellsWriter.add(row, 0, task.keySize, family, 0, family.length, qualifier, 0, qualifier.length,
+          if (mSetup.parallelism > 0) {
+            mCellsWriter = new SerializedCellsWriter(mSetup.keySize + family.length + qualifier.length + value.length + 32);
+            if (!mCellsWriter.add(row, 0, mSetup.keySize, family, 0, family.length, qualifier, 0, qualifier.length,
                                   SerializedCellsFlag.AUTO_ASSIGN, value, 0, value.length, SerializedCellsFlag.FLAG_INSERT)) {
               System.out.println("Failed to write to SerializedCellsWriter");
               System.exit(-1);
@@ -169,11 +159,11 @@ public class DriverHypertable extends Driver {
               mThreadStates[mThreadNext].updates.add(mCellsWriter);
               mThreadStates[mThreadNext].notifyAll();
             }
-            mThreadNext = (mThreadNext + 1) % mParallelism;
+            mThreadNext = (mThreadNext + 1) % mSetup.parallelism;
             mCellsWriter = null;
           }
           else {
-            while (!mCellsWriter.add(row, 0, task.keySize,
+            while (!mCellsWriter.add(row, 0, mSetup.keySize,
                                      family, 0, family.length,
                                      qualifier, 0, qualifier.length,
                                      SerializedCellsFlag.AUTO_ASSIGN,
@@ -183,7 +173,7 @@ public class DriverHypertable extends Driver {
             }
           }
         }
-        if (mParallelism == 0) {
+        if (mSetup.parallelism == 0) {
           if (!mCellsWriter.isEmpty())
             mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
           else
@@ -196,31 +186,28 @@ public class DriverHypertable extends Driver {
         throw new IOException("Unable to set cell via thrift - " + e.toString());
       }
     }
-    else if (task.type == Task.Type.INCR) {
-      byte [] row = new byte [ task.keySize ];
+    else if (mSetup.type == Setup.Type.INCR) {
+      byte [] row = new byte [ mSetup.keySize ];
       byte [] family = mCommon.COLUMN_FAMILY_BYTES;
       byte [] qualifier = mCommon.COLUMN_QUALIFIER_BYTES;
       byte [] value = mCommon.INCREMENT_VALUE_BYTES;
 
-      if (mParallelism == 0)
+      if (mSetup.parallelism == 0)
         mCellsWriter.clear();
 
       try {
         for (long i=task.start; i<task.end; i++) {
-          if (task.order == Task.Order.RANDOM) {
-            if (task.keyCount > Integer.MAX_VALUE)
-              randi = mCommon.random.nextLong();
-            else
-              randi = mCommon.random.nextInt();
-            if (task.keyMax != -1)
-              randi %= task.keyMax;
-            mCommon.formatRowKey(randi, task.keySize, row);
+          if (mSetup.order == Setup.Order.RANDOM) {
+            randi = getRandomLong();
+            if (mSetup.keyMax != -1)
+              randi %= mSetup.keyMax;
+            mCommon.formatRowKey(randi, mSetup.keySize, row);
           }
           else
-            mCommon.formatRowKey(i, task.keySize, row);
-          if (mParallelism > 0) {
-            mCellsWriter = new SerializedCellsWriter(task.keySize + family.length + qualifier.length + value.length + 32);
-            if (!mCellsWriter.add(row, 0, task.keySize, family, 0, family.length, qualifier, 0, qualifier.length,
+            mCommon.formatRowKey(i, mSetup.keySize, row);
+          if (mSetup.parallelism > 0) {
+            mCellsWriter = new SerializedCellsWriter(mSetup.keySize + family.length + qualifier.length + value.length + 32);
+            if (!mCellsWriter.add(row, 0, mSetup.keySize, family, 0, family.length, qualifier, 0, qualifier.length,
                                   SerializedCellsFlag.AUTO_ASSIGN, value, 0, value.length, SerializedCellsFlag.FLAG_INSERT)) {
               System.out.println("Failed to write to SerializedCellsWriter");
               System.exit(-1);
@@ -229,11 +216,11 @@ public class DriverHypertable extends Driver {
               mThreadStates[mThreadNext].updates.add(mCellsWriter);
               mThreadStates[mThreadNext].notifyAll();
             }
-            mThreadNext = (mThreadNext + 1) % mParallelism;
+            mThreadNext = (mThreadNext + 1) % mSetup.parallelism;
             mCellsWriter = null;
           }
           else {
-            while (!mCellsWriter.add(row, 0, task.keySize,
+            while (!mCellsWriter.add(row, 0, mSetup.keySize,
                                      family, 0, family.length,
                                      qualifier, 0, qualifier.length,
                                      SerializedCellsFlag.AUTO_ASSIGN,
@@ -243,7 +230,7 @@ public class DriverHypertable extends Driver {
             }
           }
         }
-        if (mParallelism == 0) {
+        if (mSetup.parallelism == 0) {
           if (!mCellsWriter.isEmpty())
             mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
           else
@@ -256,34 +243,35 @@ public class DriverHypertable extends Driver {
         throw new IOException("Unable to set cell via thrift - " + e.toString());
       }
     }
-    else if (task.type == Task.Type.READ) {
+    else if (mSetup.type == Setup.Type.READ) {
       String row;
       SerializedCellsReader reader = new SerializedCellsReader(null);
 
-      if (mParallelism != 0) {
+      if (mSetup.parallelism != 0) {
         System.out.println("Parallel reads not implemented");
         System.exit(1);
       }
 
       try {
         for (long i=task.start; i<task.end; i++) {
-          if (task.order == Task.Order.RANDOM) {
+          if (mSetup.order == Setup.Order.RANDOM) {
             keyByteBuf.clear();
-            if (task.distribution == Task.Distribution.ZIPFIAN) {
-              randi = zipf.getSample();
-              keyByteBuf.putLong(randi);
-              randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+            if (mSetup.distribution == Setup.Distribution.ZIPFIAN) {
+              randi = mZipf.getSample();
+	      randi *= mZipfianMultiplier;
             }
             else {
-              keyByteBuf.putLong(i);
-              randi = Checksum.fletcher32(keyBuf, 0, 8) % task.keyCount;
+              randi = getRandomLong() % mSetup.keyMax;
             }
-            row = mCommon.formatRowKey(randi, task.keySize);
+            row = mCommon.formatRowKey(randi, mSetup.keySize);
           }
           else
-            row = mCommon.formatRowKey(i, task.keySize);
+            row = mCommon.formatRowKey(i, mSetup.keySize);
 
-          reader.reset( mClient.get_row_serialized(mNamespaceId, mTableName, row) );
+          long startTime = System.currentTimeMillis();
+          reader.reset( mClient.get_row_serialized(mNamespaceId, mSetup.tableName, row) );
+          mResult.cumulativeLatency += System.currentTimeMillis() - startTime;
+          mResult.requestCount++;
           while (reader.next()) {
             mResult.itemsReturned++;
             mResult.valueBytesReturned += reader.get_value_length();
@@ -295,13 +283,13 @@ public class DriverHypertable extends Driver {
         throw new IOException("Unable to set cell via thrift - " + e.toString());
       }
     }
-    else if (task.type == Task.Type.SCAN) {
+    else if (mSetup.type == Setup.Type.SCAN) {
       boolean eos = false;
-      String start_row = mCommon.formatRowKey(task.start, task.keySize);
-      String end_row = mCommon.formatRowKey(task.end, task.keySize);
+      String start_row = mCommon.formatRowKey(task.start, mSetup.keySize);
+      String end_row = mCommon.formatRowKey(task.end, mSetup.keySize);
       SerializedCellsReader reader = new SerializedCellsReader(null);
 
-      if (mParallelism != 0) {
+      if (mSetup.parallelism != 0) {
         System.out.println("Parallel scans not implemented");
         System.exit(1);
       }
@@ -316,7 +304,7 @@ public class DriverHypertable extends Driver {
       scan_spec.addToRow_intervals(ri);
 
       try {
-        long scanner = mClient.scanner_open(mNamespaceId, mTableName, scan_spec);
+        long scanner = mClient.scanner_open(mNamespaceId, mSetup.tableName, scan_spec);
         while (!eos) {
           reader.reset( mClient.scanner_get_cells_serialized(scanner) );
           while (reader.next()) {
@@ -334,7 +322,7 @@ public class DriverHypertable extends Driver {
     }
 
     try {
-      for (int i=0; i<mParallelism; i++) {
+      for (int i=0; i<mSetup.parallelism; i++) {
         synchronized (mThreadStates[mThreadNext]) {
           if (!mThreadStates[mThreadNext].updates.isEmpty()) {
             mThreadStates[mThreadNext].wait();
@@ -349,16 +337,14 @@ public class DriverHypertable extends Driver {
     }
 
     mResult.itemsSubmitted += (task.end-task.start);
-    mResult.elapsedMillis += System.currentTimeMillis() - startTime;
+    mResult.elapsedMillis += System.currentTimeMillis() - taskStartTime;
   }
 
   ThriftClient mClient;
   String mNamespace;
-  String mTableName;
   long mMutator;
   long mNamespaceId=0;
   SerializedCellsWriter mCellsWriter;
-  int mParallelism=0;
   DriverThreadState [] mThreadStates;
   int mThreadNext = 0;
   int mThriftBrokerPort = DEFAULT_THRIFTBROKER_PORT;

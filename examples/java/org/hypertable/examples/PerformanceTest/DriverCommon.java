@@ -79,6 +79,6 @@ public class DriverCommon {
     }
   }
 
-  protected Random random = new Random(System.currentTimeMillis());
+  protected Random random = new Random( System.nanoTime() );
   protected static ByteBuffer valueData;
 }
