@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2008  Luke Lu (Zvents, Inc.)
+ * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is distributed under the Apache Software License
  * (http://www.apache.org/licenses/)

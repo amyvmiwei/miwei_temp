@@ -1,5 +1,5 @@
 /**
- * Copyright (c) 2010, Hypertable, Inc.
+ * Copyright (C) 2007-2012 Hypertable, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
