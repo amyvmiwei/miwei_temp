@@ -1401,6 +1401,20 @@ class Iface:
     """
     pass
 
+  def error_get_text(self, error_code):
+    """
+    Retrieves a descriptive error string from an error code
+
+    @param error_code - the numeric error code
+
+    @return the descriptive string, or "ERROR NOT REGISTERED" if the error
+       code is unknown
+
+    Parameters:
+     - error_code
+    """
+    pass
+
 
 class Client(Iface):
   """
@@ -5895,6 +5909,43 @@ class Client(Iface):
       raise result.e
     raise TApplicationException(TApplicationException.MISSING_RESULT, "create_cell_unique failed: unknown result");
 
+  def error_get_text(self, error_code):
+    """
+    Retrieves a descriptive error string from an error code
+
+    @param error_code - the numeric error code
+
+    @return the descriptive string, or "ERROR NOT REGISTERED" if the error
+       code is unknown
+
+    Parameters:
+     - error_code
+    """
+    self.send_error_get_text(error_code)
+    return self.recv_error_get_text()
+
+  def send_error_get_text(self, error_code):
+    self._oprot.writeMessageBegin('error_get_text', TMessageType.CALL, self._seqid)
+    args = error_get_text_args()
+    args.error_code = error_code
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_error_get_text(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = error_get_text_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    if result.success is not None:
+      return result.success
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "error_get_text failed: unknown result");
+
 
 class Processor(Iface, TProcessor):
   def __init__(self, handler):
@@ -6024,6 +6075,7 @@ class Processor(Iface, TProcessor):
     self._processMap["table_drop"] = Processor.process_table_drop
     self._processMap["generate_guid"] = Processor.process_generate_guid
     self._processMap["create_cell_unique"] = Processor.process_create_cell_unique
+    self._processMap["error_get_text"] = Processor.process_error_get_text
 
   def process(self, iprot, oprot):
     (name, type, seqid) = iprot.readMessageBegin()
@@ -7769,6 +7821,17 @@ class Processor(Iface, TProcessor):
     except ClientException, e:
       result.e = e
     oprot.writeMessageBegin("create_cell_unique", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_error_get_text(self, seqid, iprot, oprot):
+    args = error_get_text_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = error_get_text_result()
+    result.success = self._handler.error_get_text(args.error_code)
+    oprot.writeMessageBegin("error_get_text", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -25398,6 +25461,125 @@ class create_cell_unique_result:
     if self.e is not None:
       oprot.writeFieldBegin('e', TType.STRUCT, 1)
       self.e.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class error_get_text_args:
+  """
+  Attributes:
+   - error_code
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I32, 'error_code', None, None, ), # 1
+  )
+
+  def __init__(self, error_code=None,):
+    self.error_code = error_code
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I32:
+          self.error_code = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('error_get_text_args')
+    if self.error_code is not None:
+      oprot.writeFieldBegin('error_code', TType.I32, 1)
+      oprot.writeI32(self.error_code)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class error_get_text_result:
+  """
+  Attributes:
+   - success
+  """
+
+  thrift_spec = (
+    (0, TType.STRING, 'success', None, None, ), # 0
+  )
+
+  def __init__(self, success=None,):
+    self.success = success
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 0:
+        if ftype == TType.STRING:
+          self.success = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('error_get_text_result')
+    if self.success is not None:
+      oprot.writeFieldBegin('success', TType.STRING, 0)
+      oprot.writeString(self.success)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

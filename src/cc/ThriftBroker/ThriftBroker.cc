@@ -22,6 +22,7 @@
 #include "Common/Mutex.h"
 #include "Common/Random.h"
 #include "HyperAppHelper/Unique.h"
+#include "HyperAppHelper/Error.h"
 
 #include <iostream>
 #include <iomanip>
@@ -1770,6 +1771,13 @@ public:
             << tkey << " value=" << value);
     LOG_API_FINISH;
     _return=value.empty() ? guid : value;
+  }
+
+  virtual void error_get_text(std::string &_return, 
+          int error_code) {
+    LOG_API_START("error_code=" << error_code);
+    _return = HyperAppHelper::error_get_text(error_code);
+    LOG_API_FINISH;
   }
 
   // helper methods
