@@ -1932,6 +1932,21 @@ require 'client_types'
                   raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'create_cell_unique failed: unknown result')
                 end
 
+                def error_get_text(error_code)
+                  send_error_get_text(error_code)
+                  return recv_error_get_text()
+                end
+
+                def send_error_get_text(error_code)
+                  send_message('error_get_text', Error_get_text_args, :error_code => error_code)
+                end
+
+                def recv_error_get_text()
+                  result = receive_message(Error_get_text_result)
+                  return result.success unless result.success.nil?
+                  raise ::Thrift::ApplicationException.new(::Thrift::ApplicationException::MISSING_RESULT, 'error_get_text failed: unknown result')
+                end
+
               end
 
               class Processor
@@ -3295,6 +3310,13 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'create_cell_unique', seqid)
+                end
+
+                def process_error_get_text(seqid, iprot, oprot)
+                  args = read_args(iprot, Error_get_text_args)
+                  result = Error_get_text_result.new()
+                  result.success = @handler.error_get_text(args.error_code)
+                  write_result(result, oprot, 'error_get_text', seqid)
                 end
 
               end
@@ -7640,6 +7662,38 @@ require 'client_types'
                 FIELDS = {
                   SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'},
                   E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Error_get_text_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                ERROR_CODE = 1
+
+                FIELDS = {
+                  ERROR_CODE => {:type => ::Thrift::Types::I32, :name => 'error_code'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Error_get_text_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                SUCCESS = 0
+
+                FIELDS = {
+                  SUCCESS => {:type => ::Thrift::Types::STRING, :name => 'success'}
                 }
 
                 def struct_fields; FIELDS; end

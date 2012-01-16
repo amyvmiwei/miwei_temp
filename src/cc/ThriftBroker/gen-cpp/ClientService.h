@@ -138,6 +138,7 @@ class ClientServiceIf {
   virtual void table_drop(const Namespace ns, const std::string& name, const bool if_exists) = 0;
   virtual void generate_guid(std::string& _return) = 0;
   virtual void create_cell_unique(std::string& _return, const Namespace ns, const std::string& table_name, const Key& key, const std::string& value) = 0;
+  virtual void error_get_text(std::string& _return, const int32_t error_code) = 0;
 };
 
 class ClientServiceNull : virtual public ClientServiceIf {
@@ -533,6 +534,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return;
   }
   void create_cell_unique(std::string& /* _return */, const Namespace /* ns */, const std::string& /* table_name */, const Key& /* key */, const std::string& /* value */) {
+    return;
+  }
+  void error_get_text(std::string& /* _return */, const int32_t /* error_code */) {
     return;
   }
 };
@@ -15693,6 +15697,114 @@ class ClientService_create_cell_unique_presult {
 
 };
 
+typedef struct _ClientService_error_get_text_args__isset {
+  _ClientService_error_get_text_args__isset() : error_code(false) {}
+  bool error_code;
+} _ClientService_error_get_text_args__isset;
+
+class ClientService_error_get_text_args {
+ public:
+
+  ClientService_error_get_text_args() : error_code(0) {
+  }
+
+  virtual ~ClientService_error_get_text_args() throw() {}
+
+  int32_t error_code;
+
+  _ClientService_error_get_text_args__isset __isset;
+
+  void __set_error_code(const int32_t val) {
+    error_code = val;
+  }
+
+  bool operator == (const ClientService_error_get_text_args & rhs) const
+  {
+    if (!(error_code == rhs.error_code))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_error_get_text_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_error_get_text_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_error_get_text_pargs {
+ public:
+
+
+  virtual ~ClientService_error_get_text_pargs() throw() {}
+
+  const int32_t* error_code;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_error_get_text_result__isset {
+  _ClientService_error_get_text_result__isset() : success(false) {}
+  bool success;
+} _ClientService_error_get_text_result__isset;
+
+class ClientService_error_get_text_result {
+ public:
+
+  ClientService_error_get_text_result() : success("") {
+  }
+
+  virtual ~ClientService_error_get_text_result() throw() {}
+
+  std::string success;
+
+  _ClientService_error_get_text_result__isset __isset;
+
+  void __set_success(const std::string& val) {
+    success = val;
+  }
+
+  bool operator == (const ClientService_error_get_text_result & rhs) const
+  {
+    if (!(success == rhs.success))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_error_get_text_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_error_get_text_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_error_get_text_presult__isset {
+  _ClientService_error_get_text_presult__isset() : success(false) {}
+  bool success;
+} _ClientService_error_get_text_presult__isset;
+
+class ClientService_error_get_text_presult {
+ public:
+
+
+  virtual ~ClientService_error_get_text_presult() throw() {}
+
+  std::string* success;
+
+  _ClientService_error_get_text_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
 class ClientServiceClient : virtual public ClientServiceIf {
  public:
   ClientServiceClient(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> prot) :
@@ -16085,6 +16197,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void create_cell_unique(std::string& _return, const Namespace ns, const std::string& table_name, const Key& key, const std::string& value);
   void send_create_cell_unique(const Namespace ns, const std::string& table_name, const Key& key, const std::string& value);
   void recv_create_cell_unique(std::string& _return);
+  void error_get_text(std::string& _return, const int32_t error_code);
+  void send_error_get_text(const int32_t error_code);
+  void recv_error_get_text(std::string& _return);
  protected:
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot_;
   boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot_;
@@ -16222,6 +16337,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
   void process_table_drop(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_generate_guid(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_create_cell_unique(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_error_get_text(int32_t seqid, ::apache::thrift::protocol::TProtocol* iprot, ::apache::thrift::protocol::TProtocol* oprot, void* callContext);
  public:
   ClientServiceProcessor(boost::shared_ptr<ClientServiceIf> iface) :
     iface_(iface) {
@@ -16349,6 +16465,7 @@ class ClientServiceProcessor : virtual public ::apache::thrift::TProcessor {
     processMap_["table_drop"] = &ClientServiceProcessor::process_table_drop;
     processMap_["generate_guid"] = &ClientServiceProcessor::process_generate_guid;
     processMap_["create_cell_unique"] = &ClientServiceProcessor::process_create_cell_unique;
+    processMap_["error_get_text"] = &ClientServiceProcessor::process_error_get_text;
   }
 
   virtual bool process(boost::shared_ptr< ::apache::thrift::protocol::TProtocol> piprot, boost::shared_ptr< ::apache::thrift::protocol::TProtocol> poprot, void* callContext);
@@ -17511,6 +17628,18 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
         return;
       } else {
         ifaces_[i]->create_cell_unique(_return, ns, table_name, key, value);
+      }
+    }
+  }
+
+  void error_get_text(std::string& _return, const int32_t error_code) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      if (i == sz - 1) {
+        ifaces_[i]->error_get_text(_return, error_code);
+        return;
+      } else {
+        ifaces_[i]->error_get_text(_return, error_code);
       }
     }
   }

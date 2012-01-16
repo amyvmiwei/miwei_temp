@@ -642,6 +642,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("create_cell_unique\n");
   }
 
+  void error_get_text(std::string& _return, const int32_t error_code) {
+    // Your implementation goes here
+    printf("error_get_text\n");
+  }
+
 };
 
 int main(int argc, char **argv) {

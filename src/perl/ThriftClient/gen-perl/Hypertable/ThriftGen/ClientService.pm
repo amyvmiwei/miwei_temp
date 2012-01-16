@@ -19889,6 +19889,134 @@ sub write {
   return $xfer;
 }
 
+package Hypertable::ThriftGen::ClientService_error_get_text_args;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_error_get_text_args->mk_accessors( qw( error_code ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{error_code} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{error_code}) {
+      $self->{error_code} = $vals->{error_code};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_error_get_text_args';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{error_code});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_error_get_text_args');
+  if (defined $self->{error_code}) {
+    $xfer += $output->writeFieldBegin('error_code', TType::I32, 1);
+    $xfer += $output->writeI32($self->{error_code});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ClientService_error_get_text_result;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ClientService_error_get_text_result->mk_accessors( qw( success ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{success} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{success}) {
+      $self->{success} = $vals->{success};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ClientService_error_get_text_result';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^0$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{success});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ClientService_error_get_text_result');
+  if (defined $self->{success}) {
+    $xfer += $output->writeFieldBegin('success', TType::STRING, 0);
+    $xfer += $output->writeString($self->{success});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
 package Hypertable::ThriftGen::ClientServiceIf;
 
 use strict;
@@ -20889,6 +21017,13 @@ sub create_cell_unique{
   my $table_name = shift;
   my $key = shift;
   my $value = shift;
+
+  die 'implement interface';
+}
+
+sub error_get_text{
+  my $self = shift;
+  my $error_code = shift;
 
   die 'implement interface';
 }
@@ -21902,6 +22037,13 @@ sub create_cell_unique{
   my $key = ($request->{'key'}) ? $request->{'key'} : undef;
   my $value = ($request->{'value'}) ? $request->{'value'} : undef;
   return $self->{impl}->create_cell_unique($ns, $table_name, $key, $value);
+}
+
+sub error_get_text{
+  my ($self, $request) = @_;
+
+  my $error_code = ($request->{'error_code'}) ? $request->{'error_code'} : undef;
+  return $self->{impl}->error_get_text($error_code);
 }
 
 package Hypertable::ThriftGen::ClientServiceClient;
@@ -27819,6 +27961,49 @@ sub recv_create_cell_unique{
   }
   die "create_cell_unique failed: unknown result";
 }
+sub error_get_text{
+  my $self = shift;
+  my $error_code = shift;
+
+    $self->send_error_get_text($error_code);
+  return $self->recv_error_get_text();
+}
+
+sub send_error_get_text{
+  my $self = shift;
+  my $error_code = shift;
+
+  $self->{output}->writeMessageBegin('error_get_text', TMessageType::CALL, $self->{seqid});
+  my $args = new Hypertable::ThriftGen::ClientService_error_get_text_args();
+  $args->{error_code} = $error_code;
+  $args->write($self->{output});
+  $self->{output}->writeMessageEnd();
+  $self->{output}->getTransport()->flush();
+}
+
+sub recv_error_get_text{
+  my $self = shift;
+
+  my $rseqid = 0;
+  my $fname;
+  my $mtype = 0;
+
+  $self->{input}->readMessageBegin(\$fname, \$mtype, \$rseqid);
+  if ($mtype == TMessageType::EXCEPTION) {
+    my $x = new TApplicationException();
+    $x->read($self->{input});
+    $self->{input}->readMessageEnd();
+    die $x;
+  }
+  my $result = new Hypertable::ThriftGen::ClientService_error_get_text_result();
+  $result->read($self->{input});
+  $self->{input}->readMessageEnd();
+
+  if (defined $result->{success} ) {
+    return $result->{success};
+  }
+  die "error_get_text failed: unknown result";
+}
 package Hypertable::ThriftGen::ClientServiceProcessor;
 
 use strict;
@@ -29952,6 +30137,19 @@ sub process_create_cell_unique {
       $result->{e} = $@;
     }
     $output->writeMessageBegin('create_cell_unique', TMessageType::REPLY, $seqid);
+    $result->write($output);
+    $output->writeMessageEnd();
+    $output->getTransport()->flush();
+}
+
+sub process_error_get_text {
+    my ($self, $seqid, $input, $output) = @_;
+    my $args = new Hypertable::ThriftGen::ClientService_error_get_text_args();
+    $args->read($input);
+    $input->readMessageEnd();
+    my $result = new Hypertable::ThriftGen::ClientService_error_get_text_result();
+    $result->{success} = $self->{handler}->error_get_text($args->error_code);
+    $output->writeMessageBegin('error_get_text', TMessageType::REPLY, $seqid);
     $result->write($output);
     $output->writeMessageEnd();
     $output->getTransport()->flush();

@@ -145,6 +145,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  void table_drop(Namespace ns, string name, bool if_exists)'
   print '  string generate_guid()'
   print '  string create_cell_unique(Namespace ns, string table_name, Key key, string value)'
+  print '  string error_get_text(i32 error_code)'
   print ''
   sys.exit(0)
 
@@ -938,6 +939,12 @@ elif cmd == 'create_cell_unique':
     print 'create_cell_unique requires 4 args'
     sys.exit(1)
   pp.pprint(client.create_cell_unique(eval(args[0]),args[1],eval(args[2]),args[3],))
+
+elif cmd == 'error_get_text':
+  if len(args) != 1:
+    print 'error_get_text requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.error_get_text(eval(args[0]),))
 
 else:
   print 'Unrecognized method %s' % cmd

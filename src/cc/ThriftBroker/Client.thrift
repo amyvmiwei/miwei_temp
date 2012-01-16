@@ -1311,4 +1311,14 @@ service ClientService {
    */
   string create_cell_unique(1:Namespace ns, 2:string table_name, 3:Key key,
       4:string value) throws (1:ClientException e),
+
+  /**
+   * Retrieves a descriptive error string from an error code
+   *
+   * @param error_code - the numeric error code
+   *
+   * @return the descriptive string, or "ERROR NOT REGISTERED" if the error
+   *    code is unknown
+   */
+  string error_get_text(1:i32 error_code);
 }

@@ -22,6 +22,8 @@ set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/HyperAppHelper")
 
 set(Helper_SRCS
 Unique.cc
+Unique.h
+Error.h
 )
 
 add_library(HyperAppHelper ${Helper_SRCS})
@@ -33,6 +35,9 @@ target_link_libraries(HyperAppHelper Hypertable HyperCommon ${BOOST_LIBS} ${Log4
 add_executable(unique_test tests/unique_test.cc)
 target_link_libraries(unique_test HyperAppHelper Hypertable HyperComm HyperCommon)
 add_test(HyperAppHelper-Unique unique_test)
+add_executable(error_test tests/error_test.cc)
+target_link_libraries(error_test HyperAppHelper HyperCommon)
+add_test(HyperAppHelper-Error error_test)
 
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)

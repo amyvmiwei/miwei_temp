@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_UNIQUE_H
-#define HYPERTABLE_UNIQUE_H
+#ifndef HYPERAPPHELPER_UNIQUE_H
+#define HYPERAPPHELPER_UNIQUE_H
 
 #include "Common/Compat.h"
 #include "Common/String.h"
@@ -66,5 +66,5 @@ namespace Hypertable { namespace HyperAppHelper {
 
 }} // namespace HyperAppHelper, HyperTable
 
-#endif // HYPERTABLE_UNIQUE_H
+#endif // HYPERAPPHELPER_UNIQUE_H
 

@@ -40,6 +40,7 @@ void test_set(Thrift::Client *client);
 void test_schema(Thrift::Client *client, std::ostream &out);
 void test_put(Thrift::Client *client);
 void test_async(Thrift::Client *client, std::ostream &out);
+void test_error(Thrift::Client *client, std::ostream &out);
 
 
 int main() {
@@ -71,6 +72,8 @@ void run(Thrift::Client *client) {
     test_async(client, out);
     out << "running test_rename_alter" << std::endl;
     test_rename_alter(client, out);
+    out << "running test_error" << std::endl;
+    test_error(client, out);
   }
   catch (ClientException &e) {
     std::cout << e << std::endl;
@@ -518,5 +521,27 @@ void test_async(Thrift::Client *client, std::ostream &out) {
     _exit(1);
   }
 
+}
+
+void check_error(std::string expected, std::string &received, 
+                    std::ostream &out)
+{
+  if (received != expected) {
+    out << "Expected: " << expected << "; received: " << received << std::endl;
+    _exit(1);
+  }
+}
+
+void test_error(Thrift::Client *client, std::ostream &out) {
+  String s;
+
+  client->error_get_text(s, 0);
+  check_error("HYPERTABLE ok", s, out);
+  client->error_get_text(s, 1);
+  check_error("HYPERTABLE protocol error", s, out);
+  client->error_get_text(s, 2);
+  check_error("HYPERTABLE request truncated", s, out);
+  client->error_get_text(s, 99999);
+  check_error("ERROR NOT REGISTERED", s, out);
 }
 
