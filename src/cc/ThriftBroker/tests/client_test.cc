@@ -36,6 +36,7 @@ void test_guid(Thrift::Client *client, std::ostream &out);
 void test_unique(Thrift::Client *client, std::ostream &out);
 void test_hql(Thrift::Client *client, std::ostream &out);
 void test_scan(Thrift::Client *client, std::ostream &out);
+void test_scan_keysonly(Thrift::Client *client, std::ostream &out);
 void test_set(Thrift::Client *client);
 void test_schema(Thrift::Client *client, std::ostream &out);
 void test_put(Thrift::Client *client);
@@ -74,6 +75,8 @@ void run(Thrift::Client *client) {
     test_rename_alter(client, out);
     out << "running test_error" << std::endl;
     test_error(client, out);
+    out << "running test_scan_keysonly" << std::endl;
+    test_scan_keysonly(client, out);
   }
   catch (ClientException &e) {
     std::cout << e << std::endl;
@@ -227,6 +230,25 @@ void test_scan(Thrift::Client *client, std::ostream &out) {
       out << cell << std::endl;
   } while (cells.size());
   client->namespace_close(ns);
+}
+
+// test for issue 484
+void test_scan_keysonly(Thrift::Client *client, std::ostream &out) {
+  ScanSpec ss;
+  ss.keys_only=true;
+  ss.__isset.keys_only = true;
+  Namespace ns = client->namespace_open("test");
+
+  Scanner s = client->open_scanner(ns, "thrift_test", ss);
+  std::vector<Hypertable::ThriftGen::Cell> cells;
+
+  do {
+    client->scanner_get_cells(cells, s);
+    foreach(const Hypertable::ThriftGen::Cell &cell, cells)
+      out << cell << std::endl;
+  } while (cells.size());
+
+  client->scanner_close(s);
 }
 
 void test_set(Thrift::Client *client) {
