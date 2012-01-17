@@ -151,6 +151,7 @@ public class Dispatcher {
     "OPTIONS:",
     "  --help                  Display this help text and exit",
     "  --clients=<n>           Wait for <n> clients to connect",
+    "  --cmf-file=<fname>      Load CMF data from <fname>",
     "  --driver=<s>            Which DB driver to use.  Valid values include:",
     "                          hypertable, hbase (default = hypertable)",
     "  --key-max=<n>           When generating random keys, modulo resulting key by <n>",
@@ -242,6 +243,8 @@ public class Dispatcher {
         port = Integer.parseInt(args[i].substring(7));
       else if (args[i].startsWith("--clients="))
         clients = Integer.parseInt(args[i].substring(10));
+      else if (args[i].startsWith("--cmf-file="))
+        setup.cmfFile = args[i].substring(11);
       else if (args[i].startsWith("--driver="))
         setup.driver = args[i].substring(9);
       else if (args[i].startsWith("--parallel="))
@@ -531,15 +534,23 @@ public class Dispatcher {
       PrintStream ps = new PrintStream(baos);
       if (setup.type == Setup.Type.INCR)
         ps.format("Client Throughput: %.2f incr/s", ((double)keysSubmitted / (double)(elapsedMillis/1000)));
-      else
+      else {
+        ps.format("Client Throughput: %.2f queries/s", ((double)keysSubmitted / (double)(elapsedMillis/1000)));
+        summary.add(baos.toString());
+        baos.reset();
         ps.format("Client Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000)));
+      }
       summary.add(baos.toString());
-
       baos.reset();
+
       if (setup.type == Setup.Type.INCR)
         ps.format("Aggregate Throughput: %.2f incr/s", ((double)keysSubmitted / (double)(elapsedMillis/1000))*(double)connections);
-      else
-        ps.format("Aggregate Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000))*(double)connections);        
+      else {
+        ps.format("Aggregate Throughput: %.2f queries/s", ((double)keysSubmitted / (double)(elapsedMillis/1000))*(double)connections);
+        summary.add(baos.toString());
+        baos.reset();
+        ps.format("Aggregate Throughput: %.2f bytes/s", ((double)bytesReturned / (double)(elapsedMillis/1000))*(double)connections);
+      }
       summary.add(baos.toString());
 
       if (setup.type == Setup.Type.READ) {

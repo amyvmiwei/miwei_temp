@@ -27,29 +27,42 @@ shift
 VALUE_SIZE=$1
 shift
 
-if [ "$SYSTEM" != "hypertable" ] && [ "$SYSTEM" != "hbase" ] ; then
+if [ "$SYSTEM" == "hypertable" ] ; then
+    STOP_SYSTEM=stop_hypertable
+    START_SYSTEM=start_hypertable
+elif [ "$SYSTEM" == "hbase" ] ; then
+    STOP_SYSTEM=stop_hbase
+    START_SYSTEM=start_hbase
+    sudo cp $PWD/hbase-site-query.xml /etc/hbase/conf/hbase-site.xml
+else
     echo "ERROR:  Unrecognized system name '$SYSTEM'"
     exit 1
 fi
 
+
 let CELLSIZE=KEY_SIZE+VALUE_SIZE
 let KEYMAX=DATA_SIZE/CELLSIZE
 let DISTRANGE=100000000
-let KEYCOUNT=5000000
+let KEYCOUNT=10000000
 
-cap stop_test
-cap stop
-cap push_config
-cap start
-sleep 180
+#
+# This file should be the same on all test Client machines.  I can be
+# generated with the following command:
+#
+# /opt/hypertable/doug/current/bin/jrun org.hypertable.Common.DiscreteRandomGeneratorZipf --generate-cmf-file /data/1/test/cmf.dat 0 100000000
+#
+CMF=/data/1/test/cmf.dat
 
-cap -S test_driver=$SYSTEM -S client_multiplier=12 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random --key-max=$KEYMAX --submit-exactly=$KEYCOUNT read $KEY_SIZE $VALUE_SIZE $DATA_SIZE" run_test 
+${STOP_SYSTEM}
+${START_SYSTEM}
+sleep 300
 
-cap stop_test
-cap stop
-cap -S config=$PWD/perftest-hypertable-query.cfg push_config
-cap -S config=$PWD/perftest-hypertable-query.cfg start
-sleep 180
+cap -S test_driver=$SYSTEM -S client_multiplier=128 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random --key-max=$KEYMAX --submit-exactly=$KEYCOUNT read $KEY_SIZE $VALUE_SIZE $DATA_SIZE" run_test 
 
-cap -S test_driver=$SYSTEM -S client_multiplier=12 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --distribution-range=$DISTRANGE --random --zipf --key-max=$KEYMAX --submit-exactly=$KEYCOUNT read $KEY_SIZE $VALUE_SIZE $DATA_SIZE" run_test 
+${STOP_SYSTEM}
+CONFIG=$PWD/perftest-hypertable-query.cfg
+${START_SYSTEM}
+sleep 300
+
+cap -S test_driver=$SYSTEM -S client_multiplier=128 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random --zipf --cmf-file=$CMF --key-max=$KEYMAX --submit-exactly=$KEYCOUNT read $KEY_SIZE $VALUE_SIZE $DATA_SIZE" run_test 
 
