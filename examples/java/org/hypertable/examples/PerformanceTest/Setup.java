@@ -37,7 +37,8 @@ public class Setup {
   public Setup() { }
 
   public int encodedLength() { return 52 + Serialization.EncodedLengthString(tableName) + 
-      Serialization.EncodedLengthString(driver) + Serialization.EncodedLengthString(valueData); }
+      Serialization.EncodedLengthString(driver) + Serialization.EncodedLengthString(valueData) +
+      Serialization.EncodedLengthString(cmfFile); }
 
   public void encode(ByteBuffer buf) {
     buf.putInt(type.ordinal());
@@ -53,6 +54,7 @@ public class Setup {
     Serialization.EncodeString(buf, tableName);
     Serialization.EncodeString(buf, driver);
     Serialization.EncodeString(buf, valueData);
+    Serialization.EncodeString(buf, cmfFile);
   }
 
   public void decode(ByteBuffer buf) {
@@ -69,6 +71,7 @@ public class Setup {
     tableName = Serialization.DecodeString(buf);
     driver = Serialization.DecodeString(buf);
     valueData = Serialization.DecodeString(buf);
+    cmfFile = Serialization.DecodeString(buf);
   }
 
   public String toString() {
@@ -84,6 +87,7 @@ public class Setup {
                       ", tableName=" + tableName +
                       ", driver=" + driver +
                       ", valueData=" + valueData +
+                      ", cmfFile=" + cmfFile +
 		      ")");
   }
 
@@ -100,4 +104,5 @@ public class Setup {
   public String tableName;
   public String driver;
   public String valueData;
+  public String cmfFile;
 }

@@ -35,14 +35,27 @@ public abstract class Driver {
     mSetup = setup;
     mResult = new Result();
 
-    if (mSetup.distribution == Setup.Distribution.ZIPFIAN) {
-      if (mSetup.distributionRange == 0) {
-        System.out.println("Distribution range must be specified for Zipfian random distribution");
-        System.exit(-1);
+    try {
+
+      if (mSetup.distribution == Setup.Distribution.ZIPFIAN) {
+        if (mSetup.cmfFile != null || mSetup.cmfFile.equals("")) {
+          System.out.printf("Loading Zipfian CMF data from file " + mSetup.cmfFile);
+          mZipf = new DiscreteRandomGeneratorZipf(mSetup.cmfFile);
+        }
+        else {
+          if (mSetup.distributionRange == 0) {
+            System.out.println("Distribution range must be specified for Zipfian random distribution");
+            System.exit(-1);
+          }
+          mZipf = new DiscreteRandomGeneratorZipf(0, (int)mSetup.distributionRange, 1, 0.8);
+        }
+        mZipfianMultiplier = mSetup.keyMax / mZipf.distributionRange();
+        mZipf.setSeed( System.nanoTime() );
       }
-      mZipf = new DiscreteRandomGeneratorZipf(0, (int)mSetup.distributionRange, 1, 0.8);
-      mZipf.setSeed( System.nanoTime() );
-      mZipfianMultiplier = mSetup.keyMax / mSetup.distributionRange;
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+      System.exit(-1);
     }
   }
 

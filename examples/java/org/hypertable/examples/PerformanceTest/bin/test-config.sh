@@ -7,6 +7,23 @@ VALUE_DATA=/data/1/test/enwiki-sample.txt
 TEST_NAME=test2
 let DATA_SIZE=5000000000000
 
+#
+# Hypertable
+#
+start_hypertable() {
+  if [ "$CONFIG" == "" ] ; then
+    cap start
+  else
+    cap -S config=$CONFIG push_config
+    cap -S config=$CONFIG start
+  fi
+}
+
+stop_hypertable() {
+  cap stop_test
+  cap stop
+}
+
 clean_hypertable() {
     cap stop_test
     cap -S additional_args="--force" stop
@@ -20,6 +37,18 @@ restart_hypertable() {
     cap push_config
     cap start
     echo "use '/'; create table perftest ( column );" | $HYPERTABLE_HOME/bin/ht shell --config=$HYPERTABLE_HOME/conf/perftest-hypertable.cfg
+}
+
+#
+# HBase
+#
+start_hbase() {
+  sudo cap start_hbase
+}
+
+stop_hbase() {
+  cap stop_test
+  sudo cap stop_hbase
 }
 
 clean_hbase() {

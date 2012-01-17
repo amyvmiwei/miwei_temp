@@ -20,56 +20,114 @@
  */
 package org.hypertable.Common;
 
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.lang.System;
+import java.nio.ByteBuffer;
+import java.nio.channels.FileChannel;
 import java.util.Random;
+import java.io.File;
+import java.io.RandomAccessFile;
+import java.nio.MappedByteBuffer;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 
 public abstract class DiscreteRandomGenerator {
 
   public DiscreteRandomGenerator(int min, int max, int seed) {
     mMinValue = min;
     mMaxValue = max;
-    mRandom = new Random(seed);
+    mOrigSeed = seed;
+    mRandom = new Random(mOrigSeed);
+  }
+
+  public DiscreteRandomGenerator(String cmfFile) throws FileNotFoundException, IOException {
+    File file = new File(cmfFile);
+    FileChannel roChannel = new RandomAccessFile(file, "r").getChannel();
+    MappedByteBuffer buf = roChannel.map(FileChannel.MapMode.READ_ONLY, 0, 12);
+    mMinValue = buf.getInt();
+    mMaxValue = buf.getInt();
+    mValueCount = mMaxValue-mMinValue;
+    mRandom = new Random(1);
+    mNumberBuffer = roChannel.map(FileChannel.MapMode.READ_ONLY, 8, (int)(mValueCount*8));
+    long cmfOffset = 8+(mValueCount*8);
+    mCmfBuffer = roChannel.map(FileChannel.MapMode.READ_ONLY, cmfOffset, roChannel.size()-cmfOffset);
+  }
+
+  void writeCmfFile(String cmfFile) {
+    if (mCmfBuffer == null)
+      generateCmf();
+
+    try {
+      FileChannel wChannel = new FileOutputStream(cmfFile, false).getChannel();
+      ByteBuffer buf = ByteBuffer.allocate(8);
+      buf.putInt(mMinValue);
+      buf.putInt(mMaxValue);
+      buf.flip();
+      wChannel.write(buf);
+      // Write Number vector
+      mNumberBuffer.limit( mNumberBuffer.capacity() );
+      mNumberBuffer.position(0);
+      wChannel.write(mNumberBuffer);
+      // Write CMF data
+      mCmfBuffer.limit( mNumberBuffer.capacity() );
+      mCmfBuffer.position(0);
+      wChannel.write(mCmfBuffer);
+      wChannel.close();
+    }
+    catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   public void setSeed(long seed) {
-    if (mCmf == null)
+    if (mCmfBuffer == null)
       generateCmf();
     mRandom.setSeed(seed);
   }
 
+  public int distributionRange() {
+    return mMaxValue-mMinValue;
+  }
+
   public long getSample() {
 
-    if (mCmf == null)
+    if (mCmfBuffer == null)
       generateCmf();
 
     int upper = mValueCount;
     int lower = 0;
-    int ii;
+    int ii = 0;
 
     double rand = mRandom.nextDouble();
 
     // do a binary search through cmf to figure out which index in cmf
     // rand lies in. this will transform the uniform[0,1] distribution into
     // the distribution specified in mCmf
-    while(true) {
+    try {
+      while(true) {
 
-      ii = (upper + lower)/2;
-      if (mCmf[ii] >= rand) {
-        if (ii == 0 || mCmf[ii-1] <= rand)
-          break;
+        ii = (upper + lower)/2;
+        if (mCmfBuffer.getDouble(ii*8) >= rand) {
+          if (ii == 0 || mCmfBuffer.getDouble((ii-1)*8) <= rand)
+            break;
+          else {
+            upper = ii - 1;
+            continue;
+          }
+        }
         else {
-          upper = ii - 1;
+          lower = ii + 1;
           continue;
         }
       }
-      else {
-        lower = ii + 1;
-        continue;
-      }
+    }
+    catch (IndexOutOfBoundsException e) {
+      System.err.println("index = " + ii + " length = " + mValueCount + " cmfCapacity=" + mCmfBuffer.capacity());
+      e.printStackTrace();
     }
 
-    return mNumbers[ii];
+    return mNumberBuffer.getLong(ii*8);
   }
 
   protected void generateCmf() {
@@ -78,29 +136,35 @@ public abstract class DiscreteRandomGenerator {
     
     mValueCount = mMaxValue-mMinValue;
 
-    mNumbers = new long [ mValueCount + 1];
-    mCmf = new double [ mValueCount + 1 ];
+    mCmfBuffer = ByteBuffer.allocate((mValueCount+1)*8);
 
-    for (int i=0; i<mValueCount; i++)
-      mNumbers[i] = i;
+    loadNumberBuffer();
 
-    long tmpval;
-    for (int i=0; i<mValueCount; i++) {
-      tmpval = mNumbers[i];
-      ii = Math.abs(mRandom.nextInt()) % mValueCount;
-      mNumbers[i] = mNumbers[ii];
-      mNumbers[ii] = tmpval;
-    }
-
-    mCmf[0] = pmf(0);
+    double prev = pmf(0);
+    mCmfBuffer.putDouble(prev);
     for (ii=1; ii < mValueCount+1 ;++ii) {
-      mCmf[ii] = mCmf[ii-1] + pmf(ii);
+      prev = prev + pmf(ii);
+      mCmfBuffer.putDouble(prev);
     }
 
-    norm_const = mCmf[mValueCount];
+    norm_const = prev;
     // renormalize cmf
     for (ii=0; ii < mValueCount+1 ;++ii) {
-      mCmf[ii] /= norm_const;
+      mCmfBuffer.putDouble(ii*8, mCmfBuffer.getDouble(ii*8) / norm_const);
+    }
+  }
+
+  private void loadNumberBuffer() {
+    int ii;
+    mNumberBuffer = ByteBuffer.allocate(mValueCount*8);
+    for (int i=0; i<mValueCount; i++)
+      mNumberBuffer.putLong(i*8, i);
+    long tmpval;
+    for (int i=0; i<mValueCount; i++) {
+      tmpval = mNumberBuffer.getLong(i*8);
+      ii = Math.abs(mRandom.nextInt()) % mValueCount;
+      mNumberBuffer.putLong(i*8, mNumberBuffer.getLong(ii*8));
+      mNumberBuffer.putLong(ii*8, tmpval);
     }
   }
 
@@ -108,8 +172,9 @@ public abstract class DiscreteRandomGenerator {
 
   protected int mMinValue;
   protected int mMaxValue;
+  protected int mOrigSeed;
   protected int mValueCount;
   private Random mRandom;
-  protected long [] mNumbers;
-  protected double [] mCmf;
+  protected ByteBuffer mNumberBuffer;
+  protected ByteBuffer mCmfBuffer;
 }
