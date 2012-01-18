@@ -59,14 +59,14 @@ namespace Hypertable {
                                    SchemaPtr &, RangeLocatorPtr &, bool auto_refresh,
                                    uint32_t timeout_ms,
                                    uint32_t id);
+    virtual ~TableMutatorAsyncScatterBuffer();
     void set(const Key &, const void *value, uint32_t value_len, size_t incr_mem);
     void set_delete(const Key &key, size_t incr_mem);
     void set(SerializedKey key, ByteString value, size_t incr_mem);
-    bool full() { return m_full; }
+    bool full() { ScopedLock lock(m_mutex); return m_full; }
     void send(uint32_t flags);
     bool completed();
     void wait_for_completion();
-    void reset();
     TableMutatorAsyncScatterBuffer *create_redo_buffer(uint32_t id);
     uint64_t get_resend_count() { return m_resends; }
     void
@@ -113,7 +113,6 @@ namespace Hypertable {
     bool                 m_auto_refresh;
     uint32_t             m_timeout_ms;
     uint32_t             m_server_flush_limit;
-    uint32_t             m_last_send_flags;
     DynamicBuffer        m_counter_value;
     Timer                m_timer;
     uint32_t             m_id;
@@ -125,6 +124,7 @@ namespace Hypertable {
     uint32_t             m_send_flags;
     uint32_t             m_wait_time;
     const static uint32_t ms_init_redo_wait_time=1000;
+    bool dead;
   };
 
   typedef intrusive_ptr<TableMutatorAsyncScatterBuffer> TableMutatorAsyncScatterBufferPtr;

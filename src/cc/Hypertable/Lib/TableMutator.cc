@@ -42,15 +42,15 @@ void TableMutator::handle_exceptions() {
     throw;
   }
   catch (std::bad_alloc &e) {
-    m_last_error = Error::BAD_MEMORY_ALLOCATION;
+    set_last_error(Error::BAD_MEMORY_ALLOCATION);
     HT_ERROR("caught bad_alloc here");
   }
   catch (std::exception &e) {
-    m_last_error = Error::EXTERNAL;
+    set_last_error(Error::EXTERNAL);
     HT_ERRORF("caught std::exception: %s", e.what());
   }
   catch (...) {
-    m_last_error = Error::EXTERNAL;
+    set_last_error(Error::EXTERNAL);
     HT_ERROR("caught unknown exception here");
   }
 }
@@ -62,11 +62,11 @@ TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table,
   : m_callback(this), m_timeout_ms(timeout_ms), m_flags(flags), m_flush_delay(0),
     m_last_error(Error::OK), m_last_op(0), m_unflushed_updates(false) {
   HT_ASSERT(timeout_ms);
-  m_queue = new TableMutatorQueue(m_mutex, m_cond);
+  m_queue = new TableMutatorQueue(m_queue_mutex, m_cond);
   ApplicationQueuePtr app_queue = (ApplicationQueue *)m_queue.get();
 
   m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
-  m_mutator  = new TableMutatorAsync(m_mutex, m_cond, props, comm, app_queue, table, range_locator, timeout_ms,
+  m_mutator  = new TableMutatorAsync(m_queue_mutex, m_cond, props, comm, app_queue, table, range_locator, timeout_ms,
       &m_callback, flags, false);
 }
 
@@ -168,7 +168,7 @@ void TableMutator::auto_flush() {
 
 void TableMutator::flush() {
   try {
-    m_last_error = Error::OK;
+    set_last_error(Error::OK);
 
     wait_for_flush_completion();
 
@@ -194,11 +194,14 @@ void TableMutator::wait_for_flush_completion() {
   ApplicationHandler *app_handler;
   while (true) {
     {
-      ScopedLock lock(m_mutex);
+      ScopedLock lock(m_queue_mutex);
       if (m_mutator->has_outstanding_unlocked()) {
 	m_queue->wait_for_buffer(lock, &app_handler);
-	if (m_last_error != Error::OK)
-	  HT_THROW(m_last_error, "");
+        {
+          ScopedLock lock(m_mutex);
+          if (m_last_error != Error::OK)
+            HT_THROW(m_last_error, "");
+        }
       }
       else
 	return;
@@ -213,10 +216,12 @@ void TableMutator::wait_for_flush_completion() {
 bool TableMutator::retry(uint32_t timeout_ms) {
   uint32_t save_timeout = m_timeout_ms;
 
-  if (m_last_error == Error::OK)
-    return true;
-
-  m_last_error = Error::OK;
+  {
+    ScopedLock lock(m_mutex);
+    if (m_last_error == Error::OK)
+      return true;
+    m_last_error = Error::OK;
+  }
 
   try {
     if (timeout_ms != 0)
@@ -238,14 +243,17 @@ bool TableMutator::retry(uint32_t timeout_ms) {
 }
 
 void TableMutator::retry_flush() {
-  if (m_failed_cells.size() > 0) {
-    set_cells(m_failed_cells.get());
+  {
+    ScopedLock lock(m_mutex);
+    if (m_failed_cells.size() > 0)
+      set_cells(m_failed_cells.get());
   }
   flush();
 }
 
 std::ostream &
 TableMutator::show_failed(const Exception &e, std::ostream &out) {
+  ScopedLock lock(m_mutex);
 
   if (!m_failed_mutations.empty()) {
     foreach(const FailedMutation &v, m_failed_mutations) {
@@ -265,6 +273,7 @@ TableMutator::show_failed(const Exception &e, std::ostream &out) {
 }
 
 void TableMutator::update_ok() {
+  ScopedLock lock(m_mutex);
   if (m_failed_cells.size() > 0) {
     m_failed_cells.clear();
     m_failed_mutations.clear();
@@ -272,6 +281,7 @@ void TableMutator::update_ok() {
 }
 
 void TableMutator::update_error(int error, FailedMutations &failures) {
+  ScopedLock lock(m_mutex);
   // copy all failed updates
   m_last_error = error;
   m_failed_cells.copy_failed_mutations(failures, m_failed_mutations);
