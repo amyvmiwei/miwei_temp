@@ -181,6 +181,10 @@ namespace Hypertable {
 
     void auto_flush();
     void wait_for_flush_completion();
+    void set_last_error(int32_t error) {
+      ScopedLock lock(m_mutex);
+      m_last_error = error;
+    }
 
     enum Operation {
       SET = 1,
@@ -207,6 +211,7 @@ namespace Hypertable {
     void retry_flush();
 
     Mutex                m_mutex;
+    Mutex                m_queue_mutex;
     boost::condition     m_cond;
     PropertiesPtr        m_props;
     Comm                *m_comm;

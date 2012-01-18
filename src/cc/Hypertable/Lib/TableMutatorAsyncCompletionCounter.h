@@ -57,15 +57,15 @@ namespace Hypertable {
       }
       return m_done;
     }
-    void set_retries() { m_retries = true; }
+    void set_retries() { ScopedLock lock(m_mutex); m_retries = true; }
 
-    void set_errors() { m_errors = true; }
+    void set_errors() { ScopedLock lock(m_mutex); m_errors = true; }
 
-    bool has_retries() { return m_retries; }
+    bool has_retries() { ScopedLock lock(m_mutex); return m_retries; }
 
-    bool has_errors() { return m_errors; }
+    bool has_errors() { ScopedLock lock(m_mutex); return m_errors; }
 
-    void clear_errors() { m_errors = false; }
+    void clear_errors() { ScopedLock lock(m_mutex); m_errors = false; }
 
   private:
     Mutex m_mutex;

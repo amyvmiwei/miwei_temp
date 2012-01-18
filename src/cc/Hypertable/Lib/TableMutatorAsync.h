@@ -173,6 +173,7 @@ namespace Hypertable {
     bool retry(uint32_t timeout_ms);
     void update_outstanding(TableMutatorAsyncScatterBufferPtr &buffer);
     void get_failed_mutations(FailedMutations &failed_mutations) {
+      ScopedLock lock(m_member_mutex);
       failed_mutations = m_failed_mutations;
     }
     bool has_outstanding() {
@@ -213,43 +214,45 @@ namespace Hypertable {
       to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,
                   cell.timestamp, cell.revision, cell.flag, full_key, unknown_cf);
     }
+
     void update_unsynced_rangeservers(const CommAddressSet &unsynced);
+
     void handle_send_exceptions();
+
+    bool mutated() {
+      ScopedLock lock(m_member_mutex);
+      return m_mutated;
+    }
+
     typedef std::map<uint32_t, TableMutatorAsyncScatterBufferPtr> ScatterBufferAsyncMap;
-    PropertiesPtr        m_props;
+
     Comm                *m_comm;
     ApplicationQueuePtr  m_app_queue;
     TablePtr             m_table;
-    SchemaPtr            m_schema;
+    SchemaPtr            m_schema;  // needs mutex
     RangeLocatorPtr      m_range_locator;
-    TableIdentifierManaged m_table_identifier;
-    uint64_t             m_memory_used;
+    TableIdentifierManaged m_table_identifier;    // needs mutex
+    uint64_t             m_memory_used;  // protected by buffer_mutex
     uint64_t             m_max_memory;
-    ScatterBufferAsyncMap  m_outstanding_buffers;
-    TableMutatorAsyncScatterBufferPtr m_current_buffer;
-    uint64_t             m_resends;
+    ScatterBufferAsyncMap  m_outstanding_buffers;  // protected by buffer mutex
+    TableMutatorAsyncScatterBufferPtr m_current_buffer; // needs mutex
+    uint64_t             m_resends;  // needs mutex
     uint32_t             m_timeout_ms;
     ResultCallback       *m_cb;
     uint32_t             m_flags;
-    CommAddressSet       m_unsynced_rangeservers;
-    int32_t     m_last_error;
-    int         m_last_op;
-    KeySpec     m_last_key;
-    const void *m_last_value;
-    uint32_t    m_last_value_len;
-    Cells::const_iterator m_last_cells_it;
-    Cells::const_iterator m_last_cells_end;
+    CommAddressSet       m_unsynced_rangeservers;  // needs mutex
+
     const static uint32_t ms_max_sync_retries = 5;
 
     Mutex      m_buffer_mutex;
     Mutex      &m_mutex;
-    Mutex      m_cancel_mutex;
+    Mutex      m_member_mutex;
     boost::condition m_buffer_cond;
     boost::condition &m_cond;
     bool       m_explicit_block_only;
-    uint32_t   m_next_buffer_id;
+    uint32_t   m_next_buffer_id; // needs mutex
     bool       m_cancelled;
-    bool       m_mutated;
+    bool       m_mutated;   // needs mutex
     FailedMutations m_failed_mutations;
   };
 
