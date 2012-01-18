@@ -27,9 +27,19 @@ start_masters() {
     wait_for_server_up "master" "master:38050" "--Hypertable.Master.Port=38050"
 
     $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38051 \
-        --pidfile $HT_HOME/run/Hypertable.Master.pid \
+        --pidfile $HT_HOME/run/Hypertable.Master.38051.pid \
         --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.38051.log&
-    wait_for_server_up "master" "master:38051" "--Hypertable.Master.Port=38051"
+    #wait_for_server_up "master" "master:38051" "--Hypertable.Master.Port=38051"
+    # chris - do not use wait_for_server_up because serverup cannot connect
+    # to this master; it's caught in main(), trying to acquire the hyperspace
+    # lock and not yet able to accept socket connections
+    sleep 5
+    ps `cat $HT_HOME/run/Hypertable.Master.38051.pid`
+    if [ $? != 0 ] ; then
+      echo "Master (38051) not running, exiting...";
+      exit 1
+    fi
+    echo "Master (38051) seems to be running"
 }
 
 
