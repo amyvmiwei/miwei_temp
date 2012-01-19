@@ -23,10 +23,13 @@
 #define HYPERTABLE_MONITORING_H
 
 #include <map>
+#include <deque>
+#include <vector>
 
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 #include "Common/StatsSystem.h"
+#include "Common/String.h"
 
 #include "Hypertable/Lib/KeySpec.h"
 #include "Hypertable/Lib/StatsRangeServer.h"
@@ -43,7 +46,6 @@ namespace Hypertable {
   class Monitoring : public ReferenceCount {
 
   public:
-
     /**
      * Constructor.
      */
@@ -135,6 +137,8 @@ namespace Hypertable {
     void compute_clock_skew(int64_t server_timestamp, RangeServerStatistics *stats);
     void create_rangeserver_rrd(const String &filename);
     void update_rangeserver_rrd(const String &filename, struct rangeserver_rrd_data &rrd_data);
+    void run_rrdtool(std::vector<String> &command);
+
     void dump_rangeserver_summary_json(std::vector<RangeServerStatistics> &stats);
     void dump_master_summary_json();
 
