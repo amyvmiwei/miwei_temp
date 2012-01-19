@@ -68,7 +68,7 @@ HT_INSTALL_LIBS(lib ${BOOST_LIBS} ${Thrift_LIBS}
                 ${EXPAT_LIBRARIES} ${BZIP2_LIBRARIES}
                 ${ZLIB_LIBRARIES} ${SNAPPY_LIBRARY} ${SIGAR_LIBRARY} ${Tcmalloc_LIBRARIES}
                 ${Jemalloc_LIBRARIES} ${Ceph_LIBRARIES} ${RE2_LIBRARIES}
-                 ${READLINE_LIBRARIES})
+                ${READLINE_LIBRARIES})
 
 if (NOT PACKAGE_THRIFTBROKER)
   HT_INSTALL_LIBS(lib ${BDB_LIBRARIES} ${RRD_LIBRARIES})
@@ -93,10 +93,14 @@ if (LDD_RETURN STREQUAL "0")
   HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib} ${stacktrace_lib})
 endif ()
 
-# Include other RRDTool dependencies found in Hypertable.Master
+# copy rrdtool to the /bin directory
+install(PROGRAMS "${RRDTOOL_DIR}/rrdtool" DESTINATION
+      ${CMAKE_INSTALL_PREFIX}/bin)
+
+# Include dependencies found in rrdtool
 if (NOT PACKAGE_THRIFTBROKER)
   exec_program(${CMAKE_INSTALL_PREFIX}/bin/ldd.sh
-               ARGS ${CMAKE_BINARY_DIR}/src/cc/Hypertable/Master/Hypertable.Master
+        ARGS ${CMAKE_INSTALL_PREFIX}/bin/rrdtool
                OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
 
   if (HT_CMAKE_DEBUG)
@@ -104,6 +108,8 @@ if (NOT PACKAGE_THRIFTBROKER)
   endif ()
 
   if (LDD_RETURN STREQUAL "0")
+    string(REGEX MATCH "[ \t](/[^ ]+/libdbi-[^ \n]+)" dummy ${LDD_OUT})
+    set(dbi_lib ${CMAKE_MATCH_1})
     string(REGEX MATCH "[ \t](/[^ ]+/libdirectfb-[^ \n]+)" dummy ${LDD_OUT})
     set(directfb_lib ${CMAKE_MATCH_1})
     string(REGEX MATCH "[ \t](/[^ ]+/libfusion-[^ \n]+)" dummy ${LDD_OUT})
@@ -182,7 +188,7 @@ if (LDD_RETURN STREQUAL "0")
   set(krb5support_lib ${CMAKE_MATCH_1})
 endif ()
 
-HT_INSTALL_LIBS(lib ${directfb_lib} ${fusion_lib} ${direct_lib}
+HT_INSTALL_LIBS(lib ${dbi_lib} ${directfb_lib} ${fusion_lib} ${direct_lib}
                 ${xcb_render_util_lib} ${xcb_render_lib}
                 ${pangocairo_lib} ${pango_lib} ${cairo_lib}
                 ${fontconfig_lib} ${Xrender_lib} ${X11_lib} ${xml2_lib}
@@ -260,7 +266,7 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
     "${CMAKE_BINARY_DIR}/prerm")
 
 # RPM package variables
-set(CPACK_RPM_PACKAGE_LICENSE "GPLv2+")
+set(CPACK_RPM_PACKAGE_LICENSE "GPLv3+")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/Databases")
 
 # rpm perl dependencies stuff is dumb
