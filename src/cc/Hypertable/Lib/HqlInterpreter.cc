@@ -385,7 +385,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
     }
     if (state.escape)
       row_escaper.escape(cell.row_key, strlen(cell.row_key),
-			 &row_unescaped_buf, &row_unescaped_len);
+             &row_unescaped_buf, &row_unescaped_len);
     else
       row_unescaped_buf = cell.row_key;
     if (!state.scan.keys_only) {
@@ -515,19 +515,19 @@ cmd_dump_table(NamespacePtr &ns,
 
     if (state.escape)
       row_escaper.escape(cell.row_key, strlen(cell.row_key),
-			 &row_unescaped_buf, &row_unescaped_len);
+             &row_unescaped_buf, &row_unescaped_len);
     else
       row_unescaped_buf = cell.row_key;
 
     if (cell.column_family) {
       fout << row_unescaped_buf << "\t" << cell.column_family;
       if (cell.column_qualifier && *cell.column_qualifier) {
-	if (state.escape)
-	  escaper.escape(cell.column_qualifier, strlen(cell.column_qualifier),
-			 &unescaped_buf, &unescaped_len);
-	else
-	  unescaped_buf = cell.column_qualifier;
-	fout << ":" << unescaped_buf;
+        if (state.escape)
+          escaper.escape(cell.column_qualifier, strlen(cell.column_qualifier),
+                   &unescaped_buf, &unescaped_len);
+        else
+          unescaped_buf = cell.column_qualifier;
+        fout << ":" << unescaped_buf;
       }
     }
     else
@@ -535,7 +535,7 @@ cmd_dump_table(NamespacePtr &ns,
 
     if (state.escape)
       escaper.escape((const char *)cell.value, (size_t)cell.value_len,
-		     &unescaped_buf, &unescaped_len);
+             &unescaped_buf, &unescaped_len);
     else {
       unescaped_buf = (const char *)cell.value;
       unescaped_len = (size_t)cell.value_len;
@@ -555,7 +555,8 @@ cmd_dump_table(NamespacePtr &ns,
 
 void
 cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
-              ConnectionManagerPtr &conn_manager, DfsBroker::ClientPtr &dfs_client,
+              ConnectionManagerPtr &conn_manager, 
+              DfsBroker::ClientPtr &dfs_client,
               ParserState &state, HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
@@ -569,9 +570,10 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   bool largefile_mode = false;
   ::uint64_t running_total = 0;
   ::uint64_t consume_threshold = 0;
+  bool ignore_unknown_columns = false;
 
   if (LoadDataFlags::ignore_unknown_cfs(state.load_flags))
-    mutator_flags |= Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS;
+    ignore_unknown_columns = true;
 
   // Turn on no-log-sync unconditionally for LOAD DATA INFILE
   mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
@@ -604,10 +606,10 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   if(state.input_file_src == DFS_FILE && !dfs_client)
     dfs_client = new DfsBroker::Client(conn_manager, Config::properties);
 
-  lds = LoadDataSourceFactory::create(dfs_client, state.input_file, state.input_file_src,
-      state.header_file, state.header_file_src,
-      state.columns, state.timestamp_column,
-      state.row_uniquify_chars, state.load_flags);
+  lds = LoadDataSourceFactory::create(dfs_client, state.input_file, 
+               state.input_file_src, state.header_file, state.header_file_src, 
+               state.columns, state.timestamp_column, state.row_uniquify_chars, 
+               state.load_flags);
 
   cb.file_size = lds->get_source_size();
   if (cb.file_size > std::numeric_limits<unsigned long>::max()) {
@@ -650,12 +652,12 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
             &escaped_buf, &escaped_len);
         key.row = escaped_buf;
         key.row_len = escaped_len;
-        qualifier_escaper.unescape(key.column_qualifier, (size_t)key.column_qualifier_len,
-            &escaped_buf, &escaped_len);
+        qualifier_escaper.unescape(key.column_qualifier, 
+                (size_t)key.column_qualifier_len, &escaped_buf, &escaped_len);
         key.column_qualifier = escaped_buf;
         key.column_qualifier_len = escaped_len;
-        value_escaper.unescape((const char *)value, (size_t)value_len, &escaped_buf,
-            &escaped_len);
+        value_escaper.unescape((const char *)value, 
+                (size_t)value_len, &escaped_buf, &escaped_len);
       }
       else {
         escaped_buf = (const char *)value;
@@ -664,10 +666,18 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
 
       if (into_table) {
         try {
-          if (is_delete)
-            mutator->set_delete(key);
-          else
-            mutator->set(key, escaped_buf, escaped_len);
+          bool skip = false;
+          if (ignore_unknown_columns) {
+            SchemaPtr schema = table->schema();
+            if (!schema->get_column_family(key.column_family))
+              skip = true;
+          }
+          if (!skip) {
+            if (is_delete)
+              mutator->set_delete(key);
+            else
+              mutator->set(key, escaped_buf, escaped_len);
+          }
         }
         catch (Exception &e) {
           do {
@@ -677,23 +687,25 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
       }
       else {
         if (display_timestamps)
-          fout << key.timestamp << "\t" << key.row << "\t" << key.column_family << "\t"
-            << escaped_buf << "\n";
+          fout << key.timestamp << "\t" << key.row << "\t" 
+               << key.column_family << "\t" << escaped_buf << "\n";
         else
-          fout << key.row << "\t" << key.column_family << "\t" << escaped_buf << "\n";
+          fout << key.row << "\t" << key.column_family << "\t" 
+               << escaped_buf << "\n";
       }
 
       if (cb.normal_mode && state.input_file_src != STDIN) {
         if (largefile_mode == true) {
-	  running_total += consumed;
-	  if (running_total >= consume_threshold) {
-	    consumed = 1 + (unsigned long)((running_total - consume_threshold) / 1048576LL);
-	    consume_threshold += (::uint64_t)consumed * 1048576LL;
-	    cb.on_progress(consumed);
-	  }
+          running_total += consumed;
+          if (running_total >= consume_threshold) {
+            consumed = 1 + (unsigned long)((running_total - consume_threshold) 
+                    / 1048576LL);
+            consume_threshold += (::uint64_t)consumed * 1048576LL;
+            cb.on_progress(consumed);
+          }
         }
-	else
-	  cb.on_progress(consumed);
+        else
+          cb.on_progress(consumed);
       }
     }
   }

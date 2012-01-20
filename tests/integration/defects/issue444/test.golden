@@ -1,0 +1,88 @@
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+
+USE "/";
+
+DROP TABLE IF EXISTS TestIssue444;
+
+CREATE TABLE TestIssue444 (
+anon_id, query, item, click_url
+);
+
+LOAD DATA INFILE "test.tsv" INTO TABLE TestIssue444;
+SELECT * FROM TestIssue444;
+1127071	query	guardianship
+1127071	item:rank	8
+1127071	click_url	http://adopting.adoption.com
+1246036	query	polish american
+1246036	item:rank	6
+1246036	click_url	thttp://www.palichicago.org
+12653	query	lowes
+12653	item:rank	1
+12653	click_url	http://www.lowes.com
+1270972	query	head hunters
+1270972	item:rank	2
+1270972	click_url	http://www.headhunters.com
+2648672	query	jamie farr
+2648672	item:rank	1
+2648672	click_url	http://www.imdb.com
+3613173	query	batman signal images
+3613173	item:rank	18
+3613173	click_url	http://www.icomania.com
+465778	query	google
+465778	item:rank	1
+465778	click_url	http://www.google.com
+48785	query	address locator
+48785	query	address locator
+48785	item:rank	3
+48785	item:rank	2
+48785	click_url	http://factfinder.census.gov
+48785	click_url	http://www.usps.com/ncsc/
+605089	query	dachshunds for sale
+605089	item:rank	2
+605089	click_url	http://www.houstonzone.org
+760038	query	stds
+760038	item:rank	1
+760038	click_url	http://www.ashastd.org
+
+DROP TABLE IF EXISTS TestIssue444;
+
+CREATE TABLE TestIssue444 (
+anon_id, item, click_url
+);
+
+LOAD DATA INFILE "test.tsv" INTO TABLE TestIssue444;
+ERROR hypertable : caught std::exception: Bad column family 'query'
+ERROR hypertable : set: Hypertable::Exception: Bad column family 'query' - HYPERTABLE bad key
+	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
+SELECT * FROM TestIssue444;
+
+LOAD DATA INFILE IGNORE_UNKNOWN_COLUMNS "test.tsv" INTO TABLE TestIssue444;
+SELECT * FROM TestIssue444;
+1127071	item:rank	8
+1127071	click_url	http://adopting.adoption.com
+1246036	item:rank	6
+1246036	click_url	thttp://www.palichicago.org
+12653	item:rank	1
+12653	click_url	http://www.lowes.com
+1270972	item:rank	2
+1270972	click_url	http://www.headhunters.com
+2648672	item:rank	1
+2648672	click_url	http://www.imdb.com
+3613173	item:rank	18
+3613173	click_url	http://www.icomania.com
+465778	item:rank	1
+465778	click_url	http://www.google.com
+48785	item:rank	3
+48785	item:rank	2
+48785	click_url	http://factfinder.census.gov
+48785	click_url	http://www.usps.com/ncsc/
+605089	item:rank	2
+605089	click_url	http://www.houstonzone.org
+760038	item:rank	1
+760038	click_url	http://www.ashastd.org

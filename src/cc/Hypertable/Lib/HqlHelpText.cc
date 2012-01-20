@@ -1403,7 +1403,7 @@ namespace {
     "       with ' ' (space) padding",
     "",
     "",
-    "For example, assuming the data in Example 3 above is contained in a filed",
+    "For example, assuming the data in Example 3 above is contained in a file",
     "named \"query-log.tsv\", then the following LOAD DATA INFILE command:",
     "",
     "    LOAD DATA INFILE ROW_KEY_COLUMN=\"%09anon_id\"+query \"query-log.tsv\" INTO TABLE 'anon-id-query';",

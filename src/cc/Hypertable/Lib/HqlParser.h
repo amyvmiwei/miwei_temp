@@ -1021,7 +1021,7 @@ namespace Hypertable {
     struct set_ignore_unknown_cfs {
       set_ignore_unknown_cfs(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.load_flags |= LoadDataFlags::IGNORE_UNKNOWN_CFS;
+        state.load_flags |= LoadDataFlags::IGNORE_UNKNOWN_COLUMNS;
       }
       ParserState &state;
     };

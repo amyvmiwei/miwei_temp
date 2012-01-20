@@ -25,10 +25,10 @@
 namespace Hypertable { namespace LoadDataFlags {
 
   enum {
-    DUP_KEY_COLS       = 0x0001,
-    NO_ESCAPE          = 0x0002,
-    IGNORE_UNKNOWN_CFS = 0x0004,
-    SINGLE_CELL_FORMAT = 0x0008
+    DUP_KEY_COLS           = 0x0001,
+    NO_ESCAPE              = 0x0002,
+    IGNORE_UNKNOWN_COLUMNS = 0x0004,
+    SINGLE_CELL_FORMAT     = 0x0008
   };
 
   inline bool duplicate_key_columns(int flags) {
@@ -40,7 +40,7 @@ namespace Hypertable { namespace LoadDataFlags {
   }
 
   inline bool ignore_unknown_cfs(int flags) {
-    return (flags & IGNORE_UNKNOWN_CFS) == IGNORE_UNKNOWN_CFS;
+    return (flags & IGNORE_UNKNOWN_COLUMNS) == IGNORE_UNKNOWN_COLUMNS;
   }
 
   inline bool single_cell_format(int flags) {

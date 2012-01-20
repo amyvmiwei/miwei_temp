@@ -252,16 +252,12 @@ void
 TableMutatorAsync::set(const KeySpec &key, const void *value, 
         uint32_t value_len) {
   ScopedLock lock(m_member_mutex);
-  bool unknown_cf;
-  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS);
 
   try {
     key.sanity_check();
 
     Key full_key;
-    to_full_key(key, full_key, unknown_cf);
-    if (ignore_unknown_cfs && unknown_cf)
-      return;
+    to_full_key(key, full_key);
 
     // if there's an index: buffer the key and update the index
     full_key.row_len = key.row_len;
@@ -341,8 +337,6 @@ void
 TableMutatorAsync::set_cells(Cells::const_iterator it, 
         Cells::const_iterator end) {
   ScopedLock lock(m_member_mutex);
-  bool unknown_cf;
-  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS);
 
   try {
     for (; it != end; ++it) {
@@ -361,9 +355,7 @@ TableMutatorAsync::set_cells(Cells::const_iterator it,
         full_key.flag = cell.flag;
       }
       else {
-        to_full_key(cell, full_key, unknown_cf);
-        if (ignore_unknown_cfs && unknown_cf)
-          continue;
+        to_full_key(cell, full_key);
       }
 
       if (cell.row_key)
@@ -389,8 +381,6 @@ TableMutatorAsync::set_cells(Cells::const_iterator it,
 void TableMutatorAsync::set_delete(const KeySpec &key) {
   ScopedLock lock(m_member_mutex);
   Key full_key;
-  bool unknown_cf;
-  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS);
 
   try {
     key.sanity_check();
@@ -402,9 +392,7 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
       full_key.flag = key.flag;
     }
     else {
-      to_full_key(key, full_key, unknown_cf);
-      if (ignore_unknown_cfs && unknown_cf)
-        return;
+      to_full_key(key, full_key);
     }
 
     // if there's an index: buffer the key and update the index
@@ -426,11 +414,7 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
 void
 TableMutatorAsync::to_full_key(const void *row, const char *column_family, 
         const void *column_qualifier, int64_t timestamp, int64_t revision, 
-        uint8_t flag, Key &full_key, bool &unknown_cf) {
-  bool ignore_unknown_cfs = (m_flags & Table::MUTATOR_FLAG_IGNORE_UNKNOWN_CFS);
-
-  unknown_cf = false;
-
+        uint8_t flag, Key &full_key) {
   if (flag > FLAG_DELETE_ROW) {
     if (!column_family)
       HT_THROW(Error::BAD_KEY, "Column family not specified");
@@ -443,16 +427,10 @@ TableMutatorAsync::to_full_key(const void *row, const char *column_family,
         m_current_buffer->refresh_schema(m_table_identifier, m_schema);
         cf = m_schema->get_column_family(column_family);
         if (!cf) {
-          unknown_cf = true;
-          if (ignore_unknown_cfs)
-            return;
           HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
         }
       }
       else {
-        unknown_cf = true;
-        if (ignore_unknown_cfs)
-          return;
         HT_THROWF(Error::BAD_KEY, "Bad column family '%s'", column_family);
       }
     }
