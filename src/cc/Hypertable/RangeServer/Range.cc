@@ -912,57 +912,67 @@ void Range::split_compact_and_shrink() {
 
   try {
     String files;
-    String metadata_key_str;
-    KeySpec key;
+    String metadata_row_low, metadata_row_high;
+    int64_t total_blocks;
+    KeySpec key_low, key_high;
+    char buf[32];
 
     TableMutatorPtr mutator = Global::metadata_table->create_mutator();
 
     // For new range with existing end row, update METADATA entry with new
     // 'StartRow' column.
-    metadata_key_str = String("") + m_metalog_entity->table.id + ":" + m_metalog_entity->spec.end_row;
-    key.row = metadata_key_str.c_str();
-    key.row_len = metadata_key_str.length();
-    key.column_qualifier = 0;
-    key.column_qualifier_len = 0;
-    key.column_family = "StartRow";
-    mutator->set(key, (uint8_t *)m_metalog_entity->state.split_point,
+
+    metadata_row_high = String("") + m_metalog_entity->table.id + ":" + m_metalog_entity->spec.end_row;
+    key_high.row = metadata_row_high.c_str();
+    key_high.row_len = metadata_row_high.length();
+    key_high.column_qualifier = 0;
+    key_high.column_qualifier_len = 0;
+    key_high.column_family = "StartRow";
+    mutator->set(key_high, (uint8_t *)m_metalog_entity->state.split_point,
                  strlen(m_metalog_entity->state.split_point));
+
+    // This is needed to strip out the "live file" references
     if (m_split_off_high) {
-      key.column_family = "Files";
+      key_high.column_family = "Files";
       for (size_t i=0; i<ag_vector.size(); i++) {
-        key.column_qualifier = ag_vector[i]->get_name();
-        key.column_qualifier_len = strlen(ag_vector[i]->get_name());
-        ag_vector[i]->get_file_list(files, false);
+        key_high.column_qualifier = ag_vector[i]->get_name();
+        key_high.column_qualifier_len = strlen(ag_vector[i]->get_name());
+        ag_vector[i]->get_file_data(files, &total_blocks, false);
         if (files != "")
-          mutator->set(key, (uint8_t *)files.c_str(), files.length());
+          mutator->set(key_high, (uint8_t *)files.c_str(), files.length());
       }
     }
 
     // For new range whose end row is the split point, create a new METADATA
     // entry
-    metadata_key_str = format("%s:%s", m_metalog_entity->table.id, m_metalog_entity->state.split_point);
-    key.row = metadata_key_str.c_str();
-    key.row_len = metadata_key_str.length();
-    key.column_qualifier = 0;
-    key.column_qualifier_len = 0;
+    metadata_row_low = format("%s:%s", m_metalog_entity->table.id, m_metalog_entity->state.split_point);
+    key_low.row = metadata_row_low.c_str();
+    key_low.row_len = metadata_row_low.length();
+    key_low.column_qualifier = 0;
+    key_low.column_qualifier_len = 0;
 
-    key.column_family = "StartRow";
-    mutator->set(key, old_start_row.c_str(), old_start_row.length());
+    key_low.column_family = "StartRow";
+    mutator->set(key_low, old_start_row.c_str(), old_start_row.length());
 
-    key.column_family = "Files";
     for (size_t i=0; i<ag_vector.size(); i++) {
-      key.column_qualifier = ag_vector[i]->get_name();
-      key.column_qualifier_len = strlen(ag_vector[i]->get_name());
-      ag_vector[i]->get_file_list(files, m_split_off_high);
-      if (files != "")
-        mutator->set(key, (uint8_t *)files.c_str(), files.length());
+      ag_vector[i]->get_file_data(files, &total_blocks, m_split_off_high);
+      key_low.column_family = key_high.column_family = "BlockCount";
+      key_low.column_qualifier = key_high.column_qualifier = ag_vector[i]->get_name();
+      key_low.column_qualifier_len = key_high.column_qualifier_len = strlen(ag_vector[i]->get_name());
+      sprintf(buf, "%llu", (Llu)total_blocks/2);
+      mutator->set(key_low, (uint8_t *)buf, strlen(buf));
+      mutator->set(key_high, (uint8_t *)buf, strlen(buf));
+      if (files != "") {
+        key_low.column_family = "Files";
+        mutator->set(key_low, (uint8_t *)files.c_str(), files.length());
+      }
     }
     if (m_split_off_high) {
-      key.column_qualifier = 0;
-      key.column_qualifier_len = 0;
-      key.column_family = "Location";
+      key_low.column_qualifier = 0;
+      key_low.column_qualifier_len = 0;
+      key_low.column_family = "Location";
       String location = Global::location_initializer->get();
-      mutator->set(key, location.c_str(), location.length());
+      mutator->set(key_low, location.c_str(), location.length());
     }
 
     mutator->flush();

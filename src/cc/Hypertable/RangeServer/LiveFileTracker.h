@@ -57,17 +57,20 @@ namespace Hypertable {
      * @param add filename to add
      * @param deletes vector of filenames to delete
      * @param nextcsid Next available CellStore ID
+     * @param total_blocks Total number of cell store blocks in access group
      */
-    void update_live(const String &add, std::vector<String> &deletes, uint32_t nextcsid);
+    void update_live(const String &add, std::vector<String> &deletes, uint32_t nextcsid, int64_t total_blocks);
 
     /**
      * Adds a file to the live file set without seting the 'need_update' bit
      *
      * @param fname file to add
+     * @param total_blocks Total number of cell store blocks in access group
      */
-    void add_live_noupdate(const String &fname) {
+    void add_live_noupdate(const String &fname, int64_t total_blocks) {
       ScopedLock lock(m_mutex);
       m_live.insert(strip_basename(fname));
+      m_total_blocks = total_blocks;
     }
 
     /**
@@ -101,9 +104,10 @@ namespace Hypertable {
      * the list, prefixed by the '#' character
      *
      * @param file_list reference to output string to hold file list
+     * @param block_countp address of integer to hold the block count for this AG
      * @param include_blocked include commented out files blocked from GC
      */
-    void get_file_list(String &file_list, bool include_blocked);
+    void get_file_data(String &file_list, int64_t *block_countp, bool include_blocked);
 
     void set_next_csid(uint32_t nid) { 
       m_last_nextcsid = m_cur_nextcsid = nid;
@@ -128,6 +132,7 @@ namespace Hypertable {
     bool             m_is_root;
     uint32_t         m_last_nextcsid;
     uint32_t         m_cur_nextcsid;
+    int64_t          m_total_blocks;
   };
 
 }

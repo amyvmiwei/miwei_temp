@@ -482,11 +482,13 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore) {
   }
 
   m_stores.push_back( cellstore );
-  recompute_compression_ratio();
+
+  int64_t total_index_entries = 0;
+  recompute_compression_ratio(&total_index_entries);
 
   m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
 
-  m_file_tracker.add_live_noupdate(cellstore->get_filename());
+  m_file_tracker.add_live_noupdate(cellstore->get_filename(), total_index_entries);
 }
 
 void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp) {
@@ -684,6 +686,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
      * Install new CellCache and CellStore and update Live file tracker
      */
     std::vector<String> removed_files;
+    int64_t total_index_entries = 0;
     {
       ScopedLock lock(m_mutex);
 
@@ -767,10 +770,10 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
       }
 
-      recompute_compression_ratio();
+      recompute_compression_ratio(&total_index_entries);
     }
 
-    m_file_tracker.update_live(added_file, removed_files, m_next_cs_id);
+    m_file_tracker.update_live(added_file, removed_files, m_next_cs_id, total_index_entries);
     m_file_tracker.update_files_column();
 
     if (merging)
@@ -1025,11 +1028,15 @@ void AccessGroup::range_dir_initialize() {
 
 }
 
-void AccessGroup::recompute_compression_ratio() {
+void AccessGroup::recompute_compression_ratio(int64_t *total_index_entriesp) {
   m_disk_usage = 0;
   m_compression_ratio = 0.0;
+  if (total_index_entriesp)
+    *total_index_entriesp = 0;
   for (size_t i=0; i<m_stores.size(); i++) {
     HT_ASSERT(m_stores[i].cs);
+    if (total_index_entriesp)
+      *total_index_entriesp += (int64_t)m_stores[i].index_entries;
     double disk_usage = m_stores[i].cs->disk_usage();
     m_disk_usage += (uint64_t)disk_usage;
     m_compression_ratio += disk_usage / m_stores[i].cs->compression_ratio();

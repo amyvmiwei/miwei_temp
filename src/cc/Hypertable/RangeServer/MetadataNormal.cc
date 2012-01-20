@@ -106,42 +106,50 @@ bool MetadataNormal::get_next_files(String &ag_name, String &files, uint32_t *ne
 
 
 
-void MetadataNormal::write_files(const String &ag_name, const String &files) {
+void MetadataNormal::write_files(const String &ag_name, const String &files, int64_t total_blocks) {
   TableMutatorPtr mutator;
   KeySpec key;
+  char buf[32];
 
   mutator = Global::metadata_table->create_mutator();
 
   key.row = m_metadata_key.c_str();
   key.row_len = m_metadata_key.length();
-  key.column_family = "Files";
   key.column_qualifier = ag_name.c_str();
   key.column_qualifier_len = ag_name.length();
+
+  key.column_family = "Files";
   mutator->set(key, (uint8_t *)files.c_str(), files.length());
+
+  sprintf(buf, "%llu", (Llu)total_blocks);
+  key.column_family = "BlockCount";
+  mutator->set(key, (uint8_t *)buf, strlen(buf));
+
   mutator->flush();
 }
 
 
-void MetadataNormal::write_files(const String &ag_name, const String &files, uint32_t nextcsid) {
+void MetadataNormal::write_files(const String &ag_name, const String &files, int64_t total_blocks, uint32_t nextcsid) {
   TableMutatorPtr mutator;
   KeySpec key;
+  char buf[32];
 
   mutator = Global::metadata_table->create_mutator();
 
   key.row = m_metadata_key.c_str();
   key.row_len = m_metadata_key.length();
-  key.column_family = "Files";
   key.column_qualifier = ag_name.c_str();
   key.column_qualifier_len = ag_name.length();
+
+  key.column_family = "Files";
   mutator->set(key, (uint8_t *)files.c_str(), files.length());
 
-  char buf[32];
   sprintf(buf, "%u", (unsigned)nextcsid);
-  key.row = m_metadata_key.c_str();
-  key.row_len = m_metadata_key.length();
   key.column_family = "NextCSID";
-  key.column_qualifier = ag_name.c_str();
-  key.column_qualifier_len = ag_name.length();
+  mutator->set(key, (uint8_t *)buf, strlen(buf));
+
+  sprintf(buf, "%llu", (Llu)total_blocks);
+  key.column_family = "BlockCount";
   mutator->set(key, (uint8_t *)buf, strlen(buf));
 
   mutator->flush();

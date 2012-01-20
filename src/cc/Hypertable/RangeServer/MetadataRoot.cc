@@ -100,38 +100,50 @@ bool MetadataRoot::get_next_files(String &ag_name, String &files, uint32_t *next
 }
 
 
-void MetadataRoot::write_files(const String &ag_name, const String &files) {
-  String attrname = (String)"files." + ag_name;
-
-  // Write "files"
-  try {
-    Global::hyperspace->attr_set(m_handle, attrname.c_str(), files.c_str(),
-                                 files.length());
-  }
-  catch (Exception &e) {
-    HT_THROW2(e.code(), e, (String)"Problem creating attribute '" + attrname
-              + "' on Hyperspace file '/hypertable/root'");
-  }
-
-}
-
-void MetadataRoot::write_files(const String &ag_name, const String &files, uint32_t nextcsid) {
-  String files_attrname = (String)"files." + ag_name;
-  String nextcsid_attrname = (String)"nextcsid." + ag_name;
-  char buf[32];
-  sprintf(buf, "%u", (unsigned)nextcsid);
-
+void MetadataRoot::write_files(const String &ag_name, const String &files, int64_t total_blocks) {
   std::vector<Attribute> attrs;
-  attrs.push_back(Attribute(files_attrname.c_str(), files.c_str(), files.length()));
-  attrs.push_back(Attribute(nextcsid_attrname.c_str(), buf, strlen(buf)));
+  String files_attrname = (String)"files." + ag_name;
+  String blockcount_attrname = (String)"blockcount." + ag_name;
+  char blockcount_buf[32];
 
-  // Write "files" and "nextcsid"
+  sprintf(blockcount_buf, "%llu", (Llu)total_blocks);
+
+  attrs.push_back(Attribute(files_attrname.c_str(), files.c_str(), files.length()));
+  attrs.push_back(Attribute(blockcount_attrname.c_str(), blockcount_buf, strlen(blockcount_buf)));
+
+  // Write "Files" and "BlockCount"
   try {
     Global::hyperspace->attr_set(m_handle, attrs);
   }
   catch (Exception &e) {
-    HT_THROW2(e.code(), e, (String)"Problem creating attribute '" + files_attrname
-              + "/" + nextcsid_attrname + "' on Hyperspace file '/hypertable/root'");
+    HT_THROW2(e.code(), e, (String)"Problem creating attributes '" + files_attrname
+              + "/" + blockcount_attrname + "' on Hyperspace file '/hypertable/root'");
+  }
+
+}
+
+void MetadataRoot::write_files(const String &ag_name, const String &files, int64_t total_blocks, uint32_t nextcsid) {
+  String files_attrname = (String)"files." + ag_name;
+  String nextcsid_attrname = (String)"nextcsid." + ag_name;
+  String blockcount_attrname = (String)"blockcount." + ag_name;
+  char nextcsid_buf[32], blockcount_buf[32];
+
+  sprintf(nextcsid_buf, "%u", (unsigned)nextcsid);
+  sprintf(blockcount_buf, "%llu", (Llu)total_blocks);
+
+  std::vector<Attribute> attrs;
+  attrs.push_back(Attribute(files_attrname.c_str(), files.c_str(), files.length()));
+  attrs.push_back(Attribute(nextcsid_attrname.c_str(), nextcsid_buf, strlen(nextcsid_buf)));
+  attrs.push_back(Attribute(blockcount_attrname.c_str(), blockcount_buf, strlen(blockcount_buf)));
+
+  // Write "Files", "NextCSID", and "BlockCount"
+  try {
+    Global::hyperspace->attr_set(m_handle, attrs);
+  }
+  catch (Exception &e) {
+    HT_THROW2(e.code(), e, (String)"Problem creating attributes '" + files_attrname
+              + "/" + nextcsid_attrname + "/" + blockcount_attrname + 
+              "' on Hyperspace file '/hypertable/root'");
   }
 
 }
