@@ -93,6 +93,10 @@ if (LDD_RETURN STREQUAL "0")
   HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib} ${stacktrace_lib})
 endif ()
 
+# copy cronolog to the /bin directory
+install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION
+      ${CMAKE_INSTALL_PREFIX}/bin)
+
 # copy rrdtool to the /bin directory
 install(PROGRAMS "${RRDTOOL_DIR}/rrdtool" DESTINATION
       ${CMAKE_INSTALL_PREFIX}/bin)

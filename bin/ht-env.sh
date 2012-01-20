@@ -147,12 +147,8 @@ set_start_vars() {
   pidfile=$RUNTIME_ROOT/run/$1.pid
   logfile=$RUNTIME_ROOT/log/$1.log
   startlog=/tmp/start-$1$$.log
-  if type cronolog > /dev/null 2>&1; then
-    logger="cronolog --link $logfile \
+  logger="$RUNTIME_ROOT/bin/cronolog --link $logfile \
       $RUNTIME_ROOT/log/archive/%Y-%m/%d/$1.log"
-  else
-    logger=
-  fi
 }
 
 check_startlog() {
