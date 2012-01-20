@@ -1,4 +1,4 @@
-<Schema generation="2">
+<Schema generation="3">
   <AccessGroup name="default">
     <ColumnFamily id="1">
       <Generation>1</Generation>
@@ -15,6 +15,13 @@
     <ColumnFamily id="6">
       <Generation>2</Generation>
       <Name>NextCSID</Name>
+      <MaxVersions>1</MaxVersions>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="7">
+      <Generation>3</Generation>
+      <Name>BlockCount</Name>
       <MaxVersions>1</MaxVersions>
       <Counter>false</Counter>
       <deleted>false</deleted>

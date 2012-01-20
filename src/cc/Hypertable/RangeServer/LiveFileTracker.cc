@@ -37,7 +37,7 @@ LiveFileTracker::LiveFileTracker(const TableIdentifier *identifier,
   m_identifier(*identifier), m_schema_ptr(schema_ptr),
   m_start_row(range->start_row), m_end_row(range->end_row),
   m_ag_name(ag_name), m_need_update(false), m_is_root(false),
-  m_last_nextcsid(0), m_cur_nextcsid(0) {
+  m_last_nextcsid(0), m_cur_nextcsid(0), m_total_blocks(0) {
 
   m_is_root = (m_identifier.is_metadata() && *range->start_row == 0
                && !strcmp(range->end_row, Key::END_ROOT_ROW));
@@ -46,13 +46,14 @@ LiveFileTracker::LiveFileTracker(const TableIdentifier *identifier,
 
 }
 
-void LiveFileTracker::update_live(const String &add, std::vector<String> &deletes, uint32_t nextcsid) {
+void LiveFileTracker::update_live(const String &add, std::vector<String> &deletes, uint32_t nextcsid, int64_t total_blocks) {
   ScopedLock lock(m_mutex);
   for (size_t i=0; i<deletes.size(); i++)
     m_live.erase(strip_basename(deletes[i]));
   if (add != "")
     m_live.insert(strip_basename(add));
   m_cur_nextcsid = nextcsid;
+  m_total_blocks = total_blocks;
   m_need_update = true;
 }
 
@@ -129,20 +130,20 @@ void LiveFileTracker::update_files_column() {
     if (m_is_root) {
       MetadataRoot metadata(m_schema_ptr);
       if (m_cur_nextcsid != m_last_nextcsid) {
-        metadata.write_files(m_ag_name, file_list, m_cur_nextcsid);
+        metadata.write_files(m_ag_name, file_list, m_total_blocks, m_cur_nextcsid);
         m_last_nextcsid = m_cur_nextcsid;
       }
       else
-        metadata.write_files(m_ag_name, file_list);
+        metadata.write_files(m_ag_name, file_list, m_total_blocks);
     }
     else {
       MetadataNormal metadata(&m_identifier, end_row);
       if (m_cur_nextcsid != m_last_nextcsid) {
-        metadata.write_files(m_ag_name, file_list, m_cur_nextcsid);
+        metadata.write_files(m_ag_name, file_list, m_total_blocks, m_cur_nextcsid);
         m_last_nextcsid = m_cur_nextcsid;
       }
       else
-        metadata.write_files(m_ag_name, file_list);
+        metadata.write_files(m_ag_name, file_list, m_total_blocks);
     }
     HT_MAYBE_FAIL("LiveFileTracker-update_files_column");
   }
@@ -164,7 +165,7 @@ void LiveFileTracker::update_files_column() {
 }
 
 
-void LiveFileTracker::get_file_list(String &file_list, bool include_blocked) {
+void LiveFileTracker::get_file_data(String &file_list, int64_t *block_countp, bool include_blocked) {
   ScopedLock lock(m_mutex);
 
   file_list = "";
@@ -182,6 +183,7 @@ void LiveFileTracker::get_file_list(String &file_list, bool include_blocked) {
     }
   }
 
+  *block_countp = m_total_blocks;
 }
 
 String LiveFileTracker::strip_basename(const String &fname) {

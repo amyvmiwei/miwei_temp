@@ -174,8 +174,8 @@ namespace Hypertable {
       return m_cell_cache ? m_cell_cache->size() : 0;
     }
 
-    void get_file_list(String &file_list, bool include_blocked) {
-      m_file_tracker.get_file_list(file_list, include_blocked);
+    void get_file_data(String &file_list, int64_t *block_countp, bool include_blocked) {
+      m_file_tracker.get_file_data(file_list, block_countp, include_blocked);
     }
 
     void release_files(const std::vector<String> &files);
@@ -200,7 +200,7 @@ namespace Hypertable {
 
     void merge_caches(bool reset_earliest_cached_revision=true);
     void range_dir_initialize();
-    void recompute_compression_ratio();
+    void recompute_compression_ratio(int64_t *total_index_entriesp=0);
     bool find_merge_run(size_t *indexp=0, size_t *lenp=0);
     bool needs_merging();
     void sort_cellstores_by_timestamp();
