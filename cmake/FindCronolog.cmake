@@ -16,26 +16,27 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-# - Find Rrdtool 
-# Check if the rrdtool binary is installed
+# - Find Cronolog 
+# Check if the cronolog binary is installed
 #
-#  RRDTOOL_DIR        - Directory where the rrdtool is located
-#  RRDTOOL_FOUND      - True if rrdtool was found
+#  CRONOLOG_DIR        - Directory where cronolog is located
+#  CRONOLOG_FOUND      - True if cronolog was found
 
-find_path(RRDTOOL_DIR rrdtool
+find_path(CRONOLOG_DIR cronolog
     /usr/bin
     /usr/local/bin
+    /usr/local/sbin
     )
-if (RRDTOOL_DIR)
-  set(RRDTOOL_FOUND TRUE)
+if (CRONOLOG_DIR)
+  set(CRONOLOG_FOUND TRUE)
 endif()
 
-if (RRDTOOL_FOUND)
-  message(STATUS "Found rrdtool in ${RRDTOOL_DIR}")
+if (CRONOLOG_FOUND)
+  message(STATUS "Found cronolog in ${CRONOLOG_DIR}")
 else ()
-  message(FATAL_ERROR "Not Found rrdtool")
+  message(FATAL_ERROR "Not Found cronolog")
 endif ()
 
 mark_as_advanced(
-  RRDTOOL_DIR
+  CRONOLOG_DIR
   )
