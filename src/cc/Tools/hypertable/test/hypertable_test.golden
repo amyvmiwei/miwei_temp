@@ -155,7 +155,7 @@ key4	TestColumnFamily	tcf4
 LOAD DATA INFILE ROW_KEY_COLUMN=rowkey "hypertable_unknown_cf.tsv" INTO TABLE hypertable;
 ERROR hypertable : caught std::exception: Bad column family 'Unknown'
 ERROR hypertable : set: Hypertable::Exception: Bad column family 'Unknown' - HYPERTABLE bad key
-	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, bool&) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
+	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
 Error: line number 2 - HYPERTABLE bad key
 DROP TABLE IF EXISTS hypertable;
 CREATE TABLE hypertable ( TestColumnFamily );
@@ -691,7 +691,7 @@ ALTER TABLE Fruits RENAME COLUMN FAMILY ('Orange', 'Pink') RENAME COLUMN FAMILY 
 insert into Fruits values('www.cnn.com', 'Orange', 'Kumquat');
 ERROR hypertable : caught std::exception: Bad column family 'Orange'
 ERROR hypertable : set_cells: Hypertable::Exception: Bad column family 'Orange' - HYPERTABLE bad key
-	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&, bool&) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
+	at void Hypertable::TableMutatorAsync::to_full_key(const void*, const char*, const void*, int64_t, int64_t, uint8_t, Hypertable::Key&) (src/cc/Hypertable/Lib/TableMutatorAsync.cc)
 Error: Bad column family 'Orange' - HYPERTABLE bad key
 insert into Fruits values('www.cnn.com', 'Pink', 'Grapefruit');
 select * from Fruits;

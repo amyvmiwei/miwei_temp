@@ -227,14 +227,16 @@ namespace Hypertable {
     void do_sync();
 
     void to_full_key(const void *row, const char *cf, const void *cq,
-                     int64_t ts, int64_t rev, uint8_t flag, Key &full_key, bool &unknown_cf);
-    void to_full_key(const KeySpec &key, Key &full_key, bool &unknown_cf) {
+                     int64_t ts, int64_t rev, uint8_t flag, Key &full_key);
+
+    void to_full_key(const KeySpec &key, Key &full_key) {
       to_full_key(key.row, key.column_family, key.column_qualifier,
-                  key.timestamp, key.revision, key.flag, full_key, unknown_cf);
+                  key.timestamp, key.revision, key.flag, full_key);
     }
-    void to_full_key(const Cell &cell, Key &full_key, bool &unknown_cf) {
+
+    void to_full_key(const Cell &cell, Key &full_key) {
       to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,
-                  cell.timestamp, cell.revision, cell.flag, full_key, unknown_cf);
+                  cell.timestamp, cell.revision, cell.flag, full_key);
     }
 
     void update_unsynced_rangeservers(const CommAddressSet &unsynced);

@@ -299,11 +299,17 @@ void test_put(Thrift::Client *client) {
   cells.push_back(make_cell("put2", "col", 0, "this_will_be_deleted", "2008-11-11 22:22:22"));
   client->offer_cells(ns, "thrift_test", mutate_spec, cells);
   cells.clear();
-  cells.push_back(make_cell("put1", "no_such_col", 0, "v1", "2008-11-11 22:22:22"));
+  cells.push_back(make_cell("put1", "no_such_col", 0, 
+                "v1", "2008-11-11 22:22:22"));
   cells.push_back(make_cell("put2", "col", 0, "", "2008-11-11 22:22:23", 0,
                             ThriftGen::KeyFlag::DELETE_ROW));
   client->refresh_shared_mutator(ns, "thrift_test", mutate_spec);
-  client->offer_cells(ns, "thrift_test", mutate_spec, cells);
+  try {
+    client->offer_cells(ns, "thrift_test", mutate_spec, cells);
+  }
+  catch (ClientException &e) {
+    // ok, fall through
+  }
   client->namespace_close(ns);
   sleep(2);
 }
