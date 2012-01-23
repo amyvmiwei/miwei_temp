@@ -229,7 +229,6 @@ public class Dispatcher {
 
     boolean randomizeTasks = false;
     String argString = "";
-    String valueData = null;
 
     Setup setup = new Setup();
 
@@ -270,7 +269,7 @@ public class Dispatcher {
       else if (args[i].startsWith("--test-name="))
         testName = args[i].substring(12);
       else if (args[i].startsWith("--value-data="))
-	valueData = args[i].substring(13);
+	setup.valueData = args[i].substring(13);
       else if (args[i].equals("--zipf"))
         setup.distribution = Setup.Distribution.ZIPFIAN;
       else if (testTypeSet == false) {
