@@ -116,11 +116,12 @@ void MaintenanceScheduler::schedule() {
   trace_str += String("memory_state.limit\t") + memory_state.limit + "\n";
   trace_str += String("memory_state.needed\t") + memory_state.needed + "\n";
   {
-    uint64_t max_memory;
-    uint64_t available_memory;
-    uint64_t accesses;
-    uint64_t hits;
-    Global::block_cache->get_stats(&max_memory, &available_memory, &accesses, &hits);
+    uint64_t max_memory = 0;
+    uint64_t available_memory = 0;
+    uint64_t accesses = 0;
+    uint64_t hits = 0;
+    if (Global::block_cache)
+      Global::block_cache->get_stats(&max_memory, &available_memory, &accesses, &hits);
     trace_str += String("FileBlockCache-max_memory\t") + max_memory + "\n";
     trace_str += String("FileBlockCache-available_memory\t") + available_memory + "\n";
     trace_str += String("FileBlockCache-accesses\t") + accesses + "\n";
@@ -234,7 +235,7 @@ void MaintenanceScheduler::schedule() {
   }
 
   {
-    int64_t block_cache_memory = Global::block_cache->memory_used();
+    int64_t block_cache_memory = Global::block_cache ? Global::block_cache->memory_used() : 0;
     int64_t total_memory = block_cache_memory + block_index_memory + bloom_filter_memory + cell_cache_memory + shadow_cache_memory + m_query_cache_memory;
     double block_cache_pct = ((double)block_cache_memory / (double)total_memory) * 100.0;
     double block_index_pct = ((double)block_index_memory / (double)total_memory) * 100.0;

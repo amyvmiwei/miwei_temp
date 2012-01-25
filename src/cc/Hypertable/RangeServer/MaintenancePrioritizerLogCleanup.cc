@@ -104,11 +104,13 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
        m_server_stats->get_scan_count(collector_id) > 20)) {
     if (memory_state.balance < memory_state.limit) {
       int64_t available = memory_state.limit - memory_state.balance;
-      int64_t block_cache_available = Global::block_cache->available();
-      if (block_cache_available < available) {
-        HT_INFOF("Increasing block cache limit by %lld",
-                 (Lld)available - block_cache_available);
-        Global::block_cache->increase_limit(available - block_cache_available);
+      if (Global::block_cache) {
+        int64_t block_cache_available = Global::block_cache->available();
+        if (block_cache_available < available) {
+          HT_INFOF("Increasing block cache limit by %lld",
+                   (Lld)available - block_cache_available);
+          Global::block_cache->increase_limit(available - block_cache_available);
+        }
       }
     }
   }
