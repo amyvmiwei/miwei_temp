@@ -171,10 +171,12 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_
     if (!compact_cellcaches(range_data, memory_state, priority, trace_str))
       return;
 
-    Global::block_cache->cap_memory_use();
-    memory_state.decrement_needed( Global::block_cache->decrease_limit(memory_state.needed) );
-    if (!memory_state.need_more())
-      return;
+    if (Global::block_cache) {
+      Global::block_cache->cap_memory_use();
+      memory_state.decrement_needed( Global::block_cache->decrease_limit(memory_state.needed) );
+      if (!memory_state.need_more())
+        return;
+    }
 
     if (!purge_cellstore_indexes(range_data, memory_state, priority, trace_str))
       return;
@@ -185,10 +187,12 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_
     HT_INFOF("WRITE workload prioritization (update_bytes=%llu, scan_count=%u)",
 	     (Llu)update_bytes, (unsigned)scan_count);
 
-    Global::block_cache->cap_memory_use();
-    memory_state.decrement_needed( Global::block_cache->decrease_limit(memory_state.needed) );
-    if (!memory_state.need_more())
-      return;
+    if (Global::block_cache) {
+      Global::block_cache->cap_memory_use();
+      memory_state.decrement_needed( Global::block_cache->decrease_limit(memory_state.needed) );
+      if (!memory_state.need_more())
+        return;
+    }
 
     if (!purge_cellstore_indexes(range_data, memory_state, priority, trace_str))
       return;

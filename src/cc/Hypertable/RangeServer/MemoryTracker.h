@@ -45,7 +45,7 @@ namespace Hypertable {
 
     int64_t balance() {
       ScopedLock lock(m_mutex);
-      return m_memory_used + m_block_cache->memory_used();
+      return m_memory_used + (m_block_cache ? m_block_cache->memory_used() : 0);
     }
 
   private:

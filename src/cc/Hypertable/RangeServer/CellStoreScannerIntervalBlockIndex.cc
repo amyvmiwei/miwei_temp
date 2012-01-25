@@ -93,8 +93,12 @@ CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(C
 
 template <typename IndexT>
 CellStoreScannerIntervalBlockIndex<IndexT>::~CellStoreScannerIntervalBlockIndex() {
-  if (m_block.base != 0)
-    Global::block_cache->checkin(m_file_id, m_block.offset);
+  if (m_block.base != 0) {
+    if (Global::block_cache)
+      Global::block_cache->checkin(m_file_id, m_block.offset);
+    else
+      delete [] m_block.base;
+  }
   delete m_zcodec;
   delete m_key_decompressor;
 }
@@ -173,7 +177,10 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
 
   // If we're at the end of the current block, deallocate and move to next
   if (m_block.base != 0 && eob) {
-    Global::block_cache->checkin(m_file_id, m_block.offset);
+    if (Global::block_cache)
+      Global::block_cache->checkin(m_file_id, m_block.offset);
+    else
+      delete [] m_block.base;
     memset(&m_block, 0, sizeof(m_block));
     ++m_iter;
 
@@ -206,8 +213,9 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
     /**
      * Cache lookup / block read
      */
-    if (!Global::block_cache->checkout(m_file_id, (uint32_t)m_block.offset,
-                                      (uint8_t **)&m_block.base, &len)) {
+    if (Global::block_cache == 0 ||
+        !Global::block_cache->checkout(m_file_id, (uint32_t)m_block.offset,
+                                       (uint8_t **)&m_block.base, &len)) {
       bool second_try = false;
     try_again:
       try {
@@ -250,8 +258,9 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
       len = fill;
 
       /** Insert block into cache  **/
-      if (!Global::block_cache->insert_and_checkout(m_file_id, m_block.offset,
-                                         (uint8_t *)m_block.base, len)) {
+      if (Global::block_cache &&
+          !Global::block_cache->insert_and_checkout(m_file_id, m_block.offset,
+                                                    (uint8_t *)m_block.base, len)) {
         delete [] m_block.base;
 
         if (!Global::block_cache->checkout(m_file_id, m_block.offset,
