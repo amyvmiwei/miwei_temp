@@ -153,7 +153,7 @@ namespace Hypertable {
 
     friend class UpdateThread;
 
-    void update_qualify_and_transform(bool metadata);
+    void update_qualify_and_transform();
     void update_commit();
     void update_add_and_respond();
 
@@ -196,9 +196,6 @@ namespace Hypertable {
     Mutex                      m_update_qualify_queue_mutex;
     boost::condition           m_update_qualify_queue_cond;
     std::list<UpdateContext *> m_update_qualify_queue;
-    Mutex                      m_update_qualify_metadata_queue_mutex;
-    boost::condition           m_update_qualify_metadata_queue_cond;
-    std::list<UpdateContext *> m_update_qualify_metadata_queue;
     Mutex                      m_update_commit_queue_mutex;
     boost::condition           m_update_commit_queue_cond;
     int32_t                    m_update_commit_queue_count;
