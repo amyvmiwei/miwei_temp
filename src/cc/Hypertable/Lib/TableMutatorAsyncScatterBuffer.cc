@@ -313,7 +313,7 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
   if (outstanding)
     m_outstanding = true;
   else
-    m_app_queue->add(new TableMutatorAsyncHandler(m_mutator, m_id));
+    m_app_queue->add_unlocked(new TableMutatorAsyncHandler(m_mutator, m_id));
 }
 
 

@@ -53,6 +53,10 @@ namespace Hypertable {
      */
     virtual void add(ApplicationHandler *app_handler) {
       ScopedLock lock(m_mutex);
+      add_unlocked(app_handler);
+    }
+
+    virtual void add_unlocked(ApplicationHandler *app_handler) {
       m_work_queue.push_back(app_handler);
       m_cond.notify_one();
     }
