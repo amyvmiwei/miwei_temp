@@ -325,6 +325,10 @@ namespace Hypertable {
         m_state.cond.notify_one();
       }
     }
+
+    virtual void add_unlocked(ApplicationHandler *app_handler) {
+      add(app_handler);
+    }
   };
 
   typedef boost::intrusive_ptr<ApplicationQueue> ApplicationQueuePtr;
