@@ -63,6 +63,7 @@ namespace Hypertable {
     BlockCompressionCodec *m_zcodec;
     KeyDecompressor      *m_key_decompressor;
     int32_t               m_fd;
+    bool                  m_cached;
     bool                  m_check_for_range_end;
     int                   m_file_id;
     ScanContextPtr        m_scan_ctx;
