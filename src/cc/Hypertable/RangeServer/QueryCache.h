@@ -77,7 +77,9 @@ namespace Hypertable {
 
     void dump();
 
-    uint64_t available_memory() { return m_avail_memory; }
+    uint64_t available_memory() { ScopedLock lock(m_mutex); return m_avail_memory; }
+
+    uint64_t memory_used() { ScopedLock lock(m_mutex); return m_max_memory-m_avail_memory; }
 
     void get_stats(uint64_t *max_memoryp, uint64_t *available_memoryp,
                    uint64_t *total_lookupsp, uint64_t *total_hitsp);

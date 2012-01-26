@@ -25,13 +25,14 @@
 #include <boost/thread/mutex.hpp>
 
 #include "FileBlockCache.h"
+#include "QueryCache.h"
 
 namespace Hypertable {
 
   class MemoryTracker {
   public:
-    MemoryTracker(FileBlockCache *block_cache) 
-      : m_memory_used(0), m_block_cache(block_cache) { }
+    MemoryTracker(FileBlockCache *block_cache, QueryCache *query_cache) 
+      : m_memory_used(0), m_block_cache(block_cache), m_query_cache(query_cache) { }
 
     void add(int64_t amount) {
       ScopedLock lock(m_mutex);
@@ -45,13 +46,15 @@ namespace Hypertable {
 
     int64_t balance() {
       ScopedLock lock(m_mutex);
-      return m_memory_used + (m_block_cache ? m_block_cache->memory_used() : 0);
+      return m_memory_used + (m_block_cache ? m_block_cache->memory_used() : 0) +
+        (m_query_cache ? m_query_cache->memory_used() : 0);
     }
 
   private:
     Mutex m_mutex;
     int64_t m_memory_used;
     FileBlockCache *m_block_cache;
+    QueryCache *m_query_cache;
   };
 
 }

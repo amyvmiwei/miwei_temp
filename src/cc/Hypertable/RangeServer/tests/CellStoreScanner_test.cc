@@ -41,7 +41,6 @@
 
 #include "../CellStoreFactory.h"
 #include "../CellStoreV5.h"
-#include "../FileBlockCache.h"
 #include "../Global.h"
 
 #include <cstdlib>
@@ -614,8 +613,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    Global::block_cache = new FileBlockCache(10000000LL, 20000000LL);
-    Global::memory_tracker = new MemoryTracker(Global::block_cache);
+    Global::memory_tracker = new MemoryTracker(0, 0);
 
     String testdir = "/CellStoreScanner_test";
     client->mkdirs(testdir);
