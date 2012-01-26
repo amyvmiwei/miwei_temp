@@ -39,7 +39,6 @@
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "../CellStoreV5.h"
-#include "../FileBlockCache.h"
 #include "../Global.h"
 
 #include <cstdlib>
@@ -525,8 +524,7 @@ int main(int argc, char **argv) {
       return 1;
     }
 
-    Global::block_cache = new FileBlockCache(100000LL, 100000LL);
-    Global::memory_tracker = new MemoryTracker(Global::block_cache);
+    Global::memory_tracker = new MemoryTracker(0, 0);
 
     String testdir = "/CellStoreScanner_delete_test";
     client->mkdirs(testdir);

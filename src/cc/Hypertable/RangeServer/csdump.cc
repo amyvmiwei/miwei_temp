@@ -142,8 +142,7 @@ int main(int argc, char **argv) {
 
     Global::dfs = dfs;
 
-    Global::block_cache = new FileBlockCache(200000000LL, 200000000LL);
-    Global::memory_tracker = new MemoryTracker(Global::block_cache);
+    Global::memory_tracker = new MemoryTracker(0, 0);
 
     /**
      * Open cellStore
