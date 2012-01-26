@@ -98,7 +98,7 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
       m_available += (length-m_available);
     }
     else
-      HT_FATALF("Unable to add block (%lld bytes) to block cache", (Lld)length);
+      return false;
   }
 
   BlockCacheEntry entry(file_id, file_offset);

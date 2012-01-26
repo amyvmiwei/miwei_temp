@@ -38,7 +38,7 @@ template <typename IndexT>
 CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(CellStore *cellstore,
   IndexT *index, SerializedKey start_key, SerializedKey end_key, ScanContextPtr &scan_ctx) :
   m_cellstore(cellstore), m_index(index), m_start_key(start_key),
-  m_end_key(end_key), m_fd(-1), m_check_for_range_end(false),
+  m_end_key(end_key), m_fd(-1), m_cached(false), m_check_for_range_end(false),
   m_scan_ctx(scan_ctx), m_rowset(scan_ctx->rowset) {
 
   memset(&m_block, 0, sizeof(m_block));
@@ -94,7 +94,7 @@ CellStoreScannerIntervalBlockIndex<IndexT>::CellStoreScannerIntervalBlockIndex(C
 template <typename IndexT>
 CellStoreScannerIntervalBlockIndex<IndexT>::~CellStoreScannerIntervalBlockIndex() {
   if (m_block.base != 0) {
-    if (Global::block_cache)
+    if (m_cached)
       Global::block_cache->checkin(m_file_id, m_block.offset);
     else
       delete [] m_block.base;
@@ -177,7 +177,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
 
   // If we're at the end of the current block, deallocate and move to next
   if (m_block.base != 0 && eob) {
-    if (Global::block_cache)
+    if (m_cached)
       Global::block_cache->checkin(m_file_id, m_block.offset);
     else
       delete [] m_block.base;
@@ -257,19 +257,17 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
       m_block.base = expand_buf.release(&fill);
       len = fill;
 
+      m_cached = false;
+
       /** Insert block into cache  **/
       if (Global::block_cache &&
-          !Global::block_cache->insert_and_checkout(m_file_id, m_block.offset,
-                                                    (uint8_t *)m_block.base, len)) {
-        delete [] m_block.base;
-
-        if (!Global::block_cache->checkout(m_file_id, m_block.offset,
-                                          (uint8_t **)&m_block.base, &len)) {
-          HT_FATALF("Problem checking out block from cache file_id=%d, "
-                    "offset=%lld", m_file_id, (Lld)m_block.offset);
-        }
-      }
+          Global::block_cache->insert_and_checkout(m_file_id, m_block.offset,
+                                                   (uint8_t *)m_block.base, len))
+        m_cached = true;
     }
+    else
+      m_cached = true;
+
     m_key_decompressor->reset();
     m_block.end = m_block.base + len;
     m_cur_value.ptr = m_key_decompressor->add(m_block.base);
