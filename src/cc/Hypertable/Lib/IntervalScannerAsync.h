@@ -66,7 +66,8 @@ namespace Hypertable {
     void    set_rows_seen(int32_t n) { m_rows_seen = n; }
     bool abort(bool is_create);
     // if we can't retry then abort scanner
-    bool retry_or_abort(bool refresh, bool hard, bool is_create, bool *move_to_next);
+    bool retry_or_abort(bool refresh, bool hard, bool is_create, 
+            bool *move_to_next, int last_error);
     bool handle_result(bool *show_results, ScanCellsPtr &cells, EventPtr &event, bool is_create);
     bool set_current(bool *show_results, ScanCellsPtr &cells, bool abort);
     inline bool has_outstanding_requests() { return m_create_outstanding || m_fetch_outstanding; }

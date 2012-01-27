@@ -176,7 +176,8 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
       case (Error::TABLE_NOT_FOUND):
       case (Error::RANGESERVER_TABLE_NOT_FOUND):
         if (m_table->auto_refresh() && is_create)
-        abort = !(m_interval_scanners[scanner_id]->retry_or_abort(true, true, is_create, &next));
+        abort = !(m_interval_scanners[scanner_id]->retry_or_abort(true, true, 
+                    is_create, &next, error));
         else {
           next = m_interval_scanners[scanner_id]->abort(is_create);
           abort = true;
@@ -184,7 +185,8 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
         break;
       case (Error::RANGESERVER_GENERATION_MISMATCH):
         if (m_table->auto_refresh() && is_create)
-        abort = !(m_interval_scanners[scanner_id]->retry_or_abort(true, false, is_create, &next));
+        abort = !(m_interval_scanners[scanner_id]->retry_or_abort(true, false, 
+                    is_create, &next, error));
         else {
           next = m_interval_scanners[scanner_id]->abort(is_create);
           abort = true;
@@ -197,7 +199,8 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
       case(Error::RANGESERVER_RANGE_NOT_FOUND):
       case(Error::COMM_NOT_CONNECTED):
       case(Error::COMM_BROKEN_CONNECTION):
-        abort = !(m_interval_scanners[scanner_id]->retry_or_abort(false, true, is_create, &next));
+        abort = !(m_interval_scanners[scanner_id]->retry_or_abort(false, true, 
+                    is_create, &next, error));
         break;
 
       default:
