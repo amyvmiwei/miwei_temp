@@ -375,17 +375,33 @@ void TableScannerAsync::move_to_next_interval_scanner(int current_scanner, bool 
       break;
     }
     m_current_scanner = current_scanner;
+
     if (m_interval_scanners[current_scanner] !=0) {
       next = m_interval_scanners[current_scanner]->set_current(&do_callback, cells, abort);
       HT_ASSERT(do_callback || !next || abort);
 
-      // scan was cancelled and this is the last outstanding scanner
-      if (next && m_outstanding==1 && cancelled && m_error == Error::OK) {
+      // this is the last outstanding scanner and the scan was cancelled
+      // or failed with an error
+      if (next 
+          && m_outstanding==1 
+          && ((cancelled && m_error == Error::OK)
+            || m_error != Error::OK)) {
         do_callback = true;
         cells = new ScanCells;
       }
       maybe_callback_ok(m_current_scanner, next, do_callback, cells);
     }
+  }
+
+  // if we skipped ALL outstanding scanners then make sure the "eos" marker
+  // is sent to the caller, and m_outstanding is decremented
+  if (next 
+      && m_outstanding == 1
+      && current_scanner == ((int)m_interval_scanners.size() - 1) 
+      && !cells) {
+    cells = new ScanCells;
+    maybe_callback_ok(m_current_scanner, true, true, cells);
+    m_current_scanner = (int)m_interval_scanners.size() - 1;
   }
 }
 
