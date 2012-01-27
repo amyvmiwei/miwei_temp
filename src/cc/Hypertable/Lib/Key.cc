@@ -58,40 +58,6 @@ namespace Hypertable {
   const char *Key::END_ROW_MARKER = (const char *)end_row_chars;
   const char *Key::END_ROOT_ROW   = (const char *)end_root_row_chars;
 
-  ByteString
-  create_key(uint8_t flag, const char *row, uint8_t column_family_code,
-      const char *column_qualifier, int64_t timestamp, int64_t revision) {
-    size_t len = 1 + strlen(row) + 4;
-    uint8_t control = 0;
-
-    if (timestamp == AUTO_ASSIGN)
-      control = Key::AUTO_TIMESTAMP;
-    else if (timestamp != TIMESTAMP_NULL) {
-      len += 8;
-      control = Key::HAVE_TIMESTAMP;
-    }
-
-    if (revision != AUTO_ASSIGN) {
-      len += 8;
-      control |= Key::HAVE_REVISION;
-    }
-
-    uint8_t *ptr = new uint8_t [len + Serialization::encoded_length_vi32(len)];
-        // !!! could probably just make this 6
-    ByteString bs(ptr);
-    Serialization::encode_vi32(&ptr, len);
-    ptr += write_key(ptr, control, flag, row, column_family_code,
-                     column_qualifier);
-
-    if (control & Key::HAVE_TIMESTAMP)
-      Key::encode_ts64(&ptr, timestamp);
-
-    if (control & Key::HAVE_REVISION)
-      Key::encode_ts64(&ptr, revision);
-
-    return bs;
-  }
-
   void
   create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag, const char *row,
       uint8_t column_family_code, const char *column_qualifier,
