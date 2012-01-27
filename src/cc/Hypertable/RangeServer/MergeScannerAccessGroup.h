@@ -267,6 +267,8 @@ namespace Hypertable {
     DynamicBuffer m_deleted_cell_version;
     std::set<int64_t> m_deleted_cell_version_set;
 
+    ScanContext*  m_scan_context;
+
   };
 
 } // namespace Hypertable

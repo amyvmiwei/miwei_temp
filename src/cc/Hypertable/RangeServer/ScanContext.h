@@ -100,7 +100,7 @@ namespace Hypertable {
     bool has_qualifier_filter() const {
       return filter_by_exact_qualifier||filter_by_regexp_qualifier;
     }
-    bool has_qualifier_regexp_filter() const { return regexp_qualifiers.size()>0;}
+    bool has_qualifier_regexp_filter() const { return filter_by_regexp_qualifier;}
 
     int64_t  cutoff_time;
     uint32_t max_versions;
