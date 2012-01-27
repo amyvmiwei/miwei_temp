@@ -43,6 +43,8 @@ extern "C" {
 #include "Hyperspace/DirEntry.h"
 #include "Hypertable/Lib/Config.h"
 
+#include "Hypertable/Master/Operation.h"
+
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
 
@@ -77,14 +79,16 @@ Client::Client(const String &install_dir, uint32_t default_timeout_ms)
   initialize();
 }
 
-void Client::create_namespace(const String &name, Namespace *base, bool create_intermediate) {
+void Client::create_namespace(const String &name, Namespace *base, bool create_intermediate, bool if_not_exists) {
 
   String full_name;
   String sub_name = name;
-  int flags=NameIdMapper::IS_NAMESPACE;
+  int flags=0;
 
-  if(create_intermediate)
-    flags |= NameIdMapper::CREATE_INTERMEDIATE;
+  if (create_intermediate)
+    flags |= NamespaceFlag::CREATE_INTERMEDIATE;
+  if (if_not_exists)
+    flags |= NamespaceFlag::IF_NOT_EXISTS;
 
   if (base != NULL) {
     full_name = base->get_name() + '/';

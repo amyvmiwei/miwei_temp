@@ -87,7 +87,17 @@ void OperationCreateNamespace::execute() {
   case OperationState::ASSIGN_ID:
     if (m_flags & NamespaceFlag::CREATE_INTERMEDIATE)
       nsflags |= NameIdMapper::CREATE_INTERMEDIATE;
-    m_context->namemap->add_mapping(m_name, m_id, nsflags, true);
+    try {
+      m_context->namemap->add_mapping(m_name, m_id, nsflags, true);
+    }
+    catch (Exception &e) {
+      if (e.code() == Error::INDUCED_FAILURE)
+        throw;
+      if (e.code() != Error::NAMESPACE_DOES_NOT_EXIST)
+        HT_ERROR_OUT << e << HT_END;
+      complete_error(e);
+      return;
+    }
     HT_MAYBE_FAIL("create-namespace-ASSIGN_ID-a");
     hyperspace_dir = m_context->toplevel_dir + "/tables" + m_id;
     try {
