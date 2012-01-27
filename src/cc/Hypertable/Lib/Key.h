@@ -155,29 +155,6 @@ namespace Hypertable {
     return os;
   }
 
-
-  /**
-   * Builds an opaque key from a set of key components.  This function allocates
-   * memory for the key an then packs the components into the key so that keys
-   * can be lexicographically compared.  The opaque key has the following
-   * packed format:
-   * <p>
-   * [rowkey][column-family][column-qualifier][flag][~BIGENDIAN(timestamp)]
-   * <p>
-   * @param flag DELETE_ROW, DELETE_COLUMN_FAMILY, DELETE_CELL, DELETE_CELL_VERSION or INSERT
-   * @param row NUL-terminated row key
-   * @param column_family_code column family
-   * @param column_qualifier NUL-terminated column qualifier
-   * @param timestamp timestamp in microseconds
-   * @param revision
-   * @return newly allocated opaque key
-   */
-  ByteString create_key(uint8_t flag, const char *row,
-                        uint8_t column_family_code,
-                        const char *column_qualifier,
-                        int64_t timestamp = AUTO_ASSIGN,
-                        int64_t revision = AUTO_ASSIGN);
-
   void create_key_and_append(DynamicBuffer &dst_buf, const char *row);
 
   void create_key_and_append(DynamicBuffer &dst_buf, uint8_t flag,
