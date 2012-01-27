@@ -314,7 +314,7 @@ bool IntervalScannerAsync::is_destroyed_scanner(bool is_create) {
 }
 
 bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_create,
-      bool *move_to_next) {
+      bool *move_to_next, int last_error) {
   uint32_t wait_time = 3000;
   reset_outstanding_status(is_create, false);
 
@@ -348,7 +348,13 @@ bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_creat
   try {
     if (refresh)
       m_table->refresh(m_table_identifier, m_schema);
-    poll(0, 0, wait_time);
+    // if the range was not found then first check the location cache before
+    // sleeping
+    if (last_error == Error::RANGESERVER_RANGE_NOT_FOUND)
+      if (Error::OK != m_range_locator->find(&m_table_identifier, 
+                  m_create_scanner_row.c_str(), &m_next_range_info, 
+                  m_create_timer, false))
+        poll(0, 0, wait_time);
     find_range_and_start_scan(m_create_scanner_row.c_str(), hard);
   }
   catch (Exception &e) {
