@@ -14,7 +14,7 @@ using namespace ::apache::thrift::server;
 
 using boost::shared_ptr;
 
-using namespace Hypertable::ThriftGen;
+using namespace  ::Hypertable::ThriftGen;
 
 class ClientServiceHandler : virtual public ClientServiceIf {
  public:

@@ -43,7 +43,7 @@ require_once $GEN_DIR.'/Hql/HqlService.php';
 require_once $GEN_DIR.'/Hql/Hql_types.php';
 error_reporting($old_error_reporting);
 
-class Hypertable_ThriftClient extends HqlServiceClient {
+class Hypertable_ThriftClient extends Hypertable_ThriftGen_HqlServiceClient {
   function __construct($host, $port, $timeout_ms = 300000, $do_open = true) {
     $socket = new TSocket($host, $port);
     $socket->setSendTimeout($timeout_ms);
