@@ -43,7 +43,7 @@ fi
 let CELLSIZE=KEY_SIZE+VALUE_SIZE
 let KEYMAX=DATA_SIZE/CELLSIZE
 let DISTRANGE=100000000
-let KEYCOUNT=10000000
+let KEYCOUNT=100000000
 
 #
 # This file should be the same on all test Client machines.  I can be
@@ -54,13 +54,14 @@ let KEYCOUNT=10000000
 CMF=/data/1/test/cmf.dat
 
 ${STOP_SYSTEM}
+CONFIG=$PWD/hypertable-read-random-uniform.cfg
 ${START_SYSTEM}
 sleep 300
 
 cap -S test_driver=$SYSTEM -S client_multiplier=128 -S test_args="--test-name=$TEST_NAME --output-dir=$REPORT_DIR --random --key-max=$KEYMAX --submit-exactly=$KEYCOUNT read $KEY_SIZE $VALUE_SIZE $DATA_SIZE" run_test 
 
 ${STOP_SYSTEM}
-CONFIG=$PWD/perftest-hypertable-query.cfg
+CONFIG=$PWD/hypertable-read-random-zipfian.cfg
 ${START_SYSTEM}
 sleep 300
 
