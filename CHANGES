@@ -1,3 +1,42 @@
+Version 0.9.5.5:
+(2012-01-28)
+
+    Upgraded to Thrift 0.8.0
+    Issue #760: Changed LICENSE.txt and copyright header in sources to GPL v3
+    Added ability to disable block cache; Disabled it for now
+    Fixed concurrency problems in TableMutator classes
+    Fixed deadlocks in update path
+    Fixed race condition leading to deadlock in TableMutator
+    Fixed error propagation in scanner
+    Only account for QueryCache fill in MemoryTracker
+    Fixed BlockCache problem when not enough room to hold block
+    Improved response time if TableScanner recovers from RANGESERVER_RANGE_NOT_FOUND error
+    More updates to PerformanceTest
+    Added missing member initialization to ScanSpec constructor
+    Got rid of unused function
+    Fixed qualifier regex logic
+    Fixed mis-interpretation of CREATE_INTERMEDIATE in Client::create_namespace
+    Fixed bug recently introduce in the update path
+    issue 773: Removed deadlock in TableMutatorAsync
+    Fixed bug recently introduced in PerformanceTest causing value-data file to be null
+    Issue #766: cronolog is now packaged into /bin directory
+    Issue #734: Removed dependency to librrd
+    Added BlockCount field to METADATA table
+    Improved integration tests; several tests are now running more reliable
+    Added memory mapped CMF data file for Zipfian random number generator
+    Issue #484: Added a regression test
+    Issue #743: Added function error_get_text which returns a string describing an error number
+    Issue #672, #758: Serverup tool now connects to local master instead of the one listed in hyperspace
+    PerformanceTest improvements; Got random read tests working
+    issue 745: fixed missing dependency problem on mac
+    Added additional 3 second clock skew leeway in Master register server
+    Made RangeServer::acknowledge_load request URGENT
+    issue 754: Added support MAX_VERSIONS <n> (e.g. without '=')
+    Modified Hypertable perftest to run over multiple interfaces
+    Added missing Thrift Client interface libraries to installation
+    Updated Thrift client_test examples to reflect recent API name changes
+    Fixed thrift-reconnect-hyperspace test
+
 Version 0.9.5.4:
 (2011-12-21)
 
