@@ -242,6 +242,7 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
     cell_intervals(CellIntervalAlloc(arena)),
     time_interval(ss.time_interval.first, ss.time_interval.second),
     return_deletes(ss.return_deletes), keys_only(ss.keys_only),
+    row_regexp(arena.dup(ss.row_regexp)), value_regexp(arena.dup(ss.value_regexp)),
     scan_and_filter_rows(ss.scan_and_filter_rows) {
   columns.reserve(ss.columns.size());
   row_intervals.reserve(ss.row_intervals.size());
