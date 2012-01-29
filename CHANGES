@@ -1,5 +1,5 @@
 Version 0.9.5.5:
-(2012-01-28)
+(2012-01-30)
 
     Upgraded to Thrift 0.8.0
     Issue #760: Changed LICENSE.txt and copyright header in sources to GPL v3
