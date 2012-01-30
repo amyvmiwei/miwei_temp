@@ -42,7 +42,6 @@ if [ "$SYSTEM" == "hypertable" ] ; then
 elif [ "$SYSTEM" == "hbase" ] ; then
     STOP_SYSTEM=stop_hbase
     START_SYSTEM=start_hbase
-    sudo cp $PWD/hbase-site-query.xml /etc/hbase/conf/hbase-site.xml
 else
     echo "ERROR:  Unrecognized system name '$SYSTEM'"
     exit 1

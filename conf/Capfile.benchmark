@@ -347,6 +347,90 @@ task :stop_thriftbrokers, :roles => :thriftbroker do
   CMD
 end
 
+desc "Starts HBase processes."
+task :start_hbase do
+  transaction do
+    start_zookeeper
+    start_hbase_master
+    start_hbase_regionservers
+  end
+end
+
+desc "Starts Zookeeper processes."
+task :start_zookeeper, :roles => :hyperspace do
+  run <<-CMD
+   service hadoop-zookeeper-server start
+  CMD
+end
+
+desc "Starts HBase Master processes."
+task :start_hbase_master, :roles => :master do
+  run <<-CMD
+   service hadoop-hbase-master start
+  CMD
+end
+
+desc "Starts HBase Regionserver processes."
+task :start_hbase_regionservers, :roles => :slave do
+  run <<-CMD
+   service hadoop-hbase-regionserver start
+  CMD
+end
+
+
+desc "Stops HBase and Zookeeper"
+task :stop_hbase do
+  transaction do
+    stop_hbase_master
+    stop_hbase_regionservers
+    stop_zookeeper
+  end  
+end
+
+desc "Stop HBase master processes"
+task :stop_hbase_master, :roles => :master do
+  run <<-CMD
+  service hadoop-hbase-master stop
+  CMD
+end
+
+desc "Stops HBase regionserver processes."
+task :stop_hbase_regionservers, :roles => :slave do
+  run <<-CMD
+  service hadoop-hbase-regionserver stop
+  CMD
+end
+
+desc "Stops Zookeeper processes."
+task :stop_zookeeper, :roles => :hyperspace do
+  run <<-CMD 
+  service hadoop-zookeeper-server stop
+  CMD
+end
+
+desc "Cleans HBase, removing all tables."
+task :clean_hbase do
+  transaction do
+    clean_hbase_hdfs
+    clean_zookeeper
+  end  
+end
+
+desc "Clean Zookeeper removing all state"
+task :clean_zookeeper, :roles => :hyperspace do
+  run <<-CMD 
+  rm -rf /var/zookeeper/version*
+  CMD
+end
+
+desc "Clean HBase HDFS state"
+task :clean_hbase_hdfs, :roles => :master do
+  run <<-CMD 
+  hadoop fs -rmr /hbase/*
+  CMD
+end
+
+
 desc "Cleans hyperspace & rangeservers, removing all tables."
 task :cleandb do
   transaction do
