@@ -25,19 +25,7 @@
 #include "Hypertable/Lib/TableMutator.h"
 #include "Hypertable/Lib/TableScanner.h"
 
-#include <boost/uuid/uuid.hpp>
-#include <boost/uuid/uuid_generators.hpp>
-#include <boost/uuid/uuid_io.hpp>
-#include <boost/lexical_cast.hpp>
-
 namespace Hypertable { namespace HyperAppHelper {
-
-String generate_guid()
-{
-  boost::uuids::random_generator gen;
-  boost::uuids::uuid u(gen());
-  return boost::lexical_cast<String>(u);
-}
 
 void 
 create_cell_unique(const TablePtr &table, const KeySpec &key,
