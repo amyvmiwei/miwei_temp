@@ -28,6 +28,11 @@
 #include "Hypertable/Lib/Table.h"
 #include "Hypertable/Lib/Cell.h"
 
+#include <boost/uuid/uuid.hpp>
+#include <boost/uuid/uuid_generators.hpp>
+#include <boost/uuid/uuid_io.hpp>
+#include <boost/lexical_cast.hpp>
+
 namespace Hypertable { namespace HyperAppHelper {
 
   /**
@@ -36,7 +41,11 @@ namespace Hypertable { namespace HyperAppHelper {
    * GUIDs are globally unique. The generated string is 36 bytes long and 
    * has a format similar to "9cf7da31-307a-4bef-b65e-19fb05aa57d8".
    */
-  extern String generate_guid();
+  inline String generate_guid() {
+    boost::uuids::random_generator gen;
+    boost::uuids::uuid u(gen());
+    return boost::lexical_cast<String>(u);
+  }
 
   /**
    * Inserts a unique value into a table
