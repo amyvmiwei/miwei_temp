@@ -200,8 +200,6 @@ void Client::initialize() {
 
   m_hyperspace = new Hyperspace::Session(m_comm, m_props);
 
-  m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
-
   Timer timer(m_timeout_ms, true);
 
   remaining = timer.remaining();
@@ -217,6 +215,8 @@ void Client::initialize() {
     remaining = timer.remaining();
     wait_time = (remaining < interval) ? remaining : interval;
   }
+
+  m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
 
   m_app_queue = new ApplicationQueue(m_props->
                                      get_i32("Hypertable.Client.Workers"));
