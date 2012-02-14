@@ -767,10 +767,7 @@ void Monitoring::invalidate_id_mapping(const String &table_id) {
 }
 
 void Monitoring::run_rrdtool(std::vector<String> &command) {
-  const char *env = ::getenv("HYPERTABLE_HOME");
-  if (!env)
-    env = ".";
-  String cmd = env;
+  String cmd = System::install_dir;
   cmd += "/bin/rrdtool";
 
   foreach (const String &s, command) {
