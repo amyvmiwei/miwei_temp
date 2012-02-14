@@ -1871,7 +1871,7 @@ public:
     TablePtr t = namespace_ptr->open_table(table);
     FuturePtr future_ptr = get_future(ff);
 
-    return t->create_mutator_async(future_ptr.get(), flags);
+    return t->create_mutator_async(future_ptr.get(), 0, flags);
   }
 
   TableScannerAsyncPtr
