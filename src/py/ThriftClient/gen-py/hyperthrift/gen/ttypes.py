@@ -3,7 +3,7 @@
 #
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
-#  options string: py
+#  options string: py:new_style
 #
 
 from thrift.Thrift import TType, TMessageType, TException
@@ -16,7 +16,7 @@ except:
   fastbinary = None
 
 
-class KeyFlag:
+class KeyFlag(object):
   """
   State flags for a key
 
@@ -55,7 +55,7 @@ class KeyFlag:
     "INSERT": 255,
   }
 
-class MutatorFlag:
+class MutatorFlag(object):
   """
   Mutator creation flags
 
@@ -76,7 +76,7 @@ class MutatorFlag:
   }
 
 
-class RowInterval:
+class RowInterval(object):
   """
   Specifies a range of rows
 
@@ -188,7 +188,7 @@ class RowInterval:
   def __ne__(self, other):
     return not (self == other)
 
-class CellInterval:
+class CellInterval(object):
   """
   Specifies a range of cells
 
@@ -332,7 +332,7 @@ class CellInterval:
   def __ne__(self, other):
     return not (self == other)
 
-class ScanSpec:
+class ScanSpec(object):
   """
   Specifies options for a scan
 
@@ -650,7 +650,7 @@ class ScanSpec:
   def __ne__(self, other):
     return not (self == other)
 
-class Key:
+class Key(object):
   """
   Defines a cell key
 
@@ -794,7 +794,7 @@ class Key:
   def __ne__(self, other):
     return not (self == other)
 
-class MutateSpec:
+class MutateSpec(object):
   """
   Specifies options for a shared periodic mutator
 
@@ -897,7 +897,7 @@ class MutateSpec:
   def __ne__(self, other):
     return not (self == other)
 
-class Cell:
+class Cell(object):
   """
   Defines a table cell
 
@@ -980,7 +980,7 @@ class Cell:
   def __ne__(self, other):
     return not (self == other)
 
-class Result:
+class Result(object):
   """
   Specifies a result object for asynchronous requests.
   TODO: add support for update results
@@ -1155,7 +1155,7 @@ class Result:
   def __ne__(self, other):
     return not (self == other)
 
-class ResultAsArrays:
+class ResultAsArrays(object):
   """
   Specifies a result object for asynchronous requests.
   TODO: add support for update results
@@ -1337,7 +1337,7 @@ class ResultAsArrays:
   def __ne__(self, other):
     return not (self == other)
 
-class ResultSerialized:
+class ResultSerialized(object):
   """
   Specifies a serialized result object for asynchronous requests.
   TODO: add support for update results
@@ -1503,7 +1503,7 @@ class ResultSerialized:
   def __ne__(self, other):
     return not (self == other)
 
-class NamespaceListing:
+class NamespaceListing(object):
   """
   Defines an individual namespace listing
 
@@ -1589,7 +1589,7 @@ class NamespaceListing:
   def __ne__(self, other):
     return not (self == other)
 
-class TableSplit:
+class TableSplit(object):
   """
   Defines a table split
 
@@ -1716,7 +1716,7 @@ class TableSplit:
   def __ne__(self, other):
     return not (self == other)
 
-class ColumnFamily:
+class ColumnFamily(object):
   """
   Describes a ColumnFamily
   <dl>
@@ -1827,7 +1827,7 @@ class ColumnFamily:
   def __ne__(self, other):
     return not (self == other)
 
-class AccessGroup:
+class AccessGroup(object):
   """
   Describes an AccessGroup
   <dl>
@@ -1992,7 +1992,7 @@ class AccessGroup:
   def __ne__(self, other):
     return not (self == other)
 
-class Schema:
+class Schema(object):
   """
   Describes a schema
   <dl>

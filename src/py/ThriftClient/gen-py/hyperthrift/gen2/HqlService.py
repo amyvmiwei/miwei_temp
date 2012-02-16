@@ -3,7 +3,7 @@
 #
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
-#  options string: py
+#  options string: py:new_style
 #
 
 from thrift.Thrift import TType, TMessageType, TException
@@ -461,7 +461,7 @@ class Processor(hyperthrift.gen.ClientService.Processor, Iface, TProcessor):
 
 # HELPER FUNCTIONS AND STRUCTURES
 
-class hql_exec_args:
+class hql_exec_args(object):
   """
   Attributes:
    - ns
@@ -557,7 +557,7 @@ class hql_exec_args:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_exec_result:
+class hql_exec_result(object):
   """
   Attributes:
    - success
@@ -630,7 +630,7 @@ class hql_exec_result:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_query_args:
+class hql_query_args(object):
   """
   Attributes:
    - ns
@@ -702,7 +702,7 @@ class hql_query_args:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_query_result:
+class hql_query_result(object):
   """
   Attributes:
    - success
@@ -775,7 +775,7 @@ class hql_query_result:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_exec_as_arrays_args:
+class hql_exec_as_arrays_args(object):
   """
   Attributes:
    - ns
@@ -871,7 +871,7 @@ class hql_exec_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_exec_as_arrays_result:
+class hql_exec_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -944,7 +944,7 @@ class hql_exec_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_exec2_args:
+class hql_exec2_args(object):
   """
   Attributes:
    - ns
@@ -1040,7 +1040,7 @@ class hql_exec2_args:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_exec2_result:
+class hql_exec2_result(object):
   """
   Attributes:
    - success
@@ -1113,7 +1113,7 @@ class hql_exec2_result:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_query_as_arrays_args:
+class hql_query_as_arrays_args(object):
   """
   Attributes:
    - ns
@@ -1185,7 +1185,7 @@ class hql_query_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_query_as_arrays_result:
+class hql_query_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -1258,7 +1258,7 @@ class hql_query_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_query2_args:
+class hql_query2_args(object):
   """
   Attributes:
    - ns
@@ -1330,7 +1330,7 @@ class hql_query2_args:
   def __ne__(self, other):
     return not (self == other)
 
-class hql_query2_result:
+class hql_query2_result(object):
   """
   Attributes:
    - success

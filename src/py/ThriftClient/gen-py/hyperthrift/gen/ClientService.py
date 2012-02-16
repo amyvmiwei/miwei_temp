@@ -3,7 +3,7 @@
 #
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
-#  options string: py
+#  options string: py:new_style
 #
 
 from thrift.Thrift import TType, TMessageType, TException
@@ -17,7 +17,7 @@ except:
   fastbinary = None
 
 
-class Iface:
+class Iface(object):
   """
   The client service mimics the C++ client API, with table, scanner and
   mutator interface flattened.
@@ -7841,7 +7841,7 @@ class Processor(Iface, TProcessor):
 
 # HELPER FUNCTIONS AND STRUCTURES
 
-class namespace_create_args:
+class namespace_create_args(object):
   """
   Attributes:
    - ns
@@ -7901,7 +7901,7 @@ class namespace_create_args:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_create_result:
+class namespace_create_result(object):
   """
   Attributes:
    - e
@@ -7962,7 +7962,7 @@ class namespace_create_result:
   def __ne__(self, other):
     return not (self == other)
 
-class create_namespace_args:
+class create_namespace_args(object):
   """
   Attributes:
    - ns
@@ -8022,7 +8022,7 @@ class create_namespace_args:
   def __ne__(self, other):
     return not (self == other)
 
-class create_namespace_result:
+class create_namespace_result(object):
   """
   Attributes:
    - e
@@ -8083,7 +8083,7 @@ class create_namespace_result:
   def __ne__(self, other):
     return not (self == other)
 
-class create_table_args:
+class create_table_args(object):
   """
   Attributes:
    - ns
@@ -8167,7 +8167,7 @@ class create_table_args:
   def __ne__(self, other):
     return not (self == other)
 
-class create_table_result:
+class create_table_result(object):
   """
   Attributes:
    - e
@@ -8228,7 +8228,7 @@ class create_table_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_create_args:
+class table_create_args(object):
   """
   Attributes:
    - ns
@@ -8312,7 +8312,7 @@ class table_create_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_create_result:
+class table_create_result(object):
   """
   Attributes:
    - e
@@ -8373,7 +8373,7 @@ class table_create_result:
   def __ne__(self, other):
     return not (self == other)
 
-class alter_table_args:
+class alter_table_args(object):
   """
   Attributes:
    - ns
@@ -8457,7 +8457,7 @@ class alter_table_args:
   def __ne__(self, other):
     return not (self == other)
 
-class alter_table_result:
+class alter_table_result(object):
   """
   Attributes:
    - e
@@ -8518,7 +8518,7 @@ class alter_table_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_alter_args:
+class table_alter_args(object):
   """
   Attributes:
    - ns
@@ -8602,7 +8602,7 @@ class table_alter_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_alter_result:
+class table_alter_result(object):
   """
   Attributes:
    - e
@@ -8663,7 +8663,7 @@ class table_alter_result:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_open_args:
+class namespace_open_args(object):
   """
   Attributes:
    - ns
@@ -8723,7 +8723,7 @@ class namespace_open_args:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_open_result:
+class namespace_open_result(object):
   """
   Attributes:
    - success
@@ -8795,7 +8795,7 @@ class namespace_open_result:
   def __ne__(self, other):
     return not (self == other)
 
-class open_namespace_args:
+class open_namespace_args(object):
   """
   Attributes:
    - ns
@@ -8855,7 +8855,7 @@ class open_namespace_args:
   def __ne__(self, other):
     return not (self == other)
 
-class open_namespace_result:
+class open_namespace_result(object):
   """
   Attributes:
    - success
@@ -8927,7 +8927,7 @@ class open_namespace_result:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_close_args:
+class namespace_close_args(object):
   """
   Attributes:
    - ns
@@ -8987,7 +8987,7 @@ class namespace_close_args:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_close_result:
+class namespace_close_result(object):
   """
   Attributes:
    - e
@@ -9048,7 +9048,7 @@ class namespace_close_result:
   def __ne__(self, other):
     return not (self == other)
 
-class close_namespace_args:
+class close_namespace_args(object):
   """
   Attributes:
    - ns
@@ -9108,7 +9108,7 @@ class close_namespace_args:
   def __ne__(self, other):
     return not (self == other)
 
-class close_namespace_result:
+class close_namespace_result(object):
   """
   Attributes:
    - e
@@ -9169,7 +9169,7 @@ class close_namespace_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_open_args:
+class future_open_args(object):
   """
   Attributes:
    - capacity
@@ -9229,7 +9229,7 @@ class future_open_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_open_result:
+class future_open_result(object):
   """
   Attributes:
    - success
@@ -9301,7 +9301,7 @@ class future_open_result:
   def __ne__(self, other):
     return not (self == other)
 
-class open_future_args:
+class open_future_args(object):
   """
   Attributes:
    - capacity
@@ -9361,7 +9361,7 @@ class open_future_args:
   def __ne__(self, other):
     return not (self == other)
 
-class open_future_result:
+class open_future_result(object):
   """
   Attributes:
    - success
@@ -9433,7 +9433,7 @@ class open_future_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_cancel_args:
+class future_cancel_args(object):
   """
   Attributes:
    - ff
@@ -9493,7 +9493,7 @@ class future_cancel_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_cancel_result:
+class future_cancel_result(object):
   """
   Attributes:
    - e
@@ -9554,7 +9554,7 @@ class future_cancel_result:
   def __ne__(self, other):
     return not (self == other)
 
-class cancel_future_args:
+class cancel_future_args(object):
   """
   Attributes:
    - ff
@@ -9614,7 +9614,7 @@ class cancel_future_args:
   def __ne__(self, other):
     return not (self == other)
 
-class cancel_future_result:
+class cancel_future_result(object):
   """
   Attributes:
    - e
@@ -9675,7 +9675,7 @@ class cancel_future_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_get_result_args:
+class future_get_result_args(object):
   """
   Attributes:
    - ff
@@ -9747,7 +9747,7 @@ class future_get_result_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_get_result_result:
+class future_get_result_result(object):
   """
   Attributes:
    - success
@@ -9820,7 +9820,7 @@ class future_get_result_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_future_result_args:
+class get_future_result_args(object):
   """
   Attributes:
    - ff
@@ -9892,7 +9892,7 @@ class get_future_result_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_future_result_result:
+class get_future_result_result(object):
   """
   Attributes:
    - success
@@ -9965,7 +9965,7 @@ class get_future_result_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_get_result_as_arrays_args:
+class future_get_result_as_arrays_args(object):
   """
   Attributes:
    - ff
@@ -10037,7 +10037,7 @@ class future_get_result_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_get_result_as_arrays_result:
+class future_get_result_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -10110,7 +10110,7 @@ class future_get_result_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_future_result_as_arrays_args:
+class get_future_result_as_arrays_args(object):
   """
   Attributes:
    - ff
@@ -10182,7 +10182,7 @@ class get_future_result_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_future_result_as_arrays_result:
+class get_future_result_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -10255,7 +10255,7 @@ class get_future_result_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_get_result_serialized_args:
+class future_get_result_serialized_args(object):
   """
   Attributes:
    - ff
@@ -10327,7 +10327,7 @@ class future_get_result_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_get_result_serialized_result:
+class future_get_result_serialized_result(object):
   """
   Attributes:
    - success
@@ -10400,7 +10400,7 @@ class future_get_result_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_future_result_serialized_args:
+class get_future_result_serialized_args(object):
   """
   Attributes:
    - ff
@@ -10472,7 +10472,7 @@ class get_future_result_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_future_result_serialized_result:
+class get_future_result_serialized_result(object):
   """
   Attributes:
    - success
@@ -10545,7 +10545,7 @@ class get_future_result_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_is_empty_args:
+class future_is_empty_args(object):
   """
   Attributes:
    - ff
@@ -10605,7 +10605,7 @@ class future_is_empty_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_is_empty_result:
+class future_is_empty_result(object):
   """
   Attributes:
    - success
@@ -10677,7 +10677,7 @@ class future_is_empty_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_is_full_args:
+class future_is_full_args(object):
   """
   Attributes:
    - ff
@@ -10737,7 +10737,7 @@ class future_is_full_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_is_full_result:
+class future_is_full_result(object):
   """
   Attributes:
    - success
@@ -10809,7 +10809,7 @@ class future_is_full_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_is_cancelled_args:
+class future_is_cancelled_args(object):
   """
   Attributes:
    - ff
@@ -10869,7 +10869,7 @@ class future_is_cancelled_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_is_cancelled_result:
+class future_is_cancelled_result(object):
   """
   Attributes:
    - success
@@ -10941,7 +10941,7 @@ class future_is_cancelled_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_has_outstanding_args:
+class future_has_outstanding_args(object):
   """
   Attributes:
    - ff
@@ -11001,7 +11001,7 @@ class future_has_outstanding_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_has_outstanding_result:
+class future_has_outstanding_result(object):
   """
   Attributes:
    - success
@@ -11073,7 +11073,7 @@ class future_has_outstanding_result:
   def __ne__(self, other):
     return not (self == other)
 
-class future_close_args:
+class future_close_args(object):
   """
   Attributes:
    - ff
@@ -11133,7 +11133,7 @@ class future_close_args:
   def __ne__(self, other):
     return not (self == other)
 
-class future_close_result:
+class future_close_result(object):
   """
   Attributes:
    - e
@@ -11194,7 +11194,7 @@ class future_close_result:
   def __ne__(self, other):
     return not (self == other)
 
-class close_future_args:
+class close_future_args(object):
   """
   Attributes:
    - ff
@@ -11254,7 +11254,7 @@ class close_future_args:
   def __ne__(self, other):
     return not (self == other)
 
-class close_future_result:
+class close_future_result(object):
   """
   Attributes:
    - e
@@ -11315,7 +11315,7 @@ class close_future_result:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_open_args:
+class scanner_open_args(object):
   """
   Attributes:
    - ns
@@ -11400,7 +11400,7 @@ class scanner_open_args:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_open_result:
+class scanner_open_result(object):
   """
   Attributes:
    - success
@@ -11472,7 +11472,7 @@ class scanner_open_result:
   def __ne__(self, other):
     return not (self == other)
 
-class open_scanner_args:
+class open_scanner_args(object):
   """
   Attributes:
    - ns
@@ -11557,7 +11557,7 @@ class open_scanner_args:
   def __ne__(self, other):
     return not (self == other)
 
-class open_scanner_result:
+class open_scanner_result(object):
   """
   Attributes:
    - success
@@ -11629,7 +11629,7 @@ class open_scanner_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_scanner_open_args:
+class async_scanner_open_args(object):
   """
   Attributes:
    - ns
@@ -11726,7 +11726,7 @@ class async_scanner_open_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_scanner_open_result:
+class async_scanner_open_result(object):
   """
   Attributes:
    - success
@@ -11798,7 +11798,7 @@ class async_scanner_open_result:
   def __ne__(self, other):
     return not (self == other)
 
-class open_scanner_async_args:
+class open_scanner_async_args(object):
   """
   Attributes:
    - ns
@@ -11895,7 +11895,7 @@ class open_scanner_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class open_scanner_async_result:
+class open_scanner_async_result(object):
   """
   Attributes:
    - success
@@ -11967,7 +11967,7 @@ class open_scanner_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_close_args:
+class scanner_close_args(object):
   """
   Attributes:
    - scanner
@@ -12027,7 +12027,7 @@ class scanner_close_args:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_close_result:
+class scanner_close_result(object):
   """
   Attributes:
    - e
@@ -12088,7 +12088,7 @@ class scanner_close_result:
   def __ne__(self, other):
     return not (self == other)
 
-class close_scanner_args:
+class close_scanner_args(object):
   """
   Attributes:
    - scanner
@@ -12148,7 +12148,7 @@ class close_scanner_args:
   def __ne__(self, other):
     return not (self == other)
 
-class close_scanner_result:
+class close_scanner_result(object):
   """
   Attributes:
    - e
@@ -12209,7 +12209,7 @@ class close_scanner_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_scanner_cancel_args:
+class async_scanner_cancel_args(object):
   """
   Attributes:
    - scanner
@@ -12269,7 +12269,7 @@ class async_scanner_cancel_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_scanner_cancel_result:
+class async_scanner_cancel_result(object):
   """
   Attributes:
    - e
@@ -12330,7 +12330,7 @@ class async_scanner_cancel_result:
   def __ne__(self, other):
     return not (self == other)
 
-class cancel_scanner_async_args:
+class cancel_scanner_async_args(object):
   """
   Attributes:
    - scanner
@@ -12390,7 +12390,7 @@ class cancel_scanner_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class cancel_scanner_async_result:
+class cancel_scanner_async_result(object):
   """
   Attributes:
    - e
@@ -12451,7 +12451,7 @@ class cancel_scanner_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_scanner_close_args:
+class async_scanner_close_args(object):
   """
   Attributes:
    - scanner
@@ -12511,7 +12511,7 @@ class async_scanner_close_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_scanner_close_result:
+class async_scanner_close_result(object):
   """
   Attributes:
    - e
@@ -12572,7 +12572,7 @@ class async_scanner_close_result:
   def __ne__(self, other):
     return not (self == other)
 
-class close_scanner_async_args:
+class close_scanner_async_args(object):
   """
   Attributes:
    - scanner
@@ -12632,7 +12632,7 @@ class close_scanner_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class close_scanner_async_result:
+class close_scanner_async_result(object):
   """
   Attributes:
    - e
@@ -12693,7 +12693,7 @@ class close_scanner_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_cells_args:
+class scanner_get_cells_args(object):
   """
   Attributes:
    - scanner
@@ -12753,7 +12753,7 @@ class scanner_get_cells_args:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_cells_result:
+class scanner_get_cells_result(object):
   """
   Attributes:
    - success
@@ -12834,7 +12834,7 @@ class scanner_get_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
-class next_cells_args:
+class next_cells_args(object):
   """
   Attributes:
    - scanner
@@ -12894,7 +12894,7 @@ class next_cells_args:
   def __ne__(self, other):
     return not (self == other)
 
-class next_cells_result:
+class next_cells_result(object):
   """
   Attributes:
    - success
@@ -12975,7 +12975,7 @@ class next_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_cells_as_arrays_args:
+class scanner_get_cells_as_arrays_args(object):
   """
   Attributes:
    - scanner
@@ -13035,7 +13035,7 @@ class scanner_get_cells_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_cells_as_arrays_result:
+class scanner_get_cells_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -13123,7 +13123,7 @@ class scanner_get_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class next_cells_as_arrays_args:
+class next_cells_as_arrays_args(object):
   """
   Attributes:
    - scanner
@@ -13183,7 +13183,7 @@ class next_cells_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class next_cells_as_arrays_result:
+class next_cells_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -13271,7 +13271,7 @@ class next_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_cells_serialized_args:
+class scanner_get_cells_serialized_args(object):
   """
   Attributes:
    - scanner
@@ -13331,7 +13331,7 @@ class scanner_get_cells_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_cells_serialized_result:
+class scanner_get_cells_serialized_result(object):
   """
   Attributes:
    - success
@@ -13403,7 +13403,7 @@ class scanner_get_cells_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class next_cells_serialized_args:
+class next_cells_serialized_args(object):
   """
   Attributes:
    - scanner
@@ -13463,7 +13463,7 @@ class next_cells_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class next_cells_serialized_result:
+class next_cells_serialized_result(object):
   """
   Attributes:
    - success
@@ -13535,7 +13535,7 @@ class next_cells_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_row_args:
+class scanner_get_row_args(object):
   """
   Attributes:
    - scanner
@@ -13595,7 +13595,7 @@ class scanner_get_row_args:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_row_result:
+class scanner_get_row_result(object):
   """
   Attributes:
    - success
@@ -13676,7 +13676,7 @@ class scanner_get_row_result:
   def __ne__(self, other):
     return not (self == other)
 
-class next_row_args:
+class next_row_args(object):
   """
   Attributes:
    - scanner
@@ -13736,7 +13736,7 @@ class next_row_args:
   def __ne__(self, other):
     return not (self == other)
 
-class next_row_result:
+class next_row_result(object):
   """
   Attributes:
    - success
@@ -13817,7 +13817,7 @@ class next_row_result:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_row_as_arrays_args:
+class scanner_get_row_as_arrays_args(object):
   """
   Attributes:
    - scanner
@@ -13877,7 +13877,7 @@ class scanner_get_row_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_row_as_arrays_result:
+class scanner_get_row_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -13965,7 +13965,7 @@ class scanner_get_row_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class next_row_as_arrays_args:
+class next_row_as_arrays_args(object):
   """
   Attributes:
    - scanner
@@ -14025,7 +14025,7 @@ class next_row_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class next_row_as_arrays_result:
+class next_row_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -14113,7 +14113,7 @@ class next_row_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_row_serialized_args:
+class scanner_get_row_serialized_args(object):
   """
   Attributes:
    - scanner
@@ -14173,7 +14173,7 @@ class scanner_get_row_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class scanner_get_row_serialized_result:
+class scanner_get_row_serialized_result(object):
   """
   Attributes:
    - success
@@ -14245,7 +14245,7 @@ class scanner_get_row_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class next_row_serialized_args:
+class next_row_serialized_args(object):
   """
   Attributes:
    - scanner
@@ -14305,7 +14305,7 @@ class next_row_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class next_row_serialized_result:
+class next_row_serialized_result(object):
   """
   Attributes:
    - success
@@ -14377,7 +14377,7 @@ class next_row_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_row_args:
+class get_row_args(object):
   """
   Attributes:
    - ns
@@ -14461,7 +14461,7 @@ class get_row_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_row_result:
+class get_row_result(object):
   """
   Attributes:
    - success
@@ -14542,7 +14542,7 @@ class get_row_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_row_as_arrays_args:
+class get_row_as_arrays_args(object):
   """
   Attributes:
    - ns
@@ -14626,7 +14626,7 @@ class get_row_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_row_as_arrays_result:
+class get_row_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -14714,7 +14714,7 @@ class get_row_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_row_serialized_args:
+class get_row_serialized_args(object):
   """
   Attributes:
    - ns
@@ -14798,7 +14798,7 @@ class get_row_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_row_serialized_result:
+class get_row_serialized_result(object):
   """
   Attributes:
    - success
@@ -14870,7 +14870,7 @@ class get_row_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_cell_args:
+class get_cell_args(object):
   """
   Attributes:
    - ns
@@ -14966,7 +14966,7 @@ class get_cell_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_cell_result:
+class get_cell_result(object):
   """
   Attributes:
    - success
@@ -15038,7 +15038,7 @@ class get_cell_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_cells_args:
+class get_cells_args(object):
   """
   Attributes:
    - ns
@@ -15123,7 +15123,7 @@ class get_cells_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_cells_result:
+class get_cells_result(object):
   """
   Attributes:
    - success
@@ -15204,7 +15204,7 @@ class get_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_cells_as_arrays_args:
+class get_cells_as_arrays_args(object):
   """
   Attributes:
    - ns
@@ -15289,7 +15289,7 @@ class get_cells_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_cells_as_arrays_result:
+class get_cells_as_arrays_result(object):
   """
   Attributes:
    - success
@@ -15377,7 +15377,7 @@ class get_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_cells_serialized_args:
+class get_cells_serialized_args(object):
   """
   Attributes:
    - ns
@@ -15462,7 +15462,7 @@ class get_cells_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_cells_serialized_result:
+class get_cells_serialized_result(object):
   """
   Attributes:
    - success
@@ -15534,7 +15534,7 @@ class get_cells_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_refresh_args:
+class shared_mutator_refresh_args(object):
   """
   Attributes:
    - ns
@@ -15619,7 +15619,7 @@ class shared_mutator_refresh_args:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_refresh_result:
+class shared_mutator_refresh_result(object):
   """
   Attributes:
    - e
@@ -15680,7 +15680,7 @@ class shared_mutator_refresh_result:
   def __ne__(self, other):
     return not (self == other)
 
-class refresh_shared_mutator_args:
+class refresh_shared_mutator_args(object):
   """
   Attributes:
    - ns
@@ -15765,7 +15765,7 @@ class refresh_shared_mutator_args:
   def __ne__(self, other):
     return not (self == other)
 
-class refresh_shared_mutator_result:
+class refresh_shared_mutator_result(object):
   """
   Attributes:
    - e
@@ -15826,7 +15826,7 @@ class refresh_shared_mutator_result:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_set_cells_args:
+class shared_mutator_set_cells_args(object):
   """
   Attributes:
    - ns
@@ -15932,7 +15932,7 @@ class shared_mutator_set_cells_args:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_set_cells_result:
+class shared_mutator_set_cells_result(object):
   """
   Attributes:
    - e
@@ -15993,7 +15993,7 @@ class shared_mutator_set_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
-class offer_cells_args:
+class offer_cells_args(object):
   """
   Attributes:
    - ns
@@ -16099,7 +16099,7 @@ class offer_cells_args:
   def __ne__(self, other):
     return not (self == other)
 
-class offer_cells_result:
+class offer_cells_result(object):
   """
   Attributes:
    - e
@@ -16160,7 +16160,7 @@ class offer_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_set_cells_as_arrays_args:
+class shared_mutator_set_cells_as_arrays_args(object):
   """
   Attributes:
    - ns
@@ -16273,7 +16273,7 @@ class shared_mutator_set_cells_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_set_cells_as_arrays_result:
+class shared_mutator_set_cells_as_arrays_result(object):
   """
   Attributes:
    - e
@@ -16334,7 +16334,7 @@ class shared_mutator_set_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class offer_cells_as_arrays_args:
+class offer_cells_as_arrays_args(object):
   """
   Attributes:
    - ns
@@ -16447,7 +16447,7 @@ class offer_cells_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class offer_cells_as_arrays_result:
+class offer_cells_as_arrays_result(object):
   """
   Attributes:
    - e
@@ -16508,7 +16508,7 @@ class offer_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_set_cell_args:
+class shared_mutator_set_cell_args(object):
   """
   Attributes:
    - ns
@@ -16606,7 +16606,7 @@ class shared_mutator_set_cell_args:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_set_cell_result:
+class shared_mutator_set_cell_result(object):
   """
   Attributes:
    - e
@@ -16667,7 +16667,7 @@ class shared_mutator_set_cell_result:
   def __ne__(self, other):
     return not (self == other)
 
-class offer_cell_args:
+class offer_cell_args(object):
   """
   Attributes:
    - ns
@@ -16765,7 +16765,7 @@ class offer_cell_args:
   def __ne__(self, other):
     return not (self == other)
 
-class offer_cell_result:
+class offer_cell_result(object):
   """
   Attributes:
    - e
@@ -16826,7 +16826,7 @@ class offer_cell_result:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_set_cell_as_array_args:
+class shared_mutator_set_cell_as_array_args(object):
   """
   Attributes:
    - ns
@@ -16931,7 +16931,7 @@ class shared_mutator_set_cell_as_array_args:
   def __ne__(self, other):
     return not (self == other)
 
-class shared_mutator_set_cell_as_array_result:
+class shared_mutator_set_cell_as_array_result(object):
   """
   Attributes:
    - e
@@ -16992,7 +16992,7 @@ class shared_mutator_set_cell_as_array_result:
   def __ne__(self, other):
     return not (self == other)
 
-class offer_cell_as_array_args:
+class offer_cell_as_array_args(object):
   """
   Attributes:
    - ns
@@ -17097,7 +17097,7 @@ class offer_cell_as_array_args:
   def __ne__(self, other):
     return not (self == other)
 
-class offer_cell_as_array_result:
+class offer_cell_as_array_result(object):
   """
   Attributes:
    - e
@@ -17158,7 +17158,7 @@ class offer_cell_as_array_result:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_open_args:
+class mutator_open_args(object):
   """
   Attributes:
    - ns
@@ -17254,7 +17254,7 @@ class mutator_open_args:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_open_result:
+class mutator_open_result(object):
   """
   Attributes:
    - success
@@ -17326,7 +17326,7 @@ class mutator_open_result:
   def __ne__(self, other):
     return not (self == other)
 
-class open_mutator_args:
+class open_mutator_args(object):
   """
   Attributes:
    - ns
@@ -17422,7 +17422,7 @@ class open_mutator_args:
   def __ne__(self, other):
     return not (self == other)
 
-class open_mutator_result:
+class open_mutator_result(object):
   """
   Attributes:
    - success
@@ -17494,7 +17494,7 @@ class open_mutator_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_open_args:
+class async_mutator_open_args(object):
   """
   Attributes:
    - ns
@@ -17590,7 +17590,7 @@ class async_mutator_open_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_open_result:
+class async_mutator_open_result(object):
   """
   Attributes:
    - success
@@ -17662,7 +17662,7 @@ class async_mutator_open_result:
   def __ne__(self, other):
     return not (self == other)
 
-class open_mutator_async_args:
+class open_mutator_async_args(object):
   """
   Attributes:
    - ns
@@ -17758,7 +17758,7 @@ class open_mutator_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class open_mutator_async_result:
+class open_mutator_async_result(object):
   """
   Attributes:
    - success
@@ -17830,7 +17830,7 @@ class open_mutator_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_close_args:
+class mutator_close_args(object):
   """
   Attributes:
    - mutator
@@ -17890,7 +17890,7 @@ class mutator_close_args:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_close_result:
+class mutator_close_result(object):
   """
   Attributes:
    - e
@@ -17951,7 +17951,7 @@ class mutator_close_result:
   def __ne__(self, other):
     return not (self == other)
 
-class close_mutator_args:
+class close_mutator_args(object):
   """
   Attributes:
    - mutator
@@ -18011,7 +18011,7 @@ class close_mutator_args:
   def __ne__(self, other):
     return not (self == other)
 
-class close_mutator_result:
+class close_mutator_result(object):
   """
   Attributes:
    - e
@@ -18072,7 +18072,7 @@ class close_mutator_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_cancel_args:
+class async_mutator_cancel_args(object):
   """
   Attributes:
    - mutator
@@ -18132,7 +18132,7 @@ class async_mutator_cancel_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_cancel_result:
+class async_mutator_cancel_result(object):
   """
   Attributes:
    - e
@@ -18193,7 +18193,7 @@ class async_mutator_cancel_result:
   def __ne__(self, other):
     return not (self == other)
 
-class cancel_mutator_async_args:
+class cancel_mutator_async_args(object):
   """
   Attributes:
    - mutator
@@ -18253,7 +18253,7 @@ class cancel_mutator_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class cancel_mutator_async_result:
+class cancel_mutator_async_result(object):
   """
   Attributes:
    - e
@@ -18314,7 +18314,7 @@ class cancel_mutator_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_close_args:
+class async_mutator_close_args(object):
   """
   Attributes:
    - mutator
@@ -18374,7 +18374,7 @@ class async_mutator_close_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_close_result:
+class async_mutator_close_result(object):
   """
   Attributes:
    - e
@@ -18435,7 +18435,7 @@ class async_mutator_close_result:
   def __ne__(self, other):
     return not (self == other)
 
-class close_mutator_async_args:
+class close_mutator_async_args(object):
   """
   Attributes:
    - mutator
@@ -18495,7 +18495,7 @@ class close_mutator_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class close_mutator_async_result:
+class close_mutator_async_result(object):
   """
   Attributes:
    - e
@@ -18556,7 +18556,7 @@ class close_mutator_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cell_args:
+class mutator_set_cell_args(object):
   """
   Attributes:
    - mutator
@@ -18629,7 +18629,7 @@ class mutator_set_cell_args:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cell_result:
+class mutator_set_cell_result(object):
   """
   Attributes:
    - e
@@ -18690,7 +18690,7 @@ class mutator_set_cell_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cell_args:
+class set_cell_args(object):
   """
   Attributes:
    - ns
@@ -18775,7 +18775,7 @@ class set_cell_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cell_result:
+class set_cell_result(object):
   """
   Attributes:
    - e
@@ -18836,7 +18836,7 @@ class set_cell_result:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cell_as_array_args:
+class mutator_set_cell_as_array_args(object):
   """
   Attributes:
    - mutator
@@ -18916,7 +18916,7 @@ class mutator_set_cell_as_array_args:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cell_as_array_result:
+class mutator_set_cell_as_array_result(object):
   """
   Attributes:
    - e
@@ -18977,7 +18977,7 @@ class mutator_set_cell_as_array_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cell_as_array_args:
+class set_cell_as_array_args(object):
   """
   Attributes:
    - ns
@@ -19069,7 +19069,7 @@ class set_cell_as_array_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cell_as_array_result:
+class set_cell_as_array_result(object):
   """
   Attributes:
    - e
@@ -19130,7 +19130,7 @@ class set_cell_as_array_result:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cells_args:
+class mutator_set_cells_args(object):
   """
   Attributes:
    - mutator
@@ -19211,7 +19211,7 @@ class mutator_set_cells_args:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cells_result:
+class mutator_set_cells_result(object):
   """
   Attributes:
    - e
@@ -19272,7 +19272,7 @@ class mutator_set_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_args:
+class set_cells_args(object):
   """
   Attributes:
    - ns
@@ -19365,7 +19365,7 @@ class set_cells_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_result:
+class set_cells_result(object):
   """
   Attributes:
    - e
@@ -19426,7 +19426,7 @@ class set_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cells_as_arrays_args:
+class mutator_set_cells_as_arrays_args(object):
   """
   Attributes:
    - mutator
@@ -19514,7 +19514,7 @@ class mutator_set_cells_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cells_as_arrays_result:
+class mutator_set_cells_as_arrays_result(object):
   """
   Attributes:
    - e
@@ -19575,7 +19575,7 @@ class mutator_set_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_as_arrays_args:
+class set_cells_as_arrays_args(object):
   """
   Attributes:
    - ns
@@ -19675,7 +19675,7 @@ class set_cells_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_as_arrays_result:
+class set_cells_as_arrays_result(object):
   """
   Attributes:
    - e
@@ -19736,7 +19736,7 @@ class set_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cells_serialized_args:
+class mutator_set_cells_serialized_args(object):
   """
   Attributes:
    - mutator
@@ -19820,7 +19820,7 @@ class mutator_set_cells_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_set_cells_serialized_result:
+class mutator_set_cells_serialized_result(object):
   """
   Attributes:
    - e
@@ -19881,7 +19881,7 @@ class mutator_set_cells_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_serialized_args:
+class set_cells_serialized_args(object):
   """
   Attributes:
    - ns
@@ -19965,7 +19965,7 @@ class set_cells_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_serialized_result:
+class set_cells_serialized_result(object):
   """
   Attributes:
    - e
@@ -20026,7 +20026,7 @@ class set_cells_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_flush_args:
+class mutator_flush_args(object):
   """
   Attributes:
    - mutator
@@ -20086,7 +20086,7 @@ class mutator_flush_args:
   def __ne__(self, other):
     return not (self == other)
 
-class mutator_flush_result:
+class mutator_flush_result(object):
   """
   Attributes:
    - e
@@ -20147,7 +20147,7 @@ class mutator_flush_result:
   def __ne__(self, other):
     return not (self == other)
 
-class flush_mutator_args:
+class flush_mutator_args(object):
   """
   Attributes:
    - mutator
@@ -20207,7 +20207,7 @@ class flush_mutator_args:
   def __ne__(self, other):
     return not (self == other)
 
-class flush_mutator_result:
+class flush_mutator_result(object):
   """
   Attributes:
    - e
@@ -20268,7 +20268,7 @@ class flush_mutator_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cell_args:
+class async_mutator_set_cell_args(object):
   """
   Attributes:
    - mutator
@@ -20341,7 +20341,7 @@ class async_mutator_set_cell_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cell_result:
+class async_mutator_set_cell_result(object):
   """
   Attributes:
    - e
@@ -20402,7 +20402,7 @@ class async_mutator_set_cell_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cell_async_args:
+class set_cell_async_args(object):
   """
   Attributes:
    - mutator
@@ -20475,7 +20475,7 @@ class set_cell_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cell_async_result:
+class set_cell_async_result(object):
   """
   Attributes:
    - e
@@ -20536,7 +20536,7 @@ class set_cell_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cell_as_array_args:
+class async_mutator_set_cell_as_array_args(object):
   """
   Attributes:
    - mutator
@@ -20616,7 +20616,7 @@ class async_mutator_set_cell_as_array_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cell_as_array_result:
+class async_mutator_set_cell_as_array_result(object):
   """
   Attributes:
    - e
@@ -20677,7 +20677,7 @@ class async_mutator_set_cell_as_array_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cell_as_array_async_args:
+class set_cell_as_array_async_args(object):
   """
   Attributes:
    - mutator
@@ -20757,7 +20757,7 @@ class set_cell_as_array_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cell_as_array_async_result:
+class set_cell_as_array_async_result(object):
   """
   Attributes:
    - e
@@ -20818,7 +20818,7 @@ class set_cell_as_array_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cells_args:
+class async_mutator_set_cells_args(object):
   """
   Attributes:
    - mutator
@@ -20899,7 +20899,7 @@ class async_mutator_set_cells_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cells_result:
+class async_mutator_set_cells_result(object):
   """
   Attributes:
    - e
@@ -20960,7 +20960,7 @@ class async_mutator_set_cells_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_async_args:
+class set_cells_async_args(object):
   """
   Attributes:
    - mutator
@@ -21041,7 +21041,7 @@ class set_cells_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_async_result:
+class set_cells_async_result(object):
   """
   Attributes:
    - e
@@ -21102,7 +21102,7 @@ class set_cells_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cells_as_arrays_args:
+class async_mutator_set_cells_as_arrays_args(object):
   """
   Attributes:
    - mutator
@@ -21190,7 +21190,7 @@ class async_mutator_set_cells_as_arrays_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cells_as_arrays_result:
+class async_mutator_set_cells_as_arrays_result(object):
   """
   Attributes:
    - e
@@ -21251,7 +21251,7 @@ class async_mutator_set_cells_as_arrays_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_as_arrays_async_args:
+class set_cells_as_arrays_async_args(object):
   """
   Attributes:
    - mutator
@@ -21339,7 +21339,7 @@ class set_cells_as_arrays_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_as_arrays_async_result:
+class set_cells_as_arrays_async_result(object):
   """
   Attributes:
    - e
@@ -21400,7 +21400,7 @@ class set_cells_as_arrays_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cells_serialized_args:
+class async_mutator_set_cells_serialized_args(object):
   """
   Attributes:
    - mutator
@@ -21484,7 +21484,7 @@ class async_mutator_set_cells_serialized_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_set_cells_serialized_result:
+class async_mutator_set_cells_serialized_result(object):
   """
   Attributes:
    - e
@@ -21545,7 +21545,7 @@ class async_mutator_set_cells_serialized_result:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_serialized_async_args:
+class set_cells_serialized_async_args(object):
   """
   Attributes:
    - mutator
@@ -21629,7 +21629,7 @@ class set_cells_serialized_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class set_cells_serialized_async_result:
+class set_cells_serialized_async_result(object):
   """
   Attributes:
    - e
@@ -21690,7 +21690,7 @@ class set_cells_serialized_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_flush_args:
+class async_mutator_flush_args(object):
   """
   Attributes:
    - mutator
@@ -21750,7 +21750,7 @@ class async_mutator_flush_args:
   def __ne__(self, other):
     return not (self == other)
 
-class async_mutator_flush_result:
+class async_mutator_flush_result(object):
   """
   Attributes:
    - e
@@ -21811,7 +21811,7 @@ class async_mutator_flush_result:
   def __ne__(self, other):
     return not (self == other)
 
-class flush_mutator_async_args:
+class flush_mutator_async_args(object):
   """
   Attributes:
    - mutator
@@ -21871,7 +21871,7 @@ class flush_mutator_async_args:
   def __ne__(self, other):
     return not (self == other)
 
-class flush_mutator_async_result:
+class flush_mutator_async_result(object):
   """
   Attributes:
    - e
@@ -21932,7 +21932,7 @@ class flush_mutator_async_result:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_exists_args:
+class namespace_exists_args(object):
   """
   Attributes:
    - ns
@@ -21992,7 +21992,7 @@ class namespace_exists_args:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_exists_result:
+class namespace_exists_result(object):
   """
   Attributes:
    - success
@@ -22064,7 +22064,7 @@ class namespace_exists_result:
   def __ne__(self, other):
     return not (self == other)
 
-class exists_namespace_args:
+class exists_namespace_args(object):
   """
   Attributes:
    - ns
@@ -22124,7 +22124,7 @@ class exists_namespace_args:
   def __ne__(self, other):
     return not (self == other)
 
-class exists_namespace_result:
+class exists_namespace_result(object):
   """
   Attributes:
    - success
@@ -22196,7 +22196,7 @@ class exists_namespace_result:
   def __ne__(self, other):
     return not (self == other)
 
-class exists_table_args:
+class exists_table_args(object):
   """
   Attributes:
    - ns
@@ -22268,7 +22268,7 @@ class exists_table_args:
   def __ne__(self, other):
     return not (self == other)
 
-class exists_table_result:
+class exists_table_result(object):
   """
   Attributes:
    - success
@@ -22340,7 +22340,7 @@ class exists_table_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_exists_args:
+class table_exists_args(object):
   """
   Attributes:
    - ns
@@ -22412,7 +22412,7 @@ class table_exists_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_exists_result:
+class table_exists_result(object):
   """
   Attributes:
    - success
@@ -22484,7 +22484,7 @@ class table_exists_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_id_args:
+class table_get_id_args(object):
   """
   Attributes:
    - ns
@@ -22556,7 +22556,7 @@ class table_get_id_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_id_result:
+class table_get_id_result(object):
   """
   Attributes:
    - success
@@ -22628,7 +22628,7 @@ class table_get_id_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_table_id_args:
+class get_table_id_args(object):
   """
   Attributes:
    - ns
@@ -22700,7 +22700,7 @@ class get_table_id_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_table_id_result:
+class get_table_id_result(object):
   """
   Attributes:
    - success
@@ -22772,7 +22772,7 @@ class get_table_id_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_schema_str_args:
+class table_get_schema_str_args(object):
   """
   Attributes:
    - ns
@@ -22844,7 +22844,7 @@ class table_get_schema_str_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_schema_str_result:
+class table_get_schema_str_result(object):
   """
   Attributes:
    - success
@@ -22916,7 +22916,7 @@ class table_get_schema_str_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_schema_str_args:
+class get_schema_str_args(object):
   """
   Attributes:
    - ns
@@ -22988,7 +22988,7 @@ class get_schema_str_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_schema_str_result:
+class get_schema_str_result(object):
   """
   Attributes:
    - success
@@ -23060,7 +23060,7 @@ class get_schema_str_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_schema_str_with_ids_args:
+class table_get_schema_str_with_ids_args(object):
   """
   Attributes:
    - ns
@@ -23132,7 +23132,7 @@ class table_get_schema_str_with_ids_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_schema_str_with_ids_result:
+class table_get_schema_str_with_ids_result(object):
   """
   Attributes:
    - success
@@ -23204,7 +23204,7 @@ class table_get_schema_str_with_ids_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_schema_str_with_ids_args:
+class get_schema_str_with_ids_args(object):
   """
   Attributes:
    - ns
@@ -23276,7 +23276,7 @@ class get_schema_str_with_ids_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_schema_str_with_ids_result:
+class get_schema_str_with_ids_result(object):
   """
   Attributes:
    - success
@@ -23348,7 +23348,7 @@ class get_schema_str_with_ids_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_schema_args:
+class table_get_schema_args(object):
   """
   Attributes:
    - ns
@@ -23420,7 +23420,7 @@ class table_get_schema_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_schema_result:
+class table_get_schema_result(object):
   """
   Attributes:
    - success
@@ -23493,7 +23493,7 @@ class table_get_schema_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_schema_args:
+class get_schema_args(object):
   """
   Attributes:
    - ns
@@ -23565,7 +23565,7 @@ class get_schema_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_schema_result:
+class get_schema_result(object):
   """
   Attributes:
    - success
@@ -23638,7 +23638,7 @@ class get_schema_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_tables_args:
+class get_tables_args(object):
   """
   Attributes:
    - ns
@@ -23698,7 +23698,7 @@ class get_tables_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_tables_result:
+class get_tables_result(object):
   """
   Attributes:
    - success
@@ -23778,7 +23778,7 @@ class get_tables_result:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_get_listing_args:
+class namespace_get_listing_args(object):
   """
   Attributes:
    - ns
@@ -23838,7 +23838,7 @@ class namespace_get_listing_args:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_get_listing_result:
+class namespace_get_listing_result(object):
   """
   Attributes:
    - success
@@ -23919,7 +23919,7 @@ class namespace_get_listing_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_listing_args:
+class get_listing_args(object):
   """
   Attributes:
    - ns
@@ -23979,7 +23979,7 @@ class get_listing_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_listing_result:
+class get_listing_result(object):
   """
   Attributes:
    - success
@@ -24060,7 +24060,7 @@ class get_listing_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_splits_args:
+class table_get_splits_args(object):
   """
   Attributes:
    - ns
@@ -24132,7 +24132,7 @@ class table_get_splits_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_get_splits_result:
+class table_get_splits_result(object):
   """
   Attributes:
    - success
@@ -24213,7 +24213,7 @@ class table_get_splits_result:
   def __ne__(self, other):
     return not (self == other)
 
-class get_table_splits_args:
+class get_table_splits_args(object):
   """
   Attributes:
    - ns
@@ -24285,7 +24285,7 @@ class get_table_splits_args:
   def __ne__(self, other):
     return not (self == other)
 
-class get_table_splits_result:
+class get_table_splits_result(object):
   """
   Attributes:
    - success
@@ -24366,7 +24366,7 @@ class get_table_splits_result:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_drop_args:
+class namespace_drop_args(object):
   """
   Attributes:
    - ns
@@ -24438,7 +24438,7 @@ class namespace_drop_args:
   def __ne__(self, other):
     return not (self == other)
 
-class namespace_drop_result:
+class namespace_drop_result(object):
   """
   Attributes:
    - e
@@ -24499,7 +24499,7 @@ class namespace_drop_result:
   def __ne__(self, other):
     return not (self == other)
 
-class drop_namespace_args:
+class drop_namespace_args(object):
   """
   Attributes:
    - ns
@@ -24571,7 +24571,7 @@ class drop_namespace_args:
   def __ne__(self, other):
     return not (self == other)
 
-class drop_namespace_result:
+class drop_namespace_result(object):
   """
   Attributes:
    - e
@@ -24632,7 +24632,7 @@ class drop_namespace_result:
   def __ne__(self, other):
     return not (self == other)
 
-class rename_table_args:
+class rename_table_args(object):
   """
   Attributes:
    - ns
@@ -24716,7 +24716,7 @@ class rename_table_args:
   def __ne__(self, other):
     return not (self == other)
 
-class rename_table_result:
+class rename_table_result(object):
   """
   Attributes:
    - e
@@ -24777,7 +24777,7 @@ class rename_table_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_rename_args:
+class table_rename_args(object):
   """
   Attributes:
    - ns
@@ -24861,7 +24861,7 @@ class table_rename_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_rename_result:
+class table_rename_result(object):
   """
   Attributes:
    - e
@@ -24922,7 +24922,7 @@ class table_rename_result:
   def __ne__(self, other):
     return not (self == other)
 
-class drop_table_args:
+class drop_table_args(object):
   """
   Attributes:
    - ns
@@ -25006,7 +25006,7 @@ class drop_table_args:
   def __ne__(self, other):
     return not (self == other)
 
-class drop_table_result:
+class drop_table_result(object):
   """
   Attributes:
    - e
@@ -25067,7 +25067,7 @@ class drop_table_result:
   def __ne__(self, other):
     return not (self == other)
 
-class table_drop_args:
+class table_drop_args(object):
   """
   Attributes:
    - ns
@@ -25151,7 +25151,7 @@ class table_drop_args:
   def __ne__(self, other):
     return not (self == other)
 
-class table_drop_result:
+class table_drop_result(object):
   """
   Attributes:
    - e
@@ -25212,7 +25212,7 @@ class table_drop_result:
   def __ne__(self, other):
     return not (self == other)
 
-class generate_guid_args:
+class generate_guid_args(object):
 
   thrift_spec = (
   )
@@ -25254,7 +25254,7 @@ class generate_guid_args:
   def __ne__(self, other):
     return not (self == other)
 
-class generate_guid_result:
+class generate_guid_result(object):
   """
   Attributes:
    - success
@@ -25313,7 +25313,7 @@ class generate_guid_result:
   def __ne__(self, other):
     return not (self == other)
 
-class create_cell_unique_args:
+class create_cell_unique_args(object):
   """
   Attributes:
    - ns
@@ -25410,7 +25410,7 @@ class create_cell_unique_args:
   def __ne__(self, other):
     return not (self == other)
 
-class create_cell_unique_result:
+class create_cell_unique_result(object):
   """
   Attributes:
    - success
@@ -25482,7 +25482,7 @@ class create_cell_unique_result:
   def __ne__(self, other):
     return not (self == other)
 
-class error_get_text_args:
+class error_get_text_args(object):
   """
   Attributes:
    - error_code
@@ -25542,7 +25542,7 @@ class error_get_text_args:
   def __ne__(self, other):
     return not (self == other)
 
-class error_get_text_result:
+class error_get_text_result(object):
   """
   Attributes:
    - success
