@@ -343,6 +343,11 @@ void Range::add(const Key &key, const ByteString value) {
   size_t len = value.decode_length(&p);
   _out_ << format_bytes(20, p, len) << HT_END;
 
+  if (key.flag != FLAG_INSERT && key.flag >= KEYSPEC_DELETE_MAX) {
+    HT_WARNF("Unknown key flag encountered (%d), skipping..", (int)key.flag);
+    return;
+  }
+
   if (key.flag == FLAG_DELETE_ROW) {
     for (size_t i=0; i<m_access_group_vector.size(); ++i)
       m_access_group_vector[i]->add(key, value);

@@ -41,6 +41,9 @@ namespace Hypertable {
   static const uint32_t FLAG_DELETE_COLUMN_FAMILY  = 0x01;
   static const uint32_t FLAG_DELETE_CELL           = 0x02;
   static const uint32_t FLAG_DELETE_CELL_VERSION   = 0x03;
+  enum {
+    KEYSPEC_DELETE_MAX = 4
+  };
   static const uint32_t FLAG_INSERT                = 0xFF;
 
   class KeySpec {

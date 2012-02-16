@@ -353,7 +353,7 @@ namespace Hypertable {
     Barrier          m_update_barrier;
     Barrier          m_scan_barrier;
     bool             m_is_root;
-    uint64_t         m_added_deletes[3];
+    uint64_t         m_added_deletes[KEYSPEC_DELETE_MAX];
     uint64_t         m_added_inserts;
     RangeSet        *m_range_set;
     int32_t          m_error;
