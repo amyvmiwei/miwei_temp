@@ -261,6 +261,7 @@ namespace Hypertable {
     LoadFactors            m_load_factors;
     size_t                 m_metric_samples;
     size_t                 m_cores;
+    int32_t                m_maintenance_pause_interval;
     CellsBuilder          *m_pending_metrics_updates;
   };
 

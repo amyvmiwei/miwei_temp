@@ -28,6 +28,7 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
     --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
+    --Hypertable.RangeServer.Testing.MaintenanceNeeded.PauseInterval=1000 $@
     --Hypertable.RangeServer.Maintenance.Interval=100 $@
 
 [ "$1" ] || exit # base run

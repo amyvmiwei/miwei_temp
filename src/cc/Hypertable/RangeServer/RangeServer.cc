@@ -96,7 +96,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_group_commit_timer_handler(0), m_query_cache(0),
     m_last_revision(TIMESTAMP_MIN), m_last_metrics_update(0),
     m_loadavg_accum(0.0), m_page_in_accum(0), m_page_out_accum(0),
-    m_metric_samples(0), m_pending_metrics_updates(0)
+    m_metric_samples(0), m_maintenance_pause_interval(0), m_pending_metrics_updates(0)
 {
 
   uint16_t port;
@@ -117,6 +117,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_scanner_buffer_size = cfg.get_i64("Scanner.BufferSize");
   port = cfg.get_i16("Port");
   m_update_coalesce_limit = cfg.get_i64("UpdateCoalesceLimit");
+  m_maintenance_pause_interval = cfg.get_i32("Testing.MaintenanceNeeded.PauseInterval");
 
   /** Compute maintenance threads **/
   uint32_t maintenance_threads;
@@ -2685,6 +2686,7 @@ void RangeServer::update_add_and_respond() {
     /**
      * wait for these ranges to complete maintenance
      */
+    bool maintenance_needed = false;
     foreach (TableUpdate *table_update, uc->updates) {
 
       /**
@@ -2696,6 +2698,7 @@ void RangeServer::update_add_and_respond() {
             !Global::maintenance_queue->is_scheduled((*iter).first)) {
           ScopedLock lock(m_mutex);
           m_maintenance_scheduler->need_scheduling();
+          maintenance_needed = true;
           if (m_timer_handler)
             m_timer_handler->schedule_maintenance();
           break;
@@ -2753,6 +2756,10 @@ void RangeServer::update_add_and_respond() {
     }
 
     delete uc;
+
+    // For testing
+    if (m_maintenance_pause_interval > 0 && maintenance_needed)
+      poll(0, 0, m_maintenance_pause_interval);
 
   }
 
