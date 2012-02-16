@@ -344,7 +344,7 @@ void Range::add(const Key &key, const ByteString value) {
   _out_ << format_bytes(20, p, len) << HT_END;
 
   if (key.flag != FLAG_INSERT && key.flag >= KEYSPEC_DELETE_MAX) {
-    HT_WARNF("Unknown key flag encountered (%d), skipping..", (int)key.flag);
+    HT_ERRORF("Unknown key flag encountered (%d), skipping..", (int)key.flag);
     return;
   }
 
@@ -352,8 +352,15 @@ void Range::add(const Key &key, const ByteString value) {
     for (size_t i=0; i<m_access_group_vector.size(); ++i)
       m_access_group_vector[i]->add(key, value);
   }
-  else
+  else {
+    if (key.column_family_code >= m_column_family_vector.size() ||
+        m_column_family_vector[key.column_family_code] == 0) {
+      HT_ERRORF("Bad column family code encountered (%d) for table %s, skipping...",
+                (int)key.column_family_code, m_metalog_entity->table.id);
+      return;
+    }
     m_column_family_vector[key.column_family_code]->add(key, value);
+  }
 
   if (key.flag == FLAG_INSERT)
     m_added_inserts++;
