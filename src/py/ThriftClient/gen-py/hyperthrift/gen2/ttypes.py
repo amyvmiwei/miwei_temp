@@ -3,7 +3,7 @@
 #
 # DO NOT EDIT UNLESS YOU ARE SURE THAT YOU KNOW WHAT YOU ARE DOING
 #
-#  options string: py
+#  options string: py:new_style
 #
 
 from thrift.Thrift import TType, TMessageType, TException
@@ -19,7 +19,7 @@ except:
 
 
 
-class HqlResult:
+class HqlResult(object):
   """
   Result type of HQL queries
 
@@ -148,7 +148,7 @@ class HqlResult:
   def __ne__(self, other):
     return not (self == other)
 
-class HqlResult2:
+class HqlResult2(object):
   """
   Same as HqlResult except with cell as array
 
@@ -270,7 +270,7 @@ class HqlResult2:
   def __ne__(self, other):
     return not (self == other)
 
-class HqlResultAsArrays:
+class HqlResultAsArrays(object):
   """
   Same as HqlResult except with cell as array
 

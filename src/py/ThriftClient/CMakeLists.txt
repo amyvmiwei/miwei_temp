@@ -22,7 +22,7 @@ HT_GLOB(GenPy_SRCS gen-py/*.py)
 add_custom_command(
   OUTPUT    ${GenPy_SRCS}
   COMMAND   thrift
-  ARGS      -r --gen py -o ${CMAKE_CURRENT_SOURCE_DIR}
+  ARGS      -r --gen py:new_style -o ${CMAKE_CURRENT_SOURCE_DIR}
             ${ThriftBroker_IDL_DIR}/Hql.thrift
   DEPENDS   ${ThriftBroker_IDL_DIR}/Client.thrift
             ${ThriftBroker_IDL_DIR}/Hql.thrift
