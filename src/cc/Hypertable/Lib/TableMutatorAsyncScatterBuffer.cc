@@ -213,7 +213,7 @@ namespace {
     uint64_t offset;
   };
 
-  inline bool operator<(const SendRec sr1, const SendRec sr2) {
+  inline bool operator<(const SendRec &sr1, const SendRec &sr2) {
     const char *row1 = sr1.key.row();
     const char *row2 = sr2.key.row();
     int rval = strcmp(row1, row2);
