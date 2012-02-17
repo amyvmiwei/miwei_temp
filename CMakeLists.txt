@@ -45,6 +45,10 @@ if (NOT CMAKE_BUILD_TYPE)
       "Options: None Debug Release RelWithDebInfo MinSizeRel." FORCE)
 endif ()
 
+if (PHPTHRIFT_ROOT)
+   message(FATAL_ERROR "PHPTHRIFT_ROOT variable no longer supported.  Use THRIFT_SOURCE_DIR instead.")
+endif ()
+
 # install directory prefix
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "/opt/hypertable"
@@ -198,11 +202,13 @@ install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
 install(PROGRAMS bin/jrun DESTINATION bin)
 
 # Copy PHP Thrift files
-if (PHPTHRIFT_ROOT)
+if (THRIFT_SOURCE_DIR)
   message(STATUS "Copying PHP files into installation")
-  file(GLOB PHPFILES ${PHPTHRIFT_ROOT}/*.php)
+  file(GLOB PHPFILES ${THRIFT_SOURCE_DIR}/lib/php/src/*.php)
   install(FILES ${PHPFILES} DESTINATION lib/php)
-  install(DIRECTORY ${PHPTHRIFT_ROOT}/protocol ${PHPTHRIFT_ROOT}/server ${PHPTHRIFT_ROOT}/transport
+  install(DIRECTORY ${THRIFT_SOURCE_DIR}/lib/php/src/protocol
+		    ${THRIFT_SOURCE_DIR}/lib/php/src/server
+		    ${THRIFT_SOURCE_DIR}/lib/php/src/transport
           DESTINATION lib/php USE_SOURCE_PERMISSIONS)
 endif ()
 
