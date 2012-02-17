@@ -2,7 +2,7 @@
 
 build=Release
 srcdir=$HOME/Source/hypertable
-phpdir=$HOME/Source/thrift/lib/php/src
+thriftdir=/usr/src/thrift
 
 usage_exit() {
   echo "Usage: htpkg [Options] <generator>..."
@@ -10,7 +10,7 @@ usage_exit() {
   echo "Options:"
   echo "  --build <type>        Build type: Release|Debug|RelWithDebInfo"
   echo "  --srcdir <dir>        Hypertable source directory"
-  echo "  --phpdir <dir>        Thrift php library directory"
+  echo "  --thriftdir <dir>     Toplevel Thrift source directory"
   echo ""
   exit $1
 }
@@ -19,13 +19,13 @@ while [ "$1" != "${1##-}" ]; do
   case $1 in
     --build)    build=$2;       shift;;
     --srcdir)   srcdir=$2;      shift;;
-    --phpdir)   phpdir=$2;      shift;;
+    --thriftdir)   thriftdir=$2;      shift;;
     *)          usage_exit 1
   esac
   shift
 done
 
-opts="-DCMAKE_BUILD_TYPE=$build -DPHPTHRIFT_ROOT=$phpdir"
+opts="-DCMAKE_BUILD_TYPE=$build -DTHRIFT_SOURCE_DIR=$thriftdir"
 
 for gen in "$@"; do
   cmake $opts -DPACKAGE_THRIFTBROKER=1 $srcdir

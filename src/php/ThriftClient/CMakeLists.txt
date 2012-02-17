@@ -32,7 +32,7 @@ add_custom_command(
 add_custom_target(ThriftGenPHP ALL DEPENDS ${GenPHP_SRCS})
 
 if (PHPTHRIFT_FOUND)
-  add_test(ThriftClient-php env PHPTHRIFT_ROOT=${PHPTHRIFT_ROOT}
+  add_test(ThriftClient-php env PHPTHRIFT_ROOT=${THRIFT_SOURCE_DIR}/lib/php/src
            php ${CMAKE_CURRENT_SOURCE_DIR}/client_test.php)
 endif ()
 

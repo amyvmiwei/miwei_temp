@@ -20,10 +20,10 @@
 # This module defines
 #  PHPTHRIFT_FOUND, If false, do not try to use ant
 
-if (PHPTHRIFT_ROOT)
-  if (EXISTS ${PHPTHRIFT_ROOT}/Thrift.php)
+if (THRIFT_SOURCE_DIR)
+  if (EXISTS ${THRIFT_SOURCE_DIR}/lib/php/src/Thrift.php)
     set(PHPTHRIFT_FOUND TRUE)
-    set(PHPTHRIFT_ROOT ${PHPTHRIFT_ROOT} CACHE PATH "php thrift root dir" FORCE)
+    set(THRIFT_SOURCE_DIR ${THRIFT_SOURCE_DIR} CACHE PATH "thrift source dir" FORCE)
   endif ()
 else ()
   set(PHPTHRIFT_FOUND FALSE)
@@ -31,14 +31,14 @@ endif ()
 
 if (PHPTHRIFT_FOUND)
   if (NOT PHPTHRIFT_FIND_QUIETLY)
-    message(STATUS "Found thrift for php: ${PHPTHRIFT_ROOT}")
+    message(STATUS "Found thrift for php: ${THRIFT_SOURCE_DIR}/lib/php/src")
   endif ()
 else ()
-  message(STATUS "PHPTHRIFT_ROOT not found. "
+  message(STATUS "PHP Thrift files not found. "
                  "ThriftBroker support for php will be disabled")
 endif ()
 
 mark_as_advanced(
-  PHPTHRIFT_ROOT
+  THRIFT_SOURCE_DIR
 )
 
