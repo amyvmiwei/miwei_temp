@@ -40,7 +40,7 @@ namespace Hypertable {
 
   public:
 
-    ResultCallback() : m_outstanding(0) {};
+    ResultCallback() { atomic_set(&m_outstanding, 0); }
 
     virtual ~ResultCallback() {
       wait_for_completion();
@@ -112,28 +112,25 @@ namespace Hypertable {
      */
     void wait_for_completion() {
       ScopedRecLock lock(m_outstanding_mutex);
-      while(m_outstanding) {
+      while(!is_done()) {
         m_outstanding_cond.wait(lock);
       }
-      return;
     }
 
     /**
      *
      */
     void increment_outstanding() {
-      ScopedRecLock lock(m_outstanding_mutex);
-      ++m_outstanding;
+      atomic_inc(&m_outstanding);
     }
 
     /**
      *
      */
     void decrement_outstanding() {
-      ScopedRecLock lock(m_outstanding_mutex);
-      HT_ASSERT(m_outstanding);
-      --m_outstanding;
-      if (m_outstanding == 0) {
+      int outstanding = atomic_sub_return(1, &m_outstanding);
+      HT_ASSERT(outstanding >= 0);
+      if (outstanding == 0) {
         completed();
         m_outstanding_cond.notify_one();
       }
@@ -143,11 +140,10 @@ namespace Hypertable {
      *
      */
     bool is_done() {
-      ScopedRecLock lock(m_outstanding_mutex);
-      return (m_outstanding == 0);
+      return atomic_add_return(0, &m_outstanding) == 0;
     }
   protected:
-    size_t m_outstanding;
+    atomic_t m_outstanding;
     RecMutex m_outstanding_mutex;
     boost::condition m_outstanding_cond;
   };
