@@ -201,7 +201,7 @@ install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
           DESTINATION lib/java OPTIONAL)
 install(PROGRAMS bin/jrun DESTINATION bin)
 
-# Copy PHP Thrift files
+# Copy Thrift files
 if (THRIFT_SOURCE_DIR)
   message(STATUS "Copying PHP files into installation")
   file(GLOB PHPFILES ${THRIFT_SOURCE_DIR}/lib/php/src/*.php)
@@ -210,6 +210,11 @@ if (THRIFT_SOURCE_DIR)
 		    ${THRIFT_SOURCE_DIR}/lib/php/src/server
 		    ${THRIFT_SOURCE_DIR}/lib/php/src/transport
           DESTINATION lib/php USE_SOURCE_PERMISSIONS)
+  message(STATUS "Copying Perl files into installation")
+  file(GLOB PERLFILES ${THRIFT_SOURCE_DIR}/lib/perl/lib/*.pm)
+  install(FILES ${PERLFILES} DESTINATION lib/perl)
+  install(DIRECTORY ${THRIFT_SOURCE_DIR}/lib/perl/lib/Thrift
+          DESTINATION lib/perl USE_SOURCE_PERMISSIONS)
 endif ()
 
 # Copy C++ Thrift files
