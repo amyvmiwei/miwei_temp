@@ -29,7 +29,7 @@ my $client = new Hypertable::ThriftClient("localhost", 38080);
 print "HQL examples\n";
 my $namespace = $client->namespace_open("test");
 print Dumper($client->hql_exec($namespace,"show tables"));
-print Dumper($client->hql_exec($namespace,"select * from thrift_test revs=1"));
+print Dumper($client->hql_exec($namespace,"select * from thrift_test max_versions 1"));
 
 print "mutator examples\n";
 my $mutator = $client->mutator_open($namespace, "thrift_test");
@@ -62,7 +62,7 @@ sleep(2);
 
 print "scanner examples\n";
 my $scanner = $client->scanner_open($namespace, "thrift_test",
-    new Hypertable::ThriftGen::ScanSpec({revs => 1}));
+    new Hypertable::ThriftGen::ScanSpec({versions => 1}));
 
 my $cells = $client->scanner_get_cells($scanner);
 
@@ -74,11 +74,11 @@ while (scalar @$cells) {
 print "asynchronous examples\n";
 my $future = $client->future_open();
 my $color_scanner = $client->async_scanner_open($namespace, "FruitColor", $future,
-    new Hypertable::ThriftGen::ScanSpec({revs => 1}));
+    new Hypertable::ThriftGen::ScanSpec({versions => 1}));
 my $location_scanner = $client->async_scanner_open($namespace, "FruitLocation", $future,
-    new Hypertable::ThriftGen::ScanSpec({revs => 1}));
+    new Hypertable::ThriftGen::ScanSpec({versions => 1}));
 my $energy_scanner = $client->async_scanner_open($namespace, "FruitEnergy", $future,
-    new Hypertable::ThriftGen::ScanSpec({revs => 1}));
+    new Hypertable::ThriftGen::ScanSpec({versions => 1}));
 
 my $expected_cells = 6;
 my $num_cells=0;
@@ -107,7 +107,7 @@ die "Expected $expected_cells cells got $num_cells." if ($num_cells != $expected
 
 print "regexp scanner example\n";
 $scanner = $client->scanner_open($namespace, "thrift_test",
-    new Hypertable::ThriftGen::ScanSpec({revs => 1, row_regexp=>"k", value_regexp=>"^v[24]",
+    new Hypertable::ThriftGen::ScanSpec({versions => 1, row_regexp=>"k", value_regexp=>"^v[24]",
     columns=>["col"]}));
 
 my $cells = $client->scanner_get_cells($scanner);
