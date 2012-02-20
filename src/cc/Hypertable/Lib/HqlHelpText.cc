@@ -53,7 +53,7 @@ namespace {
     "",
     "Statements must be terminated with ';'.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is from",
-    "the preceeding list.",
+    "the preceding list.",
     "",
     0
   };
