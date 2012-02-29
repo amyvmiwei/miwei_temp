@@ -65,7 +65,6 @@ namespace Hypertable {
     void set(SerializedKey key, ByteString value, size_t incr_mem);
     bool full() { ScopedLock lock(m_mutex); return m_full; }
     void send(uint32_t flags);
-    bool completed();
     void wait_for_completion();
     TableMutatorAsyncScatterBuffer *create_redo_buffer(uint32_t id);
     uint64_t get_resend_count() { return m_resends; }

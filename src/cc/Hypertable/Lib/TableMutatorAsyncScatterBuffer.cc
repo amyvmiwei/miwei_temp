@@ -317,12 +317,6 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
 }
 
 
-bool TableMutatorAsyncScatterBuffer::completed() {
-  ScopedLock lock(m_mutex);
-  return m_outstanding;
-}
-
-
 void TableMutatorAsyncScatterBuffer::wait_for_completion() {
   ScopedLock lock(m_mutex);
 
