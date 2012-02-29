@@ -70,7 +70,7 @@ public abstract class DiscreteRandomGenerator {
       mNumberBuffer.position(0);
       wChannel.write(mNumberBuffer);
       // Write CMF data
-      mCmfBuffer.limit( mNumberBuffer.capacity() );
+      mCmfBuffer.limit( mCmfBuffer.capacity() );
       mCmfBuffer.position(0);
       wChannel.write(mCmfBuffer);
       wChannel.close();
