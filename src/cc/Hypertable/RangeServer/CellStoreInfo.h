@@ -23,7 +23,7 @@
 #define HYPERTABLE_CELLSTOREINFO_H
 
 #include "CellCache.h"
-#include "CellStoreV5.h"
+#include "CellStoreV6.h"
 
 namespace Hypertable {
 
@@ -50,7 +50,7 @@ namespace Hypertable {
     void init_from_trailer() {
       int divisor = 0;
       try {
-        divisor = (boost::any_cast<uint32_t>(cs->get_trailer()->get("flags")) & CellStoreTrailerV5::SPLIT) ? 2 : 1;
+        divisor = (boost::any_cast<uint32_t>(cs->get_trailer()->get("flags")) & CellStoreTrailerV6::SPLIT) ? 2 : 1;
         cell_count = boost::any_cast<int64_t>(cs->get_trailer()->get("total_entries")) / divisor;
         timestamp_min = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_min"));
         timestamp_max = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_max"));

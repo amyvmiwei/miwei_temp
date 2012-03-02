@@ -32,12 +32,14 @@
 #include "CellStoreV3.h"
 #include "CellStoreV4.h"
 #include "CellStoreV5.h"
+#include "CellStoreV6.h"
 #include "CellStoreTrailerV0.h"
 #include "CellStoreTrailerV1.h"
 #include "CellStoreTrailerV2.h"
 #include "CellStoreTrailerV3.h"
 #include "CellStoreTrailerV4.h"
 #include "CellStoreTrailerV5.h"
+#include "CellStoreTrailerV6.h"
 #include "Global.h"
 
 using namespace Hypertable;
@@ -52,9 +54,12 @@ CellStore *CellStoreFactory::open(const String &name,
   uint64_t offset;
   uint16_t version;
   uint32_t oflags = 0;
+  bool first_try = true;
 
   /** Get the file length **/
   file_length = Global::dfs->length(name);
+
+ try_again:
 
   if (HT_IO_ALIGNED(file_length))
     oflags = Filesystem::OPEN_FLAG_DIRECTIO;
@@ -86,7 +91,32 @@ CellStore *CellStoreFactory::open(const String &name,
     fd = Global::dfs->open(name);
   }
 
-  if (version == 5) {
+  if (version == 6) {
+    CellStoreTrailerV6 trailer_v6;
+    CellStoreV6 *cellstore_v6;
+
+    if (amount < trailer_v6.size())
+      HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
+                "Bad length of CellStoreV6 file '%s' - %llu",
+                name.c_str(), (Llu)file_length);
+
+    try {
+      trailer_v6.deserialize(trailer_buf.get() + (amount - trailer_v6.size()));
+    }
+    catch (Exception &e) {
+      Global::dfs->close(fd);
+      if (first_try && e.code() == Error::CHECKSUM_MISMATCH) {
+	first_try = false;
+	goto try_again;
+      }
+      throw;
+    }
+
+    cellstore_v6 = new CellStoreV6(Global::dfs.get());
+    cellstore_v6->open(name, start, end, fd, file_length, &trailer_v6);
+    return cellstore_v6;
+  }
+  else if (version == 5) {
     CellStoreTrailerV5 trailer_v5;
     CellStoreV5 *cellstore_v5;
 

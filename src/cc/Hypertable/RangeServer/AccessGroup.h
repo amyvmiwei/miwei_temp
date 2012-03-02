@@ -43,7 +43,7 @@
 #include "AccessGroupGarbageTracker.h"
 #include "CellCache.h"
 #include "CellStore.h"
-#include "CellStoreTrailerV5.h"
+#include "CellStoreTrailerV6.h"
 #include "CellStoreInfo.h"
 #include "LiveFileTracker.h"
 #include "MaintenanceFlag.h"
