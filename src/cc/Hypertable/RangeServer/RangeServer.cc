@@ -1721,9 +1721,9 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       // make sure that we don't have a clock skew
       // poll() timeout is in milliseconds, revision and now is in nanoseconds
       int64_t now = Hypertable::get_ts64();
-      m_last_revision = range->get_scan_revision();
-      if (m_last_revision > now) {
-        int64_t diff = (m_last_revision - now) / 1000000;
+      int64_t revision = range->get_scan_revision();
+      if (revision > now) {
+        int64_t diff = (revision - now) / 1000000;
         HT_WARNF("Clock skew detected when loading range; waiting for %lld "
                  "millisec", (long long int)diff);
         poll(0, 0, diff);
@@ -2381,6 +2381,18 @@ void RangeServer::update_qualify_and_transform() {
               SchemaPtr schema = table_update->table_info->get_schema();
               uint8_t family=*(key.ptr+1+strlen((const char *)key.ptr+1)+1);
               Schema::ColumnFamily *cf = schema->get_column_family(family);
+
+	      // reset auto_revision if it's gotten behind
+	      if (uc->auto_revision < latest_range_revision) {
+		uc->auto_revision = Hypertable::get_ts64();
+		if (uc->auto_revision < latest_range_revision) {
+                  HT_THROWF(Error::RANGESERVER_REVISION_ORDER_ERROR,
+                            "Auto revision (%lld) is less than latest range "
+			    "revision (%lld) for range %s",
+                            (Lld)uc->auto_revision, (Lld)latest_range_revision,
+                            rulist->range->get_name().c_str());
+		}
+	      }
 
               // This will transform keys that need to be assigned a
               // timestamp and/or revision number by re-writing the key
