@@ -34,7 +34,7 @@
 #include "CellCacheScanner.h"
 #include "CellStoreFactory.h"
 #include "CellStoreReleaseCallback.h"
-#include "CellStoreV5.h"
+#include "CellStoreV6.h"
 #include "Global.h"
 #include "MaintenanceFlag.h"
 #include "MergeScannerAccessGroup.h"
@@ -624,7 +624,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
       }
 
-      cellstore = new CellStoreV5(Global::dfs.get(), m_schema.get());
+      cellstore = new CellStoreV6(Global::dfs.get(), m_schema.get());
 
       max_num_entries = m_immutable_cache ? m_immutable_cache->size() : 0;
 
@@ -641,7 +641,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         for (size_t i=merge_offset; i<merge_offset+merge_length; i++) {
           HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
-          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV5::SPLIT) ? 2: 1;
+          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV6::SPLIT) ? 2: 1;
           max_num_entries += (boost::any_cast<int64_t>
               (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
@@ -654,7 +654,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         for (size_t i=0; i<m_stores.size(); i++) {
           HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
-          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV5::SPLIT) ? 2: 1;
+          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV6::SPLIT) ? 2: 1;
           max_num_entries += (boost::any_cast<int64_t>
               (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
@@ -672,13 +672,13 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       scanner->forward();
     }
 
-    CellStoreTrailerV5 *trailer = dynamic_cast<CellStoreTrailerV5 *>(cellstore->get_trailer());
+    CellStoreTrailerV6 *trailer = dynamic_cast<CellStoreTrailerV6 *>(cellstore->get_trailer());
 
     if (major && mscanner)
-      trailer->flags |= CellStoreTrailerV5::MAJOR_COMPACTION;
+      trailer->flags |= CellStoreTrailerV6::MAJOR_COMPACTION;
 
     if (maintenance_flags & MaintenanceFlag::SPLIT)
-      trailer->flags |= CellStoreTrailerV5::SPLIT;
+      trailer->flags |= CellStoreTrailerV6::SPLIT;
 
     cellstore->finalize(&m_identifier);
 

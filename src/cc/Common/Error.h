@@ -81,6 +81,7 @@ namespace Hypertable {
       SERVER_SHUTTING_DOWN               = 46,
       LOCATION_UNASSIGNED                = 47,
       ALREADY_EXISTS                     = 48,
+      CHECKSUM_MISMATCH                  = 49,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

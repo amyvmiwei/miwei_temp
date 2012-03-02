@@ -39,9 +39,9 @@
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
 
-#include "CellStoreV5.h"
+#include "CellStoreV6.h"
 #include "CellStoreInfo.h"
-#include "CellStoreTrailerV5.h"
+#include "CellStoreTrailerV6.h"
 #include "CellStoreScanner.h"
 
 #include "FileBlockCache.h"
@@ -58,7 +58,7 @@ namespace {
 }
 
 
-CellStoreV5::CellStoreV5(Filesystem *filesys, Schema *schema)
+CellStoreV6::CellStoreV6(Filesystem *filesys, Schema *schema)
   : m_filesys(filesys), m_schema(schema), m_fd(-1), m_filename(),
     m_64bit_index(false), m_compressor(0), m_buffer(0),
     m_outstanding_appends(0), m_offset(0), m_file_length(0),
@@ -71,7 +71,7 @@ CellStoreV5::CellStoreV5(Filesystem *filesys, Schema *schema)
 }
 
 
-CellStoreV5::~CellStoreV5() {
+CellStoreV6::~CellStoreV6() {
   try {
     delete m_compressor;
     delete m_bloom_filter;
@@ -84,22 +84,22 @@ CellStoreV5::~CellStoreV5() {
     HT_ERROR_OUT << e << HT_END;
   }
 
-  Global::memory_tracker->subtract( sizeof(CellStoreV5) + sizeof(CellStoreInfo) + m_index_stats.bloom_filter_memory + m_index_stats.block_index_memory );
+  Global::memory_tracker->subtract( sizeof(CellStoreV6) + sizeof(CellStoreInfo) + m_index_stats.bloom_filter_memory + m_index_stats.block_index_memory );
 
 }
 
 
-BlockCompressionCodec *CellStoreV5::create_block_compression_codec() {
+BlockCompressionCodec *CellStoreV6::create_block_compression_codec() {
   return CompressorFactory::create_block_codec(
       (BlockCompressionCodec::Type)m_trailer.compression_type);
 }
 
-KeyDecompressor *CellStoreV5::create_key_decompressor() {
+KeyDecompressor *CellStoreV6::create_key_decompressor() {
   return new KeyDecompressorPrefix();
 }
 
 
-const char *CellStoreV5::get_split_row() {
+const char *CellStoreV6::get_split_row() {
   if (m_split_row != "")
     return m_split_row.c_str();
   if (m_index_stats.block_index_memory == 0)
@@ -109,7 +109,7 @@ const char *CellStoreV5::get_split_row() {
   return 0;
 }
 
-CellListScanner *CellStoreV5::create_scanner(ScanContextPtr &scan_ctx) {
+CellListScanner *CellStoreV6::create_scanner(ScanContextPtr &scan_ctx) {
   bool need_index =  m_restricted_range || scan_ctx->restricted_range || scan_ctx->single_row;
 
   if (need_index) {
@@ -142,7 +142,7 @@ namespace {
 }
 
 void
-CellStoreV5::create(const char *fname, size_t max_entries,
+CellStoreV6::create(const char *fname, size_t max_entries,
                     PropertiesPtr &props, const TableIdentifier *table_id) {
   int64_t blocksize = props->get("blocksize", uint32_t(0));
   String compressor = props->get("compressor", String());
@@ -237,7 +237,7 @@ CellStoreV5::create(const char *fname, size_t max_entries,
 }
 
 
-void CellStoreV5::create_bloom_filter(bool is_approx) {
+void CellStoreV6::create_bloom_filter(bool is_approx) {
   assert(!m_bloom_filter && m_bloom_filter_items);
 
   HT_DEBUG_OUT << "Creating new BloomFilter for CellStore '"
@@ -268,13 +268,13 @@ void CellStoreV5::create_bloom_filter(bool is_approx) {
     << m_filename <<"'"<< HT_END;
 }
 
-const std::vector<String> &CellStoreV5::get_replaced_files() {
+const std::vector<String> &CellStoreV6::get_replaced_files() {
   if (!m_replaced_files_loaded)
     load_replaced_files();
   return m_replaced_files;
 }
 
-void CellStoreV5::load_replaced_files() {
+void CellStoreV6::load_replaced_files() {
  bool second_try = false;
  int64_t amount = m_trailer.replaced_files_length;
  int64_t len = 0;
@@ -324,7 +324,7 @@ void CellStoreV5::load_replaced_files() {
   m_replaced_files_loaded = true;
 }
 
-void CellStoreV5::load_bloom_filter() {
+void CellStoreV6::load_bloom_filter() {
   size_t len;
 
   HT_ASSERT(m_index_stats.bloom_filter_memory == 0);
@@ -366,7 +366,7 @@ void CellStoreV5::load_bloom_filter() {
 
 
 
-uint64_t CellStoreV5::purge_indexes() {
+uint64_t CellStoreV6::purge_indexes() {
   uint64_t memory_purged = 0;
 
   if (m_index_stats.bloom_filter_memory > 0) {
@@ -392,7 +392,7 @@ uint64_t CellStoreV5::purge_indexes() {
 
 
 
-void CellStoreV5::add(const Key &key, const ByteString value) {
+void CellStoreV6::add(const Key &key, const ByteString value) {
   EventPtr event_ptr;
   DynamicBuffer zbuf;
 
@@ -506,7 +506,7 @@ void CellStoreV5::add(const Key &key, const ByteString value) {
 }
 
 
-void CellStoreV5::finalize(TableIdentifier *table_identifier) {
+void CellStoreV6::finalize(TableIdentifier *table_identifier) {
   EventPtr event_ptr;
   size_t zlen;
   DynamicBuffer zbuf(0);
@@ -681,7 +681,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
     m_trailer.index_entries = m_index_map64.index_entries();
     record_split_row( m_index_map64.middle_key() );
     index_memory = m_index_map64.memory_used();
-    m_trailer.flags |= CellStoreTrailerV5::INDEX_64BIT;
+    m_trailer.flags |= CellStoreTrailerV6::INDEX_64BIT;
   }
   else {
     m_index_map32.load(m_index_builder.fixed_buf(),
@@ -738,7 +738,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
   m_fd = m_filesys->open(m_filename, Filesystem::OPEN_FLAG_DIRECTIO);
 
   // If compacting due to a split, estimate the disk usage at 1/2
-  if (m_trailer.flags & CellStoreTrailerV5::SPLIT)
+  if (m_trailer.flags & CellStoreTrailerV6::SPLIT)
     m_disk_usage = m_file_length / 2;
   else
     m_disk_usage = m_file_length;
@@ -751,11 +751,11 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
   delete [] m_column_ttl;
   m_column_ttl = 0;
 
-  Global::memory_tracker->add( sizeof(CellStoreV5) + sizeof(CellStoreInfo) + m_index_stats.block_index_memory + m_index_stats.bloom_filter_memory );
+  Global::memory_tracker->add( sizeof(CellStoreV6) + sizeof(CellStoreInfo) + m_index_stats.block_index_memory + m_index_stats.bloom_filter_memory );
 }
 
 
-void CellStoreV5::IndexBuilder::add_entry(KeyCompressorPtr &key_compressor,
+void CellStoreV6::IndexBuilder::add_entry(KeyCompressorPtr &key_compressor,
                                           int64_t offset) {
 
   // switch to 64-bit offsets if offset being added is >= 2^32
@@ -795,7 +795,7 @@ void CellStoreV5::IndexBuilder::add_entry(KeyCompressorPtr &key_compressor,
 }
 
 
-void CellStoreV5::IndexBuilder::chop() {
+void CellStoreV6::IndexBuilder::chop() {
   uint8_t *base;
   size_t len;
 
@@ -813,7 +813,7 @@ void CellStoreV5::IndexBuilder::chop() {
 
 
 void
-CellStoreV5::open(const String &fname, const String &start_row,
+CellStoreV6::open(const String &fname, const String &start_row,
                   const String &end_row, int32_t fd, int64_t file_length,
                   CellStoreTrailer *trailer) {
   m_filename = fname;
@@ -824,10 +824,10 @@ CellStoreV5::open(const String &fname, const String &start_row,
 
   m_restricted_range = !(m_start_row == "" && m_end_row == Key::END_ROW_MARKER);
 
-  m_trailer = *static_cast<CellStoreTrailerV5 *>(trailer);
+  m_trailer = *static_cast<CellStoreTrailerV6 *>(trailer);
 
   // If compacting due to a split, estimate the disk usage at 1/2
-  if (m_trailer.flags & CellStoreTrailerV5::SPLIT)
+  if (m_trailer.flags & CellStoreTrailerV6::SPLIT)
     m_disk_usage = m_file_length / 2;
   else
     m_disk_usage = m_file_length;
@@ -835,9 +835,9 @@ CellStoreV5::open(const String &fname, const String &start_row,
   m_bloom_filter_mode = (BloomFilterMode)m_trailer.bloom_filter_mode;
 
   /** Sanity check trailer **/
-  HT_ASSERT(m_trailer.version == 5);
+  HT_ASSERT(m_trailer.version == 6);
 
-  if (m_trailer.flags & CellStoreTrailerV5::INDEX_64BIT)
+  if (m_trailer.flags & CellStoreTrailerV6::INDEX_64BIT)
     m_64bit_index = true;
 
   if (!(m_trailer.fix_index_offset < m_trailer.var_index_offset &&
@@ -847,12 +847,12 @@ CellStoreV5::open(const String &fname, const String &start_row,
               "length=%llu, file='%s'", (unsigned)m_fd, (Lld)m_trailer.fix_index_offset,
            (Lld)m_trailer.var_index_offset, (Llu)m_file_length, fname.c_str());
 
-  Global::memory_tracker->add( sizeof(CellStoreV5) + sizeof(CellStoreInfo) );
+  Global::memory_tracker->add( sizeof(CellStoreV6) + sizeof(CellStoreInfo) );
 
 }
 
 
-void CellStoreV5::load_block_index() {
+void CellStoreV6::load_block_index() {
   int64_t amount, index_amount;
   int64_t len = 0;
   BlockCompressionCodecPtr compressor;
@@ -948,7 +948,7 @@ void CellStoreV5::load_block_index() {
 }
 
 
-bool CellStoreV5::may_contain(ScanContextPtr &scan_context) {
+bool CellStoreV6::may_contain(ScanContextPtr &scan_context) {
 
   if (m_bloom_filter_mode == BLOOM_FILTER_DISABLED)
     return true;
@@ -985,7 +985,7 @@ bool CellStoreV5::may_contain(ScanContextPtr &scan_context) {
 }
 
 
-bool CellStoreV5::may_contain(const void *ptr, size_t len) {
+bool CellStoreV6::may_contain(const void *ptr, size_t len) {
 
   if (m_bloom_filter_mode == BLOOM_FILTER_DISABLED)
     return true;
@@ -1001,7 +1001,7 @@ bool CellStoreV5::may_contain(const void *ptr, size_t len) {
 
 
 
-void CellStoreV5::display_block_info() {
+void CellStoreV6::display_block_info() {
   if (m_index_stats.block_index_memory == 0)
     load_block_index();
   if (m_64bit_index)
@@ -1012,7 +1012,7 @@ void CellStoreV5::display_block_info() {
 
 
 
-void CellStoreV5::record_split_row(const SerializedKey key) {
+void CellStoreV6::record_split_row(const SerializedKey key) {
   if (key.ptr) {
     std::string split_row = key.row();
     if (split_row > m_start_row && split_row < m_end_row)

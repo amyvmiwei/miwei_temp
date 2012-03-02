@@ -41,6 +41,7 @@ CellStoreTrailerV2.cc
 CellStoreTrailerV3.cc
 CellStoreTrailerV4.cc
 CellStoreTrailerV5.cc
+CellStoreTrailerV6.cc
 CellStore.cc
 CellStoreV0.cc
 CellStoreV1.cc
@@ -48,6 +49,7 @@ CellStoreV2.cc
 CellStoreV3.cc
 CellStoreV4.cc
 CellStoreV5.cc
+CellStoreV6.cc
 Config.cc
 ConnectionHandler.cc
 FileBlockCache.cc
