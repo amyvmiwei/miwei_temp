@@ -29,6 +29,7 @@ AccessGroup.cc
 AccessGroupGarbageTracker.cc
 CellCache.cc
 CellCacheAllocator.cc
+CellCacheManager.cc
 CellStoreReleaseCallback.cc
 CellCacheScanner.cc
 CellStoreFactory.cc
