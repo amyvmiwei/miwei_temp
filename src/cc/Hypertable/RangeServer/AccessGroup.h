@@ -41,7 +41,7 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "AccessGroupGarbageTracker.h"
-#include "CellCache.h"
+#include "CellCacheManager.h"
 #include "CellStore.h"
 #include "CellStoreTrailerV6.h"
 #include "CellStoreInfo.h"
@@ -77,9 +77,7 @@ namespace Hypertable {
       int64_t latest_stored_revision;
       int64_t mem_used;
       int64_t mem_allocated;
-      int64_t cached_items;
       uint64_t cell_count;
-      int64_t immutable_items;
       int64_t disk_used;
       int64_t disk_estimate;
       int64_t log_space_pinned;
@@ -113,9 +111,7 @@ namespace Hypertable {
 
     virtual int64_t get_total_entries() {
       boost::mutex::scoped_lock lock(m_mutex);
-      int64_t total = m_cell_cache ? m_cell_cache->get_total_entries() : 0;
-      if (m_immutable_cache)
-        total += m_immutable_cache->get_total_entries();
+      int64_t total = m_cell_cache_manager->get_total_entries();
       if (!m_in_memory) {
         for (size_t i=0; i<m_stores.size(); i++)
           total += m_stores[i].cs->get_total_entries();
@@ -127,14 +123,11 @@ namespace Hypertable {
 
     void lock() {
       m_mutex.lock();
-      if (!m_cell_cache)
-        m_cell_cache = new CellCache();
-      m_cell_cache->lock();
+      m_cell_cache_manager->lock();
     }
 
     void unlock() {
-      if (m_cell_cache)
-        m_cell_cache->unlock();
+      m_cell_cache_manager->unlock();
       m_mutex.unlock();
     }
 
@@ -163,16 +156,6 @@ namespace Hypertable {
     const char *get_full_name() { return m_full_name.c_str(); }
 
     void shrink(String &split_row, bool drop_high);
-
-    uint64_t get_collision_count() {
-      ScopedLock lock(m_mutex);
-      return m_collisions + (m_cell_cache ? m_cell_cache->get_collision_count() : 0);
-    }
-
-    uint64_t get_cached_count() {
-      ScopedLock lock(m_mutex);
-      return m_cell_cache ? m_cell_cache->size() : 0;
-    }
 
     void get_file_data(String &file_list, int64_t *block_countp, bool include_blocked) {
       m_file_tracker.get_file_data(file_list, block_countp, include_blocked);
@@ -220,8 +203,7 @@ namespace Hypertable {
     String               m_range_name;
     std::vector<CellStoreInfo> m_stores;
     PropertiesPtr        m_cellstore_props;
-    CellCachePtr         m_cell_cache;
-    CellCachePtr         m_immutable_cache;
+    CellCacheManagerPtr  m_cell_cache_manager;
     uint32_t             m_next_cs_id;
     uint64_t             m_disk_usage;
     float                m_compression_ratio;
