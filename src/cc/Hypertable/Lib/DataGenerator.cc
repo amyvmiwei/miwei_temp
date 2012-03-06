@@ -238,6 +238,9 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
       else if (!strcmp(tptr, "value.source")) {
         m_column_specs[columni].source = str;
       }
+      else if (!strcmp(tptr, "value.cooked-source")) {
+        m_column_specs[columni].cooked_source = str;
+      }
     }
   }
 
