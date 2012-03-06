@@ -188,8 +188,8 @@ LoadClient::create_scanner(const String &tablename, const ScanSpec &scan_spec)
 uint64_t
 LoadClient::get_all_cells()
 {
-  if(m_thrift) {
-    uint64_t bytes_scanned=0;
+  uint64_t bytes_scanned = 0;
+  if (m_thrift) {
 #ifdef HT_WITH_THRIFT
     vector<ThriftGen::Cell> cells;
 
@@ -205,11 +205,15 @@ LoadClient::get_all_cells()
   }
   else {
     Cell cell;
-    while (m_native_scanner->next(cell))
-      ;
-    return m_native_scanner->bytes_scanned();
+    // see issue #802 why we can#t return m_native_scanner->bytes_scanned()
+    while (m_native_scanner->next(cell)) {
+      bytes_scanned += strlen(cell.row_key) + strlen(cell.column_family) +
+                       8 + 8 + 2 + cell.value_len;
+      if (cell.column_qualifier)
+        bytes_scanned += strlen(cell.column_qualifier);
+    }
+    return bytes_scanned;
   }
-
 }
 
 void

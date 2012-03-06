@@ -85,12 +85,14 @@ namespace {
         ("parallel", i32()->default_value(0),
          "Spawn threads to execute requests in parallel")
         ("query-delay", i32(), "Delay milliseconds between each query")
+        ("query-mode", str(),
+         "Whether to query 'index' or 'qualifier' index")
         ("sample-file", str(),
          "Output file to hold request latencies, one per line")
         ("seed", i32()->default_value(1), "Pseudo-random number generator seed")
         ("row-seed", i32()->default_value(1), "Pseudo-random number generator seed")
         ("spec-file", str(),
-         "File containing the DataGenerator specificaiton")
+         "File containing the DataGenerator specification")
         ("stdout", boo()->zero_tokens()->default_value(false),
          "Display generated data to stdout instead of sending load to cluster")
         ("verbose,v", boo()->zero_tokens()->default_value(false),
@@ -602,6 +604,11 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
 
 }
 
+enum {
+  DEFAULT = 0,
+  INDEX = 1,
+  QUALIFIER = 2
+};
 
 void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, ::int32_t delay, String &sample_fname, bool thrift)
 {
@@ -614,7 +621,19 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
   bool output_samples = false;
   ofstream sample_file;
-  DataGenerator dg(props, true);
+
+  int query_mode = DEFAULT;
+  if (has("query-mode")) {
+    String qm = get_str("query-mode");
+    if (qm == "index")
+      query_mode = INDEX;
+    else if (qm == "qualifier")
+      query_mode = QUALIFIER;
+    else
+      HT_THROW(Error::CONFIG_BAD_VALUE, "invalid query-mode parameter");
+  }
+
+  DataGenerator dg(props, query_mode ? false : true);
 
   if (to_stdout) {
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
@@ -648,15 +667,26 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
     else
       load_client_ptr = new LoadClient(thrift);
 
-
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
 
       if (delay)
         poll(0, 0, delay);
 
       scan_spec.clear();
-      scan_spec.add_column((*iter).column_family);
-      scan_spec.add_row((*iter).row_key);
+      if (query_mode == INDEX) {
+        scan_spec.add_column((*iter).column_family);
+        scan_spec.add_column_predicate((*iter).column_family,
+                ColumnPredicate::EXACT_MATCH, (const char *)(*iter).value);
+      }
+      else if (query_mode == QUALIFIER) {
+        String s = format("%s:%s", (*iter).column_family, 
+                (*iter).column_qualifier ? (*iter).column_qualifier : "");
+        scan_spec.add_column(s.c_str());
+      }
+      else {
+        scan_spec.add_column((*iter).column_family);
+        scan_spec.add_row((*iter).row_key);
+      }
 
       start_clocks = clock();
 
