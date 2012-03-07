@@ -806,33 +806,21 @@ void Range::split_install_log() {
     m_split_row = split_rows[split_rows.size()/2];
     if (strcmp(m_split_row.c_str(), m_metalog_entity->spec.start_row) < 0 ||
         strcmp(m_split_row.c_str(), m_metalog_entity->spec.end_row) >= 0) {
-      split_rows.clear();
-      for (size_t i=0; i<ag_vector.size(); i++)
-        ag_vector[i]->get_cached_rows(split_rows);
-      if (split_rows.size() > 0) {
-        sort(split_rows.begin(), split_rows.end());
-        m_split_row = split_rows[split_rows.size()/2];
-        if (strcmp(m_split_row.c_str(), m_metalog_entity->spec.start_row) < 0 ||
-            strcmp(m_split_row.c_str(), m_metalog_entity->spec.end_row) >= 0) {
-          m_error = Error::RANGESERVER_ROW_OVERFLOW;
-          HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
-                    "(a) Unable to determine split row for range %s[%s..%s]",
-                    m_metalog_entity->table.id, m_metalog_entity->spec.start_row, m_metalog_entity->spec.end_row);
-        }
-      }
-      else {
-        m_error = Error::RANGESERVER_ROW_OVERFLOW;
-        HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
-                  "(b) Unable to determine split row for range %s[%s..%s]",
-                   m_metalog_entity->table.id, m_metalog_entity->spec.start_row, m_metalog_entity->spec.end_row);
+      if (!determine_split_row_from_cached_keys(ag_vector)) {
+	m_error = Error::RANGESERVER_ROW_OVERFLOW;
+	HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
+		  "(a) Unable to determine split row for range %s[%s..%s]",
+		  m_metalog_entity->table.id, m_metalog_entity->spec.start_row, m_metalog_entity->spec.end_row);
       }
     }
   }
   else {
-    m_error = Error::RANGESERVER_ROW_OVERFLOW;
-    HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
-              "(c) Unable to determine split row for range %s[%s..%s]",
-              m_metalog_entity->table.id, m_metalog_entity->spec.start_row, m_metalog_entity->spec.end_row);
+    if (!determine_split_row_from_cached_keys(ag_vector)) {
+      m_error = Error::RANGESERVER_ROW_OVERFLOW;
+      HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
+		"(b) Unable to determine split row for range %s[%s..%s]",
+		m_metalog_entity->table.id, m_metalog_entity->spec.start_row, m_metalog_entity->spec.end_row);
+    }
   }
 
   m_metalog_entity->state.set_split_point(m_split_row);
@@ -899,6 +887,27 @@ void Range::split_install_log() {
   HT_MAYBE_FAIL("split-1");
   HT_MAYBE_FAIL_X("metadata-split-1", m_metalog_entity->table.is_metadata());
 
+}
+
+
+bool Range::determine_split_row_from_cached_keys(AccessGroupVector &ag_vector) {
+  std::vector<String> split_rows;  
+
+  for (size_t i=0; i<ag_vector.size(); i++)
+    ag_vector[i]->get_cached_rows(split_rows);
+
+  if (split_rows.size() > 0) {
+    sort(split_rows.begin(), split_rows.end());
+    m_split_row = split_rows[split_rows.size()/2];
+    if (strcmp(m_split_row.c_str(), m_metalog_entity->spec.start_row) < 0 ||
+	strcmp(m_split_row.c_str(), m_metalog_entity->spec.end_row) >= 0) {
+      return false;
+    }
+  }
+  else
+    return false;
+
+  return true;
 }
 
 

@@ -423,7 +423,7 @@ void AccessGroup::add_cell_store(CellStorePtr &cellstore) {
     HT_ASSERT(m_stores.empty());
     ScanContextPtr scan_context = new ScanContext(m_schema);
     CellListScannerPtr scanner = cellstore->create_scanner(scan_context);
-    m_cell_cache_manager->add(scanner);
+    m_cell_cache_manager->add_to_read_cache(scanner);
   }
 
   m_stores.push_back( cellstore );
@@ -749,6 +749,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
 void AccessGroup::shrink(String &split_row, bool drop_high) {
   ScopedLock lock(m_mutex);
   ScanContextPtr scan_context = new ScanContext(m_schema);
+  CellCachePtr old_cell_cache;
   ByteString key;
   ByteString value;
   Key key_comps;
@@ -757,6 +758,8 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
   uint64_t memory_added = 0;
   uint64_t items_added = 0;
   int cmp;
+
+  m_cell_cache_manager->get_read_cache(old_cell_cache);
 
   m_recovering = true;
 
@@ -776,8 +779,6 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
     m_full_name = m_range_name + "(" + m_name + ")";
 
     m_file_tracker.change_range(m_start_row, m_end_row);
-
-    CellCachePtr old_cell_cache = m_cell_cache_manager->cell_cache();
 
     CellCachePtr new_cell_cache = new CellCache();
     new_cell_cache->lock();
@@ -833,6 +834,7 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
   }
   catch (Exception &e) {
     m_recovering = false;
+    m_cell_cache_manager->install_new_cell_cache(old_cell_cache);
     m_earliest_cached_revision = m_earliest_cached_revision_saved;
     m_earliest_cached_revision_saved = TIMESTAMP_MAX;
     throw;

@@ -38,7 +38,16 @@ using namespace std;
 
 
 CellCache::CellCache()
-  : m_arena(), m_cell_map(std::less<const SerializedKey>(), Alloc(m_arena)),
+  : m_arena_base(), m_arena(m_arena_base), m_cell_map(std::less<const SerializedKey>(), Alloc(m_arena)),
+    m_deletes(0), m_collisions(0), m_key_bytes(0), m_value_bytes(0),
+    m_frozen(false), m_have_counter_deletes(false) {
+  assert(Config::properties); // requires Config::init* first
+  m_arena.set_page_size((size_t)
+      Config::get_i32("Hypertable.RangeServer.AccessGroup.CellCache.PageSize"));
+}
+
+CellCache::CellCache(CellCacheArena &arena)
+  : m_arena(arena), m_cell_map(std::less<const SerializedKey>(), Alloc(m_arena)),
     m_deletes(0), m_collisions(0), m_key_bytes(0), m_value_bytes(0),
     m_frozen(false), m_have_counter_deletes(false) {
   assert(Config::properties); // requires Config::init* first
@@ -196,4 +205,18 @@ void CellCache::get_rows(std::vector<std::string> &rows) {
 CellListScanner *CellCache::create_scanner(ScanContextPtr &scan_ctx) {
   CellCachePtr cellcache(this);
   return new CellCacheScanner(cellcache, scan_ctx);
+}
+
+void CellCache::merge(CellCache *other) {
+  ScopedLock lock(m_mutex);
+  HT_ASSERT(&m_arena == &(other->m_arena));
+  Locker<CellCache> write_lock(*other);
+  if (m_cell_map.empty())
+    m_cell_map.swap(other->m_cell_map);
+  else {
+    for (CellMap::const_iterator iter = other->m_cell_map.begin();
+	 iter != other->m_cell_map.end(); ++iter)
+      m_cell_map.insert(*iter);
+    other->m_cell_map.clear();
+  }
 }
