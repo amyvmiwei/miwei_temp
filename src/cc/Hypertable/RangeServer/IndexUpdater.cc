@@ -222,7 +222,6 @@ void IndexUpdaterFactory::close()
 {
   ScopedLock lock(ms_mutex);
 
-  delete ms_namemap.get();
   ms_namemap = 0;
 
   ms_index_cache.clear();
