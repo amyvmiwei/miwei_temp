@@ -317,6 +317,8 @@ namespace Hypertable {
     void relinquish_install_log();
     void relinquish_compact_and_finish();
 
+    bool determine_split_row_from_cached_keys(AccessGroupVector &ag_vector);
+
     void split_install_log();
     void split_compact_and_shrink();
     void split_notify_master();

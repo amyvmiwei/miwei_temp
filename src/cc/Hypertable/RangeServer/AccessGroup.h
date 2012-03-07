@@ -123,11 +123,11 @@ namespace Hypertable {
 
     void lock() {
       m_mutex.lock();
-      m_cell_cache_manager->lock();
+      m_cell_cache_manager->lock_write_cache();
     }
 
     void unlock() {
-      m_cell_cache_manager->unlock();
+      m_cell_cache_manager->unlock_write_cache();
       m_mutex.unlock();
     }
 

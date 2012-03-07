@@ -55,7 +55,7 @@ namespace Hypertable {
 
     void add_counter(const Key &key, const ByteString value);
 
-    void add(CellListScannerPtr &scanner);
+    void add_to_read_cache(CellListScannerPtr &scanner);
 
     void add_immutable_scanner(MergeScanner *scanner, ScanContextPtr &scan_context);
 
@@ -67,17 +67,12 @@ namespace Hypertable {
 
     int64_t get_total_entries();
 
-    /** Creates a CellCacheScanner object that contains an shared pointer
-     * (intrusive_ptr) to this CellCache.
-     */
-    CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
-
     CellListScanner *create_immutable_scanner(ScanContextPtr &scan_ctx);
 
-    void lock();
-    void unlock();
+    void lock_write_cache();
+    void unlock_write_cache();
 
-    CellCache *cell_cache() { return m_cell_cache.get(); }
+    void get_read_cache(CellCachePtr &read_cache);
 
     CellCache *immutable_cache() { return m_immutable_cache ? m_immutable_cache.get() : 0; }
 
@@ -110,7 +105,8 @@ namespace Hypertable {
     void populate_key_set(KeySet &keys);
 
   private:
-    CellCachePtr m_cell_cache;
+    CellCachePtr m_read_cache;
+    CellCachePtr m_write_cache;
     CellCachePtr m_immutable_cache;
   };
 

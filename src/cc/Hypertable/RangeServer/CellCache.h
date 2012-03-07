@@ -54,6 +54,7 @@ namespace Hypertable {
 
   public:
     CellCache();
+    CellCache(CellCacheArena &arena);
     virtual ~CellCache() { }
     /**
      * Adds a key/value pair to the CellCache.  This method assumes that
@@ -118,6 +119,8 @@ namespace Hypertable {
     void freeze() { m_frozen = true; }
     void unfreeze() { m_frozen = false; }
 
+    void merge(CellCache *other);
+
     void populate_key_set(KeySet &keys) {
       Key key;
       for (CellMap::const_iterator iter = m_cell_map.begin();
@@ -126,6 +129,8 @@ namespace Hypertable {
 	keys.insert(key);
       }
     }
+
+    CellCacheArena &arena() { return m_arena; }
 
     friend class CellCacheScanner;
 
@@ -137,7 +142,8 @@ namespace Hypertable {
   protected:
 
     Mutex              m_mutex;
-    CellCacheArena     m_arena;
+    CellCacheArena     m_arena_base;
+    CellCacheArena    &m_arena;
     CellMap            m_cell_map;
     int32_t            m_deletes;
     int32_t            m_collisions;
