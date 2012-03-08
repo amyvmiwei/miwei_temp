@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
       total_memory = std::max((int64_t)strtoll(&argv[i][15], 0, 0), (int64_t)(TARGET_BUFSIZE * 2));
   }
   uint64_t cache_memory = total_memory / 2;
-  cache = new FileBlockCache(cache_memory, cache_memory);
+  cache = new FileBlockCache(cache_memory, cache_memory, false);
 
   srandom(seed);
 
@@ -120,7 +120,7 @@ int main(int argc, char **argv) {
     else {
       length = input_data[index].length;
       block = new uint8_t [ length ];
-      HT_EXPECT(cache->insert_and_checkout(file_id, file_offset, block, length),
+      HT_EXPECT(cache->insert(file_id, file_offset, block, length, true),
                 Error::FAILED_EXPECTATION);
       total_alloc += length;
       cache->checkin(file_id, file_offset);

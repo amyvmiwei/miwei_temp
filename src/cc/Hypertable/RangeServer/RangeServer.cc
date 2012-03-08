@@ -204,7 +204,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     block_cache_min = block_cache_max;
 
   if (block_cache_max > 0)
-    Global::block_cache = new FileBlockCache(block_cache_min, block_cache_max);
+    Global::block_cache = new FileBlockCache(block_cache_min, block_cache_max,
+					     cfg.get_bool("BlockCache.Compressed"));
 
   int64_t query_cache_memory = cfg.get_i64("QueryCache.MaxMemory");
   if (query_cache_memory > 0) {

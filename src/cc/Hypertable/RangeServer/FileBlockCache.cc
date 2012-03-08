@@ -80,8 +80,8 @@ void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
 
 
 bool
-FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
-                                    uint8_t *block, uint32_t length) {
+FileBlockCache::insert(int file_id, uint32_t file_offset,
+		       uint8_t *block, uint32_t length, bool checkout) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   int64_t key = ((int64_t)file_id << 32) | file_offset;
@@ -104,7 +104,7 @@ FileBlockCache::insert_and_checkout(int file_id, uint32_t file_offset,
   BlockCacheEntry entry(file_id, file_offset);
   entry.block = block;
   entry.length = length;
-  entry.ref_count = 1;
+  entry.ref_count = checkout ? 1 : 0;
 
   pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
   assert(insert_result.second);
