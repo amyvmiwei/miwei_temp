@@ -23,9 +23,8 @@ sleep 1
 $HT_HOME/bin/start-test-servers.sh --no-thriftbroker 
 
 cat ${SCRIPT_DIR}/test-indices.hql | $HT_HOME/bin/ht hypertable \
-    --no-prompt --test-mode \
-    > ${SCRIPT_DIR}/test-indices.output
-diff ${SCRIPT_DIR}/test-indices.output ${SCRIPT_DIR}/test-indices.golden 
+    --no-prompt --test-mode > test-indices.output
+diff test-indices.output ${SCRIPT_DIR}/test-indices.golden 
 if [ $? -ne "0" ]
 then
   echo "FAIL - indices tests differ, exiting"

@@ -116,9 +116,9 @@ namespace Hypertable {
      */
     void scan_error(int error, const String &error_msg);
 
+    TableCallback m_callback;
     TableScannerQueuePtr m_queue;
     TableScannerAsyncPtr m_scanner;
-    TableCallback m_callback;
     ScanCellsPtr m_cur_cells;
     size_t m_cur_cells_index;
     size_t m_cur_cells_size;
