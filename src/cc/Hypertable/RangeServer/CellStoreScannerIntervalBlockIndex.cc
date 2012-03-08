@@ -192,7 +192,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
   }
 
   if (m_block.base == 0 && m_iter != m_index->end()) {
-    DynamicBuffer expand_buf(0);
+    DynamicBuffer expand_buf;
     uint32_t len;
 
     m_block.offset = m_iter.value();
@@ -213,21 +213,37 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
     /**
      * Cache lookup / block read
      */
-    if (Global::block_cache == 0 ||
+    if (Global::block_cache == 0 || Global::block_cache->compressed() ||
         !Global::block_cache->checkout(m_file_id, (uint32_t)m_block.offset,
-                                       (uint8_t **)&m_block.base, &len)) {
+				       (uint8_t **)&m_block.base, &len)) {
       bool second_try = false;
+      bool checked_out = false;
     try_again:
       try {
-        DynamicBuffer buf(m_block.zlength);
+        DynamicBuffer buf;
 
-        if (second_try)
-          m_fd = m_cellstore->reopen_fd();
+	if (Global::block_cache == 0 || !Global::block_cache->compressed() ||
+            !Global::block_cache->checkout(m_file_id, (uint32_t)m_block.offset,
+				           (uint8_t **)&buf.base, &len)) {
+	  buf.grow(m_block.zlength, true);
 
-        /** Read compressed block **/
-        Global::dfs->pread(m_fd, buf.ptr, m_block.zlength, m_block.offset);
+	  if (second_try)
+	    m_fd = m_cellstore->reopen_fd();
 
-        buf.ptr += m_block.zlength;
+	  /** Read compressed block **/
+	  Global::dfs->pread(m_fd, buf.base, m_block.zlength, m_block.offset);
+
+	  checked_out = false;
+	}
+	else {
+	  HT_ASSERT(len == m_block.zlength);
+	  buf.size = m_block.zlength;
+	  buf.own = false;
+	  checked_out = true;
+	}
+
+	buf.ptr = buf.base + m_block.zlength;
+
         /** inflate compressed block **/
         BlockCompressionHeader header;
 
@@ -238,6 +254,17 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
         if (!header.check_magic(CellStore::DATA_BLOCK_MAGIC))
           HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC,
                    "Error inflating cell store block - magic string mismatch");
+
+        /** Insert or checkin compressed block into cache  **/
+        if (Global::block_cache && Global::block_cache->compressed()) {
+          if (checked_out)
+            Global::block_cache->checkin(m_file_id, m_block.offset);
+          else if (Global::block_cache) {
+            if (Global::block_cache->insert(m_file_id, m_block.offset, (uint8_t *)buf.base, m_block.zlength))
+              buf.own = false;
+          }
+        }
+
       }
       catch (Exception &e) {
         HT_ERROR_OUT <<"Error reading cell store (fd=" << m_fd << " file="
@@ -259,10 +286,10 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
 
       m_cached = false;
 
-      /** Insert block into cache  **/
-      if (Global::block_cache &&
-          Global::block_cache->insert_and_checkout(m_file_id, m_block.offset,
-                                                   (uint8_t *)m_block.base, len))
+      /** Insert uncompressed block into cache  **/
+      if (Global::block_cache && !Global::block_cache->compressed() &&
+          Global::block_cache->insert(m_file_id, m_block.offset,
+				      (uint8_t *)m_block.base, len, true))
         m_cached = true;
     }
     else

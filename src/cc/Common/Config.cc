@@ -344,9 +344,11 @@ void DefaultPolicy::init_options() {
         boo()->default_value(false), "Ignore clock skew errors")
     ("Hypertable.RangeServer.CommitInterval", i32()->default_value(50),
      "Default minimum group commit interval in milliseconds")
+    ("Hypertable.RangeServer.BlockCache.Compressed", boo()->default_value(true),
+        "Controls whether or not block cache stores compressed blocks")
     ("Hypertable.RangeServer.BlockCache.MinMemory", i64()->default_value(0),
         "Minimum size of block cache")
-    ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(0),
+    ("Hypertable.RangeServer.BlockCache.MaxMemory", i64()->default_value(-1),
         "Maximum (target) size of block cache")
     ("Hypertable.RangeServer.QueryCache.MaxMemory", i64()->default_value(50*M),
         "Maximum size of query cache")
