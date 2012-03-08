@@ -65,7 +65,7 @@ TableMutatorAsync::TableMutatorAsync(PropertiesPtr &props, Comm *comm,
     m_timeout_ms(timeout_ms), m_cb(cb), m_flags(flags), m_mutex(m_buffer_mutex),
     m_cond(m_buffer_cond), m_explicit_block_only(explicit_block_only),
     m_next_buffer_id(0), m_cancelled(false), m_mutated(false), m_imc(0), 
-    m_use_index(false) {
+    m_use_index(false), m_mutator(0) {
   initialize(props);
 }
 
@@ -73,13 +73,14 @@ TableMutatorAsync::TableMutatorAsync(PropertiesPtr &props, Comm *comm,
 TableMutatorAsync::TableMutatorAsync(Mutex &mutex, boost::condition &cond, 
         PropertiesPtr &props, Comm *comm, ApplicationQueuePtr &app_queue, 
         Table *table, RangeLocatorPtr &range_locator, uint32_t timeout_ms, 
-        ResultCallback *cb, uint32_t flags, bool explicit_block_only)
+        ResultCallback *cb, uint32_t flags, bool explicit_block_only,
+        TableMutator *mutator)
   : m_comm(comm), m_app_queue(app_queue), m_table(table), 
     m_range_locator(range_locator), m_memory_used(0), m_resends(0), 
     m_timeout_ms(timeout_ms), m_cb(cb), m_flags(flags), m_mutex(mutex), 
     m_cond(cond), m_explicit_block_only(explicit_block_only), 
     m_next_buffer_id(0), m_cancelled(false), m_mutated(false), m_imc(0),
-    m_use_index(false) {
+    m_use_index(false), m_mutator(mutator) {
   initialize(props);
 }
 
@@ -251,29 +252,32 @@ TableMutatorAsync::update_with_index(Key &key, const void *value,
 void
 TableMutatorAsync::set(const KeySpec &key, const void *value, 
         uint32_t value_len) {
-  ScopedLock lock(m_member_mutex);
+  {
+    ScopedLock lock(m_member_mutex);
 
-  try {
-    key.sanity_check();
+    try {
+      key.sanity_check();
 
-    Key full_key;
-    to_full_key(key, full_key);
+      Key full_key;
+      to_full_key(key, full_key);
 
-    // if there's an index: buffer the key and update the index
-    full_key.row_len = key.row_len;
-    if (key.flag == FLAG_INSERT && m_use_index && key_uses_index(full_key)) {
-      update_with_index(full_key, value, value_len);
-      if (m_imc->needs_flush())
-        flush();
+      // if there's an index: buffer the key and update the index
+      full_key.row_len = key.row_len;
+      if (key.flag == FLAG_INSERT && m_use_index && key_uses_index(full_key)) {
+        update_with_index(full_key, value, value_len);
+      }
+      else {
+        update_without_index(full_key, value, value_len);
+      }
     }
-    else {
-      update_without_index(full_key, value, value_len);
+    catch (...) {
+      handle_send_exceptions();
+      throw;
     }
-  }
-  catch (...) {
-    handle_send_exceptions();
-    throw;
-  }
+  } // ScopedLock
+
+  if (m_imc && m_imc->needs_flush())
+    flush();
 }
 
 void
@@ -336,79 +340,86 @@ TableMutatorAsync::update_without_index(Key &full_key, const void *value,
 void
 TableMutatorAsync::set_cells(Cells::const_iterator it, 
         Cells::const_iterator end) {
-  ScopedLock lock(m_member_mutex);
+  {
+    ScopedLock lock(m_member_mutex);
 
-  try {
-    for (; it != end; ++it) {
-      Key full_key;
-      const Cell &cell = *it;
-      cell.sanity_check();
-
-      if (!cell.column_family) {
-        if (cell.flag != FLAG_DELETE_ROW)
-          HT_THROW(Error::BAD_KEY,
-              (String)"Column family not specified in non-delete row set "
-              "on row=" + (String)cell.row_key);
-        full_key.row = cell.row_key;
-        full_key.timestamp = cell.timestamp;
-        full_key.revision = cell.revision;
-        full_key.flag = cell.flag;
-      }
-      else {
-        to_full_key(cell, full_key);
-      }
-
-      if (cell.row_key)
-        full_key.row_len = strlen(cell.row_key);
-
-      // if there's an index: buffer the key and update the index
-      if (cell.flag == FLAG_INSERT && m_use_index && key_uses_index(full_key)) {
-        update_with_index(full_key, cell.value, cell.value_len);
-        if (m_imc->needs_flush())
-          flush();
-      }
-      else {
-        update_without_index(full_key, cell);
+    try {
+      for (; it != end; ++it) {
+        Key full_key;
+        const Cell &cell = *it;
+        cell.sanity_check();
+  
+        if (!cell.column_family) {
+          if (cell.flag != FLAG_DELETE_ROW)
+            HT_THROW(Error::BAD_KEY,
+                (String)"Column family not specified in non-delete row set "
+                "on row=" + (String)cell.row_key);
+          full_key.row = cell.row_key;
+          full_key.timestamp = cell.timestamp;
+          full_key.revision = cell.revision;
+          full_key.flag = cell.flag;
+        }
+        else {
+          to_full_key(cell, full_key);
+        }
+  
+        if (cell.row_key)
+          full_key.row_len = strlen(cell.row_key);
+  
+        // if there's an index: buffer the key and update the index
+        if (cell.flag == FLAG_INSERT && m_use_index && key_uses_index(full_key)) {
+          update_with_index(full_key, cell.value, cell.value_len);
+        }
+        else {
+          update_without_index(full_key, cell);
+        }
       }
     }
-  }
-  catch (...) {
-    handle_send_exceptions();
-    throw;
-  }
+    catch (...) {
+      handle_send_exceptions();
+      throw;
+    }
+  } // ScopedLock
+
+  if (m_imc && m_imc->needs_flush())
+    flush();
 }
 
 void TableMutatorAsync::set_delete(const KeySpec &key) {
-  ScopedLock lock(m_member_mutex);
   Key full_key;
 
-  try {
-    key.sanity_check();
+  {
+    ScopedLock lock(m_member_mutex);
 
-    if (!key.column_family) {
-      full_key.row = (const char *)key.row;
-      full_key.timestamp = key.timestamp;
-      full_key.revision = key.revision;
-      full_key.flag = key.flag;
+    try {
+      key.sanity_check();
+  
+      if (!key.column_family) {
+        full_key.row = (const char *)key.row;
+        full_key.timestamp = key.timestamp;
+        full_key.revision = key.revision;
+        full_key.flag = key.flag;
+      }
+      else {
+        to_full_key(key, full_key);
+      }
+  
+      // if there's an index: buffer the key and update the index
+      if (m_use_index && key_uses_index(full_key)) {
+        update_with_index(full_key, 0, 0);
+      }
+      else {
+        update_without_index(full_key, 0, 0);
+      }
     }
-    else {
-      to_full_key(key, full_key);
+    catch (...) {
+      handle_send_exceptions();
+      throw;
     }
+  } // ScopedLock
 
-    // if there's an index: buffer the key and update the index
-    if (m_use_index && key_uses_index(full_key)) {
-      update_with_index(full_key, 0, 0);
-      if (m_imc->needs_flush())
-        flush();
-    }
-    else {
-      update_without_index(full_key, 0, 0);
-    }
-  }
-  catch (...) {
-    handle_send_exceptions();
-    throw;
-  }
+  if (m_imc && m_imc->needs_flush())
+    flush();
 }
 
 void
@@ -466,7 +477,7 @@ bool TableMutatorAsync::needs_flush() {
 }
 
 void TableMutatorAsync::flush(bool sync) {
-  flush_with_tablequeue(0, sync);
+  flush_with_tablequeue(m_mutator, sync);
 }
 
 void TableMutatorAsync::flush_with_tablequeue(TableMutator *mutator, bool sync) {
@@ -476,13 +487,13 @@ void TableMutatorAsync::flush_with_tablequeue(TableMutator *mutator, bool sync) 
     if (m_index_mutator) {
       m_index_mutator->flush();
       if (mutator)
-        mutator->wait_for_flush_completion(&(*m_index_mutator));
+        mutator->wait_for_flush_completion(m_index_mutator.get());
       m_index_mutator->wait_for_completion();
     }
     if (m_qualifier_index_mutator) {
       m_qualifier_index_mutator->flush();
       if (mutator)
-        mutator->wait_for_flush_completion(&(*m_qualifier_index_mutator));
+        mutator->wait_for_flush_completion(m_qualifier_index_mutator.get());
       m_qualifier_index_mutator->wait_for_completion();
     }
 

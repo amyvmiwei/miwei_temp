@@ -78,12 +78,13 @@ namespace Hypertable {
     TableMutatorAsync(PropertiesPtr &props, Comm *comm,
 		      ApplicationQueuePtr &app_queue, Table *table,
 		      RangeLocatorPtr &range_locator, uint32_t timeout_ms, ResultCallback *cb,
-		      uint32_t flags = 0, bool explicit_block_only=false);
+		      uint32_t flags = 0, bool explicit_block_only = false);
 
     TableMutatorAsync(Mutex &mutex, boost::condition &cond, PropertiesPtr &props, Comm *comm,
 		      ApplicationQueuePtr &app_queue, Table *table,
 		      RangeLocatorPtr &range_locator, uint32_t timeout_ms, ResultCallback *cb,
-		      uint32_t flags = 0, bool explicit_block_only=false);
+		      uint32_t flags = 0, bool explicit_block_only = false,
+              TableMutator *mutator = 0);
 
     /**
      * Destructor for TableMutatorAsync object
@@ -287,6 +288,7 @@ namespace Hypertable {
     TableMutatorAsyncPtr m_qualifier_index_mutator;
     IndexMutatorCallbackPtr m_imc;
     bool       m_use_index;
+    TableMutator *m_mutator;
   };
 
 } // namespace Hypertable

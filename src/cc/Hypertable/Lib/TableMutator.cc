@@ -56,8 +56,7 @@ void TableMutator::handle_exceptions() {
 }
 
 
-TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table,
-    RangeLocatorPtr &range_locator,
+TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table, RangeLocatorPtr &range_locator,
     uint32_t timeout_ms, uint32_t flags)
   : m_callback(this), m_timeout_ms(timeout_ms), m_flags(flags), m_flush_delay(0),
     m_last_error(Error::OK), m_last_op(0), m_unflushed_updates(false) {
@@ -66,8 +65,9 @@ TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table,
   ApplicationQueuePtr app_queue = (ApplicationQueue *)m_queue.get();
 
   m_flush_delay = props->get_i32("Hypertable.Mutator.FlushDelay");
-  m_mutator  = new TableMutatorAsync(m_queue_mutex, m_cond, props, comm, app_queue, table, range_locator, timeout_ms,
-      &m_callback, flags, false);
+  m_mutator = new TableMutatorAsync(m_queue_mutex, m_cond, props, comm, 
+          app_queue, table, range_locator, timeout_ms, &m_callback, 
+          flags, false, this);
 }
 
 TableMutator::~TableMutator() {
@@ -171,11 +171,11 @@ void TableMutator::flush() {
   try {
     set_last_error(Error::OK);
 
-    wait_for_flush_completion(&(*m_mutator));
+    wait_for_flush_completion(m_mutator.get());
 
     m_mutator->flush_with_tablequeue(this);
 
-    wait_for_flush_completion(&(*m_mutator));
+    wait_for_flush_completion(m_mutator.get());
 
     m_unflushed_updates = false;
   }

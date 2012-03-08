@@ -74,6 +74,10 @@ namespace Hypertable {
               key.timestamp, key.revision, (uint8_t *)value, 
               value_len, key.flag);
       m_cellbuffer.add(cell, true);
+      m_used_memory += strlen(key.row) + cf->name.size() 
+          + 8 + 8 + 2 + value_len;
+      if (key.column_qualifier)
+        m_used_memory += strlen(key.column_qualifier);
 
       // retrieve the inserted cell, then store it in the keymap as well
       m_cellbuffer.get_cell(cell, m_cellbuffer.size() - 1);
@@ -165,7 +169,7 @@ namespace Hypertable {
     }
 
     bool needs_flush() {
-      return m_cellbuffer.memory_used() > m_max_memory;
+      return m_used_memory > m_max_memory;
     }
 
     Mutex &get_mutex() { return m_mutex; }
@@ -173,6 +177,7 @@ namespace Hypertable {
     void clear() {
       m_keymap.clear();
       m_cellbuffer.clear();
+      m_used_memory = 0;
     }
 
     KeyMap &get_keymap() { return m_keymap; }
@@ -198,6 +203,9 @@ namespace Hypertable {
 
     // maximum size of buffered keys
     uint64_t m_max_memory;
+
+    // currently used memory
+    uint64_t m_used_memory;
 
     // last error code returned from the RangeServer
     int m_error;
