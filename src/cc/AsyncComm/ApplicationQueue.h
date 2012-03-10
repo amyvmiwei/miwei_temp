@@ -104,6 +104,11 @@ namespace Hypertable {
               m_state.cond.wait(lock);
             }
 
+            if (m_state.shutdown) {
+              m_state.threads_available--;
+              return;
+            }
+
             rec = 0;
 
             iter = m_state.urgent_queue.begin();

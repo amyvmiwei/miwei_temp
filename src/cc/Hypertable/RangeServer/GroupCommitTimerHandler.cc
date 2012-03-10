@@ -37,7 +37,8 @@ using namespace Hypertable::Config;
  */
 GroupCommitTimerHandler::GroupCommitTimerHandler(Comm *comm, RangeServer *range_server,
                                                  ApplicationQueuePtr &app_queue) 
-  : m_comm(comm), m_range_server(range_server), m_app_queue(app_queue), m_shutdown(false) {
+  : m_comm(comm), m_range_server(range_server), m_app_queue(app_queue),
+    m_shutdown(false), m_shutdown_complete(false) {
   int error;
 
   m_commit_interval = get_i32("Hypertable.RangeServer.CommitInterval");
@@ -58,6 +59,8 @@ void GroupCommitTimerHandler::handle(Hypertable::EventPtr &event_ptr) {
 
   if (m_shutdown) {
     HT_INFO("CommitIntervalGroupCommitTimerHandler shutting down.");
+    m_shutdown_complete = true;
+    m_shutdown_cond.notify_all();
     return;
   }
 
@@ -65,5 +68,15 @@ void GroupCommitTimerHandler::handle(Hypertable::EventPtr &event_ptr) {
 
   if ((error = m_comm->set_timer(m_commit_interval, this)) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
+}
 
+
+void GroupCommitTimerHandler::shutdown() {
+  ScopedLock lock(m_mutex);
+  m_shutdown = true;
+  m_comm->cancel_timer(this);
+  // gracfully complete shutdown
+  int error;
+  if ((error = m_comm->set_timer(0, this)) != Error::OK)
+    HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 }

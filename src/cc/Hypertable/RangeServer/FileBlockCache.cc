@@ -31,9 +31,11 @@ using std::pair;
 atomic_t FileBlockCache::ms_next_file_id = ATOMIC_INIT(0);
 
 FileBlockCache::~FileBlockCache() {
+  ScopedLock lock(m_mutex);
   for (BlockCache::const_iterator iter = m_cache.begin();
        iter != m_cache.end(); ++iter)
     delete [] (*iter).block;
+  m_cache.clear();
 }
 
 bool

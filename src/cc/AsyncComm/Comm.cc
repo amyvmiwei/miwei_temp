@@ -410,6 +410,9 @@ Comm::set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler) {
   return Error::OK;
 }
 
+void Comm::cancel_timer(DispatchHandler *handler) {
+  m_timer_reactor->cancel_timer(handler);
+}
 
 int
 Comm::get_local_address(const CommAddress &addr,

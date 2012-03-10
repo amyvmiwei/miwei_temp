@@ -86,6 +86,22 @@ namespace Hypertable {
       poll_loop_interrupt();
     }
 
+    void cancel_timer(DispatchHandler *handler) {
+      ScopedLock lock(m_mutex);
+      typedef TimerHeap::container_type container_t;
+      container_t container;
+      container.reserve(m_timer_heap.size());
+      ExpireTimer timer;
+      while (!m_timer_heap.empty()) {
+        timer = m_timer_heap.top();
+        if (timer.handler != handler)
+          container.push_back(timer);
+        m_timer_heap.pop();
+      }
+      foreach (const ExpireTimer &t, container)
+        m_timer_heap.push(t);
+    }
+
     void schedule_removal(IOHandler *handler) {
       ScopedLock lock(m_mutex);
       m_removed_handlers.insert(handler);

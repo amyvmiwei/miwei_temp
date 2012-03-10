@@ -99,6 +99,9 @@ int main(int argc, char **argv) {
 
     IndexUpdaterFactory::close();
 
+    range_server = 0;
+    timer_handler = 0;
+
     HT_ERROR("Exiting RangeServer.");
   }
   catch (Exception &e) {
