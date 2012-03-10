@@ -42,12 +42,15 @@ namespace Hyperspace {
                            ApplicationQueuePtr &app_queue_ptr);
     virtual void handle(Hypertable::EventPtr &event_ptr);
     void deliver_event_notifications(uint64_t session_id);
+    void shutdown();
 
   private:
     Comm              *m_comm;
     Master            *m_master;
     struct sockaddr_in m_send_addr;
     ApplicationQueuePtr m_app_queue_ptr;
+    Mutex              m_mutex;
+    bool               m_shutdown;
   };
   typedef boost::shared_ptr<ServerKeepaliveHandler> ServerKeepaliveHandlerPtr;
 }

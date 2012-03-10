@@ -54,7 +54,7 @@ namespace Hyperspace {
     virtual const char *command_text(uint64_t command);
 
     static CommBuf *create_client_keepalive_request(uint64_t session_id,
-        uint64_t last_known_event, bool shutdown=false);
+        uint64_t last_known_event, bool destroy_session=false);
     static CommBuf *
     create_server_keepalive_request(uint64_t session_id, int error);
     static CommBuf *
@@ -101,6 +101,7 @@ namespace Hyperspace {
                               const void *value, size_t value_len);
 
     static CommBuf *create_status_request();
+    static CommBuf *create_shutdown_request();
 
     static const uint64_t COMMAND_KEEPALIVE      = 0;
     static const uint64_t COMMAND_HANDSHAKE      = 1;
@@ -126,7 +127,8 @@ namespace Hyperspace {
     static const uint64_t COMMAND_READDIRATTR    = 21;
     static const uint64_t COMMAND_ATTRINCR       = 22;
     static const uint64_t COMMAND_READPATHATTR   = 23;
-    static const uint64_t COMMAND_MAX            = 24;
+    static const uint64_t COMMAND_SHUTDOWN       = 24;
+    static const uint64_t COMMAND_MAX            = 25;
 
     static const char * command_strs[COMMAND_MAX];
 

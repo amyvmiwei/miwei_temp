@@ -20,15 +20,10 @@
  */
 
 #include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
+#include "AsyncComm/ResponseCallback.h"
 
-#include "AsyncComm/CommBuf.h"
-
-#include "Protocol.h"
 #include "Master.h"
-#include "RequestHandlerDestroySession.h"
-#include "SessionData.h"
+#include "RequestHandlerShutdown.h"
 
 using namespace Hyperspace;
 using namespace Hypertable;
@@ -36,13 +31,14 @@ using namespace Hypertable;
 /**
  *
  */
-void RequestHandlerDestroySession::run() {
-
+void RequestHandlerShutdown::run() {
+  ResponseCallback cb(m_comm, m_event_ptr);
   try {
-    HT_INFO_OUT << "Destroying session " << m_session_id << HT_END;
-    m_master->destroy_session(m_session_id);
+    HT_INFO("Initiate shutdown");
+    m_master->shutdown(&cb, m_session_id);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+    cb.error(e.code(), "Error handling SHUTDOWN message");
   }
 }

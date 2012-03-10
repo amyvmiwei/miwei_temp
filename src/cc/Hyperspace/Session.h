@@ -665,6 +665,12 @@ namespace Hyperspace {
 
     void update_master_addr(const String &host);
 
+    /** Attempts to shutdown the Hyperspace server and destroys this session.
+     *
+     * @param timer maximum wait timer
+     */
+    void shutdown(Timer *timer=0);
+
   private:
 
     typedef hash_map<uint64_t, SessionCallback *> CallbackMap;

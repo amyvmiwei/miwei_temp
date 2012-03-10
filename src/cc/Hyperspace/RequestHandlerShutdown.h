@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/**
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,28 +19,27 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
-#define HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
+#ifndef HYPERSPACE_REQUESTHANDLERSHUTDOWN_H
+#define HYPERSPACE_REQUESTHANDLERSHUTDOWN_H
 
 #include "Common/Runnable.h"
-#include "Common/Mutex.h"
 
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/Event.h"
+
 
 namespace Hyperspace {
   using namespace Hypertable;
+
   class Master;
 
-  class RequestHandlerRenewSession : public ApplicationHandler {
+  class RequestHandlerShutdown : public ApplicationHandler {
   public:
-    RequestHandlerRenewSession(Comm *comm, Master *master,
-        uint64_t session_id, uint64_t last_known_event, bool destroy_session,
-        EventPtr &event, struct sockaddr_in *send_addr)
-      : m_comm(comm), m_master(master), m_session_id(session_id),
-        m_last_known_event(last_known_event), m_destroy_session(destroy_session),
-        m_event(event), m_send_addr(send_addr)  { }
-    virtual ~RequestHandlerRenewSession() { }
+    RequestHandlerShutdown(Comm *comm, Master *master, uint64_t session_id,
+                         EventPtr &event_ptr)
+      : ApplicationHandler(event_ptr), m_comm(comm), m_master(master),
+        m_session_id(session_id) { }
 
     virtual void run();
 
@@ -48,11 +47,8 @@ namespace Hyperspace {
     Comm        *m_comm;
     Master      *m_master;
     uint64_t     m_session_id;
-    uint64_t     m_last_known_event;
-    bool         m_destroy_session;
-    EventPtr     m_event;
-    struct sockaddr_in *m_send_addr;
   };
+
 }
 
-#endif // HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
+#endif // HYPERSPACE_REQUESTHANDLERSHUTDOWN_H

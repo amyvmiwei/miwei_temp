@@ -60,6 +60,7 @@ RequestHandlerReaddirAttr.cc
 RequestHandlerReadpathAttr.cc
 RequestHandlerLock.cc
 RequestHandlerRelease.cc
+RequestHandlerShutdown.cc
 RequestHandlerStatus.cc
 RequestHandlerHandshake.cc
 RequestHandlerDoMaintenance.cc

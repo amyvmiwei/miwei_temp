@@ -111,6 +111,7 @@ namespace Hyperspace {
                       bool include_sub_entries);
     void readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
                        uint64_t handle, const char *name, const char *attr);
+    void shutdown(ResponseCallback *cb, uint64_t session_id);
     void lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
               uint32_t mode, bool try_lock);
     void release(ResponseCallback *cb, uint64_t session_id, uint64_t handle);
@@ -298,7 +299,6 @@ namespace Hyperspace {
     void grant_pending_lock_reqs(BDbTxn &txn, const String &node,
         HyperspaceEventPtr &lock_granted_event, NotificationMap &lock_granted_notifications,
         HyperspaceEventPtr &lock_acquired_event, NotificationMap &lock_acquired_notifications);
-    void recover_state();
 
     typedef std::vector<SessionDataPtr> SessionDataVec;
     typedef hash_map<uint64_t, SessionDataPtr> SessionMap;
@@ -324,6 +324,7 @@ namespace Hyperspace {
     bool          m_maintenance_outstanding;
     boost::xtime  m_last_tick;
     uint64_t      m_lease_credit;
+    bool          m_shutdown;
 
     // BerkeleyDB state
     BerkeleyDbFilesystem *m_bdb_fs;
