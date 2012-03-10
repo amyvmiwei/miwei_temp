@@ -58,8 +58,8 @@ namespace Hypertable {
         regexp_qualifiers.push_back( new RE2(other.regexp_qualifiers[ii]->pattern()) );
       }
       exact_qualifiers = other.exact_qualifiers;
-      for (size_t ii=0; ii<exact_qualifiers.size(); ++ii) {
-        exact_qualifiers_set.insert(exact_qualifiers[ii].c_str());
+      foreach (const String& qualifier, exact_qualifiers) {
+        exact_qualifiers_set.insert(qualifier.c_str());
       }
       filter_by_exact_qualifier = other.filter_by_exact_qualifier;
       filter_by_regexp_qualifier = other.filter_by_regexp_qualifier;
@@ -121,8 +121,9 @@ namespace Hypertable {
         filter_by_prefix_qualifier = true;
       }
       else {
-        exact_qualifiers.push_back(qualifier);
-        exact_qualifiers_set.insert(exact_qualifiers.back().c_str());
+        pair<StringSet::iterator, bool> r = exact_qualifiers.insert(qualifier);
+        if (r.second)
+          exact_qualifiers_set.insert(r.first->c_str());
         filter_by_exact_qualifier = true;
       }
     }
@@ -144,11 +145,10 @@ namespace Hypertable {
     // qualifier_regexp
     CellFilterInfo& operator = (const CellFilterInfo&);
     vector<RE2 *> regexp_qualifiers;
-    vector<String> exact_qualifiers;
+    StringSet exact_qualifiers;
+    CstrSet exact_qualifiers_set;
     vector<String> prefix_qualifiers;
-    typedef set<const char *, LtCstr> QualifierSet;
-    QualifierSet exact_qualifiers_set;
-    QualifierSet prefix_qualifiers_set;
+    CstrSet prefix_qualifiers_set;
     bool filter_by_exact_qualifier;
     bool filter_by_regexp_qualifier;
     bool filter_by_prefix_qualifier;
