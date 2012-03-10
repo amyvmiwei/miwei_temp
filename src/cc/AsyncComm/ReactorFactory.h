@@ -62,7 +62,14 @@ namespace Hypertable {
     static void get_reactor(ReactorPtr &reactor_ptr) {
       assert(ms_reactors.size() > 0);
       reactor_ptr = ms_reactors[atomic_inc_return(&ms_next_reactor)
-                                % ms_reactors.size()];
+                                % (ms_reactors.size() - 1)];
+    }
+
+    /** This method returns the reserved timer reactor.
+     */
+    static void get_timer_reactor(ReactorPtr &reactor_ptr) {
+      assert(ms_reactors.size() > 0);
+      reactor_ptr = ms_reactors.back();
     }
 
     /** vector of reactors */
