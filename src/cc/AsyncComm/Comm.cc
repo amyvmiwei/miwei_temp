@@ -72,7 +72,7 @@ Comm::Comm() {
 
   InetAddr::initialize(&m_local_addr, System::net_info().primary_addr.c_str(), 0);
 
-  ReactorFactory::get_reactor(m_timer_reactor);
+  ReactorFactory::get_timer_reactor(m_timer_reactor);
   m_handler_map = ReactorRunner::handler_map;
 }
 
