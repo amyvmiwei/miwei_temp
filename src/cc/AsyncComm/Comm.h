@@ -269,6 +269,14 @@ namespace Hypertable {
     int set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler);
 
     /**
+     * Cancels all scheduled timers for the dispatch handler specified.
+     *
+     * @param handler the dispatch handler for which all scheduled timer should
+     *        be cancelled
+     */
+    void cancel_timer(DispatchHandler *handler);
+
+    /**
      * Closes the socket connection specified by the addr argument.  This has
      * the effect of closing the connection and removing it from the event
      * demultiplexer (e.g epoll).  It also causes all outstanding requests on

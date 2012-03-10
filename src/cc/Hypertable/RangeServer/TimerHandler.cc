@@ -106,6 +106,16 @@ void TimerHandler::complete_maintenance_notify() {
 }
 
 
+void TimerHandler::shutdown() {
+  ScopedLock lock(m_mutex);
+  TimerInterface::shutdown();
+  m_comm->cancel_timer(this);
+  // gracfully complete shutdown
+  int error;
+  if ((error = m_comm->set_timer(0, this)) != Error::OK)
+    HT_FATALF("Problem setting timer - %s", Error::get_text(error));
+}
+
 
 /**
  *

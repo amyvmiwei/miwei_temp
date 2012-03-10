@@ -328,23 +328,21 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 void RangeServer::shutdown() {
 
   try {
+    ScopedLock lock(m_stats_mutex);
+
+    m_app_queue->stop();
 
     // stop maintenance timer
-    if (m_timer_handler) {
+    if (m_timer_handler)
       m_timer_handler->shutdown();
-#if defined(CLEAN_SHUTDOWN)
-      m_timer_handler->wait_for_shutdown();
-#endif
-    }
 
     if (m_group_commit_timer_handler)
       m_group_commit_timer_handler->shutdown();
 
     // stop maintenance queue
+    Global::maintenance_queue->clear();
     Global::maintenance_queue->shutdown();
-#if defined(CLEAN_SHUTDOWN)
     Global::maintenance_queue->join();
-#endif
 
     // Kill update threads
     m_shutdown = true;
@@ -355,7 +353,6 @@ void RangeServer::shutdown() {
       thread->join();
 
     Global::range_locator = 0;
-    delete Global::block_cache;
 
     if (Global::rsml_writer) {
       Global::rsml_writer->close();
@@ -364,22 +361,33 @@ void RangeServer::shutdown() {
     if (Global::root_log) {
       Global::root_log->close();
       delete Global::root_log;
+      Global::root_log = 0;
     }
     if (Global::metadata_log) {
       Global::metadata_log->close();
       delete Global::metadata_log;
+      Global::metadata_log = 0;
     }
     if (Global::system_log) {
       Global::system_log->close();
       delete Global::system_log;
+      Global::system_log = 0;
     }
     if (Global::user_log) {
       Global::user_log->close();
       delete Global::user_log;
+      Global::user_log = 0;
     }
 
-    if (m_query_cache)
-      delete m_query_cache;
+    if (Global::block_cache) {
+      delete Global::block_cache;
+      Global::block_cache = 0;
+    }
+
+    if (m_query_cache) {
+       delete m_query_cache;
+      m_query_cache = 0;
+    }
 
     Global::maintenance_queue = 0;
     Global::metadata_table = 0;
@@ -389,7 +397,11 @@ void RangeServer::shutdown() {
     Global::log_dfs = 0;
     Global::dfs = 0;
 
+    delete Global::memory_tracker;
+    Global::memory_tracker = 0;
+
     delete Global::protocol;
+    Global::protocol = 0;
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -400,6 +412,7 @@ void RangeServer::shutdown() {
 
 
 RangeServer::~RangeServer() {
+  m_timer_handler = 0;
 }
 
 
@@ -2979,6 +2992,11 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
 
   HT_INFO_OUT << "Entering get_statistics()" << HT_END;
 
+  if (m_shutdown) {
+    cb->error(Error::SERVER_SHUTTING_DOWN, "");
+    return;
+  }
+
   m_server_stats->recompute(collector_id);
   m_stats->system.refresh();
 
@@ -3531,8 +3549,6 @@ RangeServer::relinquish_range(ResponseCallback *cb, const TableIdentifier *table
 void RangeServer::close(ResponseCallback *cb) {
   std::vector<TableInfoPtr> table_vec;
   std::vector<RangePtr> range_vec;
-
-  (void)cb;
 
   HT_INFO("close");
 

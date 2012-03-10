@@ -34,7 +34,7 @@ namespace Hypertable {
     virtual void complete_maintenance_notify() = 0;
     virtual bool low_memory() = 0;
 
-    void shutdown() { m_shutdown = true; }
+    virtual void shutdown() { m_shutdown = true; }
 
     void wait_for_shutdown() {
       ScopedLock lock(m_mutex);
