@@ -39,7 +39,8 @@ using namespace Serialization;
 
 ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master,
                                                ApplicationQueuePtr &app_queue)
-  : m_comm(comm), m_master(master), m_app_queue_ptr(app_queue) {
+  : m_comm(comm), m_master(master),
+    m_app_queue_ptr(app_queue), m_shutdown(false) {
   int error;
 
   m_master->get_datagram_send_address(&m_send_addr);
@@ -57,6 +58,12 @@ ServerKeepaliveHandler::ServerKeepaliveHandler(Comm *comm, Master *master,
 
 void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
   int error;
+
+  {
+    ScopedLock lock(m_mutex);
+    if (m_shutdown)
+      return;
+  }
 
   if (event->type == Hypertable::Event::MESSAGE) {
     const uint8_t *decode_ptr = event->payload;
@@ -117,6 +124,12 @@ void ServerKeepaliveHandler::deliver_event_notifications(uint64_t session_id) {
   int error = 0;
   SessionDataPtr session_ptr;
 
+  {
+    ScopedLock lock(m_mutex);
+    if (m_shutdown)
+      return;
+  }
+
   //HT_INFOF("Delivering event notifications for session %lld", session_id);
 
   if (!m_master->get_session(session_id, session_ptr)) {
@@ -131,8 +144,14 @@ void ServerKeepaliveHandler::deliver_event_notifications(uint64_t session_id) {
 
   CommBufPtr cbp(Protocol::create_server_keepalive_request(session_ptr));
 
-  if ((error = m_comm->send_datagram(session_ptr->addr, m_send_addr, cbp))
+  if ((error = m_comm->send_datagram(session_ptr->get_addr(), m_send_addr, cbp))
       != Error::OK) {
     HT_ERRORF("Comm::send_datagram returned %s", Error::get_text(error));
   }
+}
+
+void ServerKeepaliveHandler::shutdown() {
+  ScopedLock lock(m_mutex);
+  m_shutdown = true;
+  m_app_queue_ptr->shutdown();
 }

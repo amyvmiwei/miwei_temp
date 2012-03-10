@@ -102,24 +102,25 @@ namespace Hyperspace {
       ScopedLock lock(mutex);
       boost::xtime now;
       boost::xtime_get(&now, boost::TIME_UTC);
-      if (xtime_cmp(expire_time, now) < 0) {
+      if (xtime_cmp(expire_time, now) < 0)
         return false;
-      }
       memcpy(&expire_time, &now, sizeof(boost::xtime));
       xtime_add_millis(expire_time, m_lease_interval);
       return true;
     }
 
-    uint64_t get_id() const { return id;}
+    uint64_t get_id() const { return id; }
+
+    const struct sockaddr_in& get_addr() const { return addr; }
 
     void extend_lease(uint32_t millis) {
+      ScopedLock lock(mutex);
       xtime_add_millis(expire_time, millis);
     }
 
-    bool is_expired(boost::xtime &now) {
-      if (expired)
-        return true;
-      return (xtime_cmp(expire_time, now) < 0) ? true : false;
+    bool is_expired(const boost::xtime &now) {
+      ScopedLock lock(mutex);
+      return expired || xtime_cmp(expire_time, now) < 0;
     }
 
     void expire() {
@@ -135,6 +136,11 @@ namespace Hyperspace {
       }
     }
 
+    void set_expire_time_now() {
+      ScopedLock lock(mutex);
+      boost::xtime_get(&expire_time, boost::TIME_UTC);
+    }
+
     void set_name(const String &name_) {
       ScopedLock lock(mutex);
       name = name_;
@@ -142,11 +148,11 @@ namespace Hyperspace {
 
     friend struct LtSessionData;
 
-    struct sockaddr_in addr;
-    boost::xtime expire_time;
   private:
 
     Mutex mutex;
+    struct sockaddr_in addr;
+    boost::xtime expire_time;
     uint32_t m_lease_interval;
     uint64_t id;
     bool expired;

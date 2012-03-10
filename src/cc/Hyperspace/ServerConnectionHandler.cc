@@ -47,6 +47,7 @@
 #include "RequestHandlerHandshake.h"
 #include "RequestHandlerDoMaintenance.h"
 #include "RequestHandlerDestroySession.h"
+#include "RequestHandlerShutdown.h"
 #include "ServerConnectionHandler.h"
 
 using namespace std;
@@ -167,6 +168,10 @@ void ServerConnectionHandler::handle(EventPtr &event) {
       case Protocol::COMMAND_STATUS:
         handler = new RequestHandlerStatus(m_comm, m_master_ptr.get(),
                                            m_session_id, event);
+        break;
+      case Protocol::COMMAND_SHUTDOWN:
+        handler = new RequestHandlerShutdown(m_comm, m_master_ptr.get(),
+                                             m_session_id, event);
         break;
       default:
         HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",

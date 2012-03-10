@@ -62,6 +62,7 @@ const char *Hyperspace::Protocol::command_strs[COMMAND_MAX] = {
   "readdirattr",
   "attrincr",
   "readpathattr",
+  "shutdown"
 };
 
 
@@ -79,13 +80,13 @@ const char *Hyperspace::Protocol::command_text(uint64_t command) {
  */
 CommBuf *
 Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_id,
-    uint64_t last_known_event, bool shutdown) {
+    uint64_t last_known_event, bool destroy_session) {
   CommHeader header(COMMAND_KEEPALIVE);
   header.flags |= CommHeader::FLAGS_BIT_URGENT;
   CommBuf *cbuf = new CommBuf(header, 17);
   cbuf->append_i64(session_id);
   cbuf->append_i64(last_known_event);
-  cbuf->append_bool(shutdown);
+  cbuf->append_bool(destroy_session);
   return cbuf;
 }
 
@@ -489,6 +490,13 @@ CommBuf *Hyperspace::Protocol::create_release_request(uint64_t handle) {
 CommBuf *Hyperspace::Protocol::create_status_request() {
   CommHeader header(COMMAND_STATUS);
   header.flags |= CommHeader::FLAGS_BIT_URGENT;
+  CommBuf *cbuf = new CommBuf(header, 0);
+  return cbuf;
+}
+
+
+CommBuf *Hyperspace::Protocol::create_shutdown_request() {
+  CommHeader header(COMMAND_SHUTDOWN);
   CommBuf *cbuf = new CommBuf(header, 0);
   return cbuf;
 }

@@ -132,7 +132,8 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
                ServerKeepaliveHandlerPtr &keepalive_handler,
                ApplicationQueuePtr &app_queue_ptr)
   : m_verbose(false), m_next_handle_number(1), m_next_session_id(1),
-    m_maintenance_outstanding(false), m_lease_credit(0), m_bdb_fs(0) {
+    m_maintenance_outstanding(false), m_lease_credit(0),
+    m_shutdown(false), m_bdb_fs(0) {
 
   m_verbose = props->get_bool("verbose");
   m_lease_interval = props->get_i32("Hyperspace.Lease.Interval");
@@ -306,7 +307,7 @@ void Master::destroy_session(uint64_t session_id) {
   m_session_map.erase(session_id);
   session_data->expire();
   // force it to top of expiration heap
-  boost::xtime_get(&session_data->expire_time, boost::TIME_UTC);
+  session_data->set_expire_time_now();
   HT_INFOF("destroyed session %llu(%s)",
           (Llu)session_id, session_data->get_name());
 }
@@ -392,16 +393,16 @@ Master::next_expired_session(SessionDataPtr &session_data, boost::xtime &now) {
   ScopedLock lock(m_session_map_mutex);
   struct LtSessionData ascending;
 
-  if (m_session_heap.size() > 0) {
+  if (!m_session_heap.empty()) {
     std::make_heap(m_session_heap.begin(), m_session_heap.end(), ascending);
-    if (m_session_heap[0]->is_expired(now)) {
-      session_data = m_session_heap[0];
-      std::pop_heap(m_session_heap.begin(), m_session_heap.end(), ascending);
-      m_session_heap.resize(m_session_heap.size()-1);
+    session_data = m_session_heap.front();
+    if (session_data->is_expired(now) || m_shutdown) {
+      m_session_heap.erase(m_session_heap.begin());
       m_session_map.erase(session_data->get_id());
       return true;
     }
   }
+  session_data = 0;
   return false;
 }
 
@@ -433,7 +434,10 @@ void Master::remove_expired_sessions() {
 
     // try recomputing lease credit
     if (lease_credit == 0) {
-      lease_credit = xtime_diff_millis(m_last_tick, now);
+      {
+        ScopedLock lock(m_last_tick_mutex);
+        lease_credit = xtime_diff_millis(m_last_tick, now);
+      }
       if (lease_credit < 5000)
         lease_credit = 0;
     }
@@ -441,11 +445,13 @@ void Master::remove_expired_sessions() {
     // extend all leases in case of suspension
     if (lease_credit) {
       ScopedLock lock(m_session_map_mutex);
-      HT_INFOF("Suspension detected, extending all session leases "
-               "by %lu milliseconds", (Lu)lease_credit);
-      for (SessionMap::iterator iter = m_session_map.begin();
-           iter != m_session_map.end(); iter++)
-        (*iter).second->extend_lease((uint32_t)lease_credit);
+      if (!m_shutdown) {
+        HT_INFOF("Suspension detected, extending all session leases "
+                 "by %lu milliseconds", (Lu)lease_credit);
+        for (SessionMap::iterator iter = m_session_map.begin();
+             iter != m_session_map.end(); iter++)
+          (*iter).second->extend_lease((uint32_t)lease_credit);
+      }
     }
   } // end extend expiry in case of suspension
 
@@ -1152,6 +1158,43 @@ Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
 
   if ((ctx.error = cb->response(listing)) != Error::OK)
     HT_ERRORF("Problem sending back response - %s", Error::get_text(ctx.error));
+}
+
+/**
+ * shutdown
+ */
+void Master::shutdown(ResponseCallback *cb, uint64_t session_id) {
+  if (m_verbose)
+    HT_INFOF("shutdown(session=%llu", (Llu)session_id);
+
+  // destroy session
+  destroy_session(session_id);
+
+  // destroy dangling sessions...
+  {
+    ScopedLock lock(m_session_map_mutex);
+    m_shutdown = true;
+    SessionDataPtr session_data;
+    while (m_session_map.size()) {
+      SessionMap::iterator iter = m_session_map.begin();
+      session_data = (*iter).second;
+      m_session_map.erase(iter);
+      session_data->expire();
+      // force it to top of expiration heap
+      session_data->set_expire_time_now();
+      HT_INFOF("destroyed dangling session %llu(%s)",
+              (Llu)session_data->get_id(), session_data->get_name());
+    }
+  }
+
+  //...and remove
+  remove_expired_sessions();
+
+  int error;
+  if ((error = cb->response_ok()) != Error::OK)
+    HT_ERRORF("Problem sending back response - %s", Error::get_text(error));
+
+  m_keepalive_handler_ptr->shutdown();
 }
 
 /**

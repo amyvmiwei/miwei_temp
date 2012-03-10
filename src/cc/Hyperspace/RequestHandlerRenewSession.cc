@@ -44,7 +44,7 @@ void RequestHandlerRenewSession::run() {
   try {
     SessionDataPtr session_ptr;
 
-    if (m_shutdown) {
+    if (m_destroy_session) {
       m_master->destroy_session(m_session_id);
       return;
     }
