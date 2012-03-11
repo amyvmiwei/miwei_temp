@@ -64,7 +64,9 @@ public class RequestHandlerShutdown extends ApplicationHandler {
 
             cb.response_ok();
 
-            wait(2000);
+	    synchronized (this) {
+		wait(2000);
+	    }
 
             System.exit(0);
 
