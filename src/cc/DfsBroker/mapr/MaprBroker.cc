@@ -79,7 +79,7 @@ MaprBroker::~MaprBroker() {
 
 void
 MaprBroker::open(ResponseCallbackOpen *cb, const char *fname, 
-                  uint32_t flags, uint32_t bufsz) {
+		 uint32_t flags, uint32_t bufsz, bool) {
   hdfsFile file;
   int fd;
 
@@ -320,7 +320,7 @@ void MaprBroker::length(ResponseCallbackLength *cb, const char *fname) {
 
 void
 MaprBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
-                   uint32_t amount) {
+		  uint32_t amount, bool) {
   OpenFileDataMaprPtr fdata;
   ssize_t nread;
   uint8_t *readbuf;

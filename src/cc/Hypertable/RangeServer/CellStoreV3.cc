@@ -580,7 +580,7 @@ void CellStoreV3::finalize(TableIdentifier *table_identifier) {
   m_file_length = m_offset;
 
   /** Re-open file for reading **/
-  m_fd = m_filesys->open(m_filename);
+  m_fd = m_filesys->open(m_filename, 0, false);
 
   m_disk_usage = m_file_length;
   if (m_disk_usage < 0)

@@ -44,6 +44,7 @@ public class RequestHandlerOpen extends ApplicationHandler {
         String  fileName;
         int flags;
         int bufferSize;
+	boolean verify_checksum;
         ResponseCallbackOpen cb = new ResponseCallbackOpen(mComm, mEvent);
 
         try {
@@ -58,7 +59,9 @@ public class RequestHandlerOpen extends ApplicationHandler {
                 throw new ProtocolException(
                     "Filename not properly encoded in request packet");
 
-            mBroker.Open(cb, fileName, flags, bufferSize);
+	    verify_checksum = mEvent.payload.get() != 0;
+
+            mBroker.Open(cb, fileName, flags, bufferSize, verify_checksum);
 
         }
         catch (ProtocolException e) {

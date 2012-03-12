@@ -68,12 +68,14 @@ namespace Hypertable {
      *
      */
     CommBuf *
-    Protocol::create_open_request(const String &fname, uint32_t flags, uint32_t bufsz) {
+    Protocol::create_open_request(const String &fname, uint32_t flags,
+				  uint32_t bufsz, bool verify_checksum) {
       CommHeader header(COMMAND_OPEN);
-      CommBuf *cbuf = new CommBuf(header, 8 + encoded_length_str16(fname));
+      CommBuf *cbuf = new CommBuf(header, 9 + encoded_length_str16(fname));
       cbuf->append_i32(flags);
       cbuf->append_i32(bufsz);
       cbuf->append_str16(fname);
+      cbuf->append_bool(verify_checksum);
       return cbuf;
     }
 
@@ -164,13 +166,14 @@ namespace Hypertable {
      */
     CommBuf *
     Protocol::create_position_read_request(int32_t fd, uint64_t offset,
-                                           uint32_t amount) {
+                                           uint32_t amount, bool verify_checksum) {
       CommHeader header(COMMAND_PREAD);
       header.gid = fd;
-      CommBuf *cbuf = new CommBuf(header, 16);
+      CommBuf *cbuf = new CommBuf(header, 17);
       cbuf->append_i32(fd);
       cbuf->append_i64(offset);
       cbuf->append_i32(amount);
+      cbuf->append_bool(verify_checksum);
       return cbuf;
     }
 

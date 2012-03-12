@@ -23,6 +23,7 @@ package org.hypertable.DfsBroker.hadoop;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.BufferUnderflowException;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -30,8 +31,10 @@ import java.util.logging.Logger;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.server.namenode.NotReplicatedYetException;
+import org.apache.hadoop.util.ReflectionUtils;
 
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.ResponseCallback;
@@ -57,12 +60,19 @@ public class HdfsBroker {
 
     public HdfsBroker(Comm comm, Properties props) throws IOException {
         String str;
+	boolean shortcircuit_reads = false;
+	boolean verify_checksums = false;
 
         str = props.getProperty("verbose");
         if (str != null && str.equalsIgnoreCase("true"))
             mVerbose = true;
         else
             mVerbose = false;
+
+	str = props.getProperty("HdfsBroker.dfs.client.read.shortcircuit");
+	if (str != null && str.equalsIgnoreCase("true"))
+	    shortcircuit_reads = true;
+
         str = props.getProperty("HdfsBroker.fs.default.name");
         if (str == null) {
             System.err.println(
@@ -72,16 +82,20 @@ public class HdfsBroker {
 
         if (mVerbose) {
             System.out.println("HdfsBroker.Server.fs.default.name=" + str);
+	    System.out.println("HdfsBroker.dfs.client.read.shortcircuit=" + shortcircuit_reads);
         }
 
         mConf.set("fs.default.name", str);
         mConf.set("dfs.client.buffer.dir", "/tmp");
         mConf.setInt("dfs.client.block.write.retries", 3);
         mConf.setBoolean("fs.automatic.close", false);
-        mConf.setBoolean("dfs.client.read.shortcircuit", true);
+        mConf.setBoolean("dfs.client.read.shortcircuit", shortcircuit_reads);
 
         try {
             mFilesystem = FileSystem.get(mConf);
+	    mFilesystem.initialize(FileSystem.getDefaultUri(mConf), mConf);
+	    mFilesystem_noverify = newInstanceFileSystem(mConf);
+	    mFilesystem_noverify.setVerifyChecksum(false);
         }
         catch (Exception e) {
             log.severe("ERROR: Unable to establish connection to HDFS.");
@@ -89,6 +103,25 @@ public class HdfsBroker {
         }
     }
 
+    /**
+     * Returns a brand new instance of the FileSystem. It does not use
+     * the FileSystem.Cache. In newer versions of HDFS, we can directly
+     * invoke FileSystem.newInstance(Configuration).
+     * 
+     * @param conf Configuration
+     * @return A new instance of the filesystem
+     */
+    private static FileSystem newInstanceFileSystem(Configuration conf)
+	throws IOException {
+	URI uri = FileSystem.getDefaultUri(conf);
+	Class<?> clazz = conf.getClass("fs." + uri.getScheme() + ".impl", null);
+	if (clazz == null) {
+	    throw new IOException("No FileSystem for scheme: " + uri.getScheme());
+	}
+	FileSystem fs = (FileSystem)ReflectionUtils.newInstance(clazz, conf);
+	fs.initialize(uri, conf);
+	return fs;
+    }
 
     /**
      *
@@ -101,7 +134,8 @@ public class HdfsBroker {
     /**
      *
      */
-    public void Open(ResponseCallbackOpen cb, String fileName, int flags, int bufferSize) {
+    public void Open(ResponseCallbackOpen cb, String fileName, int flags,
+		     int bufferSize, boolean verify_checksum) {
         int fd;
         OpenFileData ofd;
         int error = Error.OK;
@@ -118,11 +152,15 @@ public class HdfsBroker {
 
             if (mVerbose)
               log.info("Opening file '" + fileName + "' flags=" + flags + " bs=" + bufferSize
-                         + " handle = " + fd);
+                         + " handle = " + fd + " verify_checksum=" + verify_checksum);
 
             ofd = mOpenFileMap.Create(fd, cb.GetAddress());
 
-            ofd.is = mFilesystem.open(new Path(fileName));
+	    if (verify_checksum)
+		ofd.is = mFilesystem.open(new Path(fileName));
+	    else
+		ofd.is_noverify = mFilesystem_noverify.open(new Path(fileName));
+
             ofd.pathname = fileName;
 
             // todo:  do something with bufferSize
@@ -170,6 +208,13 @@ public class HdfsBroker {
                         log.info("Closing input file " + ofd.pathname + " handle " + fd);
                     ofd.is.close();
                     ofd.is = null;
+                }
+
+                if (ofd.is_noverify != null) {
+                    if (mVerbose)
+                        log.info("Closing noverify input stream for file " + ofd.pathname + " handle " + fd);
+                    ofd.is_noverify.close();
+                    ofd.is_noverify = null;
                 }
 
                 if (ofd.os != null) {
@@ -420,11 +465,12 @@ public class HdfsBroker {
     }
 
     public void PositionRead(ResponseCallbackPositionRead cb, int fd,
-                             long offset, int amount) {
+                             long offset, int amount, boolean verify_checksum) {
         int error = Error.OK;
         OpenFileData ofd;
         int retries = 10;
         byte [] data = null;
+	FSDataInputStream is;
 
         while (true) {
           try {
@@ -439,9 +485,21 @@ public class HdfsBroker {
                log.info("Reading " + amount + " bytes from fd=" + fd);
             */
 
-            if (ofd.is == null)
-              throw new IOException("File handle " + fd
-                                    + " not open for reading");
+	    if (verify_checksum) {
+		if (ofd.is == null) {
+		    if (ofd.is == null) {
+			ofd.is = mFilesystem.open(new Path(ofd.pathname));
+			log.info("Re-opening '" + ofd.pathname + "' for verify checksum read");
+		    }
+		}
+		is = ofd.is;
+	    }
+	    else
+		is = ofd.is_noverify;
+
+            if (is == null)
+		throw new IOException("File handle " + fd
+				      + " not open for reading");
 
             if (data == null)
               data = new byte [ amount ];
@@ -449,7 +507,7 @@ public class HdfsBroker {
             int nread = 0;
 
             while (nread < amount) {
-              int r = ofd.is.read(offset + nread, data, nread, amount - nread);
+              int r = is.read(offset + nread, data, nread, amount - nread);
 
               if (r < 0) break;
 
@@ -734,6 +792,7 @@ public class HdfsBroker {
 
     private Configuration mConf = new Configuration();
     private FileSystem    mFilesystem;
+    private FileSystem    mFilesystem_noverify;
     private boolean       mVerbose = false;
     public  OpenFileMap   mOpenFileMap = new OpenFileMap();
 }

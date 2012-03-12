@@ -103,7 +103,7 @@ namespace Hypertable { namespace DfsBroker {
       }
 
       virtual void open(const String &name, uint32_t flags, DispatchHandler *handler);
-      virtual int open(const String &name, uint32_t flags=0);
+      virtual int open(const String &name, uint32_t flags, bool verify_checksum);
       virtual int open_buffered(const String &name, uint32_t flags, uint32_t buf_size,
                                 uint32_t outstanding, uint64_t start_offset=0,
                                 uint64_t end_offset=0);
@@ -136,7 +136,8 @@ namespace Hypertable { namespace DfsBroker {
 
       virtual void pread(int32_t fd, size_t len, uint64_t offset,
                          DispatchHandler *handler);
-      virtual size_t pread(int32_t fd, void *dst, size_t len, uint64_t offset);
+      virtual size_t pread(int32_t fd, void *dst, size_t len, uint64_t offset,
+			   bool verify_checksum);
 
       virtual void mkdirs(const String &name, DispatchHandler *handler);
       virtual void mkdirs(const String &name);

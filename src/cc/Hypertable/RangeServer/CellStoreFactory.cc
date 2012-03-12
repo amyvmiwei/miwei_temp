@@ -54,25 +54,25 @@ CellStore *CellStoreFactory::open(const String &name,
   uint64_t offset;
   uint16_t version;
   uint32_t oflags = 0;
-  bool first_try = true;
 
   /** Get the file length **/
   file_length = Global::dfs->length(name);
 
+  bool second_try = false;
  try_again:
 
   if (HT_IO_ALIGNED(file_length))
     oflags = Filesystem::OPEN_FLAG_DIRECTIO;
 
   /** Open the DFS file **/
-  fd = Global::dfs->open(name, oflags);
+  fd = Global::dfs->open(name, oflags, second_try);
 
   amount = (file_length < HT_DIRECT_IO_ALIGNMENT) ? file_length : HT_DIRECT_IO_ALIGNMENT;
   offset = file_length - amount;
 
   boost::shared_array<uint8_t> trailer_buf( new uint8_t [amount] );
 
-  nread = Global::dfs->pread(fd, trailer_buf.get(), amount, offset);
+  nread = Global::dfs->pread(fd, trailer_buf.get(), amount, offset, second_try);
 
   if (nread != amount)
     HT_THROWF(Error::DFSBROKER_IO_ERROR,
@@ -88,7 +88,7 @@ CellStore *CellStoreFactory::open(const String &name,
   // If file format is < 4 and happens to be aligned, reopen non-directio
   if (version < 4 && oflags) {
     Global::dfs->close(fd);
-    fd = Global::dfs->open(name);
+    fd = Global::dfs->open(name, 0, second_try);
   }
 
   if (version == 6) {
@@ -105,8 +105,8 @@ CellStore *CellStoreFactory::open(const String &name,
     }
     catch (Exception &e) {
       Global::dfs->close(fd);
-      if (first_try && e.code() == Error::CHECKSUM_MISMATCH) {
-	first_try = false;
+      if (!second_try && e.code() == Error::CHECKSUM_MISMATCH) {
+	second_try = true;
 	goto try_again;
       }
       throw;

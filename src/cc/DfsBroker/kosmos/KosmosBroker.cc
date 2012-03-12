@@ -61,7 +61,7 @@ KosmosBroker::~KosmosBroker() {
 
 void
 KosmosBroker::open(ResponseCallbackOpen *cb, const char *fname,
-                   uint32_t flags, uint32_t bufsz) {
+                   uint32_t flags, uint32_t bufsz, bool) {
   int fd, local_fd;
   String abspath;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
@@ -308,7 +308,7 @@ void KosmosBroker::length(ResponseCallbackLength *cb, const char *fname) {
 
 void
 KosmosBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
-                    uint32_t amount) {
+                    uint32_t amount, bool) {
   OpenFileDataKosmosPtr fdata;
   ssize_t nread;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();

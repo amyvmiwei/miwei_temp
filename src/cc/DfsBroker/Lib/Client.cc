@@ -85,7 +85,7 @@ Client::~Client() {
 
 void
 Client::open(const String &name, uint32_t flags, DispatchHandler *handler) {
-  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0));
+  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0, true));
 
   try {
     send_message(cbp, handler);
@@ -97,10 +97,10 @@ Client::open(const String &name, uint32_t flags, DispatchHandler *handler) {
 
 
 int
-Client::open(const String &name, uint32_t flags) {
+Client::open(const String &name, uint32_t flags, bool verify_checksum) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0));
+  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0, verify_checksum));
 
   try {
     send_message(cbp, &sync_handler);
@@ -126,7 +126,7 @@ Client::open_buffered(const String &name, uint32_t flags, uint32_t buf_size,
               (HT_IO_ALIGNED(buf_size) &&
                HT_IO_ALIGNED(start_offset) &&
                HT_IO_ALIGNED(end_offset)));
-    int fd = open(name, flags);
+    int fd = open(name, flags, true);
     {
       ScopedLock lock(m_mutex);
       HT_ASSERT(m_buffered_reader_map.find(fd) == m_buffered_reader_map.end());
@@ -456,7 +456,7 @@ Client::length(const String &name) {
 void
 Client::pread(int32_t fd, size_t len, uint64_t offset,
               DispatchHandler *handler) {
-  CommBufPtr cbp(m_protocol.create_position_read_request(fd, offset, len));
+  CommBufPtr cbp(m_protocol.create_position_read_request(fd, offset, len, true));
 
   try { send_message(cbp, handler); }
   catch (Exception &e) {
@@ -467,10 +467,10 @@ Client::pread(int32_t fd, size_t len, uint64_t offset,
 
 
 size_t
-Client::pread(int32_t fd, void *dst, size_t len, uint64_t offset) {
+Client::pread(int32_t fd, void *dst, size_t len, uint64_t offset, bool verify_checksum) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(m_protocol.create_position_read_request(fd, offset, len));
+  CommBufPtr cbp(m_protocol.create_position_read_request(fd, offset, len, verify_checksum));
 
   try {
     send_message(cbp, &sync_handler);

@@ -735,7 +735,7 @@ void CellStoreV5::finalize(TableIdentifier *table_identifier) {
   m_file_length = m_offset;
 
   /** Re-open file for reading **/
-  m_fd = m_filesys->open(m_filename, Filesystem::OPEN_FLAG_DIRECTIO);
+  m_fd = m_filesys->open(m_filename, Filesystem::OPEN_FLAG_DIRECTIO, false);
 
   // If compacting due to a split, estimate the disk usage at 1/2
   if (m_trailer.flags & CellStoreTrailerV5::SPLIT)
