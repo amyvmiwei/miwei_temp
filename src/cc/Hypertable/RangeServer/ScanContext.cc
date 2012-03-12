@@ -88,6 +88,9 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
           family_info[cf->id].add_qualifier(qualifier.c_str(), 
                   is_regexp, is_prefix);
         }
+        else
+          family_info[cf->id].accept_empty_qualifier = true;
+
         if (cf->ttl == 0)
           family_info[cf->id].cutoff_time = TIMESTAMP_MIN;
         else

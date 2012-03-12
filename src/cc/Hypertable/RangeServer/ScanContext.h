@@ -46,8 +46,8 @@ namespace Hypertable {
   public:
     CellFilterInfo(): cutoff_time(0), max_versions(0), counter(false),
         has_index(false), has_qualifier_index(false),
-        filter_by_exact_qualifier(false), filter_by_regexp_qualifier(false),
-        filter_by_prefix_qualifier(false) {}
+        accept_empty_qualifier(false), filter_by_exact_qualifier(false), 
+        filter_by_regexp_qualifier(false), filter_by_prefix_qualifier(false) {}
 
     CellFilterInfo(const CellFilterInfo& other) {
       cutoff_time = other.cutoff_time;
@@ -66,6 +66,7 @@ namespace Hypertable {
       filter_by_prefix_qualifier = other.filter_by_prefix_qualifier;
       has_index = other.has_index;
       has_qualifier_index = other.has_qualifier_index;
+      accept_empty_qualifier = other.accept_empty_qualifier;
     }
 
     ~CellFilterInfo() {
@@ -74,8 +75,9 @@ namespace Hypertable {
     }
 
     bool qualifier_matches(const char *qualifier, size_t qualifier_len) {
-      if (!filter_by_exact_qualifier && !filter_by_regexp_qualifier && 
-              !filter_by_prefix_qualifier)
+      if (accept_empty_qualifier ||
+          (!filter_by_exact_qualifier && !filter_by_regexp_qualifier && 
+              !filter_by_prefix_qualifier))
         return true;
 
       // check exact match first
@@ -139,6 +141,7 @@ namespace Hypertable {
     bool counter;
     bool has_index;
     bool has_qualifier_index;
+    bool accept_empty_qualifier;
 
   private:
     // disable assignment -- if needed then implement with deep copy of

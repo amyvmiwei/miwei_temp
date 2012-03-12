@@ -2694,3 +2694,15 @@ INSERT INTO Test VALUES ('foo;', 'col', 'bar');
 SELECT * FROM Test WHERE ROW='foo;';
 foo;	col	bar
 
+# issue 738: select a,a:foo only returns a:foo
+INSERT INTO Test VALUES ('foo;', 'col:qual', 'baz');
+SELECT col, col:qual FROM Test;
+foo;	col	bar
+foo;	col:qual	baz
+SELECT col FROM Test;
+foo;	col	bar
+foo;	col:qual	baz
+SELECT col:qual FROM Test;
+foo;	col:qual	baz
+
+
