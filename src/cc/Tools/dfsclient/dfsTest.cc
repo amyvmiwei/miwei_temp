@@ -121,7 +121,7 @@ namespace {
     client->append(fd, sbuf);
     client->close(fd);
     client->rename(file_a, file_b);
-    fd = client->open(file_b);
+    fd = client->open(file_b, 0, true);
     client->read(fd, buf, sizeof(buf));
     HT_ASSERT(strcmp(buf, magic) == 0);
     client->close(fd);

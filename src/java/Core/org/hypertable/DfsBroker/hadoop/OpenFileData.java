@@ -29,6 +29,7 @@ import org.apache.hadoop.fs.FSDataOutputStream;
  *
  */
 public class OpenFileData {
+    public FSDataInputStream is_noverify = null;
     public FSDataInputStream is = null;
     public FSDataOutputStream os = null;
     public InetSocketAddress addr = null;

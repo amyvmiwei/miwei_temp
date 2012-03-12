@@ -64,9 +64,10 @@ namespace Hypertable {
      *
      * @param name absolute path name of file to open
      * @param flags open flags (DIRECT)
+     * @param verify_checksum turn on checksum verification
      * @return file descriptor
      */
-    virtual int open(const String &name, uint32_t flags=0) = 0;
+    virtual int open(const String &name, uint32_t flags, bool verify_checksum) = 0;
 
     /** Opens a file in buffered (readahead) mode.  Issues an open file request
      * and waits for it to complete. Turns on readahead mode so that data is
@@ -315,7 +316,8 @@ namespace Hypertable {
      * @param dst destination buffer for read data
      * @return amount of data read
      */
-    virtual size_t pread(int fd, void *dst, size_t len, uint64_t offset) = 0;
+    virtual size_t pread(int fd, void *dst, size_t len, uint64_t offset,
+			 bool verify_checksum=true) = 0;
 
     /** Decodes the response from a pread request
      *

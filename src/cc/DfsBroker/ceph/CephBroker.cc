@@ -68,7 +68,7 @@ CephBroker::~CephBroker() {
 }
 
 void CephBroker::open(ResponseCallbackOpen *cb, const char *fname,
-		      uint32_t flags, uint32_t bufsz) {
+		      uint32_t flags, uint32_t bufsz, bool) {
   int fd, ceph_fd;
   String abspath;
   HT_DEBUGF("open file='%s' bufsz=%d", fname, bufsz);
@@ -281,7 +281,7 @@ void CephBroker::length(ResponseCallbackLength *cb, const char *fname) {
 }
 
 void CephBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
-		       uint32_t amount) {
+		       uint32_t amount, bool) {
   OpenFileDataCephPtr fdata;
   ssize_t nread;
   StaticBuffer buf(new uint8_t [amount], amount);

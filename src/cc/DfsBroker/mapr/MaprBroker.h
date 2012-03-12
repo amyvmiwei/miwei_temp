@@ -82,7 +82,7 @@ namespace Hypertable {
     virtual ~MaprBroker();
 
     virtual void open(ResponseCallbackOpen *cb, const char *fname,
-                      uint32_t flags, uint32_t bufsz);
+                      uint32_t flags, uint32_t bufsz, bool verify_checksum);
     virtual void create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
            int32_t bufsz, int16_t replication, int64_t blksz);
     virtual void close(ResponseCallback *cb, uint32_t fd);
@@ -93,7 +93,7 @@ namespace Hypertable {
     virtual void remove(ResponseCallback *cb, const char *fname);
     virtual void length(ResponseCallbackLength *cb, const char *fname);
     virtual void pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
-                       uint32_t amount);
+                       uint32_t amount, bool verify_checksum);
     virtual void mkdirs(ResponseCallback *cb, const char *dname);
     virtual void rmdir(ResponseCallback *cb, const char *dname);
     virtual void readdir(ResponseCallbackReaddir *cb, const char *dname);

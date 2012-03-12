@@ -39,7 +39,8 @@ namespace Hypertable {
 
       static CommBuf *create_open_request(const String &fname,
                                           uint32_t flags,
-                                          uint32_t bufsz=0);
+                                          uint32_t bufsz,
+					  bool verify_checksum);
 
       static CommBuf *create_create_request(const String &fname,
                                             uint32_t flags,
@@ -61,7 +62,7 @@ namespace Hypertable {
       static CommBuf *create_length_request(const String &fname);
 
       static CommBuf *create_position_read_request(int32_t fd, uint64_t offset,
-                                                   uint32_t amount);
+                                                   uint32_t amount, bool verify_checksum);
 
       static CommBuf *create_mkdirs_request(const String &fname);
 

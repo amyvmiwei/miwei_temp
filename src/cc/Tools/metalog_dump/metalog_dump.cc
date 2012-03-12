@@ -95,7 +95,7 @@ namespace {
     }
 
     if (*is_file) {
-      int fd = fs->open(path);
+      int fd = fs->open(path, 0, true);
       MetaLog::Header header;
       uint8_t buf[MetaLog::Header::LENGTH];
       const uint8_t *ptr = buf;

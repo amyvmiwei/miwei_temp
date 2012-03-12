@@ -44,8 +44,9 @@ void RequestHandlerPread::run() {
     uint32_t fd = decode_i32(&decode_ptr, &decode_remain);
     uint64_t offset = decode_i64(&decode_ptr, &decode_remain);
     uint32_t amount = decode_i32(&decode_ptr, &decode_remain);
+    bool verify_checksum = decode_bool(&decode_ptr, &decode_remain);
 
-    m_broker->pread(&cb, fd, offset, amount);
+    m_broker->pread(&cb, fd, offset, amount, verify_checksum);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

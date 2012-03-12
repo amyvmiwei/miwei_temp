@@ -94,7 +94,7 @@ LocalBroker::~LocalBroker() {
 
 void
 LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, 
-                  uint32_t flags, uint32_t bufsz) {
+                  uint32_t flags, uint32_t bufsz, bool) {
   int fd, local_fd;
   String abspath;
 
@@ -392,7 +392,7 @@ void LocalBroker::length(ResponseCallbackLength *cb, const char *fname) {
 
 void
 LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
-                   uint32_t amount) {
+                   uint32_t amount, bool) {
   OpenFileDataLocalPtr fdata;
   ssize_t nread;
   uint8_t *readbuf;
