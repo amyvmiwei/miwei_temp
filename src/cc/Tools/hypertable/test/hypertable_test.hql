@@ -550,3 +550,10 @@ CREATE TABLE Test('col');
 INSERT INTO Test VALUES ('foo;', 'col', 'bar');
 SELECT * FROM Test WHERE ROW='foo;';
 
+# issue 738: select a,a:foo only returns a:foo
+INSERT INTO Test VALUES ('foo;', 'col:qual', 'baz');
+SELECT col, col:qual FROM Test;
+SELECT col FROM Test;
+SELECT col:qual FROM Test;
+
+
