@@ -2704,5 +2704,19 @@ foo;	col	bar
 foo;	col:qual	baz
 SELECT col:qual FROM Test;
 foo;	col:qual	baz
+DROP TABLE IF EXISTS Test;
 
+# issue 793: CREATE TABLE does not work with fully qualified table names
+USE "/";
+CREATE NAMESPACE ns;
+CREATE TABLE "/ns/t" (a);
+INSERT INTO "/ns/t" VALUES ('foo', 'a', 'bar');
+ALTER TABLE "/ns/t" RENAME COLUMN FAMILY ('a', 'b');
+RENAME TABLE "/ns/t" TO "/ns/r";
+DROP TABLE "/ns/r";
+CREATE TABLE "ns/t" (a);
+INSERT INTO "ns/t" VALUES ('foo', 'a', 'bar');
+ALTER TABLE "ns/t" RENAME COLUMN FAMILY ('a', 'b');
+RENAME TABLE "ns/t" TO "ns/r";
+DROP TABLE "ns/r";
 
