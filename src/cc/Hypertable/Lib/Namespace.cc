@@ -78,8 +78,6 @@ String Namespace::get_full_name(const String &sub_name) {
   // remove leading/trailing '/' and ' '
   String full_name = sub_name;
   boost::trim_if(full_name, boost::is_any_of("/ "));
-  if (full_name.find('/') != String::npos)
-    HT_THROW(Error::BAD_NAMESPACE, (String)" bad sub_name=" + sub_name);
   full_name = m_name + '/' + full_name;
   canonicalize(&full_name);
   return full_name;
