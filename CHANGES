@@ -1,3 +1,49 @@
+Version 0.9.5.6:
+(2012-03-15)
+
+    Fixed bug in ScanSpec operator<<(std::ostream function
+    issue 793: CREATE TABLE now works with fully qualified table names
+    issue 738: SELECT a, a:foo used to ignore all cells without qualifier
+    Disable checksum verification for random block reads
+    Enable dfs.client.read.shortcircuit in HDFS broker
+    Fix ScanContext exact qualifier set
+    Graceful shutdown of RangeServer
+    Gracefully shutdown Hyperspace
+    Use dedicated timer reactor
+    Updated to CDH3u3
+    LoadGenerator can now generate queries which use cell value index or qualifier index
+    LoadGenerator can now read words from text file as cell values
+    Fixed a race condition in IndexScannerCallback/IndexMutatorCallback
+    Retry bind() call in event of failure in Comm::listen
+    Added ability to store _compressed_ blocks in block cache
+    Split CellCache into Read and Write caches to minimize contention
+    Fixed double-free in IndexUpdater
+    issue 444: Moved logic for IGNORE_UNKNOWN_COLUMNS from TableMutator to HqlInterpreter
+    issue 779: Fixed upgrade-ok.sh for 1.0.0.0
+    Removed an unused function
+    Added support for secondary indices
+    Fixed path of rrdtool; now using System::install_dir instead of
+    Added CellCacheManager to AccessGroup
+    issue 756: Fixed problem with auto-assigned revision number not strictly increasing
+    issue 796: Added CellStore V6 with trailer checksum
+    Fixed bug in java DiscreteRandomGenerator
+    Fixed typos in help text
+    Copy Thirft perl module into installation; Fixed Ruby and perl examples
+    Removed PHPTHRIFT_ROOT in favor of THRIFT_SOURCE_DIR
+    Race condition fixed in TableMutatorAsync
+    Fix SendRec comparison operator in TableMutatorAsyncScatterBuffer.cc
+    Changed monitoring UI to pull rrdtool from installation
+    Added key sanity check to Range::add
+    issues 785,776: Fixed METADATA tests; Added default value for Hyperspace.Replica.Workers
+    issue 778: use new-style python classes for Thrift API
+    Fixed Master SystemUpgrade to re-open metadata_table and rs_metrics_table
+    Fixed array write overrun in Range introduced with FLAG_DELETE_CELL_VERSION
+    Fixed initialization problem in Client
+    Added missing parameter to create_mutator_async() in ThriftBroker
+    Only copy PHP files if PHPTHRIFT_ROOT defined
+    Fixed circular dependency when building shared libraries
+    Fixed Thrift compilation errors due to missing stdint.h
+
 Version 0.9.5.5:
 (2012-01-30)
 
