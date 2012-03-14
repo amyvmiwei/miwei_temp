@@ -234,8 +234,8 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
      <<" max_versions="<< scan_spec.max_versions
      <<" return_deletes="<< scan_spec.return_deletes
      <<" keys_only="<< scan_spec.keys_only;
-  os <<" row_regexp=" << scan_spec.row_regexp;
-  os <<" value_regexp=" << scan_spec.value_regexp;
+  os <<" row_regexp=" << (scan_spec.row_regexp ? scan_spec.row_regexp : "");
+  os <<" value_regexp=" << (scan_spec.value_regexp ? scan_spec.value_regexp : "");
   os <<" scan_and_filter_rows=" << scan_spec.scan_and_filter_rows;
   os <<" row_offset=" << scan_spec.row_offset;
   os <<" cell_offset=" << scan_spec.cell_offset;
