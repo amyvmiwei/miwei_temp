@@ -42,6 +42,7 @@
 
 namespace Hypertable {
 
+static String last;
   static const char *tmp_schema_outer=
         "<Schema>"
           "<AccessGroup name=\"default\">"
@@ -125,8 +126,8 @@ namespace Hypertable {
       m_scanners.clear();
       sspecs_clear();
       if (m_tmp_table) {
-        Client *client=m_primary_table->get_namespace()->get_client();
-        NamespacePtr nstmp=client->open_namespace("/tmp");
+        Client *client = m_primary_table->get_namespace()->get_client();
+        NamespacePtr nstmp = client->open_namespace("/tmp");
         nstmp->drop_table(Filesystem::basename(m_tmp_table->get_name()), true);
       }
     }
@@ -186,10 +187,9 @@ namespace Hypertable {
         else
           m_original_cb->scan_ok(scanner, scancells);
 
-        // immediately read ahead after receiving the first result from the
-        // first scanner, or when the current scanner sends "eos"; 
-        // that way there's always one outstanding scan
-        if (!m_limits_reached && (is_eos || m_readahead_count <= 1))
+        // fetch data from the next scanner when we have reached the end of
+        // the current one
+        if (!m_limits_reached && is_eos)
           readahead();
       }
 
@@ -335,7 +335,7 @@ namespace Hypertable {
           delete m_mutator;
           m_mutator = 0;
         }
-        if (m_tmp_keys.empty()) {
+        if (!m_tmp_table && m_tmp_keys.empty()) {
           m_eos = true;
           return;
         }
