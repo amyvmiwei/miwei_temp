@@ -338,7 +338,6 @@ void RangeServer::shutdown() {
     Global::maintenance_queue->shutdown();
     Global::maintenance_queue->join();
 
-    m_app_queue->wait_for_empty();
     m_app_queue->stop();
 
     if (m_group_commit_timer_handler)
@@ -402,6 +401,8 @@ void RangeServer::shutdown() {
 
     delete Global::protocol;
     Global::protocol = 0;
+
+    m_app_queue->shutdown();
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
