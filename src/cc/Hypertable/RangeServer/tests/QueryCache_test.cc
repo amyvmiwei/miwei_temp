@@ -75,7 +75,7 @@ int main(int argc, char **argv) {
 
   cache = new QueryCache(MAX_MEMORY);
 
-  md5_csum((unsigned char *)"aa", 2, key.digest);
+  md5_csum((unsigned char *)"aa", 2, (unsigned char *)key.digest);
 
   if (cache->insert(&key, "/1", "aa", result, MAX_MEMORY+1)) {
     cout << "Error: insert should have failed." << endl;
@@ -93,7 +93,7 @@ int main(int argc, char **argv) {
     row[2] = 0;
     for (size_t i=0; i<100; i++) {
       sprintf(keybuf, "%s-%d", row, (int)i);
-      md5_csum((unsigned char *)keybuf, strlen(keybuf), key.digest);
+      md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)key.digest);
       if (!cache->insert(&key, "/1", row, result, 1000)) {
 	cout << "Error: insert failed." << endl;
 	exit(1);
@@ -107,7 +107,7 @@ int main(int argc, char **argv) {
 
   for (size_t i=0; i<100; i++) {
     sprintf(keybuf, "%s-%d", row, (int)i);
-    md5_csum((unsigned char *)keybuf, strlen(keybuf), key.digest);
+    md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)key.digest);
     if (!cache->lookup(&key, result, &result_length)) {
       cout << "Error: key not found." << endl;
       exit(1);
@@ -118,7 +118,7 @@ int main(int argc, char **argv) {
 
   for (size_t i=0; i<100; i++) {
     sprintf(keybuf, "%s-%d", row, (int)i);
-    md5_csum((unsigned char *)keybuf, strlen(keybuf), key.digest);
+    md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)key.digest);
     if (cache->lookup(&key, result, &result_length)) {
       cout << "Error: key found." << endl;
       exit(1);
@@ -142,7 +142,7 @@ int main(int argc, char **argv) {
     rand_val = (uint32_t)random();
     charno = (random() % 26) + (uint32_t)'a';
     sprintf(keybuf, "%c-%d", charno, (int)rand_val);
-    md5_csum((unsigned char *)keybuf, strlen(keybuf), track_buf[track_buf_i].key.digest);
+    md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)track_buf[track_buf_i].key.digest);
     track_buf[track_buf_i].row[0] = (char)charno;
     track_buf[track_buf_i].row[1] = (char)charno;
     track_buf[track_buf_i].row[2] = 0;

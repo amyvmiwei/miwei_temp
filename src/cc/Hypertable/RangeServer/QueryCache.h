@@ -48,7 +48,7 @@ namespace Hypertable {
       bool operator==(const Key &other) const {
 	return memcmp(digest, other.digest, 16) == 0;
       }
-      uint8_t digest[16];
+      uint64_t digest[2];
     };
 
     class RowKey {
