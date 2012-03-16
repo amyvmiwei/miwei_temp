@@ -154,7 +154,7 @@ namespace Hypertable {
         m_disk_used = m_end_of_last_block - (*m_array.begin()).offset;
 
         /** determine split key **/
-        size_t mid_point = m_array.size()/2;
+        size_t mid_point = (m_array.size()==2) ? 0 : m_array.size()/2;
         m_middle_key = m_array[mid_point].key;
       }
 
