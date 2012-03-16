@@ -75,7 +75,9 @@ namespace Hypertable {
       UsageRecMap         usage_map;
       Mutex               mutex;
       boost::condition    cond;
+      boost::condition    quiesce_cond;
       size_t              threads_available;
+      size_t              threads_total;
       bool                shutdown;
       bool                paused;
     };
@@ -101,6 +103,8 @@ namespace Hypertable {
                 m_state.threads_available--;
                 return;
               }
+	      if (m_state.threads_available == m_state.threads_total)
+		m_state.quiesce_cond.notify_all();
               m_state.cond.wait(lock);
             }
 
@@ -230,6 +234,7 @@ namespace Hypertable {
      */
     ApplicationQueue(int worker_count, bool dynamic_threads=true) 
       : joined(false), m_dynamic_threads(dynamic_threads) {
+      m_state.threads_total = worker_count;
       Worker Worker(m_state);
       assert (worker_count > 0);
       for (int i=0; i<worker_count; ++i) {
@@ -261,6 +266,12 @@ namespace Hypertable {
     virtual void shutdown() {
       m_state.shutdown = true;
       m_state.cond.notify_all();
+    }
+
+    void wait_for_empty() {
+      ScopedLock lock(m_mutex);
+      while (m_state.threads_available < m_state.threads_total)
+	m_state.quiesce_cond.wait(lock);
     }
 
     /**

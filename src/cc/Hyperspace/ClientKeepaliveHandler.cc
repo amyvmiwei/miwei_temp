@@ -169,7 +169,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           error = decode_i32(&decode_ptr, &decode_remain);
 
           if (error != Error::OK) {
-            HT_ERRORF("Master session (%llu) error - %s", session_id, Error::get_text(error));
+            HT_ERRORF("Master session (%llu) error - %s", (Llu)session_id, Error::get_text(error));
             expire_session();
             return;
           }

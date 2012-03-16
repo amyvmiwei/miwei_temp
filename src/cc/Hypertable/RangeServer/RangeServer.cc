@@ -330,19 +330,19 @@ void RangeServer::shutdown() {
   try {
     ScopedLock lock(m_stats_mutex);
 
-    m_app_queue->stop();
-
     // stop maintenance timer
     if (m_timer_handler)
       m_timer_handler->shutdown();
 
-    if (m_group_commit_timer_handler)
-      m_group_commit_timer_handler->shutdown();
-
     // stop maintenance queue
-    Global::maintenance_queue->clear();
     Global::maintenance_queue->shutdown();
     Global::maintenance_queue->join();
+
+    m_app_queue->wait_for_empty();
+    m_app_queue->stop();
+
+    if (m_group_commit_timer_handler)
+      m_group_commit_timer_handler->shutdown();
 
     // Kill update threads
     m_shutdown = true;
@@ -3545,60 +3545,6 @@ RangeServer::relinquish_range(ResponseCallback *cb, const TableIdentifier *table
 
 }
 
-
-void RangeServer::close(ResponseCallback *cb) {
-  std::vector<TableInfoPtr> table_vec;
-  std::vector<RangePtr> range_vec;
-
-  HT_INFO("close");
-
-  Global::maintenance_queue->stop();
-
-  // Kill update threads
-  m_shutdown = true;
-  m_update_qualify_queue_cond.notify_all();
-  m_update_commit_queue_cond.notify_all();
-  m_update_response_queue_cond.notify_all();
-  foreach (Thread *thread, m_update_threads)
-    thread->join();
-
-  // get the tables
-  m_live_map->get_all(table_vec);
-
-  // add all ranges into the range vector
-  for (size_t i=0; i<table_vec.size(); i++)
-    table_vec[i]->get_range_vector(range_vec);
-
-  // increment the update counters
-  for (size_t i=0; i<range_vec.size(); i++)
-    range_vec[i]->increment_update_counter();
-
-  try {
-
-    if (Global::rsml_writer) {
-      Global::rsml_writer->close();
-      Global::rsml_writer = 0;
-    }
-
-    if (Global::root_log)
-      Global::root_log->close();
-
-    if (Global::metadata_log)
-      Global::metadata_log->close();
-
-    if (Global::system_log)
-      Global::system_log->close();
-
-    if (Global::user_log)
-      Global::user_log->close();
-
-    cb->response_ok();
-  }
-  catch (Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-  }
-
-}
 
 void RangeServer::wait_for_maintenance(ResponseCallback *cb) {
   boost::xtime expire_time;
