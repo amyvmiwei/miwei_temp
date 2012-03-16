@@ -110,7 +110,7 @@ RequestHandlerReplayCommit.cc
 RequestHandlerStatus.cc
 RequestHandlerUpdate.cc
 RequestHandlerWaitForMaintenance.cc
-RequestHandlerClose.cc
+RequestHandlerShutdown.cc
 RequestHandlerCommitLogSync.cc
 ResponseCallbackCreateScanner.cc
 ResponseCallbackFetchScanblock.cc

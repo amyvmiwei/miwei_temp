@@ -19,32 +19,20 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_REQUESTHANDLERCLOSE_H
-#define HYPERTABLE_REQUESTHANDLERCLOSE_H
+#include "Common/Compat.h"
+#include "AsyncComm/ResponseCallback.h"
 
-#include "Common/Runnable.h"
+#include "RangeServer.h"
 
-#include "AsyncComm/ApplicationHandler.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/Event.h"
+#include "RequestHandlerShutdown.h"
 
+using namespace Hypertable;
 
-namespace Hypertable {
-
-  class RangeServer;
-
-  class RequestHandlerClose : public ApplicationHandler {
-  public:
-    RequestHandlerClose(Comm *comm, RangeServer *rs, EventPtr &event_ptr)
-      : ApplicationHandler(event_ptr), m_comm(comm), m_range_server(rs) { }
-
-    virtual void run();
-
-  private:
-    Comm        *m_comm;
-    RangeServer *m_range_server;
-  };
-
+/**
+ *
+ */
+void RequestHandlerShutdown::run() {
+  ResponseCallback cb(m_comm, m_event_ptr);
+  m_range_server->shutdown();
+  cb.response_ok();
 }
-
-#endif // HYPERTABLE_REQUESTHANDLERCLOSE_H

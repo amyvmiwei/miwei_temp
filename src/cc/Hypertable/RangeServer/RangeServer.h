@@ -112,8 +112,6 @@ namespace Hypertable {
 
     void metadata_sync(ResponseCallback *, const char *, uint32_t flags, std::vector<const char *> columns);
 
-    void close(ResponseCallback *cb);
-
     /**
      * Blocks while the maintenance queue is non-empty
      *

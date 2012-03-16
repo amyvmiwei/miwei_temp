@@ -355,14 +355,10 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       else
         cout << endl << "no help for '" << state.str << "'" << endl << endl;
     }
-    else if (state.command == COMMAND_CLOSE) {
-      m_range_server->close(m_addr);
-    }
     else if (state.command == COMMAND_WAIT_FOR_MAINTENANCE) {
       m_range_server->wait_for_maintenance(m_addr);
     }
     else if (state.command == COMMAND_SHUTDOWN) {
-      m_range_server->close(m_addr);
       m_range_server->shutdown(m_addr);
     }
     else if (state.command == COMMAND_HEAPCHECK) {
