@@ -55,7 +55,7 @@ void RequestHandlerCreateScanner::run() {
     scan_spec.decode(&decode_ptr, &decode_remain);
 
     if (scan_spec.cacheable()) {
-      md5_csum((unsigned char *)base, decode_ptr-base, (unsigned char *)key.digest);
+      md5_csum((unsigned char *)base, decode_ptr-base, reinterpret_cast<unsigned char *>(key.digest));
       m_range_server->create_scanner(&cb, &table, &range, &scan_spec, &key);
     }
     else
