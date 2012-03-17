@@ -166,5 +166,5 @@ main(int _argc, char **_argv)
 
   test_create_cell_unique();
 
-  return (0);
+  _exit(0);
 }

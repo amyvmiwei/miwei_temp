@@ -48,5 +48,5 @@ main(int _argc, char **_argv)
   s=error_get_text(999999);
   assert(!strcmp(s, "ERROR NOT REGISTERED"));
 
-  return (0);
+  _exit(0);
 }
