@@ -55,15 +55,16 @@ namespace Hypertable {
       counter = other.counter;
       regexp_qualifiers.clear();
       for (size_t ii=0; ii<other.regexp_qualifiers.size(); ++ii) {
-        regexp_qualifiers.push_back( new RE2(other.regexp_qualifiers[ii]->pattern()) );
+        regexp_qualifiers.push_back(new RE2(other.regexp_qualifiers[ii]->pattern()));
       }
       exact_qualifiers = other.exact_qualifiers;
       foreach (const String& qualifier, exact_qualifiers) {
         exact_qualifiers_set.insert(qualifier.c_str());
       }
+      prefix_qualifiers = other.prefix_qualifiers;
       filter_by_exact_qualifier = other.filter_by_exact_qualifier;
-      filter_by_regexp_qualifier = other.filter_by_regexp_qualifier;
       filter_by_prefix_qualifier = other.filter_by_prefix_qualifier;
+      filter_by_regexp_qualifier = other.filter_by_regexp_qualifier;
       has_index = other.has_index;
       has_qualifier_index = other.has_qualifier_index;
       accept_empty_qualifier = other.accept_empty_qualifier;
@@ -88,11 +89,10 @@ namespace Hypertable {
 
       // check prefix filters
       if (filter_by_prefix_qualifier) {
-        for (size_t ii=0; ii<prefix_qualifiers.size(); ++ii) {
-          if (prefix_qualifiers[ii].size() > qualifier_len)
+        foreach (const String& qstr, prefix_qualifiers) {
+          if (qstr.size() > qualifier_len)
             continue;
-          if (0 == memcmp(prefix_qualifiers[ii].c_str(), 
-                      qualifier, prefix_qualifiers[ii].size()))
+          if (0 == memcmp(qstr.c_str(), qualifier, qstr.size()))
             return true;
         }
       }
@@ -118,8 +118,7 @@ namespace Hypertable {
         filter_by_regexp_qualifier = true;
       }
       else if (is_prefix) {
-        prefix_qualifiers.push_back(qualifier);
-        prefix_qualifiers_set.insert(prefix_qualifiers.back().c_str());
+        prefix_qualifiers.insert(qualifier);
         filter_by_prefix_qualifier = true;
       }
       else {
@@ -150,8 +149,7 @@ namespace Hypertable {
     vector<RE2 *> regexp_qualifiers;
     StringSet exact_qualifiers;
     CstrSet exact_qualifiers_set;
-    vector<String> prefix_qualifiers;
-    CstrSet prefix_qualifiers_set;
+    StringSet prefix_qualifiers;
     bool filter_by_exact_qualifier;
     bool filter_by_regexp_qualifier;
     bool filter_by_prefix_qualifier;
