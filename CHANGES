@@ -1,6 +1,19 @@
 Version 0.9.5.6:
-(2012-03-15)
+(2012-03-21)
 
+    Added support for secondary indices
+    Fixed rowkey-ag-imbalance test (again); Elimated warning
+    Added a new test for prefix scans w/ indices
+    Improved performance of TableMutatorAsync if indices are used
+    issue 701: fixed ambiguous format() call
+    Added some missing "prefix qualifiers" assignments
+    Added reinterpret_cast to eliminate warning on some platforms
+    Fixed HyperAppHelper tests to avoid global destruction order problem
+    Fixed shutdown problem
+    Eliminated warning in QueryCache.h
+    Fixed RangeServer::shutdown(), removed RangeServer::close()
+    Fixed RangeServer-rowkey-ag-imbalance regression test
+    Fixed bug when collecting data from a temporary index table
     Fixed bug in ScanSpec operator<<(std::ostream function
     issue 793: CREATE TABLE now works with fully qualified table names
     issue 738: SELECT a, a:foo used to ignore all cells without qualifier
@@ -21,7 +34,6 @@ Version 0.9.5.6:
     issue 444: Moved logic for IGNORE_UNKNOWN_COLUMNS from TableMutator to HqlInterpreter
     issue 779: Fixed upgrade-ok.sh for 1.0.0.0
     Removed an unused function
-    Added support for secondary indices
     Fixed path of rrdtool; now using System::install_dir instead of
     Added CellCacheManager to AccessGroup
     issue 756: Fixed problem with auto-assigned revision number not strictly increasing
