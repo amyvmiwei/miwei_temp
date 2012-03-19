@@ -38,21 +38,21 @@ RecMutex g_recmutex;
 atomic_t g_av;
 
 void test_loop(int n) {
-  HT_BENCH(format("%d: loop", g_vcount), ++g_vcount, n);
+  HT_BENCH(Hypertable::format("%d: loop", g_vcount), ++g_vcount, n);
 }
 
 void test_atomic(int n) {
-  HT_BENCH1(format("%d: atomic", g_count), for (int i = n; i--;)
+  HT_BENCH1(Hypertable::format("%d: atomic", g_count), for (int i = n; i--;)
     atomic_inc(&g_av); g_count = atomic_read(&g_av), n);
 }
 
 void test_mutex(int n) {
-  HT_BENCH(format("%d: mutex", g_count),
+  HT_BENCH(Hypertable::format("%d: mutex", g_count),
     ScopedLock lock(g_mutex); ++g_count, n);
 }
 
 void test_recmutex(int n) {
-  HT_BENCH(format("%d: recmutex", g_count),
+  HT_BENCH(Hypertable::format("%d: recmutex", g_count),
     ScopedRecLock lock(g_recmutex); ++g_count, n);
 }
 

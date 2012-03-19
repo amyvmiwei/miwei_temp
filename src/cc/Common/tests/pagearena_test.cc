@@ -155,33 +155,33 @@ void test_pagearena_frag(int n, int sz) {
   CharArena arena(sz);
   {
     Cstrs v;
-    random_pagearena_test(format("arena %d", sz), arena, v, n);
+    random_pagearena_test(Hypertable::format("arena %d", sz), arena, v, n);
     print_proc_stat();
-    HT_BENCH1(format("arena %d clear", sz), v.clear(), n);
+    HT_BENCH1(Hypertable::format("arena %d clear", sz), v.clear(), n);
   }
-  HT_BENCH1(format("arena %d free", sz), arena.free(), n);
+  HT_BENCH1(Hypertable::format("arena %d free", sz), arena.free(), n);
 }
 
 void test_pagearena_alloc_frag(int n, int sz) {
   CharArena arena(sz);
   {
     Astrs v = Astrs(Alloc(arena));
-    random_pagearena_test(format("arena alloc %d", sz), arena, v, n);
+    random_pagearena_test(Hypertable::format("arena alloc %d", sz), arena, v, n);
     cout << System::proc_stat() << endl;
-    HT_BENCH1(format("arena alloc %d clear", sz), v.clear(), n);
+    HT_BENCH1(Hypertable::format("arena alloc %d clear", sz), v.clear(), n);
   }
-  HT_BENCH1(format("arena alloc %d free", sz), arena.free(), n);
+  HT_BENCH1(Hypertable::format("arena alloc %d free", sz), arena.free(), n);
 }
 
 void test_pagearena_downalloc_frag(int n, int sz) {
   CharArena arena(sz);
   {
     Dstrs v = Dstrs(DownAlloc(arena));
-    random_pagearena_test(format("arena downalloc %d", sz), arena, v, n);
+    random_pagearena_test(Hypertable::format("arena downalloc %d", sz), arena, v, n);
     print_proc_stat();
-    HT_BENCH1(format("arena downalloc %d clear", sz), v.clear(), n);
+    HT_BENCH1(Hypertable::format("arena downalloc %d clear", sz), v.clear(), n);
   }
-  HT_BENCH1(format("arena downalloc %d free", sz), arena.free(), n);
+  HT_BENCH1(Hypertable::format("arena downalloc %d free", sz), arena.free(), n);
 }
 
 void test_strings_frag(int n) {
