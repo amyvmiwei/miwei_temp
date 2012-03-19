@@ -40,7 +40,7 @@ void test_small_deque(int s, int reserve, int n) {
   CharArena arena;
   int l = n / s;
 
-  HT_BENCH1(format("small deque %d", s), for (int i = 0; i < l; ++i) {
+  HT_BENCH1(Hypertable::format("small deque %d", s), for (int i = 0; i < l; ++i) {
     Deq q = Deq(Alloc(arena));
     for (int j = 0; j < s; ++j) q.push_back(1e8); }, n);
 }
@@ -49,7 +49,7 @@ void test_small_vector(int s, int reserve, int n) {
   CharArena arena;
   int l = n / s;
 
-  HT_BENCH1(format("small vector %d", s), for (int i = 0; i < l; ++i) {
+  HT_BENCH1(Hypertable::format("small vector %d", s), for (int i = 0; i < l; ++i) {
     Vec v = Vec(Alloc(arena)); v.reserve(reserve);
     for (int j = 0; j < s; ++j) v.push_back(1e8); }, n);
 }
