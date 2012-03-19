@@ -154,19 +154,11 @@ void TableMutatorAsync::wait_for_completion() {
     m_cond.wait(lock);
 }
 
-bool
-TableMutatorAsync::key_uses_index(Key &key) {
-  Schema::ColumnFamily *cf=m_schema->get_column_family(key.column_family_code);
-  if (!cf || (!cf->has_index && !cf->has_qualifier_index))
-    return false;
-  return true;
-}
-
 void
 TableMutatorAsync::update_with_index(Key &key, const void *value, 
-        uint32_t value_len) {
+        uint32_t value_len, Schema::ColumnFamily *cf) {
   HT_ASSERT(m_use_index == true);
-  HT_ASSERT(key_uses_index(key) == true);
+  HT_ASSERT(cf && (cf->has_index || cf->has_qualifier_index));
 
   // indexed keys get an auto-assigned timestamp to make sure that the 
   // index key and the original key have identical timestamps
@@ -179,8 +171,6 @@ TableMutatorAsync::update_with_index(Key &key, const void *value,
   // if this is a DELETE then return, otherwise update the index
   if (key.flag != FLAG_INSERT)
     return;
-
-  Schema::ColumnFamily *cf=m_schema->get_column_family(key.column_family_code);
 
   // now create the key for the index
   KeySpec k;
@@ -211,7 +201,7 @@ TableMutatorAsync::update_with_index(Key &key, const void *value,
     }
     StaticBuffer sb(4 + value_len + rowlen + 1 + 1);
     char *p = (char *)sb.base;
-    sprintf(p, "%d,", (int)cf->id);
+    sprintf(p, "%d,", (int)key.column_family_code);
     p     += strlen(p);
     memcpy(p, value, value_len);
     p     += value_len;
@@ -231,7 +221,7 @@ TableMutatorAsync::update_with_index(Key &key, const void *value,
     size_t qlen = key.column_qualifier ? strlen(key.column_qualifier) : 0;
     StaticBuffer sb(4 + qlen + rowlen + 1 + 1);
     char *p = (char *)sb.base;
-    sprintf(p, "%d,", (int)cf->id);
+    sprintf(p, "%d,", (int)key.column_family_code);
     p     += strlen(p);
     if (qlen) {
       memcpy(p, key.column_qualifier, qlen);
@@ -254,17 +244,19 @@ TableMutatorAsync::set(const KeySpec &key, const void *value,
         uint32_t value_len) {
   {
     ScopedLock lock(m_member_mutex);
+    Schema::ColumnFamily *cf = 0;
 
     try {
       key.sanity_check();
 
       Key full_key;
-      to_full_key(key, full_key);
+      to_full_key(key, full_key, &cf);
 
       // if there's an index: buffer the key and update the index
       full_key.row_len = key.row_len;
-      if (key.flag == FLAG_INSERT && m_use_index && key_uses_index(full_key)) {
-        update_with_index(full_key, value, value_len);
+      if (key.flag == FLAG_INSERT && m_use_index && 
+          cf && (cf->has_index || cf->has_qualifier_index)) {
+        update_with_index(full_key, value, value_len, cf);
       }
       else {
         update_without_index(full_key, value, value_len);
@@ -342,6 +334,7 @@ TableMutatorAsync::set_cells(Cells::const_iterator it,
         Cells::const_iterator end) {
   {
     ScopedLock lock(m_member_mutex);
+    Schema::ColumnFamily *cf = 0;
 
     try {
       for (; it != end; ++it) {
@@ -360,15 +353,16 @@ TableMutatorAsync::set_cells(Cells::const_iterator it,
           full_key.flag = cell.flag;
         }
         else {
-          to_full_key(cell, full_key);
+          to_full_key(cell, full_key, &cf);
         }
   
         if (cell.row_key)
           full_key.row_len = strlen(cell.row_key);
   
         // if there's an index: buffer the key and update the index
-        if (cell.flag == FLAG_INSERT && m_use_index && key_uses_index(full_key)) {
-          update_with_index(full_key, cell.value, cell.value_len);
+        if (cell.flag == FLAG_INSERT && m_use_index 
+            && cf && (cf->has_index || cf->has_qualifier_index)) {
+          update_with_index(full_key, cell.value, cell.value_len, cf);
         }
         else {
           update_without_index(full_key, cell);
@@ -390,6 +384,7 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
 
   {
     ScopedLock lock(m_member_mutex);
+    Schema::ColumnFamily *cf = 0;
 
     try {
       key.sanity_check();
@@ -401,12 +396,12 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
         full_key.flag = key.flag;
       }
       else {
-        to_full_key(key, full_key);
+        to_full_key(key, full_key, &cf);
       }
   
       // if there's an index: buffer the key and update the index
-      if (m_use_index && key_uses_index(full_key)) {
-        update_with_index(full_key, 0, 0);
+      if (m_use_index && cf && (cf->has_index || cf->has_qualifier_index)) {
+        update_with_index(full_key, 0, 0, cf);
       }
       else {
         update_without_index(full_key, 0, 0);
@@ -425,12 +420,14 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
 void
 TableMutatorAsync::to_full_key(const void *row, const char *column_family, 
         const void *column_qualifier, int64_t timestamp, int64_t revision, 
-        uint8_t flag, Key &full_key) {
+        uint8_t flag, Key &full_key, Schema::ColumnFamily **pcf) {
+  Schema::ColumnFamily *cf;
+
   if (flag > FLAG_DELETE_ROW) {
     if (!column_family)
       HT_THROW(Error::BAD_KEY, "Column family not specified");
 
-    Schema::ColumnFamily *cf = m_schema->get_column_family(column_family);
+    cf = m_schema->get_column_family(column_family);
 
     if (!cf) {
       if (m_table->auto_refresh()) {
@@ -455,6 +452,8 @@ TableMutatorAsync::to_full_key(const void *row, const char *column_family,
   full_key.timestamp = timestamp;
   full_key.revision = revision;
   full_key.flag = flag;
+
+  *pcf = cf;
 }
 
 void TableMutatorAsync::cancel() {
