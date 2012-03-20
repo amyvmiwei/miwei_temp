@@ -19,8 +19,8 @@ $HT_HOME/bin/ht ht_load_generator update --spec-file=foo.spec --max-bytes=220000
 
 sleep 2
 
-$HT_HOME/bin/ht ht_load_generator update --spec-file=bar.spec --max-bytes=40000000 \
-    --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=1M --Hypertable.Mutator.FlushDelay=100
+$HT_HOME/bin/ht ht_load_generator update --spec-file=bar.spec --max-bytes=10000000 \
+    --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=200K --Hypertable.Mutator.FlushDelay=100
 
 sleep 1
 
