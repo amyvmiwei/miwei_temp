@@ -232,11 +232,30 @@ DataGenerator::DataGenerator(PropertiesPtr &props, bool keys_only) : m_props(pro
         m_column_specs[columni].qualifier.charset = str;
         boost::trim_if(m_column_specs[columni].qualifier.charset, boost::is_any_of("'\""));
       }
+      else if (!strcmp(tptr, "value.random")) {
+        if (!strcasecmp(str.c_str(), "false"))
+          m_column_specs[columni].order = ASCENDING;
+        else if (!strcasecmp(str.c_str(), "true"))
+          m_column_specs[columni].order = RANDOM;
+        else
+          HT_THROW(Error::SYNTAX_ERROR, format("Bad value for 'value.random'"));
+      }
+      else if (!strcmp(tptr, "value.seed")) {
+        m_column_specs[columni].seed = atoi(str.c_str());
+      }
       else if (!strcmp(tptr, "value.size")) {
         m_column_specs[columni].size = atoi(str.c_str());
       }
       else if (!strcmp(tptr, "value.source")) {
         m_column_specs[columni].source = str;
+      }
+      else if (!strcmp(tptr, "value.source.words")) {
+        if (!strcasecmp(str.c_str(), "true"))
+          m_column_specs[columni].word_stream = true;
+        else if (!strcasecmp(str.c_str(), "false"))
+          m_column_specs[columni].word_stream = false;
+        else
+          HT_THROW(Error::SYNTAX_ERROR, format("Bad value for 'value.source.words'"));
       }
       else if (!strcmp(tptr, "value.cooked-source")) {
         m_column_specs[columni].cooked_source = str;

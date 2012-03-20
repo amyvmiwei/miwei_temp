@@ -51,6 +51,7 @@ StringDecompressorPrefix.cc
 Time.cc
 Usage.cc
 Version.cc
+WordStream.cc
 md5.cc
 )
 
@@ -69,6 +70,9 @@ target_link_libraries(system_info HyperCommon)
 
 add_executable(ht_checksum ht_checksum.cc)
 target_link_libraries(ht_checksum HyperCommon)
+
+add_executable(ht_wordstream ht_wordstream.cc)
+target_link_libraries(ht_wordstream HyperCommon)
 
 # tests
 add_executable(exception_test tests/exception_test.cc)

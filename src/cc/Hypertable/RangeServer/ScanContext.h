@@ -89,11 +89,14 @@ namespace Hypertable {
 
       // check prefix filters
       if (filter_by_prefix_qualifier) {
+	int cmp;
         foreach (const String& qstr, prefix_qualifiers) {
           if (qstr.size() > qualifier_len)
             continue;
-          if (0 == memcmp(qstr.c_str(), qualifier, qstr.size()))
+          if (0 == (cmp = memcmp(qstr.c_str(), qualifier, qstr.size())))
             return true;
+	  else if (cmp > 0)
+	    break;
         }
       }
 

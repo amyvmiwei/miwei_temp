@@ -36,6 +36,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/Random.h"
 #include "Common/String.h"
+#include "Common/WordStream.h"
 
 #include "Cell.h"
 #include "DataGeneratorRowComponent.h"
@@ -48,7 +49,7 @@ namespace Hypertable {
 
   class ColumnSpec {
   public:
-    ColumnSpec() : size(-1), to_stdout(false) { }
+    ColumnSpec() : size(-1), order(RANDOM), seed(1), word_stream(false), to_stdout(false) { }
     QualifierSpec qualifier;
     int size;
     int order;
@@ -57,6 +58,7 @@ namespace Hypertable {
     String column_family;
     unsigned seed;
     String distribution;
+    bool word_stream;
     bool to_stdout;
   };
 
@@ -86,22 +88,32 @@ namespace Hypertable {
       if (s.empty())
         s = cooked_source;
 
-      if (s == "") {
-        m_value_data_len = size * 50;
-        m_value_data.reset( new char [ m_value_data_len ] );
-        Random::fill_buffer_with_random_ascii((char *)m_value_data.get(),
-                m_value_data_len);
-        m_source = (const char *)m_value_data.get();
+      if (word_stream) {
+        if (s.empty())
+          HT_FATAL("Source file not specified for word stream");
+        if (size == -1)
+          HT_FATAL("Size not specified for word stream");
+        m_word_stream = new WordStream(s, seed, size, order == RANDOM);
       }
       else {
-        m_source = (const char *)FileUtils::mmap(s, &m_value_data_len);
-        HT_ASSERT(m_value_data_len >= size);
+
+        if (s == "") {
+          m_value_data_len = size * 50;
+          m_value_data.reset( new char [ m_value_data_len ] );
+          Random::fill_buffer_with_random_ascii((char *)m_value_data.get(),
+                                                m_value_data_len);
+          m_source = (const char *)m_value_data.get();
+        }
+        else {
+          m_source = (const char *)FileUtils::mmap(s, &m_value_data_len);
+          HT_ASSERT(m_value_data_len >= size);
+        }
+        m_value_data_len -= size;
+        if (cooked_source.empty())
+          m_render_buf.reset( new char [size * 2 + 1] );
+        else
+          m_render_buf.reset( new char [1024 * 10] );
       }
-      m_value_data_len -= size;
-      if (cooked_source.empty())
-        m_render_buf.reset( new char [size * 2 + 1] );
-      else
-        m_render_buf.reset( new char [1024 * 10] );
     }
 
     virtual ~ColumnString() { }
@@ -154,36 +166,41 @@ namespace Hypertable {
         m_next_qualifier = (m_next_qualifier + 1) % m_qualifiers.size();
 
       if (m_next_qualifier == 0 && !m_keys_only) {
-        if (to_stdout) {
-          if (!m_cooked.empty())
-            m_value = m_cooked.c_str();
-          else
-            m_value = m_source + offset;
+        if (m_word_stream) {
+          m_value = m_word_stream->next();
         }
         else {
-          const char *src = m_source + offset;
-          if (!m_cooked.empty())
-            src = m_cooked.c_str();
-          char *dst = m_render_buf.get();
-          for (size_t i=0; i<(size_t)value_len(); i++) {
-            if (*src == '\n') {
-              *dst++ = '\\';
-              *dst++ = 'n';
-            }
-            else if (*src == '\t') {
-              *dst++ = '\\';
-              *dst++ = 't';
-            }
-            else if (*src == '\0') {
-              *dst++ = '\\';
-              *dst++ = '0';
-            }
+          if (to_stdout) {
+            if (!m_cooked.empty())
+              m_value = m_cooked.c_str();
             else
-              *dst++ = *src;
-            src++;
+              m_value = m_source + offset;
           }
-          *dst = 0;
-          m_value = m_render_buf.get();
+          else {
+            const char *src = m_source + offset;
+            if (!m_cooked.empty())
+              src = m_cooked.c_str();
+            char *dst = m_render_buf.get();
+            for (size_t i=0; i<(size_t)value_len(); i++) {
+              if (*src == '\n') {
+                *dst++ = '\\';
+                *dst++ = 'n';
+              }
+              else if (*src == '\t') {
+                *dst++ = '\\';
+                *dst++ = 't';
+              }
+              else if (*src == '\0') {
+                *dst++ = '\\';
+                *dst++ = '0';
+              }
+              else
+                *dst++ = *src;
+              src++;
+            }
+            *dst = 0;
+            m_value = m_render_buf.get();
+          }
         }
       }
       if (m_qualifiers.empty())
@@ -205,6 +222,8 @@ namespace Hypertable {
     }
 
     virtual uint32_t value_len() {
+      if (word_stream)
+	return strlen(m_value);
       return m_size ? m_size : size;
     }
 
@@ -220,6 +239,7 @@ namespace Hypertable {
     size_t m_size;
     off_t m_second_offset;
     String m_cooked;
+    WordStreamPtr m_word_stream;
   };
 
 }
