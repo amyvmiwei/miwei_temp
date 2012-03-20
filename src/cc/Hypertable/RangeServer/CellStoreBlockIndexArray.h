@@ -124,7 +124,7 @@ namespace Hypertable {
         fixed.ptr += sizeof(offset);
 
         if (!in_scope) {
-          if (strcmp(key.row(), start_row.c_str()) < 0)
+          if (strcmp(key.row(), start_row.c_str()) <= 0)
             continue;
           in_scope = true;
         }

@@ -444,8 +444,10 @@ TableMutatorAsync::to_full_key(const void *row, const char *column_family,
     }
     full_key.column_family_code = (uint8_t)cf->id;
   }
-  else
+  else {
     full_key.column_family_code = 0;
+    cf = 0;
+  }
 
   full_key.row = (const char *)row;
   full_key.column_qualifier = (const char *)column_qualifier;
