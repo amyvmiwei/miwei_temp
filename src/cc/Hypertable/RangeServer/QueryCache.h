@@ -102,8 +102,7 @@ namespace Hypertable {
 
     struct KeyHash {
       std::size_t operator()(Key k) const {
-        std::size_t *sptr = (std::size_t *)k.digest;
-        return sptr[0];
+	return (std::size_t)k.digest[0];
       }
     };
 

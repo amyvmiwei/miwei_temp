@@ -637,11 +637,21 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
 
   if (to_stdout) {
     for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); iter++) {
-      if (*(*iter).column_qualifier == 0)
-        cout << (*iter).row_key << "\t" << (*iter).column_family << "\n";
+      if (query_mode == DEFAULT) {
+        if (*(*iter).column_qualifier == 0)
+          cout << (*iter).row_key << "\t" << (*iter).column_family << "\n";
+        else
+          cout << (*iter).row_key << "\t" << (*iter).column_family << ":"
+               << (*iter).column_qualifier << "\n";
+      }
+      else if (query_mode == INDEX) {
+        cout << "\t" << (*iter).column_family;
+        if (*(*iter).column_qualifier != 0)
+          cout << (*iter).column_qualifier;
+        cout << "\t" << (const char *)(*iter).value << "\n";
+      }
       else
-        cout << (*iter).row_key << "\t" << (*iter).column_family << ":"
-             << (*iter).column_qualifier << "\n";
+        cout << "not implemented!\n";
     }
     cout << flush;
     return;

@@ -38,7 +38,7 @@ namespace Hypertable {
 
   class QualifierSpec {
   public:
-    QualifierSpec() : type(-1), size(-1) { }
+    QualifierSpec() : type(-1), order(RANDOM), size(-1) { }
     int type;
     int order;
     int size;

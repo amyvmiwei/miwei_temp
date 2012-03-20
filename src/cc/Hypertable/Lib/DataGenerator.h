@@ -80,8 +80,11 @@ namespace Hypertable {
         ("<column>.qualifier.size", i32(), "Size of qualifier")
         ("<column>.qualifier.charset", str(),
          "Set of characters to use when generating string qualifiers")
+        ("<column>.value.random", boo(), "Generate random values (default=true)")
+        ("<column>.value.seed", i32(), "Pseudo-random generator seed")
         ("<column>.value.size", i32(), "Size of value")
         ("<column>.value.source", i32(), "Source file to pull value data from")
+        ("<column>.value.source.words", i32(), "Interpret source as word stream; value.size treated as word count")
         ;
       cmdline_hidden_desc().add(file_desc());
     }
