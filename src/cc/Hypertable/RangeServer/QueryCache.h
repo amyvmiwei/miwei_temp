@@ -101,13 +101,13 @@ namespace Hypertable {
     };
 
     struct KeyHash {
-      std::size_t operator()(Key k) const {
+      std::size_t operator()(const Key k) const {
 	return (std::size_t)k.digest[0];
       }
     };
 
     struct RowKeyHash {
-      std::size_t operator()(RowKey k) const {
+      std::size_t operator()(const RowKey k) const {
         return k.hash;
       }
     };
