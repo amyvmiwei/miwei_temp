@@ -653,64 +653,73 @@ void TableMutatorAsync::update_outstanding(TableMutatorAsyncScatterBufferPtr &bu
 }
 
 void TableMutatorAsync::buffer_finish(uint32_t id, int error, bool retry) {
-  ScopedLock lock(m_mutex);
   bool cancelled = false;
   bool mutated = false;
+  uint32_t next_id = 0;
+  TableMutatorAsyncScatterBufferPtr redo;
   TableMutatorAsyncScatterBufferPtr buffer;
   ScatterBufferAsyncMap::iterator it;
 
-  it = m_outstanding_buffers.find(id);
-  HT_ASSERT(it != m_outstanding_buffers.end());
-
-  buffer = it->second;
   {
-    ScopedLock lock(m_member_mutex);
-    m_failed_mutations.clear();
-    update_unsynced_rangeservers(buffer->get_unsynced_rangeservers());
-    cancelled = m_cancelled;
-    mutated = m_mutated;
-  }
+    ScopedLock lock(m_mutex);
+    it = m_outstanding_buffers.find(id);
+    HT_ASSERT(it != m_outstanding_buffers.end());
 
-  if (cancelled) {
-    update_outstanding(buffer);
-    return;
-  }
-
-  if (error != Error::OK) {
-    if (error == Error::RANGESERVER_GENERATION_MISMATCH ||
-        (!mutated && error == Error::RANGESERVER_TABLE_NOT_FOUND)) {
+    buffer = it->second;
+    {
       ScopedLock lock(m_member_mutex);
-      // retry possible
-      m_table->refresh(m_table_identifier, m_schema);
-      buffer->refresh_schema(m_table_identifier, m_schema);
-      retry = true;
+      m_failed_mutations.clear();
+      update_unsynced_rangeservers(buffer->get_unsynced_rangeservers());
+      cancelled = m_cancelled;
+      mutated = m_mutated;
     }
-    else {
-      if (retry)
-        buffer->set_retries_to_fail(error);
-      // send error to callback
-      {
-        ScopedLock lock(m_member_mutex);
-        buffer->get_failed_mutations(m_failed_mutations);
-        if (m_cb != 0)
-          m_cb->update_error(this, error, m_failed_mutations);
-      }
+
+    if (cancelled) {
       update_outstanding(buffer);
       return;
     }
-  }
+
+    if (error != Error::OK) {
+      if (error == Error::RANGESERVER_GENERATION_MISMATCH ||
+          (!mutated && error == Error::RANGESERVER_TABLE_NOT_FOUND)) {
+        ScopedLock lock(m_member_mutex);
+        // retry possible
+        m_table->refresh(m_table_identifier, m_schema);
+        buffer->refresh_schema(m_table_identifier, m_schema);
+        retry = true;
+      }
+      else {
+        if (retry)
+          buffer->set_retries_to_fail(error);
+        // send error to callback
+        {
+          ScopedLock lock(m_member_mutex);
+          buffer->get_failed_mutations(m_failed_mutations);
+          if (m_cb != 0)
+            m_cb->update_error(this, error, m_failed_mutations);
+        }
+        update_outstanding(buffer);
+        return;
+      }
+    }
+
+    next_id = ++m_next_buffer_id;
+  } // ScopedLock
 
   if (retry) {
     // create & send redo buffer
-    uint32_t next_id = ++m_next_buffer_id;
-    TableMutatorAsyncScatterBufferPtr redo;
+    ScopedLock lock(m_member_mutex);
     try {
       redo = buffer->create_redo_buffer(next_id);
     }
     catch (Exception &e) {
       error = e.code();
-      redo=0;
+      redo = 0;
     }
+  }
+
+  ScopedLock lock(m_mutex);
+  if (retry) {
     if (!redo) {
       {
         ScopedLock lock(m_member_mutex);
