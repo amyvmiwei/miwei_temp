@@ -46,9 +46,8 @@ FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
   HashIndex::iterator iter;
 
   m_accesses++;
-  int64_t key = ((int64_t)file_id << 32) | file_offset;
 
-  if ((iter = hash_index.find(key)) == hash_index.end())
+  if ((iter = hash_index.find(make_key(file_id, file_offset))) == hash_index.end())
     return false;
 
   BlockCacheEntry entry = *iter;
@@ -71,9 +70,8 @@ void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   HashIndex::iterator iter;
-  int64_t key = ((int64_t)file_id << 32) | file_offset;
 
-  iter = hash_index.find(key);
+  iter = hash_index.find(make_key(file_id, file_offset));
 
   assert(iter != hash_index.end() && (*iter).ref_count > 0);
 
@@ -86,9 +84,8 @@ FileBlockCache::insert(int file_id, uint32_t file_offset,
 		       uint8_t *block, uint32_t length, bool checkout) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
-  int64_t key = ((int64_t)file_id << 32) | file_offset;
 
-  if (hash_index.find(key) != hash_index.end())
+  if (hash_index.find(make_key(file_id, file_offset)) != hash_index.end())
     return false;
 
   if (m_available < length)
@@ -120,10 +117,9 @@ FileBlockCache::insert(int file_id, uint32_t file_offset,
 bool FileBlockCache::contains(int file_id, uint32_t file_offset) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
-  int64_t key = ((int64_t)file_id << 32) | file_offset;
   m_accesses++;
 
-  if (hash_index.find(key) != hash_index.end()) {
+  if (hash_index.find(make_key(file_id, file_offset)) != hash_index.end()) {
     m_hits++;
     return true;
   }

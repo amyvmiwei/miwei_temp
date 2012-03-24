@@ -106,6 +106,10 @@ namespace Hypertable {
 
     int64_t make_room(int64_t amount);
 
+    inline static int64_t make_key(int file_id, uint32_t file_offset) {
+      return ((int64_t)file_id << 32) | file_offset;
+    }
+
     class BlockCacheEntry {
     public:
       BlockCacheEntry() : file_id(-1), file_offset(0), block(0), length(0),
@@ -118,7 +122,7 @@ namespace Hypertable {
       uint8_t  *block;
       uint32_t length;
       uint32_t ref_count;
-      int64_t key() const { return ((int64_t)file_id << 32) | file_offset; }
+      int64_t key() const { return FileBlockCache::make_key(file_id, file_offset); }
     };
 
     struct DecrementRefCount {
@@ -129,7 +133,7 @@ namespace Hypertable {
 
     struct HashI64 {
       std::size_t operator()(int64_t x) const {
-        return (std::size_t)(x >> 32) ^ (std::size_t)x;
+        return (std::size_t)((x >> 32) * 31) ^ (std::size_t)x;
       }
     };
 
