@@ -148,8 +148,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
   index_spec.get().columns.resize(0);
 
   // for value prefix queries we require normal indicies for ALL scanned columns
-  if (primary_spec.column_predicates.size() && primary_spec.columns.size()) {
-    HT_ASSERT(primary_spec.column_predicates.size() == 1);
+  if (primary_spec.column_predicates.size() == 1 && primary_spec.columns.size()) {
 
     foreach (const ColumnPredicate &cp, primary_spec.column_predicates) {
       Schema::ColumnFamily *cf=table->schema()->get_column_family(
@@ -157,8 +156,9 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
       if (!cf || !cf->has_index)
         return false;
 
-      HT_ASSERT(cp.operation == ColumnPredicate::EXACT_MATCH
-                 || cp.operation == ColumnPredicate::PREFIX_MATCH);
+      if (cp.operation != ColumnPredicate::EXACT_MATCH &&
+          cp.operation != ColumnPredicate::PREFIX_MATCH)
+        return false;
 
       // every \t in the original value gets escaped
       const char *value;

@@ -35,6 +35,65 @@ using namespace std;
 using namespace Hypertable;
 
 
+const uint8_t* CellFilterInfo::memfind(
+  const uint8_t* block,        // Block containing data
+  size_t         block_size,   // Size of block in bytes
+  const uint8_t* pattern,      // Pattern to search for
+  size_t         pattern_size, // Size of pattern block
+  size_t*        shift,        // Shift table (search buffer)
+  bool*          repeat_find)  // true: search buffer already init
+{
+  assert(block);
+  assert(pattern);
+  assert(shift);
+  if (block == 0 || pattern == 0 || shift == 0)
+    return 0;
+
+  // Pattern must be smaller or equal in size to string
+  if (block_size < pattern_size)
+    return 0;
+
+  if (pattern_size == 0)
+    return block;
+
+  // Build the shift table unless we're continuing a previous search.
+  // The shift table determines how far to shift before trying to match
+  // again, if a match at this point fails.  If the byte after where the
+  // end of our pattern falls is not in our pattern, then we start to
+  // match again after that byte; otherwise we line up the last occurence 
+  // of that byte in our pattern under that byte, and try match again.
+  if (!repeat_find || !*repeat_find) {
+    for (size_t byte_nbr = 0; byte_nbr < 256; byte_nbr++)
+      shift[byte_nbr] = pattern_size + 1;
+    for (size_t byte_nbr = 0; byte_nbr < pattern_size; byte_nbr++)
+      shift[(uint8_t) pattern[byte_nbr]] = pattern_size - byte_nbr;
+
+    if (repeat_find)
+      *repeat_find = true;
+  }
+
+  // Search for the block, each time jumping up by the amount
+  // computed in the shift table
+  const uint8_t* limit = block + (block_size - pattern_size + 1);
+  assert(limit > block);
+
+  for (const uint8_t* match_base = block;
+    match_base < limit;
+    match_base += shift[*(match_base + pattern_size)]) {
+    const uint8_t* match_ptr  = match_base;
+    size_t match_size = 0;
+    // Compare pattern until it all matches, or we find a difference
+    while (*match_ptr++ == pattern[match_size++]) {
+      assert(match_size <= pattern_size && match_ptr == (match_base + match_size));
+
+      // If we found a match, return the start address
+      if (match_size >= pattern_size)
+        return match_base;
+    }
+  }
+  return 0;
+}
+
 void
 ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     const RangeSpec *range_spec, SchemaPtr &sp) {
@@ -365,6 +424,24 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       if (!value_regexp->ok()) {
         HT_THROW(Error::BAD_SCAN_SPEC, (String)"Can't convert value_regexp "
             + spec->value_regexp + " to regexp -" + value_regexp->error_arg());
+      }
+    }
+
+    foreach (const ColumnPredicate& cp, spec->column_predicates) {
+      if (cp.column_family && *cp.column_family) {
+        cf = schema->get_column_family(cp.column_family);
+        if (cf == 0) {
+          HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY,
+                   format("Invalid column family '%s'", cp.column_family).c_str() );
+        }
+        if (cf->id == 0) {
+          HT_THROW(Error::RANGESERVER_SCHEMA_INVALID_CFID,
+                   format("Bad id for column family '%s'", cf->name.c_str()).c_str() );
+        }
+        if (cf->counter) {
+          HT_THROW(Error::BAD_SCAN_SPEC, "Counters are not supported for column predicates" );
+        }
+        family_info[cf->id].add_column_predicate(cp);
       }
     }
   }
