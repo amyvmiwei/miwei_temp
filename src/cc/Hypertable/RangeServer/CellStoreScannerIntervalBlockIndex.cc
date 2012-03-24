@@ -249,7 +249,8 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
 
         m_zcodec->inflate(buf, expand_buf, header);
 
-        m_disk_read += expand_buf.fill();
+        if (!checked_out)
+          m_disk_read += expand_buf.fill();
 
         if (!header.check_magic(CellStore::DATA_BLOCK_MAGIC))
           HT_THROW(Error::BLOCK_COMPRESSOR_BAD_MAGIC,
@@ -259,10 +260,8 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
         if (Global::block_cache && Global::block_cache->compressed()) {
           if (checked_out)
             Global::block_cache->checkin(m_file_id, m_block.offset);
-          else if (Global::block_cache) {
-            if (Global::block_cache->insert(m_file_id, m_block.offset, (uint8_t *)buf.base, m_block.zlength))
-              buf.own = false;
-          }
+          else if (Global::block_cache->insert(m_file_id, m_block.offset, (uint8_t *)buf.base, m_block.zlength))
+            buf.own = false;
         }
 
       }
@@ -284,13 +283,10 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
       m_block.base = expand_buf.release(&fill);
       len = fill;
 
-      m_cached = false;
-
       /** Insert uncompressed block into cache  **/
-      if (Global::block_cache && !Global::block_cache->compressed() &&
+      m_cached = Global::block_cache && !Global::block_cache->compressed() &&
           Global::block_cache->insert(m_file_id, m_block.offset,
-				      (uint8_t *)m_block.base, len, true))
-        m_cached = true;
+				      (uint8_t *)m_block.base, len, true);
     }
     else
       m_cached = true;

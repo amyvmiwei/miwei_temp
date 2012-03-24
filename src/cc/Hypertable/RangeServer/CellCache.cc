@@ -215,8 +215,15 @@ void CellCache::merge(CellCache *other) {
     m_cell_map.swap(other->m_cell_map);
   else {
     for (CellMap::const_iterator iter = other->m_cell_map.begin();
-	 iter != other->m_cell_map.end(); ++iter)
-      m_cell_map.insert(*iter);
+	 iter != other->m_cell_map.end(); ++iter) {
+      std::pair<CellMap::iterator, bool> r = m_cell_map.insert(*iter);
+      if (!r.second) {
+        m_cell_map.erase(r.first);
+        m_cell_map.insert(*iter);
+        m_collisions++;
+        HT_WARNF("Collision detected merge (row = %s)", iter->first.row());
+      }
+    }
     other->m_cell_map.clear();
   }
 }
