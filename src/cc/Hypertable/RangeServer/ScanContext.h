@@ -62,6 +62,8 @@ namespace Hypertable {
         exact_qualifiers_set.insert(qualifier.c_str());
       }
       prefix_qualifiers = other.prefix_qualifiers;
+      column_predicates = other.column_predicates;
+      search_buf_column_predicates = other.search_buf_column_predicates;
       filter_by_exact_qualifier = other.filter_by_exact_qualifier;
       filter_by_prefix_qualifier = other.filter_by_prefix_qualifier;
       filter_by_regexp_qualifier = other.filter_by_regexp_qualifier;
@@ -138,6 +140,51 @@ namespace Hypertable {
     }
     bool has_qualifier_regexp_filter() const { return filter_by_regexp_qualifier;}
 
+    bool column_predicate_matches(const char* value, uint32_t value_len) {
+      int ncp = 0;
+      foreach (const ColumnPredicate& cp, column_predicates) {
+        if (cp.value && value) {
+          switch (cp.operation) {
+            case ColumnPredicate::EXACT_MATCH:
+              if (cp.value_len == value_len &&
+                    memcmp(cp.value, value, cp.value_len) == 0)
+                return true;
+              break;
+            case ColumnPredicate::PREFIX_MATCH:
+              if (cp.value_len <= value_len &&
+                      memcmp(cp.value, value, cp.value_len) == 0)
+                return true;
+              break;
+            case Hypertable::ColumnPredicate::CONTAINS:
+              if (cp.value_len <= value_len) {
+                while (search_buf_column_predicates.size() < column_predicates.size()) {
+                  search_buf_column_predicates.push_back(search_buf_t());
+                }
+                search_buf_t& buf = search_buf_column_predicates[ncp];
+                if (memfind((const uint8_t*)value, value_len, (const uint8_t*)cp.value,
+                      cp.value_len, buf.shift, &buf.repeat) != 0)
+                  return true;
+              }
+              break;
+            default:
+              break;
+          }
+        }
+        else if (!cp.value && !value)
+          return true;
+        ++ncp;
+      }
+      return false;
+    }
+
+    void add_column_predicate( const ColumnPredicate& cp ) {
+      column_predicates.push_back( cp );
+    }
+
+    bool has_column_predicate_filter( ) const {
+      return !column_predicates.empty();
+    }
+
     int64_t  cutoff_time;
     uint32_t max_versions;
     bool counter;
@@ -153,9 +200,25 @@ namespace Hypertable {
     StringSet exact_qualifiers;
     CstrSet exact_qualifiers_set;
     StringSet prefix_qualifiers;
+    std::vector<ColumnPredicate> column_predicates;
+    struct search_buf_t {
+      size_t shift[256];
+      bool repeat;
+      search_buf_t() : repeat( false ) { }
+    };
+    std::vector<search_buf_t> search_buf_column_predicates;
     bool filter_by_exact_qualifier;
     bool filter_by_regexp_qualifier;
     bool filter_by_prefix_qualifier;
+
+    // Searches for a pattern in a block of memory using the Boyer- Moore-Horspool-Sunday algorithm
+    static const uint8_t* memfind(
+      const uint8_t* block,        // Block containing data
+      size_t         block_size,   // Size of block in bytes
+      const uint8_t* pattern,      // Pattern to search for
+      size_t         pattern_size, // Size of pattern block
+      size_t*        shift,        // Shift table (search buffer)
+      bool*          repeat_find); // true, search buffer already initialized
   };
 
   /**

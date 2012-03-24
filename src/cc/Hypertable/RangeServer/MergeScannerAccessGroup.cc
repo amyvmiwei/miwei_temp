@@ -216,31 +216,10 @@ MergeScannerAccessGroup::do_initialize()
         }
       }
       // value match (exact match or prefix match)
-      if (m_scan_context_ptr->spec 
-            && m_scan_context_ptr->spec->column_predicates.size()) {
-        bool fail = false;
-        foreach (const ColumnPredicate &cp, 
-                m_scan_context_ptr->spec->column_predicates) {
-          const uint8_t *dptr;
-          size_t len = sstate.value.decode_length(&dptr);
-          switch (cp.operation) {
-            case ColumnPredicate::EXACT_MATCH:
-              if (cp.value_len != len || 
-                    memcmp(cp.value, sstate.value.str(), cp.value_len))
-                fail = true;
-              break;
-            case ColumnPredicate::PREFIX_MATCH:
-              if (cp.value_len > len || 
-                    memcmp(cp.value, sstate.value.str(), cp.value_len))
-                fail = true;
-              break;
-            default:
-              continue;
-          }
-          if (fail)
-            break;
-        }
-        if (fail) {
+      if (cfi.has_column_predicate_filter()) {
+        const uint8_t *dptr;
+        if (!cfi.column_predicate_matches(sstate.value.str(),
+                sstate.value.decode_length(&dptr))) {
           m_queue.pop();
           sstate.scanner->forward();
           if (sstate.scanner->get(sstate.key, sstate.value))
@@ -511,31 +490,10 @@ MergeScannerAccessGroup::do_forward()
             continue;
         }
         // value match (exact match or prefix match)
-        if (m_scan_context_ptr->spec 
-              && m_scan_context_ptr->spec->column_predicates.size()) {
-          bool fail = false;
-          foreach (const ColumnPredicate &cp, 
-                  m_scan_context_ptr->spec->column_predicates) {
-            const uint8_t *dptr;
-            size_t len = sstate.value.decode_length(&dptr);
-            switch (cp.operation) {
-              case ColumnPredicate::EXACT_MATCH:
-                if (cp.value_len != len || 
-                      memcmp(cp.value, sstate.value.str(), cp.value_len))
-                  fail = true;
-                break;
-              case ColumnPredicate::PREFIX_MATCH:
-                if (cp.value_len > len || 
-                      memcmp(cp.value, sstate.value.str(), cp.value_len))
-                  fail = true;
-                break;
-              default:
-                continue;
-            }
-            if (fail)
-              break;
-          }
-          if (fail)
+        if (cfi.has_column_predicate_filter()) {
+          const uint8_t *dptr;
+          if (!cfi.column_predicate_matches(sstate.value.str(),
+                 sstate.value.decode_length(&dptr)))
             continue;
         }
         // row regexp
@@ -572,7 +530,7 @@ MergeScannerAccessGroup::do_forward()
         // filter but value regexp last since its probly the most expensive
         if (m_scan_context->value_regexp && !counter) {
           const uint8_t *dptr;
-          if (!RE2::PartialMatch(re2::StringPiece((const char *)sstate.value.str(),
+          if (!RE2::PartialMatch(re2::StringPiece(sstate.value.str(),
                             sstate.value.decode_length(&dptr)), 
                             *(m_scan_context->value_regexp)))
             continue;
