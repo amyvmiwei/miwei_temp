@@ -92,18 +92,18 @@ static String last;
       atomic_set(&m_outstanding_scanners, 0);
       m_original_cb->increment_outstanding();
 
-      if (m_primary_spec.row_limit != 0 ||
-          m_primary_spec.cell_limit != 0 ||
-          m_primary_spec.row_offset != 0 ||
-          m_primary_spec.cell_offset != 0 ||
-          m_primary_spec.cell_limit_per_family != 0) {
+      if (primary_spec.row_limit != 0 ||
+          primary_spec.cell_limit != 0 ||
+          primary_spec.row_offset != 0 ||
+          primary_spec.cell_offset != 0 ||
+          primary_spec.cell_limit_per_family != 0) {
         // keep track of offset and limit
         m_track_limits = true;
-        m_row_limit = m_primary_spec.row_limit;
-        m_cell_limit = m_primary_spec.cell_limit;
-        m_row_offset = m_primary_spec.row_offset;
-        m_cell_offset = m_primary_spec.cell_offset;
-        m_cell_limit_per_family = m_primary_spec.cell_limit_per_family;
+        m_row_limit = primary_spec.row_limit;
+        m_cell_limit = primary_spec.cell_limit;
+        m_row_offset = primary_spec.row_offset;
+        m_cell_offset = primary_spec.cell_offset;
+        m_cell_limit_per_family = primary_spec.cell_limit_per_family;
       }
       else
         m_track_limits = false;
@@ -256,6 +256,7 @@ static String last;
     }
 
     void collect_indices(TableScannerAsync *scanner, ScanCellsPtr &scancells) {
+      const ScanSpec &primary_spec = m_primary_spec.get();
       // split the index row into column id, cell value and cell row key
       size_t old_inserted_keys = m_tmp_keys.size();
       Cells cells;
@@ -295,14 +296,14 @@ static String last;
 
         // if the original query specified row intervals then these have
         // to be filtered in the client
-        if (m_primary_spec.row_intervals.size()) {
-          if (!row_intervals_match(m_primary_spec.row_intervals, p))
+        if (primary_spec.row_intervals.size()) {
+          if (!row_intervals_match(primary_spec.row_intervals, p))
             continue;
         }
 
         // same about cell intervals
-        if (m_primary_spec.cell_intervals.size()) {
-          if (!cell_intervals_match(m_primary_spec.cell_intervals, p, 
+        if (primary_spec.cell_intervals.size()) {
+          if (!cell_intervals_match(primary_spec.cell_intervals, p, 
                                 m_column_map[cfid].c_str()))
             continue;
         }
@@ -364,14 +365,14 @@ static String last;
       // scanner for this table. Otherwise immediately send the temporary
       // results to the primary table for verification
       ScanSpecBuilder ssb;
-      ssb.set_max_versions(m_primary_spec.max_versions);
-      ssb.set_return_deletes(m_primary_spec.return_deletes);
-      ssb.set_keys_only(m_primary_spec.keys_only);
-      ssb.set_row_regexp(m_primary_spec.row_regexp);
-      foreach (const String &s, m_primary_spec.columns)
+      ssb.set_max_versions(primary_spec.max_versions);
+      ssb.set_return_deletes(primary_spec.return_deletes);
+      ssb.set_keys_only(primary_spec.keys_only);
+      ssb.set_row_regexp(primary_spec.row_regexp);
+      foreach (const String &s, primary_spec.columns)
         ssb.add_column(s.c_str());
-      ssb.set_time_interval(m_primary_spec.time_interval.first, 
-                            m_primary_spec.time_interval.second);
+      ssb.set_time_interval(primary_spec.time_interval.first, 
+                            primary_spec.time_interval.second);
 
       TableScannerAsync *s;
       if (m_tmp_table) {
@@ -382,7 +383,7 @@ static String last;
         for (CkeyMap::iterator it = m_tmp_keys.begin(); 
                 it != m_tmp_keys.end(); ++it) 
           ssb.add_row((const char *)it->first.row);
-        foreach (const ColumnPredicate &cp, m_primary_spec.column_predicates)
+        foreach (const ColumnPredicate &cp, primary_spec.column_predicates)
           ssb.add_column_predicate(cp.column_family, cp.operation,
                   cp.value, cp.value_len);
 
@@ -434,6 +435,8 @@ static String last;
         return;
       }
 
+      const ScanSpec &primary_spec = m_primary_spec.get();
+
       Cells cells;
       scancells->get(cells);
       const char *last = m_last_rowkey_verify.size() 
@@ -453,15 +456,15 @@ static String last;
         last = (const char *)cell.row_key;
 
         ScanSpecBuilder *ssb = new ScanSpecBuilder;
-        foreach (const String &s, m_primary_spec.columns)
+        foreach (const String &s, primary_spec.columns)
           ssb->add_column(s.c_str());
-        ssb->set_max_versions(m_primary_spec.max_versions);
-        ssb->set_return_deletes(m_primary_spec.return_deletes);
-        foreach (const ColumnPredicate &cp, m_primary_spec.column_predicates)
+        ssb->set_max_versions(primary_spec.max_versions);
+        ssb->set_return_deletes(primary_spec.return_deletes);
+        foreach (const ColumnPredicate &cp, primary_spec.column_predicates)
           ssb->add_column_predicate(cp.column_family, cp.operation,
                   cp.value, cp.value_len);
-        if (m_primary_spec.value_regexp)
-          ssb->set_value_regexp(m_primary_spec.value_regexp);
+        if (primary_spec.value_regexp)
+          ssb->set_value_regexp(primary_spec.value_regexp);
 
         ssb->add_row(cell.row_key);
 
@@ -485,15 +488,15 @@ static String last;
       //
       // Create a new ScanSpec
       ScanSpecBuilder *ssb = new ScanSpecBuilder;
-      foreach (const String &s, m_primary_spec.columns)
+      foreach (const String &s, primary_spec.columns)
         ssb->add_column(s.c_str());
-      ssb->set_max_versions(m_primary_spec.max_versions);
-      ssb->set_return_deletes(m_primary_spec.return_deletes);
-      foreach (const ColumnPredicate &cp, m_primary_spec.column_predicates)
+      ssb->set_max_versions(primary_spec.max_versions);
+      ssb->set_return_deletes(primary_spec.return_deletes);
+      foreach (const ColumnPredicate &cp, primary_spec.column_predicates)
         ssb->add_column_predicate(cp.column_family, cp.operation,
                 cp.value, cp.value_len);
-      if (m_primary_spec.value_regexp)
-        ssb->set_value_regexp(m_primary_spec.value_regexp);
+      if (primary_spec.value_regexp)
+        ssb->set_value_regexp(primary_spec.value_regexp);
 
       // foreach cell from the secondary index: verify that it exists in
       // the primary table, but make sure that each rowkey is only inserted
@@ -699,7 +702,7 @@ static String last;
     TablePtr m_primary_table;
 
     // the original scan spec for the primary table
-    ScanSpec m_primary_spec;
+    ScanSpecBuilder m_primary_spec;
 
     // the original callback object specified by the user
     ResultCallback *m_original_cb;
