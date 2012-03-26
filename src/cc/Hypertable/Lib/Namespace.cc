@@ -111,6 +111,10 @@ void Namespace::create_table(const String &table_name, const String &schema) {
 }
 
 void Namespace::alter_table(const String &table_name, const String &alter_schema_str) {
+  String name = Filesystem::basename(table_name);
+  if (name.size() && name[0]=='^')
+    HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
+
   // Construct a new schema which is a merge of the existing schema
   // and the desired alterations.
   String full_name = get_full_name(table_name);
@@ -271,6 +275,12 @@ SchemaPtr Namespace::get_schema(const String &table_name) {
 }
 
 void Namespace::rename_table(const String &old_name, const String &new_name) {
+  String name = Filesystem::basename(old_name);
+  if (name.size() && name[0]=='^')
+    HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
+  name = Filesystem::basename(new_name);
+  if (name.size() && name[0]=='^')
+    HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
   String full_old_name = get_full_name(old_name);
   String full_new_name = get_full_name(new_name);
 
