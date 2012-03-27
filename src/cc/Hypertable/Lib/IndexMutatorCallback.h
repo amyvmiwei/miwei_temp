@@ -63,18 +63,16 @@ namespace Hypertable {
     void buffer_key(Key &key, const void *value, uint32_t value_len) {
       ScopedLock lock(m_mutex);
 
-      Schema::ColumnFamily *cf =
-          m_primary_mutator->schema()->get_column_family(key.column_family_code,
-                  true);
-      if (!cf)
-        HT_THROW(Error::BAD_KEY, "Invalid column family");
+      // to avoid Schema lookups: use the numeric ID as the column family
+      char tmp[32];
+      sprintf(tmp, "%d", key.column_family_code);
 
       // create a cell and add it to the cell-buffer
-      Cell cell(key.row, cf->name.c_str(), key.column_qualifier,
+      Cell cell(key.row, &tmp[0], key.column_qualifier,
               key.timestamp, key.revision, (uint8_t *)value, 
               value_len, key.flag);
       m_cellbuffer.add(cell, true);
-      m_used_memory += strlen(key.row) + cf->name.size() 
+      m_used_memory += strlen(key.row) + strlen(&tmp[0])
           + 8 + 8 + 2 + value_len;
       if (key.column_qualifier)
         m_used_memory += strlen(key.column_qualifier);
@@ -169,18 +167,27 @@ namespace Hypertable {
     }
 
     bool needs_flush() {
+      ScopedLock lock(m_mutex);
       return m_used_memory > m_max_memory;
     }
 
-    Mutex &get_mutex() { return m_mutex; }
+    void consume_keybuffer(TableMutatorAsync *mutator) {
+      ScopedLock lock(m_mutex);
 
+      IndexMutatorCallback::KeyMap::iterator it;
+      for (it = m_keymap.begin(); it != m_keymap.end(); ++it) {
+        mutator->update_without_index(it->second);
+      }
+
+      // then clear the internal buffers in the callback
+      clear();
+    }
+    
     void clear() {
       m_keymap.clear();
       m_cellbuffer.clear();
       m_used_memory = 0;
     }
-
-    KeyMap &get_keymap() { return m_keymap; }
 
   private:
     // the original mutator for the primary table

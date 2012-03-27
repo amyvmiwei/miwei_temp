@@ -36,15 +36,14 @@ using namespace Hypertable;
 using namespace Serialization;
 
 size_t ColumnPredicate::encoded_length() const {
-  return 2 * sizeof(uint32_t)
-            + encoded_length_vstr(column_family) 
-            + encoded_length_vstr(value);
+  return sizeof(uint32_t)
+          + encoded_length_vstr(column_family) 
+          + encoded_length_vstr(value_len);
 }
 
 void ColumnPredicate::encode(uint8_t **bufp) const {
   encode_vstr(bufp, column_family);
   encode_i32(bufp, operation);
-  encode_i32(bufp, value_len);
   encode_vstr(bufp, value, value_len);
 }
 
@@ -52,8 +51,7 @@ void ColumnPredicate::decode(const uint8_t **bufp, size_t *remainp) {
   HT_TRY("decoding column predicate",
     column_family = decode_vstr(bufp, remainp);
     operation = decode_i32(bufp, remainp);
-    value_len = decode_i32(bufp, remainp);
-    value = decode_vstr(bufp, remainp));
+    value = decode_vstr(bufp, remainp, &value_len));
 }
 
 size_t RowInterval::encoded_length() const {
