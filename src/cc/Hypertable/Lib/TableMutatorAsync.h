@@ -208,6 +208,7 @@ namespace Hypertable {
 
     void initialize_indices(PropertiesPtr &props);
 
+    friend class IndexMutatorCallback;
     void update_without_index(const Cell &cell);
 
     void update_without_index(Key &full_key, const Cell &cell);

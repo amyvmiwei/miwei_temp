@@ -282,13 +282,15 @@ TableMutatorAsync::update_without_index(const Cell &cell)
   if (cell.column_qualifier)
     column_qualifier_len = strlen(cell.column_qualifier);
 
-  Schema::ColumnFamily *cf = m_schema->get_column_family(cell.column_family);
-  if (!cf)
+  // the cell.column_family string contains the numeric ID of the
+  // column family
+  int cf_id = (int)strtoul(cell.column_family, 0, 0);
+  if (!cf_id)
     HT_THROW(Error::BAD_KEY, "Invalid column family");
 
   Key k;
   k.flag = cell.flag;
-  k.column_family_code = cf->id;
+  k.column_family_code = cf_id;
   k.row_key_set = true;
   k.row = cell.row_key;
   k.column_qualifier = cell.column_qualifier;
@@ -504,18 +506,9 @@ void TableMutatorAsync::flush_with_tablequeue(TableMutator *mutator, bool sync) 
     // propagate all index failures to the original callback
     m_imc->propagate_failures();
 
-    ScopedLock lock(m_imc->get_mutex());
+    // now copy all regular cells to this mutator's buffers 
+    m_imc->consume_keybuffer(this);
 
-    // now write all keys to the buffer of the primary table
-    IndexMutatorCallback::KeyMap &map = m_imc->get_keymap();
-    IndexMutatorCallback::KeyMap::iterator it;
-    for (it = map.begin(); it != map.end(); ++it) {
-      update_without_index(it->second);
-    }
-
-    // and clear the internal buffers in the callback
-    m_imc->clear();
-    
     // then fall through
   }
 

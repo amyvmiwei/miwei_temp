@@ -43,11 +43,11 @@ public:
     PREFIX_MATCH
   };
 
-  ColumnPredicate() : column_family(0), operation(0), value(0) { }
+  ColumnPredicate() : column_family(0), operation(0), value(0), value_len(0) { }
   ColumnPredicate(const char *_column_family, uint32_t _operation, 
-          const char *_value, uint32_t value_len = 0)
+          const char *_value, uint32_t _value_len = 0)
     : column_family(_column_family), operation(_operation), value(_value),
-        value_len(0) { 
+        value_len(_value_len) { 
     if (!value_len && value) 
       value_len = strlen(value); 
   }
@@ -322,11 +322,12 @@ public:
 
     ColumnPredicate cp;
     cp.column_family = arena.dup(column_family);
-    cp.value = arena.dup(value);
     cp.operation = operation;
     cp.value_len = value_len;
+    if (value)
+      cp.value = arena.dup(value);
     if (!cp.value_len)
-      cp.value_len = strlen(cp.value);
+      cp.value_len = cp.value ? strlen(cp.value) : 0;
     column_predicates.push_back(cp);
   }
 
