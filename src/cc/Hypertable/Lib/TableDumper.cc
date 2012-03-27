@@ -40,7 +40,7 @@ using namespace Hypertable;
  */
 TableDumper::TableDumper(NamespacePtr &ns, const String &name,
 			 ScanSpec &scan_spec, size_t target_node_count)
-  : m_scan_spec(scan_spec), m_eod(false), m_rows_seen(0), m_bytes_scanned(0) {
+  : m_scan_spec(scan_spec), m_eod(false), m_rows_seen(0) {
   TableScannerPtr scanner;
   RowInterval ri;
 
@@ -89,11 +89,9 @@ bool TableDumper::next(Cell &cell) {
 
     if ((*m_scanner_iter)->next(cell)) {
       if (++m_scanner_iter == m_scanners.end())
-	m_scanner_iter = m_scanners.begin();
+      m_scanner_iter = m_scanners.begin();
       return true;
     }
-
-    m_bytes_scanned += (*m_scanner_iter)->bytes_scanned();
 
     // add another scanner
     if (m_next < m_ordering.size()) {

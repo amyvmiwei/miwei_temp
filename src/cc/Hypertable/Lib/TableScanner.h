@@ -90,13 +90,6 @@ namespace Hypertable {
      */
     void unget(const Cell &cell);
 
-    /**
-     * Returns number of bytes scanned
-     *
-     * @return byte count
-     */
-    int64_t bytes_scanned() { return m_bytes_scanned; }
-
   private:
 
     friend class TableCallback;
@@ -126,7 +119,6 @@ namespace Hypertable {
     String m_error_msg;
     bool m_eos;
     Cell m_ungot;
-    int64_t m_bytes_scanned;
   };
   typedef intrusive_ptr<TableScanner> TableScannerPtr;
 

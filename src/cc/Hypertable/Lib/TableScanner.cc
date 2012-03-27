@@ -40,7 +40,7 @@ TableScanner::TableScanner(Comm *comm, Table *table,
     RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
     uint32_t timeout_ms)
   : m_callback(this), m_cur_cells(0), m_cur_cells_index(0), m_cur_cells_size(0),
-    m_error(Error::OK), m_eos(false), m_bytes_scanned(0) {
+    m_error(Error::OK), m_eos(false) {
 
   m_queue = new TableScannerQueue;
   ApplicationQueuePtr app_queue = (ApplicationQueue *)m_queue.get();

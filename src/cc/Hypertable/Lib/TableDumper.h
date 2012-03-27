@@ -53,13 +53,6 @@ namespace Hypertable {
      */
     bool next(Cell &cell);
 
-    /**
-     * Returns number of bytes scanned
-     *
-     * @return byte count
-     */
-    int64_t bytes_scanned() { return m_bytes_scanned; }
-
   private:
     ScanSpec  m_scan_spec;
     TableSplitsContainer m_splits;
@@ -70,7 +63,6 @@ namespace Hypertable {
     std::list<TableScannerPtr>::iterator m_scanner_iter;
     bool      m_eod;
     int64_t   m_rows_seen;
-    int64_t   m_bytes_scanned;
   };
 
   typedef intrusive_ptr<TableDumper> TableDumperPtr;
