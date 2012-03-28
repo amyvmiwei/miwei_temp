@@ -87,9 +87,9 @@ cmd_create_namespace(Client *client, NamespacePtr &ns, ParserState &state,
     HqlInterpreter::Callback &cb) {
 
   if (!ns || state.ns.find('/') == 0)
-    client->create_namespace(state.ns);
+    client->create_namespace(state.ns, NULL, false, state.if_exists);
   else
-    client->create_namespace(state.ns, ns.get());
+    client->create_namespace(state.ns, ns.get(), false, state.if_exists);
   cb.on_finish();
 }
 

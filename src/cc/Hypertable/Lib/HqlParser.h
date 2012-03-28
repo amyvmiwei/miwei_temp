@@ -1924,6 +1924,7 @@ namespace Hypertable {
           Token STARTS       = as_lower_d["starts"];
           Token WITH         = as_lower_d["with"];
           Token IF           = as_lower_d["if"];
+          Token NOT          = as_lower_d["not"];
           Token EXISTS       = as_lower_d["exists"];
           Token DISPLAY_TIMESTAMPS = as_lower_d["display_timestamps"];
           Token RETURN_DELETES = as_lower_d["return_deletes"];
@@ -2294,6 +2295,7 @@ namespace Hypertable {
           create_namespace_statement
             = CREATE >> (NAMESPACE | DATABASE)
               >> user_identifier[set_namespace(self.state)]
+              >> !(IF >> NOT >> EXISTS[set_if_exists(self.state)])
             ;
 
           use_namespace_statement
