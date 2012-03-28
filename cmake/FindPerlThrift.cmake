@@ -16,11 +16,12 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-# - Find PYTHON5
+# - Find Perl Thrift
 # This module defines
-#  PERLTHRIFT_FOUND, If false, do not try to use ant
+#  PERLTHRIFT_FOUND, If false, do not use perl w/ thrift
 
-exec_program(env ARGS perl -MThrift -e 0 OUTPUT_VARIABLE PERLTHRIFT_OUT
+exec_program(env ARGS perl -I${THRIFT_SOURCE_DIR}/lib/perl/lib -MThrift -e 0 
+             OUTPUT_VARIABLE PERLTHRIFT_OUT 
              RETURN_VALUE PERLTHRIFT_RETURN)
 
 if (PERLTHRIFT_RETURN STREQUAL "0")
@@ -34,7 +35,7 @@ if (PERLTHRIFT_FOUND)
     message(STATUS "Found thrift for perl")
   endif ()
 else ()
-  message(STATUS "Thrift for perl not found. "
+    message(STATUS "Thrift for perl not found. "
                  "ThriftBroker support for perl will be disabled")
 endif ()
 
