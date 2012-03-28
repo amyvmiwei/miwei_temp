@@ -16,11 +16,12 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-# - Find PYTHON5
+# - Find Ruby Thrift module
 # This module defines
-#  RUBYTHRIFT_FOUND, If false, do not try to use ant
+#  RUBYTHRIFT_FOUND, If false, do not Ruby w/ thrift
 
-exec_program(env ARGS ruby -r thrift -e 0 OUTPUT_VARIABLE RUBYTHRIFT_OUT
+exec_program(env ARGS ruby -I${THRIFT_SOURCE_DIR}/lib/rb/lib -r thrift -e 0 
+             OUTPUT_VARIABLE RUBYTHRIFT_OUT
              RETURN_VALUE RUBYTHRIFT_RETURN)
 
 if (RUBYTHRIFT_RETURN STREQUAL "0")

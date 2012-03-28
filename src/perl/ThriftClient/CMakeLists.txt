@@ -34,6 +34,7 @@ add_custom_target(ThriftGenPerl ALL DEPENDS ${GenPerl_SRCS})
 if (PERLTHRIFT_FOUND)
   add_test(ThriftClient-perl perl -I ${CMAKE_CURRENT_SOURCE_DIR}
            -I ${CMAKE_CURRENT_SOURCE_DIR}/gen-perl
+           -I ${THRIFT_SOURCE_DIR}/lib/perl/lib
            ${CMAKE_CURRENT_SOURCE_DIR}/client_test.pl)
 endif ()
 
