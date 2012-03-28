@@ -57,8 +57,6 @@ extern "C" {
 #include "Hypertable/Lib/MetaLogReader.h"
 #include "Hypertable/Lib/MetaLogWriter.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
-#include "Hypertable/Lib/old/RangeServerMetaLogReader.h"
-#include "Hypertable/Lib/old/RangeServerMetaLogEntries.h"
 
 #include "DfsBroker/Lib/Client.h"
 
@@ -468,36 +466,6 @@ void RangeServer::initialize(PropertiesPtr &props) {
   HT_INFO_OUT << "log_dir=" << Global::log_dir << HT_END;
 }
 
-namespace {
-
-  void recover_old_metalog(std::vector<MetaLog::EntityPtr> &entities) {
-    String meta_log_dir = Global::log_dir + "/range_txn";
-    OldMetaLog::RangeServerMetaLogReaderPtr rsml_reader;
-
-    try {
-
-      if (Global::log_dfs->exists(meta_log_dir)) {
-        bool found_recover_entry;
-        rsml_reader = new OldMetaLog::RangeServerMetaLogReader(Global::log_dfs.get(), meta_log_dir);
-        if (!rsml_reader->empty()) {
-          const OldMetaLog::RangeStates &range_states = rsml_reader->load_range_states(&found_recover_entry);
-          foreach(const OldMetaLog::RangeStateInfo *i, range_states) {
-            MetaLog::EntityPtr entity = new MetaLog::EntityRange(i->table, i->range, i->range_state, false);
-            ((MetaLog::EntityRange *)entity.get())->load_acknowledged = true;
-            entities.push_back(entity);
-          }
-        }
-      }
-
-    }
-    catch (Exception &e) {
-      HT_ERROR_OUT << e << HT_END;
-      HT_ABORT;
-    }
-  }
-
-}
-
 
 void RangeServer::local_recover() {
   MetaLog::DefinitionPtr rsml_definition =
@@ -521,10 +489,6 @@ void RangeServer::local_recover() {
                                       Global::log_dir + "/" + rsml_definition->name());
 
     rsml_reader->get_entities(entities);
-
-    // If empty, try loading the old MetaLog
-    if (entities.empty())
-      recover_old_metalog(entities);
 
     if (!entities.empty()) {
       HT_DEBUG_OUT <<"Found "<< Global::log_dir << "/" << rsml_definition->name() <<", start recovering"<< HT_END;

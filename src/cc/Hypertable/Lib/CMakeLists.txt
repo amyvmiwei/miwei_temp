@@ -98,20 +98,6 @@ TableScannerHandler.cc
 TableSplit.cc
 TestSource.cc
 Types.cc
-old/MasterMetaLog.cc
-old/MasterMetaLogEntries.cc
-old/MasterMetaLogEntryFactory.cc
-old/MasterMetaLogReader.cc
-old/MetaLog.cc
-old/MetaLogDfsBase.cc
-old/MetaLogEntryBase.cc
-old/MetaLogReader.cc
-old/MetaLogReaderDfsBase.cc
-old/MetaLogVersion.cc
-old/RangeServerMetaLog.cc
-old/RangeServerMetaLogEntries.cc
-old/RangeServerMetaLogEntryFactory.cc
-old/RangeServerMetaLogReader.cc
 bmz/bmz.c
 )
 
@@ -122,10 +108,6 @@ target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperDfsBroker ${
 # generate_test_data
 add_executable(generate_test_data generate_test_data.cc)
 target_link_libraries(generate_test_data Hypertable)
-
-# old meta log dumper
-add_executable(dump_old_metalog tests/DumpMetaLog.cc)
-target_link_libraries(dump_old_metalog HyperDfsBroker Hypertable)
 
 # schemaTest
 add_executable(schemaTest tests/schemaTest.cc)
@@ -298,9 +280,4 @@ if (NOT HT_COMPONENT_INSTALL)
   install(FILES ${HEADERS} DESTINATION include/Hypertable/Lib)
 
   install(TARGETS generate_test_data RUNTIME DESTINATION bin)
-
-  install(TARGETS Hypertable dump_old_metalog
-          RUNTIME DESTINATION bin
-          LIBRARY DESTINATION lib
-          ARCHIVE DESTINATION lib)
 endif ()
