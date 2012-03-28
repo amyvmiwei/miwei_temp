@@ -2720,3 +2720,21 @@ ALTER TABLE "ns/t" RENAME COLUMN FAMILY ('a', 'b');
 RENAME TABLE "ns/t" TO "ns/r";
 DROP TABLE "ns/r";
 
+# issue 565
+CREATE NAMESPACE issue565 IF NOT EXISTS;
+USE issue565;
+DROP NAMESPACE ns;
+Error: MasterClient operation drop_namespace('/issue565/ns', if_exists=false) failed - HYPERTABLE namespace does not exist
+CREATE NAMESPACE ns;
+CREATE NAMESPACE ns;
+Error: MasterClient operation create_namespace('issue565/ns', 0x0) failed - HYPERTABLE namespace exists
+GET LISTING;
+ns	(namespace)
+CREATE NAMESPACE ns IF NOT EXISTS;
+CREATE DATABASE ns IF NOT EXISTS;
+GET LISTING;
+ns	(namespace)
+DROP NAMESPACE ns;
+CREATE NAMESPACE ns IF NOT EXISTS;
+GET LISTING;
+ns	(namespace)
