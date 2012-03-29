@@ -30,8 +30,7 @@ extern "C" {
 #include <errno.h>
 #include <limits.h>
 #include <poll.h>
-#include <readline/history.h>
-#include <readline/readline.h>
+#include <editline/readline.h>
 #include <signal.h>
 }
 

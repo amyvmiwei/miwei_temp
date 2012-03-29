@@ -16,22 +16,24 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-# Find the Readline includes and libraries
+# Find the Editline includes and libraries
 # This module defines
-# READLINE_INCLUDE_DIR, where to find db.h, etc.
-# READLINE_LIBRARIES, the libraries needed to use BerkeleyDB.
-# READLINE_FOUND, If false, do not try to use BerkeleyDB.
+# EDITLINE_INCLUDE_DIR, where to find editline/readline.h, etc.
+# EDITLINE_LIBRARIES, the libraries needed to use editline.
+# EDITLINE_FOUND, If false, do not try to use editline.
 # also defined, but not for general use are
-# READLINE_LIBRARY, NCURSES_LIBRARY
+# EDITLINE_LIBRARY, NCURSES_LIBRARY
 
-find_path(READLINE_INCLUDE_DIR readline/readline.h
+find_path(EDITLINE_INCLUDE_DIR editline/readline.h
     /opt/local/include
     /usr/local/include
+    /usr/include
     )
 
-find_library(READLINE_LIBRARY NAMES readline PATHS
+find_library(EDITLINE_LIBRARY NAMES edit PATHS
     /opt/local/lib
     /usr/local/lib
+    /usr/lib
     )
 
 find_library(NCURSES_LIBRARY NAMES ncurses PATHS
@@ -39,25 +41,25 @@ find_library(NCURSES_LIBRARY NAMES ncurses PATHS
     /usr/local/lib
     )
 
-if (READLINE_LIBRARY AND READLINE_INCLUDE_DIR AND NCURSES_LIBRARY)
-  set(READLINE_LIBRARIES ${READLINE_LIBRARY} ${NCURSES_LIBRARY})
-  set(READLINE_FOUND "YES")
+if (EDITLINE_LIBRARY AND EDITLINE_INCLUDE_DIR AND NCURSES_LIBRARY)
+  set(EDITLINE_LIBRARIES ${EDITLINE_LIBRARY} ${NCURSES_LIBRARY})
+  set(EDITLINE_FOUND "YES")
 else ()
-  set(READLINE_FOUND "NO")
+  set(EDITLINE_FOUND "NO")
 endif ()
 
-if (READLINE_FOUND)
-  if (NOT READLINE_FIND_QUIETLY)
-    message(STATUS "Found Readline libraries: ${READLINE_LIBRARIES}")
+if (EDITLINE_FOUND)
+  if (NOT EDITLINE_FIND_QUIETLY)
+    message(STATUS "Found Editline libraries: ${EDITLINE_LIBRARIES}")
   endif ()
 else ()
-  if (READLINE_FIND_REQUIRED)
-    message(FATAL_ERROR "Could not find suitable Readline libraries")
+  if (EDITLINE_FIND_REQUIRED)
+    message(FATAL_ERROR "Could not find suitable Editline libraries")
   endif ()
 endif ()
 
 mark_as_advanced(
   NCURSES_LIBRARY
-  READLINE_INCLUDE_DIR
-  READLINE_LIBRARY
+  EDITLINE_INCLUDE_DIR
+  EDITLINE_LIBRARY
   )

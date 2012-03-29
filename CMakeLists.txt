@@ -97,7 +97,7 @@ find_package(Boost REQUIRED)
 find_package(BerkeleyDB REQUIRED)
 find_package(EXPAT REQUIRED)
 find_package(Log4cpp REQUIRED)
-find_package(Readline REQUIRED)
+find_package(Editline REQUIRED)
 find_package(SIGAR REQUIRED)
 find_package(ZLIB REQUIRED)
 find_package(BZip2 REQUIRED)
@@ -149,7 +149,7 @@ endif ()
 # include directories
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
     ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR}
-    ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR} ${READLINE_INCLUDE_DIR}
+    ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR} ${EDITLINE_INCLUDE_DIR}
     ${SIGAR_INCLUDE_DIR})
 
 if (Thrift_FOUND)
