@@ -20,14 +20,51 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
 FORCE="false"
+only="false"
 
-STOP_DFSBROKER="true"
-STOP_MASTER="true"
-STOP_RANGESERVER="true"
-STOP_THRIFTBROKER="true"
-STOP_HYPERSPACE="true"
-STOP_TESTCLIENT="true"
-STOP_TESTDISPATCHER="true"
+STOP_DFSBROKER="false"
+STOP_MASTER="false"
+STOP_RANGESERVER="false"
+STOP_THRIFTBROKER="false"
+STOP_HYPERSPACE="false"
+STOP_TESTCLIENT="false"
+STOP_TESTDISPATCHER="false"
+
+for arg in "$@"
+do
+  case $arg in
+    thriftbroker)
+      only="true"
+      STOP_THRIFTBROKER="true"
+      ;;
+    master)
+      only="true"
+      STOP_MASTER="true"
+      ;;
+    hyperspace)
+      only="true"
+      STOP_HYPERSPACE="true"
+      ;;
+    rangeserver)
+      only="true"
+      STOP_RANGESERVER="true"
+      ;;
+    dfsbroker)
+      only="true"
+      STOP_DFSBROKER="true"
+      ;;
+  esac
+done
+
+if [ $only == "false" ]; then
+  STOP_DFSBROKER="true"
+  STOP_MASTER="true"
+  STOP_RANGESERVER="true"
+  STOP_THRIFTBROKER="true"
+  STOP_HYPERSPACE="true"
+  STOP_TESTCLIENT="true"
+  STOP_TESTDISPATCHER="true"
+fi
 
 usage() {
   echo ""
@@ -40,6 +77,11 @@ usage() {
   echo "  --no-rangeserver        do not stop the RangeServer"
   echo "  --no-hyperspace         do not stop the Hyperspace master"
   echo "  --no-thriftbroker       do not stop the ThriftBroker"
+  echo "  dfsbroker               stops the DFS broker"
+  echo "  master                  stops the Hypertable master"
+  echo "  rangeserver             stops the RangeServer"
+  echo "  hyperspace              stops the Hyperspace master"
+  echo "  thriftbroker            stops the ThriftBroker"
   echo ""
   echo "DFS choices: kfs, hadoop, local"
   echo ""
@@ -74,12 +116,31 @@ while [ "$1" != "${1##[-+]}" ]; do
       STOP_THRIFTBROKER="false"
       shift
       ;;
+    --only-dfsbroker)
+      STOP_DFSBROKER="true"
+      shift
+      ;;
+    --only-master)
+      STOP_MASTER="true"
+      shift
+      ;;
+    --only-rangeserver)
+      STOP_RANGESERVER="true"
+      shift
+      ;;
+    --only-hyperspace)
+      STOP_HYPERSPACE="true"
+      shift
+      ;;
+    --only-thriftbroker)
+      STOP_THRIFTBROKER="true"
+      shift
+      ;;
     *)
       usage
       exit 1;;
   esac
 done
-
 
 if [ ! -e $HYPERTABLE_HOME/bin/ht_master_client ] ; then
   STOP_MASTER="false"
@@ -88,7 +149,6 @@ fi
 if [ ! -e $HYPERTABLE_HOME/bin/ht_rsclient ] ; then
   STOP_RANGESERVER="false"
 fi
-
 
 #
 # Stop TestClient
@@ -136,7 +196,6 @@ if [ $STOP_RANGESERVER == "true" ] ; then
   fi
 fi
 
-
 #
 # Stop DFSBroker
 #
@@ -146,7 +205,6 @@ if [ $STOP_DFSBROKER == "true" ] ; then
   stop_server dfsbroker
 fi
 
-
 #
 # Stop Hyperspace
 #
@@ -155,21 +213,31 @@ if [ $STOP_HYPERSPACE == "true" ] ; then
 fi
 
 sleep 1
+
+#
 # wait for thriftbroker shutdown
+#
 if [ $STOP_THRIFTBROKER == "true" ] ; then
   wait_for_server_shutdown thriftbroker "thrift broker" "$@" &
 fi
+
+#
 # wait for dfsbroker shutdown
+#
 if [ $STOP_DFSBROKER == "true" ] ; then
   wait_for_server_shutdown dfsbroker "DFS broker" "$@" &
 fi
 
+#
 # wait for master shutdown
+#
 if [ $STOP_MASTER == "true" ] ; then
   wait_for_server_shutdown master "hypertable master" "$@" &
 fi
 
+#
 # wait for hyperspace shutdown
+#
 if [ $STOP_HYPERSPACE == "true" ] ; then
     wait_for_server_shutdown hyperspace "hyperspace" "$@" &
 fi
