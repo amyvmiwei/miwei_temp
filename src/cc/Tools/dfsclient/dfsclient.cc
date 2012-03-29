@@ -25,8 +25,7 @@
 #include <vector>
 
 extern "C" {
-#include <readline/readline.h>
-#include <readline/history.h>
+#include <editline/readline.h>
 }
 
 #include <boost/algorithm/string.hpp>
