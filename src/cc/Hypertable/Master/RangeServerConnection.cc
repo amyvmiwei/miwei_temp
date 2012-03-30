@@ -52,8 +52,16 @@ void RangeServerConnection::set_mml_writer(MetaLog::WriterPtr &mml_writer) {
   m_mml_writer = mml_writer;
 }
 
-bool RangeServerConnection::connect(const String &hostname, InetAddr local_addr, InetAddr public_addr) {
+bool RangeServerConnection::connect(const String &hostname, 
+        InetAddr local_addr, InetAddr public_addr, bool test_mode) {
   ScopedLock lock(m_mutex);
+
+  // update the mml if the hostname or IP changed
+  if (hostname != m_hostname || public_addr != m_public_addr) {
+    if (!test_mode)
+      m_mml_writer->record_state(this);
+  }
+
   m_hostname = hostname;
   m_local_addr = local_addr;
   m_public_addr = public_addr;

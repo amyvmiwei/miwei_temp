@@ -66,7 +66,7 @@ bool Context::connect_server(RangeServerConnectionPtr &rsc, const String &hostna
   comm->add_proxy(rsc->location(), hostname, public_addr);
   HT_INFOF("Registered proxy %s", rsc->location().c_str());
 
-  if (rsc->connect(hostname, local_addr, public_addr)) {
+  if (rsc->connect(hostname, local_addr, public_addr, test_mode)) {
     conn_count++;
     if (conn_count == 1)
       notify = true;

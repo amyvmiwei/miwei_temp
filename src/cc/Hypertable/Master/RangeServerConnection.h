@@ -76,7 +76,8 @@ namespace Hypertable {
     friend class Context;
 
   protected:
-    bool connect(const String &hostname, InetAddr local_addr, InetAddr public_addr);
+    bool connect(const String &hostname, InetAddr local_addr, 
+            InetAddr public_addr, bool test_mode = false);
     bool disconnect();
 
   private:
