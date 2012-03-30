@@ -336,9 +336,28 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
     }
 
   }
-  catch(DbException &e) {
-    HT_FATALF("Error initializing Berkeley DB (dir=%s) - %s",
-              m_base_dir.c_str(), e.what());
+  catch (DbException &e) {
+    unsigned count = 0;
+    DB_REPMGR_SITE *list = 0;
+    if (m_env.repmgr_site_list(&count, &list) == 0) {
+      if (count)
+        HT_INFO_OUT << "The following replicas are (dis)connected: " << HT_END;
+      for (unsigned i = 0; i < count; i++) {
+        const char *status = "unknown";
+        switch (list[i].status) {
+          case DB_REPMGR_CONNECTED:
+            status = "connected";
+            break;
+          case DB_REPMGR_DISCONNECTED:
+            status = "disconnected";
+            break;
+        }
+        HT_INFO_OUT << "  " << list[i].host << " status: " << status << HT_END;
+      }
+    }
+    HT_FATALF("Error initializing Berkeley DB (dir=%s) - %s; please make sure "
+              "that the hyperspace replicas are correctly configured.",
+               m_base_dir.c_str(), e.what());
   }
 
   // initialize per thread DB handles
