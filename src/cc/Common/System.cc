@@ -52,7 +52,7 @@ String System::_locate_install_dir(const char *argv0) {
   if (!install_dir.empty())
     return install_dir;
 
-  exe_name = Path(argv0).filename().c_str();
+  exe_name = Path(argv0).filename().generic_string();
 
   Path exepath(proc_info().exe);
 
@@ -81,7 +81,7 @@ void System::_init(const String &install_directory) {
   }
 
   if (exe_name.empty())
-    exe_name = Path(proc_info().args[0]).filename().c_str();
+    exe_name = Path(proc_info().args[0]).filename().generic_string();
 
   // initialize logging system
   Logger::initialize(exe_name);
