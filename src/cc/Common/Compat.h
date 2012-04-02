@@ -35,6 +35,7 @@
 #endif
 
 #define BOOST_IOSTREAMS_USE_DEPRECATED
+#define BOOST_FILESYSTEM_VERSION 3
 #define BOOST_FILESYSTEM_DEPRECATED     1
 
 #include "Sweetener.h"

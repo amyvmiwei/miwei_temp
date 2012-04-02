@@ -689,7 +689,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
                 ColumnPredicate::EXACT_MATCH, (const char *)(*iter).value);
       }
       else if (query_mode == QUALIFIER) {
-        String s = format("%s:%s", (*iter).column_family, 
+        String s = Hypertable::format("%s:%s", (*iter).column_family, 
                 (*iter).column_qualifier ? (*iter).column_qualifier : "");
         scan_spec.add_column(s.c_str());
       }
