@@ -61,6 +61,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   public static final String INPUT_NAMESPACE    = "hypertable.mapreduce.input.namespace";
   public static final String TABLE              = "hypertable.mapreduce.input.table";
   public static final String COLUMNS            = "hypertable.mapreduce.input.scan_spec.columns";
+  public static final String VALUE_REGEXPS      = "hypertable.mapreduce.input.scan_spec.value_regexps";
+  public static final String COLUMN_PREDICATES  = "hypertable.mapreduce.input.scan_spec.column_predicates";
   public static final String OPTIONS            = "hypertable.mapreduce.input.scan_spec.options";
   public static final String ROW_INTERVAL       = "hypertable.mapreduce.input.scan_spec.row_interval";
   public static final String TIMESTAMP_INTERVAL = "hypertable.mapreduce.input.scan_spec.timestamp_interval";
@@ -94,6 +96,27 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
           int value = Integer.parseInt(strs[i]);
           m_base_spec.setVersions(value);
         }
+        else if (strs[i].equals("OFFSET")) {
+          i++;
+          if (i==strs.length)
+            throw new ParseException("Bad OPTIONS spec", i);
+          int value = Integer.parseInt(strs[i]);
+          m_base_spec.setRow_offset(value);
+        }
+        else if (strs[i].equals("CELL_OFFSET")) {
+          i++;
+          if (i==strs.length)
+            throw new ParseException("Bad OPTIONS spec", i);
+          int value = Integer.parseInt(strs[i]);
+          m_base_spec.setCell_offset(value);
+        }
+        else if (strs[i].equals("LIMIT")) {
+          i++;
+          if (i==strs.length)
+            throw new ParseException("Bad OPTIONS spec", i);
+          int value = Integer.parseInt(strs[i]);
+          m_base_spec.setRow_limit(value);
+        }
         else if (strs[i].equals("CELL_LIMIT")) {
           i++;
           if (i==strs.length)
@@ -101,8 +124,18 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
           int value = Integer.parseInt(strs[i]);
           m_base_spec.setCell_limit(value);
         }
+        else if (strs[i].equals("CELL_LIMIT_PER_FAMILY")) {
+          i++;
+          if (i==strs.length)
+            throw new ParseException("Bad OPTIONS spec", i);
+          int value = Integer.parseInt(strs[i]);
+          m_base_spec.setCell_limit_per_family(value);
+        }
         else if (strs[i].equals("KEYS_ONLY")) {
           m_base_spec.setKeys_only(true);
+        }
+        else if (strs[i].equals("RETURN_DELETES")) {
+          m_base_spec.setReturn_deletes(true);
         }
         else
           throw new ParseException("Bad OPTIONS spec: "+strs[i], i);
@@ -117,6 +150,34 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       for (int i=0; i<columns.length; i++)
         m_base_spec.addToColumns(stripQuotes(columns[i]));
     }
+  }
+
+  public void parseValueRegexps(JobConf job) {
+    String str = job.get(VALUE_REGEXPS);
+    if (str != null)
+      m_base_spec.setValue_regexp(stripQuotes(str));
+  }
+
+  public void parseColumnPredicate(JobConf job) throws ParseException {
+    ColumnPredicate cp = new ColumnPredicate();
+    String str = job.get(COLUMN_PREDICATES);
+    int offset = str.indexOf("=^");
+    if (offset != -1) {
+      cp.column_family = str.substring(0, offset).trim();
+      cp.operation = ColumnPredicateOperation.PREFIX_MATCH;
+      cp.value = str.substring(offset + 2).trim();
+    }
+    else {
+      offset = str.indexOf("=");
+      if (offset != -1) {
+        cp.column_family = str.substring(0, offset).trim();
+        cp.operation = ColumnPredicateOperation.EXACT_MATCH;
+        cp.value = str.substring(offset + 1).trim();
+      }
+      else
+        throw new ParseException("Invalid COLUMN_PREDICATE: "+str, 0);
+    }
+    m_base_spec.addToColumn_predicates(cp);
   }
 
   public String [] parseRelopSpec(String str, String name) {
@@ -291,6 +352,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       parseOptions(job);
       parseTimestampInterval(job);
       parseRowInterval(job);
+      parseValueRegexps(job);
+      parseColumnPredicate(job);
 
       System.out.println(m_base_spec);
     }
