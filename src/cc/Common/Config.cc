@@ -188,6 +188,8 @@ void DefaultPolicy::init_options() {
      "Ceph monitor address to connect to")
     ("HdfsBroker.Port", i16(),
         "Port number on which to listen (read by HdfsBroker only)")
+    ("HdfsBroker.Hadoop.ConfDir", str(), "Hadoop configuration directory "
+        "(e.g. /etc/hadoop/conf or /usr/lib/hadoop/conf)")
     ("HdfsBroker.fs.default.name", str(), "Hadoop Filesystem "
         "default name, same as fs.default.name property in Hadoop config "
         "(e.g. hdfs://localhost:9000)")
