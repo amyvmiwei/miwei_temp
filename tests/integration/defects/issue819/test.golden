@@ -1,0 +1,27 @@
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://www.hypertable.org/
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+
+USE "/";
+
+DROP TABLE IF EXISTS TestIssue819;
+
+CREATE TABLE TestIssue819 (
+col1
+);
+
+LOAD DATA INFILE "test.tsv" INTO TABLE TestIssue819;
+SELECT * FROM TestIssue819;
+r0	col1:''	cell0
+r1	col1:''	cell1
+r2	col1:''	cell2
+r3	col1:''	cell3
+r5	col1:''	cell5
+r6	col1:''	cell6
+r7	col1:''	cell7
+r8	col1:''	cell8
+r9	col1:''	cell9
