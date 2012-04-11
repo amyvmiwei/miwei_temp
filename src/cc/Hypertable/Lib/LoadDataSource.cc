@@ -306,6 +306,9 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
   if (consumedp)
     *consumedp = 0;
 
+  *is_deletep = false;
+  keyp->flag = FLAG_INSERT;
+
   if (m_hyperformat) {
 
     while (get_next_line(line)) {
@@ -406,7 +409,6 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
       *valuep = (uint8_t *)base;
       if ((ptr = strchr(base, '\t')) == 0) {
         *value_lenp = strlen((char *)*valuep);
-        *is_deletep = false;
       }
       else {
         *value_lenp = ptr-base;
@@ -428,7 +430,6 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
         }
         else {
           cerr << "warning: too many fields on line " << m_cur_line << endl;
-          *is_deletep = false;
         }
       }
 

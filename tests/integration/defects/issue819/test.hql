@@ -1,0 +1,11 @@
+
+USE "/";
+
+DROP TABLE IF EXISTS TestIssue819;
+
+CREATE TABLE TestIssue819 (
+  col1
+);
+
+LOAD DATA INFILE "test.tsv" INTO TABLE TestIssue819;
+SELECT * FROM TestIssue819;
