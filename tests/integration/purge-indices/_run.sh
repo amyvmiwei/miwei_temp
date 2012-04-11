@@ -25,7 +25,7 @@ $HT_HOME/bin/ht ht_load_generator update \
     --spec-file=${SCRIPT_DIR}/data.spec \
     --table=IndexTest --max-keys=30000 \
     --row-seed=1 $LOAD_GEN_FLAG \
-    --delete-percentage=50
+    --delete-percentage=40
 
 # wait a few seconds to make sure that the TTL=1 test works
 sleep 5
