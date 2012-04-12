@@ -209,7 +209,7 @@ if (NOT CPACK_PACKAGE_NAME)
 endif ()
 
 if (NOT CPACK_PACKAGE_CONTACT)
-  set(CPACK_PACKAGE_CONTACT "doug@hypertable.org")
+  set(CPACK_PACKAGE_CONTACT "info@hypertable.com")
 endif ()
 
 if (NOT CPACK_PACKAGE_DESCRIPTION_SUMMARY)
@@ -217,7 +217,7 @@ if (NOT CPACK_PACKAGE_DESCRIPTION_SUMMARY)
 endif ()
 
 if (NOT CPACK_PACKAGE_VENDOR)
-  set(CPACK_PACKAGE_VENDOR "hypertable.org")
+  set(CPACK_PACKAGE_VENDOR "hypertable.com")
 endif ()
 
 if (NOT CPACK_PACKAGE_DESCRIPTION_FILE)
