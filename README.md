@@ -3,7 +3,7 @@ HOW TO INSTALL
 
 You can either download an appropriate binary package for your
 platform or build from source. Binary packages can be obtained from
-[here](http://package.hypertable.org/).
+[here](http://hypertable.com/download).
 
 See [this wiki
 page](http://code.google.com/p/hypertable/wiki/UpAndRunningWithBinaryPackages)
@@ -16,7 +16,7 @@ HOW TO BUILD FROM SOURCE
 1.  Download the source:
 
     You can either download a release source tar ball from the [download
-    page](http://hypertable.org/download.html) and unpack it in your
+    page](http://hypertable.com/download) and unpack it in your
     source directory say ~/src:
 
         cd ~/src
@@ -25,7 +25,7 @@ HOW TO BUILD FROM SOURCE
     or from our git repository:
 
         cd ~/src
-        git clone git://scm.hypertable.org/pub/repos/hypertable.git
+        git clone git://github.com/hypertable/hypertable.git
 
     From now on, we assume that your hypertable source tree is
     ~/src/hypertable

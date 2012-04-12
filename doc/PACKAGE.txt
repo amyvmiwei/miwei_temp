@@ -2,10 +2,10 @@ Getting Started with Hypertable
 ===============================
 
 - Project Website
-  http://www.hypertable.org/
+  http://www.hypertable.com/
 
 - Documentation:
-  http://www.hypertable.org/documentation.html
+  http://www.hypertable.com/documentation
 
 - Mailing List
   http://groups.google.com/group/hypertable-user

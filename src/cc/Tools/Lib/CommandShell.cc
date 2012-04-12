@@ -233,7 +233,7 @@ int CommandShell::run() {
     cout << endl;
     cout << "Welcome to the " << m_program_name << " command interpreter."
          << endl;
-    cout << "For information about Hypertable, visit http://www.hypertable.org/"
+    cout << "For information about Hypertable, visit http://hypertable.com"
          << endl;
     cout << endl;
     cout << "Type 'help' for a list of commands, or 'help shell' for a" << endl;
