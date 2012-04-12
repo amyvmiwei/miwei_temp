@@ -358,8 +358,17 @@ void HsCommandInterpreter::execute_line(const String &line) {
             *oo << display_fname << ":" << attr << "\t" << value_str << endl;
         }
 
-        // read all files and dirs under this path
-        m_session->readdir(handle, listing);
+        // read all files and dirs under this path; skip BAD_PATHNAME errors. 
+        // they simply mean that the path is a file and not a directory
+        try {
+          m_session->readdir(handle, listing);
+        }
+        catch (Exception &e) {
+          if (e.code() != Error::HYPERSPACE_BAD_PATHNAME)
+            throw;
+          else
+            continue;
+        }
         foreach(const struct DirEntry &entry, listing) {
           // if dir save it
           if(entry.is_dir)
