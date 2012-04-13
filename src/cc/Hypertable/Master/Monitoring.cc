@@ -767,8 +767,7 @@ void Monitoring::invalidate_id_mapping(const String &table_id) {
 }
 
 void Monitoring::run_rrdtool(std::vector<String> &command) {
-  String cmd = System::install_dir;
-  cmd += "/bin/rrdtool";
+  String cmd = "rrdtool";
 
   foreach (const String &s, command) {
     cmd += " \"";
@@ -780,8 +779,8 @@ void Monitoring::run_rrdtool(std::vector<String> &command) {
 
   int ret = ::system(cmd.c_str());
   if (ret != 0) {
-    HT_WARNF("Monitor: shell command ('%s') returned status %d", 
-            cmd.c_str(), ret);
+    HT_WARNF("Monitor: failed to invoke `rrdtool`; make sure it's properly "
+            "installed and in your $PATH (command returned status %d)", ret);
   }
 }
 

@@ -44,8 +44,7 @@ module RRD
 
     def run
       tempname = "-"
-      params =  [File.dirname(__FILE__) << "/../../../bin/ht"]
-      params +=  %w{rrdtool graph}
+      params =  %w{rrdtool graph}
       params << tempname
       params += %w{--imgformat PNG --slope-mode --interlaced}
       params += ['--end', @end_.to_s, '--start', @start.to_s]
