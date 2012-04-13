@@ -232,9 +232,7 @@ if (NOT HT_COMPONENT_INSTALL)
           USE_SOURCE_PERMISSIONS)
   install(DIRECTORY examples/freebase DESTINATION examples
           USE_SOURCE_PERMISSIONS)
-  install(PROGRAMS
-          "${RRDTOOL_DIR}/rrdtool" "${CRONOLOG_DIR}/cronolog"
-          DESTINATION bin)
+  install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION bin)
   include(PackageHelper)
 else ()
   install(PROGRAMS bin/ht-env.sh bin/fhsize.sh bin/prerm.sh DESTINATION bin)
