@@ -23,4 +23,6 @@ public class SerializedCellsFlag {
 
   public static final long NULL = Long.MIN_VALUE + 1;
   public static final long AUTO_ASSIGN = Long.MIN_VALUE + 2;
+
+  public static final byte VERSION = (byte)0x01;
 }

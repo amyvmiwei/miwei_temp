@@ -151,10 +151,10 @@ public class Error {
     static public final int METALOG_ENTRY_BAD_TYPE    = 0x00070006;
     static public final int METALOG_ENTRY_BAD_ORDER   = 0x00070007;
 
-    static public final int SERIALIZATION_INPUT_OVERRUN = 0x00080001;
-    static public final int SERIALIZATION_BAD_VINT      = 0x00080002;
-    static public final int SERIALIZATION_BAD_VSTR      = 0x00080003;
-
+    static public final int SERIALIZATION_INPUT_OVERRUN    = 0x00080001;
+    static public final int SERIALIZATION_BAD_VINT         = 0x00080002;
+    static public final int SERIALIZATION_BAD_VSTR         = 0x00080003;
+    static public final int SERIALIZATION_VERSION_MISMATCH = 0x00080004;
 
     static public String GetText(int lcode) {
         return mTextMap.get(lcode);
@@ -320,7 +320,8 @@ public class Error {
         mTextMap.put(METALOG_ENTRY_BAD_ORDER,   "METALOG bad entry order");
         mTextMap.put(SERIALIZATION_INPUT_OVERRUN,
             "SERIALIZATION input overrun");
-        mTextMap.put(SERIALIZATION_BAD_VINT,      "SERIALIZATION bad vint");
-        mTextMap.put(SERIALIZATION_BAD_VSTR,      "SERIALIZATION bad vstr");
+        mTextMap.put(SERIALIZATION_BAD_VINT,         "SERIALIZATION bad vint");
+        mTextMap.put(SERIALIZATION_BAD_VSTR,         "SERIALIZATION bad vstr");
+        mTextMap.put(SERIALIZATION_VERSION_MISMATCH, "SERIALIZATION version mismatch");
     }
 }

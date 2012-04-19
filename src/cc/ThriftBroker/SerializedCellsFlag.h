@@ -32,6 +32,12 @@ namespace Hypertable {
       HAVE_REVISION  = 0x80
     };
   }
+
+  namespace SerializedCellsVersion {
+    enum {
+      VERSION        = 0x01
+    };
+  }
 }
 
 #endif // HYPERTABLE_SERIALIZEDCELLSFLAG_H

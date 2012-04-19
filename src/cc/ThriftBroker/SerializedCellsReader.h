@@ -30,12 +30,19 @@ namespace Hypertable {
 
   class SerializedCellsReader {
   public:
-  
-    SerializedCellsReader(void *buf, uint32_t len) : m_row(0),
-      m_column_family(0), m_column_qualifier(0), m_timestamp(AUTO_ASSIGN),
-      m_value(0), m_value_len(0), m_cell_flag(FLAG_INSERT), m_flag(0), m_eob(false) {
-      m_base = m_ptr = (uint8_t *)buf;
-      m_end = m_base + len;
+
+    SerializedCellsReader(void *buf, uint32_t len)
+      : m_row(0), m_column_family(0), m_column_qualifier(0),
+        m_timestamp(AUTO_ASSIGN), m_value(0), m_value_len(0),
+        m_cell_flag(FLAG_INSERT), m_flag(0), m_eob(false), m_previous_row(0) {
+      init((uint8_t *)buf, len);
+    }
+
+    SerializedCellsReader(const char *buf, uint32_t len)
+      : m_row(0), m_column_family(0), m_column_qualifier(0),
+        m_timestamp(AUTO_ASSIGN), m_value(0), m_value_len(0),
+        m_cell_flag(FLAG_INSERT), m_flag(0), m_eob(false), m_previous_row(0) {
+      init((uint8_t *)buf, len);
     }
 
     bool next();
@@ -51,9 +58,9 @@ namespace Hypertable {
     }
 
     void get(Cell &cell) {
-      cell.row_key = m_row;      
+      cell.row_key = m_row;
       cell.column_family = m_column_family;
-      cell.column_qualifier = m_column_qualifier;      
+      cell.column_qualifier = m_column_qualifier;
       cell.timestamp = m_timestamp;
       cell.revision = AUTO_ASSIGN;
       cell.value = (uint8_t*)m_value;
@@ -65,6 +72,7 @@ namespace Hypertable {
     const char *column_family() { return m_column_family; }
     const char *column_qualifier() { return m_column_qualifier; }
     const void *value() { return m_value; }
+    const char *value_str() { return (const char *)m_value; }
     uint32_t value_len() { return m_value_len; }
     int64_t timestamp() { return m_timestamp; }
     int8_t cell_flag() { return m_cell_flag; }
@@ -73,6 +81,16 @@ namespace Hypertable {
     bool eos() { return (m_flag & SerializedCellsFlag::EOS) > 0; }
 
   private:
+    void init(uint8_t *buf, uint32_t len) {
+      m_base = m_ptr = (uint8_t *)buf;
+      m_end = m_base + len;
+
+      size_t remaining = m_end - m_ptr;
+      int32_t version = Serialization::decode_i32(&m_ptr, &remaining);
+      if (version != SerializedCellsVersion::VERSION)
+        HT_THROW(Error::SERIALIZATION_VERSION_MISMATCH, "");
+    }
+
     const uint8_t *m_base;
     const uint8_t *m_ptr;
     const uint8_t *m_end;
@@ -86,6 +104,7 @@ namespace Hypertable {
     uint8_t     m_cell_flag;
     uint8_t     m_flag;
     bool        m_eob;
+    const char *m_previous_row;
   };
 
 }

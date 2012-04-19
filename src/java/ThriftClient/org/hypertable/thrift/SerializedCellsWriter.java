@@ -14,14 +14,16 @@ import java.nio.ByteOrder;
 public class SerializedCellsWriter {
 
   public SerializedCellsWriter(int size) {
-    mBuffer = ByteBuffer.allocate(size);
+    mBuffer = ByteBuffer.allocate(size+5);
     mBuffer.order(ByteOrder.LITTLE_ENDIAN);
+    mBuffer.putInt(SerializedCellsFlag.VERSION);
     mGrow=false;
   }
 
   public SerializedCellsWriter(int size, boolean grow) {
-    mBuffer = ByteBuffer.allocate(size);
+    mBuffer = ByteBuffer.allocate(size+5);
     mBuffer.order(ByteOrder.LITTLE_ENDIAN);
+    mBuffer.putInt(SerializedCellsFlag.VERSION);
     mGrow = grow;
   }
 
@@ -34,7 +36,7 @@ public class SerializedCellsWriter {
    * @return true if cells were added
    */
   public boolean add_serialized_cell_array(byte [] serialized_cells) {
-    int length = serialized_cells.length - 1;
+    int length = serialized_cells.length - 5;  // skip 4-byte version and 1-byte terminator
 
     // need to leave room for the termination byte
     if (length >= mBuffer.remaining()) {
@@ -50,7 +52,7 @@ public class SerializedCellsWriter {
         }
       }
     }
-    mBuffer.put(serialized_cells, 0 , length);
+    mBuffer.put(serialized_cells, 4, length);
     return true;
   }
 
@@ -140,7 +142,6 @@ public class SerializedCellsWriter {
         if (!mGrow) // dont grow this buffer
           return false;
         else {
-
           // grow
           ByteBuffer newBuffer = ByteBuffer.allocate(((mBuffer.capacity()+length)*3)/2);
           newBuffer.order(ByteOrder.LITTLE_ENDIAN);
@@ -149,8 +150,9 @@ public class SerializedCellsWriter {
         }
       }
       else {
-        mBuffer = ByteBuffer.allocate(length+1);
+        mBuffer = ByteBuffer.allocate(length+5);
         mBuffer.order(ByteOrder.LITTLE_ENDIAN);
+	mBuffer.putInt(SerializedCellsFlag.VERSION);
       }
     }
 
@@ -165,8 +167,12 @@ public class SerializedCellsWriter {
         (control & SerializedCellsFlag.REV_IS_TS) == 0)
       mBuffer.putLong((long)0);
 
-    // row
-    mBuffer.put(row, row_offset, row_length);
+    String newRow = new String(row, row_offset, row_length);
+
+    if (!mSavedRow.equals(newRow)) {
+      mSavedRow = newRow;
+      mBuffer.put(row, row_offset, row_length);
+    }
     mBuffer.put((byte)0);
 
     // column family
@@ -239,7 +245,9 @@ public class SerializedCellsWriter {
 
   public void clear() {
     mBuffer.clear();
+    mBuffer.putInt(SerializedCellsFlag.VERSION);
     mFinalized = false;
+    mSavedRow = "";
   }
 
   public int capacity() {
@@ -247,6 +255,7 @@ public class SerializedCellsWriter {
   }
 
   private ByteBuffer mBuffer;
+  private String mSavedRow = "";
   private boolean mFinalized = false;
   private boolean mGrow = false;
 }

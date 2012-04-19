@@ -22,9 +22,8 @@ sleep 1
 
 # now test the offset
 cat ${SCRIPT_DIR}/test-offsets.hql | $HT_HOME/bin/ht hypertable \
-    --no-prompt --test-mode \
-    > ${SCRIPT_DIR}/test-offsets.output
-diff ${SCRIPT_DIR}/test-offsets.output ${SCRIPT_DIR}/test-offsets.golden
+    --no-prompt --test-mode > test-offsets.output
+diff test-offsets.output ${SCRIPT_DIR}/test-offsets.golden
 if [ $? -ne "0" ]
 then
   echo "FAIL - offset tests differ, exiting"

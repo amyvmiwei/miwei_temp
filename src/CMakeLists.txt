@@ -12,6 +12,9 @@ add_subdirectory(cc/Tools)
 add_subdirectory(cc/DfsBroker/Lib)
 add_subdirectory(cc/DfsBroker/local)
 add_subdirectory(cc/Benchmark)
+if (PYTHONTHRIFT_FOUND AND PYTHON_FOUND)
+  add_subdirectory(cc/HyperPython)
+endif ()
 
 add_subdirectory(rb/Monitoring)
 

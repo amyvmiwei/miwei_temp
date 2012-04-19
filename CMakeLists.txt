@@ -75,7 +75,7 @@ if (CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
   endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 endif ()
 
-add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT)
+add_definitions(-D_LARGEFILE_SOURCE -D_FILE_OFFSET_BITS=64 -D_REENTRANT -fPIC)
 
 # Uncomment the following to build dynamic libraries
 # set (BUILD_SHARED_LIBS ON)
@@ -121,6 +121,7 @@ find_package(RubyThrift)
 find_package(PHP5Thrift)
 find_package(PerlThrift)
 find_package(PythonThrift)
+find_package(Python)
 
 # set malloc library (maybe)
 if (USE_JEMALLOC)

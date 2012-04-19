@@ -31,13 +31,22 @@ namespace Hypertable {
 
   class SerializedCellsWriter {
   public:
-  
-    SerializedCellsWriter(int32_t size, bool grow=false) :
-      m_buf(size), m_finalized(false), m_grow(grow) { }
+ 
+    SerializedCellsWriter(int32_t size, bool grow = false)
+      :  m_buf(size), m_finalized(false), m_grow(grow), m_version_sent(false),
+         m_previous_row(0), m_previous_row_length(0) { }
 
     bool add(Cell &cell) {
       return add(cell.row_key, cell.column_family, cell.column_qualifier,
                  cell.timestamp, cell.value, cell.value_len, cell.flag);
+    }
+
+    bool add(const char *row, const char *column_family,
+             const char *column_qualifier, int64_t timestamp,
+             const char *value, int32_t value_length,
+			 int cell_flag) {
+      return add(row, column_family, column_qualifier, timestamp,
+                (const void *)value, value_length, (uint8_t)cell_flag);
     }
 
     bool add(const char *row, const char *column_family,
@@ -47,13 +56,17 @@ namespace Hypertable {
 
     void finalize(uint8_t flag) {
       if (m_grow)
-        m_buf.ensure(1);
+        m_buf.ensure(m_buf.empty() ? 5 : 1);
+      if (m_buf.empty())
+	Serialization::encode_i32(&m_buf.ptr, SerializedCellsVersion::VERSION);
       *m_buf.ptr++ = SerializedCellsFlag::EOB | flag;
       m_finalized = true;
     }
 
     uint8_t *get_buffer() { return m_buf.base; }
+    uint8_t *get_buffer() const { return m_buf.base; }
     int32_t get_buffer_length() { return m_buf.fill(); }
+    int32_t get_buffer_length() const { return m_buf.fill(); }
 
     void get_buffer(const uint8_t **bufp, int32_t *lenp) {
       if (!m_finalized)
@@ -62,14 +75,17 @@ namespace Hypertable {
       *lenp = m_buf.fill();
     }
 
-    bool empty() { return m_buf.empty(); }    
-    
-    void clear() { m_buf.clear(); }
+    bool empty() { return m_buf.empty(); }
+
+    void clear();
 
   private:
     DynamicBuffer m_buf;
     bool m_finalized;
     bool m_grow;
+    bool m_version_sent;
+    void *m_previous_row;
+    int32_t m_previous_row_length;
   };
 
 }
