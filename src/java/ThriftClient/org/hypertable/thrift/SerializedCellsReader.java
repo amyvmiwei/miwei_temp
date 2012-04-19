@@ -20,6 +20,9 @@ public class SerializedCellsReader {
     if (buf != null) {
       mBuf = ByteBuffer.wrap(buf);
       mBuf.order(ByteOrder.LITTLE_ENDIAN);
+      int version = mBuf.getInt();
+      if (version != SerializedCellsFlag.VERSION)
+	  throw new AssertionError("SerializedCells version mismatch, expected " + SerializedCellsFlag.VERSION + ", got " + version);
     }
   }
 
@@ -34,6 +37,9 @@ public class SerializedCellsReader {
     mColumnQualifier = null;
     mValue = null;
     mCellFlag = 0;
+    int version = mBuf.getInt();
+    if (version != SerializedCellsFlag.VERSION)
+	throw new AssertionError("SerializedCells version mismatch, expected " + SerializedCellsFlag.VERSION + ", got " + version);
   }
 
   public void reset(ByteBuffer buf) {
@@ -53,6 +59,9 @@ public class SerializedCellsReader {
     mColumnQualifier = null;
     mValue = null;
     mCellFlag = 0;
+    int version = mBuf.getInt();
+    if (version != SerializedCellsFlag.VERSION)
+	throw new AssertionError("SerializedCells version mismatch, expected " + SerializedCellsFlag.VERSION + ", got " + version);
   }
 
   public boolean next() {
@@ -77,12 +86,16 @@ public class SerializedCellsReader {
       revision = mBuf.getLong();
 
     // row
-    mRow = null;
-    mRowOffset = mBuf.position();
+    int row_offset = mBuf.position();
     for (offset=mBuf.position(); mBuf.get(offset)!=0; offset++)
       ;
-    mRowLength = offset - mRowOffset;
+    int length = offset - row_offset;
     mBuf.position(offset+1); // skip \0
+    if (length > 0) {
+      mRowOffset = row_offset;
+      mRowLength = length;
+      mRow = null;
+    }
 
     // column_family
     mColumnFamily = null;

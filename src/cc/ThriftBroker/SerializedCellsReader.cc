@@ -49,21 +49,28 @@ bool SerializedCellsReader::next() {
       (m_flag & SerializedCellsFlag::REV_IS_TS) == 0)
     m_revision = Serialization::decode_i64(&m_ptr, &remaining);
 
-  // row
+  // row; if empty then use the previous row
   m_row = (const char *)m_ptr;
-  HT_ASSERT(*m_row);
-  while (*m_ptr && m_ptr<m_end)
+  if (!*m_row) {
+    HT_ASSERT(m_previous_row);
+    m_row = m_previous_row;
     m_ptr++;
-  if (m_ptr == m_end)
-    HT_THROW(Error::SERIALIZATION_INPUT_OVERRUN, "");    
-  m_ptr++;
+  }
+  else {
+    while (*m_ptr && m_ptr<m_end)
+      m_ptr++;
+    if (m_ptr == m_end)
+      HT_THROW(Error::SERIALIZATION_INPUT_OVERRUN, "");
+    m_ptr++;
+    m_previous_row = m_row;
+  }
 
   // column_family
   m_column_family = (const char *)m_ptr;
   while (*m_ptr && m_ptr<m_end)
     m_ptr++;
   if (m_ptr == m_end)
-    HT_THROW(Error::SERIALIZATION_INPUT_OVERRUN, "");    
+    HT_THROW(Error::SERIALIZATION_INPUT_OVERRUN, "");
   m_ptr++;
 
   // column_qualifier
@@ -71,7 +78,7 @@ bool SerializedCellsReader::next() {
   while (*m_ptr && m_ptr<m_end)
     m_ptr++;
   if (m_ptr == m_end)
-    HT_THROW(Error::SERIALIZATION_INPUT_OVERRUN, "");    
+    HT_THROW(Error::SERIALIZATION_INPUT_OVERRUN, "");
   m_ptr++;
 
   remaining = m_end - m_ptr;
@@ -85,8 +92,8 @@ bool SerializedCellsReader::next() {
 
   m_cell_flag = *m_ptr++;
 
-  if( m_cell_flag == FLAG_DELETE_ROW && !*m_column_family )
+  if (m_cell_flag == FLAG_DELETE_ROW && !*m_column_family)
     m_column_family = 0;
-    
+
   return true;
 }

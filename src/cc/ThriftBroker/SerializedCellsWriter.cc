@@ -33,12 +33,25 @@ bool SerializedCellsWriter::add(const char *row, const char *column_family,
                                 const char *column_qualifier, int64_t timestamp,
                                 const void *value, int32_t value_length,
 								uint8_t cell_flag) {
-  if( !value && value_length ) value_length = 0;
   int32_t row_length = strlen(row);
   int32_t column_family_length = column_family ? strlen(column_family) : 0;
   int32_t column_qualifier_length = column_qualifier ? strlen(column_qualifier) : 0;
-  int32_t length = 9 + row_length + column_family_length + column_qualifier_length + value_length + 1; 
   uint8_t flag = 0;
+
+  bool need_row = false;
+  if (row_length != m_previous_row_length
+      || (m_previous_row && memcmp(row, m_previous_row, row_length)))
+    need_row = true;
+
+  if (!value && value_length)
+    value_length = 0;
+
+  int32_t length = 9 + column_family_length + 3
+      + column_qualifier_length + value_length + 1;
+  if (m_buf.empty())  // Add version to beginning of buffer
+    length += 4;
+  if (need_row)
+    length += row_length;
 
   if (timestamp == AUTO_ASSIGN)
     flag |= SerializedCellsFlag::AUTO_TIMESTAMP;
@@ -58,6 +71,10 @@ bool SerializedCellsWriter::add(const char *row, const char *column_family,
     }
   }
 
+  // version
+  if (m_buf.empty())
+    Serialization::encode_i32(&m_buf.ptr, SerializedCellsVersion::VERSION);
+
   // flag byte
   *m_buf.ptr++ = flag;
 
@@ -70,24 +87,39 @@ bool SerializedCellsWriter::add(const char *row, const char *column_family,
       (flag & SerializedCellsFlag::REV_IS_TS) == 0)
     Serialization::encode_i64(&m_buf.ptr, 0);
 
-  // row
-  memcpy(m_buf.ptr, row, row_length);
-  m_buf.ptr += row_length;
+  // row; only write it if it's not identical to the previous row
+  if (need_row) {
+    memcpy(m_buf.ptr, row, row_length);
+    m_previous_row = m_buf.ptr;
+    m_buf.ptr += row_length;
+    m_previous_row_length = row_length;
+  }
   *m_buf.ptr++ = 0;
 
   // column_family
-  if( column_family ) memcpy(m_buf.ptr, column_family, column_family_length);
+  if (column_family)
+    memcpy(m_buf.ptr, column_family, column_family_length);
   m_buf.ptr += column_family_length;
   *m_buf.ptr++ = 0;
 
   // column_qualifier
-  if( column_qualifier ) memcpy(m_buf.ptr, column_qualifier, column_qualifier_length);
+  if (column_qualifier)
+    memcpy(m_buf.ptr, column_qualifier, column_qualifier_length);
   m_buf.ptr += column_qualifier_length;
   *m_buf.ptr++ = 0;
 
   Serialization::encode_i32(&m_buf.ptr, value_length);
-  if( value ) memcpy(m_buf.ptr, value, value_length);
+  if (value)
+    memcpy(m_buf.ptr, value, value_length);
   m_buf.ptr += value_length;
   Serialization::encode_i8(&m_buf.ptr, cell_flag);
+
   return true;
+}
+
+
+void SerializedCellsWriter::clear() { 
+  m_buf.clear();
+  m_previous_row = 0;
+  m_previous_row_length = 0;
 }
