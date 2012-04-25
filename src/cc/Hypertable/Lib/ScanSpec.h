@@ -38,7 +38,7 @@ namespace Hypertable {
 class ColumnPredicate {
 public:
   enum {
-    NO_OPERATION=0,
+    NO_OPERATION = 0,
     EXACT_MATCH,
     PREFIX_MATCH
   };

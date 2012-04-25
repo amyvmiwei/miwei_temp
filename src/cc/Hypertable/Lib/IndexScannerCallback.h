@@ -124,6 +124,8 @@ static String last;
       foreach (TableScannerAsync *s, m_scanners)
         delete s;
       m_scanners.clear();
+      if (m_mutator)
+        delete m_mutator;
       sspecs_clear();
       if (m_tmp_table) {
         Client *client = m_primary_table->get_namespace()->get_client();
@@ -470,7 +472,7 @@ static String last;
 
         m_last_rowkey_verify = last;
 
-        while (m_sspecs.size()>SSB_QUEUE_LIMIT && !m_limits_reached)
+        while (m_sspecs.size() > SSB_QUEUE_LIMIT && !m_limits_reached)
           m_sspecs_cond.wait(lock);
 
         if (m_limits_reached) { 
@@ -514,7 +516,7 @@ static String last;
       m_last_rowkey_verify = last;
 
       // add the ScanSpec to the queue
-      while (m_sspecs.size()>SSB_QUEUE_LIMIT && !m_limits_reached)
+      while (m_sspecs.size() > SSB_QUEUE_LIMIT && !m_limits_reached)
         m_sspecs_cond.wait(lock);
 
       // if, in the meantime, we reached any CELL_LIMIT/ROW_LIMIT then return

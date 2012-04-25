@@ -386,7 +386,7 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
   if (m_error != Error::OK || cancelled) {
     maybe_callback_error(scanner_id, next);
     if (next && scanner_id == m_current_scanner)
-      move_to_next_interval_scanner(scanner_id, cancelled);
+      move_to_next_interval_scanner(scanner_id);
     return;
   }
   else if (abort) {
@@ -396,10 +396,10 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
     HT_ERROR_OUT << e << HT_END;
     maybe_callback_error(scanner_id, next);
     if (next && scanner_id == m_current_scanner)
-      move_to_next_interval_scanner(scanner_id, cancelled);
+      move_to_next_interval_scanner(scanner_id);
   }
   else if (next && scanner_id == m_current_scanner) {
-    move_to_next_interval_scanner(scanner_id, cancelled);
+    move_to_next_interval_scanner(scanner_id);
   }
 }
 
@@ -420,7 +420,7 @@ void TableScannerAsync::handle_timeout(int scanner_id, const String &error_msg, 
   m_error = Error::REQUEST_TIMEOUT;
   maybe_callback_error(scanner_id, next);
   if (next && scanner_id == m_current_scanner)
-    move_to_next_interval_scanner(scanner_id, cancelled);
+    move_to_next_interval_scanner(scanner_id);
 
 }
 
@@ -434,7 +434,7 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
   bool abort = (m_error != Error::OK || cancelled);
 
   bool next;
-  bool do_callback=false;
+  bool do_callback = false;
   int current_scanner = scanner_id;
 
   try {
@@ -462,7 +462,7 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
     }
 
     if (next)
-      move_to_next_interval_scanner(current_scanner, cancelled);
+      move_to_next_interval_scanner(current_scanner);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -534,9 +534,9 @@ String TableScannerAsync::get_table_name() const {
   return m_table->get_name();
 }
 
-void TableScannerAsync::move_to_next_interval_scanner(int current_scanner, bool cancelled) {
-
-  bool next=true;
+void TableScannerAsync::move_to_next_interval_scanner(int current_scanner) {
+  bool next = true;
+  bool cancelled = is_cancelled();
   bool do_callback;
   ScanCellsPtr cells;
   bool abort = cancelled || (m_error != Error::OK);
