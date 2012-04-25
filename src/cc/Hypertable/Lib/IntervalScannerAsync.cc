@@ -95,7 +95,6 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
   }
 
   HT_ASSERT(scan_spec.row_intervals.size() <= 1 || scan_spec.scan_and_filter_rows);
-
   if (!scan_spec.row_intervals.empty()) {
     if (!scan_spec.scan_and_filter_rows) {
       start_row = (scan_spec.row_intervals[0].start == 0) ? ""

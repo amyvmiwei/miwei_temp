@@ -136,7 +136,7 @@ namespace Hypertable {
             bool do_callback, ScanCellsPtr &cells);
     void maybe_callback_error(int scanner_id, bool next);
     void wait_for_completion();
-    void move_to_next_interval_scanner(int current_scanner, bool cancelled);
+    void move_to_next_interval_scanner(int current_scanner);
     bool use_index(TablePtr table, const ScanSpec &primary_spec, 
             ScanSpecBuilder &index_spec, bool *use_qualifier);
     void add_index_row(ScanSpecBuilder &ssb, const char *row);
