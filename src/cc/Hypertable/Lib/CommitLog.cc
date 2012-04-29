@@ -174,7 +174,8 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision, bool sync) {
    */
   if (m_cur_fragment_length > m_max_fragment_size) {
     ScopedLock lock(m_mutex);
-    roll();
+    if ((error = roll()) != Error::OK)
+      return error;
   }
 
   return Error::OK;
@@ -227,7 +228,8 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     m_fs->append(m_fd, send_buf, false);
     m_cur_fragment_length += amount;
 
-    roll();
+    if ((error = roll()) != Error::OK)
+      return error;
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem linking external log into commit log - %s", e.what());
@@ -325,11 +327,9 @@ int CommitLog::roll() {
       m_fs->close(m_fd);
     }
     catch (Exception &e) {
-      if (e.code() != Error::DFSBROKER_BAD_FILE_HANDLE) {
-        HT_ERRORF("Problem closing commit log fragment: %s: %s",
-                  m_cur_fragment_fname.c_str(), e.what());
-        return e.code();
-      }
+      HT_ERRORF("Problem closing commit log fragment: %s: %s",
+		m_cur_fragment_fname.c_str(), e.what());
+      return e.code();
     }
 
     m_fd = -1;
