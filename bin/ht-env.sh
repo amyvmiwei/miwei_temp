@@ -19,6 +19,7 @@
 #
 
 ulimit -c unlimited
+ulimit -v unlimited
 
 if [ "e$RUNTIME_ROOT" == "e" ]; then
   RUNTIME_ROOT=$HYPERTABLE_HOME
