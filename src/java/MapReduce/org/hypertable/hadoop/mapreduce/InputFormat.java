@@ -207,12 +207,11 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         m_bytes_read += 24 + cell.key.row.length();
         if (cell.value != null && cell.value.hasRemaining()) {
           value = new byte [ cell.value.remaining() ];
-          m_bytes_read += cell.value.limit();
           System.arraycopy(cell.value.array(), cell.value.arrayOffset()+cell.value.position(),
                            value, 0, value.length);
         }
         m_value = new BytesWritable(value);
-        m_bytes_read += 24 + cell.key.row.length() + cell.value.limit();
+        m_bytes_read += 24 + cell.key.row.length() + value.length;
         if (cell.key.column_qualifier != null)
           m_bytes_read += cell.key.column_qualifier.length();
       }
