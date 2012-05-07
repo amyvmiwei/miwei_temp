@@ -123,7 +123,7 @@ namespace Hypertable {
       ScopedLock lock(m_mutex);
       if (m_fd != -1)
         m_filesys->close(m_fd);
-      m_fd = m_filesys->open(m_filename, 0, true);
+      m_fd = m_filesys->open(m_filename, 0);
       return m_fd;
     }
 

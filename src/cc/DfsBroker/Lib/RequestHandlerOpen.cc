@@ -44,13 +44,12 @@ void RequestHandlerOpen::run() {
     uint32_t flags = decode_i32(&decode_ptr, &decode_remain);
     uint32_t bufsz = decode_i32(&decode_ptr, &decode_remain);
     const char *fname = decode_str16(&decode_ptr, &decode_remain);
-    bool verify_checksum = decode_bool(&decode_ptr, &decode_remain);
 
     // validate filename
     if (fname[strlen(fname)-1] == '/')
       HT_THROWF(Error::DFSBROKER_BAD_FILENAME, "bad filename: %s", fname);
 
-    m_broker->open(&cb, fname, flags, bufsz, verify_checksum);
+    m_broker->open(&cb, fname, flags, bufsz);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

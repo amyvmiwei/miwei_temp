@@ -227,9 +227,6 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
 				           (uint8_t **)&buf.base, &len)) {
 	  buf.grow(m_block.zlength, true);
 
-	  if (second_try)
-	    m_fd = m_cellstore->reopen_fd();
-
 	  /** Read compressed block **/
 	  Global::dfs->pread(m_fd, buf.base, m_block.zlength, m_block.offset, second_try);
 

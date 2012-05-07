@@ -85,7 +85,7 @@ Client::~Client() {
 
 void
 Client::open(const String &name, uint32_t flags, DispatchHandler *handler) {
-  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0, true));
+  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0));
 
   try {
     send_message(cbp, handler);
@@ -97,10 +97,10 @@ Client::open(const String &name, uint32_t flags, DispatchHandler *handler) {
 
 
 int
-Client::open(const String &name, uint32_t flags, bool verify_checksum) {
+Client::open(const String &name, uint32_t flags) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0, verify_checksum));
+  CommBufPtr cbp(m_protocol.create_open_request(name, flags, 0));
 
   try {
     send_message(cbp, &sync_handler);
@@ -126,7 +126,7 @@ Client::open_buffered(const String &name, uint32_t flags, uint32_t buf_size,
               (HT_IO_ALIGNED(buf_size) &&
                HT_IO_ALIGNED(start_offset) &&
                HT_IO_ALIGNED(end_offset)));
-    int fd = open(name, flags, true);
+    int fd = open(name, flags|OPEN_FLAG_VERIFY_CHECKSUM);
     {
       ScopedLock lock(m_mutex);
       HT_ASSERT(m_buffered_reader_map.find(fd) == m_buffered_reader_map.end());

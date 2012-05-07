@@ -414,7 +414,7 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   m_file_length = m_offset;
 
   /** Re-open file for reading **/
-  m_fd = m_filesys->open(m_filename, 0, false);
+  m_fd = m_filesys->open(m_filename, 0);
 
   m_disk_usage = (uint32_t)m_file_length;
   if (m_disk_usage < 0)
@@ -494,11 +494,8 @@ void CellStoreV0::load_index() {
   try {
     DynamicBuffer buf(amount);
 
-    if (second_try)
-      reopen_fd();
-
     /** Read index data **/
-    len = m_filesys->pread(m_fd, buf.ptr, amount, m_trailer.fix_index_offset);
+    len = m_filesys->pread(m_fd, buf.ptr, amount, m_trailer.fix_index_offset, second_try);
 
     if (len != amount)
       HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error loading index for "
@@ -565,8 +562,22 @@ void CellStoreV0::load_index() {
                      << " items -"<< e << HT_END;
     }
     amount = (m_file_length - m_trailer.size()) - m_trailer.filter_offset;
-    len = m_filesys->pread(m_fd, m_bloom_filter->ptr(), amount,
-                             m_trailer.filter_offset);
+
+    while (true) {
+      try {
+	len = m_filesys->pread(m_fd, m_bloom_filter->ptr(), amount,
+			       m_trailer.filter_offset, second_try);
+      }
+      catch (Exception &e) {
+	if (!second_try) {
+	  second_try=true;
+	  continue;
+	}
+	HT_THROW2(e.code(), e, format("Error loading BloomFilter for CellStore '%s'",
+				      m_filename.c_str()));
+      }
+      break;
+    }
 
     if (len != amount) {
       HT_THROWF(Error::DFSBROKER_IO_ERROR, "Problem loading bloomfilter for"
