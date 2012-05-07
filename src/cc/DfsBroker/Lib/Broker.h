@@ -43,7 +43,7 @@ namespace Hypertable {
     public:
       virtual ~Broker() { return; }
       virtual void open(ResponseCallbackOpen *, const char *fname,
-                        uint32_t flags, uint32_t bufsz, bool verify_checksum) = 0;
+                        uint32_t flags, uint32_t bufsz) = 0;
       virtual void create(ResponseCallbackOpen *, const char *fname,
                           uint32_t flags, int32_t bufsz,
                           int16_t replication, int64_t blksz) = 0;

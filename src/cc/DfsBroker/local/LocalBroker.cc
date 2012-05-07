@@ -94,7 +94,7 @@ LocalBroker::~LocalBroker() {
 
 void
 LocalBroker::open(ResponseCallbackOpen *cb, const char *fname, 
-                  uint32_t flags, uint32_t bufsz, bool) {
+                  uint32_t flags, uint32_t bufsz) {
   int fd, local_fd;
   String abspath;
 

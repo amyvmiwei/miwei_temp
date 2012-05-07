@@ -45,7 +45,11 @@ namespace Hypertable {
   class Filesystem : public ReferenceCount {
   public:
     enum OptionType { O_FLUSH = 1 };
-    enum OpenFlags { OPEN_FLAG_DIRECTIO = 0x00000001, OPEN_FLAG_OVERWRITE = 0x00000002 };
+    enum OpenFlags {
+      OPEN_FLAG_DIRECTIO = 0x00000001,
+      OPEN_FLAG_OVERWRITE = 0x00000002,
+      OPEN_FLAG_VERIFY_CHECKSUM = 0x00000004
+    };
 
     virtual ~Filesystem() { return; }
 
@@ -64,10 +68,9 @@ namespace Hypertable {
      *
      * @param name absolute path name of file to open
      * @param flags open flags (DIRECT)
-     * @param verify_checksum turn on checksum verification
      * @return file descriptor
      */
-    virtual int open(const String &name, uint32_t flags, bool verify_checksum) = 0;
+    virtual int open(const String &name, uint32_t flags) = 0;
 
     /** Opens a file in buffered (readahead) mode.  Issues an open file request
      * and waits for it to complete. Turns on readahead mode so that data is

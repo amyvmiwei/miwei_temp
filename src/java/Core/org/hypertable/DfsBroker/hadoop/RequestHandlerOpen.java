@@ -59,9 +59,7 @@ public class RequestHandlerOpen extends ApplicationHandler {
                 throw new ProtocolException(
                     "Filename not properly encoded in request packet");
 
-	    verify_checksum = mEvent.payload.get() != 0;
-
-            mBroker.Open(cb, fileName, flags, bufferSize, verify_checksum);
+            mBroker.Open(cb, fileName, flags, bufferSize);
 
         }
         catch (ProtocolException e) {

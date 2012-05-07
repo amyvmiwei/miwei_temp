@@ -51,8 +51,9 @@ import org.apache.hadoop.fs.FileStatus;
  */
 public class HdfsBroker {
 
-    private static final int OPEN_FLAG_DIRECT    = 0x00000001;
-    private static final int OPEN_FLAG_OVERWRITE = 0x00000002;
+    private static final int OPEN_FLAG_DIRECT          = 0x00000001;
+    private static final int OPEN_FLAG_OVERWRITE       = 0x00000002;
+    private static final int OPEN_FLAG_VERIFY_CHECKSUM = 0x00000004;
 
     static final Logger log = Logger.getLogger(
                                  "org.hypertable.DfsBroker.hadoop");
@@ -205,7 +206,7 @@ public class HdfsBroker {
      *
      */
     public void Open(ResponseCallbackOpen cb, String fileName, int flags,
-		     int bufferSize, boolean verify_checksum) {
+		     int bufferSize) {
         int fd;
         OpenFileData ofd;
         int error = Error.OK;
@@ -222,14 +223,14 @@ public class HdfsBroker {
 
             if (mVerbose)
               log.info("Opening file '" + fileName + "' flags=" + flags + " bs=" + bufferSize
-                         + " handle = " + fd + " verify_checksum=" + verify_checksum);
+                         + " handle = " + fd);
 
             ofd = mOpenFileMap.Create(fd, cb.GetAddress());
 
-	    if (verify_checksum)
-		ofd.is = mFilesystem.open(new Path(fileName));
-	    else
+	    if ((flags & OPEN_FLAG_VERIFY_CHECKSUM) == 0)
 		ofd.is_noverify = mFilesystem_noverify.open(new Path(fileName));
+	    else
+		ofd.is = mFilesystem.open(new Path(fileName));
 
             ofd.pathname = fileName;
 
@@ -275,7 +276,7 @@ public class HdfsBroker {
 
                 if (ofd.is != null) {
                     if (mVerbose)
-                        log.info("Closing input file " + ofd.pathname + " handle " + fd);
+                        log.info("Closing input stream for file " + ofd.pathname + " handle " + fd);
                     ofd.is.close();
                     ofd.is = null;
                 }
@@ -558,15 +559,18 @@ public class HdfsBroker {
 
 	    if (verify_checksum) {
 		if (ofd.is == null) {
-		    if (ofd.is == null) {
-			ofd.is = mFilesystem.open(new Path(ofd.pathname));
-			log.info("Re-opening '" + ofd.pathname + "' for verify checksum read");
-		    }
+		    ofd.is = mFilesystem.open(new Path(ofd.pathname));
+		    log.info("Opening '" + ofd.pathname + "' for verify checksum read");
 		}
 		is = ofd.is;
 	    }
-	    else
+	    else {
+		if (ofd.is_noverify == null) {
+		    ofd.is_noverify = mFilesystem_noverify.open(new Path(ofd.pathname));
+		    log.info("Opening '" + ofd.pathname + "' for non-verify checksum read");
+		}
 		is = ofd.is_noverify;
+	    }
 
             if (is == null)
 		throw new IOException("File handle " + fd

@@ -73,7 +73,7 @@ void CommandCopyToLocal::run() {
     if ((fp = fopen(m_args[src_arg+1].first.c_str(), "w+")) == 0)
       HT_THROW(Error::EXTERNAL, strerror(errno));
 
-    fd = m_client->open(m_args[src_arg].first, 0, true);
+    fd = m_client->open(m_args[src_arg].first, 0);
 
     if (start_off > 0) {
       m_client->seek(fd, start_off);

@@ -59,13 +59,14 @@ CellStore *CellStoreFactory::open(const String &name,
   file_length = Global::dfs->length(name);
 
   bool second_try = false;
- try_again:
 
   if (HT_IO_ALIGNED(file_length))
     oflags = Filesystem::OPEN_FLAG_DIRECTIO;
 
   /** Open the DFS file **/
-  fd = Global::dfs->open(name, oflags, second_try);
+  fd = Global::dfs->open(name, oflags);
+
+ try_again:
 
   amount = (file_length < HT_DIRECT_IO_ALIGNMENT) ? file_length : HT_DIRECT_IO_ALIGNMENT;
   offset = file_length - amount;
@@ -88,7 +89,7 @@ CellStore *CellStoreFactory::open(const String &name,
   // If file format is < 4 and happens to be aligned, reopen non-directio
   if (version < 4 && oflags) {
     Global::dfs->close(fd);
-    fd = Global::dfs->open(name, 0, second_try);
+    fd = Global::dfs->open(name, 0);
   }
 
   if (version == 6) {

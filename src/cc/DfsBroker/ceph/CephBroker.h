@@ -66,7 +66,7 @@ namespace Hypertable {
     virtual ~CephBroker();
 
     virtual void open(ResponseCallbackOpen *cb, const char *fname,
-                      uint32_t flags, uint32_t bufsz, bool verify_checksum);
+                      uint32_t flags, uint32_t bufsz);
     virtual void
     create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
            int32_t bufsz, int16_t replication, int64_t blksz);

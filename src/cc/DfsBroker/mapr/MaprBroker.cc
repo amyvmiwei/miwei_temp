@@ -79,7 +79,7 @@ MaprBroker::~MaprBroker() {
 
 void
 MaprBroker::open(ResponseCallbackOpen *cb, const char *fname, 
-		 uint32_t flags, uint32_t bufsz, bool) {
+		 uint32_t flags, uint32_t bufsz) {
   hdfsFile file;
   int fd;
 

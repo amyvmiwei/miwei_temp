@@ -39,8 +39,7 @@ namespace Hypertable {
 
       static CommBuf *create_open_request(const String &fname,
                                           uint32_t flags,
-                                          uint32_t bufsz,
-					  bool verify_checksum);
+                                          uint32_t bufsz);
 
       static CommBuf *create_create_request(const String &fname,
                                             uint32_t flags,
