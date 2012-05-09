@@ -82,6 +82,7 @@ namespace Hypertable {
       LOCATION_UNASSIGNED                = 47,
       ALREADY_EXISTS                     = 48,
       CHECKSUM_MISMATCH                  = 49,
+      CLOSED                             = 50,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

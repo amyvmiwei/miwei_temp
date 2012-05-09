@@ -141,6 +141,8 @@ CommitLog::sync() {
   // Sync commit log update (protected by lock)
   try {
     ScopedLock lock(m_mutex);
+    if (m_fd == -1)
+      return Error::CLOSED;
     m_fs->flush(m_fd);
     HT_DEBUG_OUT << "synced commit log explicitly" << HT_END;
   }
@@ -225,6 +227,9 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     size_t amount = input.fill();
     StaticBuffer send_buf(input);
 
+    if (m_fd == -1)
+      return Error::CLOSED;
+
     m_fs->append(m_fd, send_buf, false);
     m_cur_fragment_length += amount;
 
@@ -266,6 +271,9 @@ int CommitLog::purge(int64_t revision) {
   ScopedLock lock(m_mutex);
   CommitLogFileInfo file_info;
   String fname;
+
+  if (m_fd == -1)
+    return Error::CLOSED;
 
   HT_DEBUG_OUT << "Purging commit log fragments with latest revision older than " << revision
               << HT_END;
@@ -316,6 +324,9 @@ int CommitLog::purge(int64_t revision) {
 
 int CommitLog::roll() {
   CommitLogFileInfo file_info;
+
+  if (m_fd == -1)
+    return Error::CLOSED;
 
   if (m_latest_revision == TIMESTAMP_MIN)
     return Error::OK;
@@ -384,6 +395,9 @@ CommitLog::compress_and_write(DynamicBuffer &input,
   try {
     ScopedLock lock(m_mutex);
 
+    if (m_fd == -1)
+      return Error::CLOSED;
+
     m_compressor->deflate(input, zblock, *header);
 
     size_t amount = zblock.fill();
@@ -410,6 +424,9 @@ void CommitLog::load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map)
   int64_t cumulative_total = 0;
   uint32_t distance = 0;
   CumulativeFragmentData frag_data;
+
+  if (m_fd == -1)
+    HT_THROWF(Error::CLOSED, "Commit log '%s' has been closed", m_log_dir.c_str());
 
   memset(&frag_data, 0, sizeof(frag_data));
 
@@ -438,6 +455,9 @@ void CommitLog::load_cumulative_size_map(CumulativeSizeMap &cumulative_size_map)
 
 void CommitLog::get_stats(const String &prefix, String &result) {
   ScopedLock lock(m_mutex);
+
+  if (m_fd == -1)
+    HT_THROWF(Error::CLOSED, "Commit log '%s' has been closed", m_log_dir.c_str());
 
   try {
     foreach (const CommitLogFileInfo &frag, m_fragment_queue) {
