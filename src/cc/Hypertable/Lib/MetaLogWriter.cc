@@ -99,7 +99,6 @@ Writer::~Writer() {
   close();
 }
 
-
 void Writer::close() {
   ScopedLock lock(m_mutex);
   try {
@@ -119,6 +118,9 @@ void Writer::close() {
 
 void Writer::purge_old_log_files(std::vector<int32_t> &file_ids, size_t keep_count) {
   ScopedLock lock(m_mutex);
+
+  if (m_fd == -1)
+    HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
   // reverse sort
   sort(file_ids.rbegin(), file_ids.rend());
@@ -176,6 +178,9 @@ void Writer::record_state(Entity *entity) {
   boost::shared_array<uint8_t> backup_buf( new uint8_t [EntityHeader::LENGTH + entity->encoded_length()] );
   uint8_t *ptr = buf.base;
 
+  if (m_fd == -1)
+    HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
+
   entity->encode_entry( &ptr );
 
   HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
@@ -189,6 +194,9 @@ void Writer::record_state(Entity *entity) {
 void Writer::record_state(std::vector<Entity *> &entities) {
   ScopedLock lock(m_mutex);
   size_t length = 0;
+
+  if (m_fd == -1)
+    HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
   for (size_t i=0; i<entities.size(); i++)
     length += EntityHeader::LENGTH + entities[i]->encoded_length();
@@ -217,6 +225,9 @@ void Writer::record_removal(Entity *entity) {
   uint8_t backup_buf[EntityHeader::LENGTH];
   uint8_t *ptr = buf.base;
 
+  if (m_fd == -1)
+    HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
+
   entity->header.flags |= EntityHeader::FLAG_REMOVE;
   entity->header.length = 0;
   entity->header.checksum = 0;
@@ -236,6 +247,9 @@ void Writer::record_removal(Entity *entity) {
 void Writer::record_removal(std::vector<Entity *> &entities) {
   ScopedLock lock(m_mutex);
   size_t length = entities.size() * EntityHeader::LENGTH;
+
+  if (m_fd == -1)
+    HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
   {
     StaticBuffer buf(length);

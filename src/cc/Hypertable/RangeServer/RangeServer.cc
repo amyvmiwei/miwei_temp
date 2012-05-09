@@ -334,7 +334,7 @@ void RangeServer::shutdown() {
 
     // stop maintenance queue
     Global::maintenance_queue->shutdown();
-    Global::maintenance_queue->join();
+    //Global::maintenance_queue->join();
 
     m_app_queue->stop();
 
@@ -349,31 +349,39 @@ void RangeServer::shutdown() {
     foreach (Thread *thread, m_update_threads)
       thread->join();
 
-    Global::range_locator = 0;
+    //Global::range_locator = 0;
 
     if (Global::rsml_writer) {
       Global::rsml_writer->close();
-      Global::rsml_writer = 0;
+      //Global::rsml_writer = 0;
     }
     if (Global::root_log) {
       Global::root_log->close();
+      /*
       delete Global::root_log;
       Global::root_log = 0;
+      */
     }
     if (Global::metadata_log) {
       Global::metadata_log->close();
+      /*
       delete Global::metadata_log;
       Global::metadata_log = 0;
+      */
     }
     if (Global::system_log) {
       Global::system_log->close();
+      /*
       delete Global::system_log;
       Global::system_log = 0;
+      */
     }
     if (Global::user_log) {
       Global::user_log->close();
+      /*
       delete Global::user_log;
       Global::user_log = 0;
+      */
     }
 
     if (Global::block_cache) {
@@ -386,6 +394,7 @@ void RangeServer::shutdown() {
       m_query_cache = 0;
     }
 
+    /*
     Global::maintenance_queue = 0;
     Global::metadata_table = 0;
     Global::rs_metrics_table = 0;
@@ -399,6 +408,7 @@ void RangeServer::shutdown() {
 
     delete Global::protocol;
     Global::protocol = 0;
+    */
 
     m_app_queue->shutdown();
   }
