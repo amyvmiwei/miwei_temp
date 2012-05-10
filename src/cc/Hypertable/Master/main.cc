@@ -107,7 +107,18 @@ int main(int argc, char **argv) {
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
 
+    // the "state-file" signals that we're currently acquiring the hyperspace
+    // lock; it is required for the serverup tool (issue 816)
+    String state_file = System::install_dir + "/run/Hypertable.Master.state";
+    String state_text = "acquiring";
+
+    if (FileUtils::write(state_file, state_text) < 0)
+      HT_INFOF("Unable to write state file %s", state_file.c_str());
+
     obtain_master_lock(context);
+
+    if (!FileUtils::unlink(state_file))
+      HT_INFOF("Unable to delete state file %s", state_file.c_str());
 
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
     context->range_split_size = context->props->get_i64("Hypertable.RangeServer.Range.SplitSize");
