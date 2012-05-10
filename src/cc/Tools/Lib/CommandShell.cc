@@ -281,22 +281,22 @@ process_line:
           m_notifier_ptr->notify();
         continue;
       }
-      else if (!strcasecmp(line, "quit") || !strcasecmp(line, "exit")
+      else if (!strncasecmp(line, "quit", 4) || !strncasecmp(line, "exit", 4)
                || !strcmp(line, "\\q")) {
         if (!m_batch_mode)
           write_history(ms_history_file.c_str());
         return 0;
       }
-      else if (!strcasecmp(line, "print") || !strcmp(line, "\\p")) {
+      else if (!strncasecmp(line, "print", 5) || !strcmp(line, "\\p")) {
         cout << m_accum << endl;
         continue;
       }
-      else if (!strcasecmp(line, "clear") || !strcmp(line, "\\c")) {
+      else if (!strncasecmp(line, "clear", 5) || !strcmp(line, "\\c")) {
         m_accum = "";
         m_cont = false;
         continue;
       }
-      else if (!strncmp(line, "source", 6) || line[0] == '.') {
+      else if (!strncasecmp(line, "source", 6) || line[0] == '.') {
         if ((base = strchr(line, ' ')) == 0) {
           cout << "syntax error: source or '.' must be followed by a space "
               "character" << endl;
