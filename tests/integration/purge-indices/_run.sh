@@ -24,8 +24,8 @@ $HT_SHELL --batch --no-prompt < $SCRIPT_DIR/$HQL_CREATE
 $HT_HOME/bin/ht ht_load_generator update \
     --spec-file=${SCRIPT_DIR}/data.spec \
     --table=IndexTest --max-keys=30000 \
-    --row-seed=1 $LOAD_GEN_FLAG \
-    --delete-percentage=40
+    --row-seed=1 --seed=1 $LOAD_GEN_FLAG \
+    --delete-percentage=30
 
 # wait a few seconds to make sure that the TTL=1 test works
 sleep 5
@@ -56,7 +56,7 @@ fi
 diff Field1.results Field1.output
 if [ $? -ne "0" ]
 then
-  echo "(2) Verification of Field1 failed"
+  echo "(3) Verification of Field1 failed"
   exit -1
 fi
 
@@ -84,7 +84,7 @@ fi
 diff Field2.results Field2.output
 if [ $? -ne "0" ]
 then
-  echo "(2) Verification of Field2 failed"
+  echo "(3) Verification of Field2 failed"
   exit -1
 fi
 
