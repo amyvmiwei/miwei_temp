@@ -400,6 +400,8 @@ end
 
 desc "Get status for Hyperspace.Master process."
 task :hyperspace_status, :roles => [:hyperspace] do
+  srand
+  sleep(rand(4))
   run <<-CMD
    #{install_dir}/current/bin/ht serverup hyperspace
   CMD
