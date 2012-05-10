@@ -2,7 +2,7 @@
         component.0.order=random
         component.0.type=integer
         component.0.format="%05lld"
-        component.0.max=1000
+        component.0.max=10000
 [Field1]
         value.size=10
 [Field2]
