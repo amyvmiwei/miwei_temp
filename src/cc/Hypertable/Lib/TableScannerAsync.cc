@@ -90,8 +90,6 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
   HT_ASSERT(!table->schema()->need_id_assignment());
 
   index_spec.set_keys_only(true);
-  if (primary_spec.value_regexp)
-    index_spec.set_value_regexp(primary_spec.value_regexp);
   index_spec.add_column("v1");
 
   // if a column qualifier is specified then make sure that all columns have
