@@ -1962,3 +1962,10 @@ SELECT a FROM t WHERE a =^ "xas";
 USE "/tmp";
 GET LISTING;
 
+# issue 823
+CREATE TABLE t (data MAX_VERSIONS = 1, join MAX_VERSIONS = 1, QUALIFIER INDEX join);
+INSERT INTO t VALUES ('r1', 'join:a1', 'value 1');
+INSERT INTO t VALUES ('r2', 'join:a2', 'value 2');
+INSERT INTO t VALUES ('r3', 'join:b1', 'value 3');
+SELECT join:a1 FROM t WHERE VALUE REGEXP 'v';
+r1	join:a1	value 1
