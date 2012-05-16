@@ -151,10 +151,16 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_scanner_ttl = (time_t)cfg.get_i32("Scanner.Ttl");
 
   Global::metrics_interval = props->get_i32("Hypertable.LoadMetrics.Interval");
-  m_next_metrics_update = time(0) + Global::metrics_interval;
-  m_next_metrics_update -= m_next_metrics_update % Global::metrics_interval;
-  // randomly pick a time within 5 minutes of the next update
-  m_next_metrics_update = (m_next_metrics_update-150) + (Random::number32()%300);
+  if (HT_FAILURE_SIGNALLED("report-metrics-immediately")) {
+    m_next_metrics_update = time(0);
+  }
+  else {
+    m_next_metrics_update = time(0) + Global::metrics_interval;
+    m_next_metrics_update -= m_next_metrics_update % Global::metrics_interval;
+    // randomly pick a time within 5 minutes of the next update
+    m_next_metrics_update = (m_next_metrics_update - 150)
+        + (Random::number32() % 300);
+  }
 
   Global::cell_cache_scanner_cache_size =
     cfg.get_i32("AccessGroup.CellCache.ScannerCacheSize");

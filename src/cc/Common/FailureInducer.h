@@ -39,6 +39,7 @@ namespace Hypertable {
     void clear();
 
   private:
+    void parse_option_single(String option);
     struct failure_inducer_state {
       uint32_t iteration;
       uint32_t trigger_iteration;

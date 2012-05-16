@@ -85,7 +85,7 @@ namespace {
 typedef Meta::list<AppPolicy, DefaultCommPolicy> Policies;
 
 void generate_balance_plan(PropertiesPtr &props, const String &load_balancer,
-    TablePtr &rs_metrics, BalancePlanPtr &plan);
+    ContextPtr &context, BalancePlanPtr &plan);
 void create_table(String &ns, String &tablename, String &rs_metrics_file);
 
 int main(int argc, char **argv) {
@@ -121,7 +121,9 @@ int main(int argc, char **argv) {
     NamespacePtr ns = client->open_namespace(ns_str);
     TablePtr rs_metrics = ns->open_table(table_str);
     BalancePlanPtr plan = new BalancePlan;
-    generate_balance_plan(props, load_balancer, rs_metrics, plan);
+    ContextPtr context = new Context;
+    context->rs_metrics_table = rs_metrics;
+    generate_balance_plan(props, load_balancer, context, plan);
     ostream *oo;
 
     if (balance_plan_file.size() == 0)
@@ -155,15 +157,19 @@ int main(int argc, char **argv) {
 }
 
 void generate_balance_plan(PropertiesPtr &props, const String &load_balancer,
-    TablePtr &rs_metrics, BalancePlanPtr &plan) {
+    ContextPtr &context, BalancePlanPtr &plan) {
 
   if (load_balancer != "basic-distribute-load")
     HT_THROW(Error::NOT_IMPLEMENTED,
              (String)"Only 'basic-distribute-load' balancer is supported. '" + load_balancer
              + "' balancer not supported.");
 
+  std::vector<RangeServerStatistics> range_server_stats;
+  // TODO fill this vector; otherwise disk usage is not taken into account
+
   double loadavg_threshold = get_f64("Hypertable.LoadBalancer.LoadavgThreshold");
-  LoadBalancerBasicDistributeLoad balancer(loadavg_threshold, rs_metrics);
+  LoadBalancerBasicDistributeLoad balancer(loadavg_threshold, 
+          range_server_stats, context);
   balancer.compute_plan(plan);
 }
 

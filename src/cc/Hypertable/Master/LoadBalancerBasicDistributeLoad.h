@@ -23,38 +23,56 @@
 #define HYPERTABLE_LOADBALANCERBASICDISTRIBUTELOAD_H
 
 #include <set>
+#include <map>
 #include <iostream>
 
 #include "Common/String.h"
 #include "Hypertable/Lib/Client.h"
 
 #include "RSMetrics.h"
+#include "RangeServerStatistics.h"
+#include "Context.h"
 
 namespace Hypertable {
-
 
   class LoadBalancerBasicDistributeLoad {
 
     public:
-      LoadBalancerBasicDistributeLoad(double max_load_deviation, TablePtr &table)
-        :  m_loadavg_deviation_threshold(max_load_deviation), m_table(table) { }
+      LoadBalancerBasicDistributeLoad(double max_load_deviation,
+              vector<RangeServerStatistics> &range_server_stats,
+              ContextPtr context)
+          : m_loadavg_deviation_threshold(max_load_deviation),
+            m_context(context) {
+        foreach (RangeServerStatistics &rs, range_server_stats)
+          m_rsstats[rs.location] = rs;
+      }
+
       void compute_plan(BalancePlanPtr &balance_plan);
 
     public:
+
       class ServerMetricSummary {
       public:
         ServerMetricSummary() { clear(); }
-        void clear() { loadavg = loadavg_per_loadestimate = 0; server_id = 0; }
+
+        void clear() {
+          loadavg = loadavg_per_loadestimate = 0;
+          server_id = 0;
+          disk_full = false;
+        }
 
         double loadavg;
         double loadavg_per_loadestimate;
         const char *server_id;
+        bool disk_full;
       };
+
       struct GtServerMetricSummary {
         bool operator() (const ServerMetricSummary &x, const ServerMetricSummary &y) const {
           return x.loadavg > y.loadavg;
         }
       };
+
       typedef std::multiset<ServerMetricSummary, GtServerMetricSummary> ServerSetDescLoad;
 
       class RangeMetricSummary {
@@ -75,21 +93,30 @@ namespace Hypertable {
       typedef std::multiset<RangeMetricSummary, GtRangeMetricSummary> RangeSetDescLoad;
 
     private:
-      void calculate_server_summary(const ServerMetrics &metrics, ServerMetricSummary &summary);
-      void calculate_range_summary(const RangeMetrics &metrics, RangeMetricSummary &summary);
+
+      void calculate_server_summary(const ServerMetrics &metrics,
+              ServerMetricSummary &summary);
+
+      void calculate_range_summary(const RangeMetrics &metrics,
+              RangeMetricSummary &summary);
+
       void populate_range_load_set(const RangeMetricsMap &range_metrics,
-                                   RangeSetDescLoad &ranges_desc_load);
-      bool check_move(const ServerMetricSummary &source, const ServerMetricSummary &destination,
-                      double range_loadestimate, double mean_loadavg);
+              RangeSetDescLoad &ranges_desc_load);
 
+      bool check_move(const ServerMetricSummary &source,
+              const ServerMetricSummary &destination,
+              double range_loadestimate, double mean_loadavg);
+
+      typedef std::map<String, RangeServerStatistics> StatisticsSet;
+      StatisticsSet m_rsstats;
       double m_loadavg_deviation_threshold;
-      TablePtr &m_table;
-
-
+      ContextPtr m_context;
   }; // LoadBalancerBasicDistributeLoad
 
-  std::ostream &operator<<(std::ostream &out, const LoadBalancerBasicDistributeLoad::ServerMetricSummary &summary);
-  std::ostream &operator<<(std::ostream &out, const LoadBalancerBasicDistributeLoad::RangeMetricSummary &summary);
+  std::ostream &operator<<(std::ostream &out,
+          const LoadBalancerBasicDistributeLoad::ServerMetricSummary &summary);
+  std::ostream &operator<<(std::ostream &out,
+          const LoadBalancerBasicDistributeLoad::RangeMetricSummary &summary);
 
 } // namespace Hypertable
 

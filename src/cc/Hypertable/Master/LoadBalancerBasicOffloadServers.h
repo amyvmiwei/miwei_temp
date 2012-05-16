@@ -30,6 +30,7 @@
 #include "Hypertable/Lib/BalancePlan.h"
 #include "Hypertable/Lib/Client.h"
 #include "RangeServerStatistics.h"
+#include "Context.h"
 
 namespace Hypertable {
 
@@ -38,16 +39,19 @@ namespace Hypertable {
   class LoadBalancerBasicOffloadServers {
 
     public:
-      LoadBalancerBasicOffloadServers(TablePtr &table) : m_table(table) { }
+      LoadBalancerBasicOffloadServers(ContextPtr context)
+        : m_context(context) { }
+
       void compute_plan(std::vector<RangeServerStatistics> &range_server_stats,
-                        std::set<String> &offload_servers, const String &root_location,
-                        BalancePlanPtr &balance_plan);
+              std::set<String> &offload_servers, const String &root_location,
+              BalancePlanPtr &balance_plan);
+
     private:
       void compute_moves(std::vector<RangeServerStatistics> &range_server_stats,
-                         std::set<String> &offload_servers, const String &root_location,
-                         BalancePlanPtr &balance_plan);
+              std::set<String> &offload_servers, const String &root_location,
+              BalancePlanPtr &balance_plan);
 
-      TablePtr m_table;
+      ContextPtr m_context;
   }; // LoadBalancerBasicOffloadServers
 
 

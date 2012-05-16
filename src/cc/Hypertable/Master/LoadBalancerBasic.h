@@ -37,12 +37,13 @@ namespace Hypertable {
 
   class LoadBalancerBasic : public LoadBalancer {
     public:
-    enum {
-      BALANCE_MODE_DISTRIBUTE_LOAD             = 1,
-      BALANCE_MODE_DISTRIBUTE_TABLE_RANGES     = 2,
-      BALANCE_MODE_OFFLOAD_SERVERS             = 3
-    };
-    LoadBalancerBasic(ContextPtr context);
+      enum {
+        BALANCE_MODE_DISTRIBUTE_LOAD             = 1,
+        BALANCE_MODE_DISTRIBUTE_TABLE_RANGES     = 2,
+        BALANCE_MODE_OFFLOAD_SERVERS             = 3
+      };
+
+      LoadBalancerBasic(ContextPtr context);
 
       void transfer_monitoring_data(vector<RangeServerStatistics> &stats);
       void balance(const String &algorithm=String());
@@ -51,19 +52,24 @@ namespace Hypertable {
       //void range_move_loaded(TableIdentifier &tid, RangeIdentifier &rid) = 0;
       //void range_relinquish_acknowledged(TableIdentifier &tid, RangeIdentifier &rid) = 0;
       //time_t maintenance_interval() = 0;
+
     private:
       void calculate_balance_plan(const String &algorithm, BalancePlanPtr &plan);
-      void distribute_load(const boost::posix_time::ptime &now, BalancePlanPtr &plan);
+      void distribute_load(const boost::posix_time::ptime &now,
+              vector<RangeServerStatistics> &range_server_stats,
+              BalancePlanPtr &plan);
+
       void distribute_table_ranges(vector<RangeServerStatistics> &range_server_stats,
-                                   BalancePlanPtr &plan);
+              BalancePlanPtr &plan);
+
       void offload_servers(vector<RangeServerStatistics> &range_server_stats,
-                           set<String> &offload, BalancePlanPtr &balance_plan);
+              set<String> &offload, BalancePlanPtr &balance_plan);
 
       void get_unbalanced_servers(const std::vector<RangeServerStatistics> &stats);
 
       Mutex m_data_mutex;
       bool m_enabled;
-      bool  m_waiting_for_servers;
+      bool m_waiting_for_servers;
       std::vector <RangeServerStatistics> m_range_server_stats;
       ptime m_wait_time_start;
   }; // LoadBalancerBasic

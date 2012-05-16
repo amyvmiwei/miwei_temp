@@ -304,6 +304,8 @@ void DefaultPolicy::init_options() {
         "Includes master hash (host:port) in RangeServer location id")
     ("Hypertable.Master.Split.SoftLimitEnabled", boo()->default_value(true),
         "Enable aggressive splitting of tables with little data to spread out ranges")
+    ("Hypertable.Master.DiskThreshold.Percentage", i32()->default_value(90),
+        "Stop assigning ranges to RangeServers if disk usage is above this threshold")
     ("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage",
      i32()->default_value(20), "Perform major compaction when garbage accounts "
      "for this percentage of the data")
