@@ -30,16 +30,19 @@
 #include "Hypertable/Lib/BalancePlan.h"
 #include "Hypertable/Lib/Client.h"
 #include "RangeServerStatistics.h"
+#include "Context.h"
 
 namespace Hypertable {
 
   class LoadBalancerBasicDistributeTableRanges {
 
     public:
-      LoadBalancerBasicDistributeTableRanges(TablePtr &table) : m_table(table),
-          m_num_servers(0), m_num_ranges(0) { }
+      LoadBalancerBasicDistributeTableRanges(ContextPtr context)
+        : m_context(context), m_num_servers(0), m_num_ranges(0) { }
+
       void compute_plan(std::vector<RangeServerStatistics> &range_server_stats,
                         BalancePlanPtr &balance_plan);
+
     private:
       void clear();
       void compute_moves(BalancePlanPtr &plan);
@@ -63,7 +66,7 @@ namespace Hypertable {
       vector<const char *> m_servers;
       CstrSet m_saturated_tables;
       TableSummaryMap m_table_summaries;
-      TablePtr m_table;
+      ContextPtr m_context;
       uint32_t m_num_servers;
       size_t m_num_ranges;
       uint32_t m_num_empty_servers;

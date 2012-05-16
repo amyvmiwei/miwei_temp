@@ -67,6 +67,11 @@ namespace Hypertable {
                 test_mode(false), in_operation(false) {
       m_server_list_iter = m_server_list.end();
       master_file_handle = 0;
+      balancer = 0;
+      response_manager = 0;
+      removal_manager = 0;
+      op = 0;
+      op_balance = 0;
     }
     ~Context();
 
@@ -121,6 +126,7 @@ namespace Hypertable {
     size_t connection_count() { ScopedLock lock(mutex); return conn_count; }
     size_t server_count() { ScopedLock lock(mutex); return m_server_list.size(); }
     void get_servers(std::vector<RangeServerConnectionPtr> &servers);
+    bool can_accept_ranges(const RangeServerStatistics &stats);
 
   private:
 

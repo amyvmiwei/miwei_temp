@@ -26,17 +26,16 @@ using namespace Hypertable;
 using namespace std;
 
 void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan) {
-
   vector<ServerMetrics> server_metrics;
-  RSMetrics rs_metrics(m_table);
+  RSMetrics rs_metrics(m_context->rs_metrics_table);
   rs_metrics.get_server_metrics(server_metrics);
 
   ServerMetricSummary ss;
   ServerSetDescLoad servers_desc_load;
   int num_servers;
-  int num_loaded_servers=0;
-  double mean_loadavg=0;
-  double mean_loadavg_per_loadestimate=0;
+  int num_loaded_servers = 0;
+  double mean_loadavg = 0;
+  double mean_loadavg_per_loadestimate = 0;
   String heaviest_server_id, lightest_server_id;
 
   foreach(const ServerMetrics &sm, server_metrics) {
@@ -58,26 +57,36 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
 
   mean_loadavg /= num_servers;
   mean_loadavg_per_loadestimate /= num_loaded_servers;
-  HT_INFO_OUT << "mean_loadavg=" << mean_loadavg << ", num_servers=" << num_servers
+  HT_INFO_OUT << "mean_loadavg=" << mean_loadavg
+      << ", num_servers=" << num_servers
       << ", mean_loadavg_per_loadestimate=" << mean_loadavg_per_loadestimate
       << ", num_loaded_servers=" << num_loaded_servers
-      << ", loadavg_deviation_threshold=" << m_loadavg_deviation_threshold << HT_END;
+      << ", loadavg_deviation_threshold=" << m_loadavg_deviation_threshold
+      << HT_END;
 
-  while(1) {
-    if (servers_desc_load.size() <2 )
+  while (1) {
+    if (servers_desc_load.size() < 2)
       break;
     ServerMetricSummary heaviest_server = *(servers_desc_load.begin());
-    ServerMetricSummary lightest_server = *(servers_desc_load.rbegin());
+
+    // find the lightest server with enough disk capacity 
+    ServerSetDescLoad::reverse_iterator rit = servers_desc_load.rbegin();
+    while (rit != servers_desc_load.rend() && (*rit).disk_full)
+      ++rit;
+    if (rit == servers_desc_load.rend())
+      break;
+    ServerMetricSummary lightest_server = *rit;
 
     if (lightest_server.loadavg_per_loadestimate == 0)
       lightest_server.loadavg_per_loadestimate = mean_loadavg_per_loadestimate;
     if (heaviest_server.loadavg_per_loadestimate == 0)
       heaviest_server.loadavg_per_loadestimate = mean_loadavg_per_loadestimate;
 
-    HT_DEBUG_OUT << "heaviest_server=" << heaviest_server << ", lightest_server="
-        << lightest_server << HT_END;
+    HT_DEBUG_OUT << "heaviest_server=" << heaviest_server
+        << ", lightest_server=" << lightest_server << HT_END;
 
-    // the heaviest server doesnt have enough load to justify any more moves, so we're done
+    // the heaviest server doesnt have enough load to justify any more moves,
+    // so we're done
     if (heaviest_server.loadavg < m_loadavg_deviation_threshold + mean_loadavg) {
       HT_DEBUG_OUT << "Heaviest loaded server now has estimated loadavg of "
           << heaviest_server.loadavg << " which is within the acceptable threshold ("
@@ -96,8 +105,8 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
 
     while (heaviest_server.loadavg > m_loadavg_deviation_threshold + mean_loadavg &&
            ranges_desc_load_it != ranges_desc_load.end()) {
-      if (check_move(heaviest_server, lightest_server, ranges_desc_load_it->loadestimate,
-                     mean_loadavg)) {
+      if (check_move(heaviest_server, lightest_server,
+                  ranges_desc_load_it->loadestimate, mean_loadavg)) {
         // add move to balance plan
         RangeMoveSpecPtr move = new RangeMoveSpec(heaviest_server.server_id,
             lightest_server.server_id, ranges_desc_load_it->table_id,
@@ -120,11 +129,12 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
         lightest_server = *(servers_desc_load.rbegin());
 
         // no need to erase this range from the heaviest loaded range
-        // since we will skip to next range and delete the heaviest server from set of
-        // servers used in balancing after all moves are done for it
+        // since we will skip to next range and delete the heaviest server from
+        // the set of servers used in balancing after all moves are done for it
       }
       else {
-        HT_DEBUG_OUT << "Moving range " << *ranges_desc_load_it << " is not viable." << HT_END;
+        HT_DEBUG_OUT << "Moving range " << *ranges_desc_load_it
+            << " is not viable." << HT_END;
       }
       ranges_desc_load_it++;
     }
@@ -133,26 +143,29 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
     // for balancing anymore
     servers_desc_load.erase(servers_desc_load.begin());
   }
-
-  return;
 }
 
 void LoadBalancerBasicDistributeLoad::calculate_server_summary(const ServerMetrics &metrics,
-    ServerMetricSummary &summary) {
-
+        ServerMetricSummary &summary) {
   summary.server_id = metrics.get_id().c_str();
-  double loadestimate=0;
+  double loadestimate = 0;
 
   // calculate average loadavg for server
   const vector<ServerMeasurement> &measurements = metrics.get_measurements();
   if (measurements.size() > 0) {
     foreach(const ServerMeasurement& measurement, measurements) {
       summary.loadavg += measurement.loadavg;
-      loadestimate += measurement.bytes_written_rate + measurement.bytes_scanned_rate;
+      loadestimate += measurement.bytes_written_rate
+          + measurement.bytes_scanned_rate;
     }
     summary.loadavg /= measurements.size();
-    summary.loadavg_per_loadestimate = summary.loadavg/(loadestimate/measurements.size());
+    summary.loadavg_per_loadestimate = summary.loadavg
+        / (loadestimate / measurements.size());
   }
+
+  StatisticsSet::iterator it = m_rsstats.find(metrics.get_id());
+  if (it != m_rsstats.end())
+    summary.disk_full = !m_context->can_accept_ranges(it->second);
 }
 
 void LoadBalancerBasicDistributeLoad::calculate_range_summary(const RangeMetrics &metrics,

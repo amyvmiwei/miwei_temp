@@ -29,26 +29,35 @@ using namespace Hypertable;
 using namespace std;
 
 void LoadBalancerBasicOffloadServers::compute_plan(vector<RangeServerStatistics> &range_server_stats,
-    set<String> &offload_servers, const String &root_location, BalancePlanPtr &balance_plan) {
+        set<String> &offload_servers, const String &root_location,
+        BalancePlanPtr &balance_plan) {
 
   size_t num_servers = range_server_stats.size();
   if (num_servers <= 1)
     return;
   // Now scan thru METADATA Location and StartRow and come up with balance plan
   compute_moves(range_server_stats, offload_servers, root_location, balance_plan);
-  return;
 }
 
 void LoadBalancerBasicOffloadServers::compute_moves(vector<RangeServerStatistics> &range_server_stats,
-    set<String> &offload_servers, const String &root_location, BalancePlanPtr &plan) {
+        set<String> &offload_servers, const String &root_location,
+        BalancePlanPtr &plan) {
+
+  HT_INFOF("Offloading ranges from %d servers", (int)offload_servers.size());
 
   set<String> load_servers;
   set<String>::iterator load_servers_it;
 
   foreach(const RangeServerStatistics &stats, range_server_stats) {
-    if (offload_servers.find(stats.location) == offload_servers.end())
-      load_servers.insert(stats.location);
+    if (offload_servers.find(stats.location) == offload_servers.end()) {
+      if (m_context->can_accept_ranges(stats))
+        load_servers.insert(stats.location);
+    }
   }
+
+  // return if there's no server with enough disk space
+  if (load_servers.empty())
+    return;
 
   load_servers_it = load_servers.begin();
 
@@ -65,19 +74,21 @@ void LoadBalancerBasicOffloadServers::compute_moves(vector<RangeServerStatistics
     if (load_servers_it == load_servers.end())
       load_servers_it = load_servers.begin();
 
-    RangeMoveSpecPtr move = new RangeMoveSpec(root_location.c_str(), new_location.c_str(),
-        TableIdentifier::METADATA_ID, "", Key::END_ROOT_ROW);
+    RangeMoveSpecPtr move = new RangeMoveSpec(root_location.c_str(),
+            new_location.c_str(), TableIdentifier::METADATA_ID, "",
+            Key::END_ROOT_ROW);
     plan->moves.push_back(move);
 
-    HT_DEBUG_OUT << TableIdentifier::METADATA_ID << "[" << ".." << Key::END_ROOT_ROW << "] "
-      << root_location << "->" << new_location << HT_END;
+    HT_DEBUG_OUT << TableIdentifier::METADATA_ID << "[" << ".."
+        << Key::END_ROOT_ROW << "] " << root_location << "->"
+        << new_location << HT_END;
   }
 
   scan_spec.columns.push_back(location.c_str());
   scan_spec.columns.push_back(start_row.c_str());
   scan_spec.max_versions = 1;
 
-  TableScannerPtr scanner = m_table->create_scanner(scan_spec);
+  TableScannerPtr scanner = m_context->metadata_table->create_scanner(scan_spec);
   while (scanner->next(cell)) {
 
     if (last_key == cell.row_key) {
@@ -102,8 +113,8 @@ void LoadBalancerBasicOffloadServers::compute_moves(vector<RangeServerStatistics
       }
     }
 
-    HT_DEBUG_OUT << "last_key=" << last_key << ", last_location=" << last_location
-        << ", last_start_row=" << last_start_row << HT_END;
+    HT_DEBUG_OUT << "last_key=" << last_key << ", last_location="
+        << last_location << ", last_start_row=" << last_start_row << HT_END;
 
     // check if this range is on one of the offload servers
     if (last_location.size() > 0 && read_start_row &&
@@ -117,14 +128,13 @@ void LoadBalancerBasicOffloadServers::compute_moves(vector<RangeServerStatistics
       if (load_servers_it == load_servers.end())
         load_servers_it = load_servers.begin();
 
-      RangeMoveSpecPtr move = new RangeMoveSpec(last_location.c_str(), new_location.c_str(),
-                                                table.c_str(), last_start_row.c_str(),
-                                                end_row.c_str());
+      RangeMoveSpecPtr move = new RangeMoveSpec(last_location.c_str(),
+              new_location.c_str(), table.c_str(), last_start_row.c_str(),
+              end_row.c_str());
       plan->moves.push_back(move);
 
       HT_DEBUG_OUT << table << "[" << last_start_row << ".." << end_row << "] "
-                   << last_location << "->" << new_location << HT_END;
+          << last_location << "->" << new_location << HT_END;
     }
   }
-
 }

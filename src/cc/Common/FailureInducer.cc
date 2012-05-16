@@ -20,8 +20,11 @@
  */
 
 #include "Compat.h"
+#include "Common/String.h"
 
 #include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <vector>
 
 #include "FailureInducer.h"
 #include "Error.h"
@@ -40,35 +43,11 @@ namespace {
 FailureInducer *FailureInducer::instance = 0;
 
 void FailureInducer::parse_option(String option) {
-  char *istr = (char*)strchr(option.c_str(), ':');
-  HT_ASSERT(istr != 0);
-  *istr++ = 0;
-  const char *failure_type = istr;
-  istr = strchr(istr, ':');
-  HT_ASSERT(istr != 0);
-  *istr++ = 0;
-  size_t failure_type_len=strlen(failure_type);
-  failure_inducer_state *statep = new failure_inducer_state;
-  if (!strcmp(failure_type, "exit"))
-    statep->failure_type = FAILURE_TYPE_EXIT;
-  else if (!strcmp(failure_type, "signal"))
-    statep->failure_type = FAILURE_TYPE_SIGNAL;
-  else if (boost::algorithm::starts_with(failure_type, "throw")) {
-    statep->failure_type = FAILURE_TYPE_THROW;
-    statep->error_code = Error::INDUCED_FAILURE;
-    if (failure_type_len > 5 && failure_type[5] == '(') {
-      const char *error_code = failure_type+6;
-      if (boost::algorithm::istarts_with(error_code, "0x"))
-        statep->error_code = (int)strtol(error_code, NULL, 16);
-      else
-        statep->error_code = (int)strtol(error_code, NULL, 0);
-    }
-  }
-  else
-    HT_ASSERT(!"Unknown failure type");
-  statep->iteration = 0;
-  statep->trigger_iteration = atoi(istr);
-  m_state_map[option.c_str()] = statep;
+  std::vector<String> args;
+  boost::algorithm::split(args, option, boost::algorithm::is_any_of(";"));
+
+  foreach (String &a, args)
+    parse_option_single(a);
 }
 
 void FailureInducer::maybe_fail(const String &label) {
@@ -116,3 +95,36 @@ void FailureInducer::clear() {
     delete iter->second;
   m_state_map.clear();
 }
+
+void FailureInducer::parse_option_single(String option) {
+  char *istr = (char*)strchr(option.c_str(), ':');
+  HT_ASSERT(istr != 0);
+  *istr++ = 0;
+
+  const char *failure_type = istr;
+  istr = strchr(istr, ':');
+  HT_ASSERT(istr != 0);
+  *istr++ = 0;
+  size_t failure_type_len = strlen(failure_type);
+  failure_inducer_state *statep = new failure_inducer_state;
+
+  if (!strcmp(failure_type, "exit"))
+    statep->failure_type = FAILURE_TYPE_EXIT;
+  else if (!strcmp(failure_type, "signal"))
+    statep->failure_type = FAILURE_TYPE_SIGNAL;
+  else if (boost::algorithm::starts_with(failure_type, "throw")) {
+    statep->failure_type = FAILURE_TYPE_THROW;
+    statep->error_code = Error::INDUCED_FAILURE;
+    if (failure_type_len > 5 && failure_type[5] == '(') {
+      const char *error_code = failure_type + 6;
+      statep->error_code = (int)strtol(error_code, NULL, 0);
+    }
+  }
+  else
+    HT_ASSERT(!"Unknown failure type");
+
+  statep->iteration = 0;
+  statep->trigger_iteration = atoi(istr);
+  m_state_map[option.c_str()] = statep;
+}
+

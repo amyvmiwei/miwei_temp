@@ -234,7 +234,31 @@ void Context::get_unbalanced_servers(const std::vector<String> &locations,
 
 void Context::set_servers_balanced(const std::vector<RangeServerConnectionPtr> &unbalanced) {
   ScopedLock lock(mutex);
-  foreach( const RangeServerConnectionPtr rsc, unbalanced) {
+  foreach (const RangeServerConnectionPtr rsc, unbalanced) {
     rsc->set_balanced();
   }
+}
+
+bool Context::can_accept_ranges(const RangeServerStatistics &stats)
+{
+  static int threshold = 0;
+  if (!threshold)
+    threshold = props->get_i32("Hypertable.Master.DiskThreshold.Percentage");
+
+  // system info was not yet initialized; assume that the disks are available
+  if (!stats.stats) {
+    HT_WARNF("RangeServer %s: no disk usage statistics available",
+            stats.location.c_str());
+    return true;
+  }
+
+  // accept new ranges if there's at least one disk below the threshold
+  foreach (const FsStat &fs, stats.stats->system.fs_stat) {
+    if (fs.use_pct < threshold)
+      return true;
+  }
+  HT_WARNF("RangeServer %s: all disks are above threshold of %d %% "
+          "(Hypertable.Master.DiskThresholdPct); will not assign ranges",
+          stats.location.c_str(), threshold);
+  return false;
 }
