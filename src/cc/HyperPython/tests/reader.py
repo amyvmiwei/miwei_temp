@@ -35,15 +35,15 @@ try:
           ScanSpec(None, None, None, 1));
   while True:
     buf = client.scanner_get_cells_serialized(scanner)
-    if (len(buf) <= 1):
+    if (len(buf) <= 5):
       break
     scr = libHyperPython.SerializedCellsReader(buf, len(buf))
     while scr.has_next():
       print scr.row(),
       print scr.column_family(),
-      s=''
+      s = ''
       for i in range(scr.value_len()):
-        s+=scr.value()[i]
+        s += scr.value()[i]
       print s
 
   client.scanner_close(scanner)
