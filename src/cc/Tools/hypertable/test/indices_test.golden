@@ -400,23 +400,6 @@ rowa11	a	mella11
 SELECT a FROM t WHERE (ROW < "rowa3") AND a =^ "m";
 rowa10	a	mella10
 rowa11	a	mella11
-SELECT a FROM t WHERE ("rowa10" < ROW <= "rowa3") AND a =^ "m";
-rowa11	a	mella11
-SELECT a FROM t WHERE ("rowa10" <= ROW <= "rowa3") AND a =^ "m";
-rowa10	a	mella10
-rowa11	a	mella11
-SELECT a FROM t WHERE ("rowa10" <= ROW < "rowa3") AND a =^ "m";
-rowa10	a	mella10
-rowa11	a	mella11
-SELECT a FROM t WHERE ("rowa10" <= ROW < "rowa3" OR ROW < "rowa9") AND a =^ "m";
-rowa10	a	mella10
-rowa11	a	mella11
-SELECT a FROM t WHERE ("rowa1" <= ROW < "rowa3" OR ROW <= "rowa9") AND a =^ "m";
-rowa10	a	mella10
-rowa11	a	mella11
-SELECT a FROM t WHERE ("rowa1" <= ROW < "rowa3" OR ROW < "rowa9x") AND a =^ "m";
-rowa10	a	mella10
-rowa11	a	mella11
 SELECT a FROM t WHERE (ROW < "00") AND a =^ "m";
 SELECT a FROM t WHERE ROW REGEXP "rowa" AND a =^ "m";
 rowa10	a	mella10
@@ -441,46 +424,6 @@ SELECT a FROM t WHERE (ROW < "rowa3") AND a =^ "c";
 rowa0	a	cella0
 rowa1	a	cella1
 rowa2	a	cella2
-SELECT a FROM t WHERE ("rowa10" < ROW <= "rowa3") AND a =^ "c";
-rowa2	a	cella2
-rowa3	a	cella3
-SELECT a FROM t WHERE ("rowa10" <= ROW <= "rowa3") AND a =^ "c";
-rowa2	a	cella2
-rowa3	a	cella3
-SELECT a FROM t WHERE ("rowa10" <= ROW < "rowa3") AND a =^ "c";
-rowa2	a	cella2
-SELECT a FROM t WHERE ("rowa10" <= ROW < "rowa3" OR ROW < "rowa9") AND a =^ "c";
-rowa0	a	cella0
-rowa1	a	cella1
-rowa2	a	cella2
-rowa3	a	cella3
-rowa4	a	cella4
-rowa5	a	cella5
-rowa6	a	cella6
-rowa7	a	cella7
-rowa8	a	cella8
-SELECT a FROM t WHERE ("rowa1" <= ROW < "rowa3" OR ROW <= "rowa9") AND a =^ "c";
-rowa0	a	cella0
-rowa1	a	cella1
-rowa2	a	cella2
-rowa3	a	cella3
-rowa4	a	cella4
-rowa5	a	cella5
-rowa6	a	cella6
-rowa7	a	cella7
-rowa8	a	cella8
-rowa9	a	cella9
-SELECT a FROM t WHERE ("rowa1" <= ROW < "rowa3" OR ROW < "rowa9x") AND a =^ "c";
-rowa0	a	cella0
-rowa1	a	cella1
-rowa2	a	cella2
-rowa3	a	cella3
-rowa4	a	cella4
-rowa5	a	cella5
-rowa6	a	cella6
-rowa7	a	cella7
-rowa8	a	cella8
-rowa9	a	cella9
 SELECT a FROM t WHERE (ROW < "00") AND a =^ "c";
 SELECT a FROM t WHERE ROW REGEXP "rowa" AND a =^ "c";
 rowa0	a	cella0
