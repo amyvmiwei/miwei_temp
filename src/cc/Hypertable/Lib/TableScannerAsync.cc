@@ -89,6 +89,10 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
 {
   HT_ASSERT(!table->schema()->need_id_assignment());
 
+  // never use an index if the row key is specified
+  if (primary_spec.row_intervals.size())
+    return false;
+
   index_spec.set_keys_only(true);
   index_spec.add_column("v1");
 
@@ -98,19 +102,23 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
   if (primary_spec.columns.size()) {
     for (size_t i = 0; i < primary_spec.columns.size(); i++) {
       Schema::ColumnFamily *cf = 0;
-      const char *qualifier = strchr(primary_spec.columns[i], ':');
-      if (!qualifier) {
+      const char *qualifier_start = strchr(primary_spec.columns[i], ':');
+      if (!qualifier_start) {
         *use_qualifier = false;
         break;
       }
 
-      String column(primary_spec.columns[i], qualifier);
+      String column(primary_spec.columns[i], qualifier_start);
       cf = table->schema()->get_column_family(column);
       if (!cf || !cf->has_qualifier_index) {
         *use_qualifier = false;
         break;
       }
-      qualifier++;
+
+      qualifier_start++;
+      String qualifier(qualifier_start);
+      boost::algorithm::trim_if(qualifier, boost::algorithm::is_any_of("'\""));
+
       if (qualifier[0] == '/') {
         *use_qualifier = false;
         break;
@@ -118,14 +126,14 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
 
       // prefix match: create row interval ["%d,qualifier", ..)
       if (qualifier[0] == '^') {
-        String q(qualifier + 1);
+        String q(qualifier.c_str() + 1);
         trim_if(q, boost::algorithm::is_any_of("'\""));
         String s = format("%d,%s", (int)cf->id, q.c_str());
         add_index_row(index_spec, s.c_str());
       }
       // exact match:  create row interval ["%d,qualifier\t", ..)
       else {
-        String s = format("%d,%s\t", (int)cf->id, qualifier);
+        String s = format("%d,%s\t", (int)cf->id, qualifier.c_str());
         add_index_row(index_spec, s.c_str());
       }
 
