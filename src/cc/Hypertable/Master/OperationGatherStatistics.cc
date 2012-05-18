@@ -77,8 +77,9 @@ void OperationGatherStatistics::execute() {
     filename_tmp = monitoring_dir + "/mop.tmp.dot";
     if (FileUtils::write(filename_tmp, graphviz_str) != -1)
       FileUtils::rename(filename_tmp, filename);
-    dot_cmd = format("dot -Tjpg:cairo:gd -o%s/mop.tmp.jpg %s/mop.dot",
-                     monitoring_dir.c_str(), monitoring_dir.c_str());
+    dot_cmd = format("dot -Tjpg:cairo:gd -Gcharset=latin1 "
+            "-o%s/mop.tmp.jpg %s/mop.dot",
+            monitoring_dir.c_str(), monitoring_dir.c_str());
     if (system(dot_cmd.c_str()) != -1) {
       filename = monitoring_dir + "/mop.jpg";
       filename_tmp = monitoring_dir + "/mop.tmp.jpg";
