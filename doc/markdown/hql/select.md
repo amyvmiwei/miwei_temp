@@ -45,7 +45,7 @@ SELECT
       [timestamp relop] TIMESTAMP relop timestamp
 
     options_spec:
-      (REVS revision_count
+      (MAX_REVISIONS revision_count
       | OFFSET row_offset
       | LIMIT row_count
       | CELL_OFFSET cell_offset
@@ -99,13 +99,13 @@ versions of Hypertable):
 
 #### Options
 <p>
-#### `REVS revision_count`
+#### `MAX_REVISIONS revision_count`
 <p>
 Each cell in a Hypertable table can have multiple timestamped revisions.  By
 default all revisions of a cell are returned by the `SELECT` statement.  The
-`REVS` option allows control over the number of cell revisions returned.  The
-cell revisions are stored in reverse-chronological order, so `REVS=1` will
-return the most recent version of the cell.
+`MAX_REVISIONS` option allows control over the number of cell revisions
+returned.  The cell revisions are stored in reverse-chronological order, so
+`MAX_REVISIONS 1` will return the most recent version of the cell.
 
 #### `OFFSET row_offset`
 <p>
