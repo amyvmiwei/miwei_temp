@@ -100,8 +100,9 @@ CommBuf *LocationInitializer::create_initialization_request() {
 bool LocationInitializer::process_initialization_response(Event *event) {
 
   if (Protocol::response_code(event) != Error::OK) {
-    HT_ERROR_OUT << "Problem initializing Master connection - "
-                 << Protocol::string_format_message(event) << HT_END;
+    HT_ERROR_OUT << "Problem initializing Master connection; event type: "
+        << event->type << ", event error: " << event->error << ", description: "
+        << Protocol::string_format_message(event) << HT_END;
     return false;
   }
 
