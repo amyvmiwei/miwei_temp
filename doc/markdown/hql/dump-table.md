@@ -27,7 +27,7 @@ DUMP TABLE
       VALUE REGEXP 'value_regexp'
 
     options_spec:
-      (REVS revision_count
+      (MAX_VERSIONS revision_count
       | INTO FILE [file_location]filename[.gz]
       | BUCKETS n
       | NO_ESCAPE)*
@@ -54,13 +54,13 @@ and can be specified with the `BUCKETS` option.
 
 #### Options
 <p>
-#### `REVS revision_count`
+#### `MAX_VERSIONS revision_count`
 <p>
 Each cell in a Hypertable table can have multiple timestamped revisions.  By
 default all revisions of a cell are returned by the `DUMP TABLE` statement.  The
-`REVS` option allows control over the number of cell revisions returned.  The
-cell revisions are stored in reverse-chronological order, so `REVS 1` will
-return the most recent version of the cell.
+`MAX_VERSIONS` option allows control over the number of cell revisions returned.
+The cell revisions are stored in reverse-chronological order, so
+`MAX_REVISIONS 1` will return the most recent version of the cell.
 
 #### `INTO FILE [file://|dfs://]filename[.gz]`
 <p>
@@ -118,5 +118,5 @@ The `NO_ESCAPE` option turns off this escaping mechanism.
     DUMP TABLE foo;
     DUMP TABLE foo WHERE '2008-07-28 00:00:02' < TIMESTAMP < '2008-07-28 00:00:07';
     DUMP TABLE foo INTO FILE 'foo.tsv.gz'
-    DUMP TABLE foo REVS 1 BUCKETS 1000;
+    DUMP TABLE foo MAX_REVISIONS 1 BUCKETS 1000;
     DUMP TABLE LoadTest COLUMNS user:/^a/ WHERE ROW REGEXP "1.*2" AND VALUE REGEXP "foob";
