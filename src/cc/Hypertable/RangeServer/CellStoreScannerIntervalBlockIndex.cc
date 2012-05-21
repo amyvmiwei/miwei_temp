@@ -263,14 +263,16 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
 
       }
       catch (Exception &e) {
-        HT_ERROR_OUT <<"Error reading cell store (fd=" << m_fd << " file="
-                     << m_cellstore->get_filename() <<") : "
-                     << e << HT_END;
-        HT_ERROR_OUT << "pread(fd=" << m_fd << ", zlen="
-                     << m_block.zlength << ", offset=" << m_block.offset
-                     << HT_END;
+        HT_WARN_OUT << "Error reading cell store (fd=" << m_fd << " file="
+                    << m_cellstore->get_filename() << ") : "
+                    << e << HT_END;
+        HT_WARN_OUT << "pread(fd=" << m_fd << ", zlen="
+                    << m_block.zlength << ", offset=" << m_block.offset
+                    << HT_END;
         if (second_try)
           throw;
+
+        HT_INFO_OUT << "Retrying with dfs checksum enabled" << HT_END;
         second_try = true;
         goto try_again;
       }
