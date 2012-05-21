@@ -277,7 +277,11 @@ add_test(Secondary-Indices-tests indices_test)
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)
 
-  install(FILES ${HEADERS} DESTINATION include/Hypertable/Lib)
-
-  install(TARGETS generate_test_data RUNTIME DESTINATION bin)
+  install(FILES ${HEADERS}
+      DESTINATION include/Hypertable/Lib)
+  install(TARGETS generate_test_data
+      RUNTIME DESTINATION bin)
+  install(TARGETS Hypertable
+      LIBRARY DESTINATION lib
+      ARCHIVE DESTINATION lib)
 endif ()
