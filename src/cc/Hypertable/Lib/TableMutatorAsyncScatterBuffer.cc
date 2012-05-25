@@ -67,9 +67,9 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
   TableMutatorAsyncSendBufferMap::const_iterator iter;
 
   if (!m_loc_cache->lookup(m_table_identifier.id, key.row, &range_info)) {
-    m_timer.start();
+    Timer timer(m_timeout_ms, true);
     m_range_locator->find_loop(&m_table_identifier, key.row, &range_info,
-        m_timer, false);
+        timer, false);
   }
 
   iter = m_buffer_map.find(range_info.addr);
@@ -135,9 +135,9 @@ void TableMutatorAsyncScatterBuffer::set_delete(const Key &key, size_t incr_mem)
     HT_THROW(Error::BAD_KEY, "Key flag is FLAG_INSERT, expected delete");
 
   if (!m_loc_cache->lookup(m_table_identifier.id, key.row, &range_info)) {
-    m_timer.start();
+    Timer timer(m_timeout_ms, true);
     m_range_locator->find_loop(&m_table_identifier, key.row, &range_info,
-        m_timer, false);
+        timer, false);
   }
   iter = m_buffer_map.find(range_info.addr);
 
@@ -182,9 +182,9 @@ TableMutatorAsyncScatterBuffer::set(SerializedKey key, ByteString value, size_t 
 
   if (!m_loc_cache->lookup(m_table_identifier.id, (const char *)ptr+1,
         &range_info)) {
-    m_timer.start();
+    Timer timer(m_timeout_ms, true);
     m_range_locator->find_loop(&m_table_identifier, (const char *)ptr+1,
-        &range_info, m_timer, false);
+        &range_info, timer, false);
   }
 
   iter = m_buffer_map.find(range_info.addr);
@@ -227,6 +227,7 @@ namespace {
 void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
   ScopedLock lock(m_mutex);
 
+  m_timer.start();
   TableMutatorAsyncSendBufferPtr send_buffer;
   std::vector<SendRec> send_vec;
   uint8_t *ptr;
