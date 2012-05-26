@@ -309,6 +309,8 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage",
      i32()->default_value(20), "Perform major compaction when garbage accounts "
      "for this percentage of the data")
+    ("Hypertable.RangeServer.LoadMetadataOnly", boo()->default_value(false),
+        "Instructs the RangeServer to only load ROOT and METADATA ranges (for debugging)")
     ("Hypertable.RangeServer.MemoryLimit", i64(), "RangeServer memory limit")
     ("Hypertable.RangeServer.MemoryLimit.Percentage", i32()->default_value(60),
      "RangeServer memory limit specified as percentage of physical RAM")
