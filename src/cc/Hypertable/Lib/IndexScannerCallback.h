@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_INDEXRESULTCALLBACK_H
-#define HYPERTABLE_INDEXRESULTCALLBACK_H
+#ifndef HYPERTABLE_INDEXSCANNERCALLBACK_H
+#define HYPERTABLE_INDEXSCANNERCALLBACK_H
 
 #include <vector>
 #include <deque>
@@ -231,19 +231,7 @@ static String last;
       // packet to the original callback and decrement the outstanding scanners
       // once more (this is the equivalent operation to the increment in
       // the constructor)
-      bool final_eos = false;
-      if (m_track_limits) {
-        if (((m_limits_reached && is_eos && m_eos) && 
-                    atomic_read(&m_outstanding_scanners) == 0)
-            || (!m_limits_reached && (is_eos || m_eos) && 
-                atomic_read(&m_outstanding_scanners) == 0))
-          final_eos = true;
-      }
-      else {
-        if ((is_eos || m_eos) && atomic_read(&m_outstanding_scanners) == 0)
-          final_eos = true;
-      }
-      if (final_eos) {
+      if ((is_eos || m_eos) && atomic_read(&m_outstanding_scanners) == 0) {
         m_eos = true;
         HT_ASSERT(m_final_decrement == false);
         if (!m_final_decrement) {
@@ -797,4 +785,4 @@ static String last;
   }
 } // namespace Hypertable
 
-#endif // HYPERTABLE_INDEXRESULTCALLBACK_H
+#endif // HYPERTABLE_INDEXSCANNERCALLBACK_H
