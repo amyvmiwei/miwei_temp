@@ -46,7 +46,7 @@ bool Writer::skip_recover_entry = false;
 
 Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
                std::vector<EntityPtr> &initial_entities) :
-  m_fs(fs), m_definition(definition), m_offset(0) {
+  m_fs(fs), m_fd(-1), m_definition(definition), m_offset(0) {
 
   HT_EXPECT(Config::properties, Error::FAILED_EXPECTATION);
 
@@ -118,9 +118,6 @@ void Writer::close() {
 
 void Writer::purge_old_log_files(std::vector<int32_t> &file_ids, size_t keep_count) {
   ScopedLock lock(m_mutex);
-
-  if (m_fd == -1)
-    HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
   // reverse sort
   sort(file_ids.rbegin(), file_ids.rend());
