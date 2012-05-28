@@ -255,10 +255,10 @@ network roundtrips required when the number of rows requested is very large.
     SELECT * FROM test WHERE CELL > "old","tag:abacate";
     SELECT * FROM test WHERE CELL >= "old","tag:abacate";
     SELECT * FROM test WHERE "old","tag:foo" < CELL >= "old","tag:abacate";
-    SELECT * FROM test WHERE ( CELL = "maui","tag:abaisance" OR
-                               CELL = "foo","tag:adage" OR
-                               CELL = "cow","tag:Ab" OR
-                               CELL =^ "foo","tag:acya");
+    SELECT * FROM test WHERE (CELL = "maui","tag:abaisance" OR
+                              CELL = "foo","tag:adage" OR
+                              CELL = "cow","tag:Ab" OR
+                              CELL =^ "foo","tag:acya");
     SELECT * FROM test INTO FILE "dfs:///tmp/foo";
     SELECT col2:"bird" FROM RegexpTest WHERE ROW REGEXP "http://.*"; 
     SELECT col1:/^w[^a-zA-Z]*$/ FROM RegexpTest WHERE ROW REGEXP "m.*\s\S";

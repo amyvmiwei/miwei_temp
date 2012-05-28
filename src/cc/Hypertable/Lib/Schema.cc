@@ -729,10 +729,10 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
   output += "CREATE TABLE ";
 
   if (m_compressor != "")
-    output += format("COMPRESSOR=\"%s\" ", m_compressor.c_str());
+    output += format("COMPRESSOR \"%s\" ", m_compressor.c_str());
 
   if (m_group_commit_interval > 0)
-    output += format("GROUP_COMMIT_INTERVAL=\"%u\" ", m_group_commit_interval);
+    output += format("GROUP_COMMIT_INTERVAL \"%u\" ", m_group_commit_interval);
 
   if (hql_needs_quotes(table_name.c_str()))
     output += "'" + table_name + "'";
@@ -751,7 +751,7 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
       output += format("  %s", cf->name.c_str());
 
     if (cf->max_versions != 0)
-      output += format(" MAX_VERSIONS=%u", cf->max_versions);
+      output += format(" MAX_VERSIONS %u", cf->max_versions);
 
     if (cf->time_order_desc)
       output += format(" TIME_ORDER DESC");
@@ -760,7 +760,7 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
       output += format(" COUNTER");
 
     if (cf->ttl != 0)
-      output += format(" TTL=%d", (int)cf->ttl);
+      output += format(" TTL %d", (int)cf->ttl);
 
     if (cf->has_index) {
       if (hql_needs_quotes(cf->name.c_str()))
@@ -795,16 +795,16 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
       ag_string += " COUNTER";
 
     if (ag->replication >= 0)
-      ag_string += format(" REPLICATION=%d", ag->replication);
+      ag_string += format(" REPLICATION %d", ag->replication);
 
     if (ag->blocksize != 0)
-      ag_string += format(" BLOCKSIZE=%u", ag->blocksize);
+      ag_string += format(" BLOCKSIZE %u", ag->blocksize);
 
     if (ag->compressor != "")
-      ag_string += format(" COMPRESSOR=\"%s\"", ag->compressor.c_str());
+      ag_string += format(" COMPRESSOR \"%s\"", ag->compressor.c_str());
 
     if (ag->bloom_filter != "")
-      ag_string += format(" BLOOMFILTER=\"%s\"",
+      ag_string += format(" BLOOMFILTER \"%s\"",
           ag->bloom_filter.c_str());
 
     if (!ag->columns.empty()) {
