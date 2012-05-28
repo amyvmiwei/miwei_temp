@@ -14,11 +14,11 @@ and the column family "id" attributes are included in the XML output.  For
 example, the following table creation statement:
 
     CREATE TABLE foo (
-      a MAX_VERSIONS=1,
-      b TTL=1 DAY,
+      a MAX_VERSIONS 1,
+      b TTL 1 DAY,
       c,
-      ACCESS GROUP primary BLOCKSIZE=1024 ( a, b ),
-      ACCESS GROUP secondary compressor="zlib --best" ( c )
+      ACCESS GROUP primary BLOCKSIZE 1024 (a, b),
+      ACCESS GROUP secondary compressor "zlib --best" (c)
     )
 
 will create a table with the following schema as reported by the `CREATE TABLE`

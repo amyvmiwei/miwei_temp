@@ -16,7 +16,7 @@ ALTER TABLE
       | rename_cf_definition
 
     add_definition:
-      column_family_name [MAX_VERSIONS '=' int] [TTL '=' duration]
+      column_family_name [MAX_VERSIONS int] [TTL duration]
       | ACCESS GROUP name [access_group_option ...]
         ['(' [column_family_name, ...] ')']
     
@@ -35,10 +35,10 @@ ALTER TABLE
 
     access_group_option:
       IN_MEMORY
-      | BLOCKSIZE '=' int
-      | REPLICATION '=' int
-      | COMPRESSOR '=' compressor_spec
-      | BLOOMFILTER '=' bloom_filter_spec
+      | BLOCKSIZE int
+      | REPLICATION int
+      | COMPRESSOR compressor_spec
+      | BLOOMFILTER bloom_filter_spec
 
     compressor_spec:
       bmz [ bmz_options ]
@@ -82,28 +82,28 @@ specification will go into the "default" access group.
 The following statements:
 
     CREATE TABLE foo (
-      a MAX_VERSIONS=1,
-      b TTL=1 DAY,
+      a MAX_VERSIONS 1,
+      b TTL 1 DAY,
       c,
-      ACCESS GROUP primary BLOCKSIZE=1024 ( a ),
-      ACCESS GROUP secondary COMPRESSOR="zlib --best" ( b, c )
+      ACCESS GROUP primary BLOCKSIZE 1024 (a),
+      ACCESS GROUP secondary COMPRESSOR "zlib --best" (b, c)
     );
 
     ALTER TABLE foo
-      ADD ( d MAX_VERSIONS=2 )
-      ADD ( ACCESS GROUP tertiary BLOOMFILTER="rows --false-positive 0.1" (d))
-      DROP ( c ) 
+      ADD (d MAX_VERSIONS 2)
+      ADD (ACCESS GROUP tertiary BLOOMFILTER "rows --false-positive 0.1" (d))
+      DROP (c) 
       RENAME COLUMN FAMILY (a, e); 
 
 will produce the following output with `SHOW CREATE TABLE foo;` ...
 
     CREATE TABLE foo (
-      e MAX_VERSIONS=1,
-      b TTL=86400,
-      d MAX_VERSIONS=2,
-      ACCESS GROUP primary BLOCKSIZE=1024 (e),
-      ACCESS GROUP secondary COMPRESSOR="zlib --best" (b),
-      ACCESS GROUP tertiary BLOOMFILTER="rows --false-positive 0.1" (d),
+      e MAX_VERSIONS 1,
+      b TTL 86400,
+      d MAX_VERSIONS 2,
+      ACCESS GROUP primary BLOCKSIZE 1024 (e),
+      ACCESS GROUP secondary COMPRESSOR "zlib --best" (b),
+      ACCESS GROUP tertiary BLOOMFILTER "rows --false-positive 0.1" (d),
     )
 
 

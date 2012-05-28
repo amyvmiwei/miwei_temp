@@ -13,9 +13,9 @@ CREATE TABLE
         ['(' [column_family_name, ...] ')']
 
     column_family_option:
-      MAX_VERSIONS '=' int
+      MAX_VERSIONS int
       | TIME_ORDER DESC
-      | TTL '=' duration
+      | TTL duration
       | COUNTER
 
     duration:
@@ -29,10 +29,10 @@ CREATE TABLE
     access_group_option:
       COUNTER
       | IN_MEMORY
-      | BLOCKSIZE '=' int
-      | REPLICATION '=' int
-      | COMPRESSOR '=' compressor_spec
-      | BLOOMFILTER '=' bloom_filter_spec
+      | BLOCKSIZE int
+      | REPLICATION int
+      | COMPRESSOR compressor_spec
+      | BLOOMFILTER bloom_filter_spec
 
     compressor_spec:
       bmz [ bmz_options ]
@@ -62,13 +62,13 @@ CREATE TABLE
       --max-approx-items int
 
     table_option:
-      MAX_VERSIONS '=' int
-      | TTL '=' duration
+      MAX_VERSIONS int
+      | TTL duration
       | IN_MEMORY
-      | BLOCKSIZE '=' int
-      | REPLICATION '=' int
-      | COMPRESSOR '=' compressor_spec
-      | GROUP_COMMIT_INTERVAL '=' int
+      | BLOCKSIZE int
+      | REPLICATION int
+      | COMPRESSOR compressor_spec
+      | GROUP_COMMIT_INTERVAL int
 
 #### Description
 <p>
@@ -148,7 +148,7 @@ GROUP clause.  For example, the following two statements are equivalent.
    a,
    b,
    c,
-   ACCESS GROUP bar ( a, b )
+   ACCESS GROUP bar (a, b)
  )
 </code></pre>
 </td valign="top">
@@ -183,13 +183,13 @@ their own access group.
 <p>
 The following table options are supported:
 
-  * `MAX_VERSIONS '=' int`
-  * `TTL '=' duration`
+  * `MAX_VERSIONS int`
+  * `TTL duration`
   * `IN_MEMORY`
-  * `BLOCKSIZE '=' int`
-  * `REPLICATION '=' int`
-  * `COMPRESSOR '=' compressor_spec`
-  * `GROUP_COMMIT_INTERVAL '=' int`
+  * `BLOCKSIZE int`
+  * `REPLICATION int`
+  * `COMPRESSOR compressor_spec`
+  * `GROUP_COMMIT_INTERVAL int`
 
 Most of these are the same options as the ones in the column family and access
 group specification except that they act as defaults in the case where no
@@ -212,9 +212,9 @@ the nearest multiple of this property value.
 <p>
 The following column family options are supported:
 
-  * `MAX_VERSIONS '=' int`
+  * `MAX_VERSIONS int`
   * `TIME_ORDER DESC`
-  * `TTL '=' duration`
+  * `TTL duration`
   * `COUNTER`
 
 Cells in a table are specified by not only a row key and a qualified column,
@@ -276,10 +276,10 @@ The following access group options are supported:
 
   * `COUNTER`
   * `IN_MEMORY`
-  * `BLOCKSIZE '=' int`
-  * `REPLICATION '=' int`
-  * `COMPRESSOR '=' compressor_spec`
-  * `BLOOMFILTER '=' bloom_filter_spec`
+  * `BLOCKSIZE int`
+  * `REPLICATION int`
+  * `COMPRESSOR compressor_spec`
+  * `BLOOMFILTER bloom_filter_spec`
 
 The `COUNTER` option makes all column families in the access group
 counter columns (see `COUNTER` description under Column Family Options

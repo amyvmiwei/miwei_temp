@@ -2309,7 +2309,7 @@ namespace Hypertable {
 
 
           table_option
-            = COMPRESSOR >> EQUAL >> string_literal[
+            = COMPRESSOR >> *EQUAL >> string_literal[
                 set_table_compressor(self.state)]
             | GROUP_COMMIT_INTERVAL >> EQUAL >> uint_p[set_group_commit_interval(self.state)]
             | table_option_in_memory[set_table_in_memory(self.state)]
@@ -2400,7 +2400,7 @@ namespace Hypertable {
             ;
 
           ttl_option
-            = TTL >> EQUAL >> duration[set_ttl(self.state)]
+            = TTL >> *EQUAL >> duration[set_ttl(self.state)]
             ;
 
           counter_option
@@ -2433,13 +2433,13 @@ namespace Hypertable {
             | in_memory_option[set_access_group_in_memory(self.state)]
             | blocksize_option
             | replication_option
-            | COMPRESSOR >> EQUAL >> string_literal[
+            | COMPRESSOR >> *EQUAL >> string_literal[
                 set_access_group_compressor(self.state)]
             | bloom_filter_option
             ;
 
           bloom_filter_option
-            = BLOOMFILTER >> EQUAL
+            = BLOOMFILTER >> *EQUAL
               >> string_literal[set_access_group_bloom_filter(self.state)]
             ;
 
@@ -2448,12 +2448,12 @@ namespace Hypertable {
             ;
 
           blocksize_option
-            = BLOCKSIZE >> EQUAL >> uint_p[
+            = BLOCKSIZE >> *EQUAL >> uint_p[
                 set_access_group_blocksize(self.state)]
             ;
 
           replication_option
-            = REPLICATION >> EQUAL >> uint_p[
+            = REPLICATION >> *EQUAL >> uint_p[
                 set_access_group_replication(self.state)]
             ;
 
