@@ -103,7 +103,7 @@ void Writer::close() {
   ScopedLock lock(m_mutex);
   try {
     if (m_fd != -1) {
-      m_fs->close(m_fd, (DispatchHandler *)0);
+      m_fs->close(m_fd);
       m_fd = -1;
       ::close(m_backup_fd);
       m_backup_fd = -1;
