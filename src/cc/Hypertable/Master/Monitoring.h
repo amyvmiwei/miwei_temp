@@ -167,6 +167,7 @@ namespace Hypertable {
     unsigned char m_last_server_set_digest[16];
     uint64_t table_stats_timestamp;
     NameIdMapperPtr m_namemap_ptr;
+    bool m_disable_rrdtool;
   };
 
   typedef intrusive_ptr<Monitoring> MonitoringPtr;

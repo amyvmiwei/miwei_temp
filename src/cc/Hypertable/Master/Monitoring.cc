@@ -41,11 +41,12 @@ using namespace Hypertable;
 using namespace std;
 
 Monitoring::Monitoring(PropertiesPtr &props,NameIdMapperPtr &m_namemap) 
-  : m_last_server_count(0) {
+  : m_last_server_count(0), m_disable_rrdtool(false) {
 
   /**
    * Create dir for storing monitoring stats
    */
+  m_disable_rrdtool = props->get_bool("Hypertable.Monitoring.Disable");
   m_monitoring_interval = props->get_i32("Hypertable.Monitoring.Interval");
   Path data_dir = props->get_str("Hypertable.DataDirectory");
   m_monitoring_dir = (data_dir /= "/run/monitoring").string();
@@ -126,8 +127,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   m_prev_table_stat_map = m_table_stat_map;
   m_table_stat_map.clear(); // clear the previous contents
 
-  for (size_t i=0; i<stats.size(); i++) {
-
+  for (size_t i = 0; i < stats.size(); i++) {
     memset(&rrd_data, 0, sizeof(rrd_data));
 
     iter = m_server_map.find(stats[i].location);
@@ -283,9 +283,9 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     if (prev_iter != m_prev_table_stat_map.end()) {
       if (server_count != m_last_server_count ||
           memcmp(m_last_server_set_digest, server_set_digest, 16)) {
-        HT_INFO_OUT << "Statistics server set mismatch, using previous statistics."
-            <<" last_server_count=" << m_last_server_count << ", server_count="
-            << server_count << HT_END;
+        HT_INFO_OUT << "Statistics server set mismatch, using previous " 
+            "statistics." <<" last_server_count=" << m_last_server_count
+            << ", server_count=" << server_count << HT_END;
         ts_iter->second.scan_rate = prev_iter->second.scan_rate;
         ts_iter->second.update_rate = prev_iter->second.update_rate;
         ts_iter->second.cell_read_rate = prev_iter->second.cell_read_rate;
@@ -297,14 +297,14 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
         m_last_server_count = server_count;
       }
       else {
-	double elapsed_time = (double)(ts_iter->second.fetch_timestamp - prev_iter->second.fetch_timestamp)/1000000000.0;
-	ts_iter->second.scan_rate = (ts_iter->second.scans - prev_iter->second.scans)/elapsed_time;
-	ts_iter->second.update_rate = (ts_iter->second.updates - prev_iter->second.updates)/elapsed_time;
-	ts_iter->second.cell_read_rate = (ts_iter->second.cells_read - prev_iter->second.cells_read)/elapsed_time;
-	ts_iter->second.cell_write_rate = (ts_iter->second.cells_written - prev_iter->second.cells_written)/elapsed_time;
-	ts_iter->second.byte_read_rate = (ts_iter->second.bytes_read - prev_iter->second.bytes_read)/elapsed_time;
-	ts_iter->second.byte_write_rate = (ts_iter->second.bytes_written - prev_iter->second.bytes_written)/elapsed_time;
-	ts_iter->second.disk_read_rate = (ts_iter->second.disk_bytes_read - prev_iter->second.disk_bytes_read)/elapsed_time;
+        double elapsed_time = (double)(ts_iter->second.fetch_timestamp - prev_iter->second.fetch_timestamp) / 1000000000.0;
+        ts_iter->second.scan_rate = (ts_iter->second.scans - prev_iter->second.scans) / elapsed_time;
+        ts_iter->second.update_rate = (ts_iter->second.updates - prev_iter->second.updates) / elapsed_time;
+        ts_iter->second.cell_read_rate = (ts_iter->second.cells_read - prev_iter->second.cells_read) / elapsed_time;
+        ts_iter->second.cell_write_rate = (ts_iter->second.cells_written - prev_iter->second.cells_written) / elapsed_time;
+        ts_iter->second.byte_read_rate = (ts_iter->second.bytes_read - prev_iter->second.bytes_read) / elapsed_time;
+        ts_iter->second.byte_write_rate = (ts_iter->second.bytes_written - prev_iter->second.bytes_written) / elapsed_time;
+        ts_iter->second.disk_read_rate = (ts_iter->second.disk_bytes_read - prev_iter->second.disk_bytes_read) / elapsed_time;
       }
     }
 
@@ -320,7 +320,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
         String table_dir = m_monitoring_table_dir + "/"+dir;
         if (!FileUtils::exists(table_dir)) {
             if (!FileUtils::mkdirs(table_dir)) {
-                HT_THROW(Error::LOCAL_IO_ERROR, "Unable to create table dir ");
+                HT_THROW(Error::LOCAL_IO_ERROR, "Unable to create table dir");
             }
         }
         create_table_rrd(rrd_file);
@@ -414,7 +414,7 @@ void Monitoring::create_rangeserver_rrd(const String &filename) {
    * http://oss.oetiker.ch/rrdtool/doc/rrdcreate.en.html
    */
 
-  HT_INFOF("Creating rrd file %s", filename.c_str());
+  HT_DEBUGF("Creating rrd file %s", filename.c_str());
 
   std::vector<String> args;
   args.push_back((String)"create");
@@ -478,7 +478,7 @@ void Monitoring::create_table_rrd(const String &filename) {
    * http://oss.oetiker.ch/rrdtool/doc/rrdcreate.en.html
    */
 
-  HT_INFOF("Creating rrd file %s", filename.c_str());
+  HT_DEBUGF("Creating rrd file %s", filename.c_str());
 
   std::vector<String> args;
   args.push_back((String)"create");
@@ -767,6 +767,9 @@ void Monitoring::invalidate_id_mapping(const String &table_id) {
 }
 
 void Monitoring::run_rrdtool(std::vector<String> &command) {
+  if (m_disable_rrdtool)
+    return;
+
   String cmd = "rrdtool";
 
   foreach (const String &s, command) {
