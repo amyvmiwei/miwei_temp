@@ -40,6 +40,7 @@
 
 #include "DfsBroker/Lib/Client.h"
 
+#include "Hypertable/Lib/LoadDataEscape.h"
 #include "Hypertable/Lib/Key.h"
 
 #include "Config.h"
@@ -165,7 +166,14 @@ int main(int argc, char **argv) {
      * Dump keys
      */
     if (tsv_format || dump_all || count_keys) {
+      LoadDataEscape row_escaper;
+      LoadDataEscape escaper;
       ScanContextPtr scan_ctx(new ScanContext());
+      const char *unescaped_buf, *row_unescaped_buf;
+      size_t unescaped_len, row_unescaped_len;
+
+      if (tsv_format)
+	cout << "#timestamp\trow\tcolumn\tvalue\n";
 
       scanner = cellstore->create_scanner(scan_ctx);
       while (scanner->get(key_comps, value)) {
@@ -183,12 +191,17 @@ int main(int argc, char **argv) {
           key_count++;
         else {
 	  if (tsv_format) {
+	    row_escaper.escape(key_comps.row, key_comps.row_len,
+			       &row_unescaped_buf, &row_unescaped_len);
 	    if (column_id_map[key_comps.column_family_code])
-	      cout << key_comps.row << "\t" << column_id_map[key_comps.column_family_code];
+	      cout << key_comps.timestamp << "\t" << row_unescaped_buf << "\t" << column_id_map[key_comps.column_family_code];
 	    else
-	      cout << key_comps.row << "\t" << key_comps.column_family_code;
-	    if (key_comps.column_qualifier && *key_comps.column_qualifier)
-	      cout << ":" << key_comps.column_qualifier;
+	      cout << key_comps.timestamp << "\t" << row_unescaped_buf << "\t" << (unsigned int)key_comps.column_family_code;
+	    if (key_comps.column_qualifier && *key_comps.column_qualifier) {
+	      escaper.escape(key_comps.column_qualifier, key_comps.column_qualifier_len,
+			     &unescaped_buf, &unescaped_len);
+	      cout << ":" << unescaped_buf;
+	    }
 	    bslen = value.decode_length((const uint8_t **)&bsptr);
 	    if (bslen >= buf_len) {
 	      delete [] buf;
@@ -197,7 +210,8 @@ int main(int argc, char **argv) {
 	    }
 	    memcpy(buf, bsptr, bslen);
 	    buf[bslen] = 0;
-	    cout << "\t" << (char *)buf << "\n";
+	    escaper.escape(buf, bslen, &unescaped_buf, &unescaped_len);
+	    cout << "\t" << (char *)unescaped_buf << "\n";
 	  }
 	  else
 	    cout << key_comps << endl;
