@@ -94,7 +94,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_group_commit_timer_handler(0), m_query_cache(0),
     m_last_revision(TIMESTAMP_MIN), m_last_metrics_update(0),
     m_loadavg_accum(0.0), m_page_in_accum(0), m_page_out_accum(0),
-    m_metric_samples(0), m_maintenance_pause_interval(0), m_pending_metrics_updates(0)
+    m_metric_samples(0), m_maintenance_pause_interval(0), m_pending_metrics_updates(0),
+    m_profile_query(false)
 {
 
   uint16_t port;
@@ -116,6 +117,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   port = cfg.get_i16("Port");
   m_update_coalesce_limit = cfg.get_i64("UpdateCoalesceLimit");
   m_maintenance_pause_interval = cfg.get_i32("Testing.MaintenanceNeeded.PauseInterval");
+
+  m_control_file_check_interval = cfg.get_i32("ControlFile.CheckInterval");
+  boost::xtime_get(&m_last_control_file_check, boost::TIME_UTC);
 
   /** Compute maintenance threads **/
   uint32_t maintenance_threads;
@@ -2052,6 +2056,8 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
   {
     ScopedLock lock(m_update_qualify_queue_mutex);
     HT_ASSERT(!updates.empty());
+    if (m_profile_query)
+      boost::xtime_get(&uc->start_time, TIME_UTC);
     m_update_qualify_queue.push_back(uc);
     m_update_qualify_queue_cond.notify_all();
   }
@@ -2499,6 +2505,12 @@ void RangeServer::update_qualify_and_transform() {
     // Enqueue update
     {
       ScopedLock lock(m_update_commit_queue_mutex);
+      if (m_profile_query) {
+	boost::xtime now;
+	boost::xtime_get(&now, TIME_UTC);
+	uc->qualify_time = xtime_diff_millis(uc->start_time, now);
+	uc->start_time = now;
+      }
       m_update_commit_queue.push_back(uc);
       m_update_commit_queue_cond.notify_all();
       m_update_commit_queue_count++;
@@ -2632,6 +2644,12 @@ void RangeServer::update_commit() {
       coalesce_queue.push_back(uc);
       while (!coalesce_queue.empty()) {
         uc = coalesce_queue.front();
+	if (m_profile_query) {
+	  boost::xtime now;
+	  boost::xtime_get(&now, TIME_UTC);
+	  uc->commit_time = xtime_diff_millis(uc->start_time, now);
+	  uc->start_time = now;
+	}
         coalesce_queue.pop_front();
         m_update_response_queue.push_back(uc);
       }
@@ -2784,6 +2802,13 @@ void RangeServer::update_add_and_respond() {
     {
       Locker<RSStats> lock(*m_server_stats);
       m_server_stats->add_update_data(uc->total_updates, uc->total_added, uc->total_bytes_added, uc->total_syncs);
+    }
+
+    if (m_profile_query) {
+      boost::xtime now;
+      boost::xtime_get(&now, TIME_UTC);
+      uc->add_time = xtime_diff_millis(uc->start_time, now);
+      m_profile_query_out << "update\t" << uc->qualify_time << "\t" << uc->commit_time << "\t" << uc->add_time << "\n";
     }
 
     delete uc;
@@ -3672,6 +3697,7 @@ void RangeServer::do_maintenance() {
   HT_ASSERT(m_timer_handler);
 
   try {
+    boost::xtime now;
 
     // Purge expired scanners
     Global::scanner_map.purge_expired(m_scanner_ttl);
@@ -3684,6 +3710,26 @@ void RangeServer::do_maintenance() {
 
     // Schedule maintenance
     m_maintenance_scheduler->schedule();
+
+    // Check for control files
+    boost::xtime_get(&now, TIME_UTC);
+    if (xtime_diff_millis(m_last_control_file_check, now) >= (int64_t)m_control_file_check_interval) {
+      if (FileUtils::exists(System::install_dir + "/run/query-profile")) {
+	if (!m_profile_query) {
+	  String output_fname = System::install_dir + "/run/query-profile.output";
+	  m_profile_query_out.open(output_fname.c_str(), ios_base::out|ios_base::app);
+	  m_profile_query = true;
+	}
+      }
+      else {
+	if (m_profile_query) {
+	  m_profile_query = false;
+	  poll(0, 0, 3000);
+	  m_profile_query_out.close();
+	}
+      }
+      m_last_control_file_check = now;      
+    }
 
   }
   catch (Hypertable::Exception &e) {

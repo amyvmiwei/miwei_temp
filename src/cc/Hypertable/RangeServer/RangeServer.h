@@ -189,6 +189,10 @@ namespace Hypertable {
       uint32_t total_added;
       uint32_t total_syncs;
       uint64_t total_bytes_added;
+      boost::xtime start_time;
+      uint32_t qualify_time;
+      uint32_t commit_time;
+      uint32_t add_time;
     };
 
     Mutex                      m_update_qualify_queue_mutex;
@@ -261,6 +265,10 @@ namespace Hypertable {
     size_t                 m_cores;
     int32_t                m_maintenance_pause_interval;
     CellsBuilder          *m_pending_metrics_updates;
+    boost::xtime           m_last_control_file_check;
+    int32_t                m_control_file_check_interval;
+    std::ofstream          m_profile_query_out;
+    bool                   m_profile_query;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;
