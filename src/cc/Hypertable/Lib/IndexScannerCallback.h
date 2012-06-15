@@ -306,9 +306,12 @@ static String last;
         key.row_len = strlen(p);
         key.column_family = m_column_map[cfid].c_str();
         key.timestamp = cell.timestamp;
-        if (m_mutator) {
-          m_mutator->set(key, 0);
+        if (m_qualifier_scan) {
+          key.column_qualifier = r;
+          key.column_qualifier_len = strlen(r);
         }
+        if (m_mutator)
+          m_mutator->set(key, 0);
         else if (m_tmp_keys.find(key) == m_tmp_keys.end()) {
           m_tmp_keys.insert(CkeyMap::value_type(key, true));
         }
