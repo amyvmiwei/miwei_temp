@@ -47,7 +47,7 @@ if [ $# != 2 ] ; then
   exit 1
 fi
 
-FROM=`echo $1 | awk -F'/' '{ print $NF; }'`
+FROM=`basename $1 | awk -F'/' '{ print $NF; }'`
 TO=`echo $2 | awk -F'/' '{ print $NF; }'`
 
 if [ "$FROM" == "current" ] ; then
