@@ -107,14 +107,17 @@ CellStore *CellStoreFactory::open(const String &name,
     catch (Exception &e) {
       Global::dfs->close(fd);
       if (!second_try && e.code() == Error::CHECKSUM_MISMATCH) {
-	second_try = true;
-	goto try_again;
+        second_try = true;
+        goto try_again;
       }
       throw;
     }
 
     cellstore_v6 = new CellStoreV6(Global::dfs.get());
     cellstore_v6->open(name, start, end, fd, file_length, &trailer_v6);
+    if (!cellstore_v6)
+      HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
+              name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
     return cellstore_v6;
   }
   else if (version == 5) {
@@ -130,6 +133,9 @@ CellStore *CellStoreFactory::open(const String &name,
 
     cellstore_v5 = new CellStoreV5(Global::dfs.get());
     cellstore_v5->open(name, start, end, fd, file_length, &trailer_v5);
+    if (!cellstore_v5)
+      HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
+              name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
     return cellstore_v5;
   }
   else if (version == 4) {
@@ -145,6 +151,9 @@ CellStore *CellStoreFactory::open(const String &name,
 
     cellstore_v4 = new CellStoreV4(Global::dfs.get());
     cellstore_v4->open(name, start, end, fd, file_length, &trailer_v4);
+    if (!cellstore_v4)
+      HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
+              name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
     return cellstore_v4;
   }
   else if (version == 3) {
@@ -160,6 +169,9 @@ CellStore *CellStoreFactory::open(const String &name,
 
     cellstore_v3 = new CellStoreV3(Global::dfs.get());
     cellstore_v3->open(name, start, end, fd, file_length, &trailer_v3);
+    if (!cellstore_v3)
+      HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
+              name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
     return cellstore_v3;
   }
   else if (version == 2) {
@@ -175,6 +187,9 @@ CellStore *CellStoreFactory::open(const String &name,
 
     cellstore_v2 = new CellStoreV2(Global::dfs.get());
     cellstore_v2->open(name, start, end, fd, file_length, &trailer_v2);
+    if (!cellstore_v2)
+      HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
+              name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
     return cellstore_v2;
   }
   else if (version == 1) {
@@ -190,6 +205,9 @@ CellStore *CellStoreFactory::open(const String &name,
 
     cellstore_v1 = new CellStoreV1(Global::dfs.get());
     cellstore_v1->open(name, start, end, fd, file_length, &trailer_v1);
+    if (!cellstore_v1)
+      HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
+              name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
     return cellstore_v1;
   }
   else if (version == 0) {
@@ -205,6 +223,9 @@ CellStore *CellStoreFactory::open(const String &name,
 
     cellstore_v0 = new CellStoreV0(Global::dfs.get());
     cellstore_v0->open(name, start, end, fd, file_length, &trailer_v0);
+    if (!cellstore_v0)
+      HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
+              name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
     return cellstore_v0;
   }
   return 0;
