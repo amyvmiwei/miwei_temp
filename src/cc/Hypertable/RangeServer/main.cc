@@ -69,6 +69,14 @@ int main(int argc, char **argv) {
       FailureInducer::instance->parse_option(get_str("induce-failure"));
     }
 
+    // issue 851: don't start if config files are missing
+    if (!FileUtils::exists(System::install_dir + "/conf/METADATA.xml"))
+      HT_FATALF("%s/conf/METADATA.xml is missing, aborting...",
+              System::install_dir.c_str());
+    if (!FileUtils::exists(System::install_dir + "/conf/RS_METRICS.xml"))
+      HT_FATALF("%s/conf/RS_METRICS.xml is missing, aborting...",
+              System::install_dir.c_str());
+
     Comm *comm = Comm::instance();
     ConnectionManagerPtr conn_manager = new ConnectionManager(comm);
     Global::conn_manager = conn_manager;

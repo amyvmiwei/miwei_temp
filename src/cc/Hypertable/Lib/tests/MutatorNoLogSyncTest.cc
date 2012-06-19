@@ -263,6 +263,9 @@ int main(int argc, char **argv) {
                  "./Hypertable.RangeServer") == 0);
   unlink("./serverup");
   HT_ASSERT(link("../../Tools/serverup/serverup", "./serverup") == 0);
+  system("mkdir conf");
+  system("touch conf/METADATA.xml");
+  system("touch conf/RS_METRICS.xml");
 
   config_file = install_dir + config_file;
   Config::parse_file(config_file, file_desc());
