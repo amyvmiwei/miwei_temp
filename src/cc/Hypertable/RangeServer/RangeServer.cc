@@ -303,6 +303,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_master_connection_handler = new ConnectionHandler(m_comm, m_app_queue, this);
   Global::location_initializer = new LocationInitializer(m_props);
   m_master_client->initiate_connection(m_master_connection_handler, Global::location_initializer);
+  Global::master_client = m_master_client;
 
   Global::location_initializer->wait_until_assigned();
 
@@ -597,11 +598,10 @@ void RangeServer::local_recover() {
 
       // Populated Global::work_queue
       {
-	ScopedLock lock(Global::mutex);
 	MetaLog::EntityTask *task_entity;
 	foreach(MetaLog::EntityPtr &entity, entities) {
 	  if ((task_entity = dynamic_cast<MetaLog::EntityTask *>(entity.get())) != 0)
-	    Global::work_queue.push_back(task_entity);
+	    Global::add_to_work_queue(task_entity);
 	}
       }
 

@@ -19,30 +19,35 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_METALOGENTITYTASKREMOVETRANSFERLOG_H
-#define HYPERTABLE_METALOGENTITYTASKREMOVETRANSFERLOG_H
+#ifndef HYPERTABLE_METALOGENTITYTASKACKNOWLEDGERELINQUISH_H
+#define HYPERTABLE_METALOGENTITYTASKACKNOWLEDGERELINQUISH_H
+
+#include "Common/md5.h"
 
 #include "MetaLogEntityTask.h"
 
 namespace Hypertable {
   namespace MetaLog {
 
-    class EntityTaskRemoveTransferLog : public EntityTask {
+    class EntityTaskAcknowledgeRelinquish : public EntityTask {
     public:
-      EntityTaskRemoveTransferLog(const EntityHeader &header_);
-      EntityTaskRemoveTransferLog(const String &transfer_log);
-      virtual ~EntityTaskRemoveTransferLog() { }
+      EntityTaskAcknowledgeRelinquish(const EntityHeader &header_);
+      EntityTaskAcknowledgeRelinquish(const String &loc, const TableIdentifier &t, const RangeSpec &rs);
+      virtual ~EntityTaskAcknowledgeRelinquish() { }
       virtual bool execute();
+      virtual void work_queue_add_hook();
       virtual size_t encoded_length() const;
       virtual void encode(uint8_t **bufp) const;
       virtual void decode(const uint8_t **bufp, size_t *remainp);
       virtual const String name();
       virtual void display(std::ostream &os);
 
-      String transfer_log;
+      String location;
+      TableIdentifierManaged table;
+      RangeSpecManaged range_spec;
     };
 
   } // namespace MetaLog
 } // namespace Hypertable
 
-#endif // HYPERTABLE_METALOGENTITYTASKREMOVETRANSFERLOG_H
+#endif // HYPERTABLE_METALOGENTITYTASKACKNOWLEDGERELINQUISH_H
