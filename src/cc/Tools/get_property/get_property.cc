@@ -55,21 +55,32 @@ namespace {
 
 } // local namespace
 
+#define TRY(exp, t)        \
+    try { cout << exp; goto bail; } catch (Exception &e) { if (t) throw e; }
 
-int main(int argc, char **argv) {
-
+int main(int argc, char **argv)
+{
   try {
     init_with_policy<Policies>(argc, argv);
-    if (properties->has(lookup_property))
-      cout << properties->get_str(lookup_property) << flush;
+    if (properties->has(lookup_property)) {
+      // issue 869: in order to avoid type conversion errors we have to try
+      // all available conversion functions
+      TRY(properties->get_str(lookup_property), false)
+      TRY(properties->get_bool(lookup_property), false)
+      TRY(properties->get_i16(lookup_property), false)
+      TRY(properties->get_i32(lookup_property), false)
+      TRY(properties->get_i64(lookup_property), false)
+      TRY(properties->get_f64(lookup_property), true)
+    }
     else {
-      cout << lookup_property << "-PROPERTY-DOES-NOT-EXIST" << flush;
-      _exit(-1);
+      cout << lookup_property << "-PROPERTY-DOES-NOT-EXIST";
     }
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    _exit(-1);
   }
+
+bail:
+  cout << flush;
   _exit(0);
 }
