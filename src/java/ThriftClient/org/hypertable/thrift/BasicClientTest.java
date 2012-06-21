@@ -93,7 +93,11 @@ public class BasicClientTest {
         List<Cell> cells = client.scanner_get_cells(scanner);
 
         while (cells.size() > 0) {
-          show(cells.toString());
+          for (Cell cell : cells) {
+            byte[] tmp = cell.getValue();
+            String s = new String(tmp);
+            show(s);
+          }
           cells = client.scanner_get_cells(scanner);
         }
       }
@@ -110,7 +114,11 @@ public class BasicClientTest {
         List<Cell> cells = client.scanner_get_cells(scanner);
 
         while (cells.size() > 0) {
-          show(cells.toString());
+          for (Cell cell : cells) {
+            byte[] tmp = cell.getValue();
+            String s = new String(tmp);
+            show(s);
+          }
           cells = client.scanner_get_cells(scanner);
         }
       }
@@ -159,12 +167,12 @@ public class BasicClientTest {
 
         int num_flushes=0;
         while (true) {
-	  result = client.future_get_result(future, 0);
+          result = client.future_get_result(future, 0);
           if (result.is_empty || result.is_error || result.is_scan)
             break;
           num_flushes++;
         }
-        if (num_flushes>2) {
+        if (num_flushes > 2) {
           System.out.println("Expected 2 flushes, received " + num_flushes);
           System.exit(1);
         }
@@ -187,14 +195,16 @@ public class BasicClientTest {
         energy_scanner = client.async_scanner_open(ns, "FruitEnergy", future, ss);
         Result result;
         while (true) {
-	  result = client.future_get_result(future, 0);
+          result = client.future_get_result(future, 0);
           if (result.is_empty || result.is_error || !result.is_scan)
             break;
-          for(int ii=0; ii< result.cells.size(); ++ii) {
-            show(result.cells.toString());
+          for (Cell cell : result.cells) {
+            byte[] tmp = cell.getValue();
+            String s = new String(tmp);
+            show(s);
             num_cells++;
           }
-          if (num_cells >=6) {
+          if (num_cells >= 6) {
             client.future_cancel(future);
             break;
           }
