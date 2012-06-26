@@ -217,6 +217,7 @@ namespace Hypertable {
       m_prev_cf = m_counted_key.column_family_code;
       m_no_forward = true;
       m_count_present = false;
+      m_skip_remaining_counter = false;
     }
 
     inline void start_count(const Key &key, const ByteString &value) {
