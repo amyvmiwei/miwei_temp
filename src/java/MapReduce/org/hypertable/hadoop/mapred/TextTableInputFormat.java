@@ -161,6 +161,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   public void parseColumnPredicate(JobConf job) throws ParseException {
     ColumnPredicate cp = new ColumnPredicate();
     String str = job.get(COLUMN_PREDICATES);
+    if (str == null)
+      return;
     int offset = str.indexOf("=^");
     if (offset != -1) {
       cp.column_family = str.substring(0, offset).trim();
@@ -497,7 +499,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       }
     }
 
-  public boolean next(Text key, Text value) throws IOException {
+    public boolean next(Text key, Text value) throws IOException {
       try {
         if (m_eos)
           return false;
