@@ -1,0 +1,30 @@
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://hypertable.com
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+
+USE "/";
+
+DROP TABLE IF EXISTS TestIssue873;
+
+CREATE TABLE TestIssue873 (
+a COUNTER
+);
+
+INSERT INTO TestIssue873 VALUES ("r0", "a", "1");
+INSERT INTO TestIssue873 VALUES ("r1", "a", "1");
+SELECT * FROM TestIssue873;
+r0	a	1
+r1	a	1
+INSERT INTO TestIssue873 VALUES ("r0", "a", "1");
+SELECT * FROM TestIssue873;
+r0	a	2
+r1	a	1
+INSERT INTO TestIssue873 VALUES ("r0", "a", "=1"), ("r1", "a", "=1");
+SELECT * FROM TestIssue873;
+r0	a	1
+r1	a	1
+

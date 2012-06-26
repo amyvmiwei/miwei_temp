@@ -2484,17 +2484,17 @@ void RangeServer::update_qualify_and_transform() {
               uint8_t family=*(key.ptr+1+strlen((const char *)key.ptr+1)+1);
               Schema::ColumnFamily *cf = schema->get_column_family(family);
 
-	      // reset auto_revision if it's gotten behind
-	      if (uc->auto_revision < latest_range_revision) {
-		uc->auto_revision = Hypertable::get_ts64();
-		if (uc->auto_revision < latest_range_revision) {
+              // reset auto_revision if it's gotten behind
+              if (uc->auto_revision < latest_range_revision) {
+                uc->auto_revision = Hypertable::get_ts64();
+                if (uc->auto_revision < latest_range_revision) {
                   HT_THROWF(Error::RANGESERVER_REVISION_ORDER_ERROR,
-                            "Auto revision (%lld) is less than latest range "
-			    "revision (%lld) for range %s",
-                            (Lld)uc->auto_revision, (Lld)latest_range_revision,
-                            rulist->range->get_name().c_str());
-		}
-	      }
+                          "Auto revision (%lld) is less than latest range "
+                          "revision (%lld) for range %s",
+                          (Lld)uc->auto_revision, (Lld)latest_range_revision,
+                          rulist->range->get_name().c_str());
+                }
+              }
 
               // This will transform keys that need to be assigned a
               // timestamp and/or revision number by re-writing the key
@@ -2506,10 +2506,10 @@ void RangeServer::update_qualify_and_transform() {
               if (m_last_revision < latest_range_revision) {
                 if (m_last_revision != uc->auto_revision) {
                   HT_THROWF(Error::RANGESERVER_REVISION_ORDER_ERROR,
-                            "Supplied revision (%lld) is less than most recently "
-                            "seen revision (%lld) for range %s",
-                            (Lld)m_last_revision, (Lld)latest_range_revision,
-                            rulist->range->get_name().c_str());
+                          "Supplied revision (%lld) is less than most recently "
+                          "seen revision (%lld) for range %s",
+                          (Lld)m_last_revision, (Lld)latest_range_revision,
+                          rulist->range->get_name().c_str());
                 }
               }
             }
@@ -2583,10 +2583,10 @@ void RangeServer::update_qualify_and_transform() {
     {
       ScopedLock lock(m_update_commit_queue_mutex);
       if (m_profile_query) {
-	boost::xtime now;
-	boost::xtime_get(&now, TIME_UTC);
-	uc->qualify_time = xtime_diff_millis(uc->start_time, now);
-	uc->start_time = now;
+        boost::xtime now;
+        boost::xtime_get(&now, TIME_UTC);
+        uc->qualify_time = xtime_diff_millis(uc->start_time, now);
+        uc->start_time = now;
       }
       m_update_commit_queue.push_back(uc);
       m_update_commit_queue_cond.notify_all();
@@ -2721,12 +2721,12 @@ void RangeServer::update_commit() {
       coalesce_queue.push_back(uc);
       while (!coalesce_queue.empty()) {
         uc = coalesce_queue.front();
-	if (m_profile_query) {
-	  boost::xtime now;
-	  boost::xtime_get(&now, TIME_UTC);
-	  uc->commit_time = xtime_diff_millis(uc->start_time, now);
-	  uc->start_time = now;
-	}
+        if (m_profile_query) {
+          boost::xtime now;
+          boost::xtime_get(&now, TIME_UTC);
+          uc->commit_time = xtime_diff_millis(uc->start_time, now);
+          uc->start_time = now;
+        }
         coalesce_queue.pop_front();
         m_update_response_queue.push_back(uc);
       }
