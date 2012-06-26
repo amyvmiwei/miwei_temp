@@ -62,7 +62,7 @@ class PageArena : boost::noncopyable {
     }
 
     size_t
-    remain() { return page_end - alloc_end; }
+    remain() const { return page_end - alloc_end; }
 
     CharT *
     alloc(size_t sz) {
@@ -88,6 +88,32 @@ class PageArena : boost::noncopyable {
   size_t m_pages;       // number of pages allocated
   size_t m_total;       // total number of bytes occupied by pages
   PageAllocatorT m_page_allocator;
+
+  struct LtPageRemain {
+    bool operator()(const Page* p1, const Page*p2) const {
+      return p1->remain() < p2->remain();
+    }
+  };
+
+  typedef std::set<Page*, LtPageRemain> GappyPages;
+  GappyPages m_gappy_pages;
+  size_t m_gappy_limit;
+
+  struct TinyBuffer {
+    enum { SIZE = 128 };
+    CharT base[SIZE];
+    size_t fill;
+    inline TinyBuffer() : fill(0) { }
+    inline CharT *alloc(size_t sz) {
+      CharT *p = 0;
+      if (fill + sz <= SIZE) {
+        p = base + fill;
+        fill += sz;
+      }
+      return p;
+    }
+  };
+  TinyBuffer m_tinybuf;
 
  private: // helpers
   Page *
@@ -134,7 +160,7 @@ class PageArena : boost::noncopyable {
   PageArena(size_t page_size = DEFAULT_PAGE_SIZE,
             const PageAllocatorT &alloc = PageAllocatorT())
     : m_cur_page(0), m_used(0), m_page_limit(0), m_page_size(page_size),
-      m_pages(0), m_total(0), m_page_allocator(alloc) {
+      m_pages(0), m_total(0), m_page_allocator(alloc), m_gappy_limit(0) {
     BOOST_STATIC_ASSERT(sizeof(CharT) == 1);
     HT_ASSERT(page_size > sizeof(Page));
   }
@@ -150,14 +176,35 @@ class PageArena : boost::noncopyable {
   /** allocate sz bytes */
   CharT *
   alloc(size_t sz) {
+    CharT *tiny;
+    if ((tiny = m_tinybuf.alloc(sz)))
+      return tiny;
     m_used += sz;
     ensure_cur_page();
+
+    if (m_gappy_limit >= sz) {
+      Page f((const char*)sz);
+      f.alloc_end = 0;
+      typename GappyPages::iterator it = m_gappy_pages.lower_bound(&f);
+      Page* page = *it;
+      CharT *p = page->alloc(sz);
+      m_gappy_pages.erase(it);
+      if (page->remain() >= TinyBuffer::SIZE) {
+        m_gappy_pages.insert(page);
+      }
+      m_gappy_limit = m_gappy_pages.size() ? (*m_gappy_pages.rbegin())->remain() : 0;
+      return p;
+    }
 
     // common case
     if (HT_LIKELY(sz <= m_cur_page->remain()))
       return m_cur_page->alloc(sz);
 
     if (is_normal_overflow(sz)) {
+      if (m_cur_page->remain() >= TinyBuffer::SIZE) {
+        m_gappy_pages.insert(m_cur_page);
+        m_gappy_limit = (*m_gappy_pages.rbegin())->remain();
+      }
       m_cur_page = alloc_page(m_page_size);
       return m_cur_page->alloc(sz);
     }
@@ -166,31 +213,10 @@ class PageArena : boost::noncopyable {
 
   /** allocate sz bytes */
   CharT *
-  alloc_aligned(size_t sz) {
-    m_used += sz;
-    ensure_cur_page();
-
-    size_t align_offset = get_align_offset(m_cur_page->alloc_end);
-    size_t adjusted_sz = sz + align_offset;
-
-    // common case
-    if (HT_LIKELY(adjusted_sz <= m_cur_page->remain())) {
-      m_used += align_offset;
-      return m_cur_page->alloc(adjusted_sz) + align_offset;
-    }
-    if (is_normal_overflow(sz)) {
-      m_cur_page = alloc_page(m_page_size);
-      return m_cur_page->alloc(sz);
-    }
-    return alloc_big(sz);
-  }
-
-  /**
-   * allocate from the end of the page.
-   * - allow better packing/space saving for certain scenarios
-   */
-  CharT *
   alloc_down(size_t sz) {
+    CharT *tiny;
+    if ((tiny = m_tinybuf.alloc(sz)))
+      return tiny;
     m_used += sz;
     ensure_cur_page();
 
@@ -256,6 +282,10 @@ class PageArena : boost::noncopyable {
     }
     m_page_allocator.freed(m_total);
     m_pages = m_total = m_used = 0;
+
+    m_tinybuf = TinyBuffer();
+    m_gappy_pages.clear();
+    m_gappy_limit = 0;
   }
 
   /** swap with another allocator efficiently */
@@ -267,6 +297,9 @@ class PageArena : boost::noncopyable {
     std::swap(m_pages, x.m_pages);
     std::swap(m_total, x.m_total);
     std::swap(m_used, x.m_used);
+    std::swap(m_tinybuf, x.m_tinybuf);
+    std::swap(m_gappy_pages, x.m_gappy_pages);
+    std::swap(m_gappy_limit, x.m_gappy_limit);
   }
 
   /** dump some allocator stats */

@@ -46,7 +46,7 @@ struct PageArenaAllocator : public ArenaAllocatorBase<T, ArenaT> {
     check_allocate_size(sz);
 
     if (HT_LIKELY(Base::arena() != NULL))
-      return (pointer)(Base::arena()->alloc_aligned(sz * sizeof(T)));
+      return (pointer)(Base::arena()->alloc(sz * sizeof(T)));
 
     return default_allocate(sz);
   }
