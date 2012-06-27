@@ -25,21 +25,22 @@
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
 
-EntityRange::EntityRange(int32_t type) : Entity(type), needs_compaction(false), load_acknowledged(false) { }
+bool EntityRange::encountered_upgrade = false;
 
 EntityRange::EntityRange(const EntityHeader &header_) : Entity(header_) { }
 
 EntityRange::EntityRange(const TableIdentifier &identifier,
                          const RangeSpec &range, const RangeState &state_,
                          bool needs_compaction_)
-  : Entity(EntityType::RANGE), table(identifier), spec(range), state(state_),
+  : Entity(EntityType::RANGE2), table(identifier), spec(range), state(state_),
     needs_compaction(needs_compaction_), load_acknowledged(false) {
 }
 
 
 size_t EntityRange::encoded_length() const {
   return table.encoded_length() + spec.encoded_length() +
-    state.encoded_length() + 2;
+    state.encoded_length() + 2 + 
+    Serialization::encoded_length_vstr(original_transfer_log);
 }
 
 
@@ -49,6 +50,7 @@ void EntityRange::encode(uint8_t **bufp) const {
   state.encode(bufp);
   Serialization::encode_bool(bufp, needs_compaction);
   Serialization::encode_bool(bufp, load_acknowledged);
+  Serialization::encode_vstr(bufp, original_transfer_log);
 }
 
 void EntityRange::decode(const uint8_t **bufp, size_t *remainp) {
@@ -57,6 +59,12 @@ void EntityRange::decode(const uint8_t **bufp, size_t *remainp) {
   state.decode(bufp, remainp);
   needs_compaction = Serialization::decode_bool(bufp, remainp);
   load_acknowledged = Serialization::decode_bool(bufp, remainp);
+  if (header.type == EntityType::RANGE2)
+    original_transfer_log = Serialization::decode_vstr(bufp, remainp);
+  else {
+    header.type = EntityType::RANGE2;
+    encountered_upgrade = true;
+  }
 }
 
 const String EntityRange::name() {
@@ -67,5 +75,6 @@ void EntityRange::display(std::ostream &os) {
   os << " " << table << " " << spec << " " << state << " ";
   os << "needs_compaction=" << (needs_compaction ? "true" : "false") << " ";
   os << "load_acknowledged=" << (load_acknowledged ? "true" : "false") << " ";
+  os << "original_transfer_log=" << original_transfer_log << " ";
 }
 

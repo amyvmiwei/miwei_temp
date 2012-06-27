@@ -140,10 +140,11 @@ void OperationMoveRange::execute() {
 
       addr.set_proxy(m_location);
       range_state.soft_limit = m_soft_limit;
+      range_state.transfer_log = m_transfer_log.c_str();
       if (m_context->test_mode)
         HT_WARNF("Skipping %s::load_range() because in TEST MODE", m_location.c_str());
       else
-        rsc.load_range(addr, *table, *range, m_transfer_log.c_str(), range_state, !m_is_split);
+        rsc.load_range(addr, *table, *range, range_state, !m_is_split);
     }
     catch (Exception &e) {
       if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED) {

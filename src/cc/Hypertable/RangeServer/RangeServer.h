@@ -82,8 +82,8 @@ namespace Hypertable {
     void destroy_scanner(ResponseCallback *cb, uint32_t scanner_id);
     void fetch_scanblock(ResponseCallbackFetchScanblock *, uint32_t scanner_id);
     void load_range(ResponseCallback *, const TableIdentifier *,
-                    const RangeSpec *, const char *transfer_log_dir,
-                    const RangeState *, bool needs_compaction);
+                    const RangeSpec *, const RangeState *,
+		    bool needs_compaction);
     void acknowledge_load(ResponseCallback *, const TableIdentifier *,
                           const RangeSpec *);
     void update_schema(ResponseCallback *, const TableIdentifier *,

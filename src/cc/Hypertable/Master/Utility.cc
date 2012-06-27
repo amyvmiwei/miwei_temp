@@ -301,7 +301,7 @@ void create_table_load_range(ContextPtr &context, const String &location, TableI
       range_state.soft_limit = context->range_split_size;
     else
       range_state.soft_limit = context->range_split_size / std::min(64, (int)context->server_count()*2);
-    rsc.load_range(addr, *table, range, 0, range_state, needs_compaction);
+    rsc.load_range(addr, *table, range, range_state, needs_compaction);
   }
   catch (Exception &e) {
     if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED)

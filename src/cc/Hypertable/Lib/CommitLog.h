@@ -28,7 +28,6 @@
 
 #include <boost/thread/xtime.hpp>
 
-#include "Common/Mutex.h"
 #include "Common/DynamicBuffer.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
@@ -136,8 +135,11 @@ namespace Hypertable {
      * a revision that is less than the given revision.
      *
      * @param revision real cutoff revision
+     * @param remove_ok set of md5 hashes of logs that are ok to remove
      */
-    int purge(int64_t revision);
+    int purge(int64_t revision, std::set<int64_t> remove_ok);
+
+    void remove_linked_log(const String &log_dir);
 
     /**
      * Fills up a map of cumulative fragment size data.  One entry per log
@@ -190,7 +192,6 @@ namespace Hypertable {
     int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header,
                            int64_t revision, bool sync);
 
-    Mutex                   m_mutex;
     FilesystemPtr           m_fs;
     BlockCompressionCodec  *m_compressor;
     String                  m_cur_fragment_fname;

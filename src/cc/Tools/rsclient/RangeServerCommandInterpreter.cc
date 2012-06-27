@@ -157,7 +157,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       range_state.soft_limit = 200000000LL;
 
-      m_range_server->load_range(m_addr, *table, range, 0, range_state, false);
+      m_range_server->load_range(m_addr, *table, range, range_state, false);
 
       m_range_server->acknowledge_load(m_addr, *table, range);
 
