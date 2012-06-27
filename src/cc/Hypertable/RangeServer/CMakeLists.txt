@@ -76,10 +76,12 @@ MaintenanceTaskCompaction.cc
 MaintenanceTaskMemoryPurge.cc
 MaintenanceTaskRelinquish.cc
 MaintenanceTaskSplit.cc
+MaintenanceTaskWorkQueue.cc
 MergeScanner.cc
 MergeScannerRange.cc
 MergeScannerAccessGroup.cc
 MetaLogEntityRange.cc
+MetaLogEntityTaskRemoveTransferLog.cc
 MetaLogDefinitionRangeServer.cc
 MetadataNormal.cc
 MetadataRoot.cc

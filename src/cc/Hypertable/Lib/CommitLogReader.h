@@ -74,7 +74,6 @@ namespace Hypertable {
     CompressorMap          m_compressor_map;
     uint16_t               m_compressor_type;
     BlockCompressionCodec *m_compressor;
-
   };
 
   typedef intrusive_ptr<CommitLogReader> CommitLogReaderPtr;

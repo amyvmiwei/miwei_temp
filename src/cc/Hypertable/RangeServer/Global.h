@@ -44,6 +44,7 @@
 #include "LocationInitializer.h"
 #include "MaintenanceQueue.h"
 #include "MemoryTracker.h"
+#include "MetaLogEntityTask.h"
 #include "ScannerMap.h"
 #include "TableInfo.h"
 
@@ -97,6 +98,7 @@ namespace Hypertable {
     static int32_t        merge_cellstore_run_length_threshold;
     static bool           ignore_clock_skew_errors;
     static ConnectionManagerPtr conn_manager;
+    static std::vector<MetaLog::EntityTaskPtr> work_queue;
   };
 
 } // namespace Hypertable

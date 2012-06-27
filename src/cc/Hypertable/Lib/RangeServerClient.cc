@@ -93,29 +93,29 @@ RangeServerClient::metadata_sync(const CommAddress &addr, const String &table_id
 void
 RangeServerClient::load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-    const char *transfer_log, const RangeState &range_state, bool needs_compaction) {
-  do_load_range(addr, table, range, transfer_log, range_state, needs_compaction,
+    const RangeState &range_state, bool needs_compaction) {
+  do_load_range(addr, table, range, range_state, needs_compaction,
                 m_default_timeout_ms);
 }
 
 void
 RangeServerClient::load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-    const char *transfer_log, const RangeState &range_state, bool needs_compaction,
+    const RangeState &range_state, bool needs_compaction,
     Timer &timer) {
-  do_load_range(addr, table, range, transfer_log, range_state, needs_compaction,
+  do_load_range(addr, table, range, range_state, needs_compaction,
                 timer.remaining());
 }
 
 void
 RangeServerClient::do_load_range(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-    const char *transfer_log, const RangeState &range_state, bool needs_compaction,
+    const RangeState &range_state, bool needs_compaction,
     uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_load_range(table, range,
-                 transfer_log, range_state, needs_compaction));
+                 range_state, needs_compaction));
 
   send_message(addr, cbp, &sync_handler, timeout_ms);
 

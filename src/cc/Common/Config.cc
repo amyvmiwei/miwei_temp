@@ -376,6 +376,8 @@ void DefaultPolicy::init_options() {
         "Host of DFS Broker to use for Commit Log")
     ("Hypertable.RangeServer.CommitLog.DfsBroker.Port", i16(),
         "Port of DFS Broker to use for Commit Log")
+    ("Hypertable.RangeServer.CommitLog.FragmentRemoval.RangeReferenceRequired", boo()->default_value(true),
+        "Only remove linked log fragments if they're part of a transfer log referenced by a range")
     ("Hypertable.RangeServer.CommitLog.PruneThreshold.Min", i64()->default_value(1*G),
         "Lower threshold for amount of outstanding commit log before pruning")
     ("Hypertable.RangeServer.CommitLog.PruneThreshold.Max", i64(),

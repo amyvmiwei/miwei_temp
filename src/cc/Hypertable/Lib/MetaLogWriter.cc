@@ -168,6 +168,31 @@ void Writer::write_header() {
 }
 
 
+void Writer::record_state_and_removal(Entity *state_entity, Entity *removal_entity) {
+  ScopedLock lock(m_mutex);
+  StaticBuffer buf(EntityHeader::LENGTH + state_entity->encoded_length() + EntityHeader::LENGTH);
+  boost::shared_array<uint8_t> backup_buf( new uint8_t [EntityHeader::LENGTH + state_entity->encoded_length() + EntityHeader::LENGTH] );
+  uint8_t *ptr = buf.base;
+
+  if (m_fd == -1)
+    HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
+
+  state_entity->encode_entry( &ptr );
+
+  removal_entity->header.flags |= EntityHeader::FLAG_REMOVE;
+  removal_entity->header.length = 0;
+  removal_entity->header.checksum = 0;
+
+  removal_entity->header.encode( &ptr );
+
+  HT_ASSERT((ptr-buf.base) == (ptrdiff_t)buf.size);
+  memcpy(backup_buf.get(), buf.base, buf.size);
+
+  m_fs->append(m_fd, buf, Filesystem::O_FLUSH);
+  FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
+  m_offset += buf.size;
+}
+
 
 void Writer::record_state(Entity *entity) {
   ScopedLock lock(m_mutex);

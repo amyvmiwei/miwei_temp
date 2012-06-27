@@ -102,27 +102,25 @@ namespace Hypertable {
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
-     * @param transfer_log transfer log
      * @param range_state range state
      * @param needs_compaction if true range needs compaction after load
      */
     void load_range(const CommAddress &addr, const TableIdentifier &table,
-                    const RangeSpec &range, const char *transfer_log,
-                    const RangeState &range_state, bool needs_compaction);
+                    const RangeSpec &range, const RangeState &range_state,
+		    bool needs_compaction);
 
     /** Issues a synchronous "load range" request with timer.
      *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
-     * @param transfer_log transfer log
      * @param range_state range state
      * @param needs_compaction if true range needs compaction after load
      * @param timer timer
      */
     void load_range(const CommAddress &addr, const TableIdentifier &table,
-                    const RangeSpec &range, const char *transfer_log,
-                    const RangeState &range_state, bool needs_compaction, Timer &timer);
+                    const RangeSpec &range,  const RangeState &range_state,
+		    bool needs_compaction, Timer &timer);
 
     /** Issues a synchronous "acknowledge load" request.
      *
@@ -622,9 +620,8 @@ namespace Hypertable {
   private:
 
     void do_load_range(const CommAddress &addr, const TableIdentifier &table,
-                       const RangeSpec &range, const char *transfer_log,
-                       const RangeState &range_state, bool needs_compaction,
-                       uint32_t timeout_ms);
+                       const RangeSpec &range, const RangeState &range_state,
+		       bool needs_compaction, uint32_t timeout_ms);
     void do_update(const CommAddress &addr, const TableIdentifier &table,
                    uint32_t count, StaticBuffer &buffer, uint32_t flags,
                    uint32_t timeout_ms);

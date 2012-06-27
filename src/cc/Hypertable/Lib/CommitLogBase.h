@@ -24,6 +24,9 @@
 
 #include <deque>
 
+#include <boost/algorithm/string.hpp>
+
+#include "Common/Mutex.h"
 #include "Common/String.h"
 
 #include "KeySpec.h"
@@ -36,6 +39,7 @@ namespace Hypertable {
     uint32_t   num;
     uint64_t   size;
     int64_t    revision;
+    int64_t    log_dir_hash;
     bool       purge_log_dir;
     CommitLogBlockStream *block_stream;
   } CommitLogFileInfo;
@@ -55,17 +59,22 @@ namespace Hypertable {
   class CommitLogBase : public ReferenceCount {
   public:
     CommitLogBase(const String &log_dir)
-      : m_log_dir(log_dir), m_latest_revision(TIMESTAMP_MIN) {
-      size_t lastslash = log_dir.find_last_of('/');
+      : m_log_dir(log_dir), m_latest_revision(TIMESTAMP_MIN), m_range_reference_required(true) {
 
-      if (lastslash == log_dir.length()-1)
-        lastslash = log_dir.find_last_of('/', log_dir.length()-2);
+      boost::trim_right_if(m_log_dir, boost::is_any_of("/"));
+      
+      size_t lastslash = m_log_dir.find_last_of('/');
 
-      m_log_name = (lastslash == String::npos) ? log_dir
-                                               : log_dir.substr(lastslash+1);
+      m_log_name = (lastslash == String::npos) ? m_log_dir
+                                               : m_log_dir.substr(lastslash+1);
     }
 
+    /**
+     * This method assumes that the other commit log is not being
+     * concurrently used which is why it doesn't lock it's mutex
+     */
     void stitch_in(CommitLogBase *other) {
+      ScopedLock lock(m_mutex);
       for (LogFragmentQueue::iterator iter = other->m_fragment_queue.begin();
            iter != other->m_fragment_queue.end(); iter++)
         m_fragment_queue.push_back(*iter);
@@ -75,16 +84,20 @@ namespace Hypertable {
 
     int64_t get_latest_revision() { return m_latest_revision; }
 
-    bool empty() { return m_fragment_queue.empty(); }
+    bool empty() { ScopedLock lock(m_mutex); return m_fragment_queue.empty(); }
 
     std::set<int64_t> &get_linked_log_set() { return m_linked_logs; }
 
+    bool range_reference_required() { return m_range_reference_required; }
+
   protected:
+    Mutex             m_mutex;
     String            m_log_dir;
     String            m_log_name;
     LogFragmentQueue  m_fragment_queue;
     int64_t           m_latest_revision;
     std::set<int64_t> m_linked_logs;
+    bool m_range_reference_required;
   };
 
   typedef intrusive_ptr<CommitLogBase> CommitLogBasePtr;

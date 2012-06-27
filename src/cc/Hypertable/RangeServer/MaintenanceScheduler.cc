@@ -20,6 +20,7 @@
  */
 #include "Common/Compat.h"
 #include "Common/Config.h"
+#include "Common/md5.h"
 #include "Common/SystemInfo.h"
 
 #include <algorithm>
@@ -35,6 +36,7 @@
 #include "MaintenanceTaskMemoryPurge.h"
 #include "MaintenanceTaskRelinquish.h"
 #include "MaintenanceTaskSplit.h"
+#include "MaintenanceTaskWorkQueue.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -68,6 +70,22 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPt
   m_merges_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MergesPerInterval",
                                   std::numeric_limits<int32_t>::max());
   m_move_compactions_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MoveCompactionsPerInterval");
+
+  /** 
+   * This code adds hashes for the four primary commit log
+   * directories to the m_log_hashes set.  This set is passed
+   * into CommitLog::purge to tell the commit log that fragments
+   * from these directories are OK to remove.
+   */
+  String log_dir = Global::log_dir + "/root";
+  m_log_hashes.insert( md5_hash(log_dir.c_str()) );
+  log_dir = Global::log_dir + "/metadata";
+  m_log_hashes.insert( md5_hash(log_dir.c_str()) );
+  log_dir = Global::log_dir + "/system";
+  m_log_hashes.insert( md5_hash(log_dir.c_str()) );
+  log_dir = Global::log_dir + "/user";
+  m_log_hashes.insert( md5_hash(log_dir.c_str()) );
+
 }
 
 
@@ -162,11 +180,12 @@ void MaintenanceScheduler::schedule() {
    * Purge commit log fragments
    */
   {
-    int64_t revision_user = Global::user_log ? Global::user_log->get_latest_revision() : TIMESTAMP_MIN;
-    int64_t revision_metadata = Global::metadata_log ? Global::metadata_log->get_latest_revision() : TIMESTAMP_MIN;
-    int64_t revision_system = Global::system_log ? Global::system_log->get_latest_revision() : TIMESTAMP_MIN;
-    int64_t revision_root = Global::root_log ? Global::root_log->get_latest_revision() : TIMESTAMP_MIN;
+    int64_t revision_user = TIMESTAMP_MAX;
+    int64_t revision_metadata = TIMESTAMP_MAX;
+    int64_t revision_system = TIMESTAMP_MAX;
+    int64_t revision_root = TIMESTAMP_MAX;
     AccessGroup::CellStoreMaintenanceData *cs_data;
+    std::set<int64_t> log_dir_hashes = m_log_hashes;
 
     trace_str += String("before revision_root\t") + revision_root + "\n";
     trace_str += String("before revision_metadata\t") + revision_metadata + "\n";
@@ -174,6 +193,8 @@ void MaintenanceScheduler::schedule() {
     trace_str += String("before revision_user\t") + revision_user + "\n";
 
     for (size_t i=0; i<range_data.size(); i++) {
+
+      log_dir_hashes.insert(range_data[i]->log_hash);
 
       if (range_data[i]->needs_major_compaction && priority <= m_move_compactions_per_interval) {
         range_data[i]->priority = priority++;
@@ -193,23 +214,19 @@ void MaintenanceScheduler::schedule() {
 
         if (ag_data->earliest_cached_revision != TIMESTAMP_MAX) {
           if (range_data[i]->range->is_root()) {
-            if (revision_root == TIMESTAMP_MIN || 
-                ag_data->earliest_cached_revision < revision_root)
+            if (ag_data->earliest_cached_revision < revision_root)
               revision_root = ag_data->earliest_cached_revision;
           }
           else if (range_data[i]->is_metadata) {
-            if (revision_metadata == TIMESTAMP_MIN ||
-                ag_data->earliest_cached_revision < revision_metadata)
+            if (ag_data->earliest_cached_revision < revision_metadata)
               revision_metadata = ag_data->earliest_cached_revision;
           }
           else if (range_data[i]->is_system) {
-            if (revision_system == TIMESTAMP_MIN ||
-                ag_data->earliest_cached_revision < revision_system)
+            if (ag_data->earliest_cached_revision < revision_system)
               revision_system = ag_data->earliest_cached_revision;
           }
           else {
-            if (revision_user == TIMESTAMP_MIN ||
-                ag_data->earliest_cached_revision < revision_user)
+            if (ag_data->earliest_cached_revision < revision_user)
               revision_user = ag_data->earliest_cached_revision;
           }
         }
@@ -222,16 +239,16 @@ void MaintenanceScheduler::schedule() {
     trace_str += String("after revision_user\t") + revision_user + "\n";
 
     if (Global::root_log)
-      Global::root_log->purge(revision_root);
+      Global::root_log->purge(revision_root, log_dir_hashes);
 
     if (Global::metadata_log)
-      Global::metadata_log->purge(revision_metadata);
+      Global::metadata_log->purge(revision_metadata, log_dir_hashes);
 
     if (Global::system_log)
-      Global::system_log->purge(revision_system);
+      Global::system_log->purge(revision_system, log_dir_hashes);
 
     if (Global::user_log)
-      Global::user_log->purge(revision_user);
+      Global::user_log->purge(revision_user, log_dir_hashes);
   }
 
   {
@@ -346,6 +363,15 @@ void MaintenanceScheduler::schedule() {
       }
     }
   }
+
+  MaintenanceTaskWorkQueue *task = 0;
+  {
+    ScopedLock lock(Global::mutex);
+    if (!Global::work_queue.empty())
+      task = new MaintenanceTaskWorkQueue(3, 0, Global::work_queue);
+  }
+  if (task)
+    Global::maintenance_queue->add(task);
 
   //cout << flush << trace_str << flush;
 

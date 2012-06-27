@@ -43,6 +43,7 @@
 #include "LoadMetricsRange.h"
 #include "MaintenanceFlag.h"
 #include "MetaLogEntityRange.h"
+#include "MetaLogEntityTask.h"
 #include "Metadata.h"
 #include "RangeMaintenanceGuard.h"
 #include "RangeSet.h"
@@ -99,6 +100,7 @@ namespace Hypertable {
       bool     relinquish;
       bool     needs_major_compaction;
       bool     needs_split;
+      int64_t  log_hash;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
@@ -325,6 +327,8 @@ namespace Hypertable {
 
     void split_install_log_rollback_metadata();
 
+    void maybe_create_log_removal_task(MetaLog::EntityTaskPtr &log_removal_task);
+
     // these need to be aligned
     uint64_t         m_scans;
     uint64_t         m_cells_scanned;
@@ -365,6 +369,7 @@ namespace Hypertable {
     bool             m_removed_from_working_set;
     int64_t          m_maintenance_generation;
     LoadMetricsRange m_load_metrics;
+    int64_t          m_log_hash;
   };
 
   typedef intrusive_ptr<Range> RangePtr;

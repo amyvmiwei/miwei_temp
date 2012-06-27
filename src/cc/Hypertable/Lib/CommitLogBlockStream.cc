@@ -58,7 +58,7 @@ void CommitLogBlockStream::load(const String &log_dir, const String &fragment) {
   if (m_fd != -1)
     close();
   m_fragment = fragment;
-  m_fname = log_dir + fragment;
+  m_fname = log_dir + "/" + fragment;
   m_log_dir = log_dir;
   m_cur_offset = 0;
   m_file_length = m_fs->length(m_fname);

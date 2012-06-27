@@ -29,6 +29,8 @@ extern "C" {
 #include <string.h>
 }
 
+#include<re2/re2.h>
+
 #include <boost/algorithm/string.hpp>
 
 #include "Common/Config.h"
@@ -47,6 +49,7 @@ extern "C" {
 #include "MergeScannerRange.h"
 #include "MetadataNormal.h"
 #include "MetadataRoot.h"
+#include "MetaLogEntityTaskRemoveTransferLog.h"
 #include "Range.h"
 
 using namespace Hypertable;
@@ -64,7 +67,8 @@ Range::Range(MasterClientPtr &master_client,
     m_split_off_high(false), m_added_inserts(0), m_range_set(range_set),
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
     m_relinquish(false), m_removed_from_working_set(false), m_maintenance_generation(0),
-    m_load_metrics(identifier->id, range->start_row, range->end_row) {
+    m_load_metrics(identifier->id, range->start_row, range->end_row),
+    m_log_hash(0) {
   m_metalog_entity = new MetaLog::EntityRange(*identifier, *range, *state, needs_compaction);
   initialize();
 }
@@ -78,12 +82,18 @@ Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
     m_split_threshold(0), m_split_off_high(false), m_added_inserts(0), m_range_set(range_set),
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
     m_relinquish(false), m_removed_from_working_set(false), m_maintenance_generation(0),
-    m_load_metrics(range_entity->table.id, range_entity->spec.start_row, range_entity->spec.end_row) {
+    m_load_metrics(range_entity->table.id, range_entity->spec.start_row, range_entity->spec.end_row),
+    m_log_hash(0) {
   initialize();
 }
 
 void Range::initialize() {
   AccessGroup *ag;
+
+  if (!(m_metalog_entity->state.transfer_log == 0 || *m_metalog_entity->state.transfer_log == 0)) {
+    HT_ASSERT(m_metalog_entity->state.transfer_log[strlen(m_metalog_entity->state.transfer_log)] != '/');
+    m_log_hash = md5_hash(m_metalog_entity->state.transfer_log);
+  }
 
   memset(m_added_deletes, 0, 3*sizeof(int64_t));
 
@@ -516,6 +526,8 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
 
   mdata->needs_major_compaction = m_metalog_entity->needs_compaction;
 
+  mdata->log_hash = m_log_hash;
+
   if (mutator)
     m_load_metrics.compute_and_store(mutator, now, mdata->load_factors,
                                      mdata->disk_used, mdata->memory_used);
@@ -556,6 +568,9 @@ void Range::relinquish_install_log() {
   String logname;
   time_t now = 0;
   AccessGroupVector  ag_vector(0);
+
+  if (m_metalog_entity->state.transfer_log)
+    m_metalog_entity->original_transfer_log = m_metalog_entity->state.transfer_log;
 
   {
     ScopedLock lock(m_schema_mutex);
@@ -687,12 +702,18 @@ void Range::relinquish_compact_and_finish() {
                               m_metalog_entity->state.transfer_log,
                               m_metalog_entity->state.soft_limit, false);
 
+  MetaLog::EntityTaskPtr log_removal_task;
+  maybe_create_log_removal_task(log_removal_task);
+
   /**
-   * Remove range from RSML
+   * Add the log removal task and remove range from RSML
    */
   for (int i=0; true; i++) {
     try {
-      Global::rsml_writer->record_removal(m_metalog_entity.get());
+      if (log_removal_task)
+	Global::rsml_writer->record_state_and_removal(log_removal_task.get(), m_metalog_entity.get());
+      else
+	Global::rsml_writer->record_removal(m_metalog_entity.get());
       break;
     }
     catch (Exception &e) {
@@ -704,6 +725,12 @@ void Range::relinquish_compact_and_finish() {
       HT_ERRORF("Problem recording removal for range %s", m_name.c_str());
       HT_FATAL_OUT << e << HT_END;
     }
+  }
+
+  // Add the log removal task to work queue
+  if (log_removal_task) {
+    ScopedLock lock(Global::mutex);
+    Global::work_queue.push_back(log_removal_task);
   }
 
   // Acknowledge RSML update
@@ -767,6 +794,9 @@ void Range::split_install_log() {
   std::vector<String> split_rows;
   char md5DigestStr[33];
   AccessGroupVector  ag_vector(0);
+
+  if (m_metalog_entity->state.transfer_log)
+    m_metalog_entity->original_transfer_log = m_metalog_entity->state.transfer_log;
 
   {
     ScopedLock lock(m_schema_mutex);
@@ -1151,8 +1181,16 @@ void Range::split_notify_master() {
   HT_MAYBE_FAIL("split-3");
   HT_MAYBE_FAIL_X("metadata-split-3", m_metalog_entity->table.is_metadata());
 
+  MetaLog::EntityTaskPtr log_removal_task;
+  maybe_create_log_removal_task(log_removal_task);
+
+  std::vector<MetaLog::Entity *> entities;
+  entities.push_back(m_metalog_entity.get());
+  if (log_removal_task)
+    entities.push_back(log_removal_task.get());
+
   /**
-   * Persist STEADY Metalog state
+   * Persist STEADY Metalog state and log removal task
    */
   {
     ScopedLock lock(m_mutex);
@@ -1161,7 +1199,7 @@ void Range::split_notify_master() {
   }
   for (int i=0; true; i++) {
     try {
-      Global::rsml_writer->record_state(m_metalog_entity.get());
+      Global::rsml_writer->record_state(entities);
       break;
     }
     catch (Exception &e) {
@@ -1174,6 +1212,12 @@ void Range::split_notify_master() {
                 m_name.c_str());
       HT_FATAL_OUT << e << HT_END;
     }
+  }
+
+  // Add the log removal task to work queue
+  if (log_removal_task) {
+    ScopedLock lock(Global::mutex);
+    Global::work_queue.push_back(log_removal_task);
   }
 
   // Acknowledge RSML update
@@ -1461,4 +1505,20 @@ std::ostream &Hypertable::operator<<(std::ostream &os, const Range::MaintenanceD
   os << "needs_major_compaction=" << (mdata.needs_major_compaction ? "true" : "false") << "\n";
   os << "needs_split=" << (mdata.needs_split ? "true" : "false") << "\n";
   return os;
+}
+
+
+/**
+ * Only create log removal task if the log looks like
+ * a transfer log.
+ */
+void Range::maybe_create_log_removal_task(MetaLog::EntityTaskPtr &log_removal_task) {
+  if (!m_metalog_entity->original_transfer_log.empty()) {
+    RE2 regex("\\/servers\\/[[:alnum:]]+\\/log\\/[[:digit:]]+\\/");
+    if (RE2::PartialMatch(m_metalog_entity->original_transfer_log.c_str(), regex))
+      log_removal_task = new MetaLog::EntityTaskRemoveTransferLog(m_metalog_entity->original_transfer_log);
+    else
+      HT_WARNF("Skipping log removal of '%s' because it does not look like a transfer log",
+	       m_metalog_entity->original_transfer_log.c_str());
+  }
 }
