@@ -48,6 +48,7 @@
 #include "OperationRenameTable.h"
 #include "OperationStatus.h"
 #include "OperationLoadBalancer.h"
+#include "OperationStop.h"
 #include "RangeServerConnection.h"
 #include "RemovalManager.h"
 
@@ -87,7 +88,6 @@ void ConnectionHandler::handle(EventPtr &event) {
     //event->display()
 
     try {
-
       // sanity check command code
       if (event->header.command < 0
           || event->header.command >= MasterProtocol::COMMAND_MAX)
@@ -128,6 +128,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case MasterProtocol::COMMAND_BALANCE:
         operation = new OperationLoadBalancer(m_context, event);
+        break;
+      case MasterProtocol::COMMAND_STOP:
+        operation = new OperationStop(m_context, event);
         break;
       case MasterProtocol::COMMAND_SHUTDOWN:
         HT_INFO("Received shutdown command");
@@ -174,8 +177,10 @@ void ConnectionHandler::handle(EventPtr &event) {
         HT_WARNF("%s", e.what());
       else
         HT_ERROR_OUT << e << HT_END;
-      operation->complete_error_no_log(e.code(), e.what());
-      m_context->response_manager->add_operation(operation);
+      if (operation) {
+        operation->complete_error_no_log(e.code(), e.what());
+        m_context->response_manager->add_operation(operation);
+      }
     }
   }
   else if (event->type == Event::DISCONNECT) {

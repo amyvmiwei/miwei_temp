@@ -124,6 +124,8 @@ namespace Hypertable {
 
     void balance(BalancePlan &plan, Timer *timer = 0);
 
+    void stop(const String &rsname, bool recover, Timer *timer = 0);
+
     void reload_master();
 
     void set_verbose_flag(bool verbose) { m_verbose = verbose; }

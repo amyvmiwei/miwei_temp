@@ -167,6 +167,15 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::create_stop_request(const String &rsname,
+          bool recover) {
+    CommHeader header(COMMAND_STOP);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(rsname) + 1);
+    cbuf->append_vstr(rsname);
+    cbuf->append_bool(recover);
+    return cbuf;
+  }
+
   const char *MasterProtocol::m_command_strings[] = {
     "create table",
     "get schema",
@@ -182,7 +191,8 @@ namespace Hypertable {
     "rename table",
     "relinquish acknowledge",
     "fetch result",
-    "balance"
+    "balance",
+    "stop"
   };
 
   const char *MasterProtocol::command_text(uint64_t command) {

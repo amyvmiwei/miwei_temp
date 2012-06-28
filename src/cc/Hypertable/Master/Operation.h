@@ -183,7 +183,8 @@ namespace Hypertable {
         OPERATION_MOVE_RANGE             = 0x00020011,
         OPERATION_RELINQUISH_ACKNOWLEDGE = 0x00020012,
         OPERATION_BALANCE                = 0x00020013,
-        OPERATION_LOAD_BALANCER          = 0x00020014
+        OPERATION_LOAD_BALANCER          = 0x00020014,
+        OPERATION_STOP                   = 0x00020015
       };
     }
   }
