@@ -103,6 +103,7 @@ namespace Hypertable {
       COMMAND_HEAPCHECK,
       COMMAND_COMPACT,
       COMMAND_METADATA_SYNC,
+      COMMAND_STOP,
       COMMAND_MAX
     };
 
@@ -287,6 +288,7 @@ namespace Hypertable {
       String input_file;
       String source;
       String destination;
+      String rs_name;
       int input_file_src;
       String header_file;
       int header_file_src;
@@ -377,6 +379,15 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         state.ns = String(str, end-str);
         trim_if(state.ns, is_any_of("'\""));
+      }
+      ParserState &state;
+    };
+
+    struct set_rangeserver {
+      set_rangeserver(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.rs_name = String(str, end-str);
+        trim_if(state.rs_name, is_any_of("'\""));
       }
       ParserState &state;
     };
@@ -1876,6 +1887,7 @@ namespace Hypertable {
           Token LISTING      = as_lower_d["listing"];
           Token ESC_HELP     = as_lower_d["\\h"];
           Token SELECT       = as_lower_d["select"];
+          Token STOP         = as_lower_d["stop"];
           Token START_TIME   = as_lower_d["start_time"];
           Token END_TIME     = as_lower_d["end_time"];
           Token FROM         = as_lower_d["from"];
@@ -2054,6 +2066,11 @@ namespace Hypertable {
             | heapcheck_statement[set_command(self.state, COMMAND_HEAPCHECK)]
             | compact_statement[set_command(self.state, COMMAND_COMPACT)]
             | metadata_sync_statement[set_command(self.state, COMMAND_METADATA_SYNC)]
+            | stop_statement[set_command(self.state, COMMAND_STOP)]
+            ;
+
+          stop_statement
+            = STOP >> user_identifier[set_rangeserver(self.state)]
             ;
 
           metadata_sync_statement
@@ -2767,6 +2784,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(compact_statement);
           BOOST_SPIRIT_DEBUG_RULE(metadata_sync_statement);
           BOOST_SPIRIT_DEBUG_RULE(metadata_sync_option_spec);
+          BOOST_SPIRIT_DEBUG_RULE(stop_statement);
           BOOST_SPIRIT_DEBUG_RULE(range_type);
 #endif
         }
@@ -2810,7 +2828,8 @@ namespace Hypertable {
           cell_spec, wait_for_maintenance_statement, move_range_statement,
           balance_statement, range_move_spec_list, range_move_spec,
           balance_option_spec, heapcheck_statement, compact_statement,
-          metadata_sync_statement, metadata_sync_option_spec, range_type;
+          metadata_sync_statement, metadata_sync_option_spec, stop_statement,
+          range_type;
       };
 
       ParserState &state;

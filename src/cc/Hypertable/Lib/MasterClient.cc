@@ -834,6 +834,43 @@ void MasterClient::balance(BalancePlan &plan, Timer *timer) {
 
 }
 
+void
+MasterClient::stop(const String &rsname, bool recover, Timer *timer)
+{
+  Timer tmp_timer(m_timeout_ms);
+  CommBufPtr cbp;
+  EventPtr event;
+  int64_t id = 0;
+  String label = "stop";
+
+  initialize(timer, tmp_timer);
+
+  try {
+    while (!timer->expired()) {
+      cbp = MasterProtocol::create_stop_request(rsname, recover);
+
+      if (!send_message(cbp, timer, event, label))
+        continue;
+      const uint8_t *ptr = event->payload + 4;
+      size_t remain = event->payload_len - 4;
+      id = decode_i64(&ptr, &remain);
+      break;
+    }
+
+    if (timer->expired()) {
+      ScopedLock lock(m_mutex);
+      HT_THROWF(Error::REQUEST_TIMEOUT,
+                "MasterClient operation %s to master %s failed", label.c_str(),
+                m_master_addr.format().c_str());
+    }
+  }
+  catch (Exception &e) {
+    if (e.code() != Error::MASTER_OPERATION_IN_PROGRESS)
+      HT_THROW2(e.code(), e, label);
+  }
+
+  fetch_result(id, timer, event, label);
+}
 
 void
 MasterClient::send_message_async(CommBufPtr &cbp, DispatchHandler *handler,

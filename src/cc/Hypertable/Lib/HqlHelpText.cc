@@ -1098,6 +1098,27 @@ namespace {
     0
   };
 
+  const char *help_text_stop[] = {
+    "",
+    "STOP",
+    "======",
+    "",
+    "    STOP rangeserver",
+    "",
+    "Description",
+    "-----------",
+    "",
+    "STOP is used to shutdown a RangeServer without triggering a recovery ",
+    "operation and moving all ranges of this RangeServer to other RangeServers.",
+    "",
+    "Examples",
+    "--------",
+    "",
+    "    STOP rs1",
+    "",
+    0
+  };
+
   const char *help_text_describe_table[] = {
     "",
     "DESCRIBE TABLE",
@@ -1892,6 +1913,7 @@ namespace {
     (*map)["delete"] = help_text_delete;
     (*map)["insert"] = help_text_insert;
     (*map)["select"] = help_text_select;
+    (*map)["stop"] = help_text_stop;
     (*map)["describe table"] = help_text_describe_table;
     (*map)["describe"] = help_text_describe_table;
     (*map)["show create table"] = help_text_show_create_table;
@@ -1931,6 +1953,7 @@ void HqlHelpText::install_range_server_client_text() {
   text_map["compact ranges"] = help_text_compact;
   text_map["contents"] = help_text_rsclient_contents;
   text_map["select"] = help_text_select;
+  text_map["stop"] = help_text_stop;
   text_map["create"] = help_text_create_scanner;
   text_map["create scanner"] = help_text_create_scanner;
   text_map["destroy"] = help_text_destroy_scanner;

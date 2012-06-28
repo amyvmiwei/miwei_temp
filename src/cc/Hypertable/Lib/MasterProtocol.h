@@ -53,7 +53,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_RELINQUISH_ACKNOWLEDGE= 12;
     static const uint64_t COMMAND_FETCH_RESULT          = 13;
     static const uint64_t COMMAND_BALANCE               = 14;
-    static const uint64_t COMMAND_MAX                   = 15;
+    static const uint64_t COMMAND_STOP                  = 15;
+    static const uint64_t COMMAND_MAX                   = 16;
 
     static const char *m_command_strings[];
 
@@ -89,6 +90,8 @@ namespace Hypertable {
     static CommBuf *create_shutdown_request();
 
     static CommBuf *create_balance_request(BalancePlan &plan);
+
+    static CommBuf *create_stop_request(const String &rsname, bool recover);
 
     virtual const char *command_text(uint64_t command);
 

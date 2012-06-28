@@ -83,6 +83,7 @@ namespace Hypertable {
       ALREADY_EXISTS                     = 48,
       CHECKSUM_MISMATCH                  = 49,
       CLOSED                             = 50,
+      RANGESERVER_NOT_FOUND              = 51,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

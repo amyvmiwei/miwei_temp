@@ -50,6 +50,7 @@ OperationStatus.cc
 OperationSystemUpgrade.cc
 OperationWaitForServers.cc
 OperationLoadBalancer.cc
+OperationStop.cc
 RangeServerConnection.cc
 RemovalManager.cc
 ResponseManager.cc
