@@ -103,8 +103,8 @@ namespace Hypertable {
                 m_state.threads_available--;
                 return;
               }
-	      if (m_state.threads_available == m_state.threads_total)
-		m_state.quiesce_cond.notify_all();
+              if (m_state.threads_available == m_state.threads_total)
+                m_state.quiesce_cond.notify_all();
               m_state.cond.wait(lock);
             }
 
@@ -121,6 +121,7 @@ namespace Hypertable {
               if (!rec->handler || rec->handler->expired()) {
                 iter = m_state.urgent_queue.erase(iter);
                 remove_expired(rec);
+                rec = 0;
                 continue;
               }
               if (rec->usage == 0 || !rec->usage->running) {
