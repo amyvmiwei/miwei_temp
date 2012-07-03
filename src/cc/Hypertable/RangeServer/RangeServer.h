@@ -147,6 +147,13 @@ namespace Hypertable {
 
     void shutdown();
 
+    void write_profile_data(const String &line) {
+      if (m_profile_query) {
+        ScopedLock lock(m_profile_mutex);
+        m_profile_query_out << line << "\n";
+      }
+    }
+
   protected:
 
     friend class UpdateThread;
@@ -269,6 +276,7 @@ namespace Hypertable {
     int32_t                m_control_file_check_interval;
     std::ofstream          m_profile_query_out;
     bool                   m_profile_query;
+    Mutex                  m_profile_mutex;
   };
 
   typedef intrusive_ptr<RangeServer> RangeServerPtr;
