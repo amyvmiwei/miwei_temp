@@ -196,6 +196,8 @@ namespace {
         "HYPERSPACE State DB node does not exist" },
     { Error::HYPERSPACE_STATEDB_NODE_ATTR_NOT_FOUND,
         "HYPERSPACE State DB node attr not found" },
+    { Error::HYPERSPACE_VERSION_MISMATCH,
+        "HYPERSPACE client/server protocol version mismatch" },
 
     { Error::MASTER_TABLE_EXISTS,         "MASTER table exists" },
     { Error::MASTER_BAD_SCHEMA,           "MASTER bad schema" },

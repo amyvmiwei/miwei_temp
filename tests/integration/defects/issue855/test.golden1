@@ -1,0 +1,10 @@
+SESSION CALLBACK: Safe
+
+Welcome to the hyperspace command interpreter.
+For information about Hypertable, visit http://hypertable.com
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+dump /;
+Error: Hyperspace 'open' error, name=/ flags=0x1 events=0x0 - HYPERSPACE client/server protocol version mismatch

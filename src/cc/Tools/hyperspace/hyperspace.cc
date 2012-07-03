@@ -28,6 +28,7 @@
 #include <boost/algorithm/string.hpp>
 #include <boost/thread/exceptions.hpp>
 
+#include "Common/FailureInducer.h"
 #include "Hyperspace/Config.h"
 #include "Hyperspace/Session.h"
 #include "Hyperspace/HsCommandInterpreter.h"
@@ -54,7 +55,6 @@ public:
 int main(int argc, char **argv) {
   typedef Cons<HyperspaceCommandShellPolicy, DefaultCommPolicy> MyPolicy;
 
-
   try {
     Comm *comm;
     CommandInterpreterPtr interp;
@@ -74,6 +74,11 @@ int main(int argc, char **argv) {
     interp->set_silent(shell->silent());
     interp->set_test_mode(shell->test_mode());
 
+    if (has("induce-failure")) {
+      if (FailureInducer::instance == 0)
+        FailureInducer::instance = new FailureInducer();
+      FailureInducer::instance->parse_option(get_str("induce-failure"));
+    }
 
     if(!session_ptr->wait_for_connection(30000)) {
       cerr << "Unable to establish connection with Hyperspace, exitting..."

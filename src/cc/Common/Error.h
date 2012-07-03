@@ -160,6 +160,8 @@ namespace Hypertable {
       HYPERSPACE_STATEDB_NODE_NOT_EXISTS           = 0x00030029,
       HYPERSPACE_STATEDB_NODE_ATTR_NOT_FOUND       = 0x0003002A,
 
+      HYPERSPACE_VERSION_MISMATCH                  = 0x00030030,
+
       MASTER_TABLE_EXISTS                    = 0x00040001,
       MASTER_BAD_SCHEMA                      = 0x00040002,
       MASTER_NOT_RUNNING                     = 0x00040003,

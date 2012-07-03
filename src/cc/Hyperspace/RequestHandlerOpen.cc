@@ -42,6 +42,22 @@ void RequestHandlerOpen::run() {
   const uint8_t *decode_ptr = m_event_ptr->payload;
   Attribute attr;
   std::vector<Attribute> attrs;
+  int32_t version = -1;
+
+  try {
+    version = Serialization::decode_i32(&decode_ptr, &decode_remain);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb.error(e.code(), "Error handling Hyperspace open");
+    return;
+  }
+
+  if (version != Protocol::VERSION) {
+    cb.error(Error::HYPERSPACE_VERSION_MISMATCH,
+            "Hyperspace client/server version mismatch");
+    return;
+  }
 
   try {
     uint32_t flags = decode_i32(&decode_ptr, &decode_remain);
