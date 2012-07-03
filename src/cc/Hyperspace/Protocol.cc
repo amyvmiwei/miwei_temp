@@ -26,6 +26,7 @@
 #include "Common/Error.h"
 #include "Common/Serialization.h"
 #include "Common/StringExt.h"
+#include "Common/FailureInducer.h"
 
 #include "AsyncComm/CommHeader.h"
 
@@ -156,14 +157,20 @@ CommBuf *
 Hyperspace::Protocol::create_open_request(const std::string &name,
     uint32_t flags, HandleCallbackPtr &callback,
     const std::vector<Attribute> &init_attrs) {
-  size_t len = 12 + encoded_length_vstr(name.size());
+  size_t len = 16 + encoded_length_vstr(name.size());
   CommHeader header(COMMAND_OPEN);
-  for (size_t i=0; i<init_attrs.size(); i++)
+  for (size_t i = 0; i < init_attrs.size(); i++)
     len += encoded_length_vstr(init_attrs[i].name)
            + encoded_length_vstr(init_attrs[i].value_len);
 
   CommBuf *cbuf = new CommBuf(header, len);
 
+  if (HT_FAILURE_SIGNALLED("bad-hyperspace-version")) {
+    cbuf->append_i32(Protocol::VERSION + 1);
+  }
+  else {
+    cbuf->append_i32(Protocol::VERSION);
+  }
   cbuf->append_i32(flags);
   if (callback)
     cbuf->append_i32(callback->get_event_mask());
