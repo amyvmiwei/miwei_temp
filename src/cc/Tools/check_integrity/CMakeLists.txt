@@ -17,21 +17,8 @@
 # 02110-1301, USA.
 #
 
-add_subdirectory(dfsclient)
-add_subdirectory(dumplog)
-add_subdirectory(generate_error_code_doc)
-add_subdirectory(hyperspace)
-add_subdirectory(hypertable)
-add_subdirectory(master_client)
-add_subdirectory(merge_diff)
-add_subdirectory(metalog_dump)
-add_subdirectory(prepend_md5)
-add_subdirectory(prune_tsv)
-add_subdirectory(rsclient)
-add_subdirectory(rsstat)
-add_subdirectory(serverup)
-add_subdirectory(Lib)
-add_subdirectory(load_generator)
-add_subdirectory(get_property)
-add_subdirectory(balance_plan_generator)
-add_subdirectory(check_integrity)
+# hypertable - command interpreter
+add_executable(check_integrity main.cc)
+target_link_libraries(check_integrity Hypertable)
+
+install (TARGETS check_integrity RUNTIME DESTINATION bin)

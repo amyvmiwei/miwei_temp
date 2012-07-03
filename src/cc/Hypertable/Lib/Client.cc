@@ -168,6 +168,10 @@ MasterClientPtr Client::get_master_client() {
   return m_master_client;
 }
 
+NameIdMapperPtr Client::get_nameid_mapper() {
+  return m_namemap;
+}
+
 void Client::close() {
   HT_WARN("close() is no longer supported");
 }
