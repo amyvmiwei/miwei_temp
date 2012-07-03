@@ -2882,10 +2882,11 @@ void RangeServer::update_add_and_respond() {
     }
 
     if (m_profile_query) {
+      ScopedLock lock(m_profile_mutex);
       boost::xtime now;
       boost::xtime_get(&now, TIME_UTC);
       uc->add_time = xtime_diff_millis(uc->start_time, now);
-      m_profile_query_out << "update\t" << uc->qualify_time << "\t" << uc->commit_time << "\t" << uc->add_time << "\n";
+      m_profile_query_out << now.sec << "\tupdate\t" << uc->qualify_time << "\t" << uc->commit_time << "\t" << uc->add_time << "\n";
     }
 
     delete uc;
@@ -3793,6 +3794,7 @@ void RangeServer::do_maintenance() {
     if (xtime_diff_millis(m_last_control_file_check, now) >= (int64_t)m_control_file_check_interval) {
       if (FileUtils::exists(System::install_dir + "/run/query-profile")) {
 	if (!m_profile_query) {
+          ScopedLock lock(m_profile_mutex);
 	  String output_fname = System::install_dir + "/run/query-profile.output";
 	  m_profile_query_out.open(output_fname.c_str(), ios_base::out|ios_base::app);
 	  m_profile_query = true;
@@ -3800,9 +3802,9 @@ void RangeServer::do_maintenance() {
       }
       else {
 	if (m_profile_query) {
-	  m_profile_query = false;
-	  poll(0, 0, 3000);
+          ScopedLock lock(m_profile_mutex);
 	  m_profile_query_out.close();
+	  m_profile_query = false;
 	}
       }
       m_last_control_file_check = now;      
