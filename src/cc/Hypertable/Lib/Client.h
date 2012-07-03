@@ -112,6 +112,8 @@ namespace Hypertable {
 
     MasterClientPtr get_master_client();
 
+    NameIdMapperPtr get_nameid_mapper();
+
     void close();
     void shutdown();
 
