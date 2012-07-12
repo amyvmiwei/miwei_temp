@@ -20,6 +20,7 @@
  */
 #include "Common/Compat.h"
 #include "Common/Config.h"
+#include "Common/Debug.h"
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
@@ -98,11 +99,15 @@ CommBuf *LocationInitializer::create_initialization_request() {
 }
 
 bool LocationInitializer::process_initialization_response(Event *event) {
+  int error = Protocol::response_code(event);
 
-  if (Protocol::response_code(event) != Error::OK) {
+  if (error != Error::OK) {
     HT_ERROR_OUT << "Problem initializing Master connection; event type: "
-        << event->type << ", event error: " << event->error << ", description: "
-        << Protocol::string_format_message(event) << HT_END;
+        << event->type << ", error: " << error << HT_END;
+    HT_ERROR_OUT << event->to_str() << HT_END;
+    String str;
+    Debug::binary_to_human_readable(event->payload, event->payload_len, str);
+    HT_ERROR_OUT << str << HT_END;
     return false;
   }
 

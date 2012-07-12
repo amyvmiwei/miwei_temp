@@ -24,6 +24,7 @@ set(Common_SRCS
 Abi.cc
 Checksum.cc
 Config.cc
+Debug.cc
 DiscreteRandomGenerator.cc
 DiscreteRandomGeneratorFactory.cc
 DiscreteRandomGeneratorZipf.cc
