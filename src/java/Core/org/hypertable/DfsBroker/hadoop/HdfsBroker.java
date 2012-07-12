@@ -35,6 +35,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.server.namenode.NotReplicatedYetException;
+import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import org.hypertable.AsyncComm.Comm;
@@ -380,19 +381,28 @@ public class HdfsBroker {
     /**
      *
      */
-    public void Length(ResponseCallbackLength cb, String fileName) {
+    public void Length(ResponseCallbackLength cb, String fileName,
+            boolean accurate) {
         int error = Error.OK;
         long length;
 
         try {
-
             if (mVerbose)
-                log.info("Getting length of file '" + fileName);
+                log.info("Getting length of file '" + fileName +
+                        "' (accurate: " + accurate + ")");
 
-            length = mFilesystem.getFileStatus(new Path(fileName)).getLen();
+            Path path = new Path(fileName);
+            if (accurate) {
+                DFSClient.DFSDataInputStream in =
+                    (DFSClient.DFSDataInputStream)mFilesystem.open(path);
+                length = in.getVisibleLength();
+                in.close();
+            }
+            else {
+                length = mFilesystem.getFileStatus(path).getLen();
+            }
 
             error = cb.response(length);
-
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);

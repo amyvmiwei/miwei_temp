@@ -42,8 +42,9 @@ void RequestHandlerLength::run() {
 
   try {
     const char *fname = decode_str16(&decode_ptr, &decode_remain);
+    bool accurate = decode_bool(&decode_ptr, &decode_remain);
 
-    m_broker->length(&cb, fname);
+    m_broker->length(&cb, fname, accurate);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

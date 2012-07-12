@@ -45,13 +45,12 @@ public class RequestHandlerLength extends ApplicationHandler {
         ResponseCallbackLength cb = new ResponseCallbackLength(mComm, mEvent);
 
         try {
-
             if ((fileName = Serialization.DecodeString(mEvent.payload)) == null)
                 throw new ProtocolException(
                     "Filename not properly encoded in request packet");
+            boolean accurate = mEvent.payload.get() == '\000' ? false : true;
 
-            mBroker.Length(cb, fileName);
-
+            mBroker.Length(cb, fileName, accurate);
         }
         catch (ProtocolException e) {
             int error = cb.error(Error.PROTOCOL_ERROR, e.getMessage());

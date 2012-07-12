@@ -62,13 +62,15 @@ namespace Hypertable { namespace DfsBroker {
       {};
     // Ctor
     FileDevice(ClientPtr &client, const String &filename,
-               BOOST_IOS::openmode mode = BOOST_IOS::in);
+                bool accurate_length = true,
+                BOOST_IOS::openmode mode = BOOST_IOS::in);
     // Dtor
     virtual ~FileDevice() { }
 
     // open
     virtual void open(ClientPtr &client, const String &filename,
-                      BOOST_IOS::openmode mode = BOOST_IOS::in);
+                bool accurate_length = true,
+                BOOST_IOS::openmode mode = BOOST_IOS::in);
     virtual bool is_open() const;
 
     // read
@@ -86,7 +88,7 @@ namespace Hypertable { namespace DfsBroker {
   private:
     struct impl {
       impl(ClientPtr &client, const String &filename,
-           BOOST_IOS::openmode mode)
+           bool accurate_length, BOOST_IOS::openmode mode)
            : m_client(client), m_filename(filename), m_open(false),
              m_bytes_read(0), m_bytes_written(0), m_length(0)
       {
@@ -94,7 +96,7 @@ namespace Hypertable { namespace DfsBroker {
         if (mode & BOOST_IOS::in) {
           if (!m_client->exists(filename))
             HT_THROW(Error::FILE_NOT_FOUND, (String)"dfs://" + filename);
-          m_length = m_client->length(filename);
+          m_length = m_client->length(filename, accurate_length);
           m_fd = m_client->open_buffered(filename, Filesystem::OPEN_FLAG_DIRECTIO,
                                          READAHEAD_BUFFER_SIZE, OUTSTANDING_READS);
         }
@@ -177,8 +179,9 @@ namespace Hypertable { namespace DfsBroker {
       {}
     virtual ~FileSource() { }
 
-    void open(ClientPtr &client, const String &filename) {
-      FileDevice::open(client, filename, BOOST_IOS::in);
+    void open(ClientPtr &client, const String &filename,
+            bool accurate_length = true) {
+      FileDevice::open(client, filename, accurate_length, BOOST_IOS::in);
     }
   };
 
@@ -194,12 +197,12 @@ namespace Hypertable { namespace DfsBroker {
     using FileDevice::bytes_written;
 
     FileSink(ClientPtr &client, const String &filename)
-      : FileDevice(client, filename, BOOST_IOS::out)
+      : FileDevice(client, filename, false, BOOST_IOS::out)
       {}
     virtual ~FileSink() { }
 
     void open(ClientPtr &client, const String &filename) {
-      FileDevice::open(client, filename, BOOST_IOS::out);
+      FileDevice::open(client, filename, false, BOOST_IOS::out);
     }
   };
 }} // namespace Hypertable::DfsBroker

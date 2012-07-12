@@ -58,7 +58,7 @@ namespace Hypertable {
 
       static CommBuf *create_remove_request(const String &fname);
 
-      static CommBuf *create_length_request(const String &fname);
+      static CommBuf *create_length_request(const String &fname, bool accurate);
 
       static CommBuf *create_position_read_request(int32_t fd, uint64_t offset,
                                                    uint32_t amount, bool verify_checksum);

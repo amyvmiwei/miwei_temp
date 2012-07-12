@@ -153,10 +153,12 @@ namespace Hypertable {
 
     /**
      */
-    CommBuf *Protocol::create_length_request(const String &fname) {
+    CommBuf *Protocol::create_length_request(const String &fname,
+            bool accurate) {
       CommHeader header(COMMAND_LENGTH);
-      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname));
+      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname) + 1);
       cbuf->append_str16(fname);
+      cbuf->append_bool(accurate);
       return cbuf;
     }
 

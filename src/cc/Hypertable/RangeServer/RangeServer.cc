@@ -511,7 +511,7 @@ namespace {
 
     try {
       if (!Global::log_dfs->exists(logdir))
-	return;
+        return;
       Global::log_dfs->readdir(logdir, listing);
     }
     catch (Hypertable::Exception &e) {
@@ -527,15 +527,16 @@ namespace {
     foreach (String &entry, listing) {
       String fragment_file = logdir + "/" + entry;
       try {
-	if (Global::log_dfs->length(fragment_file) == 0) {
-	  HT_INFOF("Removing log fragment '%s' because it has zero length", fragment_file.c_str());
-	  Global::log_dfs->remove(fragment_file);
-	}
-	else
-	  listing2.push_back(entry);
+        if (Global::log_dfs->length(fragment_file) == 0) {
+          HT_INFOF("Removing log fragment '%s' because it has zero length",
+                  fragment_file.c_str());
+          Global::log_dfs->remove(fragment_file);
+        }
+        else
+          listing2.push_back(entry);
       }
       catch (Hypertable::Exception &e) {
-	HT_FATALF("Unable to check fragment file '%s'", fragment_file.c_str());
+        HT_FATALF("Unable to check fragment file '%s'", fragment_file.c_str());
       }
     }
 

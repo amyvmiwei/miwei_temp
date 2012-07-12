@@ -56,7 +56,7 @@ CellStore *CellStoreFactory::open(const String &name,
   uint32_t oflags = 0;
 
   /** Get the file length **/
-  file_length = Global::dfs->length(name);
+  file_length = Global::dfs->length(name, false);
 
   bool second_try = false;
 

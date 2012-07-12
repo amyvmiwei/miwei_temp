@@ -420,8 +420,8 @@ Client::status() {
 
 
 void
-Client::length(const String &name, DispatchHandler *handler) {
-  CommBufPtr cbp(m_protocol.create_length_request(name));
+Client::length(const String &name, bool accurate, DispatchHandler *handler) {
+  CommBufPtr cbp(m_protocol.create_length_request(name, accurate));
 
   try { send_message(cbp, handler); }
   catch (Exception &e) {
@@ -432,10 +432,10 @@ Client::length(const String &name, DispatchHandler *handler) {
 
 
 int64_t
-Client::length(const String &name) {
+Client::length(const String &name, bool accurate) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event_ptr;
-  CommBufPtr cbp(m_protocol.create_length_request(name));
+  CommBufPtr cbp(m_protocol.create_length_request(name, accurate));
 
   try {
     send_message(cbp, &sync_handler);

@@ -190,7 +190,6 @@ CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
 void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) {
   vector<string> listing;
   CommitLogFileInfo *fi;
-  bool added_fragments = false;
   int mark = -1;
 
   try {
@@ -237,7 +236,6 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
         parent->references++;
       if (fi->size > 0) {
         m_fragment_queue.push_back(fi);
-        added_fragments = true;
       }
     }
   }
@@ -246,11 +244,12 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
     if (m_fragment_queue.empty() || mark < (int)m_fragment_queue.front()->num) {
       String mark_filename;
       try {
-	mark_filename = log_dir + "/" + mark + ".mark";
-	m_fs->remove(mark_filename);
+        mark_filename = log_dir + "/" + mark + ".mark";
+        m_fs->remove(mark_filename);
       }
       catch (Hypertable::Exception &e) {
-	HT_FATALF("Problem removing mark file '%s' - %s", mark_filename.c_str(), e.what());
+        HT_FATALF("Problem removing mark file '%s' - %s",
+                mark_filename.c_str(), e.what());
       }
     }
     else

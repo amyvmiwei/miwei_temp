@@ -30,14 +30,16 @@ using namespace boost::iostreams;
 
 
 
-FileDevice::FileDevice(ClientPtr &client, const String &filename, BOOST_IOS::openmode mode)
+FileDevice::FileDevice(ClientPtr &client, const String &filename,
+        bool accurate_length, BOOST_IOS::openmode mode)
 {
-  open(client, filename, mode);
+  open(client, filename, accurate_length, mode);
 }
 
-void FileDevice::open(ClientPtr &client, const String &filename, BOOST_IOS::openmode mode)
+void FileDevice::open(ClientPtr &client, const String &filename,
+        bool accurate_length, BOOST_IOS::openmode mode)
 {
-  pimpl_.reset(new impl(client, filename, mode));
+  pimpl_.reset(new impl(client, filename, accurate_length, mode));
 }
 
 bool FileDevice::is_open() const
