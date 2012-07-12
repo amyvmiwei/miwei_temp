@@ -59,6 +59,7 @@ atomic_t LocalBroker::ms_next_fd = ATOMIC_INIT(0);
 LocalBroker::LocalBroker(PropertiesPtr &cfg) {
   m_verbose = cfg->get_bool("verbose");
   m_directio = cfg->get_bool("DfsBroker.Local.DirectIO");
+  m_no_removal = cfg->get_bool("DfsBroker.DisableFileRemoval");
 
 #if defined(__linux__)
   // disable direct i/o for kernels < 2.6
@@ -352,11 +353,20 @@ void LocalBroker::remove(ResponseCallback *cb, const char *fname) {
   else
     abspath = m_rootdir + "/" + fname;
 
-  if (unlink(abspath.c_str()) == -1) {
-    report_error(cb);
-    HT_ERRORF("unlink failed: file='%s' - %s", abspath.c_str(),
-              strerror(errno));
-    return;
+  if (m_no_removal) {
+    String deleted_file = abspath + ".deleted";
+    if (!FileUtils::rename(abspath, deleted_file)) {
+      report_error(cb);
+      return;
+    }
+  }
+  else {
+    if (unlink(abspath.c_str()) == -1) {
+      report_error(cb);
+      HT_ERRORF("unlink failed: file='%s' - %s", abspath.c_str(),
+                strerror(errno));
+      return;
+    }
   }
 
   if ((error = cb->response_ok()) != Error::OK)
@@ -472,11 +482,20 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dname) {
     absdir = m_rootdir + "/" + dname;
 
   if (FileUtils::exists(absdir)) {
-    cmd_str = (String)"/bin/rm -rf " + absdir;
-    if (system(cmd_str.c_str()) != 0) {
-      HT_ERRORF("%s failed.", cmd_str.c_str());
-      cb->error(Error::DFSBROKER_IO_ERROR, cmd_str);
-      return;
+    if (m_no_removal) {
+      String deleted_file = absdir + ".deleted";
+      if (!FileUtils::rename(absdir, deleted_file)) {
+        report_error(cb);
+        return;
+      }
+    }
+    else {
+      cmd_str = (String)"/bin/rm -rf " + absdir;
+      if (system(cmd_str.c_str()) != 0) {
+        HT_ERRORF("%s failed.", cmd_str.c_str());
+        cb->error(Error::DFSBROKER_IO_ERROR, cmd_str);
+        return;
+      }
     }
   }
 
@@ -524,8 +543,15 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   }
 
   while (result != 0) {
+
     if (result->d_name[0] != '.' && result->d_name[0] != 0) {
-      listing.push_back((String)result->d_name);
+      if (m_no_removal) {
+        size_t len = strlen(result->d_name);
+        if (len <= 8 || strcmp(&result->d_name[len-8], ".deleted"))
+          listing.push_back((String)result->d_name);
+      }
+      else
+        listing.push_back((String)result->d_name);
       //HT_INFOF("readdir Adding listing '%s'", result->d_name);
     }
 

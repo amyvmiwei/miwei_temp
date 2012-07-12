@@ -107,9 +107,10 @@ namespace Hypertable {
 
     virtual void report_error(ResponseCallback *cb);
 
-    bool         m_verbose;
     String       m_rootdir;
+    bool         m_verbose;
     bool         m_directio;
+    bool         m_no_removal;
   };
 
 }
