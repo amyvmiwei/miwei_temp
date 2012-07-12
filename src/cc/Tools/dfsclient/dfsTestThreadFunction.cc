@@ -47,7 +47,7 @@ using namespace std;
  */
 void DfsTestThreadFunction::operator()() {
   vector<const char *> args;
-  int64_t origsz, dfssz;
+  int64_t origsz, dfssz1, dfssz2;
   CommandCopyFromLocal cmd_cp_from_local(m_client);
   CommandCopyToLocal cmd_cp_to_local(m_client);
   CommandRemove cmd_rm(m_client);
@@ -74,10 +74,15 @@ void DfsTestThreadFunction::operator()() {
     HT_ASSERT(m_client->exists(m_dfs_file));
 
     // Determine DFS file size
-    dfssz = m_client->length(m_dfs_file);
+    dfssz1 = m_client->length(m_dfs_file, false);
+    dfssz2 = m_client->length(m_dfs_file, true);
 
-    if (origsz != dfssz) {
-      HT_ERRORF("Length mismatch: %lld != %lld", (Lld)origsz, (Lld)dfssz);
+    if (origsz != dfssz1) {
+      HT_ERRORF("Length mismatch: %lld != %lld", (Lld)origsz, (Lld)dfssz1);
+      exit(1);
+    }
+    if (origsz != dfssz2) {
+      HT_ERRORF("Length mismatch: %lld != %lld", (Lld)origsz, (Lld)dfssz2);
       exit(1);
     }
   }

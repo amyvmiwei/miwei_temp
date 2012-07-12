@@ -280,14 +280,17 @@ void KosmosBroker::remove(ResponseCallback *cb, const char *fname) {
 }
 
 
-void KosmosBroker::length(ResponseCallbackLength *cb, const char *fname) {
+void KosmosBroker::length(ResponseCallbackLength *cb, const char *fname,
+                        bool accurate) {
   String abspath;
   uint64_t length;
   int res;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();
   struct stat statbuf;
 
-   HT_DEBUGF("length file='%s'", fname);
+  (void)accurate;
+
+  HT_DEBUGF("length file='%s'", fname);
 
   if (fname[0] == '/')
     abspath = fname;

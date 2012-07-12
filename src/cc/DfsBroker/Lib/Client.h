@@ -131,8 +131,9 @@ namespace Hypertable { namespace DfsBroker {
       virtual void remove(const String &name, DispatchHandler *handler);
       virtual void remove(const String &name, bool force = true);
 
-      virtual void length(const String &name, DispatchHandler *handler);
-      virtual int64_t length(const String &name);
+      virtual void length(const String &name, bool accurate,
+                          DispatchHandler *handler);
+      virtual int64_t length(const String &name, bool accurate = true);
 
       virtual void pread(int32_t fd, size_t len, uint64_t offset,
                          DispatchHandler *handler);

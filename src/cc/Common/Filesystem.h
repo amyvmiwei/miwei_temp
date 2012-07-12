@@ -274,17 +274,22 @@ namespace Hypertable {
      * given dispatch handler.
      *
      * @param name absolute pathname of file
+     * @param accurate whether the accurate or an estimated file length
+     *      is required (an hdfs performance optimization)
      * @param handler dispatch handler
      * @return Error::OK on success or error code on failure
      */
-    virtual void length(const String &name, DispatchHandler *handler) = 0;
+    virtual void length(const String &name, bool accurate,
+                        DispatchHandler *handler) = 0;
 
     /** Gets the length of a file.  Issues a length request and waits for it
      * to complete.
      *
      * @param name absolute pathname of file
+     * @param accurate whether the accurate or an estimated file length
+     *      is required (an hdfs performance optimization)
      */
-    virtual int64_t length(const String &name) = 0;
+    virtual int64_t length(const String &name, bool accurate = true) = 0;
 
     /** Decodes the response from a length request
      *

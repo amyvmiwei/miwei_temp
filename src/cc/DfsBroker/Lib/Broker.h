@@ -54,7 +54,8 @@ namespace Hypertable {
                           uint32_t amount, const void *data, bool flush) = 0;
       virtual void seek(ResponseCallback *, uint32_t fd, uint64_t offset) = 0;
       virtual void remove(ResponseCallback *, const char *fname) = 0;
-      virtual void length(ResponseCallbackLength *, const char *fname) = 0;
+      virtual void length(ResponseCallbackLength *, const char *fname,
+                        bool accurate = true) = 0;
       virtual void pread(ResponseCallbackRead *, uint32_t fd, uint64_t offset,
                          uint32_t amount, bool verify_checksum) = 0;
       virtual void mkdirs(ResponseCallback *, const char *dname) = 0;

@@ -264,9 +264,12 @@ void CephBroker::remove(ResponseCallback *cb, const char *fname) {
   cb->response_ok();
 }
 
-void CephBroker::length(ResponseCallbackLength *cb, const char *fname) {
+void CephBroker::length(ResponseCallbackLength *cb, const char *fname,
+                    bool accurate) {
   int r;
   struct stat statbuf;
+
+  (void)accurate;
 
   HT_DEBUGF("length file='%s'", fname);
 

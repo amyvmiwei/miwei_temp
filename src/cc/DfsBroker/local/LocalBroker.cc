@@ -375,12 +375,14 @@ void LocalBroker::remove(ResponseCallback *cb, const char *fname) {
 }
 
 
-void LocalBroker::length(ResponseCallbackLength *cb, const char *fname) {
+void LocalBroker::length(ResponseCallbackLength *cb, const char *fname,
+        bool accurate) {
   String abspath;
   uint64_t length;
   int error;
 
-  HT_DEBUGF("length file='%s'", fname);
+  HT_DEBUGF("length file='%s' (accurate=%s)", fname,
+          accurate ? "true" : "false");
 
   if (fname[0] == '/')
     abspath = m_rootdir + fname;
