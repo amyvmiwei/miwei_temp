@@ -206,6 +206,8 @@ void DefaultPolicy::init_options() {
     ("Kfs.Broker.Reactors", i32(), "Number of Kfs broker reactor threads")
     ("Kfs.MetaServer.Name", str(), "Hostname of Kosmos meta server")
     ("Kfs.MetaServer.Port", i16(), "Port number for Kosmos meta server")
+    ("DfsBroker.DisableFileRemoval", boo()->default_value(false),
+        "Rename files with .deleted extension instead of removing (for testing)")
     ("DfsBroker.Local.DirectIO", boo()->default_value(false),
         "Read and write files using direct i/o")
     ("DfsBroker.Local.Port", i16()->default_value(38030),
