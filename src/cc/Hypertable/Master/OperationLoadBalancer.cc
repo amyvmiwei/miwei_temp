@@ -62,6 +62,10 @@ void OperationLoadBalancer::execute() {
       m_context->balancer->balance();
   }
   catch (Exception &e) {
+    if (e.code() == Error::NOT_IMPLEMENTED) {
+      complete_error_no_log(e.code(), "Load Balancer");
+      return;
+    }
     HT_THROW2(e.code(), e, "Load Balancer");
   }
   complete_ok_no_log();
@@ -81,6 +85,5 @@ const String OperationLoadBalancer::get_algorithm() {
 }
 
 void OperationLoadBalancer::decode_request(const uint8_t **bufp, size_t *remainp) {
-
   m_plan->decode(bufp, remainp);
 }
