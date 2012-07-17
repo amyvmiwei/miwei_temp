@@ -118,17 +118,15 @@ namespace Hypertable {
             iter = m_state.urgent_queue.begin();
             while (iter != m_state.urgent_queue.end()) {
               rec = (*iter);
-              if (!rec->handler || rec->handler->expired()) {
-                iter = m_state.urgent_queue.erase(iter);
-                remove_expired(rec);
-                rec = 0;
-                continue;
-              }
               if (rec->usage == 0 || !rec->usage->running) {
                 if (rec->usage)
                   rec->usage->running = true;
                 m_state.urgent_queue.erase(iter);
                 break;
+              }
+              if (!rec->handler || rec->handler->expired()) {
+                iter = m_state.urgent_queue.erase(iter);
+                remove_expired(rec);
               }
               rec = 0;
               iter++;
@@ -138,16 +136,15 @@ namespace Hypertable {
               iter = m_state.queue.begin();
               while (iter != m_state.queue.end()) {
                 rec = (*iter);
-                if (!rec->handler || rec->handler->expired()) {
-                  iter = m_state.queue.erase(iter);
-                  remove_expired(rec);
-                  continue;
-                }
                 if (rec->usage == 0 || !rec->usage->running) {
                   if (rec->usage)
                     rec->usage->running = true;
                   m_state.queue.erase(iter);
                   break;
+                }
+                if (!rec->handler || rec->handler->expired()) {
+                  iter = m_state.queue.erase(iter);
+                  remove_expired(rec);
                 }
                 rec = 0;
                 iter++;
