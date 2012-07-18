@@ -22,7 +22,8 @@ public class SerializedCellsReader {
       mBuf.order(ByteOrder.LITTLE_ENDIAN);
       int version = mBuf.getInt();
       if (version != SerializedCellsFlag.VERSION)
-	  throw new AssertionError("SerializedCells version mismatch, expected " + SerializedCellsFlag.VERSION + ", got " + version);
+        throw new AssertionError("SerializedCells version mismatch, expected "
+                + SerializedCellsFlag.VERSION + ", got " + version);
     }
   }
 
@@ -39,7 +40,8 @@ public class SerializedCellsReader {
     mCellFlag = 0;
     int version = mBuf.getInt();
     if (version != SerializedCellsFlag.VERSION)
-	throw new AssertionError("SerializedCells version mismatch, expected " + SerializedCellsFlag.VERSION + ", got " + version);
+      throw new AssertionError("SerializedCells version mismatch, expected "
+              + SerializedCellsFlag.VERSION + ", got " + version);
   }
 
   public void reset(ByteBuffer buf) {
@@ -61,7 +63,8 @@ public class SerializedCellsReader {
     mCellFlag = 0;
     int version = mBuf.getInt();
     if (version != SerializedCellsFlag.VERSION)
-	throw new AssertionError("SerializedCells version mismatch, expected " + SerializedCellsFlag.VERSION + ", got " + version);
+      throw new AssertionError("SerializedCells version mismatch, expected "
+              + SerializedCellsFlag.VERSION + ", got " + version);
   }
 
   public boolean next() {

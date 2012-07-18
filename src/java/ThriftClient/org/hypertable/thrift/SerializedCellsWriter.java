@@ -14,14 +14,14 @@ import java.nio.ByteOrder;
 public class SerializedCellsWriter {
 
   public SerializedCellsWriter(int size) {
-    mBuffer = ByteBuffer.allocate(size+5);
+    mBuffer = ByteBuffer.allocate(size + 5);
     mBuffer.order(ByteOrder.LITTLE_ENDIAN);
     mBuffer.putInt(SerializedCellsFlag.VERSION);
-    mGrow=false;
+    mGrow = false;
   }
 
   public SerializedCellsWriter(int size, boolean grow) {
-    mBuffer = ByteBuffer.allocate(size+5);
+    mBuffer = ByteBuffer.allocate(size + 5);
     mBuffer.order(ByteOrder.LITTLE_ENDIAN);
     mBuffer.putInt(SerializedCellsFlag.VERSION);
     mGrow = grow;
@@ -40,12 +40,13 @@ public class SerializedCellsWriter {
 
     // need to leave room for the termination byte
     if (length >= mBuffer.remaining()) {
-      if (mBuffer.position() > 0) {
+      if (mBuffer.position() > 4) {
         if (!mGrow) // dont grow this buffer
           return false;
         else {
           // grow
-          ByteBuffer newBuffer = ByteBuffer.allocate(((mBuffer.capacity()+length)*3)/2);
+          ByteBuffer newBuffer = ByteBuffer.allocate(((mBuffer.capacity()
+                          + length) * 3) / 2);
           newBuffer.order(ByteOrder.LITTLE_ENDIAN);
           newBuffer.put(mBuffer.array(), 0, mBuffer.position());
           mBuffer = newBuffer;
@@ -126,7 +127,8 @@ public class SerializedCellsWriter {
                      byte [] column_qualifier, int column_qualifier_offset, int column_qualifier_length,
                      long timestamp,
                      byte [] value, int value_offset, int value_length, byte flag) {
-    int length = 9 + row_length + column_family_length + column_qualifier_length + value_length;
+    int length = 9 + row_length + column_family_length
+        + column_qualifier_length + value_length;
     byte control = 0;
 
     if (timestamp == SerializedCellsFlag.AUTO_ASSIGN)
@@ -138,21 +140,22 @@ public class SerializedCellsWriter {
 
     // need to leave room for the termination byte
     if (length >= mBuffer.remaining()) {
-      if (mBuffer.position() > 0) {
-        if (!mGrow) // dont grow this buffer
+      if (mBuffer.position() > 4) {
+        if (!mGrow)  // dont grow this buffer
           return false;
         else {
           // grow
-          ByteBuffer newBuffer = ByteBuffer.allocate(((mBuffer.capacity()+length)*3)/2);
+          ByteBuffer newBuffer = ByteBuffer.allocate(((mBuffer.capacity()
+                          + length) * 3) / 2);
           newBuffer.order(ByteOrder.LITTLE_ENDIAN);
           newBuffer.put(mBuffer.array(), 0, mBuffer.position());
           mBuffer = newBuffer;
         }
       }
       else {
-        mBuffer = ByteBuffer.allocate(length+5);
+        mBuffer = ByteBuffer.allocate(length + 5);
         mBuffer.order(ByteOrder.LITTLE_ENDIAN);
-	mBuffer.putInt(SerializedCellsFlag.VERSION);
+        mBuffer.putInt(SerializedCellsFlag.VERSION);
       }
     }
 
