@@ -19,11 +19,39 @@ import org.apache.thrift.protocol.TProtocol;
 public class ThriftClient extends HqlService.Client {
   public ThriftClient(TProtocol protocol) { super(protocol); }
 
-  // Java only allow super as the first statement of constructor.  It doesn't
-  // support multiple inheritance to use the base-from-member idiom either. So,
-  // we're resorting to a static factory method here.
-  public static ThriftClient
-  create(String host, int port, int timeout_ms, boolean do_open)
+  /**
+   * Java factory method for creating a new ThriftClient
+   *
+   * @param host  hostname of the ThriftBroker
+   * @param port  port of the ThriftBroker
+   * @param timeout  connection timeout
+   * @param do_open  set to true to immediately open the connection
+   * @param max_framesize  maximum thrift framesize (in bytes)
+   */
+  public static ThriftClient create(String host, int port, int timeout_ms,
+          boolean do_open, int max_framesize)
+      throws TTransportException, TException {
+    TFramedTransport transport = new TFramedTransport(
+        new TSocket(host, port, timeout_ms), max_framesize);
+    ThriftClient client = new ThriftClient(new TBinaryProtocol(transport));
+    client.transport = transport;
+
+    if (do_open)
+      client.open();
+
+    return client;
+  }
+
+  /**
+   * Java factory method for creating a new ThriftClient
+   *
+   * @param host  hostname of the ThriftBroker
+   * @param port  port of the ThriftBroker
+   * @param timeout  connection timeout
+   * @param do_open  set to true to immediately open the connection
+   */
+  public static ThriftClient create(String host, int port, int timeout_ms,
+          boolean do_open)
       throws TTransportException, TException {
     TFramedTransport transport = new TFramedTransport(
         new TSocket(host, port, timeout_ms));
