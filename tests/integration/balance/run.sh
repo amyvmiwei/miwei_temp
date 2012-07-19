@@ -7,7 +7,18 @@ WRITE_SIZE=${WRITE_SIZE:-"40000000"}
 RS1_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs1.pid
 RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver
+save_failure_state() {
+  ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
+  mkdir $ARCHIVE_DIR
+  cp $HT_HOME/log/* $ARCHIVE_DIR
+  cp ~/build/hypertable/debug/Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR
+  cp -f core* $ARCHIVE_DIR
+  cp rangeserver.* $ARCHIVE_DIR
+  cp errors.txt *.output $ARCHIVE_DIR
+  cp -r $HT_HOME/fs $ARCHIVE_DIR
+}
+
+$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --DfsBroker.DisableFileRemoval=true
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
@@ -90,8 +101,7 @@ fi
 
 diff dump.output dump.golden
 if [ $? != 0 ] ; then
-  #exec 1>&-
-  #sleep 86400
+  save_failure_state
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
   $HT_HOME/bin/clean-database.sh
   exit 1
@@ -119,9 +129,7 @@ wait $QUERY_PID
 
 fgrep ERROR query.output > errors.txt
 if [ -s errors.txt ] ; then
-  cat errors.txt
-  #exec 1>&-
-  #sleep 86400
+  save_failure_state
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
   $HT_HOME/bin/clean-database.sh
   exit 1
@@ -136,11 +144,11 @@ while [ -s errors.txt ] && [ $iteration -lt 5 ]; do
   $HT_HOME/bin/ht metalog_dump /hypertable/servers/rs2/log/rsml | fgrep "load_acknowledged=false" >> errors.txt
   let iteration=iteration+1
 done
+fgrep -i reset $HT_HOME/log/DfsBroker.local.log >> errors.txt
+ls core* >> errors.txt
 
 if [ -s errors.txt ] ; then
-  cat errors.txt
-  #exec 1>&-
-  #sleep 86400
+  save_failure_state
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
   $HT_HOME/bin/clean-database.sh
   exit 1

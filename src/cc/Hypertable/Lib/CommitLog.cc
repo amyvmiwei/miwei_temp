@@ -317,8 +317,8 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok) {
   if (m_fd == -1)
     return Error::CLOSED;
 
-  HT_DEBUG_OUT << "Purging commit log fragments with latest revision older than " << revision
-              << HT_END;
+  HT_INFOF("Purging log fragments from '%s' with latest revision older than %lld",
+           m_log_dir.c_str(), (Lld)revision);
 
   // Process "reap" set
   std::set<CommitLogFileInfo *>::iterator rm_iter, iter = m_reap_set.begin();
@@ -365,6 +365,7 @@ void CommitLog::remove_file_info(CommitLogFileInfo *fi) {
   // Remove linked log directores
   foreach (const String &logdir, fi->purge_dirs) {
     try {
+      HT_INFOF("Removing linked log directory '%s' because all fragments have been removed", logdir.c_str());
       m_fs->rmdir(logdir);
     }
     catch (Exception &e) {
@@ -376,6 +377,7 @@ void CommitLog::remove_file_info(CommitLogFileInfo *fi) {
   // Remove log fragment
   try {
     fname = fi->log_dir + "/" + fi->num;
+    HT_INFOF("Removing log fragment '%s' revision=%lld", fname.c_str(), (Lld)fi->revision);
     m_fs->remove(fname);
   }
   catch (Exception &e) {
