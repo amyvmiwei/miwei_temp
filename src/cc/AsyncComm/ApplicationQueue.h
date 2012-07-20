@@ -28,6 +28,7 @@
 #include <vector>
 
 #include <boost/thread/condition.hpp>
+#include <boost/thread/xtime.hpp>
 
 #include "Common/Thread.h"
 #include "Common/Mutex.h"
@@ -210,7 +211,6 @@ namespace Hypertable {
       bool m_one_shot;
     };
 
-    Mutex                  m_mutex;
     ApplicationQueueState  m_state;
     ThreadGroup            m_threads;
     std::vector<Thread::id>     m_thread_ids;
@@ -266,10 +266,18 @@ namespace Hypertable {
       m_state.cond.notify_all();
     }
 
-    void wait_for_empty() {
-      ScopedLock lock(m_mutex);
-      while (m_state.threads_available < m_state.threads_total)
-	m_state.quiesce_cond.wait(lock);
+    void wait_for_empty(int reserve_threads=0) {
+      ScopedLock lock(m_state.mutex);
+      while (m_state.threads_available < (m_state.threads_total-reserve_threads))
+        m_state.quiesce_cond.wait(lock);
+    }
+
+    void wait_for_empty(boost::xtime &expire_time, int reserve_threads=0) {
+      ScopedLock lock(m_state.mutex);
+      while (m_state.threads_available < (m_state.threads_total-reserve_threads)) {
+        if (!m_state.quiesce_cond.timed_wait(lock, expire_time))
+          return;
+      }
     }
 
     /**
@@ -278,7 +286,6 @@ namespace Hypertable {
      */
 
     virtual void join() {
-      ScopedLock lock(m_mutex);
       if (!joined) {
         m_threads.join_all();
         joined = true;

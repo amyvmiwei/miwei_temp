@@ -289,8 +289,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_comm->listen(listen_addr, chfp);
   }
   catch (Exception &e) {
-    HT_FATALF("Unable to listen on port %u - %s - %s",
+    HT_ERRORF("Unable to listen on port %u - %s - %s",
               port, Error::get_text(e.code()), e.what());
+    _exit(0);
   }
 
   /**
@@ -343,17 +344,25 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 void RangeServer::shutdown() {
 
   try {
-    ScopedLock lock(m_stats_mutex);
 
     // stop maintenance timer
-    if (m_timer_handler)
+    if (m_timer_handler) {
       m_timer_handler->shutdown();
+      m_timer_handler->wait_for_shutdown();
+    }
 
     // stop maintenance queue
     Global::maintenance_queue->shutdown();
     //Global::maintenance_queue->join();
 
+    // stop application queue
     m_app_queue->stop();
+    boost::xtime expire_time;
+    boost::xtime_get(&expire_time, boost::TIME_UTC);
+    expire_time.sec += 30;  // wait for up to 30 seconds
+    m_app_queue->wait_for_empty(expire_time, 1);
+
+    ScopedLock lock(m_stats_mutex);
 
     if (m_group_commit_timer_handler)
       m_group_commit_timer_handler->shutdown();
@@ -366,11 +375,11 @@ void RangeServer::shutdown() {
     foreach (Thread *thread, m_update_threads)
       thread->join();
 
-    //Global::range_locator = 0;
+    Global::range_locator = 0;
 
     if (Global::rsml_writer) {
       Global::rsml_writer->close();
-      //Global::rsml_writer = 0;
+      Global::rsml_writer = 0;
     }
     if (Global::root_log) {
       Global::root_log->close();
