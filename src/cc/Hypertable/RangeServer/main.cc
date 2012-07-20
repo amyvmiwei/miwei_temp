@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
 
     if (!Global::hyperspace->wait_for_connection(hyperspace_timeout)) {
       HT_ERROR("Unable to connect to hyperspace, exiting...");
-      exit(1);
+      _exit(1);
     }
 
     RangeServerPtr range_server= new RangeServer(properties,
