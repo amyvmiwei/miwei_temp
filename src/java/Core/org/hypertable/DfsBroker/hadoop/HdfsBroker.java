@@ -251,8 +251,8 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'open' command - "
-                       + Error.GetText(error));
+            log.severe("Error sending OPEN response back (error="
+                    + error + ", filename=" + fileName + ")");
     }
 
 
@@ -317,7 +317,8 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Error sending CLOSE response back");
+            log.severe("Error sending CLOSE response back (fd=" + fd
+                    + ", error=" + error + ")");
     }
 
     public void Create(ResponseCallbackCreate cb, String fileName,
@@ -373,8 +374,10 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'create' command - "
-                       + Error.GetText(error));
+            log.severe("Error sending CREATE response back (error="
+                    + error + ", filename=" + fileName
+                    + ", bufferSize=" + bufferSize + ", replication="
+                    + replication + ", blockSize=" + blockSize + ")");
     }
 
 
@@ -415,8 +418,9 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'length' command - "
-                       + Error.GetText(error));
+            log.severe("Error sending LENGTH response back (error="
+                    + error + ", filename=" + fileName + ", accurate="
+                    + accurate + ")");
     }
 
 
@@ -449,8 +453,8 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'mkdirs' command - "
-                       + Error.GetText(error));
+            log.severe("Error sending MKDIRS response back (error="
+                    + error + ", fileName=" + fileName + ")");
     }
 
 
@@ -498,7 +502,8 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Error sending READ response back");
+            log.severe("Error sending READ response back (fd=" + fd
+                    + ", error=" + error + ", amount=" + amount + ")");
     }
 
     public void Write(ResponseCallbackWrite cb, int fd, int amount,
@@ -543,7 +548,9 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Error sending WRITE response back");
+            log.severe("Error sending WRITE response back (fd=" + fd
+                    + ", error=" + error + ", amount=" + amount
+                    + ", sync=" + sync + ")");
     }
 
     public void PositionRead(ResponseCallbackPositionRead cb, int fd,
@@ -552,7 +559,7 @@ public class HdfsBroker {
         OpenFileData ofd;
         int retries = 10;
         byte [] data = null;
-	FSDataInputStream is;
+        FSDataInputStream is;
 
         while (true) {
           try {
@@ -567,23 +574,23 @@ public class HdfsBroker {
                log.info("Reading " + amount + " bytes from fd=" + fd);
             */
 
-	    if (verify_checksum) {
-		if (ofd.is == null) {
-		    ofd.is = mFilesystem.open(new Path(ofd.pathname));
-		    log.info("Opening '" + ofd.pathname + "' for verify checksum read");
-		}
-		is = ofd.is;
-	    }
-	    else {
-		if (ofd.is_noverify == null) {
-		    ofd.is_noverify = mFilesystem_noverify.open(new Path(ofd.pathname));
-		    log.info("Opening '" + ofd.pathname + "' for non-verify checksum read");
-		}
-		is = ofd.is_noverify;
-	    }
+	        if (verify_checksum) {
+                if (ofd.is == null) {
+                    ofd.is = mFilesystem.open(new Path(ofd.pathname));
+                    log.info("Opening '" + ofd.pathname + "' for verify checksum read");
+                }
+                is = ofd.is;
+            }
+            else {
+                if (ofd.is_noverify == null) {
+                    ofd.is_noverify = mFilesystem_noverify.open(new Path(ofd.pathname));
+                    log.info("Opening '" + ofd.pathname + "' for non-verify checksum read");
+                }
+                is = ofd.is_noverify;
+            }
 
             if (is == null)
-		throw new IOException("File handle " + fd
+                throw new IOException("File handle " + fd
 				      + " not open for reading");
 
             if (data == null)
@@ -625,7 +632,10 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Error sending PREAD response back");
+            log.severe("Error sending PREAD response back (fd=" + fd
+                    + ", error=" + error + ", offset=" + offset
+                    + ", amount=" + amount + ", verify_checksum="
+                    + verify_checksum + ")");
     }
 
     /**
@@ -657,8 +667,8 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'remove' command - "
-                       + Error.GetText(error));
+            log.severe("Error sending REMOVE response back (error="
+                    + error + ", fileName=" + fileName + ")");
     }
 
     public void Seek(ResponseCallback cb, int fd, long offset) {
@@ -684,8 +694,8 @@ public class HdfsBroker {
             error = cb.response_ok();
 
             if (error != Error.OK)
-                log.severe("Error sending SEEK response back - "
-                           + Error.GetText(error));
+                log.severe("Error sending SEEK response back (fd=" + fd
+                        + ", error=" + error + ", offset=" + offset + ")");
 
         }
         catch (IOException e) {
@@ -719,8 +729,8 @@ public class HdfsBroker {
             error = cb.response_ok();
 
             if (error != Error.OK)
-                log.severe("Error sending FLUSH response back - "
-                           + Error.GetText(error));
+                log.severe("Error sending FLUSH response back (fd=" + fd
+                        + ", error=" + error + ")");
         }
         catch (IOException e) {
             log.severe("I/O exception - " + e.toString());
@@ -764,8 +774,8 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'rmdir' command - "
-                       + Error.GetText(error));
+            log.severe("Error sending RMDIR response back (error="
+                    + error + ", fileName=" + fileName + ")");
     }
 
 
@@ -815,8 +825,8 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'readdir' command - "
-                       + Error.GetText(error));
+            log.severe("Error sending READDIR response back (error="
+                    + error + ", dirName=" + dirName + ")");
     }
 
     /**
@@ -842,8 +852,8 @@ public class HdfsBroker {
         }
 
         if (error != Error.OK)
-            log.severe("Problem sending response to 'exists' command - "
-                       + Error.GetText(error));
+            log.severe("Error sending EXISTS response back (error="
+                    + error + ", fileName=" + fileName + ")");
     }
 
     /**
