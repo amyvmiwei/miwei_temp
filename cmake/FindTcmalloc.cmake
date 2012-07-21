@@ -48,7 +48,11 @@ find_library(Unwind_LIBRARY NO_DEFAULT_PATH
 
 if (Tcmalloc_INCLUDE_DIR AND Tcmalloc_LIBRARY)
   set(Tcmalloc_FOUND TRUE)
-  set( Tcmalloc_LIBRARIES ${Tcmalloc_LIBRARY} ${Unwind_LIBRARY} )
+  if (Unwind_LIBRARY)
+    set( Tcmalloc_LIBRARIES ${Tcmalloc_LIBRARY} ${Unwind_LIBRARY} )
+  else ()
+    set( Tcmalloc_LIBRARIES ${Tcmalloc_LIBRARY} )
+  endif ()
 else ()
   set(Tcmalloc_FOUND FALSE)
   set( Tcmalloc_LIBRARIES )

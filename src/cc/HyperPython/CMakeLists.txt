@@ -25,7 +25,7 @@ include_directories(${PYTHON_INCLUDE_DIR})
 
 add_library(HyperPython SHARED SerializedCells.cc)
 target_link_libraries(HyperPython HyperThrift HyperCommon
-    Hypertable ${BOOST_PYTHON_LIB} ${PYTHON_LIB_DIR} ${Thrift_LIBS} 
+    Hypertable ${BOOST_PYTHON_LIB} ${PYTHON_LIB_DIR} ${PYTHON_LIBRARY} ${Thrift_LIBS}
     ${LibEvent_LIBS})
 install(TARGETS HyperPython
         RUNTIME DESTINATION bin
