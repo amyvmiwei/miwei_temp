@@ -1,3 +1,94 @@
+Version 0.9.6.0:
+(2012-07-23)
+
+    Fixed zero-length hdfs log file issues
+    issue 876: fixed rangeserver crash if request times out
+    issue 863: Fixed interference problem with Master/RangeServer init handshake
+    issue 884: Fixed problem in CommitLog that caused orphaned transfer logs
+    Improved shutdown() to avoid segfaults
+    issue 887: Fixed deadlock in Master inside DispatchHandlerOperation
+    issue 855: added protocol version to Hyperspace
+    Fixed problem that could prevent MoveRange from being removed in Master
+    issue 873: bulk atomic counter resets resulting in incorrect values
+    Fixed null reference in MapReduce Input class
+    issue 866: qualifier index now working with very large result sets
+    issue 876: fixed AsyncComm crash when handling expired messages
+    Fixed race condition that caused transfer log to be removed prematurely
+    Added better error state capture to Balancing-mechanics test
+    Java ThriftClient can now specify max thrift frame size
+    issue 890: java SerializedCellsWriter add() function should accept at least one cell
+    Updating debian dev build setup
+    Fixed endless loop when running load balancer with unknown algorithm
+    Fixed mutex protection for m_metalog_entity member of Range class
+    Added a 'compact' mode to csdump
+    Do not generate core file when Hyperspace session expires
+    issue 879: added cronolog to ThriftBroker package
+    issue 881: added diagnostics output to track load_acknowledge flag
+    Display /proc/sys/vm/swappiness in start-rangeserver.sh
+    Added libunwind to install and packages
+    Fixed two build issues that turned up on 32-bit
+    Improved Balancing-mechanics test and fixed brittleness
+    Added DfsBroker.DisableFileRemoval property and support in localBroker
+    issue 858: created a tool that checks the integrity of a cluster
+    Added STOP command to shutdown a rangeserver
+    Java Thrift sample now prints cell values instead of ByteBuffer statistics
+    issue 869: get_property tool can now print integer properties
+    issue 840: upgrade-ok.sh now works with trailing slashes
+    issue 851: RangeServer fails to start if METADATA.xml or RS_METRICS.xml is missing
+    issue 862: CellStoreFactory now prints messages on error
+    Added timestamp and "app queue pause" info to query profile output
+    issue 861: added new property Hypertable.Monitoring.Disable to disable rrdtool
+    Equal sign is now optional when specifying HQL options
+    Fixed uninitialized memory access in MetaLogWriter
+    issue 843: fixed hang in qualifier index lookup with CELL_LIMIT predicate
+    issue 838: TableMutatorAsyncScatterBuffer used m_timer across multiple operations
+    Added support for query profiling (updates) in RangeServer
+    Fixed csdump --tsv-format to include header line, timestamp, and escape
+    Made dfs file close synchronous in MetaLogWriter
+    Added Hypertable.RangeServer.LoadMetadataOnly property
+    Fixed link order build issue with libHyperPython
+    Changed log message when reading a corrupt cell store
+    issue 754: the HQL keyword REVS is now deprecated
+    issue 844: libHypertable.so is now properly installed
+    issue 841: mop.jpg is now written correctly
+    Fixed a bug in the SerializedCellReader test
+    issue 842: do not use indices if row interval is specified
+    issue 783: balancer now factors in the disk capacities
+    issue 833: added newest fields to ScanSpec.java
+    issue 823: VALUE REGEXP scan now works with qualifier index
+    Fixed spurious failures of test Purge-indices-2
+    Modified clean-database.sh to remove mml backup
+    issue 828: all HQL statements are now case-sensitive (exit, quit, print...)
+    issue 836: add jitter to 'cap hyperspace_status' to avoid hyperspace/BDB deadlocks
+    issue 816: serverup now recognizes masters which try to acquire the hyperspace lock
+    issue 777: stop-servers.sh can now stop individual processes
+    Fixed hang problem on RangeServer shutdown
+    Fixed problem with DFS verify_checksum logic
+    Fixed monitoring graphs and added ulimit -v unlimited to ht-env.sh
+    Fixed NullPointerException in mapreduce/InputFormat
+    issue 820: Python bindings for SerializedCellReader/Writer     - added version information     - collapsing duplicat
+    issue 822: Removed code that skipped an error
+    issue 827: fixed deadlock when scanning secondary indices
+    issue 815: remove rrdtool from the installation package
+    Replaced links to hypertable.org with hypertable.com
+    issue 749: ignore BAD_PATHNAME exception when DUMPing a file in hyperspace shell
+    Fixed spurious failures of test Purge-indices-2
+    issue 817: fixed handling of DELETE in LOAD DATA INFILE
+    issue 727: new config setting HdfsBroker.Hadoop.ConfDir
+    issue 731: added new ScanSpec options to hadoop streaming mapreduce
+    issue 700: update to boost 1.49
+    issue 811: update mml if RangeServer address or IP changes
+    issue 812: improved error message if hyperspace replica host names are invalid
+    issue 775: replaced readline with libedit
+    issue 797: removed old metalog-code
+    issue 792: improved thrift tests for perl, python, ruby
+    issue 565: added IF NOT EXISTS option to CREATE NAMESPACE
+    issue 802: removed unused function
+    Fix crash due to ScanSpec copy
+    Check for invalid table name characters
+    Added minor cleanups and performance improvements
+    Modified CellCache to prefer new exact key inerts over old ones; Better FileBlockCache hash
+
 Version 0.9.5.6:
 (2012-03-21)
 
