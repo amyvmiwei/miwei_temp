@@ -68,6 +68,7 @@ check_killed  ThriftBroker
 check_running localBroker
 
 $HT_HOME/bin/stop-servers.sh rangeserver
+sleep 5
 check_killed  Hypertable.Master
 check_killed  Hypertable.RangeServer
 check_running Hyperspace.Master
