@@ -83,13 +83,16 @@ MaprBroker::open(ResponseCallbackOpen *cb, const char *fname,
   hdfsFile file;
   int fd;
 
+  if (bufsz == (uint32_t)-1)
+    bufsz = 0;
+
   HT_DEBUGF("open file='%s' flags=%u bufsz=%d", fname, flags, bufsz);
 
   fd = atomic_inc_return(&ms_next_fd);
 
   int oflags = O_RDONLY;
 
-  if ((file = hdfsOpenFile(m_filesystem, fname, oflags, bufsz, -1, -1)) == 0) {
+  if ((file = hdfsOpenFile(m_filesystem, fname, oflags, bufsz, 0, 0)) == 0) {
     report_error(cb);
     HT_ERRORF("open failed: file='%s' - %s", fname, strerror(errno));
     return;
@@ -116,6 +119,13 @@ MaprBroker::create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags,
   hdfsFile file;
   int fd;
   int oflags = O_WRONLY;
+
+  if (bufsz == -1)
+    bufsz = 0;
+  if (replication == -1)
+    replication = 0;
+  if (blksz == -1)
+    blksz = 0;
 
   HT_DEBUGF("create file='%s' flags=%u bufsz=%d replication=%d blksz=%lld",
             fname, flags, bufsz, (int)replication, (Lld)blksz);
