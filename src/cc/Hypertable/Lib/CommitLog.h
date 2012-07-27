@@ -136,8 +136,9 @@ namespace Hypertable {
      *
      * @param revision real cutoff revision
      * @param remove_ok set of md5 hashes of logs that are ok to remove
+     * @param generation Only consider fragemnts with this generation or less
      */
-    int purge(int64_t revision, std::set<int64_t> remove_ok);
+    int purge(int64_t revision, std::set<int64_t> remove_ok, int generation);
 
     void remove_linked_log(const String &log_dir);
 

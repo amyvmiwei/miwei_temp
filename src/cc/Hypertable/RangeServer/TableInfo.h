@@ -38,7 +38,14 @@
 
 namespace Hypertable {
 
-  class Schema;
+
+  class RangeData {
+  public:
+    RangeData(RangePtr r, Range::MaintenanceData *md=0) : range(r), data(md) {}
+    RangePtr range;
+    Range::MaintenanceData *data;
+  };
+  typedef std::vector<RangeData> RangeDataVector;
 
   class RangeInfo {
   public:
@@ -70,6 +77,8 @@ namespace Hypertable {
     String end_row;
     RangePtr range;
   };
+
+  class Schema;
 
   class TableInfo : public RangeSet {
   public:
@@ -206,11 +215,11 @@ namespace Hypertable {
     void dump_range_table();
 
     /**
-     * Fills a vector of pointers to range objects
+     * Fills a vector of RangeData objects
      *
-     * @param range_vec smart pointer to range vector
+     * @param range_data smart pointer to range data vector
      */
-    void get_range_vector(std::vector<RangePtr> &range_vec);
+    void get_range_data(RangeDataVector &range_data);
 
     /**
      * Returns the number of ranges open for this table

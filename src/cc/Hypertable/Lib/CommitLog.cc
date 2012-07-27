@@ -136,11 +136,11 @@ int64_t CommitLog::get_timestamp() {
 
 int
 CommitLog::sync() {
+  ScopedLock lock(m_mutex);
   int error = Error::OK;
 
   // Sync commit log update (protected by lock)
   try {
-    ScopedLock lock(m_mutex);
     if (m_fd == -1)
       return Error::CLOSED;
     m_fs->flush(m_fd);
@@ -185,6 +185,7 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision, bool sync) {
 
 
 int CommitLog::link_log(CommitLogBase *log_base) {
+  ScopedLock lock(m_mutex);
   int error;
   int64_t link_revision = log_base->get_latest_revision();
   BlockCompressionHeaderCommitLog header(MAGIC_LINK, link_revision);
@@ -198,22 +199,17 @@ int CommitLog::link_log(CommitLogBase *log_base) {
   }
 
   if (m_needs_roll) {
-    ScopedLock lock(m_mutex);
     if ((error = roll()) != Error::OK)
       return error;
   }
 
-  {
-    ScopedLock lock(m_mutex);
+  HT_INFOF("clgc Linking log %s into fragment %d; link_rev=%lld latest_rev=%lld",
+           log_dir.c_str(), m_cur_fragment_num, (Lld)link_revision, (Lld)m_latest_revision);
 
-    HT_INFOF("clgc Linking log %s into fragment %d; link_rev=%lld latest_rev=%lld",
-             log_dir.c_str(), m_cur_fragment_num, (Lld)link_revision, (Lld)m_latest_revision);
+  HT_ASSERT(link_revision > 0);
 
-    HT_ASSERT(link_revision > 0);
-
-    if (link_revision > m_latest_revision)
-      m_latest_revision = link_revision;
-  }
+  if (link_revision > m_latest_revision)
+    m_latest_revision = link_revision;
 
   input.ensure(header.length());
 
@@ -227,10 +223,9 @@ int CommitLog::link_log(CommitLogBase *log_base) {
   input.add(log_dir.c_str(), log_dir.length() + 1);
 
   try {
-    ScopedLock lock(m_mutex);
     size_t amount = input.fill();
     StaticBuffer send_buf(input);
-    CommitLogFileInfo *file_info;
+    CommitLogFileInfo *file_info = 0;
 
     if (m_fd == -1)
       return Error::CLOSED;
@@ -241,6 +236,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     if ((error = roll(&file_info)) != Error::OK)
       return error;
 
+    file_info->verify();
     file_info->purge_dirs.insert(log_dir);
 
     foreach (CommitLogFileInfo *fi, log_base->fragment_queue()) {
@@ -265,10 +261,10 @@ int CommitLog::link_log(CommitLogBase *log_base) {
 
 
 int CommitLog::close() {
+  ScopedLock lock(m_mutex);
 
   try {
-    ScopedLock lock(m_mutex);
-    if (m_fd > 0) {
+    if (m_fd >= 0) {
       m_fs->close(m_fd);
       m_fd = -1;
     }
@@ -290,6 +286,7 @@ void CommitLog::remove_linked_log(const String &log_dir) {
   LogFragmentQueue::iterator iter = m_fragment_queue.begin();
   while (iter != m_fragment_queue.end()) {
     if ((*iter)->log_dir_hash == log_dir_hash) {
+      (*iter)->verify();
       // Decrement parent reference count
       if ((*iter)->parent) {
         HT_ASSERT((*iter)->parent->references > 0);
@@ -311,7 +308,7 @@ void CommitLog::remove_linked_log(const String &log_dir) {
  * loaded.  When the RS came up again, it removed the transfer log
  * prematurely, resulting in data loss.
  */
-int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok) {
+int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok, int generation) {
   ScopedLock lock(m_mutex);
 
   if (m_fd == -1)
@@ -323,7 +320,7 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok) {
   // Process "reap" set
   std::set<CommitLogFileInfo *>::iterator rm_iter, iter = m_reap_set.begin();
   while (iter != m_reap_set.end()) {
-    if ((*iter)->references == 0) {
+    if ((*iter)->references == 0 && (*iter)->generation <= generation) {
       remove_file_info(*iter);
       delete *iter;
       rm_iter = iter++;
@@ -336,7 +333,7 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok) {
   CommitLogFileInfo *fi;
   while (!m_fragment_queue.empty()) {
     fi = m_fragment_queue.front();
-    if (fi->revision < revision &&
+    if (fi->revision < revision && fi->generation <= generation &&
 	(!m_range_reference_required || remove_ok.count(fi->log_dir_hash) > 0)) {
 
       if (fi->references == 0) {
@@ -361,6 +358,8 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok) {
 
 void CommitLog::remove_file_info(CommitLogFileInfo *fi) {
   String fname;
+
+  fi->verify();
 
   // Remove linked log directores
   foreach (const String &logdir, fi->purge_dirs) {
@@ -408,7 +407,10 @@ int CommitLog::roll(CommitLogFileInfo **clfip) {
 
   m_needs_roll = true;
 
-  if (m_fd > 0) {
+  if (clfip)
+    *clfip = 0;
+
+  if (m_fd >= 0) {
     try {
       m_fs->close(m_fd);
     }
@@ -466,12 +468,12 @@ int CommitLog::roll(CommitLogFileInfo **clfip) {
 int
 CommitLog::compress_and_write(DynamicBuffer &input,
     BlockCompressionHeader *header, int64_t revision, bool sync) {
+  ScopedLock lock(m_mutex);
   int error = Error::OK;
   DynamicBuffer zblock;
 
   // Compress block and kick off log write (protected by lock)
   try {
-    ScopedLock lock(m_mutex);
 
     if (m_fd == -1)
       return Error::CLOSED;

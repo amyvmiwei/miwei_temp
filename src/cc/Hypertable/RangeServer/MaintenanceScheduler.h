@@ -56,13 +56,13 @@ namespace Hypertable {
 
   private:
 
-    int get_level(Range::MaintenanceData *range_data);
+    int get_level(RangeData &rd);
 
     bool low_memory_mode() {
       return m_prioritizer == &m_prioritizer_low_memory;
     }
 
-    void check_file_dump_statistics(boost::xtime now, RangeStatsVector &range_data,
+    void check_file_dump_statistics(boost::xtime now, RangeDataVector &range_data,
                                     const String &header_str);
 
     bool m_initialized;

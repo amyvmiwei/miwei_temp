@@ -43,9 +43,9 @@ using namespace std;
 using namespace Hypertable::Config;
 
 namespace {
-  struct RangeStatsAscending {
-    bool operator()(const Range::MaintenanceData *x, const Range::MaintenanceData *y) const {
-      return x->priority < y->priority;
+  struct RangeDataAscending {
+    bool operator()(const RangeData x, const RangeData y) const {
+      return x.data->priority < y.data->priority;
     }
   };
 }
@@ -91,8 +91,8 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPt
 
 
 void MaintenanceScheduler::schedule() {
-  RangeStatsVector range_data;
-  RangeStatsVector range_data_prioritized;
+  RangeDataVector range_data;
+  RangeDataVector range_data_prioritized;
   AccessGroup::MaintenanceData *ag_data;
   String output;
   String ag_name;
@@ -101,6 +101,7 @@ void MaintenanceScheduler::schedule() {
   MaintenancePrioritizer::MemoryState memory_state;
   bool low_memory = low_memory_mode();
   int32_t priority = 1;
+  int log_generation;
 
   memory_state.balance = Global::memory_tracker->balance();
   memory_state.limit = Global::memory_limit;
@@ -162,7 +163,7 @@ void MaintenanceScheduler::schedule() {
 
   Global::maintenance_queue->clear();
 
-  m_stats_gatherer->fetch(range_data);
+  m_stats_gatherer->fetch(range_data, 0, &log_generation);
 
   if (range_data.empty()) {
     m_scheduling_needed = false;
@@ -195,18 +196,17 @@ void MaintenanceScheduler::schedule() {
 
     for (size_t i=0; i<range_data.size(); i++) {
 
-      log_dir_hashes.insert(range_data[i]->log_hash);
+      log_dir_hashes.insert(range_data[i].data->log_hash);
 
-      if (range_data[i]->needs_major_compaction && priority <= m_move_compactions_per_interval) {
-        range_data[i]->priority = priority++;
-        range_data[i]->maintenance_flags = MaintenanceFlag::COMPACT_MOVE;
-        continue;
+      if (range_data[i].data->needs_major_compaction && priority <= m_move_compactions_per_interval) {
+        range_data[i].data->priority = priority++;
+        range_data[i].data->maintenance_flags = MaintenanceFlag::COMPACT_MOVE;
       }
 
-      if (!range_data[i]->load_acknowledged)
+      if (!range_data[i].data->load_acknowledged)
         not_acknowledged++;
 
-      for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next) {
+      for (ag_data = range_data[i].data->agdata; ag_data; ag_data = ag_data->next) {
 
         // compute memory stats
         cell_cache_memory += ag_data->mem_allocated;
@@ -217,15 +217,15 @@ void MaintenanceScheduler::schedule() {
         }
 
         if (ag_data->earliest_cached_revision != TIMESTAMP_MAX) {
-          if (range_data[i]->range->is_root()) {
+          if (range_data[i].range->is_root()) {
             if (ag_data->earliest_cached_revision < revision_root)
               revision_root = ag_data->earliest_cached_revision;
           }
-          else if (range_data[i]->is_metadata) {
+          else if (range_data[i].data->is_metadata) {
             if (ag_data->earliest_cached_revision < revision_metadata)
               revision_metadata = ag_data->earliest_cached_revision;
           }
-          else if (range_data[i]->is_system) {
+          else if (range_data[i].data->is_system) {
             if (ag_data->earliest_cached_revision < revision_system)
               revision_system = ag_data->earliest_cached_revision;
           }
@@ -243,16 +243,16 @@ void MaintenanceScheduler::schedule() {
     trace_str += String("after revision_user\t") + revision_user + "\n";
 
     if (Global::root_log)
-      Global::root_log->purge(revision_root, log_dir_hashes);
+      Global::root_log->purge(revision_root, log_dir_hashes, log_generation);
 
     if (Global::metadata_log)
-      Global::metadata_log->purge(revision_metadata, log_dir_hashes);
+      Global::metadata_log->purge(revision_metadata, log_dir_hashes, log_generation);
 
     if (Global::system_log)
-      Global::system_log->purge(revision_system, log_dir_hashes);
+      Global::system_log->purge(revision_system, log_dir_hashes, log_generation);
 
     if (Global::user_log)
-      Global::user_log->purge(revision_user, log_dir_hashes);
+      Global::user_log->purge(revision_user, log_dir_hashes, log_generation);
   }
 
   {
@@ -294,16 +294,14 @@ void MaintenanceScheduler::schedule() {
   if (!m_initialized) {
     int level = 0, priority = 0;
     for (size_t i=0; i<range_data.size(); i++) {
-      if (range_data[i]->state == RangeState::SPLIT_LOG_INSTALLED ||
-          range_data[i]->state == RangeState::SPLIT_SHRUNK) {
-        RangePtr range(range_data[i]->range);
+      if (range_data[i].data->state == RangeState::SPLIT_LOG_INSTALLED ||
+          range_data[i].data->state == RangeState::SPLIT_SHRUNK) {
         level = get_level(range_data[i]);
-        Global::maintenance_queue->add(new MaintenanceTaskSplit(level, priority++, schedule_time, range));
+        Global::maintenance_queue->add(new MaintenanceTaskSplit(level, priority++, schedule_time, range_data[i].range));
       }
-      else if (range_data[i]->state == RangeState::RELINQUISH_LOG_INSTALLED) {
-        RangePtr range(range_data[i]->range);
+      else if (range_data[i].data->state == RangeState::RELINQUISH_LOG_INSTALLED) {
         level = get_level(range_data[i]);
-        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(level, priority++, schedule_time, range));
+        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(level, priority++, schedule_time, range_data[i].range));
       }
     }
     m_initialized = true;
@@ -313,33 +311,33 @@ void MaintenanceScheduler::schedule() {
     // Sort the ranges based on priority
     range_data_prioritized.reserve( range_data.size() );
     for (size_t i=0; i<range_data.size(); i++) {
-      if (range_data[i]->priority > 0)
+      if (range_data[i].data->priority > 0)
         range_data_prioritized.push_back(range_data[i]);
     }
-    struct RangeStatsAscending ordering;
+    struct RangeDataAscending ordering;
     sort(range_data_prioritized.begin(), range_data_prioritized.end(), ordering);
 
     int32_t merges_created = 0;
     int level = 0;
 
     for (size_t i=0; i<range_data_prioritized.size(); i++) {
-      if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::SPLIT) {
-        RangePtr range(range_data_prioritized[i]->range);
+      if (range_data_prioritized[i].data->maintenance_flags & MaintenanceFlag::SPLIT) {
         level = get_level(range_data_prioritized[i]);
-        Global::maintenance_queue->add(new MaintenanceTaskSplit(level, range_data_prioritized[i]->priority, schedule_time, range));
+        Global::maintenance_queue->add(new MaintenanceTaskSplit(level, range_data_prioritized[i].data->priority,
+                                                                schedule_time, range_data_prioritized[i].range));
       }
-      else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::RELINQUISH) {
-        RangePtr range(range_data_prioritized[i]->range);
+      else if (range_data_prioritized[i].data->maintenance_flags & MaintenanceFlag::RELINQUISH) {
         level = get_level(range_data_prioritized[i]);
-        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(level, range_data_prioritized[i]->priority, schedule_time, range));
+        Global::maintenance_queue->add(new MaintenanceTaskRelinquish(level, range_data_prioritized[i].data->priority,
+                                                                     schedule_time, range_data_prioritized[i].range));
       }
-      else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::COMPACT) {
+      else if (range_data_prioritized[i].data->maintenance_flags & MaintenanceFlag::COMPACT) {
         MaintenanceTaskCompaction *task;
-        RangePtr range(range_data_prioritized[i]->range);
         level = get_level(range_data_prioritized[i]);
-        task = new MaintenanceTaskCompaction(level, range_data_prioritized[i]->priority, schedule_time, range);
-        if (!range_data_prioritized[i]->needs_major_compaction) {
-          for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i]->agdata; ag_data; ag_data=ag_data->next) {
+        task = new MaintenanceTaskCompaction(level, range_data_prioritized[i].data->priority,
+                                             schedule_time, range_data_prioritized[i].range);
+        if (!range_data_prioritized[i].data->needs_major_compaction) {
+          for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i].data->agdata; ag_data; ag_data=ag_data->next) {
             if (MaintenanceFlag::minor_compaction(ag_data->maintenance_flags) ||
                 MaintenanceFlag::major_compaction(ag_data->maintenance_flags) ||
                 MaintenanceFlag::gc_compaction(ag_data->maintenance_flags))
@@ -354,12 +352,12 @@ void MaintenanceScheduler::schedule() {
         }
         Global::maintenance_queue->add(task);
       }
-      else if (range_data_prioritized[i]->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) {
+      else if (range_data_prioritized[i].data->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) {
         MaintenanceTaskMemoryPurge *task;
-        RangePtr range(range_data_prioritized[i]->range);
         level = get_level(range_data_prioritized[i]);
-        task = new MaintenanceTaskMemoryPurge(level, range_data_prioritized[i]->priority, schedule_time, range);
-        for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i]->agdata; ag_data; ag_data=ag_data->next) {
+        task = new MaintenanceTaskMemoryPurge(level, range_data_prioritized[i].data->priority,
+                                              schedule_time, range_data_prioritized[i].range);
+        for (AccessGroup::MaintenanceData *ag_data=range_data_prioritized[i].data->agdata; ag_data; ag_data=ag_data->next) {
           if (ag_data->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) {
             task->add_subtask(ag_data->ag, ag_data->maintenance_flags);
             for (AccessGroup::CellStoreMaintenanceData *cs_data=ag_data->csdata; cs_data; cs_data=cs_data->next) {
@@ -389,18 +387,18 @@ void MaintenanceScheduler::schedule() {
   m_stats_gatherer->clear();
 }
 
-int MaintenanceScheduler::get_level(Range::MaintenanceData *range_data) {
-  if (range_data->range->is_root())
+int MaintenanceScheduler::get_level(RangeData &rd) {
+  if (rd.range->is_root())
     return 0;
-  if (range_data->is_metadata)
+  if (rd.data->is_metadata)
     return 1;
-  else if (range_data->is_system)
+  else if (rd.data->is_system)
     return 2;
   return 3;
 }
 
 
-void MaintenanceScheduler::check_file_dump_statistics(boost::xtime now, RangeStatsVector &range_data,
+void MaintenanceScheduler::check_file_dump_statistics(boost::xtime now, RangeDataVector &range_data,
                                                       const String &header_str) {
   AccessGroup::MaintenanceData *ag_data;
 
@@ -411,8 +409,8 @@ void MaintenanceScheduler::check_file_dump_statistics(boost::xtime now, RangeSta
       out.open(output_fname.c_str());
       out << header_str << "\n";
       for (size_t i=0; i<range_data.size(); i++) {
-        out << *range_data[i] << "\n";
-        for (ag_data = range_data[i]->agdata; ag_data; ag_data = ag_data->next)
+        out << *range_data[i].data << "\n";
+        for (ag_data = range_data[i].data->agdata; ag_data; ag_data = ag_data->next)
           out << *ag_data << "\n";
       }
       out.close();

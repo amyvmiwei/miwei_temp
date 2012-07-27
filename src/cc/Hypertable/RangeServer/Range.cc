@@ -466,7 +466,6 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->load_factors.cells_written = m_cells_written;
   }
 
-  mdata->range = this;
   mdata->relinquish = m_relinquish;
 
   // record starting maintenance generation
@@ -1533,7 +1532,6 @@ void Range::record_removal_rsml() {
 
 
 std::ostream &Hypertable::operator<<(std::ostream &os, const Range::MaintenanceData &mdata) {
-  os << "RANGE " << mdata.range->get_name() << "\n";
   os << "table_id=" << mdata.table_id << "\n";
   os << "scans=" << mdata.load_factors.scans << "\n";
   os << "updates=" << mdata.load_factors.updates << "\n";

@@ -32,21 +32,21 @@ using namespace Hypertable;
 using namespace std;
 
 void
-MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
+MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
                                              MemoryState &memory_state,
                                              int32_t priority, String &trace_str) {
-  RangeStatsVector range_data_root;
-  RangeStatsVector range_data_metadata;
-  RangeStatsVector range_data_system;
-  RangeStatsVector range_data_user;
+  RangeDataVector range_data_root;
+  RangeDataVector range_data_metadata;
+  RangeDataVector range_data_system;
+  RangeDataVector range_data_user;
   int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
 
   for (size_t i=0; i<range_data.size(); i++) {
-    if (range_data[i]->range->is_root())
+    if (range_data[i].range->is_root())
       range_data_root.push_back(range_data[i]);
-    else if (range_data[i]->is_metadata)
+    else if (range_data[i].data->is_metadata)
       range_data_metadata.push_back(range_data[i]);
-    else if (range_data[i]->is_system)
+    else if (range_data[i].data->is_system)
       range_data_system.push_back(range_data[i]);
     else
       range_data_user.push_back(range_data[i]);
@@ -124,7 +124,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeStatsVector &range_data,
  * 3. schedule compactions for log cleanup purposes
  */
 void
-MaintenancePrioritizerLogCleanup::assign_priorities(RangeStatsVector &range_data,
+MaintenancePrioritizerLogCleanup::assign_priorities(RangeDataVector &range_data,
               CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
               int32_t &priority, String &trace_str) {
 

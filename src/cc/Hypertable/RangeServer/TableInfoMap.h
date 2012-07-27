@@ -36,7 +36,6 @@ namespace Hypertable {
 
   typedef boost::intrusive_ptr<TableInfoMap> TableInfoMapPtr;
 
-
   /**
    * Provides a mapping from table name to TableInfo object.
    */
@@ -48,9 +47,12 @@ namespace Hypertable {
     bool get(const String &name, TableInfoPtr &info);
     void get(const TableIdentifier *table, TableInfoPtr &info);
     void set(const String &name, TableInfoPtr &info);
+    void stage_range(const TableIdentifier *table, const RangeSpec *range_spec);
+    void unstage_range(const TableIdentifier *table, const RangeSpec *range_spec);
+    void add_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log);
     bool remove(const String &name, TableInfoPtr &info);
     void get_all(std::vector<TableInfoPtr> &tv);
-    void get_range_vector(std::vector<RangePtr> &range_vec);
+    void get_range_data(RangeDataVector &range_data, int *log_generation=0);
     int32_t get_range_count();
     void clear();
     void clear_ranges();
