@@ -332,13 +332,12 @@ bool TableInfo::includes_row(const String &row) const {
   return false;
 }
 
-void TableInfo::get_range_vector(std::vector<RangePtr> &range_vec) {
+void TableInfo::get_range_data(RangeDataVector &range_data) {
   ScopedLock lock(m_mutex);
-  range_vec.reserve(range_vec.size() + m_range_set.size());
   for (RangeInfoSet::iterator iter = m_range_set.begin();
        iter != m_range_set.end(); ++iter) {
     if (iter->get_range())
-      range_vec.push_back(iter->get_range());
+      range_data.push_back( RangeData(iter->get_range()) );
   }
 }
 

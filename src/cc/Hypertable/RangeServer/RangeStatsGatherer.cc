@@ -27,36 +27,19 @@
 
 using namespace Hypertable;
 
-void RangeStatsGatherer::fetch(RangeStatsVector &range_stats,
-                               size_t *lenp, TableMutator *mutator) {
+
+void RangeStatsGatherer::fetch(RangeDataVector &range_data, TableMutator *mutator, int *log_generation) {
   std::vector<TableInfoPtr> table_vec;
-
-  range_stats.clear();
-
-  clear();
-
-  m_table_info_map->get_all(table_vec);
-
-  m_range_vec.reserve( m_table_info_map->get_range_count() );
-
-  if (table_vec.empty())
-    return;
-
   time_t now = time(0);
 
-  if (lenp)
-    *lenp = table_vec.size();
-
-  for (size_t i=0,j=0; i<table_vec.size(); i++) {
-    table_vec[i]->get_range_vector(m_range_vec);
-    for (; j<m_range_vec.size(); j++)
-      range_stats.push_back(m_range_vec[j]->get_maintenance_data(m_arena, now, mutator));
-  }
-
+  clear();
+  range_data.clear();
+  m_table_info_map->get_range_data(range_data, log_generation);
+  foreach (RangeData &rd, range_data)
+    rd.data = rd.range->get_maintenance_data(m_arena, now, mutator);
 }
 
 
 void RangeStatsGatherer::clear() {
   m_arena.free();
-  m_range_vec.clear();
 }

@@ -16,7 +16,15 @@ save_failure_state() {
   cp rangeserver.* $ARCHIVE_DIR
   cp errors.txt *.output $ARCHIVE_DIR
   cp -r $HT_HOME/fs $ARCHIVE_DIR
+  touch failure
 }
+
+if [ -e failure ]; then
+  kill -9 `ps auxww | fgrep -i "$HT_HOME/bin" | fgrep -v java | fgrep -v grep | tr -s "[ ]" | cut -f2 -d' '`
+  sleep 10
+  kill -9 `ps auxww | fgrep -i "$HT_HOME/bin" | fgrep -v java | fgrep -v grep | tr -s "[ ]" | cut -f2 -d' '`
+  rm -f failure
+fi
 
 $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --DfsBroker.DisableFileRemoval=true
 
@@ -144,8 +152,7 @@ while [ -s errors.txt ] && [ $iteration -lt 5 ]; do
   $HT_HOME/bin/ht metalog_dump /hypertable/servers/rs2/log/rsml | fgrep "load_acknowledged=false" >> errors.txt
   let iteration=iteration+1
 done
-fgrep -i reset $HT_HOME/log/DfsBroker.local.log >> errors.txt
-ls core* >> errors.txt
+#ls core* >> errors.txt
 
 if [ -s errors.txt ] ; then
   save_failure_state

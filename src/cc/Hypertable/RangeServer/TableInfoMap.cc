@@ -20,6 +20,11 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/FailureInducer.h"
+
+#include "Hypertable/Lib/CommitLog.h"
+#include "Hypertable/Lib/CommitLogReader.h"
+
 #include "Global.h"
 #include "MaintenanceTaskSplit.h"
 #include "TableInfoMap.h"
@@ -61,6 +66,57 @@ void TableInfoMap::set(const String &name, TableInfoPtr &info) {
 }
 
 
+void TableInfoMap::stage_range(const TableIdentifier *table, const RangeSpec *range_spec) {
+  ScopedLock lock(m_mutex);
+  InfoMap::iterator iter = m_map.find(table->id);
+  HT_ASSERT(iter != m_map.end());
+  (*iter).second->stage_range(range_spec);
+}
+
+
+void TableInfoMap::unstage_range(const TableIdentifier *table, const RangeSpec *range_spec) {
+  ScopedLock lock(m_mutex);
+  InfoMap::iterator iter = m_map.find(table->id);
+  HT_ASSERT(iter != m_map.end());
+  (*iter).second->unstage_range(range_spec);
+}
+
+
+void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log) {
+  ScopedLock lock(m_mutex);
+  int error;
+
+  InfoMap::iterator iter = m_map.find(table->id);
+  HT_ASSERT(iter != m_map.end());
+
+  if (transfer_log && *transfer_log) {
+    CommitLogReaderPtr commit_log_reader =
+      new CommitLogReader(Global::log_dfs, transfer_log);
+    if (!commit_log_reader->empty()) {
+      CommitLog *log;
+      if (range->is_root())
+        log = Global::root_log;
+      else if (table->is_metadata())
+        log = Global::metadata_log;
+      else if (table->is_system())
+        log = Global::system_log;
+      else
+        log = Global::user_log;
+
+      range->replay_transfer_log(commit_log_reader.get());
+
+      if ((error = log->link_log(commit_log_reader.get())) != Error::OK)
+        HT_THROWF(error, "Unable to link transfer log (%s) into commit log(%s)",
+                  transfer_log, log->get_log_dir().c_str());
+    }
+  }
+
+  HT_MAYBE_FAIL_X("metadata-load-range-4", table->is_metadata());
+
+  (*iter).second->add_staged_range(range);
+}
+
+
 bool TableInfoMap::remove(const String &name, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
   InfoMap::iterator iter = m_map.find(name);
@@ -78,10 +134,21 @@ void TableInfoMap::get_all(std::vector<TableInfoPtr> &tv) {
     tv.push_back((*iter).second);
 }
 
-void TableInfoMap::get_range_vector(std::vector<RangePtr> &range_vec) {
+
+void TableInfoMap::get_range_data(RangeDataVector &range_data, int *log_generation) {
   ScopedLock lock(m_mutex);
+  int32_t count = 0;
+
+  if (log_generation)
+    *log_generation = atomic_read(&g_log_generation);
+
+  // reserve space in vector
   for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
-    (*iter).second->get_range_vector(range_vec);
+    count += (*iter).second->get_range_count();
+  range_data.reserve(count+10);
+
+  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
+    (*iter).second->get_range_data(range_data);
 }
 
 int32_t TableInfoMap::get_range_count() {
@@ -109,7 +176,7 @@ void TableInfoMap::clear_ranges() {
 void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
   ScopedLock lock(m_mutex);
   InfoMap::iterator from_iter, to_iter;
-  std::vector<RangePtr> range_vec;
+  RangeDataVector range_data;
 
   for (from_iter = table_info_map_ptr->m_map.begin();
        from_iter != table_info_map_ptr->m_map.end(); ++from_iter) {
@@ -120,10 +187,10 @@ void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
       m_map[ (*from_iter).first ] = (*from_iter).second;
     }
     else {
-      range_vec.clear();
-      (*from_iter).second->get_range_vector(range_vec);
-      for (size_t i=0; i<range_vec.size(); i++)
-        (*to_iter).second->add_range(range_vec[i]);
+      range_data.clear();
+      (*from_iter).second->get_range_data(range_data);
+      foreach (RangeData &rd, range_data)
+        (*to_iter).second->add_range(rd.range);
     }
 
   }

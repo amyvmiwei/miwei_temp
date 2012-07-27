@@ -35,21 +35,21 @@ using namespace Hypertable::Config;
 using namespace std;
 
 void
-MaintenancePrioritizerLowMemory::prioritize(RangeStatsVector &range_data,
+MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
                                             MemoryState &memory_state,
                                             int32_t priority, String &trace_str) {
-  RangeStatsVector range_data_root;
-  RangeStatsVector range_data_metadata;
-  RangeStatsVector range_data_system;
-  RangeStatsVector range_data_user;
+  RangeDataVector range_data_root;
+  RangeDataVector range_data_metadata;
+  RangeDataVector range_data_system;
+  RangeDataVector range_data_user;
   int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
 
   for (size_t i=0; i<range_data.size(); i++) {
-    if (range_data[i]->range->is_root())
+    if (range_data[i].range->is_root())
       range_data_root.push_back(range_data[i]);
-    else if (range_data[i]->is_metadata)
+    else if (range_data[i].data->is_metadata)
       range_data_metadata.push_back(range_data[i]);
-    else if (range_data[i]->is_system)
+    else if (range_data[i].data->is_system)
       range_data_system.push_back(range_data[i]);
     else
       range_data_user.push_back(range_data[i]);
@@ -116,7 +116,7 @@ MaintenancePrioritizerLowMemory::prioritize(RangeStatsVector &range_data,
  * 3. schedule needed compactions
  */
 void
-MaintenancePrioritizerLowMemory::assign_priorities_all(RangeStatsVector &range_data,
+MaintenancePrioritizerLowMemory::assign_priorities_all(RangeDataVector &range_data,
             CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
 	    int32_t &priority, String &trace_str) {
 
@@ -154,7 +154,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_all(RangeStatsVector &range_d
  */
 
 void
-MaintenancePrioritizerLowMemory::assign_priorities_user(RangeStatsVector &range_data,
+MaintenancePrioritizerLowMemory::assign_priorities_user(RangeDataVector &range_data,
                   MemoryState &memory_state, int32_t &priority, String &trace_str) {
   int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
   uint64_t update_bytes = m_server_stats->get_update_bytes(collector_id);

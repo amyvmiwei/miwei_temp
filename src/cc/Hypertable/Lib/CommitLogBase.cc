@@ -19,38 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGESTATSGATHERER_H
-#define HYPERTABLE_RANGESTATSGATHERER_H
+#include "Common/Compat.h"
 
-#include "Common/PageArena.h"
-#include "Common/ReferenceCount.h"
+#include "CommitLogBase.h"
 
-#include "Hypertable/Lib/TableMutator.h"
-
-#include "MaintenanceQueue.h"
-#include "Range.h"
-#include "TableInfoMap.h"
-
-namespace Hypertable {
-
-  class RangeStatsGatherer : public ReferenceCount {
-  public:
-    RangeStatsGatherer(TableInfoMapPtr &table_info_map) : m_table_info_map(table_info_map) { }
-
-    virtual ~RangeStatsGatherer() { }
-
-    void fetch(RangeDataVector &range_data, TableMutator *mutator=0, int *log_generation=0);
-
-    void clear();
-
-  private:
-    ByteArena m_arena;
-    TableInfoMapPtr m_table_info_map;
-  };
-  typedef intrusive_ptr<RangeStatsGatherer> RangeStatsGathererPtr;
-
-}
-
-#endif // HYPERTABLE_RANGESTATSGATHERER_H
-
-
+atomic_t Hypertable::g_log_generation = ATOMIC_INIT(0);

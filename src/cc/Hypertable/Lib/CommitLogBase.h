@@ -36,18 +36,28 @@
 
 namespace Hypertable {
 
+  extern atomic_t g_log_generation;
+
   class CommitLogFileInfo {
   public:
-    CommitLogFileInfo() : num(0), size(0), revision(0), log_dir_hash(0), references(0), block_stream(0), parent(0) { }
+    CommitLogFileInfo() : num(0), size(0), revision(0), log_dir_hash(0), references(0), block_stream(0), parent(0), verification(123456789LL) {
+      generation = atomic_inc_return(&g_log_generation);
+    }
+    ~CommitLogFileInfo() { verify(); verification = 0; }
+    void verify() {
+      HT_ASSERT(verification == 123456789LL);
+    }
     String     log_dir;
     uint32_t   num;
     uint64_t   size;
     int64_t    revision;
     int64_t    log_dir_hash;
     size_t     references;
+    int        generation;
     CommitLogBlockStream *block_stream;
     CommitLogFileInfo *parent;
     StringSet  purge_dirs;
+    int64_t verification;
   };
 
   struct LtClfip {
