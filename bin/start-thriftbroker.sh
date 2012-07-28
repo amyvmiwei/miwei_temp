@@ -39,7 +39,7 @@ PIDBASE="ThriftBroker"
 while [ "$1" != "${1##[-+]}" ]; do
   case $1 in
     --valgrind)
-      VALGRIND="valgrind -v --log-file=vg --leak-check=full --num-callers=20 "
+      VALGRIND="valgrind -v --log-file=vg.tb.%p --leak-check=full --num-callers=20 "
       shift;;
     --pidbase)
       shift
