@@ -40,7 +40,7 @@ bool SerializedCellsWriter::add(const char *row, const char *column_family,
 
   bool need_row = false;
   if (row_length != m_previous_row_length
-      || (m_previous_row && memcmp(row, m_previous_row, row_length)))
+      || (m_previous_row_offset >= 0 && memcmp(row, m_buf.base + m_previous_row_offset, row_length)))
     need_row = true;
 
   if (!value && value_length)
@@ -90,7 +90,7 @@ bool SerializedCellsWriter::add(const char *row, const char *column_family,
   // row; only write it if it's not identical to the previous row
   if (need_row) {
     memcpy(m_buf.ptr, row, row_length);
-    m_previous_row = m_buf.ptr;
+    m_previous_row_offset = m_buf.ptr - m_buf.base;
     m_buf.ptr += row_length;
     m_previous_row_length = row_length;
   }
@@ -120,6 +120,6 @@ bool SerializedCellsWriter::add(const char *row, const char *column_family,
 
 void SerializedCellsWriter::clear() { 
   m_buf.clear();
-  m_previous_row = 0;
+  m_previous_row_offset = -1;
   m_previous_row_length = 0;
 }
