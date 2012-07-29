@@ -34,7 +34,7 @@ namespace Hypertable {
  
     SerializedCellsWriter(int32_t size, bool grow = false)
       :  m_buf(size), m_finalized(false), m_grow(grow), m_version_sent(false),
-         m_previous_row(0), m_previous_row_length(0) { }
+         m_previous_row_offset(-1), m_previous_row_length(0) { }
 
     bool add(Cell &cell) {
       return add(cell.row_key, cell.column_family, cell.column_qualifier,
@@ -84,7 +84,7 @@ namespace Hypertable {
     bool m_finalized;
     bool m_grow;
     bool m_version_sent;
-    void *m_previous_row;
+    size_t m_previous_row_offset;
     int32_t m_previous_row_length;
   };
 
