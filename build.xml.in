@@ -78,31 +78,31 @@
 
   <target name="compile" depends="prepare" description="Standard compile">
     <javac srcdir='\${gensrc.dir}' destdir='\${build.classes}'
-           deprecation='yes' debug='true'>
+           deprecation='yes' debug='true' includeantruntime='false'>
       <classpath refid='project.classpath'/>
     </javac>
     <javac srcdir='\${thriftsrc.dir}' destdir='\${build.classes}'
-           deprecation='yes' debug='true'>
+           deprecation='yes' debug='true' includeantruntime='false'>
       <classpath refid='project.classpath'/>
     </javac>
     <javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes"
-           debug="true">
+           debug="true" includeantruntime='false'>
       <classpath refid="project.classpath"/>
     </javac>
     <javac srcdir="${mapreducesrc.dir}" destdir="${build.classes}" deprecation="yes"
-           debug="true">
+           debug="true" includeantruntime='false'>
       <classpath refid="project.classpath"/>
     </javac>
     <javac srcdir="${mapred.src}" destdir="${build.classes}" deprecation="yes"
-           debug="true">
+           debug="true" includeantruntime='false'>
       <classpath refid="project.classpath"/>
     </javac>
     <javac srcdir="${hivesrc.dir}" destdir="${build.classes}" deprecation="yes"
-           debug="true">
+           debug="true" includeantruntime='false'>
       <classpath refid="project.classpath"/>
     </javac>
     <javac srcdir="${examples.dir}" destdir="${build.classes}" deprecation="yes"
-           debug="true">
+           debug="true" includeantruntime='false'>
       <classpath refid="project.classpath"/>
     </javac>
   </target>
