@@ -41,7 +41,8 @@ import org.hypertable.thrift.ThriftClient;
 /**
  * Write Map/Reduce output to a table in Hypertable.
  *
- * TODO: For now we assume ThriftBroker is running on localhost on default port (38080).
+ * TODO: For now we assume ThriftBroker is running on localhost on default
+ * port (38080).
  * Change this to read from configs at some point.
  * Key is not used but output value must be a KeyWritable
  */
@@ -130,7 +131,7 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
         Cell cell = new Cell();
         key.convert_buffers_to_strings();
         cell.key = key;
-        cell.value = ByteBuffer.wrap(value.getBytes());
+        cell.value = ByteBuffer.wrap(value.getBytes(), 0, value.getLength());
         mClient.mutator_set_cell(mMutator, cell);
       }
       catch (Exception e) {
