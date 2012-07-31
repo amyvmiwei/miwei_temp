@@ -33,7 +33,7 @@ public class OutputCommitter extends org.apache.hadoop.mapreduce.OutputCommitter
   public void abortTask(TaskAttemptContext arg0) {
   }
 
-  @Override
+  @Deprecated
   public void cleanupJob(JobContext arg0) {
   }
 
