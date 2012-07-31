@@ -184,8 +184,6 @@ int main(int argc, char **argv) {
     return 1;
   }
 
-  memset(&key, 0, sizeof(key));
-
   // Load the log file into the ApacheLogParser
   // object
   parser.load(inputfile);
