@@ -49,6 +49,21 @@ if (PHPTHRIFT_ROOT)
    message(FATAL_ERROR "PHPTHRIFT_ROOT variable no longer supported.  Use THRIFT_SOURCE_DIR instead.")
 endif ()
 
+#uname -p says i386, but we know better when its x86 apple
+if (APPLE AND "${CMAKE_SYSTEM_PROCESSOR}" STREQUAL "i386")
+    SET(CMAKE_SYSTEM_PROCESSOR "x86_64")
+endif ()
+#detect 32 or 64 bit compiler
+if (CMAKE_SYSTEM_PROCESSOR MATCHES "^(i.86|x86|x86_64)$")
+    include(CheckTypeSize)
+    check_type_size("void*" SIZEOF_VOID_P BUILTIN_TYPES_ONLY)
+    if (${SIZEOF_VOID_P} EQUAL 8)
+        set(CMAKE_SYSTEM_PROCESSOR_x86 64)
+    else ()
+        set(CMAKE_SYSTEM_PROCESSOR_x86 32)
+    endif ()
+endif ()
+
 # install directory prefix
 if (CMAKE_INSTALL_PREFIX_INITIALIZED_TO_DEFAULT)
   set(CMAKE_INSTALL_PREFIX "/opt/hypertable"
