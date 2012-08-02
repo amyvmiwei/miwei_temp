@@ -41,10 +41,14 @@ find_library(Tcmalloc_LIBRARY NO_DEFAULT_PATH
   PATHS ${HT_DEPENDENCY_LIB_DIR} /lib /usr/lib /usr/local/lib /opt/local/lib
 )
 
-find_library(Unwind_LIBRARY NO_DEFAULT_PATH
-  NAMES unwind
-  PATHS ${HT_DEPENDENCY_LIB_DIR} /lib /usr/lib /usr/local/lib /opt/local/lib
-)
+if (CMAKE_SYSTEM_PROCESSOR_x86 AND ${CMAKE_SYSTEM_PROCESSOR_x86} EQUAL 64)
+  find_library(Unwind_LIBRARY NO_DEFAULT_PATH
+    NAMES unwind
+    PATHS ${HT_DEPENDENCY_LIB_DIR} /lib /usr/lib /usr/local/lib /opt/local/lib
+  )
+else ()
+  set( Unwind_LIBRARY )
+endif ()
 
 if (Tcmalloc_INCLUDE_DIR AND Tcmalloc_LIBRARY)
   set(Tcmalloc_FOUND TRUE)
