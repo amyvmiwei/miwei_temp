@@ -214,7 +214,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
      * Cache lookup / block read
      */
     if (Global::block_cache == 0 || Global::block_cache->compressed() ||
-        !Global::block_cache->checkout(m_file_id, (uint32_t)m_block.offset,
+        !Global::block_cache->checkout(m_file_id, m_block.offset,
 				       (uint8_t **)&m_block.base, &len)) {
       bool second_try = false;
       bool checked_out = false;
@@ -223,7 +223,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
         DynamicBuffer buf;
 
 	if (Global::block_cache == 0 || !Global::block_cache->compressed() ||
-            !Global::block_cache->checkout(m_file_id, (uint32_t)m_block.offset,
+            !Global::block_cache->checkout(m_file_id, m_block.offset,
 				           (uint8_t **)&buf.base, &len)) {
 	  buf.grow(m_block.zlength, true);
 

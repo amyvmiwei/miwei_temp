@@ -1070,23 +1070,23 @@ RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags)
             }
           }
         }
-
-        if ((flags & RangeServerProtocol::COMPACT_FLAG_SYSTEM) ==
-            RangeServerProtocol::COMPACT_FLAG_SYSTEM && tables[i]->identifier().is_system()) {
-          range_data.clear();
-          tables[i]->get_range_data(range_data);
-          foreach(RangeData &rd, range_data)
-            rd.range->set_needs_compaction(true);
-          range_count += range_data.size();
+        else if (tables[i]->identifier().is_system()) {
+          if ((flags & RangeServerProtocol::COMPACT_FLAG_SYSTEM) == RangeServerProtocol::COMPACT_FLAG_SYSTEM) {
+            range_data.clear();
+            tables[i]->get_range_data(range_data);
+            foreach(RangeData &rd, range_data)
+              rd.range->set_needs_compaction(true);
+            range_count += range_data.size();
+          }
         }
-
-        if ((flags & RangeServerProtocol::COMPACT_FLAG_USER) ==
-            RangeServerProtocol::COMPACT_FLAG_USER && tables[i]->identifier().is_user()) {
-          range_data.clear();
-          tables[i]->get_range_data(range_data);
-          foreach(RangeData &rd, range_data)
-            rd.range->set_needs_compaction(true);
-          range_count += range_data.size();
+        else {
+          if ((flags & RangeServerProtocol::COMPACT_FLAG_USER) == RangeServerProtocol::COMPACT_FLAG_USER) {
+            range_data.clear();
+            tables[i]->get_range_data(range_data);
+            foreach(RangeData &rd, range_data)
+              rd.range->set_needs_compaction(true);
+            range_count += range_data.size();
+          }
         }
       }
     }

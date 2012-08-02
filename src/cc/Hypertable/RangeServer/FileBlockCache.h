@@ -46,12 +46,12 @@ namespace Hypertable {
 
     bool compressed() { return m_compressed; }
 
-    bool checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
+    bool checkout(int file_id, uint64_t file_offset, uint8_t **blockp,
                   uint32_t *lengthp);
-    void checkin(int file_id, uint32_t file_offset);
-    bool insert(int file_id, uint32_t file_offset,
+    void checkin(int file_id, uint64_t file_offset);
+    bool insert(int file_id, uint64_t file_offset,
 		uint8_t *block, uint32_t length, bool checkout=false);
-    bool contains(int file_id, uint32_t file_offset);
+    bool contains(int file_id, uint64_t file_offset);
 
     void increase_limit(int64_t amount);
 
@@ -106,21 +106,21 @@ namespace Hypertable {
 
     int64_t make_room(int64_t amount);
 
-    inline static int64_t make_key(int file_id, uint32_t file_offset) {
-      return ((int64_t)file_id << 32) | file_offset;
+    inline static int64_t make_key(int file_id, uint64_t file_offset) {
+      return ((int64_t)file_id << 32) | (int64_t)file_offset;
     }
 
     class BlockCacheEntry {
     public:
-      BlockCacheEntry() : file_id(-1), file_offset(0), block(0), length(0),
+      BlockCacheEntry() : file_id(-1), length(0), file_offset(0), block(0),
           ref_count(0) { return; }
-      BlockCacheEntry(int id, uint32_t offset) : file_id(id),
-          file_offset(offset), block(0), length(0), ref_count(0) { return; }
+      BlockCacheEntry(int id, uint64_t offset) : file_id(id), length(0),
+          file_offset(offset), block(0), ref_count(0) { return; }
 
       int      file_id;
-      uint32_t file_offset;
-      uint8_t  *block;
       uint32_t length;
+      uint64_t file_offset;
+      uint8_t  *block;
       uint32_t ref_count;
       int64_t key() const { return FileBlockCache::make_key(file_id, file_offset); }
     };
