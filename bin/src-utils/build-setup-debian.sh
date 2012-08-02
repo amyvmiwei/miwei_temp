@@ -142,6 +142,19 @@ chmod 755 ./configure ./lib/php/src/ext/thrift_protocol/build/shtool
 make
 make install
 
+# Scrooge (Scala Thrift binding)
+wget http://apt.typesafe.com/repo-deb-build-0002.deb
+dpkg -i repo-deb-build-0002.deb
+apt-get update
+apt-get -y --force-yes --fix-missing install sbt
+mkdir -p ~/.sbt/.lib/0.11.2
+cd ~/.sbt/.lib/0.11.2
+wget http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-tools.sbt/sbt-launch/0.11.2/sbt-launch.jar
+cd /usr/src
+git clone git://github.com/twitter/scrooge.git
+cd scrooge
+sbt -sbt-version 0.11.2 package-dist
+
 apt-get -y --allow-unauthenticated install dstat doxygen rrdtool graphviz gdb emacs rdoc rubygems
 
 gem install capistrano sinatra rack thin json titleize

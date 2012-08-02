@@ -148,6 +148,17 @@ chmod 755 ./configure ./lib/php/src/ext/thrift_protocol/build/shtool
 make
 make install
 
+# Scrooge (Scala Thrift generator)
+rpm -i http://rpm.typesafe.com/typesafe-repo-2.0.0-1.noarch.rpm
+yum -y install --nogpgcheck  sbt
+mkdir -p ~/.sbt/.lib/0.11.2
+cd ~/.sbt/.lib/0.11.2
+wget http://typesafe.artifactoryonline.com/typesafe/ivy-releases/org.scala-tools.sbt/sbt-launch/0.11.2/sbt-launch.jar
+cd /usr/src
+git clone git://github.com/twitter/scrooge.git
+cd scrooge
+sbt -sbt-version 0.11.2 package-dist
+
 yum -y install hadoop-0.20 dstat oprofile tcpdump doxygen rrdtool graphviz gdb emacs-nox valgrind
 
 # Upgrade to ruby 1.8.7
