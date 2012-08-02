@@ -39,7 +39,7 @@ FileBlockCache::~FileBlockCache() {
 }
 
 bool
-FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
+FileBlockCache::checkout(int file_id, uint64_t file_offset, uint8_t **blockp,
                          uint32_t *lengthp) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
@@ -66,7 +66,7 @@ FileBlockCache::checkout(int file_id, uint32_t file_offset, uint8_t **blockp,
 }
 
 
-void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
+void FileBlockCache::checkin(int file_id, uint64_t file_offset) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   HashIndex::iterator iter;
@@ -80,7 +80,7 @@ void FileBlockCache::checkin(int file_id, uint32_t file_offset) {
 
 
 bool
-FileBlockCache::insert(int file_id, uint32_t file_offset,
+FileBlockCache::insert(int file_id, uint64_t file_offset,
 		       uint8_t *block, uint32_t length, bool checkout) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
@@ -114,7 +114,7 @@ FileBlockCache::insert(int file_id, uint32_t file_offset,
 }
 
 
-bool FileBlockCache::contains(int file_id, uint32_t file_offset) {
+bool FileBlockCache::contains(int file_id, uint64_t file_offset) {
   ScopedLock lock(m_mutex);
   HashIndex &hash_index = m_cache.get<1>();
   m_accesses++;
