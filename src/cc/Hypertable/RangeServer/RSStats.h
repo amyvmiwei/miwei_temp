@@ -25,11 +25,10 @@
 #include <vector>
 #include <algorithm>
 
-#include <boost/thread/xtime.hpp>
-
 #include "Common/Logger.h"
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
+#include "Common/Time.h"
 
 #include "Range.h"
 
@@ -45,7 +44,7 @@ namespace Hypertable {
     };
 
     RSStats(const vector<int64_t> &compute_period_millis) {
-      foreach (int64_t compute_period, compute_period_millis) {
+      foreach_ht (int64_t compute_period, compute_period_millis) {
         m_stats_collectors.push_back(StatsCollector(compute_period));
       }
     }
@@ -156,7 +155,7 @@ namespace Hypertable {
     class StatsCollector {
     public:
       StatsCollector(int64_t compute_period_millis): compute_period(compute_period_millis) {
-        boost::xtime_get(&start_time, TIME_UTC);
+        boost::xtime_get(&start_time, TIME_UTC_);
         running.clear();
         computed.clear();
       }
@@ -192,7 +191,7 @@ namespace Hypertable {
       void recompute() {
         int64_t period_millis;
         boost::xtime now;
-        boost::xtime_get(&now, TIME_UTC);
+        boost::xtime_get(&now, TIME_UTC_);
 
         period_millis = xtime_diff_millis(start_time, now);
         if (period_millis < compute_period)

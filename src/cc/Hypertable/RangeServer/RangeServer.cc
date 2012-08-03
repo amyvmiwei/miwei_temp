@@ -120,7 +120,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   m_maintenance_pause_interval = cfg.get_i32("Testing.MaintenanceNeeded.PauseInterval");
 
   m_control_file_check_interval = cfg.get_i32("ControlFile.CheckInterval");
-  boost::xtime_get(&m_last_control_file_check, boost::TIME_UTC);
+  boost::xtime_get(&m_last_control_file_check, boost::TIME_UTC_);
 
   /** Compute maintenance threads **/
   uint32_t maintenance_threads;
@@ -358,7 +358,7 @@ void RangeServer::shutdown() {
     // stop application queue
     m_app_queue->stop();
     boost::xtime expire_time;
-    boost::xtime_get(&expire_time, boost::TIME_UTC);
+    boost::xtime_get(&expire_time, boost::TIME_UTC_);
     expire_time.sec += 30;  // wait for up to 30 seconds
     m_app_queue->wait_for_empty(expire_time, 1);
 
@@ -372,7 +372,7 @@ void RangeServer::shutdown() {
     m_update_qualify_queue_cond.notify_all();
     m_update_commit_queue_cond.notify_all();
     m_update_response_queue_cond.notify_all();
-    foreach (Thread *thread, m_update_threads)
+    foreach_ht (Thread *thread, m_update_threads)
       thread->join();
 
     Global::range_locator = 0;
@@ -533,7 +533,7 @@ namespace {
     sort(listing.begin(), listing.end(), ByFragmentNumber());
 
     // Remove zero-length files
-    foreach (String &entry, listing) {
+    foreach_ht (String &entry, listing) {
       String fragment_file = logdir + "/" + entry;
       try {
         if (Global::log_dfs->length(fragment_file) == 0) {
@@ -587,7 +587,7 @@ void RangeServer::local_recover() {
   try {
     std::vector<MaintenanceTask*> maintenance_tasks;
     boost::xtime now;
-    boost::xtime_get(&now, boost::TIME_UTC);
+    boost::xtime_get(&now, boost::TIME_UTC_);
 
     rsml_reader = new MetaLog::Reader(Global::log_dfs, rsml_definition,
                                       Global::log_dir + "/" + rsml_definition->name());
@@ -609,7 +609,7 @@ void RangeServer::local_recover() {
       // Populated Global::work_queue
       {
 	MetaLog::EntityTask *task_entity;
-	foreach(MetaLog::EntityPtr &entity, entities) {
+	foreach_ht(MetaLog::EntityPtr &entity, entities) {
 	  if ((task_entity = dynamic_cast<MetaLog::EntityTask *>(entity.get())) != 0)
 	    Global::add_to_work_queue(task_entity);
 	}
@@ -631,7 +631,7 @@ void RangeServer::local_recover() {
       // clear the replay map
       m_replay_map->clear();
 
-      foreach(MetaLog::EntityPtr &entity, entities) {
+      foreach_ht(MetaLog::EntityPtr &entity, entities) {
         range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get());
         if (range_entity && range_entity->table.is_metadata() &&
             range_entity->spec.end_row && !strcmp(range_entity->spec.end_row, Key::END_ROOT_ROW)) {
@@ -647,7 +647,7 @@ void RangeServer::local_recover() {
         // Perform any range specific post-replay tasks
         range_data.clear();
         m_replay_map->get_range_data(range_data);
-        foreach(RangeData &rd, range_data) {
+        foreach_ht(RangeData &rd, range_data) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -689,7 +689,7 @@ void RangeServer::local_recover() {
       // clear the replay map
       m_replay_map->clear();
 
-      foreach(MetaLog::EntityPtr &entity, entities) {
+      foreach_ht(MetaLog::EntityPtr &entity, entities) {
         range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get());
         if (range_entity && range_entity->table.is_metadata() &&
             !(range_entity->spec.end_row &&
@@ -706,7 +706,7 @@ void RangeServer::local_recover() {
         // Perform any range specific post-replay tasks
         range_data.clear();
         m_replay_map->get_range_data(range_data);
-        foreach(RangeData &rd, range_data) {
+        foreach_ht(RangeData &rd, range_data) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -753,7 +753,7 @@ void RangeServer::local_recover() {
       // clear the replay map
       m_replay_map->clear();
 
-      foreach(MetaLog::EntityPtr &entity, entities) {
+      foreach_ht(MetaLog::EntityPtr &entity, entities) {
         range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get());
         if (range_entity && range_entity->table.is_system() && !range_entity->table.is_metadata())
           replay_load_range(0, range_entity, false, &table_schemas);
@@ -767,7 +767,7 @@ void RangeServer::local_recover() {
         // Perform any range specific post-replay tasks
         range_data.clear();
         m_replay_map->get_range_data(range_data);
-        foreach(RangeData &rd, range_data) {
+        foreach_ht(RangeData &rd, range_data) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -811,7 +811,7 @@ void RangeServer::local_recover() {
       // clear the replay map
       m_replay_map->clear();
 
-      foreach(MetaLog::EntityPtr &entity, entities) {
+      foreach_ht(MetaLog::EntityPtr &entity, entities) {
         range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get());
         if (range_entity && !range_entity->table.is_system())
           replay_load_range(0, range_entity, false, &table_schemas);
@@ -825,7 +825,7 @@ void RangeServer::local_recover() {
         // Perform any range specific post-replay tasks
         range_data.clear();
         m_replay_map->get_range_data(range_data);
-        foreach(RangeData &rd, range_data) {
+        foreach_ht(RangeData &rd, range_data) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -927,7 +927,7 @@ void RangeServer::map_table_schemas(const String &parent,
                                     const std::vector<DirEntryAttr> &listing,
                                     TableSchemaMap &table_schemas) {
   String preffix = !parent.empty() ? parent + "/" : ""; // avoid leading slash
-  foreach(const DirEntryAttr& e, listing) {
+  foreach_ht(const DirEntryAttr& e, listing) {
     String name = preffix + e.name;
     if (e.has_attr) {
       SchemaPtr schema = Schema::new_instance((char*)e.attr.base, e.attr.size);
@@ -1035,7 +1035,7 @@ RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags)
 
       range_data.clear();
       table_info->get_range_data(range_data);
-      foreach(RangeData &rd, range_data)
+      foreach_ht(RangeData &rd, range_data)
         rd.range->set_needs_compaction(true);
 
       range_count = range_data.size();
@@ -1053,7 +1053,7 @@ RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags)
               RangeServerProtocol::COMPACT_FLAG_METADATA) {
             range_data.clear();
             tables[i]->get_range_data(range_data);
-            foreach(RangeData &rd, range_data)
+            foreach_ht(RangeData &rd, range_data)
               rd.range->set_needs_compaction(true);
             range_count += range_data.size();
           }
@@ -1061,7 +1061,7 @@ RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags)
                    RangeServerProtocol::COMPACT_FLAG_ROOT) {
             range_data.clear();
             tables[i]->get_range_data(range_data);
-            foreach(RangeData &rd, range_data) {
+            foreach_ht(RangeData &rd, range_data) {
               if (rd.range->is_root()) {
                 rd.range->set_needs_compaction(true);
                 range_count++;
@@ -1074,7 +1074,7 @@ RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags)
           if ((flags & RangeServerProtocol::COMPACT_FLAG_SYSTEM) == RangeServerProtocol::COMPACT_FLAG_SYSTEM) {
             range_data.clear();
             tables[i]->get_range_data(range_data);
-            foreach(RangeData &rd, range_data)
+            foreach_ht(RangeData &rd, range_data)
               rd.range->set_needs_compaction(true);
             range_count += range_data.size();
           }
@@ -1083,7 +1083,7 @@ RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags)
           if ((flags & RangeServerProtocol::COMPACT_FLAG_USER) == RangeServerProtocol::COMPACT_FLAG_USER) {
             range_data.clear();
             tables[i]->get_range_data(range_data);
-            foreach(RangeData &rd, range_data)
+            foreach_ht(RangeData &rd, range_data)
               rd.range->set_needs_compaction(true);
             range_count += range_data.size();
           }
@@ -1131,7 +1131,7 @@ namespace {
 
   void do_metadata_sync(RangeDataVector &range_data, TableMutatorPtr &mutator,
                         const char *table_id, bool do_start_row, bool do_location) {
-    foreach(RangeData &rd, range_data)
+    foreach_ht(RangeData &rd, range_data)
       do_metadata_sync(rd, mutator, table_id, do_start_row, do_location);
   }
 
@@ -1664,7 +1664,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         md5DigestStr[16] = 0;
         table_dfsdir = Global::toplevel_dir + "/tables/" + table->id;
 
-        foreach(Schema::AccessGroup *ag, schema->get_access_groups()) {
+        foreach_ht(Schema::AccessGroup *ag, schema->get_access_groups()) {
           // notice the below variables are different "range" vs. "table"
           range_dfsdir = table_dfsdir + "/" + ag->name + "/" + md5DigestStr;
           Global::dfs->mkdirs(range_dfsdir);
@@ -2087,7 +2087,7 @@ RangeServer::batch_update(std::vector<TableUpdate *> &updates, boost::xtime expi
     ScopedLock lock(m_update_qualify_queue_mutex);
     HT_ASSERT(!updates.empty());
     if (m_profile_query)
-      boost::xtime_get(&uc->start_time, TIME_UTC);
+      boost::xtime_get(&uc->start_time, TIME_UTC_);
     m_update_qualify_queue.push_back(uc);
     m_update_qualify_queue_cond.notify_all();
   }
@@ -2158,7 +2158,7 @@ void RangeServer::update_qualify_and_transform() {
     if (uc->auto_revision < m_last_revision)
       uc->auto_revision = m_last_revision;
 
-    foreach (TableUpdate *table_update, uc->updates) {
+    foreach_ht (TableUpdate *table_update, uc->updates) {
 
       HT_DEBUG_OUT <<"Update: "<< table_update->id << HT_END;
 
@@ -2195,7 +2195,7 @@ void RangeServer::update_qualify_and_transform() {
       table_update->id.encode(&table_update->go_buf.ptr);
       table_update->go_buf.set_mark();
 
-      foreach (UpdateRequest *request, table_update->requests) {
+      foreach_ht (UpdateRequest *request, table_update->requests) {
         uc->total_updates++;
 
         mod_end = request->buffer.base + request->buffer.size;
@@ -2537,7 +2537,7 @@ void RangeServer::update_qualify_and_transform() {
       ScopedLock lock(m_update_commit_queue_mutex);
       if (m_profile_query) {
         boost::xtime now;
-        boost::xtime_get(&now, TIME_UTC);
+        boost::xtime_get(&now, TIME_UTC_);
         uc->qualify_time = xtime_diff_millis(uc->start_time, now);
         uc->start_time = now;
       }
@@ -2586,7 +2586,7 @@ void RangeServer::update_commit() {
       }
     }
 
-    foreach (TableUpdate *table_update, uc->updates) {
+    foreach_ht (TableUpdate *table_update, uc->updates) {
 
       coalesce_amount += table_update->total_buffer_size;
 
@@ -2676,7 +2676,7 @@ void RangeServer::update_commit() {
         uc = coalesce_queue.front();
         if (m_profile_query) {
           boost::xtime now;
-          boost::xtime_get(&now, TIME_UTC);
+          boost::xtime_get(&now, TIME_UTC_);
           uc->commit_time = xtime_diff_millis(uc->start_time, now);
           uc->start_time = now;
         }
@@ -2711,14 +2711,14 @@ void RangeServer::update_add_and_respond() {
     /**
      *  Insert updates into Ranges
      */
-    foreach (TableUpdate *table_update, uc->updates) {
+    foreach_ht (TableUpdate *table_update, uc->updates) {
 
       // Iterate through all of the ranges, inserting updates
       for (hash_map<Range *, RangeUpdateList *>::iterator iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
         ByteString value;
         Key key_comps;
 
-        foreach (RangeUpdate &update, (*iter).second->updates) {
+        foreach_ht (RangeUpdate &update, (*iter).second->updates) {
           Range *rangep = (*iter).first;
           Locker<Range> lock(*rangep);
           uint8_t *ptr = update.bufp->base + update.offset;
@@ -2755,7 +2755,7 @@ void RangeServer::update_add_and_respond() {
     /**
      * Decrement usage counters for all referenced ranges
      */
-    foreach (TableUpdate *table_update, uc->updates) {
+    foreach_ht (TableUpdate *table_update, uc->updates) {
       for (hash_map<Range *, RangeUpdateList *>::iterator iter = table_update->range_map.begin(); iter != table_update->range_map.end(); ++iter) {
         if ((*iter).second->range_blocked)
           (*iter).first->decrement_update_counter();
@@ -2766,7 +2766,7 @@ void RangeServer::update_add_and_respond() {
      * wait for these ranges to complete maintenance
      */
     bool maintenance_needed = false;
-    foreach (TableUpdate *table_update, uc->updates) {
+    foreach_ht (TableUpdate *table_update, uc->updates) {
 
       /**
        * If any of the newly updated ranges needs maintenance,
@@ -2784,7 +2784,7 @@ void RangeServer::update_add_and_respond() {
         }
       }
 
-      foreach (UpdateRequest *request, table_update->requests) {
+      foreach_ht (UpdateRequest *request, table_update->requests) {
         ResponseCallbackUpdate cb(m_comm, request->event);
 
         if (table_update->error != Error::OK) {
@@ -2837,7 +2837,7 @@ void RangeServer::update_add_and_respond() {
     if (m_profile_query) {
       ScopedLock lock(m_profile_mutex);
       boost::xtime now;
-      boost::xtime_get(&now, TIME_UTC);
+      boost::xtime_get(&now, TIME_UTC_);
       uc->add_time = xtime_diff_millis(uc->start_time, now);
       m_profile_query_out << now.sec << "\tupdate\t" << uc->qualify_time << "\t" << uc->commit_time << "\t" << uc->add_time << "\n";
     }
@@ -2892,13 +2892,13 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
    */
   range_data.clear();
   table_info->get_range_data(range_data);
-  foreach(RangeData &rd, range_data)
+  foreach_ht(RangeData &rd, range_data)
     rd.range->drop();
 
   /**
    *  Wait for maintenance to complete and record removal in RSML
    */
-  foreach(RangeData &rd, range_data) {
+  foreach_ht(RangeData &rd, range_data) {
     rd.range->wait_for_maintenance_to_complete();
     try {
       rd.range->record_removal_rsml();
@@ -2921,7 +2921,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
     // For each range in dropped table, Set the 'drop' bit and clear
     // the 'Location' column of the corresponding METADATA entry
     metadata_prefix = String("") + table->id + ":";
-    foreach (RangeData &rd, range_data) {
+    foreach_ht (RangeData &rd, range_data) {
       // Mark Location column
       metadata_key = metadata_prefix + rd.range->end_row();
       key.row = metadata_key.c_str();
@@ -3478,7 +3478,7 @@ void RangeServer::replay_commit(ResponseCallback *cb) {
     // Perform any range specific post-replay tasks
     /*
     m_replay_map->get_range_vector(rangev);
-    foreach(RangePtr &range, rangev)
+    foreach_ht(RangePtr &range, rangev)
       range->recovery_finalize();
     */
 
@@ -3746,7 +3746,7 @@ void RangeServer::do_maintenance() {
     m_maintenance_scheduler->schedule();
 
     // Check for control files
-    boost::xtime_get(&now, TIME_UTC);
+    boost::xtime_get(&now, TIME_UTC_);
     if (xtime_diff_millis(m_last_control_file_check, now) >= (int64_t)m_control_file_check_interval) {
       if (FileUtils::exists(System::install_dir + "/run/query-profile")) {
 	if (!m_profile_query) {

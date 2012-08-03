@@ -104,7 +104,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   String family, qualifier;
   bool has_qualifier, is_regexp, is_prefix;
 
-  boost::xtime_get(&xtnow, boost::TIME_UTC);
+  boost::xtime_get(&xtnow, boost::TIME_UTC_);
   now = ((int64_t)xtnow.sec * 1000000000LL) + (int64_t)xtnow.nsec;
 
   revision = (rev == TIMESTAMP_NULL) ? TIMESTAMP_MAX : rev;
@@ -134,7 +134,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
     if (spec && spec->columns.size() > 0) {
 
-      foreach(const char *cfstr, spec->columns) {
+      foreach_ht(const char *cfstr, spec->columns) {
         ScanSpec::parse_column(cfstr, family, qualifier, &has_qualifier, 
                 &is_regexp, &is_prefix);
         cf = schema->get_column_family(family.c_str());
@@ -245,7 +245,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       }
 
       if (spec->scan_and_filter_rows) {
-        foreach (const RowInterval& ri, spec->row_intervals) {
+        foreach_ht (const RowInterval& ri, spec->row_intervals) {
           rowset.insert(arena.dup(ri.start)); // ri.end is set to "" in order to safe space
         }
         end_row = *rowset.rbegin();
@@ -427,7 +427,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
       }
     }
 
-    foreach (const ColumnPredicate& cp, spec->column_predicates) {
+    foreach_ht (const ColumnPredicate& cp, spec->column_predicates) {
       if (cp.column_family && *cp.column_family) {
         cf = schema->get_column_family(cp.column_family);
         if (cf == 0) {

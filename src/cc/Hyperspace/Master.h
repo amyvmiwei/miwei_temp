@@ -31,6 +31,7 @@
 #include "Common/ReferenceCount.h"
 #include "Common/SockAddrMap.h"
 #include "Common/StringExt.h"
+#include "Common/Time.h"
 
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -159,7 +160,7 @@ namespace Hyperspace {
     void tick() {
       ScopedLock lock(m_last_tick_mutex);
       boost::xtime now;
-      boost::xtime_get(&now, boost::TIME_UTC);
+      boost::xtime_get(&now, boost::TIME_UTC_);
       m_lease_credit = xtime_diff_millis(m_last_tick, now);
       if (m_lease_credit < 5000)
         m_lease_credit = 0;

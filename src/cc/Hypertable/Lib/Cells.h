@@ -99,7 +99,7 @@ public:
   clear();
   dst.clear();
   size_t ii=0;
-  foreach(const FailedMutation &v, src) {
+  foreach_ht(const FailedMutation &v, src) {
     add(v.first);
     dst.push_back(std::make_pair(m_cells[ii], v.second));
     ++ii;

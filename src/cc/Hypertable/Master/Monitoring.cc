@@ -239,7 +239,7 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
   // Calculate "server set" MD5 digest
   md5_context md5_ctx;
   md5_starts(&md5_ctx);
-  foreach(const char *server, server_set)
+  foreach_ht(const char *server, server_set)
     md5_update(&md5_ctx, (const unsigned char *)server, strlen(server));
   unsigned char server_set_digest[16];
   md5_finish(&md5_ctx, server_set_digest);
@@ -772,7 +772,7 @@ void Monitoring::run_rrdtool(std::vector<String> &command) {
 
   String cmd = "rrdtool";
 
-  foreach (const String &s, command) {
+  foreach_ht (const String &s, command) {
     cmd += " \"";
     cmd += s;
     cmd += "\" ";

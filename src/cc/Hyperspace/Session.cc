@@ -62,13 +62,13 @@ Session::Session(Comm *comm, PropertiesPtr &cfg)
   if (m_reconnect)
     HT_INFO_OUT << "Hyperspace session setup to reconnect" << HT_END;
 
-  foreach(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
+  foreach_ht(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
     m_hyperspace_replicas.push_back(replica);
   }
 
   m_timeout_ms = m_lease_interval * 2;
 
-  boost::xtime_get(&m_expire_time, boost::TIME_UTC);
+  boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
   xtime_add_millis(m_expire_time, m_grace_period);
 
   m_keepalive_handler_ptr = new ClientKeepaliveHandler(m_comm, m_cfg, this);
@@ -1124,7 +1124,7 @@ String Session::locate(int type) {
     location = m_hyperspace_master +  "\n";
     break;
   case LOCATE_REPLICAS:
-    foreach(const String &replica, m_hyperspace_replicas)
+    foreach_ht(const String &replica, m_hyperspace_replicas)
       location += replica + "\n";
     break;
   }
@@ -1164,7 +1164,7 @@ int Session::state_transition(int state) {
     if (old_state == STATE_SAFE) {
       for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
         (it->second)->jeopardy();
-      boost::xtime_get(&m_expire_time, boost::TIME_UTC);
+      boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
       xtime_add_millis(m_expire_time, m_grace_period);
     }
   }
@@ -1173,7 +1173,7 @@ int Session::state_transition(int state) {
       if (old_state != STATE_DISCONNECTED)
         for(CallbackMap::iterator it = m_callbacks.begin(); it != m_callbacks.end(); it++)
           (it->second)->disconnected();
-      boost::xtime_get(&m_expire_time, boost::TIME_UTC);
+      boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
       xtime_add_millis(m_expire_time, m_grace_period);
     }
   }
@@ -1197,7 +1197,7 @@ int Session::get_state() {
 bool Session::expired() {
   ScopedLock lock(m_mutex);
   boost::xtime now;
-  boost::xtime_get(&now, boost::TIME_UTC);
+  boost::xtime_get(&now, boost::TIME_UTC_);
   if (xtime_cmp(m_expire_time, now) < 0)
     return true;
   return false;
@@ -1208,12 +1208,12 @@ bool Session::wait_for_connection(uint32_t max_wait_ms) {
   ScopedLock lock(m_mutex);
   boost::xtime drop_time, now;
 
-  boost::xtime_get(&drop_time, boost::TIME_UTC);
+  boost::xtime_get(&drop_time, boost::TIME_UTC_);
   xtime_add_millis(drop_time, max_wait_ms);
 
   while (m_state != STATE_SAFE) {
     m_cond.timed_wait(lock, drop_time);
-    boost::xtime_get(&now, boost::TIME_UTC);
+    boost::xtime_get(&now, boost::TIME_UTC_);
     if (xtime_cmp(now, drop_time) >= 0)
       return false;
   }
@@ -1228,7 +1228,7 @@ bool Session::wait_for_connection(Timer &timer) {
   boost::xtime drop_time;
 
   while (m_state != STATE_SAFE) {
-    boost::xtime_get(&drop_time, boost::TIME_UTC);
+    boost::xtime_get(&drop_time, boost::TIME_UTC_);
     xtime_add_millis(drop_time, timer.remaining());
     if (!m_cond.timed_wait(lock, drop_time))
       return false;

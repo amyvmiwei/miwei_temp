@@ -153,7 +153,7 @@ int main(int argc, char **argv) {
       std::vector<String> strs;
       split(strs, eval, is_any_of(";"));
 
-      foreach(String cmd, strs) {
+      foreach_ht(String cmd, strs) {
         trim(cmd);
 
         for (i=0; i<commands.size(); i++) {

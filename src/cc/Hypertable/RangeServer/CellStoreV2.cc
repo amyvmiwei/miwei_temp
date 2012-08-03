@@ -215,7 +215,7 @@ void CellStoreV2::create_bloom_filter(bool is_approx) {
                  << m_trailer.filter_items_estimate << " items - "<< e << HT_END;
   }
 
-  foreach(const Blob &blob, *m_bloom_filter_items)
+  foreach_ht(const Blob &blob, *m_bloom_filter_items)
     m_bloom_filter->insert(blob.start, blob.size);
 
   delete m_bloom_filter_items;
@@ -532,7 +532,7 @@ void CellStoreV2::finalize(TableIdentifier *table_identifier) {
   m_trailer.table_generation = table_identifier->generation;
   {
     boost::xtime now;
-    boost::xtime_get(&now, boost::TIME_UTC);
+    boost::xtime_get(&now, boost::TIME_UTC_);
     m_trailer.create_time = ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
   }
 
@@ -776,7 +776,7 @@ bool CellStoreV2::may_contain(ScanContextPtr &scan_context) {
         boost::scoped_array<char> rowcol(new char[rowlen + 2]);
         memcpy(rowcol.get(), scan_context->start_row.c_str(), rowlen + 1);
 
-        foreach(const char *col, scan_context->spec->columns) {
+        foreach_ht(const char *col, scan_context->spec->columns) {
           uint8_t column_family_id = schema->get_column_family(col)->id;
           rowcol[rowlen + 1] = column_family_id;
 

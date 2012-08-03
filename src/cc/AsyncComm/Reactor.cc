@@ -43,6 +43,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
+#include "Common/Time.h"
 
 #include "IOHandlerData.h"
 #include "Reactor.h"
@@ -170,7 +171,7 @@ void Reactor::handle_timeouts(PollTimeout &next_timeout) {
       IOHandler       *handler;
       DispatchHandler *dh;
 
-      boost::xtime_get(&now, boost::TIME_UTC);
+      boost::xtime_get(&now, boost::TIME_UTC_);
 
       while ((dh = m_request_cache.get_next_timeout(now, handler,
                                                     &next_req_timeout)) != 0) {

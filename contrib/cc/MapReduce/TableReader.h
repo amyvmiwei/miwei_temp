@@ -7,7 +7,7 @@
 #include <hadoop/TemplateFactory.hh>
 #include <hadoop/StringUtils.hh>
 #include <hadoop/SerialUtils.hh>
-#include <boost/foreach.hpp>
+#include <boost/foreach_ht.hpp>
 #include <boost/algorithm/string.hpp>
 #include <string>
 

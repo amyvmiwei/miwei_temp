@@ -154,7 +154,7 @@ bool LoadBalancerBasicDistributeTableRanges::maybe_add_to_plan(const char *table
   String dst_server;
 
   bool found_dst_server = false;
-  foreach(const char *target_server, m_servers) {
+  foreach_ht(const char *target_server, m_servers) {
     if (!strcmp(target_server, src_server))
       continue;
     dst_range_dist_it = table_it->second->range_dist.find(target_server);
@@ -204,14 +204,14 @@ void LoadBalancerBasicDistributeTableRanges::clear() {
 void LoadBalancerBasicDistributeTableRanges::compute_range_distribution(vector<RangeServerStatistics> &range_server_stats) {
 
   m_num_ranges = 0;
-  foreach (RangeServerStatistics &rs, range_server_stats) {
+  foreach_ht (RangeServerStatistics &rs, range_server_stats) {
     if (!rs.stats || !rs.stats->live || !m_context->can_accept_ranges(rs))
       continue;
     const char *server_id = rs.location.c_str();
     m_servers.push_back(server_id);
     if (rs.stats->range_count > 0) {
       m_num_ranges += rs.stats->range_count;
-      foreach (StatsTable &table, rs.stats->tables) {
+      foreach_ht (StatsTable &table, rs.stats->tables) {
         uint32_t range_count = table.range_count;
         const char *table_id = table.table_id.c_str();
         HT_DEBUG_OUT << "Looking at stats for " << server_id << ":"

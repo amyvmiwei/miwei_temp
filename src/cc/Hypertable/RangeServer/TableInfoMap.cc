@@ -189,7 +189,7 @@ void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
     else {
       range_data.clear();
       (*from_iter).second->get_range_data(range_data);
-      foreach (RangeData &rd, range_data)
+      foreach_ht (RangeData &rd, range_data)
         (*to_iter).second->add_range(rd.range);
     }
 

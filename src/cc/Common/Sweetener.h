@@ -24,6 +24,6 @@
 
 #include <boost/foreach.hpp>
 
-#define foreach BOOST_FOREACH
+#define foreach_ht BOOST_FOREACH
 
 #endif // HYPERTABLE_SWEETENER_H

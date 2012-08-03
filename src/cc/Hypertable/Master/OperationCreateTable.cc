@@ -72,7 +72,7 @@ void OperationCreateTable::requires_indices(bool &needs_index,
   SchemaPtr s;
 
   s = Schema::new_instance(m_schema.c_str(), m_schema.size());
-  foreach (Schema::ColumnFamily *cf, s->get_column_families()) {
+  foreach_ht (Schema::ColumnFamily *cf, s->get_column_families()) {
     if (cf && !cf->deleted) {
      if (cf->has_index)
        needs_index = true;

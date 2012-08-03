@@ -109,6 +109,6 @@ void ScannerMap::get_counts(int32_t *totalp, CstrToInt32Map &table_scanner_count
 
 int64_t ScannerMap::get_timestamp_millis() {
   boost::xtime now;
-  boost::xtime_get(&now, boost::TIME_UTC);
+  boost::xtime_get(&now, boost::TIME_UTC_);
   return ((int64_t)now.sec * 1000LL) + ((int64_t)now.nsec / 1000000LL);
 }

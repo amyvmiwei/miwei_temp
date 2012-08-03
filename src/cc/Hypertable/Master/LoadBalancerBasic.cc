@@ -94,7 +94,7 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
   boost::trim(algorithm);
   boost::to_lower(algorithm);
   if (algorithm.size() == 0) {
-    foreach(const RangeServerStatistics &server_stats, range_server_stats) {
+    foreach_ht(const RangeServerStatistics &server_stats, range_server_stats) {
       if (!server_stats.stats->live) {
         HT_INFO_OUT << "Found non-live server " << server_stats.location
             << " wait till all servers are live before trying balance"
@@ -110,7 +110,7 @@ void LoadBalancerBasic::calculate_balance_plan(const String &algo, BalancePlanPt
       size_t total_ranges = 0;
       get_unbalanced_servers(range_server_stats);
       size_t num_unbalanced_servers=m_unbalanced_servers.size();
-      foreach(const RangeServerStatistics &server_stats, range_server_stats) {
+      foreach_ht(const RangeServerStatistics &server_stats, range_server_stats) {
         total_ranges += server_stats.stats->range_count;
       }
       // 3 ranges shd always be in the system (2 metadata, 1 rs_metrics)
@@ -219,7 +219,7 @@ void LoadBalancerBasic::offload_servers(vector<RangeServerStatistics> &range_ser
 void LoadBalancerBasic::get_unbalanced_servers(const vector<RangeServerStatistics> &range_server_stats) {
   m_unbalanced_servers.clear();
   vector<String> servers;
-  foreach(const RangeServerStatistics &server_stats, range_server_stats)
+  foreach_ht(const RangeServerStatistics &server_stats, range_server_stats)
     servers.push_back(server_stats.location);
   m_context->get_unbalanced_servers(servers, m_unbalanced_servers);
 }

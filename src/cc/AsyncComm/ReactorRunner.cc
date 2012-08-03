@@ -293,7 +293,7 @@ void ReactorRunner::operator()() {
 
 void
 ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
-  foreach(IOHandler *handler, handlers) {
+  foreach_ht(IOHandler *handler, handlers) {
 
     HT_ASSERT(handler);
 

@@ -30,6 +30,7 @@
 #  BOOST_IOSTREAMS_LIB - The name of the boost program options library
 #  BOOST_PYTHON_LIB - The name of the boost python library
 #  BOOST_SYSTEM_LIB - The name of the boost system library
+#  BOOST_CHRONO_LIB - The name of the boost system library
 # ----------------------------------------------------------------------------
 #
 # Usage:
@@ -190,6 +191,7 @@ if (Boost_INCLUDE_DIR)
   FIND_BOOST_LIBRARY(BOOST_IOSTREAMS_LIB iostreams ${Boost_PARENT} true)
   FIND_BOOST_LIBRARY(BOOST_FILESYSTEM_LIB filesystem ${Boost_PARENT} true)
   FIND_BOOST_LIBRARY(BOOST_PYTHON_LIB python ${Boost_PARENT} false)
+  FIND_BOOST_LIBRARY(BOOST_CHRONO_LIB chrono ${Boost_PARENT} false)
 
   if(Boost_HAS_SYSTEM_LIB)
     FIND_BOOST_LIBRARY(BOOST_SYSTEM_LIB system ${Boost_PARENT} true)
@@ -201,6 +203,7 @@ if (Boost_INCLUDE_DIR)
     message(STATUS "Boost filesystem lib: ${BOOST_FILESYSTEM_LIB}")
     message(STATUS "Boost iostreams lib: ${BOOST_IOSTREAMS_LIB}")
     message(STATUS "Boost python lib: ${BOOST_PYTHON_LIB}")
+    message(STATUS "Boost chrono lib: ${BOOST_CHRONO_LIB}")
 
     if(Boost_HAS_SYSTEM_LIB)
       message(STATUS "Boost system lib: ${BOOST_SYSTEM_LIB}")
@@ -216,6 +219,10 @@ if (Boost_INCLUDE_DIR)
   if(Boost_HAS_SYSTEM_LIB)
     set(BOOST_LIBS ${BOOST_LIBS} ${BOOST_SYSTEM_LIB})
   endif()
+
+  if (NOT ${BOOST_CHRONO_LIB} MATCHES "NOTFOUND$")
+    set(BOOST_LIBS ${BOOST_LIBS} ${BOOST_CHRONO_LIB})
+  endif ()
 
   if (EXISTS ${Boost_INCLUDE_DIR})
     set(Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIR})

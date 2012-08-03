@@ -188,7 +188,7 @@ void create_table_in_hyperspace(ContextPtr &context, const String &name,
   // for this table in DFS
   String table_basedir = context->toplevel_dir + "/tables/" + table_id + "/";
 
-  foreach(const Schema::AccessGroup *ag, schema->get_access_groups()) {
+  foreach_ht(const Schema::AccessGroup *ag, schema->get_access_groups()) {
     String agdir = table_basedir + ag->name;
     context->dfs->mkdirs(agdir);
   }

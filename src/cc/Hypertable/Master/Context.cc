@@ -224,7 +224,7 @@ void Context::get_unbalanced_servers(const std::vector<String> &locations,
   LocationIndex::iterator lookup_iter;
   RangeServerConnectionPtr rsc;
 
-  foreach(const String &location, locations) {
+  foreach_ht(const String &location, locations) {
     if ((lookup_iter = hash_index.find(location)) == hash_index.end())
       continue;
     rsc = lookup_iter->rsc;
@@ -235,7 +235,7 @@ void Context::get_unbalanced_servers(const std::vector<String> &locations,
 
 void Context::set_servers_balanced(const std::vector<RangeServerConnectionPtr> &unbalanced) {
   ScopedLock lock(mutex);
-  foreach (const RangeServerConnectionPtr rsc, unbalanced) {
+  foreach_ht (const RangeServerConnectionPtr rsc, unbalanced) {
     rsc->set_balanced();
   }
 }
@@ -254,7 +254,7 @@ bool Context::can_accept_ranges(const RangeServerStatistics &stats)
   }
 
   // accept new ranges if there's at least one disk below the threshold
-  foreach (const FsStat &fs, stats.stats->system.fs_stat) {
+  foreach_ht (const FsStat &fs, stats.stats->system.fs_stat) {
     if (fs.use_pct < threshold)
       return true;
   }

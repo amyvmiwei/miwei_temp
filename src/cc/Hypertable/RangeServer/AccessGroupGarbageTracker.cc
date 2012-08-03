@@ -49,7 +49,7 @@ void AccessGroupGarbageTracker::set_schema(SchemaPtr &schema, Schema::AccessGrou
     m_have_max_versions = false;
     m_min_ttl = m_max_ttl = 0;
     m_in_memory = ag->in_memory;
-    foreach(Schema::ColumnFamily *cf, ag->columns) {
+    foreach_ht(Schema::ColumnFamily *cf, ag->columns) {
       if (cf->max_versions > 0)
         m_have_max_versions = true;
       if (cf->ttl > 0) {

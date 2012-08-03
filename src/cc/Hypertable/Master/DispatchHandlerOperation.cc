@@ -88,7 +88,7 @@ void DispatchHandlerOperation::process_events() {
   Result result;
   RangeServerConnectionPtr rsc;
 
-  foreach (EventPtr &event, m_events) {
+  foreach_ht (EventPtr &event, m_events) {
 
     if (m_context->find_server_by_local_addr(event->addr, rsc)) {
       result.location = rsc->location();

@@ -35,7 +35,7 @@ void RangeStatsGatherer::fetch(RangeDataVector &range_data, TableMutator *mutato
   clear();
   range_data.clear();
   m_table_info_map->get_range_data(range_data, log_generation);
-  foreach (RangeData &rd, range_data)
+  foreach_ht (RangeData &rd, range_data)
     rd.data = rd.range->get_maintenance_data(m_arena, now, mutator);
 }
 

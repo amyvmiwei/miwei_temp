@@ -38,7 +38,7 @@ void LoadBalancerBasicDistributeLoad::compute_plan(BalancePlanPtr &balance_plan)
   double mean_loadavg_per_loadestimate = 0;
   String heaviest_server_id, lightest_server_id;
 
-  foreach(const ServerMetrics &sm, server_metrics) {
+  foreach_ht(const ServerMetrics &sm, server_metrics) {
     calculate_server_summary(sm, ss);
     servers_desc_load.insert(ss);
     mean_loadavg += ss.loadavg;
@@ -153,7 +153,7 @@ void LoadBalancerBasicDistributeLoad::calculate_server_summary(const ServerMetri
   // calculate average loadavg for server
   const vector<ServerMeasurement> &measurements = metrics.get_measurements();
   if (measurements.size() > 0) {
-    foreach(const ServerMeasurement& measurement, measurements) {
+    foreach_ht(const ServerMeasurement& measurement, measurements) {
       summary.loadavg += measurement.loadavg;
       loadestimate += measurement.bytes_written_rate
           + measurement.bytes_scanned_rate;
@@ -179,7 +179,7 @@ void LoadBalancerBasicDistributeLoad::calculate_range_summary(const RangeMetrics
   // calculate the average loadestimate for this range
   const vector<RangeMeasurement> &measurements = metrics.get_measurements();
   if (measurements.size() > 0) {
-    foreach(const RangeMeasurement &measurement, measurements)
+    foreach_ht(const RangeMeasurement &measurement, measurements)
       summary.loadestimate += measurement.byte_read_rate + measurement.byte_write_rate;
     summary.loadestimate /= measurements.size();
   }
@@ -189,7 +189,7 @@ void LoadBalancerBasicDistributeLoad::calculate_range_summary(const RangeMetrics
 void LoadBalancerBasicDistributeLoad::populate_range_load_set(const RangeMetricsMap &range_metrics, RangeSetDescLoad &ranges_desc_load) {
 
   ranges_desc_load.clear();
-  foreach(const RangeMetricsMap::value_type &vv, range_metrics) {
+  foreach_ht(const RangeMetricsMap::value_type &vv, range_metrics) {
     // don't consider ranges that can't be moved
     if (!vv.second.is_moveable())
       continue;

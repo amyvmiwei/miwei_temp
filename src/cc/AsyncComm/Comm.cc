@@ -81,7 +81,7 @@ Comm::~Comm() {
   set<IOHandler *> handlers;
   m_handler_map->decomission_all(handlers);
 
-  foreach(IOHandler *handler, handlers)
+  foreach_ht(IOHandler *handler, handlers)
     handler->shutdown();
 
   // wait for all decomissioned handlers to get purged by Reactor
@@ -393,7 +393,7 @@ Comm::send_datagram(const CommAddress &addr, const CommAddress &send_addr,
 
 int Comm::set_timer(uint32_t duration_millis, DispatchHandler *handler) {
   ExpireTimer timer;
-  boost::xtime_get(&timer.expire_time, boost::TIME_UTC);
+  boost::xtime_get(&timer.expire_time, boost::TIME_UTC_);
   xtime_add_millis(timer.expire_time, duration_millis);
   timer.handler = handler;
   m_timer_reactor->add_timer(timer);

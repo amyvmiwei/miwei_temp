@@ -35,7 +35,7 @@ using namespace Hyperspace;
 
 MetadataRoot::MetadataRoot(SchemaPtr &schema) : m_next(0) {
 
-  foreach(const Schema::AccessGroup *ag, schema->get_access_groups())
+  foreach_ht(const Schema::AccessGroup *ag, schema->get_access_groups())
     m_agnames.push_back(ag->name);
 
   try {

@@ -71,7 +71,7 @@ public:
 
   size_t memory_used() const {
     size_t mem_used=0;
-    foreach(const ScanBlockPtr &v, m_scanblocks) {
+    foreach_ht(const ScanBlockPtr &v, m_scanblocks) {
       mem_used += v->memory_used();
     }
     return mem_used;
@@ -114,7 +114,7 @@ protected:
    * get number of rows that were skipped because of an OFFSET predicate
    */
   int get_skipped_rows() {
-    foreach(const ScanBlockPtr &v, m_scanblocks) {
+    foreach_ht(const ScanBlockPtr &v, m_scanblocks) {
       if (v->get_skipped_rows())
         return (v->get_skipped_rows());
     }
@@ -125,7 +125,7 @@ protected:
    * get number of cells that were skipped because of a CELL_OFFSET predicate
    */
   int get_skipped_cells() {
-    foreach(const ScanBlockPtr &v, m_scanblocks) {
+    foreach_ht(const ScanBlockPtr &v, m_scanblocks) {
       if (v->get_skipped_cells())
         return (v->get_skipped_cells());
     }

@@ -138,19 +138,19 @@ std::ostream &operator<<(std::ostream &out, const ScanSpec &ss) {
 
   if (ss.__isset.row_intervals) {
     out <<" rows=[\n";
-    foreach(const RowInterval &ri, ss.row_intervals)
+    foreach_ht(const RowInterval &ri, ss.row_intervals)
       out <<"  "<< ri <<"\n";
     out <<"  ]\n";
   }
   if (ss.__isset.cell_intervals) {
     out <<" cells=[\n";
-    foreach(const CellInterval &ci, ss.cell_intervals)
+    foreach_ht(const CellInterval &ci, ss.cell_intervals)
       out <<"  "<< ci <<"\n";
     out <<"  ]\n";
   }
   if (ss.__isset.columns) {
     out <<" columns=[\n";
-    foreach(const std::string &col, ss.columns)
+    foreach_ht(const std::string &col, ss.columns)
       out <<"  "<< col <<"\n";
     out <<"  ]\n";
   }
@@ -201,13 +201,13 @@ std::ostream &operator<<(std::ostream &out, const HqlResult &hr) {
 
   if (hr.__isset.results) {
     out <<" results=[";
-    foreach(const std::string &s, hr.results)
+    foreach_ht(const std::string &s, hr.results)
       out <<"  '"<< s <<"'\n";
     out <<"  ]\n";
   }
   if (hr.__isset.cells) {
     out <<" cells=[\n";
-    foreach(const Cell &cell, hr.cells)
+    foreach_ht(const Cell &cell, hr.cells)
       out <<"  "<< cell <<"\n";
     out <<"  ]\n";
   }
@@ -225,13 +225,13 @@ std::ostream &operator<<(std::ostream &out, const HqlResult2 &hr) {
 
   if (hr.__isset.results) {
     out <<" results=[";
-    foreach(const std::string &s, hr.results)
+    foreach_ht(const std::string &s, hr.results)
       out <<"  '"<< s <<"'\n";
     out <<"  ]\n";
   }
   if (hr.__isset.cells) {
     out <<" cells=[\n";
-    foreach(const CellAsArray &cell, hr.cells)
+    foreach_ht(const CellAsArray &cell, hr.cells)
       out <<"  "<< cell <<"\n";
     out <<"  ]\n";
   }
@@ -249,13 +249,13 @@ std::ostream &operator<<(std::ostream &out, const HqlResultAsArrays &hr) {
 
   if (hr.__isset.results) {
     out <<" results=[";
-    foreach(const std::string &s, hr.results)
+    foreach_ht(const std::string &s, hr.results)
       out <<"  '"<< s <<"'\n";
     out <<"  ]\n";
   }
   if (hr.__isset.cells) {
     out <<" cells=[\n";
-    foreach(const CellAsArray &cell, hr.cells)
+    foreach_ht(const CellAsArray &cell, hr.cells)
       out <<"  "<< cell <<"\n";
     out <<"  ]\n";
   }

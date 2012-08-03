@@ -113,10 +113,10 @@ size_t ScanSpec::encoded_length() const {
                encoded_length_vi32(row_offset) +
                encoded_length_vi32(cell_offset);
 
-  foreach(const char *c, columns) len += encoded_length_vstr(c);
-  foreach(const RowInterval &ri, row_intervals) len += ri.encoded_length();
-  foreach(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
-  foreach(const ColumnPredicate &cp, column_predicates) len += cp.encoded_length();
+  foreach_ht(const char *c, columns) len += encoded_length_vstr(c);
+  foreach_ht(const RowInterval &ri, row_intervals) len += ri.encoded_length();
+  foreach_ht(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
+  foreach_ht(const ColumnPredicate &cp, column_predicates) len += cp.encoded_length();
 
   return len + 8 + 8 + 3;
 }
@@ -127,13 +127,13 @@ void ScanSpec::encode(uint8_t **bufp) const {
   encode_vi32(bufp, cell_limit_per_family);
   encode_vi32(bufp, max_versions);
   encode_vi32(bufp, columns.size());
-  foreach(const char *c, columns) encode_vstr(bufp, c);
+  foreach_ht(const char *c, columns) encode_vstr(bufp, c);
   encode_vi32(bufp, row_intervals.size());
-  foreach(const RowInterval &ri, row_intervals) ri.encode(bufp);
+  foreach_ht(const RowInterval &ri, row_intervals) ri.encode(bufp);
   encode_vi32(bufp, cell_intervals.size());
-  foreach(const CellInterval &ci, cell_intervals) ci.encode(bufp);
+  foreach_ht(const CellInterval &ci, cell_intervals) ci.encode(bufp);
   encode_vi32(bufp, column_predicates.size());
-  foreach(const ColumnPredicate &cp, column_predicates) cp.encode(bufp);
+  foreach_ht(const ColumnPredicate &cp, column_predicates) cp.encode(bufp);
   encode_i64(bufp, time_interval.first);
   encode_i64(bufp, time_interval.second);
   encode_bool(bufp, return_deletes);
@@ -240,23 +240,23 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
 
   if (!scan_spec.row_intervals.empty()) {
     os << "\n rows=";
-    foreach(const RowInterval &ri, scan_spec.row_intervals)
+    foreach_ht(const RowInterval &ri, scan_spec.row_intervals)
       os << " " << ri;
   }
   if (!scan_spec.cell_intervals.empty()) {
     os << "\n cells=";
-    foreach(const CellInterval &ci, scan_spec.cell_intervals)
+    foreach_ht(const CellInterval &ci, scan_spec.cell_intervals)
       os << " " << ci;
   }
   if (!scan_spec.column_predicates.empty()) {
     os << "\n column_predicates=";
-    foreach(const ColumnPredicate &cp, scan_spec.column_predicates)
+    foreach_ht(const ColumnPredicate &cp, scan_spec.column_predicates)
       os << " (" << cp.column_family << " " << cp.operation << " " 
          << cp.value << ")";
   }
   if (!scan_spec.columns.empty()) {
     os << "\n columns=(";
-    foreach (const char *c, scan_spec.columns)
+    foreach_ht (const char *c, scan_spec.columns)
       os <<"'"<< c << "' ";
     os <<')';
   }
@@ -284,18 +284,18 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
   cell_intervals.reserve(ss.cell_intervals.size());
   column_predicates.reserve(ss.column_predicates.size());
 
-  foreach(const char *c, ss.columns)
+  foreach_ht(const char *c, ss.columns)
     add_column(arena, c);
 
-  foreach(const RowInterval &ri, ss.row_intervals)
+  foreach_ht(const RowInterval &ri, ss.row_intervals)
     add_row_interval(arena, ri.start, ri.start_inclusive,
                      ri.end, ri.end_inclusive);
 
-  foreach(const CellInterval &ci, ss.cell_intervals)
+  foreach_ht(const CellInterval &ci, ss.cell_intervals)
     add_cell_interval(arena, ci.start_row, ci.start_column, ci.start_inclusive,
                       ci.end_row, ci.end_column, ci.end_inclusive);
 
-  foreach(const ColumnPredicate &cp, ss.column_predicates)
+  foreach_ht(const ColumnPredicate &cp, ss.column_predicates)
     add_column_predicate(arena, cp.column_family, cp.operation, cp.value);
 }
 

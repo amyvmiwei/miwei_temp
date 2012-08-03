@@ -22,10 +22,9 @@
 #ifndef HYPERTABLE_MAINTENANCEPRIORITIZER_H
 #define HYPERTABLE_MAINTENANCEPRIORITIZER_H
 
-#include <boost/thread/xtime.hpp>
-
 #include "Common/Logger.h"
 #include "Common/ReferenceCount.h"
+#include "Common/Time.h"
 
 #include "Global.h"
 #include "RSStats.h"

@@ -25,11 +25,10 @@
 #include <iostream>
 #include <time.h>
 
-#include <boost/thread/xtime.hpp>
-
 #include "Common/InetAddr.h"
 #include "Common/String.h"
 #include "Common/ReferenceCount.h"
+#include "Common/Time.h"
 
 #include "CommHeader.h"
 
@@ -128,13 +127,13 @@ namespace Hypertable {
     }
 
     void expiration_time(boost::xtime &expire_time) {
-      boost::xtime_get(&expire_time, boost::TIME_UTC);
+      boost::xtime_get(&expire_time, boost::TIME_UTC_);
       expire_time.sec += header.timeout_ms/1000;
     }
 
     boost::xtime expiration_time() {
       boost::xtime expire_time;
-      boost::xtime_get(&expire_time, boost::TIME_UTC);
+      boost::xtime_get(&expire_time, boost::TIME_UTC_);
       expire_time.sec += header.timeout_ms/1000;
       return expire_time;
     }

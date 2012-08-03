@@ -108,7 +108,7 @@ namespace Hypertable {
                     wait_for_system_recovery(false), sync(false),
                     transfer_count(0), total_added(0), error(0) {}
     ~TableUpdate() {
-      foreach (UpdateRequest *r, requests)
+      foreach_ht (UpdateRequest *r, requests)
         delete r;
       for (hash_map<Range *, RangeUpdateList *>::iterator iter = range_map.begin(); iter != range_map.end(); ++iter)
         delete (*iter).second;

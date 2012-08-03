@@ -23,7 +23,16 @@
 #define HYPERTABLE_HIRES_TIME_H
 
 #include <iosfwd>
+#include <boost/version.hpp>
 #include <boost/thread/xtime.hpp>
+
+#if BOOST_VERSION < 105000
+namespace boost {
+  enum {
+    TIME_UTC_ = 1
+  };
+}
+#endif
 
 namespace Hypertable {
 
@@ -31,17 +40,17 @@ namespace Hypertable {
   bool xtime_sub_millis(boost::xtime &xt, uint32_t millis);
   int64_t xtime_diff_millis(boost::xtime &early, boost::xtime &late);
 
-  using boost::TIME_UTC;
+  using boost::TIME_UTC_;
 
   /** High-Resolution Time
    */
   struct HiResTime : public boost::xtime {
-    HiResTime(int type = TIME_UTC) { reset(type); }
+    HiResTime(int type = TIME_UTC_) { reset(type); }
 
     /** get the current hi-res time
      *  return true on success; otherwise false
      */
-    bool reset(int type = TIME_UTC) {
+    bool reset(int type = TIME_UTC_) {
       return boost::xtime_get(this, type) != 0;
     }
 

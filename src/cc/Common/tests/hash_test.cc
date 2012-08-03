@@ -111,8 +111,8 @@ struct HashTest {
       for (Items::const_iterator i = items.begin(), end = items.end();
            i != end; ++i) last_hash = i->data[0], items.size());
 
-    MEASURE("  foreach loop",
-      foreach(const HashItem &item, items)
+    MEASURE("  foreach_ht loop",
+      foreach_ht(const HashItem &item, items)
         last_hash = item.data[0], items.size());
 
     cout <<"  length="<< len <<" last hash="<< last_hash << endl;
@@ -127,7 +127,7 @@ struct HashTest {
 
     for (int r = 0; r < repeats; ++r) {
       MEASURE(label, HashT hasher;
-        foreach(const HashItem &hi, items) last_hash = hasher(hi.data),
+        foreach_ht(const HashItem &hi, items) last_hash = hasher(hi.data),
         items.size());
     }
 
@@ -137,7 +137,7 @@ struct HashTest {
     TEST_HASHSET_IF(StringHashSet,
       // common case: string needs to be constructed
       MEASURE("  string_hash_set insert",
-        foreach(const HashItem &hi, items)
+        foreach_ht(const HashItem &hi, items)
           str_set.insert(String(hi.data.data(), hi.data.size())),
         items.size());
 
@@ -145,7 +145,7 @@ struct HashTest {
         cout <<"  proc stats: "<< System::proc_stat() << endl;
 
       MEASURE("  string_hash_set lookup",
-        foreach(const HashItem &hi, items)
+        foreach_ht(const HashItem &hi, items)
           HT_ASSERT(str_set.find(String(hi.data.data(), hi.data.size()))
                     != str_set.end()),
         items.size());
@@ -155,12 +155,12 @@ struct HashTest {
     // cstr_hash_map
     TEST_HASHSET_IF(CstrHashMap,
       MEASURE("  cstr_hash_map insert",
-        foreach(const HashItem &hi, items)
+        foreach_ht(const HashItem &hi, items)
           cstr_map.insert(hi.data.c_str(), hi.data.size()),
         items.size());
 
       MEASURE("  cstr_hash_map lookup",
-        foreach(const HashItem &hi, items)
+        foreach_ht(const HashItem &hi, items)
           HT_ASSERT(cstr_map.find(hi.data.c_str()) != cstr_map.end()),
         items.size());
 
@@ -169,7 +169,7 @@ struct HashTest {
     // blob hash set
     TEST_HASHSET_IF(BlobHashSet,
       MEASURE("  blob_hash_set insert",
-        foreach(const HashItem &hi, items) blob_set.insert(hi.data),
+        foreach_ht(const HashItem &hi, items) blob_set.insert(hi.data),
         items.size());
 
       if (has("BlobHashSet")) {
@@ -178,7 +178,7 @@ struct HashTest {
       }
 
       MEASURE("  blob_hash_set lookup",
-        foreach(const HashItem &hi, items)
+        foreach_ht(const HashItem &hi, items)
           HT_ASSERT(blob_set.find(hi.data) != blob_set.end()), items.size());
 
       MEASURE("  blob_hash_set clear", blob_set.clear(), items.size()));

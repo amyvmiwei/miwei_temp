@@ -128,7 +128,7 @@ namespace Hypertable {
       m_error = error;
 
       // remove failed updates from the keymap
-      foreach (const FailedMutation &fm, failedMutations) {
+      foreach_ht (const FailedMutation &fm, failedMutations) {
         const Cell &cell = fm.first;
         
         // get the original row key
@@ -150,7 +150,7 @@ namespace Hypertable {
 
       ScopedLock lock(m_mutex);
 
-      foreach (const FailedRow &fail, m_failed_rows) {
+      foreach_ht (const FailedRow &fail, m_failed_rows) {
         // add all cells with this row key to the failed mutations and
         // purge them from the keymap
         std::pair<KeyMap::iterator, KeyMap::iterator> it =

@@ -24,7 +24,7 @@
 
 #include <cstring>
 
-#include <boost/thread/xtime.hpp>
+#include "Time.h"
 
 namespace Hypertable {
 
@@ -42,7 +42,7 @@ namespace Hypertable {
 
     void start() {
       if (!m_running) {
-        boost::xtime_get(&start_time, boost::TIME_UTC);
+        boost::xtime_get(&start_time, boost::TIME_UTC_);
         m_running = true;
       }
     }
@@ -50,7 +50,7 @@ namespace Hypertable {
     void stop() {
       if (m_running) {
         boost::xtime stop_time;
-        boost::xtime_get(&stop_time, boost::TIME_UTC);
+        boost::xtime_get(&stop_time, boost::TIME_UTC_);
         if (start_time.sec == stop_time.sec)
           elapsed_time.nsec += stop_time.nsec - start_time.nsec;
         else {

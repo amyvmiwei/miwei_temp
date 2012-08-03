@@ -150,7 +150,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
   // for value prefix queries we require normal indicies for ALL scanned columns
   if (primary_spec.column_predicates.size() == 1 && primary_spec.columns.size()) {
 
-    foreach (const ColumnPredicate &cp, primary_spec.column_predicates) {
+    foreach_ht (const ColumnPredicate &cp, primary_spec.column_predicates) {
       Schema::ColumnFamily *cf=table->schema()->get_column_family(
                                 cp.column_family);
       if (!cf || !cf->has_index)
@@ -261,7 +261,7 @@ void TableScannerAsync::init(Comm *comm, ApplicationQueuePtr &app_queue,
       ScanSpec rowset_scan_spec;
       scan_spec.base_copy(rowset_scan_spec);
       rowset_scan_spec.row_intervals.reserve(scan_spec.row_intervals.size());
-      foreach (const RowInterval& ri, scan_spec.row_intervals) {
+      foreach_ht (const RowInterval& ri, scan_spec.row_intervals) {
         if (ri.start != ri.end && strcmp(ri.start, ri.end) != 0) {
           scan_spec.base_copy(interval_scan_spec);
           interval_scan_spec.row_intervals.push_back(ri);

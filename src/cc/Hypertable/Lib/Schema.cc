@@ -146,7 +146,7 @@ Schema::Schema(const Schema &src_schema)
   m_counter_flags = src_schema.m_counter_flags;
 
   // Create access groups
-  foreach(const AccessGroup *src_ag, src_schema.m_access_groups) {
+  foreach_ht(const AccessGroup *src_ag, src_schema.m_access_groups) {
     ag = new Schema::AccessGroup();
     ag->name = src_ag->name;
     ag->in_memory = src_ag->in_memory;
@@ -160,7 +160,7 @@ Schema::Schema(const Schema &src_schema)
     m_access_groups.push_back(ag);
 
     // Populate access group with column families
-    foreach(const ColumnFamily *src_cf, src_ag->columns) {
+    foreach_ht(const ColumnFamily *src_cf, src_ag->columns) {
       cf = new Schema::ColumnFamily(*src_cf);
       m_column_family_map.insert(make_pair(cf->name, cf));
       m_column_families.push_back(cf);
@@ -170,9 +170,9 @@ Schema::Schema(const Schema &src_schema)
 }
 
 Schema::~Schema() {
-  foreach(AccessGroup *ag, m_access_groups)
+  foreach_ht(AccessGroup *ag, m_access_groups)
     delete ag;
-  foreach(ColumnFamily *cf, m_column_families)
+  foreach_ht(ColumnFamily *cf, m_column_families)
     delete cf;
 }
 
@@ -584,7 +584,7 @@ void Schema::assign_ids() {
   /**
    * Sanity check and determine if ID assignment is necessary
    */
-  foreach(ColumnFamily *cf, m_column_families) {
+  foreach_ht(ColumnFamily *cf, m_column_families) {
     if (cf->generation == 0) {
       need_assignment = true;
       if (cf->id != 0)
@@ -618,7 +618,7 @@ void Schema::assign_ids() {
     m_generation = 1;
 
   m_output_ids=true;
-  foreach(ColumnFamily *cf, m_column_families) {
+  foreach_ht(ColumnFamily *cf, m_column_families) {
     if (cf->id == 0) {
       cf->id = ++m_max_column_family_id;
       cf->generation = m_generation;
@@ -652,7 +652,7 @@ void Schema::render(String &output, bool with_ids) {
 
   output += ">\n";
 
-  foreach(const AccessGroup *ag, m_access_groups) {
+  foreach_ht(const AccessGroup *ag, m_access_groups) {
     output += format("  <AccessGroup name=\"%s\"", ag->name.c_str());
 
     if (ag->in_memory)
@@ -675,7 +675,7 @@ void Schema::render(String &output, bool with_ids) {
 
     output += ">\n";
 
-    foreach(const ColumnFamily *cf, ag->columns) {
+    foreach_ht(const ColumnFamily *cf, ag->columns) {
       output += "    <ColumnFamily";
 
       if (m_output_ids || with_ids) {
@@ -740,7 +740,7 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
     output += table_name;
   output += " (\n";
 
-  foreach(const ColumnFamily *cf, m_column_families) {
+  foreach_ht(const ColumnFamily *cf, m_column_families) {
     // don't display deleted cfs
     if (cf->deleted)
       continue;
@@ -779,7 +779,7 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
   }
 
   size_t i = 1;
-  foreach(const AccessGroup *ag, m_access_groups) {
+  foreach_ht(const AccessGroup *ag, m_access_groups) {
     got_columns = false;
     ag_string = "  ACCESS GROUP ";
 
@@ -811,7 +811,7 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
       bool display_comma = false;
       ag_string += " (";
 
-      foreach(const ColumnFamily *cf, ag->columns) {
+      foreach_ht(const ColumnFamily *cf, ag->columns) {
         if (cf->deleted)
           continue;
         got_columns = true;

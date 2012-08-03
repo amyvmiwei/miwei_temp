@@ -180,7 +180,7 @@ void GcWorker::insert_file(CountMap &map, const char *fname, int c) {
 void GcWorker::reap(CountMap &files_map) {
   size_t nf = 0, nf_done = 0, nd = 0, nd_done = 0;
 
-  foreach (const CountMap::value_type &v, files_map) {
+  foreach_ht (const CountMap::value_type &v, files_map) {
     if (!v.second) {
       HT_INFOF("MasterGc: removing file %s", v.first);
       try {
