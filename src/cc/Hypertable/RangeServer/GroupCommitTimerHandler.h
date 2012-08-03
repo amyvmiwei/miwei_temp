@@ -24,7 +24,6 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
-#include <boost/thread/xtime.hpp>
 
 #include "Common/Mutex.h"
 

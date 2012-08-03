@@ -113,7 +113,7 @@ ConnectionManager::add_internal(const CommAddress &addr,
   conn_state->initializer = initializer;
   conn_state->initialized = false;
   conn_state->service_name = (service_name) ? service_name : "";
-  boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC);
+  boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
 
   if (addr.is_proxy())
     m_impl->conn_map_proxy[addr.proxy] = ConnectionStatePtr(conn_state);
@@ -172,7 +172,7 @@ bool ConnectionManager::wait_for_connection(ConnectionState *conn_state,
     boost::xtime drop_time;
 
     while (!conn_state->connected && !conn_state->decomissioned) {
-      boost::xtime_get(&drop_time, boost::TIME_UTC);
+      boost::xtime_get(&drop_time, boost::TIME_UTC_);
       xtime_add_millis(drop_time, timer.remaining());
       if (!conn_state->cond.timed_wait(conn_lock, drop_time))
         return false;
@@ -224,7 +224,7 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
     }
 
     // reschedule (throw in a little randomness)
-    boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC);
+    boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
     xtime_add_millis(conn_state->next_retry, conn_state->timeout_ms);
 
     int32_t milli_adjust = System::rand32() % 2000;
@@ -364,7 +364,7 @@ ConnectionManager::handle(EventPtr &event_ptr) {
       // connection attempt was a long time ago, then schedule immediately
       // otherwise, if this event is the result of an immediately prior connect
       // attempt, then do the following
-      boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC);
+      boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
       xtime_add_millis(conn_state->next_retry, conn_state->timeout_ms);
 
       // add to retry heap
@@ -433,7 +433,7 @@ void ConnectionManager::operator()() {
       {
         ScopedLock conn_lock(conn_state->mutex);
         boost::xtime now;
-        boost::xtime_get(&now, boost::TIME_UTC);
+        boost::xtime_get(&now, boost::TIME_UTC_);
 
         if (xtime_cmp(conn_state->next_retry, now) <= 0) {
           m_impl->retry_queue.pop();

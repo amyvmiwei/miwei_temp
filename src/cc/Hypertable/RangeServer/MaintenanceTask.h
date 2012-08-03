@@ -22,7 +22,7 @@
 #ifndef HYPERTABLE_MAINTENANCETASK_H
 #define HYPERTABLE_MAINTENANCETASK_H
 
-#include <boost/thread/xtime.hpp>
+#include "Common/Time.h"
 
 #include "MaintenanceFlag.h"
 #include "Range.h"
@@ -38,7 +38,7 @@ namespace Hypertable {
 
     MaintenanceTask(int _level, int _priority, const String &desc) :
       level(_level), priority(_priority), m_retry(false), m_description(desc) {
-      boost::xtime_get(&start_time, boost::TIME_UTC);
+      boost::xtime_get(&start_time, boost::TIME_UTC_);
     }
 
     virtual ~MaintenanceTask() { }

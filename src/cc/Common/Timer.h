@@ -24,8 +24,6 @@
 
 #include <cstring>
 
-#include <boost/thread/xtime.hpp>
-
 #include "Logger.h"
 #include "Time.h"
 
@@ -57,7 +55,7 @@ namespace Hypertable {
 
     void start() {
       if (!m_running) {
-        boost::xtime_get(&start_time, boost::TIME_UTC);
+        boost::xtime_get(&start_time, boost::TIME_UTC_);
         m_running = true;
         if (!m_started)
           m_started = true;
@@ -66,7 +64,7 @@ namespace Hypertable {
 
     void stop() {
       boost::xtime stop_time;
-      boost::xtime_get(&stop_time, boost::TIME_UTC);
+      boost::xtime_get(&stop_time, boost::TIME_UTC_);
       uint32_t adjustment;
 
       assert(m_started);

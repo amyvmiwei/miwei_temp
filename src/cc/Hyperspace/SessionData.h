@@ -26,7 +26,6 @@
 #include <set>
 
 #include <boost/thread/mutex.hpp>
-#include <boost/thread/xtime.hpp>
 
 #include "Common/ReferenceCount.h"
 #include "Common/Time.h"
@@ -42,7 +41,7 @@ namespace Hyperspace {
   public:
     SessionData(const sockaddr_in &_addr, uint32_t lease_interval, uint64_t _id)
       : addr(_addr), m_lease_interval(lease_interval), id(_id), expired(false) {
-      boost::xtime_get(&expire_time, boost::TIME_UTC);
+      boost::xtime_get(&expire_time, boost::TIME_UTC_);
       xtime_add_millis(expire_time, lease_interval);
       return;
     }
@@ -101,7 +100,7 @@ namespace Hyperspace {
     bool renew_lease() {
       ScopedLock lock(mutex);
       boost::xtime now;
-      boost::xtime_get(&now, boost::TIME_UTC);
+      boost::xtime_get(&now, boost::TIME_UTC_);
       if (xtime_cmp(expire_time, now) < 0)
         return false;
       memcpy(&expire_time, &now, sizeof(boost::xtime));
@@ -138,7 +137,7 @@ namespace Hyperspace {
 
     void set_expire_time_now() {
       ScopedLock lock(mutex);
-      boost::xtime_get(&expire_time, boost::TIME_UTC);
+      boost::xtime_get(&expire_time, boost::TIME_UTC_);
     }
 
     void set_name(const String &name_) {

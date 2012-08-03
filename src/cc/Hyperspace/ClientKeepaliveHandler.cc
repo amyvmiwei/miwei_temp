@@ -27,6 +27,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/StringExt.h"
+#include "Common/Time.h"
 
 #include "ClientKeepaliveHandler.h"
 #include "Master.h"
@@ -52,8 +53,8 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
     m_keep_alive_interval = cfg->get_i32("Hyperspace.KeepAlive.Interval");
     m_reconnect = cfg->get_bool("Hyperspace.Session.Reconnect"));
 
-  boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
-  boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
+  boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC_);
+  boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC_);
   xtime_add_millis(m_jeopardy_time, m_lease_interval);
 
   m_local_addr = InetAddr(INADDR_ANY, m_datagram_send_port);
@@ -61,7 +62,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
   DispatchHandlerPtr dhp(this);
   m_comm->create_datagram_receive_socket(m_local_addr, 0x10, dhp);
 
-  foreach(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
+  foreach_ht(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
     m_hyperspace_replicas.push_back(replica);
   }
 
@@ -199,7 +200,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
             if (iter == m_handle_map.end()) {
               // We have a bad notification, ie. a notification for a handle not in m_handle_map
               boost::xtime now;
-              boost::xtime_get(&now, boost::TIME_UTC);
+              boost::xtime_get(&now, boost::TIME_UTC_);
 
               HT_ERROR_OUT << "[Issue 313] Received bad notification session=" << m_session_id
                            << ", handle=" << handle << ", event_id=" << event_id
@@ -335,7 +336,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           if (notifications > 0) {
             CommBufPtr cbp(Protocol::create_client_keepalive_request(
                 m_session_id, m_last_known_event));
-            boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
+            boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC_);
             if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
                 != Error::OK)) {
               HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
@@ -366,7 +367,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
     if ((state = m_session->get_state()) == Session::STATE_EXPIRED)
       return;
 
-    boost::xtime_get(&now, boost::TIME_UTC);
+    boost::xtime_get(&now, boost::TIME_UTC_);
 
     if (state == Session::STATE_SAFE) {
       if (xtime_cmp(m_jeopardy_time, now) < 0) {
@@ -381,7 +382,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
     CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
         m_session_id, m_last_known_event));
 
-    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
+    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC_);
 
     if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
         != Error::OK)) {
@@ -414,8 +415,8 @@ void ClientKeepaliveHandler::expire_session() {
   m_last_known_event = 0;
 
   if (m_reconnect) {
-    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC);
-    boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC);
+    boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC_);
+    boost::xtime_get(&m_jeopardy_time, boost::TIME_UTC_);
     xtime_add_millis(m_jeopardy_time, m_lease_interval);
 
     m_local_addr = InetAddr(INADDR_ANY, m_datagram_send_port);

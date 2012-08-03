@@ -183,7 +183,7 @@ namespace Hypertable {
       UpdateContext(std::vector<TableUpdate *> &tu, boost::xtime xt) : updates(tu), expire_time(xt),
           total_updates(0), total_added(0), total_syncs(0), total_bytes_added(0) { }
       ~UpdateContext() {
-        foreach(TableUpdate *u, updates)
+        foreach_ht(TableUpdate *u, updates)
           delete u;
       }
       std::vector<TableUpdate *> updates;

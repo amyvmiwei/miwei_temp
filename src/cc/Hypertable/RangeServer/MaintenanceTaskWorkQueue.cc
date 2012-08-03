@@ -46,7 +46,7 @@ MaintenanceTaskWorkQueue::~MaintenanceTaskWorkQueue() {
  *
  */
 void MaintenanceTaskWorkQueue::execute() {
-  foreach (MetaLog::EntityTaskPtr &entity_task, m_work) {
+  foreach_ht (MetaLog::EntityTaskPtr &entity_task, m_work) {
     try {
       if (!entity_task->execute()) {
 	ScopedLock lock(Global::mutex);

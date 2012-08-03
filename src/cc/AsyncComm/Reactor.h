@@ -98,7 +98,7 @@ namespace Hypertable {
           container.push_back(timer);
         m_timer_heap.pop();
       }
-      foreach (const ExpireTimer &t, container)
+      foreach_ht (const ExpireTimer &t, container)
         m_timer_heap.push(t);
     }
 

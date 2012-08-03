@@ -49,7 +49,7 @@ MergeScannerAccessGroup::MergeScannerAccessGroup(String &table_name,
 
   if (is_compaction) {
     // check if there are any indices in this schema
-    foreach (Schema::ColumnFamily *cf, scan_ctx->schema->get_column_families()){
+    foreach_ht (Schema::ColumnFamily *cf, scan_ctx->schema->get_column_families()){
       if (!cf || cf->deleted)
         continue;
       if (cf->has_index) {

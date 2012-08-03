@@ -89,7 +89,7 @@ namespace Hypertable {
           {
             ScopedLock lock(m_state.mutex);
 
-            boost::xtime_get(&now, boost::TIME_UTC);
+            boost::xtime_get(&now, boost::TIME_UTC_);
 
             while (m_state.queue.empty() || 
 		   (m_state.outstanding && ((m_state.queue.top())->level > m_state.outstanding_level)) ||
@@ -105,7 +105,7 @@ namespace Hypertable {
                 next_work = (m_state.queue.top())->start_time;
                 m_state.cond.timed_wait(lock, next_work);
               }
-              boost::xtime_get(&now, boost::TIME_UTC);
+              boost::xtime_get(&now, boost::TIME_UTC_);
             }
 
             task = m_state.queue.top();
@@ -138,7 +138,7 @@ namespace Hypertable {
                 ScopedLock lock(m_state.mutex);
                 HT_ERRORF("Maintenance Task '%s' failed, will retry in %u milliseconds ...",
                           task->description().c_str(), task->get_retry_delay());
-                boost::xtime_get(&task->start_time, boost::TIME_UTC);
+                boost::xtime_get(&task->start_time, boost::TIME_UTC_);
                 task->start_time.sec += task->get_retry_delay() / 1000;
                 m_state.queue.push(task);
                 m_state.cond.notify_one();

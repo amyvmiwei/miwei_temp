@@ -58,7 +58,7 @@ namespace Hypertable {
         regexp_qualifiers.push_back(new RE2(other.regexp_qualifiers[ii]->pattern()));
       }
       exact_qualifiers = other.exact_qualifiers;
-      foreach (const String& qualifier, exact_qualifiers) {
+      foreach_ht (const String& qualifier, exact_qualifiers) {
         exact_qualifiers_set.insert(qualifier.c_str());
       }
       prefix_qualifiers = other.prefix_qualifiers;
@@ -92,7 +92,7 @@ namespace Hypertable {
       // check prefix filters
       if (filter_by_prefix_qualifier) {
 	int cmp;
-        foreach (const String& qstr, prefix_qualifiers) {
+        foreach_ht (const String& qstr, prefix_qualifiers) {
           if (qstr.size() > qualifier_len)
             continue;
           if (0 == (cmp = memcmp(qstr.c_str(), qualifier, qstr.size())))
@@ -142,7 +142,7 @@ namespace Hypertable {
 
     bool column_predicate_matches(const char* value, uint32_t value_len) {
       int ncp = 0;
-      foreach (const ColumnPredicate& cp, column_predicates) {
+      foreach_ht (const ColumnPredicate& cp, column_predicates) {
         if (cp.value && value) {
           switch (cp.operation) {
             case ColumnPredicate::EXACT_MATCH:

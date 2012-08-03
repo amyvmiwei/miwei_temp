@@ -80,7 +80,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
   m_checkpoint_size = props->get_i32("Hyperspace.Checkpoint.Size");
   m_log_gc_interval = props->get_i32("Hyperspace.LogGc.Interval");
   m_max_unused_logs = props->get_i32("Hyperspace.LogGc.MaxUnusedLogs");
-  boost::xtime_get(&m_last_log_gc_time, boost::TIME_UTC);
+  boost::xtime_get(&m_last_log_gc_time, boost::TIME_UTC_);
 
   u_int32_t env_flags =
     DB_CREATE |      // If the environment does not exist, create it
@@ -169,7 +169,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
                             props->get_i32("Hyperspace.Replica.Replication.Timeout")*1000);
 
       int priority = m_replication_info.num_replicas;
-      foreach(String replica, props->get_strs("Hyperspace.Replica.Host")) {
+      foreach_ht(String replica, props->get_strs("Hyperspace.Replica.Host")) {
         bool is_ipv4 = InetAddr::is_ipv4(replica.c_str());
         bool is_localhost=false;
         Endpoint e;
@@ -373,7 +373,7 @@ BerkeleyDbFilesystem::~BerkeleyDbFilesystem() {
    */
   try {
     HT_INFO_OUT << "Closed DB handles for all threads " << HT_END;
-    foreach(ThreadHandleMap::value_type &val, m_thread_handle_map) {
+    foreach_ht(ThreadHandleMap::value_type &val, m_thread_handle_map) {
       (val.second)->close();
     }
     m_env.close(0);
@@ -502,7 +502,7 @@ void BerkeleyDbFilesystem::init_db_handles(const vector<Thread::id> &thread_ids)
   BDbHandlesPtr db_handles;
 
   // Assign per thread handles but don't open them yet
-  foreach(Thread::id thread_id, thread_ids) {
+  foreach_ht(Thread::id thread_id, thread_ids) {
     db_handles = new BDbHandles();
     m_thread_handle_map[thread_id] = db_handles;
     HT_INFO_OUT << "Created DB handles for thread: " << thread_id << HT_END;
@@ -548,7 +548,7 @@ void BerkeleyDbFilesystem::do_checkpoint() {
   }
 
   boost::xtime now;
-  boost::xtime_get(&now, boost::TIME_UTC);
+  boost::xtime_get(&now, boost::TIME_UTC_);
   int64_t time_elapsed = xtime_diff_millis(m_last_log_gc_time, now);
 
   if (time_elapsed > m_log_gc_interval) {
@@ -1237,7 +1237,7 @@ BerkeleyDbFilesystem::get_directory_attr_listing(BDbTxn &txn, String fname,
   if (include_sub_entries) {
     if (!ends_with(fname, "/"))
       fname += "/";
-    foreach(DirEntryAttr &entry, listing)
+    foreach_ht(DirEntryAttr &entry, listing)
       if (entry.is_dir)
         get_directory_attr_listing(txn, fname + entry.name, aname, true, entry.sub_entries);
   }

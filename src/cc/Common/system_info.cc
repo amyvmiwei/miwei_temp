@@ -76,7 +76,7 @@ int main(int ac, char *av[]) {
   if (has("property")) {
     Strings strs = get_strs("property");
 
-    foreach(const String &s, strs)
+    foreach_ht(const String &s, strs)
       cout << Properties::to_str((*properties)[s]) << endl;
 
     has_option = true;

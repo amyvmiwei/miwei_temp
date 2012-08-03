@@ -84,7 +84,7 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
   write_header();
 
   // Write existing entries
-  foreach (EntityPtr &entity, initial_entities)
+  foreach_ht (EntityPtr &entity, initial_entities)
     record_state(entity.get());
 
   // Write "Recover" entity
@@ -198,7 +198,7 @@ void Writer::record_state(std::vector<Entity *> &entities) {
   if (m_fd == -1)
     HT_THROWF(Error::CLOSED, "MetaLog '%s' has been closed", m_path.c_str());
 
-  foreach (Entity *entity, entities)
+  foreach_ht (Entity *entity, entities)
     length += EntityHeader::LENGTH + (entity->marked_for_removal() ? 0 : entity->encoded_length());
 
   {
@@ -206,7 +206,7 @@ void Writer::record_state(std::vector<Entity *> &entities) {
     boost::shared_array<uint8_t> backup_buf( new uint8_t [length] );
     uint8_t *ptr = buf.base;
 
-    foreach (Entity *entity, entities) {
+    foreach_ht (Entity *entity, entities) {
       if (entity->marked_for_removal())
         entity->header.encode( &ptr );
       else

@@ -1,6 +1,6 @@
 #include <Common/Compat.h>
 #include <Common/System.h>
-#include <boost/foreach.hpp>
+#include <boost/foreach_ht.hpp>
 #include <boost/algorithm/string.hpp>
 
 #include <hadoop/Pipes.hh>

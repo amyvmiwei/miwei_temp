@@ -246,7 +246,7 @@ int main(int argc, char **argv) {
   
   if (errors.size()) {
     cout << endl << endl << "Got " << errors.size() << " errors: " << endl;
-    foreach (const String &s, errors) {
+    foreach_ht (const String &s, errors) {
       cout << "   " << s << endl;
     }
   }

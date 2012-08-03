@@ -61,7 +61,7 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPt
   m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
   m_query_cache_memory = get_i64("Hypertable.RangeServer.QueryCache.MaxMemory");
   // Setup to immediately schedule maintenance
-  boost::xtime_get(&m_last_maintenance, TIME_UTC);
+  boost::xtime_get(&m_last_maintenance, TIME_UTC_);
   memcpy(&m_last_low_memory, &m_last_maintenance, sizeof(boost::xtime));
   memcpy(&m_last_check, &m_last_maintenance, sizeof(boost::xtime));
   m_last_maintenance.sec -= m_maintenance_interval / 1000;
@@ -148,7 +148,7 @@ void MaintenanceScheduler::schedule() {
   }
 
   boost::xtime now;
-  boost::xtime_get(&now, TIME_UTC);
+  boost::xtime_get(&now, TIME_UTC_);
   int64_t millis_since_last_maintenance =
     xtime_diff_millis(m_last_maintenance, now);
 
@@ -282,7 +282,7 @@ void MaintenanceScheduler::schedule() {
   check_file_dump_statistics(now, range_data, trace_str);
 
   boost::xtime schedule_time;
-  boost::xtime_get(&schedule_time, boost::TIME_UTC);
+  boost::xtime_get(&schedule_time, boost::TIME_UTC_);
 
   if (not_acknowledged) {
     HT_INFO_OUT << "Found load_acknowledged=false in " << not_acknowledged

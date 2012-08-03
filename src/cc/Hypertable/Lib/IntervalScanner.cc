@@ -79,7 +79,7 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
   m_scan_spec_builder.set_row_offset(scan_spec.row_offset);
   m_scan_spec_builder.set_cell_offset(scan_spec.cell_offset);
 
-  foreach (const ColumnPredicate &cp, scan_spec.column_predicates)
+  foreach_ht (const ColumnPredicate &cp, scan_spec.column_predicates)
     m_scan_spec_builder.add_column_predicate(cp.column_family,
             cp.operation, cp.value, cp.value_len);
 
@@ -120,11 +120,11 @@ void IntervalScanner::init(const ScanSpec &scan_spec, Timer &timer) {
       m_scan_spec_builder.set_scan_and_filter_rows(true);
       // order and filter duplicated rows
       CstrRowSet rowset;
-      foreach (const RowInterval& ri, scan_spec.row_intervals)
+      foreach_ht (const RowInterval& ri, scan_spec.row_intervals)
         rowset.insert(ri.start); // ri.start always equals to ri.end
       // setup ordered row intervals and rowset
       m_scan_spec_builder.reserve_rows(rowset.size());
-      foreach (const char* r, rowset) {
+      foreach_ht (const char* r, rowset) {
         m_scan_spec_builder.add_row_interval(r, true, "", true); // end is set to "" in order to safe space
         m_rowset.insert(m_scan_spec_builder.get().row_intervals.back().start); // Cstr's must be taken from m_scan_spec_builder and not from scan_spec
       }

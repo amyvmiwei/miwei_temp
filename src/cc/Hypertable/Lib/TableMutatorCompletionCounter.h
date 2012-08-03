@@ -65,7 +65,7 @@ namespace Hypertable {
       timer.start();
 
       while (m_outstanding) {
-        boost::xtime_get(&expire_time, boost::TIME_UTC);
+        boost::xtime_get(&expire_time, boost::TIME_UTC_);
         xtime_add_millis(expire_time, timer.remaining());
         if (!m_cond.timed_wait(lock, expire_time))
           HT_THROW(Error::REQUEST_TIMEOUT, "");

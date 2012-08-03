@@ -365,7 +365,7 @@ void NameIdMapper::get_namespace_listing(const std::vector<DirEntryAttr> &dir_li
   NamespaceListing entry;
   listing.clear();
   listing.reserve(dir_listing.size());
-  foreach(const DirEntryAttr &dir_entry, dir_listing) {
+  foreach_ht(const DirEntryAttr &dir_entry, dir_listing) {
     if (dir_entry.has_attr) {
       entry.name = (String)((const char*)dir_entry.attr.base);
       entry.is_namespace = dir_entry.is_dir;

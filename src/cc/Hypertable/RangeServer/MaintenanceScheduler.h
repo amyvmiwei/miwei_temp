@@ -45,7 +45,7 @@ namespace Hypertable {
       else {
         if (m_prioritizer != &m_prioritizer_log_cleanup) {
           m_prioritizer = &m_prioritizer_log_cleanup;
-          boost::xtime_get(&m_last_low_memory, TIME_UTC);
+          boost::xtime_get(&m_last_low_memory, TIME_UTC_);
         }
       }
     }

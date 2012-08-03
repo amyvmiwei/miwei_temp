@@ -72,7 +72,7 @@ void OperationBalance::initialize_dependencies() {
   m_dependencies.clear();
   m_dependencies.insert(Dependency::INIT);
   CstrSet addrs;
-  foreach (RangeMoveSpecPtr &move, m_plan->moves) {
+  foreach_ht (RangeMoveSpecPtr &move, m_plan->moves) {
     if (addrs.find(move->source_location.c_str()) == addrs.end()) {
       addrs.insert(move->source_location.c_str());
       m_dependencies.insert(move->source_location);
@@ -130,7 +130,7 @@ void OperationBalance::execute() {
       if (!m_plan->moves.empty()) {
         uint32_t wait_millis = m_plan->duration_millis / m_plan->moves.size();
 
-        foreach (RangeMoveSpecPtr &move, m_plan->moves) {
+        foreach_ht (RangeMoveSpecPtr &move, m_plan->moves) {
           addr.set_proxy(move->source_location);
           try {
             rsc.relinquish_range(addr, move->table, move->range);
@@ -142,7 +142,7 @@ void OperationBalance::execute() {
             m_context->balancer->move_complete(move->table, move->range, move->error);
           }
         }
-        foreach (RangeMoveSpecPtr &move, m_plan->moves)
+        foreach_ht (RangeMoveSpecPtr &move, m_plan->moves)
           HT_INFO_OUT << *move << HT_END;
       }
     }

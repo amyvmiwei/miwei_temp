@@ -21,6 +21,7 @@
 
 #include "Common/Compat.h"
 #include "Common/Serialization.h"
+#include "Common/Time.h"
 
 #include <ctime>
 
@@ -127,7 +128,7 @@ bool RangeServerConnection::wait_for_connection() {
   boost::xtime expire_time;
   if (m_state & RangeServerConnectionFlags::REMOVED)
     return false;
-  boost::xtime_get(&expire_time, boost::TIME_UTC);
+  boost::xtime_get(&expire_time, boost::TIME_UTC_);
   while (!m_connected) {
     expire_time.sec += (int64_t)60;
     HT_INFOF("Waiting for connection to '%s' ...", m_location.c_str());

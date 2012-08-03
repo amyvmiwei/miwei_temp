@@ -689,7 +689,7 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
   if (cbp->header.id != 0 && disp_handler != 0
       && cbp->header.flags & CommHeader::FLAGS_BIT_REQUEST) {
     boost::xtime expire_time;
-    boost::xtime_get(&expire_time, boost::TIME_UTC);
+    boost::xtime_get(&expire_time, boost::TIME_UTC_);
     xtime_add_millis(expire_time, timeout_ms);
     m_reactor_ptr->add_request(cbp->header.id, this, disp_handler, expire_time);
   }

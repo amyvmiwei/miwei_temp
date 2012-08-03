@@ -4,7 +4,7 @@
 #include <Common/Compat.h>
 #include <Common/System.h>
 #include <Hypertable/Lib/Client.h>
-#include <boost/foreach.hpp>
+#include <boost/foreach_ht.hpp>
 #include <boost/algorithm/string.hpp>
 #include <string>
 #include <vector>

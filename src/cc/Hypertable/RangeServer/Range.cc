@@ -144,12 +144,12 @@ void Range::initialize() {
 
   m_column_family_vector.resize(m_schema->get_max_column_family_id() + 1);
 
-  foreach(Schema::AccessGroup *sag, m_schema->get_access_groups()) {
+  foreach_ht(Schema::AccessGroup *sag, m_schema->get_access_groups()) {
     ag = new AccessGroup(&m_metalog_entity->table, m_schema, sag, &m_metalog_entity->spec);
     m_access_group_map[sag->name] = ag;
     m_access_group_vector.push_back(ag);
 
-    foreach(Schema::ColumnFamily *scf, sag->columns)
+    foreach_ht(Schema::ColumnFamily *scf, sag->columns)
       m_column_family_vector[scf->id] = ag;
   }
 
@@ -313,11 +313,11 @@ void Range::update_schema(SchemaPtr &schema) {
     m_column_family_vector.resize(max_column_family_id+1);
 
   // update all existing access groups & create new ones as needed
-  foreach(Schema::AccessGroup *s_ag, schema->get_access_groups()) {
+  foreach_ht(Schema::AccessGroup *s_ag, schema->get_access_groups()) {
     if( (ag_iter = m_access_group_map.find(s_ag->name)) !=
         m_access_group_map.end()) {
       ag_iter->second->update_schema(schema, s_ag);
-      foreach(Schema::ColumnFamily *s_cf, s_ag->columns) {
+      foreach_ht(Schema::ColumnFamily *s_cf, s_ag->columns) {
         if (s_cf->deleted == false)
           m_column_family_vector[s_cf->id] = ag_iter->second;
       }
@@ -331,12 +331,12 @@ void Range::update_schema(SchemaPtr &schema) {
   {
     ScopedLock lock(m_mutex);
     m_metalog_entity->table.generation = schema->get_generation();
-    foreach(Schema::AccessGroup *s_ag, new_access_groups) {
+    foreach_ht(Schema::AccessGroup *s_ag, new_access_groups) {
       ag = new AccessGroup(&m_metalog_entity->table, schema, s_ag, &m_metalog_entity->spec);
       m_access_group_map[s_ag->name] = ag;
       m_access_group_vector.push_back(ag);
 
-      foreach(Schema::ColumnFamily *s_cf, s_ag->columns) {
+      foreach_ht(Schema::ColumnFamily *s_cf, s_ag->columns) {
         if (s_cf->deleted == false)
           m_column_family_vector[s_cf->id] = ag;
       }
@@ -1125,7 +1125,7 @@ void Range::split_compact_and_shrink() {
 
       {
         ScopedLock lock(m_schema_mutex);
-        foreach(Schema::AccessGroup *ag, m_schema->get_access_groups()) {
+        foreach_ht(Schema::AccessGroup *ag, m_schema->get_access_groups()) {
           // notice the below variables are different "range" vs. "table"
           range_dir = table_dir + "/" + ag->name + "/" + md5DigestStr;
           Global::dfs->mkdirs(range_dir);

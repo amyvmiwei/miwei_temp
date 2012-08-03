@@ -93,13 +93,13 @@ namespace Hypertable {
 
       m_proxy_map.update_mapping(proxy, hostname, addr, invalidated_map, new_map);
 
-      foreach(const ProxyMapT::value_type &v, invalidated_map) {
+      foreach_ht(const ProxyMapT::value_type &v, invalidated_map) {
 	IOHandler *handler = lookup_handler(v.second.addr);
 	if (handler)
 	  handler->set_proxy("");
       }
 
-      foreach(const ProxyMapT::value_type &v, new_map) {
+      foreach_ht(const ProxyMapT::value_type &v, new_map) {
 	IOHandler *handler = lookup_handler(v.second.addr);
 	if (handler)
 	  handler->set_proxy(v.first);
@@ -127,13 +127,13 @@ namespace Hypertable {
 
       m_proxy_map.update_mappings(mappings, invalidated_map, new_map);
 
-      foreach(const ProxyMapT::value_type &v, invalidated_map) {
+      foreach_ht(const ProxyMapT::value_type &v, invalidated_map) {
 	IOHandler *handler = lookup_handler(v.second.addr);
 	if (handler)
 	  handler->set_proxy("");
       }
 
-      foreach(const ProxyMapT::value_type &v, new_map) {
+      foreach_ht(const ProxyMapT::value_type &v, new_map) {
 	IOHandler *handler = lookup_handler(v.second.addr);
 	if (handler)
 	  handler->set_proxy(v.first);
@@ -150,7 +150,7 @@ namespace Hypertable {
       timer.start();
 
       while (!m_proxies_loaded) {
-        boost::xtime_get(&drop_time, boost::TIME_UTC);
+        boost::xtime_get(&drop_time, boost::TIME_UTC_);
         xtime_add_millis(drop_time, timer.remaining());
         if (!m_cond.timed_wait(lock, drop_time))
           return false;
@@ -312,7 +312,7 @@ namespace Hypertable {
       SockAddrMap<IOHandlerPtr>::iterator iter;
       String mapping;
 
-      foreach(const ProxyMapT::value_type &v, mappings)
+      foreach_ht(const ProxyMapT::value_type &v, mappings)
 	mapping += v.first + "\t" + v.second.hostname + "\t" + InetAddr::format(v.second.addr) + "\n";
 
       uint8_t *buffer = new uint8_t [ mapping.length() + 1 ];

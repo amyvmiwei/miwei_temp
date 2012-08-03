@@ -46,6 +46,7 @@ extern "C" {
 #include "Common/Logger.h"
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
+#include "Common/Time.h"
 
 #include "DispatchHandler.h"
 #include "ReactorFactory.h"
@@ -186,7 +187,7 @@ namespace Hypertable {
     void shutdown() {
       ExpireTimer timer;
       m_reactor_ptr->schedule_removal(this);
-      boost::xtime_get(&timer.expire_time, boost::TIME_UTC);
+      boost::xtime_get(&timer.expire_time, boost::TIME_UTC_);
       timer.expire_time.nsec += 200000000LL;
       timer.handler = 0;
       m_reactor_ptr->add_timer(timer);

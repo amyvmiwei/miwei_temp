@@ -48,7 +48,7 @@ void LoadBalancerBasicOffloadServers::compute_moves(vector<RangeServerStatistics
   set<String> load_servers;
   set<String>::iterator load_servers_it;
 
-  foreach(const RangeServerStatistics &stats, range_server_stats) {
+  foreach_ht(const RangeServerStatistics &stats, range_server_stats) {
     if (offload_servers.find(stats.location) == offload_servers.end()) {
       if (m_context->can_accept_ranges(stats))
         load_servers.insert(stats.location);

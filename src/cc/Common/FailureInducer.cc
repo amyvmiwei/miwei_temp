@@ -51,7 +51,7 @@ void FailureInducer::parse_option(String option) {
   std::vector<String> args;
   boost::algorithm::split(args, option, boost::algorithm::is_any_of(";"));
 
-  foreach (String &a, args)
+  foreach_ht (String &a, args)
     parse_option_single(a);
 }
 

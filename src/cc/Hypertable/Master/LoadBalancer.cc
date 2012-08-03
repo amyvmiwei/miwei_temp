@@ -20,6 +20,7 @@
  */
 #include "Common/Compat.h"
 #include "Common/Sweetener.h"
+#include "Common/Time.h"
 
 #include "LoadBalancer.h"
 #include "OperationBalance.h"
@@ -33,7 +34,7 @@ void LoadBalancer::register_plan(BalancePlanPtr &plan) {
   m_plan = plan;
 
   // Insert moves into current set
-  foreach (RangeMoveSpecPtr &move, m_plan->moves)
+  foreach_ht (RangeMoveSpecPtr &move, m_plan->moves)
     m_current_set.insert(move);
 
   HT_INFO_OUT << "Balance plan registered move " << m_plan->moves.size() << " ranges" <<
@@ -92,7 +93,7 @@ bool LoadBalancer::wait_for_complete(RangeMoveSpecPtr &move, uint32_t timeout_mi
   boost::xtime expire_time;
   MoveSetT::iterator iter;
 
-  boost::xtime_get(&expire_time, boost::TIME_UTC);
+  boost::xtime_get(&expire_time, boost::TIME_UTC_);
   expire_time.sec += timeout_millis/1000;
   expire_time.nsec += (int32_t)((double)(timeout_millis-(timeout_millis/1000)) * 1000000.0);
 

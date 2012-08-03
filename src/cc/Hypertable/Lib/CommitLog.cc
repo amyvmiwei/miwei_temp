@@ -29,6 +29,7 @@
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/StringExt.h"
+#include "Common/Time.h"
 #include "Common/md5.h"
 
 #include "AsyncComm/Protocol.h"
@@ -90,7 +91,7 @@ CommitLog::initialize(const String &log_dir, PropertiesPtr &props,
     if (m_range_reference_required)
       m_range_reference_required = init_log->range_reference_required();
     stitch_in(init_log);
-    foreach (const CommitLogFileInfo *frag, m_fragment_queue) {
+    foreach_ht (const CommitLogFileInfo *frag, m_fragment_queue) {
       if (frag->num >= m_cur_fragment_num)
         m_cur_fragment_num = frag->num + 1;
     }
@@ -130,7 +131,7 @@ CommitLog::initialize(const String &log_dir, PropertiesPtr &props,
 int64_t CommitLog::get_timestamp() {
   ScopedLock lock(m_mutex);
   boost::xtime now;
-  boost::xtime_get(&now, boost::TIME_UTC);
+  boost::xtime_get(&now, boost::TIME_UTC_);
   return ((int64_t)now.sec * 1000000000LL) + (int64_t)now.nsec;
 }
 
@@ -239,7 +240,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     file_info->verify();
     file_info->purge_dirs.insert(log_dir);
 
-    foreach (CommitLogFileInfo *fi, log_base->fragment_queue()) {
+    foreach_ht (CommitLogFileInfo *fi, log_base->fragment_queue()) {
       if (fi->parent == 0) {
         fi->parent = file_info;
         file_info->references++;
@@ -362,7 +363,7 @@ void CommitLog::remove_file_info(CommitLogFileInfo *fi) {
   fi->verify();
 
   // Remove linked log directores
-  foreach (const String &logdir, fi->purge_dirs) {
+  foreach_ht (const String &logdir, fi->purge_dirs) {
     try {
       HT_INFOF("Removing linked log directory '%s' because all fragments have been removed", logdir.c_str());
       m_fs->rmdir(logdir);
@@ -540,7 +541,7 @@ void CommitLog::get_stats(const String &prefix, String &result) {
     HT_THROWF(Error::CLOSED, "Commit log '%s' has been closed", m_log_dir.c_str());
 
   try {
-    foreach (const CommitLogFileInfo *frag, m_fragment_queue) {
+    foreach_ht (const CommitLogFileInfo *frag, m_fragment_queue) {
       result += prefix + String("-log-fragment[") + frag->num + "]\tsize\t" + frag->size + "\n";
       result += prefix + String("-log-fragment[") + frag->num + "]\trevision\t" + frag->revision + "\n";
       result += prefix + String("-log-fragment[") + frag->num + "]\tdir\t" + frag->log_dir + "\n";

@@ -45,7 +45,7 @@ int ResponseCallbackAttrGet::response(const std::vector<DynamicBufferPtr> &buffe
   }
 
   size_t len = 0;
-  foreach (const DynamicBufferPtr &pdb, buffers) {
+  foreach_ht (const DynamicBufferPtr &pdb, buffers) {
     if (pdb)
       len += pdb->fill();
   }
@@ -53,7 +53,7 @@ int ResponseCallbackAttrGet::response(const std::vector<DynamicBufferPtr> &buffe
   CommBufPtr cbp(new CommBuf(header, 8 + 4 * buffers.size() + len));
   cbp->append_i32(Error::OK);
   cbp->append_i32(buffers.size());
-  foreach (const DynamicBufferPtr &pdb, buffers) {
+  foreach_ht (const DynamicBufferPtr &pdb, buffers) {
     if (pdb)
       Serialization::encode_bytes32(cbp->get_data_ptr_address(), pdb->base, pdb->fill());
     else

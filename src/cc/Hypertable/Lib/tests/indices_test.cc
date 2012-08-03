@@ -193,7 +193,7 @@ test_escaped_regexps(void)
   // now make sure that the values were correctly escaped
   Cell cell;
   FILE *fout=fopen("indices_test.output", "wt");
-  foreach (Query &q, queries) {
+  foreach_ht (Query &q, queries) {
     ScanSpecBuilder ssb;
     ssb.add_column_predicate("a", q.second, q.first);
     String s=escape(q.first, strlen(q.first));

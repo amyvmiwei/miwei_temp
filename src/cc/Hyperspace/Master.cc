@@ -235,7 +235,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
 
-  boost::xtime_get(&m_last_tick, boost::TIME_UTC);
+  boost::xtime_get(&m_last_tick, boost::TIME_UTC_);
 
   m_keepalive_handler_ptr.reset(
    new ServerKeepaliveHandler(conn_mgr->get_comm(), this, app_queue_ptr));
@@ -430,7 +430,7 @@ void Master::remove_expired_sessions() {
       lease_credit = m_lease_credit;
     }
 
-    boost::xtime_get(&now, boost::TIME_UTC);
+    boost::xtime_get(&now, boost::TIME_UTC_);
 
     // try recomputing lease credit
     if (lease_credit == 0) {
@@ -477,7 +477,7 @@ void Master::remove_expired_sessions() {
   }
 
   // delete handles open by expired sessions
-  foreach(uint64_t handle, handles) {
+  foreach_ht(uint64_t handle, handles) {
     if (m_verbose)
       HT_INFOF("Destroying handle %llu", (Llu)handle);
     if (!destroy_handle(handle, error, errmsg, false))
@@ -488,7 +488,7 @@ void Master::remove_expired_sessions() {
   // delete expired sessions from BDB
   if (expired_sessions.size() > 0) {
     HT_BDBTXN_BEGIN() {
-      foreach (uint64_t expired_session, expired_sessions) {
+      foreach_ht (uint64_t expired_session, expired_sessions) {
         m_bdb_fs->delete_session(txn, expired_session);
       }
       txn.commit(0);
@@ -1584,7 +1584,7 @@ void Master::grant_pending_lock_reqs(BDbTxn &txn, const String &node,
 
       lock_granted_event = new EventLockGranted(event_id, next_mode, lock_generation);
 
-      foreach(uint64_t handle, next_lock_handles) {
+      foreach_ht(uint64_t handle, next_lock_handles) {
         lock_handle(txn, handle, next_mode, node);
         session = m_bdb_fs->get_handle_session(txn, handle);
         lock_granted_notifications[handle] = session;
@@ -1663,7 +1663,7 @@ Master::deliver_event_notifications(HyperspaceEventPtr &event_ptr,
 
   if (has_notifications) {
 
-    foreach (session_id, sessions) {
+    foreach_ht (session_id, sessions) {
       m_keepalive_handler_ptr->deliver_event_notifications(session_id);
     }
 
@@ -2111,7 +2111,7 @@ void Master::attr_set(CommandContext &ctx, uint64_t handle,
   std::string attr_names;
   size_t total_value_len = 0;
   if (m_verbose) {
-    foreach (const Attribute& attr, attrs) {
+    foreach_ht (const Attribute& attr, attrs) {
       attr_names += attr.name;
       attr_names += ",";
       total_value_len += attr.value_len;
@@ -2128,7 +2128,7 @@ void Master::attr_set(CommandContext &ctx, uint64_t handle,
     if (!get_handle_node(ctx, handle, attr_names.c_str(), node))
       return;
 
-  foreach (const Attribute& attr, attrs) {
+  foreach_ht (const Attribute& attr, attrs) {
     m_bdb_fs->set_xattr(txn, node, attr.name, attr.value, attr.value_len);
     // create event notification and persist
     create_event(ctx, node, EVENT_MASK_ATTR_SET, attr.name);
@@ -2177,7 +2177,7 @@ void Master::attr_get(CommandContext &ctx, uint64_t handle,
       return;
 
   dbufs.reserve(attrs.size());
-  foreach (const String &attr, attrs) {
+  foreach_ht (const String &attr, attrs) {
     dbufs.push_back(new DynamicBuffer());
     if (!m_bdb_fs->get_xattr(txn, node, attr, *dbufs.back()))
       dbufs.back() = 0; // attr not found
@@ -2459,7 +2459,7 @@ void Master::create_event(CommandContext &ctx, const String &node, uint32_t even
 /**
  */
 void Master::deliver_event_notifications(CommandContext &ctx, bool wait_for_notify) {
-  foreach(EventContext& evt, ctx.evts)
+  foreach_ht(EventContext& evt, ctx.evts)
     if (evt.persisted_notifications)
       deliver_event_notifications(evt, wait_for_notify);
 }

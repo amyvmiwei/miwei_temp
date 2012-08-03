@@ -94,7 +94,7 @@ void TableMutatorSyncDispatchHandler::retry() {
   ScopedLock lock(m_mutex);
 
   m_errors.clear();
-  foreach (CommAddress addr, m_pending) {
+  foreach_ht (CommAddress addr, m_pending) {
     try {
       m_client.commit_log_sync(addr, m_table_identifier, this);
     }

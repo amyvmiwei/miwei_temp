@@ -43,7 +43,7 @@ namespace Hypertable {
               ContextPtr context)
           : m_loadavg_deviation_threshold(max_load_deviation),
             m_context(context) {
-        foreach (RangeServerStatistics &rs, range_server_stats)
+        foreach_ht (RangeServerStatistics &rs, range_server_stats)
           m_rsstats[rs.location] = rs;
       }
 

@@ -89,7 +89,7 @@ int main(int ac, char *av[]) {
     int s = get_i32("small-size");
     int r = get_i32("reserve");
 
-    foreach(const String &co, get_strs("components")) {
+    foreach_ht(const String &co, get_strs("components")) {
       if (co == "smalldeque")
         run_test(bind(test_small_deque, s, r, n), true);
       else if (co == "smallvector")

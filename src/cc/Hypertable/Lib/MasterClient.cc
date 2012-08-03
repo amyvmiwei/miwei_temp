@@ -885,7 +885,7 @@ MasterClient::send_message_async(CommBufPtr &cbp, DispatchHandler *handler,
 	error == Error::COMM_BROKEN_CONNECTION ||
 	error == Error::COMM_CONNECT_ERROR) {
       boost::xtime expire_time;
-      boost::xtime_get(&expire_time, boost::TIME_UTC);
+      boost::xtime_get(&expire_time, boost::TIME_UTC_);
       xtime_add_millis(expire_time, std::min(timer->remaining(), (System::rand32() % m_retry_interval)));
       if (!m_cond.timed_wait(lock, expire_time)) {
         if (timer->expired())

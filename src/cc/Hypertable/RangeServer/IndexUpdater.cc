@@ -51,7 +51,7 @@ IndexUpdater::IndexUpdater(SchemaPtr &primary_schema, TablePtr index_table,
   memset(&m_index_map[0], 0, sizeof(m_index_map));
   memset(&m_qualifier_index_map[0], 0, sizeof(m_qualifier_index_map));
 
-  foreach (const Schema::ColumnFamily *cf, 
+  foreach_ht (const Schema::ColumnFamily *cf, 
           primary_schema->get_column_families()) {
     if (!cf || cf->deleted)
       continue;

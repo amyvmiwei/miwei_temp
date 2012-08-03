@@ -187,7 +187,7 @@ cmd_create_table(NamespacePtr &ns, ParserState &state,
     schema->set_compressor(state.table_compressor);
     schema->set_group_commit_interval(state.group_commit_interval);
 
-    foreach(Schema::AccessGroup *ag, state.ag_list) {
+    foreach_ht(Schema::AccessGroup *ag, state.ag_list) {
       schema->validate_compressor(ag->compressor);
       schema->validate_bloom_filter(ag->bloom_filter);
       if (state.table_in_memory)
@@ -202,7 +202,7 @@ cmd_create_table(NamespacePtr &ns, ParserState &state,
     if (state.ag_map.find("default") == state.ag_map.end())
       need_default_ag = true;
 
-    foreach(Schema::ColumnFamily *cf, state.cf_list) {
+    foreach_ht(Schema::ColumnFamily *cf, state.cf_list) {
       if (cf->ag == "") {
         cf->ag = "default";
         if (need_default_ag) {
@@ -251,13 +251,13 @@ cmd_alter_table(NamespacePtr &ns, ParserState &state,
   Schema *schema = new Schema();
   bool need_default_ag = false;
 
-  foreach(Schema::AccessGroup *ag, state.ag_list)
+  foreach_ht(Schema::AccessGroup *ag, state.ag_list)
     schema->add_access_group(ag);
 
   if (state.ag_map.find("default") == state.ag_map.end())
     need_default_ag = true;
 
-  foreach(Schema::ColumnFamily *cf, state.cf_list) {
+  foreach_ht(Schema::ColumnFamily *cf, state.cf_list) {
     if (cf->ag == "") {
       cf->ag = "default";
       if (need_default_ag) {
@@ -741,7 +741,7 @@ cmd_insert(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
   if (cb.normal_mode) {
     cb.total_cells = cells.size();
 
-    foreach(const Cell &cell, cells) {
+    foreach_ht(const Cell &cell, cells) {
       cb.total_keys_size += cell.column_qualifier
           ? (strlen(cell.column_qualifier) + 1) : 0;
       cb.total_values_size += cell.value_len;
@@ -787,7 +787,7 @@ cmd_delete(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
     }
   }
   else {
-    foreach(const String &col, state.delete_columns) {
+    foreach_ht(const String &col, state.delete_columns) {
       ++cb.total_cells;
 
       key.column_family = col.c_str();
@@ -823,7 +823,7 @@ cmd_get_listing(NamespacePtr &ns, ParserState &state,
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   std::vector<NamespaceListing> listing;
   ns->get_listing(false, listing);
-  foreach (const NamespaceListing &entry, listing) {
+  foreach_ht (const NamespaceListing &entry, listing) {
     if (entry.is_namespace && !state.tables_only)
       cb.on_return(entry.name + "\t(namespace)");
     else if (!entry.is_namespace)
