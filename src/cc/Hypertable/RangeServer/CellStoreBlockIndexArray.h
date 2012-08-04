@@ -149,7 +149,6 @@ namespace Hypertable {
 
       if (!m_array.empty()) {
 
-        std::sort(m_array.begin(), m_array.end(), LtT());
         /** compute space covered by this index scope **/
         m_disk_used = m_end_of_last_block - (*m_array.begin()).offset;
 
