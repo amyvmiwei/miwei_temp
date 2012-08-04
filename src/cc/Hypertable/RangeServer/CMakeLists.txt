@@ -144,6 +144,10 @@ target_link_libraries(Hypertable.RangeServer HyperRanger ${MALLOC_LIBRARY})
 add_executable(csdump csdump.cc)
 target_link_libraries(csdump HyperRanger)
 
+# csvalidate
+add_executable(csvalidate csvalidate.cc)
+target_link_libraries(csvalidate HyperRanger)
+
 # count_stored - program to diff two sorted files
 add_executable(count_stored count_stored.cc)
 target_link_libraries(count_stored HyperRanger)
@@ -201,7 +205,7 @@ add_test(AG-garbage-tracker AccessGroupGarbageTracker_test)
 #add_test(CellStore-64bit CellStore64_test)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS HyperRanger Hypertable.RangeServer csdump count_stored
+  install(TARGETS HyperRanger Hypertable.RangeServer csdump csvalidate count_stored
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)
