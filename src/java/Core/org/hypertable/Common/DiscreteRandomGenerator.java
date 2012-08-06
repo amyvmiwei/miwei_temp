@@ -105,7 +105,7 @@ public abstract class DiscreteRandomGenerator {
     // rand lies in. this will transform the uniform[0,1] distribution into
     // the distribution specified in mCmf
     try {
-      while(true) {
+      while (ii < (mValueCount-1)) {
 
         ii = (upper + lower)/2;
         if (mCmfBuffer.getDouble(ii*8) >= rand) {
