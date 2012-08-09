@@ -62,9 +62,10 @@ namespace Hypertable {
 
   class Context : public ReferenceCount {
   public:
-    Context() : timer_interval(0), monitoring_interval(0), gc_interval(0),
-                next_monitoring_time(0), next_gc_time(0), conn_count(0),
-                test_mode(false), in_operation(false) {
+    Context()
+      : timer_interval(0), monitoring_interval(0), gc_interval(0),
+        next_monitoring_time(0), next_gc_time(0), conn_count(0),
+        test_mode(false), in_operation(false) {
       m_server_list_iter = m_server_list.end();
       master_file_handle = 0;
       balancer = 0;
@@ -73,6 +74,7 @@ namespace Hypertable {
       op = 0;
       op_balance = 0;
     }
+
     ~Context();
 
     Mutex mutex;
@@ -108,27 +110,51 @@ namespace Hypertable {
     int32_t max_allowable_skew;
     bool in_operation;
 
+    // adds a new server; called by the main() function at startup
     void add_server(RangeServerConnectionPtr &rsc);
-    bool connect_server(RangeServerConnectionPtr &rsc, const String &hostname, InetAddr local_addr, InetAddr public_addr);
+
+    // connect a new server; called by OperationRegisterServer
+    bool connect_server(RangeServerConnectionPtr &rsc, const String &hostname,
+            InetAddr local_addr, InetAddr public_addr);
+
+    // disconnect a range server
     bool disconnect_server(RangeServerConnectionPtr &rsc);
+
     void wait_for_server();
 
-    bool find_server_by_location(const String &location, RangeServerConnectionPtr &rsc);
-    bool find_server_by_hostname(const String &hostname, RangeServerConnectionPtr &rsc);
-    bool find_server_by_public_addr(InetAddr addr, RangeServerConnectionPtr &rsc);
-    bool find_server_by_local_addr(InetAddr addr, RangeServerConnectionPtr &rsc);
+    // query functions to retrieve a RangeServerConnection
+    bool find_server_by_location(const String &location,
+            RangeServerConnectionPtr &rsc);
+    bool find_server_by_hostname(const String &hostname,
+            RangeServerConnectionPtr &rsc);
+    bool find_server_by_public_addr(InetAddr addr,
+            RangeServerConnectionPtr &rsc);
+    bool find_server_by_local_addr(InetAddr addr,
+            RangeServerConnectionPtr &rsc);
+
     bool next_available_server(RangeServerConnectionPtr &rsc);
+
     bool reassigned(TableIdentifier *table, RangeSpec &range, String &location);
+
     bool is_connected(const String &location);
+
     void get_unbalanced_servers(const std::vector<String> &locations,
         std::vector<RangeServerConnectionPtr> &unbalanced);
+
     void set_servers_balanced(const std::vector<RangeServerConnectionPtr> &servers);
+
     size_t connection_count() { ScopedLock lock(mutex); return conn_count; }
+
     size_t server_count() { ScopedLock lock(mutex); return m_server_list.size(); }
+
     void get_servers(std::vector<RangeServerConnectionPtr> &servers);
+
     bool can_accept_ranges(const RangeServerStatistics &stats);
 
   private:
+
+    // remove a RangeServerConnection from the internal index
+    void remove_server(RangeServerConnectionPtr &rsc);
 
     class RangeServerConnectionEntry {
     public:
@@ -153,13 +179,13 @@ namespace Hypertable {
       indexed_by<
         sequenced<>,
         hashed_unique<const_mem_fun<RangeServerConnectionEntry, String,
-                                    &RangeServerConnectionEntry::location> >,
+            &RangeServerConnectionEntry::location> >,
         hashed_non_unique<const_mem_fun<RangeServerConnectionEntry, String,
-                                        &RangeServerConnectionEntry::hostname> >,
+            &RangeServerConnectionEntry::hostname> >,
         hashed_unique<const_mem_fun<RangeServerConnectionEntry, InetAddr,
-                                    &RangeServerConnectionEntry::public_addr>, InetAddrHash>,
+            &RangeServerConnectionEntry::public_addr>, InetAddrHash>,
         hashed_non_unique<const_mem_fun<RangeServerConnectionEntry, InetAddr,
-                                        &RangeServerConnectionEntry::local_addr>, InetAddrHash>
+            &RangeServerConnectionEntry::local_addr>, InetAddrHash>
         >
       > ServerList;
 
