@@ -72,6 +72,10 @@ target_link_libraries(Hypertable.Master HyperMaster Hyperspace Hypertable HyperD
 add_executable(op_test_driver tests/op_test_driver.cc)
 target_link_libraries(op_test_driver HyperMaster Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
 
+# context_test
+add_executable(context_test tests/context_test.cc)
+target_link_libraries(context_test HyperMaster Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
+
 # op_dependency_test
 add_executable(op_dependency_test tests/op_dependency_test.cc tests/OperationTest.cc)
 target_link_libraries(op_dependency_test HyperMaster Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
@@ -97,6 +101,7 @@ add_test(MasterOperation-CreateTableWithIndex op_test_driver
     create_table_with_index)
 add_test(MasterOperation-RenameTable op_test_driver rename_table)
 add_test(MasterOperation-MoveRange op_test_driver move_range)
+add_test(Master-Context context_test)
 
 
 if (NOT HT_COMPONENT_INSTALL)

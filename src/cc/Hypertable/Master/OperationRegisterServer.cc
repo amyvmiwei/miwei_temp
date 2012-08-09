@@ -47,14 +47,14 @@ OperationRegisterServer::OperationRegisterServer(ContextPtr &context, EventPtr &
   m_local_addr = InetAddr(event->addr);
   m_public_addr = InetAddr(m_system_stats.net_info.primary_addr, m_listen_port);
   m_received_ts = get_ts64();
-
 }
 
 
 void OperationRegisterServer::execute() {
 
   if (m_location == "") {
-    if (!m_context->find_server_by_hostname(m_system_stats.net_info.host_name, m_rsc))
+    if (!m_context->find_server_by_hostname(m_system_stats.net_info.host_name,
+                m_rsc))
       m_context->find_server_by_public_addr(m_public_addr, m_rsc);
     if (m_rsc)
       m_location = m_rsc->location();
@@ -68,25 +68,30 @@ void OperationRegisterServer::execute() {
       if (m_context->location_hash.empty())
         m_location = String("rs") + id;
       else
-        m_location = format("rs-%s-%llu", m_context->location_hash.c_str(), (Llu)id);
+        m_location = format("rs-%s-%llu", m_context->location_hash.c_str(),
+                (Llu)id);
     }
+
     bool balanced = false;
     if (!m_context->in_operation)
       balanced = true;
     m_rsc = new RangeServerConnection(m_context->mml_writer, m_location,
-                                      m_system_stats.net_info.host_name, m_public_addr,
-                                      balanced);
+                    m_system_stats.net_info.host_name, m_public_addr, balanced);
   }
 
   m_context->connect_server(m_rsc, m_system_stats.net_info.host_name,
-                            m_local_addr, m_public_addr);
-  int32_t difference = (int32_t)abs((m_received_ts - m_register_ts)/ 1000LL);
-  if (difference > (3000000+m_context->max_allowable_skew)) {
+            m_local_addr, m_public_addr);
+
+  int32_t difference = (int32_t)abs((m_received_ts - m_register_ts) / 1000LL);
+  if (difference > (3000000 + m_context->max_allowable_skew)) {
     m_error = Error::RANGESERVER_CLOCK_SKEW;
-    m_error_msg = format("Detected clock skew while registering server %s(%s), as location %s register_ts=%llu, received_ts=%llu, difference=%d > allowable skew %d",
-        m_system_stats.net_info.host_name.c_str(), m_public_addr.format().c_str(),
-        m_location.c_str(), (Llu)m_register_ts, (Llu)m_received_ts, difference,
-        m_context->max_allowable_skew);
+    m_error_msg = format("Detected clock skew while registering server %s(%s), "
+            "as location %s register_ts=%llu, received_ts=%llu, "
+            "difference=%d > allowable skew %d",
+            m_system_stats.net_info.host_name.c_str(),
+            m_public_addr.format().c_str(), m_location.c_str(),
+            (Llu)m_register_ts, (Llu)m_received_ts, difference,
+            m_context->max_allowable_skew);
     HT_ERROR_OUT << m_error_msg << HT_END;
     // clock skew detected by master
     CommHeader header;
@@ -102,8 +107,9 @@ void OperationRegisterServer::execute() {
   }
   else {
     m_context->monitoring->add_server(m_location, m_system_stats);
-    HT_INFOF("%lld Registering server %s (host=%s, local_addr=%s, public_addr=%s)",
-        (Lld)header.id, m_rsc->location().c_str(), m_system_stats.net_info.host_name.c_str(),
+    HT_INFOF("%lld Registering server %s (host=%s, local_addr=%s, "
+        "public_addr=%s)", (Lld)header.id, m_rsc->location().c_str(),
+        m_system_stats.net_info.host_name.c_str(),
         m_local_addr.format().c_str(), m_public_addr.format().c_str());
 
     /** Send back Response **/
@@ -122,7 +128,8 @@ void OperationRegisterServer::execute() {
   complete_ok_no_log();
   m_context->op->unblock(m_location);
   m_context->op->unblock(Dependency::SERVERS);
-  HT_INFOF("%lld Leaving RegisterServer %s", (Lld)header.id, m_rsc->location().c_str());
+  HT_INFOF("%lld Leaving RegisterServer %s", (Lld)header.id,
+          m_rsc->location().c_str());
 }
 
 size_t OperationRegisterServer::encoded_result_length() const {

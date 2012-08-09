@@ -41,25 +41,33 @@ Context::~Context() {
 
 void Context::add_server(RangeServerConnectionPtr &rsc) {
   ScopedLock lock(mutex);
-  pair<Sequence::iterator, bool> insert_result = m_server_list.push_back( RangeServerConnectionEntry(rsc) );
+
+  // Remove this connection if already exists
+  remove_server(rsc);
+
+  pair<Sequence::iterator, bool> insert_result
+      = m_server_list.push_back(RangeServerConnectionEntry(rsc));
+
+  // this should never be executed since we removed the server from the index
   if (!insert_result.second) {
-    HT_INFOF("Tried to insert %s host=%s local=%s public=%s", rsc->location().c_str(),
-             rsc->hostname().c_str(), rsc->local_addr().format().c_str(),
-             rsc->public_addr().format().c_str());
-    for (Sequence::iterator iter = m_server_list.begin(); iter != m_server_list.end(); ++iter) {
-      HT_INFOF("Contains %s host=%s local=%s public=%s", iter->location().c_str(),
-               iter->hostname().c_str(), iter->local_addr().format().c_str(),
-               iter->public_addr().format().c_str());
+    HT_INFOF("Tried to insert %s host=%s local=%s public=%s",
+            rsc->location().c_str(), rsc->hostname().c_str(),
+            rsc->local_addr().format().c_str(),
+            rsc->public_addr().format().c_str());
+    for (Sequence::iterator iter = m_server_list.begin();
+            iter != m_server_list.end(); ++iter) {
+      HT_INFOF("Contains %s host=%s local=%s public=%s",
+              iter->location().c_str(), iter->hostname().c_str(),
+              iter->local_addr().format().c_str(),
+              iter->public_addr().format().c_str());
     }
     HT_ASSERT(insert_result.second);
   }
 }
 
-bool Context::connect_server(RangeServerConnectionPtr &rsc, const String &hostname,
-                             InetAddr local_addr, InetAddr public_addr) {
+bool Context::connect_server(RangeServerConnectionPtr &rsc,
+        const String &hostname, InetAddr local_addr, InetAddr public_addr) {
   ScopedLock lock(mutex);
-  LocationIndex &hash_index = m_server_list.get<1>();
-  LocationIndex::iterator iter;
   bool retval = false;
   bool notify = false;
 
@@ -79,12 +87,11 @@ bool Context::connect_server(RangeServerConnectionPtr &rsc, const String &hostna
     ++m_server_list_iter;
 
   // Remove this connection if already exists
-  iter = hash_index.find(rsc->location());
-  if (iter != hash_index.end())
-    hash_index.erase(iter);
+  remove_server(rsc);
 
   // Add it (or re-add it)
-  pair<Sequence::iterator, bool> insert_result = m_server_list.push_back( RangeServerConnectionEntry(rsc) );
+  pair<Sequence::iterator, bool> insert_result
+      = m_server_list.push_back(RangeServerConnectionEntry(rsc));
   HT_ASSERT(insert_result.second);
   if (m_server_list.size() == 1 || m_server_list_iter == m_server_list.end())
     m_server_list_iter = m_server_list.begin();
@@ -112,7 +119,8 @@ void Context::wait_for_server() {
 }
 
 
-bool Context::find_server_by_location(const String &location, RangeServerConnectionPtr &rsc) {
+bool Context::find_server_by_location(const String &location,
+        RangeServerConnectionPtr &rsc) {
   ScopedLock lock(mutex);
   LocationIndex &hash_index = m_server_list.get<1>();
   LocationIndex::iterator lookup_iter;
@@ -126,11 +134,13 @@ bool Context::find_server_by_location(const String &location, RangeServerConnect
 }
 
 
-bool Context::find_server_by_hostname(const String &hostname, RangeServerConnectionPtr &rsc) {
+bool Context::find_server_by_hostname(const String &hostname,
+        RangeServerConnectionPtr &rsc) {
   ScopedLock lock(mutex);
   HostnameIndex &hash_index = m_server_list.get<2>();
 
-  pair<HostnameIndex::iterator, HostnameIndex::iterator> p = hash_index.equal_range(hostname);
+  pair<HostnameIndex::iterator, HostnameIndex::iterator> p
+      = hash_index.equal_range(hostname);
   if (p.first != p.second) {
     rsc = p.first->rsc;
     if (++p.first == p.second)
@@ -140,9 +150,8 @@ bool Context::find_server_by_hostname(const String &hostname, RangeServerConnect
   return false;
 }
 
-
-
-bool Context::find_server_by_public_addr(InetAddr addr, RangeServerConnectionPtr &rsc) {
+bool Context::find_server_by_public_addr(InetAddr addr,
+        RangeServerConnectionPtr &rsc) {
   ScopedLock lock(mutex);
   PublicAddrIndex &hash_index = m_server_list.get<3>();
   PublicAddrIndex::iterator lookup_iter;
@@ -155,12 +164,13 @@ bool Context::find_server_by_public_addr(InetAddr addr, RangeServerConnectionPtr
   return true;
 }
 
-
-bool Context::find_server_by_local_addr(InetAddr addr, RangeServerConnectionPtr &rsc) {
+bool Context::find_server_by_local_addr(InetAddr addr,
+        RangeServerConnectionPtr &rsc) {
   ScopedLock lock(mutex);
   LocalAddrIndex &hash_index = m_server_list.get<4>();
 
-  for (pair<LocalAddrIndex::iterator, LocalAddrIndex::iterator> p = hash_index.equal_range(addr);
+  for (pair<LocalAddrIndex::iterator, LocalAddrIndex::iterator> p
+          = hash_index.equal_range(addr);
        p.first != p.second; ++p.first) {
     if (p.first->connected()) {
       rsc = p.first->rsc;
@@ -169,7 +179,6 @@ bool Context::find_server_by_local_addr(InetAddr addr, RangeServerConnectionPtr 
   }
   return false;
 }
-
 
 bool Context::next_available_server(RangeServerConnectionPtr &rsc) {
   ScopedLock lock(mutex);
@@ -207,7 +216,6 @@ bool Context::is_connected(const String &location) {
     rsc->connected();
   return false;
 }
-
 
 void Context::get_servers(std::vector<RangeServerConnectionPtr> &servers) {
   ScopedLock lock(mutex);
@@ -262,4 +270,18 @@ bool Context::can_accept_ranges(const RangeServerStatistics &stats)
           "(Hypertable.Master.DiskThresholdPct); will not assign ranges",
           stats.location.c_str(), threshold);
   return false;
+}
+
+void Context::remove_server(RangeServerConnectionPtr &rsc) {
+  LocationIndex &hash_index = m_server_list.get<1>();
+  LocationIndex::iterator loc_iter;
+  PublicAddrIndex &addr_index = m_server_list.get<3>();
+  PublicAddrIndex::iterator addr_iter;
+
+  loc_iter = hash_index.find(rsc->location());
+  if (loc_iter != hash_index.end())
+    hash_index.erase(loc_iter);
+  addr_iter = addr_index.find(rsc->public_addr());
+  if (addr_iter != addr_index.end())
+    addr_index.erase(addr_iter);
 }
