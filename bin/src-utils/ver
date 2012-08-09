@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # show a version string of the repo
-vstr=`git describe 2> /dev/null`
+vstr=`git describe --long 2> /dev/null`
 
 if [ "$1" == "--commit-only" ] ; then
   case "$vstr" in
