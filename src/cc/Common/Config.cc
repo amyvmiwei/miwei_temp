@@ -282,6 +282,14 @@ void DefaultPolicy::init_options() {
         "load balancer to be overloaded")
     ("Hypertable.HqlInterpreter.Mutator.NoLogSync", boo()->default_value(false),
         "Suspends CommitLog sync operation on updates until command completion")
+    ("Hypertable.RangeLocator.MetadataReadaheadCount", i32()->default_value(10),
+        "Number of rows that the RangeLocator fetches from the METADATA")
+    ("Hypertable.RangeLocator.MaxErrorQueueLength", i32()->default_value(4),
+        "Maximum numbers of errors to be stored")
+    ("Hypertable.RangeLocator.MetadataRetryInterval", i32()->default_value(3000),
+        "Retry interval when connecting to a RangeServer to fetch metadata")
+    ("Hypertable.RangeLocator.RootMetadataRetryInterval", i32()->default_value(3000),
+        "Retry interval when connecting to the Root RangeServer")
     ("Hypertable.Mutator.FlushDelay", i32()->default_value(0), "Number of "
         "milliseconds to wait prior to flushing scatter buffers (for testing)")
     ("Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer",

@@ -174,6 +174,10 @@ namespace Hypertable {
     uint32_t               m_timeout_ms;
     RangeLocatorHyperspaceSessionCallback m_hyperspace_session_callback;
     String                 m_toplevel_dir;
+    uint32_t               m_metadata_readahead_count;
+    uint32_t               m_max_error_queue_length;
+    uint32_t               m_metadata_retry_interval;
+    uint32_t               m_root_metadata_retry_interval;
   };
 
   typedef intrusive_ptr<RangeLocator> RangeLocatorPtr;
