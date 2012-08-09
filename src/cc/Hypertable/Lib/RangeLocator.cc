@@ -49,7 +49,7 @@ extern "C" {
   do { \
     ScopedLock lock(m_mutex); \
     m_last_errors.push_back(HT_EXCEPTION(_code_, _msg_)); \
-    while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH) \
+    while (m_last_errors.size() > m_max_error_queue_length) \
       m_last_errors.pop_front(); \
   } while (false)
 
@@ -57,17 +57,13 @@ extern "C" {
   do { \
     ScopedLock lock(m_mutex); \
     m_last_errors.push_back(HT_EXCEPTION2(_code_, _ex_, _msg_)); \
-    while (m_last_errors.size() > MAX_ERROR_QUEUE_LENGTH) \
+    while (m_last_errors.size() > m_max_error_queue_length) \
       m_last_errors.pop_front(); \
   } while (false)
 
 using namespace Hypertable;
 
 namespace {
-  const uint32_t METADATA_READAHEAD_COUNT = 10;
-  const uint32_t MAX_ERROR_QUEUE_LENGTH = 4;
-  const uint32_t METADATA_RETRY_INTERVAL = 3000;
-  const uint32_t ROOT_METADATA_RETRY_INTERVAL = 3000;
 
   class MetaKeyBuilder {
   public:
@@ -113,6 +109,15 @@ RangeLocator::RangeLocator(PropertiesPtr &cfg, ConnectionManagerPtr &conn_mgr,
   : m_conn_manager(conn_mgr), m_hyperspace(hyperspace),
     m_root_stale(true), m_range_server(conn_mgr->get_comm(), timeout_ms),
     m_hyperspace_init(false), m_hyperspace_connected(true), m_timeout_ms(timeout_ms) {
+
+  m_metadata_readahead_count
+      = cfg->get_i32("Hypertable.RangeLocator.MetadataReadaheadCount");
+  m_max_error_queue_length
+      = cfg->get_i32("Hypertable.RangeLocator.MaxErrorQueueLength");
+  m_metadata_retry_interval
+      = cfg->get_i32("Hypertable.RangeLocator.MetadataRetryInterval");
+  m_root_metadata_retry_interval
+      = cfg->get_i32("Hypertable.RangeLocator.RootMetadataRetryInterval");
 
   int cache_size = cfg->get_i64("Hypertable.LocationCache.MaxEntries");
 
@@ -327,7 +332,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   if (hard || !m_cache->lookup(TableIdentifier::METADATA_ID, meta_key,
                                rane_loc_infop, inclusive)) {
 
-    meta_scan_spec.row_limit = METADATA_READAHEAD_COUNT;
+    meta_scan_spec.row_limit = m_metadata_readahead_count;
     meta_scan_spec.max_versions = 1;
     meta_scan_spec.columns.push_back("StartRow");
     meta_scan_spec.columns.push_back("Location");
@@ -391,7 +396,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
 
   meta_scan_spec.clear();
 
-  meta_scan_spec.row_limit = METADATA_READAHEAD_COUNT;
+  meta_scan_spec.row_limit = m_metadata_readahead_count;
   meta_scan_spec.max_versions = 1;
   meta_scan_spec.columns.push_back("StartRow");
   meta_scan_spec.columns.push_back("Location");
@@ -492,7 +497,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block, Timer &timer
            * Add this location (address) to the connection manager
            */
           if (m_conn_manager) {
-            m_conn_manager->add(range_loc_info.addr, METADATA_RETRY_INTERVAL, "RangeServer");
+            m_conn_manager->add(range_loc_info.addr, m_metadata_retry_interval, "RangeServer");
 	    if (!m_conn_manager->wait_for_connection(range_loc_info.addr, timer.remaining())) {
 	      if (timer.expired())
 		HT_THROW_(Error::REQUEST_TIMEOUT);
@@ -555,7 +560,7 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block, Timer &timer
      * Add this location (address) to the connection manager
      */
     if (m_conn_manager) {
-      m_conn_manager->add(range_loc_info.addr, METADATA_RETRY_INTERVAL, "RangeServer");
+      m_conn_manager->add(range_loc_info.addr, m_metadata_retry_interval, "RangeServer");
       if (!m_conn_manager->wait_for_connection(range_loc_info.addr, timer.remaining())) {
 	if (timer.expired())
 	  HT_THROW_(Error::REQUEST_TIMEOUT);
@@ -609,7 +614,7 @@ int RangeLocator::read_root_location(Timer &timer) {
   if (m_conn_manager) {
     uint32_t after_remaining, remaining = timer.remaining();
 
-    m_conn_manager->add(addr, ROOT_METADATA_RETRY_INTERVAL,
+    m_conn_manager->add(addr, m_root_metadata_retry_interval,
                         "Root RangeServer");
 
     if (!m_conn_manager->wait_for_connection(addr, remaining)) {
