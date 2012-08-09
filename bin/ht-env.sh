@@ -113,6 +113,11 @@ wait_for_server() {
   server_desc=$1; shift
   max_retries=${max_retries:-40}
   report_interval=${report_interval:-5}
+  address=`$HYPERTABLE_HOME/bin/serverup --display-address=true $server`
+
+  if [ "$address" ]; then
+    address=" ($address)";
+  fi
 
   check_server "$@" $server
   ret=$?
@@ -120,7 +125,7 @@ wait_for_server() {
   while should_wait $ret "$become" && [ $retries -lt $max_retries ]; do
     let retries=retries+1
     let report=retries%$report_interval
-    [ $report == 0 ] && echo "Waiting for $server_desc to $become..."
+    [ $report == 0 ] && echo "Waiting for $server_desc$address to $become..."
     sleep 1
     check_server "$@" $server
     ret=$?
