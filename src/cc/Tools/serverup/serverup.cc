@@ -80,6 +80,8 @@ namespace {
       cmdline_desc(usage).add_options()
           ("wait", i32()->default_value(2000), "Check wait time in ms")
           ("host", str(), "Specifies the hostname of the server(s)")
+          ("display-address", boo()->default_value(false),
+           "Displays hostname and port of the server(s), then exits")
           ;
       cmdline_hidden_desc().add_options()("server-name", str(), "");
       cmdline_positional_desc().add("server-name", -1);
@@ -114,11 +116,19 @@ namespace {
   }
 
   void check_dfsbroker(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
-    HT_DEBUG_OUT <<"Checking dfsbroker at "<< get_str("dfs-host")
-                 <<':'<< get_i16("dfs-port") << HT_END;
+    HT_DEBUG_OUT << "Checking dfsbroker at " << get_str("dfs-host")
+        << ':' << get_i16("dfs-port") << HT_END;
 
-    if (properties->has("host"))
+    if (properties->has("host")) {
       properties->set("DfsBroker.Host", properties->get_str("host"));
+      properties->set("dfs-host", properties->get_str("host"));
+    }
+
+    if (get_bool("display-address")) {
+      std::cout << get_str("dfs-host") << ":" << get_i16("dfs-port")
+          << std::endl;
+      _exit(0);
+    }
 
     DfsBroker::ClientPtr dfs = new DfsBroker::Client(conn_mgr, properties);
 
@@ -132,14 +142,22 @@ namespace {
   Hyperspace::Session *hyperspace;
 
   void check_hyperspace(ConnectionManagerPtr &conn_mgr, uint32_t max_wait_ms) {
-    HT_DEBUG_OUT <<"Checking hyperspace"<< HT_END;
+    HT_DEBUG_OUT << "Checking hyperspace"<< HT_END;
     Timer timer(max_wait_ms, true);
     int error;
 
+    String host = "localhost";
     if (properties->has("host")) {
+      host = properties->get_str("host");
       std::vector<String> vec;
-      vec.push_back(properties->get_str("host"));
+      vec.push_back(host);
       properties->set("Hyperspace.Replica.Host", vec);
+    }
+
+    if (get_bool("display-address")) {
+      std::cout << host << ":" <<
+          properties->get_i16("Hyperspace.Replica.Port") << std::endl;
+      _exit(0);
     }
 
     hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
@@ -154,15 +172,21 @@ namespace {
   }
 
   void check_global_master(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
-    HT_DEBUG_OUT <<"Checking master via hyperspace"<< HT_END;
+    HT_DEBUG_OUT << "Checking master via hyperspace" << HT_END;
     Timer timer(wait_ms, true);
+
+    if (get_bool("display-address")) {
+      std::cout << get_str("Hypertable.Master.Host") << ":" <<
+          get_i16("Hypertable.Master.Port") << std::endl;
+      _exit(0);
+    }
 
     if (!hyperspace) {
       hyperspace = new Hyperspace::Session(conn_mgr->get_comm(), properties);
-
       if (!hyperspace->wait_for_connection(wait_ms))
         HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
     }
+
     ApplicationQueuePtr app_queue = new ApplicationQueue(1);
     Hyperspace::SessionPtr hyperspace_ptr = hyperspace;
 
@@ -191,6 +215,12 @@ namespace {
       host = properties->get_str("host").c_str();
     else
       host = "localhost";
+
+    if (get_bool("display-address")) {
+      std::cout << host << ":" << port << std::endl;
+      _exit(0);
+    }
+
     HT_DEBUG_OUT << "Checking master on " << host << ":" << port << HT_END;
     InetAddr addr(host, port);
 
@@ -230,6 +260,11 @@ namespace {
     if (properties->has("host"))
       properties->set("rs-host", properties->get_str("host"));
 
+    if (get_bool("display-address")) {
+      std::cout << get_str("rs-host") << ":" << get_i16("rs-port") << std::endl;
+      _exit(0);
+    }
+
     InetAddr addr(get_str("rs-host"), get_i16("rs-port"));
 
     wait_for_connection("range server", conn_mgr, addr, wait_ms, wait_ms);
@@ -244,6 +279,12 @@ namespace {
 #ifdef HT_WITH_THRIFT
     if (properties->has("host"))
       properties->set("thrift-host", properties->get_str("host"));
+
+    if (get_bool("display-address")) {
+      std::cout << get_str("thrift-host") << ":" << get_i16("thrift-port")
+          << std::endl;
+      _exit(0);
+    }
 
     String table_id;
     InetAddr addr(get_str("thrift-host"), get_i16("thrift-port"));
@@ -302,7 +343,7 @@ int main(int argc, char **argv) {
     else if (server_name == "hyperspace") {
       CHECK_SERVER(hyperspace);
     }
-    else if (server_name == "global-master") {
+    else if (server_name == "global-master" || server_name == "global_master") {
       CHECK_SERVER(global_master);
     }
     else if (server_name == "master") {
