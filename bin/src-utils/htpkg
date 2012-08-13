@@ -8,9 +8,10 @@ usage_exit() {
   echo "Usage: htpkg [Options] <generator>..."
   echo ""
   echo "Options:"
-  echo "  --build <type>        Build type: Release|Debug|RelWithDebInfo"
-  echo "  --srcdir <dir>        Hypertable source directory"
-  echo "  --thriftdir <dir>     Toplevel Thrift source directory"
+  echo "  --build <type>       Build type: Release|Debug|RelWithDebInfo"
+  echo "  --srcdir <dir>       Hypertable source directory"
+  echo "  --thriftdir <dir>    Toplevel Thrift source directory"
+  echo "  --skip-thriftbroker  Build the full package only"
   echo ""
   exit $1
 }
@@ -20,6 +21,7 @@ while [ "$1" != "${1##-}" ]; do
     --build)    build=$2;       shift;;
     --srcdir)   srcdir=$2;      shift;;
     --thriftdir)   thriftdir=$2;      shift;;
+    --skip-thriftbroker)   skiptbonly=true;;
     *)          usage_exit 1
   esac
   shift
@@ -28,8 +30,10 @@ done
 opts="-DCMAKE_BUILD_TYPE=$build -DTHRIFT_SOURCE_DIR=$thriftdir"
 
 for gen in "$@"; do
-  cmake $opts -DPACKAGE_THRIFTBROKER=1 $srcdir
-  cpack -G $gen
+  if [ "x$skiptbonly" != "xtrue" ]; then
+    cmake $opts -DPACKAGE_THRIFTBROKER=1 $srcdir
+    cpack -G $gen
+  fi
   cmake $opts -DPACKAGE_THRIFTBROKER= $srcdir
   cpack -G $gen
 done
