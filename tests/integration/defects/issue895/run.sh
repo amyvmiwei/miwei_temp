@@ -12,7 +12,7 @@ BINDIR=`pwd`/../../../../examples/apache_log
 #$HT_HOME/bin/ht start-test-servers.sh --clear
 
 echo "creating table"
-$HT_HOME/bin/ht shell --namespace / --exec "DROP TABLE LogDb; CREATE TABLE LogDb ( ClientIpAddress, UserId, Request, ResponseCode, ObjectSize, Referer, UserAgent);"
+$HT_HOME/bin/ht shell --namespace / --exec "DROP TABLE IF EXISTS LogDb; CREATE TABLE LogDb ( ClientIpAddress, UserId, Request, ResponseCode, ObjectSize, Referer, UserAgent);"
 
 echo "copying files"
 cp $BINDIR/apache_log_load $HT_HOME/bin
@@ -35,6 +35,7 @@ diff test.output $SCRIPT_DIR/test.golden
 if [ $? != 0 ]
 then
   echo "golden files differ"
+  exit 1
 fi
 
 exit 0
