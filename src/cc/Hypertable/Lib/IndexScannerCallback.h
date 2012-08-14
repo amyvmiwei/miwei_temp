@@ -88,7 +88,7 @@ static String last;
         m_cell_offset(0), m_row_count(0), m_cell_limit_per_family(0), 
         m_eos(false), m_limits_reached(false), m_readahead_count(0), 
         m_qualifier_scan(qualifier_scan), m_tmp_cutoff(0), 
-        m_final_decrement(false) {
+        m_final_decrement(false), m_shutdown(false) {
       atomic_set(&m_outstanding_scanners, 0);
       m_original_cb->increment_outstanding();
 
@@ -118,20 +118,35 @@ static String last;
     }
 
     virtual ~IndexScannerCallback() {
-      ScopedLock lock(m_mutex);
-      if (m_mutator)
-        delete m_mutator;
-      foreach_ht (TableScannerAsync *s, m_scanners)
-        delete s;
+      ScopedLock lock1(m_scanner_mutex);
+      ScopedLock lock2(m_mutex);
       m_scanners.clear();
+      sspecs_clear();
       if (m_mutator)
         delete m_mutator;
-      sspecs_clear();
+
       if (m_tmp_table) {
         Client *client = m_primary_table->get_namespace()->get_client();
         NamespacePtr nstmp = client->open_namespace("/tmp");
         nstmp->drop_table(Filesystem::basename(m_tmp_table->get_name()), true);
       }
+    }
+
+    void shutdown() {
+      {
+        ScopedLock lock(m_mutex);
+        m_shutdown = true;
+      }
+
+      {
+        ScopedLock lock(m_scanner_mutex);
+        foreach_ht (TableScannerAsync *s, m_scanners)
+          delete s;
+      }
+
+      ScopedRecLock lock(m_outstanding_mutex);
+      while (atomic_read(&m_outstanding_scanners) > 1)
+        m_outstanding_cond.wait(lock);
     }
 
     void sspecs_clear() {
@@ -367,6 +382,10 @@ static String last;
       ssb.set_time_interval(primary_spec.time_interval.first, 
                             primary_spec.time_interval.second);
 
+      ScopedLock lock(m_scanner_mutex);
+      if (m_shutdown)
+        return;
+
       TableScannerAsync *s;
       if (m_tmp_table) {
         s = m_tmp_table->create_scanner_async(this, ssb.get(), 
@@ -537,13 +556,20 @@ static String last;
 
       ScanSpecBuilder *ssb = m_sspecs[0];
       m_sspecs.pop_front();
+      if (m_shutdown) {
+        delete ssb;
+        return;
+      }
       TableScannerAsync *s = 
             m_primary_table->create_scanner_async(this, ssb->get(), 
                         m_timeout_ms, Table::SCANNER_FLAG_IGNORE_INDEX);
-      m_scanners.push_back(s);
+
       m_readahead_count++;
       delete ssb;
       m_sspecs_cond.notify_one();
+
+      ScopedLock lock(m_scanner_mutex);
+      m_scanners.push_back(s);
     }
 
     void track_predicates(TableScannerAsync *scanner, ScanCellsPtr &scancells) {
@@ -706,6 +732,9 @@ static String last;
     // a list of all scanners that are created in this object
     std::vector<TableScannerAsync *> m_scanners;
 
+    // a mutex for m_scanners
+    Mutex m_scanner_mutex;
+
     // a deque of ScanSpecs, needed for readahead in the primary table
     std::deque<ScanSpecBuilder *> m_sspecs;
 
@@ -770,6 +799,9 @@ static String last;
 
     // number of outstanding scanners (this is more precise than m_outstanding)
     atomic_t m_outstanding_scanners;
+
+    // shutting down this scanner?
+    bool m_shutdown;
   };
 
   typedef intrusive_ptr<IndexScannerCallback> IndexScannerCallbackPtr;

@@ -69,9 +69,9 @@ test_insert_timestamps(void)
   // now verify that the index keys have the same timestamp
   ScanSpecBuilder ssb;
   ssb.add_column("v1");
-  TableScanner *ts=table->get_index_table()->create_scanner(ssb.get());
+  TableScanner *ts = table->get_index_table()->create_scanner(ssb.get());
   Cell cell;
-  int i=0;
+  int i = 0;
   while (ts->next(cell)) {
     char buf[100];
     sprintf(buf, "1,val%03d\trow%03d", i, i);
@@ -90,7 +90,7 @@ test_insert_timestamps(void)
   tm=table->create_mutator();
 
   // insert a couple of keys WITHOUT timestamp
-  for (int i=0; i<100; i++) {
+  for (int i = 0; i < 100; i++) {
     sprintf(valbuf, "val%03d", i);
     KeySpec key;
     sprintf(rowbuf, "row%03d", i);
@@ -112,7 +112,7 @@ test_insert_timestamps(void)
   TableScanner *tsp=table->create_scanner(ssbprim.get());
 
   Cell idx_cell;
-  i=0;
+  i = 0;
   while (tsi->next(idx_cell) && tsp->next(cell)) {
     char buf[100];
     sprintf(buf, "1,val%03d\trow%03d", i, i);
@@ -130,13 +130,13 @@ static String
 escape(const char *str, size_t len) 
 {
   String ret;
-  for (size_t i=0; i<len; i++) {
-    if (str[i]=='\t')
-      ret+="\\t";
-    else if (str[i]=='\0')
-      ret+="\\0";
+  for (size_t i = 0; i < len; i++) {
+    if (str[i] == '\t')
+      ret += "\\t";
+    else if (str[i] == '\0')
+      ret += "\\0";
     else
-      ret+=str[i];
+      ret += str[i];
   }
 
   return ret;
@@ -146,9 +146,9 @@ static void
 test_escaped_regexps(void)
 {
   char rowbuf[100];
-  TablePtr table=ht_namespace->open_table("IndexTest");
-  TableMutator *tm=table->create_mutator();
-  const char *values[]={
+  TablePtr table = ht_namespace->open_table("IndexTest");
+  TableMutator *tm = table->create_mutator();
+  const char *values[] = {
       "\tcell",
       "cell\ta1",
       "cell\ta2\t",
@@ -208,8 +208,8 @@ test_escaped_regexps(void)
   }
   fclose(fout);
 
-  const char *cmd="diff indices_test.output indices_test.golden";
-  if (system(cmd)!=0) {
+  const char *cmd = "diff indices_test.output indices_test.golden";
+  if (system(cmd) != 0) {
     printf("diff failed\n");
     exit(1);
   }
@@ -232,7 +232,7 @@ main(int _argc, char **_argv)
   ht_namespace->create_table("IndexTest", schema);
   test_escaped_regexps();
 
-  ht_namespace=0; // delete namespace object before ht_client goes out of scope
+  ht_namespace = 0; // delete namespace before ht_client goes out of scope
   delete ht_client;
   return (0);
 }

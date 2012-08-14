@@ -321,6 +321,7 @@ TableScannerAsync::~TableScannerAsync() {
     HT_ERROR_OUT << e << HT_END;
   }
   if (m_use_index) {
+    ((IndexScannerCallback *)m_cb)->shutdown();
     delete m_cb;
     m_cb = 0;
   }
@@ -531,9 +532,8 @@ void TableScannerAsync::maybe_callback_ok(int scanner_id, bool next, bool do_cal
 
 void TableScannerAsync::wait_for_completion() {
   ScopedLock lock(m_mutex);
-  while (m_outstanding!=0)
+  while (m_outstanding != 0)
     m_cond.wait(lock);
-  return;
 }
 
 String TableScannerAsync::get_table_name() const {
