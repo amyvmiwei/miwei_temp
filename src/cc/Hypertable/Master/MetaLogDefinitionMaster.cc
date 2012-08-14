@@ -98,7 +98,7 @@ Entity *DefinitionMaster::create(uint16_t log_version, const EntityHeader &heade
       operation->set_original_type(EntityType::OLD_OPERATION_RENAME_TABLE);
     }
     else if (header.type == EntityType::OLD_OPERATION_MOVE_RANGE) {
-      // let OperationMoveRange handle the upgrade
+      ((EntityHeader *)&header)->type = EntityType::OPERATION_MOVE_RANGE;
       operation = new OperationMoveRange(m_context, header);
       operation->set_original_type(EntityType::OLD_OPERATION_MOVE_RANGE);
     }

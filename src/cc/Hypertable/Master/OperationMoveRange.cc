@@ -241,12 +241,10 @@ void OperationMoveRange::encode_state(uint8_t **bufp) const {
 void OperationMoveRange::decode_state(const uint8_t **bufp, size_t *remainp) {
   decode_request(bufp, remainp);
   m_destination = Serialization::decode_vstr(bufp, remainp);
-  if (header.type == MetaLog::EntityType::OLD_OPERATION_MOVE_RANGE)
-    header.type = MetaLog::EntityType::OPERATION_MOVE_RANGE;
 }
 
 void OperationMoveRange::decode_request(const uint8_t **bufp, size_t *remainp) {
-  if (header.type == MetaLog::EntityType::OPERATION_MOVE_RANGE)
+  if (get_original_type() != MetaLog::EntityType::OLD_OPERATION_MOVE_RANGE)
     m_source = Serialization::decode_vstr(bufp, remainp);
   m_table.decode(bufp, remainp);
   m_range.decode(bufp, remainp);
