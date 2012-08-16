@@ -1,3 +1,38 @@
+Version 0.9.6.1:
+(2012-08-16)
+
+    Fixed open problem with MapR broker
+    issue 892: Fixed intermittend data loss (rare) in balancing-mechanics test
+    Fixed FileBlockCache to handle large (> 4GB) CellStore files
+    Don't sort block index on load (was causing out-of-order problem on equal keys)
+    Fixed issues with HyperPython build and packaging
+    issue 914: Fixed problem where Master was writing bad MML entries
+    Fixed a test which lacked some error checks
+    PageArena improvements for low-memory systems
+    issue 835: add --skip-thriftbroker to htpkg
+    issue 902: fixing access to uninitialized data when creating RangeServer statistics
+    issue 827: fixed deadlock when deleting an index scanner
+    issue 409: removed old and unused MapReduce code
+    issue 533: fixed VERSION_ADD_COMMIT_SUFFIX if current commit is same as the last tag
+    issue 300: removed hardcoded RangeLocator constants
+    issue 40: better startup script errors
+    issue 908: Fixed IndexOutOfBoundsException in DiscreteRandomGenerator
+    Don't link against tcmalloc on mac
+    Added csvalidate
+    Changes to support Boost 1.50
+    Added Scrooge installation commands to build-setup scripts
+    Don't include libunwind on 32-bit platforms
+    Removed version verification check
+    issue 895: Fixed apache_log_load example
+    issue 885: BytesWritable writes trailing garbage back to Hypertable
+    Support for multiple column predicate added, new op CONTAINS added, bug fixes
+    Crash fixed if cell buffer grows
+    Got rid of build.xml warnings
+    Added process ID to valgrind filename
+    Fixed two tests
+    issue 880: increased logging output in case of errors
+    Fixed build issues on 32-bit and mac
+
 Version 0.9.6.0:
 (2012-07-23)
 
