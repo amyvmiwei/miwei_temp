@@ -23,10 +23,9 @@ set(CMAKE_CXX_FLAGS -DHAVE_NETINET_IN_H)
 
 include_directories(${PYTHON_INCLUDE_DIR})
 
-add_library(HyperPython SHARED SerializedCells.cc)
+add_library(HyperPython MODULE SerializedCells.cc)
 target_link_libraries(HyperPython HyperThrift HyperCommon
-    Hypertable ${BOOST_PYTHON_LIB} ${PYTHON_LIB_DIR} ${PYTHON_LIBRARY} ${Thrift_LIBS}
-    ${LibEvent_LIBS})
+    Hypertable ${PYTHON_LIBRARY} ${Thrift_LIBS} ${LibEvent_LIBS})
 install(TARGETS HyperPython
         RUNTIME DESTINATION bin
         LIBRARY DESTINATION "lib/py/hypertable"

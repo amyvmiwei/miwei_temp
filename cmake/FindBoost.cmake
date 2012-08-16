@@ -224,6 +224,12 @@ if (Boost_INCLUDE_DIR)
     set(BOOST_LIBS ${BOOST_LIBS} ${BOOST_CHRONO_LIB})
   endif ()
 
+  if (PYTHON_FOUND AND NOT ${BOOST_PYTHON_LIB} MATCHES "NOTFOUND$")
+    set(BOOST_LIBS ${BOOST_LIBS} ${BOOST_PYTHON_LIB} ${PYTHON_LIBRARY})
+  endif ()
+
+  message(STATUS "Boost libs: ${BOOST_LIBS}")
+
   if (EXISTS ${Boost_INCLUDE_DIR})
     set(Boost_INCLUDE_DIRS ${Boost_INCLUDE_DIR})
     # We have found boost. It is possible that the user has not
