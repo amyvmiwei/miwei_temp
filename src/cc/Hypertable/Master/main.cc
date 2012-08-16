@@ -241,6 +241,7 @@ int main(int argc, char **argv) {
     context->comm->listen(listen_addr, hf);
 
     context->op->join();
+    context->mml_writer->close();
     context->comm->close_socket(listen_addr);
 
     context->response_manager->shutdown();
