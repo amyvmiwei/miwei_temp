@@ -21,32 +21,46 @@
 #  PYTHON_LIBRARIES   - List of libraries when using python-devel
 #  PYTHON_FOUND       - True if python-devel was found
 
-find_path(PYTHON_INCLUDE_DIR Python.h NO_DEFAULT_PATH PATHS
-  ${HT_DEPENDENCY_INCLUDE_DIR}
-  /usr/include/python
-  /usr/include/python2.7
-  /usr/include/python2.6
-  /usr/local/include/python
-  /usr/local/include/python2.7
-  /usr/local/include/python2.6
-)
+exec_program(env ARGS python -V OUTPUT_VARIABLE VERSION_STRING
+             RETURN_VALUE PYTHON_RETURN)
 
-find_library(PYTHON_LIBRARY NAMES python2.7 python2.6 python NO_DEFAULT_PATH PATHS
-    ${HT_DEPENDENCY_LIB_DIR}
-    /usr/lib
-    /usr/local/lib
-    /opt/local/lib
-    )
+if (PYTHON_RETURN STREQUAL "0")
+  message(STATUS "Python Shell Version: ${VERSION_STRING}")
 
-if (PYTHON_INCLUDE_DIR)
-  set(PYTHON_FOUND TRUE)
-endif ()
+  STRING(REGEX REPLACE ".*Python ([0-9]+.[0-9]+).*" "\\1" PYTHON_VERSION "${VERSION_STRING}")
 
-if (PYTHON_FOUND)
-  message(STATUS "Found Python-devel: ${PYTHON_LIBRARY}")
+  find_path(PYTHON_INCLUDE_DIR Python.h NO_DEFAULT_PATH PATHS
+            ${HT_DEPENDENCY_INCLUDE_DIR}
+            /opt/local/include/python${PYTHON_VERSION}
+            /opt/local/include/python
+            /usr/local/include/python${PYTHON_VERSION}
+            /usr/local/include/python
+            /usr/include/python${PYTHON_VERSION}
+            /usr/include/python
+            )
+
+  find_library(PYTHON_LIBRARY python${PYTHON_VERSION} NO_DEFAULT_PATH PATHS
+               ${HT_DEPENDENCY_LIB_DIR}
+               /opt/local/lib
+               /usr/local/lib
+               /usr/lib
+               )
+
+  if (PYTHON_INCLUDE_DIR)
+    set(PYTHON_FOUND TRUE)
+  endif ()
+
+  if (PYTHON_FOUND)
+    message(STATUS "Found Python-devel: ${PYTHON_LIBRARY}")
+  else ()
+    message(STATUS "Not Found Python-devel: ${PYTHON_LIBRARY}")
+  endif ()
+
 else ()
-  message(STATUS "Not Found Python-devel: ${PYTHON_LIBRARY}")
+  message(STATUS "Python: not found")
+  set(PYTHON_FOUND FALSE)
 endif ()
+
 
 mark_as_advanced(
   PYTHON_LIBRARY
