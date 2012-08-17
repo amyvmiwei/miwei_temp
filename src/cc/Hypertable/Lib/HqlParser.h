@@ -2197,7 +2197,7 @@ namespace Hypertable {
 
           dump_table_statement
 	          = DUMP >> TABLE >> user_identifier[set_table_name(self.state)]
-            >> !(COLUMNS >> ('*' | (column_predicate >> *(COMMA >> column_predicate))))
+            >> !(COLUMNS >> ('*' | (column_selection >> *(COMMA >> column_selection))))
 		        >> !(dump_where_clause)
 		        >> *(dump_table_option_spec)
             ;
