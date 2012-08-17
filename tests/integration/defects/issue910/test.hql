@@ -1,0 +1,17 @@
+USE "/";
+
+# delete a cell which does not exist (the delete timestamp is older than
+# all other cells
+DELETE Field1 FROM LoadTest WHERE ROW = "0000001" TIMESTAMP "2012-08-16 09:22:50.455921030";
+
+SELECT * FROM LoadTest LIMIT 2;
+SELECT * FROM LoadTest LIMIT 2 RETURN_DELETES;
+
+SELECT * FROM LoadTest LIMIT 5;
+SELECT * FROM LoadTest LIMIT 5 RETURN_DELETES;
+
+SELECT * FROM LoadTest LIMIT 10;
+SELECT * FROM LoadTest LIMIT 10 RETURN_DELETES;
+
+SELECT * FROM LoadTest OFFSET 1 LIMIT 5;
+SELECT * FROM LoadTest OFFSET 1 LIMIT 5 RETURN_DELETES;

@@ -89,22 +89,21 @@ MergeScannerRange::do_initialize()
       m_skip_this_row = true;
       m_row_skipped++;
     }
+
+    if (m_cell_offset)
+      m_cell_skipped = 1;
+    else if (!m_row_offset && m_cell_limit)
+      m_cell_count = 1;
+
+    if (m_row_limit && !m_row_offset && !m_cell_offset)
+      m_row_count = 1;
   }
-
-  if (m_cell_offset)
-    m_cell_skipped = 1;
-  else if (!m_row_offset && m_cell_limit)
-    m_cell_count = 1;
-
-  if (m_row_limit && !m_row_offset && !m_cell_offset)
-    m_row_count = 1;
 
   io_add_output_cell(cur_bytes);
 
   // was OFFSET or CELL_OFFSET specified? then move forward and skip
-  if (m_cell_offset || m_row_offset) {
+  if (m_cell_offset || m_row_offset)
     do_forward();
-  }
 }
 
 void 
