@@ -93,19 +93,27 @@ namespace Hypertable {
 
   class ParallelStateRec {
   public:
-  ParallelStateRec() : finished(false), cum_latency(0), cum_sq_latency(0), min_latency(0), max_latency(0) { }
+    ParallelStateRec()
+    : total_cells(0), total_bytes(0), finished(false), cum_latency(0),
+      cum_sq_latency(0), min_latency(0), max_latency(0), elapsed_time(0) {
+    }
+
     ParallelStateRec(const ParallelStateRec& other) {
       finished = other.finished;
     }
+
     Mutex mutex;
     boost::condition cond;
     std::list<LoadRec *> requests;
     std::list<LoadRec *> garbage;
+    int64_t total_cells;
+    int64_t total_bytes;
     bool finished;
     double cum_latency;
     double cum_sq_latency;
     double min_latency;
     double max_latency;
+    double elapsed_time;
   };
 
 }
