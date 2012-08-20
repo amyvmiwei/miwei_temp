@@ -53,6 +53,7 @@ extern "C" {
 
 #include "LoadClient.h"
 #include "LoadThread.h"
+#include "QueryThread.h"
 #include "ParallelLoad.h"
 
 using namespace Hypertable;
@@ -122,16 +123,24 @@ namespace {
 
 typedef Meta::list<AppPolicy, DataGeneratorPolicy, DefaultCommPolicy> Policies;
 
-void generate_update_load(PropertiesPtr &props, String &tablename, bool flush, bool no_log_sync,
-                          ::uint64_t flush_interval, bool to_stdout, String &sample_fname,
-                          ::int32_t delete_pct, bool thrift);
-void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::int32_t parallel,
-                                   bool flush, bool no_log_sync, ::uint64_t flush_interval,
-                                   ::int32_t delete_pct, bool thrift);
-void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout,
-                         ::int32_t delay, String &sample_fname, bool thrift);
+void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
+        bool no_log_sync, ::uint64_t flush_interval, bool to_stdout,
+        String &sample_fname, ::int32_t delete_pct, bool thrift);
+
+void generate_update_load_parallel(PropertiesPtr &props, String &tablename,
+        ::int32_t parallel, bool flush, bool no_log_sync,
+        ::uint64_t flush_interval, ::int32_t delete_pct, bool thrift);
+
+void generate_query_load(PropertiesPtr &props, String &tablename,
+        bool to_stdout, ::int32_t delay, String &sample_fname, bool thrift);
+
+void generate_query_load_parallel(PropertiesPtr &props, String &tablename,
+        int32_t parallel);
+
 double std_dev(::uint64_t nn, double sum, double sq_sum);
+
 void parse_command_line(int argc, char **argv, PropertiesPtr &props);
+
 
 int main(int argc, char **argv) {
   String table, load_type, spec_file, sample_fname;
@@ -179,7 +188,7 @@ int main(int argc, char **argv) {
     parse_command_line(argc, argv, generator_props);
 
     if (generator_props->has("DataGenerator.MaxBytes") &&
-	generator_props->has("DataGenerator.MaxKeys")) {
+        generator_props->has("DataGenerator.MaxKeys")) {
       HT_ERROR("Only one of 'DataGenerator.MaxBytes' or 'DataGenerator.MaxKeys' may be specified");
       _exit(1);
     }
@@ -190,21 +199,42 @@ int main(int argc, char **argv) {
       delete_pct = generator_props->get_i32("DataGenerator.DeletePercentage");
     }
 
-    if (parallel > 0 && load_type == "query")
-      HT_FATAL("parallel support for query load not yet implemented");
-
     if (load_type == "update" && parallel > 0)
       generate_update_load_parallel(generator_props, table, parallel, flush,
-                                    no_log_sync, flush_interval, delete_pct, thrift);
+              no_log_sync, flush_interval, delete_pct, thrift);
     else if (load_type == "update")
-      generate_update_load(generator_props, table, flush, no_log_sync, flush_interval,
-                           to_stdout, sample_fname, delete_pct, thrift);
+      generate_update_load(generator_props, table, flush, no_log_sync,
+              flush_interval, to_stdout, sample_fname, delete_pct, thrift);
     else if (load_type == "query") {
-      if (!generator_props->has("DataGenerator.MaxKeys") && !generator_props->has("max-keys")) {
-	HT_ERROR("'DataGenerator.MaxKeys' or --max-keys must be specified for load type 'query'");
-	_exit(1);
+      if (!generator_props->has("DataGenerator.MaxKeys")
+              && !generator_props->has("max-keys")) {
+        HT_ERROR("'DataGenerator.MaxKeys' or --max-keys must be specified for "
+                "load type 'query'");
+        _exit(1);
       }
-      generate_query_load(generator_props, table, to_stdout, query_delay, sample_fname, thrift);
+      if (parallel > 0) {
+        if (to_stdout) {
+          HT_FATAL("--stdout switch not supported for parallel queries");
+          _exit(1);
+        }
+        if (sample_fname != "") {
+          HT_FATAL("--sample-file not supported for parallel queries");
+          _exit(1);
+        }
+        if (has("query-mode")) {
+          HT_FATAL("--query-mode not supported for parallel queries");
+          _exit(1);
+        }
+        if (thrift) {
+          HT_FATAL("thrift mode not supported for parallel queries");
+          _exit(1);
+        }
+
+        generate_query_load_parallel(generator_props, table, parallel);
+      }
+      else
+        generate_query_load(generator_props, table, to_stdout, query_delay,
+                sample_fname, thrift);
     }
     else {
       std::cout << cmdline_desc() << std::flush;
@@ -423,17 +453,17 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 
       ++total_cells;
       if (key_limit)
-	       progress_meter += 1;
+               progress_meter += 1;
       else {
-	       if (largefile_mode == true) {
-		 if (total_bytes >= consume_threshold) {
-		   uint32_t consumed = 1 + (uint32_t)((total_bytes - consume_threshold) / 1048576LL);
-		   progress_meter += consumed;
-		   consume_threshold += (::uint64_t)consumed * 1048576LL;
-		 }
-	       }
-	       else
-	         progress_meter += iter.last_data_size();
+               if (largefile_mode == true) {
+                 if (total_bytes >= consume_threshold) {
+                   uint32_t consumed = 1 + (uint32_t)((total_bytes - consume_threshold) / 1048576LL);
+                   progress_meter += consumed;
+                   consume_threshold += (::uint64_t)consumed * 1048576LL;
+                 }
+               }
+               else
+                 progress_meter += iter.last_data_size();
       }
     }
 
@@ -469,9 +499,9 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 
 }
 
-void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::int32_t parallel,
-                                   bool flush, bool no_log_sync, ::uint64_t flush_interval,
-                                   ::int32_t delete_pct, bool thrift)
+void generate_update_load_parallel(PropertiesPtr &props, String &tablename,
+        ::int32_t parallel, bool flush, bool no_log_sync,
+        ::uint64_t flush_interval, ::int32_t delete_pct, bool thrift)
 {
   double cum_latency=0, cum_sq_latency=0;
   double min_latency=0, max_latency=0;
@@ -518,10 +548,11 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
     else
       adjusted_bytes = dg.get_max_bytes();
 
-    boost::progress_display progress_meter(key_limit ? dg.get_max_keys() : adjusted_bytes);
+    boost::progress_display progress_meter(key_limit ?
+            dg.get_max_keys() : adjusted_bytes);
 
-    for (DataGenerator::iterator iter = dg.begin(); iter != dg.end(); total_bytes+=iter.last_data_size(),++iter) {
-
+    for (DataGenerator::iterator iter = dg.begin(); iter != dg.end();
+            total_bytes+=iter.last_data_size(), ++iter) {
       if (delete_pct != 0 && (::random() % 100) < delete_pct)
         lrec = new LoadRec(*iter, true);
       else
@@ -538,12 +569,13 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
             progress_meter += 1;
           else {
             if (largefile_mode == true) {
-	      consume_total += garbage->amount;
-	      if (consume_total >= consume_threshold) {
-		uint32_t consumed = 1 + (uint32_t)((consume_total - consume_threshold) / 1048576LL);
-		progress_meter += consumed;
-		consume_threshold += (::uint64_t)consumed * 1048576LL;
-	      }
+              consume_total += garbage->amount;
+              if (consume_total >= consume_threshold) {
+                uint32_t consumed = 1 + (uint32_t)((consume_total
+                            - consume_threshold) / 1048576LL);
+                progress_meter += consumed;
+                consume_threshold += (::uint64_t)consumed * 1048576LL;
+              }
             }
             else
               progress_meter += garbage->amount;
@@ -556,7 +588,6 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
       next = (next+1) % parallel;
 
       ++total_cells;
-
     }
 
     for (::int32_t i=0; i<parallel; i++) {
@@ -576,7 +607,6 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename, ::in
       if (load_vector[i].max_latency > max_latency)
         max_latency = load_vector[i].max_latency;
     }
-
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -610,7 +640,8 @@ enum {
   QUALIFIER = 2
 };
 
-void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout, ::int32_t delay, String &sample_fname, bool thrift)
+void generate_query_load(PropertiesPtr &props, String &tablename,
+        bool to_stdout, ::int32_t delay, String &sample_fname, bool thrift)
 {
   double cum_latency=0, cum_sq_latency=0, latency=0;
   double min_latency=10000000, max_latency=0;
@@ -707,7 +738,8 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
 
       stop_clocks = clock();
       if (stop_clocks < start_clocks)
-        latency = ((std::numeric_limits<clock_t>::max() - start_clocks) + stop_clocks) / clocks_per_usec;
+        latency = ((std::numeric_limits<clock_t>::max() - start_clocks)
+                + stop_clocks) / clocks_per_usec;
       else
         latency = (stop_clocks-start_clocks) / clocks_per_usec;
       if (output_samples)
@@ -753,6 +785,62 @@ void generate_query_load(PropertiesPtr &props, String &tablename, bool to_stdout
     sample_file.close();
 }
 
+void generate_query_load_parallel(PropertiesPtr &props, String &tablename,
+        int32_t parallel)
+{
+  double cum_latency = 0, cum_sq_latency = 0, elapsed_time = 0;
+  double min_latency = 10000000, max_latency = 0;
+  ::int64_t total_cells = 0;
+  ::int64_t total_bytes = 0;
+
+  int64_t max_keys = props->has("DataGenerator.MaxKeys")
+                        ? props->get_i64("DataGenerator.MaxKeys")
+                        : props->get_i64("max-keys");
+  boost::progress_display progress(max_keys * parallel);
+
+  String config_file = get_str("config");
+  ClientPtr client = new Hypertable::Client(config_file);
+  NamespacePtr ht_namespace = client->open_namespace("/");
+  TablePtr table = ht_namespace->open_table(tablename);
+
+  boost::thread_group threads;
+  std::vector<ParallelStateRec> load_vector(parallel);
+  for (::int32_t i = 0; i < parallel; i++)
+    threads.create_thread(QueryThread(props, table, &progress, load_vector[i]));
+
+  // wait for the threads to finish
+  threads.join_all();
+
+  // accumulate all the gathered metrics
+  min_latency = load_vector[0].min_latency;
+  for (::int32_t i = 0; i < parallel; i++) {
+    cum_latency += load_vector[i].cum_latency;
+    cum_sq_latency += load_vector[i].cum_sq_latency;
+    total_cells += load_vector[i].total_cells;
+    total_bytes += load_vector[i].total_bytes;
+    elapsed_time = load_vector[i].elapsed_time;
+    if (load_vector[i].min_latency < min_latency)
+      min_latency = load_vector[i].min_latency;
+    if (load_vector[i].max_latency > max_latency)
+      max_latency = load_vector[i].max_latency;
+  }
+
+  printf("\n");
+  printf("\n");
+  printf("        Elapsed time: %.2f s\n", elapsed_time);
+  printf("Total cells returned: %llu\n", (Llu) total_cells);
+  printf("Throughput (cells/s): %.2f\n", (double)total_cells / elapsed_time);
+  printf("Total bytes returned: %llu\n", (Llu)total_bytes);
+  printf("Throughput (bytes/s): %.2f\n", (double)total_bytes / elapsed_time);
+
+  printf("  Latency min (usec): %llu\n", (Llu)min_latency);
+  printf("  Latency max (usec): %llu\n", (Llu)max_latency);
+  printf("  Latency avg (usec): %llu\n", (Llu)((double)cum_latency
+              / total_cells));
+  printf("Latency stddev (usec): %llu\n", (Llu)std_dev(total_cells,
+              cum_latency, cum_sq_latency));
+  printf("\n");
+}
 
 
 /**
