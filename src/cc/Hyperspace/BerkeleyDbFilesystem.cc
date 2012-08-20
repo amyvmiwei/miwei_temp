@@ -605,7 +605,9 @@ void BerkeleyDbFilesystem::start_transaction(BDbTxn &txn) {
     m_env.txn_begin(NULL, &txn.m_db_txn, 0);
   }
   catch (DbException &e) {
-    HT_FATALF("Error starting Berkeley DB transaction: %s", e.what());
+    // issue 915: a failure of txn_begin is possible if BDB ran out of
+    // locker entries
+    HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
   HT_DEBUG_OUT <<"txn="<< txn << HT_END;
 
