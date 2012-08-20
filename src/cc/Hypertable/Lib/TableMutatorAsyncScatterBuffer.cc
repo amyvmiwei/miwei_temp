@@ -65,6 +65,7 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
 
   RangeLocationInfo range_info;
   TableMutatorAsyncSendBufferMap::const_iterator iter;
+  bool counter_reset = false;
 
   if (!m_loc_cache->lookup(m_table_identifier.id, key.row, &range_info)) {
     Timer timer(m_timeout_ms, true);
@@ -72,23 +73,10 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
         timer, false);
   }
 
-  iter = m_buffer_map.find(range_info.addr);
-
-  if (iter == m_buffer_map.end()) {
-    // this can be optimized by using the insert() method
-    m_buffer_map[range_info.addr] = new TableMutatorAsyncSendBuffer(&m_table_identifier,
-        &m_completion_counter, m_range_locator.get());
-    iter = m_buffer_map.find(range_info.addr);
-    (*iter).second->addr = range_info.addr;
-  }
-
-  (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
-  create_key_and_append((*iter).second->accum, key.flag, key.row,
-      key.column_family_code, key.column_qualifier, key.timestamp);
-
-  // if the CF is a counter then re-encode value to 64 bit int
-  if (key.column_family_code && m_schema->get_column_family(key.column_family_code)->counter) {
-    bool counter_reset = false;
+  // counter? make sure that a valid integer was specified and re-encode
+  // it as a 64bit value
+  if (key.column_family_code
+      && m_schema->get_column_family(key.column_family_code)->counter) {
     const char *ascii_value = (const char *)value;
     char *endptr;
     m_counter_value.clear();
@@ -106,10 +94,25 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
           (char*)m_counter_value.base, key.row);
     m_counter_value.clear();
     Serialization::encode_i64(&m_counter_value.ptr, val);
-    /**
-     * If the value represents a counter reset (e.g. "=0"), then
-     * append a '=' character after the seralized reset value
-     */
+  }
+
+  iter = m_buffer_map.find(range_info.addr);
+
+  if (iter == m_buffer_map.end()) {
+    // this can be optimized by using the insert() method
+    m_buffer_map[range_info.addr] = new TableMutatorAsyncSendBuffer(&m_table_identifier,
+        &m_completion_counter, m_range_locator.get());
+    iter = m_buffer_map.find(range_info.addr);
+    (*iter).second->addr = range_info.addr;
+  }
+
+  (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
+  create_key_and_append((*iter).second->accum, key.flag, key.row,
+      key.column_family_code, key.column_qualifier, key.timestamp);
+
+  // now append the counter
+  if (key.column_family_code
+      && m_schema->get_column_family(key.column_family_code)->counter) {
     if (counter_reset) {
       *m_counter_value.ptr++ = '=';
       append_as_byte_string((*iter).second->accum, m_counter_value.base, 9);
@@ -119,6 +122,7 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
   }
   else
     append_as_byte_string((*iter).second->accum, value, value_len);
+
   if ((*iter).second->accum.fill() > m_server_flush_limit)
     m_full = true;
   m_memory_used += incr_mem;
