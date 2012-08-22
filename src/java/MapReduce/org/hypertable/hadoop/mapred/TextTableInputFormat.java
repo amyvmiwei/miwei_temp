@@ -67,12 +67,14 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   public static final String ROW_INTERVAL       = "hypertable.mapreduce.input.scan_spec.row_interval";
   public static final String TIMESTAMP_INTERVAL = "hypertable.mapreduce.input.scan_spec.timestamp_interval";
   public static final String INCLUDE_TIMESTAMPS = "hypertable.mapreduce.input.include_timestamps";
+  public static final String NO_ESCAPE          = "hypertable.mapreduce.input.no_escape";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
   private String m_namespace = null;
   private String m_tablename = null;
   private boolean m_include_timestamps = false;
+  private boolean m_no_escape = false;
 
   private static String stripQuotes(String str) {
     if (str != null && str.length() > 0) {
@@ -87,46 +89,46 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
     String str = job.get(OPTIONS);
     if (str != null) {
       String [] strs = str.split("\\s");
-      for (int i=0; i<strs.length; i++) {
+      for (int i = 0; i < strs.length; i++) {
         strs[i] = strs[i].toUpperCase();
         if (strs[i].equals("MAX_VERSIONS") || strs[i].equals("REVS")) {
           i++;
-          if (i==strs.length)
+          if (i == strs.length)
             throw new ParseException("Bad OPTIONS spec", i);
           int value = Integer.parseInt(strs[i]);
           m_base_spec.setVersions(value);
         }
         else if (strs[i].equals("OFFSET")) {
           i++;
-          if (i==strs.length)
+          if (i == strs.length)
             throw new ParseException("Bad OPTIONS spec", i);
           int value = Integer.parseInt(strs[i]);
           m_base_spec.setRow_offset(value);
         }
         else if (strs[i].equals("CELL_OFFSET")) {
           i++;
-          if (i==strs.length)
+          if (i == strs.length)
             throw new ParseException("Bad OPTIONS spec", i);
           int value = Integer.parseInt(strs[i]);
           m_base_spec.setCell_offset(value);
         }
         else if (strs[i].equals("LIMIT")) {
           i++;
-          if (i==strs.length)
+          if (i == strs.length)
             throw new ParseException("Bad OPTIONS spec", i);
           int value = Integer.parseInt(strs[i]);
           m_base_spec.setRow_limit(value);
         }
         else if (strs[i].equals("CELL_LIMIT")) {
           i++;
-          if (i==strs.length)
+          if (i == strs.length)
             throw new ParseException("Bad OPTIONS spec", i);
           int value = Integer.parseInt(strs[i]);
           m_base_spec.setCell_limit(value);
         }
         else if (strs[i].equals("CELL_LIMIT_PER_FAMILY")) {
           i++;
-          if (i==strs.length)
+          if (i == strs.length)
             throw new ParseException("Bad OPTIONS spec", i);
           int value = Integer.parseInt(strs[i]);
           m_base_spec.setCell_limit_per_family(value);
@@ -147,7 +149,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
     String str = job.get(COLUMNS);
     if (str != null) {
       String [] columns = str.split(",");
-      for (int i=0; i<columns.length; i++)
+      for (int i = 0; i < columns.length; i++)
         m_base_spec.addToColumns(stripQuotes(columns[i]));
     }
   }
@@ -194,7 +196,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
     strs[0] = str.substring(0, ts_offset).trim();
     strs[2] = str.substring(ts_offset, ts_offset+name.length());
-    strs[4] = str.substring(ts_offset+name.length()).trim();
+    strs[4] = str.substring(ts_offset + name.length()).trim();
 
     if (strs[0].length() > 0) {
       int offset = strs[0].length()-1;
@@ -265,7 +267,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       }
     }
 
-    if (strs[1] != null && strs[1].equals("=") && strs[3] != null && strs[3].equals("="))
+    if (strs[1] != null && strs[1].equals("=")
+            && strs[3] != null && strs[3].equals("="))
       return null;
 
     strs[0] = stripQuotes(strs[0]);
@@ -321,7 +324,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         else if (parsedRelop[1].equals("<="))
           interval.setStart_inclusive(true);
         else
-          throw new ParseException("Invalid ROW interval, bad RELOP (" + parsedRelop[1] + ")", 0);        
+          throw new ParseException("Invalid ROW interval, bad RELOP ("
+                  + parsedRelop[1] + ")", 0);        
         interval.setStart_inclusiveIsSet(true);
       }
 
@@ -333,11 +337,12 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         else if (parsedRelop[3].equals("<="))
           interval.setEnd_inclusive(true);
         else
-          throw new ParseException("Invalid ROW interval, bad RELOP (" + parsedRelop[3] + ")", 0);
+          throw new ParseException("Invalid ROW interval, bad RELOP ("
+                  + parsedRelop[3] + ")", 0);
         interval.setEnd_inclusiveIsSet(true);
       }
 
-      if(interval.isSetStart_row() || interval.isSetEnd_row()) {
+      if (interval.isSetStart_row() || interval.isSetEnd_row()) {
         m_base_spec.addToRow_intervals(interval);
         m_base_spec.setRow_intervalsIsSet(true);
       }
@@ -347,6 +352,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   public void configure(JobConf job)
   {
     m_include_timestamps = job.getBoolean(INCLUDE_TIMESTAMPS, false);
+    m_no_escape = job.getBoolean(NO_ESCAPE, false);
     try {
       m_base_spec = new ScanSpec();
 
@@ -366,183 +372,6 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
   }
 
-  protected class HypertableRecordReader
-  implements org.apache.hadoop.mapred.RecordReader<Text, Text> {
-
-    private ThriftClient m_client = null;
-    private long m_ns = 0;
-    private long m_scanner = 0;
-    private String m_namespace = null;
-    private String m_tablename = null;
-    private ScanSpec m_scan_spec = null;
-    private long m_bytes_read = 0;
-
-    private List<Cell> m_cells = null;
-    private Iterator<Cell> m_iter = null;
-    private boolean m_eos = false;
-
-    private Text m_key = new Text();
-    private Text m_value = new Text();
-
-    private byte[] t_row = null;
-    private byte[] t_column_family = null;
-    private byte[] t_column_qualifier = null;
-    private byte[] t_timestamp = null;
-
-    /* XXX make this less ugly and actually use stream.seperator */
-    private byte[] tab = "\t".getBytes();
-    private byte[] colon = ":".getBytes();
-
-    /**
-     *  Constructor
-     *
-     * @param client Hypertable Thrift client
-     * @param namespace namespace containing table
-     * @param tablename name of table to read from
-     * @param scan_spec scan specification
-     */
-    public HypertableRecordReader(ThriftClient client, String namespace, String tablename, ScanSpec scan_spec)
-     throws IOException {
-      m_client = client;
-      m_namespace = namespace;
-      m_tablename = tablename;
-      m_scan_spec = scan_spec;
-      try {
-        m_ns = m_client.namespace_open(m_namespace);
-        m_scanner = m_client.scanner_open(m_ns, m_tablename, m_scan_spec);
-      }
-      catch (TTransportException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
-      catch (TException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
-      catch (ClientException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
-
-    }
-
-    public Text createKey() {
-        return new Text("");
-    }
-
-    public Text createValue() {
-        return new Text("");
-    }
-
-    public void close() {
-      try {
-        m_client.scanner_close(m_scanner);
-        if (m_ns != 0)
-          m_client.namespace_close(m_ns);
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
-    }
-
-    public long getPos() throws IOException {
-            return m_bytes_read;
-    }
-    public float getProgress() {
-      // Assume 200M split size
-      if (m_bytes_read >= 200000000)
-        return (float)1.0;
-      return (float)m_bytes_read / (float)200000000.0;
-    }
-
-    private void fill_key(Text key, Key cell_key) {
-      boolean clear = false;
-      /* XXX not sure if "clear" is necessary */
-
-      try {
-        if (m_include_timestamps && cell_key.isSetTimestamp()) {
-          t_timestamp = Long.toString(cell_key.timestamp).getBytes("UTF-8");
-          clear = true;
-        }
-
-        if (cell_key.isSetRow()) {
-          t_row = cell_key.row.getBytes("UTF-8");
-          clear = true;
-        }
-        if (cell_key.isSetColumn_family()) {
-          t_column_family = cell_key.column_family.getBytes("UTF-8");
-          clear = true;
-        }
-        if (cell_key.isSetColumn_qualifier()) {
-          t_column_qualifier = cell_key.column_qualifier.getBytes("UTF-8");
-          clear = true;
-        }
-      }
-      catch (UnsupportedEncodingException e) {
-        e.printStackTrace();
-        System.exit(-1);
-      }
-
-      if(clear) {
-          key.clear();
-          if(m_include_timestamps) {
-              key.append(t_timestamp,0,t_timestamp.length);
-              key.append(tab,0,tab.length);
-          }
-          key.append(t_row,0,t_row.length);
-          key.append(tab,0,tab.length);
-          key.append(t_column_family,0,t_column_family.length);
-          if (t_column_qualifier.length > 0) {
-            key.append(colon,0,colon.length);
-            key.append(t_column_qualifier,0,t_column_qualifier.length);
-          }
-      }
-    }
-
-    public boolean next(Text key, Text value) throws IOException {
-      try {
-        if (m_eos)
-          return false;
-        if (m_cells == null || !m_iter.hasNext()) {
-          m_cells = m_client.scanner_get_cells(m_scanner);
-          if (m_cells.isEmpty()) {
-            m_eos = true;
-            return false;
-          }
-          m_iter = m_cells.iterator();
-        }
-        Cell cell = m_iter.next();
-        fill_key(key, cell.key);
-        m_bytes_read += 24 + cell.key.row.length();
-        if (cell.value == null || !cell.value.hasRemaining()) {
-          value.set("");
-        } else {
-          m_bytes_read +=  cell.value.remaining();
-          value.set(cell.value.array(), cell.value.arrayOffset()+cell.value.position(),
-                    cell.value.remaining());
-        }
-
-        if (cell.key.column_qualifier != null)
-          m_bytes_read += cell.key.column_qualifier.length();
-      }
-      catch (TTransportException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
-      catch (TException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
-      catch (ClientException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
-      return true;
-    }
-
-  }
-
-
   public RecordReader<Text, Text> getRecordReader(
       InputSplit split, JobConf job, Reporter reporter)
   throws IOException {
@@ -560,7 +389,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
       if (m_client == null)
         m_client = ThriftClient.create("localhost", 38080);
-      return new HypertableRecordReader(m_client, m_namespace, m_tablename, scan_spec);
+      return new HypertableRecordReader(m_client, m_namespace, m_tablename,
+              scan_spec, m_include_timestamps, m_no_escape);
     }
     catch (TTransportException e) {
       e.printStackTrace();
@@ -573,7 +403,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   }
 
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
-    long ns=0;
+    long ns = 0;
 
     try {
       RowInterval ri = null;
@@ -602,12 +432,20 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
       for (final org.hypertable.thriftgen.TableSplit ts : tsplits) {
         if (ri == null ||
-            ((!ri.isSetStart_row() || ts.end_row == null || ts.end_row.compareTo(ri.getStart_row()) > 0 ||
-              (ts.end_row.compareTo(ri.getStart_row()) == 0 && ri.isStart_inclusive())) &&
-             (!ri.isSetEnd_row() || ts.start_row == null || ts.start_row.compareTo(ri.getEnd_row()) < 0))) {
-          byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
-          byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
-          TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row, end_row, ts.hostname);
+            ((!ri.isSetStart_row() || ts.end_row == null
+              || ts.end_row.compareTo(ri.getStart_row()) > 0
+              || (ts.end_row.compareTo(ri.getStart_row()) == 0
+                  && ri.isStart_inclusive())) &&
+             (!ri.isSetEnd_row() || ts.start_row == null
+              || ts.start_row.compareTo(ri.getEnd_row()) < 0))) {
+          byte [] start_row = (ts.start_row == null)
+                    ? null
+                    : ts.start_row.getBytes("UTF-8");
+          byte [] end_row = (ts.end_row == null)
+                    ? null
+                    : ts.end_row.getBytes("UTF-8");
+          TableSplit split = new TableSplit(tablename.getBytes("UTF-8"),
+                  start_row, end_row, ts.hostname);
           splits.add(split);
         }
       }
@@ -643,6 +481,4 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       }
     }
   }
-
-
 }
