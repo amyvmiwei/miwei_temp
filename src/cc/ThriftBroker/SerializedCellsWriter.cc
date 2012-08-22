@@ -122,4 +122,5 @@ void SerializedCellsWriter::clear() {
   m_buf.clear();
   m_previous_row_offset = -1;
   m_previous_row_length = 0;
+  m_finalized = false;
 }

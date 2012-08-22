@@ -63,6 +63,11 @@ add_executable(client_test tests/client_test.cc)
 target_link_libraries(client_test HyperThrift HyperCommon Hypertable)
 add_test(ThriftClient-cpp client_test)
 
+# regression test for SerializedCellsWriter/SerializedCellsReader
+add_executable(serialized_test tests/serialized_test.cc)
+target_link_libraries(serialized_test HyperThrift HyperCommon Hypertable)
+add_test(ThriftClient-Serialized-cpp serialized_test)
+
 if (NOT HT_COMPONENT_INSTALL OR PACKAGE_THRIFTBROKER)
   install(TARGETS HyperThrift HyperThriftConfig ThriftBroker
           RUNTIME DESTINATION bin
