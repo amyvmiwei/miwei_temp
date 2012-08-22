@@ -113,6 +113,10 @@ target_link_libraries(mutex_test HyperCommon)
 add_executable(properties_test tests/properties_test.cc)
 target_link_libraries(properties_test HyperCommon)
 
+# config tests
+add_executable(config_test tests/config_test.cc)
+target_link_libraries(config_test HyperCommon)
+
 # init tests
 add_executable(init_test tests/init_test.cc)
 target_link_libraries(init_test HyperCommon)
@@ -167,6 +171,7 @@ add_test(Common-Serialization sertest)
 add_test(Common-ScopeGuard scope_guard_test)
 add_test(Common-InetAddr inetaddr_test)
 add_test(Common-PageArena pagearena_test)
+add_test(Common-Config config_test)
 add_test(Common-Properties ${TEST_DIFF}
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/properties_test.golden ./properties_test)
 add_test(Common-init ${TEST_DIFF}

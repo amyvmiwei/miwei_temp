@@ -36,7 +36,7 @@ namespace {
 
   const char *usage =
     "\n"
-    "Usage: get_property [options] <property]\n\nOptions"
+    "Usage: get_property [options] <property>\n\nOptions"
     ;
 
   struct AppPolicy : Policy {
