@@ -55,7 +55,7 @@ namespace Hypertable {
   public:
     CellCache();
     CellCache(CellCacheArena &arena);
-    virtual ~CellCache() { }
+    virtual ~CellCache() { m_cell_map.clear(); }
     /**
      * Adds a key/value pair to the CellCache.  This method assumes that
      * the CellCache has been locked by a call to #lock.  Copies of

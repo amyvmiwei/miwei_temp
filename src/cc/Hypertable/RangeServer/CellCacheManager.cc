@@ -35,8 +35,10 @@ CellCacheManager::CellCacheManager() {
 }
 
 void CellCacheManager::install_new_cell_cache(CellCachePtr &cell_cache) {
+  // 1st set write cache and free previous write cell cache
+  m_write_cache = new CellCache(cell_cache->arena());
+  // 2nd assign new read cache and free previous read cell cache including the shared arena
   m_read_cache = cell_cache;
-  m_write_cache = new CellCache(m_read_cache->arena());
 }
 
 void CellCacheManager::install_new_immutable_cache(CellCachePtr &cell_cache) {
