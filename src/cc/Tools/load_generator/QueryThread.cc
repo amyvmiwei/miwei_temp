@@ -79,12 +79,12 @@ void QueryThread::operator()() {
       int64_t latency = 0;
       stop_clocks = clock();
       if (stop_clocks < start_clocks)
-        latency += ((std::numeric_limits<clock_t>::max()
+        latency += (double)((std::numeric_limits<clock_t>::max()
                     - start_clocks) + stop_clocks) / clocks_per_usec;
       else
-        latency += (stop_clocks - start_clocks) / clocks_per_usec;
+        latency += (double)(stop_clocks - start_clocks) / clocks_per_usec;
       m_state.cum_latency += latency;
-      m_state.cum_sq_latency += pow(latency, 2);
+      m_state.cum_sq_latency += ::pow(latency, 2);
       if (latency < m_state.min_latency)
         m_state.min_latency = latency;
       if (latency > m_state.max_latency)
