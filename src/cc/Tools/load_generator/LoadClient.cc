@@ -26,19 +26,19 @@
 #include "ThriftBroker/Config.h"
 #endif
 
-LoadClient::LoadClient(const String &config_file, bool thrift): m_thrift(thrift),
-    m_native_client(0), m_ns(0), m_native_table(0), m_native_table_open(false),
-    m_native_mutator(0), m_native_scanner(0)
-{
+LoadClient::LoadClient(const String &config_file, bool thrift)
+  : m_thrift(thrift), m_native_client(0), m_ns(0), m_native_table(0),
+    m_native_table_open(false), m_native_mutator(0), m_native_scanner(0) {
 #ifdef HT_WITH_THRIFT
   m_thrift_namespace = 0;
   m_thrift_mutator = 0;
   m_thrift_scanner = 0;
 #endif
 
-  if(m_thrift) {
+  if (m_thrift) {
 #ifdef HT_WITH_THRIFT
     m_thrift_client.reset(new Thrift::Client("localhost", 38080));
+    m_thrift_namespace = m_thrift_client->open_namespace("/");
 #else
     HT_FATAL("Thrift support not installed");
 #endif
@@ -49,17 +49,16 @@ LoadClient::LoadClient(const String &config_file, bool thrift): m_thrift(thrift)
   }
 }
 
-LoadClient::LoadClient(bool thrift):m_thrift(thrift),
-    m_native_client(0), m_ns(0), m_native_table(0), m_native_table_open(false),
-    m_native_mutator(0), m_native_scanner(0)
-{
+LoadClient::LoadClient(bool thrift)
+  : m_thrift(thrift), m_native_client(0), m_ns(0), m_native_table(0),
+    m_native_table_open(false), m_native_mutator(0), m_native_scanner(0) {
 #ifdef HT_WITH_THRIFT
   m_thrift_namespace = 0;
   m_thrift_mutator = 0;
   m_thrift_scanner = 0;
 #endif
 
-  if(m_thrift) {
+  if (m_thrift) {
 #ifdef HT_WITH_THRIFT
     m_thrift_client.reset(new Thrift::Client("localhost", 38080));
     m_thrift_namespace = m_thrift_client->open_namespace("/");
@@ -76,10 +75,10 @@ LoadClient::LoadClient(bool thrift):m_thrift(thrift),
 void
 LoadClient::create_mutator(const String &tablename, int mutator_flags)
 {
-  if(m_thrift) {
+  if (m_thrift) {
 #ifdef HT_WITH_THRIFT
-    m_thrift_mutator = m_thrift_client->open_mutator(m_thrift_namespace, tablename,
-                                                     mutator_flags, 0);
+    m_thrift_mutator = m_thrift_client->open_mutator(m_thrift_namespace,
+            tablename, mutator_flags, 0);
 #endif
   }
   else {
@@ -100,8 +99,8 @@ LoadClient::set_cells(const Cells &cells)
     foreach_ht(const Cell &cell , cells) {
       thrift_cells.push_back(ThriftGen::make_cell((const char*)cell.row_key,
           (const char*)cell.column_family,(const char*)cell.column_qualifier,
-          string((const char*)cell.value, cell.value_len), cell.timestamp, cell.revision,
-          (ThriftGen::KeyFlag::type) cell.flag));
+          string((const char*)cell.value, cell.value_len), cell.timestamp,
+          cell.revision, (ThriftGen::KeyFlag::type) cell.flag));
     }
     m_thrift_client->mutator_set_cells(m_thrift_mutator, thrift_cells);
 #endif
@@ -110,7 +109,6 @@ LoadClient::set_cells(const Cells &cells)
     m_native_mutator->set_cells(cells);
   }
 }
-
 
 void
 LoadClient::set_delete(const KeySpec &key) {
@@ -149,7 +147,6 @@ LoadClient::flush()
   else {
     m_native_mutator->flush();
   }
-
 }
 
 void
@@ -171,8 +168,8 @@ LoadClient::create_scanner(const String &tablename, const ScanSpec &scan_spec)
     thrift_scan_spec.row_intervals.push_back(thrift_row_interval);
     thrift_scan_spec.__isset.columns = thrift_scan_spec.__isset.row_intervals = true;
 
-    m_thrift_scanner = m_thrift_client->open_scanner(m_thrift_namespace, tablename,
-                                                     thrift_scan_spec);
+    m_thrift_scanner = m_thrift_client->open_scanner(m_thrift_namespace,
+            tablename, thrift_scan_spec);
 #endif
   }
   else {
@@ -182,7 +179,6 @@ LoadClient::create_scanner(const String &tablename, const ScanSpec &scan_spec)
     }
     m_native_scanner = m_native_table->create_scanner(scan_spec);
   }
-
 }
 
 uint64_t
@@ -196,8 +192,9 @@ LoadClient::get_all_cells()
     do {
       m_thrift_client->next_cells(cells, m_thrift_scanner);
       foreach_ht(const ThriftGen::Cell &cell, cells) {
-        bytes_scanned += cell.key.row.size() + cell.key.column_family.size() +
-                         cell.key.column_qualifier.size() + 8 + 8 + 2 + cell.value.size();
+        bytes_scanned += cell.key.row.size() + cell.key.column_family.size()
+                         + cell.key.column_qualifier.size() + 8 + 8 + 2
+                         + cell.value.size();
       }
     } while (cells.size());
 #endif
