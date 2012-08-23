@@ -106,6 +106,10 @@ add_library(Hypertable ${Hypertable_SRCS})
 add_dependencies(Hypertable HyperComm Hyperspace HyperCommon)
 target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperDfsBroker ${MALLOC_LIBRARY} HyperThirdParty)
 
+# test_parser
+add_executable(test_parser tests/test_parser.cc)
+target_link_libraries(test_parser Hypertable)
+
 # generate_test_data
 add_executable(generate_test_data generate_test_data.cc)
 target_link_libraries(generate_test_data Hypertable)
@@ -263,6 +267,7 @@ add_test(BlockCompressor-NONE compressor_test none)
 add_test(BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test(BlockCompressor-ZLIB compressor_test zlib)
 add_test(BlockCompressor-SNAPPY compressor_test snappy)
+add_test(Parser /usr/bin/env bash -c "${DST_DIR}/test_parser -q < ${SRC_DIR}/test_parser.input > ${DST_DIR}/test_parser.output; diff ${SRC_DIR}/test_parser.golden ${DST_DIR}/test_parser.output")
 add_test(CommitLog commit_log_test)
 add_test(MetaLog metalog_test)
 add_test(Client-large-block large_insert_test)
@@ -280,6 +285,8 @@ if (NOT HT_COMPONENT_INSTALL)
 
   install(FILES ${HEADERS}
       DESTINATION include/Hypertable/Lib)
+  install(TARGETS test_parser
+      RUNTIME DESTINATION bin)
   install(TARGETS generate_test_data
       RUNTIME DESTINATION bin)
   install(TARGETS Hypertable
