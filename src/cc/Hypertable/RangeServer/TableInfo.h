@@ -45,7 +45,17 @@ namespace Hypertable {
     RangePtr range;
     Range::MaintenanceData *data;
   };
-  typedef std::vector<RangeData> RangeDataVector;
+
+  class RangeDataVector : public std::vector<RangeData>
+  {
+  public:
+    RangeDataVector() : std::vector<RangeData>() {}
+    ByteArena& arena() { return m_arena; }
+  private:
+    RangeDataVector(const RangeDataVector&);
+    RangeDataVector& operator = (const RangeDataVector&);
+    ByteArena m_arena;
+  };
 
   class RangeInfo {
   public:

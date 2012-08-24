@@ -383,8 +383,6 @@ void MaintenanceScheduler::schedule() {
   //cout << flush << trace_str << flush;
 
   m_scheduling_needed = false;
-
-  m_stats_gatherer->clear();
 }
 
 int MaintenanceScheduler::get_level(RangeData &rd) {
