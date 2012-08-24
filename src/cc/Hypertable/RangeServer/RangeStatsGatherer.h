@@ -41,10 +41,7 @@ namespace Hypertable {
 
     void fetch(RangeDataVector &range_data, TableMutator *mutator=0, int *log_generation=0);
 
-    void clear();
-
   private:
-    ByteArena m_arena;
     TableInfoMapPtr m_table_info_map;
   };
   typedef intrusive_ptr<RangeStatsGatherer> RangeStatsGathererPtr;
