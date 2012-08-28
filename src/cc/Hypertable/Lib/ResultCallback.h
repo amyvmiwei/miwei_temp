@@ -26,6 +26,7 @@
 #include <map>
 #include <boost/thread/condition.hpp>
 
+#include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 
 #include "ScanCells.h"
@@ -40,7 +41,7 @@ namespace Hypertable {
 
   public:
 
-    ResultCallback() { atomic_set(&m_outstanding, 0); }
+    ResultCallback() : m_outstanding(0) { }
 
     virtual ~ResultCallback() {
       wait_for_completion();
@@ -111,28 +112,29 @@ namespace Hypertable {
      * Blocks till outstanding == 0
      */
     void wait_for_completion() {
-      ScopedRecLock lock(m_outstanding_mutex);
-      while(!is_done()) {
+      ScopedLock lock(m_outstanding_mutex);
+      while (m_outstanding)
         m_outstanding_cond.wait(lock);
-      }
     }
 
     /**
      *
      */
     void increment_outstanding() {
-      atomic_inc(&m_outstanding);
+      ScopedLock lock(m_outstanding_mutex);
+      m_outstanding++;
     }
 
     /**
      *
      */
     void decrement_outstanding() {
-      int outstanding = atomic_sub_return(1, &m_outstanding);
-      HT_ASSERT(outstanding >= 0);
-      if (outstanding == 0) {
+      ScopedLock lock(m_outstanding_mutex);
+      HT_ASSERT(m_outstanding > 0);
+      m_outstanding--;
+      if (m_outstanding == 0) {
         completed();
-        m_outstanding_cond.notify_one();
+        m_outstanding_cond.notify_all();
       }
     }
 
@@ -140,11 +142,13 @@ namespace Hypertable {
      *
      */
     bool is_done() {
-      return atomic_add_return(0, &m_outstanding) == 0;
+      ScopedLock lock(m_outstanding_mutex);
+      return m_outstanding == 0;
     }
+
   protected:
-    atomic_t m_outstanding;
-    RecMutex m_outstanding_mutex;
+    int m_outstanding;
+    Mutex m_outstanding_mutex;
     boost::condition m_outstanding_cond;
   };
   typedef intrusive_ptr<ResultCallback> ResultCallbackPtr;

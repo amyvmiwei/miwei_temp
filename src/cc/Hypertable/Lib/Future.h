@@ -78,7 +78,7 @@ namespace Hypertable {
      * Checks whether the Future result queue is full
      */
     bool is_full() {
-      ScopedRecLock lock(m_outstanding_mutex);
+      ScopedLock lock(m_outstanding_mutex);
       return !has_remaining_capacity();
     }
 
@@ -86,7 +86,7 @@ namespace Hypertable {
      * Checks whether the Future result queue is empty
      */
     bool is_empty() {
-      ScopedRecLock lock(m_outstanding_mutex);
+      ScopedLock lock(m_outstanding_mutex);
       return _is_empty();
     }
 
@@ -94,7 +94,7 @@ namespace Hypertable {
      * Checks whether the Future object has been cancelled
      */
     bool is_cancelled() {
-      ScopedRecLock lock(m_outstanding_mutex);
+      ScopedLock lock(m_outstanding_mutex);
       return _is_cancelled();
     }
 
@@ -131,6 +131,10 @@ namespace Hypertable {
     bool _is_empty() { return m_queue.empty(); }
     bool _is_cancelled() const {
       return m_cancelled;
+    }
+
+    bool _is_done() {
+      return m_outstanding == 0;
     }
 
     void enqueue(ResultPtr &result);
