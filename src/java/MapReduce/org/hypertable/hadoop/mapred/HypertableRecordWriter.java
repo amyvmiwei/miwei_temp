@@ -81,21 +81,26 @@ public class HypertableRecordWriter implements RecordWriter<Text, Text> {
   }
 
   /**
-   * Opens a client & mutator to specified table
+   * Opens a client and a mutator to the specified table
    *
    * @param namespace namespace containing HT table
    * @param table name of HT table
    * @param flags mutator flags
    * @param flush_interval used for periodic flush mutators
+   * @param framesize max thrift framesize
    */
   public HypertableRecordWriter(String namespace, String table, int flags,
-          int flush_interval)
+          int flush_interval, int framesize)
     throws IOException {
     try {
       //TODO: read this from HT configs
       this.namespace = namespace;
       this.table = table;
-      mClient = ThriftClient.create("localhost", 38080);
+      if (framesize != 0)
+        mClient = ThriftClient.create("localhost", 38080, 1600000,
+                true, framesize);
+      else
+        mClient = ThriftClient.create("localhost", 38080);
       mNamespaceId = mClient.namespace_open(namespace);
       mMutator = mClient.mutator_open(mNamespaceId, table,
               flags, flush_interval);
@@ -111,7 +116,7 @@ public class HypertableRecordWriter implements RecordWriter<Text, Text> {
    */
   public HypertableRecordWriter(String namespace, String table)
       throws IOException {
-    this (namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0);
+    this (namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0, 0);
   }
 
   /**
@@ -119,7 +124,7 @@ public class HypertableRecordWriter implements RecordWriter<Text, Text> {
    */
   public HypertableRecordWriter(String namespace, String table, int flags)
       throws IOException {
-    this (namespace, table, flags, 0);
+    this (namespace, table, flags, 0, 0);
   }
 
   /**

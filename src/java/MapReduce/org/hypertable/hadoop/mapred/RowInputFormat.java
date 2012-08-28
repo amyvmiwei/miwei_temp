@@ -62,6 +62,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
   public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
   public static final String START_ROW = "hypertable.mapreduce.input.startrow";
   public static final String END_ROW = "hypertable.mapreduce.input.endrow";
+  public static final String THRIFT_FRAMESIZE = "hypertable.mapreduce.thriftbroker.framesize";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
@@ -230,9 +231,16 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
       }
       ScanSpec scan_spec = ts.createScanSpec(m_base_spec);
 
-      if (m_client == null)
-        m_client = ThriftClient.create("localhost", 38080);
-      return new HypertableRecordReader(m_client, m_namespace, m_tablename, scan_spec);
+      if (m_client == null) {
+        int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize != 0)
+          m_client = ThriftClient.create("localhost", 38080, 1600000,
+                  true, framesize);
+        else
+          m_client = ThriftClient.create("localhost", 38080);
+      }
+      return new HypertableRecordReader(m_client, m_namespace, m_tablename,
+              scan_spec);
     }
     catch (TTransportException e) {
       e.printStackTrace();
@@ -245,10 +253,16 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
   }
 
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
-    long ns=0;
+    long ns = 0;
     try {
-      if (m_client == null)
-        m_client = ThriftClient.create("localhost", 38080);
+      if (m_client == null) {
+        int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize != 0)
+          m_client = ThriftClient.create("localhost", 38080, 1600000,
+                  true, framesize);
+        else
+          m_client = ThriftClient.create("localhost", 38080);
+      }
 
       String namespace, tablename;
       if (m_namespace == null)
