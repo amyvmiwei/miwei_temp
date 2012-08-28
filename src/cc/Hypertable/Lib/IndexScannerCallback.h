@@ -144,9 +144,8 @@ static String last;
           delete s;
       }
 
-      ScopedRecLock lock(m_outstanding_mutex);
-      while (atomic_read(&m_outstanding_scanners) > 1)
-        m_outstanding_cond.wait(lock);
+      wait_for_completion();
+
     }
 
     void sspecs_clear() {
