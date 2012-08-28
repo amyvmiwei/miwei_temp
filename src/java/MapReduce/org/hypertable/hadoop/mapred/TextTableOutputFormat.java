@@ -60,6 +60,7 @@ public class TextTableOutputFormat
   public static final String TABLE = "hypertable.mapreduce.output.table";
   public static final String MUTATOR_FLAGS = "hypertable.mapreduce.output.mutator_flags";
   public static final String MUTATOR_FLUSH_INTERVAL = "hypertable.mapreduce.output.mutator_flush_interval";
+  public static final String THRIFT_FRAMESIZE = "hypertable.mapreduce.thriftbroker.framesize";
 
 
   /**
@@ -74,10 +75,11 @@ public class TextTableOutputFormat
     String table = job.get(TextTableOutputFormat.TABLE);
     int flags = job.getInt(TextTableOutputFormat.MUTATOR_FLAGS, 0);
     int flush_interval = job.getInt(TextTableOutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
+    int framesize = job.getInt(TextTableOutputFormat.THRIFT_FRAMESIZE, 0);
 
     try {
       return new HypertableRecordWriter(namespace, table, flags,
-              flush_interval);
+              flush_interval, framesize);
     }
     catch (Exception e) {
       log.error(e);

@@ -80,14 +80,20 @@ public class RowOutputFormat
      * @param flags mutator flags
      * @param flush_interval used for periodic flush mutators
      * @param buffer_size buffer up cells to this size limit
+     * @param framesize max thrift framesize
      */
-    public HypertableRecordWriter(String namespace, String table, int flags, int flush_interval, int buffer_size)
+    public HypertableRecordWriter(String namespace, String table, int flags,
+            int flush_interval, int buffer_size, int framesize)
       throws IOException {
       try {
         //TODO: read this from HT configs
         this.namespace = namespace;
         this.table = table;
-        mClient = ThriftClient.create("localhost", 38080);
+        if (framesize != 0)
+          mClient = ThriftClient.create("localhost", 38080, 1600000,
+                  true, framesize);
+        else
+          mClient = ThriftClient.create("localhost", 38080);
         mNamespace = mClient.open_namespace(namespace);
         mMutator = mClient.open_mutator(mNamespace, table, flags, flush_interval);
         mSerializedCellsWriter = new SerializedCellsWriter(buffer_size, false);
@@ -102,14 +108,15 @@ public class RowOutputFormat
      * Ctor with default flags=NO_LOG_SYNC and flush interval set to 0
      */
     public HypertableRecordWriter(String namespace, String table) throws IOException {
-      this(namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0, msDefaultSerializedCellBufferSize);
+      this(namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0,
+              msDefaultSerializedCellBufferSize, 0);
     }
 
     /**
      * Ctor with default flush interval set to 0
      */
     public HypertableRecordWriter(String namespace, String table, int flags) throws IOException {
-      this(namespace, table, flags, 0, msDefaultSerializedCellBufferSize);
+      this(namespace, table, flags, 0, msDefaultSerializedCellBufferSize, 0);
     }
 
     /**
@@ -178,7 +185,8 @@ public class RowOutputFormat
                                  msDefaultSerializedCellBufferSize);
 
     try {
-      return new HypertableRecordWriter(namespace, table, flags, flush_interval, buffer_size);
+      return new HypertableRecordWriter(namespace, table, flags,
+              flush_interval, buffer_size, 0);
     }
     catch (Exception e) {
       log.error(e);

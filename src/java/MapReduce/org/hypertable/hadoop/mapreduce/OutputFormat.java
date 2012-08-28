@@ -56,6 +56,7 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
   public static final String MUTATOR_FLAGS = "hypertable.mapreduce.output.mutator-flags";
 
   public static final String MUTATOR_FLUSH_INTERVAL = "hypertable.mapreduce.output.mutator-flush-interval";
+  public static final String THRIFT_FRAMESIZE = "hypertable.mapreduce.thriftclient.framesize";
 
   /**
    * Write reducer output to HT via Thrift interface
@@ -69,20 +70,27 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
     private String namespace;
 
     /**
-     * Opens a client & mutator to specified table
+     * Opens a client and a mutator to specified table
      *
      * @param namespace HT namespace which contains the table
      * @param table name of HT table
      * @param flags mutator flags
      * @param flush_interval used for periodic flush mutators
+     * @param framesize max thrift framesize
      */
-    public HypertableRecordWriter(String namespace, String table, int flags, int flush_interval)
-      throws IOException {
+    public HypertableRecordWriter(String namespace, String table, int flags,
+            int flush_interval, int framesize) throws IOException {
       try {
         this.namespace = namespace;
         this.table = table;
         //TODO: read this from HT configs
-        mClient = ThriftClient.create("localhost", 38080);
+        if (mClient == null) {
+          if (framesize != 0)
+            mClient = ThriftClient.create("localhost", 38080, 1600000,
+                    true, framesize);
+          else
+            mClient = ThriftClient.create("localhost", 38080);
+        }
         mNamespace = mClient.namespace_open(namespace);
         mMutator = mClient.mutator_open(mNamespace, table, flags, flush_interval);
       }
@@ -96,14 +104,14 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
      * Ctor with default flags=NO_LOG_SYNC and flush interval set to 0
      */
     public HypertableRecordWriter(String namespace, String table) throws IOException {
-      this(namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0);
+      this(namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0, 0);
     }
 
     /**
      * Ctor with default flush interval set to 0
      */
     public HypertableRecordWriter(String namespace, String table, int flags) throws IOException {
-      this(namespace, table, flags, 0);
+      this(namespace, table, flags, 0, 0);
     }
 
     /**
@@ -150,9 +158,11 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
     String table = ctx.getConfiguration().get(OutputFormat.TABLE);
     int flags = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLAGS, 0);
     int flush_interval = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
+    int framesize = ctx.getConfiguration().getInt(OutputFormat.THRIFT_FRAMESIZE, 0);
 
     try {
-      return new HypertableRecordWriter(namespace, table, flags, flush_interval);
+      return new HypertableRecordWriter(namespace, table, flags,
+              flush_interval, framesize);
     }
     catch (Exception e) {
       log.error(e);

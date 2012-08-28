@@ -51,6 +51,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
   public static final String NAMESPACE = "hypertable.mapreduce.input.namespace";
   public static final String TABLE = "hypertable.mapreduce.input.table";
   public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
+  public static final String THRIFT_FRAMESIZE = "hypertable.mapreduce.thriftclient.framesize";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
@@ -207,8 +208,9 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         m_bytes_read += 24 + cell.key.row.length();
         if (cell.value != null && cell.value.hasRemaining()) {
           value = new byte [ cell.value.remaining() ];
-          System.arraycopy(cell.value.array(), cell.value.arrayOffset()+cell.value.position(),
-                           value, 0, value.length);
+          System.arraycopy(cell.value.array(),
+                  cell.value.arrayOffset()+cell.value.position(),
+                  value, 0, value.length);
         }
         m_value = new BytesWritable(value);
         m_bytes_read += 24 + cell.key.row.length() + value.length;
@@ -254,15 +256,21 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
       if (m_tablename == null) {
         m_tablename = context.getConfiguration().get(TABLE);
-        m_base_spec = ScanSpec.serializedTextToScanSpec( context.getConfiguration().get(SCAN_SPEC) );
+        m_base_spec = ScanSpec.serializedTextToScanSpec(context.getConfiguration().get(SCAN_SPEC));
         System.out.println(m_base_spec);
       }
 
       ScanSpec scan_spec = ts.createScanSpec(m_base_spec);
       System.out.println(scan_spec);
 
-      if (m_client == null)
-        m_client = ThriftClient.create("localhost", 38080);
+      if (m_client == null) {
+        int framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize != 0)
+          m_client = ThriftClient.create("localhost", 38080, 1600000,
+                  true, framesize);
+        else
+          m_client = ThriftClient.create("localhost", 38080);
+      }
       return new RecordReader(m_client, m_namespace, m_tablename, scan_spec);
     }
     catch (TTransportException e) {
@@ -292,11 +300,17 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
     try {
       RowInterval ri = null;
 
-      if (m_client == null)
-        m_client = ThriftClient.create("localhost", 38080);
+      if (m_client == null) {
+        int framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize != 0)
+          m_client = ThriftClient.create("localhost", 38080, 1600000,
+                  true, framesize);
+        else
+          m_client = ThriftClient.create("localhost", 38080);
+      }
 
       if (m_base_spec == null)
-        m_base_spec = ScanSpec.serializedTextToScanSpec( context.getConfiguration().get(SCAN_SPEC) );
+        m_base_spec = ScanSpec.serializedTextToScanSpec(context.getConfiguration().get(SCAN_SPEC));
 
       java.util.Iterator<RowInterval> iter = m_base_spec.getRow_intervalsIterator();
       if (iter != null && iter.hasNext()) {

@@ -30,7 +30,7 @@ CP=$HT_HOME/lib/java/libthrift-0.8.0.jar:$HT_HOME/lib/java/*:$SCRIPT_DIR:.
 javac -classpath $CP -d . $SCRIPT_DIR/TestInputOutput.java
 
 echo "running"
-java -ea -classpath $CP TestInputOutput >> test.output
+java -ea -classpath $CP -Dhypertable.mapreduce.thriftbroker.framesize=10240 TestInputOutput >> test.output
 
 diff test.output $SCRIPT_DIR/test.golden
 if [ "$?" -ne "0" ]

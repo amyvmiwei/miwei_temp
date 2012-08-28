@@ -58,6 +58,7 @@ public class SerializedCellsOutputFormat
   public static final String MUTATOR_FLAGS = "hypertable.mapreduce.output.mutator-flags";
 
   public static final String MUTATOR_FLUSH_INTERVAL = "hypertable.mapreduce.output.mutator-flush-interval";
+  public static final String THRIFT_FRAMESIZE = "hypertable.mapreduce.thriftclient.framesize";
 
   /**
    * Write reducer output to HT via Thrift interface
@@ -72,20 +73,26 @@ public class SerializedCellsOutputFormat
     private String table;
 
     /**
-     * Opens a client & mutator to specified table
+     * Opens a client and mutator to specified table
      *
      * @param namespace Namespace which contains the HT table
      * @param table name of HT table
      * @param flags mutator flags
      * @param flush_interval used for periodic flush mutators
+     * @param framesize maximum thrift framesize
      */
-    public RecordWriter(String namespace, String table, int flags, int flush_interval)
+    public RecordWriter(String namespace, String table, int flags,
+            int flush_interval, int framesize)
       throws IOException {
       try {
         //TODO: read this from HT configs
         this.namespace = namespace;
         this.table = table;
-        mClient = ThriftClient.create("localhost", 38080);
+        if (framesize != 0)
+          mClient = ThriftClient.create("localhost", 38080, 1600000,
+                  true, framesize);
+        else
+          mClient = ThriftClient.create("localhost", 38080);
         mNamespace = mClient.open_namespace(namespace);
         mMutator = mClient.open_mutator(mNamespace, table, flags, flush_interval);
       }
@@ -99,14 +106,15 @@ public class SerializedCellsOutputFormat
      * Ctor with default flags=NO_LOG_SYNC and flush interval set to 0
      */
     public RecordWriter(String namespace, String table) throws IOException {
-      this(namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0);
+      this(namespace, table, MutatorFlag.NO_LOG_SYNC.getValue(), 0, 0);
     }
 
     /**
      * Ctor with default flush interval set to 0
      */
-    public RecordWriter(String namespace, String table, int flags) throws IOException {
-      this(namespace, table, flags, 0);
+    public RecordWriter(String namespace, String table, int flags)
+        throws IOException {
+      this(namespace, table, flags, 0, 0);
     }
 
     /**
@@ -121,7 +129,8 @@ public class SerializedCellsOutputFormat
       }
       catch (Exception e) {
         log.error(e);
-        throw new IOException("Unable to close thrift mutator & namespace- " + e.toString());
+        throw new IOException("Unable to close thrift mutator & namespace- "
+                + e.toString());
       }
     }
 
@@ -150,9 +159,10 @@ public class SerializedCellsOutputFormat
     String table = ctx.getConfiguration().get(OutputFormat.TABLE);
     int flags = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLAGS, 0);
     int flush_interval = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
+    int framesize = ctx.getConfiguration().getInt(OutputFormat.THRIFT_FRAMESIZE, 0);
 
     try {
-      return new RecordWriter(namespace, table, flags, flush_interval);
+      return new RecordWriter(namespace, table, flags, flush_interval, framesize);
     }
     catch (Exception e) {
       log.error(e);
