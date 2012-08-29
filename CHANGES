@@ -1,3 +1,26 @@
+Version 0.9.6.2:
+(2012-08-30)
+
+    Fixed race condition with ResultCallback m_outstanding counter
+    issue 932: thrift framesize is now configurable
+    issue 921: fixed escape problem for streaming mapreduce
+    issue 922: refresh internal table info when a table was dropped and re-created
+    Avoid using hard-coded paths in a java thrift test
+    Added a C++ example for SerializedCellsWriter/SerializedCellsReader
+    Added a tool to convert all command line parameters to html
+    Fixed load_generator's usage of the thrift mutator
+    Fixed hql interpreter leak in ThriftBroker
+    issue 915: gracefully handle BDB errors when creating transactions
+    issue 915: fixed crash in TableMutatorAsync when using an invalid COUNTER value
+    ht_load_generator now supports parallel queries
+    Couple ByteArena to the RangeDataVector
+    Fixed potential access violation when installing new cell cache
+    Fixed DUMP TABLE COLUMNS spec to match SELECT
+    Fixed documentation bug in CREATE TABLE: the default compression for cellstores is snappy
+    issue 910: fixed DELETE handling in combination with row limits
+    issue 907: fixed assert in master when replacing a RangeServer with a new machine
+    issue 912: fixed deadlock during master shutdown
+
 Version 0.9.6.1:
 (2012-08-16)
 
