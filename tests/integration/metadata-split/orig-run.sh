@@ -31,13 +31,14 @@ fi
 # clear state
 /bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* report.txt
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker --Hypertable.Master.Gc.Interval=30000
+$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker \
+    --Hypertable.Master.Gc.Interval=30000 \
+    --Hypertable.RangeServer.Range.SplitSize=25K \
+    --Hypertable.RangeServer.Range.MetadataSplitSize=10K
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
-    --Hypertable.RangeServer.Range.SplitSize=25K \
     --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
-    --Hypertable.RangeServer.Range.MetadataSplitSize=6K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
     --Hypertable.RangeServer.Maintenance.Interval=100 > rangeserver.output &
 
@@ -54,9 +55,7 @@ kill -9 `cat $PIDFILE`
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
-    --Hypertable.RangeServer.Range.SplitSize=25K \
     --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
-    --Hypertable.RangeServer.Range.MetadataSplitSize=6K \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
     --Hypertable.RangeServer.Maintenance.Interval=100 >> rangeserver.output &
 
@@ -66,13 +65,6 @@ fgrep ERROR rangeserver.output | fgrep -v " skew " > error.0
 cat error.0
 
 if [ -s error.0 ] ; then
-    echo "USE sys; SELECT * FROM METADATA RETURN_DELETES DISPLAY_TIMESTAMPS;" | $HT_HOME/bin/ht shell --batch >& metadata.dump
-    save_failure_state
-    kill -9 `cat $PIDFILE`
-    exit 1
-fi
-
-if [ -e core.* ] ; then
     echo "USE sys; SELECT * FROM METADATA RETURN_DELETES DISPLAY_TIMESTAMPS;" | $HT_HOME/bin/ht shell --batch >& metadata.dump
     save_failure_state
     kill -9 `cat $PIDFILE`

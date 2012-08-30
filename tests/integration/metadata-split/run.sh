@@ -23,11 +23,17 @@ start_masters() {
 
     $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38050 $@ \
         --pidfile $HT_HOME/run/Hypertable.Master.38050.pid \
+        --Hypertable.Master.Gc.Interval=30000 \
+        --Hypertable.RangeServer.Range.SplitSize=25K \
+        --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
         --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.38050.log&
     wait_for_server_up "master" "master:38050" "--Hypertable.Master.Port=38050"
 
     $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38051 \
         --pidfile $HT_HOME/run/Hypertable.Master.38051.pid \
+        --Hypertable.Master.Gc.Interval=30000 \
+        --Hypertable.RangeServer.Range.SplitSize=25K \
+        --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
         --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.38051.log&
     #wait_for_server_up "master" "master:38051" "--Hypertable.Master.Port=38051"
     # chris - do not use wait_for_server_up because serverup cannot connect
@@ -88,24 +94,23 @@ run_test() {
 
   touch running.$TEST_ID
 
-  if [ -z "$SKIP_START_SERVERS" ]; then
-    $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
-                                       --clear --Hypertable.Master.Gc.Interval=30000
-  fi
+  stop_range_server
+  kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid`
 
   if [ $TEST_ID == 10 ] || [ $TEST_ID == 11 ] || [ $TEST_ID == 12 ] || [ $TEST_ID == 13 ] ; then
-      kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid`
-      stop_range_server
+      $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-master \
+          --no-thriftbroker
       start_masters $@
       $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
-          --Hypertable.RangeServer.Range.SplitSize=25K \
           --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
-          --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
           --Hypertable.RangeServer.MaintenanceThreads=8 \
-          --Hypertable.RangeServer.Maintenance.Interval=100 2>&1 &> rangeserver.output &
+          --Hypertable.RangeServer.Maintenance.Interval=100 2>&1 &> rangeserver.output.$TEST_ID &
   else
-      stop_range_server
-      $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
+    $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver \
+        --no-thriftbroker --Hypertable.Master.Gc.Interval=30000 \
+        --Hypertable.RangeServer.Range.SplitSize=25K \
+        --Hypertable.RangeServer.Range.MetadataSplitSize=10K
+    $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
   fi
 
   # give servers time to come up
@@ -113,17 +118,14 @@ run_test() {
 
   $HT_SHELL --batch < $SCRIPT_DIR/create-table.hql
   if [ $? != 0 ] ; then
-      # try again
-      $HT_SHELL --batch < $SCRIPT_DIR/create-table.hql
-      if [ $? != 0 ] ; then
-          echo "Error creating table 'LoadTest', shell returned %?"
-          save_failure_state
-          cleanup_and_abort
-      fi
+    echo "Error creating table 'LoadTest', shell returned %?"
+    save_failure_state
+    cleanup_and_abort
   fi
 
   $HT_HOME/bin/ht ht_load_generator update --spec-file=$SCRIPT_DIR/data.spec --max-bytes=300K \
-      --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K
+      --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
+      --Hypertable.Mutator.FlushDelay=100
 
   if [ $? != 0 ] ; then
       echo "Error loading table 'LoadTest', shell returned $?"
@@ -142,11 +144,21 @@ run_test() {
       cleanup_and_abort 
   fi
 
-  if [ -e core.* ] ; then
-      echo "ERROR: core file generated"
+  # Verify that the falure was induced
+  if [ $@ ]; then
+    if [ $TEST_ID == 10 ] || [ $TEST_ID == 11 ] || [ $TEST_ID == 12 ] || [ $TEST_ID == 13 ] ; then
+      fgrep "induced failure" Hypertable.Master.38050.log
+    else
+      fgrep "induced failure" rangeserver.output.$TEST_ID
+    fi
+    if [ $? != 0 ] ; then
+      echo "ERROR: Failure was not induced."
+      echo "Test $TEST_ID FAILED." >> report.txt
+      echo "Test $TEST_ID FAILED." >> errors.txt
       touch failed.$TEST_ID
       save_failure_state
-      cleanup_and_abort 
+      cleanup_and_abort
+    fi
   fi
 
   /bin/rm -f select-a.$TEST_ID select-b.$TEST_ID
@@ -187,7 +199,7 @@ env | grep '^TEST_[0-9]' || set_tests 0 1 2 3 4 5 6 7 8 9 10 11 12 13
 [ "$TEST_7" ] && run_test 7 "--induce-failure=metadata-load-range-3:exit:2"
 [ "$TEST_8" ] && run_test 8 "--induce-failure=metadata-load-range-4:exit:2"
 [ "$TEST_9" ] && run_test 9 "--induce-failure=metadata-load-range-5:exit:2"
-[ "$TEST_10" ] && run_test 10 "--induce-failure=connection-handler-before-id-response:exit:2"
+[ "$TEST_10" ] && run_test 10 "--induce-failure=connection-handler-move-range:exit:0"
 [ "$TEST_11" ] && run_test 11 "--induce-failure=move-range-INITIAL-a:exit:0"
 [ "$TEST_12" ] && run_test 12 "--induce-failure=move-range-STARTED:exit:0"
 [ "$TEST_13" ] && run_test 13 "--induce-failure=move-range-LOAD_RANGE:exit:0"

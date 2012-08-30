@@ -249,7 +249,6 @@ int main(int argc, char **argv) {
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
-    context->range_split_size = context->props->get_i64("Hypertable.RangeServer.Range.SplitSize");
     context->monitoring = new Monitoring(context->props, context->namemap);
 
     context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
