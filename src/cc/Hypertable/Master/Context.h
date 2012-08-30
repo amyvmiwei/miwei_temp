@@ -95,7 +95,6 @@ namespace Hypertable {
     ReferenceManager *reference_manager;
     TablePtr metadata_table;
     TablePtr rs_metrics_table;
-    uint64_t range_split_size;
     time_t request_timeout;
     uint32_t timer_interval;
     uint32_t monitoring_interval;
