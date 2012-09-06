@@ -309,6 +309,12 @@ namespace Hypertable {
 
     void record_state_rsml();
 
+    /**
+     * Updates RSML to signal the removal of this Range.  It writes two
+     * RSML entries, a TaskRemoveTansferLog entity to remove the transfer
+     * log and the EntityRange for this range marked for removal.  The
+     * TaskRemoveTransferLog is also enqueued on the global work queue.
+     */
     void record_removal_rsml();
 
   private:

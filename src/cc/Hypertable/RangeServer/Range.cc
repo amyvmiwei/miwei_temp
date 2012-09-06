@@ -1526,7 +1526,20 @@ void Range::record_removal_rsml() {
   if (Global::rsml_writer == 0)
     HT_THROW(Error::SERVER_SHUTTING_DOWN, "Pointer to RSML Writer is NULL");
 
-  Global::rsml_writer->record_removal(m_metalog_entity.get());
+  MetaLog::EntityTaskPtr log_removal_task;
+  maybe_create_log_removal_task(log_removal_task);
+
+  if (log_removal_task) {
+    std::vector<MetaLog::Entity *> entities;
+    entities.push_back(log_removal_task.get());
+    m_metalog_entity->mark_for_removal();
+    entities.push_back(m_metalog_entity.get());
+    Global::rsml_writer->record_state(entities);
+    Global::add_to_work_queue(log_removal_task);
+  }
+  else
+    Global::rsml_writer->record_removal(m_metalog_entity.get());
+
 }
 
 
