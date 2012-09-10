@@ -21,13 +21,13 @@
 #  PYTHON_LIBRARIES   - List of libraries when using python-devel
 #  PYTHON_FOUND       - True if python-devel was found
 
-exec_program(env ARGS python -V OUTPUT_VARIABLE VERSION_STRING
+exec_program(env ARGS python -V OUTPUT_VARIABLE PYTHON_VERSION_STRING
              RETURN_VALUE PYTHON_RETURN)
 
 if (PYTHON_RETURN STREQUAL "0")
-  message(STATUS "Python Shell Version: ${VERSION_STRING}")
+  message(STATUS "Python Shell Version: ${PYTHON_VERSION_STRING}")
 
-  STRING(REGEX REPLACE ".*Python ([0-9]+.[0-9]+).*" "\\1" PYTHON_VERSION "${VERSION_STRING}")
+  STRING(REGEX REPLACE ".*Python ([0-9]+.[0-9]+).*" "\\1" PYTHON_VERSION "${PYTHON_VERSION_STRING}")
 
   find_path(PYTHON_INCLUDE_DIR Python.h NO_DEFAULT_PATH PATHS
             ${HT_DEPENDENCY_INCLUDE_DIR}
