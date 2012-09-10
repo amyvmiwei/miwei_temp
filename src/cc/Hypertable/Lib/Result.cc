@@ -26,7 +26,7 @@
 namespace Hypertable {
 
 Result::Result(TableScannerAsync *scanner, ScanCellsPtr &cells) : m_scanner(scanner),
-    m_mutator(0), m_cells(cells), m_isscan(true), m_iserror(false) {
+         m_mutator(0), m_cells(cells), m_error(0), m_isscan(true), m_iserror(false) {
   return;
 }
 
@@ -37,11 +37,11 @@ Result::Result(TableScannerAsync *scanner, int error, const String &error_msg) :
 }
 
 Result::Result(TableMutatorAsync *mutator) : m_scanner(0), m_mutator(mutator),
-    m_isscan(false), m_iserror(false)  {
+                              m_error(0), m_isscan(false), m_iserror(false)  {
 }
 
 Result::Result(TableMutatorAsync *mutator, int error, FailedMutations &failed_mutations)
-  : m_scanner(0), m_mutator(mutator), m_isscan(false), m_iserror(true) {
+  : m_scanner(0), m_mutator(mutator), m_error(error), m_isscan(false), m_iserror(true) {
   m_failed_cells.copy_failed_mutations(failed_mutations, m_failed_mutations);
 }
 
