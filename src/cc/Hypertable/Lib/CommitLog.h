@@ -34,8 +34,8 @@
 #include "Common/Properties.h"
 #include "Common/Filesystem.h"
 
-#include "Hypertable/Lib/BlockCompressionCodec.h"
-#include "Hypertable/Lib/Types.h"
+#include "BlockCompressionCodec.h"
+#include "Types.h"
 
 #include "CommitLogBase.h"
 #include "CommitLogBlockStream.h"
@@ -197,10 +197,11 @@ namespace Hypertable {
     FilesystemPtr           m_fs;
     std::set<CommitLogFileInfo *> m_reap_set;
     BlockCompressionCodec  *m_compressor;
+    int64_t                 m_purge_report_revision;
     String                  m_cur_fragment_fname;
     int64_t                 m_cur_fragment_length;
-    uint32_t                m_cur_fragment_num;
     int64_t                 m_max_fragment_size;
+    uint32_t                m_cur_fragment_num;
     int32_t                 m_fd;
     int32_t                 m_replication;
     bool                    m_needs_roll;

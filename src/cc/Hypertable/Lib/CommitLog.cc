@@ -69,6 +69,7 @@ CommitLog::initialize(const String &log_dir, PropertiesPtr &props,
   m_cur_fragment_num = 0;
   m_needs_roll = false;
   m_replication = -1;
+  m_purge_report_revision = TIMESTAMP_NULL;
 
   if (is_meta)
     m_replication = props->get_i32("Hypertable.Metadata.Replication");
@@ -315,9 +316,6 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok, int generati
   if (m_fd == -1)
     return Error::CLOSED;
 
-  HT_INFOF("Purging log fragments from '%s' with latest revision older than %lld",
-           m_log_dir.c_str(), (Lld)revision);
-
   // Process "reap" set
   std::set<CommitLogFileInfo *>::iterator rm_iter, iter = m_reap_set.begin();
   while (iter != m_reap_set.end()) {
@@ -347,8 +345,11 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok, int generati
       m_fragment_queue.pop_front();
     }
     else {
-      HT_DEBUGF("clgc LOG FRAGMENT PURGE breaking because %lld >= %lld",
-               (Lld)fi->revision, (Lld)revision);
+      if (revision != m_purge_report_revision) {
+        HT_INFOF("purge('%s') breaking because %lld >= %lld",
+                 m_log_dir.c_str(), (Lld)fi->revision, (Lld)revision);
+        m_purge_report_revision = revision;
+      }
       break;
     }
   }
