@@ -1,4 +1,14 @@
 Version 0.9.6.2:
+(2012-09-10)
+
+    Added missing error code initialization to Result constructor
+    Changed CommitLog.FragmentRemoval.RangeReferenceRequired default to false
+    Made CommitLog::purge() less chatty
+    issue 939: Fixed monitoring system Master version number display
+    Remove transfer log when Ranges are deleted due to drop table
+    Fixed METADATA split test
+
+Version 0.9.6.2:
 (2012-08-30)
 
     Fixed race condition with ResultCallback m_outstanding counter
