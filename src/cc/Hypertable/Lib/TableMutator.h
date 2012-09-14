@@ -176,6 +176,11 @@ namespace Hypertable {
     void update_ok();
     void update_error(int error, FailedMutations &failures);
 
+    int32_t get_last_error() {
+      ScopedLock lock(m_mutex);
+      return m_last_error;
+    }
+
   private:
 
     void auto_flush();

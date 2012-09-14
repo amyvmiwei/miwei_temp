@@ -737,6 +737,10 @@ cmd_insert(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
     do {
       mutator->show_failed(e);
     } while (!mutator->retry());
+
+    if (mutator->get_last_error())
+      HT_THROW(mutator->get_last_error(),
+              Error::get_text(mutator->get_last_error()));
   }
   if (cb.normal_mode) {
     cb.total_cells = cells.size();
@@ -747,7 +751,14 @@ cmd_insert(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
       cb.total_values_size += cell.value_len;
     }
   }
+
+  // flush the mutator
   cb.on_finish(mutator.get());
+
+  // report errors during mutator->flush
+  if (mutator->get_last_error())
+    HT_THROW(mutator->get_last_error(),
+            Error::get_text(mutator->get_last_error()));
 }
 
 void

@@ -80,11 +80,11 @@ namespace Hypertable {
       /** Called when interpreter updates progress for long running queries */
       virtual void on_progress(size_t amount) { }
 
-      /** Called when interpreter is finished note, mutator pointer maybe NULL
-       * in case of things like load data ... into file
+      /** Called when interpreter is finished
+       * Note: mutator pointer maybe NULL in case of things like
+       * LOAD DATA ... INTO file
        */
-      virtual void
-      on_finish(TableMutator *mutator = 0) {
+      virtual void on_finish(TableMutator *mutator = 0) {
         if (mutator) try {
           mutator->flush();
         }
