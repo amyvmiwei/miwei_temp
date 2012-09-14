@@ -205,7 +205,8 @@ void TableMutator::wait_for_flush_completion(TableMutatorAsync *mutator) {
         }
       }
       else {
-        if (last_error != Error::OK)
+        ScopedLock lock(m_mutex);
+        if (m_last_error != Error::OK)
           HT_THROW(m_last_error, "");
         return;
       }
@@ -220,6 +221,10 @@ void TableMutator::wait_for_flush_completion(TableMutatorAsync *mutator) {
 
 bool TableMutator::retry(uint32_t timeout_ms) {
   uint32_t save_timeout = m_timeout_ms;
+
+  /* issue 938: don't continue if there's a row overflow */
+  if (m_last_error == Error::RANGESERVER_ROW_OVERFLOW)
+    return true;
 
   {
     ScopedLock lock(m_mutex);
@@ -253,6 +258,9 @@ void TableMutator::retry_flush() {
     if (m_failed_cells.size() > 0)
       set_cells(m_failed_cells.get());
   }
+
+  poll(0, 0, 2000);
+
   flush();
 }
 
