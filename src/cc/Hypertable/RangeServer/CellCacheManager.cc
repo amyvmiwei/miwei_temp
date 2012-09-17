@@ -163,10 +163,13 @@ bool CellCacheManager::immutable_cache_empty() {
   return !m_immutable_cache || m_immutable_cache->empty();
 }
 
-// only include read cache since write cache shares arena
 int64_t CellCacheManager::memory_used() {
-  return m_read_cache->memory_used() + 
-    (m_immutable_cache ? m_immutable_cache->memory_used() : 0);
+  if (m_read_cache->memory_used() == 0)
+    return m_write_cache->memory_used() + 
+      (m_immutable_cache ? m_immutable_cache->memory_used() : 0);
+  else
+    return m_read_cache->memory_used() + 
+      (m_immutable_cache ? m_immutable_cache->memory_used() : 0);
 }
 
 int64_t CellCacheManager::immutable_memory_used() {

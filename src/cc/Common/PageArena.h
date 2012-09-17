@@ -314,9 +314,9 @@ class PageArena : boost::noncopyable {
   }
 
   /** stats accessors */
-  size_t used() const { return m_used; }
+  size_t used() const { return m_used + m_tinybuf.fill; }
   size_t pages() const { return m_pages; }
-  size_t total() const { return m_total; }
+  size_t total() const { return m_total + TinyBuffer::SIZE; }
 };
 
 typedef PageArena<> CharArena;
