@@ -414,7 +414,7 @@ void CellStoreV6::add(const Key &key, const ByteString value) {
   if (key.timestamp != TIMESTAMP_NULL) {
     if (key.timestamp < m_trailer.timestamp_min)
       m_trailer.timestamp_min = key.timestamp;
-    else if (key.timestamp > m_trailer.timestamp_max)
+    if (key.timestamp > m_trailer.timestamp_max)
       m_trailer.timestamp_max = key.timestamp;
   }
 
