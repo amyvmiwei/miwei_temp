@@ -79,8 +79,24 @@ void OperationRegisterServer::execute() {
                     m_system_stats.net_info.host_name, m_public_addr, balanced);
   }
 
-  m_context->connect_server(m_rsc, m_system_stats.net_info.host_name,
-            m_local_addr, m_public_addr);
+  if (!m_context->connect_server(m_rsc, m_system_stats.net_info.host_name,
+                                 m_local_addr, m_public_addr)) {
+
+    m_error = Error::CONNECT_ERROR_MASTER;
+    m_error_msg = format("Problem connecting location %s", m_location.c_str());
+
+    CommHeader header;
+    header.initialize_from_request_header(m_event->header);
+    header.command = RangeServerProtocol::COMMAND_INITIALIZE;
+    CommBufPtr cbp(new CommBuf(header, encoded_response_length()));
+    encode_response(cbp->get_data_ptr_address());
+    int error = m_context->comm->send_response(m_event->addr, cbp);
+    if (error != Error::OK)
+      HT_ERRORF("Problem sending response (location=%s) back to %s",
+                m_location.c_str(), m_event->addr.format().c_str());
+    complete_error_no_log(m_error, m_error_msg);
+    return;
+  }
 
   int32_t difference = (int32_t)abs((m_received_ts - m_register_ts) / 1000LL);
   if (difference > (3000000 + m_context->max_allowable_skew)) {
@@ -97,9 +113,9 @@ void OperationRegisterServer::execute() {
     CommHeader header;
     header.initialize_from_request_header(m_event->header);
     header.command = RangeServerProtocol::COMMAND_INITIALIZE;
-    CommBufPtr cbp(new CommBuf(header, encoded_result_length()));
+    CommBufPtr cbp(new CommBuf(header, encoded_response_length()));
 
-    encode_result(cbp->get_data_ptr_address());
+    encode_response(cbp->get_data_ptr_address());
     int error = m_context->comm->send_response(m_event->addr, cbp);
     if (error != Error::OK)
       HT_ERRORF("Problem sending response (location=%s) back to %s",
@@ -117,8 +133,8 @@ void OperationRegisterServer::execute() {
       CommHeader header;
       header.initialize_from_request_header(m_event->header);
       header.command = RangeServerProtocol::COMMAND_INITIALIZE;
-      CommBufPtr cbp(new CommBuf(header, encoded_result_length()));
-      encode_result(cbp->get_data_ptr_address());
+      CommBufPtr cbp(new CommBuf(header, encoded_response_length()));
+      encode_response(cbp->get_data_ptr_address());
       int error = m_context->comm->send_response(m_event->addr, cbp);
       if (error != Error::OK)
         HT_ERRORF("Problem sending response (location=%s) back to %s",
@@ -173,3 +189,19 @@ const String OperationRegisterServer::label() {
   return String("RegisterServer ") + m_location;
 }
 
+size_t OperationRegisterServer::encoded_response_length() const {
+  size_t length = 4;
+  if (m_error == Error::OK)
+    length += Serialization::encoded_length_vstr(m_location);
+  else
+    length += Serialization::encoded_length_str16(m_error_msg);
+  return length;
+}
+
+void OperationRegisterServer::encode_response(uint8_t **bufp) const {
+  Serialization::encode_i32(bufp, m_error);
+  if (m_error == Error::OK)
+    Serialization::encode_vstr(bufp, m_location);
+  else
+    Serialization::encode_str16(bufp, m_error_msg);
+}

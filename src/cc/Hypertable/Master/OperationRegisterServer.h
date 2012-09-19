@@ -47,6 +47,10 @@ namespace Hypertable {
     virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
   private:
+
+    virtual size_t encoded_response_length() const;
+    virtual void encode_response(uint8_t **bufp) const;
+
     String m_location;
     uint16_t m_listen_port;
     StatsSystem m_system_stats;

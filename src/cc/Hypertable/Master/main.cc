@@ -82,6 +82,12 @@ namespace {
     DispatchHandlerPtr m_handler;
   };
 
+  struct ltrsc {
+    bool operator()(const RangeServerConnectionPtr &rsc1, const RangeServerConnectionPtr &rsc2) const {
+      return strcmp(rsc1->location().c_str(), rsc2->location().c_str()) < 0;
+    }
+  };
+
 
 } // local namespace
 
@@ -162,6 +168,30 @@ int main(int argc, char **argv) {
 
     mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition, log_dir);
     mml_reader->get_entities(entities);
+
+    // Uniq-ify the RangeServerConnection objects
+    {
+      std::vector<MetaLog::EntityPtr> entities2;
+      std::set<RangeServerConnectionPtr, ltrsc> rsc_set;
+
+      entities2.reserve(entities.size());
+      foreach_ht (MetaLog::EntityPtr &entity, entities) {
+        operation = dynamic_cast<Operation *>(entity.get());
+        if (operation)
+          entities2.push_back(entity);
+        else {
+          rsc = dynamic_cast<RangeServerConnection *>(entity.get());
+          if (rsc_set.count(rsc.get()) > 0) {
+            rsc_set.erase(rsc.get());
+            rsc_set.insert(rsc.get());
+          }
+        }
+      }
+      foreach_ht (const RangeServerConnectionPtr &rsc, rsc_set)
+        entities2.push_back(rsc.get());
+      entities.swap(entities2);
+    }
+
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
                                               log_dir, entities);
 
