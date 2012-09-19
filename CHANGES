@@ -1,4 +1,15 @@
-Version 0.9.6.2:
+Version 0.9.6.4:
+(2012-09-19)
+
+    Fixed bug in memory reporting introduced with TinyBuffer allocator
+    Ensure single RangeServerConnection entity in MML for each connection
+    Eliminated conflict with VERSION identifier in SerializedCells*
+    issue 923: Fixed RangeServer master initialization error reporting
+    Fixed timestamp_max calculation in CellStoreV6
+    issue 938: fixed propagation of row overflow error
+    Eliminated warnings
+
+Version 0.9.6.3:
 (2012-09-10)
 
     Added missing error code initialization to Result constructor
