@@ -58,7 +58,7 @@ namespace Hypertable {
       if (m_grow)
         m_buf.ensure(m_buf.empty() ? 5 : 1);
       if (m_buf.empty())
-        Serialization::encode_i32(&m_buf.ptr, SerializedCellsVersion::VERSION);
+        Serialization::encode_i32(&m_buf.ptr, SerializedCellsVersion::SCVERSION);
       *m_buf.ptr++ = SerializedCellsFlag::EOB | flag;
       m_finalized = true;
     }

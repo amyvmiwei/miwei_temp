@@ -87,7 +87,7 @@ namespace Hypertable {
 
       size_t remaining = m_end - m_ptr;
       int32_t version = Serialization::decode_i32(&m_ptr, &remaining);
-      if (version != SerializedCellsVersion::VERSION)
+      if (version != SerializedCellsVersion::SCVERSION)
         HT_THROW(Error::SERIALIZATION_VERSION_MISMATCH, "");
     }
 

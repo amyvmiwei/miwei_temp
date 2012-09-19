@@ -73,7 +73,7 @@ bool SerializedCellsWriter::add(const char *row, const char *column_family,
 
   // version
   if (m_buf.empty())
-    Serialization::encode_i32(&m_buf.ptr, SerializedCellsVersion::VERSION);
+    Serialization::encode_i32(&m_buf.ptr, SerializedCellsVersion::SCVERSION);
 
   // flag byte
   *m_buf.ptr++ = flag;

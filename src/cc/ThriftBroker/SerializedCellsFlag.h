@@ -35,7 +35,7 @@ namespace Hypertable {
 
   namespace SerializedCellsVersion {
     enum {
-      VERSION        = 0x01
+      SCVERSION        = 0x01
     };
   }
 }
