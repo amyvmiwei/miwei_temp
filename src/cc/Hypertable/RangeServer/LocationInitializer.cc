@@ -102,12 +102,8 @@ bool LocationInitializer::process_initialization_response(Event *event) {
   int error = Protocol::response_code(event);
 
   if (error != Error::OK) {
-    HT_ERROR_OUT << "Problem initializing Master connection; event type: "
-        << event->type << ", error: " << error << HT_END;
-    HT_ERROR_OUT << event->to_str() << HT_END;
-    String str;
-    Debug::binary_to_human_readable(event->payload, event->payload_len, str);
-    HT_ERROR_OUT << str << HT_END;
+    HT_ERROR_OUT << "Problem initializing Master connection - "
+                 << Protocol::string_format_message(event) << HT_END;
     return false;
   }
 
