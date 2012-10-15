@@ -176,16 +176,14 @@ int main(int argc, char **argv) {
 
       entities2.reserve(entities.size());
       foreach_ht (MetaLog::EntityPtr &entity, entities) {
-        operation = dynamic_cast<Operation *>(entity.get());
-        if (operation)
-          entities2.push_back(entity);
-        else {
-          rsc = dynamic_cast<RangeServerConnection *>(entity.get());
-          if (rsc_set.count(rsc.get()) > 0) {
+        rsc = dynamic_cast<RangeServerConnection *>(entity.get());
+        if (rsc) {
+          if (rsc_set.count(rsc.get()) > 0)
             rsc_set.erase(rsc.get());
-            rsc_set.insert(rsc.get());
-          }
+          rsc_set.insert(rsc.get());
         }
+        else
+          entities2.push_back(entity);
       }
       foreach_ht (const RangeServerConnectionPtr &rsc, rsc_set)
         entities2.push_back(rsc.get());
