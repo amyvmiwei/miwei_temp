@@ -347,10 +347,16 @@ Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
 #endif
   }
 
-  // bind socket
-  if ((bind(sd, (const sockaddr *)&addr.inet, sizeof(sockaddr_in))) < 0)
-    HT_THROWF(Error::COMM_BIND_ERROR, "binding to %s: %s",
-              addr.to_str().c_str(), strerror(errno));
+  int bind_attempts = 0;
+  while ((bind(sd, (const sockaddr *)&addr.inet, sizeof(sockaddr_in))) < 0) {
+    if (bind_attempts == 6)
+      HT_THROWF(Error::COMM_BIND_ERROR, "binding to %s: %s",
+		addr.to_str().c_str(), strerror(errno));
+    HT_INFOF("Unable to bind to %s: %s, will retry in 10 seconds...",
+             addr.to_str().c_str(), strerror(errno));
+    poll(0, 0, 10000);
+    bind_attempts++;
+  }
 
   handler = dg_handler = new IOHandlerDatagram(sd, addr.inet, dhp);
 

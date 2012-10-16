@@ -24,7 +24,7 @@ start_masters() {
     $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38050 $@ \
         --pidfile $HT_HOME/run/Hypertable.Master.38050.pid \
         --Hypertable.Master.Gc.Interval=30000 \
-        --Hypertable.RangeServer.Range.SplitSize=25K \
+        --Hypertable.RangeServer.Range.SplitSize=18K \
         --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
         --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.38050.log&
     wait_for_server_up "master" "master:38050" "--Hypertable.Master.Port=38050"
@@ -32,7 +32,7 @@ start_masters() {
     $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38051 \
         --pidfile $HT_HOME/run/Hypertable.Master.38051.pid \
         --Hypertable.Master.Gc.Interval=30000 \
-        --Hypertable.RangeServer.Range.SplitSize=25K \
+        --Hypertable.RangeServer.Range.SplitSize=18K \
         --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
         --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.38051.log&
     #wait_for_server_up "master" "master:38051" "--Hypertable.Master.Port=38051"
@@ -108,7 +108,7 @@ run_test() {
   else
     $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver \
         --no-thriftbroker --Hypertable.Master.Gc.Interval=30000 \
-        --Hypertable.RangeServer.Range.SplitSize=25K \
+        --Hypertable.RangeServer.Range.SplitSize=18K \
         --Hypertable.RangeServer.Range.MetadataSplitSize=10K
     $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
   fi
@@ -125,7 +125,7 @@ run_test() {
 
   $HT_HOME/bin/ht ht_load_generator update --spec-file=$SCRIPT_DIR/data.spec --max-bytes=300K \
       --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
-      --Hypertable.Mutator.FlushDelay=100
+      --Hypertable.Mutator.FlushDelay=250
 
   if [ $? != 0 ] ; then
       echo "Error loading table 'LoadTest', shell returned $?"
@@ -222,5 +222,5 @@ echo ""
 echo "**** TEST REPORT ****"
 echo ""
 cat report.txt
-grep FAILED report.txt > /dev/null && exit 1
+tail -1 report.txt | grep FAILED > /dev/null && exit 1
 exit 0
