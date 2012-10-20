@@ -225,10 +225,9 @@ namespace Hypertable {
       wait_for_maintenance = false;
       *latest_revisionp = m_latest_revision;
 
-      if (m_transfer_log) {
-        transfer_log = m_transfer_log;
+      transfer_log = m_transfer_log;
+      if (m_transfer_log)
         retval = true;
-      }
 
       if (m_split_row.length())
         transfer_info.set_split(m_split_row, m_split_off_high);
