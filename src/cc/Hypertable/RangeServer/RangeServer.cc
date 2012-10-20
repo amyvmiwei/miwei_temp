@@ -2338,7 +2338,7 @@ void RangeServer::update_qualify_and_transform() {
           if (rulist->transfer_log.get() == 0)
             rulist->transfer_log = transfer_log;
 
-          assert(rulist->transfer_log.get() == transfer_log.get());
+          HT_ASSERT(rulist->transfer_log.get() == transfer_log.get());
 
           bool in_transferring_region = false;
 
