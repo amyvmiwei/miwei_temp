@@ -1,3 +1,10 @@
+Version 0.9.6.5:
+(2012-10-22)
+
+    issue957: Fixed group commit assert
+    issue 942: Fixed metadata-split tests on 32-bit
+    Fixed problem of purging RangeServerConnection entries on startup
+
 Version 0.9.6.4:
 (2012-09-19)
 
