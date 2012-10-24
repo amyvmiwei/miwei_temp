@@ -54,8 +54,10 @@ namespace Hyperspace {
 
     void register_handle(ClientHandleStatePtr &handle_state) {
       ScopedRecLock lock(m_mutex);
+#ifndef NDEBUG
       HandleMap::iterator iter = m_handle_map.find(handle_state->handle);
       assert(iter == m_handle_map.end());
+#endif
       m_handle_map[handle_state->handle] = handle_state;
     }
 
