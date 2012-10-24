@@ -728,12 +728,6 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
   output += "\n";
   output += "CREATE TABLE ";
 
-  if (m_compressor != "")
-    output += format("COMPRESSOR \"%s\" ", m_compressor.c_str());
-
-  if (m_group_commit_interval > 0)
-    output += format("GROUP_COMMIT_INTERVAL \"%u\" ", m_group_commit_interval);
-
   if (hql_needs_quotes(table_name.c_str()))
     output += "'" + table_name + "'";
   else
@@ -833,7 +827,15 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
     if (got_columns)
       output += ag_string;
   }
-  output += ")\n";
+  output += ")";
+
+  if (m_compressor != "")
+    output += format(" COMPRESSOR \"%s\"", m_compressor.c_str());
+
+  if (m_group_commit_interval > 0)
+    output += format(" GROUP_COMMIT_INTERVAL %u", m_group_commit_interval);
+
+  output += "\n";
 }
 
 
