@@ -57,6 +57,7 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
 
   public static final String MUTATOR_FLUSH_INTERVAL = "hypertable.mapreduce.output.mutator-flush-interval";
   public static final String THRIFT_FRAMESIZE = "hypertable.mapreduce.thriftclient.framesize";
+  public static final String THRIFT_FRAMESIZE2 = "hypertable.mapreduce.thriftbroker.framesize";
 
   /**
    * Write reducer output to HT via Thrift interface
@@ -159,6 +160,8 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
     int flags = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLAGS, 0);
     int flush_interval = ctx.getConfiguration().getInt(OutputFormat.MUTATOR_FLUSH_INTERVAL, 0);
     int framesize = ctx.getConfiguration().getInt(OutputFormat.THRIFT_FRAMESIZE, 0);
+    if (framesize == 0)
+      framesize = ctx.getConfiguration().getInt(OutputFormat.THRIFT_FRAMESIZE2, 0);
 
     try {
       return new HypertableRecordWriter(namespace, table, flags,

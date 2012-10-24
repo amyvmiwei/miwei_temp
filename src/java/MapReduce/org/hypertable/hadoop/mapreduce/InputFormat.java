@@ -52,6 +52,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
   public static final String TABLE = "hypertable.mapreduce.input.table";
   public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
   public static final String THRIFT_FRAMESIZE = "hypertable.mapreduce.thriftclient.framesize";
+  public static final String THRIFT_FRAMESIZE2 = "hypertable.mapreduce.thriftbroker.framesize";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
@@ -265,6 +266,8 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
       if (m_client == null) {
         int framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize == 0)
+          framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
           m_client = ThriftClient.create("localhost", 38080, 1600000,
                   true, framesize);
@@ -302,6 +305,8 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
 
       if (m_client == null) {
         int framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize == 0)
+          framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
           m_client = ThriftClient.create("localhost", 38080, 1600000,
                   true, framesize);

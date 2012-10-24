@@ -68,7 +68,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   public static final String TIMESTAMP_INTERVAL = "hypertable.mapreduce.input.scan_spec.timestamp_interval";
   public static final String INCLUDE_TIMESTAMPS = "hypertable.mapreduce.input.include_timestamps";
   public static final String NO_ESCAPE          = "hypertable.mapreduce.input.no_escape";
-  public static final String THRIFT_FRAMESIZE          = "hypertable.mapreduce.thriftbroker.framesize";
+  public static final String THRIFT_FRAMESIZE   = "hypertable.mapreduce.thriftbroker.framesize";
+  public static final String THRIFT_FRAMESIZE2  = "hypertable.mapreduce.thriftclient.framesize";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
@@ -390,6 +391,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
       if (m_client == null) {
         int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize == 0)
+          framesize = job.getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
           m_client = ThriftClient.create("localhost", 38080, 1600000,
                   true, framesize);
@@ -417,6 +420,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
 
       if (m_client == null) {
         int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize == 0)
+          framesize = job.getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
           m_client = ThriftClient.create("localhost", 38080, 1600000,
                   true, framesize);

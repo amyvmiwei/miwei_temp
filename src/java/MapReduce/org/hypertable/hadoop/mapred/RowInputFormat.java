@@ -63,6 +63,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
   public static final String START_ROW = "hypertable.mapreduce.input.startrow";
   public static final String END_ROW = "hypertable.mapreduce.input.endrow";
   public static final String THRIFT_FRAMESIZE = "hypertable.mapreduce.thriftbroker.framesize";
+  public static final String THRIFT_FRAMESIZE2 = "hypertable.mapreduce.thriftclient.framesize";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
@@ -233,6 +234,8 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
 
       if (m_client == null) {
         int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize == 0)
+          framesize = job.getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
           m_client = ThriftClient.create("localhost", 38080, 1600000,
                   true, framesize);
@@ -257,6 +260,8 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
     try {
       if (m_client == null) {
         int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
+        if (framesize == 0)
+          framesize = job.getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
           m_client = ThriftClient.create("localhost", 38080, 1600000,
                   true, framesize);
