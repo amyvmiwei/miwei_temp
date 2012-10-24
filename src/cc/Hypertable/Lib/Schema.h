@@ -175,7 +175,9 @@ namespace Hypertable {
     void set_compressor(const String &compressor) { m_compressor = compressor; }
     const String &get_compressor() { return m_compressor; }
 
-    void set_group_commit_interval(uint32_t interval) { m_group_commit_interval=interval; }
+    void set_group_commit_interval(uint32_t interval) {
+      m_group_commit_interval = interval;
+    }
     uint32_t get_group_commit_interval() { return m_group_commit_interval; }
 
     typedef hash_map<String, ColumnFamily *> ColumnFamilyMap;

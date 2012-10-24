@@ -2328,7 +2328,7 @@ namespace Hypertable {
           table_option
             = COMPRESSOR >> *EQUAL >> string_literal[
                 set_table_compressor(self.state)]
-            | GROUP_COMMIT_INTERVAL >> EQUAL >> uint_p[set_group_commit_interval(self.state)]
+            | GROUP_COMMIT_INTERVAL >> *EQUAL >> uint_p[set_group_commit_interval(self.state)]
             | table_option_in_memory[set_table_in_memory(self.state)]
             | table_option_blocksize
             | table_option_replication
