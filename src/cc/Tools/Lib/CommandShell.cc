@@ -53,11 +53,6 @@ using namespace std;
 String CommandShell::ms_history_file = "";
 
 namespace {
-  void termination_handler (int signum) {
-    write_history(CommandShell::ms_history_file.c_str());
-    exit(1);
-  }
-
   const char *help_text =
   "\n" \
   "Interpreter Meta Commands\n" \
@@ -75,9 +70,9 @@ namespace {
     bool in_quotes = false;
     char quote_char = 0;
 
-    for (const char *ptr=s; *ptr; ptr++) {
+    for (const char *ptr = s; *ptr; ptr++) {
       if (in_quotes) {
-        if (*ptr == quote_char && *(ptr-1) != '\\')
+        if (*ptr == quote_char && *(ptr - 1) != '\\')
           in_quotes = false;
       }
       else {
@@ -91,10 +86,9 @@ namespace {
     }
     return 0;
   }
-
 }
 
-
+CommandShell *CommandShell::ms_instance;
 
 /**
  */
@@ -104,22 +98,23 @@ CommandShell::CommandShell(const String &program_name,
       m_batch_mode(false), m_silent(false), m_test_mode(false),
       m_no_prompt(false), m_cont(false), m_line_read(0), m_notify(false),
       m_has_cmd_file(false), m_has_cmd_exec(false) {
-  m_prompt_str = program_name + "> ";
+
+  ms_history_file = (String)getenv("HOME") + "/." + m_program_name + "_history";
+
   m_batch_mode = m_props->has("batch");
   if (m_batch_mode)
     m_silent = true;
   else
     m_silent = m_props->get_bool("silent");
   m_test_mode = m_props->has("test-mode");
-  if (m_test_mode) {
+  if (m_test_mode)
     Logger::set_test_mode(System::exe_name);
-  }
   m_no_prompt = m_props->has("no-prompt");
 
   m_notify = m_props->has("notification-address");
-  if(m_notify) {
+  if (m_notify) {
     String notification_address = m_props->get_str("notification-address");
-    m_notifier_ptr = new Notifier (notification_address.c_str());
+    m_notifier_ptr = new Notifier(notification_address.c_str());
   }
 
   if (m_props->has("execute")) {
@@ -132,16 +127,54 @@ CommandShell::CommandShell(const String &program_name,
     m_has_cmd_file = true;
     m_batch_mode = true;
   }
+
+  setlocale(LC_ALL, "");
+
+  /* initialize libedit */
+  if (!m_batch_mode) {
+    ms_instance = this;
+    m_editline = el_init("hypertable", stdin, stdout, stderr);
+    m_history = history_winit();
+    history_w(m_history, &m_history_event, H_SETSIZE, 100);
+    history_w(m_history, &m_history_event, H_LOAD, ms_history_file.c_str());
+
+    el_wset(m_editline, EL_HIST, history_w, m_history);
+    el_wset(m_editline, EL_PROMPT, prompt);
+    el_wset(m_editline, EL_SIGNAL, 1);
+    el_wset(m_editline, EL_EDITOR, L"emacs");
+
+    /* Source the user's defaults file. */
+    el_source(m_editline, NULL);
+    m_tokenizer = tok_winit(NULL);
+  }
+  else {
+    m_editline = 0;
+    m_history = 0;
+    m_tokenizer = 0;
+  }
+
+  /* initialize prompt string */
+  wchar_t buf[64] = {0};
+  const char *p = program_name.c_str();
+  mbsrtowcs(buf, &p, 63, 0);
+  m_prompt_str = buf;
+  m_prompt_str += L"> ";
 }
 
-
+CommandShell::~CommandShell() {
+  if (m_editline)
+    el_end(m_editline);
+  if (m_history)
+    history_wend(m_history);
+  if (m_tokenizer)
+    tok_wend(m_tokenizer);
+}
 
 /**
  */
 char *CommandShell::rl_gets () {
-
   if (m_line_read) {
-    free (m_line_read);
+    free(m_line_read);
     m_line_read = (char *)NULL;
   }
 
@@ -153,7 +186,7 @@ char *CommandShell::rl_gets () {
       return 0;
 
     if (m_has_cmd_exec) {
-      m_line_read = (char *)malloc(m_cmd_str.size()+1);
+      m_line_read = (char *)malloc(m_cmd_str.size() + 1);
       strcpy(m_line_read, m_cmd_str.c_str());
     }
     else {
@@ -169,6 +202,7 @@ char *CommandShell::rl_gets () {
     done = true;
     return m_line_read;
   }
+
   /* Get a line from the user. */
   if (m_batch_mode || m_no_prompt || m_silent || m_test_mode) {
     if (!getline(cin, m_input_str))
@@ -178,19 +212,53 @@ char *CommandShell::rl_gets () {
       cout << m_input_str << endl;
     return (char *)m_input_str.c_str();
   }
-  else if (!m_cont)
-    m_line_read = readline(m_prompt_str.c_str());
-  else
-    m_line_read = readline("         -> ");
+  else {
+    const wchar_t *wline = 0;
+    int numc = 0;
+    while (true) {
+      wline = el_wgets(m_editline, &numc);
+      if (wline == 0 || numc == 0)
+        return (char *)"exit";
 
-  /* If the line has any text in it, save it on the history. */
-  if (!m_batch_mode && !m_test_mode && m_line_read && *m_line_read)
-    add_history (m_line_read);
+      if (!m_cont && numc == 1)
+        continue;  /* Only got a linefeed */
+
+      const LineInfoW *li = el_wline(m_editline);
+      int ac = 0, cc = 0, co = 0;
+      const wchar_t **av;
+      int ncont = tok_wline(m_tokenizer, li, &ac, &av, &cc, &co);
+      if (ncont < 0) {
+        // (void) fprintf(stderr, "Internal error\n");
+        m_cont = false;
+        continue;
+      }
+
+      if (el_wparse(m_editline, ac, av) == -1)
+        break;
+    }
+
+    char *buffer = (char *)malloc(1024 * 8);
+    size_t len = 1024 * 8;
+    while (1) {
+      const wchar_t *wp = &wline[0];
+      size_t l = wcsrtombs(buffer, &wp, len, 0);
+      if (l > len) {
+        buffer = (char *)realloc(buffer, l + 1);
+        len = l + 1;
+      }
+      else
+        break;
+    }
+    m_line_read = buffer;
+
+    /* If the line has any text in it, save it on the history. */
+    if (!m_batch_mode && !m_test_mode && m_line_read && *m_line_read)
+      history_w(m_history, &m_history_event,
+              m_cont ? H_APPEND : H_ENTER, wline);
+  }
 
   return m_line_read;
 }
-
-
 
 void CommandShell::add_options(PropertiesDesc &desc) {
   desc.add_options()
@@ -205,7 +273,6 @@ void CommandShell::add_options(PropertiesDesc &desc) {
     ("execute,e", Property::str(), "Execute specified commands.")
     ("command-file", Property::str(), "Execute commands from file.")
     ;
-
 }
 
 
@@ -218,8 +285,6 @@ int CommandShell::run() {
   String use_ns;
   const char *base, *ptr;
 
-  ms_history_file = (String)getenv("HOME") + "/." + m_program_name + "_history";
-
   if (m_props->has("timestamp-format"))
     timestamp_format = m_props->get_str("timestamp-format");
 
@@ -227,7 +292,6 @@ int CommandShell::run() {
     m_interp_ptr->set_timestamp_output_format(timestamp_format);
 
   if (!m_batch_mode && !m_silent) {
-
     read_history(ms_history_file.c_str());
 
     cout << endl;
@@ -241,28 +305,20 @@ int CommandShell::run() {
     cout << endl << flush;
   }
 
-  if (signal (SIGINT, termination_handler) == SIG_IGN)
-    signal (SIGINT, SIG_IGN);
-  if (signal (SIGHUP, termination_handler) == SIG_IGN)
-    signal (SIGHUP, SIG_IGN);
-  if (signal (SIGTERM, termination_handler) == SIG_IGN)
-    signal (SIGTERM, SIG_IGN);
-
   m_accum = "";
   if (!m_batch_mode)
     using_history();
 
   trim_if(m_namespace, boost::is_any_of(" \t\n\r;"));
   if (m_namespace.size()) {
-    use_ns="USE \""+m_namespace+"\";";
-    line=use_ns.c_str();
+    use_ns = "USE \"" + m_namespace + "\";";
+    line = use_ns.c_str();
     goto process_line;
   }
 
   while ((line = rl_gets()) != 0) {
 process_line:
     try {
-
       if (*line == 0)
         continue;
 
@@ -282,9 +338,10 @@ process_line:
         continue;
       }
       else if (!strncasecmp(line, "quit", 4) || !strncasecmp(line, "exit", 4)
-               || !strcmp(line, "\\q")) {
+          || !strcmp(line, "\\q")) {
         if (!m_batch_mode)
-          write_history(ms_history_file.c_str());
+          history_w(m_history, &m_history_event, H_SAVE,
+                  ms_history_file.c_str());
         return 0;
       }
       else if (!strncasecmp(line, "print", 5) || !strcmp(line, "\\p")) {
@@ -336,7 +393,6 @@ process_line:
         continue;
       }
 
-
       /**
        * Add commands to queue
        */
@@ -369,7 +425,8 @@ process_line:
         if (command_queue.front() == "quit"
             || command_queue.front() == "exit") {
           if (!m_batch_mode)
-            write_history(ms_history_file.c_str());
+            history_w(m_history, &m_history_event, H_SAVE,
+                    ms_history_file.c_str());
           return 0;
         }
         command = command_queue.front();
@@ -393,14 +450,14 @@ process_line:
             m_notifier_ptr->notify();
         }
       }
-
     }
     catch (Hypertable::Exception &e) {
       if (e.code() == Error::BAD_NAMESPACE)
         cerr << "ERROR: No namespace is open (see 'use' command)" << endl;
       else {
         if (m_test_mode)
-          cerr << "Error: " << e.what() << " - " << Error::get_text(e.code()) << endl;
+          cerr << "Error: " << e.what() << " - " << Error::get_text(e.code())
+              << endl;
         else
           cerr << "Error: " << e << " - " << Error::get_text(e.code()) << endl;
       }
@@ -411,13 +468,20 @@ process_line:
       m_accum = "";
       while (!command_queue.empty())
         command_queue.pop();
-      m_cont=false;
+      m_cont = false;
     }
-
   }
 
   if (!m_batch_mode)
-    write_history(ms_history_file.c_str());
+    history_w(m_history, &m_history_event, H_SAVE, ms_history_file.c_str());
 
   return 0;
+}
+
+const wchar_t *
+CommandShell::prompt(EditLine *el) {
+  if (ms_instance->m_cont)
+    return L"         -> ";
+  else
+    return ms_instance->m_prompt_str.c_str();
 }

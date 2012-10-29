@@ -50,8 +50,17 @@ else ()
 endif ()
 
 if (EDITLINE_FOUND)
-  if (NOT EDITLINE_FIND_QUIETLY)
-    message(STATUS "Found Editline libraries: ${EDITLINE_LIBRARIES}")
+  message(STATUS "Found Editline: ${EDITLINE_LIBRARY}")
+  try_run(EDITLINE_CHECK EDITLINE_CHECK_BUILD
+          ${HYPERTABLE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
+          ${HYPERTABLE_SOURCE_DIR}/cmake/CheckEditline.cc
+          CMAKE_FLAGS -DINCLUDE_DIRECTORIES=${EDITLINE_INCLUDE_DIR}
+              -DLINK_LIBRARIES=${EDITLINE_LIBRARIES}
+            OUTPUT_VARIABLE EDITLINE_TRY_OUT)
+  if (EDITLINE_CHECK_BUILD STREQUAL "FALSE")
+    message(STATUS "${EDITLINE_TRY_OUT}")
+    message(FATAL_ERROR "Please fix the Editline installation and try again.  Make sure you build libedit with --enable-widec!")
+    set(EDITLINE_LIBRARIES)
   endif ()
 else ()
   if (EDITLINE_FIND_REQUIRED)
