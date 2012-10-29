@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_COMMAND_SHELL_H
 #define HYPERTABLE_COMMAND_SHELL_H
 
+#include <histedit.h>
+
 #include "Common/ReferenceCount.h"
 #include "Common/Properties.h"
 
@@ -34,6 +36,9 @@ namespace Hypertable {
   public:
     CommandShell(const String &program_name, CommandInterpreterPtr &,
                  PropertiesPtr &);
+
+    ~CommandShell();
+
     int run();
 
     bool silent() { return m_silent; }
@@ -45,7 +50,9 @@ namespace Hypertable {
     static String ms_history_file;
 
   private:
-    char *rl_gets ();
+    char *rl_gets();
+    static CommandShell *ms_instance;
+    static const wchar_t *prompt(EditLine *el);
 
     String m_program_name;
     CommandInterpreterPtr m_interp_ptr;
@@ -64,10 +71,15 @@ namespace Hypertable {
     bool m_has_cmd_file;
     bool m_has_cmd_exec;
     String m_input_str;
-    String m_prompt_str;
+    std::wstring m_prompt_str;
     String m_cmd_str;
     String m_cmd_file;
     String m_namespace;
+
+    EditLine *m_editline;
+    HistoryW *m_history;
+    HistEventW m_history_event;
+    TokenizerW *m_tokenizer;
   };
 
   typedef intrusive_ptr<CommandShell> CommandShellPtr;
