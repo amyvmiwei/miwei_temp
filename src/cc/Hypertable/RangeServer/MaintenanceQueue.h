@@ -147,12 +147,16 @@ namespace Hypertable {
           }
           catch(Hypertable::Exception &e) {
             if (e.code() != Error::RANGESERVER_RANGE_NOT_ACTIVE &&
-		dynamic_cast<MaintenanceTaskMemoryPurge *>(task) == 0) {
-              HT_ERROR_OUT << e << HT_END;
+                dynamic_cast<MaintenanceTaskMemoryPurge *>(task) == 0) {
+              if (e.code() == Error::RANGESERVER_RANGE_BUSY)
+                HT_INFO_OUT << e << HT_END;
+              else
+                HT_ERROR_OUT << e << HT_END;
               if (task->retry()) {
                 ScopedLock lock(m_state.mutex);
-                HT_ERRORF("Maintenance Task '%s' failed, will retry in %u milliseconds ...",
-                          task->description().c_str(), task->get_retry_delay());
+                HT_ERRORF("Maintenance Task '%s' failed, will retry in %u "
+                        "milliseconds ...", task->description().c_str(),
+                        task->get_retry_delay());
                 boost::xtime_get(&task->start_time, boost::TIME_UTC_);
                 task->start_time.sec += task->get_retry_delay() / 1000;
                 m_state.queue.push(task);
