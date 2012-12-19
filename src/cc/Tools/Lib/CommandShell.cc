@@ -99,7 +99,11 @@ CommandShell::CommandShell(const String &program_name,
       m_no_prompt(false), m_cont(false), m_line_read(0), m_notify(false),
       m_has_cmd_file(false), m_has_cmd_exec(false) {
 
-  ms_history_file = (String)getenv("HOME") + "/." + m_program_name + "_history";
+  const char *home = getenv("HOME");
+  if (home)
+    ms_history_file = (String)home + "/." + m_program_name + "_history";
+  else
+    ms_history_file = (String)"." + m_program_name + "_history";
 
   m_batch_mode = m_props->has("batch");
   if (m_batch_mode)
