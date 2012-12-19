@@ -344,6 +344,9 @@ public:
     time_interval.second = end;
   }
 
+  // checks if this ScanSpec is valid; if not it will throw an exception
+  void throw_if_invalid() const;
+
   int32_t row_limit;
   int32_t cell_limit;
   int32_t cell_limit_per_family;
