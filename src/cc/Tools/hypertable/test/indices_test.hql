@@ -565,3 +565,8 @@ INSERT INTO t VALUES ('r1', 'join:a1', 'value 1');
 INSERT INTO t VALUES ('r2', 'join:a2', 'value 2');
 INSERT INTO t VALUES ('r3', 'join:b1', 'value 3');
 SELECT join:a1 FROM t WHERE VALUE REGEXP 'v';
+
+# issue 989
+CREATE TABLE badidea (c COUNTER, INDEX c);
+CREATE TABLE badidea (c COUNTER, QUALIFIER INDEX c);
+
