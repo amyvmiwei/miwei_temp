@@ -273,12 +273,16 @@ void Range::load_cell_stores(Metadata *metadata) {
       HT_INFOF("Loading CellStore %s", csvec[i].c_str());
 
       try {
-        cellstore = CellStoreFactory::open(file_basename + csvec[i], m_metalog_entity->spec.start_row, m_metalog_entity->spec.end_row);
+        cellstore = CellStoreFactory::open(file_basename + csvec[i],
+                m_metalog_entity->spec.start_row,
+                m_metalog_entity->spec.end_row);
       }
       catch (Exception &e) {
+        // issue 986: mapr returns IO_ERROR if CellStore does not exist
         if (skip_not_found &&
             (e.code() == Error::DFSBROKER_FILE_NOT_FOUND ||
-             e.code() == Error::DFSBROKER_BAD_FILENAME)) {
+             e.code() == Error::DFSBROKER_BAD_FILENAME ||
+             e.code() == Error::DFSBROKER_IO_ERROR)) {
           HT_WARNF("CellStore file '%s' not found, skipping", csvec[i].c_str());
           continue;
         }
