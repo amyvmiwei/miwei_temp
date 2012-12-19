@@ -164,9 +164,10 @@ class LocationThread
         delete scanner;
 
         (*m_progress) += 1;
-        // ignore error if RS_METRICS is empty
-        if (!found && table_name != "sys/RS_METRICS"
-                && previous_end == "" && m_ranges[i].endrow == "\xff\xff") {
+        // ignore error if the table is empty
+        if (!found
+            && (previous_end != ""
+              || m_ranges[i].endrow != "\xff\xff")) {
           add_error(format("Table %s: Range [%s..%s] was not found",
                       table_name.c_str(), previous_end.c_str(),
                       m_ranges[i].endrow.c_str()));
