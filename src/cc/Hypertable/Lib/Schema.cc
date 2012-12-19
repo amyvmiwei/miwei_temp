@@ -502,76 +502,84 @@ void Schema::set_access_group_parameter(const char *param, const char *value) {
 
 
 void Schema::set_column_family_parameter(const char *param, const char *value) {
-  if (m_open_column_family == 0)
+  if (m_open_column_family == 0) {
     set_error_string((String)"Unable to set ColumnFamily parameter '" + param
                       + "', column family not open");
-  else {
-    if (!strcasecmp(param, "Name"))
-      m_open_column_family->name = value;
-    else if (!strcasecmp(param, "ttl")) {
-      long long secs = strtoll(value, 0, 10);
-      m_open_column_family->ttl = (time_t)secs;
-    }
-    else if (!strcasecmp(param, "deleted")) {
-      if (!strcasecmp(value, "true"))
-        m_open_column_family->deleted = true;
-      else
-        m_open_column_family->deleted = false;
-    }
-    else if (!strcasecmp(param, "renamed")) {
-      if (!strcasecmp(value, "true"))
-        m_open_column_family->renamed = true;
-      else
-        m_open_column_family->renamed = false;
-    }
-    else if (!strcasecmp(param, "NewName")) {
-      m_open_column_family->new_name = value;
-    }
-    else if (!strcasecmp(param, "Index")) {
-      if (!strcasecmp(value, "true"))
-        m_open_column_family->has_index = true;
-      else
-        m_open_column_family->has_index = false;
-    }
-    else if (!strcasecmp(param, "QualifierIndex")) {
-      if (!strcasecmp(value, "true"))
-        m_open_column_family->has_qualifier_index = true;
-      else
-        m_open_column_family->has_qualifier_index = false;
-    }
-    else if (!strcasecmp(param, "MaxVersions")) {
-      m_open_column_family->max_versions = atoi(value);
-      if (m_open_column_family->max_versions == 0)
-        set_error_string((String)"Invalid value (" + value
-                          + ") for MaxVersions");
-    }
-    else if (!strcasecmp(param, "TimeOrder")) {
-      if (!strcasecmp(value, "desc"))
-        m_open_column_family->time_order_desc = true;
-      else
-        m_open_column_family->time_order_desc = false;
-    }
-    else if (!strcasecmp(param, "Counter")) {
-      if (!strcasecmp(value, "true"))
-        m_open_column_family->counter = true;
-      else
-        m_open_column_family->counter = false;
-    }
-    else if (!strcasecmp(param, "id")) {
-      m_open_column_family->id = atoi(value);
-      if (m_open_column_family->id == 0)
-        set_error_string((String)"Invalid value (" + value
-                          + ") for ColumnFamily id attribute");
-      if (m_open_column_family->id > m_max_column_family_id)
-        m_max_column_family_id = m_open_column_family->id;
-    }
-    else if (!strcasecmp(param, "Generation")) {
-      m_open_column_family->generation = atoi(value);
-      if (m_open_column_family->generation == 0)
-        m_need_id_assignment = true;
-    }
+    return;
+  }
+
+  if (!strcasecmp(param, "Name"))
+    m_open_column_family->name = value;
+  else if (!strcasecmp(param, "ttl")) {
+    long long secs = strtoll(value, 0, 10);
+    m_open_column_family->ttl = (time_t)secs;
+  }
+  else if (!strcasecmp(param, "deleted")) {
+    if (!strcasecmp(value, "true"))
+      m_open_column_family->deleted = true;
     else
-      set_error_string(format("Invalid ColumnFamily parameter '%s'", param));
+      m_open_column_family->deleted = false;
+  }
+  else if (!strcasecmp(param, "renamed")) {
+    if (!strcasecmp(value, "true"))
+      m_open_column_family->renamed = true;
+    else
+      m_open_column_family->renamed = false;
+  }
+  else if (!strcasecmp(param, "NewName")) {
+    m_open_column_family->new_name = value;
+  }
+  else if (!strcasecmp(param, "Index")) {
+    if (!strcasecmp(value, "true"))
+      m_open_column_family->has_index = true;
+    else
+      m_open_column_family->has_index = false;
+  }
+  else if (!strcasecmp(param, "QualifierIndex")) {
+    if (!strcasecmp(value, "true"))
+      m_open_column_family->has_qualifier_index = true;
+    else
+      m_open_column_family->has_qualifier_index = false;
+  }
+  else if (!strcasecmp(param, "MaxVersions")) {
+    m_open_column_family->max_versions = atoi(value);
+    if (m_open_column_family->max_versions == 0)
+      set_error_string((String)"Invalid value (" + value
+                        + ") for MaxVersions");
+  }
+  else if (!strcasecmp(param, "TimeOrder")) {
+    if (!strcasecmp(value, "desc"))
+      m_open_column_family->time_order_desc = true;
+    else
+      m_open_column_family->time_order_desc = false;
+  }
+  else if (!strcasecmp(param, "Counter")) {
+    if (!strcasecmp(value, "true"))
+      m_open_column_family->counter = true;
+    else
+      m_open_column_family->counter = false;
+  }
+  else if (!strcasecmp(param, "id")) {
+    m_open_column_family->id = atoi(value);
+    if (m_open_column_family->id == 0)
+      set_error_string((String)"Invalid value (" + value
+                        + ") for ColumnFamily id attribute");
+    if (m_open_column_family->id > m_max_column_family_id)
+      m_max_column_family_id = m_open_column_family->id;
+  }
+  else if (!strcasecmp(param, "Generation")) {
+    m_open_column_family->generation = atoi(value);
+    if (m_open_column_family->generation == 0)
+      m_need_id_assignment = true;
+  }
+  else
+    set_error_string(format("Invalid ColumnFamily parameter '%s'", param));
+
+  if (m_open_column_family->counter
+      && (m_open_column_family->has_index
+        || m_open_column_family->has_qualifier_index)) {
+    m_error_string = String("Column family '") + m_open_column_family->name
+        + "' is a COUNTER and therefore cannot have indices";
   }
 }
 
@@ -899,6 +907,12 @@ bool Schema::add_column_family(ColumnFamily *cf) {
   if (ag_iter == m_access_group_map.end()) {
     m_error_string = String("Invalid access group '") + cf->ag
         + "' for column family '" + cf->name + "'";
+    return false;
+  }
+
+  if (cf->counter && (cf->has_index || cf->has_qualifier_index)) {
+    m_error_string = String("Column family '") + cf->name
+        + "' is a COUNTER and therefore cannot have indices";
     return false;
   }
 
