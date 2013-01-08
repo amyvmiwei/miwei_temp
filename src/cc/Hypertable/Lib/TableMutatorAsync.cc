@@ -40,7 +40,7 @@ extern "C" {
 using namespace Hypertable;
 using namespace Hypertable::Config;
 
-void TableMutatorAsync::handle_send_exceptions() {
+void TableMutatorAsync::handle_send_exceptions(const String& info) {
   try {
     throw;
   }
@@ -50,14 +50,14 @@ void TableMutatorAsync::handle_send_exceptions() {
       m_table->refresh();
     throw;
   }
-  catch (std::bad_alloc &e) {
-    HT_ERROR("caught bad_alloc here");
+  catch (std::bad_alloc&) {
+    HT_ERRORF("caught bad_alloc here, %s", info.c_str());
   }
   catch (std::exception &e) {
-    HT_ERRORF("caught std::exception: %s", e.what());
+    HT_ERRORF("caught std::exception: %s, %s", e.what(), info.c_str());
   }
   catch (...) {
-    HT_ERROR("caught unknown exception here");
+    HT_ERRORF("caught unknown exception here, %s", info.c_str());
   }
 }
 
@@ -270,7 +270,14 @@ TableMutatorAsync::set(const KeySpec &key, const void *value,
       }
     }
     catch (...) {
-      handle_send_exceptions();
+      handle_send_exceptions(
+        format("row=%s, cf=%s, cq=%s, value_len=%d (%s:%d)",
+        (const char*)key.row,
+        key.column_family,
+        key.column_qualifier ? key.column_qualifier : "-",
+        value_len,
+        __FILE__,
+        __LINE__));
       throw;
     }
   } // ScopedLock
@@ -306,19 +313,23 @@ TableMutatorAsync::update_without_index(const Cell &cell)
   k.timestamp = cell.timestamp;
   k.revision = cell.revision;
 
-  size_t incr_mem = 20 + row_key_len + column_qualifier_len;
-  m_current_buffer->set(k, cell.value, cell.value_len, incr_mem);
-  m_memory_used += incr_mem;
+  if (k.flag != FLAG_INSERT) {
+    size_t incr_mem = 20 + k.row_len + k.column_qualifier_len;
+    m_current_buffer->set_delete(k, incr_mem);
+    m_memory_used += incr_mem;
+  }
+  else {
+    size_t incr_mem = 20 + k.row_len + k.column_qualifier_len
+      + cell.value_len;
+    m_current_buffer->set(k, cell.value, cell.value_len, incr_mem);
+    m_memory_used += incr_mem;
+  }
 }
 
 void
 TableMutatorAsync::update_without_index(Key &full_key, const Cell &cell)
 {
-  // assuming all inserts for now
-  size_t incr_mem = 20 + full_key.row_len
-          + (cell.column_qualifier ? strlen(cell.column_qualifier) : 0);
-  m_current_buffer->set(full_key, cell.value, cell.value_len, incr_mem);
-  m_memory_used += incr_mem;
+  update_without_index(full_key, cell.value, cell.value_len);
 }
 
 void
@@ -379,7 +390,14 @@ TableMutatorAsync::set_cells(Cells::const_iterator it,
       }
     }
     catch (...) {
-      handle_send_exceptions();
+      handle_send_exceptions(
+        format("row=%s, cf=%s, cq=%s, value_len=%d (%s:%d)",
+        it->row_key,
+        it->column_family,
+        it->column_qualifier ? it->column_qualifier : "-",
+        it->value_len,
+        __FILE__,
+        __LINE__));
       throw;
     }
   } // ScopedLock
@@ -417,7 +435,13 @@ void TableMutatorAsync::set_delete(const KeySpec &key) {
       }
     }
     catch (...) {
-      handle_send_exceptions();
+      handle_send_exceptions(
+        format("row=%s, cf=%s, cq=%s (%s:%d)",
+        (const char*)key.row,
+        key.column_family,
+        key.column_qualifier ? key.column_qualifier : "-",
+        __FILE__,
+        __LINE__));
       throw;
     }
   } // ScopedLock
@@ -566,6 +590,9 @@ void TableMutatorAsync::do_sync() {
     table_identifier = m_table_identifier;
   }
 
+  uint32_t retry_count = 0;
+  bool retry_failed;
+
   // sync unsynced rangeservers
   try {
     TableMutatorSyncDispatchHandler sync_handler(m_comm, table_identifier, 
@@ -579,8 +606,6 @@ void TableMutatorAsync::do_sync() {
 
     if (!sync_handler.wait_for_completion()) {
       std::vector<TableMutatorSyncDispatchHandler::ErrorResult> errors;
-      uint32_t retry_count = 0;
-      bool retry_failed;
       do {
         bool do_refresh = false;
         retry_count++;
@@ -623,7 +648,11 @@ void TableMutatorAsync::do_sync() {
     throw;
   }
   catch (...) {
-    handle_send_exceptions();
+    handle_send_exceptions(
+      format("retry_count=%d (%s:%d)",
+      retry_count,
+      __FILE__,
+      __LINE__));
     throw;
   }
 }

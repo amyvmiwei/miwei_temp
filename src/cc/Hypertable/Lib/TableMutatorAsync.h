@@ -246,7 +246,7 @@ namespace Hypertable {
 
     void update_unsynced_rangeservers(const CommAddressSet &unsynced);
 
-    void handle_send_exceptions();
+    void handle_send_exceptions(const String& info);
 
     bool mutated() {
       ScopedLock lock(m_member_mutex);
