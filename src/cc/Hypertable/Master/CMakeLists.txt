@@ -91,7 +91,7 @@ set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hypertable/Master/tests")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hypertable/Master")
 
 add_executable(htgc htgc.cc GcWorker.cc)
-target_link_libraries(htgc HyperDfsBroker Hypertable ${RRD_LIBRARIES})
+target_link_libraries(htgc HyperMaster HyperDfsBroker Hypertable ${RRD_LIBRARIES})
 
 set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hypertable/Master/tests")
 configure_file(${SRC_DIR}/balance_plan_authority_test.golden
