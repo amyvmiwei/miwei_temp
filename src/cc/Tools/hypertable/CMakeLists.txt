@@ -32,6 +32,7 @@ target_link_libraries(hypertable Hypertable)
 add_executable(hypertable_test test/hypertable_test.cc ${TEST_DEPENDENCIES})
 target_link_libraries(hypertable_test HyperComm)
 
+
 configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
                ${DST_DIR}/hypertable.cfg)
 configure_file(${SRC_DIR}/test/offset_test.golden
@@ -62,7 +63,8 @@ configure_file(${SRC_DIR}/test/foobar.tsv
                ${DST_DIR}/foobar.tsv)
 configure_file(${SRC_DIR}/test/single_cell_test.tsv
                ${DST_DIR}/single_cell_test.tsv)
-add_test(Hypertable-shell hypertable_test)
+add_test(Hypertable-shell env INSTALL_DIR=${INSTALL_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/hypertable_test.sh hypertable_test)
 
 # hypertable_ldi_select_test
 add_executable(hypertable_ldi_select_test test/hypertable_ldi_select_test.cc ${TEST_DEPENDENCIES})
