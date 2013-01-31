@@ -96,7 +96,7 @@ namespace Hyperspace {
     uint32_t m_id;
   };
 
-  /*
+  /**
    * %Hyperspace session.  Provides the API for %Hyperspace, a namespace and
    * lock service.  This service is modeled after
    * <a href="http://labs.google.com/papers/chubby.html">Chubby</a>.

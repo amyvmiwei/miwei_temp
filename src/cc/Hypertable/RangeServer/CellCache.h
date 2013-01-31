@@ -68,11 +68,7 @@ namespace Hypertable {
 
     virtual void add_counter(const Key &key, const ByteString value);
 
-    virtual const char *get_split_row();
-
-    virtual void get_split_rows(std::vector<std::string> &split_rows);
-
-    virtual void get_rows(std::vector<std::string> &rows);
+    virtual void split_row_estimate_data(SplitRowDataMapT &split_row_data);
 
     virtual int64_t get_total_entries() { return m_cell_map.size(); }
 

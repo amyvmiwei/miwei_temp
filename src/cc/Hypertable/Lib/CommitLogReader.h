@@ -45,7 +45,13 @@ namespace Hypertable {
 
   public:
     CommitLogReader(FilesystemPtr &fs, const String &log_dir);
-    virtual ~CommitLogReader();
+
+    CommitLogReader(FilesystemPtr &fs, const String &log_dir,
+            const std::vector<uint32_t> &fragment_filter);
+
+    virtual ~CommitLogReader() { }
+
+    void get_init_fragment_ids(std::vector<uint32_t> &ids);
 
     bool next_raw_block(CommitLogBlockInfo *,
                         BlockCompressionHeaderCommitLog *);
@@ -57,7 +63,14 @@ namespace Hypertable {
       m_block_buffer.clear();
       m_revision = TIMESTAMP_MIN;
       m_latest_revision = TIMESTAMP_MIN;
+      m_error_map.clear();
     }
+
+    const std::map<uint32_t, uint32_t> &get_error_map() { return m_error_map; }
+
+    String last_fragment_fname() { return m_last_fragment_fname; }
+
+    int32_t last_fragment_id() { return m_last_fragment_id; }
 
   private:
 
@@ -74,6 +87,12 @@ namespace Hypertable {
     CompressorMap          m_compressor_map;
     uint16_t               m_compressor_type;
     BlockCompressionCodec *m_compressor;
+    std::set<uint64_t>     m_fragment_filter;
+    std::vector<uint32_t>  m_init_fragments;
+    std::map<uint32_t, uint32_t> m_error_map;
+    String                 m_last_fragment_fname;
+    int32_t                m_last_fragment_id;
+    bool                   m_verbose;
   };
 
   typedef intrusive_ptr<CommitLogReader> CommitLogReaderPtr;

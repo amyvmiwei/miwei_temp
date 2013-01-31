@@ -49,7 +49,8 @@ void TableMutatorAsyncHandler::run() {
   // and this method goes out of scope
   TableMutatorAsyncScatterBufferPtr buffer =
       m_mutator->get_outstanding_buffer(m_scatter_buffer);
-  HT_ASSERT(buffer);
+  if (!buffer)
+    HT_FATALF("Unable to locate buffer %d from mutator %p", (int)m_scatter_buffer, (void *)m_mutator);
   buffer->finish();
 }
 

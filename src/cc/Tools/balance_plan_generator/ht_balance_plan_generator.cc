@@ -39,7 +39,7 @@ extern "C" {
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/BalancePlan.h"
-#include "Hypertable/Master/LoadBalancerBasicDistributeLoad.h"
+#include "Hypertable/Master/BalanceAlgorithmLoad.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -91,7 +91,6 @@ void create_table(String &ns, String &tablename, String &rs_metrics_file);
 int main(int argc, char **argv) {
   String ns_str, table_str, load_balancer, rs_metrics_file;
   String balance_plan_file;
-  PropertiesPtr props = new Properties();
   System::initialize(System::locate_install_dir(argv[0]));
 
   try {
@@ -123,7 +122,8 @@ int main(int argc, char **argv) {
     BalancePlanPtr plan = new BalancePlan;
     ContextPtr context = new Context;
     context->rs_metrics_table = rs_metrics;
-    generate_balance_plan(props, load_balancer, context, plan);
+    context->props = properties;
+    generate_balance_plan(context->props, load_balancer, context, plan);
     ostream *oo;
 
     if (balance_plan_file.size() == 0)
@@ -167,10 +167,9 @@ void generate_balance_plan(PropertiesPtr &props, const String &load_balancer,
   std::vector<RangeServerStatistics> range_server_stats;
   // TODO fill this vector; otherwise disk usage is not taken into account
 
-  double loadavg_threshold = get_f64("Hypertable.LoadBalancer.LoadavgThreshold");
-  LoadBalancerBasicDistributeLoad balancer(loadavg_threshold, 
-          range_server_stats, context);
-  balancer.compute_plan(plan);
+  BalanceAlgorithmLoad balancer(context, range_server_stats);
+  std::vector<RangeServerConnectionPtr> balanced;
+  balancer.compute_plan(plan, balanced);
 }
 
 

@@ -31,7 +31,7 @@ for((ii=0; $ii<${ITERATIONS}; ii=$ii+1)) do
   echo "Running '${cmd}'"
   echo "================="
   `${cmd}  2>&1 >> future_mutator_cancel_test.out`
-  if [ $? != 0 ] ; then
+  if [ $? -ne 0 ] ; then
     echo "${cmd} failed got error $?" 
     exit 1
   fi

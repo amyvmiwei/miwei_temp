@@ -19,7 +19,7 @@
 
 # hypertable - command interpreter
 add_executable(ht_balance_plan_generator ht_balance_plan_generator.cc)
-target_link_libraries(ht_balance_plan_generator Hypertable HyperMaster)
+target_link_libraries(ht_balance_plan_generator HyperMaster HyperRanger Hypertable)
 
 if (NOT HT_COMPONENT_INSTALL)
   install (TARGETS ht_balance_plan_generator RUNTIME DESTINATION bin)

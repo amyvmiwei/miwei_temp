@@ -42,6 +42,28 @@ namespace Hypertable {
 
   typedef hash_map<String, ProxyAddressInfo> ProxyMapT;
 
+  /**
+   * ProxyMap is a class that maintains mappings from proxy name to IP address.
+   * Hypertable uses <i>proxy names</i> (e.g. "rs1") to refer to servers so
+   * that the system can continue to operate properly even when servers are
+   * reassigned IP addresses, such as starting and stopping Hypertable running
+   * on EBS volumes in AWS EC2.  There is a single ProxyMap associated with
+   * each Comm layer and one of the connected participants is designated as
+   * the <i>proxy master</i> by setting the global variable
+   * <code>ReactorFactory::proxy_master</code> to <i>true</i>.
+   * In Hypertable, the Master is designated as the proxy master.  The proxy
+   * master is responsible for assigning proxy names which are just mnemonic
+   * strings (e.g. "rs1").  Whenever a server connects to the proxy master,
+   * the proxy master will either assign the newly connected server a proxy
+   * name or obtain it via a handshake and should then update the proxy map with
+   * the <i>{proxy name, IP address}</i> association and will propagate the new
+   * proxy map information to all connected participants.  Once this is
+   * complete, all connected participants and send and receive messages to any
+   * participant using its proxy name.  The CommAddress class is an abstraction
+   * that can hold either a proxy name or an IP address and used to identify
+   * the destination of a message.
+   *
+   */
   class ProxyMap {
 
   public:
@@ -65,6 +87,7 @@ namespace Hypertable {
     void invalidate(const String &proxy, const InetAddr &addr,
 		    ProxyMapT &invalidated_mappings);
 
+    /// 
     Mutex     m_mutex;
     ProxyMapT m_map;
     SockAddrMap<String> m_reverse_map;

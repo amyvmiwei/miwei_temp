@@ -41,7 +41,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 
 #include "IOHandlerDatagram.h"
-#include "HandlerMap.h"
+#include "ReactorRunner.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -54,6 +54,7 @@ IOHandlerDatagram::handle_event(struct pollfd *event, time_t) {
 
   if (event->revents & POLLOUT) {
     if ((error = handle_write_readiness()) != Error::OK) {
+      ReactorRunner::handler_map->decomission_handler(this);
       deliver_event(new Event(Event::ERROR, m_addr, error));
       return true;
     }
@@ -69,7 +70,7 @@ IOHandlerDatagram::handle_event(struct pollfd *event, time_t) {
 
       Event *event = new Event(Event::MESSAGE, addr, Error::OK);
 
-      event->load_header(m_sd, m_message, (size_t)m_message[1]);
+      event->load_message_header(m_message, (size_t)m_message[1]);
 
       payload_len = nread - (ssize_t)event->header.header_len;
       event->payload_len = payload_len;
@@ -84,7 +85,7 @@ IOHandlerDatagram::handle_event(struct pollfd *event, time_t) {
       HT_ERRORF("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
       deliver_event(new Event(Event::ERROR, addr,
                               Error::COMM_RECEIVE_ERROR));
-      return true;
+      ReactorRunner::handler_map->decomission_handler(this);
     }
 
     return false;
@@ -94,6 +95,7 @@ IOHandlerDatagram::handle_event(struct pollfd *event, time_t) {
     HT_WARN_OUT << "Received EPOLLERR on descriptor " << m_sd << " ("
                 << m_addr.format() << ")" << HT_END;
     deliver_event(new Event(Event::ERROR, m_addr, Error::COMM_POLL_ERROR));
+    ReactorRunner::handler_map->decomission_handler(this);
     return true;
   }
 
@@ -113,6 +115,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event, time_t) {
   if (event->events & EPOLLOUT) {
     if ((error = handle_write_readiness()) != Error::OK) {
       deliver_event(new Event(Event::ERROR, m_addr, error));
+      ReactorRunner::handler_map->decomission_handler(this);
       return true;
     }
   }
@@ -128,7 +131,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event, time_t) {
       Event *event = new Event(Event::MESSAGE, addr, Error::OK);
       
       try {
-        event->load_header(m_sd, m_message, (size_t)m_message[1]);
+        event->load_message_header(m_message, (size_t)m_message[1]);
       }
       catch (Hypertable::Exception &e) {
         HT_ERROR_OUT << e << " - from " << addr.format() << HT_END;
@@ -149,6 +152,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event, time_t) {
       HT_ERRORF("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
       deliver_event(new Event(Event::ERROR, addr,
                               Error::COMM_RECEIVE_ERROR));
+      ReactorRunner::handler_map->decomission_handler(this);
       return true;
     }
 
@@ -159,6 +163,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event, time_t) {
     HT_WARN_OUT << "Received EPOLLERR on descriptor " << m_sd << " ("
                 << m_addr.format() << ")" << HT_END;
     deliver_event(new Event(Event::ERROR, m_addr, Error::COMM_POLL_ERROR));
+    ReactorRunner::handler_map->decomission_handler(this);
     return true;
   }
 
@@ -176,6 +181,7 @@ bool IOHandlerDatagram::handle_event(port_event_t *event, time_t) {
     if (event->portev_events == POLLOUT) {
       if ((error = handle_write_readiness()) != Error::OK) {
 	deliver_event(new Event(Event::ERROR, m_addr, error));
+        ReactorRunner::handler_map->decomission_handler(this);
 	return true;
       }
     }
@@ -190,7 +196,7 @@ bool IOHandlerDatagram::handle_event(port_event_t *event, time_t) {
 
 	Event *event = new Event(Event::MESSAGE, addr, Error::OK);
 
-	event->load_header(m_sd, m_message, (size_t)m_message[1]);
+	event->load_message_header(m_message, (size_t)m_message[1]);
 
 	payload_len = nread - (ssize_t)event->header.header_len;
 	event->payload_len = payload_len;
@@ -205,6 +211,7 @@ bool IOHandlerDatagram::handle_event(port_event_t *event, time_t) {
 	HT_ERRORF("FileUtils::recvfrom(%d) failure : %s", m_sd, strerror(errno));
 	deliver_event(new Event(Event::ERROR, addr,
 				Error::COMM_RECEIVE_ERROR));
+        ReactorRunner::handler_map->decomission_handler(this);
 	return true;
       }
 
@@ -215,18 +222,21 @@ bool IOHandlerDatagram::handle_event(port_event_t *event, time_t) {
       HT_WARN_OUT << "Received EPOLLERR on descriptor " << m_sd << " ("
 		  << m_addr.format() << ")" << HT_END;
       deliver_event(new Event(Event::ERROR, m_addr, Error::COMM_POLL_ERROR));
+      ReactorRunner::handler_map->decomission_handler(this);
       return true;
     }
 
     if (event->portev_events == POLLREMOVE) {
       HT_DEBUGF("Received POLLREMOVE on descriptor %d (%s:%d)", m_sd,
                 inet_ntoa(m_addr.sin_addr), ntohs(m_addr.sin_port));
+      ReactorRunner::handler_map->decomission_handler(this);
       return true;
     }
     
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+    ReactorRunner::handler_map->decomission_handler(this);
     return true;
   }
 
@@ -250,6 +260,7 @@ bool IOHandlerDatagram::handle_event(struct kevent *event, time_t) {
   if (event->filter == EVFILT_WRITE) {
     if ((error = handle_write_readiness()) != Error::OK) {
       deliver_event(new Event(Event::ERROR, m_addr, error));
+      ReactorRunner::handler_map->decomission_handler(this);
       return true;
     }
   }
@@ -266,12 +277,13 @@ bool IOHandlerDatagram::handle_event(struct kevent *event, time_t) {
                 (int)available, strerror(errno));
       deliver_event(new Event(Event::ERROR, addr,
                               Error::COMM_RECEIVE_ERROR));
+      ReactorRunner::handler_map->decomission_handler(this);
       return true;
     }
 
     Event *event = new Event(Event::MESSAGE, addr, Error::OK);
 
-    event->load_header(m_sd, m_message, (size_t)m_message[1]);
+    event->load_message_header(m_message, (size_t)m_message[1]);
 
     payload_len = nread - (ssize_t)event->header.header_len;
     event->payload_len = payload_len;
@@ -280,8 +292,6 @@ bool IOHandlerDatagram::handle_event(struct kevent *event, time_t) {
            payload_len);
 
     deliver_event( event );
-
-    return false;
   }
 
   return false;
@@ -334,7 +344,6 @@ int IOHandlerDatagram::send_message(const InetAddr &addr, CommBufPtr &cbp) {
 
   return Error::OK;
 }
-
 
 
 int IOHandlerDatagram::flush_send_queue() {

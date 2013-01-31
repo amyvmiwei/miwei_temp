@@ -29,6 +29,7 @@ extern "C" {
 
 #include <boost/algorithm/string.hpp>
 
+#include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ReactorFactory.h"
 

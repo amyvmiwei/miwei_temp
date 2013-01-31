@@ -159,8 +159,14 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       m_range_server->load_range(m_addr, *table, range, range_state, false);
 
-      m_range_server->acknowledge_load(m_addr, *table, range);
-
+      QualifiedRangeSpec qrs(*table, range);
+      vector<QualifiedRangeSpec *> range_vec;
+      map<QualifiedRangeSpec, int> response_map;
+      range_vec.push_back(&qrs);
+      m_range_server->acknowledge_load(m_addr, range_vec, response_map);
+      map<QualifiedRangeSpec, int>::iterator it = response_map.begin();
+      if (it->second != Error::OK)
+        HT_THROW(it->second, "Problem acknowledging load range");
     }
     else if (state.command == COMMAND_UPDATE) {
       TestSource *tsource = 0;
@@ -326,25 +332,9 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
                  (Protocol::string_format_message(event)));
 
     }
-    else if (state.command == COMMAND_REPLAY_BEGIN) {
-      // fix me!!  added metadata boolean
-      m_range_server->replay_begin(m_addr, false, &sync_handler);
-      if (!sync_handler.wait_for_reply(event))
-        HT_THROW(Protocol::response_code(event),
-                 (Protocol::string_format_message(event)));
-    }
-    else if (state.command == COMMAND_REPLAY_LOG) {
-      cout << "Not implemented." << endl;
-    }
     else if (state.command == COMMAND_DUMP) {
       m_range_server->dump(m_addr, state.output_file, state.nokeys);
       cout << "success" << endl;
-    }
-    else if (state.command == COMMAND_REPLAY_COMMIT) {
-      m_range_server->replay_commit(m_addr, &sync_handler);
-      if (!sync_handler.wait_for_reply(event))
-        HT_THROW(Protocol::response_code(event),
-                 (Protocol::string_format_message(event)));
     }
     else if (state.command == COMMAND_HELP) {
       const char **text = HqlHelpText::get(state.str);

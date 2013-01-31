@@ -24,6 +24,7 @@
 
 #include "AsyncComm/CommAddress.h"
 
+#include "Hypertable/Lib/KeySpec.h"
 #include "Hypertable/Lib/StatsRangeServer.h"
 
 namespace Hypertable {

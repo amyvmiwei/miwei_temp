@@ -39,12 +39,12 @@ using namespace Hypertable;
  *
  */
 void RequestHandlerCreateScanner::run() {
-  ResponseCallbackCreateScanner cb(m_comm, m_event_ptr);
+  ResponseCallbackCreateScanner cb(m_comm, m_event);
   TableIdentifier table;
   RangeSpec range;
   ScanSpec scan_spec;
-  const uint8_t *decode_ptr = m_event_ptr->payload;
-  size_t decode_remain = m_event_ptr->payload_len;
+  const uint8_t *decode_ptr = m_event->payload;
+  size_t decode_remain = m_event->payload_len;
   const uint8_t *base;
   QueryCache::Key key;
 

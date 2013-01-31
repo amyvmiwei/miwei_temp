@@ -45,9 +45,9 @@ namespace Hypertable {
      * @param event_ptr smart pointer to the event that generated the request
      */
     ResponseCallback(Comm *comm, EventPtr &event_ptr)
-      : m_comm(comm), m_event_ptr(event_ptr) { return; }
+      : m_comm(comm), m_event(event_ptr) { return; }
 
-    ResponseCallback() : m_comm(0), m_event_ptr(0) { return; }
+    ResponseCallback() : m_comm(0), m_event(0) { return; }
 
     virtual ~ResponseCallback() { return; }
 
@@ -75,7 +75,7 @@ namespace Hypertable {
      * @param addr reference to address structure to hold result
      */
     void get_address(struct sockaddr_in &addr) {
-      memcpy(&addr, &m_event_ptr->addr, sizeof(addr));
+      memcpy(&addr, &m_event->addr, sizeof(addr));
     }
 
     /** Gets the remote address of the client.
@@ -83,14 +83,14 @@ namespace Hypertable {
      * @return remote address
      */
     const InetAddr get_address() const {
-      return m_event_ptr->addr;
+      return m_event->addr;
     }
 
-    EventPtr &get_event() { return m_event_ptr; }
+    EventPtr &get_event() { return m_event; }
 
   protected:
     Comm          *m_comm;
-    EventPtr       m_event_ptr;
+    EventPtr       m_event;
   };
 
 } // namespace Hypertable

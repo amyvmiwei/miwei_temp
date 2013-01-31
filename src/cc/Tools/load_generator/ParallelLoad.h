@@ -99,7 +99,14 @@ namespace Hypertable {
     }
 
     ParallelStateRec(const ParallelStateRec& other) {
+      total_cells = other.total_cells;
+      total_bytes = other.total_bytes;
       finished = other.finished;
+      cum_latency = other.cum_latency;
+      cum_sq_latency = other.cum_sq_latency;
+      min_latency = other.min_latency;
+      max_latency = other.max_latency;
+      elapsed_time = other.elapsed_time;
     }
 
     Mutex mutex;

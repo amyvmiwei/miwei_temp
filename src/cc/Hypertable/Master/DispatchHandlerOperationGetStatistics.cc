@@ -52,7 +52,7 @@ void DispatchHandlerOperationGetStatistics::start(const String &location) {
 }
 
 
-void DispatchHandlerOperationGetStatistics::result_callback(EventPtr &event) {
+void DispatchHandlerOperationGetStatistics::result_callback(const EventPtr &event) {
   int error;
   int64_t now = get_ts64();
   SockAddrMap<RangeServerStatistics *>::iterator iter = m_index.find(event->addr);

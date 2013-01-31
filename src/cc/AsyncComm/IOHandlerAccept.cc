@@ -42,6 +42,7 @@ extern "C" {
 #include "IOHandlerAccept.h"
 #include "IOHandlerData.h"
 #include "ReactorFactory.h"
+#include "ReactorRunner.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -51,6 +52,7 @@ bool
 IOHandlerAccept::handle_event(struct pollfd *event, time_t arival_time) {
   if (event->revents & POLLIN)
     return handle_incoming_connection();
+  ReactorRunner::handler_map->decomission_handler(this);
   return true;
 }
 
@@ -62,6 +64,7 @@ bool IOHandlerAccept::handle_event(struct kevent *event, time_t) {
   //DisplayEvent(event);
   if (event->filter == EVFILT_READ)
     return handle_incoming_connection();
+  ReactorRunner::handler_map->decomission_handler(this);
   return true;
 }
 #elif defined(__linux__)
@@ -73,6 +76,7 @@ bool IOHandlerAccept::handle_event(struct epoll_event *event, time_t) {
 bool IOHandlerAccept::handle_event(port_event_t *event, time_t) {
   if (event->portev_events == POLLIN)
     return handle_incoming_connection();
+  ReactorRunner::handler_map->decomission_handler(this);
   return true;
 }
 #else
@@ -86,7 +90,7 @@ bool IOHandlerAccept::handle_incoming_connection() {
   struct sockaddr_in addr;
   socklen_t addr_len = sizeof(sockaddr_in);
   int one = 1;
-  IOHandlerData *data_handler;
+  IOHandlerData *handler;
 
   while (true) {
 
@@ -123,19 +127,18 @@ bool IOHandlerAccept::handle_incoming_connection() {
       HT_WARNF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
 
     DispatchHandlerPtr dhp;
-    m_handler_factory_ptr->get_instance(dhp);
+    m_handler_factory->get_instance(dhp);
 
-    data_handler = new IOHandlerData(sd, addr, dhp, true);
+    handler = new IOHandlerData(sd, addr, dhp, true);
 
-    IOHandlerPtr handler(data_handler);
-    int32_t error = m_handler_map_ptr->insert_handler(data_handler);
+    int32_t error = m_handler_map->insert_handler(handler);
     if (error != Error::OK) {
       HT_ERRORF("Problem registering accepted connection in handler map - %s",
                 Error::get_text(error));
-      ::close(sd);
-      return false;
+      delete handler;
+      return true;
     }
-    data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
+    handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
 
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK));
   }

@@ -44,9 +44,10 @@ namespace Hypertable {
       bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0)  {
       init_from_trailer();
     }
-    CellStoreInfo() : cell_count(0), shadow_cache_ecr(TIMESTAMP_MAX), shadow_cache_hits(0),
-                      bloom_filter_accesses(0), bloom_filter_maybes(0), bloom_filter_fps(0),
-                      index_entries(0) { }
+    CellStoreInfo() : cell_count(0), shadow_cache_ecr(TIMESTAMP_MAX),
+                      shadow_cache_hits(0), bloom_filter_accesses(0),
+                      bloom_filter_maybes(0), bloom_filter_fps(0) { }
+
     void init_from_trailer() {
       int divisor = 0;
       try {
@@ -56,7 +57,6 @@ namespace Hypertable {
         timestamp_max = boost::any_cast<int64_t>(cs->get_trailer()->get("timestamp_max"));
         expirable_data = boost::any_cast<int64_t>(cs->get_trailer()->get("expirable_data"))
           / divisor ;
-        index_entries = (uint32_t)boost::any_cast<int64_t>(cs->get_trailer()->get("index_entries"));
       }
       catch (std::exception &e) {
         divisor = 0;
@@ -64,7 +64,6 @@ namespace Hypertable {
         timestamp_min = TIMESTAMP_MAX;
         timestamp_max = TIMESTAMP_MIN;
         expirable_data = 0;
-        index_entries = 0;
       }
       try {
         if (divisor) {
@@ -88,7 +87,6 @@ namespace Hypertable {
     uint32_t bloom_filter_accesses;
     uint32_t bloom_filter_maybes;
     uint32_t bloom_filter_fps;
-    uint32_t index_entries;
     int64_t timestamp_min;
     int64_t timestamp_max;
     int64_t expirable_data;

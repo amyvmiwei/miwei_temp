@@ -47,6 +47,7 @@ namespace Hypertable {
     bool get(const String &name, TableInfoPtr &info);
     void get(const TableIdentifier *table, TableInfoPtr &info);
     void set(const String &name, TableInfoPtr &info);
+    bool insert(const String &name, TableInfoPtr &info);
     void stage_range(const TableIdentifier *table, const RangeSpec *range_spec);
     void unstage_range(const TableIdentifier *table, const RangeSpec *range_spec);
     void add_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log);

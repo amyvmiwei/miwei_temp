@@ -59,8 +59,9 @@ namespace Hypertable {
     bool empty();
     void wake_up();
     void unblock(const String &name);
-    void remove_operation(int64_t hash_code);
+    void activate(const String &name);
     bool operation_complete(int64_t hash_code);
+    void state_description(String &output);
 
   private:
 

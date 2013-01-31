@@ -38,11 +38,11 @@ using namespace Serialization;
  *
  */
 void RequestHandlerMetadataSync::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
+  ResponseCallback cb(m_comm, m_event);
   const char *table_id;
   uint32_t flags, count;
-  const uint8_t *decode_ptr = m_event_ptr->payload;
-  size_t decode_remain = m_event_ptr->payload_len;
+  const uint8_t *decode_ptr = m_event->payload;
+  size_t decode_remain = m_event->payload_len;
   std::vector<const char *> columns;
 
   try {

@@ -60,7 +60,6 @@ void RangeState::decode(const uint8_t **bufp, size_t *remainp) {
     transfer_log = decode_vstr(bufp, remainp);
     split_point = decode_vstr(bufp, remainp);
     old_boundary_row = decode_vstr(bufp, remainp));
-
 }
 
 void RangeStateManaged::clear() {
@@ -74,16 +73,23 @@ void RangeStateManaged::decode(const uint8_t **bufp, size_t *remainp) {
   *this = *this;
 }
 
-std::ostream& Hypertable::operator<<(std::ostream &out, const RangeState &st) {
-  out <<"{RangeState: state=";
-
-  switch (st.state) {
-  case RangeState::STEADY: out <<"STEADY";              break;
-  case RangeState::SPLIT_LOG_INSTALLED: out <<"SLI";    break;
-  case RangeState::SPLIT_SHRUNK: out <<"SHRUNK";        break;
+String RangeState::get_text(uint8_t state) {
+  String str;
+  switch (state & ~RangeState::PHANTOM) {
+  case RangeState::STEADY: str = "STEADY";              break;
+  case RangeState::SPLIT_LOG_INSTALLED: str = "SPLIT_LOG_INSTALLED";    break;
+  case RangeState::SPLIT_SHRUNK: str = "SPLIT_SHRUNK";  break;
   default:
-    out <<"unknown ("<< st.state;
+    str = format("UNKNOWN(%d)", (int)state);
   }
+
+  if (state & RangeState::PHANTOM)
+    str += String("|PHANTOM");
+  return str;
+}
+
+std::ostream& Hypertable::operator<<(std::ostream &out, const RangeState &st) {
+  out <<"{RangeState: state=" << RangeState::get_text(st.state);
   out << " timestamp=" << st.timestamp;
   out <<" soft_limit="<< st.soft_limit;
   if (st.transfer_log)

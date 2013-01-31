@@ -32,6 +32,8 @@
 
 #include "Context.h"
 
+#include <set>
+
 namespace Hypertable {
 
   /**
@@ -42,7 +44,12 @@ namespace Hypertable {
 
   public:
 
-    struct Result {
+    class Result {
+    public:
+      Result(const String &loc) : location(loc) { }
+      bool operator<(const Result &other) const {
+        return location.compare(other.location) < 0;
+      }
       String location;
       int error;
       String msg;
@@ -54,13 +61,13 @@ namespace Hypertable {
 
     virtual void start(const String &location) = 0;
 
-    virtual void result_callback(EventPtr &event) { }
+    virtual void result_callback(const EventPtr &event) { }
 
     virtual void handle(EventPtr &event);
 
     bool wait_for_completion();
 
-    void get_results(std::vector<Result> &results);
+    void get_results(std::set<Result> &results);
 
     void process_events();
 
@@ -69,13 +76,21 @@ namespace Hypertable {
     RangeServerClient m_rsclient;
 
   private:
+
+    /** STL Strict Weak Ordering for comparing c-style strings. */
+    struct LtEventPtr {
+      bool operator()(const EventPtr &e1, const EventPtr &e2) const {
+        return e1->addr < e2->addr;
+      }
+    };
+
     Mutex m_mutex;
     boost::condition m_cond;
-    std::vector<EventPtr> m_events;
+    std::set<EventPtr, LtEventPtr> m_events;
     int m_outstanding;
     int m_error_count;
     StringSet m_locations;
-    std::vector<Result> m_results;
+    std::set<Result> m_results;
   };
 
   typedef intrusive_ptr<DispatchHandlerOperation> DispatchHandlerOperationPtr;

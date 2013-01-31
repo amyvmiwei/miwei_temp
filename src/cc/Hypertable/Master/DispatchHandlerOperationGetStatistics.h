@@ -37,7 +37,7 @@ namespace Hypertable {
     DispatchHandlerOperationGetStatistics(ContextPtr &context);
     void initialize(std::vector<RangeServerStatistics> &results);
     virtual void start(const String &location);
-    virtual void result_callback(EventPtr &event);
+    virtual void result_callback(const EventPtr &event);
 
   private:
     Timer m_timer;

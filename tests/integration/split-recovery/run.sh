@@ -35,6 +35,17 @@ stop_range_server() {
   fi
 }
 
+save_failure_state() {
+    local TEST_ID=$1
+    shift
+    mkdir failed-run-$TEST_ID
+    pstack `cat $HT_HOME/run/Hypertable.Master.pid` > failed-run-$TEST_ID/master.stack
+    cp rangeserver.output.$TEST_ID $HT_HOME/log/* failed-run-$TEST_ID
+    touch $HT_HOME/run/debug-op
+    sleep 60
+    cp $HT_HOME/run/op.output failed-run-$TEST_ID
+}
+
 set_tests() {
   for i in $@; do
     eval TEST_$i=1
@@ -47,23 +58,27 @@ run_test() {
   shift;
 
   if [ -z "$SKIP_START_SERVERS" ]; then
-    $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
-                                       --clear
+      stop_range_server
+      \rm -f $HT_HOME/run/Hypertable.RangeServer.pid
+      $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker --clear
   fi
 
-  stop_range_server
   $SCRIPT_DIR/rangeserver-launcher.sh $@ > rangeserver.output.$TEST_ID 2>&1 &
-  # give rangeserver time to get registered etc 
-  sleep 3;
+
+  set_start_vars Hypertable.RangeServer
+  wait_for_server_up rangeserver "$pidname"
+
   $HT_SHELL --batch < $SCRIPT_DIR/create-test-table.hql
   if [ $? != 0 ] ; then
     echo "Unable to create table 'split-test', exiting ..."
+    save_failure_state $TEST_ID
     exit 1
   fi
 
   $HT_SHELL --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=100K --batch < $SCRIPT_DIR/load.hql
   if [ $? != 0 ] ; then
     echo "Problem loading table 'split-test', exiting ..."
+    save_failure_state $TEST_ID
     exit 1
   fi
 
@@ -72,6 +87,7 @@ run_test() {
   $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql | grep -v "hypertable" > dbdump.$TEST_ID
   if [ $? != 0 ] ; then
     echo "Problem dumping table 'split-test', exiting ..."
+    save_failure_state $TEST_ID
     exit 1
   fi
 
@@ -85,10 +101,9 @@ run_test() {
     $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql | grep -v "hypertable" > dbdump.$TEST_ID.again
     if [ $? != 0 ] ; then
         echo "Problem dumping table 'split-test', exiting ..."
+	save_failure_state $TEST_ID
         exit 1
     fi
-    #exec 1>&-
-    #sleep 86400
   else
     echo "Test $TEST_ID PASSED." >> report.txt
   fi

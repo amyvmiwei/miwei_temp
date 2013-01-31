@@ -25,7 +25,7 @@
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
-#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ApplicationQueueInterface.h"
 #include "TableCache.h"
 #include "Schema.h"
 #include "RangeLocator.h"
@@ -41,7 +41,7 @@ namespace Hypertable {
 
     NamespaceCache(PropertiesPtr &props, RangeLocatorPtr &range_locator,
                    ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-                   ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap,
+                   ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap,
                    MasterClientPtr &master_client, TableCachePtr &table_cache,
                    uint32_t default_timeout_ms, Client *client);
 
@@ -65,7 +65,7 @@ namespace Hypertable {
     Comm                   *m_comm;
     ConnectionManagerPtr    m_conn_manager;
     Hyperspace::SessionPtr  m_hyperspace;
-    ApplicationQueuePtr     m_app_queue;
+    ApplicationQueueInterfacePtr     m_app_queue;
     NameIdMapperPtr         m_namemap;
     MasterClientPtr         m_master_client;
     TableCachePtr           m_table_cache;

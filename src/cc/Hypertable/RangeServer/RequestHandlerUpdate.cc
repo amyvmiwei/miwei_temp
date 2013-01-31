@@ -37,10 +37,10 @@ using namespace Hypertable;
  *
  */
 void RequestHandlerUpdate::run() {
-  ResponseCallbackUpdate cb(m_comm, m_event_ptr);
+  ResponseCallbackUpdate cb(m_comm, m_event);
   TableIdentifier table;
-  const uint8_t *decode_ptr = m_event_ptr->payload;
-  size_t decode_remain = m_event_ptr->payload_len;
+  const uint8_t *decode_ptr = m_event->payload;
+  size_t decode_remain = m_event->payload_len;
   StaticBuffer mods;
 
   try {

@@ -92,12 +92,6 @@ BlockCompressionCodec *CellStoreV0::create_block_compression_codec() {
 }
 
 
-const char *CellStoreV0::get_split_row() {
-  if (m_split_row != "")
-    return m_split_row.c_str();
-  return 0;
-}
-
 CellListScanner *CellStoreV0::create_scanner(ScanContextPtr &scan_ctx) {
   return new CellStoreScanner<CellStoreBlockIndexArray<uint32_t> >(this, scan_ctx, &m_index_map32);
 }
@@ -384,7 +378,6 @@ void CellStoreV0::finalize(TableIdentifier *table_identifier) {
   /** Set up m_index_map32 **/
   m_index_map32.load(m_fix_index_buffer, m_var_index_buffer,
                      m_trailer.fix_index_offset);
-  record_split_row( m_index_map32.middle_key() );
 
   // deallocate fix index data
   delete [] m_fix_index_buffer.release();
@@ -544,7 +537,6 @@ void CellStoreV0::load_index() {
   /** Set up m_index_map32 **/
   m_index_map32.load(m_fix_index_buffer, m_var_index_buffer,
                      m_trailer.fix_index_offset, m_start_row, m_end_row);
-  record_split_row( m_index_map32.middle_key() );
 
   // instantiate a bloom filter and read in the bloom filter bits.
   // If num_filter_items in trailer is 0, means bloom_filter is disabled..
@@ -661,14 +653,5 @@ void CellStoreV0::display_block_info() {
     block_size = m_trailer.filter_offset - last_offset;
     cout << i << ": offset=" << last_offset << " size=" << block_size
          << " row=" << last_key.row() << endl;
-  }
-}
-
-
-void CellStoreV0::record_split_row(const SerializedKey key) {
-  if (key.ptr) {
-    std::string split_row = key.row();
-    if (split_row > m_start_row && split_row < m_end_row)
-      m_split_row = split_row;
   }
 }

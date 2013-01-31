@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for ConnectionManager.
+ * This file contains type declarations for ConnectionManager, a class for
+ * establishing and maintaining TCP connections.
  */
 
 #ifndef HYPERTABLE_CONNECTIONMANAGER_H
@@ -47,6 +53,10 @@ extern "C" {
 #include "DispatchHandler.h"
 
 namespace Hypertable {
+
+  /** @addtogroup AsyncComm
+   *  @{
+   */
 
   class Event;
 
@@ -180,14 +190,14 @@ namespace Hypertable {
     /**
      * Same as above method except installs a connection initializer
      *
-     * @param addr The address to maintain a connection to
-     * @param timeout_ms The timeout value (in milliseconds) that gets passed
-     *        into Comm::connect and also used as the waiting period betweeen
-     *        connection attempts
-     * @param service_name The name of the serivce at the other end of the
-     *        connection used for descriptive log messages
-     * @param handler This is the default handler to install on the connection.
-     *        All events get changed through to this handler.
+     * @param addr Address to maintain a connection to
+     * @param timeout_ms Timeout value (in milliseconds) that gets passed into
+     * Comm#connect and also used as the waiting period between connection
+     * attempts
+     * @param service_name Name of the serivce at the other end of the
+     * connection used for descriptive log messages
+     * @param handler Default event handler for connection.
+     * @param initializer Connection initialization handshake driver
      */
     void add_with_initializer(const CommAddress &addr, uint32_t timeout_ms,
                               const char *service_name,
@@ -304,12 +314,15 @@ namespace Hypertable {
 
     void send_connect_request(ConnectionState *conn_state);
 
+    void set_retry_state(ConnectionState *conn_state, EventPtr &event);
+
     SharedImplPtr m_impl;
 
   };
+  /// Smart pointer to ConnectionManager
   typedef boost::intrusive_ptr<ConnectionManager> ConnectionManagerPtr;
 
+  /** @}*/
 }
-
 
 #endif // HYPERTABLE_CONNECTIONMANAGER_H

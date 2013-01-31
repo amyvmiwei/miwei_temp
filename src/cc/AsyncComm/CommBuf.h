@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,13 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for CommBuf.
+ * This file contains type declarations for CommBuf, a class to create and
+ * manipulate messages to be transmitted over a network.
+ */
+
+
 #ifndef HYPERTABLE_COMMBUF_H
 #define HYPERTABLE_COMMBUF_H
 
@@ -37,15 +44,16 @@
 
 namespace Hypertable {
 
-  /**
-   * Message buffer sent over the network
-   * by the AsyncComm subsystem.  It consists of a primary
-   * buffer and an extended buffer and also contains buffer pointers
-   * that keep track of how much data has already been written
-   * in the case of partial writes.  These pointers are managed by
-   * the AsyncComm subsytem iteslf.  The following example
-   * illustrates how to build a request message using the
-   * CommBuf.
+  /** @addtogroup AsyncComm
+   *  @{
+   */
+
+  /** Message buffer for holding data to be transmitted over a network.
+   * The CommBuf class contains a primary buffer and an extended buffer along
+   * with buffer pointers to keep track of how much data has been written into
+   * the buffers. These pointers are managed by the IOHandler while the buffer
+   * is being transmitted. The following example illustrates how to build a
+   * request message using the CommBuf.  
    *
    * <pre>
    *   CommHeader header(COMMAND_FETCH_SCANBLOCK);
@@ -59,12 +67,12 @@ namespace Hypertable {
    *
    * <pre>
    *   CommHeader header;
-   *   header.initialize_from_request_header(m_event_ptr->header);
+   *   header.initialize_from_request_header(m_event->header);
    *   CommBufPtr cbp(new CommBuf( header, 10, ext));
    *   cbp->append_i32(Error::OK);
    *   cbp->append_i16(moreflag);
    *   cbp->append_i32(id);
-   *   error = m_comm->send_response(m_event_ptr->addr, cbp);
+   *   error = m_comm->send_response(m_event->addr, cbp);
    * </pre>
    *
    */
@@ -144,7 +152,7 @@ namespace Hypertable {
      */
     void write_header_and_reset() {
       uint8_t *buf = data.base;
-      HT_ASSERT((data_ptr - data.base) == (int)data.size);
+      HT_ASSERT((data_ptr-data.base) == (int)data.size || data_ptr == data.base);
       header.encode(&buf);
       data_ptr = data.base;
       ext_ptr = ext.base;
@@ -310,8 +318,9 @@ namespace Hypertable {
     boost::shared_array<uint8_t> ext_shared_array;
   };
 
+  /// Smart pointer to CommBuf
   typedef intrusive_ptr<CommBuf> CommBufPtr;
-
+  /** @}*/
 } // namespace Hypertable
 
 

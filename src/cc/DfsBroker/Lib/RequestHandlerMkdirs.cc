@@ -36,9 +36,9 @@ using namespace Serialization;
  *
  */
 void RequestHandlerMkdirs::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
-  const uint8_t *decode_ptr = m_event_ptr->payload;
-  size_t decode_remain = m_event_ptr->payload_len;
+  ResponseCallback cb(m_comm, m_event);
+  const uint8_t *decode_ptr = m_event->payload;
+  size_t decode_remain = m_event->payload_len;
 
   try {
     const char *dname = decode_str16(&decode_ptr, &decode_remain);

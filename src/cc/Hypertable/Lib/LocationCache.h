@@ -106,6 +106,8 @@ namespace Hypertable {
                 RangeLocationInfo *rane_loc_infop, bool inclusive=false);
     bool invalidate(const char *table_name, const char *rowkey);
 
+    void invalidate_host(const String &hostname);
+
     void display(std::ostream &);
 
   private:

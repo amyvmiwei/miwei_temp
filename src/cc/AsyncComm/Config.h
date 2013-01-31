@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/* -*- C++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,12 +19,23 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for configuration properties.
+ * This file contains type declarations for configuration properties.  These
+ * types are used to define AsyncComm specific properties.
+ */
+
 #ifndef HYPERTABLE_COMM_CONFIG_H
 #define HYPERTABLE_COMM_CONFIG_H
 
 #include "Common/Config.h"
 
 namespace Hypertable { namespace Config {
+
+  /** @addtogroup AsyncComm
+   *  @{
+   */
+
   // init helpers
   void init_comm_options();
   void init_comm();
@@ -44,6 +55,8 @@ namespace Hypertable { namespace Config {
 
   typedef Cons<DefaultPolicy, CommPolicy> DefaultCommPolicy;
   typedef Cons<GenericServerPolicy, DefaultCommPolicy> DefaultServerPolicy;
+
+  /** @}*/
 
 }} // namespace Hypertable::Config
 

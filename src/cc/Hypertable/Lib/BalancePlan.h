@@ -35,10 +35,12 @@ namespace Hypertable {
    */
   class BalancePlan : public ReferenceCount {
   public:
-    BalancePlan(const String &algorithm_=String()) : algorithm(algorithm_), duration_millis(0) { }
+    BalancePlan(const String &algorithm_ = String())
+      : algorithm(algorithm_), duration_millis(0) { }
     size_t encoded_length() const;
     void encode(uint8_t **bufp) const;
     void decode(const uint8_t **bufp, size_t *remainp);
+    bool empty() { return moves.empty(); }
 
     void clear() {
       moves.clear();

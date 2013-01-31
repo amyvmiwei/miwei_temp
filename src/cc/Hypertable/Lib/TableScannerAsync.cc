@@ -41,7 +41,7 @@ using namespace Hypertable;
  *
  */
 TableScannerAsync::TableScannerAsync(Comm *comm, 
-      ApplicationQueuePtr &app_queue, Table *table,
+      ApplicationQueueInterfacePtr &app_queue, Table *table,
       RangeLocatorPtr &range_locator, const ScanSpec &scan_spec, 
       uint32_t timeout_ms, ResultCallback *cb, int flags)
   : m_bytes_scanned(0), m_current_scanner(0), m_outstanding(0), 
@@ -217,7 +217,7 @@ void TableScannerAsync::add_index_row(ScanSpecBuilder &ssb, const char *row)
                     ri.end, ri.end_inclusive);
 }
 
-void TableScannerAsync::init(Comm *comm, ApplicationQueuePtr &app_queue, 
+void TableScannerAsync::init(Comm *comm, ApplicationQueueInterfacePtr &app_queue, 
         Table *table, RangeLocatorPtr &range_locator, 
         const ScanSpec &scan_spec, uint32_t timeout_ms, ResultCallback *cb)
 {
@@ -475,7 +475,7 @@ void TableScannerAsync::handle_result(int scanner_id, EventPtr &event, bool is_c
     HT_ERROR_OUT << e << HT_END;
     m_error = e.code();
     m_error_msg = e.what();
-    next = m_interval_scanners[current_scanner]->has_outstanding_requests();
+    next = !m_interval_scanners[current_scanner]->has_outstanding_requests();
     maybe_callback_error(current_scanner, next);
     throw;
   }

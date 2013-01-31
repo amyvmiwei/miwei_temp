@@ -51,7 +51,7 @@ namespace Hypertable {
 
     class EntityGeneric : public Entity {
     public:
-      EntityGeneric(int t) : Entity(t), value(1) { m_name = String("GenericEntity") + t; }
+      EntityGeneric(int t) : Entity(t), value(100) { m_name = String("GenericEntity") + t; }
       EntityGeneric(const EntityHeader &header_) : Entity(header_), value(0) { m_name = String("GenericEntity") + header_.type; }
       virtual const String name() { return m_name; }
       virtual size_t encoded_length() const { return 4; }

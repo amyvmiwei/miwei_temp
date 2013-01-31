@@ -29,6 +29,8 @@
 #include "Common/Error.h"
 #include "Common/Logger.h"
 
+#include "AsyncComm/ApplicationQueue.h"
+
 #include "Hyperspace/HandleCallback.h"
 #include "Hyperspace/Session.h"
 
@@ -60,7 +62,7 @@ Table::Table(PropertiesPtr &props, ConnectionManagerPtr &conn_manager,
 
 Table::Table(PropertiesPtr &props, RangeLocatorPtr &range_locator,
              ConnectionManagerPtr &conn_manager, 
-             Hyperspace::SessionPtr &hyperspace, ApplicationQueuePtr &app_queue,
+             Hyperspace::SessionPtr &hyperspace, ApplicationQueueInterfacePtr &app_queue,
              NameIdMapperPtr &namemap, const String &name, 
              int32_t flags, uint32_t timeout_ms)
   : m_props(props), m_comm(conn_manager->get_comm()),

@@ -97,16 +97,6 @@ KeyDecompressor *CellStoreV4::create_key_decompressor() {
 }
 
 
-const char *CellStoreV4::get_split_row() {
-  if (m_split_row != "")
-    return m_split_row.c_str();
-  if (m_index_stats.block_index_memory == 0)
-    load_block_index();
-  if (m_split_row != "")
-    return m_split_row.c_str();
-  return 0;
-}
-
 CellListScanner *CellStoreV4::create_scanner(ScanContextPtr &scan_ctx) {
   bool need_index =  m_restricted_range || scan_ctx->restricted_range || scan_ctx->single_row;
 
@@ -571,7 +561,6 @@ void CellStoreV4::finalize(TableIdentifier *table_identifier) {
                        m_index_builder.variable_buf(),
                        m_trailer.fix_index_offset);
     m_trailer.index_entries = m_index_map64.index_entries();
-    record_split_row( m_index_map64.middle_key() );
     index_memory = m_index_map64.memory_used();
     m_trailer.flags |= CellStoreTrailerV4::INDEX_64BIT;
   }
@@ -581,7 +570,6 @@ void CellStoreV4::finalize(TableIdentifier *table_identifier) {
                        m_trailer.fix_index_offset);
     m_trailer.index_entries = m_index_map32.index_entries();
     index_memory = m_index_map32.memory_used();
-    record_split_row( m_index_map32.middle_key() );
   }
 
   // deallocate fix index data
@@ -811,13 +799,11 @@ void CellStoreV4::load_block_index() {
     m_index_map64.load(m_index_builder.fixed_buf(),
                        m_index_builder.variable_buf(),
                        m_trailer.fix_index_offset, m_start_row, m_end_row);
-    record_split_row( m_index_map64.middle_key() );
   }
   else {
     m_index_map32.load(m_index_builder.fixed_buf(),
                        m_index_builder.variable_buf(),
                        m_trailer.fix_index_offset, m_start_row, m_end_row);
-    record_split_row( m_index_map32.middle_key() );
   }
 
   m_index_stats.block_index_memory = sizeof(CellStoreV4) + m_index_map32.memory_used();
@@ -888,14 +874,4 @@ void CellStoreV4::display_block_info() {
     m_index_map64.display();
   else
     m_index_map32.display();
-}
-
-
-
-void CellStoreV4::record_split_row(const SerializedKey key) {
-  if (key.ptr) {
-    std::string split_row = key.row();
-    if (split_row > m_start_row && split_row < m_end_row)
-      m_split_row = split_row;
-  }
 }

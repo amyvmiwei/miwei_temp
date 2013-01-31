@@ -29,6 +29,7 @@
 
 namespace Hypertable {
   using namespace Serialization;
+  using namespace std;
 
   CommBuf *
   MasterProtocol::create_create_namespace_request(const String &name, int flags) {
@@ -181,6 +182,48 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::create_replay_complete_request(int64_t op_id,
+          const String &location, int plan_generation,
+          int32_t error, const String &message) {
+    CommHeader header(COMMAND_REPLAY_COMPLETE);
+    size_t len = 8 + encoded_length_vstr(location) + 4 + 4 + encoded_length_vstr(message);
+    CommBuf *cbuf = new CommBuf(header, len);
+    cbuf->append_i64(op_id);
+    cbuf->append_vstr(location);
+    cbuf->append_i32(plan_generation);
+    cbuf->append_i32(error);
+    cbuf->append_vstr(message);
+    return cbuf;
+  }
+
+  CommBuf *MasterProtocol::create_phantom_prepare_complete_request(int64_t op_id,
+                                     const String &location, int plan_generation,
+                                     int32_t error, const String &message) {
+    CommHeader header(COMMAND_PHANTOM_PREPARE_COMPLETE);
+    size_t len = 8 + encoded_length_vstr(location) + 4 + 4 + encoded_length_vstr(message);
+    CommBuf *cbuf = new CommBuf(header, len);
+    cbuf->append_i64(op_id);
+    cbuf->append_vstr(location);
+    cbuf->append_i32(plan_generation);
+    cbuf->append_i32(error);
+    cbuf->append_vstr(message);
+    return cbuf;
+  }
+
+  CommBuf *MasterProtocol::create_phantom_commit_complete_request(int64_t op_id,
+                                    const String &location, int plan_generation,
+                                    int32_t error, const String &message) {
+    CommHeader header(COMMAND_PHANTOM_COMMIT_COMPLETE);
+    size_t len = 8 + encoded_length_vstr(location) + 4 + 4 + encoded_length_vstr(message);
+    CommBuf *cbuf = new CommBuf(header, len);
+    cbuf->append_i64(op_id);
+    cbuf->append_vstr(location);
+    cbuf->append_i32(plan_generation);
+    cbuf->append_i32(error);
+    cbuf->append_vstr(message);
+    return cbuf;
+  }
+
   const char *MasterProtocol::m_command_strings[] = {
     "create table",
     "get schema",
@@ -197,6 +240,9 @@ namespace Hypertable {
     "relinquish acknowledge",
     "fetch result",
     "balance",
+    "replay complete",
+    "phantom prepare complete",
+    "phantom commit complete",
     "stop"
   };
 

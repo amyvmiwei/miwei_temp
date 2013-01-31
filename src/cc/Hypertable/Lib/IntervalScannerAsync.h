@@ -55,7 +55,7 @@ namespace Hypertable {
      * @param scanner pointer to table scanner
      * @param id scanner id
      */
-    IntervalScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
+    IntervalScannerAsync(Comm *comm, ApplicationQueueInterfacePtr &app_queue, Table *table,
                          RangeLocatorPtr &range_locator,
                          const ScanSpec &scan_spec, uint32_t timeout_ms,
                          bool current, TableScannerAsync *scanner, int id);
@@ -82,6 +82,7 @@ namespace Hypertable {
     void set_result(EventPtr &event, ScanCellsPtr &cells, bool is_create=false);
     void load_result(ScanCellsPtr &cells);
     void set_range_spec(DynamicBuffer &dbuf, RangeSpec &range);
+    void restart_scan(bool refresh=false);
 
     Comm               *m_comm;
     Table              *m_table;
@@ -115,8 +116,10 @@ namespace Hypertable {
     Timer               m_fetch_timer;
     bool                m_cur_scanner_finished;
     int                 m_cur_scanner_id;
+    int                 m_state;
+    Key                 m_last_key;
+    DynamicBuffer       m_last_key_buf;
     bool                m_create_event_saved;
-    bool                m_aborted;
     bool                m_invalid_scanner_id_ok;
   };
 

@@ -32,6 +32,6 @@ using namespace Hypertable;
  *
  */
 void RequestHandlerWaitForMaintenance::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
+  ResponseCallback cb(m_comm, m_event);
   m_range_server->wait_for_maintenance(&cb);
 }

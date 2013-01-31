@@ -62,7 +62,7 @@ void TableMutatorAsync::handle_send_exceptions() {
 }
 
 TableMutatorAsync::TableMutatorAsync(PropertiesPtr &props, Comm *comm, 
-        ApplicationQueuePtr &app_queue, Table *table, 
+        ApplicationQueueInterfacePtr &app_queue, Table *table, 
         RangeLocatorPtr &range_locator, uint32_t timeout_ms, 
         ResultCallback *cb,  uint32_t flags, bool explicit_block_only)
   : m_comm(comm), m_app_queue(app_queue), m_table(table), 
@@ -75,8 +75,8 @@ TableMutatorAsync::TableMutatorAsync(PropertiesPtr &props, Comm *comm,
 }
 
 
-TableMutatorAsync::TableMutatorAsync(Mutex &mutex, boost::condition &cond, 
-        PropertiesPtr &props, Comm *comm, ApplicationQueuePtr &app_queue, 
+TableMutatorAsync::TableMutatorAsync(Mutex &mutex, boost::condition &cond,
+        PropertiesPtr &props, Comm *comm, ApplicationQueueInterfacePtr &app_queue, 
         Table *table, RangeLocatorPtr &range_locator, uint32_t timeout_ms, 
         ResultCallback *cb, uint32_t flags, bool explicit_block_only,
         TableMutator *mutator)
@@ -194,12 +194,14 @@ TableMutatorAsync::update_with_index(Key &key, const void *value,
   //
   // if value has a 0 byte then we also have to escape it
   if (cf->has_index) {
+    size_t escaped_len;
     const char *val_ptr = (const char *)value;
     for (const char *v = val_ptr; v < val_ptr + value_len; v++) {
       if (*v == '\0') {
         const char *outp;
-        ldev.escape(val_ptr, (size_t)value_len, 
-                    &outp, (size_t *)&value_len);
+        escaped_len = (size_t)value_len;
+        ldev.escape(val_ptr, (size_t)value_len, &outp, &escaped_len);
+        value_len = (uint32_t)escaped_len;
         value = outp;
         break;
       }

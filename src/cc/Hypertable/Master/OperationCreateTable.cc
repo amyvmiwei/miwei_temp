@@ -29,6 +29,7 @@
 
 #include "Hypertable/Lib/Key.h"
 
+#include "BalancePlanAuthority.h"
 #include "OperationCreateTable.h"
 #include "Utility.h"
 
@@ -199,7 +200,6 @@ void OperationCreateTable::execute() {
       set_state(OperationState::WRITE_METADATA);
       return;
     }
-
     set_state(OperationState::WRITE_METADATA);
     
     // fall through
@@ -216,7 +216,7 @@ void OperationCreateTable::execute() {
       m_dependencies.insert(Dependency::SERVERS);
       m_dependencies.insert(Dependency::METADATA);
       m_dependencies.insert(Dependency::SYSTEM);
-      m_dependencies.insert(m_range_name);
+      m_obstructions.insert(String("OperationMove ") + m_range_name);
       m_state = OperationState::ASSIGN_LOCATION;
     }
     m_context->mml_writer->record_state(this);
@@ -224,15 +224,15 @@ void OperationCreateTable::execute() {
     return;
 
   case OperationState::ASSIGN_LOCATION:
-    if (!Utility::next_available_server(m_context, m_location))
-      return;
+    range.start_row = 0;
+    range.end_row = Key::END_ROW_MARKER;
+    m_context->get_balance_plan_authority()->get_balance_destination(m_table, range, m_location);
     {
       ScopedLock lock(m_mutex);
       m_dependencies.clear();
       m_dependencies.insert(Dependency::METADATA);
       m_dependencies.insert(Dependency::SYSTEM);
-      m_dependencies.insert(m_location);
-      m_dependencies.insert(m_range_name);
+      m_obstructions.insert(String("OperationMove ") + m_range_name);
       m_state = OperationState::LOAD_RANGE;
     }
     m_context->mml_writer->record_state(this);
@@ -243,27 +243,51 @@ void OperationCreateTable::execute() {
     try {
       range.start_row = 0;
       range.end_row = Key::END_ROW_MARKER;
-      Utility::create_table_load_range(m_context, m_location, &m_table, 
-              range, false);
-      HT_MAYBE_FAIL("create-table-LOAD_RANGE-a");
+      Utility::create_table_load_range(m_context, m_location, m_table,
+                                       range, false);
     }
     catch (Exception &e) {
-      if (!m_context->reassigned(&m_table, range, m_location))
-        HT_THROW2(e.code(), e, format("Loading %s range %s on server %s",
-                                      m_name.c_str(), m_range_name.c_str(), 
-                                      m_location.c_str()));
-      // if reassigned, it was properly loaded and then moved, so continue on
+      if (e.code() == Error::RANGESERVER_TABLE_DROPPED) {
+        complete_error(e);
+        return;
+      }
+      HT_INFO_OUT << e << HT_END;
+      poll(0, 0, 5000);
+      set_state(OperationState::ASSIGN_LOCATION);
+      return;
     }
-
-    {
-      ScopedLock lock(m_mutex);
-      m_dependencies.clear();
-      m_state = OperationState::FINALIZE;
-    }
+    HT_MAYBE_FAIL("create-table-LOAD_RANGE-a");
+    set_state(OperationState::ACKNOWLEDGE);
     m_context->mml_writer->record_state(this);
     HT_MAYBE_FAIL("create-table-LOAD_RANGE-b");
 
+  case OperationState::ACKNOWLEDGE:
+
+    try {
+      range.start_row = 0;
+      range.end_row = Key::END_ROW_MARKER;
+      Utility::create_table_acknowledge_range(m_context, m_location,
+                                              m_table, range);
+    }
+    catch (Exception &e) {
+      // Destination might be down - go back to the initial state
+      HT_INFOF("Problem acknowledging load range %s: %s - %s (dest %s)",
+               m_range_name.c_str(), Error::get_text(e.code()),
+               e.what(), m_location.c_str());
+      poll(0, 0, 5000);
+      // Fetch new destination, if changed, and then try again
+      range.start_row = 0;
+      range.end_row = Key::END_ROW_MARKER;
+      m_context->get_balance_plan_authority()->get_balance_destination(m_table, range, m_location);
+      return;
+    }
+    HT_MAYBE_FAIL("create-table-ACKNOWLEDGE");
+    set_state(OperationState::FINALIZE);
+
   case OperationState::FINALIZE:
+    range.start_row = 0;
+    range.end_row = Key::END_ROW_MARKER;
+    m_context->get_balance_plan_authority()->balance_move_complete(m_table, range);
     {
       String tablefile = m_context->toplevel_dir + "/tables/" + m_table.id;
       m_context->hyperspace->attr_set(tablefile, "x", "", 0);

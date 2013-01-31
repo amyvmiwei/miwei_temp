@@ -24,6 +24,7 @@ set(Common_SRCS
 Abi.cc
 Checksum.cc
 Config.cc
+Crontab.cc
 Debug.cc
 DiscreteRandomGenerator.cc
 DiscreteRandomGeneratorFactory.cc
@@ -117,6 +118,10 @@ target_link_libraries(properties_test HyperCommon)
 add_executable(config_test tests/config_test.cc)
 target_link_libraries(config_test HyperCommon)
 
+# crontab tests
+add_executable(crontab_test tests/crontab_test.cc)
+target_link_libraries(crontab_test HyperCommon)
+
 # init tests
 add_executable(init_test tests/init_test.cc)
 target_link_libraries(init_test HyperCommon)
@@ -172,6 +177,7 @@ add_test(Common-ScopeGuard scope_guard_test)
 add_test(Common-InetAddr inetaddr_test)
 add_test(Common-PageArena pagearena_test)
 add_test(Common-Config config_test)
+add_test(Common-Crontab env bash -c "${CMAKE_CURRENT_BINARY_DIR}/crontab_test > crontab_test.output; diff crontab_test.output ${CMAKE_CURRENT_SOURCE_DIR}/tests/crontab_test.golden")
 add_test(Common-Properties ${TEST_DIFF}
   ${CMAKE_CURRENT_SOURCE_DIR}/tests/properties_test.golden ./properties_test)
 add_test(Common-init ${TEST_DIFF}

@@ -115,6 +115,16 @@ namespace Hypertable {
       return m_cache->invalidate(table->id, row_key);
     }
 
+    void invalidate_host(const String &hostname) {
+      ScopedLock lock(m_mutex);
+      CommAddress addr;
+      addr.set_proxy(hostname);
+      m_conn_manager->remove(addr);
+      if (addr == m_root_range_info.addr)
+        m_root_stale = true;
+      m_cache->invalidate_host(hostname);
+    }
+
     /** Sets the "root stale" flag.  Causes methods to reread the root range
      * location before doing METADATA scans.
      */
@@ -154,6 +164,7 @@ namespace Hypertable {
     int process_metadata_scanblock(ScanBlock &scan_block, Timer &timer);
     int read_root_location(Timer &timer);
     void initialize();
+    int connect(CommAddress &addr, Timer &timer);
 
     Mutex                  m_mutex;
     ConnectionManagerPtr   m_conn_manager;

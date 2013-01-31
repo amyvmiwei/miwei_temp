@@ -38,7 +38,7 @@ using namespace Serialization;
 /**
  *
  */
-int32_t Protocol::response_code(Event *event) {
+int32_t Protocol::response_code(const Event *event) {
   if (event->type == Event::ERROR)
     return event->error;
 
@@ -54,7 +54,7 @@ int32_t Protocol::response_code(Event *event) {
 /**
  *
  */
-String Protocol::string_format_message(Event *event) {
+String Protocol::string_format_message(const Event *event) {
   int error = Error::OK;
 
   if (event == 0)

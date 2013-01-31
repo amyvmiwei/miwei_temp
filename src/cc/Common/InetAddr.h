@@ -82,7 +82,7 @@ namespace Hypertable {
       return sin_port < other.sin_port;
     }
 
-    String format(int sep = ':') { return InetAddr::format(*this, sep); }
+    String format(int sep = ':') const { return InetAddr::format(*this, sep); }
     String format_ipaddress() { return InetAddr::format_ipaddress(*this); }
     String hex(int sep = ':') { return InetAddr::hex(*this, sep); }
 

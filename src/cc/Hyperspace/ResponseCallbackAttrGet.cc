@@ -34,14 +34,14 @@ using namespace Hypertable;
  */
 int ResponseCallbackAttrGet::response(const std::vector<DynamicBufferPtr> &buffers) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   if (buffers.size() == 1 && buffers.front()) {
     StaticBuffer buffer(*buffers.front());
     CommBufPtr cbp(new CommBuf(header, 12, buffer));
     cbp->append_i32(Error::OK);
     cbp->append_i32(1);
     cbp->append_i32(buffer.size);
-    return m_comm->send_response(m_event_ptr->addr, cbp);
+    return m_comm->send_response(m_event->addr, cbp);
   }
 
   size_t len = 0;
@@ -59,6 +59,6 @@ int ResponseCallbackAttrGet::response(const std::vector<DynamicBufferPtr> &buffe
     else
       cbp->append_i32(0);
   }
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }
 

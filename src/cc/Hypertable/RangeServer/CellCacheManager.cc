@@ -114,20 +114,14 @@ void CellCacheManager::add_scanners(MergeScanner *scanner, ScanContextPtr &scan_
 }
 
 
-void CellCacheManager::get_split_rows(std::vector<std::string> &split_rows) {
+void
+CellCacheManager::split_row_estimate_data(CellList::SplitRowDataMapT &split_row_data) {
   if (m_immutable_cache)
-    m_immutable_cache->get_split_rows(split_rows);
-  m_read_cache->get_split_rows(split_rows);
-  m_write_cache->get_split_rows(split_rows);
+    m_immutable_cache->split_row_estimate_data(split_row_data);
+  m_read_cache->split_row_estimate_data(split_row_data);
+  m_write_cache->split_row_estimate_data(split_row_data);
 }
 
-
-void CellCacheManager::get_rows(std::vector<std::string> &rows) {
-  if (m_immutable_cache)
-    m_immutable_cache->get_rows(rows);
-  m_read_cache->get_rows(rows);
-  m_write_cache->get_rows(rows);
-}
 
 int64_t CellCacheManager::get_total_entries() {
   return m_read_cache->get_total_entries() + m_write_cache->get_total_entries() +

@@ -36,7 +36,7 @@ int ResponseCallbackReaddir::response(std::vector<DirEntry> &listing) {
   CommHeader header;
   uint32_t len = 8;
 
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
 
   for (size_t i=0; i<listing.size(); i++)
     len += encoded_length_dir_entry(listing[i]);
@@ -49,6 +49,6 @@ int ResponseCallbackReaddir::response(std::vector<DirEntry> &listing) {
   for (size_t i=0; i<listing.size(); i++)
     encode_dir_entry(cbp->get_data_ptr_address(), listing[i]);
 
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }
 

@@ -32,6 +32,7 @@
 #include "Hypertable/Lib/MasterProtocol.h"
 
 #include "ConnectionHandler.h"
+#include "LoadBalancer.h"
 
 #include "OperationAlterTable.h"
 #include "OperationBalance.h"
@@ -43,16 +44,17 @@
 #include "OperationGatherStatistics.h"
 #include "OperationProcessor.h"
 #include "OperationMoveRange.h"
-#include "OperationRecoverServer.h"
+#include "OperationRecover.h"
 #include "OperationRegisterServer.h"
 #include "OperationRelinquishAcknowledge.h"
 #include "OperationRenameTable.h"
 #include "OperationStatus.h"
-#include "OperationLoadBalancer.h"
 #include "OperationStop.h"
 #include "RangeServerConnection.h"
 #include "ReferenceManager.h"
 
+#include <fstream>
+#include <iostream>
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -117,8 +119,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         return;
       case MasterProtocol::COMMAND_MOVE_RANGE:
         operation = new OperationMoveRange(m_context, event);
-	if (!m_context->reference_manager->add(operation)) {
-          HT_INFOF("Skipping %s because already in progress", operation->label().c_str());
+        if (!m_context->reference_manager->add(operation)) {
+          HT_INFOF("Skipping %s because already in progress",
+                  operation->label().c_str());
           send_error_response(event, Error::MASTER_OPERATION_IN_PROGRESS, "");
           return;
         }
@@ -129,7 +132,7 @@ void ConnectionHandler::handle(EventPtr &event) {
         operation = new OperationRelinquishAcknowledge(m_context, event);
         break;
       case MasterProtocol::COMMAND_BALANCE:
-        operation = new OperationLoadBalancer(m_context, event);
+        operation = new OperationBalance(m_context, event);
         break;
       case MasterProtocol::COMMAND_STOP:
         operation = new OperationStop(m_context, event);
@@ -153,17 +156,26 @@ void ConnectionHandler::handle(EventPtr &event) {
       case MasterProtocol::COMMAND_FETCH_RESULT:
         m_context->response_manager->add_delivery_info(event);
         return;
-
+      case MasterProtocol::COMMAND_REPLAY_COMPLETE:
+        m_context->replay_complete(event);
+        send_ok_response(event);
+        return;
+      case MasterProtocol::COMMAND_PHANTOM_PREPARE_COMPLETE:
+        m_context->prepare_complete(event);
+        send_ok_response(event);
+        return;
+      case MasterProtocol::COMMAND_PHANTOM_COMMIT_COMPLETE:
+        m_context->commit_complete(event);
+        send_ok_response(event);
+        return;
       default:
         HT_THROWF(PROTOCOL_ERROR, "Unimplemented command (%llu)",
                   (Llu)event->header.command);
       }
       if (operation) {
-        HT_INFOF("About to load %u", (unsigned)event->header.command);
-        // Is the following ever used ???
         HT_MAYBE_FAIL_X("connection-handler-before-id-response",
-                        event->header.command != MasterProtocol::COMMAND_STATUS &&
-                        event->header.command != MasterProtocol::COMMAND_RELINQUISH_ACKNOWLEDGE);
+                event->header.command != MasterProtocol::COMMAND_STATUS &&
+                event->header.command != MasterProtocol::COMMAND_RELINQUISH_ACKNOWLEDGE);
         if (send_id_response(event, operation) != Error::OK)
           return;
         m_context->op->add_operation(operation);
@@ -171,7 +183,8 @@ void ConnectionHandler::handle(EventPtr &event) {
       else {
         ResponseCallback cb(m_context->comm, event);
         cb.error(Error::PROTOCOL_ERROR,
-                 format("Unimplemented command (%llu)", (Llu)event->header.command));
+                format("Unimplemented command (%llu)",
+                    (Llu)event->header.command));
       }
     }
     catch (Exception &e) {
@@ -185,22 +198,15 @@ void ConnectionHandler::handle(EventPtr &event) {
       }
     }
   }
-  else if (event->type == Event::DISCONNECT) {
-    RangeServerConnectionPtr rsc;
-    if (m_context->find_server_by_local_addr(event->addr, rsc)) {
-      if (m_context->disconnect_server(rsc)) {
-        OperationPtr operation = new OperationRecoverServer(m_context, rsc);
-        m_context->op->add_operation(operation);
-      }
-    }
-    HT_INFOF("%s", event->to_str().c_str());
-  }
   else if (event->type == Hypertable::Event::TIMER) {
     OperationPtr operation;
     int error;
     time_t now = time(0);
 
     try {
+
+      maybe_dump_op_statistics();
+
       if (m_context->next_monitoring_time <= now) {
         operation = new OperationGatherStatistics(m_context);
         m_context->op->add_operation(operation);
@@ -212,8 +218,11 @@ void ConnectionHandler::handle(EventPtr &event) {
         m_context->op->add_operation(operation);
         m_context->next_gc_time = now + (m_context->gc_interval/1000) - 1;
       }
-      operation = new OperationLoadBalancer(m_context);
-      m_context->op->add_operation(operation);
+
+      if (m_context->balancer->balance_needed()) {
+        operation = new OperationBalance(m_context);
+        m_context->op->add_operation(operation);
+      }
     }
     catch (Exception &e) {
       if (e.code() == Error::MASTER_OPERATION_IN_PROGRESS)
@@ -246,6 +255,17 @@ int32_t ConnectionHandler::send_id_response(EventPtr &event, OperationPtr &opera
   return error;
 }
 
+int32_t ConnectionHandler::send_ok_response(EventPtr &event) {
+  CommHeader header;
+  header.initialize_from_request_header(event->header);
+  CommBufPtr cbp(new CommBuf(header, 4));
+  cbp->append_i32(Error::OK);
+  int ret = m_context->comm->send_response(event->addr, cbp);
+  if (ret != Error::OK)
+    HT_ERRORF("Problem sending error response back to %s - %s",
+              event->addr.format().c_str(), Error::get_text(ret));
+  return ret;
+}
 
 int32_t ConnectionHandler::send_error_response(EventPtr &event, int32_t error, const String &msg) {
   CommHeader header;
@@ -258,4 +278,19 @@ int32_t ConnectionHandler::send_error_response(EventPtr &event, int32_t error, c
     HT_ERRORF("Problem sending error response back to %s - %s",
               event->addr.format().c_str(), Error::get_text(error));
   return error;
+}
+
+void ConnectionHandler::maybe_dump_op_statistics() {
+
+  if (FileUtils::exists(System::install_dir + "/run/debug-op")) {
+    String description;
+    String output_fname = System::install_dir + "/run/op.output";
+    ofstream out;
+    out.open(output_fname.c_str());
+    m_context->op->state_description(description);
+    out << description;
+    out.close();
+    FileUtils::unlink(System::install_dir + "/run/debug-op");
+  }
+  
 }

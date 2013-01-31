@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for Event.
+ * This file contains method definitions for Event, a class for representing
+ * a network communication event.
  */
 
 #include "Common/Compat.h"
@@ -39,7 +45,7 @@ extern "C" {
 
 using namespace Hypertable;
 
-String Event::to_str() {
+String Event::to_str() const {
   string dstr;
 
   dstr = "Event: type=";

@@ -29,28 +29,29 @@ using namespace Hypertable;
 void TableScannerHandler::run() {
   int32_t error;
   try {
-    switch (m_event_ptr->type) {
+    switch (m_event->type) {
     case(Event::MESSAGE):
-      error = Protocol::response_code(m_event_ptr);
+      error = Protocol::response_code(m_event);
       if (error == Error::REQUEST_TIMEOUT)
-        m_scanner->handle_timeout(m_interval_scanner, m_event_ptr->to_str(), m_is_create);
+        m_scanner->handle_timeout(m_interval_scanner, m_event->to_str(), m_is_create);
       else if (error != Error::OK)
-        m_scanner->handle_error(m_interval_scanner, error, m_event_ptr->to_str(), m_is_create);
+        m_scanner->handle_error(m_interval_scanner, error, m_event->to_str(), m_is_create);
       else
-        m_scanner->handle_result(m_interval_scanner, m_event_ptr, m_is_create);
+        m_scanner->handle_result(m_interval_scanner, m_event, m_is_create);
       break;
     case(Event::TIMER):
-      m_scanner->handle_timeout(m_interval_scanner, m_event_ptr->to_str(), m_is_create);
+      m_scanner->handle_timeout(m_interval_scanner, m_event->to_str(), m_is_create);
       break;
     case(Event::ERROR):
-      m_scanner->handle_error(m_interval_scanner, m_event_ptr->error, m_event_ptr->to_str(),
+      m_scanner->handle_error(m_interval_scanner, m_event->error, m_event->to_str(),
           m_is_create);
       break;
     default:
-      HT_INFO_OUT << "Received event " << m_event_ptr->to_str() << HT_END;
+      HT_INFO_OUT << "Received event " << m_event->to_str() << HT_END;
     }
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
+    m_scanner->cancel();
   }
 }

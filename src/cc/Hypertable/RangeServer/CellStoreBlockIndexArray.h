@@ -28,8 +28,10 @@
 
 #include "Common/StaticBuffer.h"
 
+#include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
+#include "CellList.h"
 
 namespace Hypertable {
 
@@ -102,18 +104,17 @@ namespace Hypertable {
       const uint8_t *key_ptr;
       bool in_scope = (start_row == "") ? true : false;
       bool check_for_end_row = end_row != "";
-
-      m_index_entries = (int64_t)total_entries;
+      const uint8_t *variable_start = variable.base;
+      const uint8_t *variable_end = variable.ptr;
 
       assert(variable.own);
 
       m_end_of_last_block = end_of_data;
 
-      m_keydata = variable;
       fixed.ptr = fixed.base;
-      key_ptr   = m_keydata.base;
+      key_ptr   = variable.base;
 
-      for (int64_t i=0; i<m_index_entries; ++i) {
+      for (size_t i=0; i<total_entries; ++i) {
 
         // variable portion
         key.ptr = key_ptr;
@@ -126,6 +127,7 @@ namespace Hypertable {
         if (!in_scope) {
           if (strcmp(key.row(), start_row.c_str()) <= 0)
             continue;
+          variable_start = key.ptr;
           in_scope = true;
         }
         else if (check_for_end_row &&
@@ -133,9 +135,10 @@ namespace Hypertable {
           ee.key = key;
           ee.offset = offset;
           m_array.push_back(ee);
-          if (i+1 < m_index_entries) {
+          if (i+1 < total_entries) {
             key.ptr = key_ptr;
             key_ptr += key.length();
+            variable_end = key_ptr;
             memcpy(&m_end_of_last_block, fixed.ptr, sizeof(offset));
           }
           break;
@@ -145,19 +148,59 @@ namespace Hypertable {
         m_array.push_back(ee);
       }
 
-      HT_ASSERT(key_ptr <= (m_keydata.base + m_keydata.size));
+      HT_ASSERT(key_ptr <= variable.ptr);
 
       if (!m_array.empty()) {
+        HT_ASSERT(variable_start < variable_end);
 
-        /** compute space covered by this index scope **/
+        // Copy portion of variable buffer used to m_keydata and fixup the
+        // array pointers to point into this new buffer
+        StaticBuffer keydata(variable_end-variable_start);
+        memcpy(keydata.base, variable_start, variable_end-variable_start);
+        foreach_ht (ElementT &element, m_array) {
+          HT_ASSERT(element.key.ptr < variable_end);
+          uint64_t offset = element.key.ptr - variable_start;
+          element.key.ptr = keydata.base + offset;
+        }
+        m_keydata.free();
+        m_keydata = keydata;
+
+        // compute space covered by this index scope
         m_disk_used = m_end_of_last_block - (*m_array.begin()).offset;
 
-        /** determine split key **/
+        // determine split key
         size_t mid_point = (m_array.size()==2) ? 0 : m_array.size()/2;
         m_middle_key = m_array[mid_point].key;
       }
 
+      // Free variable buf here to maintain original semantics
+      variable.free();
+
+      if (m_array.size() == total_entries)
+        m_fraction_covered = 1.0;
+      else
+        m_fraction_covered = (float)m_array.size() / (float)total_entries;
     }
+
+    void rescope(const String &start_row="", const String &end_row="") {
+      DynamicBuffer fixed(m_array.size() * sizeof(OffsetT));
+      DynamicBuffer variable;
+
+      // Transfer ownership of m_keydata buffer to variable
+      m_keydata.own = false;
+      variable.base = variable.mark = m_keydata.base;
+      variable.size = m_keydata.size;
+      variable.ptr = variable.base + variable.size;
+
+      // Populate fixed array
+      foreach_ht (ElementT &element, m_array)
+        fixed.add_unchecked(&element.offset, sizeof(OffsetT));
+      m_array.clear();
+
+      // Perform normal load
+      load(fixed, variable, m_end_of_last_block, start_row, end_row);
+    }
+
 
     void display() {
       SerializedKey last_key;
@@ -182,7 +225,38 @@ namespace Hypertable {
       std::cout << "sizeof(OffsetT) = " << sizeof(OffsetT) << std::endl;
     }
 
-    const SerializedKey middle_key() { return m_middle_key; }
+    /** Accumulates unique row estimates from block index entries.
+     * @param split_row_data Reference to accumulator map holding unique
+     * row and count estimates
+     * @param keys_per_block Key count to add for each index entry
+     */
+    void unique_row_count_estimate(CellList::SplitRowDataMapT &split_row_data,
+                                   int32_t keys_per_block) {
+      const char *row, *last_row = 0;
+      int64_t last_count = 0;
+      foreach_ht (ElementT &e, m_array) {
+        row = e.key.row();
+        if (last_row == 0)
+          last_row = row;
+        if (strcmp(row, last_row) != 0) {
+          CstrToInt64MapT::iterator iter = split_row_data.find(last_row);
+          if (iter == split_row_data.end())
+            split_row_data[last_row] = last_count;
+          else
+            iter->second += last_count;
+          last_row = row;
+          last_count = 0;
+        }
+        last_count += keys_per_block;
+      }
+      if (last_count > 0) {
+        CstrToInt64MapT::iterator iter = split_row_data.find(last_row);
+        if (iter == split_row_data.end())
+          split_row_data[last_row] = last_count;
+        else
+          iter->second += last_count;
+      }
+    }
 
     size_t memory_used() {
       return m_keydata.size + (m_array.size() * (sizeof(ElementT)));
@@ -190,9 +264,11 @@ namespace Hypertable {
 
     int64_t disk_used() { return m_disk_used; }
 
+    double fraction_covered() { return (double)m_fraction_covered; }
+
     int64_t end_of_last_block() { return m_end_of_last_block; }
 
-    int64_t index_entries() { return m_index_entries; }
+    int64_t index_entries() { return m_array.size(); }
 
     iterator begin() {
       return iterator(m_array.begin());
@@ -216,7 +292,7 @@ namespace Hypertable {
       m_array.clear();
       m_keydata.free();
       m_middle_key.ptr = 0;
-      m_index_entries = 0;
+      m_fraction_covered = 0.0;
     }
 
   private:
@@ -225,7 +301,7 @@ namespace Hypertable {
     SerializedKey m_middle_key;
     int64_t m_end_of_last_block;
     int64_t m_disk_used;
-    int64_t m_index_entries;
+    float m_fraction_covered;
   };
 
 

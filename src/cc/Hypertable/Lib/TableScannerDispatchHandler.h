@@ -23,7 +23,7 @@
 #define HYPERTABLE_TABLESCANNERDISPATCHHANDLER_H
 
 #include "Common/Compat.h"
-#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ApplicationQueueInterface.h"
 #include "AsyncComm/DispatchHandler.h"
 #include "AsyncComm/Event.h"
 
@@ -39,7 +39,7 @@ namespace Hypertable {
     /**
      * Constructor.  Initializes state.
      */
-    TableScannerDispatchHandler(ApplicationQueuePtr &app_queue, TableScannerAsync *scanner,
+    TableScannerDispatchHandler(ApplicationQueueInterfacePtr &app_queue, TableScannerAsync *scanner,
                                 int m_interval_scanner, bool is_create);
 
     /**
@@ -52,7 +52,7 @@ namespace Hypertable {
     virtual void handle(EventPtr &event_ptr);
 
   private:
-    ApplicationQueuePtr     m_app_queue;
+    ApplicationQueueInterfacePtr     m_app_queue;
     TableScannerAsync      *m_scanner;
     int                     m_interval_scanner;
     bool                    m_is_create;

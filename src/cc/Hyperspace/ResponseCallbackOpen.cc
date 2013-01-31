@@ -33,11 +33,11 @@ int
 ResponseCallbackOpen::response(uint64_t handle, bool created,
                                uint64_t lock_generation) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   CommBufPtr cbp(new CommBuf(header, 21));
   cbp->append_i32(Error::OK);
   cbp->append_i64(handle);
   cbp->append_byte((uint8_t)created);
   cbp->append_i64(lock_generation);
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }

@@ -28,13 +28,13 @@ int
 ResponseCallbackFetchScanblock::response(short moreflag, int32_t id,
         StaticBuffer &ext) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   CommBufPtr cbp(new CommBuf( header, 18, ext));
   cbp->append_i32(Error::OK);
   cbp->append_i16(moreflag);
   cbp->append_i32(id);              // scanner ID
   cbp->append_i32(0);               // skipped_rows
   cbp->append_i32(0);               // skipped_cells
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }
 

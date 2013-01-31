@@ -13,23 +13,17 @@ save_failure_state() {
   mv metadata.dump fs-backup.tgz core.* select* dump.tsv rangeserver.output* error* failed* running* $ARCHIVE_DIR
   cp $HT_HOME/log/Hypertable.Master.log $ARCHIVE_DIR
   if [ -e Testing/Temporary/LastTest.log.tmp ] ; then
-    mv Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR
+      ln Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR/LastTest.log.tmp
   elif [ -e ../../../Testing/Temporary/LastTest.log.tmp ] ; then
-    mv ../../../Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR
+      ln ../../../Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR/LastTest.log.tmp
   fi
   echo "Failure state saved to directory $ARCHIVE_DIR"
   #exec 1>&-
   #sleep 86400
 }
 
-if [ -e running* ] || [ -e failed* ] ; then
-  save_failure_state
-  kill -9 `cat $PIDFILE`
-  exit 1
-fi
-
 # clear state
-/bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* report.txt
+/bin/rm -f core.* select* dump.tsv rangeserver.output.* error* running* failed* report.txt
 
 $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-thriftbroker \
     --Hypertable.Master.Gc.Interval=30000 \

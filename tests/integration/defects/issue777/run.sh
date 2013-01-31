@@ -10,7 +10,7 @@ echo "======================="
 check_running() {
   name=$1;
   # echo "check_running $name"
-  ps -C $name
+  ps auxww | fgrep "$name" | fgrep -v cronolog | fgrep -v grep
   if [ "$?" -ne "0" ]
   then
     echo "Process $name does not exist"
@@ -21,7 +21,7 @@ check_running() {
 check_killed() {
   name=$1;
   # echo "check_killed $name"
-  ps -C $name
+  ps auxww | fgrep "$name" | fgrep -v cronolog | fgrep -v grep
   if [ "$?" -eq "0" ]
   then
     echo "Process $name still exists"

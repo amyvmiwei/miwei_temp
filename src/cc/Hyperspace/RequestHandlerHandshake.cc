@@ -37,9 +37,9 @@ using namespace Hypertable;
 using namespace Serialization;
 
 void RequestHandlerHandshake::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
-  size_t decode_remain = m_event_ptr->payload_len - 8;
-  const uint8_t *decode_ptr = m_event_ptr->payload + 8;
+  ResponseCallback cb(m_comm, m_event);
+  size_t decode_remain = m_event->payload_len - 8;
+  const uint8_t *decode_ptr = m_event->payload + 8;
 
   try {
     const char *name = decode_vstr(&decode_ptr, &decode_remain);

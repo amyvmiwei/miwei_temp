@@ -42,7 +42,13 @@ struct LtCstr {
 
 typedef std::set<const char *, LtCstr>  CstrSet;
 
-typedef std::map<const char *, int32_t, LtCstr>  CstrToInt32Map;
+/** STL map from c-style string to int32_t
+ */
+typedef std::map<const char *, int32_t, LtCstr> CstrToInt32Map;
+
+/** STL map from c-style string to int64_t
+ */
+typedef std::map<const char *, int64_t, LtCstr> CstrToInt64MapT;
 
 inline std::string operator+(const std::string& s1, short sval) {
   char cbuf[8];

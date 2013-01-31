@@ -25,7 +25,7 @@
 #include "Common/InetAddr.h"
 #include "Common/Time.h"
 
-#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ApplicationQueueInterface.h"
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 #include "Common/Serialization.h"
 #include "Common/Timer.h"
@@ -42,7 +42,7 @@ using namespace Serialization;
 
 MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
     Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir,
-    uint32_t timeout_ms, ApplicationQueuePtr &app_queue)
+    uint32_t timeout_ms, ApplicationQueueInterfacePtr &app_queue)
   : m_verbose(true), m_conn_manager(conn_mgr),
     m_hyperspace(hyperspace), m_app_queue(app_queue),
     m_hyperspace_init(false), m_hyperspace_connected(true),
@@ -877,25 +877,32 @@ void
 MasterClient::send_message_async(CommBufPtr &cbp, DispatchHandler *handler,
                                  Timer *timer, const String &label) {
   boost::mutex::scoped_lock lock(m_mutex);
+  DispatchHandlerSynchronizer *sync_handler
+    = dynamic_cast<DispatchHandlerSynchronizer *>(handler);
   int error;
 
-  while ((error = m_comm->send_request(m_master_addr, timer->remaining(), cbp, handler))
-      != Error::OK) {
-    if (error == Error::COMM_NOT_CONNECTED ||
-	error == Error::COMM_BROKEN_CONNECTION ||
-	error == Error::COMM_CONNECT_ERROR) {
-      boost::xtime expire_time;
-      boost::xtime_get(&expire_time, boost::TIME_UTC_);
-      xtime_add_millis(expire_time, std::min(timer->remaining(), (System::rand32() % m_retry_interval)));
-      if (!m_cond.timed_wait(lock, expire_time)) {
-        if (timer->expired())
-          HT_THROWF(Error::REQUEST_TIMEOUT,
-                    "MasterClient operation %s to master %s failed", label.c_str(),
-                    m_master_addr.format().c_str());
+  while ((error = m_comm->send_request(m_master_addr, timer->remaining(), cbp,
+                                       handler)) != Error::OK) {
+    // COMM_BROKEN_CONNECTION implies handler will be called back, if handler
+    // is a DispatchHandlerSynchronizer, wait for callback and try again
+    if (error == Error::COMM_BROKEN_CONNECTION) {
+      if (sync_handler) {
+        EventPtr event;
+        sync_handler->wait_for_reply(event);
       }
+      else
+        return;
     }
-    else
-      HT_THROWF(error, "MasterClient operation %s failed", label.c_str());
+    boost::xtime expire_time;
+    boost::xtime_get(&expire_time, boost::TIME_UTC_);
+    xtime_add_millis(expire_time, std::min(timer->remaining(),
+                                           (System::rand32()%m_retry_interval)));
+    if (!m_cond.timed_wait(lock, expire_time)) {
+      if (timer->expired())
+        HT_THROWF(Error::REQUEST_TIMEOUT,
+                  "MasterClient operation %s to master %s failed", label.c_str(),
+                  m_master_addr.format().c_str());
+    }
   }
 }
 
@@ -936,6 +943,93 @@ void MasterClient::fetch_result(int64_t id, Timer *timer, EventPtr &event, const
   }
 }
 
+void
+MasterClient::replay_complete(int64_t op_id, const String &location,
+                              int plan_generation, int32_t error,
+                              const String message) {
+  Timer timer(m_timeout_ms, true);
+  CommBufPtr cbp;
+  EventPtr event;
+  String label = format("replay_complete op_id=%llu location=%s "
+                        "plan_generation=%d error=%s", (Llu)op_id,
+                        location.c_str(), plan_generation,
+                        Error::get_text(error));
+
+  while (!timer.expired()) {
+    cbp = MasterProtocol::create_replay_complete_request(op_id,
+                            location, plan_generation, error, message);
+    if (!send_message(cbp, &timer, event, label)) {
+      poll(0, 0, std::min(timer.remaining(), (System::rand32() % 3000)));
+      continue;
+    }
+    return;
+  }
+
+  {
+    ScopedLock lock(m_mutex);
+    HT_THROWF(Error::REQUEST_TIMEOUT,
+        "MasterClient operation %s to master %s failed", label.c_str(),
+        m_master_addr.format().c_str());
+  }
+}
+
+void
+MasterClient::phantom_prepare_complete(int64_t op_id, const String &location,
+                                       int plan_generation, int32_t error,
+                                       const String message) {
+  Timer timer(m_timeout_ms, true);
+  CommBufPtr cbp;
+  EventPtr event;
+  String label = format("phantom_prepare_complete op_id=%llu location=%s "
+                        "plan_generation=%d error=%s", (Llu)op_id,
+                        location.c_str(), plan_generation,
+                        Error::get_text(error));
+
+  while (!timer.expired()) {
+    cbp = MasterProtocol::create_phantom_prepare_complete_request(op_id,
+                            location, plan_generation, error, message);
+    if (!send_message(cbp, &timer, event, label)) {
+      poll(0, 0, std::min(timer.remaining(), (System::rand32() % 3000)));
+      continue;
+    }
+    return;
+  }
+
+  {
+    ScopedLock lock(m_mutex);
+    HT_THROWF(Error::REQUEST_TIMEOUT,
+        "MasterClient operation %s to master %s failed", label.c_str(),
+        m_master_addr.format().c_str());
+  }
+}
+
+void
+MasterClient::phantom_commit_complete(int64_t op_id, const String &location,
+                                      int plan_generation, int32_t error,
+                                      const String message) {
+  Timer timer(m_timeout_ms, true);
+  CommBufPtr cbp;
+  EventPtr event;
+  String label = format("phantom_commit_complete op_id=%llu location=%s "
+                        "error=%s", (Llu)op_id, location.c_str(), Error::get_text(error));
+
+  while (!timer.expired()) {
+    cbp = MasterProtocol::create_phantom_commit_complete_request(op_id,
+                           location, plan_generation, error, message);
+    if (!send_message(cbp, &timer, event, label)) {
+      poll(0, 0, std::min(timer.remaining(), (System::rand32() % 3000)));
+      continue;
+    }
+    return;
+  }
+
+  {
+    ScopedLock lock(m_mutex);
+    HT_THROWF(Error::REQUEST_TIMEOUT,
+        "MasterClient operation %s to master %s failed", label.c_str(),
+        m_master_addr.format().c_str());
+  }
+}
 
 void MasterClient::reload_master() {
   InetAddr master_addr;
@@ -1010,4 +1104,3 @@ void MasterClientHyperspaceSessionCallback::disconnected() {
 void MasterClientHyperspaceSessionCallback::reconnected() {
   m_masterclient->hyperspace_reconnected();
 }
-

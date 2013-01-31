@@ -10,6 +10,22 @@ GEN_SIZE=${DATA_SIZE:-"1200000"}
 
 . $HT_HOME/bin/ht-env.sh
 
+save_failure_state() {
+  ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
+  mkdir $ARCHIVE_DIR
+  mv dbdump.* rangeserver.output* error* report.* $ARCHIVE_DIR
+  cp $HT_HOME/log/Hypertable.Master.log $ARCHIVE_DIR
+  if [ -e Testing/Temporary/LastTest.log.tmp ] ; then
+    ln Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR/LastTest.log.tmp
+  elif [ -e ../../../Testing/Temporary/LastTest.log.tmp ] ; then
+    ln ../../../Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR/LastTest.log.tmp
+  fi
+  echo "Failure state saved to directory $ARCHIVE_DIR"
+  #exec 1>&-
+  #sleep 86400
+}
+
+
 stop_range_server() {
   # stop any existing range server if necessary
   pidfile=$HT_HOME/run/Hypertable.RangeServer.pid
@@ -49,12 +65,15 @@ run_test() {
   $HT_SHELL --batch < $SCRIPT_DIR/create-test-table.hql
   if [ $? != 0 ] ; then
     echo "Unable to create table 'LoadTest', exiting ..."
+    save_failure_state
     exit 1
   fi
 
   $HT_HOME/bin/ht ht_load_generator update --no-log-sync --parallel=300 --spec-file=$SCRIPT_DIR/data.spec --max-bytes=$GEN_SIZE
+#  $HT_HOME/bin/ht valgrind --log-file=vg.%p -v $HT_HOME/bin/ht_load_generator update --no-log-sync --parallel=300 --spec-file=$SCRIPT_DIR/data.spec --max-bytes=$GEN_SIZE
   if [ $? != 0 ] ; then
     echo "Problem loading table 'LoadTest', exiting ..."
+    save_failure_state
     exit 1
   fi
 
@@ -63,6 +82,7 @@ run_test() {
   $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql | grep -v "hypertable" > dbdump.$TEST_ID
   if [ $? != 0 ] ; then
     echo "Problem dumping table 'LoadTest', exiting ..."
+    save_failure_state
     exit 1
   fi
 
@@ -83,6 +103,7 @@ run_test() {
     $HT_SHELL -l error --batch < $SCRIPT_DIR/dump-test-table.hql | grep -v "hypertable" > dbdump.$TEST_ID.again
     if [ $? != 0 ] ; then
         echo "Problem dumping table 'LoadTest', exiting ..."
+        save_failure_state
         exit 1
     fi
     #exec 1>&-

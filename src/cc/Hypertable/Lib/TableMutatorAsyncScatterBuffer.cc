@@ -31,11 +31,16 @@
 #include "TableMutatorAsyncScatterBuffer.h"
 #include "RangeServerProtocol.h"
 
+#include <poll.h>
+
+#include <boost/random.hpp>
+#include <boost/random/uniform_01.hpp>
+
 using namespace Hypertable;
 
 
 TableMutatorAsyncScatterBuffer::TableMutatorAsyncScatterBuffer(Comm *comm,
-    ApplicationQueuePtr &app_queue, TableMutatorAsync *mutator,
+    ApplicationQueueInterfacePtr &app_queue, TableMutatorAsync *mutator,
     const TableIdentifier *table_identifier, SchemaPtr &schema,
     RangeLocatorPtr &range_locator, bool auto_refresh, uint32_t timeout_ms, uint32_t id)
   : m_comm(comm), m_app_queue(app_queue), m_mutator(mutator), m_schema(schema),
@@ -44,8 +49,6 @@ TableMutatorAsyncScatterBuffer::TableMutatorAsyncScatterBuffer(Comm *comm,
     m_full(false), m_resends(0), m_auto_refresh(auto_refresh), m_timeout_ms(timeout_ms),
     m_counter_value(9), m_timer(timeout_ms), m_id(id), m_memory_used(0), m_outstanding(false),
     m_send_flags(0), m_wait_time(ms_init_redo_wait_time), dead(false) {
-
-  m_loc_cache = m_range_locator->location_cache();
 
   HT_ASSERT(Config::properties);
 
@@ -61,71 +64,74 @@ TableMutatorAsyncScatterBuffer::~TableMutatorAsyncScatterBuffer() {
 void
 TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t value_len,
     size_t incr_mem) {
-  ScopedLock lock(m_mutex);
 
   RangeLocationInfo range_info;
   TableMutatorAsyncSendBufferMap::const_iterator iter;
   bool counter_reset = false;
 
-  if (!m_loc_cache->lookup(m_table_identifier.id, key.row, &range_info)) {
+  {
     Timer timer(m_timeout_ms, true);
     m_range_locator->find_loop(&m_table_identifier, key.row, &range_info,
         timer, false);
   }
 
-  // counter? make sure that a valid integer was specified and re-encode
-  // it as a 64bit value
-  if (key.column_family_code
-      && m_schema->get_column_family(key.column_family_code)->counter) {
-    const char *ascii_value = (const char *)value;
-    char *endptr;
-    m_counter_value.clear();
-    m_counter_value.ensure(value_len+1);
-    if (value_len > 0 && (*ascii_value == '=' || *ascii_value == '+')) {
-      counter_reset = (*ascii_value == '=');
-      m_counter_value.add_unchecked(ascii_value+1, value_len-1);
+  {
+    ScopedLock lock(m_mutex);
+
+    // counter? make sure that a valid integer was specified and re-encode
+    // it as a 64bit value
+    if (key.column_family_code
+	&& m_schema->get_column_family(key.column_family_code)->counter) {
+      const char *ascii_value = (const char *)value;
+      char *endptr;
+      m_counter_value.clear();
+      m_counter_value.ensure(value_len+1);
+      if (value_len > 0 && (*ascii_value == '=' || *ascii_value == '+')) {
+	counter_reset = (*ascii_value == '=');
+	m_counter_value.add_unchecked(ascii_value+1, value_len-1);
+      }
+      else
+	m_counter_value.add_unchecked(value, value_len);
+      m_counter_value.add_unchecked((const void *)"\0",1);
+      uint64_t val = strtoull((const char *)m_counter_value.base, &endptr, 0);
+      if (*endptr)
+	HT_THROWF(Error::BAD_KEY, "Expected integer value, got %s, row=%s",
+		  (char*)m_counter_value.base, key.row);
+      m_counter_value.clear();
+      Serialization::encode_i64(&m_counter_value.ptr, val);
     }
-    else
-      m_counter_value.add_unchecked(value, value_len);
-    m_counter_value.add_unchecked((const void *)"\0",1);
-    uint64_t val = strtoull((const char *)m_counter_value.base, &endptr, 0);
-    if (*endptr)
-      HT_THROWF(Error::BAD_KEY, "Expected integer value, got %s, row=%s",
-          (char*)m_counter_value.base, key.row);
-    m_counter_value.clear();
-    Serialization::encode_i64(&m_counter_value.ptr, val);
-  }
 
-  iter = m_buffer_map.find(range_info.addr);
-
-  if (iter == m_buffer_map.end()) {
-    // this can be optimized by using the insert() method
-    m_buffer_map[range_info.addr] = new TableMutatorAsyncSendBuffer(&m_table_identifier,
-        &m_completion_counter, m_range_locator.get());
     iter = m_buffer_map.find(range_info.addr);
-    (*iter).second->addr = range_info.addr;
-  }
 
-  (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
-  create_key_and_append((*iter).second->accum, key.flag, key.row,
-      key.column_family_code, key.column_qualifier, key.timestamp);
+    if (iter == m_buffer_map.end()) {
+      // this can be optimized by using the insert() method
+      m_buffer_map[range_info.addr] = new TableMutatorAsyncSendBuffer(&m_table_identifier,
+								      &m_completion_counter, m_range_locator.get());
+      iter = m_buffer_map.find(range_info.addr);
+      (*iter).second->addr = range_info.addr;
+    }
 
-  // now append the counter
-  if (key.column_family_code
-      && m_schema->get_column_family(key.column_family_code)->counter) {
-    if (counter_reset) {
-      *m_counter_value.ptr++ = '=';
-      append_as_byte_string((*iter).second->accum, m_counter_value.base, 9);
+    (*iter).second->key_offsets.push_back((*iter).second->accum.fill());
+    create_key_and_append((*iter).second->accum, key.flag, key.row,
+			  key.column_family_code, key.column_qualifier, key.timestamp);
+
+    // now append the counter
+    if (key.column_family_code
+	&& m_schema->get_column_family(key.column_family_code)->counter) {
+      if (counter_reset) {
+	*m_counter_value.ptr++ = '=';
+	append_as_byte_string((*iter).second->accum, m_counter_value.base, 9);
+      }
+      else
+	append_as_byte_string((*iter).second->accum, m_counter_value.base, 8);
     }
     else
-      append_as_byte_string((*iter).second->accum, m_counter_value.base, 8);
-  }
-  else
-    append_as_byte_string((*iter).second->accum, value, value_len);
+      append_as_byte_string((*iter).second->accum, value, value_len);
 
-  if ((*iter).second->accum.fill() > m_server_flush_limit)
-    m_full = true;
-  m_memory_used += incr_mem;
+    if ((*iter).second->accum.fill() > m_server_flush_limit)
+      m_full = true;
+    m_memory_used += incr_mem;
+  }
 }
 
 
@@ -138,7 +144,7 @@ void TableMutatorAsyncScatterBuffer::set_delete(const Key &key, size_t incr_mem)
   if (key.flag == FLAG_INSERT)
     HT_THROW(Error::BAD_KEY, "Key flag is FLAG_INSERT, expected delete");
 
-  if (!m_loc_cache->lookup(m_table_identifier.id, key.row, &range_info)) {
+  {
     Timer timer(m_timeout_ms, true);
     m_range_locator->find_loop(&m_table_identifier, key.row, &range_info,
         timer, false);
@@ -184,8 +190,7 @@ TableMutatorAsyncScatterBuffer::set(SerializedKey key, ByteString value, size_t 
   const uint8_t *ptr = key.ptr;
   size_t len = Serialization::decode_vi32(&ptr);
 
-  if (!m_loc_cache->lookup(m_table_identifier.id, (const char *)ptr+1,
-        &range_info)) {
+  {
     Timer timer(m_timeout_ms, true);
     m_range_locator->find_loop(&m_table_identifier, (const char *)ptr+1,
         &range_info, timer, false);
@@ -230,6 +235,7 @@ namespace {
 
 void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
   ScopedLock lock(m_mutex);
+  bool outstanding=false;
 
   m_timer.start();
   TableMutatorAsyncSendBufferPtr send_buffer;
@@ -239,7 +245,7 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
   SendRec send_rec;
   size_t len;
   String range_location;
-  bool outstanding=false;
+
   HT_ASSERT(!m_outstanding);
   m_completion_counter.set(m_buffer_map.size());
 
@@ -256,7 +262,7 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
 
     if (send_buffer->resend()) {
       memcpy(send_buffer->pending_updates.base,
-          send_buffer->accum.base, len);
+             send_buffer->accum.base, len);
       send_buffer->send_count = send_buffer->retry_count;
     }
     else {
@@ -296,8 +302,8 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
       m_send_flags = flags;
       send_buffer->pending_updates.own = false;
       m_range_server.update(send_buffer->addr, m_table_identifier,
-          send_buffer->send_count, send_buffer->pending_updates, flags,
-          send_buffer->dispatch_handler.get());
+                            send_buffer->send_count, send_buffer->pending_updates, flags,
+                            send_buffer->dispatch_handler.get());
 
       outstanding = true;
 
@@ -306,10 +312,22 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
 
     }
     catch (Exception &e) {
-      if (e.code() == Error::COMM_NOT_CONNECTED) {
+      if (e.code() == Error::COMM_NOT_CONNECTED ||
+          e.code() == Error::COMM_BROKEN_CONNECTION) {
         send_buffer->add_retries(send_buffer->send_count, 0,
-            send_buffer->pending_updates.size);
-        m_completion_counter.decrement();
+                                 send_buffer->pending_updates.size);
+        if (e.code() == Error::COMM_NOT_CONNECTED)
+          m_completion_counter.decrement();
+        else
+          outstanding = true;
+        // Random wait betwee 0 and 5 seconds
+        boost::mt19937 rng;
+        poll(0, 0, rng()%5000);
+      }
+      else {
+        HT_FATALF("Problem sending updates to %s - %s (%s)",
+                  send_buffer->addr.to_str().c_str(), Error::get_text(e.code()),
+                  e.what());
       }
     }
     send_buffer->pending_updates.own = true;

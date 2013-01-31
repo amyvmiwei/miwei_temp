@@ -41,7 +41,7 @@ using namespace Serialization;
 
 ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
                                                Session *session)
-  : m_dead(false), m_destoying(false), m_comm(comm),
+  : m_dead(false), m_destroying(false), m_comm(comm),
     m_session(session), m_session_id(0), m_last_known_event(0) {
   int error;
 
@@ -90,14 +90,14 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
 
 
 void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
-  ScopedLock lock(m_mutex);
+  ScopedRecLock lock(m_mutex);
   int error;
 
   if (m_dead)
     return;
-  else if (m_destoying) {
+  else if (m_destroying) {
     destroy();
-    m_cond_destoyed.notify_all();
+    m_cond_destroyed.notify_all();
     return;
   }
 
@@ -177,11 +177,11 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
           if (m_session_id == 0) {
             m_session_id = session_id;
-            if (!m_conn_handler_ptr) {
-              m_conn_handler_ptr = new ClientConnectionHandler(m_comm,
+            if (!m_conn_handler) {
+              m_conn_handler = new ClientConnectionHandler(m_comm,
                   m_session, m_lease_interval);
-              m_conn_handler_ptr->set_verbose_mode(m_verbose);
-              m_conn_handler_ptr->set_session_id(m_session_id);
+              m_conn_handler->set_verbose_mode(m_verbose);
+              m_conn_handler->set_session_id(m_session_id);
             }
           }
 
@@ -330,8 +330,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           }
           **/
 
-          if (m_conn_handler_ptr->disconnected())
-            m_conn_handler_ptr->initiate_connection(m_master_addr);
+          if (m_conn_handler->disconnected())
+            m_conn_handler->initiate_connection(m_master_addr);
 
           if (notifications > 0) {
             CommBufPtr cbp(Protocol::create_client_keepalive_request(
@@ -405,10 +405,10 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 void ClientKeepaliveHandler::expire_session() {
   m_session->state_transition(m_reconnect ? Session::STATE_DISCONNECTED : Session::STATE_EXPIRED);
 
-  if (m_conn_handler_ptr)
-    m_conn_handler_ptr->close();
+  if (m_conn_handler)
+    m_conn_handler->close();
   poll(0,0,2000);
-  m_conn_handler_ptr = 0;
+  m_conn_handler = 0;
   m_handle_map.clear();
   m_bad_handle_map.clear();
   m_session_id = 0;
@@ -447,9 +447,12 @@ void ClientKeepaliveHandler::destroy_session() {
   int error;
 
   {
-    ScopedLock lock(m_mutex);
-    if (m_dead || m_destoying)
+    ScopedRecLock lock(m_mutex);
+    if (m_dead || m_destroying)
       return;
+    m_destroying = true;
+    if (m_conn_handler)
+      m_conn_handler->disable_callbacks();
   }
 
   CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
@@ -460,15 +463,16 @@ void ClientKeepaliveHandler::destroy_session() {
     HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
 
   wait_for_destroy_session();
+
 }
 
 void ClientKeepaliveHandler::wait_for_destroy_session() {
-  ScopedLock lock(m_mutex);
+  ScopedRecLock lock(m_mutex);
   if (m_dead)
     return;
 
-  m_destoying = true;
-  if (!m_cond_destoyed.timed_wait(lock, boost::posix_time::seconds(2))) {
+  m_destroying = true;
+  if (!m_cond_destroyed.timed_wait(lock, boost::posix_time::seconds(2))) {
     destroy();
   }
 }
@@ -477,9 +481,9 @@ void ClientKeepaliveHandler::destroy() {
   if (m_dead)
     return;
   m_dead = true;
-  if (m_conn_handler_ptr)
-    m_conn_handler_ptr->close();
-  m_conn_handler_ptr = 0;
+  if (m_conn_handler)
+    m_conn_handler->close();
+  m_conn_handler = 0;
   m_handle_map.clear();
   m_bad_handle_map.clear();
   m_session_id = 0;

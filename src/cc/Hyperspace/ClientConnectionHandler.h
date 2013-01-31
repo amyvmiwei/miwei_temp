@@ -22,6 +22,7 @@
 #ifndef HYPERSPACE_CLIENTCONNECTIONHANDLER_H
 #define HYPERSPACE_CLIENTCONNECTIONHANDLER_H
 
+#include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
 #include "Common/Error.h"
@@ -49,12 +50,12 @@ namespace Hyperspace {
     void set_session_id(uint64_t id) { m_session_id = id; }
 
     bool disconnected() {
-      ScopedLock lock(m_mutex);
+      ScopedRecLock lock(m_mutex);
       return m_state == DISCONNECTED;
     }
 
     int initiate_connection(struct sockaddr_in &addr) {
-      ScopedLock lock(m_mutex);
+      ScopedRecLock lock(m_mutex);
       DispatchHandlerPtr dhp(this);
       m_state = CONNECTING;
       int error = m_comm->connect(addr, dhp);
@@ -79,21 +80,21 @@ namespace Hyperspace {
 
     void set_verbose_mode(bool verbose) { m_verbose = verbose; }
 
-    void close() {
-      ScopedLock lock(m_mutex);
-      m_comm->close_socket(m_master_addr);
-      m_state = DISCONNECTED;
-    }
+    void disable_callbacks() { m_callbacks_enabled = false; }
+
+    void close();
 
   private:
-    Mutex        m_mutex;
+    RecMutex         m_mutex;
+    boost::condition m_cond;
     Comm *m_comm;
     Session *m_session;
     uint64_t m_session_id;
     int m_state;
-    bool m_verbose;
     struct sockaddr_in m_master_addr;
     uint32_t m_timeout_ms;
+    bool m_verbose;
+    bool m_callbacks_enabled;
   };
 
   typedef intrusive_ptr<ClientConnectionHandler> ClientConnectionHandlerPtr;

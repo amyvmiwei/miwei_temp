@@ -46,9 +46,7 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
   : m_comm(comm), m_range_server(range_server),
     m_last_low_memory_maintenance(TIMESTAMP_NULL),
     m_urgent_maintenance_scheduled(false), m_app_queue_paused(false),
-    m_low_physical_memory(false), m_maintenance_outstanding(false),
-    m_maintenance_queue_workers((int32_t)Global::maintenance_queue->workers()),
-    m_app_queue_paused_ticks(0) {
+    m_low_physical_memory(false), m_maintenance_outstanding(false) {
   int error;
   int32_t maintenance_interval;
 
@@ -137,7 +135,6 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
     if (!m_app_queue_paused) {
       HT_INFO("Pausing application queue due to low memory condition");
       m_app_queue_paused = true;
-      m_app_queue_paused_ticks = 0;
       m_app_queue->stop();
       m_current_interval = 500;
       boost::xtime_get(&m_pause_time, TIME_UTC_);
@@ -153,14 +150,11 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
     // and maintenance workload
     if (m_last_low_memory_maintenance != TIMESTAMP_NULL) {
       if ((now-m_last_low_memory_maintenance) < (m_timer_interval*1000000LL) &&
-          (Global::maintenance_queue->pending() ||
-           (int32_t)Global::maintenance_queue->in_progress() >
-           std::max(0, m_app_queue_paused_ticks / 2 - m_maintenance_queue_workers)))
+	  Global::maintenance_queue->full())
         do_maintenance = false;
     }
     if (do_maintenance)
       m_last_low_memory_maintenance = now;
-    m_app_queue_paused_ticks++;
   }
 
   try {
@@ -193,7 +187,6 @@ void TimerHandler::restart_app_queue() {
   HT_INFO("Restarting application queue");
   m_app_queue->start();
   m_app_queue_paused = false;
-  m_app_queue_paused_ticks = 0;
   m_last_low_memory_maintenance = TIMESTAMP_NULL;
   m_current_interval = m_timer_interval;
 

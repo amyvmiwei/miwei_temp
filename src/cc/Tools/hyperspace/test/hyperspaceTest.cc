@@ -29,6 +29,7 @@ extern "C" {
 #include <unistd.h>
 }
 
+#include "Common/InetAddr.h"
 #include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
@@ -122,8 +123,10 @@ int main(int argc, char **argv) {
   std::vector<const char *> client_args;
   Comm *comm;
   CommAddress addr;
-  struct sockaddr_in inet_addr;
+  InetAddr inet_addr;
   DispatchHandlerPtr dhp;
+  String notification_address_arg;
+  String hyperspace_replica_port_arg;
 
   Config::init(0, 0);
 
@@ -142,6 +145,10 @@ int main(int argc, char **argv) {
   if (!InetAddr::initialize(&inet_addr, "23451"))
     exit(1);
 
+  comm->find_available_udp_port(inet_addr);
+  notification_address_arg = format("--notification-address=%d",
+                                    (int)ntohs(inet_addr.sin_port));
+
   addr.set_inet(inet_addr);
   comm->create_datagram_receive_socket(addr, 0x10, dhp);
 
@@ -155,15 +162,22 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
+  inet_addr = InetAddr(INADDR_ANY, 48122);
+  comm->find_available_tcp_port(inet_addr);
+  hyperspace_replica_port_arg = format("--Hyperspace.Replica.Port=%d",
+                                       (int)ntohs(inet_addr.sin_port));
+
   master_args.push_back("Hyperspace.Master");
   master_args.push_back("--config=./hyperspaceTest.cfg");
+  master_args.push_back(hyperspace_replica_port_arg.c_str());
   master_args.push_back("--verbose");
   master_args.push_back((const char *)0);
 
   client_args.push_back("hyperspace");
   client_args.push_back("--config=./hyperspaceTest.cfg");
   client_args.push_back("--test-mode");
-  client_args.push_back("--notification-address=23451");
+  client_args.push_back(hyperspace_replica_port_arg.c_str());
+  client_args.push_back(notification_address_arg.c_str());
   client_args.push_back((const char *)0);
 
   unlink("./Hyperspace.Master");
@@ -208,7 +222,7 @@ int main(int argc, char **argv) {
   if (system("diff ./client3.out ./client3.golden"))
     return 1;
 
-  return 0;
+  _exit(0);
 }
 
 

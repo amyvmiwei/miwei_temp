@@ -30,9 +30,9 @@ using namespace Hypertable;
  *
  */
 void RequestHandlerHeapcheck::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
-  const uint8_t *decode_ptr = m_event_ptr->payload;
-  size_t decode_remain = m_event_ptr->payload_len;
+  ResponseCallback cb(m_comm, m_event);
+  const uint8_t *decode_ptr = m_event->payload;
+  size_t decode_remain = m_event->payload_len;
   const char *outfile = 0;
 
   try {

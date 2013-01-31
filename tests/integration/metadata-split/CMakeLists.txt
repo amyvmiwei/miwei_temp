@@ -50,7 +50,3 @@ add_test(METADATA-split-recovery-11 env TEST_11=1 SKIP_START_SERVERS=1
 add_test(METADATA-split-recovery-12 env TEST_12=1 SKIP_START_SERVERS=1 
          INSTALL_DIR=${INSTALL_DIR}
          bash -x ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)
-
-add_test(METADATA-split-recovery-13 env TEST_13=1 SKIP_START_SERVERS=1 
-         INSTALL_DIR=${INSTALL_DIR}
-         bash -x ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)

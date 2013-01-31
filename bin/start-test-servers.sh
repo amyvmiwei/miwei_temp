@@ -39,6 +39,7 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$clear" ]; then
+  $INSTALL_DIR/bin/start-dfsbroker.sh $HT_TEST_DFS
   $INSTALL_DIR/bin/ht clean-database $@
 else
   $INSTALL_DIR/bin/ht stop servers

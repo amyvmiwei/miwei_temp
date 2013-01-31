@@ -56,7 +56,7 @@ using namespace Config;
 
 Namespace::Namespace(const String &name, const String &id, PropertiesPtr &props,
     ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-    ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, MasterClientPtr &master_client,
+    ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap, MasterClientPtr &master_client,
     RangeLocatorPtr &range_locator, TableCachePtr &table_cache, 
     uint32_t timeout, Client *client)
   : m_name(name), m_id(id), m_props(props),

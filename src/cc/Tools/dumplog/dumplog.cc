@@ -39,6 +39,8 @@
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/CommitLogReader.h"
 
+#include <boost/algorithm/string/predicate.hpp>
+
 using namespace Hypertable;
 using namespace Config;
 using namespace std;
@@ -50,8 +52,9 @@ struct AppPolicy : Config::Policy {
     cmdline_desc("Usage: %s [options] <log-dir>\n\n"
       "  This program dumps the given log's metadata.\n\nOptions")
       .add_options()
-      ("block-summary", "Display commit log block information only")
-      ("display-values", "Display values (assumes they're printable)")
+      ("block-summary", boo()->zero_tokens()->default_value(false), "Display commit log block information only")
+      ("display-values", boo()->zero_tokens()->default_value(false), "Display values (assumes they're printable)")
+      ("linked-logs", boo()->zero_tokens()->default_value(false), "Display valid (non-deleted) linked logs")
       ;
     cmdline_hidden_desc().add_options()("log-dir", str(), "dfs log dir");
     cmdline_positional_desc().add("log-dir", -1);
@@ -70,6 +73,8 @@ void display_log(DfsBroker::Client *dfs_client, const String &prefix,
     CommitLogReader *log_reader, bool display_values);
 void display_log_block_summary(DfsBroker::Client *dfs_client,
     const String &prefix, CommitLogReader *log_reader);
+void display_log_valid_links(DfsBroker::Client *dfs_client,
+    const String &prefix, CommitLogReader *log_reader);
 
 } // local namespace
 
@@ -82,8 +87,9 @@ int main(int argc, char **argv) {
 
     String log_dir = get_str("log-dir");
     String log_host = get("log-host", String());
-    int timeout = get_i32("dfs-timeout");
-    bool block_summary = has("block-summary");
+    int timeout = get_i32("dfs-timeout", 15000);
+    bool block_summary = get_bool("block-summary");
+    bool linked_logs = get_bool("linked-logs");
 
     /**
      * Check for and connect to commit log DFS broker
@@ -107,14 +113,19 @@ int main(int argc, char **argv) {
 
     FilesystemPtr fs = dfs_client;
 
+    boost::trim_right_if(log_dir, boost::is_any_of("/"));    
+
     CommitLogReaderPtr log_reader = new CommitLogReader(fs, log_dir);
 
     if (block_summary) {
       printf("LOG %s\n", log_dir.c_str());
       display_log_block_summary(dfs_client, "", log_reader.get());
     }
+    else if (linked_logs) {
+      display_log_valid_links(dfs_client, log_dir, log_reader.get());
+    }
     else
-      display_log(dfs_client, "", log_reader.get(), has("display_values"));
+      display_log(dfs_client, "", log_reader.get(), has("display-values"));
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
@@ -211,6 +222,36 @@ namespace {
                binfo.log_dir, binfo.file_fragment,
                Error::get_text(binfo.error));
     }
+  }
+
+  void
+  display_log_valid_links(DfsBroker::Client *dfs_client, const String &prefix,
+                          CommitLogReader *log_reader) {
+    CommitLogBlockInfo binfo;
+    BlockCompressionHeaderCommitLog header;
+    StringSet logs_seen;
+    String logname;
+
+    while (log_reader->next_raw_block(&binfo, &header)) {
+
+      logname = binfo.log_dir;
+      boost::trim_right_if(logname, boost::is_any_of("/"));
+
+      if (logs_seen.count(logname) > 0)
+        continue;
+
+      if (logname.compare(prefix) == 0)
+        continue;
+
+      if (dfs_client->exists(logname))
+        logs_seen.insert(logname);
+
+    }
+
+    foreach_ht (const String &name, logs_seen)
+      std::cout << name << "\n";
+    std::cout << std::flush;
+
   }
 
 } // local namespace

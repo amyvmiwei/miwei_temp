@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/* -*- C++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -37,15 +37,19 @@ extern "C" {
 
 namespace Hypertable {
 
-  /**
+  /** @addtogroup AsyncComm
+   *  @{
+   */
+
+  /** I/O handler for UDP sockets.
    */
   class IOHandlerDatagram : public IOHandler {
 
   public:
 
-    IOHandlerDatagram(int sd, const InetAddr &addr, DispatchHandlerPtr &dhp)
-      : IOHandler(sd, addr, dhp), m_send_queue() {
+    IOHandlerDatagram(int sd, DispatchHandlerPtr &dhp) : IOHandler(sd, dhp) {
       m_message = new uint8_t [65536];
+      memcpy(&m_addr, &m_local_addr, sizeof(InetAddr));
     }
 
     virtual ~IOHandlerDatagram() { delete [] m_message; }
@@ -77,8 +81,7 @@ namespace Hypertable {
     uint8_t        *m_message;
     std::list<SendRec>  m_send_queue;
   };
-
-  typedef boost::intrusive_ptr<IOHandlerDatagram> IOHandlerDatagramPtr;
+  /** @}*/
 }
 
 #endif // HYPERTABLE_IOHANDLERDATAGRAM_H

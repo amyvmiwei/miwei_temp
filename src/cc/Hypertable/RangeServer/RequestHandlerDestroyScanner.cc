@@ -38,9 +38,9 @@ using namespace Serialization;
  *
  */
 void RequestHandlerDestroyScanner::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
-  const uint8_t *decode_ptr = m_event_ptr->payload;
-  size_t decode_remain = m_event_ptr->payload_len;
+  ResponseCallback cb(m_comm, m_event);
+  const uint8_t *decode_ptr = m_event->payload;
+  size_t decode_remain = m_event->payload_len;
 
   try {
     uint32_t scanner_id = decode_i32(&decode_ptr, &decode_remain);

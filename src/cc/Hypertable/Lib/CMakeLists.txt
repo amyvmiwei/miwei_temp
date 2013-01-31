@@ -44,7 +44,6 @@ Future.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc
 HqlInterpreter.cc
-IntervalScanner.cc
 IntervalScannerAsync.cc
 Key.cc
 KeySpec.cc
@@ -61,6 +60,7 @@ MasterProtocol.cc
 MetaLog.cc
 MetaLogEntity.cc
 MetaLogEntityHeader.cc
+MetaLogEntityRange.cc
 MetaLogReader.cc
 MetaLogWriter.cc
 NameIdMapper.cc
@@ -70,6 +70,8 @@ RangeLocator.cc
 RangeMoveSpec.cc
 RangeServerClient.cc
 RangeServerProtocol.cc
+RangeRecoveryReceiverPlan.cc
+RangeRecoveryReplayPlan.cc
 RangeState.cc
 Result.cc
 RootFileHandler.cc

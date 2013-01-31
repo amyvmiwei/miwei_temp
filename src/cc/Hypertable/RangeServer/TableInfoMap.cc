@@ -65,6 +65,14 @@ void TableInfoMap::set(const String &name, TableInfoPtr &info) {
   m_map[name] = info;
 }
 
+bool TableInfoMap::insert(const String &name, TableInfoPtr &info) {
+  ScopedLock lock(m_mutex);
+  if (m_map.find(name) != m_map.end())
+    return false;
+  m_map[name] = info;
+  return true;
+}
+
 
 void TableInfoMap::stage_range(const TableIdentifier *table, const RangeSpec *range_spec) {
   ScopedLock lock(m_mutex);
@@ -77,8 +85,11 @@ void TableInfoMap::stage_range(const TableIdentifier *table, const RangeSpec *ra
 void TableInfoMap::unstage_range(const TableIdentifier *table, const RangeSpec *range_spec) {
   ScopedLock lock(m_mutex);
   InfoMap::iterator iter = m_map.find(table->id);
-  HT_ASSERT(iter != m_map.end());
-  (*iter).second->unstage_range(range_spec);
+  if (iter == m_map.end())
+    HT_INFOF("Attempt to unstange non-present range %s[%s..%s]", table->id,
+             (range_spec->start_row ? range_spec->start_row : ""), range_spec->end_row);
+  else
+    (*iter).second->unstage_range(range_spec);
 }
 
 
@@ -87,7 +98,8 @@ void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &rang
   int error;
 
   InfoMap::iterator iter = m_map.find(table->id);
-  HT_ASSERT(iter != m_map.end());
+  if (iter == m_map.end())
+    HT_THROW(Error::RANGESERVER_TABLE_DROPPED, "");
 
   if (transfer_log && *transfer_log) {
     CommitLogReaderPtr commit_log_reader =
@@ -111,7 +123,10 @@ void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &rang
     }
   }
 
-  HT_MAYBE_FAIL_X("metadata-load-range-4", table->is_metadata());
+  HT_MAYBE_FAIL_X("add-staged-range-2", !table->is_system());
+
+  // Record range in RSML
+  range->record_state_rsml();
 
   (*iter).second->add_staged_range(range);
 }

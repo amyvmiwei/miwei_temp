@@ -49,7 +49,7 @@ int ScanBlock::load(EventPtr &event_ptr) {
   size_t decode_remain = event_ptr->payload_len - 4;
   uint32_t len;
 
-  m_event_ptr = event_ptr;
+  m_event = event_ptr;
   m_vec.clear();
   m_iter = m_vec.end();
 

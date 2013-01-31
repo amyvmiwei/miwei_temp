@@ -199,19 +199,21 @@ bool Reader::load_file(const String &fname) {
 
       m_cur_offset += nread;
 
-      remaining = header.length;
-      ptr = buf.base;
-      entity->decode(&ptr, &remaining);
+      if (entity) {
+        remaining = header.length;
+        ptr = buf.base;
+        entity->decode(&ptr, &remaining);
 
-      // verify checksum
-      int32_t computed_checksum = fletcher32(buf.base, header.length);
-      if (header.checksum != computed_checksum)
-        HT_THROWF(Error::METALOG_CHECKSUM_MISMATCH,
-                  "MetaLog entry checksum mismatch header=%d, computed=%d",
-                  header.checksum, computed_checksum);
+        // verify checksum
+        int32_t computed_checksum = fletcher32(buf.base, header.length);
+        if (header.checksum != computed_checksum)
+          HT_THROWF(Error::METALOG_CHECKSUM_MISMATCH,
+                    "MetaLog entry checksum mismatch header=%d, computed=%d",
+                    header.checksum, computed_checksum);
 
-      m_entity_map[header] = entity;
-      m_entities.push_back(entity);
+        m_entity_map[header] = entity;
+        m_entities.push_back(entity);
+      }
 
     }
 

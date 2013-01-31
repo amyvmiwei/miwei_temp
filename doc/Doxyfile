@@ -31,7 +31,6 @@ SHORT_NAMES            = NO
 JAVADOC_AUTOBRIEF      = YES
 QT_AUTOBRIEF           = NO
 MULTILINE_CPP_IS_BRIEF = NO
-DETAILS_AT_TOP         = NO
 INHERIT_DOCS           = YES
 SEPARATE_MEMBER_PAGES  = NO
 TAB_SIZE               = 8
@@ -70,7 +69,6 @@ GENERATE_DEPRECATEDLIST= YES
 ENABLED_SECTIONS       =
 MAX_INITIALIZER_LINES  = 30
 SHOW_USED_FILES        = YES
-SHOW_DIRECTORIES       = YES
 FILE_VERSION_FILTER    =
 #---------------------------------------------------------------------------
 # configuration options related to warning and progress messages
@@ -118,7 +116,7 @@ FILE_PATTERNS          = *.c \
 RECURSIVE              = YES
 EXCLUDE                = @HYPERTABLE_SOURCE_DIR@/src/cc/boost-1_34-fix
 EXCLUDE_SYMLINKS       = NO
-EXCLUDE_PATTERNS       = */test/* */tests/*
+EXCLUDE_PATTERNS       = */test/* */tests/* */gen-cpp/*
 EXCLUDE_SYMBOLS        =
 EXAMPLE_PATH           =
 EXAMPLE_PATTERNS       = *
@@ -153,7 +151,6 @@ HTML_FILE_EXTENSION    = .html
 HTML_HEADER            =
 HTML_FOOTER            =
 HTML_STYLESHEET        =
-HTML_ALIGN_MEMBERS     = YES
 GENERATE_HTMLHELP      = NO
 HTML_DYNAMIC_SECTIONS  = NO
 CHM_FILE               =
@@ -218,7 +215,7 @@ PERLMOD_MAKEVAR_PREFIX =
 #---------------------------------------------------------------------------
 # Configuration options related to the preprocessor
 #---------------------------------------------------------------------------
-ENABLE_PREPROCESSING   = YES
+ENABLE_PREPROCESSING   = NO
 MACRO_EXPANSION        = NO
 EXPAND_ONLY_PREDEF     = NO
 SEARCH_INCLUDES        = YES

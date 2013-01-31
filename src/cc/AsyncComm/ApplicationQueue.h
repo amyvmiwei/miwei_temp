@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for ApplicationQueue.
+ * This file contains type declarations for ApplcationQueue, a base class for
+ * an application queue.
  */
 
 #ifndef HYPERTABLE_APPLICATIONQUEUE_H
@@ -37,43 +43,93 @@
 #include "Common/StringExt.h"
 #include "Common/Logger.h"
 
+#include "ApplicationQueueInterface.h"
 #include "ApplicationHandler.h"
 
 namespace Hypertable {
 
-  /**
-   * Provides application work queue and worker threads.  It maintains a queue
-   * of requests and a pool of threads that pull requests off the queue and
-   * carry them out.
+  /** @addtogroup AsyncComm
+   *  @{
    */
-  class ApplicationQueue : public ReferenceCount {
 
-    class UsageRec {
+  /**
+   * Application queue.  
+   * Helper class for use by server applications that are driven by messages
+   * received over the network.  This class can be used in conjunction with the
+   * ApplicationHandler class to implement an incoming request queue.  Worker
+   * threads pull handlers (requests) off the queue and carry them out.  The
+   * following features are supported:
+   *
+   * <b>Groups</b>
+   *
+   * Because a set of worker threads pull requests from the queue and carry
+   * them out independently, it is possible for requests to get executed out
+   * of order relative to the order in which they arrived in the queue.  This
+   * can cause problems for certain request sequences such as appending data
+   * to a file in the DfsBroker, or fetching scanner results from a scanner
+   * using multiple readahead requests.  <i>Groups</i> are a way to give
+   * applications the ability to serialize a set of requests.  Each request
+   * has a <i>group ID</i> that is returned by 
+   * the ApplicationHandler#get_group_id method.  Requests that have the
+   * same group ID will get executed in series, in the order in which they
+   * arrived in the application queue.  Requests with group ID 0 don't belong to
+   * any group and will get executed independently with no serialization
+   * order.
+   *
+   * <b>Prioritization</b>
+   *
+   * The ApplicationQueue supports two-level request prioritization.  Requests
+   * can be designated as <i>urgent</i> which will cause them to be executed
+   * before other non-urgent requests.  Urgent requests will also be executed
+   * even when the ApplicationQueue has been paused.  In Hypertable, METADATA
+   * scans and updates are marked urgent which allows them procede and prevent
+   * deadlocks when the application queue gets paused due to low memory
+   * condition in the RangeServer.  The ApplicationHandler#is_urgent
+   * method is used to signal if a request is urgent.
+   */
+  class ApplicationQueue : public ApplicationQueueInterface {
+
+    /** Tracks group execution state.
+     * A GroupState object is created for each unique group ID to track the
+     * queue execution state of requests in the group.
+     */
+    class GroupState {
     public:
-      UsageRec() : thread_group(0), running(false), outstanding(1) { return; }
-      uint64_t thread_group;
-      bool     running;
-      int      outstanding;
+      GroupState() : group_id(0), running(false), outstanding(1) { return; }
+      uint64_t group_id;    //!< Group ID
+      bool     running;     //!< <i>True</i> if a request from this group is
+                            //!< being executed
+      int      outstanding; //!< Number of outstanding (uncompleted) requests
+                            //!< in queue for this group
     };
 
-    typedef hash_map<uint64_t, UsageRec *> UsageRecMap;
+    /** Hash map of thread group ID to GroupState
+     */ 
+    typedef hash_map<uint64_t, GroupState *> GroupStateMap;
 
-    class WorkRec {
+    /** Request record.
+     */
+    class RequestRec {
     public:
-      WorkRec(ApplicationHandler *ah) : handler(ah), usage(0) { return; }
-      ~WorkRec() { delete handler; }
-      ApplicationHandler   *handler;
-      UsageRec             *usage;
+      RequestRec(ApplicationHandler *arh) : handler(arh), group_state(0) { return; }
+      ~RequestRec() { delete handler; }
+      ApplicationHandler *handler; //!< Pointer to ApplicationHandler
+      GroupState *group_state;     //!< Pointer to GroupState to which request belongs
     };
 
-    typedef std::list<WorkRec *> WorkQueue;
+    /** Individual request queue
+     */
+    typedef std::list<RequestRec *> RequestQueue;
 
+    /** Application queue state object shared among worker threads.
+     */
     class ApplicationQueueState {
     public:
-      ApplicationQueueState() : threads_available(0), shutdown(false), paused(false) { return; }
-      WorkQueue           queue;
-      WorkQueue           urgent_queue;
-      UsageRecMap         usage_map;
+      ApplicationQueueState() : threads_available(0), shutdown(false),
+                                paused(false) { }
+      RequestQueue           queue;
+      RequestQueue           urgent_queue;
+      GroupStateMap       group_state_map;
       Mutex               mutex;
       boost::condition    cond;
       boost::condition    quiesce_cond;
@@ -83,6 +139,8 @@ namespace Hypertable {
       bool                paused;
     };
 
+    /** Application queue worker thread function (functor)
+     */
     class Worker {
 
     public:
@@ -90,8 +148,8 @@ namespace Hypertable {
       : m_state(qstate), m_one_shot(one_shot) { return; }
 
       void operator()() {
-        WorkRec *rec = 0;
-        WorkQueue::iterator iter;
+        RequestRec *rec = 0;
+        RequestQueue::iterator iter;
 
         while (true) {
           {
@@ -119,13 +177,13 @@ namespace Hypertable {
             iter = m_state.urgent_queue.begin();
             while (iter != m_state.urgent_queue.end()) {
               rec = (*iter);
-              if (rec->usage == 0 || !rec->usage->running) {
-                if (rec->usage)
-                  rec->usage->running = true;
+              if (rec->group_state == 0 || !rec->group_state->running) {
+                if (rec->group_state)
+                  rec->group_state->running = true;
                 m_state.urgent_queue.erase(iter);
                 break;
               }
-              if (!rec->handler || rec->handler->expired()) {
+              if (!rec->handler || rec->handler->is_expired()) {
                 iter = m_state.urgent_queue.erase(iter);
                 remove_expired(rec);
               }
@@ -137,13 +195,13 @@ namespace Hypertable {
               iter = m_state.queue.begin();
               while (iter != m_state.queue.end()) {
                 rec = (*iter);
-                if (rec->usage == 0 || !rec->usage->running) {
-                  if (rec->usage)
-                    rec->usage->running = true;
+                if (rec->group_state == 0 || !rec->group_state->running) {
+                  if (rec->group_state)
+                    rec->group_state->running = true;
                   m_state.queue.erase(iter);
                   break;
                 }
-                if (!rec->handler || rec->handler->expired()) {
+                if (!rec->handler || rec->handler->is_expired()) {
                   iter = m_state.queue.erase(iter);
                   remove_expired(rec);
                 }
@@ -183,25 +241,25 @@ namespace Hypertable {
 
     private:
 
-      void remove(WorkRec *rec) {
-        if (rec->usage) {
+      void remove(RequestRec *rec) {
+        if (rec->group_state) {
           ScopedLock ulock(m_state.mutex);
-          rec->usage->running = false;
-          rec->usage->outstanding--;
-          if (rec->usage->outstanding == 0) {
-            m_state.usage_map.erase(rec->usage->thread_group);
-            delete rec->usage;
+          rec->group_state->running = false;
+          rec->group_state->outstanding--;
+          if (rec->group_state->outstanding == 0) {
+            m_state.group_state_map.erase(rec->group_state->group_id);
+            delete rec->group_state;
           }
         }
         delete rec;
       }
 
-      void remove_expired(WorkRec *rec) {
-        if (rec->usage) {
-          rec->usage->outstanding--;
-          if (rec->usage->outstanding == 0) {
-            m_state.usage_map.erase(rec->usage->thread_group);
-            delete rec->usage;
+      void remove_expired(RequestRec *rec) {
+        if (rec->group_state) {
+          rec->group_state->outstanding--;
+          if (rec->group_state->outstanding == 0) {
+            m_state.group_state_map.erase(rec->group_state->group_id);
+            delete rec->group_state;
           }
         }
         delete rec;
@@ -213,22 +271,24 @@ namespace Hypertable {
 
     ApplicationQueueState  m_state;
     ThreadGroup            m_threads;
-    std::vector<Thread::id>     m_thread_ids;
+    std::vector<Thread::id> m_thread_ids;
     bool joined;
     bool m_dynamic_threads;
 
   public:
 
     /**
-     * Default ctor used by derived classes only
+     * Default constructor used by derived classes only
      */
     ApplicationQueue() : joined(true) {}
 
     /**
-     * Constructor to set up the application queue.  It creates a number
-     * of worker threads specified by the worker_count argument.
-     *
-     * @param worker_count number of worker threads to create
+     * Constructor initialized with worker thread count.
+     * This constructor sets up the application queue with a number of worker
+     * threads specified by <code>worker_count</code>.
+     * @param worker_count Number of worker threads to create
+     * @param dynamic_threads Dynamically create temporary thread to carry out
+     * requests if none available.
      */
     ApplicationQueue(int worker_count, bool dynamic_threads=true) 
       : joined(false), m_dynamic_threads(dynamic_threads) {
@@ -241,6 +301,8 @@ namespace Hypertable {
       //threads
     }
 
+    /** Destructor.
+     */
     virtual ~ApplicationQueue() {
       if (!joined) {
         shutdown();
@@ -249,10 +311,10 @@ namespace Hypertable {
     }
 
     /**
-     * Return all the thread ids for this threadgroup
-     *
+     * Returns all the thread IDs for this threadgroup
+     * @return vector of Thread::id
      */
-    virtual std::vector<Thread::id> get_thread_ids() const {
+    std::vector<Thread::id> get_thread_ids() const {
       return m_thread_ids;
     }
 
@@ -261,74 +323,81 @@ namespace Hypertable {
      * out and then all threads exit.  #join can be called to wait for
      * completion of the shutdown.
      */
-    virtual void shutdown() {
+    void shutdown() {
       m_state.shutdown = true;
       m_state.cond.notify_all();
     }
 
-    void wait_for_empty(int reserve_threads=0) {
-      ScopedLock lock(m_state.mutex);
-      while (m_state.threads_available < (m_state.threads_total-reserve_threads))
-        m_state.quiesce_cond.wait(lock);
-    }
-
-    void wait_for_empty(boost::xtime &expire_time, int reserve_threads=0) {
+    /** Wait for queue to become idle (with timeout).
+     * @param deadline Return by this time if queue does not become idle
+     * @param reserve_threads Number of threads that can be active when queue is
+     * idle
+     * @return <i>false</i> if #deadline was reached before queue became idle,
+     * <i>true</i> otherwise
+     */
+    bool wait_for_idle(boost::xtime &deadline, int reserve_threads=0) {
       ScopedLock lock(m_state.mutex);
       while (m_state.threads_available < (m_state.threads_total-reserve_threads)) {
-        if (!m_state.quiesce_cond.timed_wait(lock, expire_time))
-          return;
+        if (!m_state.quiesce_cond.timed_wait(lock, deadline))
+          return false;
       }
+      return true;
     }
 
     /**
      * Waits for a shutdown to complete.  This method returns when all
      * application queue threads exit.
      */
-
-    virtual void join() {
+    void join() {
       if (!joined) {
         m_threads.join_all();
         joined = true;
       }
     }
 
-    virtual void stop() {
-      ScopedLock lock(m_state.mutex);
-      m_state.paused = true;
-    }
-
-    virtual void start() {
+    /** Starts application queue.
+     */
+    void start() {
       ScopedLock lock(m_state.mutex);
       m_state.paused = false;
       m_state.cond.notify_all();
     }
 
+    /** Stops (pauses) application queue, preventing non-urgent requests from
+     * being executed.  Any requests that are being executed at the time of the
+     * call will complete.
+     */
+    void stop() {
+      ScopedLock lock(m_state.mutex);
+      m_state.paused = true;
+    }
+
     /**
-     * Adds a request (application handler) to the request queue.  The request
-     * queue is designed to support the serialization of related requests.
-     * Requests are related by the thread group ID value in the
-     * ApplicationHandler.  This thread group ID is constructed in the Event
-     * object
+     * Adds a request (application request handler) to the application queue.
+     * The request queue is designed to support the serialization of related
+     * requests.  Requests are related by the thread group ID value in the
+     * ApplicationHandler.  This thread group ID is constructed in the
+     * Event object
      */
     virtual void add(ApplicationHandler *app_handler) {
-      UsageRecMap::iterator uiter;
-      uint64_t thread_group = app_handler->get_thread_group();
-      WorkRec *rec = new WorkRec(app_handler);
-      rec->usage = 0;
+      GroupStateMap::iterator uiter;
+      uint64_t group_id = app_handler->get_group_id();
+      RequestRec *rec = new RequestRec(app_handler);
+      rec->group_state = 0;
 
       HT_ASSERT(app_handler);
 
-      if (thread_group != 0) {
+      if (group_id != 0) {
         ScopedLock ulock(m_state.mutex);
-        if ((uiter = m_state.usage_map.find(thread_group))
-            != m_state.usage_map.end()) {
-          rec->usage = (*uiter).second;
-          rec->usage->outstanding++;
+        if ((uiter = m_state.group_state_map.find(group_id))
+            != m_state.group_state_map.end()) {
+          rec->group_state = (*uiter).second;
+          rec->group_state->outstanding++;
         }
         else {
-          rec->usage = new UsageRec();
-          rec->usage->thread_group = thread_group;
-          m_state.usage_map[thread_group] = rec->usage;
+          rec->group_state = new GroupState();
+          rec->group_state->group_id = group_id;
+          m_state.group_state_map[group_id] = rec->group_state;
         }
       }
 
@@ -352,8 +421,9 @@ namespace Hypertable {
     }
   };
 
+  /// Smart pointer to ApplicationQueue object
   typedef boost::intrusive_ptr<ApplicationQueue> ApplicationQueuePtr;
-
+  /** @}*/
 } // namespace Hypertable
 
 #endif // HYPERTABLE_APPLICATIONQUEUE_H

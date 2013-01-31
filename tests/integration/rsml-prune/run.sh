@@ -5,7 +5,6 @@ HT_TEST_DFS=${HT_TEST_DFS:-local}
 
 PIDFILE=$HYPERTABLE_HOME/run/Hypertable.RangeServer.pid
 
-$HYPERTABLE_HOME/bin/start-dfsbroker.sh $HT_TEST_DFS
 $HYPERTABLE_HOME/bin/start-test-servers.sh --clean --no-thriftbroker
 
 sleep 5

@@ -30,6 +30,7 @@ CommHeader.cc
 Config.cc
 ConnectionManager.cc
 Event.cc
+HandlerMap.cc
 IOHandler.cc
 IOHandlerAccept.cc
 IOHandlerData.cc

@@ -100,7 +100,6 @@ namespace Hypertable {
       return m_disk_usage;
     }
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
-    virtual const char *get_split_row();
     virtual int64_t get_total_entries() { return m_trailer.total_entries; }
     virtual std::string &get_filename() { return m_filename; }
     virtual int get_file_id() { return m_file_id; }
@@ -130,7 +129,6 @@ namespace Hypertable {
     virtual CellStoreTrailer *get_trailer() { return &m_trailer; }
 
   protected:
-    void record_split_row(const SerializedKey key);
     void create_bloom_filter(bool is_approx = false);
     void load_bloom_filter();
     void load_block_index();
@@ -154,7 +152,6 @@ namespace Hypertable {
     ByteString             m_last_key;
     int64_t                m_file_length;
     int64_t                m_disk_usage;
-    std::string            m_split_row;
     int                    m_file_id;
     float                  m_uncompressed_data;
     float                  m_compressed_data;

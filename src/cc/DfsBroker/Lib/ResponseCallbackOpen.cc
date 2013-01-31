@@ -31,9 +31,9 @@ using namespace DfsBroker;
 
 int ResponseCallbackOpen::response(int32_t fd) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   CommBufPtr cbp( new CommBuf(header, 8) );
   cbp->append_i32(Error::OK);
   cbp->append_i32(fd);
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }

@@ -36,7 +36,7 @@ bool ScanCells::add(EventPtr &event, int *scanner_id) {
 bool ScanCells::load(SchemaPtr &schema,
                      const String &end_row, bool end_inclusive, int row_limit,
                      int *rows_seen, String &cur_row, CstrSet &rowset,
-                     int64_t *bytes_scanned) {
+                     int64_t *bytes_scanned, Key *lastkey) {
   SerializedKey serkey;
   ByteString value;
   Key key;
@@ -44,6 +44,7 @@ bool ScanCells::load(SchemaPtr &schema,
   ScanBlock *scanblock;
   Schema::ColumnFamily *cf;
   size_t total_cells=0;
+  bool skipping = lastkey->row != 0;
 
   for(size_t ii=0; ii < m_scanblocks.size(); ++ii)
     total_cells += m_scanblocks[ii]->size();
@@ -53,6 +54,13 @@ bool ScanCells::load(SchemaPtr &schema,
   for (size_t ii=0; ii < m_scanblocks.size(); ++ii) {
     scanblock = m_scanblocks[ii].get();
     while (scanblock->next(serkey, value)) {
+
+      if (skipping) {
+        if (serkey <= lastkey->serial)
+          continue;
+        skipping = false;
+      }
+
       if (!key.load(serkey))
         HT_THROW(Error::BAD_KEY, "");
 
@@ -104,6 +112,10 @@ bool ScanCells::load(SchemaPtr &schema,
         rowset.erase(rowset.begin());
     }
   }
+
+  if (key.row)
+    *lastkey = key;
+
   return false;
 }
 

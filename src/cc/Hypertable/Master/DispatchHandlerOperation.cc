@@ -35,38 +35,36 @@ using namespace Hypertable;
  *
  */
 DispatchHandlerOperation::DispatchHandlerOperation(ContextPtr &context)
-  : m_context(context), m_rsclient(context->comm), m_outstanding(0), m_error_count(0) {
+  : m_context(context), m_rsclient(Comm::instance()), m_outstanding(0), m_error_count(0) {
 }
 
 
 void DispatchHandlerOperation::start(StringSet &locations) {
 
   m_results.clear();
-  m_outstanding = 0;
   m_error_count = 0;
   m_locations = locations;
-  m_events.reserve(locations.size());
+  m_outstanding = locations.size();
 
   for (StringSet::iterator iter = m_locations.begin(); iter != m_locations.end(); ++iter) {
-    {
-      ScopedLock lock(m_mutex);
-      m_outstanding++;
-    }
     try {
       start(*iter);
     }
     catch (Exception &e) {
-      ScopedLock lock(m_mutex);
-      Result result;
-      m_outstanding--;
-      result.location = *iter;
-      result.error = e.code();
-      result.msg = "Send error";
-      m_results.push_back(result);
-      m_error_count++;
+      HT_INFO_OUT << e << HT_END;
+      if (e.code() == Error::COMM_NOT_CONNECTED ||
+          e.code() == Error::COMM_INVALID_PROXY ||
+          e.code() == Error::COMM_BROKEN_CONNECTION) {
+        ScopedLock lock(m_mutex);
+        Result result(*iter);
+        m_outstanding--;
+        result.error = e.code();
+        result.msg = "Send error";
+        m_results.insert(result);
+        m_error_count++;
+      }
     }
   }
-  
 }
 
 
@@ -76,8 +74,13 @@ void DispatchHandlerOperation::start(StringSet &locations) {
 void DispatchHandlerOperation::handle(EventPtr &event) {
   ScopedLock lock(m_mutex);
 
+  if (m_events.count(event) > 0) {
+    HT_INFO_OUT << "Skipping second event - " << event->to_str() << HT_END;
+    return;
+  }
+
   HT_ASSERT(m_outstanding > 0);
-  m_events.push_back(event);
+  m_events.insert(event);
   m_outstanding--;
   if (m_outstanding == 0)
     m_cond.notify_all();
@@ -85,25 +88,24 @@ void DispatchHandlerOperation::handle(EventPtr &event) {
 
 
 void DispatchHandlerOperation::process_events() {
-  Result result;
   RangeServerConnectionPtr rsc;
 
-  foreach_ht (EventPtr &event, m_events) {
+  foreach_ht (const EventPtr &event, m_events) {
 
-    if (m_context->find_server_by_local_addr(event->addr, rsc)) {
-      result.location = rsc->location();
+    if (m_context->rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
+      Result result(rsc->location());
       if (event->type == Event::MESSAGE) {
         if ((result.error = Protocol::response_code(event)) != Error::OK) {
           m_error_count++;
           result.msg = Protocol::string_format_message(event);
-          m_results.push_back(result);
+          m_results.insert(result);
         }
       }
       else {
         m_error_count++;
         result.error = event->error;
         result.msg = "";
-        m_results.push_back(result);
+        m_results.insert(result);
       }
     }
     else
@@ -130,7 +132,7 @@ bool DispatchHandlerOperation::wait_for_completion() {
 /**
  *
  */
-void DispatchHandlerOperation::get_results(std::vector<Result> &results) {
+void DispatchHandlerOperation::get_results(std::set<Result> &results) {
   ScopedLock lock(m_mutex);
   results = m_results;
 }

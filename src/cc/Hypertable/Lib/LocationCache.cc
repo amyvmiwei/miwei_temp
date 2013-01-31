@@ -119,8 +119,6 @@ LocationCache::lookup(const char * table_name, const char *rowkey,
 
   assert(table_name);
 
-  //cout << table_name << " row=" << rowkey << endl << flush;
-
   key.table_name = table_name;
   key.end_row = rowkey;
 
@@ -148,7 +146,7 @@ LocationCache::lookup(const char * table_name, const char *rowkey,
   return true;
 }
 
-bool LocationCache::invalidate(const char * table_name, const char *rowkey) {
+bool LocationCache::invalidate(const char *table_name, const char *rowkey) {
   ScopedLock lock(m_mutex);
   LocationMap::iterator iter;
   LocationCacheKey key;
@@ -166,11 +164,35 @@ bool LocationCache::invalidate(const char * table_name, const char *rowkey) {
   if (strcmp((*iter).first.table_name, table_name))
     return false;
 
-  if (strcmp(rowkey, (*iter).second->start_row.c_str()) < 0)
+#if 0
+  if (rowkey && strcmp(rowkey, (*iter).second->start_row.c_str()) < 0)
+    return false;
+#endif
+  if ((rowkey == 0 && !(*iter).second->start_row.empty()) ||
+      (rowkey && strcmp(rowkey, (*iter).second->start_row.c_str()) < 0))
     return false;
 
   remove((*iter).second);
   return true;
+}
+
+void LocationCache::invalidate_host(const String &hostname) {
+  ScopedLock lock(m_mutex);
+  CommAddress addr;
+
+  addr.set_proxy(hostname);
+  const CommAddress *addrp = get_constant_address(addr);
+
+  LocationMap::iterator iter = m_location_map.begin();
+  Value *val = 0;
+  while (iter != m_location_map.end()) {
+    val = 0;
+    if (iter->second->addrp == addrp)
+      val = iter->second;
+    ++iter;
+    if (val)
+      remove(val);
+  }
 }
 
 

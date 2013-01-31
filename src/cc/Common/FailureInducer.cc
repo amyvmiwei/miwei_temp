@@ -134,7 +134,10 @@ void FailureInducer::parse_option_single(String option) {
     statep->error_code = Error::INDUCED_FAILURE;
     if (failure_type_len > 5 && failure_type[5] == '(') {
       const char *error_code = failure_type + 6;
-      statep->error_code = (int)strtol(error_code, NULL, 0);
+      if (boost::algorithm::istarts_with(error_code, "0x"))
+        statep->error_code = (int)strtol(error_code, NULL, 16);
+      else
+        statep->error_code = (int)strtol(error_code, NULL, 0);
     }
   }
   else

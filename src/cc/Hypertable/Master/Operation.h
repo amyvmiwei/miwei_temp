@@ -34,6 +34,7 @@
 #include "Hypertable/Lib/MetaLogEntity.h"
 
 #include "Context.h"
+#include "EntityType.h"
 
 namespace Hypertable {
 
@@ -58,7 +59,11 @@ namespace Hypertable {
       ACKNOWLEDGE = 16,
       FINALIZE = 17,
       CREATE_INDEX = 18,
-      CREATE_QUALIFIER_INDEX = 19
+      CREATE_QUALIFIER_INDEX = 19,
+      PREPARE = 20,
+      COMMIT = 21,
+      PHANTOM_LOAD = 22,
+      REPLAY_FRAGMENTS = 23
     };
     const char *get_text(int state);
   }
@@ -69,6 +74,9 @@ namespace Hypertable {
     extern const char *ROOT;
     extern const char *METADATA;
     extern const char *SYSTEM;
+    extern const char *RECOVER_SERVER;
+    extern const char *RECOVERY_BLOCKER;
+    extern const char *RECOVERY;
   }
 
   namespace NamespaceFlag {
@@ -142,6 +150,8 @@ namespace Hypertable {
 
     void swap_sub_operations(std::vector<Operation *> &sub_ops);
 
+    void pre_run();
+    void post_run();
     int32_t get_state() { ScopedLock lock(m_mutex); return m_state; }
     void set_state(int32_t state) { ScopedLock lock(m_mutex); m_state = state; }
     virtual bool is_perpetual() { return false; }
@@ -161,6 +171,7 @@ namespace Hypertable {
     int32_t m_error;
     int32_t m_remove_approvals;
     int32_t m_original_type;
+    bool m_unblock_on_exit;
     bool m_blocked;
     String m_error_msg;
     HiResTime m_expiration_time;
@@ -171,54 +182,6 @@ namespace Hypertable {
     std::vector<Operation *> m_sub_ops;
   };
   typedef intrusive_ptr<Operation> OperationPtr;
-
-  namespace MetaLog {
-    namespace EntityType {
-      enum {
-        OLD_OPERATION_TEST                   = 0x00020001,
-        OLD_OPERATION_STATUS                 = 0x00020002,
-        OLD_OPERATION_SYSTEM_UPGRADE         = 0x00020003,
-        OLD_OPERATION_INITIALIZE             = 0x00020004,
-        OLD_OPERATION_COLLECT_GARBAGE        = 0x00020005,
-        OLD_OPERATION_GATHER_STATISTICS      = 0x00020006,
-        OLD_OPERATION_WAIT_FOR_SERVERS       = 0x00020007,
-        OLD_OPERATION_REGISTER_SERVER        = 0x00020008,
-        OLD_OPERATION_RECOVER_SERVER         = 0x00020009,
-        OLD_OPERATION_CREATE_NAMESPACE       = 0x0002000A,
-        OLD_OPERATION_DROP_NAMESPACE         = 0x0002000B,
-        OLD_OPERATION_CREATE_TABLE           = 0x0002000C,
-        OLD_OPERATION_DROP_TABLE             = 0x0002000D,
-        OLD_OPERATION_ALTER_TABLE            = 0x0002000E,
-        OLD_OPERATION_RENAME_TABLE           = 0x0002000F,
-        OLD_OPERATION_GET_SCHEMA             = 0x00020010,
-        OLD_OPERATION_MOVE_RANGE             = 0x00020011,
-        OLD_OPERATION_RELINQUISH_ACKNOWLEDGE = 0x00020012,
-        OLD_OPERATION_BALANCE                = 0x00020013,
-        OLD_OPERATION_LOAD_BALANCER          = 0x00020014,
-        OPERATION_TEST                       = 0x00030001,
-        OPERATION_STATUS                     = 0x00030002,
-        OPERATION_SYSTEM_UPGRADE             = 0x00030003,
-        OPERATION_INITIALIZE                 = 0x00030004,
-        OPERATION_COLLECT_GARBAGE            = 0x00030005,
-        OPERATION_GATHER_STATISTICS          = 0x00030006,
-        OPERATION_WAIT_FOR_SERVERS           = 0x00030007,
-        OPERATION_REGISTER_SERVER            = 0x00030008,
-        OPERATION_RECOVER_SERVER             = 0x00030009,
-        OPERATION_CREATE_NAMESPACE           = 0x0003000A,
-        OPERATION_DROP_NAMESPACE             = 0x0003000B,
-        OPERATION_CREATE_TABLE               = 0x0003000C,
-        OPERATION_DROP_TABLE                 = 0x0003000D,
-        OPERATION_ALTER_TABLE                = 0x0003000E,
-        OPERATION_RENAME_TABLE               = 0x0003000F,
-        OPERATION_GET_SCHEMA                 = 0x00030010,
-        OPERATION_MOVE_RANGE                 = 0x00030011,
-        OPERATION_RELINQUISH_ACKNOWLEDGE     = 0x00030012,
-        OPERATION_BALANCE                    = 0x00030013,
-        OPERATION_LOAD_BALANCER              = 0x00030014,
-        OPERATION_STOP                       = 0x00030015
-      };
-    }
-  }
 
 } // namespace Hypertable
 

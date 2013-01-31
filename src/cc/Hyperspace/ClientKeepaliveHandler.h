@@ -50,22 +50,22 @@ namespace Hyperspace {
 
   public:
     ClientKeepaliveHandler(Comm *, PropertiesPtr &, Session *);
-    virtual void handle(Hypertable::EventPtr &event_ptr);
+    virtual void handle(Hypertable::EventPtr &event);
 
     void register_handle(ClientHandleStatePtr &handle_state) {
-      ScopedLock lock(m_mutex);
+      ScopedRecLock lock(m_mutex);
       HandleMap::iterator iter = m_handle_map.find(handle_state->handle);
       assert(iter == m_handle_map.end());
       m_handle_map[handle_state->handle] = handle_state;
     }
 
     void unregister_handle(uint64_t handle) {
-      ScopedLock lock(m_mutex);
+      ScopedRecLock lock(m_mutex);
       m_handle_map.erase(handle);
     }
 
     bool get_handle_state(uint64_t handle, ClientHandleStatePtr &handle_state) {
-      ScopedLock lock(m_mutex);
+      ScopedRecLock lock(m_mutex);
       HandleMap::iterator iter = m_handle_map.find(handle);
       if (iter == m_handle_map.end())
         return false;
@@ -83,12 +83,12 @@ namespace Hyperspace {
 
     void destroy();
 
-    Mutex              m_mutex;
+    RecMutex           m_mutex;
     boost::xtime       m_last_keep_alive_send_time;
     boost::xtime       m_jeopardy_time;
     bool m_dead;
-    bool m_destoying;
-    boost::condition m_cond_destoyed;
+    bool m_destroying;
+    boost::condition m_cond_destroyed;
     Comm *m_comm;
     uint32_t m_lease_interval;
     uint32_t m_keep_alive_interval;
@@ -97,7 +97,7 @@ namespace Hyperspace {
     bool m_verbose;
     Session *m_session;
     uint64_t m_session_id;
-    ClientConnectionHandlerPtr m_conn_handler_ptr;
+    ClientConnectionHandlerPtr m_conn_handler;
     uint64_t m_last_known_event;
     typedef hash_map<uint64_t, ClientHandleStatePtr> HandleMap;
     HandleMap  m_handle_map;

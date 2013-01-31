@@ -36,6 +36,13 @@
 
 using namespace Hypertable;
 
+OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &ctx,
+              const String &source, TableIdentifier *table, RangeSpec *range)
+  : Operation(ctx, MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE),
+    m_source(source), m_table(*table), m_range(*range) {
+}
+
+
 OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &context, EventPtr &event) 
   : Operation(context, event, MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE) {
   const uint8_t *ptr = event->payload;
@@ -53,7 +60,8 @@ void OperationRelinquishAcknowledge::execute() {
   HT_MAYBE_FAIL("relinquish-acknowledge-INITIAL-a");
   HT_MAYBE_FAIL("relinquish-acknowledge-INITIAL-b");
 
-  int64_t hash_code = Utility::range_hash_code(m_table, m_range, String("OperationMoveRange-") + m_source);
+  int64_t hash_code = Utility::range_hash_code(m_table, m_range,
+          String("OperationMoveRange-") + m_source);
 
   OperationPtr move_op = m_context->reference_manager->get(hash_code);
 

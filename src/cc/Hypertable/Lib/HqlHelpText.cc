@@ -438,39 +438,6 @@ namespace {
     0
   };
 
-  const char *help_text_replay_start[] = {
-    "",
-    "REPLAY START",
-    "",
-    "This command will issue a 'replay start' command to the RangeServer.",
-    "This has the effect of clearing the replay table/range map, droppin any",
-    "existing replay commit log and creating a new one."
-    "",
-    0
-  };
-
-  const char *help_text_replay_log[] = {
-    "",
-    "REPLAY LOG",
-    "",
-    "This command will issue a 'replay log' command to the RangeServer.",
-    "[...]",
-    "",
-    0
-  };
-
-  const char *help_text_replay_commit[] = {
-    "",
-    "REPLAY COMMIT",
-    "",
-    "This command will issue a 'replay commit' command to the RangeServer.",
-    "This has the effect of atomically merging the 'replay' range map into the",
-    "'live' range map and linking the replay log into the main log.",
-    "",
-    0
-  };
-
-
   const char *help_text_create_table[] = {
     "CREATE TABLE",
     "============",
@@ -1966,9 +1933,6 @@ void HqlHelpText::install_range_server_client_text() {
   text_map["metadata"] = help_text_metadata_sync;
   text_map["metadata sync"] = help_text_metadata_sync;
   text_map["update"] = help_text_update;
-  text_map["replay start"] = help_text_replay_start;
-  text_map["replay log"] = help_text_replay_log;
-  text_map["replay commit"] = help_text_replay_commit;
   text_map["shutdown"] = help_text_shutdown_rangeserver;
 }
 
