@@ -40,7 +40,7 @@ namespace Hypertable {
     /**
      * Constructor.  Initializes state.
      */
-    TableMutatorAsyncDispatchHandler(ApplicationQueuePtr &app_queue,
+    TableMutatorAsyncDispatchHandler(ApplicationQueueInterfacePtr &app_queue,
                                      TableMutatorAsync *mutator,
                                      uint32_t scatter_buffer,
                                      TableMutatorAsyncSendBuffer *send_buffer,
@@ -56,12 +56,11 @@ namespace Hypertable {
     virtual void handle(EventPtr &event_ptr);
 
   private:
-    ApplicationQueuePtr     m_app_queue;
+    ApplicationQueueInterfacePtr     m_app_queue;
     TableMutatorAsync *m_mutator;
     uint32_t m_scatter_buffer;
     TableMutatorAsyncSendBuffer *m_send_buffer;
     bool m_auto_refresh;
-    bool m_handled;
   };
 }
 #endif // HYPERTABLE_TABLEMUTATORDISPATCHHANDLERASYNC_H

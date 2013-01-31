@@ -49,7 +49,7 @@ public:
    * @param flags rangeserver client update command flags
    */
   TableMutatorShared(PropertiesPtr &props, Comm *comm, Table *table,
-      RangeLocatorPtr &range_locator, ApplicationQueuePtr &app_queue,
+      RangeLocatorPtr &range_locator, ApplicationQueueInterfacePtr &app_queue,
       uint32_t timeout_ms, uint32_t flush_interval_ms, uint32_t flags = 0);
 
   virtual ~TableMutatorShared();

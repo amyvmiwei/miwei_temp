@@ -24,6 +24,7 @@
 #include "Common/Init.h"
 #include "Common/Thread.h"
 
+#include <iostream>
 #include <set>
 
 #include "DfsBroker/Lib/Client.h"
@@ -349,7 +350,77 @@ int main(int argc, char **argv) {
     HT_ASSERT(context->op->empty());
 
     /**
-     *  TEST 4 (perpetual)
+     *  TEST 4 (make sure blocked operations hold up their dependencies)
+     */
+
+    operation_foo = new OperationTest(context, results, "foo", OperationState::STARTED);
+    operation_bar = new OperationTest(context, results, "bar", OperationState::STARTED);
+    OperationTestPtr operation_baz = new OperationTest(context, results, "baz", OperationState::STARTED);
+
+    /*
+     *  foo -> bar -> baz
+     */
+
+    operation_foo->add_dependency("bar");
+    operation_bar->add_dependency("baz");
+    operation_bar->add_obstruction("bar");
+    operation_baz->add_obstruction("baz");
+
+    operation = operation_baz;
+    operation->block();
+    context->op->add_operation(operation);
+
+    operation = operation_bar;
+    operation->block();
+    context->op->add_operation(operation);
+
+    operation = operation_foo;
+    context->op->add_operation(operation);
+
+    poll(0, 0, 2000);
+    HT_ASSERT(context->op->size() == 3);
+
+    context->op->unblock("baz");
+    poll(0, 0, 2000);
+    HT_ASSERT(context->op->size() == 2);
+
+    context->op->unblock("bar");
+    context->op->wait_for_empty();
+
+    // again, this time unblock in forward direction
+
+    operation_foo = new OperationTest(context, results, "foo", OperationState::STARTED);
+    operation_bar = new OperationTest(context, results, "bar", OperationState::STARTED);
+    operation_baz = new OperationTest(context, results, "baz", OperationState::STARTED);
+
+    operation_foo->add_dependency("bar");
+    operation_bar->add_dependency("baz");
+    operation_bar->add_obstruction("bar");
+    operation_baz->add_obstruction("baz");
+
+    operation = operation_baz;
+    operation->block();
+    context->op->add_operation(operation);
+
+    operation = operation_bar;
+    operation->block();
+    context->op->add_operation(operation);
+
+    operation = operation_foo;
+    context->op->add_operation(operation);
+
+    poll(0, 0, 2000);
+    HT_ASSERT(context->op->size() == 3);
+
+    context->op->unblock("bar");
+    poll(0, 0, 2000);
+    HT_ASSERT(context->op->size() == 3);
+
+    context->op->unblock("baz");
+    context->op->wait_for_empty();
+
+    /**
+     *  TEST 5 (perpetual)
      */
     dependencies.clear();
     exclusivities.clear();

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for ConnectionInitializer.
+ * This file contains type declarations for ConnectionInitializer, an abstract
+ * base class for classes that handle connection initialization handshake.
+ */
+
 #ifndef HYPERTABLE_CONNECTIONINITIALIZER_H
 #define HYPERTABLE_CONNECTIONINITIALIZER_H
 
@@ -30,14 +36,22 @@ namespace Hypertable {
 
   class Event;
 
+  /** @addtogroup AsyncComm
+   *  @{
+   */
+
+  /** Driver interface for connection initialization handshake in ConnectionManager.
+   */
   class ConnectionInitializer : public ReferenceCount {
   public:
     virtual CommBuf *create_initialization_request() = 0;
     virtual bool process_initialization_response(Event *event) = 0;
     virtual uint64_t initialization_command() = 0;
   };
-  typedef boost::intrusive_ptr<ConnectionInitializer> ConnectionInitializerPtr;
 
+  /// Smart pointer to ConnectionInitializer
+  typedef boost::intrusive_ptr<ConnectionInitializer> ConnectionInitializerPtr;
+  /** @}*/
 }
 
 #endif // HYPERTABLE_CONNECTIONINITIALIZER_H

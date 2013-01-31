@@ -29,8 +29,12 @@
 #include "Common/StringExt.h"
 #include "Common/Time.h"
 
+#include "Hyperspace/Session.h"
+
 #include <boost/algorithm/string.hpp>
 
+#include "RangeServerHyperspaceCallback.h"
+#include "LoadBalancer.h"
 #include "OperationRegisterServer.h"
 #include "OperationProcessor.h"
 
@@ -51,36 +55,81 @@ OperationRegisterServer::OperationRegisterServer(ContextPtr &context, EventPtr &
 
 
 void OperationRegisterServer::execute() {
+  bool newly_created = false;
 
   if (m_location == "") {
-    if (!m_context->find_server_by_hostname(m_system_stats.net_info.host_name,
-                m_rsc))
-      m_context->find_server_by_public_addr(m_public_addr, m_rsc);
+    if (!m_context->rsc_manager->find_server_by_hostname(m_system_stats.net_info.host_name, m_rsc))
+      m_context->rsc_manager->find_server_by_public_addr(m_public_addr, m_rsc);
     if (m_rsc)
       m_location = m_rsc->location();
   }
   else
-    m_context->find_server_by_location(m_location, m_rsc);
+    m_context->rsc_manager->find_server_by_location(m_location, m_rsc);
 
-  if (!m_rsc) {
-    if (m_location == "") {
-      uint64_t id = m_context->hyperspace->attr_incr(m_context->master_file_handle, "next_server_id");
-      if (m_context->location_hash.empty())
-        m_location = String("rs") + id;
-      else
-        m_location = format("rs-%s-%llu", m_context->location_hash.c_str(),
-                (Llu)id);
-    }
+  // Clean up existing connection (happens when connect arrives before
+  // disconnect notification from Hyperspace)
+  if (m_rsc)
+    m_context->rsc_manager->disconnect_server(m_rsc);
+  else if (m_location == "") {
+    uint64_t id = m_context->hyperspace->attr_incr(m_context->master_file_handle,
+                                                   "next_server_id");
+    if (m_context->location_hash.empty())
+      m_location = String("rs") + id;
+    else
+      m_location = format("rs-%s-%llu", m_context->location_hash.c_str(),
+                          (Llu)id);
 
-    bool balanced = false;
-    if (!m_context->in_operation)
-      balanced = true;
-    m_rsc = new RangeServerConnection(m_context->mml_writer, m_location,
-                    m_system_stats.net_info.host_name, m_public_addr, balanced);
+    String fname = m_context->toplevel_dir + "/servers/";
+    // !!! wrap in try/catch
+    m_context->hyperspace->mkdirs(fname);
+    fname += m_location;
+    uint32_t oflags = Hyperspace::OPEN_FLAG_READ | Hyperspace::OPEN_FLAG_CREATE;
+    // !!! wrap in try/catch
+    uint64_t handle = m_context->hyperspace->open(fname, oflags);
+    m_context->hyperspace->close(handle);
   }
 
-  if (!m_context->connect_server(m_rsc, m_system_stats.net_info.host_name,
-                                 m_local_addr, m_public_addr)) {
+  if (!m_rsc) {
+    m_rsc = new RangeServerConnection(m_location,
+                                      m_system_stats.net_info.host_name,
+                                      m_public_addr);
+    newly_created = true;
+  }
+
+  // this connection has been marked for removal
+  if (m_rsc->get_removed()) {
+    String errstr = format("Detected RangeServer marked removed while"
+            "registering server %s(%s), as location %s",
+            m_system_stats.net_info.host_name.c_str(),
+            m_public_addr.format().c_str(),
+            m_location.c_str());
+    complete_error_no_log(Error::MASTER_RANGESERVER_IN_RECOVERY, errstr);
+    HT_ERROR_OUT << errstr << HT_END;
+
+    CommHeader header;
+    header.initialize_from_request_header(m_event->header);
+    CommBufPtr cbp(new CommBuf(header, encoded_result_length()));
+
+    encode_result(cbp->get_data_ptr_address());
+    int error = m_context->comm->send_response(m_event->addr, cbp);
+    if (error != Error::OK)
+      HT_ERRORF("Problem sending response (location=%s) back to %s",
+              m_location.c_str(), m_event->addr.format().c_str());
+    return;
+  }
+
+  if (m_rsc->get_handle() == 0) {
+    String fname = m_context->toplevel_dir + "/servers/" + m_location;
+    RangeServerHyperspaceCallback *rscb
+      = new RangeServerHyperspaceCallback(m_context, m_rsc);
+    Hyperspace::HandleCallbackPtr cb(rscb);
+    uint64_t handle = m_context->hyperspace->open(fname, Hyperspace::OPEN_FLAG_READ|Hyperspace::OPEN_FLAG_CREATE, cb);
+    HT_ASSERT(handle);
+    m_rsc->set_handle(handle);
+  }
+
+  if (!m_context->rsc_manager->connect_server(m_rsc, m_system_stats.net_info.host_name,
+                                              m_local_addr, m_public_addr)) {
 
     m_error = Error::CONNECT_ERROR_MASTER;
     m_error_msg = format("Problem connecting location %s", m_location.c_str());
@@ -100,15 +149,15 @@ void OperationRegisterServer::execute() {
 
   int32_t difference = (int32_t)abs((m_received_ts - m_register_ts) / 1000LL);
   if (difference > (3000000 + m_context->max_allowable_skew)) {
-    m_error = Error::RANGESERVER_CLOCK_SKEW;
-    m_error_msg = format("Detected clock skew while registering server %s(%s), "
-            "as location %s register_ts=%llu, received_ts=%llu, "
-            "difference=%d > allowable skew %d",
-            m_system_stats.net_info.host_name.c_str(),
-            m_public_addr.format().c_str(), m_location.c_str(),
-            (Llu)m_register_ts, (Llu)m_received_ts, difference,
+    String errstr = format("Detected clock skew while registering server "
+            "%s(%s), as location %s register_ts=%llu, received_ts=%llu, "
+            "difference=%d > allowable skew %d", 
+            m_system_stats.net_info.host_name.c_str(), 
+            m_public_addr.format().c_str(), m_location.c_str(), 
+            (Llu)m_register_ts, (Llu)m_received_ts, difference, 
             m_context->max_allowable_skew);
-    HT_ERROR_OUT << m_error_msg << HT_END;
+    complete_error_no_log(Error::RANGESERVER_CLOCK_SKEW, errstr);
+    HT_ERROR_OUT << errstr << HT_END;
     // clock skew detected by master
     CommHeader header;
     header.initialize_from_request_header(m_event->header);
@@ -119,14 +168,22 @@ void OperationRegisterServer::execute() {
     int error = m_context->comm->send_response(m_event->addr, cbp);
     if (error != Error::OK)
       HT_ERRORF("Problem sending response (location=%s) back to %s",
-                m_location.c_str(), m_event->addr.format().c_str());
+              m_location.c_str(), m_event->addr.format().c_str());
+    if (newly_created)
+      m_context->rsc_manager->erase_server(m_rsc);
+    m_context->op->unblock(m_location);
+    m_context->op->unblock(Dependency::SERVERS);
+    m_context->op->unblock(Dependency::RECOVERY_BLOCKER);
+    HT_INFOF("%lld Leaving RegisterServer %s",
+            (Lld)header.id, m_rsc->location().c_str());
+    return;
   }
   else {
     m_context->monitoring->add_server(m_location, m_system_stats);
     HT_INFOF("%lld Registering server %s (host=%s, local_addr=%s, "
-        "public_addr=%s)", (Lld)header.id, m_rsc->location().c_str(),
-        m_system_stats.net_info.host_name.c_str(),
-        m_local_addr.format().c_str(), m_public_addr.format().c_str());
+            "public_addr=%s)", (Lld)header.id, m_rsc->location().c_str(),
+            m_system_stats.net_info.host_name.c_str(),
+            m_local_addr.format().c_str(), m_public_addr.format().c_str());
 
     /** Send back Response **/
     {
@@ -141,11 +198,21 @@ void OperationRegisterServer::execute() {
             m_location.c_str(), m_event->addr.format().c_str());
     }
   }
+
+  if (!m_rsc->get_balanced())
+    m_context->balancer->signal_new_server();
+
+  // TODO:  if (m_rsc->needs_persisting()) ...
+  m_context->mml_writer->record_state(m_rsc.get());
+
+  m_context->add_available_server(m_location);
+
   complete_ok_no_log();
   m_context->op->unblock(m_location);
   m_context->op->unblock(Dependency::SERVERS);
-  HT_INFOF("%lld Leaving RegisterServer %s", (Lld)header.id,
-          m_rsc->location().c_str());
+  m_context->op->unblock(Dependency::RECOVERY_BLOCKER);
+  HT_INFOF("%lld Leaving RegisterServer %s", 
+          (Lld)header.id, m_rsc->location().c_str());
 }
 
 size_t OperationRegisterServer::encoded_result_length() const {

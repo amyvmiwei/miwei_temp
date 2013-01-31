@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for ExpireTimer
+ * This file contains type declarations for ExpireTimer, a structue
+ * for holding timer state.
+ */
+
 #ifndef HYPERTABLE_EXPIRE_TIMER_H
 #define HYPERTABLE_EXPIRE_TIMER_H
 
@@ -28,17 +34,31 @@
 
 namespace Hypertable {
 
+  /** @addtogroup AsyncComm
+   *  @{
+   */
+
+  /** State record for timer.
+   */
   struct ExpireTimer {
-    boost::xtime       expire_time;
-    DispatchHandlerPtr handler;
+    boost::xtime expire_time;   //!< Absolute expiration time
+    DispatchHandlerPtr handler; //!< Event handler to receive TIMER event
   };
 
-  struct LtTimer {
+  /** Comparison function (functor) for timer heap.
+   */
+  struct LtTimerHeap {
+    /** Parenthesis operator with two ExpireTimer parameters.
+     * Provides "largest first" comparison.
+     * @param t1 Lefthand side of comparison
+     * @param t2 Righthand side of comparison
+     * @return true if <code>t1</code> is greater than <code>t2</code>
+     */
     bool operator()(const ExpireTimer &t1, const ExpireTimer &t2) const {
       return xtime_cmp(t1.expire_time, t2.expire_time) > 0;
     }
   };
-
+  /** @}*/
 }
 
 #endif // HYPERTABLE_ExpireTimer_H

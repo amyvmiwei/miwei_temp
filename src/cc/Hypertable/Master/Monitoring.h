@@ -41,6 +41,8 @@
 
 namespace Hypertable {
 
+  class Context;
+
   /**
    */
   class Monitoring : public ReferenceCount {
@@ -49,7 +51,7 @@ namespace Hypertable {
     /**
      * Constructor.
      */
-    Monitoring(PropertiesPtr &props, NameIdMapperPtr &m_namemap);
+    Monitoring(Context *context);
 
     void add_server(const String &location, StatsSystem &system_info);
 
@@ -153,6 +155,7 @@ namespace Hypertable {
     typedef std::map<String, table_rrd_data> TableStatMap;
     typedef std::map<String, String> TableNameMap;
 
+    Context *m_context;
     Mutex m_mutex;
     RangeServerMap m_server_map;
     TableStatMap m_table_stat_map;

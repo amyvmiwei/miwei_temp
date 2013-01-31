@@ -34,7 +34,7 @@ using namespace Hypertable;
  *
  */
 void RequestHandlerGetStatistics::run() {
-  ResponseCallbackGetStatistics cb(m_comm, m_event_ptr);
+  ResponseCallbackGetStatistics cb(m_comm, m_event);
 
   try {
     m_range_server->get_statistics(&cb);

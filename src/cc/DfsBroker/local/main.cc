@@ -39,6 +39,7 @@ extern "C" {
 
 #include "AsyncComm/ApplicationQueue.h"
 #include "AsyncComm/Comm.h"
+#include "AsyncComm/DispatchHandler.h"
 
 #include "DfsBroker/Lib/Config.h"
 #include "DfsBroker/Lib/ConnectionHandlerFactory.h"
@@ -51,20 +52,20 @@ using namespace std;
 
 namespace {
 
-struct AppPolicy : Policy {
-  static void init_options() {
-    cmdline_desc().add_options()
-      ("root", str()->default_value("fs/local"), "root directory for local "
-          "broker (if relative, it's relative to the installation directory")
-      ;
-    alias("port", "DfsBroker.Local.Port");
-    alias("root", "DfsBroker.Local.Root");
-    alias("workers", "DfsBroker.Local.Workers");
-    alias("reactors", "DfsBroker.Local.Reactors");
-  }
-};
+  struct AppPolicy : Policy {
+    static void init_options() {
+      cmdline_desc().add_options()
+        ("root", str()->default_value("fs/local"), "root directory for local "
+         "broker (if relative, it's relative to the installation directory")
+        ;
+      alias("port", "DfsBroker.Local.Port");
+      alias("root", "DfsBroker.Local.Root");
+      alias("workers", "DfsBroker.Local.Workers");
+      alias("reactors", "DfsBroker.Local.Reactors");
+    }
+  };
 
-typedef Meta::list<AppPolicy, DfsBrokerPolicy, DefaultCommPolicy> Policies;
+  typedef Meta::list<AppPolicy, DfsBrokerPolicy, DefaultCommPolicy> Policies;
 
 } // local namespace
 
@@ -79,6 +80,7 @@ int main(int argc, char **argv) {
       port = get_i16("port");
 
     Comm *comm = Comm::instance();
+
     ApplicationQueuePtr app_queue = new ApplicationQueue(worker_count);
     BrokerPtr broker = new LocalBroker(properties);
     ConnectionHandlerFactoryPtr chfp =

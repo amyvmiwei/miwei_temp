@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Primary entry point for AsyncComm service.
+ * This file contains method definitions for singleton class Comm
  */
 
 //#define HT_DISABLE_LOG_DEBUG
@@ -46,6 +51,7 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/FileUtils.h"
+#include "Common/ScopeGuard.h"
 #include "Common/SystemInfo.h"
 #include "Common/Time.h"
 
@@ -78,11 +84,7 @@ Comm::Comm() {
 
 
 Comm::~Comm() {
-  set<IOHandler *> handlers;
-  m_handler_map->decomission_all(handlers);
-
-  foreach_ht(IOHandler *handler, handlers)
-    handler->shutdown();
+  m_handler_map->decomission_all();
 
   // wait for all decomissioned handlers to get purged by Reactor
   m_handler_map->wait_for_empty();
@@ -104,21 +106,34 @@ int
 Comm::connect(const CommAddress &addr, DispatchHandlerPtr &default_handler) {
   int sd;
   int error = m_handler_map->contains_data_handler(addr);
+  uint16_t port;
 
   if (error == Error::OK)
     return Error::COMM_ALREADY_CONNECTED;
   else if (error != Error::COMM_NOT_CONNECTED)
     return error;
 
-  if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
-    HT_ERRORF("socket: %s", strerror(errno));
-    return Error::COMM_SOCKET_ERROR;
-  }
+  while (true) {
 
-  // bind socket to local address
-  if ((bind(sd, (const sockaddr *)&m_local_addr, sizeof(sockaddr_in))) < 0) {
-    HT_ERRORF( "bind: %s: %s", m_local_addr.format().c_str(), strerror(errno));
-    return Error::COMM_BIND_ERROR;
+    if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0) {
+      HT_ERRORF("socket: %s", strerror(errno));
+      return Error::COMM_SOCKET_ERROR;
+    }
+
+    // Get arbitray ephemeral port that won't conflict with our reserved ports
+    port = (uint16_t)(49152 + (ReactorFactory::rng() % 16383));
+    m_local_addr.sin_port = htons(port);
+
+    // bind socket to local address
+    if ((bind(sd, (const sockaddr *)&m_local_addr, sizeof(sockaddr_in))) < 0) {
+      if (errno == EADDRINUSE) {
+        ::close(sd);
+        continue;
+      }
+      HT_ERRORF( "bind: %s: %s", m_local_addr.format().c_str(), strerror(errno));
+      return Error::COMM_BIND_ERROR;
+    }
+    break;
   }
 
   return connect_socket(sd, addr, default_handler);
@@ -155,7 +170,6 @@ Comm::connect(const CommAddress &addr, const CommAddress &local_addr,
 
 
 int Comm::set_alias(const InetAddr &addr, const InetAddr &alias) {
-  ScopedLock lock(ms_mutex);
   return m_handler_map->set_alias(addr, alias);
 }
 
@@ -176,15 +190,14 @@ void Comm::get_proxy_map(ProxyMapT &proxy_map) {
 }
 
 bool Comm::wait_for_proxy_load(Timer &timer) {
-  return m_handler_map->wait_for_proxy_load(timer);
+  return m_handler_map->wait_for_proxy_map(timer);
 }
 
 
 void
 Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
              DispatchHandlerPtr &default_handler) {
-  IOHandlerPtr handler;
-  IOHandlerAccept *accept_handler;
+  IOHandlerAccept *handler;
   int one = 1;
   int sd;
 
@@ -205,6 +218,8 @@ Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
 #elif defined(__APPLE__) || defined(__FreeBSD__)
   if (setsockopt(sd, SOL_SOCKET, SO_NOSIGPIPE, &one, sizeof(one)) < 0)
     HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
+  if (setsockopt(sd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) < 0)
+    HT_WARNF("setsockopt(SO_REUSEPORT) failure: %s", strerror(errno));
 #endif
 
   if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
@@ -212,7 +227,7 @@ Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
 
   int bind_attempts = 0;
   while ((bind(sd, (const sockaddr *)&addr.inet, sizeof(sockaddr_in))) < 0) {
-    if (bind_attempts == 6)
+    if (bind_attempts == 24)
       HT_THROWF(Error::COMM_BIND_ERROR, "binding to %s: %s",
                 addr.to_str().c_str(), strerror(errno));
     HT_INFOF("Unable to bind to %s: %s, will retry in 10 seconds...",
@@ -224,13 +239,14 @@ Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
   if (::listen(sd, 1000) < 0)
     HT_THROWF(Error::COMM_LISTEN_ERROR, "listening: %s", strerror(errno));
 
-  handler = accept_handler = new IOHandlerAccept(sd, addr.inet, default_handler,
-                                                 m_handler_map, chf);
-  int32_t error = m_handler_map->insert_handler(accept_handler);
-  if (error != Error::OK)
+  handler = new IOHandlerAccept(sd, default_handler, m_handler_map, chf);
+  int32_t error = m_handler_map->insert_handler(handler);
+  if (error != Error::OK) {
+    delete handler;
     HT_THROWF(error, "Error inserting accept handler for %s into handler map",
               addr.to_str().c_str());
-  accept_handler->start_polling();
+  }
+  handler->start_polling();
 }
 
 
@@ -238,23 +254,23 @@ Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
 int
 Comm::send_request(const CommAddress &addr, uint32_t timeout_ms,
                    CommBufPtr &cbuf, DispatchHandler *resp_handler) {
-  ScopedLock lock(ms_mutex);
-  IOHandlerDataPtr data_handler;
+  IOHandlerData *data_handler;
   int error;
 
-  if ((error = m_handler_map->lookup_data_handler(addr, data_handler)) != Error::OK) {
+  if ((error = m_handler_map->checkout_handler(addr, &data_handler)) != Error::OK) {
     HT_WARNF("No connection for %s - %s", addr.to_str().c_str(), Error::get_text(error));
     return error;
   }
+
+  HT_ON_OBJ_SCOPE_EXIT(*m_handler_map.get(), &HandlerMap::decrement_reference_count, data_handler);
 
   return send_request(data_handler, timeout_ms, cbuf, resp_handler);
 }
 
 
 
-int Comm::send_request(IOHandlerDataPtr &data_handler, uint32_t timeout_ms,
+int Comm::send_request(IOHandlerData *data_handler, uint32_t timeout_ms,
 		       CommBufPtr &cbuf, DispatchHandler *resp_handler) {
-  int error;
 
   if (timeout_ms == 0)
     HT_THROW(Error::REQUEST_TIMEOUT, "Request with timeout of 0");
@@ -273,42 +289,34 @@ int Comm::send_request(IOHandlerDataPtr &data_handler, uint32_t timeout_ms,
   cbuf->header.timeout_ms = timeout_ms;
   cbuf->write_header_and_reset();
 
-  if ((error = data_handler->send_message(cbuf, timeout_ms, resp_handler))
-      != Error::OK)
-    data_handler->shutdown();
-
-  return error;
+  return data_handler->send_message(cbuf, timeout_ms, resp_handler);
 }
 
 
 
 int Comm::send_response(const CommAddress &addr, CommBufPtr &cbuf) {
-  ScopedLock lock(ms_mutex);
-  IOHandlerDataPtr data_handler;
+  IOHandlerData *data_handler;
   int error;
 
-  if ((error = m_handler_map->lookup_data_handler(addr, data_handler)) != Error::OK) {
+  if ((error = m_handler_map->checkout_handler(addr, &data_handler)) != Error::OK) {
     HT_ERRORF("No connection for %s - %s", addr.to_str().c_str(), Error::get_text(error));
     return error;
   }
+
+  HT_ON_OBJ_SCOPE_EXIT(*m_handler_map.get(), &HandlerMap::decrement_reference_count, data_handler);
 
   cbuf->header.flags &= CommHeader::FLAGS_MASK_REQUEST;
 
   cbuf->write_header_and_reset();
 
-  if ((error = data_handler->send_message(cbuf)) != Error::OK)
-    data_handler->shutdown();
-
-  return error;
+  return data_handler->send_message(cbuf);
 }
 
 
 void
 Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
                                      DispatchHandlerPtr &dhp) {
-  IOHandlerPtr handler;
-  IOHandlerDatagram *dg_handler;
-  int one = 1;
+  IOHandlerDatagram *handler;
   int sd;
 
   HT_ASSERT(addr.is_inet());
@@ -330,10 +338,6 @@ Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
     HT_ERRORF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
   }
 
-  if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0) {
-    HT_WARNF("setsockopt(SO_REUSEADDR) failure: %s", strerror(errno));
-  }
-
   if (tos) {
     int opt;
 #if defined(__linux__)
@@ -349,7 +353,7 @@ Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
 
   int bind_attempts = 0;
   while ((bind(sd, (const sockaddr *)&addr.inet, sizeof(sockaddr_in))) < 0) {
-    if (bind_attempts == 6)
+    if (bind_attempts == 24)
       HT_THROWF(Error::COMM_BIND_ERROR, "binding to %s: %s",
 		addr.to_str().c_str(), strerror(errno));
     HT_INFOF("Unable to bind to %s: %s, will retry in 10 seconds...",
@@ -358,42 +362,42 @@ Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
     bind_attempts++;
   }
 
-  handler = dg_handler = new IOHandlerDatagram(sd, addr.inet, dhp);
+  handler = new IOHandlerDatagram(sd, dhp);
 
-  addr.set_inet( handler->get_local_address() );
+  addr.set_inet( handler->get_address() );
 
-  int32_t error = m_handler_map->insert_datagram_handler(dg_handler);
-  if (error != Error::OK)
+  int32_t error = m_handler_map->insert_handler(handler);
+  if (error != Error::OK) {
+    delete handler;
     HT_THROWF(error, "Error inserting datagram handler for %s into handler map",
               addr.to_str().c_str());
-  dg_handler->start_polling();
+  }
+  handler->start_polling();
 }
 
 
 int
 Comm::send_datagram(const CommAddress &addr, const CommAddress &send_addr,
                     CommBufPtr &cbuf) {
-  ScopedLock lock(ms_mutex);
-  IOHandlerDatagramPtr dg_handler;
+  IOHandlerDatagram *handler;
   int error;
 
   HT_ASSERT(addr.is_inet());
 
-  if ((error = m_handler_map->lookup_datagram_handler(send_addr, dg_handler)) != Error::OK) {
+  if ((error = m_handler_map->checkout_handler(send_addr, &handler)) != Error::OK) {
     HT_ERRORF("Datagram send/local address %s not registered",
               send_addr.to_str().c_str());
     return error;
   }
+
+  HT_ON_OBJ_SCOPE_EXIT(*m_handler_map.get(), &HandlerMap::decrement_reference_count, handler);
 
   cbuf->header.flags |= (CommHeader::FLAGS_BIT_REQUEST |
 			 CommHeader::FLAGS_BIT_IGNORE_RESPONSE);
 
   cbuf->write_header_and_reset();
 
-  if ((error = dg_handler->send_message(addr.inet, cbuf)) != Error::OK)
-    dg_handler->shutdown();
-
-  return error;
+  return handler->send_message(addr.inet, cbuf);
 }
 
 
@@ -420,34 +424,98 @@ void Comm::cancel_timer(DispatchHandler *handler) {
   m_timer_reactor->cancel_timer(handler);
 }
 
-int
-Comm::get_local_address(const CommAddress &addr,
-                        CommAddress &local_addr) {
-  ScopedLock lock(ms_mutex);
-  IOHandlerDataPtr data_handler;
-  int error;
 
-  if ((error = m_handler_map->lookup_data_handler(addr, data_handler)) != Error::OK) {
-    HT_ERRORF("No connection for %s - %s", addr.to_str().c_str(), Error::get_text(error));
-    return error;
+void Comm::close_socket(const CommAddress &addr) {
+  IOHandler *handler = 0;
+  IOHandlerAccept *accept_handler;
+  IOHandlerData *data_handler;
+  IOHandlerDatagram *datagram_handler;
+
+  if (m_handler_map->checkout_handler(addr, &data_handler) == Error::OK)
+    handler = data_handler;
+  else if (m_handler_map->checkout_handler(addr, &datagram_handler) == Error::OK)
+    handler = datagram_handler;
+  else if (m_handler_map->checkout_handler(addr, &accept_handler) == Error::OK)
+    handler = accept_handler;
+  else
+    return;
+
+  HT_ON_OBJ_SCOPE_EXIT(*m_handler_map.get(), &HandlerMap::decrement_reference_count, handler);
+
+  m_handler_map->decomission_handler(handler);
+}
+
+void Comm::find_available_tcp_port(InetAddr &addr) {
+  int one = 1;
+  int sd;
+  InetAddr check_addr;
+  uint16_t starting_port = ntohs(addr.sin_port);
+
+  for (size_t i=0; i<15; i++) {
+
+    if ((sd = socket(AF_INET, SOCK_STREAM, IPPROTO_TCP)) < 0)
+      HT_FATALF("socket(AF_INET, SOCK_STREAM, IPPROTO_TCP) failure: %s",
+                strerror(errno));
+
+    if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
+      HT_FATALF("setting TCP socket SO_REUSEADDR: %s", strerror(errno));
+
+#if defined(__APPLE__) || defined(__FreeBSD__)
+    if (setsockopt(sd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) < 0)
+      HT_WARNF("setsockopt(SO_REUSEPORT) failure: %s", strerror(errno));
+#endif
+
+    check_addr = addr;
+    check_addr.sin_port = htons(starting_port+i);
+
+    if (bind(sd, (const sockaddr *)&check_addr, sizeof(sockaddr_in)) == 0) {
+      ::close(sd);
+      addr.sin_port = check_addr.sin_port;
+      return;
+    }
+    ::close(sd);
   }
 
-  local_addr.set_inet( data_handler->get_local_address() );
+  HT_FATALF("Unable to find available TCP port in range [%d..%d]",
+            (int)addr.sin_port, (int)addr.sin_port+14);
 
-  return Error::OK;
 }
 
+void Comm::find_available_udp_port(InetAddr &addr) {
+  int one = 1;
+  int sd;
+  InetAddr check_addr;
+  uint16_t starting_port = ntohs(addr.sin_port);
 
-int Comm::close_socket(const CommAddress &addr) {
-  IOHandlerPtr handler;
+  for (size_t i=0; i<15; i++) {
 
-  if (!m_handler_map->decomission_handler(addr, handler))
-    return Error::COMM_NOT_CONNECTED;
+    if ((sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+      HT_FATALF("socket(AF_INET, SOCK_DGRAM, 0) failure: %s", strerror(errno));
 
-  handler->shutdown();
+    if (setsockopt(sd, SOL_SOCKET, SO_REUSEADDR, &one, sizeof(one)) < 0)
+      HT_FATALF("setting UDP socket SO_REUSEADDR: %s", strerror(errno));
 
-  return Error::OK;
+#if defined(__APPLE__) || defined(__FreeBSD__)
+    if (setsockopt(sd, SOL_SOCKET, SO_REUSEPORT, &one, sizeof(one)) < 0)
+      HT_WARNF("setsockopt(SO_REUSEPORT) failure: %s", strerror(errno));
+#endif
+
+    check_addr = addr;
+    check_addr.sin_port = htons(starting_port+i);
+
+    if (bind(sd, (const sockaddr *)&addr, sizeof(sockaddr_in)) == 0) {
+      ::close(sd);
+      addr.sin_port = check_addr.sin_port;
+      return;
+    }
+    ::close(sd);
+  }
+
+  HT_FATALF("Unable to find available UDP port in range [%d..%d]",
+            (int)addr.sin_port, (int)addr.sin_port+14);
+  
 }
+
 
 
 /**
@@ -457,8 +525,7 @@ int Comm::close_socket(const CommAddress &addr) {
 int
 Comm::connect_socket(int sd, const CommAddress &addr,
                      DispatchHandlerPtr &default_handler) {
-  IOHandlerPtr handler;
-  IOHandlerData *data_handler;
+  IOHandlerData *handler;
   int32_t error;
   int one = 1;
   CommAddress connectable_addr;
@@ -484,10 +551,10 @@ Comm::connect_socket(int sd, const CommAddress &addr,
     HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
-  handler = data_handler = new IOHandlerData(sd, connectable_addr.inet, default_handler);
+  handler = new IOHandlerData(sd, connectable_addr.inet, default_handler);
   if (addr.is_proxy())
     handler->set_proxy(addr.proxy);
-  if ((error = m_handler_map->insert_handler(data_handler)) != Error::OK)
+  if ((error = m_handler_map->insert_handler(handler)) != Error::OK)
     return error;
 
   while (::connect(sd, (struct sockaddr *)&connectable_addr.inet, sizeof(struct sockaddr_in))
@@ -498,13 +565,28 @@ Comm::connect_socket(int sd, const CommAddress &addr,
     }
     else if (errno == EINPROGRESS) {
       //HT_INFO("connect() in progress starting to poll");
-      return data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
+      error = handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
+      if (error == Error::COMM_POLL_ERROR) {
+        HT_ERRORF("Polling problem on connection to %s: %s",
+                  connectable_addr.to_str().c_str(), strerror(errno));
+        m_handler_map->remove_handler(handler);
+        delete handler;
+      }
+      return error;
     }
-    m_handler_map->remove_handler(connectable_addr, handler);
+    m_handler_map->remove_handler(handler);
+    delete handler;
     HT_ERRORF("connecting to %s: %s", connectable_addr.to_str().c_str(),
               strerror(errno));
     return Error::COMM_CONNECT_ERROR;
   }
 
-  return data_handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
+  error = handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
+  if (error == Error::COMM_POLL_ERROR) {
+    HT_ERRORF("Polling problem on connection to %s: %s",
+              connectable_addr.to_str().c_str(), strerror(errno));
+    m_handler_map->remove_handler(handler);
+    delete handler;
+  }
+  return error;
 }

@@ -32,7 +32,7 @@ class Comm;
 class TableMutatorShared;
 
 struct TableMutatorIntervalHandler : DispatchHandler {
-  TableMutatorIntervalHandler(Comm *comm, ApplicationQueue *app_queue,
+  TableMutatorIntervalHandler(Comm *comm, ApplicationQueueInterface *app_queue,
                               TableMutatorShared *mutator)
     : active(true), complete(false), comm(comm), app_queue(app_queue), mutator(mutator) {
     self_register();
@@ -61,7 +61,7 @@ struct TableMutatorIntervalHandler : DispatchHandler {
   bool                active;
   bool                complete;
   Comm               *comm;
-  ApplicationQueue   *app_queue;
+  ApplicationQueueInterface   *app_queue;
   TableMutatorShared *mutator;
 };
 

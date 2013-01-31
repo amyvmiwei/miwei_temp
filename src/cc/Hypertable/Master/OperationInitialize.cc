@@ -128,15 +128,15 @@ void OperationInitialize::execute() {
     try {
       range.start_row = 0;
       range.end_row = Key::END_ROOT_ROW;
-      Utility::create_table_load_range(m_context, m_metadata_root_location, &m_table, range,
-          false);
-      HT_MAYBE_FAIL("initialize-LOAD_ROOT_METADATA_RANGE");
+      Utility::create_table_load_range(m_context, m_metadata_root_location,
+                                       m_table, range, false);
+      Utility::create_table_acknowledge_range(m_context, m_metadata_root_location,
+                                              m_table, range);
     }
     catch (Exception &e) {
-      if (!m_context->reassigned(&m_table, range, m_metadata_root_location))
-        HT_THROW2(e.code(), e, format("Loading ROOT range (%s)", m_root_range_name.c_str()));
-      // if reassigned, it was properly loaded and then moved, so continue on
+      HT_FATAL_OUT << "Problem loading ROOT range - " << e << HT_END;
     }
+    HT_MAYBE_FAIL("initialize-LOAD_ROOT_METADATA_RANGE");
     {
       ScopedLock lock(m_mutex);
       m_dependencies.clear();
@@ -150,15 +150,15 @@ void OperationInitialize::execute() {
     try {
       range.start_row = Key::END_ROOT_ROW;
       range.end_row = Key::END_ROW_MARKER;
-      Utility::create_table_load_range(m_context, m_metadata_secondlevel_location, &m_table,
-          range, false);
-      HT_MAYBE_FAIL("initialize-LOAD_SECOND_METADATA_RANGE");
+      Utility::create_table_load_range(m_context, m_metadata_secondlevel_location,
+                                       m_table, range, false);
+      Utility::create_table_acknowledge_range(m_context, m_metadata_secondlevel_location,
+                                              m_table, range);
     }
     catch (Exception &e) {
-      if (!m_context->reassigned(&m_table, range, m_metadata_secondlevel_location))
-        HT_THROW2(e.code(), e, format("Loading second METADATA range (%s)", m_metadata_range_name.c_str()));
-      // if reassigned, it was properly loaded and then moved, so continue on
+      HT_FATAL_OUT << "Problem loading ROOT range - " << e << HT_END;
     }
+    HT_MAYBE_FAIL("initialize-LOAD_SECOND_METADATA_RANGE");
     {
       ScopedLock lock(m_mutex);
       m_dependencies.clear();

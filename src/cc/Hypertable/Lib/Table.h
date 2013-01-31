@@ -25,7 +25,7 @@
 #include "Common/ReferenceCount.h"
 #include "Common/Mutex.h"
 
-#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ApplicationQueueInterface.h"
 
 #include "NameIdMapper.h"
 #include "Schema.h"
@@ -71,7 +71,7 @@ namespace Hypertable {
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,
           NameIdMapperPtr &namemap, const String &name, int32_t flags=0);
     Table(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
-          Hyperspace::SessionPtr &, ApplicationQueuePtr &, NameIdMapperPtr &,
+          Hyperspace::SessionPtr &, ApplicationQueueInterfacePtr &, NameIdMapperPtr &,
           const String &name, int32_t flags, uint32_t default_timeout_ms);
     virtual ~Table();
 
@@ -237,6 +237,8 @@ namespace Hypertable {
       return m_namespace;
     }
 
+    RangeLocatorPtr get_range_locator() { return m_range_locator; }
+
   private:
     void initialize();
 
@@ -247,7 +249,7 @@ namespace Hypertable {
     Hyperspace::SessionPtr m_hyperspace;
     SchemaPtr              m_schema;
     RangeLocatorPtr        m_range_locator;
-    ApplicationQueuePtr    m_app_queue;
+    ApplicationQueueInterfacePtr m_app_queue;
     NameIdMapperPtr        m_namemap;
     String                 m_name;
     TableIdentifierManaged m_table;

@@ -159,7 +159,7 @@ void DefaultPolicy::init_options() {
   file_desc().add_options()
     ("Comm.DispatchDelay", i32()->default_value(0), "[TESTING ONLY] "
         "Delay dispatching of read requests by this number of milliseconds")
-    ("Comm.UsePoll", boo()->default_value(false), "Use poll() interface")
+    ("Comm.UsePoll", boo()->default_value(false), "Use POSIX poll() interface")
     ("Hypertable.Verbose", boo()->default_value(false),
         "Enable verbose output (system wide)")
     ("Hypertable.Silent", boo()->default_value(false),
@@ -269,13 +269,11 @@ void DefaultPolicy::init_options() {
         "Disables the generation of monitoring statistics")
     ("Hypertable.LoadBalancer.Enable", boo()->default_value(true),
         "Enable automatic load balancing")
-    ("Hypertable.LoadBalancer.Interval", i32()->default_value(86400000),
-        "Time interval between LoadBalancer operations")
-    ("Hypertable.LoadBalancer.WindowStart", str()->default_value("00:00:01"),
-        "Time of day at which LoadBalancer balance window starts")
-    ("Hypertable.LoadBalancer.WindowEnd", str()->default_value("00:03:00"),
-        "Time of day at which the LoadBalancer balance window ends")
-    ("Hypertable.LoadBalancer.ServerWaitInterval", i32()->default_value(300000),
+    ("Hypertable.LoadBalancer.Crontab", str()->default_value("0 0 * * *"),
+        "Crontab entry to control when load balancer is run")
+    ("Hypertable.LoadBalancer.BalanceDelay.Initial", i32()->default_value(86400),
+        "Amount of time to wait after start up before running balancer")
+    ("Hypertable.LoadBalancer.BalanceDelay.NewServer", i32()->default_value(60),
         "Amount of time to wait before running balancer when a new RangeServer is detected")
     ("Hypertable.LoadBalancer.LoadavgThreshold", f64()->default_value(0.25),
         "Servers with loadavg above this much above the mean will be considered by the "
@@ -318,6 +316,15 @@ void DefaultPolicy::init_options() {
         "Enable aggressive splitting of tables with little data to spread out ranges")
     ("Hypertable.Master.DiskThreshold.Percentage", i32()->default_value(90),
         "Stop assigning ranges to RangeServers if disk usage is above this threshold")
+    ("Hypertable.Master.FailedRangeServerLimit.Percentage", i32()->default_value(80),
+        "Fail hard if less than this percentage of the RangeServers are unavailable "
+        "at a given time")
+    ("Hypertable.Failover.GracePeriod", i32()->default_value(30000),
+        "Master wait this long before trying to recover a RangeServer")
+    ("Hypertable.Failover.Timeout", i32()->default_value(180000),
+        "Timeout for failover operations")
+    ("Hypertable.Failover.Quorum.Percentage", i32()->default_value(90),
+        "Percentage of live RangeServers required for failover to proceed")
     ("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage",
      i32()->default_value(20), "Perform major compaction when garbage accounts "
      "for this percentage of the data")
@@ -386,7 +393,7 @@ void DefaultPolicy::init_options() {
         "Host of DFS Broker to use for Commit Log")
     ("Hypertable.RangeServer.CommitLog.DfsBroker.Port", i16(),
         "Port of DFS Broker to use for Commit Log")
-    ("Hypertable.RangeServer.CommitLog.FragmentRemoval.RangeReferenceRequired", boo()->default_value(false),
+    ("Hypertable.RangeServer.CommitLog.FragmentRemoval.RangeReferenceRequired", boo()->default_value(true),
         "Only remove linked log fragments if they're part of a transfer log referenced by a range")
     ("Hypertable.RangeServer.CommitLog.PruneThreshold.Min", i64()->default_value(1*G),
         "Lower threshold for amount of outstanding commit log before pruning")
@@ -404,6 +411,12 @@ void DefaultPolicy::init_options() {
         "TESTING:  After update, if range needs maintenance, pause for this number of milliseconds")
     ("Hypertable.RangeServer.UpdateCoalesceLimit", i64()->default_value(5*M),
         "Amount of update data to coalesce into single commit log sync")
+    ("Hypertable.RangeServer.Failover.FlushLimit.PerRange",
+     i32()->default_value(10*M), "Amount of updates (bytes) accumulated for a "
+        "single range to trigger a replay buffer flush")
+    ("Hypertable.RangeServer.Failover.FlushLimit.Aggregate",
+     i64()->default_value(100*M), "Amount of updates (bytes) accumulated for "
+        "all range to trigger a replay buffer flush")
     ("Hypertable.Metadata.Replication", i32()->default_value(-1),
         "Replication factor for commit log files")
     ("Hypertable.CommitLog.RollLimit", i64()->default_value(100*M),

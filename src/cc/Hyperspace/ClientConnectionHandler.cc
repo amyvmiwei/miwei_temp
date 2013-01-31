@@ -36,7 +36,7 @@ using namespace Hypertable;
 ClientConnectionHandler::ClientConnectionHandler(Comm *comm, Session *session,
                                                  uint32_t timeout_ms)
   : m_comm(comm), m_session(session), m_session_id(0), m_state(DISCONNECTED),
-    m_verbose(false), m_timeout_ms(timeout_ms) {
+    m_timeout_ms(timeout_ms), m_verbose(false), m_callbacks_enabled(true) {
   memset(&m_master_addr, 0, sizeof(struct sockaddr_in));
   return;
 }
@@ -51,22 +51,19 @@ ClientConnectionHandler::~ClientConnectionHandler() {
 
 
 void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
-  ScopedLock lock(m_mutex);
+  ScopedRecLock lock(m_mutex);
   int error;
 
   HT_DEBUGF("%s", event_ptr->to_str().c_str());
 
   if (event_ptr->type == Hypertable::Event::MESSAGE) {
 
-    if (Protocol::response_code(event_ptr.get()) != Error::OK) {
-      HT_ERRORF("Connection handshake error: %s",
+    if (Protocol::response_code(event_ptr.get()) != Error::OK)
+      HT_FATALF("Connection handshake error: %s",
                 Protocol::string_format_message(event_ptr.get()).c_str());
-      m_comm->close_socket(event_ptr->addr);
-      m_state = DISCONNECTED;
-      return;
-    }
 
-    m_session->state_transition(Session::STATE_SAFE);
+    if (m_callbacks_enabled)
+      m_session->state_transition(Session::STATE_SAFE);
 
     m_state = CONNECTED;
   }
@@ -76,9 +73,11 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
       HT_WARNF("%s", event_ptr->to_str().c_str());
     }
 
-    m_session->state_transition(Session::STATE_JEOPARDY);
+    if (m_callbacks_enabled)
+      m_session->state_transition(Session::STATE_JEOPARDY);
 
     m_state = DISCONNECTED;
+    m_cond.notify_all();
   }
   else if (event_ptr->type == Hypertable::Event::CONNECTION_ESTABLISHED) {
 
@@ -91,16 +90,18 @@ void ClientConnectionHandler::handle(Hypertable::EventPtr &event_ptr) {
 
     if ((error = m_comm->send_request(event_ptr->addr, m_timeout_ms, cbp, this))
         != Error::OK) {
-      HT_ERRORF("Problem sending handshake request - %s",
+      HT_FATALF("Problem sending handshake request - %s",
                 Error::get_text(error));
-      m_comm->close_socket(event_ptr->addr);
-      m_state = DISCONNECTED;
     }
   }
-  else {
-    HT_DEBUGF("%s", event_ptr->to_str().c_str());
-    m_comm->close_socket(event_ptr->addr);
-    m_state = DISCONNECTED;
-  }
+  else
+    HT_FATALF("Unrecognized event - %s", event_ptr->to_str().c_str());
 
+}
+
+void ClientConnectionHandler::close() {
+  ScopedRecLock lock(m_mutex);
+  m_comm->close_socket(m_master_addr);
+  while (m_state != DISCONNECTED)
+    m_cond.wait(lock);
 }

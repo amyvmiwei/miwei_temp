@@ -166,37 +166,32 @@ void CellCache::add_counter(const Key &key, const ByteString value) {
 }
 
 
-
-const char *CellCache::get_split_row() {
-  assert(!"CellCache::get_split_row not implemented!");
-  return 0;
-}
-
-
-
-void CellCache::get_split_rows(std::vector<std::string> &split_rows) {
+void CellCache::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
   ScopedLock lock(m_mutex);
-  if (m_cell_map.size() > 2) {
-    CellMap::const_iterator iter = m_cell_map.begin();
-    size_t i=0, mid = m_cell_map.size() / 2;
-    for (i=0; i<mid; i++)
-      ++iter;
-    split_rows.push_back((*iter).first.row());
-  }
-}
-
-
-
-void CellCache::get_rows(std::vector<std::string> &rows) {
-  ScopedLock lock(m_mutex);
-  const char *row, *last_row = "";
-  for (CellMap::const_iterator iter = m_cell_map.begin();
+  const char *row, *last_row = 0;
+  int64_t last_count = 0;
+  for (CellMap::iterator iter = m_cell_map.begin();
        iter != m_cell_map.end(); ++iter) {
-    row = (*iter).first.row();
-    if (strcmp(row, last_row)) {
-      rows.push_back(row);
+    row = iter->first.row();
+    if (last_row == 0)
       last_row = row;
+    if (strcmp(row, last_row) != 0) {
+      CstrToInt64MapT::iterator iter = split_row_data.find(last_row);
+      if (iter == split_row_data.end())
+        split_row_data[last_row] = last_count;
+      else
+        iter->second += last_count;
+      last_row = row;
+      last_count = 0;
     }
+    last_count++;
+  }
+  if (last_count > 0) {
+    CstrToInt64MapT::iterator iter = split_row_data.find(last_row);
+    if (iter == split_row_data.end())
+      split_row_data[last_row] = last_count;
+    else
+      iter->second += last_count;
   }
 }
 

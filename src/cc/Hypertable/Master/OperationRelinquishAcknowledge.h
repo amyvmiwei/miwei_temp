@@ -29,6 +29,8 @@ namespace Hypertable {
   class OperationRelinquishAcknowledge : public Operation {
   public:
     OperationRelinquishAcknowledge(ContextPtr &context, EventPtr &event);
+    OperationRelinquishAcknowledge(ContextPtr &context, const String &source,
+                                   TableIdentifier *table, RangeSpec *range);
     virtual ~OperationRelinquishAcknowledge() { }
 
     virtual void execute();

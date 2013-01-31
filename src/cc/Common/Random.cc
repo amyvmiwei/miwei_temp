@@ -30,7 +30,7 @@ namespace {
 
 using namespace Hypertable;
 
-boost::mt19937 Random::ms_rng;
+boost::mt19937 Random::ms_rng(1);
 
 void Random::fill_buffer_with_random_ascii(char *buf, size_t len) {
   size_t in_i=0, out_i=0;

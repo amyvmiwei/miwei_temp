@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+#
+# Copyright (C) 2007-2012 Hypertable, Inc.
+#
+# This file is part of Hypertable.
+#
+# Hypertable is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or any later version.
+#
+# Hypertable is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Hypertable. If not, see <http://www.gnu.org/licenses/>
+#
+
+#
+# This script uses the unix "mail" tool to send an email whenever a 
+# RangeServer fails and gets recovered. In order to activate it, you have
+# to rename it to "notification-hook.sh" and set the executable bit:
+#
+#   mv notification-hook.tmpl notification-hook.sh
+#   chmod +x notification-hook.sh
+#
+# 
+# Configuration setting
+#
+# The recipient of the email
+recipient=root
+
+###############################################################################
+
+subject=$1
+message=$2
+
+# send the mail
+echo -e $message | mail -s "$subject" ${recipient}

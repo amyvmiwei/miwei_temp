@@ -1,0 +1,4 @@
+NOTICE: Recovery of rs1 (HOSTNAME) starting
+Failure of range server rs1 (HOSTNAME) has been detected. Starting recovery...
+NOTICE: Recovery of rs1 (HOSTNAME) succeeded
+Recovery of range server rs1 (HOSTNAME) has succeeded.

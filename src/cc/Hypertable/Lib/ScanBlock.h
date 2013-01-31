@@ -92,8 +92,8 @@ namespace Hypertable {
      * which contains most of the data
      */
     size_t memory_used() const {
-      if (m_event_ptr)
-        return m_event_ptr->payload_len;
+      if (m_event)
+        return m_event->payload_len;
       return 0;
     }
 
@@ -117,7 +117,7 @@ namespace Hypertable {
     int m_skipped_cells;
     Vector m_vec;
     Vector::iterator m_iter;
-    EventPtr m_event_ptr;
+    EventPtr m_event;
   };
   typedef intrusive_ptr<ScanBlock> ScanBlockPtr;
 }

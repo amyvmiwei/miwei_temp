@@ -31,6 +31,8 @@ namespace Hypertable {
   class OperationBalance : public Operation {
   public:
     OperationBalance(ContextPtr &context);
+    OperationBalance(ContextPtr &context, BalancePlanPtr &plan);
+    OperationBalance(ContextPtr &context, EventPtr &event);
     OperationBalance(ContextPtr &context, const MetaLog::EntityHeader &header_);
     virtual ~OperationBalance() { }
 
@@ -45,13 +47,9 @@ namespace Hypertable {
     virtual void decode_state(const uint8_t **bufp, size_t *remainp);
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
     virtual bool exclusive() { return true; }
-    virtual bool is_perpetual() {return true; }
-    const String get_algorithm();
-    void register_plan(BalancePlanPtr &plan);
 
   private:
     BalancePlanPtr m_plan;
-    static const String ms_name;
   };
 
   typedef intrusive_ptr<OperationBalance> OperationBalancePtr;

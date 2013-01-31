@@ -36,7 +36,7 @@ void OperationWaitForServers::execute() {
   HT_INFOF("Entering WaitForServers-%lld (state=%s)",
            (Lld)header.id, OperationState::get_text(get_state()));
 
-  if (m_context->connection_count() == 0) {
+  if (m_context->rsc_manager->connection_count() == 0) {
     block();
     return;
   }

@@ -27,7 +27,7 @@
 
 #include "Common/Thread.h"
 #include "Common/Mutex.h"
-#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ApplicationQueueInterface.h"
 
 #include "ScanCells.h"
 
@@ -38,7 +38,7 @@ namespace Hypertable {
    * of requests and a pool of threads that pull requests off the queue and
    * carry them out.
    */
-  class TableMutatorQueue : public ApplicationQueue {
+  class TableMutatorQueue : public ApplicationQueueInterface {
 
   public:
 
@@ -71,14 +71,6 @@ namespace Hypertable {
         m_work_queue.pop_front();
       }
     }
-
-    /**
-     * Override unused inherited methods
-     */
-    virtual void stop() { }
-    virtual void start() { }
-    virtual void join() { }
-    virtual void shutdown() { }
 
   private:
 

@@ -29,7 +29,7 @@ ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
                 StaticBuffer &ext, 
                 int32_t skipped_rows, int32_t skipped_cells) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   CommBufPtr cbp(new CommBuf( header, 18, ext));
   cbp->append_i32(Error::OK);
   cbp->append_i16(moreflag);
@@ -37,7 +37,7 @@ ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
   cbp->append_i32(skipped_rows);    // for OFFSET
   cbp->append_i32(skipped_cells);   // for CELL_OFFSET
 
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }
 
 
@@ -47,7 +47,7 @@ ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
                 uint32_t ext_len, int32_t skipped_rows, 
                 int32_t skipped_cells) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   CommBufPtr cbp(new CommBuf( header, 18, ext_buffer, ext_len));
   cbp->append_i32(Error::OK);
   cbp->append_i16(moreflag);
@@ -55,6 +55,6 @@ ResponseCallbackCreateScanner::response(short moreflag, int32_t id,
   cbp->append_i32(skipped_rows);    // for OFFSET
   cbp->append_i32(skipped_cells);   // for CELL_OFFSET
 
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }
 

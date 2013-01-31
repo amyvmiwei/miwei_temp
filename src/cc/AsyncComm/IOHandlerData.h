@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/* -*- C++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -38,20 +38,29 @@ extern "C" {
 
 namespace Hypertable {
 
-  /**
+  /** @addtogroup AsyncComm
+   *  @{
+   */
+
+  /** I/O handler for TCP sockets.
    */
   class IOHandlerData : public IOHandler {
 
   public:
 
     IOHandlerData(int sd, const InetAddr &addr, DispatchHandlerPtr &dhp, bool connected=false)
-      : IOHandler(sd, addr, dhp), m_event(0), m_send_queue() {
+      : IOHandler(sd, dhp), m_event(0), m_send_queue() {
+      memcpy(&m_addr, &addr, sizeof(InetAddr));
       m_connected = connected;
       reset_incoming_message_state();
     }
 
     virtual ~IOHandlerData() {
       delete m_event;
+    }
+
+    virtual void disconnect() { 
+      deliver_event(new Event(Event::DISCONNECT, m_addr, m_proxy, m_error));
     }
 
     void reset_incoming_message_state() {
@@ -87,7 +96,10 @@ namespace Hypertable {
   private:
     void handle_message_header(time_t arrival_time);
     void handle_message_body();
-    void handle_disconnect(int error = Error::OK);
+
+    /** 
+     */
+    void handle_disconnect();
 
     bool                m_connected;
     Mutex               m_mutex;
@@ -101,8 +113,7 @@ namespace Hypertable {
     size_t              m_message_remaining;
     std::list<CommBufPtr> m_send_queue;
   };
-
-  typedef intrusive_ptr<IOHandlerData> IOHandlerDataPtr;
+  /** @}*/
 }
 
 #endif // HYPERTABLE_IOHANDLERDATA_H

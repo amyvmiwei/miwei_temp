@@ -32,7 +32,7 @@ using namespace Hypertable;
  *
  */
 void RequestHandlerShutdown::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
+  ResponseCallback cb(m_comm, m_event);
   try {
     HT_INFO("Initiate shutdown");
     m_master->shutdown(&cb, m_session_id);

@@ -24,6 +24,8 @@
 
 #include <boost/intrusive_ptr.hpp>
 
+#include <map>
+
 #include "Common/InetAddr.h"
 #include "Common/StaticBuffer.h"
 #include "Common/ReferenceCount.h"
@@ -36,7 +38,7 @@
 #include "RangeState.h"
 #include "Types.h"
 #include "StatsRangeServer.h"
-
+#include "RangeRecoveryPlan.h"
 
 namespace Hypertable {
 
@@ -107,7 +109,7 @@ namespace Hypertable {
      */
     void load_range(const CommAddress &addr, const TableIdentifier &table,
                     const RangeSpec &range, const RangeState &range_state,
-		    bool needs_compaction);
+                    bool needs_compaction);
 
     /** Issues a synchronous "load range" request with timer.
      *
@@ -120,26 +122,17 @@ namespace Hypertable {
      */
     void load_range(const CommAddress &addr, const TableIdentifier &table,
                     const RangeSpec &range,  const RangeState &range_state,
-		    bool needs_compaction, Timer &timer);
+                    bool needs_compaction, Timer &timer);
 
-    /** Issues a synchronous "acknowledge load" request.
+    /** Issues a synchronous "acknowledge load" request for multiple ranges.
      *
      * @param addr address of RangeServer
-     * @param table table identifier
-     * @param range range specification
+     * @param ranges qualified range spec
+     * @param response_map per range responses to acknowledge_load
      */
-    void acknowledge_load(const CommAddress &addr, const TableIdentifier &table,
-                          const RangeSpec &range);
-
-    /** Issues a synchronous "load range" request with timer.
-     *
-     * @param addr address of RangeServer
-     * @param table table identifier
-     * @param range range specification
-     * @param timer timer
-     */
-    void acknowledge_load(const CommAddress &addr, const TableIdentifier &table,
-                          const RangeSpec &range, Timer &timer);
+    void acknowledge_load(const CommAddress &addr,
+                          const vector<QualifiedRangeSpec *> &ranges,
+                          std::map<QualifiedRangeSpec, int> &response_map);
 
     /** Issues an "update" request asynchronously.  The data argument holds a
      * sequence of key/value pairs.  Each key/value pair is encoded as two
@@ -482,28 +475,8 @@ namespace Hypertable {
      * @param event reference to event object
      * @param stats reference to stats object to be filled in
      */
-    static void decode_response_get_statistics(EventPtr &event,
+    static void decode_response_get_statistics(const EventPtr &event,
                                                StatsRangeServer &stats);
-
-
-    /** Issues an asynchronous "replay begin" request.
-     *
-     * @param addr address of RangeServer
-     * @param group replay group to begin (METADATA_ROOT, METADATA, USER)
-     * @param handler response handler
-     */
-    void replay_begin(const CommAddress &addr, uint16_t group,
-                      DispatchHandler *handler);
-
-    /** Issues an asynchronous "replay begin" request with timer.
-     *
-     * @param addr address of RangeServer
-     * @param group replay group to begin (METADATA_ROOT, METADATA, USER)
-     * @param handler response handler
-     * @param timer timer
-     */
-    void replay_begin(const CommAddress &addr, uint16_t group,
-                      DispatchHandler *handler, Timer &timer);
 
     /** Issues an asynchronous "replay load range" request.
      *
@@ -531,41 +504,6 @@ namespace Hypertable {
                            const TableIdentifier &table,
                            const RangeSpec &range, const RangeState &state,
                            DispatchHandler *handler, Timer &timer);
-
-    /** Issues an asynchronous "replay update" request.
-     *
-     * @param addr address of RangeServer
-     * @param buffer buffer holding replay updates
-     * @param handler response handler
-     */
-    void replay_update(const CommAddress &addr, StaticBuffer &buffer,
-                       DispatchHandler *handler);
-
-    /** Issues an asynchronous "replay update" request with timer.
-     *
-     * @param addr address of RangeServer
-     * @param buffer buffer holding replay updates
-     * @param handler response handler
-     * @param timer timer
-     */
-    void replay_update(const CommAddress &addr, StaticBuffer &buffer,
-                       DispatchHandler *handler, Timer &timer);
-
-    /** Issues an asynchronous "replay commit" request.
-     *
-     * @param addr address of RangeServer
-     * @param handler response handler
-     */
-    void replay_commit(const CommAddress &addr, DispatchHandler *handler);
-
-    /** Issues an asynchronous "replay commit" request with timer.
-     *
-     * @param addr address of RangeServer
-     * @param handler response handler
-     * @param timer timer
-     */
-    void replay_commit(const CommAddress &addr, DispatchHandler *handler,
-                       Timer &timer);
 
     /** Issues an asynchronous "drop range" request asynchronously.
      *
@@ -616,9 +554,82 @@ namespace Hypertable {
      */
     void heapcheck(const CommAddress &addr, String &outfile);
 
+    /** Issues a synchronous "replay_fragments" request.
+     * @param addr address of RangeServer
+     * @param op_id id of the calling recovery operation
+     * @param recover_location location of the server being recovered
+     * @param plan_generation recovery plan generation
+     * @param type type of fragments to play
+     * @param fragments fragments being requested for replay
+     * @param receiver_plan recovery receiver plan
+     * @param replay_timeout timeout for replay to finish
+     */
+    void replay_fragments(const CommAddress &addr, int64_t op_id,
+                          const String &recover_location, int plan_generation,
+                          int type, const vector<uint32_t> &fragments,
+                          const RangeRecoveryReceiverPlan &plan,
+                          uint32_t replay_timeout);
+
+    /** Issues a "phantom_load" synchronous request.
+     *
+     * @param addr address of RangeServer
+     * @param location location of server being recovered
+     * @param plan_generation recovery plan generation
+     * @param fragments fragments being replayed
+     * @param specs range specs to be loaded
+     * @param states parallel range states array
+     */
+    void phantom_load(const CommAddress &addr, const String &location,
+                      int plan_generation,
+                      const vector<uint32_t> &fragments,
+                      const vector<QualifiedRangeSpec> &specs,
+                      const vector<RangeState> &states);
+
+    /** Issues a "phantom_update" asynchronous request.
+     *
+     * @param addr address of RangeServer
+     * @param location location being recovered
+     * @param plan_generation recovery plan generation
+     * @param range range
+     * @param fragment fragment_id
+     * @param replay_buffer replay buffer
+     * @param handler handler
+     */
+    void phantom_update(const CommAddress &addr, const String &location,
+                        int plan_generation, const QualifiedRangeSpec &range,
+                        uint32_t fragment, StaticBuffer &updates,
+                        DispatchHandler *handler);
+
+    /** Issues a "phantom_prepare_ranges" synchronous request.
+     *
+     * @param addr address of RangeServer
+     * @param op_id ID of Master recovery operation 
+     * @param location location of server being recovered
+     * @param plan_generation recovery plan generation
+     * @param ranges range specs to be prepared
+     * @param timeout timeout
+     */
+    void phantom_prepare_ranges(const CommAddress &addr, int64_t op_id,
+                                const String &location, int plan_generation,
+                                const vector<QualifiedRangeSpec> &ranges,
+                                uint32_t timeout);
+
+    /** Issues a "phantom_commit_ranges" synchronous request.
+     *
+     * @param addr address of RangeServer
+     * @param op_id ID of Master recovery operation 
+     * @param location location of server being recovered
+     * @param plan_generation recovery plan generation
+     * @param ranges range specs to be committed
+     * @param timeout timeout
+     */
+    void phantom_commit_ranges(const CommAddress &addr, int64_t op_id,
+                               const String &location, int plan_generation,
+                               const vector<QualifiedRangeSpec> &ranges,
+                               uint32_t timeout);
+
 
   private:
-
     void do_load_range(const CommAddress &addr, const TableIdentifier &table,
                        const RangeSpec &range, const RangeState &range_state,
 		       bool needs_compaction, uint32_t timeout_ms);

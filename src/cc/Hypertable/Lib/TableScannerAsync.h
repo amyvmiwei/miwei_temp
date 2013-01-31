@@ -47,7 +47,7 @@ namespace Hypertable {
      * Constructs a TableScannerAsync object.
      *
      * @param comm pointer to the Comm layer
-     * @param app_queue pointer to ApplicationQueue
+     * @param app_queue pointer to ApplicationQueueInterface
      * @param table pointer to the table object
      * @param range_locator smart pointer to range locator
      * @param scan_spec reference to scan specification object
@@ -55,7 +55,7 @@ namespace Hypertable {
      *        methods to execute before throwing an exception
      * @param cb callback to be notified when results arrive
      */
-    TableScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
+    TableScannerAsync(Comm *comm, ApplicationQueueInterfacePtr &app_queue, Table *table,
                       RangeLocatorPtr &range_locator,
                       const ScanSpec &scan_spec, uint32_t timeout_ms,
                       ResultCallback *cb, int flags = 0);
@@ -129,7 +129,7 @@ namespace Hypertable {
   private:
     friend class IndexScannerCallback;
 
-    void init(Comm *comm, ApplicationQueuePtr &app_queue, Table *table,
+    void init(Comm *comm, ApplicationQueueInterfacePtr &app_queue, Table *table,
             RangeLocatorPtr &range_locator, const ScanSpec &scan_spec, 
             uint32_t timeout_ms, ResultCallback *cb);
     void maybe_callback_ok(int scanner_id, bool next, 

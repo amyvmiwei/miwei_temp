@@ -28,7 +28,11 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.MaintenanceThreads=8 \
     --Hypertable.RangeServer.Maintenance.Interval=100 $@
 
-[ "$1" ] || exit # base run
+# Exit if base run
+if [ -z $1 ]; then
+    \rm -f $LAUNCHER_PIDFILE
+    exit
+fi
 
 echo ""
 echo "!!!! CRASH ($@) !!!!"
@@ -37,3 +41,5 @@ echo ""
 $HT_HOME/bin/ht Hypertable.RangeServer --pidfile=$PIDFILE --verbose \
     --Hypertable.RangeServer.CellStore.DefaultBlockSize=1K \
     --Hypertable.RangeServer.Maintenance.Interval=100
+
+\rm -f $LAUNCHER_PIDFILE

@@ -37,7 +37,7 @@ class Locker : boost::noncopyable {
 public:
   explicit Locker(MutexT &mutex, bool init_lock = true)
     : m_mutex(mutex), m_locked(false) {
-    if (init_lock) lock();
+    if (init_lock) lock(); else m_locked = true;
   }
   ~Locker() {
     if (m_locked) unlock();

@@ -33,7 +33,7 @@ using namespace Serialization;
 
 int ResponseCallbackReaddir::response(std::vector<std::string> &listing) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   uint32_t len = 8;
   for (size_t i=0; i<listing.size(); i++)
     len += encoded_length_str16(listing[i]);
@@ -42,5 +42,5 @@ int ResponseCallbackReaddir::response(std::vector<std::string> &listing) {
   cbp->append_i32(listing.size());
   for (size_t i=0; i<listing.size(); i++)
     cbp->append_str16(listing[i]);
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }

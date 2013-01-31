@@ -38,11 +38,11 @@ using namespace Serialization;
  *
  */
 void RequestHandlerCompact::run() {
-  ResponseCallback cb(m_comm, m_event_ptr);
+  ResponseCallback cb(m_comm, m_event);
   const char *table_id;
   uint32_t flags;
-  const uint8_t *decode_ptr = m_event_ptr->payload;
-  size_t decode_remain = m_event_ptr->payload_len;
+  const uint8_t *decode_ptr = m_event->payload;
+  size_t decode_remain = m_event->payload_len;
 
   try {
     table_id = decode_vstr(&decode_ptr, &decode_remain);

@@ -170,49 +170,60 @@ int main(int argc, char *argv[]) {
   typedef Cons<DefaultServerPolicy, HyperspaceClientPolicy> MyPolicy;
   std::vector<const char *> master_args;
 
-  if (system("/bin/rm -rf ./hsroot") != 0) {
-    HT_ERROR("Problem removing ./hsroot directory");
-    exit(1);
-  }
+  try {
+    InetAddr addr;
+    String hyperspace_replica_port_arg;
 
-  if (system("mkdir -p ./hsroot") != 0) {
-    HT_ERROR("Unable to create ./hsroot directory");
-    exit(1);
-  }
+    init_with_policy<MyPolicy>(argc, argv);
 
-  master_args.push_back("Hyperspace.Master");
-  master_args.push_back("--config=./name_id_mapper_test.cfg");
-  master_args.push_back((const char *)0);
+    Comm *comm = Comm::instance();
 
-  unlink("./Hyperspace.Master");
-  HT_ASSERT(link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master") == 0);
+    if (system("/bin/rm -rf ./hsroot") != 0) {
+      HT_ERROR("Problem removing ./hsroot directory");
+      exit(1);
+    }
 
-  {
-    ServerLauncher master("./Hyperspace.Master",
-                          (char * const *)&master_args[0]);
+    if (system("mkdir -p ./hsroot") != 0) {
+      HT_ERROR("Unable to create ./hsroot directory");
+      exit(1);
+    }
 
-    try {
-      init_with_policy<MyPolicy>(argc, argv);
+    addr = InetAddr(INADDR_ANY, 48122);
+    comm->find_available_tcp_port(addr);
+    hyperspace_replica_port_arg = format("--Hyperspace.Replica.Port=%d",
+                                       (int)ntohs(addr.sin_port));
 
-      Comm *comm = Comm::instance();
+    master_args.push_back("Hyperspace.Master");
+    master_args.push_back("--config=./name_id_mapper_test.cfg");
+    master_args.push_back(hyperspace_replica_port_arg.c_str());
+    master_args.push_back((const char *)0);
 
-      properties->set("Hyperspace.Replica.Port", (uint16_t)48122);
+    unlink("./Hyperspace.Master");
+    HT_ASSERT(link("../../Hyperspace/Hyperspace.Master", "./Hyperspace.Master") == 0);
 
-      SessionPtr session = new Hyperspace::Session(comm, properties);
+    {
+      ServerLauncher master("./Hyperspace.Master",
+                            (char * const *)&master_args[0]);
 
       {
-        NameIdMapper mapper(session, "/ht");
+        properties->set("Hyperspace.Replica.Port", (uint16_t)ntohs(addr.sin_port));
 
-        init(mapper);
-        test_mapper(mapper);
-        cleanup(session, "/ht");
+        SessionPtr session = new Hyperspace::Session(comm, properties);
+
+        {
+          NameIdMapper mapper(session, "/ht");
+
+          init(mapper);
+          test_mapper(mapper);
+          cleanup(session, "/ht");
+        }
+
       }
-
     }
-    catch (Exception &e) {
-      HT_ERROR_OUT << e << HT_END;
-      _exit(1);
-    }
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    _exit(1);
   }
 
   _exit(0);

@@ -329,7 +329,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
         cout << (*iter).row_key << "\t" << (*iter).column_family << ":"
              << (*iter).column_qualifier << "\t" << (const char *)(*iter).value << "\n";
     }
-    cout << flush;
+    cout << std::flush;
     return;
   }
 
@@ -493,6 +493,7 @@ void generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
     printf("Latency stddev (usec): %llu\n", (Llu)std_dev(total_cells, cum_latency, cum_sq_latency));
   }
   printf("\n");
+  fflush(stdout);
 
   if (output_samples)
     sample_file.close();
@@ -591,7 +592,7 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename,
     }
 
     for (::int32_t i=0; i<parallel; i++) {
-      ScopedLock lock(load_vector[next].mutex);
+      ScopedLock lock(load_vector[i].mutex);
       load_vector[i].finished = true;
       load_vector[i].cond.notify_all();
     }
@@ -631,6 +632,7 @@ void generate_update_load_parallel(PropertiesPtr &props, String &tablename,
   }
 
   printf("\n");
+  fflush(stdout);
 
 }
 
@@ -780,6 +782,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename,
     printf("Latency stddev (usec): %llu\n", (Llu)std_dev(total_cells, cum_latency, cum_sq_latency));
   }
   printf("\n");
+  fflush(stdout);
 
   if (output_samples)
     sample_file.close();
@@ -840,6 +843,8 @@ void generate_query_load_parallel(PropertiesPtr &props, String &tablename,
   printf("Latency stddev (usec): %llu\n", (Llu)std_dev(total_cells,
               cum_latency, cum_sq_latency));
   printf("\n");
+  fflush(stdout);
+
 }
 
 

@@ -22,24 +22,18 @@
 #ifndef HYPERTABLE_RANGESERVERCONNECTION_H
 #define HYPERTABLE_RANGESERVERCONNECTION_H
 
-#include <map>
-
-#include <boost/thread/condition.hpp>
-
 #include "AsyncComm/CommAddress.h"
-#include "AsyncComm/Event.h"
 
-#include "Common/HashMap.h"
 #include "Common/InetAddr.h"
 #include "Common/Mutex.h"
 
-#include "Hypertable/Lib/MetaLogEntity.h"
 #include "Hypertable/Lib/MetaLogWriter.h"
 
 namespace Hypertable {
 
   namespace RangeServerConnectionFlags {
     enum {
+      INIT     = 0x00,
       BALANCED = 0x01,
       REMOVED  = 0x02
     };
@@ -47,63 +41,52 @@ namespace Hypertable {
 
   class RangeServerConnection : public MetaLog::Entity {
   public:
-    RangeServerConnection(MetaLog::WriterPtr &mml_writer, const String &location,
-                          const String &hostname, InetAddr public_addr, bool balanced=false);
-    RangeServerConnection(MetaLog::WriterPtr &mml_writer, const MetaLog::EntityHeader &header_);
+    RangeServerConnection(const String &location, const String &hostname,
+                          InetAddr public_addr);
+    RangeServerConnection(const MetaLog::EntityHeader &header_);
     virtual ~RangeServerConnection() { }
 
-    bool connected() { ScopedLock lock(m_mutex); return m_connected; }
-    bool get_removed();
+    bool connect(const String &hostname, InetAddr local_addr, 
+                 InetAddr public_addr);
+    bool disconnect();
+    bool connected();
     void set_removed();
+    bool get_removed();
+    bool set_balanced();
     bool get_balanced();
-    bool set_balanced(bool val=true);
-    bool wait_for_connection();
-    CommAddress get_comm_address();
 
-    virtual const String name() { return "RangeServerConnection"; }
+    void set_recovering(bool b);
+    bool is_recovering();
+
+    void set_handle(uint64_t handle);
+    uint64_t get_handle();
+
+    CommAddress get_comm_address();
 
     const String location() const { return m_location; }
     const String hostname() const { return m_hostname; }
     InetAddr local_addr() const { return m_local_addr; }
     InetAddr public_addr() const { return m_public_addr; }
 
+    virtual const String name() { return "RangeServerConnection"; }
     virtual void display(std::ostream &os);
     virtual size_t encoded_length() const;
     virtual void encode(uint8_t **bufp) const;
     virtual void decode(const uint8_t **bufp, size_t *remainp);
-    virtual void set_mml_writer(MetaLog::WriterPtr &mml_writer);
-
-    friend class Context;
-
-  protected:
-    bool connect(const String &hostname, InetAddr local_addr, 
-            InetAddr public_addr, bool test_mode = false);
-    bool disconnect();
 
   private:
     Mutex m_mutex;
-    boost::condition m_cond;
-    MetaLog::WriterPtr m_mml_writer;
+    uint64_t m_handle;
     String m_location;
     String m_hostname;
     int32_t m_state;
-    time_t m_removal_time;
     CommAddress m_comm_addr;
     InetAddr m_local_addr;
     InetAddr m_public_addr;
     bool m_connected;
+    bool m_recovering;
   };
   typedef intrusive_ptr<RangeServerConnection> RangeServerConnectionPtr;
-
-  typedef std::map<String, RangeServerConnectionPtr> RangeServerConnectionMap;
-
-  namespace MetaLog {
-    namespace EntityType {
-      enum {
-        RANGE_SERVER_CONNECTION = 0x00020000
-      };
-    }
-  }
 
 } // namespace Hypertable
 

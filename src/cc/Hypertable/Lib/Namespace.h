@@ -28,7 +28,7 @@
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
 
-#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ApplicationQueueInterface.h"
 #include "AsyncComm/ConnectionManager.h"
 #include "Hyperspace/Session.h"
 
@@ -57,7 +57,7 @@ namespace Hypertable {
      */
     Namespace(const String &name, const String &id, PropertiesPtr &props,
               ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-              ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap,
+              ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap,
               MasterClientPtr &master_client, RangeLocatorPtr &range_locator,
               TableCachePtr &table_cache, uint32_t timeout, Client *client);
 
@@ -287,7 +287,7 @@ namespace Hypertable {
     Comm                   *m_comm;
     ConnectionManagerPtr    m_conn_manager;
     Hyperspace::SessionPtr  m_hyperspace;
-    ApplicationQueuePtr     m_app_queue;
+    ApplicationQueueInterfacePtr     m_app_queue;
     NameIdMapperPtr         m_namemap;
     MasterClientPtr         m_master_client;
     RangeLocatorPtr         m_range_locator;

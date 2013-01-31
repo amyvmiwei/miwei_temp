@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -29,23 +29,23 @@
 
 namespace Hypertable {
 
-  /**
-   *
+  /** @addtogroup AsyncComm
+   *  @{
+   */
+
+  /** I/O handler for listen sockets.
    */
   class IOHandlerAccept : public IOHandler {
 
   public:
 
-    IOHandlerAccept(int sd, const InetAddr &addr, DispatchHandlerPtr &dhp,
+    IOHandlerAccept(int sd, DispatchHandlerPtr &dhp,
                     HandlerMapPtr &hmap, ConnectionHandlerFactoryPtr &chfp)
-      : IOHandler(sd, addr, dhp), m_handler_map_ptr(hmap),
-        m_handler_factory_ptr(chfp) {
-      return;
+      : IOHandler(sd, dhp), m_handler_map(hmap), m_handler_factory(chfp) {
+      memcpy(&m_addr, &m_local_addr, sizeof(InetAddr));
     }
 
-    virtual ~IOHandlerAccept() {
-      return;
-    }
+    virtual ~IOHandlerAccept() { }
 
     // define default poll() interface for everyone since it is chosen at runtime
     virtual bool handle_event(struct pollfd *event, time_t arival_time=0);
@@ -60,17 +60,15 @@ namespace Hypertable {
     ImplementMe;
 #endif
 
+  private:
+
     bool handle_incoming_connection();
 
-  private:
-    HandlerMapPtr m_handler_map_ptr;
-    ConnectionHandlerFactoryPtr m_handler_factory_ptr;
+    HandlerMapPtr m_handler_map;
+    ConnectionHandlerFactoryPtr m_handler_factory;
   };
-
-  typedef intrusive_ptr<IOHandlerAccept> IOHandlerAcceptPtr;
-
+  /** @}*/
 }
-
 
 #endif // HYPERTABLE_IOHANDLERACCEPT_H
 

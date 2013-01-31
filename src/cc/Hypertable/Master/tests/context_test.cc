@@ -85,7 +85,7 @@ int main(int argc, char **argv) {
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
-    context->monitoring = new Monitoring(context->props, context->namemap);
+    context->monitoring = new Monitoring(context.get());
 
     context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
     String log_dir = context->toplevel_dir + "/servers/master/log";

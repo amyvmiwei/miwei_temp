@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 
 #include <map>
+#include <fstream>
 
 #include "Common/FailureInducer.h"
 #include "Common/Init.h"
@@ -33,10 +34,13 @@
 
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/MetaLogReader.h"
+#include "Hypertable/Lib/RangeState.h"
+#include "Hypertable/Lib/Types.h"
+
 #include "DfsBroker/Lib/Client.h"
 
 #include "Hypertable/Master/Context.h"
-#include "Hypertable/Master/LoadBalancerBasic.h"
+#include "Hypertable/Master/LoadBalancer.h"
 #include "Hypertable/Master/MetaLogDefinitionMaster.h"
 #include "Hypertable/Master/OperationCreateNamespace.h"
 #include "Hypertable/Master/OperationCreateTable.h"
@@ -46,8 +50,10 @@
 #include "Hypertable/Master/OperationRenameTable.h"
 #include "Hypertable/Master/OperationSystemUpgrade.h"
 #include "Hypertable/Master/OperationMoveRange.h"
+#include "Hypertable/Master/RangeServerConnectionManager.h"
 #include "Hypertable/Master/ReferenceManager.h"
 #include "Hypertable/Master/ResponseManager.h"
+#include "Hypertable/Master/BalancePlanAuthority.h"
 
 #include <boost/algorithm/string.hpp>
 
@@ -75,6 +81,7 @@ namespace {
                    "  create_table_with_index\n"
                    "  rename_table\n"
                    "  move_range\n"
+                   "  balance_plan_authority\n"
                    "\nOptions");
       cmdline_hidden_desc().add_options()("test", str(), "test to run");
       cmdline_positional_desc().add("test", -1);
@@ -124,6 +131,7 @@ namespace {
     OperationPtr operation;
     RangeServerConnectionPtr rsc;
     std::vector<OperationPtr> operations;
+    std::vector<MetaLog::EntityPtr> tmp_entities;
 
     context->op = new OperationProcessor(context, 4);
 
@@ -131,10 +139,10 @@ namespace {
     if (failure_point != "")
       FailureInducer::instance->parse_option(failure_point);
 
-    for (size_t i=0; i<entities.size(); i++) {
+    for (size_t i = 0; i < entities.size(); i++) {
       if ((operation = dynamic_cast<Operation *>(entities[i].get()))) {
-	if (operation->remove_explicitly())
-	  context->reference_manager->add(operation);
+        if (operation->remove_explicitly())
+          context->reference_manager->add(operation);
         operations.push_back(operation);
       }
     }
@@ -151,14 +159,37 @@ namespace {
     entities.clear();
     mml_reader->get_entities(entities);
 
-    HT_ASSERT(entities.size() == expected_operations.size() + expected_servers.size());
+    // Remove the BalancePlanAuthority object
+    foreach_ht (MetaLog::EntityPtr &entity, entities) {
+      if (dynamic_cast<BalancePlanAuthority *>(entity.get()) == 0)
+        tmp_entities.push_back(entity);
+    }
+    entities.swap(tmp_entities);
 
-    for (size_t i=0; i<entities.size(); i++) {
+#if 0
+    HT_INFO("Entities:");
+    foreach_ht (MetaLog::EntityPtr &entity, entities)
+      HT_INFOF("%s", entity->name().c_str());
+    HT_INFO("Expected Entities:");
+    for (ExpectedResultsMap::iterator iter = expected_operations.begin();
+         iter != expected_operations.end(); ++iter) {
+      HT_INFOF("%s", iter->first.c_str());
+    }
+    foreach_ht (String &server, expected_servers)
+      HT_INFOF("%s", server.c_str());
+#endif
+
+    HT_ASSERT(entities.size() == expected_operations.size()
+              + expected_servers.size());
+
+    for (size_t i = 0; i < entities.size(); i++) {
       bool match = false;
       operation = dynamic_cast<Operation *>(entities[i].get());
+      rsc = dynamic_cast<RangeServerConnection *>(entities[i].get());
       if (operation) {
-        const char *ptr = strstr(operation->name().c_str(), " ");
-        String operation_name = ptr ? String(operation->name(), 0, ptr-operation->name().c_str()) : operation->name();
+        String name = operation->name();
+        const char *ptr = strstr(name.c_str(), " ");
+        String operation_name = ptr ? String(name.c_str(), ptr-name.c_str()) : name;
         for (ExpectedResultsMap::iterator iter = expected_operations.begin();
              iter != expected_operations.end(); ++iter) {
           if (operation_name == iter->first &&
@@ -170,9 +201,8 @@ namespace {
         if (!match)
           std::cout << "Unable to find match for '" << operation_name << "'" << std::endl;
       }
-      else {
+      else if (rsc) {
         match = false;
-        rsc = dynamic_cast<RangeServerConnection *>(entities[i].get());
         for (std::vector<String>::iterator iter = expected_servers.begin();
              iter != expected_servers.end(); ++iter) {
           if (rsc->location() == *iter) {
@@ -183,6 +213,7 @@ namespace {
         if (!match)
           std::cout << "Unable to find match for '" << rsc->location() << "'" << std::endl;
       }
+
       if (!match) {
         std::cout << "ERROR - invalid state" << std::endl;
 
@@ -198,7 +229,8 @@ namespace {
           for (size_t i=0; i<entities.size(); i++) {
             operation = dynamic_cast<Operation *>(entities[i].get());
             if (operation)
-              std::cout << operation->name() << " -> " << operation->get_state() << std::endl;
+              std::cout << operation->name() << " -> "
+                  << operation->get_state() << std::endl;
             else {
               rsc = dynamic_cast<RangeServerConnection *>(entities[i].get());
               std::cout << "server " << rsc->location() << std::endl;
@@ -225,10 +257,12 @@ void rename_table_test(ContextPtr &context);
 void master_initialize_test(ContextPtr &context);
 void system_upgrade_test(ContextPtr &context);
 void move_range_test(ContextPtr &context);
+void balance_plan_authority_test(ContextPtr &context);
 
 
 int main(int argc, char **argv) {
   ContextPtr context = new Context();
+  BalancePlanAuthorityPtr bpa;
   std::vector<MetaLog::EntityPtr> entities;
 
   // Register ourselves as the Comm-layer proxy master
@@ -244,12 +278,13 @@ int main(int argc, char **argv) {
     context->props = properties;
     context->hyperspace = new Hyperspace::Session(context->comm, context->props);
     context->dfs = new DfsBroker::Client(context->conn_manager, context->props);
+    context->rsc_manager = new RangeServerConnectionManager();
 
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
-    context->monitoring = new Monitoring(context->props, context->namemap);
+    context->monitoring = new Monitoring(context.get());
 
     context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
     String log_dir = context->toplevel_dir + "/servers/master/log";
@@ -257,10 +292,12 @@ int main(int argc, char **argv) {
                                               log_dir + "/" + context->mml_definition->name(),
                                               entities);
 
+    bpa = context->get_balance_plan_authority();
+
     FailureInducer::instance = new FailureInducer();
     context->request_timeout = 600;
 
-    context->balancer = new LoadBalancerBasic(context);
+    context->balancer = new LoadBalancer(context);
 
     ResponseManagerContext *rmctx = new ResponseManagerContext(context->mml_writer);
     context->response_manager = new ResponseManager(rmctx);
@@ -286,6 +323,8 @@ int main(int argc, char **argv) {
       rename_table_test(context);
     else if (testname == "move_range")
       move_range_test(context);
+    else if (testname == "balance_plan_authority")
+      balance_plan_authority_test(context);
     else {
       HT_ERRORF("Unrecognized test name: %s", testname.c_str());
       _exit(1);
@@ -414,11 +453,18 @@ void create_table_test(ContextPtr &context) {
                                             log_dir + "/" + context->mml_definition->name(),
                                             entities);
 
-  rsc1 = new RangeServerConnection(context->mml_writer, "rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
-  rsc2 = new RangeServerConnection(context->mml_writer, "rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
 
-  context->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
-  context->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
+  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+
+  {
+    std::vector<MetaLog::Entity *> entities;
+    entities.push_back(rsc1.get());
+    entities.push_back(rsc2.get());
+    context->mml_writer->record_state(entities);
+  }
 
   expected_servers.push_back("rs1");
   expected_servers.push_back("rs2");
@@ -465,15 +511,20 @@ void create_table_test(ContextPtr &context) {
            expected_operations, expected_servers);
 
   expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ACKNOWLEDGE) );
   run_test(context, log_dir, entities, "create-table-LOAD_RANGE-b:throw:0",
            expected_operations, expected_servers);
 
-  context->disconnect_server(rsc1);
+  expected_operations.clear();
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ACKNOWLEDGE) );
+  run_test(context, log_dir, entities, "create-table-ACKNOWLEDGE:throw:0",
+           expected_operations, expected_servers);
+
+  context->rsc_manager->disconnect_server(rsc1);
   initialize_test(context, log_dir, entities, "");
   poll(0,0,100);
-  context->connect_server(rsc1, "foo.hypertable.com", InetAddr("localhost", 30267),
-                          InetAddr("localhost", 38060));
+  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("localhost", 30267),
+                                       InetAddr("localhost", 38060));
   context->op->wait_for_empty();
 
   context->op->shutdown();
@@ -497,15 +548,22 @@ void create_table_with_index_test(ContextPtr &context) {
                                             context->mml_definition->name(),
                                         entities);
 
-  rsc1 = new RangeServerConnection(context->mml_writer, "rs1", 
+  rsc1 = new RangeServerConnection("rs1", 
           "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
-  rsc2 = new RangeServerConnection(context->mml_writer, "rs2", 
+  rsc2 = new RangeServerConnection("rs2", 
           "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
 
-  context->connect_server(rsc1, "foo.hypertable.com", 
+  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", 
           InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
-  context->connect_server(rsc2, "bar.hypertable.com", 
+  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", 
           InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+
+  {
+    std::vector<MetaLog::Entity *> entities;
+    entities.push_back(rsc1.get());
+    entities.push_back(rsc2.get());
+    context->mml_writer->record_state(entities);
+  }
 
   expected_servers.push_back("rs1");
   expected_servers.push_back("rs2");
@@ -532,7 +590,7 @@ void create_table_with_index_test(ContextPtr &context) {
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ACKNOWLEDGE) );
   run_test(context, log_dir, entities, "create-table-FINALIZE:throw:0",
            expected_operations, expected_servers);
 
@@ -540,16 +598,16 @@ void create_table_with_index_test(ContextPtr &context) {
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
   expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::FINALIZE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
+  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ACKNOWLEDGE) );
   run_test(context, log_dir, entities, "create-table-FINALIZE:throw:1",
            expected_operations, expected_servers);
 
-  context->disconnect_server(rsc1);
+  context->rsc_manager->disconnect_server(rsc1);
   initialize_test(context, log_dir, entities, "");
   poll(0,0,100);
-  context->connect_server(rsc1, "foo.hypertable.com", InetAddr("localhost", 30267),
+  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("localhost", 30267),
                           InetAddr("localhost", 38060));
   context->op->wait_for_empty();
 
@@ -599,15 +657,24 @@ void master_initialize_test(ContextPtr &context) {
                                             log_dir + "/" + context->mml_definition->name(),
                                             entities);
 
-  rsc1 = new RangeServerConnection(context->mml_writer, "rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
-  rsc2 = new RangeServerConnection(context->mml_writer, "rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
-  rsc3 = new RangeServerConnection(context->mml_writer, "rs3", "how.hypertable.com", InetAddr("72.14.204.98", 38060));
-  rsc4 = new RangeServerConnection(context->mml_writer, "rs4", "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
+  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+  rsc3 = new RangeServerConnection("rs3", "how.hypertable.com", InetAddr("72.14.204.98", 38060));
+  rsc4 = new RangeServerConnection("rs4", "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
 
-  context->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
-  context->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
-  context->connect_server(rsc3, "how.hypertable.com", InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", 38060));
-  context->connect_server(rsc4, "cow.hypertable.com", InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", 38060));
+  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
+  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+  context->rsc_manager->connect_server(rsc3, "how.hypertable.com", InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", 38060));
+  context->rsc_manager->connect_server(rsc4, "cow.hypertable.com", InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", 38060));
+
+  {
+    std::vector<MetaLog::Entity *> entities;
+    entities.push_back(rsc1.get());
+    entities.push_back(rsc2.get());
+    entities.push_back(rsc3.get());
+    entities.push_back(rsc4.get());
+    context->mml_writer->record_state(entities);
+  }
 
   expected_servers.push_back("rs1");
   expected_servers.push_back("rs2");
@@ -728,19 +795,33 @@ void move_range_test(ContextPtr &context) {
   RangeServerConnectionPtr rsc1, rsc2, rsc3, rsc4;
   OperationMoveRangePtr move_range_operation;
 
-  context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            log_dir + "/" + context->mml_definition->name(),
-                                            entities);
+  context->mml_writer = new MetaLog::Writer(context->dfs,
+          context->mml_definition,
+          log_dir + "/" + context->mml_definition->name(),
+          entities);
 
-  rsc1 = new RangeServerConnection(context->mml_writer, "rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
-  rsc2 = new RangeServerConnection(context->mml_writer, "rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
-  rsc3 = new RangeServerConnection(context->mml_writer, "rs3", "how.hypertable.com", InetAddr("72.14.204.98", 38060));
-  rsc4 = new RangeServerConnection(context->mml_writer, "rs4", "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
+  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+  rsc3 = new RangeServerConnection("rs3", "how.hypertable.com", InetAddr("72.14.204.98", 38060));
+  rsc4 = new RangeServerConnection("rs4", "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
 
-  context->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
-  context->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
-  context->connect_server(rsc3, "how.hypertable.com", InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", 38060));
-  context->connect_server(rsc4, "cow.hypertable.com", InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", 38060));
+  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com",
+          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
+  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com",
+          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+  context->rsc_manager->connect_server(rsc3, "how.hypertable.com",
+          InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", 38060));
+  context->rsc_manager->connect_server(rsc4, "cow.hypertable.com",
+          InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", 38060));
+
+  {
+    std::vector<MetaLog::Entity *> entities;
+    entities.push_back(rsc1.get());
+    entities.push_back(rsc2.get());
+    entities.push_back(rsc3.get());
+    entities.push_back(rsc4.get());
+    context->mml_writer->record_state(entities);
+  }
 
   expected_servers.push_back("rs1");
   expected_servers.push_back("rs2");
@@ -757,20 +838,25 @@ void move_range_test(ContextPtr &context) {
   range.start_row = "bar";
   range.end_row = "foo";
 
-  move_range_operation = new OperationMoveRange(context, "rs1", table, range, transfer_log, soft_limit, true);
+  move_range_operation = new OperationMoveRange(context, "rs1", table, range,
+          transfer_log, soft_limit, true);
 
-  entities.push_back( move_range_operation.get() );
+  entities.push_back(move_range_operation.get());
+  entities.push_back(context->get_balance_plan_authority());
 
   expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationMoveRange", OperationState::STARTED) );
+  expected_operations.insert(std::pair<String, int32_t>("OperationMoveRange",
+            OperationState::STARTED));
   run_test(context, log_dir, entities, "move-range-INITIAL-b:throw:0",
            expected_operations, expected_servers);
 
   String initial_location = move_range_operation->get_location();
 
   expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationMoveRange", OperationState::COMPLETE) );
-  run_test(context, log_dir, entities, "", expected_operations, expected_servers);
+  expected_operations.insert(std::pair<String, int32_t>("OperationMoveRange",
+              OperationState::COMPLETE));
+  run_test(context, log_dir, entities, "",
+          expected_operations, expected_servers);
 
   String final_location = move_range_operation->get_location();
 
@@ -778,6 +864,145 @@ void move_range_test(ContextPtr &context) {
 
   context->op->shutdown();
   context->op->join();
+
+  context = 0;
+  _exit(0);
+}
+
+void fill_ranges(vector<QualifiedRangeSpec> &root_specs,
+                 vector<RangeState> &root_states,
+                 vector<QualifiedRangeSpec> &metadata_specs,
+                 vector<RangeState> &metadata_states,
+                 vector<QualifiedRangeSpec> &system_specs,
+                 vector<RangeState> &system_states,
+                 vector<QualifiedRangeSpec> &user_specs,
+                 vector<RangeState> &user_states)
+{
+  QualifiedRangeSpec spec;
+
+  root_specs.clear();
+  root_states.clear();
+  spec = QualifiedRangeSpec(TableIdentifier("0/0"), RangeSpec("start_root0", "end_root0"));
+  root_specs.push_back(spec);
+  root_states.push_back(RangeState());
+  spec = QualifiedRangeSpec(TableIdentifier("0/0"), RangeSpec("start_root1", "end_root1"));
+  root_specs.push_back(spec);
+  root_states.push_back(RangeState());
+
+  metadata_specs.clear();
+  metadata_states.clear();
+  spec = QualifiedRangeSpec(TableIdentifier("1/0"), RangeSpec("start_meta1", "end_meta1"));
+  metadata_specs.push_back(spec);
+  metadata_states.push_back(RangeState());
+  spec = QualifiedRangeSpec(TableIdentifier("1/0"), RangeSpec("start_meta2", "end_meta2"));
+  metadata_specs.push_back(spec);
+  metadata_states.push_back(RangeState());
+
+  system_specs.clear();
+  system_states.clear();
+
+  user_specs.clear();
+  user_states.clear();
+  spec = QualifiedRangeSpec(TableIdentifier("2/0"), RangeSpec("start_user1", "end_user1"));
+  user_specs.push_back(spec);
+  user_states.push_back(RangeState());
+  spec = QualifiedRangeSpec(TableIdentifier("2/0"), RangeSpec("start_user2", "end_user2"));
+  user_specs.push_back(spec);
+  user_states.push_back(RangeState());
+  spec = QualifiedRangeSpec(TableIdentifier("2/0"), RangeSpec("start_user3", "end_user3"));
+  user_specs.push_back(spec);
+  user_states.push_back(RangeState());
+}
+
+void balance_plan_authority_test(ContextPtr &context) {
+  std::ofstream out("balance_plan_authority_test.output");
+  std::vector<MetaLog::EntityPtr> entities;
+  String log_dir = context->toplevel_dir + "/servers/master/log";
+
+  context->mml_writer = new MetaLog::Writer(context->dfs,
+          context->mml_definition,
+          log_dir + "/" + context->mml_definition->name(), entities);
+
+  RangeServerConnectionPtr rsc1, rsc2, rsc3, rsc4, rsc5;
+  rsc1 = new RangeServerConnection("rs1",
+          "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+  rsc2 = new RangeServerConnection("rs2",
+          "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+  rsc3 = new RangeServerConnection("rs3",
+          "how.hypertable.com", InetAddr("72.14.204.98", 38060));
+  rsc4 = new RangeServerConnection("rs4",
+          "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
+  rsc5 = new RangeServerConnection("rs5",
+          "boo.hypertable.com", InetAddr("70.147.125.62", 38060));
+
+  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com",
+          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
+  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com",
+          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+  context->rsc_manager->connect_server(rsc3, "how.hypertable.com",
+          InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", 38060));
+  context->rsc_manager->connect_server(rsc4, "cow.hypertable.com",
+          InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", 38060));
+  context->rsc_manager->connect_server(rsc5, "boo.hypertable.com",
+          InetAddr("70.147.125.62", 30569), InetAddr("70.147.125.62", 38060));
+
+  {
+    std::vector<MetaLog::Entity *> entities;
+    entities.push_back(rsc1.get());
+    entities.push_back(rsc2.get());
+    entities.push_back(rsc3.get());
+    entities.push_back(rsc4.get());
+    entities.push_back(rsc5.get());
+    context->mml_writer->record_state(entities);
+  }
+
+  BalancePlanAuthority *bpa = context->get_balance_plan_authority();
+
+  vector<QualifiedRangeSpec> root_specs;
+  vector<RangeState> root_states;
+  vector<QualifiedRangeSpec> metadata_specs;
+  vector<RangeState> metadata_states;
+  vector<QualifiedRangeSpec> system_specs;
+  vector<RangeState> system_states;
+  vector<QualifiedRangeSpec> user_specs;
+  vector<RangeState> user_states;
+
+  // populate ranges
+  fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
+              system_specs, system_states, user_specs, user_states);
+  rsc1->set_removed();
+  bpa->create_recovery_plan("rs1", root_specs, root_states, metadata_specs, metadata_states,
+          system_specs, system_states, user_specs, user_states);
+  out << "Recovered rsc1: " << *bpa << std::endl << std::endl;
+
+  fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
+              system_specs, system_states, user_specs, user_states);
+  rsc2->set_removed();
+  bpa->create_recovery_plan("rs2", root_specs, root_states, metadata_specs, metadata_states,
+          system_specs, system_states, user_specs, user_states);
+  out << "Recovered rsc2: " << *bpa << std::endl << std::endl;
+
+  fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
+              system_specs, system_states, user_specs, user_states);
+  rsc3->set_removed();
+  bpa->create_recovery_plan("rs3", root_specs, root_states, metadata_specs, metadata_states,
+          system_specs, system_states, user_specs, user_states);
+  out << "Recovered rsc3: " << *bpa << std::endl << std::endl;
+
+  fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
+              system_specs, system_states, user_specs, user_states);
+  rsc4->set_removed();
+  bpa->create_recovery_plan("rs4", root_specs, root_states, metadata_specs, metadata_states,
+          system_specs, system_states, user_specs, user_states);
+  out << "Recovered rsc4: " << *bpa << std::endl;
+  out.flush();
+
+  // remove the timestamp, then compare against the golden file
+  String cmd = "cat balance_plan_authority_test.output | perl -e 'while (<>) { s/timestamp=.*?201\\d,/timestamp=0,/g; print; }' > output; diff output balance_plan_authority_test.golden";
+  if (system(cmd.c_str()) != 0) {
+    std::cout << "balance_plan_authority_test.output differs from golden file\n";
+    _exit(1);
+  }
 
   context = 0;
   _exit(0);

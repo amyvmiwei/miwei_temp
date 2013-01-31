@@ -30,7 +30,7 @@ using namespace Hypertable;
 void LoadThread::operator()() {
   ScopedLock lock(m_state.mutex);
   clock_t start_clocks=0, stop_clocks=0;
-  double latency;
+  double latency = 0.0;
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
 
   try {

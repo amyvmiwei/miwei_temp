@@ -36,7 +36,14 @@ extern "C" {
 
 using namespace Hypertable;
 
-IntervalScannerAsync::IntervalScannerAsync(Comm *comm, ApplicationQueuePtr &app_queue,
+namespace {
+  enum {
+    ABORTED = 1,
+    RESTART = 2
+  };
+}
+
+IntervalScannerAsync::IntervalScannerAsync(Comm *comm, ApplicationQueueInterfacePtr &app_queue,
     Table *table, RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
     uint32_t timeout_ms, bool current, TableScannerAsync *scanner, int id)
   : m_comm(comm), m_table(table), m_range_locator(range_locator),
@@ -48,8 +55,8 @@ IntervalScannerAsync::IntervalScannerAsync(Comm *comm, ApplicationQueuePtr &app_
     m_create_handler(app_queue, scanner, id, true),
     m_fetch_handler(app_queue, scanner, id, false),
     m_scanner(scanner), m_id(id), m_create_timer(timeout_ms), m_fetch_timer(timeout_ms),
-    m_cur_scanner_finished(false), m_cur_scanner_id(0), m_create_event_saved(false),
-    m_aborted(false), m_invalid_scanner_id_ok(false) {
+    m_cur_scanner_finished(false), m_cur_scanner_id(0), m_state(0),
+    m_create_event_saved(false), m_invalid_scanner_id_ok(false) {
 
   HT_ASSERT(m_timeout_ms);
 
@@ -223,20 +230,15 @@ void IntervalScannerAsync::find_range_and_start_scan(const char *row_key, bool h
  try_again:
 
   try {
-    if (hard) {
-      m_range_locator->find_loop(&m_table_identifier, row_key,
-          &m_next_range_info, m_create_timer, true);
-    }
-    else if (!m_loc_cache->lookup(m_table_identifier.id, row_key, &m_next_range_info))
-      m_range_locator->find_loop(&m_table_identifier, row_key,
-                                 &m_next_range_info, m_create_timer, false);
+    m_range_locator->find_loop(&m_table_identifier, row_key,
+                               &m_next_range_info, m_create_timer, hard);
   }
   catch (Exception &e) {
     if (e.code() == Error::REQUEST_TIMEOUT)
       HT_THROW2(e.code(), e, e.what());
     poll(0, 0, 1000);
     if (m_create_timer.expired())
-      HT_THROW(Error::REQUEST_TIMEOUT, "");
+      HT_THROW(Error::REQUEST_TIMEOUT, e.what());
     goto try_again;
   }
 
@@ -250,9 +252,9 @@ void IntervalScannerAsync::find_range_and_start_scan(const char *row_key, bool h
           m_scan_spec_builder.get(), &m_create_handler, m_create_timer);
     }
     catch (Exception &e) {
-      String msg = format("Problem creating scanner on %s[%s..%s]",
-                          m_table_identifier.id, range.start_row,
-                          range.end_row);
+      String msg = format("Problem creating scanner at %s on %s[%s..%s] - %s",
+                          m_next_range_info.addr.to_str().c_str(), m_table_identifier.id,
+                          range.start_row, range.end_row, e.what());
       reset_outstanding_status(true, false);
       if ((e.code() != Error::REQUEST_TIMEOUT
            && e.code() != Error::COMM_NOT_CONNECTED
@@ -297,7 +299,7 @@ void IntervalScannerAsync::reset_outstanding_status(bool is_create, bool reset_t
 bool IntervalScannerAsync::abort(bool is_create) {
  reset_outstanding_status(is_create, true);
   m_eos = true;
-  m_aborted = true;
+  m_state = ABORTED;
   bool move_to_next = m_current && !has_outstanding_requests();
   if (move_to_next)
     m_current = false;
@@ -322,6 +324,13 @@ bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_creat
   uint32_t wait_time = 3000;
   reset_outstanding_status(is_create, false);
 
+  if (m_eos) {
+    *move_to_next = !has_outstanding_requests() && m_current;
+    if (*move_to_next)
+      m_current = false;
+    return true;
+  }
+
   // RangeServer has already destroyed scanner so we can't refresh
   if (!is_create && refresh) {
     HT_ERROR_OUT << "Table schema can't be refreshed when schema changes after scanner creation"
@@ -331,7 +340,7 @@ bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_creat
     if (*move_to_next)
       m_current = false;
     m_eos = true;
-    m_aborted = true;
+    m_state = ABORTED;
     return false;
   }
 
@@ -345,8 +354,19 @@ bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_creat
     if (*move_to_next)
       m_current = false;
     m_eos = true;
-    m_aborted = true;
+    m_state = ABORTED;
     return false;
+  }
+
+  if (last_error == Error::COMM_NOT_CONNECTED ||
+      last_error == Error::COMM_BROKEN_CONNECTION)
+    m_state = RESTART;
+
+  if (m_state == RESTART) {
+    if (!has_outstanding_requests())
+      restart_scan(refresh);
+    *move_to_next = false;
+    return m_state != ABORTED;
   }
 
   try {
@@ -371,7 +391,7 @@ bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_creat
     if (*move_to_next)
       m_current = false;
     m_eos = true;
-    m_aborted = true;
+    m_state = ABORTED;
     return false;
   }
 
@@ -398,7 +418,7 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
 
   // deal with outstanding fetch/create for aborted scanner
   if (m_eos) {
-    if (m_aborted)
+    if (m_state == ABORTED)
       // scan was aborted caller shd have shown error on first occurrence
       *show_results = false;
     else {
@@ -414,10 +434,15 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
   // if this event is from a fetch scanblock
   if (!is_create) {
     set_result(event, cells, is_create);
-    do_readahead();
+    if (m_state != RESTART)
+      do_readahead();
     load_result(cells);
-    if (m_eos)
-      m_current = false;
+    if (!has_outstanding_requests()) {
+      if (m_state == RESTART)
+        restart_scan();
+      else if (m_eos)
+        m_current = false;
+    }
   }
   // else this event is from a create scanner result
   else {
@@ -433,12 +458,22 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
       // got results from create_scanner and theres no outstanding fetch request
       else {
         // set the range_info and load cells
-        m_range_info = m_next_range_info;
-        set_result(event, cells, is_create);
-        do_readahead();
-        load_result(cells);
-        if (m_eos)
-          m_current = false;
+        if (m_state != RESTART) {
+          m_range_info = m_next_range_info;
+          set_result(event, cells, is_create);
+          do_readahead();
+          load_result(cells);
+        }
+        else {
+          // Send back an empty ScanCells object
+          cells = new ScanCells;
+        }
+        if (!has_outstanding_requests()) {
+          if (m_state == RESTART)
+            restart_scan();
+          else if (m_eos)
+            m_current = false;
+        }
       }
     }
     else {
@@ -488,24 +523,44 @@ void IntervalScannerAsync::set_result(EventPtr &event, ScanCellsPtr &cells,
 }
 
 void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
+  Key last_key;
 
   // if scan is not over, current scanner is finished and next create scanner results
   // arrived then add them to cells
   bool eos;
 
+  if (m_last_key.row)
+    last_key = m_last_key;
+
   eos = cells->load(m_schema, m_end_row, m_end_inclusive,
                     m_scan_spec_builder.get().row_limit, &m_rows_seen, m_cur_row,
-                    m_rowset, &m_bytes_scanned);
+                    m_rowset, &m_bytes_scanned, &last_key);
 
   m_eos = m_eos || eos;
 
   // if scan is over but current scanner is not finished then destroy it
-  if (m_eos && !m_cur_scanner_finished) {
-    HT_ASSERT(m_fetch_outstanding);
-    m_range_server.destroy_scanner(m_range_info.addr, m_cur_scanner_id, 0);
-    m_invalid_scanner_id_ok=true;
-    m_cur_scanner_id = 0;
+  if (m_eos) {
+    if (!m_cur_scanner_finished) {
+      HT_ASSERT(m_fetch_outstanding);
+      try {
+        m_range_server.destroy_scanner(m_range_info.addr, m_cur_scanner_id, 0);
+      }
+      catch (Exception &e) {
+        HT_ERROR_OUT << e << HT_END;
+      }
+      m_invalid_scanner_id_ok=true;
+      m_cur_scanner_id = 0;
+    }
   }
+  else {
+    // Record the last key seen in case we need to restart
+    if (last_key.row && last_key.serial.ptr != m_last_key.serial.ptr) {
+      m_last_key_buf.clear();
+      m_last_key_buf.add(last_key.serial.ptr, last_key.length);
+      m_last_key.load( SerializedKey(m_last_key_buf.base) );
+    }
+  }
+
   return;
 }
 
@@ -531,11 +586,15 @@ bool IntervalScannerAsync::set_current(bool *show_results, ScanCellsPtr &cells, 
   m_create_event_saved = false;
   m_range_info = m_next_range_info;
   set_result(m_create_event, cells);
+  HT_ASSERT(m_state != RESTART);
   do_readahead();
   load_result(cells);
-  if (m_eos)
-    m_current = false;
-
+  if (!has_outstanding_requests()) {
+    if (m_state == RESTART)
+      restart_scan();
+    else if (m_eos)
+      m_current = false;
+  }
   HT_ASSERT (!m_current ||  m_eos || has_outstanding_requests());
   return m_eos && !(has_outstanding_requests());
 }
@@ -547,11 +606,26 @@ void IntervalScannerAsync::do_readahead() {
   // if the current scanner is not finished
   if (!m_cur_scanner_finished) {
     HT_ASSERT(!m_fetch_outstanding && !m_eos && m_current);
-    m_fetch_outstanding = true;
     // request next scanblock and block
-    m_fetch_timer.start();
-    m_range_server.fetch_scanblock(m_range_info.addr, m_cur_scanner_id,
-                                   &m_fetch_handler, m_fetch_timer);
+    try {
+      m_fetch_timer.start();
+      m_fetch_outstanding = true;
+      m_range_server.fetch_scanblock(m_range_info.addr, m_cur_scanner_id,
+                                     &m_fetch_handler, m_fetch_timer);
+    }
+    catch (Exception &e) {
+      m_fetch_outstanding = false;
+      m_fetch_timer.reset();
+      if (e.code() == Error::COMM_NOT_CONNECTED ||
+          e.code() == Error::COMM_BROKEN_CONNECTION) {
+        HT_ASSERT(m_state == 0);
+        m_state = RESTART;
+        return;
+      }
+      HT_THROW2F(e.code(), e, "Problem calling RangeServer::fetch_scanblock(%s, sid=%d)",
+                 m_range_info.addr.proxy.c_str(), (int)m_cur_scanner_id);
+    }
+
     // if an OFFSET predicate was specified: return; we don't want to create
     // more scanners till the RangeServer returned the first data
     if (m_scan_spec_builder.get().cell_offset ||
@@ -584,4 +658,30 @@ void IntervalScannerAsync::do_readahead() {
     find_range_and_start_scan(m_create_scanner_row.c_str());
   }
   return;
+}
+
+
+void IntervalScannerAsync::restart_scan(bool refresh) {
+
+  HT_ASSERT(m_state == RESTART);
+
+  try {
+    if (refresh)
+      m_table->refresh(m_table_identifier, m_schema);
+
+    m_create_event_saved = false;
+    m_create_event = 0;
+
+    if (m_last_key.row)
+      m_create_scanner_row = m_last_key.row;
+
+    m_state = 0;
+    find_range_and_start_scan(m_create_scanner_row.c_str(), true);
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    m_current = false;
+    m_eos = true;
+    m_state = ABORTED;
+  }
 }

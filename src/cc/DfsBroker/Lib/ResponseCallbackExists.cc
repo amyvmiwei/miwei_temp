@@ -31,9 +31,9 @@ using namespace DfsBroker;
 
 int ResponseCallbackExists::response(bool exists) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   CommBufPtr cbp( new CommBuf(header, 5) );
   cbp->append_i32(Error::OK);
   cbp->append_bool(exists);
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }

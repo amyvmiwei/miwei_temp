@@ -20,7 +20,7 @@
  */
 
 #include "Common/Compat.h"
-#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ApplicationQueueInterface.h"
 
 #include "EventHandlerMasterChange.h"
 #include "MasterFileHandler.h"

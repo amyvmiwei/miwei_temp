@@ -19,6 +19,11 @@ save_failure_state() {
   touch failure
 }
 
+kill_range_servers() {
+    kill -9 `cat $RS1_PIDFILE`
+    kill -9 `cat $RS2_PIDFILE`
+}
+
 if [ -e failure ]; then
   kill -9 `ps auxww | fgrep -i "$HT_HOME/bin" | fgrep -v java | fgrep -v grep | tr -s "[ ]" | cut -f2 -d' '`
   sleep 10
@@ -60,7 +65,7 @@ echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
 
 sleep 1
 
-kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+kill_range_servers
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
@@ -110,7 +115,7 @@ fi
 diff dump.output dump.golden
 if [ $? != 0 ] ; then
   save_failure_state
-  kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+  kill_range_servers
   $HT_HOME/bin/clean-database.sh
   exit 1
 fi
@@ -138,7 +143,7 @@ wait $QUERY_PID
 fgrep ERROR query.output > errors.txt
 if [ -s errors.txt ] ; then
   save_failure_state
-  kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+  kill_range_servers
   $HT_HOME/bin/clean-database.sh
   exit 1
 fi
@@ -152,16 +157,17 @@ while [ -s errors.txt ] && [ $iteration -lt 5 ]; do
   $HT_HOME/bin/ht metalog_dump /hypertable/servers/rs2/log/rsml | fgrep "load_acknowledged=false" >> errors.txt
   let iteration=iteration+1
 done
+
 #ls core* >> errors.txt
 
 if [ -s errors.txt ] ; then
   save_failure_state
-  kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+  kill_range_servers
   $HT_HOME/bin/clean-database.sh
   exit 1
 fi
 
-kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+kill_range_servers
 $HT_HOME/bin/clean-database.sh
 
 exit 0

@@ -38,9 +38,9 @@ using namespace Serialization;
  *
  */
 void RequestHandlerAttrExists::run() {
-  ResponseCallbackAttrExists cb(m_comm, m_event_ptr);
-  size_t decode_remain = m_event_ptr->payload_len;
-  const uint8_t *decode_ptr = m_event_ptr->payload;
+  ResponseCallbackAttrExists cb(m_comm, m_event);
+  size_t decode_remain = m_event->payload_len;
+  const uint8_t *decode_ptr = m_event->payload;
 
   try {
     bool has_name = decode_bool(&decode_ptr, &decode_remain);

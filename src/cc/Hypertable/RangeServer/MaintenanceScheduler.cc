@@ -116,7 +116,7 @@ void MaintenanceScheduler::schedule() {
   }
 
   if (low_memory) {
-    if (Global::maintenance_queue->pending() < Global::maintenance_queue->workers())
+    if (!Global::maintenance_queue->full())
       m_scheduling_needed = true;
     excess = (memory_state.balance > memory_state.limit) ? memory_state.balance - memory_state.limit : 0;
     memory_state.needed = ((memory_state.limit * m_low_memory_limit_percentage) / 100) + excess;
@@ -128,8 +128,7 @@ void MaintenanceScheduler::schedule() {
   trace_str += String("Global::memory_limit_ensure_unused_current\t") + Global::memory_limit_ensure_unused_current + "\n";
   trace_str += String("m_query_cache_memory\t") + m_query_cache_memory + "\n";
   trace_str += String("excess\t") + excess + "\n";
-  trace_str += String("Global::maintenance_queue->pending()\t") + (int)Global::maintenance_queue->pending() + "\n";
-  trace_str += String("Global::maintenance_queue->workers()\t") + (int)Global::maintenance_queue->workers() + "\n";
+  trace_str += String("Global::maintenance_queue->full()\t") + (Global::maintenance_queue->full() ? "true" : "false") + "\n";
   trace_str += String("m_low_memory_limit_percentage\t") + m_low_memory_limit_percentage + "\n";
   trace_str += String("memory_state.balance\t") + memory_state.balance + "\n";
   trace_str += String("memory_state.limit\t") + memory_state.limit + "\n";
@@ -161,7 +160,7 @@ void MaintenanceScheduler::schedule() {
       millis_since_last_maintenance < m_maintenance_interval)
     return;
 
-  Global::maintenance_queue->clear();
+  Global::maintenance_queue->drop_range_tasks();
 
   m_stats_gatherer->fetch(range_data, 0, &log_generation);
 

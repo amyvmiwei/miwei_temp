@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for MaintenanceQueue
+ * This file contains the type declarations for the MaintenanceQueue
  */
 
 #ifndef HYPERTABLE_MAINTENANCEQUEUE_H
@@ -39,7 +44,11 @@
 
 namespace Hypertable {
 
-  /**
+  /** @addtogroup RangeServer
+   *  @{
+   */
+
+  /** Queue for periodic maintenance work
    */
   class MaintenanceQueue : public ReferenceCount {
 
@@ -62,16 +71,15 @@ namespace Hypertable {
 
     class MaintenanceQueueState {
     public:
-      MaintenanceQueueState() : shutdown(false), outstanding(0), outstanding_level(10000) { return; }
+      MaintenanceQueueState() : shutdown(false), inflight(0), inflight_level(10000) { return; }
       TaskQueue          queue;
       Mutex              mutex;
       boost::condition   cond;
       boost::condition   empty_cond;
       bool               shutdown;
-      std::set<Range *>  pending;
-      std::set<Range *>  in_progress;
-      int                outstanding;
-      int                outstanding_level;
+      std::set<Range *>  ranges;
+      int                inflight;
+      int                inflight_level;
     };
 
     class Worker {
@@ -91,15 +99,21 @@ namespace Hypertable {
 
             boost::xtime_get(&now, boost::TIME_UTC_);
 
+	    // Block in the following circumstances:
+	    // 1. Queue is empty
+	    // 2. Level of task on front of queue is greater than (e.g. lower
+	    //    priority) the level of the tasks currently being executed
+	    // 3. Start time of task on front of queue is in the future
+
             while (m_state.queue.empty() || 
-		   (m_state.outstanding && ((m_state.queue.top())->level > m_state.outstanding_level)) ||
+		   (m_state.inflight && ((m_state.queue.top())->level > m_state.inflight_level)) ||
 		   xtime_cmp((m_state.queue.top())->start_time, now) > 0) {
 
               if (m_state.shutdown)
                 return;
 
               if (m_state.queue.empty() || 
-		  (m_state.outstanding && (m_state.queue.top())->level > m_state.outstanding_level))
+		  (m_state.inflight && (m_state.queue.top())->level > m_state.inflight_level))
                 m_state.cond.wait(lock);
               else {
                 next_work = (m_state.queue.top())->start_time;
@@ -109,13 +123,11 @@ namespace Hypertable {
             }
 
             task = m_state.queue.top();
-	    if (m_state.outstanding == 0 || task->level <= m_state.outstanding_level) {
-	      m_state.outstanding++;
-	      m_state.outstanding_level = task->level;
-	      m_state.queue.pop();
-	      m_state.pending.erase(task->get_range());
-	      m_state.in_progress.insert(task->get_range());
-	    }
+	    m_state.queue.pop();
+	    m_state.inflight++;
+
+	    if (m_state.inflight == 0 || task->level < m_state.inflight_level)
+	      m_state.inflight_level = task->level;
           }
 
           try {
@@ -126,6 +138,9 @@ namespace Hypertable {
               while (ms_pause)
                 ms_cond.wait(lock);
             }
+
+            if (m_state.shutdown)
+              return;
 
             task->execute();
 
@@ -142,7 +157,7 @@ namespace Hypertable {
                 task->start_time.sec += task->get_retry_delay() / 1000;
                 m_state.queue.push(task);
                 m_state.cond.notify_one();
-		m_state.outstanding--;
+		m_state.inflight--;
                 continue;
               }
               HT_ERRORF("Maintenance Task '%s' failed, dropping task ...",
@@ -152,10 +167,11 @@ namespace Hypertable {
 
           {
             ScopedLock lock(m_state.mutex);
-	    m_state.outstanding--;
-            m_state.in_progress.erase(task->get_range());
-	    if (m_state.queue.empty() && m_state.in_progress.empty())
-	      m_state.empty_cond.notify_one();
+	    m_state.inflight--;
+	    if (task->get_range())
+	      m_state.ranges.erase(task->get_range());
+	    if (m_state.queue.empty() && m_state.inflight == 0)
+	      m_state.empty_cond.notify_all();
           }
 
           delete task;
@@ -168,7 +184,7 @@ namespace Hypertable {
 
     MaintenanceQueueState  m_state;
     ThreadGroup m_threads;
-    int  m_workers;
+    int  m_worker_count;
     bool joined;
 
   public:
@@ -179,7 +195,8 @@ namespace Hypertable {
      *
      * @param worker_count number of worker threads to create
      */
-    MaintenanceQueue(int worker_count) : m_workers(worker_count), joined(false) {
+    MaintenanceQueue(int worker_count) : m_worker_count(worker_count),
+					 joined(false) {
       Worker Worker(m_state);
       assert (worker_count > 0);
       for (int i=0; i<worker_count; ++i)
@@ -188,7 +205,7 @@ namespace Hypertable {
     }
 
     /**
-     * Shuts down the application queue.  All outstanding requests are carried
+     * Shuts down the application queue.  All "in flight" requests are carried
      * out and then all threads exit.  #join can be called to wait for
      * completion of the shutdown.
      */
@@ -209,7 +226,7 @@ namespace Hypertable {
     }
 
     /**
-     * Stops queue processing
+     * Stops (suspends) queue processing
      */
     void stop() {
       ScopedLock lock(m_state.mutex);
@@ -231,71 +248,82 @@ namespace Hypertable {
     }
 
     /**
-     * Clear the queue
+     * Drops all range maintenance tasks from the queue.
      */
-    void clear() {
+    void drop_range_tasks() {
       ScopedLock lock(m_state.mutex);
+      TaskQueue filtered_queue;
       MaintenanceTask *task = 0;
       while (!m_state.queue.empty()) {
 	task = m_state.queue.top();
         m_state.queue.pop();
-	delete task;
+	if (task->get_range())
+	  delete task;
+	else
+	  filtered_queue.push(task);
       }
-      m_state.pending.clear();
+      m_state.queue = filtered_queue;
+      m_state.ranges.clear();
     }
 
-    bool is_scheduled(Range *range) {
+    /** Returns <i>true</i> if queue contains a maintenance task for
+     * <code>range</code>.
+     * @param range Pointer to Range object
+     * @return <i>true</i> if queue contains a maintenance task for
+     * <code>range</code>, <i>false</i> otherwise.
+     */
+    bool contains(Range *range) {
       ScopedLock lock(m_state.mutex);
-      if (m_state.pending.count(range) || m_state.in_progress.count(range))
-        return true;
-      return false;
+      return m_state.ranges.count(range) > 0;
     }
 
     /**
-     * Adds a request (application handler) to the request queue.  The request
-     * queue is designed to support the serialization of related requests.
-     * Requests are related by the thread group ID value in the
-     * ApplicationHandler.  This thread group ID is constructed in the Event
-     * object
+     * Adds a maintenance task to the queue.  If the task has an associated
+     * range, then it adds the range to the MaintenanceQueueState#ranges set.
+     * @param task Maintenance task to add
      */
     void add(MaintenanceTask *task) {
       ScopedLock lock(m_state.mutex);
       m_state.queue.push(task);
-      m_state.pending.insert(task->get_range());
+      if (task->get_range())
+	m_state.ranges.insert(task->get_range());
       m_state.cond.notify_one();
     }
 
-    size_t workers() { return m_workers; }
-
-    size_t pending() {
+    /** Returns <i>true</i> if any tasks are in queue or all worker threads
+     * are busy executing tasks.
+     * @return <i>true</i> if queue is full, <i>false</i> otherwise
+     */
+    bool full() {
       ScopedLock lock(m_state.mutex);
-      return m_state.pending.size();
+      return !m_state.queue.empty() || (m_state.inflight == m_worker_count);
     }
 
-    size_t in_progress() {
-      ScopedLock lock(m_state.mutex);
-      return m_state.in_progress.size();
-    }
-
+    /** Waits for queue to become empty
+     */
     void wait_for_empty() {
       ScopedLock lock(m_state.mutex);
-      while (!m_state.queue.empty() || !m_state.in_progress.empty())
+      while (!m_state.queue.empty() || (m_state.inflight > 0))
 	m_state.empty_cond.wait(lock);
     }
 
-    bool wait_for_empty(boost::xtime &expire_time) {
+    /** Waits for queue to become empty with deadline
+     * @deadline Return if queue not empty by this absolute time
+     * @return <i>true</i> if queue empty, <i>false</i> if deadline reached
+     */
+    bool wait_for_empty(boost::xtime &deadline) {
       ScopedLock lock(m_state.mutex);
-      while (!m_state.queue.empty() || !m_state.in_progress.empty()) {
-	if (!m_state.empty_cond.timed_wait(lock, expire_time))
+      while (!m_state.queue.empty() || (m_state.inflight > 0)) {
+	if (!m_state.empty_cond.timed_wait(lock, deadline))
           return false;
       }
       return true;
     }
-
   };
 
+  /// Smart pointer to MaintenanceQueue
   typedef boost::intrusive_ptr<MaintenanceQueue> MaintenanceQueuePtr;
-
+  /** @}*/
 } // namespace Hypertable
 
 #endif // HYPERTABLE_MAINTENANCEQUEUE_H

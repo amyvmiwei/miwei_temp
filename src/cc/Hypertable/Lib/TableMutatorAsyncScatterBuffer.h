@@ -28,7 +28,7 @@
 #include <boost/thread/condition.hpp>
 
 #include "AsyncComm/CommAddress.h"
-#include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/ApplicationQueueInterface.h"
 #include "AsyncComm/Event.h"
 
 #include "Common/atomic.h"
@@ -53,7 +53,7 @@ namespace Hypertable {
   class TableMutatorAsyncScatterBuffer : public ReferenceCount {
 
   public:
-    TableMutatorAsyncScatterBuffer(Comm *comm, ApplicationQueuePtr &app_queue,
+    TableMutatorAsyncScatterBuffer(Comm *comm, ApplicationQueueInterfacePtr &app_queue,
                                    TableMutatorAsync *mutator,
                                    const TableIdentifier *,
                                    SchemaPtr &, RangeLocatorPtr &, bool auto_refresh,
@@ -96,11 +96,10 @@ namespace Hypertable {
     typedef CommAddressMap<TableMutatorAsyncSendBufferPtr> TableMutatorAsyncSendBufferMap;
 
     Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue;
+    ApplicationQueueInterfacePtr  m_app_queue;
     TableMutatorAsync   *m_mutator;
     SchemaPtr            m_schema;
     RangeLocatorPtr      m_range_locator;
-    LocationCachePtr     m_loc_cache;
     RangeServerClient    m_range_server;
     TableIdentifierManaged m_table_identifier;
     TableMutatorAsyncSendBufferMap m_buffer_map;

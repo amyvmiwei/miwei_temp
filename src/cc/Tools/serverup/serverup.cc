@@ -187,7 +187,7 @@ namespace {
         HT_THROW(Error::REQUEST_TIMEOUT, "connecting to hyperspace");
     }
 
-    ApplicationQueuePtr app_queue = new ApplicationQueue(1);
+    ApplicationQueueInterfacePtr app_queue = new ApplicationQueue(1);
     Hyperspace::SessionPtr hyperspace_ptr = hyperspace;
 
     String toplevel_dir = properties->get_str("Hypertable.Directory");

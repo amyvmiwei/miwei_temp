@@ -1,0 +1,41 @@
+too few fields (1 1 * *)
+too many fields (1 1 * * * *)
+bad specification (1-2/2/4 1 * * *)
+* 1 * * *
+1-8 1 * * *
+bad specification (1-8/a 1 * * *)
+bad specification (*-8 1 * * *)
+bad specification (1-2b 1 * * *)
+bad specification (1-2-3 1 * * *)
+1 * * * *
+2-3 * * * *
+* 1-2,7 * * *
+* 0,2,4,6,8,10,12,14,16,18,20,22 * * *
+* 0,3,6,9,12,15,18,21 * * *
+* * * * *
+bad specification (60 * * * *)
+bad specification (* 24 * * *)
+bad specification (* * 0 * *)
+bad specification (* * 32 * *)
+bad specification (* * * 0 *)
+bad specification (* * * 13 *)
+* * * 3-5 *
+* * 14-29 * *
+Wed Nov 14 00:00:00 2012
+0 0 28 1 *
+Mon Feb 29 00:00:00 2016
+Sat Feb 29 00:00:00 2020
+Tue Feb 29 00:00:00 2000
+0 0 * * 0,7
+Sun Sep  9 00:00:00 2012
+Sun Sep 16 00:00:00 2012
+0 0 * * *
+Mon Sep  3 00:00:00 2012
+Tue Sep  4 00:00:00 2012
+Wed Sep  5 00:00:00 2012
+Thu Sep  6 00:00:00 2012
+30 12 2,4 * *
+Wed Sep  5 12:30:00 2012
+Mon Sep  3 12:30:00 2012
+Mon Sep  3 12:30:00 2012
+Wed Sep  5 12:30:00 2012

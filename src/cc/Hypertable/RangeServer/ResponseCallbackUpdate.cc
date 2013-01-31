@@ -26,8 +26,8 @@ using namespace Hypertable;
 
 int ResponseCallbackUpdate::response(StaticBuffer &ext) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   CommBufPtr cbp(new CommBuf( header, 4, ext));
   cbp->append_i32(Error::OK);
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }

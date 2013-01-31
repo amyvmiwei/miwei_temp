@@ -133,7 +133,7 @@ void Writer::purge_old_log_files(std::vector<int32_t> &file_ids, size_t keep_cou
       // remove local backup
       tmp_name = m_backup_path + String("/") + file_ids[i];
       if (FileUtils::exists(tmp_name))
-	FileUtils::unlink(tmp_name);
+        FileUtils::unlink(tmp_name);
     }
     file_ids.resize(keep_count);
   }

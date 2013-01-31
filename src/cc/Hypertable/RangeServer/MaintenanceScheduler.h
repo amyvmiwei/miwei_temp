@@ -67,7 +67,6 @@ namespace Hypertable {
 
     bool m_initialized;
     bool m_scheduling_needed;
-    ApplicationQueuePtr m_app_queue;
     MaintenanceQueuePtr m_queue;
     RSStatsPtr m_server_stats;
     RangeStatsGathererPtr m_stats_gatherer;

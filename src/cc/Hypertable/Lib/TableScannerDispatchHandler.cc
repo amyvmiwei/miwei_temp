@@ -35,7 +35,7 @@ using namespace Serialization;
  *
  */
 TableScannerDispatchHandler::TableScannerDispatchHandler(
-  ApplicationQueuePtr &app_queue, TableScannerAsync *scanner, int interval_scanner,
+  ApplicationQueueInterfacePtr &app_queue, TableScannerAsync *scanner, int interval_scanner,
   bool is_create)
   : m_app_queue(app_queue), m_scanner(scanner), m_interval_scanner(interval_scanner),
     m_is_create(is_create) {

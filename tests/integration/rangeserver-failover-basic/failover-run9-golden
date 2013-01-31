@@ -1,0 +1,13 @@
+SUBJECT: NOTICE: Recovery of rs1 (HOSTNAME) starting
+Failure of range server rs1 (HOSTNAME) has been detected.  Starting recovery...
+
+SUBJECT: ERROR: Replay failure during recovery of rs1
+Failure encountered during REPLAY FRAGMENTS step of recovery
+of range server rs1
+
+player rs2: HYPERTABLE induced failure - {{FRAGMENT}} induced failure code 45 replay-fragments-user-0 iteration=0
+
+
+SUBJECT: NOTICE: Recovery of rs1 (HOSTNAME) succeeded
+Recovery of range server rs1 (HOSTNAME) has succeeded.
+

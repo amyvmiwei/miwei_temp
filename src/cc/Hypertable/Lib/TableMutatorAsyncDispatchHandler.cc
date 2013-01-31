@@ -35,11 +35,11 @@ using namespace Serialization;
  *
  */
 TableMutatorAsyncDispatchHandler::TableMutatorAsyncDispatchHandler(
-    ApplicationQueuePtr &app_queue, TableMutatorAsync *mutator,
+    ApplicationQueueInterfacePtr &app_queue, TableMutatorAsync *mutator,
     uint32_t scatter_buffer, TableMutatorAsyncSendBuffer *send_buffer, bool auto_refresh)
   : m_app_queue(app_queue), m_mutator(mutator),
     m_scatter_buffer(scatter_buffer), m_send_buffer(send_buffer),
-    m_auto_refresh(auto_refresh), m_handled(false) {
+    m_auto_refresh(auto_refresh) {
 }
 
 /**
@@ -47,9 +47,6 @@ TableMutatorAsyncDispatchHandler::TableMutatorAsyncDispatchHandler(
  */
 void TableMutatorAsyncDispatchHandler::handle(EventPtr &event_ptr) {
   int32_t error;
-
-  HT_ASSERT(!m_handled);
-  m_handled = true;
 
   if (event_ptr->type == Event::MESSAGE) {
     error = Protocol::response_code(event_ptr);
@@ -81,7 +78,8 @@ void TableMutatorAsyncDispatchHandler::handle(EventPtr &event_ptr) {
             HT_ERROR_OUT << e << HT_END;
             break;
           }
-          if (error == Error::RANGESERVER_OUT_OF_RANGE)
+          if (error == Error::RANGESERVER_OUT_OF_RANGE ||
+              error == Error::RANGESERVER_RANGE_NOT_YET_ACKNOWLEDGED)
             m_send_buffer->add_retries(count, offset, len);
           else {
             m_send_buffer->add_errors(error, count, offset, len);

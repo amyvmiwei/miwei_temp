@@ -108,7 +108,7 @@ $HYPERTABLE_HOME/bin/start-dfsbroker.sh $DFS $@ &
 #
 # Start Hyperspace
 #
-$HYPERTABLE_HOME/bin/start-hyperspace.sh $HYPERSPACE_OPTS $@ &
+$HYPERTABLE_HOME/bin/start-hyperspace.sh $HYPERSPACE_OPTS $@
 
 wait
 

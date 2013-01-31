@@ -48,7 +48,7 @@ OperationAlterTable::OperationAlterTable(ContextPtr &context,
   : Operation(context, header_) {
 }
 
-OperationAlterTable::OperationAlterTable(ContextPtr &context, EventPtr &event) 
+OperationAlterTable::OperationAlterTable(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_ALTER_TABLE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
@@ -63,6 +63,7 @@ void OperationAlterTable::initialize_dependencies() {
   add_dependency(Dependency::INIT);
   add_dependency(Dependency::METADATA);
   add_dependency(Dependency::SYSTEM);
+  add_dependency(Dependency::RECOVER_SERVER);
 }
 
 void OperationAlterTable::execute() {
@@ -162,19 +163,19 @@ void OperationAlterTable::execute() {
     op_handler = new DispatchHandlerOperationAlterTable(m_context, table, m_schema);
     op_handler->start(dependencies);
     if (!op_handler->wait_for_completion()) {
-      std::vector<DispatchHandlerOperation::Result> results;
+      std::set<DispatchHandlerOperation::Result> results;
       op_handler->get_results(results);
-      for (size_t i=0; i<results.size(); i++) {
-        if (results[i].error == Error::OK ||
-            results[i].error == Error::TABLE_NOT_FOUND ||
-            results[i].error == Error::RANGESERVER_TABLE_DROPPED) {
+      foreach_ht (const DispatchHandlerOperation::Result &result, results) {
+        if (result.error == Error::OK ||
+            result.error == Error::TABLE_NOT_FOUND ||
+            result.error == Error::RANGESERVER_TABLE_DROPPED) {
           ScopedLock lock(m_mutex);
-          m_completed.insert(results[i].location);
-          m_dependencies.erase(results[i].location);
+          m_completed.insert(result.location);
+          m_dependencies.erase(result.location);
         }
         else
-          HT_WARNF("Alter table error at %s - %s (%s)", results[i].location.c_str(),
-                   Error::get_text(results[i].error), results[i].msg.c_str());
+          HT_WARNF("Alter table error at %s - %s (%s)", result.location.c_str(),
+                   Error::get_text(result.error), result.msg.c_str());
       }
       set_state(OperationState::SCAN_METADATA);
       m_context->mml_writer->record_state(this);

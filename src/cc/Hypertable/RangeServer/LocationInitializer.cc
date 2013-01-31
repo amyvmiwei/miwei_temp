@@ -27,18 +27,20 @@
 #include "Common/StatsSystem.h"
 #include "Common/Path.h"
 #include "Common/md5.h"
+#include "Common/ScopeGuard.h"
 
 #include <boost/algorithm/string.hpp>
 
 #include "Hypertable/Lib/MasterProtocol.h"
 
 #include "LocationInitializer.h"
+#include "Hyperspace/Session.h"
 
 using namespace Hypertable;
 using namespace Serialization;
 
 LocationInitializer::LocationInitializer(PropertiesPtr &props)
-  : m_props(props), m_location_persisted(false) {
+  : m_props(props), m_location_persisted(false), m_handshake_complete(false) {
 
   Path data_dir = m_props->get_str("Hypertable.DataDirectory");
   data_dir /= "/run";
@@ -68,6 +70,26 @@ LocationInitializer::LocationInitializer(PropertiesPtr &props)
     }
   }
 
+}
+
+bool LocationInitializer::is_removed(const String &path, Hyperspace::SessionPtr &hyperspace) {
+  bool removed = false;
+  if (!m_location.empty()) {
+    String filename=path + "/" + m_location;
+    uint64_t handle=0;
+    HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, hyperspace, &handle);
+    uint32_t oflags = Hyperspace::OPEN_FLAG_READ;
+    try {
+      handle = hyperspace->open(filename, oflags);
+      if (hyperspace->attr_exists(handle, "removed"))
+        removed = true;
+    }
+    catch (Exception &e) {
+      if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND)
+        HT_FATAL_OUT << e << HT_END;
+    }
+  }
+  return removed;
 }
 
 CommBuf *LocationInitializer::create_initialization_request() {
@@ -119,6 +141,7 @@ bool LocationInitializer::process_initialization_response(Event *event) {
     else
       HT_ASSERT(m_location == location);
     location_persisted = m_location_persisted;
+    m_handshake_complete = true;
   }
 
   if (!location_persisted) {
@@ -140,8 +163,8 @@ String LocationInitializer::get() {
   return m_location;
 }
 
-void LocationInitializer::wait_until_assigned() {
+void LocationInitializer::wait_for_handshake() {
   ScopedLock lock(m_mutex);
-  while (m_location == "")
+  while (!m_handshake_complete)
     m_cond.wait(lock);
 }

@@ -60,7 +60,7 @@ bool TableIdentifier::operator<(const TableIdentifier &other) const {
   }
   int cmpval = strcmp(id, other.id);
 
-  if (cmpval < 0 || 
+  if (cmpval < 0 ||
       (cmpval == 0 && generation < other.generation))
     return true;
   return false;
@@ -87,9 +87,29 @@ void TableIdentifierManaged::decode(const uint8_t **bufp, size_t *remainp) {
   *this = *this;
 }
 
+String RangeSpec::type_str(int type) {
+  switch(type) {
+  case (ROOT):
+    return (String) "root";
+  case (METADATA):
+    return (String) "metadata";
+  case (SYSTEM):
+    return (String) "system";
+  case (USER):
+    return "user";
+  case (UNKNOWN):
+    return "unknown";
+  }
+  return "unknown";
+}
+
 bool RangeSpec::operator==(const RangeSpec &other) const {
-  if (start_row == 0 || other.start_row == 0) {
-    if (start_row != other.start_row)
+
+  bool start_null = (start_row == 0) || (strlen(start_row)==0);
+  bool other_start_null = (other.start_row == 0) || (strlen(other.start_row)==0);
+
+  if (start_null || other_start_null) {
+    if (start_null != other_start_null)
       return false;
   }
   else {
@@ -112,11 +132,13 @@ bool RangeSpec::operator!=(const RangeSpec &other) const {
 }
 
 bool RangeSpec::operator<(const RangeSpec &other) const {
+  bool start_null = (start_row == 0) || (strlen(start_row)==0);
+  bool other_start_null = (other.start_row == 0) || (strlen(other.start_row)==0);
 
-  if (start_row == 0 || other.start_row == 0) {
-    if (other.start_row != 0)
+  if (start_null || other_start_null) {
+    if (!other_start_null)
       return true;
-    else if (start_row != 0)
+    else if (!start_null)
       return false;
   }
   else {
@@ -127,10 +149,13 @@ bool RangeSpec::operator<(const RangeSpec &other) const {
       return false;
   }
 
-  if (end_row == 0 || other.end_row == 0) {
-    if (other.end_row != 0)
+  bool end_null = (end_row==0) || (strlen(end_row)==0);
+  bool other_end_null = (other.end_row == 0) || (strlen(other.end_row)==0);
+
+  if (end_null || other_end_null) {
+    if (!other_end_null)
       return true;
-    else if (end_row != 0)
+    else if (!end_null)
       return false;
   }
   else {
@@ -164,6 +189,62 @@ void RangeSpecManaged::decode(const uint8_t **bufp, size_t *remainp) {
   *this = *this;
 }
 
+bool QualifiedRangeSpec::is_root() const {
+  bool start_null = (range.start_row == 0) || (strlen(range.start_row)==0);
+  return (table.is_metadata() && start_null);
+}
+
+bool QualifiedRangeSpec::operator<(const QualifiedRangeSpec &other) const {
+  if (!strcmp(table.id, other.table.id))
+    return (range < other.range);
+  else
+    return strcmp(table.id, other.table.id) < 0;
+}
+
+bool QualifiedRangeSpec::operator==(const QualifiedRangeSpec &other) const {
+  return (table == other.table && range == other.range);
+}
+
+size_t QualifiedRangeSpec::encoded_length() const {
+  return (table.encoded_length() + range.encoded_length());
+}
+
+void QualifiedRangeSpec::encode(uint8_t **bufp) const {
+  table.encode(bufp);
+  range.encode(bufp);
+}
+
+void QualifiedRangeSpec::decode(const uint8_t **bufp, size_t *remainp) {
+  HT_TRY("decoding qualified range spec ",
+    table.decode(bufp, remainp);
+    range.decode(bufp, remainp));
+}
+
+
+bool QualifiedRangeSpecManaged::operator<(const QualifiedRangeSpecManaged &other) const {
+  if (table == other.table)
+    return (range < other.range);
+  else
+    return (table < other.table);
+}
+
+size_t QualifiedRangeSpecManaged::encoded_length() const {
+  return (m_table.encoded_length() + m_range.encoded_length());
+}
+
+void QualifiedRangeSpecManaged::encode(uint8_t **bufp) const {
+  m_table.encode(bufp);
+  m_range.encode(bufp);
+}
+
+void QualifiedRangeSpecManaged::decode(const uint8_t **bufp, size_t *remainp) {
+  HT_TRY("decoding qualified range spec managed ",
+    m_table.decode(bufp, remainp);
+    m_range.decode(bufp, remainp));
+  table = m_table;
+  range = m_range;
+}
+
 ostream &Hypertable::operator<<(ostream &os, const TableIdentifier &tid) {
   os <<"{TableIdentifier: id='"<< tid.id
      <<"' generation="<< tid.generation <<"}";
@@ -180,4 +261,13 @@ ostream &Hypertable::operator<<(ostream &os, const RangeSpec &range) {
   return os;
 }
 
+ostream &Hypertable::operator<<(ostream &os, const QualifiedRangeSpec &qualified_range) {
+  os << qualified_range.table << qualified_range.range;
+  return os;
+}
+
+ostream &Hypertable::operator<<(ostream &os, const QualifiedRangeSpecManaged &qualified_range) {
+  os << qualified_range.m_table << qualified_range.m_range;
+  return os;
+}
 

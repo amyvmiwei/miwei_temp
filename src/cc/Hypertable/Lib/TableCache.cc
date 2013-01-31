@@ -28,7 +28,7 @@ using namespace std;
 
 TableCache::TableCache(PropertiesPtr &props, RangeLocatorPtr &range_locator,
     ConnectionManagerPtr &conn_manager, Hyperspace::SessionPtr &hyperspace,
-    ApplicationQueuePtr &app_queue, NameIdMapperPtr &namemap, 
+    ApplicationQueueInterfacePtr &app_queue, NameIdMapperPtr &namemap, 
     uint32_t default_timeout_ms)
   : m_props(props), m_range_locator(range_locator), 
     m_comm(conn_manager->get_comm()), m_conn_manager(conn_manager), 

@@ -35,13 +35,17 @@ const char *Dependency::SERVERS = "SERVERS";
 const char *Dependency::ROOT = "ROOT";
 const char *Dependency::METADATA = "METADATA";
 const char *Dependency::SYSTEM = "SYSTEM";
+const char *Dependency::RECOVER_SERVER = "RECOVER_SERVER";
+const char *Dependency::RECOVERY_BLOCKER= "RECOVERY_BLOCKER";
+const char *Dependency::RECOVERY = "RECOVERY";
 
 
 const char *OperationState::get_text(int32_t state);
 
 Operation::Operation(ContextPtr &context, int32_t type)
   : MetaLog::Entity(type), m_context(context), m_state(OperationState::INITIAL),
-    m_error(0), m_remove_approvals(0), m_original_type(0), m_blocked(false) {
+    m_error(0), m_remove_approvals(0), m_original_type(0), m_unblock_on_exit(false),
+    m_blocked(false) {
   int32_t timeout = m_context->props->get_i32("Hypertable.Request.Timeout");
   m_expiration_time.sec = time(0) + timeout/1000;
   m_expiration_time.nsec = (timeout%1000) * 1000000LL;
@@ -50,7 +54,8 @@ Operation::Operation(ContextPtr &context, int32_t type)
 
 Operation::Operation(ContextPtr &context, EventPtr &event, int32_t type)
   : MetaLog::Entity(type), m_context(context), m_event(event), m_state(OperationState::INITIAL),
-    m_error(0), m_remove_approvals(0), m_original_type(0), m_blocked(false) {
+    m_error(0), m_remove_approvals(0), m_original_type(0), m_unblock_on_exit(false),
+    m_blocked(false) {
   m_expiration_time.sec = time(0) + m_event->header.timeout_ms/1000;
   m_expiration_time.nsec = (m_event->header.timeout_ms%1000) * 1000000LL;
   m_hash_code = (int64_t)header.id;
@@ -58,7 +63,8 @@ Operation::Operation(ContextPtr &context, EventPtr &event, int32_t type)
 
 Operation::Operation(ContextPtr &context, const MetaLog::EntityHeader &header_)
   : MetaLog::Entity(header_), m_context(context), m_state(OperationState::INITIAL),
-    m_error(0), m_remove_approvals(0), m_original_type(0), m_blocked(false) {
+    m_error(0), m_remove_approvals(0), m_original_type(0), m_unblock_on_exit(false),
+    m_blocked(false) {
   m_hash_code = (int64_t)header.id;
 }
 
@@ -200,13 +206,13 @@ size_t Operation::encoded_result_length() const {
   return 4 + Serialization::encoded_length_vstr(m_error_msg);
 }
 
-void Operation::encode_result(uint8_t **bufp) const { 
+void Operation::encode_result(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_error);
   if (m_error != Error::OK)
     Serialization::encode_vstr(bufp, m_error_msg);
 }
 
-void Operation::decode_result(const uint8_t **bufp, size_t *remainp) { 
+void Operation::decode_result(const uint8_t **bufp, size_t *remainp) {
   m_error = Serialization::decode_i32(bufp, remainp);
   if (m_error != Error::OK)
     m_error_msg = Serialization::decode_vstr(bufp, remainp);
@@ -215,7 +221,7 @@ void Operation::decode_result(const uint8_t **bufp, size_t *remainp) {
 
 void Operation::complete_error(int error, const String &msg) {
   {
-    ScopedLock lock(m_mutex); 
+    ScopedLock lock(m_mutex);
     m_state = OperationState::COMPLETE;
     m_error = error;
     m_error_msg = msg;
@@ -228,7 +234,7 @@ void Operation::complete_error(int error, const String &msg) {
 }
 
 void Operation::complete_error_no_log(int error, const String &msg) {
-  ScopedLock lock(m_mutex); 
+  ScopedLock lock(m_mutex);
   m_state = OperationState::COMPLETE;
   m_error = error;
   m_error_msg = msg;
@@ -252,7 +258,7 @@ void Operation::complete_ok() {
 }
 
 void Operation::complete_ok_no_log() {
-  ScopedLock lock(m_mutex); 
+  ScopedLock lock(m_mutex);
   m_state = OperationState::COMPLETE;
   m_error = Error::OK;
   m_dependencies.clear();
@@ -281,6 +287,19 @@ void Operation::swap_sub_operations(std::vector<Operation *> &sub_ops) {
 }
 
 
+void Operation::pre_run() {
+  ScopedLock lock(m_mutex);
+  m_unblock_on_exit=false;
+}
+
+
+void Operation::post_run() {
+  ScopedLock lock(m_mutex);
+  if (m_unblock_on_exit)
+    m_blocked = false;
+}
+
+
 bool Operation::block() {
   ScopedLock lock(m_mutex);
   if (!m_blocked) {
@@ -292,11 +311,10 @@ bool Operation::block() {
 
 bool Operation::unblock() {
   ScopedLock lock(m_mutex);
-  if (m_blocked) {
-    m_blocked = false;
-    return true;
-  }
-  return false;
+  bool blocked_on_entry = m_blocked;
+  m_unblock_on_exit = true;
+  m_blocked = false;
+  return blocked_on_entry;
 }
 
 
@@ -325,6 +343,12 @@ namespace {
     { OperationState::UPDATE_HYPERSPACE, "UPDATE_HYPERSPACE" },
     { OperationState::ACKNOWLEDGE, "ACKNOWLEDGE" },
     { OperationState::FINALIZE, "FINALIZE" },
+    { OperationState::CREATE_INDEX, "CREATE_INDEX" },
+    { OperationState::CREATE_QUALIFIER_INDEX, "CREATE_QUALIFIER_INDEX" },
+    { OperationState::PREPARE, "PREPARE" },
+    { OperationState::COMMIT, "COMMIT" },
+    { OperationState::PHANTOM_LOAD, "PHANTOM_LOAD" },
+    { OperationState::REPLAY_FRAGMENTS, "REPLAY_FRAGMENTS" },
     { 0, 0 }
   };
 

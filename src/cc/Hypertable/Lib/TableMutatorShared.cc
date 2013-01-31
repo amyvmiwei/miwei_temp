@@ -27,7 +27,7 @@ using namespace Hypertable;
 
 TableMutatorShared::TableMutatorShared(PropertiesPtr &props, Comm *comm,
     Table *table, RangeLocatorPtr &range_locator,
-    ApplicationQueuePtr &app_queue, uint32_t timeout_ms,
+    ApplicationQueueInterfacePtr &app_queue, uint32_t timeout_ms,
     uint32_t flush_interval_ms, uint32_t flags)
   : Parent(props, comm, table, range_locator, timeout_ms, flags),
     m_flush_interval(flush_interval_ms) {

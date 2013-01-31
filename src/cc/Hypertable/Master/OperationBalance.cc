@@ -19,7 +19,6 @@
  * 02110-1301, USA.
  */
 
-
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/FailureInducer.h"
@@ -36,94 +35,94 @@
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/TableScanner.h"
 
-#include "LoadBalancerBasic.h"
+#include "LoadBalancer.h"
 #include "OperationBalance.h"
 #include "OperationProcessor.h"
 #include "Utility.h"
+#include "BalancePlanAuthority.h"
 
 using namespace Hypertable;
 using namespace Hyperspace;
 
-void do_block(OperationBalance *obj) {
-  obj->block();
-}
-
-const String OperationBalance::ms_name("OperationBalance");
-
 OperationBalance::OperationBalance(ContextPtr &context)
   : Operation(context, MetaLog::EntityType::OPERATION_BALANCE) {
+  initialize_dependencies();
   m_plan = new BalancePlan();
+}
+
+OperationBalance::OperationBalance(ContextPtr &context, BalancePlanPtr &plan)
+  : Operation(context, MetaLog::EntityType::OPERATION_BALANCE), m_plan(plan) {
   initialize_dependencies();
 }
 
 OperationBalance::OperationBalance(ContextPtr &context,
                                    const MetaLog::EntityHeader &header_)
   : Operation(context, header_) {
+  m_hash_code = md5_hash("OperationBalance");
+}
 
-  m_exclusivities.insert(ms_name);
-  m_hash_code = md5_hash(ms_name.c_str());
+OperationBalance::OperationBalance(ContextPtr &context, EventPtr &event)
+  : Operation(context, event, MetaLog::EntityType::OPERATION_BALANCE) {
+  initialize_dependencies();
+  const uint8_t *ptr = event->payload;
+  size_t remaining = event->payload_len;
+  decode_request(&ptr, &remaining);
 }
 
 void OperationBalance::initialize_dependencies() {
 
-  m_exclusivities.insert(ms_name);
-  m_hash_code = md5_hash(ms_name.c_str());
+  m_hash_code = md5_hash("OperationBalance");
 
   m_dependencies.clear();
   m_dependencies.insert(Dependency::INIT);
-  CstrSet addrs;
-  foreach_ht (RangeMoveSpecPtr &move, m_plan->moves) {
-    if (addrs.find(move->source_location.c_str()) == addrs.end()) {
-      addrs.insert(move->source_location.c_str());
-      m_dependencies.insert(move->source_location);
-    }
-   if (addrs.find(move->dest_location.c_str()) == addrs.end()) {
-      addrs.insert(move->dest_location.c_str());
-      m_dependencies.insert(move->dest_location);
-    }
-  }
+  m_dependencies.insert(Dependency::SERVERS);
+  m_dependencies.insert(Dependency::ROOT);
+  m_dependencies.insert(Dependency::METADATA);
+  m_dependencies.insert(Dependency::SYSTEM);
+  m_dependencies.insert(Dependency::RECOVER_SERVER);
 }
 
 
-
 void OperationBalance::execute() {
-  HT_ON_SCOPE_EXIT(&do_block, this);
-
   int32_t state = get_state();
-  bool registered=false;
 
-  HT_INFOF("Entering Balance-%lld state=%s",
-           (Lld)header.id, OperationState::get_text(state));
+  HT_INFOF("Entering Balance-%lld algorithm= %s state=%s",
+           (Lld)header.id, m_plan->algorithm.c_str(),
+           OperationState::get_text(state));
 
   switch (state) {
 
   case OperationState::INITIAL:
 
-    if (m_plan->moves.empty())
-      return;
-
     try {
-      m_context->balancer->register_plan(m_plan);
-      registered = true;
+      std::vector<RangeServerConnectionPtr> balanced;
+      std::vector<Entity *> entities;
+      int generation = m_context->get_balance_plan_authority()->get_generation();
+
+      if (m_plan->empty())
+        m_context->balancer->create_plan(m_plan, balanced);
+
+      set_state(OperationState::STARTED);
+      entities.push_back(this);
+      foreach_ht (RangeServerConnectionPtr &rsc, balanced) {
+        rsc->set_balanced();
+        entities.push_back(rsc.get());
+      }
+
+      if (!m_context->get_balance_plan_authority()->register_balance_plan(m_plan, generation, entities))
+        return;
+
+      // Un-pause the balancer
+      m_context->balancer->unpause();
     }
     catch (Exception &e) {
+      complete_error(e);
       HT_ERROR_OUT << e << HT_END;
-      return;
+      break;
     }
-    set_state(OperationState::STARTED);
-    m_context->mml_writer->record_state(this);
 
   case OperationState::STARTED:
     {
-      try {
-        if (!registered)
-          m_context->balancer->register_plan(m_plan);
-      }
-      catch (Exception &e) {
-        HT_ERROR_OUT << e << HT_END;
-        return;
-      }
-
       RangeServerClient rsc(m_context->comm);
       CommAddress addr;
 
@@ -139,12 +138,14 @@ void OperationBalance::execute() {
           catch (Exception &e) {
             move->complete = true;
             move->error = e.code();
-            m_context->balancer->move_complete(move->table, move->range, move->error);
+            m_context->get_balance_plan_authority()->balance_move_complete(move->table,
+                    move->range, move->error);
           }
         }
         foreach_ht (RangeMoveSpecPtr &move, m_plan->moves)
           HT_INFO_OUT << *move << HT_END;
       }
+      complete_ok();
     }
     break;
 
@@ -152,10 +153,9 @@ void OperationBalance::execute() {
     HT_FATALF("Unrecognized state %d", state);
   }
 
-  HT_INFOF("Leaving Balance-%lld", (Lld)header.id);
-
+  HT_INFOF("Leaving Balance-%lld algorithm=%s", (Lld)header.id,
+           m_plan->algorithm.c_str());
 }
-
 
 void OperationBalance::display_state(std::ostream &os) {
   os << *(m_plan.get());
@@ -176,30 +176,14 @@ void OperationBalance::decode_state(const uint8_t **bufp, size_t *remainp) {
 void OperationBalance::decode_request(const uint8_t **bufp, size_t *remainp) {
   m_plan = new BalancePlan();
   m_plan->decode(bufp, remainp);
-  initialize_dependencies();
 }
 
 const String OperationBalance::name() {
-  return ms_name;
+  return "OperationBalance";
 }
 
 const String OperationBalance::label() {
-  return format("Balance (%u moves)", (unsigned)m_plan->moves.size());
+  return format("Balance %s (%u moves)", m_plan->algorithm.c_str(),
+                (unsigned)m_plan->moves.size());
 }
 
-const String OperationBalance::get_algorithm() {
-  return m_plan->algorithm;
-}
-
-void OperationBalance::register_plan(BalancePlanPtr &plan) {
-  {
-    ScopedLock lock(m_mutex);
-    if (!m_blocked)
-      HT_THROW(Error::MASTER_OPERATION_IN_PROGRESS, "OperationBalance running");
-    m_plan = plan;
-    initialize_dependencies();
-    m_state = OperationState::INITIAL;
-  }
-  m_context->mml_writer->record_state(this);
-  m_context->op->unblock(ms_name);
-}

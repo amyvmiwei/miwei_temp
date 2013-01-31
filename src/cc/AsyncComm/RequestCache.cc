@@ -136,9 +136,14 @@ RequestCache::get_next_timeout(boost::xtime &now, IOHandler *&handlerp,
 void RequestCache::purge_requests(IOHandler *handler, int32_t error) {
   for (CacheNode *node = m_tail; node != 0; node = node->next) {
     if (node->handler == handler) {
+      String proxy = handler->get_proxy();
+      Event *event;
       HT_DEBUGF("Purging request id %d", node->id);
-      handler->deliver_event(new Event(Event::ERROR, ((IOHandlerData *)handler)->get_address(),
-                                       error), node->dh);
+      if (proxy.empty())
+        event = new Event(Event::ERROR, handler->get_address(), error);
+      else
+        event = new Event(Event::ERROR, handler->get_address(), proxy, error);
+      handler->deliver_event(event, node->dh);
       node->handler = 0;  // mark for deletion
     }
   }

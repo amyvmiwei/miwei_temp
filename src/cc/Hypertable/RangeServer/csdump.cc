@@ -274,10 +274,7 @@ int main(int argc, char **argv) {
     cout << endl;
     cout << "TRAILER:" << endl;
     trailer->display_multiline(cout);
-
     cout << endl;
-    cout << "OTHER:" << endl;
-    cout << "split row '" << cellstore->get_split_row() << "'" << endl;
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

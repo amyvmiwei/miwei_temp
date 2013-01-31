@@ -36,6 +36,7 @@
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Timestamp.h"
 #include "Hypertable/Lib/Types.h"
+#include "Hypertable/Lib/MetaLogEntityRange.h"
 
 #include "AccessGroup.h"
 #include "CellStore.h"
@@ -99,8 +100,8 @@ namespace Hypertable {
       bool     relinquish;
       bool     needs_major_compaction;
       bool     needs_split;
-      int64_t  log_hash;
       bool     load_acknowledged;
+      int64_t  log_hash;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
@@ -123,6 +124,8 @@ namespace Hypertable {
 
     void lock();
     void unlock();
+
+    MetaLog::EntityRange *metalog_entity() { return m_metalog_entity.get(); }
 
     uint64_t disk_usage();
 
@@ -262,6 +265,8 @@ namespace Hypertable {
 
     bool is_root() { return m_is_root; }
 
+    bool is_metadata() { return m_is_metadata; }
+
     void drop() {
       Barrier::ScopedActivator block_updates(m_update_barrier);
       Barrier::ScopedActivator block_scans(m_scan_barrier);
@@ -282,7 +287,12 @@ namespace Hypertable {
       return m_metalog_entity->state.state;
     }
 
-    int32_t get_error() { return m_error; }
+    int32_t get_error() {
+      ScopedLock lock(m_mutex);
+      if (!m_metalog_entity->load_acknowledged)
+        return Error::RANGESERVER_RANGE_NOT_YET_ACKNOWLEDGED;
+      return m_error;
+    }
 
     void set_needs_compaction(bool needs_compaction) {
       ScopedLock lock(m_mutex);
@@ -327,7 +337,7 @@ namespace Hypertable {
     void relinquish_install_log();
     void relinquish_compact_and_finish();
 
-    bool determine_split_row_from_cached_keys(AccessGroupVector &ag_vector);
+    bool estimate_split_row(SplitRowDataMapT &split_row_data, String &row);
 
     void split_install_log();
     void split_compact_and_shrink();
@@ -367,6 +377,7 @@ namespace Hypertable {
     Barrier          m_update_barrier;
     Barrier          m_scan_barrier;
     bool             m_is_root;
+    bool             m_is_metadata;
     uint64_t         m_added_deletes[KEYSPEC_DELETE_MAX];
     uint64_t         m_added_inserts;
     RangeSet        *m_range_set;

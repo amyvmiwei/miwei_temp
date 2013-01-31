@@ -22,91 +22,55 @@
 #ifndef HYPERTABLE_LOADBALANCER_H
 #define HYPERTABLE_LOADBALANCER_H
 
-#include <set>
-
-#include <boost/thread/condition.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-
+#include "Common/Crontab.h"
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 
 #include "Hypertable/Lib/BalancePlan.h"
 
-#include "RSMetrics.h"
+#include "RangeServerConnection.h"
+#include "RangeServerStatistics.h"
 #include "Context.h"
 
-namespace Hypertable {
-  using namespace boost::posix_time;
+#include <vector>
+#include <time.h>
 
-  class OperationBalance;
+namespace Hypertable {
 
   class LoadBalancer : public ReferenceCount {
   public:
-    virtual void balance(const String &algorithm=String()) = 0;
-    virtual void transfer_monitoring_data(vector<RangeServerStatistics> &stats)=0;
+    LoadBalancer(ContextPtr context);
 
-    LoadBalancer(ContextPtr context) : m_context(context), m_last_balance_time(min_date_time) {
-      m_balance_interval     = m_context->props->get_i32("Hypertable.LoadBalancer.Interval");
-      m_balance_window_start = duration_from_string(m_context->props->get_str(
-          "Hypertable.LoadBalancer.WindowStart"));
-      m_balance_window_end   = duration_from_string(m_context->props->get_str(
-          "Hypertable.LoadBalancer.WindowEnd"));
-      m_balance_wait = m_context->props->get_i32("Hypertable.LoadBalancer.ServerWaitInterval");
-      m_balance_loadavg_threshold = m_context->props->get_f64("Hypertable.LoadBalancer.LoadavgThreshold");
+    void signal_new_server();
 
-    }
+    bool balance_needed();
 
-    virtual bool has_plan_moves() {
-      ScopedLock lock(m_mutex);
-      if (!m_plan)
-        return false;
-      else
-        return (m_plan->moves.size()>0);
-    }
+    void unpause();
 
-    virtual void register_plan(BalancePlanPtr &plan);
-    virtual bool get_destination(const TableIdentifier &table, const RangeSpec &range, String &location);
-    virtual bool move_complete(const TableIdentifier &table, const RangeSpec &range, int32_t error=0);
-    virtual bool wait_for_complete(RangeMoveSpecPtr &move, uint32_t timeout_millis);
+    void create_plan(BalancePlanPtr &plan,
+                     std::vector <RangeServerConnectionPtr> &balanced);
 
-    virtual void set_balanced();
-    virtual void get_root_location(String &location);
-    //String assign_to_server(TableIdentifier &tid, RangeIdentifier &rid) = 0;
-    //void range_move_loaded(TableIdentifier &tid, RangeIdentifier &rid) = 0;
-    //void range_relinquish_acknowledged(TableIdentifier &tid, RangeIdentifier &rid) = 0;
-    //time_t maintenance_interval() = 0;
+    void transfer_monitoring_data(vector<RangeServerStatistics> &stats);
 
-  protected:
-    Mutex m_mutex;
-    boost::condition m_cond;
-    ContextPtr m_context;
-    uint32_t m_balance_interval;
-    uint32_t m_balance_wait;
-    time_duration m_balance_window_start;
-    time_duration m_balance_window_end;
-    ptime m_last_balance_time;
-    double m_balance_loadavg_threshold;
-    std::vector <RangeServerConnectionPtr> m_unbalanced_servers;
   private:
-    struct lt_move_spec {
-      bool operator()(const RangeMoveSpecPtr &ms1, const RangeMoveSpecPtr &ms2) const  {
-        if (ms1->table < ms2->table)
-          return true;
-        else if (ms1->table == ms2->table) {
-          if (ms1->range < ms2->range)
-            return true;
-        }
-        return false;
-      }
-    };
-    typedef std::set<RangeMoveSpecPtr, lt_move_spec> MoveSetT;
-
-    BalancePlanPtr m_plan;
-
-    MoveSetT m_current_set;
-    MoveSetT m_incomplete_set;
+    Mutex m_mutex;
+    ContextPtr m_context;
+    Mutex m_add_mutex;
+    CrontabPtr m_crontab;
+    time_t m_next_balance_time_load;
+    time_t m_next_balance_time_new_server;
+    double m_loadavg_threshold;
+    uint32_t m_new_server_balance_delay;
+    bool m_new_server_added;
+    bool m_enabled;
+    bool m_paused;
+    std::vector <RangeServerStatistics> m_statistics;
   };
+
   typedef intrusive_ptr<LoadBalancer> LoadBalancerPtr;
+
+  void reenable_balancer(LoadBalancer *balancer);
+  
 
 } // namespace Hypertable
 

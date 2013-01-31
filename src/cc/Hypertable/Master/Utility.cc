@@ -272,21 +272,22 @@ void create_table_write_metadata(ContextPtr &context, TableIdentifier *table) {
 
 bool next_available_server(ContextPtr &context, String &location) {
   RangeServerConnectionPtr rsc;
-  if (!context->next_available_server(rsc))
+  if (!context->rsc_manager->next_available_server(rsc))
     return false;
   location = rsc->location();
   return true;
 }
 
 
-void create_table_load_range(ContextPtr &context, const String &location, TableIdentifier *table, RangeSpec &range, bool needs_compaction) {
+void create_table_load_range(ContextPtr &context, const String &location,
+                             TableIdentifier &table, RangeSpec &range, bool needs_compaction) {
   RangeServerClient rsc(context->comm);
   CommAddress addr;
 
   if (context->test_mode) {
     RangeServerConnectionPtr rsc;
     HT_WARNF("Skipping %s::load_range() because in TEST MODE", location.c_str());
-    HT_ASSERT(context->find_server_by_location(location, rsc));
+    HT_ASSERT(context->rsc_manager->find_server_by_location(location, rsc));
     if (!rsc->connected())
       HT_THROW(Error::COMM_NOT_CONNECTED, "");
     return;
@@ -298,35 +299,52 @@ void create_table_load_range(ContextPtr &context, const String &location, TableI
     RangeState range_state;
     int64_t split_size = context->props->get_i64("Hypertable.RangeServer.Range.SplitSize");
 
-    if (table->is_metadata())
+    if (table.is_metadata())
       range_state.soft_limit = context->props->get_i64("Hypertable.RangeServer.Range.MetadataSplitSize", split_size);
     else {
       range_state.soft_limit = split_size;
       if (context->props->get_bool("Hypertable.Master.Split.SoftLimitEnabled"))
-        range_state.soft_limit /= std::min(64, (int)context->server_count()*2);
+        range_state.soft_limit /= std::min(64, (int)context->rsc_manager->server_count()*2);
     }
       
-    rsc.load_range(addr, *table, range, range_state, needs_compaction);
+    rsc.load_range(addr, table, range, range_state, needs_compaction);
   }
   catch (Exception &e) {
     if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED)
       HT_THROW2F(e.code(), e, "Problem loading range %s[%s..%s] in %s",
-                 table->id, range.start_row, range.end_row, location.c_str());
+                 table.id, range.start_row, range.end_row, location.c_str());
   }
-
-  try {
-    rsc.acknowledge_load(addr, *table, range);
-  }
-  catch (Exception &e) {
-    if (e.code() != Error::RANGESERVER_TABLE_DROPPED &&
-        e.code() != Error::TABLE_NOT_FOUND &&
-        e.code() != Error::RANGESERVER_RANGE_NOT_FOUND)
-      HT_THROW2F(e.code(), e, "Problem acknowledging load for %s[%s..%s] in %s",
-                 table->id, range.start_row, range.end_row, location.c_str());
-    HT_WARNF("Problem acknowledging load range - %s - %s", Error::get_text(e.code()), e.what());
-  }
-
 }
+
+void create_table_acknowledge_range(ContextPtr &context, const String &location,
+                                    TableIdentifier &table, RangeSpec &range) {
+  RangeServerClient rsc(context->comm);
+  CommAddress addr;
+
+  if (context->test_mode) {
+    RangeServerConnectionPtr rsc;
+    HT_WARNF("Skipping %s::acknowledge_load() because in TEST MODE", location.c_str());
+    HT_ASSERT(context->rsc_manager->find_server_by_location(location, rsc));
+    if (!rsc->connected())
+      HT_THROW(Error::COMM_NOT_CONNECTED, "");
+    return;
+  }
+
+  addr.set_proxy(location);
+
+  QualifiedRangeSpec qrs(table, range);
+  vector<QualifiedRangeSpec *> range_vec;
+  map<QualifiedRangeSpec, int> response_map;
+  range_vec.push_back(&qrs);
+  rsc.acknowledge_load(addr, range_vec, response_map);
+  map<QualifiedRangeSpec, int>::iterator it = response_map.begin();
+  if (it->second != Error::OK &&
+      it->second != Error::RANGESERVER_TABLE_DROPPED &&
+      it->second != Error::TABLE_NOT_FOUND &&
+      it->second != Error::RANGESERVER_RANGE_NOT_FOUND)
+    HT_THROW(it->second, "Problem acknowledging load range");
+}
+
 
 int64_t range_hash_code(const TableIdentifier &table, const RangeSpec &range, const String &qualifier) {
   if (!qualifier.empty())

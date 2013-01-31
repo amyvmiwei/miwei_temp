@@ -250,6 +250,9 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     }
     log_base->fragment_queue().clear();
 
+    struct LtClfip swo;
+    sort(m_fragment_queue.begin(), m_fragment_queue.end(), swo);
+
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem linking external log into commit log - %s", e.what());
@@ -333,8 +336,7 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok, int generati
   while (!m_fragment_queue.empty()) {
     fi = m_fragment_queue.front();
     if (fi->revision < revision && fi->generation <= generation &&
-	(!m_range_reference_required || remove_ok.count(fi->log_dir_hash) > 0)) {
-
+       (!m_range_reference_required || remove_ok.count(fi->log_dir_hash) > 0)) {
       if (fi->references == 0) {
         remove_file_info(fi);
         delete fi;

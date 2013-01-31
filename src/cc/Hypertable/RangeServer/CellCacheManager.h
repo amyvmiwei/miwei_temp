@@ -23,6 +23,7 @@
 #define HYPERTABLE_CELLCACHEMANAGER_H
 
 #include "CellCache.h"
+#include "CellList.h"
 #include "CellListScanner.h"
 #include "MergeScanner.h"
 #include "ScanContext.h"
@@ -61,9 +62,7 @@ namespace Hypertable {
 
     void add_scanners(MergeScanner *scanner, ScanContextPtr &scan_context);
 
-    void get_split_rows(std::vector<std::string> &split_rows);
-
-    void get_rows(std::vector<std::string> &rows);
+    void split_row_estimate_data(CellList::SplitRowDataMapT &split_row_data);
 
     int64_t get_total_entries();
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for ConnectionManager.
+ * This file contains method definitions for ConnectionManager, a class for
+ * establishing and maintaining TCP connections.
  */
 
 #include "Common/Compat.h"
@@ -210,7 +216,7 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
     conn_state->connected = true;
     conn_state->cond.notify_all();
   }
-  else if (error != Error::OK) {
+  else if (error != Error::OK && error != Error::COMM_BROKEN_CONNECTION) {
     if (conn_state->service_name != "") {
       HT_INFOF("Connection attempt to %s at %s failed - %s.  Will retry "
                "again in %d milliseconds...", conn_state->service_name.c_str(),
@@ -295,7 +301,7 @@ int ConnectionManager::remove(const CommAddress &addr) {
   }
 
   if (do_close)
-    error = m_impl->comm->close_socket(addr);
+    m_impl->comm->close_socket(addr);
 
   return error;
 }
@@ -310,39 +316,43 @@ int ConnectionManager::remove(const CommAddress &addr) {
  * disconnect or error), the connection's connected flag is set to false and a
  * retry is scheduled.
  *
- * @param event_ptr shared pointer to event object
+ * @param event shared pointer to event object
  */
 void
-ConnectionManager::handle(EventPtr &event_ptr) {
+ConnectionManager::handle(EventPtr &event) {
   ScopedLock lock(m_impl->mutex);
   ConnectionState *conn_state = 0;
 
   {
     SockAddrMap<ConnectionStatePtr>::iterator iter =
-      m_impl->conn_map.find(event_ptr->addr);
+      m_impl->conn_map.find(event->addr);
     if (iter != m_impl->conn_map.end())
       conn_state = (*iter).second.get();
   }
 
-  if (conn_state == 0 && event_ptr->proxy) {
+  if (conn_state == 0 && event->proxy) {
     hash_map<String, ConnectionStatePtr>::iterator iter = 
-      m_impl->conn_map_proxy.find(event_ptr->proxy);
+      m_impl->conn_map_proxy.find(event->proxy);
     if (iter != m_impl->conn_map_proxy.end()) {
       conn_state = (*iter).second.get();
       /** register address **/
-      m_impl->conn_map[event_ptr->addr] = ConnectionStatePtr(conn_state);
-      conn_state->inet_addr = event_ptr->addr;
+      m_impl->conn_map[event->addr] = ConnectionStatePtr(conn_state);
+      conn_state->inet_addr = event->addr;
     }
   }
 
   if (conn_state) {
     ScopedLock conn_lock(conn_state->mutex);
 
-    if (event_ptr->type == Event::CONNECTION_ESTABLISHED) {
+    if (event->type == Event::CONNECTION_ESTABLISHED) {
       if (conn_state->initializer) {
         CommBufPtr cbuf(conn_state->initializer->create_initialization_request());
-        int error = m_impl->comm->send_request(event_ptr->addr, 60000, cbuf, this);
-        if (error != Error::OK)
+        int error = m_impl->comm->send_request(event->addr, 60000, cbuf, this);
+        if (error == Error::COMM_BROKEN_CONNECTION ||
+            error == Error::COMM_NOT_CONNECTED ||
+            error == Error::COMM_INVALID_PROXY)
+          set_retry_state(conn_state, event);
+        else if (error != Error::OK)
           HT_FATALF("Problem initializing connection to %s - %s", 
                     conn_state->service_name.c_str(), Error::get_text(error));
       }
@@ -351,39 +361,24 @@ ConnectionManager::handle(EventPtr &event_ptr) {
         conn_state->cond.notify_all();
       }
     }
-    else if (event_ptr->type == Event::ERROR ||
-             event_ptr->type == Event::DISCONNECT) {
-      if (!m_impl->quiet_mode) {
-        HT_INFOF("%s; Problem connecting to %s, will retry in %d "
-                 "milliseconds...", event_ptr->to_str().c_str(),
-                 conn_state->service_name.c_str(), (int)conn_state->timeout_ms);
-      }
-      conn_state->connected = false;
-      conn_state->initialized = false;
-      // this logic could proably be smarter.  For example, if the last
-      // connection attempt was a long time ago, then schedule immediately
-      // otherwise, if this event is the result of an immediately prior connect
-      // attempt, then do the following
-      boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
-      xtime_add_millis(conn_state->next_retry, conn_state->timeout_ms);
-
-      // add to retry heap
-      m_impl->retry_queue.push(conn_state);
-      m_impl->retry_cond.notify_one();
+    else if (event->type == Event::ERROR ||
+             event->type == Event::DISCONNECT) {
+      HT_INFOF("Received event %s", event->to_str().c_str());
+      set_retry_state(conn_state, event);
     }
-    else if (event_ptr->type == Event::MESSAGE) {
+    else if (event->type == Event::MESSAGE) {
       if (conn_state->initializer && !conn_state->initialized) {
-        if (event_ptr->header.command != conn_state->initializer->initialization_command()) {
+        if (event->header.command != conn_state->initializer->initialization_command()) {
           String err_msg = "Connection initialization not yet complete";
           CommHeader header;
-          header.initialize_from_request_header(event_ptr->header);
+          header.initialize_from_request_header(event->header);
           CommBufPtr cbuf( new CommBuf(header, 4 + Serialization::encoded_length_str16(err_msg)) );
           cbuf->append_i32(Error::CONNECTION_NOT_INITIALIZED);
           cbuf->append_str16(err_msg);
-          m_impl->comm->send_response(event_ptr->addr, cbuf);
+          m_impl->comm->send_response(event->addr, cbuf);
           return;
         }
-        if (!conn_state->initializer->process_initialization_response(event_ptr.get()))
+        if (!conn_state->initializer->process_initialization_response(event.get()))
           HT_FATALF("Unable to initialize connection to %s, exiting ...",
                     conn_state->service_name.c_str());
         conn_state->initialized = true;
@@ -395,12 +390,32 @@ ConnectionManager::handle(EventPtr &event_ptr) {
 
     // Chain event to application supplied handler
     if (conn_state->handler)
-      conn_state->handler->handle(event_ptr);
+      conn_state->handler->handle(event);
   }
   else {
     HT_WARNF("Unable to find connection for %s in map.",
-             InetAddr::format(event_ptr->addr).c_str());
+             InetAddr::format(event->addr).c_str());
   }
+}
+
+void ConnectionManager::set_retry_state(ConnectionState *conn_state, EventPtr &event) {
+  if (!m_impl->quiet_mode) {
+    HT_INFOF("%s; Problem connecting to %s, will retry in %d "
+             "milliseconds...", event->to_str().c_str(),
+             conn_state->service_name.c_str(), (int)conn_state->timeout_ms);
+  }
+  conn_state->connected = false;
+  conn_state->initialized = false;
+  // this logic could proably be smarter.  For example, if the last
+  // connection attempt was a long time ago, then schedule immediately
+  // otherwise, if this event is the result of an immediately prior connect
+  // attempt, then do the following
+  boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
+  xtime_add_millis(conn_state->next_retry, conn_state->timeout_ms);
+
+  // add to retry heap
+  m_impl->retry_queue.push(conn_state);
+  m_impl->retry_cond.notify_one();
 }
 
 

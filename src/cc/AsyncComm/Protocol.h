@@ -35,13 +35,13 @@ namespace Hypertable {
 
     virtual ~Protocol() { return; }
 
-    static int32_t response_code(Event *event);
-    static int32_t response_code(EventPtr &event_ptr) {
+    static int32_t response_code(const Event *event);
+    static int32_t response_code(const EventPtr &event_ptr) {
       return response_code(event_ptr.get());
     }
 
-    static String string_format_message(Event *event);
-    static String string_format_message(EventPtr &event_ptr) {
+    static String string_format_message(const Event *event);
+    static String string_format_message(const EventPtr &event_ptr) {
       return string_format_message(event_ptr.get());
     }
 

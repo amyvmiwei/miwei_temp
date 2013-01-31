@@ -36,67 +36,73 @@ void ResponseManager::operator()() {
   std::vector<OperationPtr> operations;
   std::vector<MetaLog::Entity *> entities;
 
-  while (!shutdown) {
+  try {
 
-    {
-      ScopedLock lock(m_context->mutex);
+    while (!shutdown) {
 
-      timed_wait = false;
-      if (!op_expiration_time_index.empty()) {
-        expire_time = op_expiration_time_index.begin()->expiration_time();
-        timed_wait = true;
-      }
+      {
+        ScopedLock lock(m_context->mutex);
 
-      if (!delivery_expiration_time_index.empty()) {
-        if (!timed_wait || delivery_expiration_time_index.begin()->expiration_time < expire_time)
-          expire_time = delivery_expiration_time_index.begin()->expiration_time;
-        timed_wait = true;
-      }
+        timed_wait = false;
+        if (!op_expiration_time_index.empty()) {
+          expire_time = op_expiration_time_index.begin()->expiration_time();
+          timed_wait = true;
+        }
 
-      if (timed_wait) {
-        boost::xtime xt = expire_time;
-        m_context->cond.timed_wait(lock, xt);
-      }
-      else
-        m_context->cond.wait(lock);
+        if (!delivery_expiration_time_index.empty()) {
+          if (!timed_wait || delivery_expiration_time_index.begin()->expiration_time < expire_time)
+            expire_time = delivery_expiration_time_index.begin()->expiration_time;
+          timed_wait = true;
+        }
 
-      shutdown = m_context->shutdown;
-
-      now.reset();
-
-      op_iter = op_expiration_time_index.begin();
-      while (op_iter != op_expiration_time_index.end()) {
-        if (op_iter->expiration_time() < now) {
-          m_context->removal_queue.push_back(op_iter->op);
-          op_iter = op_expiration_time_index.erase(op_iter);
+        if (timed_wait) {
+          boost::xtime xt = expire_time;
+          m_context->cond.timed_wait(lock, xt);
         }
         else
-          break;
-      }
+          m_context->cond.wait(lock);
 
-      delivery_iter = delivery_expiration_time_index.begin();
-      while (delivery_iter != delivery_expiration_time_index.end()) {
-        if (delivery_iter->expiration_time < now)
-          delivery_iter = delivery_expiration_time_index.erase(delivery_iter);
-        else
-          break;
-      }
+        shutdown = m_context->shutdown;
 
-      operations.clear();
-      entities.clear();
-      if (!m_context->removal_queue.empty()) {
-        for (std::list<OperationPtr>::iterator iter=m_context->removal_queue.begin();
-             iter != m_context->removal_queue.end(); ++iter) {
-          operations.push_back(*iter);
-          entities.push_back(iter->get());
+        now.reset();
+
+        op_iter = op_expiration_time_index.begin();
+        while (op_iter != op_expiration_time_index.end()) {
+          if (op_iter->expiration_time() < now) {
+            m_context->removal_queue.push_back(op_iter->op);
+            op_iter = op_expiration_time_index.erase(op_iter);
+          }
+          else
+            break;
         }
-        m_context->removal_queue.clear();
+
+        delivery_iter = delivery_expiration_time_index.begin();
+        while (delivery_iter != delivery_expiration_time_index.end()) {
+          if (delivery_iter->expiration_time < now)
+            delivery_iter = delivery_expiration_time_index.erase(delivery_iter);
+          else
+            break;
+        }
+
+        operations.clear();
+        entities.clear();
+        if (!m_context->removal_queue.empty()) {
+          for (std::list<OperationPtr>::iterator iter=m_context->removal_queue.begin();
+               iter != m_context->removal_queue.end(); ++iter) {
+            operations.push_back(*iter);
+            entities.push_back(iter->get());
+          }
+          m_context->removal_queue.clear();
+        }
       }
+
+      if (!entities.empty())
+        m_context->mml_writer->record_removal(entities);
+
     }
-
-    if (!entities.empty())
-      m_context->mml_writer->record_removal(entities);
-
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
   }
   
 }

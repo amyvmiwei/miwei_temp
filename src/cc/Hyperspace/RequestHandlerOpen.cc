@@ -37,9 +37,9 @@ using namespace Hypertable;
 using namespace Serialization;
 
 void RequestHandlerOpen::run() {
-  ResponseCallbackOpen cb(m_comm, m_event_ptr);
-  size_t decode_remain = m_event_ptr->payload_len;
-  const uint8_t *decode_ptr = m_event_ptr->payload;
+  ResponseCallbackOpen cb(m_comm, m_event);
+  size_t decode_remain = m_event->payload_len;
+  const uint8_t *decode_ptr = m_event->payload;
   Attribute attr;
   std::vector<Attribute> attrs;
   int32_t version = -1;

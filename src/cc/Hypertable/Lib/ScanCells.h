@@ -104,11 +104,13 @@ protected:
    * @param cur_row current/last row seen by scanner
    * @param eos true if these results have the eos bit set
    * @param bytes_scanned number of bytes read
+   * @param lastkey Return pointer to last key in block
    * @return true if scan has reached end
    */
   bool load(SchemaPtr &schema,
             const String &end_row, bool end_inclusive, int row_limit,
-            int *rows_seen, String &cur_row, CstrSet &rowset, int64_t *bytes_scanned);
+            int *rows_seen, String &cur_row, CstrSet &rowset, int64_t *bytes_scanned,
+            Key *lastkey);
 
   /**
    * get number of rows that were skipped because of an OFFSET predicate

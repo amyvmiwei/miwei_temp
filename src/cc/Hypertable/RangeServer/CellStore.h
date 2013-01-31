@@ -55,13 +55,21 @@ namespace Hypertable {
       uint64_t block_index_access_counter;
     };
 
-    CellStore() : m_bytes_read(0) { }
+    CellStore() : m_block_count(0), m_bytes_read(0) { }
 
     virtual ~CellStore() { return; }
 
     virtual void add(const Key &key, const ByteString value) = 0;
 
-    virtual const char *get_split_row() = 0;
+    /** Populates <code>split_row_data</code> with unique row and count
+     * estimates from block index.
+     * @param split_row_data Reference to accumulator map holding unique
+     * rows and counts taken from block index.
+     * @note <code>split_row_data</code> should not be cleared
+     */
+    virtual void split_row_estimate_data(SplitRowDataMapT &split_row_data) {
+      HT_FATAL("Not implemented!");
+    }
 
     virtual int64_t get_total_entries() = 0;
 
@@ -107,6 +115,10 @@ namespace Hypertable {
                       const String &end_row, int32_t fd, int64_t file_length,
                       CellStoreTrailer *trailer) = 0;
 
+    virtual void rescope(const String &start_row, const String &end_row) {
+      HT_FATAL("Not implemented!");
+    }
+
     /**
      * Returns the block size used for this cell store.  The block size is the
      * amount of uncompressed key/value pairs to collect before compressing and
@@ -141,6 +153,12 @@ namespace Hypertable {
      * @return disk used by this cell store or portion thereof
      */
     virtual uint64_t disk_usage() = 0;
+
+    /**
+     * Returns the number of CellStore blocks covered by this object.
+     * @return block count
+     */
+    virtual size_t block_count() { return m_block_count; }
 
     /**
      * Returns block compression ratio of this cell store.
@@ -279,6 +297,7 @@ namespace Hypertable {
     static const char INDEX_FIXED_BLOCK_MAGIC[10];
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
+    size_t m_block_count;
     uint64_t m_bytes_read;
     IndexMemoryStats m_index_stats;
     std::vector <String> m_replaced_files;

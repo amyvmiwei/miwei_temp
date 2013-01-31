@@ -31,10 +31,10 @@ using namespace DfsBroker;
 
 int ResponseCallbackAppend::response(uint64_t offset, uint32_t amount) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   CommBufPtr cbp( new CommBuf(header, 16) );
   cbp->append_i32(Error::OK);
   cbp->append_i64(offset);
   cbp->append_i32(amount);
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }

@@ -25,14 +25,15 @@ if [ -f $PIDFILE ]; then
   rm -f $PIDFILE
 fi
 
-# Dumping cores slows things down unnecessarily for normal test runs
-ulimit -c 0
-
 $HT_HOME/bin/Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.RangeServer.Workers=330 \
     --Hypertable.RangeServer.Range.SplitSize=$RANGE_SIZE $@
 
-[ "$1" ] || exit # base run
+# Exit if base run
+if [ -z $1 ]; then
+    \rm -f $LAUNCHER_PIDFILE
+    exit
+fi
 
 echo ""
 echo "!!!! CRASH ($@) !!!!"
@@ -44,3 +45,5 @@ echo "Range states:"
 $DUMP_METALOG -s $METALOG
 
 $HT_HOME/bin/Hypertable.RangeServer --pidfile=$PIDFILE --Hypertable.RangeServer.Workers=330 --verbose
+
+\rm -f $LAUNCHER_PIDFILE

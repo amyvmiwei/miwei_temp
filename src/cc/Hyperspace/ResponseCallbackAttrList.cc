@@ -36,7 +36,7 @@ using namespace Hypertable;
  */
 int ResponseCallbackAttrList::response(const vector<string> &anames) {
   CommHeader header;
-  header.initialize_from_request_header(m_event_ptr->header);
+  header.initialize_from_request_header(m_event->header);
   size_t payloadsize = 8;
   vector<string>::const_iterator it;
 
@@ -52,6 +52,6 @@ int ResponseCallbackAttrList::response(const vector<string> &anames) {
     cbp->append_vstr(*it);
   }
 
-  return m_comm->send_response(m_event_ptr->addr, cbp);
+  return m_comm->send_response(m_event->addr, cbp);
 }
 

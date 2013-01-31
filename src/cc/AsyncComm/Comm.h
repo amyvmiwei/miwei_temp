@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Primary entry point for AsyncComm service.
+ * This file contains the definition for singleton class Comm
+ */
+
 #ifndef HYPERTABLE_COMMENGINE_H
 #define HYPERTABLE_COMMENGINE_H
 
@@ -31,17 +36,37 @@
 #include "DispatchHandler.h"
 #include "HandlerMap.h"
 
-
+/** Hypertable definitions
+ */
 namespace Hypertable {
 
+  /** @defgroup AsyncComm AsyncComm
+   * Asynchronous network communication service.
+   * The AsyncComm module is designed for maximally efficient network
+   * programming by 1) providing an asynchronous API to facilitate
+   * multiprogramming, and 2) using the most efficient polling mechanism for
+   * each supported system (<code>epoll</code> on Linux, <code>kqueue</code>
+   * on OSX and FreeBSD, and <code>port_associate</code> on Solaris).
+   * @{
+   */
+
   /**
-   * Provides communication (message passing) services to an application.
+   * Primary entry point to AsyncComm service.
    * There should be only one instance of this class per process and the static
    * method ReactorFactory#initialize must be called prior to constructing this
    * class in order to create the system-wide I/O reactor threads.
    */
   class Comm : public ReferenceCount {
   public:
+
+    /** Creates/returns singleton instance of the Comm class.
+     * This method will construct a new instance of the Comm class if it has
+     * not already been created.  All calls to this method return a pointer
+     * to the same singleton instance of the Comm object between calls to
+     * #destroy.  The static method ReactorFactory#initialize must be called
+     * prior to calling this method for the first time, in order to create
+     * system-wide I/O reactor threads.
+     */
     static Comm *instance() {
       ScopedLock lock(ms_mutex);
 
@@ -51,23 +76,62 @@ namespace Hypertable {
       return ms_instance;
     }
 
+    /** Destroys singleton instance of the Comm class.
+     * This method deletes the singleton instance of the Comm class, setting
+     * the ms_instance pointer to 0.
+     */
     static void destroy();
 
     /**
-     * Establishes a TCP connection to the address given by the addr argument
-     * and associates with it a default dispatch handler.
-     * CONNECTION_ESTABLISHED and DISCONNECT events are delivered to the
-     * default dispatch handler.  The argument addr is used to subsequently
-     * refer to the connection.
+     * Establishes a TCP connection and attaches a default event handler.
+     * This method establishes a TCP connection to <code>addr</code>
+     * and associates it with <code>default_handler</code> as the default
+     * event handler for the connection.  The two types of events that
+     * are delivered via the handler are CONNECTION_ESTABLISHED and DISCONNECT.
+     * No ERROR events will be deliverd via the handler because any errors that
+     * occur on the connection will result in the connection being closed,
+     * resulting in a DISCONNECT event only.  The returned error code can be
+     * inspected to determine if the handler was installed and may be
+     * subsequently called back.  The following return codes indicate that
+     * the default event handler was successfully associated:
      *
+     *   - <code>Error::COMM_BROKEN_CONNECTION</code>
+     *   - <code>Error::OK</code>
+     *
+     * The default event handler will be associated with the connection until
+     * either a) a DISCONNECT message has been delivered to the handler, or b)
+     * close_socket has been called with <code>addr</code>.  A return value
+     * of <code>Error::COMM_BROKEN_CONNECTION</code> indicates that the
+     * connection was broken before it was completely set up and a
+     * DISCONNECT event will be promptly delivered via the default event
+     * handler.  The following return codes indicate that the default event
+     * handler was <b>not</b> associated with a connection and the caller
+     * can assume that the call had no effect:
+     *
+     *   - <code>Error::COMM_ALREADY_CONNECTED</code>
+     *   - <code>Error::COMM_INVALID_PROXY</code>
+     *   - <code>Error::COMM_SOCKET_ERROR</code>
+     *   - <code>Error::COMM_BIND_ERROR</code>
+     *   - <code>Error::COMM_CONNECT_ERROR</code>
+     *   - <code>Error::COMM_POLL_ERROR</code>
+     *
+     * The default event handler, <code>default_handler</code>, will never be
+     * called back via the calling thread.  It will be called back from a
+     * reactor thread.  Because reactor threads are used to service I/O
+     * events on many different sockets, the default event handler should
+     * return quickly from the callback.  When calling back into the default
+     * event handler, the calling reactor thread does not hold any locks
+     * so the default event handler callback may safely callback into the
+     * Comm object (e.g. #send_response).
+     * 
      * @param addr address to connect to
-     * @param default_handler smart pointer to default dispatch handler
-     * @return Error::OK on success or error code on failure
+     * @param default_handler smart pointer to default event handler
+     * @return Error::OK on success or error code on failure (see description)
      */
-    int connect(const CommAddress &addr,
-                DispatchHandlerPtr &default_handler);
+    int connect(const CommAddress &addr, DispatchHandlerPtr &default_handler);
 
     /**
+     * Establishes a locally bound TCP connection and attaches a default event handler.
      * Establishes a TCP connection to the address given by the addr argument,
      * binding the local side of the connection to the address given by the
      * local_addr argument.  A default dispatch handler is associated with the
@@ -147,12 +211,17 @@ namespace Hypertable {
     /**
      * Sends a request message over a connection, expecting a response.  The
      * connection is specified by the addr argument which is the remote end of
-     * the connection.  The request message to send is encapsulated in the
-     * cbuf object (see CommBuf) and should start with a valid header.  The
+     * the connection.  The request message to send is encapsulated in
+     * <code>cbuf</code> (see CommBuf) and should start with a valid header.  The
      * dispatch handler given by the response_handler argument will get called
      * back with either a response MESSAGE event or a TIMEOUT event if no
      * response is received within the number of seconds specified by the
      * timeout argument.
+     *
+     * The following errors may be returned by this method:
+     *
+     * Error::COMM_NOT_CONNECTED
+     * Error::COMM_BROKEN_CONNECTION
      *
      * <p>If the server at the other end of the connection uses an
      * ApplicationQueue to carry out requests, then the gid field in the header
@@ -202,17 +271,6 @@ namespace Hypertable {
      * @return Error::OK on success or error code on failure
      */
     int send_response(const CommAddress &addr, CommBufPtr &cbuf);
-
-    /**
-     * Obtains the local address of a socket connection.  The connection is
-     * identified by the remote address in the addr argument.
-     *
-     * @param addr connection identifier (remote address)
-     * @param local_addr pointer to address structure to hold the returned
-     *        local address
-     * @return Error::OK on success or error code on failure
-     */
-    int get_local_address(const CommAddress &addr, CommAddress &local_addr);
 
     /**
      * Creates a local socket for receiving datagrams and assigns a default
@@ -282,30 +340,47 @@ namespace Hypertable {
      * demultiplexer (e.g epoll).  It also causes all outstanding requests on
      * the connection to get purged.
      *
-     * @param addr address of socket connection to close
      * @return Error::OK on success or error code on failure
      */
-    int close_socket(const CommAddress &addr);
+    void close_socket(const CommAddress &addr);
+
+    /** Finds an unused TCP port starting from <code>starting_addr</code>
+     * This method iterates through 15 ports starting with
+     * <code>starting_addr.sin_port</code> until it is able to bind to
+     * one.  If an available port is found, <code>starting_addr.sin_port</code>
+     * will be set to the available port, otherwise the method will assert.
+     * @param starting_addr Starting address template
+     */
+    void find_available_tcp_port(InetAddr &addr);
+
+    /** Finds an unused UDP port starting from <code>starting_port</code>
+     * This method iterates through 15 ports starting with
+     * <code>starting_addr.sin_port</code> until it is able to bind to
+     * one.  If an available port is found, <code>starting_addr.sin_port</code>
+     * will be set to the available port, otherwise the method will assert.
+     * @param starting_addr Starting address template
+     */
+    void find_available_udp_port(InetAddr &addr);
 
   private:
     Comm();     // prevent non-singleton usage
     ~Comm();
 
-    static Comm *ms_instance;
-
-    int send_request(IOHandlerDataPtr &data_handler, uint32_t timeout_ms,
+    int send_request(IOHandlerData *data_handler, uint32_t timeout_ms,
                      CommBufPtr &cbuf, DispatchHandler *response_handler);
 
     int connect_socket(int sd, const CommAddress &addr,
                        DispatchHandlerPtr &default_handler);
 
-    static atomic_t ms_next_request_id;
-
-    static Mutex   ms_mutex;
-    HandlerMapPtr  m_handler_map;
-    ReactorPtr     m_timer_reactor;
-    InetAddr       m_local_addr;
+    static Comm *ms_instance;       //!< Pointer to singleton instance of this class
+    static atomic_t ms_next_request_id; //!< Atomic integer used for assinging request IDs
+    static Mutex   ms_mutex;        //!< Mutex for serializing access to ms_instance
+    HandlerMapPtr  m_handler_map;   //!< Pointer to IOHandler map
+    ReactorPtr     m_timer_reactor; //!< Pointer to dedicated reactor for handling timer events
+    InetAddr       m_local_addr;    //!< Local address initialized to primary interface and empty port
   };
+
+  /** @}*/
 
 } // namespace Hypertable
 

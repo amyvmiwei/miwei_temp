@@ -25,6 +25,8 @@
 #include "Common/atomic.h"
 #include "Common/ByteString.h"
 #include "Common/ReferenceCount.h"
+#include "Common/StlAllocator.h"
+#include "Common/StringExt.h"
 
 #include "ScanContext.h"
 
@@ -60,13 +62,20 @@ namespace Hypertable {
     virtual CellListScanner *
     create_scanner(ScanContextPtr &scan_ctx) { return 0; }
 
-    /**
-     * Returns a split row for this cell list.  This should be an approximation
-     * of the middle row key in the list.
-     *
-     * @return the split row key
+    typedef std::pair<const char *, int64_t> SplitRowDataValue;
+    typedef StlAllocator<SplitRowDataValue> SplitRowDataAlloc;
+    typedef std::map<const char *, int64_t, LtCstr,
+                     SplitRowDataAlloc> SplitRowDataMapT;
+
+    /** Populates <code>split_row_data</code> with unique row and count
+     * estimates for this list.
+     * @param split_row_data Reference to accumulator map holding estimate
+     * of unique rows and counts.
+     * @note <code>split_row_data</code> should not be cleared
      */
-    virtual const char *get_split_row() = 0;
+    virtual void split_row_estimate_data(SplitRowDataMapT &split_row_data) {
+      HT_FATAL("Not Implemented!");
+    }
 
     /**
      * Returns the start row of this cell list.  This value is used to restrict
