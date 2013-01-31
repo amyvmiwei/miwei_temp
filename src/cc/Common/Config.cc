@@ -379,6 +379,9 @@ void DefaultPolicy::init_options() {
         "Maximum (target) size of block cache")
     ("Hypertable.RangeServer.QueryCache.MaxMemory", i64()->default_value(50*M),
         "Maximum size of query cache")
+    ("Hypertable.RangeServer.Range.RowSize.Unlimited", boo()->default_value(false),
+     "Marks range active and unsplittable upon encountering row overflow condition. "
+     "Can cause ranges to grow extremely large.  Use with caution!")
     ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(256*MiB),
         "Size of range in bytes before splitting")
     ("Hypertable.RangeServer.Range.MaximumSize", i64()->default_value(3*G),
