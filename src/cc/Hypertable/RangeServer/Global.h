@@ -64,6 +64,7 @@ namespace Hypertable {
     static Hypertable::RangeServerProtocol *protocol;
     static Hypertable::RangeLocatorPtr range_locator;
     static bool           verbose;
+    static bool           row_size_unlimited;
     static CommitLog     *user_log;
     static CommitLog     *system_log;
     static CommitLog     *metadata_log;

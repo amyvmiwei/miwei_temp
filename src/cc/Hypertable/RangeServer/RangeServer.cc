@@ -108,6 +108,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   SubProperties cfg(props, "Hypertable.RangeServer.");
 
   m_verbose = props->get_bool("verbose");
+  Global::row_size_unlimited = cfg.get_bool("Range.RowSize.Unlimited", false);
   Global::range_split_size = cfg.get_i64("Range.SplitSize");
   Global::range_maximum_size = cfg.get_i64("Range.MaximumSize");
   Global::range_metadata_split_size = cfg.get_i64("Range.MetadataSplitSize",

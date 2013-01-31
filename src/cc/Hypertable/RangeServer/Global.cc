@@ -40,6 +40,7 @@ namespace Hypertable {
   RangeServerProtocol   *Global::protocol = 0;
   RangeLocatorPtr        Global::range_locator = 0;
   bool                   Global::verbose = false;
+  bool                   Global::row_size_unlimited = false;
   CommitLog             *Global::user_log = 0;
   CommitLog             *Global::system_log = 0;
   CommitLog             *Global::metadata_log = 0;
