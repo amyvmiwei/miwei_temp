@@ -1010,11 +1010,19 @@ bool CellStoreV6::may_contain(ScanContextPtr &scan_context) {
       if (may_contain(scan_context->start_row)) {
         SchemaPtr &schema = scan_context->schema;
         size_t rowlen = scan_context->start_row.length();
+        uint8_t column_family_id;
+        const char *ptr;
         boost::scoped_array<char> rowcol(new char[rowlen + 2]);
         memcpy(rowcol.get(), scan_context->start_row.c_str(), rowlen + 1);
 
         foreach_ht(const char *col, scan_context->spec->columns) {
-          uint8_t column_family_id = schema->get_column_family(col)->id;
+          if ((ptr = strchr(col, ':')) != 0) {
+            String family(col, (size_t)(ptr-col));
+            column_family_id = schema->get_column_family(family.c_str())->id;
+          }
+          else
+            column_family_id = schema->get_column_family(col)->id;
+
           rowcol[rowlen + 1] = column_family_id;
 
           if (may_contain(rowcol.get(), rowlen + 2))
