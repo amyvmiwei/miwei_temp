@@ -19,12 +19,14 @@ stop_rs2() {
   echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
   sleep 1
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+  \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
 }
 
 stop_rs1() {
   echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
   sleep 1
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs1.pid`
+  \rm -f $HT_HOME/run/Hypertable.RangeServer.rs1.pid
 }
 
 compact_user() {

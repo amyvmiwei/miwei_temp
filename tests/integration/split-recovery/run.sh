@@ -24,7 +24,7 @@ stop_range_server() {
   pidfile=$HT_HOME/run/Hypertable.RangeServer.pid
   if [ -f $pidfile ]; then
     kill -9 `cat $pidfile`
-    rm -f $pidfile
+    \rm -f $pidfile
     sleep 1
 
     if $HT_HOME/bin/serverup --silent rangeserver; then

@@ -13,7 +13,7 @@ cleanup_and_abort() {
     sleep 10
     if [ -f $PIDFILE ]; then
       kill -9 `cat $PIDFILE`
-      rm -f $PIDFILE
+      \rm -f $PIDFILE
     fi
     exit 1
 }
@@ -52,7 +52,7 @@ stop_range_server() {
   # stop any existing range server if necessary
   if [ -f $PIDFILE ]; then
     kill -9 `cat $PIDFILE`
-    rm -f $PIDFILE
+    \rm -f $PIDFILE
     sleep 3
 
     if $HT_HOME/bin/ht serverup --silent rangeserver; then
@@ -96,6 +96,7 @@ run_test() {
 
   stop_range_server
   kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid`
+  \rm -f $HT_HOME/run/Hypertable.Master*.pid
 
   if [ $TEST_ID == 9 ] || [ $TEST_ID == 10 ] || [ $TEST_ID == 11 ] || [ $TEST_ID == 12 ] ; then
       $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --no-master \
@@ -186,6 +187,7 @@ run_test() {
 
   if [ $TEST_ID == 9 ] || [ $TEST_ID == 10 ] || [ $TEST_ID == 11 ] || [ $TEST_ID == 12 ] ; then
       kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid`
+      \rm -f $HT_HOME/run/Hypertable.Master*.pid
   fi
 
   /bin/rm -f running.$TEST_ID

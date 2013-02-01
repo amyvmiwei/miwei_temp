@@ -11,7 +11,7 @@ RS2_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs2.pid
 
 . $SCRIPT_DIR/utilities.sh
 
-kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.*.pid`
+kill_all_rs
 $HT_HOME/bin/stop-servers.sh
 
 # get rid of all old logfiles

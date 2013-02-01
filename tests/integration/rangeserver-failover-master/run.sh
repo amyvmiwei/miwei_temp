@@ -16,6 +16,7 @@ RUN_DIR=`pwd`
 
 # shut down range servers
 kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.*.pid`
+\rm -f $HT_HOME/run/Hypertable.RangeServer.*.pid
 
 # Dumping cores slows things down unnecessarily for normal test runs
 #ulimit -c 0
@@ -71,6 +72,7 @@ stop_range_servers() {
     done
     sleep 1
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
 }
 
 stop_rs() {
@@ -78,10 +80,12 @@ stop_rs() {
     let port=38059+$1
     echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
+    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
 }
 
 kill_rs() {
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
+    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
 }
 
 
@@ -247,6 +251,7 @@ run_test() {
 
     # shut down range servers
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.*.pid`
+    \rm -f $HT_HOME/run/Hypertable.RangeServer.*.pid
 
     # Make sure all ranges have been acknowledged
     let j=2

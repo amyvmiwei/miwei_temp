@@ -13,7 +13,7 @@ RUN_DIR=`pwd`
 
 . $SCRIPT_DIR/utilities.sh
 
-kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.*.pid`
+kill_all_rs
 $HT_HOME/bin/stop-servers.sh
 
 # get rid of all old logfiles
@@ -59,6 +59,7 @@ sleep 2
 # kill rs1 and the master
 stop_rs 1
 kill -9 `cat $HT_HOME/run/Hypertable.Master.pid`
+\rm -f $HT_HOME/run/Hypertable.Master.pid
 
 # wait for recovery to complete 
 wait_for_recovery rs1

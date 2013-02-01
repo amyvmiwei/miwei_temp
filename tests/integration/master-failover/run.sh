@@ -13,7 +13,7 @@ let testnum=1
 start_masters() {
 
     kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid` 2>&1 >& /dev/null
-    /bin/rm -rf $HT_HOME/run/log_backup/mml
+    /bin/rm -rf $HT_HOME/run/log_backup/mml $HT_HOME/run/Hypertable.Master*.pid
 
     $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38050 $@ \
         --pidfile $HT_HOME/run/Hypertable.Master.38050.pid \
@@ -53,6 +53,7 @@ $HT_HOME/bin/start-test-servers.sh --no-thriftbroker --clear
 echo "use '/'; create namespace test;" | $HT_HOME/bin/ht shell --batch
 
 kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid`
+\rm -f $HT_HOME/run/Hypertable.Master*.pid
 
 start_masters "--induce-failure=connection-handler-before-id-response:exit:1"
 run_test "use '/test'; create namespace foo;"
@@ -91,6 +92,7 @@ start_masters "--induce-failure=drop-table-INITIAL:exit:1"
 run_test "USE '/test'; DROP TABLE friends;"
 
 kill -9 `cat $HT_HOME/run/Hypertable.Master.*.pid`
+\rm -f $HT_HOME/run/Hypertable.Master.*.pid
 $HT_HOME/bin/clean-database.sh 
 
 exit 0
