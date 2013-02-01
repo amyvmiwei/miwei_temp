@@ -76,12 +76,21 @@ stop_rs() {
     let port=38059+$1
     echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
+    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
 }
 
 kill_rs() {
     for num in "$@"; do
         kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs${num}.pid`
+        \rm -f $HT_HOME/run/Hypertable.RangeServer.rs${num}.pid
     done
+}
+
+kill_all_rs() {
+    kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs*.pid`
+    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs*.pid
+    kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.pid`
+    \rm -f $HT_HOME/run/Hypertable.RangeServer.pid
 }
 
 save_failure_state() {

@@ -22,6 +22,7 @@ save_failure_state() {
 kill_range_servers() {
     kill -9 `cat $RS1_PIDFILE`
     kill -9 `cat $RS2_PIDFILE`
+    \rm -f $RS1_PIDFILE $RS2_PIDFILE
 }
 
 if [ -e failure ]; then

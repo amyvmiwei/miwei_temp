@@ -88,6 +88,7 @@ stop_range_servers() {
         echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
         let rsnum=port-38059
         kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs${rsnum}.pid`
+        \rm -f $HT_HOME/run/Hypertable.RangeServer.rs${rsnum}.pid
         let port-=1
     done
 }
@@ -96,6 +97,7 @@ kill_range_servers() {
     let rsnum=1
     while [ $rsnum -le $1 ] ; do
         kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs${rsnum}.pid`
+        \rm -f $HT_HOME/run/Hypertable.RangeServer.rs${rsnum}.pid
         let rsnum++
     done
 }
@@ -105,10 +107,12 @@ stop_rs() {
     let port=38059+$1
     echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
+    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
 }
 
 kill_rs() {
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
+    \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
 }
 
 
@@ -231,6 +235,7 @@ run_test() {
 
     # shut down all servers
     kill -9 `cat $HT_HOME/run/Hypertable.Master.pid`
+    \rm -f $HT_HOME/run/Hypertable.Master.pid
     kill_range_servers $RS_COUNT
     $HT_HOME/bin/stop-servers.sh --no-master --no-rangeserver
 

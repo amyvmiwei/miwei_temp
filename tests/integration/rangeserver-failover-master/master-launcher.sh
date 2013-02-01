@@ -45,6 +45,7 @@ $DUMP_METALOG $METALOG
 # Kill RangeServer if requested
 if [ -f $2 ]; then
   kill -9 `cat $2`
+  \rm -f $2
 fi
 
 

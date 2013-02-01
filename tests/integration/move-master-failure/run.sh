@@ -57,6 +57,7 @@ echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
 echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
 sleep 1
 kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+\rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
 
 $HT_HOME/bin/start-test-servers.sh --no-rangeserver \
   --induce-failure="relinquish-acknowledge-INITIAL-a:pause(3000):0;relinquish-acknowledge-INITIAL-b:exit:0"
@@ -94,6 +95,7 @@ if [ $j -eq 6 ]; then
   sleep 60
   cp $HT_HOME/run/op.output .
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+  \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
   pstack `cat $HT_HOME/run/Hypertable.Master.pid` > master.stack
   cp $HT_HOME/log/Hypertable.Master.log .
   cp $HT_HOME/run/monitoring/mop.dot .
@@ -126,6 +128,7 @@ $HT_HOME/bin/ht ht_load_generator update \
 RET=$?
 
 kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+\rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
 $HT_HOME/bin/stop-servers.sh
 
 exit $RET

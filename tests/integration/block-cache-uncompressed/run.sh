@@ -44,6 +44,7 @@ if [ $? != 0 ] ; then
 fi
 
 kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.pid`
+\rm -f $HT_HOME/run/Hypertable.RangeServer.pid
 $HT_HOME/bin/clean-database.sh
 
 exit 0

@@ -37,6 +37,7 @@ for ((i=1; i<10; i++)) ; do
 done
 
 kill -9 `cat $PIDFILE`
+\rm -f $PIDFILE
 
 n=`fgrep "Switching from minor to major" rangeserver.output | wc -l`
 if [ $n -eq 0 ] ; then

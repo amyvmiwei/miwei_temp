@@ -19,6 +19,7 @@ stop_range_servers() {
   sleep 1
 
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
+  \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
 }
 
 # stop and start servers

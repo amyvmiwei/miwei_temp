@@ -46,6 +46,7 @@ $HT_HOME/bin/ht ht_load_generator update --spec-file=$SCRIPT_DIR/data.spec --max
 sleep 5
 
 kill -9 `cat $PIDFILE`
+\rm -f $PIDFILE
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE \
     --Hypertable.Mutator.ScatterBuffer.FlushLimit.PerServer=11K \
@@ -62,6 +63,7 @@ if [ -s error.0 ] ; then
     echo "USE sys; SELECT * FROM METADATA RETURN_DELETES DISPLAY_TIMESTAMPS;" | $HT_HOME/bin/ht shell --batch >& metadata.dump
     save_failure_state
     kill -9 `cat $PIDFILE`
+    \rm -f $PIDFILE
     exit 1
 fi
 
@@ -72,6 +74,7 @@ echo "USE '/'; SELECT * FROM LoadTest INTO FILE 'select-a.0';" | $HT_HOME/bin/ht
 echo "USE '/'; DUMP TABLE LoadTest INTO FILE 'dump.tsv';" | $HT_HOME/bin/ht shell --batch
 
 kill -9 `cat $PIDFILE`
+\rm -f $PIDFILE
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$PIDFILE >> rangeserver.output &
 
@@ -85,8 +88,10 @@ diff select-a.0 select-b.0
 
 if [ $? != 0 ] ; then
     kill -9 `cat $PIDFILE`
+    \rm -f $PIDFILE
     exit 1
 fi
 
 kill -9 `cat $PIDFILE`
+\rm -f $PIDFILE
 exit 0
