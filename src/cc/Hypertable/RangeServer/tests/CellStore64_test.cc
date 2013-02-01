@@ -39,7 +39,7 @@
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "../CellStoreFactory.h"
-#include "../CellStoreV5.h"
+#include "../CellStoreV6.h"
 #include "../Global.h"
 
 #include <cstdlib>
@@ -117,7 +117,7 @@ int main(int argc, char **argv) {
     Config::properties->set("Hypertable.RangeServer.CellStore.DefaultCompressor", String("none"));
     Config::properties->set("Hypertable.RangeServer.CellStore.DefaultBlockSize", 4*1024*1024);
 
-    cs = new CellStoreV5(Global::dfs.get());
+    cs = new CellStoreV6(Global::dfs.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 4096, Config::properties, &table_id));
 
     // setup value
