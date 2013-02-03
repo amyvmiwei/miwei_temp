@@ -260,8 +260,10 @@ void AccessGroup::split_row_estimate_data_cached(SplitRowDataMapT &split_row_dat
 
 void AccessGroup::split_row_estimate_data_stored(SplitRowDataMapT &split_row_data) {
   ScopedLock lock(m_mutex);
-  foreach_ht (CellStoreInfo &csinfo, m_stores)
-    csinfo.cs->split_row_estimate_data(split_row_data);
+  if (!m_in_memory) {
+    foreach_ht (CellStoreInfo &csinfo, m_stores)
+      csinfo.cs->split_row_estimate_data(split_row_data);
+  }
 }
 
 
