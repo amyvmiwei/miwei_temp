@@ -1008,9 +1008,18 @@ bool Range::estimate_split_row(SplitRowDataMapT &split_row_data, String &row) {
     cumulative += iter->second;
   }
   HT_ASSERT(!row.empty());
-  HT_ASSERT(row.compare(m_metalog_entity->spec.end_row) <= 0);
-  if (row.compare(m_metalog_entity->spec.end_row) == 0)
-    return false;
+  // If row chosen above is same as end row, find largest row <= end_row
+  if (row.compare(m_metalog_entity->spec.end_row) == 0) {
+    row.clear();
+    for (SplitRowDataMapT::iterator iter=split_row_data.begin();
+         iter != split_row_data.end(); ++iter) {
+      if (strcmp(iter->first, m_metalog_entity->spec.end_row) < 0)
+        row = iter->first;
+      else
+        break;
+    }
+    return !row.empty();
+  }
   return true;
 }
 
