@@ -296,9 +296,9 @@ public class WikipediaWordCount {
    * @throws Exception When running the job fails.
    */
   public static void main(String[] args) throws Exception {
-    Arguments parsed_args = parseArgs(args);
     Configuration conf = new Configuration();
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
+    Arguments parsed_args = parseArgs(otherArgs);
     Job job = new Job(conf, "wikipedia");
     job.setJarByClass(WikipediaWordCount.class);
     job.setCombinerClass(IntSumReducer.class);
