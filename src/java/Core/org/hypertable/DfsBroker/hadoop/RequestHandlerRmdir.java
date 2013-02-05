@@ -35,7 +35,7 @@ public class RequestHandlerRmdir extends ApplicationHandler {
     static final Logger log = Logger.getLogger(
         "org.hypertable.DfsBroker.hadoop");
 
-    public RequestHandlerRmdir(Comm comm, HdfsBroker broker, Event event) {
+    public RequestHandlerRmdir(Comm comm, HadoopBroker broker, Event event) {
         super(event);
         mComm = comm;
         mBroker = broker;
@@ -63,5 +63,5 @@ public class RequestHandlerRmdir extends ApplicationHandler {
     }
 
     private Comm       mComm;
-    private HdfsBroker mBroker;
+    private HadoopBroker mBroker;
 }

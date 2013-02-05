@@ -34,7 +34,7 @@ public class RequestHandlerLength extends ApplicationHandler {
     static final Logger log = Logger.getLogger(
         "org.hypertable.DfsBroker.hadoop");
 
-    public RequestHandlerLength(Comm comm, HdfsBroker broker, Event event) {
+    public RequestHandlerLength(Comm comm, HadoopBroker broker, Event event) {
         super(event);
         mComm = comm;
         mBroker = broker;
@@ -62,5 +62,5 @@ public class RequestHandlerLength extends ApplicationHandler {
     }
 
     private Comm       mComm;
-    private HdfsBroker mBroker;
+    private HadoopBroker mBroker;
 }

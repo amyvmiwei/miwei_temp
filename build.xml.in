@@ -13,14 +13,14 @@
   <property name="mapreducesrc.dir" value="${basedir}/src/java/MapReduce"/>
   <property name="hivesrc.dir" value="${basedir}/src/java/Hive"/>
   <property name="gensrc.dir" value="${basedir}/src/gen-java"/>
-  <property name="lib.dir" value="${basedir}/lib"/>
+  <property name="src.lib.dir" value="${basedir}/lib"/>
+  <property name="src.lib.distro.dir" value="${basedir}/lib/@HADOOP_DISTRO@"/>
   <property name="examples.dir" value="${basedir}/examples/java"/>
 
   <property name="contrib.dir" value="${basedir}/contrib"/>
 
-  <property name="build.dir" value="${basedir}/build"/>
-  <property name="build.classes" value="${build.dir}/classes"/>
-  <property name="build.src" value="${build.dir}/src"/>
+  <property name="build.dir" value="${basedir}/build/@HADOOP_DISTRO@"/>
+  <property name="build.classes" value="${build.dir}/@HADOOP_DISTRO@/classes"/>
 
   <!-- javadoc -->
   <property name="doc.dir" location="doc" />
@@ -30,11 +30,26 @@
 
   <path id="project.classpath">
     <pathelement location="${build.classes}" />
-    <fileset dir="${lib.dir}">
+    <fileset dir="${src.lib.dir}">
       <!-- Dont prefer thrift jar included with hive -->
       <include name="libthrift-*.jar"/> 
     </fileset>
-    <fileset dir="${lib.dir}">
+    <fileset dir="${src.lib.dir}">
+      <include name="commons-cli-*.jar"/> 
+      <include name="commons-logging-*.jar"/> 
+      <include name="hadoop-*.jar"/> 
+      <include name="hbase-*.jar"/> 
+      <include name="hive-*.jar"/> 
+      <include name="hive-*.jar"/> 
+      <include name="hive-*.jar"/> 
+      <include name="junit-*.jar"/> 
+      <include name="log4j-*.jar"/> 
+      <include name="slf4j-*.jar"/> 
+      <include name="slf4j-*.jar"/> 
+      <include name="zookeeper-*.jar"/>
+      <exclude name="hypertable-*.jar"/>
+    </fileset>
+    <fileset dir="${src.lib.distro.dir}">
       <include name="commons-cli-*.jar"/> 
       <include name="commons-logging-*.jar"/> 
       <include name="hadoop-*.jar"/> 
@@ -85,7 +100,7 @@
       <classpath refid='project.classpath'/>
     </javac>
     <javac srcdir="${src.dir}" destdir="${build.classes}" deprecation="yes"
-           debug="true" includeantruntime='false'>
+           debug="true" includeantruntime='false' excludes="@SOURCE_EXCLUDES@">
       <classpath refid="project.classpath"/>
     </javac>
     <javac srcdir="${mapreducesrc.dir}" destdir="${build.classes}" deprecation="yes"
@@ -108,7 +123,7 @@
   <!--                                                                    -->
   <!-- ================================================================== -->
   <target name="jar" depends="clean, compile">
-    <jar destfile="${build.dir}/${final.name}.jar" basedir="${build.classes}" excludes="**/${examples.name}.jar,**/examples/**">
+    <jar destfile="${build.dir}/@HADOOP_DISTRO@/${final.name}.jar" basedir="${build.classes}" excludes="**/${examples.name}.jar,**/examples/**">
       <manifest>
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>
@@ -119,7 +134,7 @@
   </target>
 
   <target name="clean">
-    <delete dir="${build.dir}"/>
+    <delete dir="${build.dir}/@HADOOP_DISTRO@"/>
   </target>
 
   <target name="test" depends="compile" description="Execute tests">
@@ -135,10 +150,10 @@
   <target name="examples" depends="jar" description="Example programs">
     <mkdir dir="${build.classes}/lib" />
     <copy todir="${build.classes}/lib">
-       <fileset dir="${lib.dir}" includes="*.jar" excludes="hypertable*.jar"/>
-       <fileset dir="${build.dir}" includes="${final.name}.jar"/>
+       <fileset dir="${src.lib.dir}" includes="*.jar" excludes="hypertable*.jar"/>
+       <fileset dir="${build.dir}/@HADOOP_DISTRO@" includes="${final.name}.jar"/>
     </copy> 
-    <jar destfile="${build.dir}/${examples.name}.jar" basedir="${build.classes}" includes="**/examples/**/*.class **/${final.name}.jar **/libthrift-*.jar **/commons-httpclient-*.jar" excludes="**/${examples.name}.jar">
+    <jar destfile="${build.dir}/@HADOOP_DISTRO@/${examples.name}.jar" basedir="${build.classes}" includes="**/examples/**/*.class" excludes="**/${examples.name}.jar">
       <manifest>
         <section name="org/hypertable">
           <attribute name="Implementation-Title" value="Hypertable"/>

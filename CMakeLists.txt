@@ -210,10 +210,23 @@ configure_file(bin/prerm.in prerm @ONLY)
 file(GLOB CONFS conf/[^.]*)
 install(FILES ${CONFS} DESTINATION conf)
 install(PROGRAMS ${HYPERTABLE_BINARY_DIR}/ht DESTINATION bin)
+
+# common jars
 file(GLOB JARS lib/*.jar lib/*.txt)
 install(FILES ${JARS} DESTINATION lib/java)
-install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}.jar
-          DESTINATION lib/java OPTIONAL)
+
+# cdh3 jars
+file(GLOB JARS lib/cdh3/*.jar)
+install(FILES ${JARS} DESTINATION lib/java/cdh3)
+install(FILES ${HYPERTABLE_BINARY_DIR}/java/cdh3/hypertable-${VERSION}.jar
+          DESTINATION lib/java/cdh3 OPTIONAL)
+
+# cdh4 jars
+file(GLOB JARS lib/cdh4/*.jar)
+install(FILES ${JARS} DESTINATION lib/java/cdh4)
+install(FILES ${HYPERTABLE_BINARY_DIR}/java/cdh4/hypertable-${VERSION}.jar
+          DESTINATION lib/java/cdh4 OPTIONAL)
+
 install(PROGRAMS bin/jrun DESTINATION bin)
 
 # Copy Thrift files
@@ -237,8 +250,10 @@ install(DIRECTORY ${Thrift_INCLUDE_DIR} DESTINATION include USE_SOURCE_PERMISSIO
 install(DIRECTORY ${Log4cpp_INCLUDE_DIR}/log4cpp DESTINATION include USE_SOURCE_PERMISSIONS)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(FILES ${HYPERTABLE_BINARY_DIR}/java/hypertable-${VERSION}-examples.jar
-          DESTINATION lib/java OPTIONAL)
+  install(FILES ${HYPERTABLE_BINARY_DIR}/java/cdh3/hypertable-${VERSION}-examples.jar
+          DESTINATION lib/java/cdh3 OPTIONAL)
+  install(FILES ${HYPERTABLE_BINARY_DIR}/java/cdh4/hypertable-${VERSION}-examples.jar
+          DESTINATION lib/java/cdh4 OPTIONAL)
   file(GLOB SCRIPTS bin/*.sh)
   install(PROGRAMS ${SCRIPTS} DESTINATION bin)
   install(DIRECTORY examples/apache_log DESTINATION examples
