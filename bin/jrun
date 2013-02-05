@@ -45,6 +45,28 @@ while [ $# -gt 1 ] ; do
   fi
 done
 
+# Make sure configured for Hadoop distro
+DISTRO=
+if [ -e $HYPERTABLE_HOME/conf/hadoop-distro ]; then
+  DISTRO=`cat $HYPERTABLE_HOME/conf/hadoop-distro`
+fi
+HT_JAR=`ls -1 /opt/hypertable/doug/current/lib/java/*.jar | grep "hypertable-[^-]*.jar" | awk 'BEGIN {FS="/"} {print $NF}'`
+if [ -z "$HT_JAR" ] || [ -z "$DISTRO" ]; then
+    if [ -z "$DISTRO" ]; then
+      echo "No Hadoop distro is configured.  Run the following script to"
+      echo "configure:"
+      echo ""
+      echo "$HYPERTABLE_HOME/bin/set-hadoop-distro.sh"
+      exit 1
+    fi
+    $HYPERTABLE_HOME/bin/set-hadoop-distro.sh $DISTRO
+else
+    diff $HYPERTABLE_HOME/lib/java/$HT_JAR $HYPERTABLE_HOME/lib/java/$DISTRO/$HT_JAR > /dev/null
+    if [ $? -ne 0 ]; then
+        $HYPERTABLE_HOME/bin/set-hadoop-distro.sh $DISTRO        
+    fi
+fi
+
 # for developers, add Hadoop classes to CLASSPATH
 if [ -d "$HYPERTABLE_HOME/build/classes" ]; then
   CLASSPATH=${CLASSPATH}:$HYPERTABLE_HOME/build/classes

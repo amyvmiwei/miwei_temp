@@ -37,6 +37,7 @@ import java.util.ArrayList;
 import java.util.StringTokenizer;
 
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.io.IntWritable;
@@ -47,6 +48,8 @@ import org.apache.hadoop.mapreduce.Reducer;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 
 import org.hypertable.hadoop.mapreduce.Helper;
 import org.hypertable.hadoop.mapreduce.KeyWritable;
@@ -67,7 +70,7 @@ import org.hypertable.Common.Time;
  *
  * hadoop jar <jarfile> org/hypertable/examples/WikipediaWordCount --columns=article
  */
-public class WikipediaWordCount {
+public class WikipediaWordCount extends Configured implements Tool {
 
   /**
    * Simple ASCII Tokenizer class.  This class is used to extract words
@@ -295,12 +298,12 @@ public class WikipediaWordCount {
    * @param args  The command line parameters.
    * @throws Exception When running the job fails.
    */
-  public static void main(String[] args) throws Exception {
-    Configuration conf = new Configuration();
-    String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-    Arguments parsed_args = parseArgs(otherArgs);
-    Job job = new Job(conf, "wikipedia");
+  public int run(String[] args) throws Exception {
+    Job job = new Job(getConf());
     job.setJarByClass(WikipediaWordCount.class);
+    job.setJobName("wordcount");
+    Arguments parsed_args = parseArgs(args);
+
     job.setCombinerClass(IntSumReducer.class);
 
     /**
@@ -322,6 +325,12 @@ public class WikipediaWordCount {
      */
     Helper.initReducerJob(parsed_args.namespace, "wikipedia", IntSumTableReducer.class, job);
 
-    System.exit(job.waitForCompletion(true) ? 0 : 1);
+    boolean success = job.waitForCompletion(true);
+    return success ? 0 : 1;
+  }
+
+  public static void main(String[] args) throws Exception {
+    int res = ToolRunner.run(new Configuration(), new WikipediaWordCount(), args);
+    System.exit(res);
   }
 }

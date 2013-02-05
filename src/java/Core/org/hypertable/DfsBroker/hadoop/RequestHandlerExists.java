@@ -34,7 +34,7 @@ public class RequestHandlerExists extends ApplicationHandler {
     static final Logger log = Logger.getLogger(
         "org.hypertable.DfsBroker.hadoop");
 
-    public RequestHandlerExists(Comm comm, HdfsBroker broker, Event event) {
+    public RequestHandlerExists(Comm comm, HadoopBroker broker, Event event) {
         super(event);
         mComm = comm;
         mBroker = broker;
@@ -63,5 +63,5 @@ public class RequestHandlerExists extends ApplicationHandler {
     }
 
     private Comm       mComm;
-    private HdfsBroker mBroker;
+    private HadoopBroker mBroker;
 }

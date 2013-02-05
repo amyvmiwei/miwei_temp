@@ -33,7 +33,7 @@ public class RequestHandlerPositionRead extends ApplicationHandler {
     static final Logger log = Logger.getLogger(
         "org.hypertable.DfsBroker.hadoop");
 
-    public RequestHandlerPositionRead(Comm comm, HdfsBroker broker,
+    public RequestHandlerPositionRead(Comm comm, HadoopBroker broker,
                                       Event event) {
         super(event);
         mComm = comm;
@@ -73,5 +73,5 @@ public class RequestHandlerPositionRead extends ApplicationHandler {
     }
 
     private Comm       mComm;
-    private HdfsBroker mBroker;
+    private HadoopBroker mBroker;
 }

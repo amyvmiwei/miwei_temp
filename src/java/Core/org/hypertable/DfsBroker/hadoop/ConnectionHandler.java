@@ -45,7 +45,7 @@ public class ConnectionHandler implements DispatchHandler {
         "org.hypertable.DfsBroker.hadoop");
 
     public ConnectionHandler(Comm comm, ApplicationQueue appQueue,
-                             HdfsBroker broker) {
+                             HadoopBroker broker) {
         mComm = comm;
         mAppQueue = appQueue;
         mBroker = broker;
@@ -143,6 +143,6 @@ public class ConnectionHandler implements DispatchHandler {
 
     private Comm mComm;
     private ApplicationQueue mAppQueue;
-    private HdfsBroker mBroker;
+    private HadoopBroker mBroker;
 }
 

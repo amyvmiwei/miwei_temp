@@ -32,7 +32,7 @@ public class RequestHandlerFlush extends ApplicationHandler {
     static final Logger log = Logger.getLogger(
         "org.hypertable.DfsBroker.hadoop");
 
-    public RequestHandlerFlush(Comm comm, HdfsBroker broker, Event event) {
+    public RequestHandlerFlush(Comm comm, HadoopBroker broker, Event event) {
         super(event);
         mComm = comm;
         mBroker = broker;
@@ -45,5 +45,5 @@ public class RequestHandlerFlush extends ApplicationHandler {
     }
 
     private Comm       mComm;
-    private HdfsBroker mBroker;
+    private HadoopBroker mBroker;
 }

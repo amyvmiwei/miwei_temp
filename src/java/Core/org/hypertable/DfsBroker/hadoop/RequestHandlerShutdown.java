@@ -36,7 +36,7 @@ public class RequestHandlerShutdown extends ApplicationHandler {
         "org.hypertable.DfsBroker.hadoop");
 
     public RequestHandlerShutdown(Comm comm, ApplicationQueue appQueue,
-                                  HdfsBroker broker, Event event) {
+                                  HadoopBroker broker, Event event) {
         super(event);
         mComm = comm;
         mAppQueue = appQueue;
@@ -84,5 +84,5 @@ public class RequestHandlerShutdown extends ApplicationHandler {
 
   private Comm              mComm;
   private ApplicationQueue  mAppQueue;
-  private HdfsBroker        mBroker;
+  private HadoopBroker        mBroker;
 }
