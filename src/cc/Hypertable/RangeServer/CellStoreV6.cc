@@ -495,11 +495,8 @@ void CellStoreV6::add(const Key &key, const ByteString value) {
       if (m_trailer.total_entries == m_max_approx_items - 1) {
         m_trailer.filter_items_estimate = (size_t)(((double)m_max_entries
             / (double)m_max_approx_items) * m_bloom_filter_items->size());
-        if (m_trailer.filter_items_estimate == 0) {
-          HT_INFOF("max_entries = %lld, max_approx_items = %lld, bloom_filter_items_size = %lld",
-                   (Lld)m_max_entries, (Lld)m_max_approx_items, (Lld)m_bloom_filter_items->size());
-          HT_ASSERT(m_trailer.filter_items_estimate);
-        }
+        if (m_trailer.filter_items_estimate == 0)
+          m_trailer.filter_items_estimate = 1;
         create_bloom_filter(true);
       }
     }

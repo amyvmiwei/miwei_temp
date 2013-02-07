@@ -2271,3 +2271,6 @@ control=(AUTO) row='row000275' family=1 qualifier='' ts=-9223372036854775806 rev
 trailer.expiration_time = 18000000000497
 trailer.expirable_data = 14030
 trailer.delete_count= 0
+[issue1017]
+may_contain(ROW="the only row") == true
+may_contain(ROW="absent row") == false
