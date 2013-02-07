@@ -274,7 +274,6 @@ namespace Hypertable {
 
     void create_index_table(const String &primary_table_name);
 
-    typedef hash_map<String, TablePtr> TableCache;
     typedef boost::tokenizer<boost::char_separator<char> > Tokenizer;
     String get_full_name(const String &sub_name);
 
