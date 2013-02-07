@@ -8,6 +8,7 @@ echo "Defect #855"
 echo "======================="
 
 # restart servers with a clean hyperspace
+$HT_HOME/bin/stop-servers.sh
 $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver \
     --no-thriftbroker --no-master
 
