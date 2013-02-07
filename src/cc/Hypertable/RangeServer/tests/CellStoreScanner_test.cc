@@ -1594,16 +1594,57 @@ int main(int argc, char **argv) {
     out << "trailer.expirable_data = " << expirable_data << "\n";
     out << "trailer.delete_count= " << delete_count << "\n";
 
+    // close scanner
+    scanner = 0;
+
+    // issue 1017
+    out << "[issue1017]\n";
+    csname = testdir + "/cs3";
+    cs_props = new Properties();
+    Schema::parse_bloom_filter("rows", cs_props);
+    schema = Schema::new_instance(schema_str, strlen(schema_str));
+    if (!schema->is_valid()) {
+      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
+      exit(1);
+    }
+    cs = new CellStoreV6(Global::dfs.get(), schema.get());
+    HT_TRY("creating cellstore", cs->create(csname.c_str(), 735, cs_props, &table_id));
+    strcpy((char *)rowbuf, "the only row");
+    value = "Dummy value";
+    uptr = valuebuf;
+    Serialization::encode_vi32(&uptr, strlen(value));
+    strcpy((char *)uptr, value);
+    bsvalue.ptr = valuebuf;
+
+    for (size_t i=0; i<1000; i++) {
+      dbuf.clear();
+      serkey.ptr = dbuf.ptr;
+      create_key_and_append(dbuf, FLAG_INSERT, rowbuf, 1, "");
+      key.load(serkey);
+      cs->add(key, bsvalue);
+    }
+    cs->finalize(&table_id);
+
+    ssbuilder.clear();
+    ssbuilder.add_row_interval("the only row", true, "the only row", true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()),&range,schema);
+    out << "may_contain(ROW=\"the only row\") == ";
+    out << ((cs->may_contain(scan_ctx)) ? "true" : "false") << "\n";
+
+    ssbuilder.clear();
+    ssbuilder.add_row_interval("absent row", true, "absent row", true);
+    scan_ctx = new ScanContext(TIMESTAMP_MAX, &(ssbuilder.get()),&range,schema);
+    out << "may_contain(ROW=\"absent row\") == ";
+    out << ((cs->may_contain(scan_ctx)) ? "true" : "false") << "\n";
+
+    cs = 0;
+
     out << flush;
 
     String cmd_str = "diff CellStoreScanner_test.output "
                      "CellStoreScanner_test.golden";
     if (system(cmd_str.c_str()) != 0)
       return 1;
-
-    // close cell store
-    scanner = 0;
-    cs = 0;
 
     client->rmdir(testdir);
   }
