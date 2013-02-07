@@ -15,6 +15,10 @@ cat ${SCRIPT_DIR}/test.hql | $HT_HOME/bin/ht hypertable \
         --namespace / --no-prompt --test-mode \
         > test.output
 
+
+# make sure hypertable jar files are copied into lib/java
+$HT_HOME/bin/set-hadoop-distro.sh cdh3
+
 #
 # javac/java failed on test01 with this:
 #
