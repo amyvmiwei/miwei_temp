@@ -40,6 +40,10 @@ TableCache::TableCache(PropertiesPtr &props, RangeLocatorPtr &range_locator,
 
 TablePtr TableCache::get(const String &table_name, int32_t flags) {
   ScopedLock lock(m_mutex);
+  return get_unlocked(table_name, flags);
+}
+
+TablePtr TableCache::get_unlocked(const String &table_name, int32_t flags) {
   String id;
 
   TableMap::iterator it = m_table_map.find(table_name);

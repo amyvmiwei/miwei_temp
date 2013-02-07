@@ -45,6 +45,8 @@ namespace Hypertable {
      */
     TablePtr get(const String &table_name, int32_t flags);
 
+    TablePtr get_unlocked(const String &table_name, int32_t flags);
+
     /**
      * @param table_name Name of table
      * @param output_schema string representation of Schema object
@@ -67,9 +69,13 @@ namespace Hypertable {
      */
     bool remove(const String &table_name);
 
+    void lock() { m_mutex.lock(); }
+    void unlock() { m_mutex.unlock(); }
+
   private:
     typedef hash_map<String, TablePtr> TableMap;
 
+    Mutex                   m_mutex;
     PropertiesPtr           m_props;
     RangeLocatorPtr         m_range_locator;
     Comm                   *m_comm;
@@ -78,7 +84,6 @@ namespace Hypertable {
     ApplicationQueueInterfacePtr     m_app_queue;
     NameIdMapperPtr         m_namemap;
     uint32_t                m_timeout_ms;
-    Mutex                   m_mutex;
     TableMap                m_table_map;
   };
 

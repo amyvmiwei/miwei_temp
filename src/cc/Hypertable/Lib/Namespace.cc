@@ -188,15 +188,21 @@ void Namespace::alter_table(const String &table_name, const String &alter_schema
 
 
 TablePtr Namespace::open_table(const String &table_name, int32_t flags) {
+  Locker<TableCache> lock(*m_table_cache);
   String full_name = get_full_name(table_name);
   TablePtr table = _open_table(full_name, flags);
 
-  if (table->needs_index_table() 
-          && !table->has_index_table()) 
-    table->set_index_table(open_table(get_index_table_name(table_name)));
+  if (table->needs_index_table() && !table->has_index_table()) {
+    full_name = get_full_name( get_index_table_name(table_name) );
+    table->set_index_table(_open_table(full_name, 0));
+  }
+
   if (table->needs_qualifier_index_table() 
-          && !table->has_qualifier_index_table()) 
-    table->set_qualifier_index_table(open_table(get_qualifier_index_table_name(table_name)));
+      && !table->has_qualifier_index_table()) {
+    full_name = get_full_name( get_qualifier_index_table_name(table_name) );
+    table->set_qualifier_index_table(_open_table(full_name, 0));
+  }
+
   return table;
 }
 
@@ -206,7 +212,7 @@ TablePtr Namespace::_open_table(const String &full_name, int32_t flags) {
     t=new Table(m_props, m_range_locator, m_conn_manager, m_hyperspace,
                      m_app_queue, m_namemap, full_name, flags, m_timeout_ms);
   else
-    t=m_table_cache->get(full_name, flags);
+    t=m_table_cache->get_unlocked(full_name, flags);
   t->set_namespace(this);
   return (t);
 }
@@ -339,7 +345,10 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
 
   table->get(tid, schema);
 
-  table = _open_table(TableIdentifier::METADATA_NAME);
+  {
+    Locker<TableCache> lock(*m_table_cache);
+    table = _open_table(TableIdentifier::METADATA_NAME);
+  }
 
   sprintf(start_row, "%s:", tid.id);
   sprintf(end_row, "%s:%s", tid.id, Key::END_ROW_MARKER);
