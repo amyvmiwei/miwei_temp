@@ -65,6 +65,7 @@ wait_for_recovery() {
     (( n += 1 ))
     if [ "$n" -gt "300" ]; then
       echo "wait_for_recovery: time exceeded"
+      save_failure_state
       exit 1
     fi
     sleep 2
@@ -167,6 +168,7 @@ run_test() {
     $HT_SHELL --batch < $SCRIPT_DIR/create-test-table.hql
     if [ $? != 0 ] ; then
         echo "Unable to create table 'failover-test', exiting ..."
+        save_failure_state
         exit 1
     fi
 
@@ -176,6 +178,7 @@ run_test() {
         update
     if [ $? != 0 ] ; then
         echo "Problem loading table 'FailoverTest', exiting ..."
+        save_failure_state
         exit 1
     fi
     
@@ -194,6 +197,7 @@ run_test() {
         | grep -v "hypertable" > dbdump.$TEST
     if [ $? != 0 ] ; then
         echo "Problem dumping table 'failover-test', exiting ..."
+        save_failure_state
         exit 1
     fi
     

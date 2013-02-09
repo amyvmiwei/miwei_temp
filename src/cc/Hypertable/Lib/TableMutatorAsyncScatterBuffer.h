@@ -100,6 +100,7 @@ namespace Hypertable {
     TableMutatorAsync   *m_mutator;
     SchemaPtr            m_schema;
     RangeLocatorPtr      m_range_locator;
+    LocationCachePtr     m_location_cache;
     RangeServerClient    m_range_server;
     TableIdentifierManaged m_table_identifier;
     TableMutatorAsyncSendBufferMap m_buffer_map;
