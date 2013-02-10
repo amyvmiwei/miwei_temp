@@ -1,3 +1,29 @@
+Version 0.9.7.0:
+(2013-02-11)
+
+   RangeServer failover
+   Added ability to switch Hadoop distros (cdh3 or cdh4)
+   issue 958: shell now accepts unicode characters
+   Fixed Namespace::open_table race condition
+   issue1017: Fixed assert in CS bloom filter creation with small # of keys
+   Fixed argument parsing in WikipediaWordCount.java mapreduce program
+   Improved split row estimation logic
+   Fixed tests by removing .pid files after kill
+   issue976: fixed rows+cols bloom filter access with qualifier regex
+   Added update_without_index
+   Hypertable Shell test no longer fails if it is restarted
+   issue 986: catching mapr-specific error code
+   issue 974: Thrift clients now verify that ScanSpec is valid
+   issue 947: check_integrity no longer fails if a table is empty
+   issue 989: do not allow creating indices with COUNTER columns
+   issue 972: changed ERROR message to INFO
+   issue 970: fixed potential segmentation fault in CommandShell
+   Fixed a compiler warning in release mode
+   issue 963: fixed thrift framesize property mismatch
+   issue 961: fixed SHOW CREATE TABLE with group_commit_interval
+   Fixed compiler errors on g++ 4.7.2
+   Added Hypertable.RangeServer.Range.RowSize.Unlimited
+
 Version 0.9.6.5:
 (2012-10-22)
 
