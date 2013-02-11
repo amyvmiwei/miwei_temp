@@ -24,8 +24,10 @@
 
 #include <vector>
 
-#include <boost/thread/mutex.hpp>
+#include <boost/random.hpp>
+#include <boost/random/uniform_01.hpp>
 #include <boost/thread/condition.hpp>
+#include <boost/thread/mutex.hpp>
 
 #include "AsyncComm/CommAddress.h"
 #include "AsyncComm/ApplicationQueueInterface.h"
@@ -109,6 +111,7 @@ namespace Hypertable {
     uint64_t             m_resends;
     FailedMutations      m_failed_mutations;
     FlyweightString      m_constant_strings;
+    boost::mt19937       m_rng;
     bool                 m_auto_refresh;
     uint32_t             m_timeout_ms;
     uint32_t             m_server_flush_limit;

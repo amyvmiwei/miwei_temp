@@ -119,7 +119,6 @@ namespace Hypertable {
       ScopedLock lock(m_mutex);
       CommAddress addr;
       addr.set_proxy(hostname);
-      m_conn_manager->remove(addr);
       if (addr == m_root_range_info.addr)
         m_root_stale = true;
       m_cache->invalidate_host(hostname);
