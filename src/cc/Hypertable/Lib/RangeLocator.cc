@@ -285,7 +285,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   CommAddress addr;
   RowInterval ri;
   bool inclusive = (row_key == 0 || *row_key == 0) ? true : false;
-  bool root_lookup = table->is_metadata() && (row_key == 0 || strcmp(row_key, Key::END_ROOT_ROW) < 0);
+  bool root_lookup = table->is_metadata() && (row_key == 0 || strcmp(row_key, Key::END_ROOT_ROW) <= 0);
 
   //HT_DEBUG_OUT << "Trying to locate " << table->id <<  "[" << row_key
   //    << "]" << " hard=" << hard << " m_root_stale=" << m_root_stale << " root_addr="
@@ -361,12 +361,12 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
                                     meta_scan_spec, scan_block, timer);
     }
     catch (Exception &e) {
-      if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
-        m_root_stale = true;
-      else if (e.code() == Error::COMM_NOT_CONNECTED ||
-               e.code() == Error::COMM_BROKEN_CONNECTION ||
-               e.code() == Error::COMM_INVALID_PROXY)
-        m_root_stale = true;
+      if (e.code() == Error::COMM_NOT_CONNECTED ||
+          e.code() == Error::COMM_BROKEN_CONNECTION ||
+          e.code() == Error::COMM_INVALID_PROXY)
+        invalidate_host(addr.proxy);
+
+      m_root_stale = true;
 
       SAVE_ERR2(e.code(), e, format("Problem creating scanner for start row "
                 "'%s' on METADATA[..??]", meta_keys.start));
@@ -431,7 +431,10 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   }
   catch (Exception &e) {
     if (e.code() == Error::COMM_NOT_CONNECTED ||
-        e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
+        e.code() == Error::COMM_BROKEN_CONNECTION ||
+        e.code() == Error::COMM_INVALID_PROXY)
+      invalidate_host(addr.proxy);
+    else if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
       m_cache->invalidate(TableIdentifier::METADATA_ID,
                           meta_keys.start+TableIdentifier::METADATA_ID_LENGTH+1);
     SAVE_ERR2(e.code(), e, format("Problem creating scanner on second-level "
@@ -640,8 +643,10 @@ int RangeLocator::read_root_location(Timer &timer) {
      * future can happen even when the original root server is
      * still alive, this will have to change.
      */
-    if (old_addr.is_set() && old_addr != addr)
+    if (old_addr.is_set() && old_addr != addr) {
+      m_conn_manager->remove(old_addr);
       invalidate_host(old_addr.proxy);
+    }
 
     m_conn_manager->add(addr, m_root_metadata_retry_interval,
                         "Root RangeServer");

@@ -33,9 +33,6 @@
 
 #include <poll.h>
 
-#include <boost/random.hpp>
-#include <boost/random/uniform_01.hpp>
-
 using namespace Hypertable;
 
 
@@ -46,7 +43,7 @@ TableMutatorAsyncScatterBuffer::TableMutatorAsyncScatterBuffer(Comm *comm,
   : m_comm(comm), m_app_queue(app_queue), m_mutator(mutator), m_schema(schema),
     m_range_locator(range_locator), m_range_server(comm, timeout_ms),
     m_table_identifier(*table_identifier),
-    m_full(false), m_resends(0), m_auto_refresh(auto_refresh), m_timeout_ms(timeout_ms),
+    m_full(false), m_resends(0), m_rng(1), m_auto_refresh(auto_refresh), m_timeout_ms(timeout_ms),
     m_counter_value(9), m_timer(timeout_ms), m_id(id), m_memory_used(0), m_outstanding(false),
     m_send_flags(0), m_wait_time(ms_init_redo_wait_time), dead(false) {
 
@@ -316,16 +313,18 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
     }
     catch (Exception &e) {
       if (e.code() == Error::COMM_NOT_CONNECTED ||
-          e.code() == Error::COMM_BROKEN_CONNECTION) {
+          e.code() == Error::COMM_BROKEN_CONNECTION ||
+          e.code() == Error::COMM_INVALID_PROXY) {
+        m_range_locator->invalidate_host(send_buffer->addr.proxy);
         send_buffer->add_retries(send_buffer->send_count, 0,
                                  send_buffer->pending_updates.size);
-        if (e.code() == Error::COMM_NOT_CONNECTED)
+        if (e.code() == Error::COMM_NOT_CONNECTED ||
+            e.code() == Error::COMM_INVALID_PROXY)
           m_completion_counter.decrement();
         else
           outstanding = true;
-        // Random wait betwee 0 and 5 seconds
-        boost::mt19937 rng;
-        poll(0, 0, rng()%5000);
+        // Random wait between 0 and 5 seconds
+        poll(0, 0, m_rng()%5000);
       }
       else {
         HT_FATALF("Problem sending updates to %s - %s (%s)",
