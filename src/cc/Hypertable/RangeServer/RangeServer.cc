@@ -1173,7 +1173,7 @@ RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id,
   }
 
   if (!Global::metadata_table) {
-    ScopedLock lock(m_mutex);
+    ScopedLock lock(Global::mutex);
     // double-check locking (works fine on x86 and amd64 but may fail
     // on other archs without using a memory barrier
     if (!Global::metadata_table)
@@ -1585,12 +1585,9 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       HT_MAYBE_FAIL_X("load-range-1", !table->is_system());
 
       /** Get TableInfo, create if doesn't exist **/
-      {
-        ScopedLock lock(m_mutex);
-        if (!m_live_map->get(table->id, table_info)) {
-          table_info = new TableInfo(m_master_client, table, schema);
-          register_table = true;
-        }
+      if (!m_live_map->get(table->id, table_info)) {
+        table_info = new TableInfo(m_master_client, table, schema);
+        register_table = true;
       }
 
       // Verify schema, this will create the Schema object and add it to
@@ -1627,7 +1624,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
       // Lazily create sys/METADATA table pointer
       if (!Global::metadata_table) {
-        ScopedLock lock(m_mutex);
+        ScopedLock lock(Global::mutex);
         // double-check locking (works fine on x86 and amd64 but may fail
         // on other archs without using a memory barrier
         if (!Global::metadata_table)
@@ -1640,7 +1637,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
        * Queue "range_start_row" update for sys/RS_METRICS table
        */
       {
-        ScopedLock lock(m_mutex);
+        ScopedLock lock(m_pending_metrics_mutex);
         Cell cell;
 
         if (m_pending_metrics_updates == 0)
@@ -1689,17 +1686,20 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
     if (table->is_metadata()) {
       if (is_root) {
         Global::log_dfs->mkdirs(Global::log_dir + "/root");
+        ScopedLock lock(Global::mutex);
         Global::root_log = new CommitLog(Global::log_dfs, Global::log_dir
                                          + "/root", m_props);
       }
       else if (Global::metadata_log == 0) {
         Global::log_dfs->mkdirs(Global::log_dir + "/metadata");
+        ScopedLock lock(Global::mutex);
         Global::metadata_log = new CommitLog(Global::log_dfs,
                                              Global::log_dir + "/metadata", m_props);
       }
     }
     else if (table->is_system() && Global::system_log == 0) {
       Global::log_dfs->mkdirs(Global::log_dir + "/system");
+      ScopedLock lock(Global::mutex);
       Global::system_log = new CommitLog(Global::log_dfs,
                                          Global::log_dir + "/system", m_props);
     }
@@ -3091,8 +3091,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
 
   TableMutatorPtr mutator;
   if (now > m_next_metrics_update) {
-    ScopedLock lock(m_mutex);
     if (!Global::rs_metrics_table) {
+      ScopedLock lock(Global::mutex);
       try {
         uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
         if (!Global::range_locator)
@@ -3109,13 +3109,18 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
       }
     }
     if (Global::rs_metrics_table) {
+      CellsBuilder *pending_metrics_updates = 0;
       mutator = Global::rs_metrics_table->create_mutator();
-      /**
-       * Add pending updates
-       */
-      if (m_pending_metrics_updates) {
+
+      {
+        ScopedLock lock(m_pending_metrics_mutex);
+        pending_metrics_updates = m_pending_metrics_updates;
+        m_pending_metrics_updates = 0;
+      }
+
+      if (pending_metrics_updates) {
         KeySpec key;
-        Cells &cells = m_pending_metrics_updates->get();
+        Cells &cells = pending_metrics_updates->get();
         for (size_t i=0; i<cells.size(); i++) {
           key.row = cells[i].row_key;
           key.row_len = strlen(cells[i].row_key);
@@ -3124,8 +3129,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
           key.column_qualifier_len = strlen(cells[i].column_qualifier);
           mutator->set(key, cells[i].value, cells[i].value_len);
         }
-        delete m_pending_metrics_updates;
-        m_pending_metrics_updates = 0;
+        delete pending_metrics_updates;
       }
     }
   }
@@ -3909,7 +3913,7 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
         continue;
 
       if (!Global::metadata_table) {
-        ScopedLock lock(m_mutex);
+        ScopedLock lock(Global::mutex);
         // TODO double-check locking (works fine on x86 and amd64 but may fail
         // on other archs without using a memory barrier
         if (!Global::metadata_table)
@@ -3950,9 +3954,9 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
       {
         if (rr.is_root()) {
           if (!root_log_exists){
-            ScopedLock lock(m_drop_table_mutex);
             if (!Global::root_log) {
               Global::log_dfs->mkdirs(Global::log_dir + "/root");
+              ScopedLock lock(Global::mutex);
               Global::root_log = new CommitLog(Global::log_dfs,
                                                Global::log_dir + "/root", m_props);
               root_log_exists = true;
@@ -3962,9 +3966,9 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
         }
         else if (rr.table.is_metadata()) {
           if (!metadata_log_exists){
-            ScopedLock lock(m_drop_table_mutex);
             if (!Global::metadata_log) {
               Global::log_dfs->mkdirs(Global::log_dir + "/metadata");
+              ScopedLock lock(Global::mutex);
               Global::metadata_log = new CommitLog(Global::log_dfs,
                                                    Global::log_dir + "/metadata", m_props);
               metadata_log_exists = true;
@@ -3974,9 +3978,9 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
         }
         else if (rr.table.is_system()) {
           if (!system_log_exists){
-            ScopedLock lock(m_drop_table_mutex);
             if (!Global::system_log) {
               Global::log_dfs->mkdirs(Global::log_dir + "/system");
+              ScopedLock lock(Global::mutex);
               Global::system_log = new CommitLog(Global::log_dfs,
                                                  Global::log_dir + "/system", m_props);
               system_log_exists = true;
@@ -4341,7 +4345,7 @@ RangeServer::replay_load_range(ResponseCallback *cb,
      * Lazily create sys/METADATA table pointer
      */
     if (!Global::metadata_table) {
-      ScopedLock lock(m_mutex);
+      ScopedLock lock(Global::mutex);
       uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
       if (!Global::range_locator)
         Global::range_locator = new Hypertable::RangeLocator(m_props,

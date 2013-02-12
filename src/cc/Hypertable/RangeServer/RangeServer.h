@@ -318,6 +318,7 @@ namespace Hypertable {
     size_t                 m_metric_samples;
     size_t                 m_cores;
     int32_t                m_maintenance_pause_interval;
+    Mutex                  m_pending_metrics_mutex;
     CellsBuilder          *m_pending_metrics_updates;
     boost::xtime           m_last_control_file_check;
     int32_t                m_control_file_check_interval;
