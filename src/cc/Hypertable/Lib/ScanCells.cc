@@ -33,10 +33,10 @@ bool ScanCells::add(EventPtr &event, int *scanner_id) {
   return scanblock->eos();
 }
 
-bool ScanCells::load(SchemaPtr &schema,
-                     const String &end_row, bool end_inclusive, int row_limit,
-                     int *rows_seen, String &cur_row, CstrSet &rowset,
-                     int64_t *bytes_scanned, Key *lastkey) {
+bool
+ScanCells::load(SchemaPtr &schema, const String &end_row, bool end_inclusive,
+		ScanLimitState *limit_state, CstrSet &rowset,
+		int64_t *bytes_scanned, Key *lastkey) {
   SerializedKey serkey;
   ByteString value;
   Key key;
@@ -81,12 +81,14 @@ bool ScanCells::load(SchemaPtr &schema,
       }
 
       // check for row change and row limit
-      if (strcmp(cur_row.c_str(), key.row)) {
-        (*rows_seen)++;
-        cur_row = key.row;
-        if (row_limit > 0 && *rows_seen > row_limit) {
-          return true;
-        }
+      if (strcmp(limit_state->last_row.c_str(), key.row)) {
+	if (!limit_state->last_row.empty()) {
+          limit_state->rows_seen++;
+          if (limit_state->row_limit > 0 &&
+              limit_state->rows_seen >= limit_state->row_limit)
+            return true;
+	}
+	limit_state->last_row = key.row;
       }
 
       cell.row_key = key.row;
@@ -110,6 +112,12 @@ bool ScanCells::load(SchemaPtr &schema,
       // if rowset scan remove scanned row
       while (!rowset.empty() && strcmp(*rowset.begin(), key.row) < 0)
         rowset.erase(rowset.begin());
+
+      // Check for cell limit
+      limit_state->cells_seen++;
+      if (limit_state->cell_limit > 0 &&
+          limit_state->cells_seen >= limit_state->cell_limit)
+        return true;
     }
   }
 
