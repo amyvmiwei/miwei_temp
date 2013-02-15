@@ -65,7 +65,7 @@ Range::Range(MasterClientPtr &master_client,
     m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
     m_disk_bytes_read(0), m_master_client(master_client),
     m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
-    m_split_off_high(false), m_added_inserts(0), m_range_set(range_set),
+    m_split_off_high(false), m_unsplittable(false), m_added_inserts(0), m_range_set(range_set),
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
     m_relinquish(false), m_removed_from_working_set(false), m_maintenance_generation(0),
     m_load_metrics(identifier->id, range->start_row, range->end_row),
@@ -80,7 +80,7 @@ Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
     m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
     m_disk_bytes_read(0), m_master_client(master_client), m_metalog_entity(range_entity),
     m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
-    m_split_threshold(0), m_split_off_high(false), m_added_inserts(0), m_range_set(range_set),
+    m_split_threshold(0), m_split_off_high(false), m_unsplittable(false), m_added_inserts(0), m_range_set(range_set),
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
     m_relinquish(false), m_removed_from_working_set(false), m_maintenance_generation(0),
     m_load_metrics(range_entity->table.id, range_entity->spec.start_row, range_entity->spec.end_row),
@@ -522,7 +522,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
   if (tailp)
     (*tailp)->next = 0;
 
-  if (size >= m_split_threshold)
+  if (!m_unsplittable && size >= m_split_threshold)
     mdata->needs_split = true;
 
   if (size > Global::range_maximum_size) {
@@ -779,6 +779,13 @@ void Range::split() {
 
   HT_ASSERT(!m_is_root);
 
+  if (m_unsplittable) {
+    HT_WARNF("Split attempted on range %s[%s..%s], but marked unsplittable",
+	     m_metalog_entity->table.id, m_metalog_entity->spec.start_row,
+	     m_metalog_entity->spec.end_row);
+    return;
+  }
+
   try {
 
     switch (m_metalog_entity->state.state) {
@@ -864,6 +871,10 @@ void Range::split_install_log() {
     if (strcmp(m_split_row.c_str(), m_metalog_entity->spec.start_row) < 0 ||
         strcmp(m_split_row.c_str(), m_metalog_entity->spec.end_row) >= 0) {
       if (!determine_split_row_from_cached_keys(ag_vector)) {
+	if (Global::row_size_unlimited) {
+	  m_unsplittable = true;
+	  HT_THROW(Error::CANCELLED, "");
+	}
 	m_error = Error::RANGESERVER_ROW_OVERFLOW;
 	HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
 		  "(a) Unable to determine split row for range %s[%s..%s]",
@@ -873,6 +884,10 @@ void Range::split_install_log() {
   }
   else {
     if (!determine_split_row_from_cached_keys(ag_vector)) {
+      if (Global::row_size_unlimited) {
+	m_unsplittable = true;
+	HT_THROW(Error::CANCELLED, "");
+      }
       m_error = Error::RANGESERVER_ROW_OVERFLOW;
       HT_THROWF(Error::RANGESERVER_ROW_OVERFLOW,
 		"(b) Unable to determine split row for range %s[%s..%s]",
