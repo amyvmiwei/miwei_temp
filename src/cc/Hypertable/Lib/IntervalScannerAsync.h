@@ -62,8 +62,6 @@ namespace Hypertable {
 
     virtual ~IntervalScannerAsync();
 
-    int32_t get_rows_seen() { return m_rows_seen; }
-    void    set_rows_seen(int32_t n) { m_rows_seen = n; }
     bool abort(bool is_create);
     // if we can't retry then abort scanner
     bool retry_or_abort(bool refresh, bool hard, bool is_create, 
@@ -90,10 +88,10 @@ namespace Hypertable {
     RangeLocatorPtr     m_range_locator;
     LocationCachePtr    m_loc_cache;
     ScanSpecBuilder     m_scan_spec_builder;
+    ScanLimitState      m_scan_limit_state;
     RangeServerClient   m_range_server;
     TableIdentifierManaged m_table_identifier;
     bool                m_eos;
-    String              m_cur_row;
     String              m_create_scanner_row;
     RangeLocationInfo   m_range_info;
     RangeLocationInfo   m_next_range_info;
@@ -103,7 +101,6 @@ namespace Hypertable {
     String              m_start_row;
     String              m_end_row;
     bool                m_end_inclusive;
-    int32_t             m_rows_seen;
     uint32_t            m_timeout_ms;
     bool                m_current;
     int64_t             m_bytes_scanned;
