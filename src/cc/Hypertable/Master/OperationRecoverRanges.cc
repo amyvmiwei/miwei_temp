@@ -356,9 +356,9 @@ bool OperationRecoverRanges::validate_recovery_plan() {
 bool OperationRecoverRanges::wait_for_quorum() {
   size_t available_servers = m_context->available_server_count();
   size_t total_servers = m_context->rsc_manager->server_count();
-  size_t quorum = (total_servers * 
-          m_context->props->get_i32("Hypertable.Failover.Quorum.Percentage")) 
-            / 100;
+  size_t failover_pct =
+    m_context->props->get_i32("Hypertable.Failover.Quorum.Percentage");
+  size_t quorum = ((total_servers * failover_pct) + 99) / 100;
 
   if (available_servers < quorum || available_servers == 0) {
     // wait for at least half the servers to be up before proceeding
