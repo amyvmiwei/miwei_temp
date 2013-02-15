@@ -31,6 +31,7 @@
 
 #include "Cells.h"
 #include "ScanBlock.h"
+#include "ScanLimitState.h"
 #include "Schema.h"
 
 namespace Hypertable {
@@ -99,16 +100,13 @@ protected:
    * @param schema is the schema for the table being scanned
    * @param end_row the end_row of the scan for which we got these results
    * @param end_inclusive is the end_row included in the scan
-   * @param row_limit row limit specified for scan
-   * @param rows_seen number of unique rows seen
-   * @param cur_row current/last row seen by scanner
-   * @param eos true if these results have the eos bit set
+   * @param limit_state Pointer to ScanLimitState
    * @param bytes_scanned number of bytes read
    * @return true if scan has reached end
    */
-  bool load(SchemaPtr &schema,
-            const String &end_row, bool end_inclusive, int row_limit,
-            int *rows_seen, String &cur_row, CstrSet &rowset, int64_t *bytes_scanned);
+  bool load(SchemaPtr &schema, const String &end_row, bool end_inclusive,
+	    ScanLimitState *limit_state, CstrSet &rowset,
+	    int64_t *bytes_scanned);
 
   /**
    * get number of rows that were skipped because of an OFFSET predicate

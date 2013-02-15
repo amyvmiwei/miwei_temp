@@ -41,9 +41,9 @@ IntervalScannerAsync::IntervalScannerAsync(Comm *comm, ApplicationQueuePtr &app_
     uint32_t timeout_ms, bool current, TableScannerAsync *scanner, int id)
   : m_comm(comm), m_table(table), m_range_locator(range_locator),
     m_loc_cache(range_locator->location_cache()),
-    m_range_server(comm, timeout_ms), m_eos(false),
+    m_scan_limit_state(scan_spec), m_range_server(comm, timeout_ms), m_eos(false),
     m_fetch_outstanding(false), m_create_outstanding(false),
-    m_end_inclusive(false), m_rows_seen(0), m_timeout_ms(timeout_ms),
+    m_end_inclusive(false), m_timeout_ms(timeout_ms),
     m_current(current), m_bytes_scanned(0),
     m_create_handler(app_queue, scanner, id, true),
     m_fetch_handler(app_queue, scanner, id, false),
@@ -493,8 +493,7 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
   // arrived then add them to cells
   bool eos;
 
-  eos = cells->load(m_schema, m_end_row, m_end_inclusive,
-                    m_scan_spec_builder.get().row_limit, &m_rows_seen, m_cur_row,
+  eos = cells->load(m_schema, m_end_row, m_end_inclusive, &m_scan_limit_state,
                     m_rowset, &m_bytes_scanned);
 
   m_eos = m_eos || eos;
