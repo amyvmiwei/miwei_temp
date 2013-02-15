@@ -44,7 +44,9 @@ void OperationRecoveryBlocker::execute() {
 
   size_t total_servers = m_context->rsc_manager->server_count();
   size_t connected_servers = m_context->available_server_count();
-  size_t quorum = (total_servers * m_context->props->get_i32("Hypertable.Failover.Quorum.Percentage")) / 100;
+  size_t failover_pct
+    = m_context->props->get_i32("Hypertable.Failover.Quorum.Percentage");
+  size_t quorum = ((total_servers * failover_pct) + 99) / 100;
 
   HT_INFO_OUT << "total_servers=" << total_servers << " connected_servers="
               << connected_servers << " quorum=" << quorum << HT_END;

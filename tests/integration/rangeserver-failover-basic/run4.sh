@@ -11,6 +11,7 @@ RS3_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs3.pid
 RS4_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs4.pid
 RS5_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs5.pid
 RS6_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs6.pid
+RS7_PIDFILE=$HT_HOME/run/Hypertable.RangeServer.rs7.pid
 RUN_DIR=`pwd`
 
 . $HT_HOME/bin/ht-env.sh
@@ -92,10 +93,13 @@ kill_rs 4
 # now there should be error messages that the quorum can not be reached
 wait_for_quorum
 
-# start one more range server
+# start two more range servers
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS6_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs6 \
    --Hypertable.RangeServer.Port=38065 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs6.output&
+$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS7_PIDFILE \
+   --Hypertable.RangeServer.ProxyName=rs7 \
+   --Hypertable.RangeServer.Port=38066 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs7.output&
 
 # wait for recovery to complete 
 wait_for_recovery rs1
@@ -112,8 +116,9 @@ dump_keys dbdump-a.4
 $HT_HOME/bin/stop-servers.sh
 kill_rs 5
 kill_rs 6
+kill_rs 7
 
-# start master and rs5, rs6
+# start master and rs5, rs6, and rs7
 $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --config=${SCRIPT_DIR}/test.cfg
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS5_PIDFILE \
@@ -122,6 +127,9 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS5_PIDFILE \
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS6_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs6 \
    --Hypertable.RangeServer.Port=38065 --config=${SCRIPT_DIR}/test.cfg 2>&1 >> rangeserver.rs6.output&
+$HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS7_PIDFILE \
+   --Hypertable.RangeServer.ProxyName=rs7 \
+   --Hypertable.RangeServer.Port=38066 --config=${SCRIPT_DIR}/test.cfg 2>&1 >> rangeserver.rs7.output&
 
 sleep 10
 
@@ -130,8 +138,7 @@ dump_keys dbdump-b.4
 
 # stop servers
 $HT_HOME/bin/stop-servers.sh
-kill_rs 5
-kill_rs 6
+kill_all_rs
 
 echo "Test passed"
 
