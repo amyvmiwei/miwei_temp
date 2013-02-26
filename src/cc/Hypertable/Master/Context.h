@@ -91,7 +91,8 @@ namespace Hypertable {
   public:
     Context() : timer_interval(0), monitoring_interval(0), gc_interval(0),
                 next_monitoring_time(0), next_gc_time(0),
-                test_mode(false), m_balance_plan_authority(0) {
+                test_mode(false), quorum_reached(false),
+                m_balance_plan_authority(0) {
       master_file_handle = 0;
       balancer = 0;
       response_manager = 0;
@@ -128,11 +129,12 @@ namespace Hypertable {
     uint32_t gc_interval;
     time_t next_monitoring_time;
     time_t next_gc_time;
-    bool test_mode;
     OperationProcessor *op;
     OperationTimedBarrier *recovery_barrier_op;
     String location_hash;
     int32_t max_allowable_skew;
+    bool test_mode;
+    bool quorum_reached;
 
     void add_available_server(const String &location);
     void remove_available_server(const String &location);

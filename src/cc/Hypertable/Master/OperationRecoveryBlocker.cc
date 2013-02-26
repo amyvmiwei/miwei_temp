@@ -22,8 +22,9 @@
 #include "Common/Compat.h"
 #include "Common/Error.h"
 
+#include "OperationProcessor.h"
 #include "OperationRecoveryBlocker.h"
-#include "GcWorker.h"
+#include "OperationTimedBarrier.h"
 
 using namespace Hypertable;
 
@@ -59,6 +60,22 @@ void OperationRecoveryBlocker::execute() {
     HT_INFOF("Leaving RecoveryBlocker-%lld state=%s-BLOCKED", (Lld)header.id,
              OperationState::get_text(get_state()));
     return;
+  }
+
+  /**
+   * This statement prevents recovery from being triggered erroneously during
+   * startup.  If Context::quorum_reached is false, that means the Master is
+   * in the process of starting up.  Once the quorum has been reached, then
+   * Context::quorum_reached gets set to true and the TimedBarrier operation
+   * gets added to the OperationProcessor which gives the remaining servers
+   * a chance to connect without being recovered.
+   */
+  if (!m_context->quorum_reached) {
+    uint32_t millis = 2 * m_context->props->get_i32("Hypertable.Failover.GracePeriod");
+    m_context->recovery_barrier_op->advance_into_future(millis);
+    OperationPtr operation = m_context->recovery_barrier_op;
+    m_context->op->add_operation(operation);
+    m_context->quorum_reached = true;
   }
 
   set_state(OperationState::COMPLETE);

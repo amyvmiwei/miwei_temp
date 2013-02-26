@@ -77,11 +77,11 @@ $HT_HOME/bin/stop-servers.sh
 kill_rs 2
 kill_rs 3
 
-# The "Barrier for RECOVERY will be up" will be printed twice:
+# The "Barrier for RECOVERY will be up" will be printed at least twice:
 #   1. When rs1 is stopped
 #   2. When barrier is pushed back by 5 seconds after rs2 is stopped
 L=`grep "Barrier for RECOVERY will be up" $MASTER_LOG  | wc -l`
-if [ $L -ne 2 ]
+if [ $L -lt 2 ]
 then
   echo "Test failed"
   mkdir failed-run-graceperiod
