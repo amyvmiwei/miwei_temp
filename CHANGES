@@ -1,3 +1,13 @@
+Version 0.9.7.1:
+(2013-02-28)
+
+   Prevent erroneous RangeServer recovery on startup
+   Fixed rounding problem in quorum calculation
+   Fixed bug in CELL_LIMIT handling
+   LoadBalancer no longer assignes ranges to non-existing servers
+   Modified upgrade.sh to copy notification-hook.tmpl
+   Got rid of doxygen warnings and added more comments
+
 Version 0.9.7.0:
 (2013-02-11)
 
