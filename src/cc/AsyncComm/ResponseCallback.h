@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,6 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Declarations for ResponseCallback.
+ * This file contains type declarations for ResponseCallback, a class that
+ * is used to send generic success/error response messages back to
+ * request clients.
+ */
+
 
 #ifndef HYPERTABLE_RESPONSECALLBACK_H
 #define HYPERTABLE_RESPONSECALLBACK_H
@@ -86,11 +94,14 @@ namespace Hypertable {
       return m_event->addr;
     }
 
+    /** Get smart pointer to event object.
+     * @return smart pointer to event object
+     */
     EventPtr &get_event() { return m_event; }
 
   protected:
-    Comm          *m_comm;
-    EventPtr       m_event;
+    Comm          *m_comm;  //!< Comm pointer
+    EventPtr       m_event; //!< Smart pointer to event object
   };
 
 } // namespace Hypertable

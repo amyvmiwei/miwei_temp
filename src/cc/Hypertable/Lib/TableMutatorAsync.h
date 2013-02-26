@@ -158,7 +158,8 @@ namespace Hypertable {
      * Insert a bunch of cells into the table (atomically if cells are in
      * the same range/row)
      *
-     * @param cells a list of cells
+     * @param start Iterator pointing to start of cells to be inserted
+     * @param end Iterator pointing to end of cells to be inserted
      */
     void set_cells(Cells::const_iterator start, Cells::const_iterator end);
 

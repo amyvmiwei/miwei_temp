@@ -55,6 +55,7 @@ void RangeMoveSpec::decode(const uint8_t **bufp, size_t *remainp) {
   complete = decode_bool(bufp, remainp);
 }
 
+/** @relates RangeMoveSpec */
 ostream &Hypertable::operator<<(ostream &os, const RangeMoveSpec &move_spec) {
   os <<"{RangeMoveSpec: " << move_spec.table << " " << move_spec.range
      <<" source_location="<< move_spec.source_location

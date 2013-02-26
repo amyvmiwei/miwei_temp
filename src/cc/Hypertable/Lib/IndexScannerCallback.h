@@ -158,8 +158,8 @@ static String last;
     /**
      * Callback method for successful scan
      *
-     * @param scanner
-     * @param cells returned cells
+     * @param scanner Pointer to scanner
+     * @param scancells returned cells
      */
     virtual void scan_ok(TableScannerAsync *scanner, ScanCellsPtr &scancells) {
       bool is_eos = scancells->get_eos();
@@ -235,8 +235,8 @@ static String last;
     }
 
     virtual void update_error(TableMutatorAsync *mutator, int error, 
-            FailedMutations &failedMutations) {
-      m_original_cb->update_error(mutator, error, failedMutations);
+                              FailedMutations &failures) {
+      m_original_cb->update_error(mutator, error, failures);
     }
 
    private:

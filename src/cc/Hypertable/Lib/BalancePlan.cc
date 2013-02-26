@@ -60,6 +60,8 @@ void BalancePlan::decode(const uint8_t **bufp, size_t *remainp) {
   duration_millis = decode_i32(bufp, remainp);
 }
 
+/** @relates BalancePlan
+ */
 ostream &Hypertable::operator<<(ostream &os, const BalancePlan &plan) {
   os << "{BalancePlan:";
   for (size_t i=0; i<plan.moves.size(); i++)

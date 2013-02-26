@@ -80,7 +80,8 @@ namespace Hypertable {
     CellStoreV6(Filesystem *filesys, Schema *schema=0);
     virtual ~CellStoreV6();
 
-    virtual void create(const char *fname, size_t max_entries, PropertiesPtr &,
+    virtual void create(const char *fname, size_t max_entries,
+                        PropertiesPtr &props,
                         const TableIdentifier *table_id=0);
     virtual void add(const Key &key, const ByteString value);
     virtual void finalize(TableIdentifier *table_identifier);

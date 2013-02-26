@@ -40,7 +40,7 @@ using namespace Hyperspace;
 NameIdMapper::NameIdMapper(Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir)
   : m_hyperspace(hyperspace), m_toplevel_dir(toplevel_dir) {
 
-  /**
+  /*
    * Prefix looks like this:  "/" <toplevel_dir> "namemap" "names"
    * This for loop adds the number of components in <toplevel_dir>
    */

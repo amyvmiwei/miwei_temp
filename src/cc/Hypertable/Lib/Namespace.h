@@ -101,7 +101,7 @@ namespace Hypertable {
      *
      * will create a table with the follwing XML schema:
      *
-     * <pre>
+     * @verbatim
      * <Schema compressor="lzo">
      *   <AccessGroup name="primary" inMemory="true" blksz="1024">
      *     <ColumnFamily>
@@ -120,7 +120,7 @@ namespace Hypertable {
      *     </ColumnFamily>
      *   </AccessGroup>
      * </Schema>
-     * </pre>
+     * @endverbatim
      *
      * @param name name of the table
      * @param schema schema definition for the table
@@ -134,7 +134,7 @@ namespace Hypertable {
      * indicates that the column family should be deleted.  For example,
      * the following XML diff:
      *
-     * <pre>
+     * @verbatim
      * <Schema>
      *   <AccessGroup name="secondary">
      *     <ColumnFamily>
@@ -149,7 +149,7 @@ namespace Hypertable {
      *     </ColumnFamily>
      *   </AccessGroup>
      * </Schema>
-     * </pre>
+     * @endverbatim
      *
      * when applied to the 'foo' table, described in the create_table
      * example, generates a table that is equivalent to one created
@@ -224,7 +224,7 @@ namespace Hypertable {
      * Returns a list of existing tables &  namesspaces
      *
      * @param include_sub_entries include or not include all sub entries
-     * @param tables reference to vector of table names
+     * @param listing reference to vector of table names
      */
     void get_listing(bool include_sub_entries, std::vector<NamespaceListing> &listing);
 

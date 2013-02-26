@@ -275,14 +275,14 @@ namespace Hyperspace {
      * Locates the parent 'node' of the given pathname.  It determines the name
      * of the parent node by stripping off the characters incuding and after
      * the last '/' character.  It then looks up the name in the m_node_map and
-     * sets the pointer reference 'parent_node' to it. As a side effect, it
-     * also saves the child name (e.g. characters after the last '/' character
+     * sets the pointer reference <code>parent_name</code> to it. As a side effect,
+     * it also saves the child name (e.g. characters after the last '/' character
      * to the string reference child_name.  NOTE: This method locks the
      * m_node_map_mutex.
      *
      * @param normal_name Normalized (e.g. no trailing '/') name of path to
      *        find parent of
-     * @param parent_node pointer reference to hold return pointer
+     * @param parent_name reference to string to hold return parent name
      * @param child_name reference to string to hold the child directory entry
      *        name
      * @return true if parent node found, false otherwise

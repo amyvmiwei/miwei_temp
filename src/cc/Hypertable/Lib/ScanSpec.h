@@ -244,7 +244,7 @@ public:
    * Parses a column string into column family, qualifier and whether the
    * qualifier is a regexp or not
    *
-   * @param column column specified string
+   * @param column_str column specified string
    * @param family family name
    * @param qualifier column qualifier
    * @param is_regexp true if the qualifier string is a regexp

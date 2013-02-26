@@ -83,7 +83,7 @@ namespace Hypertable {
      *
      * Only one cell that's previously obtained from #next can be unget. Mostly
      * designed to provide one cell look-ahead for downstream wrapper to
-     * implement #next_row.
+     * implement next_row.
      *
      * @param cell the cell object to unget
      * @throws exception if unget is called twice without intervening next
@@ -96,8 +96,7 @@ namespace Hypertable {
     /**
      * Callback method for successful scan
      *
-     * @param scanner
-     * @param cells vector of returned cells
+     * @param cells Vector of returned cells
      */
     void scan_ok(ScanCellsPtr &cells);
 

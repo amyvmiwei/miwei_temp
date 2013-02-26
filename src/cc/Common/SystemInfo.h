@@ -66,7 +66,7 @@ namespace Hypertable {
   };
 
   /**
-   * Reports loadavg normalized over #cores
+   * Reports loadavg normalized over number of cores
    */
   struct LoadAvgStat {
     LoadAvgStat &refresh();

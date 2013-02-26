@@ -65,8 +65,9 @@ namespace Hypertable {
     CellStoreV0(Filesystem *filesys);
     virtual ~CellStoreV0();
 
-    virtual void create(const char *fname, size_t max_entries, PropertiesPtr &,
-        const TableIdentifier *table_id=0);
+    virtual void create(const char *fname, size_t max_entries,
+                        PropertiesPtr &props,
+                        const TableIdentifier *table_id=0);
     virtual void add(const Key &key, const ByteString value);
     virtual void finalize(TableIdentifier *table_identifier);
     virtual void open(const String &fname, const String &start_row,

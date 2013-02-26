@@ -85,8 +85,8 @@ namespace Hypertable {
     /**
      * Callback method for successful scan
      *
-     * @param scanner
-     * @param cells returned cells
+     * @param scanner Pointer to scanner
+     * @param scancells returned cells
      */
     virtual void scan_ok(TableScannerAsync *scanner, ScanCellsPtr &scancells) {
       if (m_original_cb)
@@ -96,10 +96,10 @@ namespace Hypertable {
     /**
      * Callback method for scan errors
      *
-     * @param scanner
-     * @param error
-     * @param error_msg
-     * @param eos end of scan
+     * @param scanner Pointer to scanner
+     * @param error Error code
+     * @param error_msg Error message
+     * @param eos end of scan indicator
      */
     virtual void scan_error(TableScannerAsync *scanner, int error, 
                             const String &error_msg, bool eos) {
@@ -114,12 +114,12 @@ namespace Hypertable {
     }
 
     virtual void update_error(TableMutatorAsync *mutator, int error, 
-            FailedMutations &failedMutations) {
+                              FailedMutations &failures) {
       // check mutator; if the failures are from the primary table then 
       // propagate them directly to the caller; if failures come from 
       // updating the index table(s) then continue below
       if (mutator == m_primary_mutator && m_original_cb) {
-        m_original_cb->update_error(mutator, error, failedMutations);
+        m_original_cb->update_error(mutator, error, failures);
         return;
       }
 
@@ -128,7 +128,7 @@ namespace Hypertable {
       m_error = error;
 
       // remove failed updates from the keymap
-      foreach_ht (const FailedMutation &fm, failedMutations) {
+      foreach_ht (const FailedMutation &fm, failures) {
         const Cell &cell = fm.first;
         
         // get the original row key

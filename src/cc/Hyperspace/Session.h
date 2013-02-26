@@ -366,6 +366,7 @@ namespace Hyperspace {
      *
      * @param handle file handle
      * @param anames vector of atribute names
+     * @param timer maximum wait timer
      */
     void attr_list(uint64_t handle, vector<String> &anames, Timer *timer=0);
 
@@ -391,7 +392,7 @@ namespace Hyperspace {
      * simply casting the base pointer:  (const char *)value.base
      *
      * @param name absolute path name of the file/directory
-     * @param name name of extended attribute
+     * @param attr name of extended attribute
      * @param value reference to DynamicBuffer to hold returned value
      * @param timer maximum wait timer
      */
@@ -425,14 +426,14 @@ namespace Hyperspace {
     void attrs_get(uint64_t handle, const std::vector<std::string> &attrs,
                   std::vector<DynamicBufferPtr> &values, Timer *timer=0);
 
-    /** Gets an extended attribute of a file.  A '\0' character is written
+    /** Gets extended attributes of a file.  A '\0' character is written
      * just past the end of the value, but not included in the value size.
      * If the value is a character string, it can be accessed easily by
      * simply casting the base pointer:  (const char *)value.base
      *
      * @param name absolute path name of the file/directory
-     * @param name name of extended attribute
-     * @param value reference to DynamicBuffer to hold returned value
+     * @param attrs names of extended attributes
+     * @param values reference to DynamicBuffer to hold returned value
      * @param timer maximum wait timer
      */
     void attrs_get(const std::string &name, const std::vector<std::string> &attrs,

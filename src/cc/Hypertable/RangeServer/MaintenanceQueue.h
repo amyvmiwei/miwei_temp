@@ -312,7 +312,7 @@ namespace Hypertable {
     }
 
     /** Waits for queue to become empty with deadline
-     * @deadline Return if queue not empty by this absolute time
+     * @param deadline Return if queue not empty by this absolute time
      * @return <i>true</i> if queue empty, <i>false</i> if deadline reached
      */
     bool wait_for_empty(boost::xtime &deadline) {

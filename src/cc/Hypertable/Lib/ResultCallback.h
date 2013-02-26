@@ -102,11 +102,11 @@ namespace Hypertable {
     /**
      * Callback method for update errors
      *
-     * @param mutator
-     * @param error
+     * @param mutator Mutator pointer
+     * @param error error code
      * @param failures vector of failed mutations
      */
-    virtual void update_error(TableMutatorAsync *mutator, int error, FailedMutations &failedMutations)=0;
+    virtual void update_error(TableMutatorAsync *mutator, int error, FailedMutations &failures)=0;
 
     /**
      * Blocks till outstanding == 0

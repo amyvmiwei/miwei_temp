@@ -91,6 +91,7 @@ namespace Hypertable {
     /**
      * Creates an asynchronous mutator on this table
      *
+     * @param cb Pointer to result callback
      * @param timeout_ms maximum time in milliseconds to allow
      *        mutator methods to execute before throwing an exception
      * @param flags mutator flags
@@ -105,7 +106,7 @@ namespace Hypertable {
      * @param scan_spec scan specification
      * @param timeout_ms maximum time in milliseconds to allow
      *        scanner methods to execute before throwing an exception
-     * @param scanner flags
+     * @param flags scanner flags
      * @return pointer to scanner object
      */
     TableScanner *create_scanner(const ScanSpec &scan_spec,
@@ -115,11 +116,11 @@ namespace Hypertable {
     /**
      * Creates an asynchronous scanner on this table
      *
-     * @param cb callback to be notified when scan results arrive
+     * @param cb Callback to be notified when scan results arrive
      * @param scan_spec scan specification
      * @param timeout_ms maximum time in milliseconds to allow
      *        scanner methods to execute before throwing an exception
-     * @param scanner flags
+     * @param flags Scanner flags
      * @return pointer to scanner object
      */
     TableScannerAsync *create_scanner_async(ResultCallback *cb,

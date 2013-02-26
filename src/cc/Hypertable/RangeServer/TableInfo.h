@@ -181,7 +181,8 @@ namespace Hypertable {
     /**
      * Adds a range
      *
-     * @param range smart pointer to range object
+     * @param range Smart pointer to range object
+     * @param remove_if_exists Remove existing entry if one exists
      */
     void add_range(RangePtr &range, bool remove_if_exists = false);
 
@@ -200,11 +201,11 @@ namespace Hypertable {
     /**
      * Finds the range that the given row belongs to
      *
-     * @param row row key used to locate range (in)
-     * @param range reference to smart pointer to hold removed range (out)
-     * @param start_row starting row of range (out)
-     * @param end_row ending row of range (out)
-     * @return true if found, false otherwise
+     * @param row Row key used to locate range (in)
+     * @param range Reference to smart pointer to hold removed range (out)
+     * @param start_rowp Starting row of range (out)
+     * @param end_rowp Ending row of range (out)
+     * @return <i>true</i> if found, <i>false</i> otherwise
      */
     bool find_containing_range(const String &row, RangePtr &range,
                                const char **start_rowp, const char **end_rowp) const;

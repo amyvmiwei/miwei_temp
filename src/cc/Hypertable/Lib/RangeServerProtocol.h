@@ -206,8 +206,8 @@ namespace Hypertable {
 
     /** Creates a "dump" command (for testing)
      *
-     * @param label controls what to dump
-     * @param outfile name of file to dump to
+     * @param outfile Name of file to dump to
+     * @param nokeys Don't include in-memory key data
      * @return protocol message
      */
     static CommBuf *create_request_dump(const String &outfile,

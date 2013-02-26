@@ -161,7 +161,8 @@ namespace Hypertable {
     /**
      * Returns the stats on all commit log fragments
      *
-     * @param stats string which will contain the stats
+     * @param prefix stat line prefix string
+     * @param result reference to return stats string
      *
      */
     void get_stats(const String &prefix, String &result);
