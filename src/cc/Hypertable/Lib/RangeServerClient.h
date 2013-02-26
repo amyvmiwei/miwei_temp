@@ -454,18 +454,16 @@ namespace Hypertable {
     /** Issues an asynchronous "get_statistics" request.
      *
      * @param addr address of RangeServer
-     * @param stats reference to RangeServer stats object
-     * @param handler
+     * @param handler Dispatch handler for asynchronous callback
      */
     void get_statistics(const CommAddress &addr, DispatchHandler *handler);
 
 
     /** Issues an asynchronous "get_statistics" request with timer.
      *
-     * @param addr address of RangeServer
-     * @param stats reference to RangeServer stats object
-     * @param handler
-     * @param timer timer
+     * @param addr Address of RangeServer
+     * @param handler Dispatch handler for asynchronous callback
+     * @param timer Maximum wait timer
      */
     void get_statistics(const CommAddress &addr, DispatchHandler *handler,
                         Timer &timer);
@@ -555,13 +553,13 @@ namespace Hypertable {
     void heapcheck(const CommAddress &addr, String &outfile);
 
     /** Issues a synchronous "replay_fragments" request.
-     * @param addr address of RangeServer
-     * @param op_id id of the calling recovery operation
-     * @param recover_location location of the server being recovered
-     * @param plan_generation recovery plan generation
-     * @param type type of fragments to play
-     * @param fragments fragments being requested for replay
-     * @param receiver_plan recovery receiver plan
+     * @param addr Address of RangeServer
+     * @param op_id ID of the calling recovery operation
+     * @param recover_location Location of the server being recovered
+     * @param plan_generation Recovery plan generation
+     * @param type Type of fragments to play
+     * @param fragments Fragments being requested for replay
+     * @param plan Recovery receiver plan
      * @param replay_timeout timeout for replay to finish
      */
     void replay_fragments(const CommAddress &addr, int64_t op_id,
@@ -590,10 +588,10 @@ namespace Hypertable {
      * @param addr address of RangeServer
      * @param location location being recovered
      * @param plan_generation recovery plan generation
-     * @param range range
-     * @param fragment fragment_id
-     * @param replay_buffer replay buffer
-     * @param handler handler
+     * @param range Qualfied range specification
+     * @param fragment Fragment ID
+     * @param updates Buffer of updates
+     * @param handler Dispatch handler
      */
     void phantom_update(const CommAddress &addr, const String &location,
                         int plan_generation, const QualifiedRangeSpec &range,

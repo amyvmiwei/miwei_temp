@@ -180,6 +180,7 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
 }
 
 
+/** @relates RowInterval */
 ostream &Hypertable::operator<<(ostream &os, const RowInterval &ri) {
   os <<"{RowInterval: ";
   if (ri.start)
@@ -202,6 +203,7 @@ ostream &Hypertable::operator<<(ostream &os, const RowInterval &ri) {
   return os;
 }
 
+/** @relates CellInterval */
 ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
   os <<"{CellInterval: ";
   if (ci.start_row)
@@ -225,6 +227,7 @@ ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
 }
 
 
+/** @relates ScanSpec */
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
      <<" cell_limit="<< scan_spec.cell_limit

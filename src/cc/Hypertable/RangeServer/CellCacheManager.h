@@ -45,8 +45,8 @@ namespace Hypertable {
     void merge_caches(SchemaPtr &schema);
 
     /**
-     * Adds a key/value pair to the CellCache.  This method assumes that
-     * the CellCache has been locked by a call to #lock.  Copies of
+     * Adds a key/value pair to the write cache.  This method assumes that
+     * the write cache has been locked by a call to CellCache#lock.  Copies of
      * the key and value are created and inserted into the underlying cell map
      *
      * @param key key to be inserted

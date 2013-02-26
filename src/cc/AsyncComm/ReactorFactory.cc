@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -51,7 +51,7 @@ void ReactorFactory::initialize(uint16_t reactor_count) {
   ScopedLock lock(ms_mutex);
   if (!ms_reactors.empty())
     return;
-  ReactorPtr reactor_ptr;
+  ReactorPtr reactor;
   ReactorRunner rrunner;
   ReactorRunner::handler_map = new HandlerMap();
   signal(SIGPIPE, SIG_IGN);
@@ -73,9 +73,9 @@ void ReactorFactory::initialize(uint16_t reactor_count) {
     use_poll = true;
 
   for (uint16_t i=0; i<=reactor_count; i++) {
-    reactor_ptr = new Reactor();
-    ms_reactors.push_back(reactor_ptr);
-    rrunner.set_reactor(reactor_ptr);
+    reactor = new Reactor();
+    ms_reactors.push_back(reactor);
+    rrunner.set_reactor(reactor);
     ms_threads.create_thread(rrunner);
   }
 }

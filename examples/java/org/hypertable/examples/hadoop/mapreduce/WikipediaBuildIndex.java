@@ -65,7 +65,7 @@ import org.hypertable.Common.Time;
  * is a count of how many times that word occurred in the article.  The
  * program is meant to be run as follows:
  *
- * hadoop jar <jarfile> org/hypertable/examples/WikipediaBuildIndex --columns=article
+ * hadoop jar $JARFILE org/hypertable/examples/WikipediaBuildIndex --columns=article
  */
 public class WikipediaBuildIndex {
 

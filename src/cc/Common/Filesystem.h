@@ -319,9 +319,10 @@ namespace Hypertable {
      * issued with the same file descriptor.
      *
      * @param fd open file descriptor
-     * @param offset starting offset of read
-     * @param len amount of data to read
      * @param dst destination buffer for read data
+     * @param len amount of data to read
+     * @param offset starting offset of read
+     * @param verify_checksum Tells filesystem to perform checksum verification
      * @return amount of data read
      */
     virtual size_t pread(int fd, void *dst, size_t len, uint64_t offset,

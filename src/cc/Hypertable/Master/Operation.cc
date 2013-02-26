@@ -40,6 +40,7 @@ const char *Dependency::RECOVERY_BLOCKER= "RECOVERY_BLOCKER";
 const char *Dependency::RECOVERY = "RECOVERY";
 
 
+/** @relates Operation */
 const char *OperationState::get_text(int32_t state);
 
 Operation::Operation(ContextPtr &context, int32_t type)
@@ -365,6 +366,7 @@ namespace {
 
 } // local namespace
 
+/** @relates Operation */
 const char *OperationState::get_text(int32_t state) {
   const char *text = text_map[state];
   if (text == 0)

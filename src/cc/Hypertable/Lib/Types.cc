@@ -245,12 +245,14 @@ void QualifiedRangeSpecManaged::decode(const uint8_t **bufp, size_t *remainp) {
   range = m_range;
 }
 
+/** @relates TableIdentifier */
 ostream &Hypertable::operator<<(ostream &os, const TableIdentifier &tid) {
   os <<"{TableIdentifier: id='"<< tid.id
      <<"' generation="<< tid.generation <<"}";
   return os;
 }
 
+/** @relates RangeSpec */
 ostream &Hypertable::operator<<(ostream &os, const RangeSpec &range) {
   os <<"{RangeSpec:";
 
@@ -261,11 +263,13 @@ ostream &Hypertable::operator<<(ostream &os, const RangeSpec &range) {
   return os;
 }
 
+/** @relates QualifiedRangeSpec */
 ostream &Hypertable::operator<<(ostream &os, const QualifiedRangeSpec &qualified_range) {
   os << qualified_range.table << qualified_range.range;
   return os;
 }
 
+/** @relates QualifiedRangeSpecManaged */
 ostream &Hypertable::operator<<(ostream &os, const QualifiedRangeSpecManaged &qualified_range) {
   os << qualified_range.m_table << qualified_range.m_range;
   return os;

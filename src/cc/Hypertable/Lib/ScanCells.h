@@ -101,6 +101,7 @@ protected:
    * @param end_row the end_row of the scan for which we got these results
    * @param end_inclusive is the end_row included in the scan
    * @param limit_state Pointer to ScanLimitState
+   * @param rowset Reference to set of rows to be selected
    * @param bytes_scanned number of bytes read
    * @param lastkey Return pointer to last key in block
    * @return true if scan has reached end

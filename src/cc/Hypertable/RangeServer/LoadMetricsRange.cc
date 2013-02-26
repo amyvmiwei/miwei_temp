@@ -37,7 +37,9 @@ LoadMetricsRange::LoadMetricsRange(const String &table_id, const String &start_r
 /**
  *  Value format for version 1:
  *
- *  v2:<ts>,<disk>,<memory>,<disk-bytes-read-rate>,<byte-write-rate>,<byte-read-rate>,<update-rate>,<scan-rate>,<cell-write-rate>,<cell-read-rate>
+ * @verbatim
+ * v2:<ts>,<disk>,<memory>,<disk-bytes-read-rate>,<byte-write-rate>,<byte-read-rate>,<update-rate>,<scan-rate>,<cell-write-rate>,<cell-read-rate>
+ * @endverbatim
  */
 
 void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,

@@ -82,7 +82,7 @@ namespace Hypertable {
      * Fills a set of location strings that represent all of the locations (range
      * servers) that are part of this plan.
      *
-     * @location reference to string set to be filled with locations
+     * @param locations reference to string set to be filled with locations
      */
     void get_locations(StringSet &locations) const;
 

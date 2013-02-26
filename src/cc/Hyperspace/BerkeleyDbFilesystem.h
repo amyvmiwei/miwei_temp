@@ -252,10 +252,8 @@ namespace Hyperspace {
      * Persist a new SessionData object in the StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
-     * @param addr Stringified remote host address
-     * @param lease_interval Session lease interval
      * @param id Session id
-     * @param name Name of remote executable
+     * @param addr Stringified remote host address
      */
     void create_session(BDbTxn &txn, uint64_t id, const String &addr);
 
@@ -329,7 +327,7 @@ namespace Hyperspace {
      *
      * @param txn BerkeleyDB txn for this DB update
      * @param id Session id
-     * @return name of the session executable
+     * @param name of the session executable
      */
     void set_session_name(BDbTxn &txn, uint64_t id, const String &name);
 
@@ -550,7 +548,7 @@ namespace Hyperspace {
      *
      * @param txn BerkeleyDB txn for this DB update
      * @param name Node name
-     * @param exclusive_lock_handle
+     * @return exclusive lock handle
      */
     uint64_t get_node_exclusive_lock_handle(BDbTxn &txn, const String &name);
 
@@ -649,8 +647,7 @@ namespace Hyperspace {
      *
      * @param txn BerkeleyDB txn
      * @param name Node name
-     * @param handles_to_sessions map specifying notifications to be sent
-     * @return true if there are some notifications that need to be sent out
+     * @param handles vector of node handles
      */
     void get_node_handles(BDbTxn &txn, const String &name, std::vector<uint64_t> &handles);
 

@@ -213,7 +213,7 @@ namespace Hypertable {
 
     /**
      * @param transfer_info
-     * @param split_log
+     * @param transfer_log
      * @param latest_revisionp
      * @param wait_for_maintenance true if this range has exceeded its capacity and
      *        future requests to this range need to be throttled till split/compaction reduces

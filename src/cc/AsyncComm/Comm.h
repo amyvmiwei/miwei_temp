@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -344,21 +344,21 @@ namespace Hypertable {
      */
     void close_socket(const CommAddress &addr);
 
-    /** Finds an unused TCP port starting from <code>starting_addr</code>
+    /** Finds an unused TCP port starting from <code>addr</code>
      * This method iterates through 15 ports starting with
-     * <code>starting_addr.sin_port</code> until it is able to bind to
-     * one.  If an available port is found, <code>starting_addr.sin_port</code>
+     * <code>addr.sin_port</code> until it is able to bind to
+     * one.  If an available port is found, <code>addr.sin_port</code>
      * will be set to the available port, otherwise the method will assert.
-     * @param starting_addr Starting address template
+     * @param addr Starting address template
      */
     void find_available_tcp_port(InetAddr &addr);
 
-    /** Finds an unused UDP port starting from <code>starting_port</code>
+    /** Finds an unused UDP port starting from <code>addr</code>
      * This method iterates through 15 ports starting with
-     * <code>starting_addr.sin_port</code> until it is able to bind to
-     * one.  If an available port is found, <code>starting_addr.sin_port</code>
+     * <code>addr.sin_port</code> until it is able to bind to
+     * one.  If an available port is found, <code>addr.sin_port</code>
      * will be set to the available port, otherwise the method will assert.
-     * @param starting_addr Starting address template
+     * @param addr Starting address template
      */
     void find_available_udp_port(InetAddr &addr);
 

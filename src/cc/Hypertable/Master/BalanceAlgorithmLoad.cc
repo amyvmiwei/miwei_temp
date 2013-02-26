@@ -215,6 +215,7 @@ bool BalanceAlgorithmLoad::check_move(const ServerMetricSummary &source,
   return (loadavg_destination < m_loadavg_deviation_threshold + mean_loadavg);
 }
 
+/** @relates BalanceAlgorithmLoad::ServerMetricSummary */
 ostream &Hypertable::operator<<(ostream &out,
     const BalanceAlgorithmLoad::ServerMetricSummary &summary) {
   out << "{ServerMetricSummary: server_id=" << summary.server_id << ", loadavg="
@@ -223,6 +224,7 @@ ostream &Hypertable::operator<<(ostream &out,
   return out;
 }
 
+/** @relates BalanceAlgorithmLoad::RangeMetricSummary */
 ostream &Hypertable::operator<<(ostream &out,
     const BalanceAlgorithmLoad::RangeMetricSummary &summary) {
   out << "{RangeMetricSummary: table_id=" << summary.table_id << ", start_row="

@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -21,7 +21,7 @@
 
 /** @file
  * Declarations for CommAddress.
- * This file contains type declarations for CommAddress, and abstraction class
+ * This file contains type declarations for CommAddress, an abstraction class
  * for holding an arbitrary address type.
  */
 

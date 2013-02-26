@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for RequestCache.
+ * This file contains method definitions for RequestCache, a class
+ * that is used to hold pending request data.
  */
 
 #include "Common/Compat.h"

@@ -54,6 +54,7 @@ namespace Hypertable {
      * @param timeout_ms maximum time in milliseconds to allow scanner
      *        methods to execute before throwing an exception
      * @param cb callback to be notified when results arrive
+     * @param flags Scanner flags
      */
     TableScannerAsync(Comm *comm, ApplicationQueueInterfacePtr &app_queue, Table *table,
                       RangeLocatorPtr &range_locator,
@@ -76,14 +77,14 @@ namespace Hypertable {
       ScopedLock lock(m_mutex);
       return m_outstanding == 0;
     }
-
+    
     /**
      * Deal with results of a scanner
      * @param scanner_id id of the scanner which triggered the error
      * @param event event with results
      * @param is_create true if this is event is for a create_scanner request
      */
-    void handle_result(int scanner_id, EventPtr &event, bool is_result);
+    void handle_result(int scanner_id, EventPtr &event, bool is_create);
 
     /**
      * Deal with errors

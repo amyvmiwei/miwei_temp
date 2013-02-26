@@ -50,7 +50,7 @@ namespace Hypertable {
     /**
      * @param name name of the table/namespace
      * @param id the returned id of the table/namespace specified by name
-     * @param is_namespace returns true if name corresponds to a namespace
+     * @param is_namespacep Set to <i>true</i> if name corresponds to a namespace
      * @return true if mapping exists
      */
     bool name_to_id(const String &name, String &id, bool *is_namespacep=0);
@@ -58,7 +58,7 @@ namespace Hypertable {
     /**
      * @param id the id of the table/namespace
      * @param name returned name of the table/namespace specified by id
-     * @param is_namespace returns true if name corresponds to a namespace
+     * @param is_namespacep Set to <i>true</i> if name corresponds to a namespace
      * @return true if mapping exists
      */
     bool id_to_name(const String &id, String &name, bool *is_namespacep=0);
@@ -71,14 +71,15 @@ namespace Hypertable {
      */
     void id_to_sublisting(const String &id, bool include_sub_entries, std::vector<NamespaceListing> &listing);
 
-    /**
+    /** Adds a new mapping.
      * @param name name to map
      * @param id output parameter to hold newly mapped ID
      * @param flags control falgs (IS_NAMESPACE and/or CREATE_INTERMEDIATE)
+     * @param ignore_exists Don't throw an exception if mapping already exists
      */
     void add_mapping(const String &name, String &id, int flags=0, bool ignore_exists=false);
 
-    /**
+    /** Drops a mapping.
      * @param name name to map
      */
     void drop_mapping(const String &name);

@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for ReactorRunner.
+ * This file contains type and method definitions for ReactorRunner, a thread
+ * functor class used to wait for and react to I/O events.
  */
 
 #include "Common/Compat.h"
@@ -69,7 +75,7 @@ void ReactorRunner::operator()() {
 
   if (ReactorFactory::use_poll) {
 
-    m_reactor_ptr->fetch_poll_array(pollfds, handlers);
+    m_reactor->fetch_poll_array(pollfds, handlers);
 
     while ((n = poll(&pollfds[0], pollfds.size(),
 		     timeout.get_millis())) >= 0 || errno == EINTR) {
@@ -80,7 +86,7 @@ void ReactorRunner::operator()() {
       if (dispatch_delay)
 	did_delay = false;
 
-      m_reactor_ptr->get_removed_handlers(removed_handlers);
+      m_reactor->get_removed_handlers(removed_handlers);
       if (!shutdown)
 	HT_DEBUGF("poll returned %d events", n);
       for (size_t i=0; i<pollfds.size(); i++) {
@@ -88,7 +94,7 @@ void ReactorRunner::operator()() {
 	if (pollfds[i].revents == 0)
 	  continue;
 
-	if (pollfds[i].fd == m_reactor_ptr->interrupt_sd()) {
+	if (pollfds[i].fd == m_reactor->interrupt_sd()) {
 	  char buf[8];
 	  int nread;
 	  errno = 0;
@@ -116,11 +122,11 @@ void ReactorRunner::operator()() {
       }
       if (!removed_handlers.empty())
 	cleanup_and_remove_handlers(removed_handlers);
-      m_reactor_ptr->handle_timeouts(timeout);
+      m_reactor->handle_timeouts(timeout);
       if (shutdown)
 	return;
 
-      m_reactor_ptr->fetch_poll_array(pollfds, handlers);
+      m_reactor->fetch_poll_array(pollfds, handlers);
     }
 
     if (!shutdown)
@@ -132,7 +138,7 @@ void ReactorRunner::operator()() {
 #if defined(__linux__)
   struct epoll_event events[256];
 
-  while ((n = epoll_wait(m_reactor_ptr->poll_fd, events, 256,
+  while ((n = epoll_wait(m_reactor->poll_fd, events, 256,
           timeout.get_millis())) >= 0 || errno == EINTR) {
 
     if (record_arrival_time)
@@ -141,7 +147,7 @@ void ReactorRunner::operator()() {
     if (dispatch_delay)
       did_delay = false;
 
-    m_reactor_ptr->get_removed_handlers(removed_handlers);
+    m_reactor->get_removed_handlers(removed_handlers);
 
     if (!shutdown)
       HT_DEBUGF("epoll_wait returned %d events", n);
@@ -164,13 +170,13 @@ void ReactorRunner::operator()() {
     }
     if (!removed_handlers.empty())
       cleanup_and_remove_handlers(removed_handlers);
-    m_reactor_ptr->handle_timeouts(timeout);
+    m_reactor->handle_timeouts(timeout);
     if (shutdown)
       return;
   }
 
   if (!shutdown)
-    HT_ERRORF("epoll_wait(%d) failed : %s", m_reactor_ptr->poll_fd,
+    HT_ERRORF("epoll_wait(%d) failed : %s", m_reactor->poll_fd,
               strerror(errno));
 
 #elif defined(__sun__)
@@ -183,7 +189,7 @@ void ReactorRunner::operator()() {
 
   events = (port_event_t *)calloc(33, sizeof (port_event_t));
 
-  while ((ret = port_getn(m_reactor_ptr->poll_fd, events, 32,
+  while ((ret = port_getn(m_reactor->poll_fd, events, 32,
 			  &nget, timeout.get_timespec())) >= 0 ||
 	 errno == EINTR || errno == EAGAIN || errno == ETIME) {
 
@@ -195,7 +201,7 @@ void ReactorRunner::operator()() {
     if (dispatch_delay)
       did_delay = false;
 
-    m_reactor_ptr->get_removed_handlers(removed_handlers);
+    m_reactor->get_removed_handlers(removed_handlers);
     for (unsigned i=0; i<nget; i++) {
 
       // handle interrupt
@@ -221,14 +227,14 @@ void ReactorRunner::operator()() {
     }
     if (!removed_handlers.empty())
       cleanup_and_remove_handlers(removed_handlers);
-    m_reactor_ptr->handle_timeouts(timeout);
+    m_reactor->handle_timeouts(timeout);
     if (shutdown)
       return;
     nget=1;
   }
 
   if (!shutdown) {
-    HT_ERRORF("port_getn(%d) failed : %s", m_reactor_ptr->poll_fd,
+    HT_ERRORF("port_getn(%d) failed : %s", m_reactor->poll_fd,
               strerror(errno));
     if (timeout.get_timespec() == 0)
       HT_ERROR("timespec is null");
@@ -238,7 +244,7 @@ void ReactorRunner::operator()() {
 #elif defined(__APPLE__) || defined(__FreeBSD__)
   struct kevent events[32];
 
-  while ((n = kevent(m_reactor_ptr->kqd, NULL, 0, events, 32,
+  while ((n = kevent(m_reactor->kqd, NULL, 0, events, 32,
           timeout.get_timespec())) >= 0 || errno == EINTR) {
 
     if (record_arrival_time)
@@ -247,7 +253,7 @@ void ReactorRunner::operator()() {
     if (dispatch_delay)
       did_delay = false;
 
-    m_reactor_ptr->get_removed_handlers(removed_handlers);
+    m_reactor->get_removed_handlers(removed_handlers);
     for (int i=0; i<n; i++) {
       handler = (IOHandler *)events[i].udata;
       if (handler && removed_handlers.count(handler) == 0) {
@@ -266,13 +272,13 @@ void ReactorRunner::operator()() {
     }
     if (!removed_handlers.empty())
       cleanup_and_remove_handlers(removed_handlers);
-    m_reactor_ptr->handle_timeouts(timeout);
+    m_reactor->handle_timeouts(timeout);
     if (shutdown)
       return;
   }
 
   if (!shutdown)
-    HT_ERRORF("kevent(%d) failed : %s", m_reactor_ptr->kqd, strerror(errno));
+    HT_ERRORF("kevent(%d) failed : %s", m_reactor->kqd, strerror(errno));
 
 #else
   ImplementMe;
@@ -291,15 +297,15 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
     if (!handler_map->destroy_ok(handler))
       continue;
 
-    m_reactor_ptr->cancel_requests(handler);
+    m_reactor->cancel_requests(handler);
 
     if (ReactorFactory::use_poll)
-      m_reactor_ptr->remove_poll_interest(handler->get_sd());
+      m_reactor->remove_poll_interest(handler->get_sd());
     else {
 #if defined(__linux__)
       struct epoll_event event;
       memset(&event, 0, sizeof(struct epoll_event));
-      if (epoll_ctl(m_reactor_ptr->poll_fd, EPOLL_CTL_DEL, handler->get_sd(), &event) < 0) {
+      if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_DEL, handler->get_sd(), &event) < 0) {
 	if (!shutdown)
 	  HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
 		    strerror(errno));
@@ -308,7 +314,7 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
       struct kevent devents[2];
       EV_SET(&devents[0], handler->get_sd(), EVFILT_READ, EV_DELETE, 0, 0, 0);
       EV_SET(&devents[1], handler->get_sd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);
-      if (kevent(m_reactor_ptr->kqd, devents, 2, NULL, 0, NULL) == -1
+      if (kevent(m_reactor->kqd, devents, 2, NULL, 0, NULL) == -1
 	  && errno != ENOENT) {
 	if (!shutdown)
 	  HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));

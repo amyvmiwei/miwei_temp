@@ -332,8 +332,8 @@ namespace Hypertable {
      * @param deadline Return by this time if queue does not become idle
      * @param reserve_threads Number of threads that can be active when queue is
      * idle
-     * @return <i>false</i> if #deadline was reached before queue became idle,
-     * <i>true</i> otherwise
+     * @return <i>false</i> if <code>deadline</code> was reached before queue
+     * became idle, <i>true</i> otherwise
      */
     bool wait_for_idle(boost::xtime &deadline, int reserve_threads=0) {
       ScopedLock lock(m_state.mutex);

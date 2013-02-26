@@ -42,9 +42,7 @@ namespace Hypertable {
 
   public:
 
-    /**
-     *
-     * @param results_capacity max number of ScanCells that can be enqueued
+    /** Default constructor.
      */
     TableScannerQueue() : m_error(Error::OK), m_error_shown(false) { }
 

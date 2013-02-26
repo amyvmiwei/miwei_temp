@@ -55,7 +55,7 @@ namespace Hypertable {
     /**
      * Inserts a phantom range
      *
-     * @param spec range spec
+     * @param range Qualified range spec
      * @param state range state
      * @param schema table schema
      * @param fragments fragments to be played
@@ -66,7 +66,7 @@ namespace Hypertable {
     /**
      * Gets the phantom range if it is in map
      *
-     * @param range range spec
+     * @param range_spec Qualified range spec
      * @param phantom_range phantom range
      */
     void get(const QualifiedRangeSpec &range_spec, PhantomRangePtr &phantom_range);

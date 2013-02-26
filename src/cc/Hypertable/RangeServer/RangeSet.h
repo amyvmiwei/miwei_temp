@@ -55,9 +55,9 @@ namespace Hypertable {
     /**
      * Changes the start row key associated with a range
      *
-     * @param old_start_row old start row of range to remove
-     * @param new_start_row new start row key of range
-     * @param end_row end row key for range
+     * @param old_start_row Old start row of range to remove
+     * @param new_start_row New start row key of range
+     * @param new_end_row New end row key for range
      * @return true if range found and end row changed, false otherwise
      */
     virtual bool change_start_row(const String &old_start_row, const String &new_start_row,
