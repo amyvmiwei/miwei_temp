@@ -3,6 +3,7 @@
 #add_subdirectory(scanner-create-failure)
 add_subdirectory(hyperspace-dump)
 add_subdirectory(balance)
+add_subdirectory(balance-inactive)
 add_subdirectory(balance-new-server)
 #add_subdirectory(balance-offload)
 add_subdirectory(block-cache-uncompressed)
