@@ -51,6 +51,15 @@ void BalanceAlgorithmLoad::compute_plan(BalancePlanPtr &plan,
   double mean_loadavg_per_loadestimate=0;
 
   foreach_ht(const ServerMetrics &sm, server_metrics) {
+    // only assign ranges if this RangeServer is connected
+    RangeServerConnectionPtr rsc;
+    if (m_context->rsc_manager &&
+        (!m_context->rsc_manager->find_server_by_location(sm.get_id(), rsc)
+         || !rsc->connected() || rsc->get_removed() || rsc->is_recovering())) {
+      HT_INFOF("RangeServer %s not connected, skipping", sm.get_id().c_str());
+      continue;
+    }
+
     calculate_server_summary(sm, ss);
     servers_desc_load.insert(ss);
     mean_loadavg += ss.loadavg;
