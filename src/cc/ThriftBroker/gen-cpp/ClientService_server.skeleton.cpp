@@ -52,6 +52,11 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("table_alter\n");
   }
 
+  void refresh_table(const Namespace ns, const std::string& table_name) {
+    // Your implementation goes here
+    printf("refresh_table\n");
+  }
+
   Namespace namespace_open(const std::string& ns) {
     // Your implementation goes here
     printf("namespace_open\n");

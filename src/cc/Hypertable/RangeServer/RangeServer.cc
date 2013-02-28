@@ -1342,7 +1342,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     decrement_needed = true;
 
-    // Check to see if range jus shrunk
+    // Check to see if range just shrunk
     if (strcmp(range->start_row().c_str(), range_spec->start_row) ||
         strcmp(range->end_row().c_str(), range_spec->end_row))
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(b) %s[%s..%s]",

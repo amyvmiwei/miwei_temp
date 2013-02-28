@@ -655,6 +655,15 @@ service ClientService {
       throws (1:ClientException e),
   
   /**
+   * Refreshes the cached table information
+   *
+   * @param ns - namespace
+   * @param table_name - name of the table
+   */
+  void refresh_table(1:Namespace ns, 2:string table_name)
+      throws (1:ClientException e),
+  
+  /**
    * Open a namespace 
    *
    * @param ns - namespace
@@ -670,7 +679,7 @@ service ClientService {
    */
   void namespace_close(1:Namespace ns) throws (1:ClientException e),
   void close_namespace(1:Namespace ns) throws (1:ClientException e),
-  
+
   /**
    * Open a future object 
    * @param capacity - Amount of result data the future object can enqueue without blocking threads  
