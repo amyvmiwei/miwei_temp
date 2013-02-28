@@ -21,6 +21,7 @@ class ClientServiceIf {
   virtual void table_create(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
   virtual void alter_table(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
   virtual void table_alter(const Namespace ns, const std::string& table_name, const std::string& schema) = 0;
+  virtual void refresh_table(const Namespace ns, const std::string& table_name) = 0;
   virtual Namespace namespace_open(const std::string& ns) = 0;
   virtual Namespace open_namespace(const std::string& ns) = 0;
   virtual void namespace_close(const Namespace ns) = 0;
@@ -185,6 +186,9 @@ class ClientServiceNull : virtual public ClientServiceIf {
     return;
   }
   void table_alter(const Namespace /* ns */, const std::string& /* table_name */, const std::string& /* schema */) {
+    return;
+  }
+  void refresh_table(const Namespace /* ns */, const std::string& /* table_name */) {
     return;
   }
   Namespace namespace_open(const std::string& /* ns */) {
@@ -1281,6 +1285,123 @@ class ClientService_table_alter_presult {
   ClientException e;
 
   _ClientService_table_alter_presult__isset __isset;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+
+};
+
+typedef struct _ClientService_refresh_table_args__isset {
+  _ClientService_refresh_table_args__isset() : ns(false), table_name(false) {}
+  bool ns;
+  bool table_name;
+} _ClientService_refresh_table_args__isset;
+
+class ClientService_refresh_table_args {
+ public:
+
+  ClientService_refresh_table_args() : ns(0), table_name("") {
+  }
+
+  virtual ~ClientService_refresh_table_args() throw() {}
+
+  Namespace ns;
+  std::string table_name;
+
+  _ClientService_refresh_table_args__isset __isset;
+
+  void __set_ns(const Namespace val) {
+    ns = val;
+  }
+
+  void __set_table_name(const std::string& val) {
+    table_name = val;
+  }
+
+  bool operator == (const ClientService_refresh_table_args & rhs) const
+  {
+    if (!(ns == rhs.ns))
+      return false;
+    if (!(table_name == rhs.table_name))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_refresh_table_args &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_refresh_table_args & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+
+class ClientService_refresh_table_pargs {
+ public:
+
+
+  virtual ~ClientService_refresh_table_pargs() throw() {}
+
+  const Namespace* ns;
+  const std::string* table_name;
+
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_refresh_table_result__isset {
+  _ClientService_refresh_table_result__isset() : e(false) {}
+  bool e;
+} _ClientService_refresh_table_result__isset;
+
+class ClientService_refresh_table_result {
+ public:
+
+  ClientService_refresh_table_result() {
+  }
+
+  virtual ~ClientService_refresh_table_result() throw() {}
+
+  ClientException e;
+
+  _ClientService_refresh_table_result__isset __isset;
+
+  void __set_e(const ClientException& val) {
+    e = val;
+  }
+
+  bool operator == (const ClientService_refresh_table_result & rhs) const
+  {
+    if (!(e == rhs.e))
+      return false;
+    return true;
+  }
+  bool operator != (const ClientService_refresh_table_result &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ClientService_refresh_table_result & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _ClientService_refresh_table_presult__isset {
+  _ClientService_refresh_table_presult__isset() : e(false) {}
+  bool e;
+} _ClientService_refresh_table_presult__isset;
+
+class ClientService_refresh_table_presult {
+ public:
+
+
+  virtual ~ClientService_refresh_table_presult() throw() {}
+
+  ClientException e;
+
+  _ClientService_refresh_table_presult__isset __isset;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
 
@@ -15868,6 +15989,9 @@ class ClientServiceClient : virtual public ClientServiceIf {
   void table_alter(const Namespace ns, const std::string& table_name, const std::string& schema);
   void send_table_alter(const Namespace ns, const std::string& table_name, const std::string& schema);
   void recv_table_alter();
+  void refresh_table(const Namespace ns, const std::string& table_name);
+  void send_refresh_table(const Namespace ns, const std::string& table_name);
+  void recv_refresh_table();
   Namespace namespace_open(const std::string& ns);
   void send_namespace_open(const std::string& ns);
   Namespace recv_namespace_open();
@@ -16244,6 +16368,7 @@ class ClientServiceProcessor : public ::apache::thrift::TProcessor {
   void process_table_create(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_alter_table(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_table_alter(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, void* callContext);
+  void process_refresh_table(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_namespace_open(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_open_namespace(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, void* callContext);
   void process_namespace_close(int32_t seqid, apache::thrift::protocol::TProtocol* iprot, apache::thrift::protocol::TProtocol* oprot, void* callContext);
@@ -16372,6 +16497,7 @@ class ClientServiceProcessor : public ::apache::thrift::TProcessor {
     processMap_["table_create"] = &ClientServiceProcessor::process_table_create;
     processMap_["alter_table"] = &ClientServiceProcessor::process_alter_table;
     processMap_["table_alter"] = &ClientServiceProcessor::process_table_alter;
+    processMap_["refresh_table"] = &ClientServiceProcessor::process_refresh_table;
     processMap_["namespace_open"] = &ClientServiceProcessor::process_namespace_open;
     processMap_["open_namespace"] = &ClientServiceProcessor::process_open_namespace;
     processMap_["namespace_close"] = &ClientServiceProcessor::process_namespace_close;
@@ -16559,6 +16685,13 @@ class ClientServiceMultiface : virtual public ClientServiceIf {
     size_t sz = ifaces_.size();
     for (size_t i = 0; i < sz; ++i) {
       ifaces_[i]->table_alter(ns, table_name, schema);
+    }
+  }
+
+  void refresh_table(const Namespace ns, const std::string& table_name) {
+    size_t sz = ifaces_.size();
+    for (size_t i = 0; i < sz; ++i) {
+      ifaces_[i]->refresh_table(ns, table_name);
     }
   }
 

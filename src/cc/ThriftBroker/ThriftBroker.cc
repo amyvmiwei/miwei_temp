@@ -708,6 +708,16 @@ public:
     namespace_close(ns);
   }
 
+  virtual void refresh_table(const ThriftGen::Namespace ns,
+          const String &table_name) {
+    LOG_API_START("namespace=" << ns << " table=" << table_name);
+    try {
+      NamespacePtr namespace_ptr = get_namespace(ns);
+      namespace_ptr->refresh_table(table_name);
+    } RETHROW("namespace=" << ns << " table=" << table_name);
+    LOG_API_FINISH;
+  }
+
   virtual void scanner_close(const Scanner scanner) {
     LOG_API_START("scanner="<< scanner);
     try {
