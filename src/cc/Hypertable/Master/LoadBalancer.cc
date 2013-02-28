@@ -38,9 +38,7 @@ LoadBalancer::LoadBalancer(ContextPtr context)
   m_new_server_balance_delay =
     m_context->props->get_i32("Hypertable.LoadBalancer.BalanceDelay.NewServer");
 
-  // TODO: fix me!!
-  //m_enabled = context->props->get_bool("Hypertable.LoadBalancer.Enable");
-  m_enabled = false;
+  m_enabled = context->props->get_bool("Hypertable.LoadBalancer.Enable");
 
   m_loadavg_threshold = 
             m_context->props->get_f64("Hypertable.LoadBalancer.LoadavgThreshold");
