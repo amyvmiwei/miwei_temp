@@ -59,3 +59,7 @@ add_test(RangeServer-failover-scan-1 env TEST=1 INSTALL_DIR=${INSTALL_DIR}
 # Fail during table dump, inside RangeServer::fetch_scanblock
 add_test(RangeServer-failover-scan-2 env TEST=2 INSTALL_DIR=${INSTALL_DIR}
          bash -x ${CMAKE_CURRENT_SOURCE_DIR}/run-scan-failover.sh)
+
+# Start 5 range servers, kill one wait for recover, kill another and wait for recover
+add_test(RangeServer-failover-two-serial env INSTALL_DIR=${INSTALL_DIR}
+         bash -x ${CMAKE_CURRENT_SOURCE_DIR}/run-two-serial-failover.sh)
