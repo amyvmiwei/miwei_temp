@@ -50,7 +50,7 @@ DISTRO=
 if [ -e $HYPERTABLE_HOME/conf/hadoop-distro ]; then
   DISTRO=`cat $HYPERTABLE_HOME/conf/hadoop-distro`
 fi
-HT_JAR=`ls -1 /opt/hypertable/doug/current/lib/java/*.jar | grep "hypertable-[^-]*.jar" | awk 'BEGIN {FS="/"} {print $NF}'`
+HT_JAR=`ls -1 $HYPERTABLE_HOME/lib/java/*.jar | grep "hypertable-[^-]*.jar" | awk 'BEGIN {FS="/"} {print $NF}'`
 if [ -z "$HT_JAR" ] || [ -z "$DISTRO" ]; then
     if [ -z "$DISTRO" ]; then
       echo "No Hadoop distro is configured.  Run the following script to"
