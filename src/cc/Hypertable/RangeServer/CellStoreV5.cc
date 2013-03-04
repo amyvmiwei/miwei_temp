@@ -98,6 +98,15 @@ KeyDecompressor *CellStoreV5::create_key_decompressor() {
   return new KeyDecompressorPrefix();
 }
 
+void CellStoreV5::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
+  if (m_index_stats.block_index_memory == 0)
+    load_block_index();
+  int32_t keys_per_block = m_trailer.total_entries / m_trailer.index_entries;
+  if (m_64bit_index)
+    m_index_map64.unique_row_count_estimate(split_row_data, keys_per_block);
+  else
+    m_index_map32.unique_row_count_estimate(split_row_data, keys_per_block);
+}
 
 CellListScanner *CellStoreV5::create_scanner(ScanContextPtr &scan_ctx) {
   bool need_index =  m_restricted_range || scan_ctx->restricted_range || scan_ctx->single_row;
