@@ -103,6 +103,21 @@ require 'client_types'
                   return
                 end
 
+                def refresh_table(ns, table_name)
+                  send_refresh_table(ns, table_name)
+                  recv_refresh_table()
+                end
+
+                def send_refresh_table(ns, table_name)
+                  send_message('refresh_table', Refresh_table_args, :ns => ns, :table_name => table_name)
+                end
+
+                def recv_refresh_table()
+                  result = receive_message(Refresh_table_result)
+                  raise result.e unless result.e.nil?
+                  return
+                end
+
                 def namespace_open(ns)
                   send_namespace_open(ns)
                   return recv_namespace_open()
@@ -2018,6 +2033,17 @@ require 'client_types'
                   write_result(result, oprot, 'table_alter', seqid)
                 end
 
+                def process_refresh_table(seqid, iprot, oprot)
+                  args = read_args(iprot, Refresh_table_args)
+                  result = Refresh_table_result.new()
+                  begin
+                    @handler.refresh_table(args.ns, args.table_name)
+                  rescue Hypertable::ThriftGen::ClientException => e
+                    result.e = e
+                  end
+                  write_result(result, oprot, 'refresh_table', seqid)
+                end
+
                 def process_namespace_open(seqid, iprot, oprot)
                   args = read_args(iprot, Namespace_open_args)
                   result = Namespace_open_result.new()
@@ -3516,6 +3542,40 @@ require 'client_types'
               end
 
               class Table_alter_result
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                E = 1
+
+                FIELDS = {
+                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Refresh_table_args
+                include ::Thrift::Struct, ::Thrift::Struct_Union
+                NS = 1
+                TABLE_NAME = 2
+
+                FIELDS = {
+                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
+                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'}
+                }
+
+                def struct_fields; FIELDS; end
+
+                def validate
+                end
+
+                ::Thrift::Struct.generate_accessors self
+              end
+
+              class Refresh_table_result
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 E = 1
 
