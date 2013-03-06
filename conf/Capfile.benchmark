@@ -171,7 +171,7 @@ task :install_package, :roles => [:master, :hyperspace, :slave, :thriftbroker, :
       raise "Package #{pkg} is not a .tar.bz2 archive"
     end
     dir_basename = pkg_basename[0..ext_index-1]
-    run("tar -xjv -f #{install_dir}/#{pkg_basename} -C #{install_dir}")
+    run("tar xjv -f #{install_dir}/#{pkg_basename} -C #{install_dir}")
     run("mv #{install_dir}/#{dir_basename}/opt/hypertable/#{hypertable_version} #{install_dir}");
     run("/bin/rm -rf #{install_dir}/#{dir_basename}");
   end
