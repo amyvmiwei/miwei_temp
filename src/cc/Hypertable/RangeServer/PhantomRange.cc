@@ -107,7 +107,8 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
   else {
     // Set phantom log to "transfer log"
     if (metalog_entity->state.transfer_log &&
-        *metalog_entity->state.transfer_log != 0)
+        *metalog_entity->state.transfer_log != 0 &&
+        log_dfs->exists(metalog_entity->state.transfer_log))
       m_phantom_logname = metalog_entity->state.transfer_log;
     else {
       m_phantom_logname = create_log(log_dfs, log_dir, metalog_entity);
