@@ -178,7 +178,8 @@ namespace Hypertable {
     }
 
     if (control & HAVE_REVISION)
-      revision = decode_ts64((const uint8_t **)&key.ptr);
+      revision = decode_ts64((const uint8_t **)&key.ptr,
+                             control&TS_CHRONOLOGICAL ? false : true);
     else
       revision = AUTO_ASSIGN;
 

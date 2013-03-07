@@ -158,7 +158,7 @@ bool TableInfo::get_range(const RangeSpec *range_spec, RangePtr &range) {
   RangeInfoSet::iterator iter = m_range_set.find(range_info);
 
   if (iter == m_range_set.end() || !iter->get_range()) {
-    HT_INFO_OUT << "TableInfo couldn't find range (" << range_spec->start_row
+    HT_DEBUG_OUT << "TableInfo couldn't find range (" << range_spec->start_row
         << ", " << range_spec->end_row << ")" << HT_END;
 
 #if 0
