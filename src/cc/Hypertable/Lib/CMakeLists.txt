@@ -66,6 +66,7 @@ MetaLogWriter.cc
 NameIdMapper.cc
 Namespace.cc
 NamespaceCache.cc
+PseudoTables.cc
 RangeLocator.cc
 RangeMoveSpec.cc
 RangeServerClient.cc

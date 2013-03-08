@@ -266,6 +266,12 @@ void AccessGroup::split_row_estimate_data_stored(SplitRowDataMapT &split_row_dat
   }
 }
 
+void AccessGroup::populate_cellstore_index_pseudo_table_scanner(CellListScannerBuffer *scanner) {
+  ScopedLock lock(m_mutex);
+  foreach_ht (CellStoreInfo &csinfo, m_stores)
+    csinfo.cs->populate_index_pseudo_table_scanner(scanner);
+}
+
 
 uint64_t AccessGroup::disk_usage() {
   ScopedLock lock(m_mutex);

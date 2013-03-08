@@ -336,6 +336,10 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       m_range_server->dump(m_addr, state.output_file, state.nokeys);
       cout << "success" << endl;
     }
+    else if (state.command == COMMAND_DUMP_PSEUDO_TABLE) {
+      m_range_server->dump_pseudo_table(m_addr, *table, state.pseudo_table_name, state.output_file);
+      cout << "success" << endl;
+    }
     else if (state.command == COMMAND_HELP) {
       const char **text = HqlHelpText::get(state.str);
       if (text) {

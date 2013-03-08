@@ -39,6 +39,7 @@ namespace Hypertable {
   MasterClientPtr        Global::master_client;
   RangeServerProtocol   *Global::protocol = 0;
   RangeLocatorPtr        Global::range_locator = 0;
+  PseudoTables          *Global::pseudo_tables = 0;
   bool                   Global::verbose = false;
   bool                   Global::row_size_unlimited = false;
   CommitLog             *Global::user_log = 0;

@@ -35,6 +35,7 @@
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/MasterClient.h"
 #include "Hypertable/Lib/MetaLogWriter.h"
+#include "Hypertable/Lib/PseudoTables.h"
 #include "Hypertable/Lib/RangeServerClient.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/Schema.h"
@@ -63,6 +64,7 @@ namespace Hypertable {
     static Hypertable::MasterClientPtr master_client;
     static Hypertable::RangeServerProtocol *protocol;
     static Hypertable::RangeLocatorPtr range_locator;
+    static Hypertable::PseudoTables *pseudo_tables;
     static bool           verbose;
     static bool           row_size_unlimited;
     static CommitLog     *user_log;

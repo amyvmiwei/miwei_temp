@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,13 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for CellStore.
+ * This file contains the type declarations for CellStore, an abstract base
+ * class from which is derived concrete classes for creating and loading
+ * cell store files.
+ */
+
 #ifndef HYPERTABLE_CELLSTORE_H
 #define HYPERTABLE_CELLSTORE_H
 
@@ -32,10 +39,15 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "CellList.h"
+#include "CellListScannerBuffer.h"
 #include "CellStoreTrailer.h"
 #include "KeyDecompressor.h"
 
 namespace Hypertable {
+
+  /** @addtogroup RangeServer
+   * @{
+   */
 
   /**
    * Abstract base class for persistent cell lists (ones that are stored on
@@ -70,6 +82,13 @@ namespace Hypertable {
     virtual void split_row_estimate_data(SplitRowDataMapT &split_row_data) {
       HT_FATAL("Not implemented!");
     }
+
+    /** Populates <code>scanner</code> with key/value pairs generated from
+     * CellStore index.
+     * @param scanner Pointer to CellListScannerBuffer to receive key/value
+     * pairs
+     */
+    virtual void populate_index_pseudo_table_scanner(CellListScannerBuffer *scanner) { }
 
     virtual int64_t get_total_entries() = 0;
 
@@ -305,6 +324,8 @@ namespace Hypertable {
   };
 
   typedef intrusive_ptr<CellStore> CellStorePtr;
+
+  /** @}*/
 
 } // namespace Hypertable
 

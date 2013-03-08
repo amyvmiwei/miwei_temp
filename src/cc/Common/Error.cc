@@ -107,6 +107,7 @@ namespace {
     { Error::RANGESERVER_NOT_FOUND,         "HYPERTABLE RangeServer not found" },
     { Error::CONNECTION_NOT_INITIALIZED,    "HYPERTABLE connection not initialized" },
     { Error::DUPLICATE_RANGE,               "HYPERTABLE duplicate range" },
+    { Error::INVALID_PSEUDO_TABLE_NAME,     "HYPERTABLE invalid pseudo-table name" },
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},
     { Error::CONFIG_GET_ERROR,            "CONFIG failed to get config value"},

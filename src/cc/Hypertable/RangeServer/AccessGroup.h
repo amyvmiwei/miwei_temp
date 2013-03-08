@@ -51,6 +51,10 @@
 
 namespace Hypertable {
 
+  /** @addtogroup RangeServer
+   * @{
+   */
+
   class AccessGroup : public CellList {
 
   public:
@@ -107,6 +111,15 @@ namespace Hypertable {
     void split_row_estimate_data_cached(SplitRowDataMapT &split_row_data);
 
     void split_row_estimate_data_stored(SplitRowDataMapT &split_row_data);
+
+    /** Populates <code>scanner</code> with data for <i>.cellstore.index</i>
+     * pseudo table.  For each CellStore that is part of the access group,
+     * the CellStore::populate_index_pseudo_table_scanner method is called
+     * with <code>scanner</code> to gather <i>.cellstore.index</i> pseudo
+     * table data.
+     * @param scanner Pointer to CellListScannerBuffer to hold data
+     */
+    void populate_cellstore_index_pseudo_table_scanner(CellListScannerBuffer *scanner);
 
     virtual int64_t get_total_entries() {
       boost::mutex::scoped_lock lock(m_mutex);
@@ -224,6 +237,8 @@ namespace Hypertable {
   typedef boost::intrusive_ptr<AccessGroup> AccessGroupPtr;
 
   std::ostream &operator<<(std::ostream &os, const AccessGroup::MaintenanceData &mdata);
+
+  /** @}*/
 
 } // namespace Hypertable
 
