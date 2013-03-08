@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for Range.
+ * This file contains the type declarations for Range, a class used to
+ * access and manage a range of table data.
  */
 
 #ifndef HYPERTABLE_RANGE_H
@@ -51,6 +57,10 @@
 #include "RangeTransferInfo.h"
 
 namespace Hypertable {
+
+  /** @addtogroup RangeServer
+   * @{
+   */
 
   /**
    * Represents a table row range.
@@ -130,6 +140,25 @@ namespace Hypertable {
     uint64_t disk_usage();
 
     CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
+
+    /** Creates a scanner over the pseudo-table indicated by
+     * <code>table_name</code>.  The following pseudo-tables are supported:
+     *
+     *   - .cellstore.index
+     *
+     * This method creates a CellListScannerBuffer and passes it into the 
+     * AccessGroup::populate_cellstore_index_pseudo_table_scanner method of each
+     * one of its access groups AccessGroups, populating it with the
+     * pseudo-table cells.
+     *
+     * @note The scanner that is returned by this method will be owned by the
+     * caller and must be freed by the caller to prevent a memory leak.
+     * @param scan_ctx ScanContext object
+     * @param table_name Pseudo-table name
+     * @return Pointer to CellListScanner (to be freed by caller)
+     */
+    CellListScanner *create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
+                                                 const String &table_name);
 
     String start_row() {
       ScopedLock lock(m_mutex);
@@ -395,6 +424,8 @@ namespace Hypertable {
   typedef intrusive_ptr<Range> RangePtr;
 
   std::ostream &operator<<(std::ostream &os, const Range::MaintenanceData &mdata);
+
+  /** @}*/
 
 } // namespace Hypertable
 

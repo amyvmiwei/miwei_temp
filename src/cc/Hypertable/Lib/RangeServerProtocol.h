@@ -67,7 +67,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_PHANTOM_UPDATE           = 27;
     static const uint64_t COMMAND_PHANTOM_PREPARE_RANGES   = 28;
     static const uint64_t COMMAND_PHANTOM_COMMIT_RANGES    = 29;
-    static const uint64_t COMMAND_MAX                      = 30;
+    static const uint64_t COMMAND_DUMP_PSEUDO_TABLE        = 30;
+    static const uint64_t COMMAND_MAX                      = 31;
 
     static const char *m_command_strings[];
 
@@ -212,6 +213,18 @@ namespace Hypertable {
      */
     static CommBuf *create_request_dump(const String &outfile,
 					bool nokeys);
+
+    /** Creates a "dump_pseudo_table" command.
+     *
+     * @param table Table identifier
+     * @param pseudo_table_name Name of pseudo table to dump
+     * @param outfile Name of file to dump to
+     * @return protocol message
+     * @deprecated This command will be soon be removed
+     */
+    static CommBuf *create_request_dump_pseudo_table(const TableIdentifier &table,
+                                        const String &pseudo_table_name,
+                                        const String &outfile);
 
     /** Creates a "drop table" request message.
      *

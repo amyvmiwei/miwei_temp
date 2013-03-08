@@ -500,6 +500,21 @@ void RangeServerClient::dump(const CommAddress &addr,
 
 }
 
+void RangeServerClient::dump_pseudo_table(const CommAddress &addr,
+                                          const TableIdentifier &table,
+                                          const String &pseudo_table_name,
+                                          const String &outfile) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event;
+  CommBufPtr cbp(RangeServerProtocol::create_request_dump_pseudo_table(table, pseudo_table_name, outfile));
+  send_message(addr, cbp, &sync_handler, m_default_timeout_ms);
+
+  if (!sync_handler.wait_for_reply(event))
+    HT_THROW((int)Protocol::response_code(event),
+             String("RangeServer dump_pseudo_table() failure : ")
+             + Protocol::string_format_message(event));
+}
+
 void
 RangeServerClient::get_statistics(const CommAddress &addr, StatsRangeServer &stats) {
   do_get_statistics(addr, stats, m_default_timeout_ms);

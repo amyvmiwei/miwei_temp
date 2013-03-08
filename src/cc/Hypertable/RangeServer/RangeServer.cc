@@ -57,6 +57,7 @@ extern "C" {
 #include "Hypertable/Lib/MetaLogDefinition.h"
 #include "Hypertable/Lib/MetaLogReader.h"
 #include "Hypertable/Lib/MetaLogWriter.h"
+#include "Hypertable/Lib/PseudoTables.h"
 #include "Hypertable/Lib/RangeServerProtocol.h"
 #include "Hypertable/Lib/RangeRecoveryReceiverPlan.h"
 
@@ -120,6 +121,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::cellstore_target_size_min = cfg.get_i64("CellStore.TargetSize.Minimum");
   Global::cellstore_target_size_max = Global::cellstore_target_size_min
       + cfg.get_i64("CellStore.TargetSize.Window");
+  Global::pseudo_tables = PseudoTables::instance();
   m_scanner_buffer_size = cfg.get_i64("Scanner.BufferSize");
   port = cfg.get_i16("Port");
   m_update_coalesce_limit = cfg.get_i64("UpdateCoalesceLimit");
@@ -3007,6 +3009,74 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
     return;
   }
   cb->response_ok();
+}
+
+void
+RangeServer::dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *table,
+                               const char *pseudo_table, const char *outfile) {
+
+  HT_INFOF("dump_psudo_table ID=%s pseudo-table=%s outfile=%s", table->id, pseudo_table, outfile);
+
+  if (!m_replay_finished) {
+    if (!RangeServer::wait_for_recovery_finish(cb->get_event()->expiration_time()))
+      return;
+  }
+
+  try {
+    RangeDataVector range_data;
+    TableInfoPtr table_info;
+    CellListScanner *scanner;
+    ScanContextPtr scan_ctx = new ScanContext();
+    Key key;
+    ByteString value;
+    Schema::ColumnFamily *cf;
+    const uint8_t *ptr;
+    size_t len;
+
+    std::ofstream out(outfile);
+
+    if (!m_live_map->get(table->id, table_info)) {
+      cb->error(Error::TABLE_NOT_FOUND, table->id);
+      return;
+    }
+
+    table_info->get_range_data(range_data);
+    foreach_ht(RangeData &rd, range_data) {
+      scanner = rd.range->create_scanner_pseudo_table(scan_ctx, pseudo_table);
+      while (scanner->get(key, value)) {
+        cf = Global::pseudo_tables->cellstore_index->get_column_family(key.column_family_code);
+        if (cf == 0) {
+          HT_ERRORF("Column family code %d not found in %s pseudo table schema",
+                    key.column_family_code, pseudo_table);
+        }
+        else {
+          out << key.row << "\t" << cf->name;
+          if (key.column_qualifier)
+            out << ":" << key.column_qualifier;
+          out << "\t";
+          ptr = value.ptr;
+          len = Serialization::decode_vi32(&ptr);
+          out.write((const char *)ptr, len);
+          out << "\n";
+        }
+        scanner->forward();
+      }
+      delete scanner;
+    }
+
+    out << std::flush;
+
+    cb->response_ok();
+
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+    cb->error(e.code(), e.what());
+  }
+  catch (std::exception &e) {
+    cb->error(Error::LOCAL_IO_ERROR, e.what());
+  }
+
 }
 
 void RangeServer::heapcheck(ResponseCallback *cb, const char *outfile) {

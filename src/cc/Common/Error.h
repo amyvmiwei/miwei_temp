@@ -86,6 +86,7 @@ namespace Hypertable {
       RANGESERVER_NOT_FOUND              = 51,
       CONNECTION_NOT_INITIALIZED         = 52,
       DUPLICATE_RANGE                    = 53,
+      INVALID_PSEUDO_TABLE_NAME          = 54,
 
       CONFIG_BAD_ARGUMENT               = 1001,
       CONFIG_BAD_CFG_FILE               = 1002,

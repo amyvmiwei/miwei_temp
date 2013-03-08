@@ -39,6 +39,7 @@ extern "C" {
 #include "RequestHandlerCompact.h"
 #include "RequestHandlerDestroyScanner.h"
 #include "RequestHandlerDump.h"
+#include "RequestHandlerDumpPseudoTable.h"
 #include "RequestHandlerGetStatistics.h"
 #include "RequestHandlerLoadRange.h"
 #include "RequestHandlerUpdateSchema.h"
@@ -161,6 +162,10 @@ void ConnectionHandler::handle(EventPtr &event) {
       case RangeServerProtocol::COMMAND_DUMP:
         handler = new RequestHandlerDump(m_comm, m_range_server_ptr.get(),
                                          event);
+        break;
+      case RangeServerProtocol::COMMAND_DUMP_PSEUDO_TABLE:
+        handler = new RequestHandlerDumpPseudoTable(m_comm, m_range_server_ptr.get(),
+                                                    event);
         break;
       case RangeServerProtocol::COMMAND_GET_STATISTICS:
         handler = new RequestHandlerGetStatistics(m_comm,

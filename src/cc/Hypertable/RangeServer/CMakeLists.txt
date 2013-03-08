@@ -30,8 +30,9 @@ AccessGroupGarbageTracker.cc
 CellCache.cc
 CellCacheAllocator.cc
 CellCacheManager.cc
-CellStoreReleaseCallback.cc
 CellCacheScanner.cc
+CellListScannerBuffer.cc
+CellStoreReleaseCallback.cc
 CellStoreFactory.cc
 CellStoreScanner.cc
 CellStoreScannerIntervalBlockIndex.cc
@@ -100,6 +101,7 @@ RequestHandlerDestroyScanner.cc
 RequestHandlerDoMaintenance.cc
 RequestHandlerDropRange.cc
 RequestHandlerDump.cc
+RequestHandlerDumpPseudoTable.cc
 RequestHandlerGetStatistics.cc
 RequestHandlerGroupCommit.cc
 RequestHandlerFetchScanblock.cc

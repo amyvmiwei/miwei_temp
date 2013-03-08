@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Definitions for Range.
+ * This file contains the variable and method definitions for Range, a class
+ * used to access and manage a range of table data.
+ */
+
 #include "Common/Compat.h"
 #include <cassert>
 #include <string>
@@ -418,6 +424,34 @@ CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
 
   // increment #scanners
   return mscanner;
+}
+
+CellListScanner *Range::create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
+                                                    const String &table_name) {
+  CellListScannerBuffer *scanner = 0;
+  AccessGroupVector ag_vector(0);
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+    m_scans++;
+  }
+
+  if (table_name != ".cellstore.index")
+    HT_THROW(Error::INVALID_PSEUDO_TABLE_NAME, table_name);
+
+  scanner = new CellListScannerBuffer(scan_ctx);
+
+  try {
+    foreach_ht (AccessGroupPtr &ag, ag_vector)
+      ag->populate_cellstore_index_pseudo_table_scanner(scanner);
+  }
+  catch (Exception &e) {
+    delete scanner;
+    HT_THROW2(e.code(), e, "");
+  }
+
+  return scanner;
 }
 
 

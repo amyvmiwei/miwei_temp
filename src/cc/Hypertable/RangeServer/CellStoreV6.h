@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for CellStoreV6.
+ * This file contains the type declarations for CellStoreV6, a class for
+ * creating and loading version 6 cell store files.
  */
 
 #ifndef HYPERTABLE_CELLSTOREV6_H
@@ -59,6 +65,10 @@ namespace Hypertable {
 
 namespace Hypertable {
 
+  /** @addtogroup RangeServer
+   * @{
+   */
+
   class CellStoreV6 : public CellStore {
 
     class IndexBuilder {
@@ -98,6 +108,18 @@ namespace Hypertable {
     virtual uint64_t disk_usage() { return m_disk_usage; }
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
     virtual void split_row_estimate_data(SplitRowDataMapT &split_row_data);
+
+    /** Populates <code>scanner</code> with key/value pairs generated from
+     * CellStore index.  This method will first load the CellStore block 
+     * index into memory, if it is not already loaded, and then it will call
+     * the CellStoreBlockIndexArray::populate_pseudo_table_scanner method
+     * to populate <code>scanner</code> with synthesized <i>.cellstore.index</i>
+     * pseudo-table cells.
+     * @param scanner Pointer to CellListScannerBuffer to receive key/value
+     * pairs
+     */
+    virtual void populate_index_pseudo_table_scanner(CellListScannerBuffer *scanner);
+
     virtual int64_t get_total_entries() { return m_trailer.total_entries; }
     virtual std::string &get_filename() { return m_filename; }
     virtual int get_file_id() { return m_file_id; }
@@ -173,6 +195,8 @@ namespace Hypertable {
   };
 
   typedef intrusive_ptr<CellStoreV6> CellStoreV6Ptr;
+
+  /** @}*/
 
 } // namespace Hypertable
 

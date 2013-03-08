@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,13 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for CellStoreBlockIndexArray.
+ * This file contains the type declarations for CellStoreBlockIndexArray, a
+ * template class used to load and provide access to a CellStore block
+ * index.
+ */
+
 #ifndef HYPERTABLE_CELLSTOREBLOCKINDEXARRAY_H
 #define HYPERTABLE_CELLSTOREBLOCKINDEXARRAY_H
 
@@ -29,11 +36,17 @@
 #include "Common/StaticBuffer.h"
 
 #include "Hypertable/Lib/Key.h"
+#include "Hypertable/Lib/PseudoTables.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "CellList.h"
+#include "CellListScannerBuffer.h"
 
 namespace Hypertable {
+
+  /** @addtogroup RangeServer
+   * @{
+   */
 
   template <typename OffsetT>
   class CellStoreBlockIndexElementArray {
@@ -258,6 +271,111 @@ namespace Hypertable {
       }
     }
 
+    /** Populates <code>scanner</code> with data for <i>.cellstore.index</i>
+     * pseudo table.  This method synthesizes the following
+     * <i>.cellstore.index</i> pseudo-table cells, for each in-scope block
+     * index entry:
+     * 
+     *   - <b>Size</b> - Estimated uncompressed size of the block
+     *   - <b>CompressedSize</b> - Actual compressed size of the block
+     *   - <b>KeyCount</b> - Estimated key count for the block
+     *     (<code>keys_per_block</code>)
+     *
+     * Each key is formed by taking the <i>row</i>, <i>timestamp</i>, and
+     * <i>revision</i> from the block index key, using FLAG_INSERT as
+     * the <i>flag</i>, and constructing the column <i>qualifier</i> as
+     * follows:
+     * <pre>
+     * <cellstore-filename> ':' <hex-offset>
+     * </pre>
+     * 
+     * As an example, a single block index entry might generate the following
+     * cells in TSV format:
+     * <pre>
+     * help@acme.com	Size:2/2/default/ZwmE_ShYJKgim-IL/cs103:00028A61	171728
+     * help@acme.com	CompressedSize:2/2/default/ZwmE_ShYJKgim-IL/cs103:00028A61	65231
+     * help@acme.com	KeyCount:2/2/default/ZwmE_ShYJKgim-IL/cs103:00028A61	281
+     * </pre>
+     * @param scanner Pointer to CellListScannerBuffer to hold data
+     * @param filename Name of associated CellStore file
+     * @param keys_per_block Estimate of number of keys per block
+     * @param compression_ratio Block compression ratio for associated CellStore
+     * file
+     */
+    void populate_pseudo_table_scanner(CellListScannerBuffer *scanner,
+                                       const String &filename,
+                                       int32_t keys_per_block,
+                                       float compression_ratio) {
+      Key key;
+      DynamicBuffer qualifier(filename.length() + 32);
+      DynamicBuffer serial_key_buf;
+      DynamicBuffer value_buf(32);
+      char buf[32];
+      char *offset_ptr;
+      const char *offset_format = (sizeof(OffsetT) == 4) ? "%08llX" : "%016llX";
+      double size;
+      OffsetT next_offset;
+
+      qualifier.add_unchecked(filename.c_str(), filename.length());
+      qualifier.add_unchecked(":", 1);
+      offset_ptr = (char *)qualifier.ptr;
+
+      for (size_t i=0; i<m_array.size(); i++) {
+
+        if (i < (m_array.size()-1))
+          next_offset = m_array[i+1].offset;
+        else
+          next_offset = m_end_of_last_block;
+
+        key.load(m_array[i].key);
+        sprintf(offset_ptr, offset_format, (long long)m_array[i].offset);
+
+        // Size key
+        serial_key_buf.clear();
+        create_key_and_append(serial_key_buf, FLAG_INSERT, key.row,
+                              PseudoTables::CELLSTORE_INDEX_SIZE,
+                              (const char *)qualifier.base, key.timestamp,
+                              key.revision);
+        // Size value
+        value_buf.clear();
+        size = (double)(next_offset - m_array[i].offset) / (double)compression_ratio;
+        sprintf(buf, "%lu", (unsigned long)size);
+        Serialization::encode_vi32(&value_buf.ptr, strlen(buf));
+        strcpy((char *)value_buf.ptr, buf);
+
+        scanner->add( SerializedKey(serial_key_buf.base), ByteString(value_buf.base) );
+
+        // CompressedSize key
+        serial_key_buf.clear();
+        create_key_and_append(serial_key_buf, FLAG_INSERT, key.row,
+                              PseudoTables::CELLSTORE_INDEX_COMPRESSED_SIZE,
+                              (const char *)qualifier.base, key.timestamp,
+                              key.revision);
+        // CompressedSize value
+        value_buf.clear();
+        sprintf(buf, "%lu", (unsigned long)(next_offset - m_array[i].offset));
+        Serialization::encode_vi32(&value_buf.ptr, strlen(buf));
+        strcpy((char *)value_buf.ptr, buf);
+
+        scanner->add( SerializedKey(serial_key_buf.base), ByteString(value_buf.base) );
+
+        // KeyCount key
+        serial_key_buf.clear();
+        create_key_and_append(serial_key_buf, FLAG_INSERT, key.row,
+                              PseudoTables::CELLSTORE_INDEX_KEY_COUNT,
+                              (const char *)qualifier.base, key.timestamp,
+                              key.revision);
+        // KeyCount value
+        value_buf.clear();
+        sprintf(buf, "%lu", (unsigned long)keys_per_block);
+        Serialization::encode_vi32(&value_buf.ptr, strlen(buf));
+        strcpy((char *)value_buf.ptr, buf);
+
+        scanner->add( SerializedKey(serial_key_buf.base), ByteString(value_buf.base) );
+
+      }
+    }
+
     size_t memory_used() {
       return m_keydata.size + (m_array.size() * (sizeof(ElementT)));
     }
@@ -299,11 +417,12 @@ namespace Hypertable {
     ArrayT m_array;
     StaticBuffer m_keydata;
     SerializedKey m_middle_key;
-    int64_t m_end_of_last_block;
-    int64_t m_disk_used;
+    OffsetT m_end_of_last_block;
+    OffsetT m_disk_used;
     float m_fraction_covered;
   };
 
+  /** @}*/
 
 } // namespace Hypertable
 

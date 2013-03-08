@@ -256,6 +256,21 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *RangeServerProtocol::create_request_dump_pseudo_table(const TableIdentifier &table,
+                                        const String &pseudo_table_name,
+                                        const String &outfile) {
+    CommHeader header(COMMAND_DUMP_PSEUDO_TABLE);
+    CommBuf *cbuf =
+      new CommBuf(header, table.encoded_length() +
+                  Serialization::encoded_length_vstr(pseudo_table_name) +
+                  Serialization::encoded_length_vstr(outfile));
+    table.encode(cbuf->get_data_ptr_address());
+    Serialization::encode_vstr(cbuf->get_data_ptr_address(),
+                               pseudo_table_name.c_str());
+    Serialization::encode_vstr(cbuf->get_data_ptr_address(), outfile.c_str());
+    return cbuf;
+  }
+
   CommBuf *RangeServerProtocol::create_request_replay_begin(uint16_t group) {
     CommHeader header(COMMAND_REPLAY_BEGIN);
     CommBuf *cbuf = new CommBuf(header, 2);

@@ -435,6 +435,11 @@ namespace Hypertable {
 
     void dump(const CommAddress &addr, String &outfile, bool nokeys);
 
+    /** @deprecated
+     */
+    void dump_pseudo_table(const CommAddress &addr, const TableIdentifier &table,
+                           const String &pseudo_table_name, const String &outfile);
+
     /** Issues an synchronous "get_statistics" request.
      *
      * @param addr address of RangeServer

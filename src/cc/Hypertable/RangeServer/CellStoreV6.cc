@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for CellStoreV6.
+ * This file contains the variable and method definitions for CellStoreV6, a
+ * class for creating and loading version 6 cell store files.
  */
 
 #include "Common/Compat.h"
@@ -107,6 +113,21 @@ void CellStoreV6::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
   else
     m_index_map32.unique_row_count_estimate(split_row_data, keys_per_block);
 }
+
+void CellStoreV6::populate_index_pseudo_table_scanner(CellListScannerBuffer *scanner) {
+  if (m_index_stats.block_index_memory == 0) {
+    load_block_index();
+    scanner->add_disk_read(m_trailer.filter_offset-m_trailer.fix_index_offset);
+  }
+  int32_t keys_per_block = m_trailer.total_entries / m_trailer.index_entries;
+  if (m_64bit_index)
+    m_index_map64.populate_pseudo_table_scanner(scanner, m_filename,
+                             keys_per_block, m_trailer.compression_ratio);
+  else
+    m_index_map32.populate_pseudo_table_scanner(scanner, m_filename,
+                             keys_per_block, m_trailer.compression_ratio);
+}
+
 
 CellListScanner *CellStoreV6::create_scanner(ScanContextPtr &scan_ctx) {
   bool need_index =  m_restricted_range || scan_ctx->restricted_range || scan_ctx->single_row;
