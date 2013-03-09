@@ -52,6 +52,7 @@ namespace Hypertable {
     DynamicBuffer             m_key_buf;
     bool                      m_keys_only;
     bool                      m_eos;
+    bool m_decrement_blockindex_refcount;
   };
 
 }

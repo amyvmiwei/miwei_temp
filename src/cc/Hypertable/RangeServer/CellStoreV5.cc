@@ -101,6 +101,10 @@ KeyDecompressor *CellStoreV5::create_key_decompressor() {
 void CellStoreV5::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
   if (m_index_stats.block_index_memory == 0)
     load_block_index();
+  if (m_trailer.index_entries == 0) {
+    HT_WARNF("%s has 0 index entries", m_filename.c_str());
+    return;
+  }
   int32_t keys_per_block = m_trailer.total_entries / m_trailer.index_entries;
   if (m_64bit_index)
     m_index_map64.unique_row_count_estimate(split_row_data, keys_per_block);

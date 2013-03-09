@@ -40,7 +40,8 @@ using namespace Hypertable;
 template <typename IndexT>
 CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr &scan_ctx, IndexT *index) :
   CellListScanner(scan_ctx), m_cellstore(cellstore), m_interval_index(0),
-  m_interval_max(0), m_keys_only(false), m_eos(false) {
+  m_interval_max(0), m_keys_only(false), m_eos(false),
+  m_decrement_blockindex_refcount(index!=0) {
   SerializedKey start_key, end_key;
 
   m_keys_only = (scan_ctx->spec) ? (scan_ctx->spec->keys_only && !scan_ctx->spec->value_regexp) : false;
@@ -142,9 +143,7 @@ CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr 
       HT_ASSERT(index);
       m_interval_scanners[m_interval_max++] = new CellStoreScannerIntervalBlockIndex<IndexT>(cellstore, index, start_key, end_key, scan_ctx);
     }
-
   }
-
 }
 
 
@@ -153,6 +152,8 @@ template <typename IndexT>
 CellStoreScanner<IndexT>::~CellStoreScanner() {
   for (size_t i=0; i<m_interval_max; i++)
     delete m_interval_scanners[i];
+  if (m_decrement_blockindex_refcount)
+    m_cellstore->decrement_index_refcount();
 }
 
 

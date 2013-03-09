@@ -38,7 +38,6 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/BloomFilterWithChecksum.h"
 #include "Common/BlobHashSet.h"
-#include "Common/Mutex.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/SerializedKey.h"
@@ -135,7 +134,6 @@ namespace Hypertable {
 
     typedef BlobHashSet<> BloomFilterItems;
 
-    Mutex                  m_mutex;
     Filesystem            *m_filesys;
     SchemaPtr              m_schema;
     int32_t                m_fd;

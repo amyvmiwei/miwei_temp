@@ -38,7 +38,6 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/BloomFilter.h"
 #include "Common/BlobHashSet.h"
-#include "Common/Mutex.h"
 #include "Common/Filesystem.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
@@ -123,7 +122,6 @@ namespace Hypertable {
     typedef std::map<SerializedKey, uint32_t> IndexMap;
     typedef BlobHashSet<> BloomFilterItems;
 
-    Mutex                  m_mutex;
     Filesystem            *m_filesys;
     int32_t                m_fd;
     std::string            m_filename;
