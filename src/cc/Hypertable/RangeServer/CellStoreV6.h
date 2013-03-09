@@ -44,7 +44,6 @@
 #include "Common/DynamicBuffer.h"
 #include "Common/BloomFilterWithChecksum.h"
 #include "Common/BlobHashSet.h"
-#include "Common/Mutex.h"
 
 #include "Hypertable/Lib/BlockCompressionCodec.h"
 #include "Hypertable/Lib/SerializedKey.h"
@@ -100,10 +99,6 @@ namespace Hypertable {
                       CellStoreTrailer *trailer);
     virtual void rescope(const String &start_row, const String &end_row);
     virtual int64_t get_blocksize() { return m_trailer.blocksize; }
-    virtual bool may_contain(const void *ptr, size_t len);
-    bool may_contain(const String &key) {
-      return may_contain(key.data(), key.size());
-    }
     virtual bool may_contain(ScanContextPtr &);
     virtual uint64_t disk_usage() { return m_disk_usage; }
     virtual float compression_ratio() { return m_trailer.compression_ratio; }
@@ -128,9 +123,22 @@ namespace Hypertable {
     virtual KeyDecompressor *create_key_decompressor();
     virtual void display_block_info();
     virtual int64_t end_of_last_block() { return m_trailer.fix_index_offset; }
-    virtual size_t bloom_filter_size() { return m_bloom_filter ? m_bloom_filter->size() : 0; }
-    virtual int64_t bloom_filter_memory_used() { return m_index_stats.bloom_filter_memory; }
-    virtual int64_t block_index_memory_used() { return m_index_stats.block_index_memory; }
+
+    virtual size_t bloom_filter_size() {
+      ScopedLock lock(m_mutex);
+      return m_bloom_filter ? m_bloom_filter->size() : 0;
+    }
+
+    virtual int64_t bloom_filter_memory_used() {
+      ScopedLock lock(m_mutex);
+      return m_index_stats.bloom_filter_memory;
+    }
+
+    virtual int64_t block_index_memory_used() {
+      ScopedLock lock(m_mutex);
+      return m_index_stats.block_index_memory;
+    }
+
     virtual uint64_t purge_indexes();
     virtual bool restricted_range() { return m_restricted_range; }
     virtual const std::vector<String> &get_replaced_files();
@@ -158,13 +166,10 @@ namespace Hypertable {
 
     typedef BlobHashSet<> BloomFilterItems;
 
-    Mutex                  m_mutex;
     Filesystem            *m_filesys;
     SchemaPtr              m_schema;
     int32_t                m_fd;
     std::string            m_filename;
-    CellStoreBlockIndexArray<uint32_t> m_index_map32;
-    CellStoreBlockIndexArray<int64_t> m_index_map64;
     bool                   m_64bit_index;
     CellStoreTrailerV6     m_trailer;
     BlockCompressionCodec *m_compressor;
@@ -183,7 +188,6 @@ namespace Hypertable {
     size_t                 m_max_entries;
 
     BloomFilterMode        m_bloom_filter_mode;
-    BloomFilterWithChecksum *m_bloom_filter;
     BloomFilterItems      *m_bloom_filter_items;
     int64_t                m_max_approx_items;
     float                  m_bloom_bits_per_item;
@@ -192,8 +196,20 @@ namespace Hypertable {
     bool                   m_restricted_range;
     int64_t               *m_column_ttl;
     bool                   m_replaced_files_loaded;
+
+    // Member that require mutex protection
+
+    /// Bloom filter
+    BloomFilterWithChecksum *m_bloom_filter;
+
+    /// 32-bit block index
+    CellStoreBlockIndexArray<uint32_t> m_index_map32;
+
+    /// 64-bit block index
+    CellStoreBlockIndexArray<int64_t> m_index_map64;
   };
 
+  /// Smart pointer to CellStoreV6 type
   typedef intrusive_ptr<CellStoreV6> CellStoreV6Ptr;
 
   /** @}*/

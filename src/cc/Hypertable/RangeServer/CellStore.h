@@ -31,6 +31,7 @@
 
 #include <vector>
 
+#include "Common/Mutex.h"
 #include "Common/String.h"
 #include "Common/ByteString.h"
 #include "Common/Filesystem.h"
@@ -40,6 +41,7 @@
 
 #include "CellList.h"
 #include "CellListScannerBuffer.h"
+#include "CellStoreBlockIndexArray.h"
 #include "CellStoreTrailer.h"
 #include "KeyDecompressor.h"
 
@@ -67,7 +69,7 @@ namespace Hypertable {
       uint64_t block_index_access_counter;
     };
 
-    CellStore() : m_block_count(0), m_bytes_read(0) { }
+    CellStore() : m_bytes_read(0), m_block_count(0), m_index_refcount(0) { }
 
     virtual ~CellStore() { return; }
 
@@ -148,21 +150,12 @@ namespace Hypertable {
     virtual int64_t get_blocksize() = 0;
 
     /**
-     * If the key is contained in this cell store, returns true.
-     * If the key is not in the cell store, returns false with a high
-     * probability (may return true - very low probability of this
-     * happening)
-     *
-     * @param key key to query for - format is implementation dependent
-     * @param len length of the key
-     * @return true if cell store may contain the key
+     * Bloom filter lookup.
+     * @param scan_ctx Scan context
+     * @return true if cell store may contain row referenced by
+     * <code>scan_ctx</code>
      */
-    virtual bool may_contain(const void *key, size_t len) = 0;
-
-    /**
-     * This is a smarter variation that look at the scan context
-     */
-    virtual bool may_contain(ScanContextPtr &) = 0;
+    virtual bool may_contain(ScanContextPtr &scan_ctx) = 0;
 
     /**
      * Returns the disk used by this cell store.  If the cell store is opened
@@ -177,7 +170,10 @@ namespace Hypertable {
      * Returns the number of CellStore blocks covered by this object.
      * @return block count
      */
-    virtual size_t block_count() { return m_block_count; }
+    virtual size_t block_count() {
+      ScopedLock lock(m_mutex);
+      return m_block_count;
+    }
 
     /**
      * Returns block compression ratio of this cell store.
@@ -294,6 +290,7 @@ namespace Hypertable {
      * Returns amount of purgeable index memory available
      */
     virtual void get_index_memory_stats(IndexMemoryStats *statsp) {
+      ScopedLock lock(m_mutex);
       memcpy(statsp, &m_index_stats, sizeof(IndexMemoryStats));
     }
 
@@ -310,17 +307,30 @@ namespace Hypertable {
      *
      * @return number of uncompressed bytes read from filesystem
      */
-    uint64_t bytes_read() { return m_bytes_read; }
+    uint64_t bytes_read() {
+      ScopedLock lock(m_mutex);
+      return m_bytes_read;
+    }
+
+    /** Decrement index reference count.
+     */
+    void decrement_index_refcount() {
+      ScopedLock lock(m_mutex);
+      m_index_refcount--;
+    }
 
     static const char DATA_BLOCK_MAGIC[10];
     static const char INDEX_FIXED_BLOCK_MAGIC[10];
     static const char INDEX_VARIABLE_BLOCK_MAGIC[10];
 
-    size_t m_block_count;
-    uint64_t m_bytes_read;
+  protected:
+
+    Mutex m_mutex;
     IndexMemoryStats m_index_stats;
     std::vector <String> m_replaced_files;
-    TableIdentifierManaged m_table_identifier;
+    uint64_t m_bytes_read;
+    size_t m_block_count;
+    uint32_t m_index_refcount;
   };
 
   typedef intrusive_ptr<CellStore> CellStorePtr;

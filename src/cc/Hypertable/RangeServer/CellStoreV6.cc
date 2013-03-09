@@ -69,9 +69,9 @@ CellStoreV6::CellStoreV6(Filesystem *filesys, Schema *schema)
     m_64bit_index(false), m_compressor(0), m_buffer(0),
     m_outstanding_appends(0), m_offset(0), m_file_length(0),
     m_disk_usage(0), m_file_id(0), m_uncompressed_blocksize(0),
-    m_bloom_filter_mode(BLOOM_FILTER_DISABLED), m_bloom_filter(0),
-    m_bloom_filter_items(0), m_filter_false_positive_prob(0.0),
-    m_restricted_range(false), m_column_ttl(0), m_replaced_files_loaded(false) {
+    m_bloom_filter_mode(BLOOM_FILTER_DISABLED), m_bloom_filter_items(0),
+    m_filter_false_positive_prob(0.0), m_restricted_range(false),
+    m_column_ttl(0), m_replaced_files_loaded(false), m_bloom_filter(0) {
   m_file_id = FileBlockCache::get_next_file_id();
   assert(sizeof(float) == 4);
 }
@@ -105,9 +105,14 @@ KeyDecompressor *CellStoreV6::create_key_decompressor() {
 }
 
 void CellStoreV6::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
+  ScopedLock lock(m_mutex);
   if (m_index_stats.block_index_memory == 0)
     load_block_index();
-  int32_t keys_per_block = m_trailer.total_entries / m_trailer.index_entries;
+  if (m_trailer.index_entries == 0) {
+    HT_WARNF("%s has 0 index entries", m_filename.c_str());
+    return;
+  }
+  int32_t keys_per_block = (int32_t)(m_trailer.total_entries / m_trailer.index_entries);
   if (m_64bit_index)
     m_index_map64.unique_row_count_estimate(split_row_data, keys_per_block);
   else
@@ -115,9 +120,14 @@ void CellStoreV6::split_row_estimate_data(SplitRowDataMapT &split_row_data) {
 }
 
 void CellStoreV6::populate_index_pseudo_table_scanner(CellListScannerBuffer *scanner) {
+  ScopedLock lock(m_mutex);
   if (m_index_stats.block_index_memory == 0) {
     load_block_index();
     scanner->add_disk_read(m_trailer.filter_offset-m_trailer.fix_index_offset);
+  }
+  if (m_trailer.index_entries == 0) {
+    HT_WARNF("%s has 0 index entries", m_filename.c_str());
+    return;
   }
   int32_t keys_per_block = m_trailer.total_entries / m_trailer.index_entries;
   if (m_64bit_index)
@@ -133,9 +143,11 @@ CellListScanner *CellStoreV6::create_scanner(ScanContextPtr &scan_ctx) {
   bool need_index =  m_restricted_range || scan_ctx->restricted_range || scan_ctx->single_row;
 
   if (need_index) {
+    ScopedLock lock(m_mutex);
     m_index_stats.block_index_access_counter = ++Global::access_counter;
     if (m_index_stats.block_index_memory == 0)
       load_block_index();
+    m_index_refcount++;
   }
 
   if (m_64bit_index)
@@ -289,6 +301,7 @@ void CellStoreV6::create_bloom_filter(bool is_approx) {
 }
 
 const std::vector<String> &CellStoreV6::get_replaced_files() {
+  ScopedLock lock(m_mutex);
   if (!m_replaced_files_loaded)
     load_replaced_files();
   return m_replaced_files;
@@ -401,20 +414,24 @@ void CellStoreV6::load_bloom_filter() {
 uint64_t CellStoreV6::purge_indexes() {
   uint64_t memory_purged = 0;
 
-  if (m_index_stats.bloom_filter_memory > 0) {
-    memory_purged = m_index_stats.bloom_filter_memory;
-    delete m_bloom_filter;
-    m_bloom_filter = 0;
-    m_index_stats.bloom_filter_memory = 0;
-  }
+  {
+    ScopedLock lock(m_mutex);
 
-  if (m_index_stats.block_index_memory > 0) {
-    memory_purged += m_index_stats.block_index_memory;
-    if (m_64bit_index)
-      m_index_map64.clear();
-    else
-      m_index_map32.clear();
-    m_index_stats.block_index_memory = 0;
+    if (m_index_stats.bloom_filter_memory > 0) {
+      memory_purged = m_index_stats.bloom_filter_memory;
+      delete m_bloom_filter;
+      m_bloom_filter = 0;
+      m_index_stats.bloom_filter_memory = 0;
+    }
+
+    if (m_index_refcount == 0 && m_index_stats.block_index_memory > 0) {
+      memory_purged += m_index_stats.block_index_memory;
+      if (m_64bit_index)
+        m_index_map64.clear();
+      else
+        m_index_map32.clear();
+      m_index_stats.block_index_memory = 0;
+    }
   }
 
   Global::memory_tracker->subtract( memory_purged );
@@ -881,6 +898,7 @@ CellStoreV6::open(const String &fname, const String &start_row,
 
 void
 CellStoreV6::rescope(const String &start_row, const String &end_row) {
+  ScopedLock lock(m_mutex);
   HT_ASSERT(m_start_row.compare(start_row)<0 || m_end_row.compare(end_row)>0);
   m_start_row = start_row;
   m_end_row = end_row;
@@ -1016,16 +1034,23 @@ bool CellStoreV6::may_contain(ScanContextPtr &scan_context) {
     return true;
   else if (m_trailer.filter_length == 0) // bloom filter is empty
     return false;
-  else if (m_bloom_filter == 0)
-    load_bloom_filter();
 
-  m_index_stats.bloom_filter_access_counter = ++Global::access_counter;
+  {
+    ScopedLock lock(m_mutex);
+    if (m_bloom_filter == 0)
+      load_bloom_filter();
 
-  switch (m_bloom_filter_mode) {
+    m_index_stats.bloom_filter_access_counter = ++Global::access_counter;
+
+    switch (m_bloom_filter_mode) {
     case BLOOM_FILTER_ROWS:
-      return may_contain(scan_context->start_row);
+      m_index_stats.bloom_filter_access_counter = ++Global::access_counter;
+      return m_bloom_filter->may_contain(scan_context->start_row.data(),
+                                         scan_context->start_row.size());
     case BLOOM_FILTER_ROWS_COLS:
-      if (may_contain(scan_context->start_row)) {
+      m_index_stats.bloom_filter_access_counter = ++Global::access_counter;
+      if (m_bloom_filter->may_contain(scan_context->start_row.data(),
+                                      scan_context->start_row.size())) {
         SchemaPtr &schema = scan_context->schema;
         size_t rowlen = scan_context->start_row.length();
         uint8_t column_family_id;
@@ -1043,35 +1068,23 @@ bool CellStoreV6::may_contain(ScanContextPtr &scan_context) {
 
           rowcol[rowlen + 1] = column_family_id;
 
-          if (may_contain(rowcol.get(), rowlen + 2))
+          m_index_stats.bloom_filter_access_counter = ++Global::access_counter;
+          if (m_bloom_filter->may_contain(rowcol.get(), rowlen + 2))
             return true;
         }
       }
       return false;
     default:
       HT_ASSERT(!"unpossible bloom filter mode!");
+    }
   }
   return false; // silence stupid compilers
 }
 
 
-bool CellStoreV6::may_contain(const void *ptr, size_t len) {
-
-  if (m_bloom_filter_mode == BLOOM_FILTER_DISABLED)
-    return true;
-  else if (m_trailer.filter_length == 0) // bloom filter is empty
-    return false;
-  else if (m_bloom_filter == 0)
-    load_bloom_filter();
-
-  m_index_stats.bloom_filter_access_counter = ++Global::access_counter;
-  bool may_contain = m_bloom_filter->may_contain(ptr, len);
-  return may_contain;
-}
-
-
 
 void CellStoreV6::display_block_info() {
+  ScopedLock lock(m_mutex);
   if (m_index_stats.block_index_memory == 0)
     load_block_index();
   if (m_64bit_index)

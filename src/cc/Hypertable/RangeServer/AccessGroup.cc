@@ -639,8 +639,10 @@ void AccessGroup::run_compaction(int maintenance_flags) {
           new_stores.push_back(m_stores[i]);
         for (size_t i=merge_offset; i<merge_offset+merge_length; i++)
           removed_files.push_back(m_stores[i].cs->get_filename());
-        new_stores.push_back(cellstore);
-        added_file = cellstore->get_filename();
+        if (cellstore->get_total_entries() > 0) {
+          new_stores.push_back(cellstore);
+          added_file = cellstore->get_filename();
+        }
         for (size_t i=merge_offset+merge_length; i<m_stores.size(); i++)
           new_stores.push_back(m_stores[i]);
         m_stores.swap(new_stores);
@@ -699,20 +701,20 @@ void AccessGroup::run_compaction(int maintenance_flags) {
           m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
           added_file = cellstore->get_filename();
         }
-        else {
-          String fname = cellstore->get_filename();
-          cellstore = 0;
-          try {
-            Global::dfs->remove(fname);
-          }
-          catch (Hypertable::Exception &e) {
-            HT_ERROR_OUT << "Problem removing '" << fname.c_str() << "' " \
-                         << e << HT_END;
-          }
-        }
       }
 
       recompute_compression_ratio(&total_index_entries);
+    }
+
+    if (cellstore->get_total_entries() == 0) {
+      String fname = cellstore->get_filename();
+      cellstore = 0;
+      try {
+        Global::dfs->remove(fname);
+      }
+      catch (Hypertable::Exception &e) {
+        HT_ERROR_OUT << "Problem removing '" << fname << "' " << e << HT_END;
+      }
     }
 
     m_file_tracker.update_live(added_file, removed_files, m_next_cs_id, total_index_entries);
