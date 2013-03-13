@@ -60,8 +60,8 @@ namespace Hypertable {
       CONNECTION_ESTABLISHED, ///< Connection established event
       DISCONNECT, ///< Connection disconnected event
       MESSAGE,    ///< Request/response message event
-      ERROR,      ///< Error event
-      TIMER       ///< Timer event
+      ERROR,      ///< %Error event
+      TIMER       ///< %Timer event
     };
 
     /** Constructor initializing with InetAddr.
@@ -131,6 +131,11 @@ namespace Hypertable {
       group_id = header.gid;
     }
 
+    /** Sets the address proxy name from which this event was generated.
+     * If the proxy name is less than 32 characters, then it is copied into
+     * #proxy_buf_static, otherwise a buffer is allocated to hold it.  #proxy
+     * is set to point to whichever buffer is chosen.
+     */
     void set_proxy(const String &p) {
       if (p.length() == 0)
 	proxy = 0;
@@ -161,15 +166,19 @@ namespace Hypertable {
      */
     Type type;
 
-    /** Remote address from which event was generated. */
+    /// Remote address from which event was generated.
     InetAddr addr;
 
-    /** Address proxy */
+    /// Address proxy name
     const char *proxy;
+
+    /// Pointer to allocated proxy name buffer
     char *proxy_buf;
+
+    /// Static proxy name buffer
     char proxy_buf_static[32];
 
-    /** Local address to which event was delivered. */
+    /// Local address to which event was delivered.
     InetAddr local_addr;
 
     /** Error code associated with this event.  DISCONNECT and
@@ -177,13 +186,13 @@ namespace Hypertable {
      */
     int error;
 
-    /** Comm layer header for MESSAGE events */
+    /// Comm layer header for MESSAGE events
     CommHeader header;
 
-    /** Points to a buffer containing the message payload */
+    /// Points to a buffer containing the message payload
     const uint8_t *payload;
 
-    /** Length of the message */
+    /// Length of the message
     size_t payload_len;
 
     /** Thread group to which this message belongs.  Used to serialize
@@ -197,7 +206,7 @@ namespace Hypertable {
      */
     uint64_t group_id;
 
-    /** time (seconds since epoch) when message arrived **/
+    /// time (seconds since epoch) when message arrived
     time_t arrival_time;
 
     /** Generates a one-line string representation of the event.  For example:

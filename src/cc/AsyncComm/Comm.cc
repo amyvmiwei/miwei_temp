@@ -20,8 +20,9 @@
  */
 
 /** @file
- * Primary entry point for AsyncComm service.
- * This file contains method definitions for singleton class Comm
+ * Definitions for Comm.
+ * This file contains variable and method definitions for Comm, a singleton
+ * class used as the main entry point to the AsyncComm subsystem.
  */
 
 //#define HT_DISABLE_LOG_DEBUG
@@ -246,7 +247,11 @@ Comm::listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
     HT_THROWF(error, "Error inserting accept handler for %s into handler map",
               addr.to_str().c_str());
   }
-  handler->start_polling();
+  if ((error = handler->start_polling()) != Error::OK) {
+    delete handler;
+    HT_THROWF(error, "Problem polling on listen socket bound to %s",
+              addr.to_str().c_str());
+  }
 }
 
 
@@ -271,9 +276,6 @@ Comm::send_request(const CommAddress &addr, uint32_t timeout_ms,
 
 int Comm::send_request(IOHandlerData *data_handler, uint32_t timeout_ms,
 		       CommBufPtr &cbuf, DispatchHandler *resp_handler) {
-
-  if (timeout_ms == 0)
-    HT_THROW(Error::REQUEST_TIMEOUT, "Request with timeout of 0");
 
   cbuf->header.flags |= CommHeader::FLAGS_BIT_REQUEST;
   if (resp_handler == 0) {
@@ -372,7 +374,11 @@ Comm::create_datagram_receive_socket(CommAddress &addr, int tos,
     HT_THROWF(error, "Error inserting datagram handler for %s into handler map",
               addr.to_str().c_str());
   }
-  handler->start_polling();
+  if ((error = handler->start_polling()) != Error::OK) {
+    delete handler;
+    HT_THROWF(error, "Problem polling on datagram socket bound to %s",
+              addr.to_str().c_str());
+  }
 }
 
 
@@ -554,8 +560,10 @@ Comm::connect_socket(int sd, const CommAddress &addr,
   handler = new IOHandlerData(sd, connectable_addr.inet, default_handler);
   if (addr.is_proxy())
     handler->set_proxy(addr.proxy);
-  if ((error = m_handler_map->insert_handler(handler)) != Error::OK)
+  if ((error = m_handler_map->insert_handler(handler)) != Error::OK) {
+    delete handler;
     return error;
+  }
 
   while (::connect(sd, (struct sockaddr *)&connectable_addr.inet, sizeof(struct sockaddr_in))
           < 0) {
@@ -582,9 +590,10 @@ Comm::connect_socket(int sd, const CommAddress &addr,
   }
 
   error = handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
-  if (error == Error::COMM_POLL_ERROR) {
-    HT_ERRORF("Polling problem on connection to %s: %s",
-              connectable_addr.to_str().c_str(), strerror(errno));
+  if (error != Error::OK) {
+    HT_ERRORF("Polling problem on connection to %s: %s (%s)",
+              connectable_addr.to_str().c_str(),
+              Error::get_text(error), strerror(errno));
     m_handler_map->remove_handler(handler);
     delete handler;
   }

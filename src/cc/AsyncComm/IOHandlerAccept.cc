@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Definitions for IOHandlerAccept.
+ * This file contains method definitions for IOHandlerAccept, a class for
+ * processing I/O events for accept (listen) sockets.
+ */
+
 #include "Common/Compat.h"
 
 #include <iostream>
@@ -136,9 +142,17 @@ bool IOHandlerAccept::handle_incoming_connection() {
       HT_ERRORF("Problem registering accepted connection in handler map - %s",
                 Error::get_text(error));
       delete handler;
+      ReactorRunner::handler_map->decomission_handler(this);
       return true;
     }
-    handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
+    if ((error = handler->start_polling(Reactor::READ_READY |
+                                        Reactor::WRITE_READY)) != Error::OK) {
+      HT_ERRORF("Problem starting polling on incoming connection - %s",
+                Error::get_text(error));
+      delete handler;
+      ReactorRunner::handler_map->decomission_handler(this);
+      return true;
+    }
 
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK));
   }

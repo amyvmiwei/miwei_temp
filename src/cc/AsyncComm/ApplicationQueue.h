@@ -121,22 +121,42 @@ namespace Hypertable {
      */
     typedef std::list<RequestRec *> RequestQueue;
 
-    /** Application queue state object shared among worker threads.
+    /** Application queue state shared among worker threads.
      */
     class ApplicationQueueState {
     public:
       ApplicationQueueState() : threads_available(0), shutdown(false),
                                 paused(false) { }
-      RequestQueue           queue;
-      RequestQueue           urgent_queue;
-      GroupStateMap       group_state_map;
-      Mutex               mutex;
-      boost::condition    cond;
-      boost::condition    quiesce_cond;
-      size_t              threads_available;
-      size_t              threads_total;
-      bool                shutdown;
-      bool                paused;
+
+      /// Normal request queue
+      RequestQueue queue;
+
+      /// Urgent request queue
+      RequestQueue urgent_queue;
+
+      /// Group ID to group state map
+      GroupStateMap group_state_map;
+
+      /// %Mutex for serializing concurrent access
+      Mutex mutex;
+
+      /// Condition variable to signal pending handlers
+      boost::condition cond;
+
+      /// Condition variable used to signal <i>quiesced</i> queue
+      boost::condition quiesce_cond;
+
+      /// Idle thread count
+      size_t threads_available;
+      
+      /// Total initial threads
+      size_t threads_total;
+
+      /// Flag indicating if shutdown is in progress
+      bool shutdown;
+
+      /// Flag indicating if queue has been paused
+      bool paused;
     };
 
     /** Application queue worker thread function (functor)
@@ -147,6 +167,8 @@ namespace Hypertable {
       Worker(ApplicationQueueState &qstate, bool one_shot=false) 
       : m_state(qstate), m_one_shot(one_shot) { return; }
 
+      /** Thread run method
+       */
       void operator()() {
         RequestRec *rec = 0;
         RequestQueue::iterator iter;
@@ -241,6 +263,13 @@ namespace Hypertable {
 
     private:
 
+      /** Removes and deletes a request.  This method updates the group
+       * state associated with <code>rec</code> by setting the running flag to
+       * <i>false</i> and decrementing the outstanding count.  If the
+       * outstanding count for the group drops to 0, the group state record
+       * is removed from ApplicationQueueState::group_state_map and is deleted.
+       * @param rec Request record to remove
+       */
       void remove(RequestRec *rec) {
         if (rec->group_state) {
           ScopedLock ulock(m_state.mutex);
@@ -254,6 +283,13 @@ namespace Hypertable {
         delete rec;
       }
 
+      /** Removes and deletes an expired request.  This method updates the group
+       * state associated with <code>rec</code> by decrementing the outstanding
+       * count.  If the outstanding count for the group drops to 0, the group
+       * state record is removed from ApplicationQueueState::group_state_map and
+       * is deleted.
+       * @param rec Request record to remove
+       */
       void remove_expired(RequestRec *rec) {
         if (rec->group_state) {
           rec->group_state->outstanding--;
@@ -265,20 +301,33 @@ namespace Hypertable {
         delete rec;
       }
 
+      /// Shared application queue state object
       ApplicationQueueState &m_state;
+
+      /// Set to <i>true</i> if thread should exit after executing request
       bool m_one_shot;
     };
 
-    ApplicationQueueState  m_state;
-    ThreadGroup            m_threads;
+    /// Application queue state object
+    ApplicationQueueState m_state;
+    
+    /// Boost thread group for managing threads
+    ThreadGroup m_threads;
+
+    /// Vector of thread IDs
     std::vector<Thread::id> m_thread_ids;
+
+    /// Flag indicating if threads have joined after a shutdown
     bool joined;
+
+    /** Set to <i>true</i> if queue is configured to allow dynamic thread
+     * creation
+     */
     bool m_dynamic_threads;
 
   public:
 
-    /**
-     * Default constructor used by derived classes only
+    /** Default constructor used by derived classes only
      */
     ApplicationQueue() : joined(true) {}
 
@@ -365,19 +414,19 @@ namespace Hypertable {
 
     /** Stops (pauses) application queue, preventing non-urgent requests from
      * being executed.  Any requests that are being executed at the time of the
-     * call will complete.
+     * call are allowed to complete.
      */
     void stop() {
       ScopedLock lock(m_state.mutex);
       m_state.paused = true;
     }
 
-    /**
-     * Adds a request (application request handler) to the application queue.
+    /** Adds a request (application request handler) to the application queue.
      * The request queue is designed to support the serialization of related
      * requests.  Requests are related by the thread group ID value in the
      * ApplicationHandler.  This thread group ID is constructed in the
-     * Event object
+     * Event object.
+     * @param app_handler Pointer to request to add
      */
     virtual void add(ApplicationHandler *app_handler) {
       GroupStateMap::iterator uiter;
@@ -416,6 +465,14 @@ namespace Hypertable {
       }
     }
 
+    /** Adds a request (application request handler) to the application queue.
+     * The request queue is designed to support the serialization of related
+     * requests.  Requests are related by the thread group ID value in the
+     * ApplicationHandler.  This thread group ID is constructed in the
+     * Event object.
+     * @note This method is defined for symmetry and just calls #add
+     * @param app_handler Pointer to request to add
+     */
     virtual void add_unlocked(ApplicationHandler *app_handler) {
       add(app_handler);
     }

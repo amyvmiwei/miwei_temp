@@ -22,10 +22,9 @@
 /** @file
  * Declarations for ResponseCallback.
  * This file contains type declarations for ResponseCallback, a class that
- * is used to send generic success/error response messages back to
- * request clients.
+ * is used to generate and send standard success/error response messages back to
+ * clients.
  */
-
 
 #ifndef HYPERTABLE_RESPONSECALLBACK_H
 #define HYPERTABLE_RESPONSECALLBACK_H
@@ -37,73 +36,77 @@
 
 namespace Hypertable {
 
-  /**
-   * This class is used to deliver responses, corresponding to a request,
-   * back to a client.
+  /** @addtogroup AsyncComm
+   *  @{
+   */
+
+  /** This class is used to generate and deliver standard responses back to a
+   * client.
    */
   class ResponseCallback {
 
   public:
 
-    /**
-     * Constructor. Initializes a pointer to the Comm object and saves a pointer
-     * to the event that triggered the request.
+    /** Constructor. Initializes a pointer to the Comm object and saves a
+     * pointer to the event that triggered the request.
      *
-     * @param comm pointer to the Comm object
-     * @param event_ptr smart pointer to the event that generated the request
+     * @param comm Pointer to the Comm object
+     * @param event Smart pointer to the event that generated the request
      */
-    ResponseCallback(Comm *comm, EventPtr &event_ptr)
-      : m_comm(comm), m_event(event_ptr) { return; }
+    ResponseCallback(Comm *comm, EventPtr &event)
+      : m_comm(comm), m_event(event) { return; }
 
+    /** Default constructor.
+     */
     ResponseCallback() : m_comm(0), m_event(0) { return; }
 
+    /** Destructor */
     virtual ~ResponseCallback() { return; }
 
-    /**
-     * Sends an error response back to the client.  The format of the response
-     * consists of the 4-byte error code followed by the error message string.
-     *
-     * @param error error code
-     * @param msg error message
+    /** Sends a standard error response back to the client.  The response message
+     * that is generated and sent back has the following format:
+     * <pre>
+     *   [int32] error code
+     *   [int16] error message length
+     *   [chars] error message
+     * </pre>
+     * @param error %Error code
+     * @param msg %Error message
      * @return Error::OK on success or error code on failure
      */
     virtual int error(int error, const String &msg);
 
-    /**
-     * Sends a a simple success response back to the client which is just
-     * simply the 4-byte error code Error::OK.  This can be used for all
-     * requests that don't have return values.
-     *
+    /** Sends a a simple success response back to the client which is just
+     * the 4-byte error code Error::OK.  This can be used to signal success
+     * for all methods that don't have return values.
      * @return Error::OK on success or error code on failure
      */
     virtual int response_ok();
 
-    /** Gets the remote address of the client.
-     *
-     * @param addr reference to address structure to hold result
+    /** Gets the remote address of the requesting client.
+     * @param addr Reference to address structure to hold result
      */
     void get_address(struct sockaddr_in &addr) {
       memcpy(&addr, &m_event->addr, sizeof(addr));
     }
 
-    /** Gets the remote address of the client.
-     *
-     * @return remote address
+    /** Gets the remote address of the requesting client.
+     * @return Remote address
      */
     const InetAddr get_address() const {
       return m_event->addr;
     }
 
-    /** Get smart pointer to event object.
-     * @return smart pointer to event object
+    /** Get smart pointer to event object that triggered the request.
+     * @return Smart pointer to event object that triggered the request.
      */
     EventPtr &get_event() { return m_event; }
 
   protected:
-    Comm          *m_comm;  //!< Comm pointer
-    EventPtr       m_event; //!< Smart pointer to event object
+    Comm     *m_comm; //!< Comm pointer
+    EventPtr m_event; //!< Smart pointer to event object
   };
-
+  /** @}*/
 } // namespace Hypertable
 
 #endif // HYPERTABLE_RESPONSECALLBACK_H

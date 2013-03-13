@@ -35,8 +35,7 @@
 using namespace Hypertable;
 
 
-DispatchHandlerSynchronizer::DispatchHandlerSynchronizer()
-  : m_receive_queue(), m_mutex(), m_cond() {
+DispatchHandlerSynchronizer::DispatchHandlerSynchronizer() {
   return;
 }
 

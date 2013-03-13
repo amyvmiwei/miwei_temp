@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for ResponseCallback.
+ * This file contains method definitions for ResponseCallback, a class that
+ * is used to generate and send standard success/error response messages back to
+ * clients.
  */
 
 #include "Common/Compat.h"

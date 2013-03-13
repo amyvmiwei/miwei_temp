@@ -148,9 +148,12 @@ IGNORE_PREFIX          =
 GENERATE_HTML          = YES
 HTML_OUTPUT            = html
 HTML_FILE_EXTENSION    = .html
-HTML_HEADER            =
+HTML_HEADER            = @HYPERTABLE_SOURCE_DIR@/doc/header.html
 HTML_FOOTER            =
 HTML_STYLESHEET        =
+HTML_EXTRA_STYLESHEET  = @HYPERTABLE_SOURCE_DIR@/doc/override.css
+HTML_COLORSTYLE_HUE    = 120
+HTML_EXTRA_FILES       = @HYPERTABLE_SOURCE_DIR@/doc/images/logo-hypertable.png
 GENERATE_HTMLHELP      = NO
 HTML_DYNAMIC_SECTIONS  = NO
 CHM_FILE               =
@@ -262,4 +265,5 @@ DOT_CLEANUP            = YES
 #---------------------------------------------------------------------------
 # Configuration::additions related to the search engine
 #---------------------------------------------------------------------------
-SEARCHENGINE           = NO
+SEARCHENGINE           = YES
+SERVER_BASED_SEARCH    = NO

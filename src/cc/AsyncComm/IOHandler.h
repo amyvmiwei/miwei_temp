@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for IOHandler.
+ * This file contains type declarations for IOHandler, an abstract base class
+ * from which I/O handlers are derived.
+ */
 
 #ifndef HYPERTABLE_IOHANDLER_H
 #define HYPERTABLE_IOHANDLER_H
@@ -156,49 +161,116 @@ namespace Hypertable {
       }
     }
 
-    /**
-     *
+    /** Start polling on the handler with the poll interest specified in
+     * <code>mode</code>.
+     * This method registers the poll interest, specified in <code>mode</code>,
+     * with the polling interface and sets #m_poll_interest to
+     * <code>mode</code>.  If an error is encountered, #m_error is
+     * set to the approprate error code and the handler is decomissioned.
+     * @return Error::OK on success, or one of Error::COMM_POLL_ERROR,
+     * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR on error
      */
     int start_polling(int mode=Reactor::READ_READY);
 
+    /** Adds the poll interest specified in <code>mode</code> to the polling
+     * interface for this handler.
+     * This method adds the poll interest, specified in <code>mode</code>,
+     * to the polling interface for this handler and merges <code>mode</code>
+     * into #m_poll_interest using bitwise OR (|).  If an error is encountered,
+     * #m_error is set to the approprate error code and the handler is
+     * decomissioned.
+     * @return Error::OK on success, or one of Error::COMM_POLL_ERROR,
+     * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR on error
+     */
     int add_poll_interest(int mode);
 
+    /** Removes the poll interest specified in <code>mode</code> to the polling
+     * interface for this handler.
+     * This method removes the poll interest, specified in <code>mode</code>,
+     * from the polling interface for this handler and strips <code>mode</code>
+     * from #m_poll_interest using boolean operations.  If an error is
+     * encountered, #m_error is set to the approprate error code and the handler
+     * is decomissioned.
+     * @return Error::OK on success, or one of Error::COMM_POLL_ERROR,
+     * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR on error
+     */
     int remove_poll_interest(int mode);
 
+    /** Resets poll interest by adding #m_poll_interest to the polling interface
+     * for this handler.  If an error is encountered, #m_error is set to the
+     * approprate error code and the handler is decomissioned.
+     * @return Error::OK on success, or one of Error::COMM_POLL_ERROR,
+     * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR on error
+     */
     int reset_poll_interest() {
       return add_poll_interest(m_poll_interest);
     }
 
+    /** Gets the handler socket address.  The socket address is the
+     * address of the remote end of the connection for data (TCP) handlers,
+     * and the local socket address for datagram and accept handlers.
+     * @return Handler socket address
+     */
     InetAddr get_address() { return m_addr; }
 
+    /** Get local socket address for connection.
+     * @return Local socket address for connection.
+     */
     InetAddr get_local_address() { return m_local_addr; }
 
+    /** Sets the proxy name for this connection.
+     * @param proxy Proxy name to set for this connection.
+     */
     void set_proxy(const String &proxy) {
       ScopedLock lock(m_mutex);
       m_proxy = proxy;
     }
 
+    /** Gets the proxy name for this connection.
+     * @return Proxy name for this connection.
+     */
     String get_proxy() {
       ScopedLock lock(m_mutex);
       return m_proxy;
     }
 
-    void set_dispatch_handler(DispatchHandler *dh) {
-      ScopedLock lock(m_mutex);
-      m_dispatch_handler = dh;
-    }
-
+    /** Gets the socket descriptor for this connection.
+     * @return Socket descriptor for this connection.
+     */
     int get_sd() { return m_sd; }
 
+    /** Get the reactor that this handler is assigned to.
+     * @param reactor Reference to returned reactor pointer
+     */
     void get_reactor(ReactorPtr &reactor) { reactor = m_reactor; }
 
+    /** Display polling event from <code>poll()</code> interface to
+     * <i>stderr</i>.
+     * @param event Pointer to <code>pollfd</code> structure describing
+     * <code>poll()</code> event.
+     */
     void display_event(struct pollfd *event);
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
+    /** Display polling event from <code>kqueue</code> interface to
+     * <i>stderr</i>.
+     * @param event Pointer to <code>kevent</code> structure describing
+     * <code>kqueue()</code> event.
+     */
     void display_event(struct kevent *event);
 #elif defined(__linux__)
+    /** Display polling event from <code>epoll()</code> interface to
+     * <i>stderr</i>.
+     * @param event Pointer to <code>epoll_event</code> structure describing
+     * <code>epoll()</code> event.
+     */
     void display_event(struct epoll_event *event);
 #elif defined(__sun__)
+    /** Display polling event from <code>port_associate()</code> interface to
+     * <i>stderr</i>.
+     * @param event Pointer to <code>port_event_t</code> structure describing
+     * <code>port_associate()</code> event.
+     */
     void display_event(port_event_t *event);
 #endif
 
@@ -206,18 +278,65 @@ namespace Hypertable {
 
   protected:
 
+    /** Sets #m_error to <code>error</code> if it has not already been set.
+     * This method checks to see if #m_error is set to Error::OK and if so, it
+     * sets #m_error to <code>error</code> and returns <i>true</i>.  Otherwise
+     * it does nothing and returns false.
+     * @return <i>true</i> if #m_error was set to <code>error</code>,
+     * <i>false</i> otherwise.
+     */
+    bool test_and_set_error(int32_t error) {
+      ScopedLock lock(m_mutex);
+      if (m_error == Error::OK) {
+        m_error = error;
+        return true;
+      }
+      return false;
+    }
+
+    /** Returns first error code encountered by handler.
+     * When an error is encountered during handler methods, the first error code
+     * that is encountered is recorded in #m_error.  This method returns that
+     * error or Error::OK if no error has been encountered.
+     * @return First error code encountered by this handler, or Error::OK if
+     * no error has been encountered
+     */
+    int32_t get_error() {
+      ScopedLock lock(m_mutex);
+      return m_error;
+    }
+
+    /** Get alias address for this connection.
+     * @return Alias address for this connection.
+     */
     InetAddr get_alias() {
       return m_alias;
     }
 
+    /** Set alias address for this connection.
+     * @param alias Reference to return alias address.
+     */
     void set_alias(const InetAddr &alias) {
       m_alias = alias;
     }
 
+    /** Increment reference count.
+     * @note This method assumes the caller is serializing access to this and
+     * related methods with a mutex lock.
+     * @see #decrement_reference_count, #reference_count, and #decomission
+     */
     void increment_reference_count() {
       m_reference_count++;
     }
 
+    /** Decrement reference count.
+     * If reference count drops to 0 and the handler is decomissioned
+     * then it is scheduled for removal with a call to
+     * <code>m_reactor->schedule_removal(this)</code>.
+     * @note This method assumes the caller is serializing access to this and
+     * related methods with a mutex lock.
+     * @see #increment_reference_count, #reference_count, and #decomission
+     */
     void decrement_reference_count() {
       HT_ASSERT(m_reference_count > 0);
       m_reference_count--;
@@ -225,10 +344,26 @@ namespace Hypertable {
         m_reactor->schedule_removal(this);
     }
 
+    /** Return reference count
+     * @note This method assumes the caller is serializing access to this and
+     * related methods with a mutex lock.
+     * @see #increment_reference_count, #decrement_reference_count, and
+     * #decomission
+     */
     size_t reference_count() {
       return m_reference_count;
     }
 
+    /** Decomission handler.
+     * This method decomissions the handler by setting the #m_decomissioned
+     * flag to <i>true</i>.  If the reference count is 0, the handler is
+     * also scheduled for removal with a call to
+     * <code>m_reactor->schedule_removal(this)</code>.
+     * @note This method assumes the caller is serializing access to this and
+     * related methods with a mutex lock.
+     * @see #increment_reference_count, #decrement_reference_count,
+     * #reference_count, and #is_decomissioned
+     */
     void decomission() {
       if (!m_decomissioned) {
         m_decomissioned = true;
@@ -237,12 +372,24 @@ namespace Hypertable {
       }
     }
 
+    /** Checks to see if handler is decomissioned.
+     * @return <i>true</i> if it is decomissioned, <i>false</i> otherwise.
+     */
     bool is_decomissioned() {
       return m_decomissioned;
     }
 
+    /** Disconnect connection.
+     */
     virtual void disconnect() { }
 
+    /** Return <code>poll()</code> interface events corresponding to the
+     * normalized polling interest in <code>mode</code>.  <code>mode</code>
+     * is some bitwise combination of the flags Reactor::READ_READY and
+     * Reactor::WRITE_READY.
+     * @return <code>poll()</code> events correspond to polling interest
+     * specified in <code>mode</code>.
+     */
     short poll_events(int mode) {
       short events = 0;
       if (mode & Reactor::READ_READY)
@@ -252,6 +399,9 @@ namespace Hypertable {
       return events;
     }
 
+    /** Stops polling by removing socket from polling interface.
+     * Clears #m_poll_interest.
+     */
     void stop_polling() {
       if (ReactorFactory::use_poll) {
 	m_poll_interest = 0;
@@ -271,22 +421,53 @@ namespace Hypertable {
 #endif
     }
 
-    Mutex               m_mutex;
-    size_t              m_reference_count;
-    uint32_t            m_free_flag;
-    int32_t             m_error;
-    String              m_proxy;
-    InetAddr            m_addr;
-    InetAddr            m_local_addr;
-    InetAddr            m_alias;
-    int                 m_sd;
-    DispatchHandlerPtr  m_dispatch_handler;
-    ReactorPtr          m_reactor;
-    int                 m_poll_interest;
-    bool                m_decomissioned;
+    /// %Mutex for serializing concurrent access
+    Mutex m_mutex;
+
+    /** Reference count.  Calls to methods that reference this member
+     * must be mutex protected by caller.
+     */
+    size_t m_reference_count;
+
+    /// Free flag (for testing)
+    uint32_t m_free_flag;
+
+    /// Error code
+    int32_t m_error;
+
+    /// Proxy name for this connection
+    String m_proxy;
+
+    /// Handler socket address
+    InetAddr m_addr;
+
+    /// Local address of connection
+    InetAddr m_local_addr;
+
+    /// Address alias for connection
+    InetAddr m_alias;
+
+    /// Socket descriptor
+    int m_sd;
+
+    /// Default dispatch hander for connection
+    DispatchHandlerPtr m_dispatch_handler;
+
+    /// Reactor to which this handler is assigned
+    ReactorPtr m_reactor;
+
+    /** Current polling interest.  The polling interest is some bitwise
+     * combination of the flags Reactor::READ_READY and
+     * Reactor::WRITE_READY.
+     */
+    int m_poll_interest;
+
+    /** Decomissioned flag.  Calls to methods that reference this member
+     * must be mutex protected by caller.
+     */
+    bool m_decomissioned;
   };
   /** @}*/
 }
-
 
 #endif // HYPERTABLE_IOHANDLER_H

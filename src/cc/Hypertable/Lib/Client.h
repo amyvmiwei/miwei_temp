@@ -39,7 +39,7 @@
 namespace Hypertable {
 
   /** @defgroup libHypertable libHypertable
-   * Hypertable client library.
+   * %Client library.
    * The libHypertable module contains the Hypertable client library
    * which contains Hypertable specific code that is shared by clients,
    * the RangeServer and the Master.

@@ -97,7 +97,7 @@ namespace Hypertable {
     /** Adds a request to request cache and adjusts poll timeout if necessary.
      * @param id Request ID
      * @param handler I/O handler with which request is associated
-     * @param dh Event handler for response MESSAGE events
+     * @param dh Application dispatch handler for response MESSAGE events
      * @param expire Absolute expiration time
      */
     void add_request(uint32_t id, IOHandler *handler, DispatchHandler *dh,
@@ -109,7 +109,7 @@ namespace Hypertable {
     }
 
     /** Removes request associated with <code>id</code>
-     * @return Pointer to request event handler
+     * @return Pointer to request dispatch handler
      */
     DispatchHandler *remove_request(uint32_t id) {
       ScopedLock lock(m_mutex);
@@ -138,7 +138,8 @@ namespace Hypertable {
     }
 
     /** Cancels timers associated with <code>handler</code>.
-     * @param handler Event handler for which associated timers are to be cancelled
+     * @param handler Dispatch handler for which associated timers are to be
+     * cancelled
      */
     void cancel_timer(DispatchHandler *handler) {
       ScopedLock lock(m_mutex);
@@ -191,7 +192,7 @@ namespace Hypertable {
     /** Processes request timeouts and timers.
      * This method removes timed out requests from the request cache, delivering
      * ERROR events (with error == Error::REQUEST_TIMEOUT) via each request's
-     * event handler.  It also processes expired timers by removing them from
+     * dispatch handler.  It also processes expired timers by removing them from
      * #m_timer_heap and delivering a TIMEOUT event via the timer handler if
      * it exsists.
      * @param next_timeout Set to next earliest timeout of active requests and
@@ -210,7 +211,8 @@ namespace Hypertable {
     /** Add poll interest for socket (POSIX <code>poll</code> only).
      * This method is only called when <code>ReactorFactory::use_poll</code> is
      * set to <i>true</i>.  It modifies #m_polldata accordingly and then calls
-     * #poll_loop_interrupt.
+     * #poll_loop_interrupt.  If an error is encountered, then the poll interest
+     * is removed by clearing the #m_polldata entry for <code>sd</code>.
      * @param sd Socket descriptor for which to add poll interest
      * @param events Bitmask of poll events (see POSIX <code>poll()</code>)
      * @param handler Pointer to I/O handler associated with socket

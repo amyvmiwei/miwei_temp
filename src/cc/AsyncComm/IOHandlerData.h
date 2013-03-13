@@ -1,4 +1,4 @@
-/* -*- C++ -*-
+/*
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for IOHandlerData.
+ * This file contains type declarations for IOHandlerData, a class for
+ * processing I/O events for data (TCP) sockets.
  */
 
 #ifndef HYPERTABLE_IOHANDLERDATA_H
@@ -48,21 +54,34 @@ namespace Hypertable {
 
   public:
 
-    IOHandlerData(int sd, const InetAddr &addr, DispatchHandlerPtr &dhp, bool connected=false)
+    /** Constructor.
+     * @param sd Socket descriptor
+     * @param addr Address of remote end of connection
+     * @param dhp Default dispatch handler for connection
+     * @param connected Initial connection state for handler
+     */
+    IOHandlerData(int sd, const InetAddr &addr,
+                  DispatchHandlerPtr &dhp, bool connected=false)
       : IOHandler(sd, dhp), m_event(0), m_send_queue() {
       memcpy(&m_addr, &addr, sizeof(InetAddr));
       m_connected = connected;
       reset_incoming_message_state();
     }
 
+    /** Destructor */
     virtual ~IOHandlerData() {
       delete m_event;
     }
 
+    /** Disconnects handler by delivering Event::DISCONNECT via default dispatch
+     * handler.
+     */
     virtual void disconnect() { 
       deliver_event(new Event(Event::DISCONNECT, m_addr, m_proxy, m_error));
     }
 
+    /** Resets incoming message buffer state in preparation for next message.
+     */
     void reset_incoming_message_state() {
       m_got_header = false;
       m_event = 0;
@@ -73,44 +92,221 @@ namespace Hypertable {
       m_message_remaining = 0;
     }
 
-    int send_message(CommBufPtr &, uint32_t timeout_ms = 0,
-                     DispatchHandler * = 0);
+    /** Sends message pointed to by <code>cbp</code> over socket associated
+     * with this I/O handler.  If the message being sent is a request
+     * message (has the CommHeader::FLAGS_BIT_REQUEST set) and
+     * <code>disp_handler</code> is not 0, then an entry is added to the
+     * reactor's request cache so that <code>disp_handler</code> will be
+     * called to handle the response or receive a TIMEOUT event if the
+     * response is not received within <code>timeout_ms</code> milliseconds.
+     * @param cbp Reference to CommBufPtr pointing to message to send
+     * @param timeout_ms Millisecond timeout used for request messages
+     * @param disp_handler Dispatch handler used for request messages
+     * @return Error::OK on success, Error::COMM_NOT_CONNECTED if handler has
+     * been decomissioned, or Error::COMM_BROKEN_CONNECTION if a write error
+     * was encountered.
+     */
+    int send_message(CommBufPtr &cbp, uint32_t timeout_ms = 0,
+                     DispatchHandler *disp_handler = 0);
 
+    /** Flushes send queue.  When messages are sent, they are first added to a
+     * send queue (#m_send_queue) and then the messages in the send queue are
+     * written over the socket by calling this method.  This method attempts
+     * to write all of the messages in the queue and stops under the following
+     * conditions:
+     *   - Send queue becomes empty
+     *   - A write results in EAGAIN (socket buffer is full)
+     *   - An error is encountered during a write
+     * The send queue holds a list of CommBuf objects that contain <i>next
+     * write</i> pointers that are updated by this method and allow it to
+     * pick up where it left off in the event of EAGAIN.
+     * @return Error::OK on success or EAGAIN, or Error::COMM_BROKEN_CONNECTION
+     * if a write error was encountered.
+     */
     int flush_send_queue();
 
-    // define default poll() interface for everyone since it is chosen at runtime
+    /** Handle <code>poll()</code> interface events.
+     * This method is called by its reactor thread to handle I/O events.
+     * It handles <code>POLLOUT</code> events with a call to
+     * #handle_write_readiness.  If #handle_write_readiness returns <i>true</i>
+     * the handler is disconnected with a call to #handle_disconnect and
+     * <i>true</i> is returned.  <code>POLLIN</code> events are handled by
+     * reading message data off the socket.  First the message header is read
+     * and decoded with #handle_message_header and then the message payload is
+     * read and delivered to the application with #handle_message_body.  If a
+     * read error is encountered, #m_error is set to the approprate error
+     * code (if not already set) and the handler is disconnected with
+     * a call to #handle_disconnect and <i>true</i> is returned. 
+     * <i>EOF</i>, <code>POLLERR</code> events, and <code>POLLHUP</code> events
+     * are handled by disconnecting the handler with a call to
+     * #handle_disconnect and <i>true</i> is returned.
+     * <code>arrival_time</code> is passed into #handle_message_header to be
+     * delivered to the applicaiton via the Event object.
+     * @param event Pointer to <code>pollfd</code> structure describing event
+     * @param arrival_time Time of event arrival
+     * @return <i>false</i> on success, <i>true</i> if error encountered and
+     * handler was decomissioned
+     */
     virtual bool handle_event(struct pollfd *event, time_t arival_time=0);
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
+    /** Handle <code>kqueue()</code> interface events.
+     * This method is called by its reactor thread to handle I/O events.
+     * It handles <code>EVFILT_WRITE</code> events with a call to
+     * #handle_write_readiness.  If #handle_write_readiness returns <i>true</i>
+     * the handler is disconnected with a call to #handle_disconnect and
+     * <i>true</i> is returned.  <code>EVFILT_READ</code> events are handled by
+     * reading message data off the socket.  First the message header is read
+     * and decoded with #handle_message_header and then the message payload is
+     * read and delivered to the application with #handle_message_body.  If a
+     * read error is encountered, #m_error is set to the approprate error
+     * code (if not already set) and the handler is disconnected with
+     * a call to #handle_disconnect and <i>true</i> is returned. 
+     * <code>EV_EOF</code> events are
+     * handled by disconnecting the handler with a call to #handle_disconnect
+     * and <i>true</i> is returned.  <code>arrival_time</code> is passed into
+     * #handle_message_header to be delivered to the applicaiton via the
+     * Event object.
+     * @param event Pointer to <code>kevent</code> structure describing event
+     * @param arrival_time Time of event arrival
+     * @return <i>false</i> on success, <i>true</i> if error encountered and
+     * handler was decomissioned
+     */
     virtual bool handle_event(struct kevent *event, time_t arival_time=0);
 #elif defined(__linux__)
+    /** Handle <code>epoll()</code> interface events.
+     * This method is called by its reactor thread to handle I/O events.
+     * It handles <code>EPOLLOUT</code> events with a call to
+     * #handle_write_readiness.  If #handle_write_readiness returns <i>true</i>
+     * the handler is disconnected with a call to #handle_disconnect and
+     * <i>true</i> is returned.  <code>EPOLLIN</code> events are handled by
+     * reading message data off the socket.  First the message header is read
+     * and decoded with #handle_message_header and then the message payload is
+     * read and delivered to the application with #handle_message_body.  If a
+     * read error is encountered, #m_error is set to the approprate error
+     * code (if not already set) and the handler is disconnected with
+     * a call to #handle_disconnect and <i>true</i> is returned.
+     * <i>EOF</i>, <code>EPOLLERR</code> events, <code>EPOLLHUP</code>, and
+     * <code>POLLRDHUP</code> events (level-triggered epoll only) are
+     * handled by disconnecting the handler with a call to #handle_disconnect
+     * and <i>true</i> is returned.  <code>arrival_time</code> is passed into
+     * #handle_message_header to be delivered to the applicaiton via the
+     * Event object.
+     * @param event Pointer to <code>epoll_event</code> structure describing
+     * event
+     * @param arrival_time Time of event arrival
+     * @return <i>false</i> on success, <i>true</i> if error encountered and
+     * handler was decomissioned
+     */
     virtual bool handle_event(struct epoll_event *event, time_t arival_time=0);
 #elif defined(__sun__)
+    /** Handle <code>port_associate()</code> interface events.
+     * This method is called by its reactor thread to handle I/O events.
+     * It handles <code>POLLOUT</code> events with a call to
+     * #handle_write_readiness.  If #handle_write_readiness returns <i>true</i>
+     * the handler is disconnected with a call to #handle_disconnect and
+     * <i>true</i> is returned.  <code>POLLIN</code> events are handled by
+     * reading message data off the socket.  First the message header is read
+     * and decoded with #handle_message_header and then the message payload is
+     * read and delivered to the application with #handle_message_body.  If a
+     * read error is encountered, #m_error is set to the approprate error
+     * code (if not already set) and the handler is disconnected with
+     * a call to #handle_disconnect and <i>true</i> is returned. 
+     * <i>EOF</i>, <code>POLLERR</code> events, <code>POLLHUP</code>, and
+     * <code>POLLREMOVE</code> events are handled by disconnecting the handler
+     * with a call to #handle_disconnect and <i>true</i> is returned.
+     * <code>arrival_time</code> is passed into #handle_message_header to be
+     * delivered to the applicaiton via the Event object.
+     * @param event Pointer to <code>port_event_t</code> structure describing
+     * event
+     * @param arrival_time Time of event arrival
+     * @return <i>false</i> on success, <i>true</i> if error encountered and
+     * handler was decomissioned
+     */
     virtual bool handle_event(port_event_t *event, time_t arival_time=0);
 #else
     ImplementMe;
 #endif
 
+    /** Handles write readiness by completing connection and flushing send
+     * queue.  When a data handler is created after a call to
+     * <code>connect</code> it is in the disconnected state.  Once the socket
+     * becomes ready for writing, the connection request can be completed.
+     * This method handles the completion of the connection when the handler
+     * is in the disconnected state by doing the following:
+     *   - Sets the socket send and receive buffer to <code>4*32768</code>
+     *     bytes
+     *   - Reads the local socket address and initializes #m_local_addr
+     *   - Sets #m_connected to <i>true</i>
+     *   - Delivers Event::CONNECTION_ESTABLISHED event via the default
+     *     dispatch handler
+     * After completion has been handled (if needed) then this method
+     * flushes the send queue with a call to #flush_send_queue.
+     * @return <i>false</i> on success, <i>true</i> if error encountered
+     */
     bool handle_write_readiness();
 
   private:
+
+    /** Processes a message header.  This method is called when the fixed
+     * length portion of a header has been completely received.  It first
+     * checks to see if there is a variable portion of the header that has
+     * not yet been read, if so, it adjusts #m_message_header_remaining and
+     * returns.  If the header has been completely received, it allocates
+     * a new Event object and sets #m_event pointing to it.  It initializes
+     * the event object with the message header and <code>arrival_time</code>.
+     * It then allocates the message payload buffer (#m_message), initialzes
+     * the payload buffer pointers, and sets #m_got_header to <i>true</i>.
+     */
     void handle_message_header(time_t arrival_time);
+
+    /** Processes a message body.  This method is called when a message
+     * has been completely received (header + payload).  It first checks to
+     * see if the message is a proxy update message and if so, it updates
+     * its proxy map with a call to HandlerMap::update_proxy_map and returns.
+     * Otherwise if it is a response message and the
+     * CommHeader::FLAGS_BIT_IGNORE_RESPONSE bit is not set in the header
+     * flags, the corresponding dispatch handler is removed form request queue
+     * and the message is delivered to the applicaton using that handler.
+     * Otherwise, the message is delivered to the application using the
+     * default dispatch handler.  After the message has been delivered, the
+     * message receive state is reset with a call to
+     * #reset_incoming_message_state.
+     */
     void handle_message_body();
 
-    /** 
+    /** Decomissions the handler.
      */
     void handle_disconnect();
 
-    bool                m_connected;
-    Mutex               m_mutex;
-    Event              *m_event;
-    uint8_t             m_message_header[64];
-    uint8_t            *m_message_header_ptr;
-    size_t              m_message_header_remaining;
-    bool                m_got_header;
-    uint8_t            *m_message;
-    uint8_t            *m_message_ptr;
-    size_t              m_message_remaining;
+    /// Flag indicating if socket connection has been completed
+    bool m_connected;
+
+    /// Flag indicating if message header has been completely received
+    bool m_got_header;
+
+    /// Pointer to Event object holding message to deliver to application
+    Event *m_event;
+
+    /// Message header buffer
+    uint8_t m_message_header[64];
+
+    /// Pointer to next write position in #m_message_header
+    uint8_t *m_message_header_ptr;
+
+    /// Amount of header remaining to be read
+    size_t m_message_header_remaining;
+
+    /// Poiner to message payload buffer
+    uint8_t *m_message;
+
+    /// Pointer to next write position in #m_message
+    uint8_t *m_message_ptr;
+
+    /// Amount of message payload remaining to be read
+    size_t m_message_remaining;
+
+    /// Send queue
     std::list<CommBufPtr> m_send_queue;
   };
   /** @}*/

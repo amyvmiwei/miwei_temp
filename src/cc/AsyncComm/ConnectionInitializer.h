@@ -44,8 +44,24 @@ namespace Hypertable {
    */
   class ConnectionInitializer : public ReferenceCount {
   public:
+
+    /** Creates a connection initialization message.
+     * @return Initialization message (freed by caller)
+     */
     virtual CommBuf *create_initialization_request() = 0;
+    
+    /** Process response to initialization message.
+     * @param event Pointer to event object holding response message
+     * @return <i>true</i> on success, <i>false</i> on failure
+     */
     virtual bool process_initialization_response(Event *event) = 0;
+
+    /** Command code (see CommHeader::command) for initialization response
+     * message.
+     * This method is used by the ConnectionManager to determine if a received
+     * message is part of the initialization handshake.
+     * @return Initialization command code
+     */
     virtual uint64_t initialization_command() = 0;
   };
 

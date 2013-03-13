@@ -1,0 +1,14 @@
+body {
+        background-color: #CCC;
+}
+div.contents {
+        background-color: #CCC;
+}
+
+#titlearea {
+        background-color: #CCC;
+}
+.directory tr.even {
+	padding-left: 6px;
+	background-color: #E7E7E7;
+}

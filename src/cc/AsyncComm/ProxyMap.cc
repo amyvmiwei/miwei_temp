@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,13 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Definitions for ProxyMap.
+ * This file contains method defintions for ProxyMap, a class that provides
+ * a mapping from a set of proxy names (e.g. "rs1") to their associated IP
+ * addresses.
+ */
+
 #include "Common/Compat.h"
 #include "Common/StringExt.h"
 
@@ -34,12 +41,15 @@ void ProxyMap::update_mapping(const String &proxy, const String &hostname,
                               const InetAddr &addr, ProxyMapT &invalidated_map,
 			      ProxyMapT &new_map) {
   ScopedLock lock(m_mutex);
-  ProxyMapT::iterator iter = m_map.find(proxy);
-  if (iter != m_map.end() && (*iter).second.addr == addr)
+  ProxyMapT::iterator iter = m_forward_map.find(proxy);
+  if (iter != m_forward_map.end() && (*iter).second.addr == addr) {
+    if ((*iter).second.hostname != hostname)
+      (*iter).second.hostname = hostname;
     return;
+  }
   invalidate(proxy, addr, invalidated_map);
   new_map[proxy] = ProxyAddressInfo(hostname, addr);
-  m_map[proxy] = ProxyAddressInfo(hostname, addr);
+  m_forward_map[proxy] = ProxyAddressInfo(hostname, addr);
   m_reverse_map[addr] = proxy;
 }
 
@@ -59,13 +69,16 @@ void ProxyMap::update_mappings(String &mappings, ProxyMapT &invalidated_map,
     HT_ASSERT(addr_str);
     InetAddr addr(addr_str);
 
-    ProxyMapT::iterator iter = m_map.find(proxy);
-    if (iter != m_map.end() && (*iter).second.addr == addr)
+    ProxyMapT::iterator iter = m_forward_map.find(proxy);
+    if (iter != m_forward_map.end() && (*iter).second.addr == addr) {
+      if ((*iter).second.hostname != hostname)
+        (*iter).second.hostname = hostname;
       continue;
+    }
 
     invalidate(proxy, addr, invalidated_map);
     new_map[proxy] = ProxyAddressInfo(hostname, addr);
-    m_map[proxy] = ProxyAddressInfo(hostname, addr);
+    m_forward_map[proxy] = ProxyAddressInfo(hostname, addr);
     m_reverse_map[addr] = proxy;
   }
 }
@@ -74,8 +87,8 @@ void ProxyMap::update_mappings(String &mappings, ProxyMapT &invalidated_map,
 
 bool ProxyMap::get_mapping(const String &proxy, String &hostname, InetAddr &addr) {
   ScopedLock lock(m_mutex);
-  ProxyMapT::iterator iter = m_map.find(proxy);
-  if (iter == m_map.end())
+  ProxyMapT::iterator iter = m_forward_map.find(proxy);
+  if (iter == m_forward_map.end())
     return false;
   addr = (*iter).second.addr;
   hostname = (*iter).second.hostname;
@@ -96,7 +109,7 @@ CommBuf *ProxyMap::create_update_message() {
   String payload;
   CommHeader header;
   header.flags |= CommHeader::FLAGS_BIT_PROXY_MAP_UPDATE;
-  for (ProxyMapT::iterator iter = m_map.begin(); iter != m_map.end(); ++iter)
+  for (ProxyMapT::iterator iter = m_forward_map.begin(); iter != m_forward_map.end(); ++iter)
     payload += (*iter).first + "\t" + (*iter).second.hostname + "\t" + (*iter).second.addr.format() + "\n";
   CommBuf *cbuf = new CommBuf(header, payload.length());
   if (payload.length())
@@ -111,11 +124,11 @@ void ProxyMap::invalidate(const String &proxy, const InetAddr &addr,
   SockAddrMap<String>::iterator rev_iter;
 
   // Invalidate entries from forward map
-  if ((iter = m_map.find(proxy)) != m_map.end()) {
+  if ((iter = m_forward_map.find(proxy)) != m_forward_map.end()) {
     if ((*iter).second.addr != addr) {
       invalidated_map[(*iter).first] = (*iter).second;
       m_reverse_map.erase( (*iter).second.addr );
-      m_map.erase((*iter).first);
+      m_forward_map.erase((*iter).first);
     }
   }
 
@@ -123,7 +136,7 @@ void ProxyMap::invalidate(const String &proxy, const InetAddr &addr,
   if ((rev_iter = m_reverse_map.find(addr)) != m_reverse_map.end()) {
     if ((*rev_iter).second != proxy) {
       invalidated_map[(*rev_iter).second] = ProxyAddressInfo("unknown", (*rev_iter).first);
-      m_map.erase((*rev_iter).second);
+      m_forward_map.erase((*rev_iter).second);
       m_reverse_map.erase((*rev_iter).first);
     }
   }

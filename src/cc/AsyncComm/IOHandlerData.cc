@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for IOHandlerData.
+ * This file contains method definitions for IOHandlerData, a class for
+ * processing I/O events for data (TCP) sockets.
  */
 
 #include "Common/Compat.h"
@@ -127,10 +133,9 @@ IOHandlerData::handle_event(struct pollfd *event, time_t arrival_time) {
             if (errno != ECONNREFUSED) {
               HT_INFOF("socket read(%d, len=%d) failure : %s", m_sd,
                         (int)m_message_header_remaining, strerror(errno));
-              m_error = Error::OK;
             }
             else
-              m_error = Error::COMM_CONNECT_ERROR;
+              test_and_set_error(Error::COMM_CONNECT_ERROR);
 
             handle_disconnect();
             return true;
@@ -235,10 +240,9 @@ IOHandlerData::handle_event(struct epoll_event *event, time_t arrival_time) {
             if (errno != ECONNREFUSED) {
               HT_INFOF("socket read(%d, len=%d) failure : %s", m_sd,
                        (int)m_message_header_remaining, strerror(errno));
-              m_error = Error::OK;
             }
             else
-              m_error = Error::COMM_CONNECT_ERROR;
+              test_and_set_error(Error::COMM_CONNECT_ERROR);
 
             handle_disconnect();
             return true;
@@ -351,10 +355,9 @@ bool IOHandlerData::handle_event(port_event_t *event, time_t arrival_time) {
             if (errno != ECONNREFUSED) {
               HT_INFOF("socket read(%d, len=%d) failure : %s", m_sd,
                         (int)m_message_header_remaining, strerror(errno));
-              m_error = Error::OK;
             }
             else
-              m_error = Error::COMM_CONNECT_ERROR;
+              test_and_set_error(Error::COMM_CONNECT_ERROR);
 
             handle_disconnect();
             return true;
@@ -431,7 +434,7 @@ bool IOHandlerData::handle_event(port_event_t *event, time_t arrival_time) {
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    m_error = e.code();
+    test_and_set_error(e.code());
     handle_disconnect();
     return true;
   }
@@ -528,7 +531,7 @@ bool IOHandlerData::handle_event(struct kevent *event, time_t arrival_time) {
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    m_error = e.code();
+    test_and_set_error(e.code());
     handle_disconnect();
     return true;
   }
@@ -614,6 +617,7 @@ void IOHandlerData::handle_disconnect() {
 bool IOHandlerData::handle_write_readiness() {
   bool deliver_conn_estab_event = false;
   bool rval = true;
+  int error = Error::OK;
 
   while (true) {
     ScopedLock lock(m_mutex);
@@ -652,13 +656,20 @@ bool IOHandlerData::handle_write_readiness() {
     }
 
     //HT_INFO("about to flush send queue");
-    if ((m_error = flush_send_queue()) != Error::OK) {
+    if ((error = flush_send_queue()) != Error::OK) {
       HT_DEBUG("error flushing send queue");
+      if (m_error == Error::OK)
+        m_error = error;
       return true;
     }
     //HT_INFO("about to remove poll interest");
-    if (m_send_queue.empty())
-      remove_poll_interest(Reactor::WRITE_READY);
+    if (m_send_queue.empty()) {
+      if ((error = remove_poll_interest(Reactor::WRITE_READY)) != Error::OK) {
+        if (m_error == Error::OK)
+          m_error = error;
+        return true;
+      }
+    }
 
     rval = false;
     break;
@@ -677,6 +688,7 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
                             DispatchHandler *disp_handler) {
   ScopedLock lock(m_mutex);
   bool initially_empty = m_send_queue.empty() ? true : false;
+  int error = Error::OK;
 
   if (m_decomissioned)
     return Error::COMM_NOT_CONNECTED;
@@ -695,22 +707,29 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
   m_send_queue.push_back(cbp);
 
   if (m_connected) {
-    if ((m_error = flush_send_queue()) != Error::OK) {
-      HT_WARNF("Problem flushing send queue - %s", Error::get_text(m_error));
+    if ((error = flush_send_queue()) != Error::OK) {
+      HT_WARNF("Problem flushing send queue - %s", Error::get_text(error));
       ReactorRunner::handler_map->decomission_handler(this);
+      if (m_error == Error::OK)
+        m_error = error;
+      return error;
     }
   }
 
   if (initially_empty && !m_send_queue.empty()) {
-    add_poll_interest(Reactor::WRITE_READY);
+    error = add_poll_interest(Reactor::WRITE_READY);
     //HT_INFO("Adding Write interest");
   }
   else if (!initially_empty && m_send_queue.empty()) {
-    remove_poll_interest(Reactor::WRITE_READY);
+    error = remove_poll_interest(Reactor::WRITE_READY);
     //HT_INFO("Removing Write interest");
   }
 
-  return m_error;
+  // Set m_error if not already set
+  if (error != Error::OK && m_error == Error::OK)
+    m_error = error;
+
+  return error;
 }
 
 

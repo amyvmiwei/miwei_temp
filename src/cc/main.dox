@@ -1,0 +1,51 @@
+/** @mainpage Index Page
+ *
+ * @section get_the_code Getting the Hypertable Source Code
+ *  
+ * We use the git version control system to manage the source code for
+ * %Hypertable. To obtain a local copy of the repository, install the latest
+ * version of git (at least 1.5.3.7) and then issue the following commands
+ * to configure your identity in commit messages.
+ * <pre>
+ * git config --global user.name "<your-name-goes-here>"
+ * git config --global user.email "<your-email-goes-here>"
+ * </pre>
+ * To obtain the source:
+ * <pre>
+ * cd ~/src
+ * git clone git://github.com/hypertable/hypertable.git
+ * </pre>
+ * This will clone the %Hypertable repository and checkout the <i>master</i>
+ * branch which represents the most up-to-date version of the source code.  We
+ * only push changes to the <i>master</i> branch if all tests pass.
+ *
+ * @section contributor Becoming a Contributor
+ *
+ * The power and quality of %Hypertable is a direct result of the contributions
+ * by the open source community.  If you would like to become a contributor to
+ * this project, fill out the
+ * <a href="http://hypertable.com/uploads/HypertableContributor.pdf">Hypertable Contributor Agreement</a>
+ * and fax it to 650-230-7176, or scan it and e-mail it to
+ * <code>contributor@hypertable.com</code>.
+ *
+ * There are a few options to contribute to the project.  Email patches always
+ * work (see the documentation by <code>git send-email --help</code>). Regular
+ * contributors might find a public repository hosting service such as
+ * <a href="https://github.com/">github</a> helpful.  The following instructions
+ * are for github (as it's the easiest to fork a project):
+ *  - Create an account on github.com
+ *  - Goto http://github.com/hypertable/hypertable/tree and click the fork
+ *    button besides the project name.
+ *  - Change directory to your local repository (assuming you've done
+ *    @ref get_the_code "Getting the Hypertable Source Code"), issue the
+ *    following command:
+ *    <pre>git remote add upstream git://github.com/hypertable/hypertable.git</pre>
+ *  - Add features and/or bug fixes
+ *  - Rebase your work against the upstream <i>master</i> branch:
+ *    <pre>git rebase upstream/master</pre>
+ *  - Verify that the regression tests pass:
+ *    <pre>cd <build-dir>
+ * make alltests</pre>
+ *  - Once the tests are passing, send out a merge/pull request by posting to the
+ *    <a href="https://groups.google.com/group/hypertable-dev">Hypertable Development Mailing List</a>
+ */

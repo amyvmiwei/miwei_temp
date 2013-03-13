@@ -20,8 +20,8 @@
  */
 
 /** @file
- * Contains declarations of ApplicationHandler.
- * This file contains the definition for ApplcationHandler, a base class
+ * Declarations of ApplicationHandler.
+ * This file contains type declarations for ApplcationHandler, a base class
  * for application handlers to be added to and carried out by an application
  * queue.
  */
@@ -47,7 +47,7 @@ namespace Hypertable {
 
   /** Base clase for application handlers.  Objects of this type are what get
    * added to an ApplicationQueue.  Provides a constructor for initialization
-   * from request MESSAGE Event received from the Comm layer.
+   * from request MESSAGE event received from the comm layer.
    * There are two attributes of a request handler that control how it is
    * treated in the Application queue:
    *
@@ -77,7 +77,7 @@ namespace Hypertable {
      * Initializes #m_event to <code>event</code> and sets #m_urgent to
      * <i>true</i> if the CommHeader::FLAGS_BIT_URGENT is set in the
      * flags field of Event#header member of <code>event</code>.
-     * @param event Event that generated the request
+     * @param event %Event that generated the request
      */
     ApplicationHandler(EventPtr &event) : m_event(event) {
       if (m_event)
