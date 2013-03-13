@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for HandlerMap.
+ * This file contains method definitions for HandlerMap, a data structure
+ * for mapping socket addresses to I/O handlers.
+ */
+
 #include "Common/Compat.h"
 
 #include "IOHandlerAccept.h"

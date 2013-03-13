@@ -276,10 +276,19 @@ int Reactor::poll_loop_interrupt() {
 
   if (ReactorFactory::ms_epollet) {
 
-    // Send 1 byte to ourself to cause epoll_wait to return
+    char buf[4];
+    ssize_t n;
+
+    // Send and receive 1 byte to ourself to cause epoll_wait to return
+
     if (FileUtils::send(m_interrupt_sd, "1", 1) < 0) {
       HT_ERRORF("send(interrupt_sd) failed - %s", strerror(errno));
       return Error::COMM_SEND_ERROR;
+    }
+
+    if ((n = FileUtils::recv(m_interrupt_sd, buf, 1)) == -1) {
+      HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
+      return Error::COMM_RECEIVE_ERROR;
     }
 
   }
@@ -377,24 +386,32 @@ int Reactor::poll_loop_continue() {
 
 
 int Reactor::add_poll_interest(int sd, short events, IOHandler *handler) {
-  {
-    ScopedLock lock(m_polldata_mutex);
+  ScopedLock lock(m_polldata_mutex);
+  int error;
 
-    if (m_polldata.size() <= (size_t)sd) {
-      size_t i = m_polldata.size();
-      m_polldata.resize(sd+1);
-      for (; i<m_polldata.size(); i++) {
-        memset(&m_polldata[i], 0, sizeof(PollDescriptorT));
-        m_polldata[i].pollfd.fd = -1;
-      }
+  if (m_polldata.size() <= (size_t)sd) {
+    size_t i = m_polldata.size();
+    m_polldata.resize(sd+1);
+    for (; i<m_polldata.size(); i++) {
+      memset(&m_polldata[i], 0, sizeof(PollDescriptorT));
+      m_polldata[i].pollfd.fd = -1;
     }
-
-    m_polldata[sd].pollfd.fd = sd;
-    m_polldata[sd].pollfd.events = events;
-    m_polldata[sd].handler = handler;
   }
-  ScopedLock lock(m_mutex);
-  return poll_loop_interrupt();
+
+  m_polldata[sd].pollfd.fd = sd;
+  m_polldata[sd].pollfd.events = events;
+  m_polldata[sd].handler = handler;
+
+  {
+    ScopedLock lock(m_mutex);
+    error = poll_loop_interrupt();
+  }
+  if (error != Error::OK) {
+    m_polldata[sd].pollfd.fd = -1;
+    m_polldata[sd].pollfd.events = 0;
+    m_polldata[sd].handler = 0;
+  }
+  return error;
 }
 
 int Reactor::remove_poll_interest(int sd) {

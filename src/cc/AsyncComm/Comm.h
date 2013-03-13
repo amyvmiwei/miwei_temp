@@ -20,8 +20,9 @@
  */
 
 /** @file
- * Primary entry point for AsyncComm service.
- * This file contains the definition for singleton class Comm
+ * Declarations for Comm.
+ * This file contains type declarations for Comm, a singleton class used
+ * as the main entry point to the AsyncComm subsystem.
  */
 
 #ifndef HYPERTABLE_COMMENGINE_H
@@ -36,12 +37,12 @@
 #include "DispatchHandler.h"
 #include "HandlerMap.h"
 
-/** Hypertable definitions
+/** %Hypertable definitions
  */
 namespace Hypertable {
 
   /** @defgroup AsyncComm AsyncComm
-   * Asynchronous network communication service.
+   * Network communication library.
    * The AsyncComm module is designed for maximally efficient network
    * programming by 1) providing an asynchronous API to facilitate
    * multiprogramming, and 2) using the most efficient polling mechanism for
@@ -50,8 +51,7 @@ namespace Hypertable {
    * @{
    */
 
-  /**
-   * Primary entry point to AsyncComm service.
+  /** Entry point to AsyncComm service.
    * There should be only one instance of this class per process and the static
    * method ReactorFactory#initialize must be called prior to constructing this
    * class in order to create the system-wide I/O reactor threads.
@@ -82,152 +82,155 @@ namespace Hypertable {
      */
     static void destroy();
 
-    /**
-     * Establishes a TCP connection and attaches a default event handler.
+    /** Establishes a TCP connection and attaches a default dispatch handler.
      * This method establishes a TCP connection to <code>addr</code>
      * and associates it with <code>default_handler</code> as the default
-     * event handler for the connection.  The two types of events that
+     * dispatch handler for the connection.  The two types of events that
      * are delivered via the handler are CONNECTION_ESTABLISHED and DISCONNECT.
      * No ERROR events will be deliverd via the handler because any errors that
      * occur on the connection will result in the connection being closed,
-     * resulting in a DISCONNECT event only.  The returned error code can be
-     * inspected to determine if the handler was installed and may be
-     * subsequently called back.  The following return codes indicate that
-     * the default event handler was successfully associated:
-     *
-     *   - <code>Error::COMM_BROKEN_CONNECTION</code>
-     *   - <code>Error::OK</code>
-     *
-     * The default event handler will be associated with the connection until
-     * either a) a DISCONNECT message has been delivered to the handler, or b)
-     * close_socket has been called with <code>addr</code>.  A return value
-     * of <code>Error::COMM_BROKEN_CONNECTION</code> indicates that the
-     * connection was broken before it was completely set up and a
-     * DISCONNECT event will be promptly delivered via the default event
-     * handler.  The following return codes indicate that the default event
-     * handler was <b>not</b> associated with a connection and the caller
-     * can assume that the call had no effect:
-     *
-     *   - <code>Error::COMM_ALREADY_CONNECTED</code>
-     *   - <code>Error::COMM_INVALID_PROXY</code>
-     *   - <code>Error::COMM_SOCKET_ERROR</code>
-     *   - <code>Error::COMM_BIND_ERROR</code>
-     *   - <code>Error::COMM_CONNECT_ERROR</code>
-     *   - <code>Error::COMM_POLL_ERROR</code>
-     *
-     * The default event handler, <code>default_handler</code>, will never be
+     * resulting in a DISCONNECT event only.  If this method fails and returns
+     * an error code, the connection will not have been setup and
+     * <code>default_handler</code> will not have been installed.
+     * The default dispatch handler, <code>default_handler</code>, will never be
      * called back via the calling thread.  It will be called back from a
      * reactor thread.  Because reactor threads are used to service I/O
-     * events on many different sockets, the default event handler should
+     * events on many different sockets, the default dispatch handler should
      * return quickly from the callback.  When calling back into the default
-     * event handler, the calling reactor thread does not hold any locks
-     * so the default event handler callback may safely callback into the
-     * Comm object (e.g. #send_response).
-     * 
-     * @param addr address to connect to
-     * @param default_handler smart pointer to default event handler
-     * @return Error::OK on success or error code on failure (see description)
+     * dispatch handler, the calling reactor thread does not hold any locks
+     * so the default dispatch handler callback may safely callback into the
+     * Comm object (e.g. #send_response).  Upon successful completion,
+     * <code>addr</code> can be used to subsequently refer to the connection.
+     * @param addr Address to connect to
+     * @param default_handler Smart pointer to default dispatch handler
+     * @return Error::OK on success, or Error::COMM_ALREADY_CONNECTED,
+     * Error::COMM_SOCKET_ERROR, Error::COMM_BIND_ERROR, or one of the
+     * errors returned by #connect_socket on error.
      */
     int connect(const CommAddress &addr, DispatchHandlerPtr &default_handler);
 
-    /**
-     * Establishes a locally bound TCP connection and attaches a default event handler.
-     * Establishes a TCP connection to the address given by the addr argument,
-     * binding the local side of the connection to the address given by the
-     * local_addr argument.  A default dispatch handler is associated with the
-     * connection to receive CONNECTION_ESTABLISHED and DISCONNECT events.  The
-     * argument addr is used to subsequently refer to the connection.
-     *
+    /** Establishes a locally bound TCP connection and attaches a default
+     * dispatch handler.  Establishes a TCP connection to
+     * <code>addr</code> argument, binding the local side of the connection to
+     * <code>local_addr</code>.  A default dispatch handler is associated with the
+     * connection to receive CONNECTION_ESTABLISHED and DISCONNECT events.
+     * No ERROR events will be deliverd via the handler because any errors that
+     * occur on the connection will result in the connection being closed,
+     * resulting in a DISCONNECT event only.  If this method fails and returns
+     * an error code, the connection will not have been setup and
+     * <code>default_handler</code> will not have been installed.
+     * The default dispatch handler, <code>default_handler</code>, will never be
+     * called back via the calling thread.  It will be called back from a
+     * reactor thread.  Because reactor threads are used to service I/O
+     * events on many different sockets, the default dispatch handler should
+     * return quickly from the callback.  When calling back into the default
+     * dispatch handler, the calling reactor thread does not hold any locks
+     * so the default dispatch handler callback may safely callback into the
+     * Comm object (e.g. #send_response).  Upon successful completion,
+     * <code>addr</code> can be used to subsequently refer to the connection.
      * @param addr address to connect to
      * @param local_addr Local address to bind to
      * @param default_handler smart pointer to default dispatch handler
-     * @return Error::OK on success or error code on failure
+     * @return Error::OK on success, or Error::COMM_ALREADY_CONNECTED,
+     * Error::COMM_SOCKET_ERROR, Error::COMM_BIND_ERROR, or one of the
+     * errors returned by #connect_socket on error.
      */
     int connect(const CommAddress &addr, const CommAddress &local_addr,
                 DispatchHandlerPtr &default_handler);
 
-
-    /**
-     * Sets an alias for a TCP connection
-     *
-     * @param addr connection identifier (remote address)
-     * @param alias alias connection identifier
+    /** Sets an alias for a TCP connection.
+     * RangeServers listen on a well-known port defined by the
+     * <code>Hypertable.RangeServer.Port</code> configuration property
+     * (default = 38060).  However, RangeServers connect to the master using
+     * an ephemeral port due to a bind conflict with its listen socket.  So that
+     * the Master can refer to the RangeServer using the well-known port, an
+     * alias address can be registered and subsequently used to reference the
+     * connection.
+     * @param addr Connection address (remote address)
+     * @param alias Alias address
      */
     int set_alias(const InetAddr &addr, const InetAddr &alias);
 
-    /**
-     * Adds a proxy name for a TCP connection
-     *
-     * @param proxy proxy name
-     * @param hostname hostname of remote machine
-     * @param addr connection identifier (remote address)
+    /** Adds a proxy name for a TCP connection.
+     * Hypertable uses <i>proxy names</i> (e.g. "rs1") to refer to servers so
+     * that the system can continue to operate properly even when servers are
+     * reassigned IP addresses, such as starting and stopping Hypertable running
+     * on EBS volumes in AWS EC2.  This method adds a proxy name for the
+     * connection identified by <code>addr</code>
+     * @param proxy Proxy name
+     * @param hostname Hostname of remote machine
+     * @param addr Connection address (remote address)
      */
     int add_proxy(const String &proxy, const String &hostname, const InetAddr &addr);
 
-    /**
-     * Fills in the proxy map
-     *
-     * @param proxy_map reference to proxy map to be filled in
+    /** Returns the proxy map.
+     * @param proxy_map Reference to return proxy map
      */
     void get_proxy_map(ProxyMapT &proxy_map);
 
-    /**
-     * Waits until the PROXY_MAP_UPDATE message is received from the proxy
-     * master
+    /** Waits until a CommHeader::FLAGS_BIT_PROXY_MAP_UPDATE message is
+     * received from the proxy master
      *
-     * @param timer expiration timer
-     * @return true if successful, false if timer expired
+     * @param timer Expiration timer
+     * @return <i>true</i> if successful, <i>false</i> if timer expired
      */
     bool wait_for_proxy_load(Timer &timer);
 
-    /**
-     * Tells the communication subsystem to listen for connection requests on
-     * the address given by the addr argument.  New connections will be
-     * assigned dispatch handlers by invoking the get_instance method of the
-     * connection handler factory supplied as the chf argument.
-     * CONNECTION_ESTABLISHED events are logged, but not delivered to the
-     * application
-     *
-     * @param addr IP address and port to listen for connection on
-     * @param chf connection handler factory smart pointer
+    /** Creates listen (accept) socket on <code>addr</code>.
+     * New connections will be assigned dispatch handlers by
+     * calling the ConnectionHandlerFactory::get_instance method of the handler
+     * factory pointed to by <code>chf</code>.  Since no default dispatch
+     * handler is supplied for this listen (accept) socket,
+     * Event::CONNECTION_ESTABLISHED events are logged, but not delivered to the
+     * application.
+     * @param addr IP address and port on which to listen for connections
+     * @param chf Smart pointer to connection handler factory
+     * @throws Exception Code set to Error::COMM_SOCKET_ERROR,
+     * Error::COMM_BIND_ERROR, Error::COMM_LISTEN_ERROR,
+     * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR
      */
     void listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf);
 
-    /**
-     * Tells the communication subsystem to listen for connection requests on
-     * the address given by the addr argument.  New connections will be
-     * assigned dispatch handlers by invoking the get_instance method of the
-     * connection handler factory supplied as the chf argument.
-     * CONNECTION_ESTABLISHED events are delivered via the default dispatch
-     * handler supplied in the default_handler argument.
-     *
-     * @param addr IP address and port to listen for connection on
-     * @param chf connection handler factory smart pointer
-     * @param default_handler smart pointer to default dispatch handler
+    /** Creates listen (accept) socket on <code>addr</code> and attaches a
+     * default dispatch handler.
+     * New connections will be assigned dispatch handlers by
+     * calling the ConnectionHandlerFactory::get_instance method of the handler
+     * factory pointed to by <code>chf</code>.  <code>default_handler</code>
+     * is registered as the default dispatch handler for the newly created
+     * listen (accept) socket and Event::CONNECTION_ESTABLISHED events will be
+     * delivered to the application via this handler.
+     * @param addr IP address and port on which to listen for connections
+     * @param chf Smart pointer to connection handler factory
+     * @param default_handler Smart pointer to default dispatch handler
+     * @throws Exception Code set to Error::COMM_SOCKET_ERROR,
+     * Error::COMM_BIND_ERROR, Error::COMM_LISTEN_ERROR,
+     * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR
      */
     void listen(const CommAddress &addr, ConnectionHandlerFactoryPtr &chf,
                 DispatchHandlerPtr &default_handler);
 
-    /**
-     * Sends a request message over a connection, expecting a response.  The
-     * connection is specified by the addr argument which is the remote end of
+    /** Sends a request message over a connection, expecting a response.  The
+     * connection is specified by <code>addr</code> which is the remote end of
      * the connection.  The request message to send is encapsulated in
-     * <code>cbuf</code> (see CommBuf) and should start with a valid header.  The
-     * dispatch handler given by the response_handler argument will get called
-     * back with either a response MESSAGE event or a TIMEOUT event if no
-     * response is received within the number of seconds specified by the
-     * timeout argument.
+     * <code>cbuf</code> (see CommBuf) and should start with a valid header.
+     * The* <code>response_handler</code> argument will get called
+     * back with a response MESSAGE event, a TIMEOUT event if no response is
+     * received within the number of seconds specified by the timeout argument,
+     * or an ERROR event (see below).  The following errors may be returned by
+     * this method:
      *
-     * The following errors may be returned by this method:
+     *   - Error::COMM_NOT_CONNECTED
+     *   - Error::COMM_BROKEN_CONNECTION
      *
-     * Error::COMM_NOT_CONNECTED
-     * Error::COMM_BROKEN_CONNECTION
-     *
-     * <p>If the server at the other end of the connection uses an
+     * A return value of Error::COMM_NOT_CONNECTED implies that
+     * <code>response_handler</code> was not installed and an Event::ERROR event
+     * will <b>not</b> be delivered.  A return value of
+     * Error::COMM_BROKEN_CONNECTION implies that <code>response_handler</code>
+     * was installed and an Event::ERROR event will be delivered to the
+     * application.  If the server at the other end of the connection uses an
      * ApplicationQueue to carry out requests, then the gid field in the header
-     * can be used to serialize requests that are destined for the same object.
-     * For example, the following code serializes requests to the same file
-     * descriptor:
+     * can be used to serialize request execution.  For example, the following
+     * code serializes requests to the same file descriptor:
      * <pre>
      * HeaderBuilder hbuilder(Header::PROTOCOL_DFSBROKER);
      * hbuilder.set_group_id(fd);
@@ -237,114 +240,129 @@ namespace Hypertable {
      * cbuf->AppendLong(amount);
      * </pre>
      *
-     * @param addr connection identifier (remote address)
-     * @param timeout_ms number of milliseconds to wait before delivering
+     * This method locates the I/O handler associated with <code>addr</code>
+     * and then calls the private method
+     * @ref private_send_request "send_request" to carry out the send request.
+     *
+     * @param addr Connection address (remote address)
+     * @param timeout_ms Number of milliseconds to wait before delivering
      *        TIMEOUT event
-     * @param cbuf request message to send (see CommBuf)
-     * @param response_handler pointer to response handler associated with the
+     * @param cbuf Request message to send (see CommBuf)
+     * @param response_handler Pointer to response handler associated with the
      *        request
-     * @return Error::OK on success or error code on failure
+     * @return Error::OK on success or error code on failure (see above)
      */
     int send_request(const CommAddress &addr, uint32_t timeout_ms,
                      CommBufPtr &cbuf, DispatchHandler *response_handler);
 
-    /**
-     * Sends a response message back over a connection.  It is assumed that the
-     * id field of the header matches the id field of the request for which
-     * this is a response to.  The connection is specified by the addr argument
-     * which is the remote end of the connection.  The response message to send
-     * is encapsulated in the cbuf (see CommBuf) object and should start
-     * with a valid header.  The following code snippet illustrates how a
-     * simple response message gets created to send back to a client in
-     * response to a request message:
+    /** Sends a response message back over a connection.  It is assumed that the
+     * CommHeader#id field of the header matches the id field of the request for
+     * which this is a response to.  The connection is specified by the
+     * <code>addr</code> which is the remote end of the connection.  The
+     * response message to send is encapsulated in the cbuf (see CommBuf) object
+     * and should start with a valid header.  The following code snippet
+     * illustrates how a simple response message gets created to send back to a
+     * client in response to a request message:
      *
      * <pre>
-     * HeaderBuilder hbuilder;
-     * hbuilder.initialize_from_request(request_event->header);
-     * CommBufPtr cbp(new CommBuf(hbuilder, 4));
+     * CommHeader header;
+     * header.initialize_from_request_header(request_event->header);
+     * CommBufPtr cbp(new CommBuf(header, 4));
      * cbp->append_i32(Error::OK);
      * </pre>
      *
-     * @param addr connection identifier (remote address)
-     * @param cbuf response message to send (must have valid header with
+     * @param addr Connection address (remote address)
+     * @param cbuf Response message to send (must have valid header with
      *        matching request id)
      * @return Error::OK on success or error code on failure
      */
     int send_response(const CommAddress &addr, CommBufPtr &cbuf);
 
-    /**
-     * Creates a local socket for receiving datagrams and assigns a default
-     * dispatch handler to handle events on this socket.  This socket can also
-     * be used for sending datagrams.  The events delivered for this socket
-     * consist of either MESSAGE events or ERROR events.
+    /** Creates a socket for receiving datagrams and attaches <code>handler</code>
+     * as the default dispatch handler.  This socket can
+     * also be used for sending datagrams.  The events delivered for this socket
+     * consist of either MESSAGE events or ERROR events.  In setting up the
+     * datagram (UDP) socket, the following setup is performed:
+     *
+     *   - <code>O_NONBLOCK</code> option is set on socket
+     *   - Socket send and receive buffers are set to <code>4*32768</code> bytes
+     *   - If <code>tos</code> is non-zero, <code>IP_TOS</code> and
+     *     <code>SO_PRIORITY</code> options are set using <code>tos</code> as
+     *     the argument (Linux only)
+     *   - If <code>tos</code> is non-zero, <code>IP_TOS</code> option is set
+     *     with <code>IPTOS_LOWDELAY</code> as the argument (Apple, Sun, and
+     *     FreeBSD)
      *
      * @param addr pointer to address structure
      * @param tos TOS value to set on IP packet
-     * @param handler default dispatch handler to handle the deliver of
-     *        events
+     * @param handler Default dispatch handler for socket
+     * @throws Exception Code set to Error::COMM_SOCKET_ERROR or
+     * Error::COMM_BIND_ERROR.
      */
     void create_datagram_receive_socket(CommAddress &addr, int tos,
                                         DispatchHandlerPtr &handler);
 
-    /**
-     * Sends a datagram to a remote address.  The remote address is specified
-     * by the addr argument and the local socket address to send it from is
-     * specified by the send_addr argument.  The send_addr argument must refer
-     * to a socket that was created with a call to
+    /** Sends a datagram to a remote address.  The remote address is specified
+     * by <code>addr</code> and the local socket address to send it from is
+     * specified by <code>send_addr</code>.  The <code>send_addr</code> argument
+     * must refer to a socket that was created with a call to
      * #create_datagram_receive_socket.
      *
-     * @param addr remote address to send datagram to
-     * @param send_addr local socket address to send from
-     * @param cbuf datagram message with valid header
+     * @param addr Remote address to send datagram to
+     * @param send_addr Local socket address to send from
+     * @param cbuf Datagram message with valid header
      * @return Error::OK on success or error code on failure
      */
     int send_datagram(const CommAddress &addr, const CommAddress &send_addr,
                       CommBufPtr &cbuf);
 
-    /**
-     * Sets a timer that will generate a TIMER event after some number of
-     * milliseconds have elapsed, specified by the duration_millis argument.
-     * The handler argument represents the dispatch handler to receive the
-     * TIMER event.
+    /** Sets a timer for <code>duration_millis</code> milliseconds in the
+     * future.
+     * This method will cause a Event::TIMER event to be generated after
+     * <code>duration_millis</code> milliseconds have elapsed.
+     * <code>handler</code> is the dispatch handler registered with the timer
+     * to receive the Event::TIMER event.  This timer registration is
+     * <i>one shot</i>.  To set up a periodic timer event, the timer must
+     * be re-registered each time it is handled.
      *
-     * @param duration_millis number of milliseconds to wait
-     * @param handler the dispatch handler to receive the TIMER event upon
+     * @param duration_millis Number of milliseconds to wait
+     * @param handler Dispatch handler to receive Event::TIMER event upon
      *        expiration
-     * @return Error::OK on success or error code on failure
+     * @return Error::OK
      */
     int set_timer(uint32_t duration_millis, DispatchHandler *handler);
 
-    /**
-     * Sets a timer that will generate a TIMER event at the absolute time
-     * specified by the expire_time argument.  The handler argument represents
-     * the dispatch handler to receive the TIMER event.
-     *
-     * @param expire_time number of milliseconds to wait
-     * @param handler the dispatch handler to receive the TIMER event upon
+    /** Sets a timer for absolute time <code>expire_time</code>.
+     * This method will cause a Event::TIMER event to be generated at the
+     * absolute time specified by <code>expire_time</code>.
+     * <code>handler</code> is the dispatch handler registered with the
+     * timer to receive Event::TIMER events.  This timer registration is
+     * <i>one shot</i>.  To set up a periodic timer event, the timer must
+     * be re-registered each time it is handled.
+     * @param expire_time Absolute expiration time
+     * @param handler Dispatch handler to receive Event::TIMER event upon
      *        expiration
-     * @return Error::OK on success or error code on failure
+     * @return Error::OK
      */
     int set_timer_absolute(boost::xtime expire_time, DispatchHandler *handler);
 
-    /**
-     * Cancels all scheduled timers for the dispatch handler specified.
+    /** Cancels all scheduled timers registered with the dispatch handler
+     * <code>handler</code>.
      *
-     * @param handler the dispatch handler for which all scheduled timer should
+     * @param handler Dispatch handler for which all scheduled timer should
      *        be cancelled
      */
     void cancel_timer(DispatchHandler *handler);
 
-    /**
-     * Closes the socket connection specified by the addr argument.  This has
+    /** Closes the socket specified by the addr argument.  This has
      * the effect of closing the connection and removing it from the event
      * demultiplexer (e.g epoll).  It also causes all outstanding requests on
      * the connection to get purged.
-     *
-     * @return Error::OK on success or error code on failure
+     * @param addr Connection or accept or datagram address
      */
     void close_socket(const CommAddress &addr);
 
-    /** Finds an unused TCP port starting from <code>addr</code>
+    /** Finds an unused TCP port starting from <code>addr</code>.
      * This method iterates through 15 ports starting with
      * <code>addr.sin_port</code> until it is able to bind to
      * one.  If an available port is found, <code>addr.sin_port</code>
@@ -353,7 +371,7 @@ namespace Hypertable {
      */
     void find_available_tcp_port(InetAddr &addr);
 
-    /** Finds an unused UDP port starting from <code>addr</code>
+    /** Finds an unused UDP port starting from <code>addr</code>.
      * This method iterates through 15 ports starting with
      * <code>addr.sin_port</code> until it is able to bind to
      * one.  If an available port is found, <code>addr.sin_port</code>
@@ -363,21 +381,76 @@ namespace Hypertable {
     void find_available_udp_port(InetAddr &addr);
 
   private:
-    Comm();     // prevent non-singleton usage
+    
+    /** Private constructor (prevent non-singleton usage). */
+    Comm();
+
+    /** Destructor */
     ~Comm();
 
+    /** Sends a request message over a connection.
+     * @anchor private_send_request
+     * This method sets the CommHeader::FLAGS_BIT_REQUEST bit of the flags
+     * field of <code>cbuf->header</code>.  If <code>response_handler</code> is
+     * 0, then the CommHeader::FLAGS_BIT_IGNORE_RESPONSE is also set.  The
+     * CommHeader#id field of <code>cbuf->header</code> is assigned by
+     * incrementing #ms_next_request_id and the CommHeader#timeout_ms field of
+     * <code>cbuf->header</code> is set to <code>timeout_ms</code>.  Finally,
+     * <code>cbuf->write_header_and_reset()</code> is called and the message
+     * is sent via <code>data_handler</code>.
+     * @param data_handler I/O handler for connection.
+     * @param timeout_ms Number of milliseconds to wait before delivering
+     *        TIMEOUT event
+     * @param cbuf Request message to send (see CommBuf)
+     * @param response_handler Pointer to response handler associated with the
+     *        request
+     * @return Error::OK on success or error code on failure
+     *         (<code>response_handler</code> is only installed on Error::OK
+     *          or Error::COMM_BROKEN_CONNECTION).
+     */
     int send_request(IOHandlerData *data_handler, uint32_t timeout_ms,
                      CommBufPtr &cbuf, DispatchHandler *response_handler);
 
+    /** Creates a TCP socket connection.
+     * This method is called by the #connect methods to setup a socket,
+     * connect to a remote address, and attach a data handler.
+     * If <code>addr</code> is of type CommAddress::PROXY then it is
+     * translated.  Then the socket is setup as follows:
+     *
+     *   - <code>O_NONBLOCK</code> option is set
+     *   - <code>TCP_NODELAY</code> option is set (Linux and Sun)
+     *   - <code>SO_NOSIGPIPE</code> option is set (Apple and FreeBSD)
+     *
+     * Then a data (TCP) handler is created for the socket and added to
+     * the handler map.  Finally <code>connect</code> is called and
+     * polling is started on the socket.
+     * @param sd Socket descriptor
+     * @param addr Remote address to connect to
+     * @param default_handler Default dispatch handler
+     * @return Error::OK on success, or one of Error::COMM_INVALID_PROXY,
+     * Error::COMM_CONNECT_ERROR, Error::COMM_POLL_ERROR,
+     * Error::COMM_SEND_ERROR, Error::COMM_RECEIVE_ERROR on error.
+     */
     int connect_socket(int sd, const CommAddress &addr,
                        DispatchHandlerPtr &default_handler);
 
-    static Comm *ms_instance;       //!< Pointer to singleton instance of this class
-    static atomic_t ms_next_request_id; //!< Atomic integer used for assinging request IDs
-    static Mutex   ms_mutex;        //!< Mutex for serializing access to ms_instance
-    HandlerMapPtr  m_handler_map;   //!< Pointer to IOHandler map
-    ReactorPtr     m_timer_reactor; //!< Pointer to dedicated reactor for handling timer events
-    InetAddr       m_local_addr;    //!< Local address initialized to primary interface and empty port
+    /// Pointer to singleton instance of this class
+    static Comm *ms_instance;
+
+    /// Atomic integer used for assinging request IDs
+    static atomic_t ms_next_request_id;
+
+    /// %Mutex for serializing access to #ms_instance
+    static Mutex ms_mutex;
+    
+    /// Pointer to IOHandler map    
+    HandlerMapPtr m_handler_map;
+
+    /// Pointer to dedicated reactor for handling timer events
+    ReactorPtr m_timer_reactor;
+
+    /// Local address initialized to primary interface and empty port
+    InetAddr m_local_addr;
   };
 
   /** @}*/

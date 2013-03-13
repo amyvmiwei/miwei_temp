@@ -55,12 +55,14 @@ namespace Hypertable {
       FLAGS_BIT_PAYLOAD_CHECKSUM = 0x8000  //!< Payload checksumming is enabled
     };
 
+    /** Enumeration constants for #flags field bitmaks
+     */
     enum FlagMask {
-      FLAGS_MASK_REQUEST          = 0xFFFE,
-      FLAGS_MASK_IGNORE_RESPONSE  = 0xFFFD,
-      FLAGS_MASK_URGENT           = 0xFFFB,
-      FLAGS_MASK_PROXY_MAP_UPDATE = 0xBFFF,
-      FLAGS_MASK_PAYLOAD_CHECKSUM = 0x7FFF
+      FLAGS_MASK_REQUEST          = 0xFFFE, //!< Request message bit
+      FLAGS_MASK_IGNORE_RESPONSE  = 0xFFFD, //!< Response should be ignored bit
+      FLAGS_MASK_URGENT           = 0xFFFB, //!< Request is urgent bit
+      FLAGS_MASK_PROXY_MAP_UPDATE = 0xBFFF, //!< ProxyMap update message bit
+      FLAGS_MASK_PAYLOAD_CHECKSUM = 0x7FFF  //!< Payload checksumming is enabled bit
     };
 
     /** Default constructor.
@@ -80,13 +82,45 @@ namespace Hypertable {
         timeout_ms(timeout), payload_checksum(0),
         command(cmd) {  }
 
+    /** Returns fixed length of header.
+     * @return Fixed length of header
+     */
     size_t fixed_length() const { return FIXED_LENGTH; }
+
+    /** Returns encoded length of header.
+     * @return Encoded length of header
+     */
     size_t encoded_length() const { return FIXED_LENGTH; }
+
+    /** Encode header to memory pointed to by <code>*bufp</code>.
+     * The <code>bufp</code> pointer is advanced to address immediately
+     * following the encoded header.
+     * @param bufp Address of memory pointer to where header is to be encoded.
+     */
     void encode(uint8_t **bufp);
+    
+    /** Decode serialized header at <code>*bufp</code>
+     * The <code>bufp</code> pointer is advanced to the address immediately
+     * following the decoded header and <code>remainp</code> is decremented
+     * by the length of the serialized header.
+     * @param bufp Address of memory pointer to where header is to be encoded.
+     * @throws Error::COMM_BAD_HEADER If fixed header size is less than
+     * <code>*remainp</code>.
+     * @throws Error::COMM_HEADER_CHECKSUM_MISMATCH If computed checksum does
+     * not match checksum field
+     */
     void decode(const uint8_t **bufp, size_t *remainp);
 
+    /** Set total length of message (header + payload).
+     * @param len Total length of message (header + payload)
+     */
     void set_total_length(uint32_t len) { total_len = len; }
 
+    /** Initializes header from <code>req_header</code>.
+     * This method is typically used to initialize a response header
+     * from a corresponding request header.
+     * @param req_header Request header from which to initialize
+     */
     void initialize_from_request_header(CommHeader &req_header) {
       flags = req_header.flags;
       id = req_header.id;

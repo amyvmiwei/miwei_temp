@@ -101,7 +101,7 @@ namespace {
 } // local namespace
 
 /** @defgroup Master Master
- * Server that orchestrates table and system-wide operations.
+ * %Master server.
  * The Master module contains all of the definitions that make up the Master
  * server process which is responsible for handling meta operations such
  * the following

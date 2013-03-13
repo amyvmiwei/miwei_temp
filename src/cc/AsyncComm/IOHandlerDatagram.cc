@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Definitions for IOHandlerDatagram.
+ * This file contains method definitions for IOHandlerDatagram, a class for
+ * processing I/O events for datagram sockets.
+ */
+
 #include "Common/Compat.h"
 
 #include <cassert>
@@ -47,13 +53,14 @@ using namespace Hypertable;
 using namespace std;
 
 bool 
-IOHandlerDatagram::handle_event(struct pollfd *event, time_t) {
+IOHandlerDatagram::handle_event(struct pollfd *event, time_t arrival_time) {
   int error;
 
   //DisplayEvent(event);
 
   if (event->revents & POLLOUT) {
     if ((error = handle_write_readiness()) != Error::OK) {
+      test_and_set_error(error);
       ReactorRunner::handler_map->decomission_handler(this);
       deliver_event(new Event(Event::ERROR, m_addr, error));
       return true;
@@ -75,6 +82,7 @@ IOHandlerDatagram::handle_event(struct pollfd *event, time_t) {
       payload_len = nread - (ssize_t)event->header.header_len;
       event->payload_len = payload_len;
       event->payload = new uint8_t [payload_len];
+      event->arrival_time = arrival_time;
       memcpy((void *)event->payload, m_message + event->header.header_len,
              payload_len);
       deliver_event( event );
@@ -104,10 +112,10 @@ IOHandlerDatagram::handle_event(struct pollfd *event, time_t) {
   return false;
 }
 
-
 #if defined(__linux__)
 
-bool IOHandlerDatagram::handle_event(struct epoll_event *event, time_t) {
+bool IOHandlerDatagram::handle_event(struct epoll_event *event,
+                                     time_t arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -142,6 +150,7 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event, time_t) {
       payload_len = nread - (ssize_t)event->header.header_len;
       event->payload_len = payload_len;
       event->payload = new uint8_t [payload_len];
+      event->arrival_time = arrival_time;
       memcpy((void *)event->payload, m_message + event->header.header_len,
              payload_len);
       deliver_event( event );
@@ -171,7 +180,8 @@ bool IOHandlerDatagram::handle_event(struct epoll_event *event, time_t) {
 }
 
 #elif defined(__sun__)
-bool IOHandlerDatagram::handle_event(port_event_t *event, time_t) {
+bool
+IOHandlerDatagram::handle_event(port_event_t *event, time_t arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -201,6 +211,7 @@ bool IOHandlerDatagram::handle_event(port_event_t *event, time_t) {
 	payload_len = nread - (ssize_t)event->header.header_len;
 	event->payload_len = payload_len;
 	event->payload = new uint8_t [payload_len];
+        event->arrival_time = arrival_time;
 	memcpy((void *)event->payload, m_message + event->header.header_len,
 	       payload_len);
 	deliver_event( event );
@@ -243,12 +254,11 @@ bool IOHandlerDatagram::handle_event(port_event_t *event, time_t) {
   return false;
   
 }
+
 #elif defined(__APPLE__) || defined(__FreeBSD__)
 
-/**
- *
- */
-bool IOHandlerDatagram::handle_event(struct kevent *event, time_t) {
+bool
+IOHandlerDatagram::handle_event(struct kevent *event, time_t arrival_time) {
   int error;
 
   //DisplayEvent(event);
@@ -288,6 +298,7 @@ bool IOHandlerDatagram::handle_event(struct kevent *event, time_t) {
     payload_len = nread - (ssize_t)event->header.header_len;
     event->payload_len = payload_len;
     event->payload = new uint8_t [payload_len];
+    event->arrival_time = arrival_time;
     memcpy((void *)event->payload, m_message + event->header.header_len,
            payload_len);
 
@@ -306,21 +317,27 @@ int IOHandlerDatagram::handle_write_readiness() {
   ScopedLock lock(m_mutex);
   int error;
 
-  if ((error = flush_send_queue()) != Error::OK)
+  if ((error = flush_send_queue()) != Error::OK) {
+    if (m_error == Error::OK)
+      m_error = error;
     return error;
+  }
 
   // is this necessary?
   if (m_send_queue.empty())
-    remove_poll_interest(Reactor::WRITE_READY);
+    error = remove_poll_interest(Reactor::WRITE_READY);
 
-  return Error::OK;
+  if (error != Error::OK && m_error == Error::OK)
+    m_error = error;
+
+  return error;
 }
 
 
 
 int IOHandlerDatagram::send_message(const InetAddr &addr, CommBufPtr &cbp) {
   ScopedLock lock(m_mutex);
-  int error;
+  int error = Error::OK;
   bool initially_empty = m_send_queue.empty() ? true : false;
 
   HT_LOG_ENTER;
@@ -330,19 +347,25 @@ int IOHandlerDatagram::send_message(const InetAddr &addr, CommBufPtr &cbp) {
 
   m_send_queue.push_back(SendRec(addr, cbp));
 
-  if ((error = flush_send_queue()) != Error::OK)
+  if ((error = flush_send_queue()) != Error::OK) {
+    if (m_error == Error::OK)
+      m_error = error;
     return error;
+  }
 
   if (initially_empty && !m_send_queue.empty()) {
-    add_poll_interest(Reactor::WRITE_READY);
+    error = add_poll_interest(Reactor::WRITE_READY);
     //HT_INFO("Adding Write interest");
   }
   else if (!initially_empty && m_send_queue.empty()) {
-    remove_poll_interest(Reactor::WRITE_READY);
+    error = remove_poll_interest(Reactor::WRITE_READY);
     //HT_INFO("Removing Write interest");
   }
 
-  return Error::OK;
+  if (error != Error::OK && m_error == Error::OK)
+    m_error = error;
+
+  return error;
 }
 
 
