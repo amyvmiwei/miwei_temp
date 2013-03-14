@@ -39,15 +39,16 @@ namespace Hypertable {
 
     void set_low_memory_mode(bool on) {
       if (on) {
-        if (m_prioritizer != &m_prioritizer_low_memory)
+        if (!m_low_memory_mode && m_low_memory_prioritization)
           m_prioritizer = &m_prioritizer_low_memory;
       }
       else {
-        if (m_prioritizer != &m_prioritizer_log_cleanup) {
+        if (m_low_memory_mode) {
           m_prioritizer = &m_prioritizer_log_cleanup;
           boost::xtime_get(&m_last_low_memory, TIME_UTC_);
         }
       }
+      m_low_memory_mode = on;
     }
 
     void need_scheduling() {
@@ -58,15 +59,14 @@ namespace Hypertable {
 
     int get_level(RangeData &rd);
 
-    bool low_memory_mode() {
-      return m_prioritizer == &m_prioritizer_low_memory;
-    }
+    /** Returns <i>true</i> if in low memory mode
+     * @return <i>true</i> if in low memory mode, <i>false</i> otherwise
+     */
+    bool low_memory_mode() { return m_low_memory_mode; }
 
     void check_file_dump_statistics(boost::xtime now, RangeDataVector &range_data,
                                     const String &header_str);
 
-    bool m_initialized;
-    bool m_scheduling_needed;
     MaintenanceQueuePtr m_queue;
     RSStatsPtr m_server_stats;
     RangeStatsGathererPtr m_stats_gatherer;
@@ -83,6 +83,10 @@ namespace Hypertable {
     int32_t m_merges_per_interval;
     int32_t m_move_compactions_per_interval;
     std::set<int64_t> m_log_hashes;
+    bool m_initialized;
+    bool m_scheduling_needed;
+    bool m_low_memory_prioritization;
+    bool m_low_memory_mode;
   };
 
   typedef intrusive_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;
