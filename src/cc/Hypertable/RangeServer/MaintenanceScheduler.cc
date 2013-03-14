@@ -51,15 +51,18 @@ namespace {
 }
 
 
-MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPtr &server_stats,
+MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
+                                           RSStatsPtr &server_stats,
                                            RangeStatsGathererPtr &gatherer)
-  : m_initialized(false), m_scheduling_needed(false), m_queue(queue),
-    m_server_stats(server_stats), m_stats_gatherer(gatherer),
+  : m_queue(queue), m_server_stats(server_stats), m_stats_gatherer(gatherer),
     m_prioritizer_log_cleanup(server_stats),
-    m_prioritizer_low_memory(server_stats) {
+    m_prioritizer_low_memory(server_stats), m_initialized(false),
+    m_scheduling_needed(false), m_low_memory_mode(false) {
   m_prioritizer = &m_prioritizer_log_cleanup;
   m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
   m_query_cache_memory = get_i64("Hypertable.RangeServer.QueryCache.MaxMemory");
+  m_low_memory_prioritization = get_bool("Hypertable.RangeServer.Maintenance.LowMemoryPrioritization");
+
   // Setup to immediately schedule maintenance
   boost::xtime_get(&m_last_maintenance, TIME_UTC_);
   memcpy(&m_last_low_memory, &m_last_maintenance, sizeof(boost::xtime));
@@ -152,7 +155,7 @@ void MaintenanceScheduler::schedule() {
     xtime_diff_millis(m_last_maintenance, now);
 
   int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
-  bool do_merges = !low_memory && 
+  bool do_merges = (!low_memory || !m_low_memory_prioritization) &&
     ((m_server_stats->get_update_bytes(collector_id) < 1000 && m_server_stats->get_scan_count(collector_id) < 5) ||
      xtime_diff_millis(m_last_low_memory, now) >= (int64_t)m_merging_delay);
 
