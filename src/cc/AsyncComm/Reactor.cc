@@ -41,6 +41,7 @@ extern "C" {
 #include <sys/socket.h>
 #include <sys/time.h>
 #include <sys/types.h>
+#include <fcntl.h>
 #if defined(__APPLE__) || defined(__FreeBSD__)
 #include <sys/event.h>
 #endif

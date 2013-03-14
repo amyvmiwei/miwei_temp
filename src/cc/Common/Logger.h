@@ -23,23 +23,92 @@
 
 #include "Error.h"
 #include "String.h"
+
 #include <iostream>
+#include <stdio.h>
+#include <stdarg.h>
+
 #include "FixedStream.h"
-#include <log4cpp/Category.hh>
 
 namespace Hypertable { namespace Logger {
-  using log4cpp::Priority;
 
-  void initialize(const String &name, int level = Priority::DEBUG,
-                  bool flush_per_log = true, std::ostream &out = std::cout);
-  void set_level(int level);
-  void set_test_mode(const String &name, int fd=1);
-  void suppress_line_numbers();
-  void flush();
-  bool set_flush_per_log(bool);
+  namespace Priority {
+    enum {
+      EMERG  = 0,
+      FATAL  = 0,
+      ALERT  = 1,
+      CRIT   = 2,
+      ERROR  = 3,
+      WARN   = 4,
+      NOTICE = 5,
+      INFO   = 6,
+      DEBUG  = 7,
+      NOTSET = 8
+    };
+  } // namespace Priority
 
-  extern log4cpp::Category *logger;
-  extern bool show_line_numbers;
+  class LogWriter {
+    public:
+      LogWriter(const String &name)
+        : m_show_line_numbers(true), m_test_mode(false), m_name(name),
+          m_priority(Priority::INFO), m_file(stdout) {
+      }
+
+      void set_level(int level) {
+        m_priority = level;
+      }
+
+      int  get_level() const {
+        return m_priority;
+      }
+
+      bool is_enabled(int priority) const {
+        return priority <= m_priority;
+      }
+
+      void set_test_mode(int fd = -1) {
+        if (fd != -1)
+          m_file = fdopen(fd, "wt");
+        m_show_line_numbers = false;
+        m_test_mode = true;
+      }
+
+      bool show_line_numbers() const {
+        return m_show_line_numbers;
+      }
+
+      void flush() {
+        fflush(m_file);
+      }
+
+      void debug(const char *format, ...);
+
+      void debug(const String &message) {
+        log(Priority::DEBUG, message);
+      }
+
+      void log(int priority, const char *format, ...);
+
+      void log(int priority, const String &message) {
+        log_string(priority, message.c_str());
+      }
+
+      void log_string(int priority, const char *message);
+
+      void log_varargs(int priority, const char *format, va_list ap);
+
+      bool m_show_line_numbers;
+      bool m_test_mode;
+      String m_name;
+      int m_priority;
+      FILE *m_file;
+  };
+
+  // public initialization function
+  extern void initialize(const String &name);
+
+  // public factory
+  extern LogWriter *get();
 
 }} // namespace Hypertable::Logger
 
@@ -54,23 +123,23 @@ namespace Hypertable { namespace Logger {
 #endif
 
 // printf interface macro helper
-#define HT_LOG(_enabled_, _cat_, msg) do { \
-  if (Logger::logger->_enabled_()) { \
-    if (Logger::show_line_numbers) \
-      Logger::logger->log(log4cpp::Priority::_cat_, Hypertable::format( \
+#define HT_LOG(priority, msg) do { \
+  if (Logger::get()->is_enabled(priority)) { \
+    if (Logger::get()->show_line_numbers()) \
+      Logger::get()->log(priority, Hypertable::format( \
           "(%s:%d) %s", __FILE__, __LINE__, msg)); \
     else \
-      Logger::logger->log(log4cpp::Priority::_cat_, msg); \
+      Logger::get()->log(priority, msg); \
   } \
 } while (0)
 
-#define HT_LOGF(_enabled_, _cat_, fmt, ...) do { \
-  if (Logger::logger->_enabled_()) { \
-    if (Logger::show_line_numbers) \
-      Logger::logger->log(log4cpp::Priority::_cat_, Hypertable::format( \
+#define HT_LOGF(priority, fmt, ...) do { \
+  if (Logger::get()->is_enabled(priority)) { \
+    if (Logger::get()->show_line_numbers()) \
+      Logger::get()->log(priority, Hypertable::format( \
           "(%s:%d) " fmt, __FILE__, __LINE__, __VA_ARGS__)); \
     else \
-      Logger::logger->log(log4cpp::Priority::_cat_, Hypertable::format( \
+      Logger::get()->log(priority, Hypertable::format( \
           fmt, __VA_ARGS__));  \
   } \
 } while (0)
@@ -78,25 +147,25 @@ namespace Hypertable { namespace Logger {
 // stream interface macro helpers
 #define HT_LOG_BUF_SIZE 4096
 
-#define HT_OUT(_enabled_, _l_) do { if (Logger::logger->_enabled_()) { \
+#define HT_OUT(priority) do { if (Logger::get()->is_enabled(priority)) { \
   char logbuf[HT_LOG_BUF_SIZE]; \
-  log4cpp::Priority::PriorityLevel _level_ = log4cpp::Priority::_l_; \
+  int _priority_ = Logger::get()->get_level(); \
   FixedOstream _out_(logbuf, sizeof(logbuf)); \
-  if (Logger::show_line_numbers) \
+  if (Logger::get()->show_line_numbers()) \
     _out_ <<"("<< __FILE__ <<':'<< __LINE__ <<") "; \
   _out_
 
-#define HT_OUT2(_enabled_, _l_) do { if (Logger::logger->_enabled_()) { \
+#define HT_OUT2(priority) do { if (Logger::get()->is_enabled(priority)) { \
   char logbuf[HT_LOG_BUF_SIZE]; \
-  log4cpp::Priority::PriorityLevel _level_ = log4cpp::Priority::_l_; \
+  int _priority_ = priority; \
   FixedOstream _out_(logbuf, sizeof(logbuf)); \
   _out_ << __func__; \
-  if (Logger::show_line_numbers) \
+  if (Logger::get()->show_line_numbers()) \
     _out_ << " ("<< __FILE__ <<':'<< __LINE__ <<")"; \
   _out_ <<": "
 
-#define HT_END ""; Logger::logger->log(_level_, _out_.str()); \
-  if (_level_ == log4cpp::Priority::FATAL) HT_ABORT; \
+#define HT_END ""; Logger::get()->log(_priority_, _out_.str()); \
+  if (_priority_ == Logger::Priority::FATAL) HT_ABORT; \
 } /* if enabled */ } while (0)
 
 #define HT_OUT_DISABLED do { if (0) {
@@ -117,26 +186,26 @@ namespace Hypertable { namespace Logger {
 #ifndef HT_DISABLE_LOG_DEBUG
 
 #define HT_LOG_ENTER do { \
-  if (Logger::logger->isDebugEnabled()) {\
-    if (Logger::show_line_numbers) \
-      Logger::logger->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, HT_FUNC);\
+  if (Logger::get()->is_enabled(Logger::Priority::DEBUG)) {\
+    if (Logger::get()->show_line_numbers()) \
+      Logger::get()->debug("(%s:%d) %s() ENTER", __FILE__, __LINE__, HT_FUNC);\
     else \
-      Logger::logger->debug("%s() ENTER", HT_FUNC); \
+      Logger::get()->debug("%s() ENTER", HT_FUNC); \
   } \
 } while(0)
 
 #define HT_LOG_EXIT do { \
-  if (Logger::logger->isDebugEnabled()) { \
-    if (Logger::show_line_numbers) \
-      Logger::logger->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, HT_FUNC); \
+  if (Logger::get()->is_enabled(Logger::Priority::DEBUG)) { \
+    if (Logger::get()->show_line_numbers()) \
+      Logger::get()->debug("(%s:%d) %s() EXIT", __FILE__, __LINE__, HT_FUNC); \
     else \
-      Logger::logger->debug("%s() EXIT", HT_FUNC); \
+      Logger::get()->debug("%s() EXIT", HT_FUNC); \
   } \
 } while(0)
 
-#define HT_DEBUG(msg) HT_LOG(isDebugEnabled, DEBUG, msg)
-#define HT_DEBUGF(msg, ...) HT_LOGF(isDebugEnabled, DEBUG, msg, __VA_ARGS__)
-#define HT_DEBUG_OUT HT_OUT2(isDebugEnabled, DEBUG)
+#define HT_DEBUG(msg) HT_LOG(Logger::Priority::DEBUG, msg)
+#define HT_DEBUGF(msg, ...) HT_LOGF(Logger::Priority::DEBUG, msg, __VA_ARGS__)
+#define HT_DEBUG_OUT HT_OUT2(Logger::Priority::DEBUG)
 #else
 #define HT_LOG_ENTER
 #define HT_LOG_EXIT
@@ -146,9 +215,9 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_INFO
-#define HT_INFO(msg) HT_LOG(isInfoEnabled, INFO, msg)
-#define HT_INFOF(msg, ...) HT_LOGF(isInfoEnabled, INFO, msg, __VA_ARGS__)
-#define HT_INFO_OUT HT_OUT(isInfoEnabled, INFO)
+#define HT_INFO(msg) HT_LOG(Logger::Priority::INFO, msg)
+#define HT_INFOF(msg, ...) HT_LOGF(Logger::Priority::INFO, msg, __VA_ARGS__)
+#define HT_INFO_OUT HT_OUT(Logger::Priority::INFO)
 #else
 #define HT_INFO(msg)
 #define HT_INFOF(msg, ...)
@@ -156,9 +225,9 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_NOTICE
-#define HT_NOTICE(msg) HT_LOG(isNoticeEnabled, NOTICE, msg)
-#define HT_NOTICEF(msg, ...) HT_LOGF(isNoticeEnabled, NOTICE, msg, __VA_ARGS__)
-#define HT_NOTICE_OUT HT_OUT(isNoticeEnabled, NOTICE)
+#define HT_NOTICE(msg) HT_LOG(Logger::Priority::NOTICE, msg)
+#define HT_NOTICEF(msg, ...) HT_LOGF(Logger::Priority::NOTICE, msg, __VA_ARGS__)
+#define HT_NOTICE_OUT HT_OUT(Logger::Priority::NOTICE)
 #else
 #define HT_NOTICE(msg)
 #define HT_NOTICEF(msg, ...)
@@ -166,9 +235,9 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_WARN
-#define HT_WARN(msg) HT_LOG(isWarnEnabled, WARN, msg)
-#define HT_WARNF(msg, ...) HT_LOGF(isWarnEnabled, WARN, msg, __VA_ARGS__)
-#define HT_WARN_OUT HT_OUT2(isWarnEnabled, WARN)
+#define HT_WARN(msg) HT_LOG(Logger::Priority::WARN, msg)
+#define HT_WARNF(msg, ...) HT_LOGF(Logger::Priority::WARN, msg, __VA_ARGS__)
+#define HT_WARN_OUT HT_OUT2(Logger::Priority::WARN)
 #else
 #define HT_WARN(msg)
 #define HT_WARNF(msg, ...)
@@ -176,9 +245,9 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_ERROR
-#define HT_ERROR(msg) HT_LOG(isErrorEnabled, ERROR, msg)
-#define HT_ERRORF(msg, ...) HT_LOGF(isErrorEnabled, ERROR, msg, __VA_ARGS__)
-#define HT_ERROR_OUT HT_OUT2(isErrorEnabled, ERROR)
+#define HT_ERROR(msg) HT_LOG(Logger::Priority::ERROR, msg)
+#define HT_ERRORF(msg, ...) HT_LOGF(Logger::Priority::ERROR, msg, __VA_ARGS__)
+#define HT_ERROR_OUT HT_OUT2(Logger::Priority::ERROR)
 #else
 #define HT_ERROR(msg)
 #define HT_ERRORF(msg, ...)
@@ -186,9 +255,9 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_CRIT
-#define HT_CRIT(msg) HT_LOG(isCritEnabled, CRIT, msg)
-#define HT_CRITF(msg, ...) HT_LOGF(isCritEnabled, CRIT, msg, __VA_ARGS__)
-#define HT_CRIT_OUT HT_OUT2(isCritEnabled, CRIT)
+#define HT_CRIT(msg) HT_LOG(Logger::Priority::CRIT, msg)
+#define HT_CRITF(msg, ...) HT_LOGF(Logger::Priority::CRIT, msg, __VA_ARGS__)
+#define HT_CRIT_OUT HT_OUT2(Logger::Priority::CRIT)
 #else
 #define HT_CRIT(msg)
 #define HT_CRITF(msg, ...)
@@ -196,9 +265,9 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_ALERT
-#define HT_ALERT(msg) HT_LOG(isAlertEnabled, ALERT, msg)
-#define HT_ALERTF(msg, ...) HT_LOGF(isAlertEnabled, ALERT, msg, __VA_ARGS__)
-#define HT_ALERT_OUT HT_OUT2(isAlertEnabled, ALERT)
+#define HT_ALERT(msg) HT_LOG(Logger::Priority::ALERT, msg)
+#define HT_ALERTF(msg, ...) HT_LOGF(Logger::Priority::ALERT, msg, __VA_ARGS__)
+#define HT_ALERT_OUT HT_OUT2(Logger::Priority::ALERT)
 #else
 #define HT_ALERT(msg)
 #define HT_ALERTF(msg, ...)
@@ -206,9 +275,9 @@ namespace Hypertable { namespace Logger {
 #endif
 
 #ifndef HT_DISABLE_LOG_EMERG
-#define HT_EMERG(msg) HT_LOG(isEmergEnabled, EMERG, msg)
-#define HT_EMERGF(msg, ...) HT_LOGF(isEmergEnabled, EMERG, msg, __VA_ARGS__)
-#define HT_EMERG_OUT HT_OUT2(isEmergEnabled, EMERG)
+#define HT_EMERG(msg) HT_LOG(Logger::Priority::EMERG, msg)
+#define HT_EMERGF(msg, ...) HT_LOGF(Logger::Priority::EMERG, msg, __VA_ARGS__)
+#define HT_EMERG_OUT HT_OUT2(Logger::Priority::EMERG)
 #else
 #define HT_EMERG(msg)
 #define HT_EMERGF(msg, ...)
@@ -217,14 +286,14 @@ namespace Hypertable { namespace Logger {
 
 #ifndef HT_DISABLE_LOG_FATAL
 #define HT_FATAL(msg) do { \
-  HT_LOG(isFatalEnabled, FATAL, msg); \
+  HT_LOG(Logger::Priority::FATAL, msg); \
   HT_ABORT; \
 } while (0)
 #define HT_FATALF(msg, ...) do { \
-  HT_LOGF(isFatalEnabled, FATAL, msg, __VA_ARGS__); \
+  HT_LOGF(Logger::Priority::FATAL, msg, __VA_ARGS__); \
   HT_ABORT; \
 } while (0)
-#define HT_FATAL_OUT HT_OUT2(isFatalEnabled, FATAL)
+#define HT_FATAL_OUT HT_OUT2(Logger::Priority::FATAL)
 #else
 #define HT_FATAL(msg)
 #define HT_FATALF(msg, ...)

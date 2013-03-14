@@ -112,7 +112,7 @@ CommandShell::CommandShell(const String &program_name,
     m_silent = m_props->get_bool("silent");
   m_test_mode = m_props->has("test-mode");
   if (m_test_mode)
-    Logger::set_test_mode(System::exe_name);
+    Logger::get()->set_test_mode();
   m_no_prompt = m_props->has("no-prompt");
 
   m_notify = m_props->has("notification-address");

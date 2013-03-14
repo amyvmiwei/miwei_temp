@@ -22,146 +22,78 @@
 #include "Common/Compat.h"
 
 #include <iostream>
-#include <log4cpp/Appender.hh>
-#include <log4cpp/BasicLayout.hh>
-#include <log4cpp/FileAppender.hh>
-#include <log4cpp/Layout.hh>
-#include <log4cpp/NDC.hh>
-#include <log4cpp/Priority.hh>
+#include <stdio.h>
+#include <stdarg.h>
 
+#include "String.h"
 #include "Logger.h"
+#include "Mutex.h"
 
-using namespace Hypertable;
-namespace Logging = log4cpp;
+namespace Hypertable { namespace Logger {
 
-namespace {
+static String logger_name;
+static LogWriter *logger_obj = 0;
+static Mutex mutex;
 
-  /**
-   * NoTimeLayout
-   **/
-  class  NoTimeLayout : public Logging::Layout {
-  public:
-    NoTimeLayout() { }
-    virtual ~NoTimeLayout() { }
-    virtual String format(const Logging::LoggingEvent& event) {
-      return Hypertable::format("%s %s %s: %s\n",
-          Logging::Priority::getPriorityName(event.priority).c_str(),
-          event.categoryName.c_str(), event.ndc.c_str(),
-          event.message.c_str());
-    }
+void initialize(const String &name) {
+  logger_name = name;
+}
+
+LogWriter *get() {
+  if (!logger_obj)
+    logger_obj = new LogWriter(logger_name);
+  return logger_obj;
+}
+
+void
+LogWriter::log_string(int priority, const char *message) {
+  static const char *priority_name[] = {
+    "FATAL",
+    "ALERT",
+    "CRIT",
+    "ERROR",
+    "WARN",
+    "NOTICE",
+    "INFO",
+    "DEBUG",
+    "NOTSET"
   };
 
-  /**
-   * MicrosecondLayout
-   **/
-  class  MicrosecondLayout : public Logging::Layout {
-  public:
-    MicrosecondLayout() { }
-    virtual ~MicrosecondLayout() { }
-    virtual String format(const Logging::LoggingEvent& event) {
-      return Hypertable::format("%d %d %s %s %s: %s\n",
-          event.timeStamp.getSeconds(), event.timeStamp.getMicroSeconds(),
-          Logging::Priority::getPriorityName(event.priority).c_str(),
-          event.categoryName.c_str(), event.ndc.c_str(),
-          event.message.c_str());
-    }
-  };
+  ScopedLock lock(mutex);
+  if (m_test_mode) {
+    fprintf(m_file, "%s %s : %s\n", priority_name[priority], m_name.c_str(),
+            message);
+  }
+  else {
+    time_t t = ::time(0);
+    fprintf(m_file, "%u %s %s : %s\n", (unsigned)t, priority_name[priority],
+            m_name.c_str(), message);
+  }
 
-  /**
-   * FlushableAppender appender with flush method
-   */
-  class FlushableAppender : public Logging::LayoutAppender {
-  public:
-    FlushableAppender(const String &name) : Logging::LayoutAppender(name) {}
-    virtual ~FlushableAppender() {}
-    virtual void flush() = 0;
-
-    bool
-    set_flush_per_log(bool choice) {
-      bool old = m_flush_per_log;
-      m_flush_per_log = choice;
-      return old;
-    }
-
-  protected:
-    bool m_flush_per_log;
-  };
-
-  /**
-   * FlushableOstreamAppender appends LoggingEvents to ostreams.
-   */
-  class FlushableOstreamAppender : public FlushableAppender {
-  public:
-    FlushableOstreamAppender(const String& name, std::ostream &stream,
-                             bool flush_per_log) :
-                             FlushableAppender(name), m_stream(stream) {
-      set_flush_per_log(flush_per_log);
-    }
-    virtual ~FlushableOstreamAppender() { close(); }
-
-    virtual bool reopen() { return true; }
-    virtual void close() { flush(); }
-    virtual void flush() { m_stream.flush(); }
-
-  protected:
-    virtual void
-    _append(const Logging::LoggingEvent& event) {
-      m_stream << _getLayout().format(event);
-
-      if (m_flush_per_log)
-        m_stream.flush();
-    }
-
-  private:
-    std::ostream &m_stream;
-  };
-
-  FlushableAppender *appender = 0;
-
-} // local namespace
-
-Logging::Category *Logger::logger = 0;
-bool Logger::show_line_numbers = true;
-
-void
-Logger::initialize(const String &name, int priority, bool flush_per_log,
-                   std::ostream &out) {
-  appender = new FlushableOstreamAppender("default", out, flush_per_log);
-  Logging::Layout* layout = new Logging::BasicLayout();
-  //Logging::Layout* layout = new MicrosecondLayout();
-  appender->setLayout(layout);
-  logger = &(Logging::Category::getInstance(name));
-  logger->addAppender(appender);
-  logger->setAdditivity(false);
-  logger->setPriority(priority);
+  flush();
 }
 
 void
-Logger::set_level(int priority) {
-  logger->setPriority(priority);
+LogWriter::log_varargs(int priority, const char *format, va_list ap) {
+  char buffer[1024 * 16];
+  vsnprintf(buffer, sizeof(buffer), format, ap);
+  log_string(priority, buffer);
 }
 
 void
-Logger::suppress_line_numbers() {
-  Logger::show_line_numbers = false;
+LogWriter::debug(const char *format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  log_varargs(Priority::DEBUG, format, ap);
+  va_end(ap);
 }
 
 void
-Logger::set_test_mode(const String &name, int fd) {
-  Logging::FileAppender *appender;
-  Logger::show_line_numbers = false;
-  logger->removeAllAppenders();
-  appender = new Logging::FileAppender(name, fd);
-  appender->setLayout(new NoTimeLayout());
-  logger->setAppender(appender);
+LogWriter::log(int priority, const char *format, ...) {
+  va_list ap;
+  va_start(ap, format);
+  log_varargs(priority, format, ap);
+  va_end(ap);
 }
 
-bool
-Logger::set_flush_per_log(bool choice) {
-  return appender->set_flush_per_log(choice);
-}
-
-void
-Logger::flush() {
-  appender->flush();
-}
+}} // namespace Hypertable::

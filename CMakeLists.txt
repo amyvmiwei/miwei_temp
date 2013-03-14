@@ -112,7 +112,6 @@ find_package(Python)
 find_package(Boost REQUIRED)
 find_package(BerkeleyDB REQUIRED)
 find_package(EXPAT REQUIRED)
-find_package(Log4cpp REQUIRED)
 find_package(Editline REQUIRED)
 find_package(SIGAR REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -163,7 +162,7 @@ endif ()
 
 # include directories
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
-    ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS} ${Log4cpp_INCLUDE_DIR}
+    ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}
     ${EXPAT_INCLUDE_DIRS} ${BDB_INCLUDE_DIR} ${EDITLINE_INCLUDE_DIR}
     ${SIGAR_INCLUDE_DIR})
 
@@ -247,7 +246,6 @@ endif ()
 
 # Copy C++ Thrift files
 install(DIRECTORY ${Thrift_INCLUDE_DIR} DESTINATION include USE_SOURCE_PERMISSIONS)
-install(DIRECTORY ${Log4cpp_INCLUDE_DIR}/log4cpp DESTINATION include USE_SOURCE_PERMISSIONS)
 
 if (NOT HT_COMPONENT_INSTALL)
   install(FILES ${HYPERTABLE_BINARY_DIR}/java/cdh3/hypertable-${VERSION}-examples.jar
