@@ -26,6 +26,7 @@
 #include <cstddef>
 #include <cassert>
 #include <algorithm>
+#include <set>
 
 #include <boost/noncopyable.hpp>
 #include <boost/static_assert.hpp>

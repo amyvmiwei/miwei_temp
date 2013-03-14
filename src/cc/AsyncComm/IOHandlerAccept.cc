@@ -36,6 +36,7 @@ extern "C" {
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <fcntl.h>
 }
 
 #define HT_DISABLE_LOG_DEBUG 1

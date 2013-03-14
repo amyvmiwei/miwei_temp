@@ -52,8 +52,9 @@ namespace Hypertable {
         exit(1);
       }
 
-      Logger::set_test_mode(name, m_fd);
+      Logger::get()->set_test_mode(m_fd);
     }
+
     ~TestHarness() {
       if (!m_error)
         unlink(m_output_file);

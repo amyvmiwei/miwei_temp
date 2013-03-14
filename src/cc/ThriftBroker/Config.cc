@@ -69,11 +69,10 @@ void init_thrift_broker() {
 }
 
 static void thrift_output_handler(const char *message) {
-  if (message) {
-    #if !defined(HT_DISABLE_LOG_ALL) && !defined(HT_DISABLE_LOG_ERROR)
-    if (Logger::logger->isErrorEnabled()) Logger::logger->log(log4cpp::Priority::ERROR, message);
-    #endif
-  }
+#if !defined(HT_DISABLE_LOG_ALL) && !defined(HT_DISABLE_LOG_ERROR)
+  if (message && Logger::get()->is_enabled(Logger::Priority::ERROR))
+    Logger::get()->log(Logger::Priority::ERROR, message);
+#endif
 }
 
 void redirect_thrift_output() {

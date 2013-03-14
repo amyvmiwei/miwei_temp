@@ -21,15 +21,11 @@
 
 #include "Common/Compat.h"
 #include "Common/HashMap.h"
+#include "Common/Logger.h"
 
 #include "Error.h"
 
 #include <iomanip>
-
-namespace Hypertable { namespace Logger {
-    extern bool show_line_numbers;
-  }
-}
 
 using namespace Hypertable;
 
@@ -345,7 +341,7 @@ std::ostream &operator<<(std::ostream &out, const Exception &e) {
 
   if (e.line()) {
     out <<"\n\tat "<< e.func() <<" (";
-    if (Logger::show_line_numbers)
+    if (Logger::get()->show_line_numbers())
       out << e.file() <<':'<< e.line();
     else
       out << relative_fname(e);
@@ -356,7 +352,7 @@ std::ostream &operator<<(std::ostream &out, const Exception &e) {
 
   for (Exception *prev = e.prev; prev; prev = prev->prev) {
     out <<"\n\tat "<< (prev->func() ? prev->func() : "-") <<" (";
-    if (Logger::show_line_numbers)
+    if (Logger::get()->show_line_numbers())
       out << (prev->file() ? prev->file() : "-") <<':'<< prev->line();
     else
       out << relative_fname(*prev);

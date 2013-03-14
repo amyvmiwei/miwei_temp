@@ -27,6 +27,12 @@
 #include <algorithm>
 #include <cassert>
 
+extern "C" {
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+}
+
 #include <boost/algorithm/string.hpp>
 #include <boost/shared_array.hpp>
 

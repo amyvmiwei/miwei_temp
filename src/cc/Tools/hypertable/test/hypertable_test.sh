@@ -1,4 +1,4 @@
-﻿#!/usr/bin/env bash
+#!/usr/bin/env bash
 
 HT_HOME=${INSTALL_DIR:-"/opt/hypertable/current"}
 SCRIPT_DIR=`dirname $0`

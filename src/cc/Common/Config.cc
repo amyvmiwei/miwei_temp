@@ -543,21 +543,21 @@ void DefaultPolicy::init() {
   }
 
   if (loglevel == "info")
-    Logger::set_level(Logger::Priority::INFO);
+    Logger::get()->set_level(Logger::Priority::INFO);
   else if (loglevel == "debug")
-    Logger::set_level(Logger::Priority::DEBUG);
+    Logger::get()->set_level(Logger::Priority::DEBUG);
   else if (loglevel == "notice")
-    Logger::set_level(Logger::Priority::NOTICE);
+    Logger::get()->set_level(Logger::Priority::NOTICE);
   else if (loglevel == "warn")
-    Logger::set_level(Logger::Priority::WARN);
+    Logger::get()->set_level(Logger::Priority::WARN);
   else if (loglevel == "error")
-    Logger::set_level(Logger::Priority::ERROR);
+    Logger::get()->set_level(Logger::Priority::ERROR);
   else if (loglevel == "crit")
-    Logger::set_level(Logger::Priority::CRIT);
+    Logger::get()->set_level(Logger::Priority::CRIT);
   else if (loglevel == "alert")
-    Logger::set_level(Logger::Priority::ALERT);
+    Logger::get()->set_level(Logger::Priority::ALERT);
   else if (loglevel == "fatal")
-    Logger::set_level(Logger::Priority::FATAL);
+    Logger::get()->set_level(Logger::Priority::FATAL);
   else {
     HT_ERROR_OUT << "unknown logging level: "<< loglevel << HT_END;
     _exit(0);

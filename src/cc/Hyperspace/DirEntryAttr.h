@@ -25,6 +25,7 @@
 #include "Common/Compat.h"
 
 #include <string>
+#include <vector>
 #include "Common/StaticBuffer.h"
 
 namespace Hyperspace {

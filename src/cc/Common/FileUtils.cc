@@ -24,6 +24,7 @@
 #include <iomanip>
 #include <iostream>
 #include <sstream>
+#include <cstdio>
 
 extern "C" {
 #include <unistd.h>
