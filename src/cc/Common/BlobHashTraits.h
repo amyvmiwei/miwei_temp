@@ -17,6 +17,10 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Helper structures for BlobHashSet.
+ */
+
 #ifndef HYPERTABLE_BLOB_HASH_TRAITS_H
 #define HYPERTABLE_BLOB_HASH_TRAITS_H
 
@@ -25,6 +29,13 @@
 
 namespace Hypertable {
 
+/** @addtogroup Common
+ *  @{
+ */
+
+/**
+ * A Blob structure holds a data pointer and a size
+ */
 struct Blob {
   Blob(const void *buf, size_t len) : start(buf), size(len) { }
 
@@ -33,8 +44,9 @@ struct Blob {
 };
 
 /**
- * Traits for BlobHashMap/Set
- * Hash function default to MurmurHash2 for speed and mix
+ * Traits for BlobHashSet
+ * Hash function default to MurmurHash2 for speed and mix. This class is
+ * not used standalone, but as a helper for BlobHashSet.
  */
 template <typename HashFunT = MurmurHash2>
 struct BlobHashTraits {
@@ -57,6 +69,8 @@ struct BlobHashTraits {
     }
   };
 };
+
+/** @}*/
 
 } // namespace Hypertable
 
