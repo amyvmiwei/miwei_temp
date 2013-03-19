@@ -19,6 +19,13 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * A Bloom Filter implementation.
+ * A bloom filter is a probabilistic datastructure (see
+ * http://en.wikipedia.org/wiki/Bloom_filter). It's used in CellStores to
+ * speed up queries.
+ */
+
 #ifndef HYPERTABLE_BLOOM_FILTER_H
 #define HYPERTABLE_BLOOM_FILTER_H
 
@@ -31,6 +38,10 @@
 
 namespace Hypertable {
 
+/** @addtogroup Common
+ *  @{
+ */
+
 /**
  * A space-efficent probabilistic set for membership test, false postives
  * are possible, but false negatives are not.
@@ -38,6 +49,12 @@ namespace Hypertable {
 template <class HasherT = MurmurHash2>
 class BasicBloomFilter {
 public:
+  /**
+   * Constructor
+   *
+   * @param items_estimate An estimated number of items that will be inserted
+   * @param false_positive_prob The probability for false positives
+   */
   BasicBloomFilter(size_t items_estimate, float false_positive_prob) {
     m_items_actual = 0;
     m_items_estimate = items_estimate;
@@ -46,21 +63,30 @@ public:
     m_num_hash_functions = (size_t)num_hashes;
     m_num_bits = (size_t)(m_items_estimate * num_hashes / std::log(2));
     if (m_num_bits == 0) {
-      HT_THROWF(Error::EMPTY_BLOOMFILTER, "Num elements=%lu false_positive_prob=%.3f",
-                (Lu)items_estimate, false_positive_prob);
+      HT_THROWF(Error::EMPTY_BLOOMFILTER,
+              "Num elements=%lu false_positive_prob=%.3f",
+              (Lu)items_estimate, false_positive_prob);
     }
     m_num_bytes = (m_num_bits / CHAR_BIT) + (m_num_bits % CHAR_BIT ? 1 : 0);
     m_bloom_bits = new uint8_t[m_num_bytes];
 
     memset(m_bloom_bits, 0, m_num_bytes);
 
-    HT_DEBUG_OUT <<"num funcs="<< m_num_hash_functions
-                 <<" num bits="<< m_num_bits <<" num bytes="<< m_num_bytes
-                 <<" bits per element="<< double(m_num_bits) / items_estimate
-                 << HT_END;
+    HT_DEBUG_OUT << "num funcs=" << m_num_hash_functions
+        << " num bits=" << m_num_bits << " num bytes=" << m_num_bytes
+        << " bits per element=" << double(m_num_bits) / items_estimate
+        << HT_END;
   }
 
-  BasicBloomFilter(size_t items_estimate, float bits_per_item, size_t num_hashes) {
+  /**
+   * Alternative constructor
+   *
+   * @param items_estimate An estimated number of items that will be inserted
+   * @param bits_per_item Average bits per item
+   * @param num_hashes Number of hash functions for the filter
+   */
+  BasicBloomFilter(size_t items_estimate, float bits_per_item,
+          size_t num_hashes) {
     m_items_actual = 0;
     m_items_estimate = items_estimate;
     m_false_positive_prob = 0.0;
@@ -75,34 +101,43 @@ public:
 
     memset(m_bloom_bits, 0, m_num_bytes);
 
-    HT_DEBUG_OUT <<"num funcs="<< m_num_hash_functions
-                 <<" num bits="<< m_num_bits <<" num bytes="<< m_num_bytes
-                 <<" bits per element="<< double(m_num_bits) / items_estimate
-                 << HT_END;
+    HT_DEBUG_OUT << "num funcs=" << m_num_hash_functions << " num bits="
+        << m_num_bits << " num bytes=" << m_num_bytes << " bits per element="
+        << double(m_num_bits) / items_estimate << HT_END;
   }
 
+  /**
+   * Alternative constructor
+   *
+   * @param items_estimate An estimated number of items that will be inserted
+   * @param items_actual Actual number of items
+   * @param length Number of bits
+   * @param num_hashes Number of hash functions for the filter
+   */
   BasicBloomFilter(size_t items_estimate, size_t items_actual,
-                 int64_t length, size_t num_hashes) {
+          int64_t length, size_t num_hashes) {
     m_items_actual = items_actual;
     m_items_estimate = items_estimate;
     m_false_positive_prob = 0.0;
     m_num_hash_functions = num_hashes;
     m_num_bits = (size_t)length;
     if (m_num_bits == 0) {
-      HT_THROWF(Error::EMPTY_BLOOMFILTER, "Estimated items=%lu actual items=%lu length=%lld num hashes=%lu",
-                (Lu)items_estimate, (Lu)items_actual, (Lld)length, (Lu)num_hashes);
+      HT_THROWF(Error::EMPTY_BLOOMFILTER,
+              "Estimated items=%lu actual items=%lu length=%lld num hashes=%lu",
+              (Lu)items_estimate, (Lu)items_actual, (Lld)length,
+              (Lu)num_hashes);
     }
     m_num_bytes = (m_num_bits / CHAR_BIT) + (m_num_bits % CHAR_BIT ? 1 : 0);
     m_bloom_bits = new uint8_t[m_num_bytes];
 
     memset(m_bloom_bits, 0, m_num_bytes);
 
-    HT_DEBUG_OUT <<"num funcs="<< m_num_hash_functions
-                 <<" num bits="<< m_num_bits <<" num bytes="<< m_num_bytes
-                 <<" bits per element="<< double(m_num_bits) / items_estimate
-                 << HT_END;
+    HT_DEBUG_OUT << "num funcs=" << m_num_hash_functions << " num bits="
+        << m_num_bits << " num bytes=" << m_num_bytes << " bits per element="
+        << double(m_num_bits) / items_estimate << HT_END;
   }
 
+  /** Destructor; releases resources */
   ~BasicBloomFilter() {
     delete[] m_bloom_bits;
   }
@@ -113,6 +148,14 @@ public:
       probability - # hash functions to use
   */
 
+  /** Inserts a new blob into the hash.
+   *
+   * Runs through each hash function and sets the appropriate bit for each
+   * hash.
+   *
+   * @param key Pointer to the key's data
+   * @param len Size of the data (in bytes)
+   */
   void insert(const void *key, size_t len) {
     uint32_t hash = len;
 
@@ -123,10 +166,25 @@ public:
     m_items_actual++;
   }
 
+  /** Overloaded insert function for Strings.
+   *
+   * @param key Reference to the string.
+   */
   void insert(const String& key) {
     insert(key.c_str(), key.length());
   }
 
+  /** Checks if the data set "may" contain the key. This can return false
+   * positives.
+   *
+   * This function runs through all hash tables and checks if the hashed bit 
+   * is set. If any of them is not set then the key is definitely not part of
+   * the data set. If all bits are set then the key "may" be in the data set.
+   *
+   * @param key Pointer to the key's data
+   * @param len Size of the data (in bytes)
+   * @return true if the key "may" be contained, otherwise false
+   */
   bool may_contain(const void *key, size_t len) const {
     uint32_t hash = len;
     uint8_t byte_mask;
@@ -137,49 +195,95 @@ public:
       byte = m_bloom_bits[hash / CHAR_BIT];
       byte_mask = (1 << (hash % CHAR_BIT));
 
-      if ( (byte & byte_mask) == 0 ) {
+      if ((byte & byte_mask) == 0) {
         return false;
       }
     }
     return true;
   }
 
+  /** Overloaded may_contain function for Strings
+   *
+   * @param key The String to look for
+   * @return true if the key "may" be contained, otherwise false
+   */
   bool may_contain(const String& key) const {
     return may_contain(key.c_str(), key.length());
   }
 
+  /** Serializes the BloomFilter into a static memory buffer
+   *
+   * @param buf The static memory buffer
+   */
   void serialize(StaticBuffer& buf) {
     buf.set(m_bloom_bits, m_num_bytes, false);
   }
 
-  uint8_t* ptr(void) {
-    return m_bloom_bits;
-  }
+  /** Getter for the bloom filter data
+   *
+   * @return A pointer to the bloom filter data
+   */
+  uint8_t *ptr() { return m_bloom_bits; }
 
-  size_t size(void) {
-    return m_num_bytes;
-  }
+  /** Getter for the bloom filter size
+   *
+   * @return The size of the bloom filter data (in bytes)
+   */
+  size_t size() { return m_num_bytes; }
 
+  /** Getter for the number of hash functions
+   *
+   * @return The number of hash functions
+   */
   size_t get_num_hashes() { return m_num_hash_functions; }
 
+  /** Getter for the number of bits
+   *
+   * @return The number of bits
+   */
   size_t get_length_bits() { return m_num_bits; }
 
+  /** Getter for the estimated number of items
+   *
+   * @return The estimated number of items
+   */
   size_t get_items_estimate() { return m_items_estimate; }
 
+  /** Getter for the actual number of items
+   *
+   * @return The actual number of items
+   */
   size_t get_items_actual() { return m_items_actual; }
 
 private:
+  /** The hash function implementation */
   HasherT    m_hasher;
+
+  /** Estimated number of items */
   size_t     m_items_estimate;
+
+  /** Actual number of items */
   size_t     m_items_actual;
+
+  /** Probability of returning a false positive */
   float      m_false_positive_prob;
+
+  /** Number of hash functions */
   size_t     m_num_hash_functions;
+
+  /** Number of bits */
   size_t     m_num_bits;
+
+  /** Number of bytes (approx. m_num_bits / 8) */
   size_t     m_num_bytes;
+
+  /** The actual bloom filter bit-array */
   uint8_t   *m_bloom_bits;
 };
 
 typedef BasicBloomFilter<> BloomFilter;
+
+/** @}*/
 
 } //namespace Hypertable
 

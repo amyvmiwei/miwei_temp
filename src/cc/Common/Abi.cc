@@ -17,6 +17,12 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Demangler for mangled C++ symbol names.
+ * This file contains a helper function to demangle mangled C++ symbol
+ * names. Required for diagnostics.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Abi.h"
 
