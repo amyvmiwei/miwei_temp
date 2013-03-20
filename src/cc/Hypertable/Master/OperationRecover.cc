@@ -112,6 +112,9 @@ void OperationRecover::execute() {
       m_context->conn_manager->remove(comm_addr);
     }
 
+    // Remove proxy from AsyncComm
+    m_context->comm->remove_proxy(m_location);
+
     // Send notification
     subject = format("NOTICE: Recovery of %s (%s) starting",
                      m_location.c_str(), m_hostname.c_str());

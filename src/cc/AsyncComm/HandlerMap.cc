@@ -286,6 +286,14 @@ int HandlerMap::add_proxy(const String &proxy, const String &hostname, const Ine
   return propagate_proxy_map(new_map);
 }
 
+int HandlerMap::remove_proxy(const String &proxy) {
+ ScopedLock lock(m_mutex);
+ ProxyMapT remove_map;
+ if (m_proxy_map.remove_mapping(proxy, remove_map))
+   return propagate_proxy_map(remove_map);
+ return Error::OK;
+}
+
 
 void HandlerMap::get_proxy_map(ProxyMapT &proxy_map) {
   m_proxy_map.get_map(proxy_map);
