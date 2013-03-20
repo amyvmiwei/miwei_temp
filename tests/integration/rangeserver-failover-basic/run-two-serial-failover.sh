@@ -27,17 +27,6 @@ rm -rf fs fs_pre
 # generate golden output file
 gen_test_data
 
-wait_for_quorum() {
-  grep "Only 1 servers ready, total servers=5 quorum=2, wait for servers" \
-      $HT_HOME/log/Hypertable.Master.log
-  while [ $? -ne "0" ]
-  do
-    sleep 2
-    grep "Only 1 servers ready, total servers=5 quorum=2, wait for servers" \
-        $HT_HOME/log/Hypertable.Master.log
-  done
-}
-
 # stop and start servers
 $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg

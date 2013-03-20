@@ -47,7 +47,7 @@ void TableScannerHandler::run() {
           m_is_create);
       break;
     default:
-      HT_INFO_OUT << "Received event " << m_event->to_str() << HT_END;
+      HT_INFOF("Received event %s", m_event->to_str().c_str());
     }
   }
   catch (Exception &e) {

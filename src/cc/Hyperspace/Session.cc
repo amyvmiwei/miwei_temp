@@ -60,7 +60,7 @@ Session::Session(Comm *comm, PropertiesPtr &cfg)
     m_reconnect = cfg->get_bool("Hyperspace.Session.Reconnect"));
 
   if (m_reconnect)
-    HT_INFO_OUT << "Hyperspace session setup to reconnect" << HT_END;
+    HT_INFO("Hyperspace session setup to reconnect");
 
   foreach_ht(const String &replica, cfg->get_strs("Hyperspace.Replica.Host")) {
     m_hyperspace_replicas.push_back(replica);

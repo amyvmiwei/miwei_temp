@@ -90,7 +90,6 @@ void test_basic_logging(const char *msg) {
   HT_LOG_ENTER;
   HT_LOG_EXIT;
   HT_DEBUG_OUT << msg << HT_END;
-  HT_INFO_OUT << msg << HT_END;
   HT_NOTICE_OUT << msg << HT_END;
   HT_WARN_OUT << msg << HT_END;
   HT_ERROR_OUT << msg <<  HT_END;
@@ -112,7 +111,7 @@ void test_big_message() {
   String buf = s.str();
 
   HT_INFOF("%s %d", buf.c_str(), 1);
-  HT_INFO_OUT << buf << HT_END;
+  HT_WARN_OUT << buf << HT_END;
 }
 
 } // local namespace

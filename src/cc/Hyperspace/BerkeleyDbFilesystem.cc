@@ -24,6 +24,7 @@
 #include <ostream>
 #include <cstdlib>
 #include <cctype>
+#include <sstream>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
@@ -107,7 +108,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
     char numbuf[17];
     String localhost = System::net_info().host_name;
     String localip = System::net_info().primary_addr;
-    HT_INFO_OUT << "localhost=" << localhost << " localip=" << localip << HT_END;
+    HT_INFOF("localhost=%s localip=%s", localhost.c_str(), localip.c_str());
 
     m_env.set_lk_detect(DB_LOCK_DEFAULT);
     m_env.set_app_private(&m_replication_info);
@@ -121,7 +122,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       String state_db = m_base_dir + "/" + ms_name_state_db;
       HT_DEBUG_OUT << "Check for  & remove for existing statedb=" << state_db << HT_END;
       if (FileUtils::exists(state_db)) {
-        HT_INFO_OUT << "Removing statedb" << HT_END;
+        HT_INFO("Removing statedb");
         Db old_state_db(&m_env, 0);
         old_state_db.remove(ms_name_state_db, NULL, 0);
       }
@@ -202,8 +203,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
           m_env.repmgr_set_local_site(e.host.c_str(), e.port, 0);
 #endif
           m_replication_info.localhost = e.host;
-          HT_INFO_OUT << "Added local replication site " << e.host
-              << " priority=" << priority << HT_END;
+          HT_INFOF("Added local replication site %s priority=%d", e.host.c_str(), priority);
         }
         else {
           int eid;
@@ -219,8 +219,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
           m_env.repmgr_add_remote_site(e.host.c_str(), e.port, &eid, 0);
 #endif
           m_replication_info.replica_map[eid] = e.host;
-          HT_INFO_OUT << "Added remote replication site " << e.host
-              << " priority=" << priority << HT_END;
+          HT_INFOF("Added remote replication site %s priority=%d", e.host.c_str(), priority);
         }
         --priority;
       }
@@ -331,8 +330,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       handle_namespace_db->close(0);
       delete handle_namespace_db;
       handle_namespace_db = 0;
-      HT_INFO_OUT << "Replication master init done" << HT_END;
-
+      HT_INFO("Replication master init done");
     }
 
   }
@@ -340,8 +338,9 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
     unsigned count = 0;
     DB_REPMGR_SITE *list = 0;
     if (m_env.repmgr_site_list(&count, &list) == 0) {
+      String msg;
       if (count)
-        HT_INFO_OUT << "The following replicas are (dis)connected: " << HT_END;
+        msg = String("The following replicas are (dis)connected: ");
       for (unsigned i = 0; i < count; i++) {
         const char *status = "unknown";
         switch (list[i].status) {
@@ -352,8 +351,10 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
             status = "disconnected";
             break;
         }
-        HT_INFO_OUT << "  " << list[i].host << " status: " << status << HT_END;
+        msg += String("(") + list[i].host + " status: " + status;
       }
+      if (count)
+        HT_INFOF("%s", msg.c_str());
     }
     HT_FATALF("Error initializing Berkeley DB (dir=%s) - %s; please make sure "
               "that the hyperspace replicas are correctly configured.",
@@ -372,7 +373,7 @@ BerkeleyDbFilesystem::~BerkeleyDbFilesystem() {
    * Close Berkeley DB "namespace" database and environment
    */
   try {
-    HT_INFO_OUT << "Closed DB handles for all threads " << HT_END;
+    HT_INFO("Closed DB handles for all threads ");
     foreach_ht(ThreadHandleMap::value_type &val, m_thread_handle_map) {
       (val.second)->close();
     }
@@ -382,7 +383,7 @@ BerkeleyDbFilesystem::~BerkeleyDbFilesystem() {
     HT_ERRORF("Error closing Berkeley DB (dir=%s) - %s",
               m_base_dir.c_str(), e.what());
   }
-  HT_INFO_OUT <<"namespace closed"<< HT_END;
+  HT_INFO("namespace closed");
 }
 
 void BerkeleyDbFilesystem::db_msg_callback(const DbEnv *dbenv, const char *msg)
@@ -393,7 +394,7 @@ void BerkeleyDbFilesystem::db_msg_callback(const DbEnv *dbenv, const char *msg)
 void BerkeleyDbFilesystem::db_err_callback(const DbEnv *dbenv, const char *errpfx,
                                            const char *msg)
 {
-  HT_INFO_OUT << "BDB ERROR:" << msg << HT_END;
+  HT_INFOF("BDB ERROR: %s", msg);
 }
 
 
@@ -403,11 +404,11 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
 
   switch (which) {
   case DB_EVENT_REP_CLIENT:
-   HT_INFO_OUT << "Received DB_EVENT_REP_CLIENT event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_CLIENT event");
    break;
   case DB_EVENT_REP_MASTER:
-   HT_INFO_OUT << "Received DB_EVENT_REP_MASTER event" << HT_END;
-   HT_INFO_OUT << "Local site elected master: " << replication_info->localhost << HT_END;
+    HT_INFO("Received DB_EVENT_REP_MASTER event");
+    HT_INFOF("Local site elected master: %s", replication_info->localhost.c_str());
    replication_info->is_master = true;
    {
      ScopedLock lock(replication_info->initial_election_mutex);
@@ -418,10 +419,10 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
    }
    break;
   case DB_EVENT_REP_ELECTED:
-   HT_INFO_OUT << "Received DB_EVENT_REP_ELECTED event ignore and wait for DB_EVENT_REP_MASTER" << HT_END;
-   break;
+    HT_INFO("Received DB_EVENT_REP_ELECTED event ignore and wait for DB_EVENT_REP_MASTER");
+    break;
   case DB_EVENT_REP_NEWMASTER:
-   HT_INFO_OUT << "Received DB_EVENT_REP_NEWMASTER event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_NEWMASTER event");
    // exit if we lost mastership
    if (replication_info->is_master)
      HT_FATAL("Local site lost mastership");
@@ -430,7 +431,7 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
      hash_map<int, String>::iterator it =
          replication_info->replica_map.find(replication_info->master_eid);
      HT_ASSERT (it != replication_info->replica_map.end());
-     HT_INFO_OUT << "New master elected: " << it->second << HT_END;
+     HT_INFOF("New master elected: %s", it->second.c_str());
 
      ScopedLock lock(replication_info->initial_election_mutex);
      if (!replication_info->initial_election_done) {
@@ -450,50 +451,50 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
    HT_FATAL("Received DB_EVENT_PANIC event");
    break;
   case DB_EVENT_REP_STARTUPDONE:
-   HT_INFO_OUT << "Received DB_EVENT_REP_STARTUPDONE event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_STARTUPDONE event");
    break;
   case DB_EVENT_WRITE_FAILED:
-   HT_INFO_OUT << "Received DB_EVENT_WROTE_FAILED event" << HT_END;
+    HT_INFO("Received DB_EVENT_WROTE_FAILED event");
    break;
 
 #if DB_VERSION_MAJOR > 5 || (DB_VERSION_MAJOR == 5 && DB_VERSION_MINOR >= 2)
   case DB_EVENT_REP_CONNECT_BROKEN:
-   HT_INFO_OUT << "Received DB_EVENT_REP_CONNECT_BROKEN event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_CONNECT_BROKEN event");
    break;
   case DB_EVENT_REP_CONNECT_ESTD:
-   HT_INFO_OUT << "Received DB_EVENT_REP_CONNECT_ESTD event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_CONNECT_ESTD event");
    break;
   case DB_EVENT_REP_CONNECT_TRY_FAILED:
-   HT_INFO_OUT << "Received DB_EVENT_REP_CONNECT_TRY_FAILED event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_CONNECT_TRY_FAILED event");
    break;
   case DB_EVENT_REP_DUPMASTER:
-   HT_INFO_OUT << "Received DB_EVENT_REP_DUPMASTER event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_DUPMASTER event");
    break;
   case DB_EVENT_REP_ELECTION_FAILED:
-   HT_INFO_OUT << "Received DB_EVENT_REP_ELECTION_FAILED event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_ELECTION_FAILED event");
    break;
   case DB_EVENT_REP_INIT_DONE:
-   HT_INFO_OUT << "Received DB_EVENT_REP_INIT_DONE event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_INIT_DONE event");
    break;
   case DB_EVENT_REP_JOIN_FAILURE:
-   HT_INFO_OUT << "Received DB_EVENT_REP_JOIN_FAILURE event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_JOIN_FAILURE event");
    break;
   case DB_EVENT_REP_LOCAL_SITE_REMOVED:
-   HT_INFO_OUT << "Received DB_EVENT_REP_LOCAL_SITE_REMOVED event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_LOCAL_SITE_REMOVED event");
    break;
   case DB_EVENT_REP_MASTER_FAILURE:
-   HT_INFO_OUT << "Received DB_EVENT_REP_MASTER_FAILURE event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_MASTER_FAILURE event");
    break;
   case DB_EVENT_REP_SITE_ADDED:
-   HT_INFO_OUT << "Received DB_EVENT_REP_SITE_ADDED event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_SITE_ADDED event");
    break;
   case DB_EVENT_REP_SITE_REMOVED:
-   HT_INFO_OUT << "Received DB_EVENT_REP_SITE_REMOVED event" << HT_END;
+    HT_INFO("Received DB_EVENT_REP_SITE_REMOVED event");
    break;
 #endif
 
   default:
-   HT_INFO_OUT << "Received BerkeleyDB event " << which << HT_END;
+    HT_INFO("Received BerkeleyDB event ");
   }
 }
 
@@ -502,10 +503,12 @@ void BerkeleyDbFilesystem::init_db_handles(const vector<Thread::id> &thread_ids)
   BDbHandlesPtr db_handles;
 
   // Assign per thread handles but don't open them yet
+  std::stringstream tid_str;
   foreach_ht(Thread::id thread_id, thread_ids) {
     db_handles = new BDbHandles();
     m_thread_handle_map[thread_id] = db_handles;
-    HT_INFO_OUT << "Created DB handles for thread: " << thread_id << HT_END;
+    tid_str << thread_id;
+    HT_INFOF("Created DB handles for thread: %s", tid_str.str().c_str());
   }
 
 }
@@ -581,7 +584,7 @@ void BerkeleyDbFilesystem::do_checkpoint() {
         // delete log file
         Path file(*log);
         boost::filesystem::remove(file);
-        HT_INFO_OUT << "Deleted unused BerkeleyDb log " << *log << HT_END;
+        HT_INFOF("Deleted unused BerkeleyDb log %s", *log);
       }
     }
   }

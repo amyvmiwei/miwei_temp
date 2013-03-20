@@ -37,6 +37,8 @@
 #include "ReferenceManager.h"
 #include "Utility.h"
 
+#include <sstream>
+
 #define OPERATION_RECOVER_VERSION 1
 
 using namespace Hypertable;
@@ -116,7 +118,7 @@ void OperationRecover::execute() {
     message = format("Failure of range server %s (%s) has been detected.  "
                      "Starting recovery...", m_location.c_str(),
                      m_hostname.c_str());
-    HT_INFO_OUT << message << HT_END;
+    HT_INFOF("%s", message.c_str());
     m_context->notification_hook(subject, message);
 
     // read rsml figure out what types of ranges lived on this server
@@ -138,36 +140,32 @@ void OperationRecover::execute() {
     if (m_root_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
                                           RangeSpec::ROOT, m_subop_dependency);
-      HT_INFO_OUT << "Number of root ranges to recover for location " 
-          << m_location << "="
-          << m_root_specs.size() << HT_END;
+      HT_INFOF("Number of root ranges to recover for location %s = %u",
+               m_location.c_str(), (unsigned)m_root_specs.size());
       m_sub_ops.push_back(sub_op);
       entities.push_back(sub_op);
     }
     if (m_metadata_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
                                           RangeSpec::METADATA, m_subop_dependency);
-      HT_INFO_OUT << "Number of metadata ranges to recover for location "
-          << m_location << "="
-          << m_metadata_specs.size() << HT_END;
+      HT_INFOF("Number of metadata ranges to recover for location %s = %u",
+               m_location.c_str(), (unsigned)m_metadata_specs.size());
       m_sub_ops.push_back(sub_op);
       entities.push_back(sub_op);
     }
     if (m_system_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
                                           RangeSpec::SYSTEM, m_subop_dependency);
-      HT_INFO_OUT << "Number of system ranges to recover for location "
-          << m_location << "="
-          << m_system_specs.size() << HT_END;
+      HT_INFOF("Number of system ranges to recover for location %s = %d",
+               m_location.c_str(), (int)m_system_specs.size());
       m_sub_ops.push_back(sub_op);
       entities.push_back(sub_op);
     }
     if (m_user_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
                                           RangeSpec::USER, m_subop_dependency);
-      HT_INFO_OUT << "Number of user ranges to recover for location " 
-          << m_location << "="
-          << m_user_specs.size() << HT_END;
+      HT_INFOF("Number of user ranges to recover for location %s = %d",
+               m_location.c_str(), (int)m_user_specs.size());
       m_sub_ops.push_back(sub_op);
       entities.push_back(sub_op);
     }
@@ -226,8 +224,8 @@ bool OperationRecover::acquire_server_lock() {
                                     LOCK_MODE_EXCLUSIVE, &lock_status,
                                     &sequencer);
     if (lock_status != LOCK_STATUS_GRANTED) {
-      HT_INFO_OUT << "Couldn't obtain lock on '" << fname
-                  << "' due to conflict, lock_status=" << lock_status << HT_END;
+      HT_INFOF("Couldn't obtain lock on '%s' due to conflict, lock_status=0x%x",
+               fname.c_str(), lock_status);
       if (!m_restart) {
         // Send notification
         subject = format("NOTICE: Recovery of %s (%s) aborted",
@@ -235,7 +233,7 @@ bool OperationRecover::acquire_server_lock() {
         message = format("Aborting recovery of range server %s (%s) because "
                          "unable to aquire lock.", m_location.c_str(),
                          m_hostname.c_str());
-        HT_INFO_OUT << message << HT_END;
+        HT_INFOF("%s", message.c_str());
         m_context->notification_hook(subject, message);
       }
       else
@@ -249,8 +247,7 @@ bool OperationRecover::acquire_server_lock() {
     handle = 0;
     m_lock_acquired = true;
 
-    HT_INFO_OUT << "Acquired lock on '" << fname 
-                << "', starting recovery..." << HT_END;
+    HT_INFOF("Acquired lock on '%s', starting recovery...", fname.c_str());
   }
   catch (Exception &e) {
     HT_ERROR_OUT << "Problem obtaining " << m_location 
@@ -286,8 +283,6 @@ void OperationRecover::clear_server_state() {
   //
   // if m_rsc is NULL then it was already removed
   if (m_rsc) {
-    HT_INFO_OUT << "delete RangeServerConnection from mml for "
-        << m_location << HT_END;
     m_context->mml_writer->record_removal(m_rsc.get());
     m_context->rsc_manager->erase_server(m_rsc);
 
@@ -330,12 +325,15 @@ void OperationRecover::read_rsml() {
     foreach_ht (MetaLog::EntityPtr &entity, entities) {
       if ((range = dynamic_cast<MetaLog::EntityRange *>(entity.get())) != 0) {
         QualifiedRangeSpec spec;
+        std::stringstream sout;
         // skip phantom ranges, let whoever was recovering them deal with them
         if (range->state.state & RangeState::PHANTOM) {
-          HT_INFO_OUT << "Skipping PHANTOM range " << *range << HT_END;
+          sout << "Skipping PHANTOM range " << *range;
+          HT_INFOF("%s", sout.str().c_str());
         }
         else {
-          HT_INFO_OUT << "Range " << *range << ": not PHANTOM; including" << HT_END;
+          sout << "Range " << *range << ": not PHANTOM; including";
+          HT_INFOF("%s", sout.str().c_str());
           spec.table = range->table;
           spec.range = range->spec;
 

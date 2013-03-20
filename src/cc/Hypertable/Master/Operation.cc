@@ -24,6 +24,7 @@
 #include "Common/Serialization.h"
 
 #include <ctime>
+#include <sstream>
 
 #include "Operation.h"
 #include "ReferenceManager.h"
@@ -230,7 +231,12 @@ void Operation::complete_error(int error, const String &msg) {
     m_obstructions.clear();
     m_exclusivities.clear();
   }
-  HT_INFO_OUT << "Operation failed (" << *this << ") " << Error::get_text(error) << " - " << msg << HT_END;
+
+  std::stringstream sout;
+
+  sout << "Operation failed (" << *this << ") " << Error::get_text(error) << " - " << msg;
+  HT_INFOF("%s", sout.str().c_str());
+
   m_context->mml_writer->record_state(this);
 }
 

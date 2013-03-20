@@ -191,7 +191,7 @@ void test_bad_vi32() {
     decode_vi32(&p, &len);
   }
   catch (Exception &e) {
-    HT_INFO_OUT << e << HT_END;
+    HT_ERROR_OUT << e << HT_END;
     HT_ASSERT(e.code() == Error::SERIALIZATION_INPUT_OVERRUN);
   }
 }
@@ -205,7 +205,7 @@ void test_bad_vi64() {
     decode_vi64(&p, &len);
   }
   catch (Exception &e) {
-    HT_INFO_OUT << e << HT_END;
+    HT_ERROR_OUT << e << HT_END;
     HT_ASSERT(e.code() == Error::SERIALIZATION_BAD_VINT);
   }
 }
@@ -219,7 +219,7 @@ void test_bad_vstr() {
     decode_vstr(&p, &len);
   }
   catch (Exception &e) {
-    HT_INFO_OUT << e << HT_END;
+    HT_ERROR_OUT << e << HT_END;
     HT_ASSERT(e.code() == Error::SERIALIZATION_BAD_VSTR);
   }
 }

@@ -30,12 +30,12 @@ rm -rf fs fs_pre
 gen_test_data
 
 wait_for_quorum() {
-  grep "Only 1 servers ready, total servers=5 quorum=2, wait for servers" \
+  grep "Only 1 servers ready, total servers=5 quorum=2, waiting for servers" \
       $HT_HOME/log/Hypertable.Master.log
   while [ $? -ne "0" ]
   do
     sleep 2
-    grep "Only 1 servers ready, total servers=5 quorum=2, wait for servers" \
+    grep "Only 1 servers ready, total servers=5 quorum=2, waiting for servers" \
         $HT_HOME/log/Hypertable.Master.log
   done
 }

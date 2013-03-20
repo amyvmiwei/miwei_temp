@@ -24,6 +24,8 @@
 #include <boost/tokenizer.hpp>
 #include <algorithm>
 #include <cstring>
+#include <sstream>
+
 
 extern "C" {
 #include <dirent.h>
@@ -67,6 +69,7 @@ using namespace std;
 #define HT_BDBTXN_BEGIN(parent_txn) \
   do { \
     BDbTxn txn;\
+    std::stringstream txn_str;\
     HT_ASSERT(is_master());\
     m_bdb_fs->start_transaction(txn); \
     try
@@ -74,14 +77,15 @@ using namespace std;
 #define HT_BDBTXN_END_CB(_cb_) \
     catch (Exception &e) { \
       if (e.code() == Error::HYPERSPACE_BERKELEYDB_DEADLOCK) { \
-        HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
+        txn_str << txn; \
+        HT_INFOF("Berkeley DB deadlock encountered in txn %s", txn_str.str().c_str()); \
         txn.abort(); \
         poll(0, 0, (System::rand32() % 3000) + 1); \
         continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \
-        HT_INFO_OUT << "Berkeley DB rep handle dead deadlock encountered in txn "\
-                    << txn << HT_END; \
+        txn_str << txn; \
+        HT_INFOF("Berkeley DB rep handle dead deadlock encountered in txn %s", txn_str.str().c_str()); \
         txn.abort(); \
         continue; \
       }\
@@ -100,14 +104,15 @@ using namespace std;
 #define HT_BDBTXN_END(...) \
     catch (Exception &e) { \
       if (e.code() == Error::HYPERSPACE_BERKELEYDB_DEADLOCK) {\
-        HT_INFO_OUT << "Berkeley DB deadlock encountered in txn "<< txn << HT_END; \
+        txn_str << txn; \
+        HT_INFOF("Berkeley DB deadlock encountered in txn %s", txn_str.str().c_str()); \
         txn.abort(); \
         poll(0, 0, (System::rand32() % 3000) + 1); \
         continue; \
       }\
       else if (e.code() == Error::HYPERSPACE_BERKELEYDB_REP_HANDLE_DEAD) { \
-        HT_INFO_OUT << "Berkeley DB rep handle dead deadlock encountered in txn "\
-                    << txn << HT_END; \
+        txn_str << txn; \
+        HT_INFOF("Berkeley DB rep handle dead deadlock encountered in txn %s", txn_str.str().c_str()); \
         txn.abort(); \
         continue; \
       }\
@@ -261,7 +266,7 @@ uint64_t Master::create_session(struct sockaddr_in &addr) {
   SessionDataPtr session_data;
   uint64_t session_id = 0;
   String addr_str = InetAddr::format(addr);
-  HT_INFO_OUT << "Create session for " << addr_str << HT_END;
+  HT_INFOF("Create session for %s", addr_str.c_str());
 
   HT_BDBTXN_BEGIN() {
     // DB updates
@@ -529,7 +534,7 @@ Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name, const
   if (ctx.aborted) {
     cb->error(ctx.error, ctx.error_msg);
     if (ctx.error == Error::HYPERSPACE_FILE_EXISTS) { // info should be sufficient
-        HT_INFO_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+      HT_INFOF("%s - %s", Error::get_text(ctx.error), ctx.error_msg.c_str());
     }
     else {
         HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
@@ -591,7 +596,7 @@ Master::mkdirs(ResponseCallback *cb, uint64_t session_id, const char *name, cons
   if (ctx.aborted) {
     cb->error(ctx.error, ctx.error_msg);
     if (ctx.error == Error::HYPERSPACE_FILE_EXISTS) { // info should be sufficient
-        HT_INFO_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
+      HT_INFOF("%s - %s", Error::get_text(ctx.error), ctx.error_msg.c_str());
     }
     else {
         HT_ERROR_OUT << Error::get_text(ctx.error) << " - " << ctx.error_msg << HT_END;
@@ -1326,16 +1331,20 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
     txn_commit:
       if (aborted) {
         txn.abort();
-        HT_INFO_OUT << "lock txn=" << txn << " aborted " << " handle=" << handle << " node="
-                     << node << " mode=" << mode << " status=" << lock_status
-                     << " lock_generation=" << lock_generation << HT_END;
+        std::stringstream sout;
+        sout << "lock txn=" << txn << " aborted " << " handle=" << handle << " node="
+             << node << " mode=" << mode << " status=" << lock_status
+             << " lock_generation=" << lock_generation;
+        HT_INFOF("%s", sout.str().c_str());
       }
       else {
         txn.commit(0);
         commited = true;
-        HT_INFO_OUT << "lock txn=" << txn << " commited " << " handle=" << handle << " node="
-                     << node << " mode=" << mode << " status=" << lock_status
-                     << " lock_generation=" << lock_generation << HT_END;
+        std::stringstream sout;
+        sout << "lock txn=" << txn << " commited " << " handle=" << handle << " node="
+             << node << " mode=" << mode << " status=" << lock_status
+             << " lock_generation=" << lock_generation;
+        HT_INFOF("%s", sout.str().c_str());
       }
   }
   HT_BDBTXN_END_CB(cb);
@@ -1671,8 +1680,7 @@ Master::deliver_event_notifications(HyperspaceEventPtr &event_ptr,
       event_ptr->wait_for_notifications();
 
     if (m_verbose)
-      HT_INFO_OUT << "exitting deliver_event_notifications for "
-                  << " event_id= " << event_ptr->get_id() << HT_END;
+      HT_INFOF("exitting deliver_event_notifications for event_id=%llu", (Llu)event_ptr->get_id());
   }
   else {
     HT_DEBUG_OUT << "exitting deliver_event_notifications nothing to do"<< HT_END;

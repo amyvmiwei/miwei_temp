@@ -293,9 +293,9 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
     if (prev_iter != m_prev_table_stat_map.end()) {
       if (server_count != m_last_server_count ||
           memcmp(m_last_server_set_digest, server_set_digest, 16)) {
-        HT_INFO_OUT << "Statistics server set mismatch, using previous " 
-            "statistics." <<" last_server_count=" << m_last_server_count
-            << ", server_count=" << server_count << HT_END;
+        HT_INFOF("Statistics server set mismatch, using previous "
+                 "statistics. last_server_count=%d, server_count=%d",
+                 m_last_server_count, server_count);
         ts_iter->second.scan_rate = prev_iter->second.scan_rate;
         ts_iter->second.update_rate = prev_iter->second.update_rate;
         ts_iter->second.cell_read_rate = prev_iter->second.cell_read_rate;

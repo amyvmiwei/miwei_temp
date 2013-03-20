@@ -41,6 +41,8 @@
 #include "Utility.h"
 #include "BalancePlanAuthority.h"
 
+#include <sstream>
+
 using namespace Hypertable;
 using namespace Hyperspace;
 
@@ -142,8 +144,12 @@ void OperationBalance::execute() {
                     move->range, move->error);
           }
         }
-        foreach_ht (RangeMoveSpecPtr &move, m_plan->moves)
-          HT_INFO_OUT << *move << HT_END;
+        std::stringstream sout;
+        foreach_ht (RangeMoveSpecPtr &move, m_plan->moves) {
+          sout.str("");
+          sout << *move;
+          HT_INFOF("%s", sout.str().c_str());
+        }
       }
       complete_ok();
     }

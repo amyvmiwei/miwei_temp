@@ -39,7 +39,7 @@ using namespace Hypertable;
 void RequestHandlerDestroySession::run() {
 
   try {
-    HT_INFO_OUT << "Destroying session " << m_session_id << HT_END;
+    HT_INFOF("Destroying session %llu", (Llu)m_session_id);
     m_master->destroy_session(m_session_id);
   }
   catch (Exception &e) {

@@ -48,7 +48,7 @@ void ReplayDispatchHandler::handle(Hypertable::EventPtr &event) {
         m_error_msg = format("Replay to %s failed - %s",
                              event->proxy ? event->proxy : event->addr.format().c_str(),
                              error_msg.c_str());
-        HT_INFO_OUT << m_error_msg << HT_END;
+        HT_INFOF("%s", m_error_msg.c_str());
         m_error = error;
       }
     }
@@ -56,7 +56,7 @@ void ReplayDispatchHandler::handle(Hypertable::EventPtr &event) {
   else {
     m_error_msg = format("Replay to %s failed",
                          event->proxy ? event->proxy : event->addr.format().c_str());
-    HT_INFO_OUT << m_error_msg << HT_END;
+    HT_INFOF("%s", m_error_msg.c_str());
     m_error = event->error;
   }
 

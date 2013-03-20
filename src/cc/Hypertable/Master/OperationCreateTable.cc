@@ -251,7 +251,7 @@ void OperationCreateTable::execute() {
         complete_error(e);
         return;
       }
-      HT_INFO_OUT << e << HT_END;
+      HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
       poll(0, 0, 5000);
       set_state(OperationState::ASSIGN_LOCATION);
       return;

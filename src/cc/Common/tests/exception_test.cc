@@ -60,7 +60,7 @@ int main(int ac, char *av[]) {
     ExceptionTest::test_ex0(0);
   }
   catch (Exception &e) {
-    HT_INFO_OUT <<"Error: "<< e.messages() << HT_END;
-    HT_INFO_OUT <<"Exception trace: "<< e << HT_END;
+    HT_ERROR_OUT <<"Error: "<< e.messages() << HT_END;
+    HT_ERROR_OUT <<"Exception trace: "<< e << HT_END;
   }
 }

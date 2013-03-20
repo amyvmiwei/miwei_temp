@@ -71,18 +71,18 @@ void BalanceAlgorithmLoad::compute_plan(BalancePlanPtr &plan,
   num_servers = servers_desc_load.size();
 
   if (num_servers < 2 || num_loaded_servers < 1) {
-    HT_INFO_OUT << "No balancing required, num_servers=" << num_servers
-        << ", num_loaded_servers=" << num_loaded_servers << HT_END;
+    HT_INFOF("No balancing required, num_servers=%d, num_loaded_servers=%d",
+             num_servers, num_loaded_servers);
     return;
   }
 
   mean_loadavg /= num_servers;
   mean_loadavg_per_loadestimate /= num_loaded_servers;
-  HT_INFO_OUT << "mean_loadavg=" << mean_loadavg << ", num_servers="
-      << num_servers << ", mean_loadavg_per_loadestimate="
-      << mean_loadavg_per_loadestimate << ", num_loaded_servers="
-      << num_loaded_servers << ", loadavg_deviation_threshold="
-      << m_loadavg_deviation_threshold << HT_END;
+
+  HT_INFOF("meand_loadavg=%f, num_servers=%u, mean_loadavg_per_loadestimate=%f"
+           ", num_loaded_servers=%u, loadavg_deviation_threshold=%f",
+           mean_loadavg, (unsigned)num_servers, mean_loadavg_per_loadestimate,
+           (unsigned)num_loaded_servers, m_loadavg_deviation_threshold);
 
   while (1) {
     if (servers_desc_load.size() < 2)

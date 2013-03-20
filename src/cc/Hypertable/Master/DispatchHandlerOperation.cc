@@ -51,7 +51,7 @@ void DispatchHandlerOperation::start(StringSet &locations) {
       start(*iter);
     }
     catch (Exception &e) {
-      HT_INFO_OUT << e << HT_END;
+      HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
       if (e.code() == Error::COMM_NOT_CONNECTED ||
           e.code() == Error::COMM_INVALID_PROXY ||
           e.code() == Error::COMM_BROKEN_CONNECTION) {
@@ -75,7 +75,7 @@ void DispatchHandlerOperation::handle(EventPtr &event) {
   ScopedLock lock(m_mutex);
 
   if (m_events.count(event) > 0) {
-    HT_INFO_OUT << "Skipping second event - " << event->to_str() << HT_END;
+    HT_INFOF("Skipping second event - %s", event->to_str().c_str());
     return;
   }
 

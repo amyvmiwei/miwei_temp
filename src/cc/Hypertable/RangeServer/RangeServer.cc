@@ -26,6 +26,7 @@
 #include <cstring>
 #include <iostream>
 #include <fstream>
+#include <sstream>
 
 #include <boost/algorithm/string.hpp>
 
@@ -489,8 +490,8 @@ void RangeServer::initialize(PropertiesPtr &props) {
     if (lock_status == LOCK_STATUS_GRANTED)
       break;
 
-    HT_INFO_OUT << "Waiting for exclusive lock on hyperspace:/" << top_dir
-                << " ..." << HT_END;
+    HT_INFOF("Waiting for exclusive lock on hyperspace:/%s ...",
+             top_dir.c_str());
     poll(0, 0, 5000);
   }
 
@@ -509,7 +510,7 @@ void RangeServer::initialize(PropertiesPtr &props) {
                path.c_str(), e.what());
   }
 
-  HT_INFO_OUT << "log_dir=" << Global::log_dir << HT_END;
+  HT_INFOF("log_dir=%s", Global::log_dir.c_str());
 }
 
 
@@ -1024,9 +1025,9 @@ RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags)
   size_t range_count = 0;
 
   if (*table_id)
-    HT_INFO_OUT << "compacting table ID=" << table_id << HT_END;
+    HT_INFOF("compacting table ID=%s", table_id);
   else
-    HT_INFO_OUT << "compacting ranges FLAGS=" << RangeServerProtocol::compact_flags_to_string(flags) << HT_END;
+    HT_INFOF("compacting ranges FLAGS=%s", RangeServerProtocol::compact_flags_to_string(flags).c_str());
 
   if (!m_replay_finished) {
     if (!RangeServer::wait_for_recovery_finish(cb->get_event()->expiration_time()))
@@ -1164,10 +1165,11 @@ RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id,
   }
 
   if (*table_id)
-    HT_INFO_OUT << "metadata sync table ID=" << table_id << " " << columns_str << HT_END;
+    HT_INFOF("metadata sync table ID=%s %s", table_id, columns_str.c_str());
   else
-    HT_INFO_OUT << "metadata sync ranges FLAGS=" << RangeServerProtocol::compact_flags_to_string(flags)
-                << " " << columns_str << HT_END;
+    HT_INFOF("metadata sync ranges FLAGS=%s %s",
+             RangeServerProtocol::compact_flags_to_string(flags).c_str(),
+             columns_str.c_str());
 
   if (!m_replay_finished) {
     if (!RangeServer::wait_for_recovery_finish(cb->get_event()->expiration_time()))
@@ -1441,7 +1443,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     if (decrement_needed)
       range->decrement_scan_counter();
     if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
-      HT_INFO_OUT << e << HT_END;
+      HT_INFOF("Range not found - %s", e.what());
     else
       HT_ERROR_OUT << e << HT_END;
     if ((error = cb->error(e.code(), e.what())) != Error::OK)
@@ -1575,8 +1577,10 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       is_root = table->is_metadata() && (*range_spec->start_row == 0)
           && !strcmp(range_spec->end_row, Key::END_ROOT_ROW);
 
-      HT_INFO_OUT <<"Loading range: "<< *table <<" "<< *range_spec << " " << *range_state
-          << " needs_compaction=" << needs_compaction << HT_END;
+      std::stringstream sout;
+      sout << "Loading range: "<< *table <<" "<< *range_spec << " " << *range_state
+           << " needs_compaction=" << needs_compaction;
+      HT_INFOF("%s", sout.str().c_str());
 
       if (m_dropped_table_id_cache->contains(table->id)) {
         HT_WARNF("Table %s has been dropped", table->id);
@@ -1810,8 +1814,8 @@ RangeServer::acknowledge_load(ResponseCallbackAcknowledgeLoad *cb,
     {
       ScopedLock lock(m_drop_table_mutex);
 
-      HT_INFO_OUT << "Acknowledging range: " << rr.table.id << "["
-          << rr.range.start_row << ".." << rr.range.end_row << "]" << HT_END;
+      HT_INFOF("Acknowledging range: %s[%s..%s]", rr.table.id,
+               rr.range.start_row, rr.range.end_row);
 
       if (m_dropped_table_id_cache->contains(rr.table.id)) {
         HT_WARNF("Table %s has been dropped", rr.table.id);
@@ -1849,7 +1853,9 @@ RangeServer::acknowledge_load(ResponseCallbackAcknowledgeLoad *cb,
       HT_MAYBE_FAIL_X("metadata-acknowledge-load", rr.table.is_metadata());
 
       error_map[rr] = Error::OK;
-      HT_INFO_OUT << "Range: " << rr <<" acknowledged" << HT_END;
+      std::stringstream sout;
+      sout << "Range: " << rr <<" acknowledged";
+      HT_INFOF("%s", sout.str().c_str());
     }
   }
 
@@ -1863,8 +1869,7 @@ RangeServer::update_schema(ResponseCallback *cb,
   TableInfoPtr table_info;
   SchemaPtr schema;
 
-  HT_INFO_OUT <<"Updating schema for: "<< *table <<" schema = "<<
-      schema_str << HT_END;
+  HT_INFOF("Updating schema for: %s schema = %s", table->id, schema_str);
 
   try {
     /**
@@ -1893,7 +1898,7 @@ RangeServer::update_schema(ResponseCallback *cb,
     return;
   }
 
-  HT_INFO_OUT << "Successfully updated schema for: "<< *table << HT_END;
+  HT_INFOF("Successfully updated schema for: %s", table->id);
   cb->response_ok();
 }
 
@@ -2865,7 +2870,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   String metadata_key;
   TableMutatorPtr mutator;
 
-  HT_INFO_OUT << "drop table " << table->id << HT_END;
+  HT_INFOF("drop table %s", table->id);
 
   if (table->is_system()) {
     cb->error(Error::NOT_ALLOWED, "system tables cannot be dropped");
@@ -3107,7 +3112,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   time_t now = (time_t)(timestamp/1000000000LL);
   int collector_id = RSStats::STATS_COLLECTOR_MONITORING;
 
-  HT_INFO_OUT << "Entering get_statistics()" << HT_END;
+  HT_INFO("Entering get_statistics()");
 
   if (m_shutdown) {
     cb->error(Error::SERVER_SHUTTING_DOWN, "");
@@ -3357,7 +3362,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     cb->response(ext);
   }
 
-  HT_INFO_OUT << "Exiting get_statistics()" << HT_END;
+  HT_INFO("Exiting get_statistics()");
 
   return;
 }
@@ -3467,7 +3472,7 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
   catch (Exception &e) {
 
     if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
-      HT_INFO_OUT << e << HT_END;
+      HT_INFOF("Range not found - %s", e.what());
     else
       HT_ERROR_OUT << e << HT_END;
 
@@ -3535,8 +3540,10 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
         const RangeSpec *range_spec) {
   TableInfoPtr table_info;
   RangePtr range;
+  std::stringstream sout;
 
-  HT_INFO_OUT << "drop_range\n"<< *table << *range_spec << HT_END;
+  sout << "drop_range\n"<< *table << *range_spec;
+  HT_INFOF("%s", sout.str().c_str());
 
   if (!m_replay_finished) {
     if (table->is_metadata()) {
@@ -3574,8 +3581,10 @@ RangeServer::relinquish_range(ResponseCallback *cb,
         const TableIdentifier *table, const RangeSpec *range_spec) {
   TableInfoPtr table_info;
   RangePtr range;
+  std::stringstream sout;
 
-  HT_INFO_OUT << "relinquish_range\n" << *table << *range_spec << HT_END;
+  sout << "relinquish_range\n" << *table << *range_spec;
+  HT_INFOF("%s", sout.str().c_str());
 
   if (!m_replay_finished) {
     if (table->is_metadata()) {
@@ -3613,7 +3622,7 @@ RangeServer::relinquish_range(ResponseCallback *cb,
   }
   catch (Hypertable::Exception &e) {
     int error = 0;
-    HT_INFO_OUT << e << HT_END;
+    HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
   }
@@ -3624,8 +3633,8 @@ void RangeServer::replay_fragments(ResponseCallback *cb, int64_t op_id,
         int type, const vector<uint32_t> &fragments,
         RangeRecoveryReceiverPlan &receiver_plan,
         uint32_t replay_timeout) {
-  HT_INFO_OUT << "replay_fragments location=" << location << ", plan_generation="
-      << plan_generation << ", num_fragments=" << fragments.size() << HT_END;
+  HT_INFOF("replay_fragments location=%s, plan_generation=%d, num_fragments=%d",
+           location.c_str(), plan_generation, (int)fragments.size());
 
   CommitLogReaderPtr log_reader;
   String log_dir = Global::toplevel_dir + "/servers/" + location + "/log/" +
@@ -3723,8 +3732,8 @@ void RangeServer::replay_fragments(ResponseCallback *cb, int64_t op_id,
 
     HT_MAYBE_FAIL_X("replay-fragments-user-1", type==RangeSpec::USER);
 
-    HT_INFO_OUT << "Finished playing " << fragments.size() << " fragments from "
-                << log_dir << HT_END;
+    HT_INFOF("Finished playing %d fragments from %s",
+             (int)fragments.size(), log_dir.c_str());
 
   }
   catch (Exception &e) {
@@ -3762,9 +3771,9 @@ void RangeServer::phantom_load(ResponseCallback *cb, const String &location,
   PhantomRangeMapPtr phantom_range_map;
   TableInfoMapPtr phantom_tableinfo_map;
 
-  HT_INFO_OUT << "phantom_load location=" << location << ", plan_generation="
-              << plan_generation << ", num_fragments=" << fragments.size()
-              << ", num_ranges=" << specs.size() << HT_END;
+  HT_INFOF("phantom_load location=%s, plan_generation=%d, num_fragments=%d,"
+           " num_ranges=%d", location.c_str(), plan_generation,
+           (int)fragments.size(), (int)specs.size());
 
   if (!m_replay_finished) {
     if (!wait_for_recovery_finish(cb->get_event()->expiration_time()))
@@ -3854,8 +3863,11 @@ void RangeServer::phantom_load(ResponseCallback *cb, const String &location,
 void RangeServer::phantom_update(ResponseCallbackPhantomUpdate *cb,
         const String &location, int plan_generation, QualifiedRangeSpec &range,
         uint32_t fragment, EventPtr &event) {
-  HT_INFO_OUT << "phantom_update location=" << location << ", fragment="
-              << fragment << ", range=" << range << HT_END;
+  std::stringstream sout;
+
+  sout << "phantom_update location=" << location << ", fragment="
+       << fragment << ", range=" << range;
+  HT_INFOF("%s", sout.str().c_str());
 
   FailoverPhantomRangeMap::iterator failover_map_it;
   PhantomRangeMapPtr phantom_range_map;
@@ -3895,7 +3907,7 @@ void RangeServer::phantom_update(ResponseCallbackPhantomUpdate *cb,
       String msg = format("fragment %d completely received for range "
                           "%s[%s..%s]", fragment, range.table.id, range.range.start_row,
                           range.range.end_row);
-      HT_INFO_OUT << msg << HT_END;
+      HT_INFOF("%s", msg.c_str());
       cb->error(Error::RANGESERVER_FRAGMENT_ALREADY_PROCESSED, msg);
       return;
     }
@@ -3917,9 +3929,9 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
   bool root_log_exists, metadata_log_exists, system_log_exists;
   root_log_exists = metadata_log_exists = system_log_exists = false;
 
-  HT_INFO_OUT << "phantom_prepare_ranges op_id=" << op_id << " location="
-              << location << ", plan_generation=" << plan_generation
-              << ", num ranges=" << specs.size() << HT_END;
+  HT_INFOF("phantom_prepare_ranges op_id=%lld, location=%s, plan_generation=%d,"
+           " num_ranges=%d", (Lld)op_id, location.c_str(), plan_generation,
+           (int)specs.size());
 
   if (!m_replay_finished) {
     if (!wait_for_recovery_finish(cb->get_event()->expiration_time()))
@@ -3934,7 +3946,7 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
     if (failover_map_it == m_failover_map.end()) {
       try {
         String msg = format("No phantom map found for %s", location.c_str());
-        HT_INFO_OUT << msg << HT_END;
+        HT_INFOF("%s", msg.c_str());
         m_master_client->phantom_prepare_complete(op_id, location, plan_generation,
                               Error::RANGESERVER_PHANTOM_RANGE_MAP_NOT_FOUND, msg);
       }
@@ -4139,10 +4151,9 @@ void RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_id,
   map<QualifiedRangeSpec, int> error_map;
   vector<RangePtr> range_vec;
 
-  HT_INFO_OUT << "phantom_commit_ranges op_id=" << op_id
-              << ", location=" << location
-              << ", plan_generation=" << plan_generation
-              << ", num ranges=" << specs.size() << HT_END;
+  HT_INFOF("phantom_commit_ranges op_id=%lld, location=%s, plan_generation=%d,"
+           " num_ranges=%d", (Lld)op_id, location.c_str(), plan_generation,
+           (int)specs.size());
 
   if (!m_replay_finished) {
     if (!wait_for_recovery_finish(cb->get_event()->expiration_time()))
@@ -4177,7 +4188,7 @@ void RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_id,
       try {
         String msg = format("No phantom map found for %s plan_generation=%d",
                             location.c_str(), plan_generation);
-        HT_INFO_OUT << msg << HT_END;
+        HT_INFOF("%s", msg.c_str());
         m_master_client->phantom_commit_complete(op_id, location, plan_generation,
                               Error::RANGESERVER_PHANTOM_RANGE_MAP_NOT_FOUND, msg);
       }
@@ -4557,7 +4568,7 @@ void RangeServer::do_maintenance() {
 bool RangeServer::wait_for_recovery_finish(boost::xtime expire_time) {
   ScopedLock lock(m_mutex);
   while (!m_replay_finished) {
-    HT_INFO_OUT << "Waiting for recovery to complete..." << HT_END;
+    HT_INFO("Waiting for recovery to complete...");
     if (!m_replay_finished_cond.timed_wait(lock, expire_time))
       return false;
   }
@@ -4567,7 +4578,7 @@ bool RangeServer::wait_for_recovery_finish(boost::xtime expire_time) {
 bool RangeServer::wait_for_root_recovery_finish(boost::xtime expire_time) {
   ScopedLock lock(m_mutex);
   while (!m_root_replay_finished) {
-    HT_INFO_OUT << "Waiting for ROOT recovery to complete..." << HT_END;
+    HT_INFO("Waiting for ROOT recovery to complete...");
     if (!m_root_replay_finished_cond.timed_wait(lock, expire_time))
       return false;
   }
@@ -4577,7 +4588,7 @@ bool RangeServer::wait_for_root_recovery_finish(boost::xtime expire_time) {
 bool RangeServer::wait_for_metadata_recovery_finish(boost::xtime expire_time) {
   ScopedLock lock(m_mutex);
   while (!m_metadata_replay_finished) {
-    HT_INFO_OUT << "Waiting for METADATA recovery to complete..." << HT_END;
+    HT_INFO("Waiting for METADATA recovery to complete...");
     if (!m_metadata_replay_finished_cond.timed_wait(lock, expire_time))
       return false;
   }
@@ -4587,7 +4598,7 @@ bool RangeServer::wait_for_metadata_recovery_finish(boost::xtime expire_time) {
 bool RangeServer::wait_for_system_recovery_finish(boost::xtime expire_time) {
   ScopedLock lock(m_mutex);
   while (!m_system_replay_finished) {
-    HT_INFO_OUT << "Waiting for SYSTEM recovery to complete..." << HT_END;
+    HT_INFO("Waiting for SYSTEM recovery to complete...");
     if (!m_system_replay_finished_cond.timed_wait(lock, expire_time))
       return false;
   }
@@ -4602,14 +4613,14 @@ RangeServer::wait_for_recovery_finish(const TableIdentifier *table,
   if (table->is_metadata()) {
     if (!strcmp(range_spec->end_row, Key::END_ROOT_ROW)) {
       while (!m_root_replay_finished) {
-        HT_INFO_OUT << "Waiting for ROOT recovery to complete..." << HT_END;
+        HT_INFO("Waiting for ROOT recovery to complete...");
         if (!m_root_replay_finished_cond.timed_wait(lock, expire_time))
           return false;
       }
     }
     else {
       while (!m_metadata_replay_finished) {
-        HT_INFO_OUT << "Waiting for METADATA recovery to complete..." << HT_END;
+        HT_INFO("Waiting for METADATA recovery to complete...");
         if (!m_metadata_replay_finished_cond.timed_wait(lock, expire_time))
           return false;
       }
@@ -4617,14 +4628,14 @@ RangeServer::wait_for_recovery_finish(const TableIdentifier *table,
   }
   else if (table->is_system()) {
     while (!m_system_replay_finished) {
-      HT_INFO_OUT << "Waiting for SYSTEM recovery to complete..." << HT_END;
+      HT_INFO("Waiting for SYSTEM recovery to complete...");
       if (!m_system_replay_finished_cond.timed_wait(lock, expire_time))
         return false;
     }
   }
   else {
     while (!m_replay_finished) {
-      HT_INFO_OUT << "Waiting for recovery to complete..." << HT_END;
+      HT_INFO("Waiting for recovery to complete...");
       if (!m_replay_finished_cond.timed_wait(lock, expire_time))
         return false;
     }

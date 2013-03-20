@@ -59,7 +59,7 @@ namespace Hypertable {
           m_context->op->add_operation(operation);
         }
         catch (Exception &e) {
-          HT_INFO_OUT << e << HT_END;
+          HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
         }
       }
     }

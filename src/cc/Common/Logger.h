@@ -217,11 +217,9 @@ namespace Hypertable { namespace Logger {
 #ifndef HT_DISABLE_LOG_INFO
 #define HT_INFO(msg) HT_LOG(Logger::Priority::INFO, msg)
 #define HT_INFOF(msg, ...) HT_LOGF(Logger::Priority::INFO, msg, __VA_ARGS__)
-#define HT_INFO_OUT HT_OUT(Logger::Priority::INFO)
 #else
 #define HT_INFO(msg)
 #define HT_INFOF(msg, ...)
-#define HT_INFO_OUT HT_OUT_DISABLED
 #endif
 
 #ifndef HT_DISABLE_LOG_NOTICE
@@ -323,7 +321,6 @@ namespace Hypertable { namespace Logger {
 #define HT_LOG_ENTER
 #define HT_LOG_EXIT
 #define HT_DEBUG_OUT HT_OUT_DISABLED
-#define HT_INFO_OUT HT_OUT_DISABLED
 #define HT_NOTICE_OUT HT_OUT_DISABLED
 #define HT_WARN_OUT HT_OUT_DISABLED
 #define HT_ERROR_OUT HT_OUT_DISABLED
