@@ -49,14 +49,14 @@ void OperationRecoveryBlocker::execute() {
     = m_context->props->get_i32("Hypertable.Failover.Quorum.Percentage");
   size_t quorum = ((total_servers * failover_pct) + 99) / 100;
 
-  HT_INFO_OUT << "total_servers=" << total_servers << " connected_servers="
-              << connected_servers << " quorum=" << quorum << HT_END;
+  HT_INFOF("total_servers=%d connected_servers=%d quorum=%d",
+           (int)total_servers, (int)connected_servers, (int)quorum);
 
   if (connected_servers < quorum || connected_servers == 0) {
     block();
-    HT_INFO_OUT << "Only " << connected_servers
-        << " servers ready, total servers=" << total_servers << " quorum="
-        << quorum << ", wait for servers" << HT_END;
+    HT_INFOF("Only %d servers ready, total servers=%d quorum=%d,"
+             " waiting for servers ...", (int)connected_servers,
+             (int)total_servers, (int)quorum);
     HT_INFOF("Leaving RecoveryBlocker-%lld state=%s-BLOCKED", (Lld)header.id,
              OperationState::get_text(get_state()));
     return;

@@ -24,6 +24,8 @@
 
 #include "PhantomRange.h"
 
+#include <sstream>
+
 using namespace Hypertable;
 using namespace std;
 
@@ -141,9 +143,12 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
 
   m_range->recovery_finalize();
 
-  HT_INFO_OUT << "Created phantom log " << m_phantom_logname
-              << " for range " << m_range_spec << ", state=" 
-              << metalog_entity->state << HT_END;
+  std::stringstream sout;
+
+  sout << "Created phantom log " << m_phantom_logname
+       << " for range " << m_range_spec << ", state="
+       << metalog_entity->state;
+  HT_INFOF("%s", sout.str().c_str());
 
   // Scan log to load blocks and determine if log is empty
   m_phantom_log = new CommitLogReader(log_dfs, m_phantom_logname);

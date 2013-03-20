@@ -31,6 +31,8 @@ extern "C" {
 #include <poll.h>
 }
 
+#include <sstream>
+
 #include "Common/FailureInducer.h"
 #include "Common/Init.h"
 #include "Common/ScopeGuard.h"
@@ -267,7 +269,9 @@ int main(int argc, char **argv) {
             = dynamic_cast<BalancePlanAuthority *>(entities[i].get());
         HT_ASSERT(bpa);
         if (!bpa->is_empty()) {
-          HT_INFO_OUT << "Loading BalancePlanAuthority: " << *bpa << HT_END;
+          std::stringstream sout;
+          sout << "Loading BalancePlanAuthority: " << *bpa;
+          HT_INFOF("%s", sout.str().c_str());
           bpa->set_mml_writer(context->mml_writer);
           context->set_balance_plan_authority(bpa);
         }

@@ -30,6 +30,8 @@
 #include "EntityType.h"
 #include "Utility.h"
 
+#include <sstream>
+
 #define BPA_VERSION 1
 
 using namespace Hypertable;
@@ -244,7 +246,7 @@ BalancePlanAuthority::create_recovery_plan(const String &location,
 {
   ScopedLock lock(m_mutex);
 
-  HT_INFO_OUT << "Creating recovery plan for " << location << HT_END;
+  HT_INFOF("Creating recovery plan for %s", location.c_str());
 
   // check if this RangeServer was already recovered; if yes then do not add
   // a new plan (this happens i.e. in rangeserver-failover-master-16)
@@ -298,9 +300,11 @@ BalancePlanAuthority::create_recovery_plan(const String &location,
       else if (plans.plans[RangeSpec::USER] && plans.plans[RangeSpec::USER]->receiver_plan.get_location(spec, new_location))
         (*iter)->dest_location = new_location;
       else {
-        HT_INFO_OUT << "Found " << (*iter)->table << " " << (*iter)->range
-                    << " in current set assigned to location "
-                    << location << ", but not in recovery plan" << HT_END;
+        std::stringstream sout;
+        sout << "Found " << (*iter)->table << " " << (*iter)->range
+             << " in current set assigned to location "
+             << location << ", but not in recovery plan";
+        HT_INFOF("%s", sout.str().c_str());
         if (m_active_iter == m_active.end())
           m_active_iter = m_active.begin();
         (*iter)->dest_location = *m_active_iter;
@@ -331,7 +335,9 @@ BalancePlanAuthority::create_recovery_plan(const String &location,
   }
 
   lock.unlock(); // otherwise operator<< will deadlock
-  HT_INFO_OUT << "Global recovery plan was modified: " << *this << HT_END;
+  std::stringstream sout;
+  sout << "Global recovery plan was modified: " << *this;
+  HT_INFOF("%s", sout.str().c_str());
 }
 
 RangeRecoveryPlan * 
@@ -437,8 +443,10 @@ BalancePlanAuthority::register_balance_plan(BalancePlanPtr &plan, int generation
   entities.push_back(this);
   m_mml_writer->record_state(entities);
 
-  HT_INFO_OUT << "Balance plan registered move " << plan->moves.size()
-        << " ranges" << ", BalancePlan = " << *plan<< HT_END;
+  std::stringstream sout;
+  sout << "Balance plan registered move " << plan->moves.size()
+       << " ranges" << ", BalancePlan = " << *plan;
+  HT_INFOF("%s", sout.str().c_str());
 
   return true;
 }
@@ -473,8 +481,10 @@ BalancePlanAuthority::balance_move_complete(const TableIdentifier &table,
                 const RangeSpec &range, int32_t error) {
   ScopedLock lock(m_mutex);
   RangeMoveSpecPtr move_spec = new RangeMoveSpec();
+  std::stringstream sout;
 
-  HT_INFO_OUT << "balance_move_complete for " << table << " " << range << HT_END;
+  sout << "balance_move_complete for " << table << " " << range;
+  HT_INFOF("%s", sout.str().c_str());
 
   move_spec->table = table;
   move_spec->range = range;

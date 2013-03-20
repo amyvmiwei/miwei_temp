@@ -287,8 +287,7 @@ void MaintenanceScheduler::schedule() {
   boost::xtime_get(&schedule_time, boost::TIME_UTC_);
 
   if (not_acknowledged) {
-    HT_INFO_OUT << "Found load_acknowledged=false in " << not_acknowledged
-        << " ranges" << HT_END;
+    HT_INFOF("Found load_acknowledged=false in %d ranges", (int)not_acknowledged);
   }
 
   // if this is the first time around, just enqueue work that

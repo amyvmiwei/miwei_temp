@@ -24,6 +24,7 @@
 #include <cstdio>
 #include <iostream>
 #include <list>
+#include <set>
 #include <vector>
 
 extern "C" {

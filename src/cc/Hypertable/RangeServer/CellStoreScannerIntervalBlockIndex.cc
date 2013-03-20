@@ -272,7 +272,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
         if (second_try)
           throw;
 
-        HT_INFO_OUT << "Retrying with dfs checksum enabled" << HT_END;
+        HT_INFO("Retrying with dfs checksum enabled");
         second_try = true;
         goto try_again;
       }

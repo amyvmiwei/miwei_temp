@@ -50,7 +50,7 @@ void Context::notification_hook(const String &subject, const String &message) {
                       message.c_str());
 
   int ret = ::system(cmd.c_str());
-  HT_INFO_OUT << "notification-hook returned: " << ret << HT_END;
+  HT_INFOF("notification-hook returned: %d", ret);
   if (ret != 0) {
     HT_WARNF("shell script conf/notification-hook.sh ('%s') returned "
             "error %d", cmd.c_str(), ret);

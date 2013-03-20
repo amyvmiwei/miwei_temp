@@ -451,9 +451,8 @@ bool OperationRecoverRanges::replay_fragments() {
       fragments.clear();
       m_plan.replay_plan.get_fragments(location, fragments);
       addr.set_proxy(location);
-      HT_INFO_OUT << "Issue replay_fragments for " << fragments.size()
-          << " fragments to " << location << " (" << m_type_str << ")"
-          << HT_END;
+      HT_INFOF("Issue replay_fragments for %d fragments to %s (%s)",
+               (int)fragments.size(), location.c_str(), m_type_str.c_str());
       rsc.replay_fragments(addr, id(), m_location, m_plan_generation, 
                            m_type, fragments, m_plan.receiver_plan, m_timeout);
       HT_MAYBE_FAIL(format("recover-server-ranges-%s-replay-fragments",
@@ -512,8 +511,8 @@ bool OperationRecoverRanges::prepare_to_commit() {
     vector<QualifiedRangeSpec> specs;
     m_plan.receiver_plan.get_range_specs(location, specs);
 
-    HT_INFO_OUT << "Issue phantom_prepare_ranges for " << specs.size()
-        << " ranges to " << location << " (" << m_type_str << ")" << HT_END;
+    HT_INFOF("Issue phantom_prepare_ranges for %d ranges to %s (%s)",
+             (int)specs.size(), location.c_str(), m_type_str.c_str());
     try {
       rsc.phantom_prepare_ranges(addr, id(), m_location, m_plan_generation, specs, m_timeout);
       HT_MAYBE_FAIL(format("recover-server-ranges-%s-phantom-prepare-ranges",
@@ -568,8 +567,8 @@ bool OperationRecoverRanges::commit() {
     m_plan.receiver_plan.get_range_specs(location, specs);
 
    try {
-      HT_INFO_OUT << "Issue phantom_commit_ranges for " << specs.size()
-          << " ranges to " << location << HT_END;
+     HT_INFOF("Issue phantom_commit_ranges for %d ranges to %s",
+              (int)specs.size(), location.c_str());
       rsc.phantom_commit_ranges(addr, id(), m_location, m_plan_generation, specs, m_timeout);
       HT_MAYBE_FAIL(format("recover-server-ranges-%s-phantom-commit-ranges",
                   m_type_str.c_str()));
@@ -592,7 +591,7 @@ bool OperationRecoverRanges::commit() {
       else
         retval = false;
     }
-    HT_INFO_OUT << "commit failed" << HT_END;
+    HT_INFO("commit failed");
     return retval;
   }
 
@@ -634,8 +633,8 @@ bool OperationRecoverRanges::acknowledge() {
     foreach_ht(QualifiedRangeSpec &range, specs)
       range_ptrs.push_back(&range);
     try {
-      HT_INFO_OUT << "Issue acknowledge_load for " << range_ptrs.size()
-          << " ranges to " << location << HT_END;
+      HT_INFOF("Issue acknowledge_load for %d ranges to %s",
+               (int)range_ptrs.size(), location.c_str());
       HT_MAYBE_FAIL(format("recover-server-ranges-%s-14", m_type_str.c_str()));
       rsc.acknowledge_load(addr, range_ptrs, response_map);
       HT_MAYBE_FAIL(format("recover-server-ranges-%s-acknowledge-load",
@@ -651,8 +650,8 @@ bool OperationRecoverRanges::acknowledge() {
         acknowledged.push_back(QualifiedRangeSpec(arena, response_map_it->first));
         ++response_map_it;
       }
-      HT_INFO_OUT << "acknowledge_load complete for " << range_ptrs.size()
-          << " ranges to " << location << HT_END;
+      HT_INFOF("acknowledge_load complete for %d ranges to %s",
+               (int)range_ptrs.size(), location.c_str());
     }
     catch (Exception &e) {
       success = false;

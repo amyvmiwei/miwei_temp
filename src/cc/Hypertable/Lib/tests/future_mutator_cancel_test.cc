@@ -119,13 +119,13 @@ int main(int argc, char **argv) {
         }
         cells++;
         if (cells >= total_cells) {
-          HT_INFO_OUT << "Wrote " << cells << " cells, cancelling" << HT_END;
+          HT_INFOF("Wrote %u cells, cancelling", (unsigned)cells);
           ff.cancel();
           break;
         }
         ii++;
       }
-      HT_INFO_OUT << "Cancel future test finished" << HT_END;
+      HT_INFO("Cancel future test finished");
     }
 
     // this time cancel individual mutators
@@ -159,7 +159,7 @@ int main(int argc, char **argv) {
           size_t cancel_after_num_cells = total_cells / 4 + (random() % total_cells*3/4);
           if (cancelled_mutator_ptrs.size() < num_mutators/2
               && cells >= cancel_after_num_cells) {
-            HT_INFO_OUT << "Cancelling mutator #" << jj << HT_END;
+            HT_INFOF("Cancelling mutator #%llu", (Llu)jj);
             mutator_ptr->cancel();
             cancelled_mutator_ptrs.insert(mutator_ptr);
           }
@@ -181,15 +181,16 @@ int main(int argc, char **argv) {
             ++num_updates;
         }
         if (cells >= total_cells) {
-          HT_INFO_OUT << "Wrote " << cells << " cells, got " << num_updates << " updates, "
-            << cancelled_mutator_ptrs.size() << "/" << num_mutators
-            << " mutators cancelled" << HT_END;
+          HT_INFOF("Write %lu cells, got %lu updates, %lu/%lu mutators cancelled",
+                   (unsigned long)cells, (unsigned long)num_updates,
+                   (unsigned long)cancelled_mutator_ptrs.size(),
+                   (unsigned long)num_mutators);
           ff.cancel();
           break;
         }
         ++cells;
       }
-      HT_INFO_OUT << "Cancel individual mutators test finished" << HT_END;
+      HT_INFO("Cancel individual mutators test finished");
     }
   }
   catch (Exception &e) {
