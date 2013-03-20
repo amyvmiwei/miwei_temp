@@ -249,6 +249,7 @@ namespace Hypertable {
      * IOHandler::set_proxy and then calls #propagate_proxy_map with the newly
      * added/updated proxy information to update all active data connections
      * with the new proxy information.
+     * @note This method should only be called by the proxy master.
      * @param proxy Proxy name of new/updated mapping
      * @param hostname Hostname of new/updated mapping
      * @param addr InetAddr of new/updated mapping
@@ -258,6 +259,18 @@ namespace Hypertable {
      * connections.
      */
     int add_proxy(const String &proxy, const String &hostname, const InetAddr &addr);
+
+    /** Removes a proxy name from the proxy map.  This method removes
+     * <code>proxy</code> from #m_proxy_map and then calls #propagate_proxy_map
+     * to propagate the removed mapping information to all connections.
+     * @note This method should only be called by the proxy master.
+     * @param proxy Proxy name to remove
+     * @return Error::OK on success, or Error::COMM_NOT_CONNECTED or
+     * Error::COMM_BROKEN_CONNECTION if an error was encountered while
+     * propagating the new mapping information over any of the active data
+     * connections.
+     */
+    int remove_proxy(const String &proxy);
 
     /** Returns the proxy map
      * @param proxy_map reference to returned proxy map

@@ -70,17 +70,46 @@ void ProxyMap::update_mappings(String &mappings, ProxyMapT &invalidated_map,
     InetAddr addr(addr_str);
 
     ProxyMapT::iterator iter = m_forward_map.find(proxy);
-    if (iter != m_forward_map.end() && (*iter).second.addr == addr) {
-      if ((*iter).second.hostname != hostname)
-        (*iter).second.hostname = hostname;
-      continue;
-    }
 
-    invalidate(proxy, addr, invalidated_map);
-    new_map[proxy] = ProxyAddressInfo(hostname, addr);
-    m_forward_map[proxy] = ProxyAddressInfo(hostname, addr);
-    m_reverse_map[addr] = proxy;
+    if (!strcmp(hostname, "--DELETED--")) {
+      if (iter != m_forward_map.end()) {
+        if ((*iter).second.addr != addr) {
+          HT_WARNF("Proxy map removal message for %s contains %s, but map "
+                   "contains %s", proxy, addr_str,
+                   (*iter).second.addr.format().c_str());
+        }
+        invalidate(proxy, addr, invalidated_map);
+      }
+      else {
+        HT_WARNF("Removal message received for %s, but not in map.", proxy);
+      }
+    }
+    else {
+      if (iter != m_forward_map.end() && (*iter).second.addr == addr) {
+        if ((*iter).second.hostname != hostname)
+          (*iter).second.hostname = hostname;
+        continue;
+      }
+      invalidate(proxy, addr, invalidated_map);
+      new_map[proxy] = ProxyAddressInfo(hostname, addr);
+      m_forward_map[proxy] = ProxyAddressInfo(hostname, addr);
+      m_reverse_map[addr] = proxy;
+    }
   }
+}
+
+
+bool ProxyMap::remove_mapping(const String &proxy, ProxyMapT &remove_map) {
+  ScopedLock lock(m_mutex);
+  InetAddr addr;
+  ProxyMapT::iterator iter = m_forward_map.find(proxy);
+  if (iter != m_forward_map.end()) {
+    ProxyMapT invalidated_map;
+    invalidate(proxy, (*iter).second.addr, invalidated_map);
+    remove_map[proxy] = ProxyAddressInfo("--DELETED--", (*iter).second.addr);
+    return true;
+  }
+  return false;
 }
 
 

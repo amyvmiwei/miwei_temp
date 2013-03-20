@@ -97,17 +97,22 @@ ConnectionManager::add_internal(const CommAddress &addr,
           const char *service_name, DispatchHandlerPtr &handler,
           ConnectionInitializerPtr &initializer) {
   ScopedLock lock(m_impl->mutex);
-  SockAddrMap<ConnectionStatePtr> iter;
   ConnectionState *conn_state;
 
   HT_ASSERT(addr.is_set());
 
-  if (addr.is_proxy() &&
-      m_impl->conn_map_proxy.find(addr.proxy) != m_impl->conn_map_proxy.end())
-    return;
-  else if (addr.is_inet() &&
-	   m_impl->conn_map.find(addr.inet) != m_impl->conn_map.end())
-    return;
+  if (addr.is_proxy()) {
+    hash_map<String, ConnectionStatePtr>::iterator iter =
+      m_impl->conn_map_proxy.find(addr.proxy);
+    if (iter != m_impl->conn_map_proxy.end() && !iter->second->decomissioned)
+      return;
+  }
+  else if (addr.is_inet()) {
+    SockAddrMap<ConnectionStatePtr>::iterator iter = 
+      m_impl->conn_map.find(addr.inet);
+    if (iter != m_impl->conn_map.end() && !iter->second->decomissioned)
+      return;
+  }
 
   conn_state = new ConnectionState();
   conn_state->connected = false;
@@ -118,6 +123,7 @@ ConnectionManager::add_internal(const CommAddress &addr,
   conn_state->handler = handler;
   conn_state->initializer = initializer;
   conn_state->initialized = false;
+  conn_state->remove_on_invalid_proxy = false;
   conn_state->service_name = (service_name) ? service_name : "";
   boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
 
@@ -214,6 +220,11 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
 
   if (error == Error::COMM_ALREADY_CONNECTED) {
     conn_state->connected = true;
+    conn_state->cond.notify_all();
+  }
+  else if (error == Error::COMM_INVALID_PROXY &&
+           conn_state->remove_on_invalid_proxy) {
+    conn_state->decomissioned = true;
     conn_state->cond.notify_all();
   }
   else if (error != Error::OK && error != Error::COMM_BROKEN_CONNECTION) {

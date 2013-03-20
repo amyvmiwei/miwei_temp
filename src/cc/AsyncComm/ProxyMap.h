@@ -115,7 +115,11 @@ namespace Hypertable {
      * forward and reverse maps for the new mapping.  Any invalidated mappings
      * are added to <code>invalidated_map</code> and the new forward mapping
      * from <code>proxy</code> to ProxyAddressInfo is added to
-     * <code>new_map</code>.
+     * <code>new_map</code>.  A hostname entry of <code>--DELETED--<code>
+     * means that the entry is to be removed.  In this situation, this method
+     * invalidates <code>proxy</code> from the forward map and <code>addr</code>
+     * from the reverse map and the invalidated mappings are added to
+     * <code>invalidated_map</code>.
      * @param mappings Proxy map update message string
      * @param invalidated_map Reference to return map to hold invalidated
      *        mappings
@@ -123,6 +127,19 @@ namespace Hypertable {
      */
     void update_mappings(String &mappings, ProxyMapT &invalidated_map,
 			 ProxyMapT &new_map);
+
+    /** Removes a mapping.  This method removes the mapping for
+     * <code>proxy</code> and adds the removed mapping to
+     * <code>remove_map</code> with the hostname set to
+     * <code>--DELETED--</code> (see #update_mappings).  The <i>proxy master</i>
+     * calls this method to remove a mapping and then propagates
+     * <code>remove_map</code> to all connections.
+     * @param proxy Proxy for which mapping is to be removed
+     * @param remove_map Reference to return map to hold removed mappings
+     * @return <i>true</i> if mapping for <code>proxy</code> and removed,
+     * <i>false</i> otherwise.
+     */
+    bool remove_mapping(const String &proxy, ProxyMapT &remove_map);
 
     /** Returns proxy map data for <code>proxy</code>.
      * This method looks up <code>proxy</code> in the forward map and returns

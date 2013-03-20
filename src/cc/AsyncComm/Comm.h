@@ -148,6 +148,9 @@ namespace Hypertable {
      * connection.
      * @param addr Connection address (remote address)
      * @param alias Alias address
+     * @return Error::OK on success, or Error::COMM_CONFLICTING_ADDRESS if
+     * alias is already registered, or Error::COMM_NOT_CONNECTED if
+     * <code>addr</code> does not refer to an established connection.
      */
     int set_alias(const InetAddr &addr, const InetAddr &alias);
 
@@ -156,12 +159,28 @@ namespace Hypertable {
      * that the system can continue to operate properly even when servers are
      * reassigned IP addresses, such as starting and stopping Hypertable running
      * on EBS volumes in AWS EC2.  This method adds a proxy name for the
-     * connection identified by <code>addr</code>
+     * connection identified by <code>addr</code> and pushes the new mapping
+     * to the remote end of all active connections.
+     * @note This method will assert if it is not called by the proxy master.
      * @param proxy Proxy name
      * @param hostname Hostname of remote machine
      * @param addr Connection address (remote address)
+     * @return Error::OK on success, or one of the errors returned by
+     * HandlerMap::propagate_proxy_map
      */
     int add_proxy(const String &proxy, const String &hostname, const InetAddr &addr);
+
+    /** Removes a proxy name for a TCP connection.
+     * Hypertable uses <i>proxy names</i> (e.g. "rs1") to refer to servers so
+     * that the system can continue to operate properly even when servers are
+     * reassigned IP addresses, such as starting and stopping Hypertable running
+     * on EBS volumes in AWS EC2.  This method removes the proxy name
+     * <code>proxy</code> locally and from the remote end of all active
+     * connections.
+     * @note This method will assert if it is not called by the proxy master.
+     * @param proxy Proxy name to remove
+     */
+    int remove_proxy(const String &proxy);
 
     /** Returns the proxy map.
      * @param proxy_map Reference to return proxy map

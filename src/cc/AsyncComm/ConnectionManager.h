@@ -73,32 +73,35 @@ namespace Hypertable {
      */
     class ConnectionState : public ReferenceCount {
     public:
-      /// Set to <i>true</i> if connected
-      bool                connected;
-      /// Set when connection is removed, prevents connect retry attempts
-      bool                decomissioned;
       /// Connection address supplied to the #add methods
-      CommAddress         addr;
+      CommAddress addr;
       /// Local address to bind to
-      CommAddress         local_addr;
+      CommAddress local_addr;
       /// Address initialized from Event object
-      InetAddr            inet_addr;
+      InetAddr inet_addr;
       /// Retry connection attempt after this many milliseconds
-      uint32_t            timeout_ms;
+      uint32_t timeout_ms;
       /// Registered connection handler
-      DispatchHandlerPtr  handler;
+      DispatchHandlerPtr handler;
       /// Connection initializer
       ConnectionInitializerPtr initializer;
       /// Set to <i>true</i> if initialization handshake is complete
-      bool                initialized;
+      bool initialized;
+      /// Set to <i>true</i> if connected
+      bool connected;
+      /// Set when connection is removed, prevents connect retry attempts
+      bool decomissioned;
+      /// Set to <i>true</i> if connection should be removed on
+      /// Error::COMM_INVALID_PROXY
+      bool remove_on_invalid_proxy;
       /// Mutex to serialize concurrent access
-      Mutex               mutex;
+      Mutex mutex;
       /// Condition variable used to signal connection state change
-      boost::condition    cond;
+      boost::condition cond;
       /// Absolute time of next connect attempt
-      boost::xtime        next_retry;
+      boost::xtime next_retry;
       /// Service name of connection for log messages
-      std::string         service_name;
+      std::string service_name;
     };
     /// Smart pointer to ConnectionState
     typedef intrusive_ptr<ConnectionState> ConnectionStatePtr;

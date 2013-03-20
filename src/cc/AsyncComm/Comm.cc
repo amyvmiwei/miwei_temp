@@ -186,6 +186,11 @@ int Comm::add_proxy(const String &proxy, const String &hostname, const InetAddr 
   return m_handler_map->add_proxy(proxy, hostname, addr);
 }
 
+int Comm::remove_proxy(const String &proxy) {
+  HT_ASSERT(ReactorFactory::proxy_master);
+  return m_handler_map->remove_proxy(proxy);
+}
+
 void Comm::get_proxy_map(ProxyMapT &proxy_map) {
   m_handler_map->get_proxy_map(proxy_map);
 }
