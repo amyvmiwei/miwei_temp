@@ -365,7 +365,8 @@ bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_creat
   if (m_state == RESTART) {
     if (!has_outstanding_requests())
       restart_scan(refresh);
-    *move_to_next = false;
+    *move_to_next = (m_state==ABORTED) &&
+      !has_outstanding_requests() && m_current;
     return m_state != ABORTED;
   }
 
@@ -679,7 +680,6 @@ void IntervalScannerAsync::restart_scan(bool refresh) {
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    m_current = false;
     m_eos = true;
     m_state = ABORTED;
   }
