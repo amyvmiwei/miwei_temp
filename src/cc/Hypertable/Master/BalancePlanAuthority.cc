@@ -253,7 +253,7 @@ BalancePlanAuthority::create_recovery_plan(const String &location,
 
   // Update "active" server set
   m_active.clear();
-  m_context->rsc_manager->get_connected_servers(m_active);
+  m_context->get_available_servers(m_active);
   m_active_iter = m_active.begin();
 
   // walk through the existing plans and move all ranges from that server

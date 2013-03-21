@@ -160,6 +160,10 @@ size_t Context::available_server_count() {
   return available_servers.size();
 }
 
+void Context::get_available_servers(StringSet &servers) {
+  ScopedLock lock(mutex);
+  servers = available_servers;
+}
 
 
 bool Context::can_accept_ranges(const RangeServerStatistics &stats)
