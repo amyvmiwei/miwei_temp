@@ -139,6 +139,7 @@ namespace Hypertable {
     void add_available_server(const String &location);
     void remove_available_server(const String &location);
     size_t available_server_count();
+    void get_available_servers(StringSet &servers);
 
     bool can_accept_ranges(const RangeServerStatistics &stats);
     void replay_complete(EventPtr &event);

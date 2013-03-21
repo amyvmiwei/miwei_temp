@@ -946,6 +946,12 @@ void balance_plan_authority_test(ContextPtr &context) {
   context->rsc_manager->connect_server(rsc5, "boo.hypertable.com",
           InetAddr("70.147.125.62", 30569), InetAddr("70.147.125.62", 38060));
 
+  context->add_available_server("rs1");
+  context->add_available_server("rs2");
+  context->add_available_server("rs3");
+  context->add_available_server("rs4");
+  context->add_available_server("rs5");
+
   {
     std::vector<MetaLog::Entity *> entities;
     entities.push_back(rsc1.get());
@@ -971,6 +977,7 @@ void balance_plan_authority_test(ContextPtr &context) {
   fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
               system_specs, system_states, user_specs, user_states);
   rsc1->set_removed();
+  context->remove_available_server("rs1");
   bpa->create_recovery_plan("rs1", root_specs, root_states, metadata_specs, metadata_states,
           system_specs, system_states, user_specs, user_states);
   out << "Recovered rsc1: " << *bpa << std::endl << std::endl;
@@ -978,6 +985,7 @@ void balance_plan_authority_test(ContextPtr &context) {
   fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
               system_specs, system_states, user_specs, user_states);
   rsc2->set_removed();
+  context->remove_available_server("rs2");
   bpa->create_recovery_plan("rs2", root_specs, root_states, metadata_specs, metadata_states,
           system_specs, system_states, user_specs, user_states);
   out << "Recovered rsc2: " << *bpa << std::endl << std::endl;
@@ -985,6 +993,7 @@ void balance_plan_authority_test(ContextPtr &context) {
   fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
               system_specs, system_states, user_specs, user_states);
   rsc3->set_removed();
+  context->remove_available_server("rs3");
   bpa->create_recovery_plan("rs3", root_specs, root_states, metadata_specs, metadata_states,
           system_specs, system_states, user_specs, user_states);
   out << "Recovered rsc3: " << *bpa << std::endl << std::endl;
@@ -992,6 +1001,7 @@ void balance_plan_authority_test(ContextPtr &context) {
   fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
               system_specs, system_states, user_specs, user_states);
   rsc4->set_removed();
+  context->remove_available_server("rs4");
   bpa->create_recovery_plan("rs4", root_specs, root_states, metadata_specs, metadata_states,
           system_specs, system_states, user_specs, user_states);
   out << "Recovered rsc4: " << *bpa << std::endl;
