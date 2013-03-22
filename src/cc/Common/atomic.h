@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -214,6 +214,7 @@ static __inline__ int atomic_inc_and_test(atomic_t *v)
  * Atomically adds i to v and returns true if the result is negative, or
  * false when result is greater than or equal to zero.
  *
+ * @param i The value added to the atomic variable
  * @param v Pointer to an atomic_t variable
  * @return true if result is negative, otherwise false
  */

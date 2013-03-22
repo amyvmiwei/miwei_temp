@@ -46,10 +46,8 @@ using namespace std;
 namespace {
 
 typedef PageArenaAllocator<char *> Alloc;
-typedef PageArenaDownAllocator<char *>DownAlloc;
 typedef deque<char *> Cstrs;
 typedef deque<char *, Alloc> Astrs;
-typedef deque<char *, DownAlloc> Dstrs;
 typedef deque<String> Strings;
 
 void random_loop(int n) {
@@ -119,20 +117,14 @@ void random_test(int n) {
   assert_same(v, v3);
   HT_BENCH1("arena 65536 free", v3.clear(); arena3.free(), n);
 
-  CharArena arena4, arena5; // default
+  CharArena arena4; // default
   {
     Astrs v4 = Astrs(Alloc(arena4));
     random_pagearena_test("arena alloc default", arena4, v4, n);
     assert_same(v, v4);
     HT_BENCH1("arena alloc default clear", v4.clear(), n);
-
-    Dstrs v5 = Dstrs(DownAlloc(arena5));
-    random_pagearena_test("arena downalloc default", arena5, v5, n);
-    assert_same(v, v5);
-    HT_BENCH1("arena downalloc default clear", v5.clear(), n);
   }
   HT_BENCH1("arena alloc default free", arena4.free(), n);
-  HT_BENCH1("arena downalloc default free", arena5.free(), n);
 
   Strings v6;
   random_strings_test(v6, n);
@@ -173,17 +165,6 @@ void test_pagearena_alloc_frag(int n, int sz) {
   HT_BENCH1(Hypertable::format("arena alloc %d free", sz), arena.free(), n);
 }
 
-void test_pagearena_downalloc_frag(int n, int sz) {
-  CharArena arena(sz);
-  {
-    Dstrs v = Dstrs(DownAlloc(arena));
-    random_pagearena_test(Hypertable::format("arena downalloc %d", sz), arena, v, n);
-    print_proc_stat();
-    HT_BENCH1(Hypertable::format("arena downalloc %d clear", sz), v.clear(), n);
-  }
-  HT_BENCH1(Hypertable::format("arena downalloc %d free", sz), arena.free(), n);
-}
-
 void test_strings_frag(int n) {
   Strings v;
   random_strings_test(v, n);
@@ -194,7 +175,7 @@ void test_strings_frag(int n) {
 struct MyPolicy : Policy {
   static void init_options() {
     cmdline_desc("Usage: %s [Options] [malloc|arena|arena_alloc|"
-                 "arena_downalloc|string]\nOptions").add_options()
+                 "string]\nOptions").add_options()
       ("page-size,p", i32()->default_value(8192), "arena page size")
       ;
   }
@@ -222,8 +203,6 @@ int main(int ac, char *av[]) {
           run_test(bind(test_pagearena_frag, n, pagesize), true);
         else if (co == "arena_alloc")
           run_test(bind(test_pagearena_alloc_frag, n, pagesize), true);
-        else if (co == "arena_downalloc")
-          run_test(bind(test_pagearena_downalloc_frag, n, pagesize), true);
         else if (co == "string")
           run_test(bind(test_strings_frag, n), true);
         else

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * System information and statistics based on libsigar.
  */
 
 #include "Common/Compat.h"
@@ -767,17 +771,6 @@ TermInfo &TermInfo::init() {
 const char *system_info_lib_version() {
   sigar_version_t *v = sigar_version_get();
   return v->description;
-}
-
-std::ostream &system_info_lib_version(std::ostream &out) {
-  sigar_version_t *v = sigar_version_get();
-  out <<"{SigarVersion: build_date='"<< v->build_date <<"' scm_revision='"
-      << v->scm_revision <<"'\n version='"<< v->version <<"' archname='"
-      << v->archname <<"'\n archlib='"<< v->archlib <<"' binname='"
-      << v->binname <<"'\n description='"<< v->description <<"'\n major="
-      << v->major <<" minor="<< v->minor <<" maint="<< v->maint <<" build="
-      << v->build <<'}';
-  return out;
 }
 
 std::ostream &operator<<(std::ostream &out, const CpuInfo &i) {

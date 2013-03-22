@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,10 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Base class managing serialized statistics.
+ */
+
 #include "Compat.h"
 #include "Logger.h"
 #include "Serialization.h"
@@ -26,26 +30,27 @@
 
 using namespace Hypertable;
 
-StatsSerializable::StatsSerializable(uint16_t _id, uint8_t _group_count) : id(_id), group_count(_group_count) {
-  HT_ASSERT(group_count < 32);
+StatsSerializable::StatsSerializable(uint16_t _id, uint8_t _group_count)
+  : id(_id), group_count(_group_count) {
+  HT_ASSERT(group_count < sizeof(group_ids));
 }
 
 StatsSerializable::StatsSerializable(const StatsSerializable &other) {
   id = other.id;
   group_count = other.group_count;
-  memcpy(group_ids, other.group_ids, 32);
+  memcpy(group_ids, other.group_ids, sizeof(group_ids));
 }
 
 StatsSerializable &StatsSerializable::operator=(const StatsSerializable &other) {
   id = other.id;
   group_count = other.group_count;
-  memcpy(group_ids, other.group_ids, 32);
+  memcpy(group_ids, other.group_ids, sizeof(group_ids));
   return *this;
 }
 
 size_t StatsSerializable::encoded_length() const {
   size_t len = 2;
-  for (uint8_t i=0; i<group_count; i++) {
+  for (uint8_t i = 0; i < group_count; i++) {
     len += 3;
     len += encoded_length_group(group_ids[i]);
   }
@@ -59,7 +64,7 @@ void StatsSerializable::encode(uint8_t **bufp) const {
   *(*bufp)++ = id;
   *(*bufp)++ = group_count;
 
-  for (uint8_t i=0; i<group_count; i++) {
+  for (uint8_t i = 0; i < group_count; i++) {
     *(*bufp)++ = group_ids[i];
     lenp = *bufp;
     (*bufp) += 2;
@@ -67,7 +72,6 @@ void StatsSerializable::encode(uint8_t **bufp) const {
     len = ((*bufp) - lenp) - 2;
     Serialization::encode_i16(&lenp, len);
   }
-  return;
 }
 
 void StatsSerializable::decode(const uint8_t **bufp, size_t *remainp) {
@@ -86,8 +90,7 @@ void StatsSerializable::decode(const uint8_t **bufp, size_t *remainp) {
   group_count = (size_t)*(*bufp)++;
   (*remainp)--;
   
-  for (uint8_t i=0; i<group_count; i++) {
-
+  for (uint8_t i = 0; i < group_count; i++) {
     // Read Group ID
     if (*remainp == 0)
       HT_THROW_INPUT_OVERRUN(*remainp, 1);
@@ -102,9 +105,7 @@ void StatsSerializable::decode(const uint8_t **bufp, size_t *remainp) {
       HT_THROW_INPUT_OVERRUN(*remainp, len);
 
     decode_group(group_ids[i], len, bufp, remainp);
-
   }
-
 }
 
 bool StatsSerializable::operator==(const StatsSerializable &other) const {

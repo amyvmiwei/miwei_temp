@@ -20,7 +20,6 @@
  */
 #include "Common/Compat.h"
 #include "Common/Config.h"
-#include "Common/Math.h"
 #include "Common/ScopeGuard.h"
 #include "Common/StringExt.h"
 

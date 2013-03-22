@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Program options handling.
+ * Based on boost::program_options, the options are configured in Config.h.
  */
 
 #ifndef HYPERTABLE_PROPERTIES_H
@@ -54,8 +59,10 @@ void validate(boost::any& v, const Strings &s, std::vector<T>*, int);
 
 namespace boost { namespace program_options {
 
-// pre 1.35 vector<T> validate doesn't pickup user defined validate for T
 #if BOOST_VERSION < 103500
+/** Implement validation function for vector<T>, which is not
+ * implemented in boost prior to 1.35
+ */
 template<typename T>
 void validate(boost::any& v, const Strings &s, std::vector<T>*, int) {
   if (v.empty())
@@ -73,7 +80,7 @@ void validate(boost::any& v, const Strings &s, std::vector<T>*, int) {
       validate(a, sv, (T*)0, 0);
       tv->push_back(boost::any_cast<T>(a));
     }
-    catch(const bad_lexical_cast& /*e*/) {
+    catch (const bad_lexical_cast &/*e*/) {
       boost::throw_exception(invalid_option_value(s[i]));
     }
   }
@@ -122,6 +129,10 @@ void validate(boost::any& v, const Strings &s, std::vector<T>*, int) {
     _const_ { return get(name, default_value); }
 
 namespace Hypertable {
+
+/** @addtogroup Common
+ *  @{
+ */
 
 namespace Po = boost::program_options;
 
@@ -180,6 +191,11 @@ inline Po::typed_value<Doubles> *f64s(Doubles *v = 0) {
 typedef Po::options_description PropertiesDesc;
 typedef Po::positional_options_description PositionalDesc;
 
+/**
+ * Manages a collection of program options.
+ *
+ * Implements getters and setters, aliases and default values.
+ */
 class Properties : public ReferenceCount {
   typedef Po::variable_value Value;
   typedef Po::variables_map Map;
@@ -187,41 +203,63 @@ class Properties : public ReferenceCount {
   typedef std::map<String, String> AliasMap;
 
 public:
-  Properties() : m_need_alias_sync(false) {}
+  /** Default constructor; creates an empty set */
+  Properties()
+    : m_need_alias_sync(false) {
+  }
+
+  /** Constructor; load properties from a filename
+   *
+   * @param filename The name of the file with the properties
+   * @param desc A Property description with valid properties, default values
+   * @param allow_unregistered If true, unknown/unregistered properties are
+   *        accepted
+   */
   Properties(const String &filename, const PropertiesDesc &desc,
              bool allow_unregistered = false)
-    : m_need_alias_sync(false) { load(filename, desc, allow_unregistered); }
+      : m_need_alias_sync(false) {
+    load(filename, desc, allow_unregistered);
+  }
 
   /**
-   * load a property config file
+   * Loads a configuration file with properties
    *
-   * @param filename - name of the config file
-   * @param desc - properties description
-   * @param allow_unregistered - allow unregistered properties
+   * @param filename The name of the configuration file
+   * @param desc A property description
+   * @param allow_unregistered If true, unknown/unregistered properties are
+   *        accepted
    */
   void load(const String &filename, const PropertiesDesc &desc,
-            bool allow_unregistered = false);
+          bool allow_unregistered = false);
 
   /**
-   * Parse arguments. Throws CONFIG_INVALID_ARGUMENT on error
+   * Parses command line arguments
    *
-   * @param argc - argument count (from main)
-   * @param argv - argument array (from main)
-   * @param desc - options description
-   * @param hidden - hidden options description
-   * @param p - positional options description
-   * @param allow_unregistered - whether to allow unregistered properties
+   * @param argc The argument count (from main)
+   * @param argv The argument array (from main)
+   * @param desc The options description
+   * @param hidden The hidden options description
+   * @param p The positional options description
+   * @param allow_unregistered If true, unknown/unregistered properties are
+   *        accepted
+   * @throw Error::CONFIG_INVALID_ARGUMENT on error
    */
-  void
-  parse_args(int argc, char *argv[], const PropertiesDesc &desc,
+  void parse_args(int argc, char *argv[], const PropertiesDesc &desc,
              const PropertiesDesc *hidden = 0, const PositionalDesc *p = 0,
              bool allow_unregistered = false);
 
   /**
-   * Same as above, except taking vector of strings as arguments
+   * Parses command line arguments
+   *
+   * @param args A vector of Strings with the command line arguments
+   * @param desc The options description
+   * @param hidden The hidden options description
+   * @param p The positional options description
+   * @param allow_unregistered If true, unknown/unregistered properties are
+   *        accepted
+   * @throw Error::CONFIG_INVALID_ARGUMENT on error
    */
-  void
-  parse_args(const std::vector<String> &args, const PropertiesDesc &desc,
+  void parse_args(const std::vector<String> &args, const PropertiesDesc &desc,
              const PropertiesDesc *hidden = 0, const PositionalDesc *p = 0,
              bool allow_unregistered = false);
 
@@ -233,11 +271,14 @@ public:
   /**
    * Get the value of option of type T. Throws if option is not defined.
    *
-   * @param name - name of the property
+   * @param name The name of the property
+   * @throw Error::CONFIG_GET_ERROR if the requested property is not defined
    */
   template <typename T>
   T get(const String &name) const {
-    try { return m_map[name].template as<T>(); }
+    try {
+      return m_map[name].template as<T>();
+    }
     catch (std::exception &e) {
       HT_THROWF(Error::CONFIG_GET_ERROR, "getting value of '%s': %s",
                 name.c_str(), e.what());
@@ -250,8 +291,8 @@ public:
    * values in the config descriptions, as it validates the name and is less
    * error prone.
    *
-   * @param name - name of the property
-   * @param default_value - default value to return if not found
+   * @param name The name of the property
+   * @param default_value The default value to return if not found
    */
   template <typename T>
   T get(const String &name, const T &default_value) const {
@@ -272,32 +313,40 @@ public:
   /**
    * Get the underlying boost::any value of 'name'
    *
-   * @param name - name of the property
+   * @param name The name of the property
    */
   const boost::any &operator[](const String &name) const {
     return m_map[name].value();
   }
 
   /**
-   * Check whether a property have default value
+   * Check whether a property has a default value
    *
-   * @param name - name of the property
+   * @param name The name of the property
    * @return true if the value is default
    */
   bool defaulted(const String &name) const {
     return m_map[name].defaulted();
   }
 
-  bool has(const String &name) const { return m_map.count(name); }
+  /** Check whether a property exists
+   *
+   * @param name The name of the property
+   * @return true if the property exists
+   */
+  bool has(const String &name) const {
+    return m_map.count(name);
+  }
 
   HT_PROPERTIES_ABBR_ACCESSORS(const)
 
   /**
    * Add property to the map
    *
-   * @param name - name/key of the property
-   * @param v - value of the property
-   * @param defaulted - whether the value is default
+   * @param name The name of the property
+   * @param v The value of the property
+   * @param defaulted True if the value is default
+   * @return An iterator to the new item
    */
   InsRet add(const String &name, const boost::any &v, bool defaulted = false) {
     m_need_alias_sync = true;
@@ -307,9 +356,9 @@ public:
   /**
    * Set a property in the map, create if not found
    *
-   * @param name - name/key of the property
-   * @param v - value of the property
-   * @param defaulted - whether the value is default
+   * @param name The name of the property
+   * @param v The value of the property
+   * @param defaulted True if the value is default
    */
   void set(const String &name, const boost::any &v, bool defaulted = false) {
     InsRet r = add(name, v, defaulted);
@@ -319,34 +368,38 @@ public:
   }
 
   /**
-   * Remove a property in the map
+   * Remove a property from the map
    *
-   * @param name - name/key of the property
+   * @param name The name of the property
    */
   void remove(const String &name) {
     m_map.erase(name);
   }
 
   /**
-   * Setup an property alias. Primary has higher priority, meaning when
-   * aliases are sync'ed primary value can override secondary value
+   * Setup an alias for a property.
    *
-   * @param primary - primary property name
-   * @param secondary - secondary property name
-   * @param overwrite - whether to overwrite existing alias
+   * The primary property has higher priority, meaning when
+   * aliases are sync'ed the primary value can override secondary value
+   *
+   * @param primary The primary property name
+   * @param secondary The secondary property name
+   * @param overwrite True if an existing alias should be overwritten
    */
   void alias(const String &primary, const String &secondary,
-             bool overwrite = false);
+          bool overwrite = false);
 
   /**
-   * Sync alias values. So properties that are aliases to each other
+   * Sync alias values.
+   *
+   * After this operation all properties that are aliases to each other
    * have the same value. Value priority: primary non-default >
    * secondary non-default > primary default > secondary default
    */
   void sync_aliases();
 
   /**
-   * Fills in the given vector with all of the property names
+   * Returns all property names
    *
    * @param names reference to vector to hold names of all properties
    */
@@ -356,50 +409,100 @@ public:
   }
 
   /**
-   * Print config key-value map
+   * Prints keys and values of the configuration map
    *
-   * @param out - output stream
-   * @param include_default - including default values or not
+   * @param out The output stream
+   * @param include_default If true then default values are included
    */
   void print(std::ostream &out, bool include_default = false);
 
   /**
    * Helper to print boost::any used by property values
+   *
+   * @param a Reference to the boost::any value
+   * @return A string with the formatted value
    */
-  static String to_str(const boost::any &);
+  static String to_str(const boost::any &a);
 
 private:
+  /** Whether the aliases need to be synced */
   bool m_need_alias_sync;
+
+  /** The map containing all properties */
   Map m_map;
+
+  /** A map with all aliases */
   AliasMap m_alias_map;
 };
 
 typedef intrusive_ptr<Properties> PropertiesPtr;
 
-/**
- * Convenient help class for access parts of properties
+/** Helper class to access parts of the properties.
+ *
+ * This snippet extracts all properties that start with
+ * "Hypertable.RangeServer." and uses the SubProperty to access
+ * "Hypertable.RangeServer.Range.SplitSize". 
+ *
+ *     SubProperties cfg(props, "Hypertable.RangeServer.");
+ *     i64_t foo = cfg.get_i64("Range.SplitSize");
  */
 class SubProperties {
 public:
+  /** Constructor
+   *
+   * @param props The original Properties object
+   * @param prefix The common prefix of all sub-properties
+   */
   SubProperties(PropertiesPtr &props, const String &prefix)
-    : m_props(props), m_prefix(prefix) { }
+    : m_props(props), m_prefix(prefix) {
+  }
 
-  String full_name(const String &name) const { return m_prefix + name; }
+  /** Returns the full name of a sub-property
+   *
+   * @param name The name of the sub-property
+   * @return The full name (prefix + name)
+   */
+  String full_name(const String &name) const {
+    return m_prefix + name;
+  }
 
+  /**
+   * Calls Properties::get for a sub-property.
+   *
+   * @param name The name of the sub-property
+   */
   template <typename T>
   T get(const String &name) const {
     return m_props->get<T>(full_name(name));
   }
 
+  /**
+   * Calls Properties::get for a sub-property.
+   *
+   * @param name The name of the sub-property
+   * @param default_value The default value to return if not found
+   */
   template <typename T>
   T get(const String &name, const T &default_value) const {
     return m_props->get(full_name(name), default_value);
   }
 
+  /**
+   * Check whether a sub-property has a default value
+   *
+   * @param name The name of the sub-property
+   * @return true if the value is default
+   */
   bool defaulted(const String &name) const {
     return m_props->defaulted(full_name(name));
   }
 
+  /**
+   * Check whether a sub-property exists
+   *
+   * @param name The name of the sub-property
+   * @return true if the property exists
+   */
   bool has(const String &name) const {
     return m_props->has(full_name(name));
   }
@@ -407,9 +510,14 @@ public:
   HT_PROPERTIES_ABBR_ACCESSORS(const)
 
 private:
+  /** Reference to the original Properties object */
   PropertiesPtr m_props;
+
+  /** The common prefix of all sub-properties */
   String m_prefix;
 };
+
+/** @} */
 
 } // namespace Hypertable
 

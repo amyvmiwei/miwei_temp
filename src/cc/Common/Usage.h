@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,17 +19,37 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Helper class for printing usage banners on the command line.
+ */
+
 #ifndef HYPERTABLE_USAGE_H
 #define HYPERTABLE_USAGE_H
 
 namespace Hypertable {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
+  /**
+   * Helper class for printing usage banners on the command line
+   */
   class Usage {
   public:
+    /**
+     * Prints each string in %usage to std::cout, delimited by std::endl;
+     * %usage must be terminated with a NULL pointer
+     */
     static void dump(const char **usage);
-    static void dump_and_exit(const char **usage, int rcode=1);
+
+    /**
+     * Same as %dump, but performs _exit(rcode) afterwards
+     */
+    static void dump_and_exit(const char **usage, int rcode = 1);
   };
 
+  /** @} */
 }
 
 #endif // HYPERTABLE_USAGE_H

@@ -23,8 +23,6 @@
 #ifndef HYPERTABLE_REQUESTHANDLERGETSTATISTICS_H
 #define HYPERTABLE_REQUESTHANDLERGETSTATISTICS_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"

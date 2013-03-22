@@ -36,7 +36,7 @@
  * @}
  */
 
-/* Name mangling */
+/** Portability macros for C code. */
 #ifdef __cplusplus
 #  define HT_EXTERN_C  extern "C"
 #else
@@ -80,5 +80,7 @@
 #include <string.h>
 #include <strings.h>
 #include <stdlib.h>
+
+/** @}*/
 
 #endif /* HYPERTABLE_COMPAT_C_H */

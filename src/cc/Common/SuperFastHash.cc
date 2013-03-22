@@ -1,7 +1,14 @@
-/**
+/*
  * Copyright (C) 2004-2008 Paul Hsieh
  *
  * cf. http://www.azillionmonkeys.com/qed/weblicense.html
+ */
+
+/** @file
+ * SuperFastHash hash algorithm.
+ * The SuperFastHash from Paul Hsieh, recommended by google sparse hash
+ * folks. Slightly faster but weaker (crypto-wise) than Lookup3
+ * see http://www.azillionmonkeys.com/qed/weblicense.html
  */
 
 #include "Common/Compat.h"

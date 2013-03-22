@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * HashMap optimized for char * strings.
+ * This file implements a HashMap for storing and looking up strings
+ * efficiently. The hash_map base class is from the Boost library.
+ */
+
 #ifndef HYPERTABLE_CSTR_HASHMAP_H
 #define HYPERTABLE_CSTR_HASHMAP_H
 
@@ -25,8 +31,13 @@
 
 namespace Hypertable {
 
+/** @addtogroup Common
+ *  @{
+ */
+
 /**
- * A hash map for storing and lookup char *strings efficiently
+ * A hash map for storing and lookup char * strings efficiently.
+ * The keys are case-independent.
  */
 template <typename DataT, class TraitsT = CstrHashTraits<> >
 class CstrHashMap : public hash_map<const char *, DataT,
@@ -42,46 +53,60 @@ public:
   typedef typename TraitsT::key_allocator key_allocator;
   typedef std::pair<iterator, bool> InsRet;
 
-private:
-  key_allocator m_alloc;
+public:
+  /** Default constructor creates an empty map */
+  CstrHashMap() {}
+
+  /** Overloaded Constructor creates an empty map with a specified number of
+   * buckets
+   *
+   * @param n_buckets Number of buckets in the hash map
+   */
+  CstrHashMap(size_t n_buckets) : Base(n_buckets) {}
+
+  /** Inserts a new string/data pair in the map. Hides all insert methods
+   * in the base class.
+   *
+   * @param key The key of the key/data pair
+   * @param data Reference to the data type of the key/data pair
+   * @return An InsRet pair with an iterator to the new blob and a flag whether
+   *        the blob already existed in the set
+   */
+  InsRet insert(const char *key, const DataT &data) {
+    return insert_key(key, Base::insert(value_type(key, data)));
+  }
+
+  /** Returns the key allocator; required for testing
+   *
+   * @return The key_allocator object
+   */
+  key_allocator &key_alloc() { return m_alloc; }
+
+  /** Clears the map and deletes all elements */
+  void clear() { Base::clear(); }
 
 private:
-  InsRet
-  insert_key(const char *key, InsRet rv) {
+  /** The key_allocator - i.e. a CharArena instance */
+  key_allocator m_alloc;
+
+  /** Helper function to insert a string; if the string already exists then a
+   * duplicate of the string is created and inserted.
+   *
+   * @param key The inserted key of the object
+   * @param rv The InsRet pair, which is the result of the actual insert
+   *        operation.
+   * @return A copy of the @a rv parameter is returned.
+   */
+  InsRet insert_key(const char *key, InsRet rv) {
     if (rv.second) {
       char *keycopy = m_alloc.dup(key);
       const_cast<key_type &>(rv.first->first) = keycopy;
     }
     return rv;
   }
-
-public:
-  CstrHashMap() {}
-  CstrHashMap(size_t n_buckets) : Base(n_buckets) {}
-  ~CstrHashMap() {}
-
-  // hides all insert methods in base class
-  InsRet
-  insert(const char *key, const DataT &data) {
-    return insert_key(key, Base::insert(value_type(key, data)));
-  }
-
-  InsRet
-  insert_noresize(const char *key, const DataT &data) {
-    return insert_key(key, Base::insert_noresize(value_type(key, data)));
-  }
-
-  DataT&
-  operator[](const char *key) {
-    return insert(key, DataT()).first->second;
-  }
-
-  key_allocator &
-  key_alloc() { return m_alloc; }
-
-  void
-  clear() { Base::clear(); }
 };
+
+/** @}*/
 
 } // namespace Hypertable
 

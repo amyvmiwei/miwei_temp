@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,61 +17,31 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Implementation of checksum routines.
+ * This file implements the fletcher32 checksum algorithm.
+ */
+
 #ifndef HYPERTABLE_CHECKSUM_H
 #define HYPERTABLE_CHECKSUM_H
 
 namespace Hypertable {
 
-/** Compute fletcher32 checksum for arbitary data
- *
- * @param data - input data
- * @param len - input data length in bytes
- */
-extern uint32_t
-fletcher32(const void *data, size_t len);
+  /** @addtogroup Common
+   *  @{
+   */
 
-/** Compute fletcher32 checksum for 16-bit aligned and padded data
- *  slightly faster than fletcher32
- *
- * @param data - input data
- * @param len - input data length in bytes
- */
-extern uint32_t
-fletcher32a(const uint16_t *data, size_t len);
+  /** Compute fletcher32 checksum for arbitary data. See
+   * http://en.wikipedia.org/wiki/Fletcher%27s_checksum for more information
+   * about the algorithm. Fletcher32 is the default checksum used in Hypertable.
+   *
+   * @param data Pointer to the input data
+   * @param len Input data length in bytes
+   * @return The calculated checksum
+   */
+  extern uint32_t fletcher32(const void *data, size_t len);
 
-/** Compute adler32 checksum
- *
- * @param data - input data
- * @param len - input data length in bytes
- */
-extern uint32_t
-adler32(const void *data, size_t len);
-
-/** Update adler32 checksum incrementally
- *
- * @param adler - current adler32 checksum
- * @param data - input data
- * @param len - input data length in bytes
- */
-extern uint32_t
-adler32_update(uint32_t adler, const void *data, size_t len);
-
-/** Compute crc32 checksum
- *
- * @param data - input data
- * @param len - input data length in bytes
- */
-extern uint32_t
-crc32(const void *data, size_t len);
-
-/** Update crc32 checksum incrementally
- *
- * @param crc - current crc32 checksum
- * @param data - input data
- * @param len - input data length in bytes
- */
-extern uint32_t
-crc32_update(uint32_t crc, const void *data, size_t len);
+  /** @}*/
 
 } // namespace Hypertable
 

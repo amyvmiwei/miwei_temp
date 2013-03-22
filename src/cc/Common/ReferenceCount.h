@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/**
+ * @file
+ * A base class for reference counted classes.
+ */
+
 #ifndef HYPERTABLE_REFERENCECOUNT_H
 #define HYPERTABLE_REFERENCECOUNT_H
 
@@ -27,6 +33,10 @@
 #include "atomic.h"
 
 namespace Hypertable {
+
+  /** @addtogroup Common
+   *  @{
+   */
 
   using boost::intrusive_ptr;
   using boost::noncopyable;
@@ -42,14 +52,27 @@ namespace Hypertable {
    * an atomic reference count variable and has the required Boost
    * intrusive_ptr functions, intrusive_ptr_add_ref and
    * intrusive_ptr_release, defined for it.
+   *
+   * Use derived classes in combination with boost::intrunsive_ptr:
+   *
+   *    class Properties : public ReferenceCount { ... }
+   *    typedef boost::intrusive_ptr<Properties> PropertiesPtr;
    */
   class ReferenceCount : noncopyable {
   public:
-    ReferenceCount() { atomic_set(&refcount, 0); }
+    /** Constructor: initializes reference count with 0 */
+    ReferenceCount() {
+      atomic_set(&refcount, 0);
+    }
+
+    /** Destructor is virtual, can be overwritten */
     virtual ~ReferenceCount() { return; }
+
     friend void intrusive_ptr_add_ref(ReferenceCount *rc);
     friend void intrusive_ptr_release(ReferenceCount *rc);
+
   private:
+    /** The reference count */
     atomic_t refcount;
   };
 
@@ -73,6 +96,8 @@ namespace Hypertable {
       delete rc;
   }
 
-}
+  /** @} */
+
+} // namespace Hypertable
 
 #endif // HYPERTABLE_REFERENCECOUNT_H

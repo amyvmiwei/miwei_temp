@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_REQUESTHANDLERRENAME_H
 #define HYPERTABLE_REQUESTHANDLERRENAME_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"

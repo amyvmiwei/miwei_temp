@@ -35,18 +35,18 @@ void basic_test(const PropertiesDesc &desc) {
       "--i16", "64k", "--i32", "20M", "--i64", "8g", "--strs", "s2",
       "--int64s", "16G", "--int64s", "32G" };
   vector<String> args;
-  args.push_back("--f64"); args.push_back("1k");
+  args.push_back("--f64");      args.push_back("1k");
   args.push_back("--float64s"); args.push_back("1.5");
   args.push_back("--float64s"); args.push_back("1.5K");
   args.push_back("--float64s"); args.push_back("1.5M");
   args.push_back("--float64s"); args.push_back("1.5g");
 
   Properties props;
-  props.parse_args(sizeof(argv)/sizeof(char *), (char **)argv, desc);
+  props.parse_args(sizeof(argv) / sizeof(char *), (char **)argv, desc);
   props.parse_args(args, desc);
   props.notify();
   props.set("mode", MODE_FOO);
-  cout <<"mode="<< props.get<Mode>("mode") << endl;
+  cout << "mode=" << props.get<Mode>("mode") << endl;
   props.print(cout);
 }
 
@@ -79,7 +79,7 @@ int main(int argc, char *argv[]) {
     if (props.has("help"))
       cout << desc << endl;
 
-    cout <<"f64test="<< f64test << endl;
+    cout << "f64test=" << f64test << endl;
 
     props.print(cout, true);
     HT_TRY("basic test", basic_test(desc));

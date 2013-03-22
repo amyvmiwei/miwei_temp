@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Configuration settings.
+ * This file contains the global configuration settings (read from file or
+ * from a command line parameter).
+ */
+
 #ifndef HYPERTABLE_CONFIG_H
 #define HYPERTABLE_CONFIG_H
 
@@ -28,39 +34,48 @@
 #include "Common/Properties.h"
 
 namespace Hypertable { namespace Config {
+
+  /** @addtogroup Common
+   *  @{
+   */
+
   using namespace Property;
   typedef PropertiesDesc Desc;
 
-  /** global config mutex */
+  /** A global (recursive) configuration mutex */
   extern RecMutex rec_mutex;
 
-  /** config filename */
-  extern String filename;
-
-  /** whether a config file was loaded after init */
-  extern bool file_loaded;
-
-  /** stored option variables map singleton */
+  /** This singleton map stores all options */
   extern PropertiesPtr properties;
 
-  /**
-   * check existence of config value
+  /** Check existence of a configuration value
+   *
+   * @param name The name of the option to search for
+   * @return true if there is an option with this name
    */
   inline bool has(const String &name) {
     HT_ASSERT(properties);
     return properties->has(name);
   }
 
-  /**
-   * Check if a config value is defaulted
+  /** Check if a configuration value is defaulted
+   *
+   * @param name The name of the option
+   * @return true if this option's value is the default value
    */
   inline bool defaulted(const String &name) {
     HT_ASSERT(properties);
     return properties->defaulted(name);
   }
 
-  /**
-   * get config value
+  /** Retrieves a configuration value
+   *
+   * This is a template function and usually not used directly. The file
+   * Properties.h provides global functions like get_bool(), get_string()
+   * that are usually used.
+   *
+   * @param name The name of the option
+   * @return The option's value
    */
   template <typename T>
   T get(const String &name) {
@@ -68,8 +83,13 @@ namespace Hypertable { namespace Config {
     return properties->get<T>(name);
   }
 
-  /**
-   * get config value with default
+  /** Retrieves a configuration value (or a default value, if the value
+   * was not set)
+   *
+   * @param name The name of the option
+   * @param default_value The default value which is returned if the value was
+   *        not set
+   * @return The option's value
    */
   template <typename T>
   T get(const String &name, const T &default_value) {
@@ -77,44 +97,55 @@ namespace Hypertable { namespace Config {
     return properties->get<T>(name, default_value);
   }
 
-  /** @see Properties */
+  /** A macro which definds global functions like get_bool(), get_str(),
+   * get_i16() etc. @see Properties.h */
   HT_PROPERTIES_ABBR_ACCESSORS(BOOST_PP_EMPTY())
 
-  // Options description accessors
   /**
    * Get the command line options description
    *
    * @param usage - optional usage string (first time)
+   * @return Reference to the Description object
    */
   Desc &cmdline_desc(const char *usage = NULL);
 
-  /**
-   * Set the command line options description
+  /** Set the command line options description
+   *
+   * @param desc Reference to the Description object
    */
-  void cmdline_desc(const Desc &);
+  void cmdline_desc(const Desc &desc);
 
-  /**
-   * Get the command line hidden options description (for positional options)
+  /** Get the command line hidden options description (for positional options)
+   *
+   * @return desc Reference to the Description object
    */
   Desc &cmdline_hidden_desc();
 
-  /**
-   * Get the command line positional options description
+  /** Get the command line positional options description
+   *
+   * @param desc Reference to the Description object
    */
   PositionalDesc &cmdline_positional_desc();
 
-  /**
-   * Get the config file options description
+  /** Get the config file options description
+   *
+   * @param usage - optional usage string
+   * @return Reference to the Description object
    */
   Desc &file_desc(const char *usage = NULL);
 
-  /**
-   * Set the config file options description
+  /** Set the config file options description
+   *
+   * @param desc Reference to the Description object
    */
-  void file_desc(const Desc &);
+  void file_desc(const Desc &desc);
 
   /**
    * Interface and base of config policy
+   *
+   * The configuration Policy describes application-specific configuration
+   * options and initialization routines. Multiple Policies can be used
+   * in a single application.
    */
   struct Policy {
     static void init_options() { }
@@ -128,6 +159,9 @@ namespace Hypertable { namespace Config {
 
   /**
    * Default init policy
+   *
+   * The DefaultPolicy sets up the regular Hypertable configuration options
+   * and initializes the logging module.
    */
   struct DefaultPolicy : Policy {
     static void init_options();
@@ -135,7 +169,7 @@ namespace Hypertable { namespace Config {
   };
 
   /**
-   * Helpers to compose init policies
+   * Helpers to compose init policies; allow to combine two policies into one
    */
   template <class CarT, class CdrT>
   struct Cons {
@@ -177,47 +211,65 @@ namespace Hypertable { namespace Config {
 
 
   /**
-   * Init helper, has side effects (setting singletons etc.) unlike above
+   * Initialization helper; parses the argc/argv parameters into properties,
+   * reads the configuration file, handles "help" and "help-config" parameters
+   *
+   * @param argc Number of elements in argv
+   * @param argv Name of binary and command line arguments
    */
   void parse_args(int argc, char *argv[]);
 
   /**
-   * Parse config file. Throws CONFIG_BAD_CFG_FILE on error
+   * Parses a configuration file and stores all configuration options into
+   * the option descriptor
    *
-   * @param fname - config filename
-   * @param desc - options description
+   * @param fname The filename of the configuration file
+   * @param desc Reference to the Description object
+   * @throws Error::CONFIG_BAD_CFG_FILE on error
    */
   void parse_file(const String &fname, const Desc &desc);
-
 
   /**
    * Setup command line option alias for config file option.
    * Typically used in policy init_options functions.
-   * Command line option has higher priority.
+   * The command line option has higher priority.
    *
-   * @param cmdline_opt - command line option name
-   * @param file_opt - cfg file option name
-   * @param overwrite - overwrite existing alias
+   * Requires use of sync_alias() afterwards.
+   *
+   * @param cmdline_opt Command line option name
+   * @param file_opt Configuration file option name
+   * @param overwrite If true then existing aliases are overwritten
    */
   void alias(const String &cmdline_opt, const String &file_opt,
              bool overwrite = false);
 
   /**
    * Sync alias values. Typically called after parse_* functions to
-   * setup values in the config variable map.
+   * setup values in the configuration variable map.
    */
   void sync_aliases();
 
   /**
-   * Toggle allow unregistered options
+   * Toggle allow unregistered options. By default unregistered options
+   * are not allowed.
+   *
+   * @param choice If true then unregistered options are allowed, otherwise not
+   * @return The previous value
    */
   bool allow_unregistered_options(bool choice);
+
+  /** Returns true if unregistered options are allowed
+   *
+   * @return true if unregistered options are allowed, otherwise false
+   */
   bool allow_unregistered_options();
 
   /**
    * Free all resources used
    */
   void cleanup();
+
+  /** @}*/
 
 }} // namespace Hypertable::Config
 

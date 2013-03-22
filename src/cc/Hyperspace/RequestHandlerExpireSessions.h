@@ -22,8 +22,6 @@
 #ifndef HYPERSPACE_REQUESTHANDLEREXPIRESESSIONS_H
 #define HYPERSPACE_REQUESTHANDLEREXPIRESESSIONS_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 
 

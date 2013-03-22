@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_REQUESTHANDLERFETCHSCANBLOCK_H
 #define HYPERTABLE_REQUESTHANDLERFETCHSCANBLOCK_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"

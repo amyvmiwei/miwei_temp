@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,10 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * A timer class to keep timeout states across AsyncComm related calls.
+ */
+
 #ifndef HYPERTABLE_TIMER_H
 #define HYPERTABLE_TIMER_H
 
@@ -29,21 +33,36 @@
 
 namespace Hypertable {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
   /**
-   * A timer class to keep timeout states across comm related calls
+   * A timer class to keep timeout states across AsyncComm related calls.
    */
   class Timer {
   public:
-
-    Timer(uint32_t millis, bool start_timer=false)
+    /**
+     * Constructor; assigns number of milliseconds after which the timer will
+     * expire
+     *
+     * @param millis Number of milliseconds after timer will expire
+     * @param start_timer If true, timer is started immediately; otherwise
+     *      start with %start
+     */
+    Timer(uint32_t millis, bool start_timer = false)
       : m_running(false), m_started(false),
         m_duration(millis), m_remaining(millis) {
       if (start_timer)
         start();
     }
 
-    // Assignment operator copy state but don't start
-    Timer& operator= (Timer &src) {
+    /**
+     * Assignment operator copies state but does not start immediately
+     *
+     * @param src Reference to the other timer object which is copied
+     */
+    Timer& operator=(Timer &src) {
       if (&src != this) {
         m_running = false;
         m_started = false;
@@ -53,6 +72,9 @@ namespace Hypertable {
       return *this;
     }
 
+    /**
+     * Starts the timer. Will have no effect if the timer is still running.
+     */
     void start() {
       if (!m_running) {
         boost::xtime_get(&start_time, boost::TIME_UTC_);
@@ -62,6 +84,10 @@ namespace Hypertable {
       }
     }
 
+    /**
+     * Stops the timer. Will assert that the timer was started. Updates the
+     * remaining time (see %remaining).
+     */
     void stop() {
       boost::xtime stop_time;
       boost::xtime_get(&stop_time, boost::TIME_UTC_);
@@ -83,7 +109,10 @@ namespace Hypertable {
       m_running = false;
     }
 
-    void reset(bool start_timer=false) {
+    /**
+     * Resets the timer
+     */
+    void reset(bool start_timer = false) {
       m_running = false;
       m_started = false;
       m_remaining = m_duration;
@@ -91,24 +120,56 @@ namespace Hypertable {
         start();
     }
 
+    /**
+     * Returns the remaining time till expiry
+     */
     uint32_t remaining() {
-      if (m_running) { stop(); start(); }
+      if (m_running) {
+        stop();
+        start();
+      }
       return m_remaining;
     }
 
-    bool expired() { return remaining() == 0; }
+    /**
+     * Returns true if the timer is expired
+     */
+    bool expired() {
+      return remaining() == 0;
+    }
 
-    bool is_running() { return m_running; }
+    /**
+     * Returns true if the timer is still running (not yet expired
+     */
+    bool is_running() {
+      return m_running;
+    }
 
-    uint32_t duration() { return m_duration; }
+    /**
+     * Returns the duration of the timer
+     */
+    uint32_t duration() {
+      return m_duration;
+    }
 
   private:
+    /** The time when the timer was started */
     boost::xtime start_time;
+
+    /** True if the timer is running */
     bool m_running;
+
+    /** True if the timer was started */
     bool m_started;
+
+    /** The duration of the timer (in milliseconds) */
     uint32_t m_duration;
+
+    /** The remaining time till expiration (in milliseconds) */
     uint32_t m_remaining;
   };
+
+  /** @} */
 
 }
 

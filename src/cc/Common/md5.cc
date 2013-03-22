@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,10 +19,12 @@
  * 02110-1301, USA.
  */
 
-/*
- *  The MD5 algorithm was designed by Ron Rivest in 1991.
- *
- *  http://www.ietf.org/rfc/rfc1321.txt
+/** @file
+ * md5 digest routines.
+ * This file implements the md5 digest algorithm and also has several
+ * helper functions like calculating the md5 of a file or a string.
+ * The MD5 algorithm was designed by Ron Rivest in 1991
+ * (http://www.ietf.org/rfc/rfc1321.txt).
  */
 
 #define SELF_TEST 1

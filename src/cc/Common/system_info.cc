@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/**
+ * @file
+ * Command line tool to print information about the system.
  */
 
 #include "Common/Compat.h"
@@ -42,7 +47,7 @@ struct MyPolicy : Policy {
 typedef Meta::list<MyPolicy, DefaultPolicy> Policies;
 
 void dump_all() {
-  cout << system_info_lib_version << endl;
+  cout << system_info_lib_version() << endl;
   cout << System::cpu_info() << endl;
   cout << System::cpu_stat() << endl;
   cout << System::mem_stat() << endl;
@@ -55,8 +60,8 @@ void dump_all() {
   cout << System::proc_stat() << endl;
   cout << System::fs_stat() << endl;
   cout << System::term_info() << endl;
-  cout <<"{System: install_dir='"<< System::install_dir
-       <<"' exe_name='"<< System::exe_name <<"'}" << endl;
+  cout << "{System: install_dir='" << System::install_dir
+      << "' exe_name='" << System::exe_name << "'}" << endl;
 }
 
 } // local namespace

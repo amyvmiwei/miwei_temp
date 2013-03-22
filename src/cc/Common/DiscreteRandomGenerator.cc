@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Discrete Random Generator.
+ * This is a base class implementing a discrete random generator.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Logger.h"
 
@@ -26,13 +32,12 @@
 using namespace Hypertable;
 
 DiscreteRandomGenerator::DiscreteRandomGenerator()
-  : m_u01(boost::mt19937()), m_seed(1), m_value_count(0),
+  : m_u01(boost::mt19937()), m_value_count(0),
     m_pool_min(0), m_pool_max(0), m_numbers(0), m_cmf(0)
 {
-  m_rng.seed((uint32_t)m_seed);
+  m_rng.seed(1u);
   m_u01 = boost::uniform_01<boost::mt19937>(m_rng);
 }
-
 
 uint64_t DiscreteRandomGenerator::get_sample()
 {
@@ -53,17 +58,17 @@ uint64_t DiscreteRandomGenerator::get_sample()
 
   double rand = m_u01();
 
-  assert(rand >=0.0 && rand <= 1.0);
+  assert(rand >= 0.0 && rand <= 1.0);
 
   // do a binary search through cmf to figure out which index in cmf
   // rand lies in. this will transform the uniform[0,1] distribution into
   // the distribution specified in m_cmf
-  while(true) {
+  while (true) {
 
     assert(upper >= lower);
-    ii = (upper + lower)/2;
+    ii = (upper + lower) / 2;
     if (m_cmf[ii] >= rand) {
-      if (ii == 0 || m_cmf[ii-1] <= rand)
+      if (ii == 0 || m_cmf[ii - 1] <= rand)
         break;
       else {
         upper = ii - 1;
@@ -77,7 +82,6 @@ uint64_t DiscreteRandomGenerator::get_sample()
   }
 
   return m_numbers[ii];
-
 }
 
 void DiscreteRandomGenerator::generate_cmf()
@@ -87,10 +91,10 @@ void DiscreteRandomGenerator::generate_cmf()
 
   if (m_value_count == m_pool_max) {
     uint64_t temp_num, index;
-    for (uint64_t i=0; i<m_value_count; i++)
+    for (uint64_t i = 0; i < m_value_count; i++)
       m_numbers[i] = i;
     // randomize the array of numbers
-    for (uint64_t i=0; i<m_value_count; i++) {
+    for (uint64_t i = 0; i < m_value_count; i++) {
       index = (uint64_t)m_rng() % m_value_count;
       temp_num = m_numbers[0];
       m_numbers[0] = m_numbers[index];
@@ -99,19 +103,18 @@ void DiscreteRandomGenerator::generate_cmf()
   }
   else {
     uint64_t pool_diff = m_pool_max - m_pool_min;
-    for (uint64_t i=0; i<m_value_count; i++)
+    for (uint64_t i = 0; i < m_value_count; i++)
       m_numbers[i] = m_pool_min + ((uint64_t)m_rng() % pool_diff);
   }
 
   m_cmf[0] = pmf(0);
-  for (ii=1; ii < m_value_count+1 ;++ii) {
-    m_cmf[ii] = m_cmf[ii-1] + pmf(ii);
+  for (ii = 1; ii < m_value_count + 1; ++ii) {
+    m_cmf[ii] = m_cmf[ii - 1] + pmf(ii);
   }
   norm_const = m_cmf[m_value_count];
   // renormalize cmf
-  for (ii=0; ii < m_value_count+1 ;++ii) {
+  for (ii = 0; ii < m_value_count + 1 ;++ii) {
     m_cmf[ii] /= norm_const;
   }
 }
-
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * A class generating a stream of words; the words are retrieved from a file
+ * and can be randomized.
+ */
+
 #include "Common/Compat.h"
 
 #include <cctype>
@@ -38,10 +44,11 @@ using namespace Hypertable;
     ptr++;
 
 WordStream::WordStream(const String &word_file, unsigned seed,
-                       size_t words_per_record, bool random, const char *separator)
-  : m_separator(separator), m_words_per_record(words_per_record), m_random(random) {
-
-  ms_rng.seed((uint32_t)seed);
+        size_t words_per_record, bool random, const char *separator)
+  : m_separator(separator), m_words_per_record(words_per_record),
+    m_random(random) {
+  if (seed)
+    ms_rng.seed((uint32_t)seed);
 
   if (!m_random)
     m_offset.resize(words_per_record, 0);
@@ -73,25 +80,23 @@ WordStream::WordStream(const String &word_file, unsigned seed,
   }
 }
 
-
 WordStream::~WordStream() {
   ::munmap((void *)m_base, m_len);
 }
-
 
 const char *WordStream::next() {
   size_t offset;
   m_record.clear();
 
-  for (size_t i=0; i<m_words_per_record; ++i) {
+  for (size_t i = 0; i < m_words_per_record; ++i) {
     if (m_random) {
       offset = ms_rng() % m_words.size();
     }
     else {
       if (m_offset[i] == m_words.size()) {
         m_offset[i] = offset = 0;
-        if (i < (m_words_per_record-1))
-          m_offset[i+1]++;
+        if (i < (m_words_per_record - 1))
+          m_offset[i + 1]++;
       }
       else if (i == 0)
         offset = m_offset[i]++;
@@ -101,8 +106,7 @@ const char *WordStream::next() {
     m_record += String(m_words[offset].word, m_words[offset].len) + m_separator;
   }
 
-  m_record.resize(m_record.size()-1);
+  m_record.resize(m_record.size() - 1);
   return m_record.c_str();
 }
-
 

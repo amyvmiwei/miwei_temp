@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,11 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * An inline helper function to parse timestamps in
+ * YYYY-mm-dd[ HH:MM[:SS[.SS|:NS]]] format
+ */
+
 #ifndef HYPERTABLE_TIMEINLINE_H
 #define HYPERTABLE_TIMEINLINE_H
 
@@ -24,8 +29,11 @@
 
 #include "Time.h"
 
-// Some header only code (no link/runtime library dependency)
 namespace Hypertable {
+
+/** @addtogroup Common
+ *  @{
+ */
 
 #ifndef HT_DELIM_CHECK
 # define HT_DELIM_CHECK(_l_, _c_) do { \
@@ -41,7 +49,16 @@ namespace Hypertable {
   } while (0)
 #endif
 
-// Parse timestamp format in YYYY-mm-dd[ HH:MM[:SS[.SS|:NS]]]
+/**
+ * Inline function which parses a string with a timestamp and returns a 64bit
+ * nanosecond timestamp
+ *
+ * @param ts c-string with the timestamp formatted as
+ *      YYYY-mm-dd[ HH:MM[:SS[.SS|:NS]]]
+ * @return Timestamp in nanoseconds
+ * @throw std::range_error if a range (i.e. 0..59) is exceeded
+ * @throw std::runtime_error if a delimiter is missing
+ */
 inline int64_t
 parse_ts(const char *ts) {
   const int64_t G = 1000000000LL;
@@ -84,6 +101,8 @@ parse_ts(const char *ts) {
 
   return (int64_t)(timegm(&tv) * G + sec * G + ns);
 }
+
+/** @} */
 
 } // namespace Hypertable
 

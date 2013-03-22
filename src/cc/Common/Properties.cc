@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Program options handling.
+ * Based on boost::program_options, the options are configured in Config.h.
  */
 
 #include "Common/Compat.h"
@@ -51,7 +56,7 @@ void validate(boost::any &v, const Strings &values, ::int64_t *, int) {
     case 'g':
     case 'G': result *= 1000000000LL;   break;
     case '\0':                          break;
-    default: throw invalid_option_value(s +": unknown suffix");
+    default: throw invalid_option_value(s + ": unknown suffix");
   }
   v = any(result);
 }
@@ -73,7 +78,7 @@ void validate(boost::any &v, const Strings &values, double *, int) {
     case 'g':
     case 'G': result *= 1000000000LL;   break;
     case '\0':                          break;
-    default: throw invalid_option_value(s +": unknown suffix");
+    default: throw invalid_option_value(s + ": unknown suffix");
   }
   v = any(result);
 }
@@ -95,7 +100,7 @@ void validate(boost::any &v, const Strings &values, ::uint16_t *, int) {
 
   if (res > UINT16_MAX) {
     const std::string &s = validators::get_single_string(values);
-    throw invalid_option_value(s +": number out of range of 16-bit integer");
+    throw invalid_option_value(s + ": number out of range of 16-bit integer");
   }
   v = any((uint16_t)res);
 }
@@ -136,7 +141,6 @@ parse(command_line_parser &parser, const PropertiesDesc &desc,
 
 } // local namespace
 
-
 void
 Properties::load(const String &fname, const PropertiesDesc &desc,
                  bool allow_unregistered) {
@@ -148,19 +152,18 @@ Properties::load(const String &fname, const PropertiesDesc &desc,
     if (!in)
       HT_THROWF(Error::CONFIG_BAD_CFG_FILE, "%s", strerror(errno));
 
-
 #if BOOST_VERSION >= 103500
     parsed_options parsed_opts = parse_config_file(in, desc, allow_unregistered);
     store(parsed_opts, m_map);
-    for (size_t i=0; i<parsed_opts.options.size(); i++) {
+    for (size_t i = 0; i < parsed_opts.options.size(); i++) {
       if (parsed_opts.options[i].unregistered && parsed_opts.options[i].string_key != "")
-        m_map.insert(Map::value_type(parsed_opts.options[i].string_key, Value(parsed_opts.options[i].value[0], false)));
+        m_map.insert(Map::value_type(parsed_opts.options[i].string_key,
+                    Value(parsed_opts.options[i].value[0], false)));
     }
 #else
     store(parse_config_file(in, desc), m_map);
 #endif
-
-      }
+  }
   catch (std::exception &e) {
     HT_THROWF(Error::CONFIG_BAD_CFG_FILE, "%s: %s", fname.c_str(), e.what());
   }
@@ -191,14 +194,12 @@ Properties::parse_args(const std::vector<String> &args,
     parse(parser, desc, m_map, hidden, p, allow_unregistered));
 }
 
-
 // As of boost 1.38, notify will segfault if anything is added to
 // the variables_map by means other than store, which is too limiting.
 // So don't call notify after add/setting properties manually or die
 void Properties::notify() {
   boost::program_options::notify(m_map);
 }
-
 
 void Properties::alias(const String &primary, const String &secondary,
                        bool overwrite) {
@@ -209,7 +210,6 @@ void Properties::alias(const String &primary, const String &secondary,
 
   m_need_alias_sync = true;
 }
-
 
 void Properties::sync_aliases() {
   if (!m_need_alias_sync)
@@ -277,10 +277,10 @@ Properties::print(std::ostream &out, bool include_default) {
     bool isdefault = kv.second.defaulted();
 
     if (include_default || !isdefault) {
-      out << kv.first <<'='<< to_str(kv.second.value());
+      out << kv.first << '=' << to_str(kv.second.value());
 
       if (isdefault)
-        out <<" (default)";
+        out << " (default)";
 
       out << std::endl;
     }

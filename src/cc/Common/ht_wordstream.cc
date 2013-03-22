@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Application to generate word streams.
+ * This small helper application prints word streams to stdout. The words are
+ * read from a file (default /usr/share/dict/words), shuffled and concatenated
+ * with a space (' ').
  */
 
 #include "Common/Compat.h"
@@ -38,7 +45,7 @@ namespace {
     "\n"
     "Usage: ht_wordstream [options] <words-per-record> [<word-file>]\n\n"
     "Description:\n"
-    "  This program is used to generate a stream of records, where each recored\n"
+    "  This program is used to generate a stream of records, where each record\n"
     "  constists of one or more randomly chosen words concatenated together with\n"
     "  a ' ' character.  The <words-per-record> argument controls how many words\n"
     "  each record should consist of, and the <word-file> argument can be used to\n"
@@ -62,16 +69,9 @@ namespace {
   };
 }
 
-
 typedef Meta::list<MyPolicy, DefaultPolicy> Policies;
 
-
-
-/**
- *
- */
 int main(int argc, char **argv) {
-
   try {
     init_with_policies<Policies>(argc, argv);
 
@@ -80,11 +80,11 @@ int main(int argc, char **argv) {
       _exit(0);
     }
 
-    WordStreamPtr word_stream = new WordStream(get_str("word-file"), 1, 2, false);
+    WordStreamPtr word_stream
+        = new WordStream(get_str("word-file"), 1, 2, false);
 
     while (true)
       cout << word_stream->next() << "\n";
-
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,11 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Importing boost::thread and boost::thread_group into the Hypertable
+ * namespace.
+ */
+
 #ifndef HYPERTABLE_THREAD_H
 #define HYPERTABLE_THREAD_H
 
@@ -25,15 +30,15 @@
 
 namespace Hypertable {
 
+/** @addtogroup Common
+ *  @{
+ */
+
 #ifdef BOOST_HAS_PTHREADS
 #  define HT_THREAD_ID_DECL(_var_) pthread_t _var_
-#  define HT_ASSERT_SAME_THREAD(_tid_) if (pthread_self() != (_tid_)) \
-     HT_FATALF("expected current thread id %u, got %u", \
-               (unsigned)(_tid_), (unsigned) pthread_self())
 #  define HT_THREAD_ID_SET(_var_) _var_ = pthread_self()
 #else
 #  define HT_THREAD_ID_DECL(_var_)
-#  define HT_ASSERT_SAME_THREAD(_tid_)
 #  define HT_THREAD_ID_SET(_var_)
 #endif
 
@@ -43,6 +48,8 @@ typedef boost::thread_group     ThreadGroup;
 namespace ThisThread {
   using namespace boost::this_thread;
 }
+
+/** @} */
 
 } // namespace Hypertable
 

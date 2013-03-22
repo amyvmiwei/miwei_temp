@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -87,7 +87,7 @@ public:
 
   /** Insert function for a Blob object
    *
-   * @param s Reference to the blob which is inserted
+   * @param blob Reference to the blob which is inserted
    * @return An InsRet pair with an iterator to the new blob and a flag whether
    *        the blob already existed in the set
    */
@@ -128,7 +128,7 @@ private:
    * @param len The length of the blob which was inserted
    * @param rv The InsRet pair, which is the result of the actual insert
    *        operation.
-   * @return A copy of the @ref rv parameter is returned.
+   * @return A copy of the @a rv parameter is returned.
    */
   InsRet insert_blob(size_t len, InsRet rv) {
     if (rv.second)

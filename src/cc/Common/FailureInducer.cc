@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * The FailureInducer simulates errors.
+ * The FailureInducer parses a list of specs (usually set in a
+ * test) and returns errors, throws exceptions or terminates the application
+ * depending on the these arguments.
  */
 
 #include "Compat.h"
@@ -70,10 +77,10 @@ void FailureInducer::maybe_fail(const String &label) {
                         error_code, label.c_str(), iteration));
       }
       else if ((*iter).second->failure_type == FAILURE_TYPE_PAUSE) {
-	HT_INFOF("Induced pause at '%s' iteration=%u for %u milliseconds",
-		 label.c_str(), (*iter).second->iteration,
-		 (*iter).second->pause_millis);
-	poll(0, 0, (*iter).second->pause_millis);
+        HT_INFOF("Induced pause at '%s' iteration=%u for %u milliseconds",
+                label.c_str(), (*iter).second->iteration,
+                (*iter).second->pause_millis);
+        poll(0, 0, (*iter).second->pause_millis);
       }
       else {
         HT_ERRORF("induced failure code '%d' '%s' iteration=%u",

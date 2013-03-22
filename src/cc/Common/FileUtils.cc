@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * File system utility functions.
+ * Helper/Utility functions for accessing files and the file system.
+ */
+
 #include "Common/Compat.h"
 
 #include <iomanip>
@@ -36,16 +41,6 @@ extern "C" {
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/uio.h>
-#ifdef HT_XATTR_ENABLED
-# if defined(__FreeBSD__)
-#   include <sys/extattr.h>
-# else
-#   include <sys/xattr.h>
-# endif
-# if defined(__linux__)
-#   include <attr/xattr.h>
-# endif
-#endif
 }
 
 #include <boost/shared_array.hpp>
@@ -71,9 +66,6 @@ ssize_t FileUtils::read(const String &fname, String &contents) {
 }
 
 
-
-/**
- */
 ssize_t FileUtils::read(int fd, void *vptr, size_t n) {
   size_t nleft;
   ssize_t nread;
@@ -87,11 +79,11 @@ ssize_t FileUtils::read(int fd, void *vptr, size_t n) {
         nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
         break;
-      else {
+      else
         return -1;
-      }
-    } else if (nread == 0)
-      break;/* EOF */
+    }
+    else if (nread == 0)
+      break; /* EOF */
 
     nleft -= nread;
     ptr   += nread;
@@ -99,8 +91,7 @@ ssize_t FileUtils::read(int fd, void *vptr, size_t n) {
   return n - nleft;
 }
 
-/**
- */
+
 ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
   size_t nleft;
   ssize_t nread;
@@ -114,11 +105,11 @@ ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
         nread = 0;/* and call read() again */
       else if (errno == EAGAIN)
         break;
-      else {
+      else
         return -1;
-      }
-    } else if (nread == 0)
-      break;/* EOF */
+    }
+    else if (nread == 0)
+      break; /* EOF */
 
     nleft -= nread;
     ptr   += nread;
@@ -129,7 +120,7 @@ ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
 
 
 ssize_t FileUtils::write(const String &fname, String &contents) {
-  int fd = open(fname.c_str(), O_WRONLY|O_CREAT|O_TRUNC, 0644);
+  int fd = open(fname.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
   if (fd < 0) {
     int saved_errno = errno;
     HT_ERRORF("Unable to open file \"%s\" for writing - %s", fname.c_str(),
@@ -143,9 +134,6 @@ ssize_t FileUtils::write(const String &fname, String &contents) {
 }
 
 
-
-/**
- */
 ssize_t FileUtils::write(int fd, const void *vptr, size_t n) {
   size_t nleft;
   ssize_t nwritten;
@@ -159,9 +147,8 @@ ssize_t FileUtils::write(int fd, const void *vptr, size_t n) {
         nwritten = 0; /* and call write() again */
       else if (errno == EAGAIN)
         break;
-      else {
+      else
         return -1; /* error */
-      }
     }
 
     nleft -= nwritten;
@@ -179,17 +166,15 @@ ssize_t FileUtils::writev(int fd, const struct iovec *vector, int count) {
       nwritten = 0;
       break;
     }
-    else {
+    else
       return -1; /* error */
-    }
   }
   return nwritten;
 }
 
 
-ssize_t
-FileUtils::sendto(int fd, const void *vptr, size_t n, const sockaddr *to,
-                  socklen_t tolen) {
+ssize_t FileUtils::sendto(int fd, const void *vptr, size_t n,
+        const sockaddr *to, socklen_t tolen) {
   size_t nleft;
   ssize_t nsent;
   const char *ptr;
@@ -202,9 +187,8 @@ FileUtils::sendto(int fd, const void *vptr, size_t n, const sockaddr *to,
         nsent = 0; /* and call sendto() again */
       else if (errno == EAGAIN || errno == ENOBUFS)
         break;
-      else {
+      else
         return -1; /* error */
-      }
     }
 
     nleft -= nsent;
@@ -212,7 +196,6 @@ FileUtils::sendto(int fd, const void *vptr, size_t n, const sockaddr *to,
   }
   return n - nleft;
 }
-
 
 
 ssize_t FileUtils::send(int fd, const void *vptr, size_t n) {
@@ -228,9 +211,8 @@ ssize_t FileUtils::send(int fd, const void *vptr, size_t n) {
         nsent = 0; /* and call sendto() again */
       else if (errno == EAGAIN || errno == ENOBUFS)
         break;
-      else {
+      else
         return -1; /* error */
-      }
     }
 
     nleft -= nsent;
@@ -240,10 +222,8 @@ ssize_t FileUtils::send(int fd, const void *vptr, size_t n) {
 }
 
 
-
-ssize_t
-FileUtils::recvfrom(int fd, void *vptr, size_t n, sockaddr *from,
-                    socklen_t *fromlen) {
+ssize_t FileUtils::recvfrom(int fd, void *vptr, size_t n, sockaddr *from,
+        socklen_t *fromlen) {
   ssize_t nread;
   while (true) {
     if ((nread = ::recvfrom(fd, vptr, n, 0, from, fromlen)) < 0) {
@@ -271,29 +251,32 @@ ssize_t FileUtils::recv(int fd, void *vptr, size_t n) {
 }
 
 
-/* flags are file status flags to turn on */
-void FileUtils::set_flags(int fd, int flags) {
+bool FileUtils::set_flags(int fd, int flags) {
   int val;
+  bool ret = true;
 
   if ((val = fcntl(fd, F_GETFL, 0)) < 0) {
     int saved_errno = errno;
-    cerr << "fcnt(F_GETFL) failed : " << strerror(saved_errno) << endl;
+    HT_ERROR_OUT << "fcnt(F_GETFL) failed : " << ::strerror(saved_errno)
+        << HT_END;
     errno = saved_errno;
+    ret = false;
   }
 
   val |= flags;
 
   if (fcntl(fd, F_SETFL, val) < 0) {
     int saved_errno = errno;
-    cerr << "fcnt(F_SETFL) failed : " << strerror(saved_errno) << endl;
+    HT_ERROR_OUT << "fcnt(F_SETFL) failed : " << ::strerror(saved_errno)
+        << HT_END;
     errno = saved_errno;
+    ret = false;
   }
+
+  return ret;
 }
 
 
-
-/**
- */
 char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
   struct stat statbuf;
   int fd;
@@ -302,14 +285,16 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
 
   if ((fd = open(fname.c_str(), O_RDONLY)) < 0) {
     int saved_errno = errno;
-    HT_ERRORF("open(\"%s\") failure - %s", fname.c_str(),  strerror(saved_errno));
+    HT_ERRORF("open(\"%s\") failure - %s", fname.c_str(),
+            strerror(saved_errno));
     errno = saved_errno;
     return 0;
   }
 
   if (fstat(fd, &statbuf) < 0) {
     int saved_errno = errno;
-    HT_ERRORF("fstat(\"%s\") failure - %s", fname.c_str(),  strerror(saved_errno));
+    HT_ERRORF("fstat(\"%s\") failure - %s", fname.c_str(),
+           strerror(saved_errno));
     errno = saved_errno;
     return 0;
   }
@@ -324,7 +309,8 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
 
   if (nread == (ssize_t)-1) {
     int saved_errno = errno;
-    HT_ERRORF("read(\"%s\") failure - %s", fname.c_str(),  strerror(saved_errno));
+    HT_ERRORF("read(\"%s\") failure - %s", fname.c_str(),
+            strerror(saved_errno));
     errno = saved_errno;
     delete [] rbuf;
     *lenp = 0;
@@ -341,6 +327,7 @@ char *FileUtils::file_to_buffer(const String &fname, off_t *lenp) {
   return rbuf;
 }
 
+
 String FileUtils::file_to_string(const String &fname) {
   String str;
   off_t len;
@@ -351,34 +338,34 @@ String FileUtils::file_to_string(const String &fname) {
 }
 
 
-
 void *FileUtils::mmap(const String &fname, off_t *lenp) {
   int fd;
   struct stat statbuf;
   void *map;
 
   if (::stat(fname.c_str(), &statbuf) != 0)
-    HT_FATALF("Unable determine length of '%s' for memory mapping - %s", fname.c_str(), strerror(errno));
+    HT_FATALF("Unable determine length of '%s' for memory mapping - %s",
+            fname.c_str(), strerror(errno));
   *lenp = (off_t)statbuf.st_size;
 
   if ((fd = ::open(fname.c_str(), O_RDONLY)) == -1)
-    HT_FATALF("Unable to open '%s' for memory mapping - %s", fname.c_str(), strerror(errno));
+    HT_FATALF("Unable to open '%s' for memory mapping - %s", fname.c_str(),
+            strerror(errno));
   
   if ((map = ::mmap(0, *lenp, PROT_READ, MAP_SHARED, fd, 0)) == MAP_FAILED)
-    HT_FATALF("Unable to memory map file '%s' - %s", fname.c_str(), strerror(errno));
+    HT_FATALF("Unable to memory map file '%s' - %s", fname.c_str(),
+            strerror(errno));
 
   close(fd);
-
   return map;
 }
-
 
 
 bool FileUtils::mkdirs(const String &dirname) {
   struct stat statbuf;
   boost::shared_array<char> tmp_dir(new char [dirname.length() + 1]);
   char *tmpdir = tmp_dir.get();
-  char *ptr = tmpdir+1;
+  char *ptr = tmpdir + 1;
 
   strcpy(tmpdir, dirname.c_str());
 
@@ -388,16 +375,16 @@ bool FileUtils::mkdirs(const String &dirname) {
       if (errno == ENOENT) {
         if (mkdir(tmpdir, 0755) != 0) {
           int saved_errno = errno;
-          HT_ERRORF("Problem creating directory '%s' - %s",
-                    tmpdir, strerror(saved_errno));
+          HT_ERRORF("Problem creating directory '%s' - %s", tmpdir,
+                  strerror(saved_errno));
           errno = saved_errno;
           return false;
         }
       }
       else {
         int saved_errno = errno;
-        HT_ERRORF("Problem stat'ing directory '%s' - %s",
-                  tmpdir, strerror(saved_errno));
+        HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpdir,
+                strerror(saved_errno));
         errno = saved_errno;
         return false;
       }
@@ -409,16 +396,16 @@ bool FileUtils::mkdirs(const String &dirname) {
     if (errno == ENOENT) {
       if (mkdir(tmpdir, 0755) != 0) {
         int saved_errno = errno;
-        HT_ERRORF("Problem creating directory '%s' - %s",
-                  tmpdir, strerror(saved_errno));
+        HT_ERRORF("Problem creating directory '%s' - %s", tmpdir,
+                strerror(saved_errno));
         errno = saved_errno;
         return false;
       }
     }
     else {
       int saved_errno = errno;
-      HT_ERRORF("Problem stat'ing directory '%s' - %s",
-                tmpdir, strerror(saved_errno));
+      HT_ERRORF("Problem stat'ing directory '%s' - %s", tmpdir,
+              strerror(saved_errno));
       errno = saved_errno;
       return false;
     }
@@ -438,7 +425,8 @@ bool FileUtils::exists(const String &fname) {
 bool FileUtils::unlink(const String &fname) {
   if (::unlink(fname.c_str()) == -1) {
     int saved_errno = errno;
-    HT_ERRORF("unlink(\"%s\") failed - %s", fname.c_str(), strerror(saved_errno));
+    HT_ERRORF("unlink(\"%s\") failed - %s", fname.c_str(),
+            strerror(saved_errno));
     errno = saved_errno;
     return false;
   }
@@ -456,12 +444,12 @@ bool FileUtils::rename(const String &oldpath, const String &newpath) {
   return true;
 }
 
+
 uint64_t FileUtils::size(const String &fname) {
   struct stat statbuf;
   if (stat(fname.c_str(), &statbuf) != 0)
     return 0;
   return statbuf.st_size;
-
 }
 
 
@@ -474,7 +462,7 @@ off_t FileUtils::length(const String &fname) {
 
 
 void FileUtils::add_trailing_slash(String &path) {
-  if (path.find('/', path.length()-1) == string::npos)
+  if (path.find('/', path.length() - 1) == string::npos)
     path += "/";
 }
 
@@ -520,112 +508,20 @@ void FileUtils::readdir(const String &dirname, const String &fname_regex,
   int ret;
   DIR *dirp = opendir(dirname.c_str());
   struct dirent de, *dep;
-  boost::shared_ptr<RE2> regex(fname_regex.length() ? new RE2(fname_regex) : 0);
+  boost::shared_ptr<RE2> regex(fname_regex.length()
+                                ? new RE2(fname_regex)
+                                : 0);
 
   do {
-
     if ((ret = readdir_r(dirp, &de, &dep)) != 0)
-      HT_FATALF("Problem reading directory '%s' - %s", dirname.c_str(), strerror(errno));
+      HT_FATALF("Problem reading directory '%s' - %s", dirname.c_str(),
+              strerror(errno));
 
-    if (dep != 0 &&
-	(!regex || RE2::FullMatch(de.d_name, *regex)))
+    if (dep != 0 && (!regex || RE2::FullMatch(de.d_name, *regex)))
       listing.push_back(de);
-
   } while (dep != 0);
 
   (void)closedir(dirp);
 }
 
 
-#ifdef HT_XATTR_ENABLED
-
-int
-FileUtils::getxattr(const String &path, const String &name, void *value,
-                    size_t size) {
-  String canonic = (String)"user." + name;
-#if defined(__linux__)
-  return ::getxattr(path.c_str(), canonic.c_str(), value, size);
-#elif defined(__APPLE__)
-  return ::getxattr(path.c_str(), canonic.c_str(), value, size, 0, 0);
-#elif defined(__FreeBSD__)
-  return ::extattr_get_file(path.c_str(), EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
-#else
-  ImplementMe;
-#endif
-}
-
-
-int
-FileUtils::setxattr(const String &path, const String &name, const void *value,
-                    size_t size, int flags) {
-  String canonic = (String)"user." + name;
-#if defined(__linux__)
-  return ::setxattr(path.c_str(), canonic.c_str(), value, size, flags);
-#elif defined(__APPLE__)
-  return ::setxattr(path.c_str(), canonic.c_str(), value, size, 0, flags);
-#elif defined(__FreeBSD__)
-  return ::extattr_set_file(path.c_str(), EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
-#else
-  ImplementMe;
-#endif
-}
-
-
-int FileUtils::fgetxattr(int fd, const String &name, void *value, size_t size) {
-  String canonic = (String)"user." + name;
-#if defined(__linux__)
-  return ::fgetxattr(fd, canonic.c_str(), value, size);
-#elif defined(__APPLE__)
-  return ::fgetxattr(fd, canonic.c_str(), value, size, 0, 0);
-#elif defined(__FreeBSD__)
-  return ::extattr_get_fd(fd, EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
-#else
-  ImplementMe;
-#endif
-}
-
-
-int
-FileUtils::fsetxattr(int fd, const String &name, const void *value,
-                     size_t size, int flags) {
-  String canonic = (String)"user." + name;
-#if defined(__linux__)
-  return ::fsetxattr(fd, canonic.c_str(), value, size, flags);
-#elif defined(__APPLE__)
-  return ::fsetxattr(fd, canonic.c_str(), value, size, 0, flags);
-#elif defined(__FreeBSD__)
-  return ::extattr_set_fd(fd, EXTATTR_NAMESPACE_USER, canonic.c_str(), value, size);
-#else
-  ImplementMe;
-#endif
-}
-
-
-int FileUtils::removexattr(const String &path, const String &name) {
-  String canonic = (String)"user." + name;
-#if defined(__linux__)
-  return ::removexattr(path.c_str(), canonic.c_str());
-#elif defined(__APPLE__)
-  return ::removexattr(path.c_str(), canonic.c_str(), 0);
-#elif defined(__FreeBSD__)
-  return ::extattr_delete_file(path.c_str(), EXTATTR_NAMESPACE_USER, canonic.c_str());
-#else
-  ImplementMe;
-#endif
-}
-
-int FileUtils::fremovexattr(int fd, const String &name) {
-  String canonic = (String)"user." + name;
-#if defined(__linux__)
-  return ::fremovexattr(fd, canonic.c_str());
-#elif defined(__APPLE__)
-  return ::fremovexattr(fd, canonic.c_str(), 0);
-#elif defined(__FreeBSD__)
-  return ::extattr_delete_fd(fd, EXTATTR_NAMESPACE_USER, canonic.c_str());
-#else
-  ImplementMe;
-#endif
-
-}
-
-#endif // HT_XATTR_ENABLED

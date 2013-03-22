@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_REQUESTHANDLEREXISTS_H
 #define HYPERTABLE_REQUESTHANDLEREXISTS_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"

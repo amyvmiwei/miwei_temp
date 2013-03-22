@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * High resolution time handling based on boost::xtime.
  */
 
 #include "Compat.h"
@@ -97,7 +101,7 @@ int64_t xtime_diff_millis(boost::xtime &early_xt, boost::xtime &late_xt) {
 
 std::ostream &hires_ts(std::ostream &out) {
   HiResTime now;
-  return out << now.sec <<'.'<< setw(9) << setfill('0') << now.nsec;
+  return out << now.sec << '.' << setw(9) << setfill('0') << now.nsec;
 }
 
 std::ostream &hires_ts_date(std::ostream &out) {
@@ -116,32 +120,32 @@ std::ostream &hires_ts_date(std::ostream &out) {
 }
 
 #if defined(__sun__)
-  time_t timegm(struct tm *t) {
-    time_t tl, tb;
-    struct tm *tg;
+time_t timegm(struct tm *t) {
+  time_t tl, tb;
+  struct tm *tg;
 
-    tl = mktime (t);
-    if (tl == -1)
-      {
-	t->tm_hour--;
-	tl = mktime (t);
-	if (tl == -1)
-	  return -1; /* can't deal with output from strptime */
-	tl += 3600;
-      }
-    tg = gmtime (&tl);
-    tg->tm_isdst = 0;
-    tb = mktime (tg);
-    if (tb == -1)
-      {
-	tg->tm_hour--;
-	tb = mktime (tg);
-	if (tb == -1)
-	  return -1; /* can't deal with output from gmtime */
-	tb += 3600;
-      }
-    return (tl - (tb - tl));
-  }
+  tl = mktime (t);
+  if (tl == -1)
+    {
+      t->tm_hour--;
+      tl = mktime (t);
+      if (tl == -1)
+        return -1; /* can't deal with output from strptime */
+      tl += 3600;
+    }
+  tg = gmtime (&tl);
+  tg->tm_isdst = 0;
+  tb = mktime (tg);
+  if (tb == -1)
+    {
+      tg->tm_hour--;
+      tb = mktime (tg);
+      if (tb == -1)
+        return -1; /* can't deal with output from gmtime */
+      tb += 3600;
+    }
+  return (tl - (tb - tl));
+}
 #endif
 
 } // namespace Hypertable

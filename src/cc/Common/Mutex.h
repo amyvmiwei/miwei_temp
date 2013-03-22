@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Scoped lockers for recursive and non-recursive mutexes.
+ * These helper classes use RAII to lock a mutex when they are constructed
+ * and to unlock them when going out of scope.
+ */
+
 #ifndef HYPERTABLE_MUTEX_H
 #define HYPERTABLE_MUTEX_H
 
@@ -28,40 +34,59 @@
 
 namespace Hypertable {
 
-/** boost::mutex::scoped_lock use lock_ops<mutex>::lock/unlock in pre 1.35
+/** @addtogroup Common
+ *  @{
+ */
+
+/** A generic Locker class for objects with lock/unlock methods.
+ *
+ * boost::mutex::scoped_lock use lock_ops<mutex>::lock/unlock in pre 1.35
  * which makes it less convenient than the following which can be used
  * to guard any object (besides a typical mutex) with lock/unlock methods
  */
 template <class MutexT>
 class Locker : boost::noncopyable {
 public:
+  /** Constructor; acquires the lock, unless @a init_lock is false */
   explicit Locker(MutexT &mutex, bool init_lock = true)
     : m_mutex(mutex), m_locked(false) {
-    if (init_lock) lock(); else m_locked = true;
-  }
-  ~Locker() {
-    if (m_locked) unlock();
-  }
-
-private:
-  MutexT &m_mutex;
-  bool m_locked;
-
-  void lock() {
-    HT_ASSERT(!m_locked);
-    m_mutex.lock();
+    if (init_lock)
+      m_mutex.lock();
     m_locked = true;
   }
 
-  void unlock() {
-    HT_ASSERT(m_locked);
-    m_mutex.unlock();
-    m_locked = false;
+  /** Destructor; releases the lock */
+  ~Locker() {
+    if (m_locked) {
+      m_mutex.unlock();
+      m_locked = false;
+    }
   }
+
+private:
+  /** Reference to the mutex object */
+  MutexT &m_mutex;
+
+  /** true if the mutex was locked, otherwise false */
+  bool m_locked;
 };
 
+/** A ScopedLock is boost's version of the Locker class for a regular
+ * (non-recursive) mutex.
+ */
 typedef boost::mutex::scoped_lock ScopedLock;
 
+/** A ScopedRecLock is boost's version of the Locker class for a recursive
+ * mutex.
+ */
+typedef boost::recursive_mutex::scoped_lock ScopedRecLock;
+
+/** A (non-recursive) mutex
+ *
+ * This is identical to boost::mutex unless your boost version is < 1.35;
+ * in this case additional lock(), unlock() methods are provided which are
+ * more convenient to use than those of boost::mutex.
+ */
 class Mutex : public boost::mutex {
 public:
 #if BOOST_VERSION < 103500
@@ -73,6 +98,12 @@ public:
 #endif
 };
 
+/** A recursive mutex
+ *
+ * This is identical to boost::recursive_mutex unless your boost version
+ * is < 1.35; in this case additional lock(), unlock() methods are provided
+ * which are more convenient to use than those of boost::recursive_mutex.
+ */
 class RecMutex : public boost::recursive_mutex {
 public:
 #if BOOST_VERSION < 103500
@@ -84,7 +115,7 @@ public:
 #endif
 };
 
-typedef boost::recursive_mutex::scoped_lock ScopedRecLock;
+/** @} */
 
 } // namespace Hypertable
 

@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,11 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Importing boost metaprogramming facilities into Hypertable::Meta.
+ * (http://www.boost.org/doc/libs/1_53_0/libs/mpl/doc/index.html).
+ */
+
 #ifndef HYPERTABLE_META_H
 #define HYPERTABLE_META_H
 
@@ -28,8 +33,14 @@
  */
 namespace Hypertable { namespace Meta {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
   using namespace boost;
   using namespace boost::mpl;
+
+  /** @} */
 
 }} // namespace Hypertable::Meta
 

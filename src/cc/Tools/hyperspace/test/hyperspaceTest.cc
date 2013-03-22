@@ -26,7 +26,13 @@
 #include <vector>
 
 extern "C" {
+#include <signal.h>
+#include <sys/types.h>
 #include <unistd.h>
+#include <poll.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 }
 
 #include "Common/InetAddr.h"
@@ -34,7 +40,6 @@ extern "C" {
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
 #include "Common/Logger.h"
-#include "Common/ServerLauncher.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -117,6 +122,61 @@ namespace {
 
 }
 
+class ServerLauncher {
+  public:
+    ServerLauncher(const char *path, char *const argv[],
+                   const char *outfile = 0, bool append_output = false) {
+      int fd[2];
+      m_path = path;
+      if (pipe(fd) < 0) {
+        perror("pipe");
+        exit(1);
+      }
+      if ((m_child_pid = fork()) == 0) {
+        if (outfile) {
+          int open_flags;
+          int outfd = -1;
+
+          if (append_output)
+            open_flags = O_CREAT|O_APPEND|O_RDWR;
+          else
+            open_flags = O_CREAT|O_TRUNC|O_WRONLY,
+
+          outfd = open(outfile, open_flags, 0644);
+          if (outfd < 0) {
+            perror("open");
+            exit(1);
+          }
+          dup2(outfd, 1);
+          dup2(outfd, 2);
+        }
+        close(fd[1]);
+        dup2(fd[0], 0);
+        close(fd[0]);
+        execv(path, argv);
+      }
+      close(fd[0]);
+      m_write_fd = fd[1];
+      poll(0,0,2000);
+    }
+
+    ~ServerLauncher() {
+      std::cerr << "Killing '" << m_path << "' pid=" << m_child_pid
+                << std::endl << std::flush;
+      close(m_write_fd);
+      if (kill(m_child_pid, 9) == -1)
+        perror("kill");
+    }
+
+    int get_write_descriptor() { return m_write_fd; }
+
+    pid_t get_pid() { return m_child_pid; }
+
+  private:
+    const char *m_path;
+    pid_t m_child_pid;
+    int   m_write_fd;
+};
 
 int main(int argc, char **argv) {
   std::vector<const char *> master_args;

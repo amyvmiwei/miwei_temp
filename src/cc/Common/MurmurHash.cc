@@ -1,4 +1,4 @@
-//-----------------------------------------------------------------------------
+// ----------------------------------------------------------------------------
 // MurmurHash2, by Austin Appleby
 // (public domain, cf. http://murmurhash.googlepages.com/)
 
@@ -13,7 +13,16 @@
 // 2. It will not produce the same results on little-endian and big-endian
 //    machines.
 
+/** @file
+ * MurmurHash2 digest routine.
+ * The MurmurHash 2 from Austin Appleby is faster and better mixed (but weaker
+ * crypto-wise with one pair of obvious differential) than both Lookup3 and
+ * SuperFastHash. Not-endian neutral for speed.
+ * https://sites.google.com/site/murmurhash/
+ */
+
 #include "Common/Compat.h"
+#include "Common/MurmurHash.h"
 
 namespace Hypertable {
 

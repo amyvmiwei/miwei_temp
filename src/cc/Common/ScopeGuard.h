@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,12 +17,22 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-// Addapted from http://www.ddj.com/cpp/184403758
+/**
+ * @file
+ * Executes user-defined functions when leaving the current scope.
+ *
+ * Adapted from http://www.ddj.com/cpp/184403758
+ */
 #ifndef HT_SCOPEGUARD_H
 #define HT_SCOPEGUARD_H
 
 namespace Hypertable {
 
+/** @addtogroup Common
+ *  @{
+ */
+
+/** Base class for the ScopeGuards */
 class ScopeGuardImplBase {
 protected:
   ~ScopeGuardImplBase() { }
@@ -49,16 +59,16 @@ private:
   mutable bool m_dismissed;
 };
 
-/**
+/*
  * According to the C++ standard, a reference initialized with a temporary
  * value makes that temporary value live for the lifetime of the reference
  * itself. This can save us from having to explicitly instantiate the guards
  * with long type parameters
  */
-typedef const ScopeGuardImplBase& ScopeGuard;
+typedef const ScopeGuardImplBase &ScopeGuard;
 
 /**
- * Guard implementation for free function with no paramter
+ * ScopeGuard implementation for free function with no paramter
  */
 template <typename FunT>
 class ScopeGuardImpl0 : public ScopeGuardImplBase {
@@ -81,7 +91,7 @@ inline ScopeGuardImpl0<FunT> make_guard(FunT fun) {
 }
 
 /**
- * Guard implementation for free function with 1 parameter
+ * ScopeGuard implementation for free function with 1 parameter
  */
 template <typename FunT, typename P1T>
 class ScopeGuardImpl1 : public ScopeGuardImplBase {
@@ -106,7 +116,7 @@ inline ScopeGuardImpl1<FunT, P1T> make_guard(FunT fun, P1T p1) {
 }
 
 /**
- * Guard implementation for free function with 2 parameters
+ * ScopeGuard implementation for free function with 2 parameters
  */
 template <typename FunT, typename P1T, typename P2T>
 class ScopeGuardImpl2: public ScopeGuardImplBase {
@@ -132,7 +142,7 @@ inline ScopeGuardImpl2<FunT, P1T, P2T> make_guard(FunT fun, P1T p1, P2T p2) {
 }
 
 /**
- * Guard implementation for free function with 3 parameters
+ * ScopeGuard implementation for free function with 3 parameters
  */
 template <typename FunT, typename P1T, typename P2T, typename P3T>
 class ScopeGuardImpl3 : public ScopeGuardImplBase {
@@ -162,7 +172,7 @@ make_guard(FunT fun, P1T p1, P2T p2, P3T p3) {
 }
 
 /**
- * Guard implementation for method with no parameter
+ * ScopeGuard implementation for method with no parameter
  */
 template <class ObjT, typename MethodT>
 class ObjScopeGuardImpl0 : public ScopeGuardImplBase {
@@ -190,7 +200,7 @@ make_obj_guard(ObjT &obj, MethodT method) {
 }
 
 /**
- * Guard implementation for method with 1 parameter
+ * ScopeGuard implementation for method with 1 parameter
  */
 template <class ObjT, typename MethodT, typename P1T>
 class ObjScopeGuardImpl1 : public ScopeGuardImplBase {
@@ -215,12 +225,11 @@ protected:
 template <class ObjT, typename MethodT, typename P1T>
 inline ObjScopeGuardImpl1<ObjT, MethodT, P1T>
 make_obj_guard(ObjT &obj, MethodT method, P1T p1) {
-  return ObjScopeGuardImpl1<ObjT, MethodT, P1T>::make_obj_guard(obj, method,
-                                                                p1);
+  return ObjScopeGuardImpl1<ObjT, MethodT, P1T>::make_obj_guard(obj, method, p1);
 }
 
 /**
- * Guard implementation for method with 2 parameters
+ * ScopeGuard implementation for method with 2 parameters
  */
 template <class ObjT, typename MethodT, typename P1T, typename P2T>
 class ObjScopeGuardImpl2 : public ScopeGuardImplBase {
@@ -251,7 +260,8 @@ make_obj_guard(ObjT &obj, MethodT method, P1T p1, P2T p2) {
 }
 
 /**
- * Used to pass parameter to the scope guard by reference
+ * Helper class used to pass a parameter to the ScopeGuard by reference.
+ *
  * e.g.:
  *     inline void decr(int &x) { --x; }
  *
@@ -277,6 +287,7 @@ inline RefHolder<T> by_ref(T& t) {
   return RefHolder<T>(t);
 }
 
+/** @} */
 
 } // namespace Hypertable
 
@@ -292,8 +303,7 @@ inline RefHolder<T> by_ref(T& t) {
   HT_UNUSED(HT_AUTO_VAR(guard))
 
 #define HT_ON_OBJ_SCOPE_EXIT(...) \
-    ScopeGuard HT_AUTO_VAR(guard) = make_obj_guard(__VA_ARGS__); \
-    HT_UNUSED(HT_AUTO_VAR(guard))
+  ScopeGuard HT_AUTO_VAR(guard) = make_obj_guard(__VA_ARGS__); \
+  HT_UNUSED(HT_AUTO_VAR(guard))
 
-
-#endif //HT_SCOPEGUARD_H
+#endif // HT_SCOPEGUARD_H

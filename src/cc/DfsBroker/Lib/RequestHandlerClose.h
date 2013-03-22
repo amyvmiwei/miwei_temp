@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_REQUESTHANDLERCLOSE_H
 #define HYPERTABLE_REQUESTHANDLERCLOSE_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"

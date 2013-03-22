@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,10 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Helper structures for CstrHashMap.
+ */
+
 #ifndef HYPERTABLE_CSTR_HASH_TRAITS_H
 #define HYPERTABLE_CSTR_HASH_TRAITS_H
 
@@ -24,6 +28,10 @@
 #include "TclHash.h"
 
 namespace Hypertable {
+
+/** @addtogroup Common
+ *  @{
+ */
 
 /**
  * Traits for CstrHashMap/Set
@@ -75,6 +83,8 @@ struct CstrCaseHashTraits {
     }
   };
 };
+
+/** @}*/
 
 } // namespace Hypertable
 
