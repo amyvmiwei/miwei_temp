@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for TimerHandler.
+ * This file contains type declarations for TimerHandler, a class for
+ * managing the maintenance timer.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Config.h"
 #include "Common/Error.h"
@@ -31,6 +38,8 @@
 
 #include "Common/Time.h"
 
+#include "Global.h"
+#include "RangeServer.h"
 #include "RequestHandlerDoMaintenance.h"
 #include "TimerHandler.h"
 
@@ -44,15 +53,17 @@ using namespace Hypertable::Config;
  */
 TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
   : m_comm(comm), m_range_server(range_server),
-    m_last_low_memory_maintenance(TIMESTAMP_NULL),
-    m_urgent_maintenance_scheduled(false), m_app_queue_paused(false),
-    m_low_physical_memory(false), m_maintenance_outstanding(false) {
+    m_shutdown(false), m_shutdown_complete(false),
+    m_immediate_maintenance_scheduled(false), m_app_queue_paused(false),
+    m_low_memory_mode(false), m_schedule_outstanding(false) {
   int error;
   int32_t maintenance_interval;
 
   m_query_cache_memory = get_i64("Hypertable.RangeServer.QueryCache.MaxMemory");
   m_timer_interval = get_i32("Hypertable.RangeServer.Timer.Interval");
   maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
+  m_userlog_size_threshold = (int64_t)((double)Global::log_prune_threshold_max * 1.2);
+  m_max_app_queue_pause = get_i32("Hypertable.RangeServer.Maintenance.MaxAppQueuePause");
 
   if (m_timer_interval > (maintenance_interval+10)) {
     m_timer_interval = maintenance_interval + 10;
@@ -62,7 +73,7 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
 
   m_current_interval = m_timer_interval;
 
-  boost::xtime_get(&m_last_maintenance, TIME_UTC_);
+  boost::xtime_get(&m_last_schedule, TIME_UTC_);
 
   m_app_queue = m_range_server->get_application_queue();
 
@@ -75,39 +86,53 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
 }
 
 
-void TimerHandler::schedule_maintenance() {
+void TimerHandler::schedule_immediate_maintenance() {
   ScopedLock lock(m_mutex);
 
-  if (!m_urgent_maintenance_scheduled && !m_maintenance_outstanding) {
+  if (!m_immediate_maintenance_scheduled && !m_schedule_outstanding) {
     boost::xtime now;
     boost::xtime_get(&now, TIME_UTC_);
-    uint64_t elapsed = xtime_diff_millis(m_last_maintenance, now);
+    uint64_t elapsed = xtime_diff_millis(m_last_schedule, now);
     int error;
     uint32_t millis = (elapsed < 1000) ? 1000 - elapsed : 0;
-    HT_INFOF("Scheduling urgent maintenance for %u millis in the future", millis);
+    HT_INFOF("Scheduling immediate maintenance for %u millis in the future", millis);
     if ((error = m_comm->set_timer(millis, this)) != Error::OK)
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
-    m_urgent_maintenance_scheduled = true;
+    m_immediate_maintenance_scheduled = true;
   }
   return;
 }
 
 
-void TimerHandler::complete_maintenance_notify() {
+void TimerHandler::maintenance_scheduled_notify() {
   ScopedLock lock(m_mutex);
-  m_maintenance_outstanding = false;
-  boost::xtime_get(&m_last_maintenance, TIME_UTC_);
-  if (m_app_queue_paused) {
-    if (!low_memory_mode()) {
-      restart_app_queue();
+
+  m_schedule_outstanding = false;
+  boost::xtime_get(&m_last_schedule, TIME_UTC_);
+
+  if (m_range_server->replay_finished()) {
+    int64_t user_log_size = Global::user_log ? Global::user_log->size() : 0;
+    if (user_log_size > m_userlog_size_threshold) {
+      if (!m_app_queue_paused)
+        pause_app_queue();
     }
+    else if (m_app_queue_paused && !low_memory())
+      restart_app_queue();
+  }
+
+  if (m_immediate_maintenance_scheduled)
+    m_immediate_maintenance_scheduled = false;
+  else {
+    int error;
+    if ((error = m_comm->set_timer(m_current_interval, this)) != Error::OK)
+      HT_FATALF("Problem setting timer - %s", Error::get_text(error));
   }
 }
 
 
 void TimerHandler::shutdown() {
   ScopedLock lock(m_mutex);
-  TimerInterface::shutdown();
+  m_shutdown = true;
   m_comm->cancel_timer(this);
   // gracfully complete shutdown
   int error;
@@ -116,13 +141,11 @@ void TimerHandler::shutdown() {
 }
 
 
-/**
- *
- */
-void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
+void TimerHandler::handle(Hypertable::EventPtr &event) {
   ScopedLock lock(m_mutex);
   int error;
-  bool do_maintenance = !m_maintenance_outstanding;
+  bool do_maintenance = !m_schedule_outstanding;
+  boost::xtime now;
 
   if (m_shutdown) {
     HT_INFO("TimerHandler shutting down.");
@@ -131,74 +154,94 @@ void TimerHandler::handle(Hypertable::EventPtr &event_ptr) {
     return;
   }
 
-  if (m_range_server->replay_finished() && low_memory_mode()) {
-    if (!m_app_queue_paused) {
-      HT_INFO("Pausing application queue due to low memory condition");
-      m_app_queue_paused = true;
-      m_app_queue->stop();
-      m_current_interval = 500;
-      boost::xtime_get(&m_pause_time, TIME_UTC_);
-    }
+  boost::xtime_get(&now, TIME_UTC_);
+
+  if (m_app_queue_paused) {
+    HT_INFOF("App queue paused (pause_time=%u, lmm=%s, restart_gen=%lld, "
+             "queue_gen=%lld)", (unsigned)xtime_diff_millis(m_pause_time, now),
+             m_low_memory_mode ? "true" : "false", (Lld)m_restart_generation,
+             (Lld)Global::maintenance_queue->generation());
+    if ((m_low_memory_mode && !low_memory()) ||
+        xtime_diff_millis(m_pause_time, now) >= m_max_app_queue_pause ||
+        m_restart_generation <= Global::maintenance_queue->generation())
+      restart_app_queue();
+    do_maintenance = !m_schedule_outstanding && m_immediate_maintenance_scheduled;
   }
-  else if (m_app_queue_paused) {
-    restart_app_queue();
+  else if (m_low_memory_mode && low_memory())
+    pause_app_queue();
+
+  // If immediate maintenance requested, disable low memory mode, otherwise,
+  // if low on memory, enable low memory mode
+  int64_t user_log_size = -1;
+  if (m_immediate_maintenance_scheduled)
+    m_low_memory_mode = false;
+  else {
+    user_log_size = Global::user_log ? Global::user_log->size() : 0;
+    if (user_log_size > m_userlog_size_threshold || low_memory())
+      m_low_memory_mode = user_log_size < m_userlog_size_threshold;
   }
 
-  if (low_memory()) {
-    int64_t now = get_ts64();
-    // balance maintenance scheduling up on recent maintenance
-    // and maintenance workload
-    if (m_last_low_memory_maintenance != TIMESTAMP_NULL) {
-      if ((now-m_last_low_memory_maintenance) < (m_timer_interval*1000000LL) &&
-	  Global::maintenance_queue->full())
-        do_maintenance = false;
-    }
-    if (do_maintenance)
-      m_last_low_memory_maintenance = now;
-  }
+  HT_INFOF("aq_paused=%s, log_size=%lld, lmm=%s, ci=%d, ims=%s, so=%s, dm=%s",
+           m_app_queue_paused ? "true" : "false", (Lld)user_log_size,
+           m_low_memory_mode ? "true" : "false",
+           (int)m_current_interval,
+           m_immediate_maintenance_scheduled ? "true" : "false",
+           m_schedule_outstanding ? "true" : "false",
+           do_maintenance ? "true" : "false");
 
   try {
 
-    if (event_ptr->type == Hypertable::Event::TIMER) {
+    if (event->type == Hypertable::Event::TIMER) {
 
       if (do_maintenance) {
         m_app_queue->add( new RequestHandlerDoMaintenance(m_comm, m_range_server) );
-        m_maintenance_outstanding = true;
+        m_schedule_outstanding = true;
       }
-
-      if (m_urgent_maintenance_scheduled)
-        m_urgent_maintenance_scheduled = false;
       else {
-        //HT_INFOF("About to reset timer to %u millis in the future", m_current_interval);
         if ((error = m_comm->set_timer(m_current_interval, this)) != Error::OK)
           HT_FATALF("Problem setting timer - %s", Error::get_text(error));
       }
     }
     else
-      HT_ERRORF("Unexpected event - %s", event_ptr->to_str().c_str());
+      HT_ERRORF("Unexpected event - %s", event->to_str().c_str());
   }
   catch (Hypertable::Exception &e) {
     HT_ERROR_OUT << e << HT_END;
   }
 }
 
+void TimerHandler::pause_app_queue() {
+  m_app_queue->stop();
+  m_app_queue_paused = true;
+  m_current_interval = 500;
+  m_restart_generation = Global::maintenance_queue->generation() +
+    Global::maintenance_queue->size();
+  HT_INFOF("Application queue PAUSED due to %s",
+           m_low_memory_mode ? "low memory" : "log size threshold exceeded");
+  boost::xtime_get(&m_pause_time, TIME_UTC_);
+}
+
+
 void TimerHandler::restart_app_queue() {
+  boost::xtime now;
   HT_ASSERT(m_app_queue_paused);
-  HT_INFO("Restarting application queue");
+  boost::xtime_get(&now, TIME_UTC_);
+  int64_t pause_millis = xtime_diff_millis(m_pause_time, now);
+  HT_INFOF("Restarting application queue (pause time = %lld millis)",
+           (Lld)pause_millis);
   m_app_queue->start();
   m_app_queue_paused = false;
-  m_last_low_memory_maintenance = TIMESTAMP_NULL;
   m_current_interval = m_timer_interval;
+  m_low_memory_mode = false;
 
   std::stringstream ss;
-  boost::xtime now;
-  boost::xtime_get(&now, TIME_UTC_);
-  ss << now.sec << "\tapp-queue-pause\t" << xtime_diff_millis(m_pause_time, now);
+  ss << now.sec << "\tapp-queue-pause\t" << pause_millis;
   m_range_server->write_profile_data(ss.str());
 }
 
-bool TimerHandler::low_memory_mode() {
+bool TimerHandler::low_memory() {
   int64_t memory_used = Global::memory_tracker->balance();
+  bool low_physical_memory = false;
 
   // ensure unused physical memory if it makes sense
   if (Global::memory_limit_ensure_unused_current &&
@@ -210,14 +253,11 @@ bool TimerHandler::low_memory_mode() {
       Global::memory_limit_ensure_unused_current = std::min(free_memory, Global::memory_limit_ensure_unused);
 
     // low physical memory reached?
-    m_low_physical_memory = free_memory < Global::memory_limit_ensure_unused_current;
-    if (m_low_physical_memory)
-       HT_INFOF("Low physical memory (free %.2fMB, limit %.2fMB)", free_memory / (double)Property::MiB,
-                 Global::memory_limit_ensure_unused_current / (double)Property::MiB);
+    low_physical_memory = free_memory < Global::memory_limit_ensure_unused_current;
+    if (low_physical_memory)
+      HT_INFOF("Low physical memory (free %.2fMB, limit %.2fMB)", free_memory / (double)Property::MiB,
+               Global::memory_limit_ensure_unused_current / (double)Property::MiB);
   }
-  else {
-    // don't care
-    m_low_physical_memory = false;
-  }
-  return memory_used > Global::memory_limit;
+
+  return low_physical_memory || memory_used > Global::memory_limit;
 }

@@ -57,17 +57,15 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
   : m_queue(queue), m_server_stats(server_stats), m_stats_gatherer(gatherer),
     m_prioritizer_log_cleanup(server_stats),
     m_prioritizer_low_memory(server_stats), m_initialized(false),
-    m_scheduling_needed(false), m_low_memory_mode(false) {
+    m_low_memory_mode(false) {
   m_prioritizer = &m_prioritizer_log_cleanup;
   m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
   m_query_cache_memory = get_i64("Hypertable.RangeServer.QueryCache.MaxMemory");
   m_low_memory_prioritization = get_bool("Hypertable.RangeServer.Maintenance.LowMemoryPrioritization");
 
   // Setup to immediately schedule maintenance
-  boost::xtime_get(&m_last_maintenance, TIME_UTC_);
-  memcpy(&m_last_low_memory, &m_last_maintenance, sizeof(boost::xtime));
-  memcpy(&m_last_check, &m_last_maintenance, sizeof(boost::xtime));
-  m_last_maintenance.sec -= m_maintenance_interval / 1000;
+  boost::xtime_get(&m_last_low_memory, TIME_UTC_);
+  memcpy(&m_last_check, &m_last_low_memory, sizeof(boost::xtime));
   m_low_memory_limit_percentage = get_i32("Hypertable.RangeServer.LowMemoryLimit.Percentage");
   m_merging_delay = get_i32("Hypertable.RangeServer.Maintenance.MergingCompaction.Delay");
   m_merges_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MergesPerInterval",
@@ -102,9 +100,10 @@ void MaintenanceScheduler::schedule() {
   String trace_str;
   int64_t excess = 0;
   MaintenancePrioritizer::MemoryState memory_state;
-  bool low_memory = low_memory_mode();
   int32_t priority = 1;
   int log_generation;
+  bool low_memory = low_memory_mode();
+  bool do_scheduling = true;
 
   memory_state.balance = Global::memory_tracker->balance();
   memory_state.limit = Global::memory_limit;
@@ -119,8 +118,8 @@ void MaintenanceScheduler::schedule() {
   }
 
   if (low_memory) {
-    if (!Global::maintenance_queue->full())
-      m_scheduling_needed = true;
+    if (Global::maintenance_queue->full())
+      do_scheduling = false;
     excess = (memory_state.balance > memory_state.limit) ? memory_state.balance - memory_state.limit : 0;
     memory_state.needed = ((memory_state.limit * m_low_memory_limit_percentage) / 100) + excess;
   }
@@ -151,26 +150,21 @@ void MaintenanceScheduler::schedule() {
 
   boost::xtime now;
   boost::xtime_get(&now, TIME_UTC_);
-  int64_t millis_since_last_maintenance =
-    xtime_diff_millis(m_last_maintenance, now);
 
   int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
   bool do_merges = (!low_memory || !m_low_memory_prioritization) &&
     ((m_server_stats->get_update_bytes(collector_id) < 1000 && m_server_stats->get_scan_count(collector_id) < 5) ||
      xtime_diff_millis(m_last_low_memory, now) >= (int64_t)m_merging_delay);
 
-  if (!m_scheduling_needed &&
-      millis_since_last_maintenance < m_maintenance_interval)
+  if (!do_scheduling)
     return;
 
   Global::maintenance_queue->drop_range_tasks();
 
   m_stats_gatherer->fetch(range_data, 0, &log_generation);
 
-  if (range_data.empty()) {
-    m_scheduling_needed = false;
+  if (range_data.empty())
     return;
-  }
 
   HT_ASSERT(m_prioritizer);
 
@@ -382,8 +376,6 @@ void MaintenanceScheduler::schedule() {
     Global::maintenance_queue->add(task);
 
   //cout << flush << trace_str << flush;
-
-  m_scheduling_needed = false;
 }
 
 int MaintenanceScheduler::get_level(RangeData &rd) {
