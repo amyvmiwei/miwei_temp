@@ -66,7 +66,7 @@
 #include "TableIdCache.h"
 #include "TableInfo.h"
 #include "TableInfoMap.h"
-#include "TimerInterface.h"
+#include "TimerHandler.h"
 #include "PhantomRangeMap.h"
 
 namespace Hypertable {
@@ -182,7 +182,7 @@ namespace Hypertable {
     bool replay_finished() { return m_replay_finished; }
 
 
-    void register_timer(TimerInterface *timer) {
+    void register_timer(TimerHandler *timer) {
       ScopedLock lock(m_mutex);
       HT_ASSERT(m_timer_handler == 0);
       m_timer_handler = timer;
@@ -305,7 +305,7 @@ namespace Hypertable {
     NameIdMapperPtr        m_namemap;
 
     MaintenanceSchedulerPtr m_maintenance_scheduler;
-    TimerInterface        *m_timer_handler;
+    TimerHandler           *m_timer_handler;
     GroupCommitInterfacePtr m_group_commit;
     GroupCommitTimerHandlerPtr m_group_commit_timer_handler;
     uint32_t               m_update_delay;

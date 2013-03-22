@@ -438,6 +438,8 @@ void DefaultPolicy::init_options() {
         "Maintenance scheduling interval in milliseconds")
     ("Hypertable.RangeServer.Maintenance.LowMemoryPrioritization", boo()->default_value(true),
         "Use low memory prioritization algorithm for freeing memory in low memory mode")
+    ("Hypertable.RangeServer.Maintenance.MaxAppQueuePause", i32()->default_value(30000),
+        "Each time application queue is paused, keep it paused for no more than this many milliseconds")
     ("Hypertable.RangeServer.Maintenance.MergesPerInterval", i32(),
         "Limit on number of merging tasks to create per maintenance interval")
     ("Hypertable.RangeServer.Maintenance.MergingCompaction.Delay", i32()->default_value(900000),

@@ -71,7 +71,8 @@ namespace Hypertable {
 
     class MaintenanceQueueState {
     public:
-      MaintenanceQueueState() : shutdown(false), inflight(0), inflight_level(10000) { return; }
+      MaintenanceQueueState() : shutdown(false), inflight(0),
+                                inflight_level(10000), generation(0) { return; }
       TaskQueue          queue;
       Mutex              mutex;
       boost::condition   cond;
@@ -80,6 +81,7 @@ namespace Hypertable {
       std::set<Range *>  ranges;
       int                inflight;
       int                inflight_level;
+      int64_t            generation;
     };
 
     class Worker {
@@ -170,6 +172,7 @@ namespace Hypertable {
           {
             ScopedLock lock(m_state.mutex);
 	    m_state.inflight--;
+	    m_state.generation++;
 	    if (task->get_range())
 	      m_state.ranges.erase(task->get_range());
 	    if (m_state.queue.empty() && m_state.inflight == 0)
@@ -259,8 +262,10 @@ namespace Hypertable {
       while (!m_state.queue.empty()) {
 	task = m_state.queue.top();
         m_state.queue.pop();
-	if (task->get_range())
+	if (task->get_range()) {
 	  delete task;
+          m_state.generation++;
+        }
 	else
 	  filtered_queue.push(task);
       }
@@ -279,8 +284,7 @@ namespace Hypertable {
       return m_state.ranges.count(range) > 0;
     }
 
-    /**
-     * Adds a maintenance task to the queue.  If the task has an associated
+    /** Adds a maintenance task to the queue.  If the task has an associated
      * range, then it adds the range to the MaintenanceQueueState#ranges set.
      * @param task Maintenance task to add
      */
@@ -292,13 +296,43 @@ namespace Hypertable {
       m_state.cond.notify_one();
     }
 
+    /** Returns the size of the queue.
+     * The size is computed as the queue size plus the number of tasks
+     * <i>in flight</i>.
+     * @return Size of queue
+     */
+    size_t size() {
+      ScopedLock lock(m_state.mutex);
+      return (size_t)m_state.queue.size() + (size_t)m_state.inflight;
+    }
+
+    /** Returns queue generation number.
+     * When the queue is created, the generation number is initialized to
+     * zero.  Each time a task is successfully excecuted and removed from the
+     * queue, the generation number is incremented by one.
+     * @return Generation number
+     */
+    int64_t generation() {
+      ScopedLock lock(m_state.mutex);
+      return m_state.generation;
+    }
+
     /** Returns <i>true</i> if any tasks are in queue or all worker threads
      * are busy executing tasks.
      * @return <i>true</i> if queue is full, <i>false</i> otherwise
      */
     bool full() {
       ScopedLock lock(m_state.mutex);
-      return !m_state.queue.empty() || (m_state.inflight == m_worker_count);
+      return (m_state.queue.size() + (size_t)m_state.inflight) >=
+        (size_t)m_worker_count;
+    }
+
+    /** Returns <i>true</i> if maintenance queue is empty.
+     * @return <i>true</i> if queue is empty, <i>false</i> otherwise
+     */
+    bool empty() {
+      ScopedLock lock(m_state.mutex);
+      return m_state.queue.empty() && m_state.inflight == 0;
     }
 
     /** Waits for queue to become empty

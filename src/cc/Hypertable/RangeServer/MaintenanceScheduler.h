@@ -51,10 +51,6 @@ namespace Hypertable {
       m_low_memory_mode = on;
     }
 
-    void need_scheduling() {
-      m_scheduling_needed = true;
-    }
-
   private:
 
     int get_level(RangeData &rd);
@@ -74,7 +70,6 @@ namespace Hypertable {
     MaintenancePrioritizerLogCleanup m_prioritizer_log_cleanup;
     MaintenancePrioritizerLowMemory  m_prioritizer_low_memory;
     int32_t m_maintenance_interval;
-    boost::xtime m_last_maintenance;
     boost::xtime m_last_low_memory;
     boost::xtime m_last_check;
     int64_t m_query_cache_memory;
@@ -84,7 +79,6 @@ namespace Hypertable {
     int32_t m_move_compactions_per_interval;
     std::set<int64_t> m_log_hashes;
     bool m_initialized;
-    bool m_scheduling_needed;
     bool m_low_memory_prioritization;
     bool m_low_memory_mode;
   };

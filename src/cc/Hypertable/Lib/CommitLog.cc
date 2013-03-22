@@ -348,9 +348,9 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok, int generati
     }
     else {
       if (revision != m_purge_report_revision) {
-        HT_INFOF("purge('%s') breaking on fragment %ul (rev=%llu gen=%d); "
+        HT_INFOF("purge('%s') breaking on fragment %u (rev=%llu gen=%d); "
                  "rev=%llu gen=%d; ref_req=%s rm_ok=%s", m_log_dir.c_str(),
-                 (unsigned long)fi->num, (Llu)fi->revision, fi->generation,
+                 (unsigned)fi->num, (Llu)fi->revision, fi->generation,
                  (Llu)revision, generation,
                  m_range_reference_required ? "yes" : "no",
                  remove_ok.count(fi->log_dir_hash) ? "yes" : "no");

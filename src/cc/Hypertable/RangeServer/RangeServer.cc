@@ -2785,11 +2785,10 @@ void RangeServer::update_add_and_respond() {
         if ((*iter).first->need_maintenance() &&
             !Global::maintenance_queue->contains((*iter).first)) {
           ScopedLock lock(m_mutex);
-          m_maintenance_scheduler->need_scheduling();
           maintenance_needed = true;
           HT_MAYBE_FAIL_X("metadata-update-and-respond", (*iter).first->is_metadata());
           if (m_timer_handler)
-            m_timer_handler->schedule_maintenance();
+            m_timer_handler->schedule_immediate_maintenance();
           break;
         }
       }
@@ -3613,9 +3612,8 @@ RangeServer::relinquish_range(ResponseCallback *cb,
     // Wake up maintenance scheduler
     {
       ScopedLock lock(m_mutex);
-      m_maintenance_scheduler->need_scheduling();
       if (m_timer_handler)
-        m_timer_handler->schedule_maintenance();
+        m_timer_handler->schedule_immediate_maintenance();
     }
 
     cb->response_ok();
@@ -4335,9 +4333,8 @@ void RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_id,
     // that were happening on the ranges just added
     {
       ScopedLock lock(m_mutex);
-      m_maintenance_scheduler->need_scheduling();
       if (m_timer_handler)
-        m_timer_handler->schedule_maintenance();
+        m_timer_handler->schedule_immediate_maintenance();
     }
 
   }
@@ -4523,7 +4520,7 @@ void RangeServer::do_maintenance() {
     Global::scanner_map.purge_expired(m_scanner_ttl);
 
     // Set Low Memory mode
-    m_maintenance_scheduler->set_low_memory_mode(m_timer_handler->low_memory());
+    m_maintenance_scheduler->set_low_memory_mode(m_timer_handler->low_memory_mode());
 
     // Recompute stats
     m_server_stats->recompute(RSStats::STATS_COLLECTOR_MAINTENANCE);
@@ -4558,11 +4555,9 @@ void RangeServer::do_maintenance() {
   }
 
   // Notify timer handler so that it can resume
-  m_timer_handler->complete_maintenance_notify();
+  m_timer_handler->maintenance_scheduled_notify();
 
   HT_INFOF("Memory Usage: %llu bytes", (Llu)Global::memory_tracker->balance());
-  if (m_timer_handler->low_memory())
-    HT_INFO("Application queue PAUSED due to low memory condition");
 }
 
 bool RangeServer::wait_for_recovery_finish(boost::xtime expire_time) {
