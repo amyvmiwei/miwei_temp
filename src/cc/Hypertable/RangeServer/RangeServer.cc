@@ -3775,8 +3775,8 @@ void RangeServer::phantom_load(ResponseCallback *cb, const String &location,
            " num_ranges=%d", location.c_str(), plan_generation,
            (int)fragments.size(), (int)specs.size());
 
-  if (!m_replay_finished) {
-    if (!wait_for_recovery_finish(cb->get_event()->expiration_time()))
+  if (!m_system_replay_finished) {
+    if (!wait_for_system_recovery_finish(cb->get_event()->expiration_time()))
       return;
   }
 
@@ -3933,8 +3933,8 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
            " num_ranges=%d", (Lld)op_id, location.c_str(), plan_generation,
            (int)specs.size());
 
-  if (!m_replay_finished) {
-    if (!wait_for_recovery_finish(cb->get_event()->expiration_time()))
+  if (!m_system_replay_finished) {
+    if (!wait_for_system_recovery_finish(cb->get_event()->expiration_time()))
       return;
   }
 
@@ -4155,8 +4155,8 @@ void RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_id,
            " num_ranges=%d", (Lld)op_id, location.c_str(), plan_generation,
            (int)specs.size());
 
-  if (!m_replay_finished) {
-    if (!wait_for_recovery_finish(cb->get_event()->expiration_time()))
+  if (!m_system_replay_finished) {
+    if (!wait_for_system_recovery_finish(cb->get_event()->expiration_time()))
       return;
   }
 
