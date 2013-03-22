@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_REQUESTHANDLERWAITFORMAINTENANCE_H
 #define HYPERTABLE_REQUESTHANDLERWAITFORMAINTENANCE_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"

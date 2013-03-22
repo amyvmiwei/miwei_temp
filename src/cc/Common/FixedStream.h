@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Fixed size string buffers.
+ * A stringstream, istringstream, ostringstream backed by a fixed size
+ * string buffer.
+ */
+
 #ifndef HYPERTABLE_FIXED_STREAM_H
 #define HYPERTABLE_FIXED_STREAM_H
 
@@ -27,17 +33,38 @@
 
 namespace Hypertable {
 
+/** @addtogroup Common
+ *  @{
+ */
+
 /**
- * A simple streambuf with fixed size buffer
+ * A simple streambuf with fixed size buffer.
  * Convenient for limitting size of output; faster than ostringstream
  * and friends, which require heap allocations
  */
 class FixedStreamBuf : public std::streambuf {
 public:
+  /** Constructor
+   *
+   * Constructs a new FixedStreamBuf object backed by a memory buffer provided
+   * by the caller. All objects "streamed" into this class will be stored
+   * in this memory buffer.
+   *
+   * @param buf Pointer to the memory buffer
+   * @param len Size of that memory buffer
+   */
   FixedStreamBuf(char *buf, size_t len) { setp(buf, buf + len); }
+
+  /** Constructor
+   *
+   * Constructs a new FixedStreamBuf object backed by a memory buffer provided
+   * by the caller. All objects are "streamed" from this memory buffer.
+   */
   FixedStreamBuf(const char *buf, const char *next, const char *end) {
     setg((char *)buf, (char *)next, (char *)end);
   }
+
+  /** Returns a String object from the output buffer */
   String str() { return String(pbase(), pptr()); }
 };
 
@@ -48,12 +75,26 @@ class FixedOstream : private virtual FixedStreamBuf, public std::ostream {
 public:
   typedef FixedStreamBuf StreamBuf;
 
-  FixedOstream(char *buf, size_t len) : FixedStreamBuf(buf, len),
-               std::ostream(static_cast<StreamBuf *>(this)) {}
+  /** Constructs the stream from an existing buffer; all streamed objects
+   * are stored in that buffer
+   *
+   * @param buf Pointer to the memory buffer
+   * @param len Size of that buffer, in bytes
+   */
+  FixedOstream(char *buf, size_t len)
+    : FixedStreamBuf(buf, len), std::ostream(static_cast<StreamBuf *>(this)) {
+  }
 
+  /** Returns a pointer to the output buffer */
   char *output() { return StreamBuf::pbase(); }
+
+  /** Returns a pointer to the current position in the output buffer */
   char *output_ptr() { return StreamBuf::pptr(); }
+
+  /** Returns a pointer to the end of the output buffer */
   char *output_end() { return StreamBuf::epptr(); }
+
+  /** Returns a String object from the output buffer */
   String str() { return StreamBuf::str(); }
 };
 
@@ -64,14 +105,28 @@ class FixedIstream : private virtual FixedStreamBuf, public std::istream {
 public:
   typedef FixedStreamBuf StreamBuf;
 
-  FixedIstream(const char *buf, const char *end) :
-               FixedStreamBuf(buf, buf, end),
-               std::istream(static_cast<StreamBuf *>(this)) {}
+  /** Constructs the input stream from an existing buffer; all streamed objects
+   * are read from that buffer
+   *
+   * @param buf Pointer to the beginning of the memory buffer
+   * @param end Pointer to the end of the memory buffer
+   */
+  FixedIstream(const char *buf, const char *end)
+    : FixedStreamBuf(buf, buf, end),
+    std::istream(static_cast<StreamBuf *>(this)) {
+  }
 
+  /** Returns a pointer to the beginning of the input buffer */
   char *input() { return StreamBuf::eback(); }
+
+  /** Returns a pointer to the current position in the input buffer */
   char *input_ptr() { return StreamBuf::gptr(); }
+
+  /** Returns a pointer to the end of the input buffer */
   char *input_end() { return StreamBuf::egptr(); }
 };
+
+/** @} */
 
 } // namespace Hypertable
 

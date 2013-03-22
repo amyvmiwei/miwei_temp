@@ -19,7 +19,6 @@
  * 02110-1301, USA.
  */
 #include "Common/Compat.h"
-#include "Common/Math.h"
 #include "Common/StringExt.h"
 
 #include <iostream>

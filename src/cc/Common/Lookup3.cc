@@ -34,6 +34,11 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 -------------------------------------------------------------------------------
 */
 
+/** @file
+ * Implementation of the Lookup3 hash algorithm.
+ * The lookup3 hash from Bob Jenkins is a fast and strong 32-bit hash.
+ */
+
 //#define SELF_TEST 1
 #include "Common/Compat.h"
 #include "Common/endian-c.h"
@@ -41,6 +46,8 @@ on 1 byte), but shoehorning those bytes into integers efficiently is messy.
 #include <stdio.h>      /* defines printf for tests */
 #include <time.h>       /* defines time_t for timings in the test */
 #include <stdint.h>     /* defines uint32_t etc */
+
+#include "Common/Lookup3.h"
 
 namespace Hypertable {
 
@@ -271,7 +278,7 @@ acceptable.  Do NOT use for cryptographic purposes.
 -------------------------------------------------------------------------------
 */
 
-uint32_t hashlittle( const void *key, size_t length, uint32_t initval)
+uint32_t Lookup3::hashlittle( const void *key, size_t length, uint32_t initval)
 {
   uint32_t a,b,c;                                          /* internal state */
   union { const void *ptr; size_t i; } u;     /* needed for Mac Powerbook G4 */

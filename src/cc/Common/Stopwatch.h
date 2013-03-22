@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/**
+ * @file
+ * The Stopwatch measures elapsed time.
+ */
+
 #ifndef HYPERTABLE_STOPWATCH_H
 #define HYPERTABLE_STOPWATCH_H
 
@@ -28,18 +33,26 @@
 
 namespace Hypertable {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
   /**
-   *
+   * The Stopwatch class measures elapsed time between instantiation (or a
+   * call to @a start) and a call to @a stop.
    */
   class Stopwatch {
   public:
-
-    Stopwatch(bool start_running=true) : m_running(false) {
+    /** Constructor; if @a start_running is true then the Stopwatch is started
+     * immediately */
+    Stopwatch(bool start_running = true)
+      : m_running(false) {
       memset(&elapsed_time, 0, sizeof(elapsed_time));
       if (start_running)
         start();
     }
 
+    /** Starts the Stopwatch */
     void start() {
       if (!m_running) {
         boost::xtime_get(&start_time, boost::TIME_UTC_);
@@ -47,6 +60,7 @@ namespace Hypertable {
       }
     }
 
+    /** Stops the Stopwatch. Has no effect if the Stopwatch was not running. */
     void stop() {
       if (m_running) {
         boost::xtime stop_time;
@@ -65,8 +79,13 @@ namespace Hypertable {
       }
     }
 
-    void reset() { memset(&elapsed_time, 0, sizeof(elapsed_time)); }
+    /** Resets the Stopwatch */
+    void reset() {
+      memset(&elapsed_time, 0, sizeof(elapsed_time));
+    }
 
+    /** Returns the elapsed time. Can be called while the Stopwatch is running;
+     * in this case the Stopwatch will continue to run. */
     double elapsed() {
       if (m_running) {
         stop();
@@ -77,10 +96,17 @@ namespace Hypertable {
     }
 
   private:
+    /** Flag whether the Stopwatch is currently running */
     bool m_running;
+
+    /** The start time */
     boost::xtime start_time;
+
+    /** The elapsed time */
     boost::xtime elapsed_time;
   };
+
+  /** @} */
 
 }
 

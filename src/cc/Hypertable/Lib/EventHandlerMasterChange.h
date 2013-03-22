@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_EVENTHANDLERMASTERCHANGE_H
 #define HYPERTABLE_EVENTHANDLERMASTERCHANGE_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Event.h"
 

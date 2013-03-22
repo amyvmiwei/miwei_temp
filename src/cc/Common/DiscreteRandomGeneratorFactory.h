@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Factory for Discrete Random Generators.
+ * This file contains a factory class for the various discrete random
+ * generators.
+ */
+
 #ifndef HYPERTABLE_DISCRETERANDOMGENERATORFACTORY_H
 #define HYPERTABLE_DISCRETERANDOMGENERATORFACTORY_H
 
@@ -28,10 +34,33 @@
 
 namespace Hypertable {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
+  /**
+   * Static factory class for discrete random generators
+   */
   class DiscreteRandomGeneratorFactory {
-  public:
-    static DiscreteRandomGenerator *create(const String &spec);
+    public:
+      /**
+       * Creates a new DiscreteRandomGenerator instance.
+       *
+       * spec is one of the following:
+       *   "uniform"
+       *   "zipf"
+       *   "zipf\t--s=<S>"  (where `S` is the seed)
+       *
+       * An unknown or invalid spec will cause termination of the application.
+       *
+       * @param spec The DiscreteRandomGenerator specification, as described
+       *        above
+       * @return Pointer to a newly created DiscreteRandomGenerator object
+       */
+      static DiscreteRandomGenerator *create(const String &spec);
   };
+
+  /** @}*/
 
 }
 

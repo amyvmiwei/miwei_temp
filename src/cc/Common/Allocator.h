@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -70,7 +70,7 @@ inline size_t get_align_offset(void *p) {
 
 
 /**
- * Base classes for all Allocator classes
+ * Base classes for all Allocator classes.
  * The template parameter T is the type of object that is allocated
  */
 template <typename T>

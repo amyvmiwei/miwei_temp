@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,11 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Discreet Random Generator creating uniform distributed numbers
+ */
+
 #ifndef HYPERTABLE_DISCRETERANDOMGENERATORUNIFORM_H
 #define HYPERTABLE_DISCRETERANDOMGENERATORUNIFORM_H
 
@@ -27,19 +32,26 @@
 
 namespace Hypertable {
 
+/** @addtogroup Common
+ *  @{
+ */
+
   /**
    * Generate samples from Uniform distribution
    */
   class DiscreteRandomGeneratorUniform: public DiscreteRandomGenerator {
   public:
     DiscreteRandomGeneratorUniform() : DiscreteRandomGenerator() { }
+
     virtual uint64_t get_sample() { 
       uint64_t rval = ((uint64_t)m_rng() << 32) | m_rng();
       if (m_pool_max != 0)
-	rval = m_pool_min + (rval % (m_pool_max-m_pool_min));
+        rval = m_pool_min + (rval % (m_pool_max - m_pool_min));
       return rval;
     }
   };
+
+/** @}*/
 
 }
 

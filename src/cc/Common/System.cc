@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,10 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Retrieves system information (hardware, installation directory, etc)
  */
 
 #include "Common/Compat.h"
@@ -39,7 +43,7 @@ using namespace boost::filesystem;
 string System::install_dir;
 string System::exe_name;
 bool   System::ms_initialized = false;
-Mutex        System::ms_mutex;
+Mutex  System::ms_mutex;
 boost::mt19937 System::ms_rng;
 
 String System::locate_install_dir(const char *argv0) {
@@ -65,7 +69,6 @@ String System::_locate_install_dir(const char *argv0) {
   return install_dir;
 }
 
-
 void System::_init(const String &install_directory) {
   // seed the random number generator
   ms_rng.seed((uint32_t)getpid());
@@ -87,7 +90,6 @@ void System::_init(const String &install_directory) {
   Logger::initialize(exe_name);
 }
 
-
 int32_t System::get_processor_count() {
   return cpu_info().total_cores;
 }
@@ -97,7 +99,6 @@ namespace {
 }
 
 int32_t System::get_drive_count() {
-
   if (drive_count > 0)
     return drive_count;
 

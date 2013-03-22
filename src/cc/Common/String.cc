@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -15,6 +15,10 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
+ */
+
+/** @file
+ * A String class based on std::string.
  */
 
 #include "Compat.h"

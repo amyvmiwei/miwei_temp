@@ -19,6 +19,10 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Hypertable version information. This file is modified by cmake!
+ */
+
 #ifndef HYPERTABLE_VERSION_H
 #define HYPERTABLE_VERSION_H
 
@@ -34,14 +38,42 @@
 #define HT_VERSION_STRING       "${VERSION_STRING}"
 
 namespace Hypertable {
+
+  /** @addtogroup Common
+   *  @{
+   */
+
+  /** The major version */
   extern const int version_major;
+
+  /** The minor version */
   extern const int version_minor;
+
+  /** The micro version */
   extern const int version_micro;
+
+  /** The patch version (usually not used) */
   extern const int version_patch;
+
+  /**
+   * Returns HT_VERSION_MISC_SUFFIX as it was compiled/linked into Hypertable,
+   * and is not inlined like %check_version below
+   */
   extern const std::string version_misc_suffix;
+
+  /**
+   * Returns HT_VERSION_STRING as it was compiled/linked into Hypertable,
+   * and is not inlined like %check_version below
+   */
   extern const char *version_string();
 
-  // must be inlined for version check
+  /**
+   * Compares the version from this header file with the version of the
+   * compiled Hypertable libraries; will exit() if not equal.
+   *
+   * This function is inlined, otherwise it would not use the header file
+   * versions but also those from the compiled libraries.
+   */
   inline void check_version() {
     if (version_major != HT_VERSION_MAJOR ||
         version_minor != HT_VERSION_MINOR ||
@@ -49,10 +81,13 @@ namespace Hypertable {
         version_patch != HT_VERSION_PATCH ||
         version_misc_suffix != HT_VERSION_MISC_SUFFIX) {
       std::fprintf(stderr, "Hypertable header/library version mismatch:\n"
-                   " header: %s\nlibrary: %s\n", HT_VERSION_STRING, version_string());
+              " header: %s\nlibrary: %s\n", HT_VERSION_STRING,
+              version_string());
       exit(1);
     }
   }
+
+  /** @} */
 }
 
 #endif // HYPERTABLE_VERSION_H

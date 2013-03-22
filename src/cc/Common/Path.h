@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Compatibility class for boost::filesystem::path.
+ * This class implements several functions that missed in boost prior to 1.36+.
+ */
+
 #ifndef HYPERTABLE_PATH_H
 #define HYPERTABLE_PATH_H
 
@@ -29,12 +34,17 @@
 
 namespace Hypertable {
 
+/** @addtogroup Common
+ *  @{
+ */
+
 /**
- * Yet another compatibility class, since boost 1.36+ replaced branch_path
- * and leaf with parent_path and filename
+ * Compatibility class for boost::filesystem::path.
+ * This class implements several functions that missed in boost prior to 1.36+.
  */
 class Path : public boost::filesystem::path {
   typedef boost::filesystem::path Parent;
+
 public:
   Path() { }
   Path(const String &s) : Parent(s) { }
@@ -52,6 +62,8 @@ public:
   String filename() const { return leaf(); }
 #endif
 };
+
+/** @} */
 
 } // namespace Hypertable
 

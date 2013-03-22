@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_REQUESTHANDLERMETADATASYNC_H
 #define HYPERTABLE_REQUESTHANDLERMETADATASYNC_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"

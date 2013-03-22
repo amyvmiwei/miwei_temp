@@ -22,7 +22,6 @@
 #ifndef HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
 #define HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
 
-#include "Common/Runnable.h"
 #include "Common/Mutex.h"
 
 #include "AsyncComm/ApplicationHandler.h"

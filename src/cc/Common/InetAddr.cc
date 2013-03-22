@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Internet address wrapper classes and utility functions.
+ * The @ref Endpoint structure manages a hostname:port pair, and the
+ * InetAddr class wraps the sockaddr_in structure.
  */
 
 #include "Common/Compat.h"
@@ -89,7 +95,7 @@ bool InetAddr::initialize(sockaddr_in *addr, const char *host, uint16_t port) {
       return false;
     }
 #else
-#error TODO
+#  error TODO please implement me!
 #endif
     memcpy(&addr->sin_addr.s_addr, he->h_addr_list[0], sizeof(uint32_t));
     if (addr->sin_addr.s_addr == 0) {
@@ -118,7 +124,7 @@ InetAddr::is_ipv4(const char *ipin) {
       break;
     if (*last != '.' || last > end || component > 255 || component < 0 || num_components > 4)
       return false;
-    ptr = last+1;
+    ptr = last + 1;
   }
   if (num_components != 4 || component > 255 || component < 0)
     return false;
@@ -229,17 +235,12 @@ String InetAddr::format_ipaddress(const sockaddr_in &addr) {
   // inet_ntoa is not thread safe on many platforms and deprecated
   const uint8_t *ip = (uint8_t *)&addr.sin_addr.s_addr;
   return Hypertable::format("%d.%d.%d.%d", (int)ip[0], (int)ip[1],
-			    (int)ip[2],(int)ip[3]);
+			    (int)ip[2], (int)ip[3]);
 }
 
 String InetAddr::hex(const sockaddr_in &addr, int sep) {
   return Hypertable::format("%x%c%x", ntohl(addr.sin_addr.s_addr), sep,
                             ntohs(addr.sin_port));
-}
-
-const char *InetAddr::string_format(String &addr_str, const sockaddr_in &addr) {
-  addr_str = InetAddr::format(addr);
-  return addr_str.c_str();
 }
 
 std::ostream &operator<<(std::ostream &out, const Endpoint &e) {

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,10 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * System information and statistics based on libsigar.
+ */
+
 #ifndef HYPERTABLE_SYSTEMINFO_H
 #define HYPERTABLE_SYSTEMINFO_H
 
@@ -30,6 +34,14 @@
 
 namespace Hypertable {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
+  /**
+   * A structure to retrieve CPU information (vendor, model, speed, number of
+   * cores etc.)
+   */
   struct CpuInfo {
     CpuInfo &init();
     bool operator==(const CpuInfo &other) const;
@@ -46,6 +58,10 @@ namespace Hypertable {
     int cores_per_socket;
   };
 
+  /**
+   * A structure to retrieve CPU statistics (system wide cpu times, idle time
+   * etc).
+   */
   struct CpuStat {
     CpuStat &refresh();
     bool operator==(const CpuStat &other) const;
@@ -66,7 +82,8 @@ namespace Hypertable {
   };
 
   /**
-   * Reports loadavg normalized over number of cores
+   * A structure to retrieve load average-statistics. 
+   * Reports loadavg normalized over number of cores.
    */
   struct LoadAvgStat {
     LoadAvgStat &refresh();
@@ -78,6 +95,10 @@ namespace Hypertable {
     double loadavg[3];
   };
 
+  /**
+   * A structure to retrieve memory statistics (RAM size, used size, free size
+   * etc)
+   */
   struct MemStat {
     MemStat &refresh();
     bool operator==(const MemStat &other) const;
@@ -94,6 +115,10 @@ namespace Hypertable {
     double actual_free; // including kernel buffers/caches
   };
 
+  /**
+   * A structure to retrieve disk statistics (read/write IOPS, transfer rates
+   * etc)
+   */
   struct DiskStat {
     DiskStat() 
     : reads_rate(0.0), writes_rate(0.0), read_rate(0.0), write_rate(0.0),
@@ -118,6 +143,10 @@ namespace Hypertable {
     Stopwatch stopwatch;
   };
 
+  /**
+   * A structure to retrieve Swapping statistics (pages swapped in/out,
+   * aggregate total numbers etc)
+   */
   struct SwapStat {
     SwapStat() : prev_stat(0) { }
     ~SwapStat();
@@ -138,6 +167,10 @@ namespace Hypertable {
     void *prev_stat;
   };
 
+  /**
+   * A structure to retrieve network information (host name, primary interface,
+   * primary address, gateway etc)
+   */
   struct NetInfo {
     NetInfo &init();
     bool operator==(const NetInfo &other) const;
@@ -151,6 +184,10 @@ namespace Hypertable {
     String default_gw;
   };
 
+  /**
+   * A structure to retrieve network statistics (receiving rate, transmitting
+   * rate etc)
+   */
   struct NetStat {
     NetStat &refresh();
     bool operator==(const NetStat &other) const;
@@ -169,6 +206,10 @@ namespace Hypertable {
     double tx_rate;   // transmitting rate...
   };
 
+  /**
+   * A structure to retrieve operating system information (name, version,
+   * vendor, architecture)
+   */
   struct OsInfo {
     OsInfo &init();
     bool operator==(const OsInfo &other) const;
@@ -191,6 +232,10 @@ namespace Hypertable {
     String code_name;
   };
 
+  /**
+   * A structure to receive process information (pid, user name, exe name,
+   * working directory, program arguments etc)
+   */
   struct ProcInfo {
     ProcInfo &init();
     bool operator==(const ProcInfo &other) const;
@@ -206,6 +251,10 @@ namespace Hypertable {
     std::vector<String> args;
   };
 
+  /**
+   * A structure to receive process statistics (CPU user time, system time,
+   * virtmal machine sizes etc)
+   */
   struct ProcStat {
     ProcStat &refresh();
     bool operator==(const ProcStat &other) const;
@@ -230,6 +279,10 @@ namespace Hypertable {
     uint64_t heap_slack;
   };
 
+  /**
+   * A structure to retrieve Filesystem statistics (total size, free size, used
+   * size etc)
+   */
   struct FsStat {
     FsStat() : use_pct(0.0), total(0), free(0),
                used(0), avail(0), files(0), free_files(0) { }
@@ -253,6 +306,9 @@ namespace Hypertable {
     uint64_t free_files; // free inodes
   };
 
+  /**
+   * A structure to retrieve terminal information (lines, columns etc)
+   */
   struct TermInfo {
     TermInfo &init();
     bool operator==(const TermInfo &other) const;
@@ -265,22 +321,46 @@ namespace Hypertable {
     int num_cols;
   };
 
+  /** Global operator<< to print a %CpuInfo */
   std::ostream &operator<<(std::ostream &, const CpuInfo &);
+
+  /** Global operator<< to print a %CpuStat */
   std::ostream &operator<<(std::ostream &, const CpuStat &);
+
+  /** Global operator<< to print a %MemStat */
   std::ostream &operator<<(std::ostream &, const MemStat &);
+
+  /** Global operator<< to print a %DiskStat */
   std::ostream &operator<<(std::ostream &, const DiskStat &);
+
+  /** Global operator<< to print a %OsInfo */
   std::ostream &operator<<(std::ostream &, const OsInfo &);
+
+  /** Global operator<< to print a %SwapStat */
   std::ostream &operator<<(std::ostream &, const SwapStat &);
+
+  /** Global operator<< to print a %NetInfo */
   std::ostream &operator<<(std::ostream &, const NetInfo &);
+
+  /** Global operator<< to print a %NetStat */
   std::ostream &operator<<(std::ostream &, const NetStat &);
+
+  /** Global operator<< to print a %ProcInfo */
   std::ostream &operator<<(std::ostream &, const ProcInfo &);
+
+  /** Global operator<< to print a %ProcStat */
   std::ostream &operator<<(std::ostream &, const ProcStat &);
+
+  /** Global operator<< to print a %FsStat */
   std::ostream &operator<<(std::ostream &, const FsStat &);
+
+  /** Global operator<< to print a %TermInfo */
   std::ostream &operator<<(std::ostream &, const TermInfo &);
 
+  /** Returns a descriptive string of the libsigar version */
   const char *system_info_lib_version();
-  std::ostream &system_info_lib_version(std::ostream &);
 
+  /** @} */
 
 } // namespace Hypertable
 

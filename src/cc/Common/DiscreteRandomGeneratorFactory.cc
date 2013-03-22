@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Factory for Discrete Random Generators.
+ * This file contains a factory class for the various discrete random
+ * generators.
  */
 
 #include "Common/Compat.h"
@@ -51,7 +57,8 @@ DiscreteRandomGeneratorFactory::create(const String &spec) {
 
   if (name == "uniform")
     return new DiscreteRandomGeneratorUniform();
-  else if (name == "zipf") {
+
+  if (name == "zipf") {
     if (args.empty())
       return new DiscreteRandomGeneratorZipf();
     if (starts_with(args[0], "--s=")) {
@@ -63,6 +70,5 @@ DiscreteRandomGeneratorFactory::create(const String &spec) {
   }
 
   HT_FATALF("Unrecognized distribution (%s)", name.c_str());
-
   return 0;
 }

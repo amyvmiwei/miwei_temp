@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,11 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Macros to serialize/deserialize primitives to/from a memory buffer. Do not
+ * use directly; use the functions from Common/Serialization.h instead.
  */
 
 #ifndef HT_SERIALIZATION_C_H

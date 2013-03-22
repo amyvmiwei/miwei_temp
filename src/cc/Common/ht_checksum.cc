@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Application to calculate checksums.
+ * This small helper application can calculate the fletcher32 checksum of
+ * a file.
+ */
+
 #include "Common/Compat.h"
 
 #include <iostream>
@@ -33,7 +39,7 @@ namespace {
 
   const char *usage_str =
     "\n" \
-    "usage: java org.hypertable.Common.Checksum <algorithm> <file>\n" \
+    "usage: ./ht_checksum <algorithm> <file>\n" \
     "\n" \
     "This program runs the checksum algorithm, <algorithm>, over the bytes\n" \
     "of the input file <file> and displays the resulting checksum as a\n" \
@@ -43,14 +49,9 @@ namespace {
     "\n" \
     "  fletcher32\n" \
     "\n";
-
 }
 
-/**
- *
- */
 int main(int argc, char **argv) {
-
   if (argc != 3) {
     cout << usage_str << endl;
     exit(1);

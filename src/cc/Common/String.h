@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,10 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * A String class based on std::string.
+ */
+
 #ifndef HYPERTABLE_STRING_H
 #define HYPERTABLE_STRING_H
 
@@ -24,49 +28,78 @@
 #include <sstream>
 
 namespace Hypertable {
+
+  /** @addtogroup Common
+   *  @{
+   */
+
   /**
-   * We might want to use something better later, as std::string always
-   * causes a heap allocation, and is lacking in functionalities
+   * A String is simply a typedef to std::string.
+   *
+   * In the future we might want to use something better later, as std::string
+   * always causes a heap allocation, and is lacking in functionalities
    * cf. http://www.and.org/vstr/comparison
    */
   typedef std::string String;
-  typedef long unsigned int Lu;         // shortcut for printf format
-  typedef long long unsigned int Llu;   // ditto
-  typedef long long int Lld;            // ditto
+
+  /** Shortcut for printf formats */
+  typedef long unsigned int Lu;
+
+  /** Shortcut for printf formats */
+  typedef long long unsigned int Llu;
+
+  /** Shortcut for printf formats */
+  typedef long long int Lld;
 
   /**
-   * Return a String using printf like format facilities
-   * vanilla snprintf is about 1.5x faster than this, which is about:
+   * Returns a String using printf like format facilities
+   * Vanilla snprintf is about 1.5x faster than this, which is about:
    *   10x faster than boost::format;
    *   1.5x faster than std::string append (operator+=);
    *   3.5x faster than std::string operator+;
+   *
+   * @param fmt A printf-like format string
+   * @return A new String with the formatted text
    */
   String format(const char *fmt, ...) __attribute__((format (printf, 1, 2)));
 
   /**
    * Return decimal number string separated by a separator (default: comma)
    * for every 3 digits. Only 10-15% slower than sprintf("%lld", n);
+   *
+   * @param n The 64-bit number
+   * @param sep The separator for every 3 digits
+   * @return A new String with the formatted text
    */
   String format_number(int64_t n, int sep = ',');
 
   /**
-   * Return first n bytes of buffer with an optinal trailer if the
+   * Return first n bytes of buffer with an optional trailer if the
    * size of the buffer exceeds n.
+   *
+   * @param n The max. displayed size of the buffer
+   * @param buf The memory buffer
+   * @param len The size of the memory buffer
+   * @param trailer Appended if %len exceeds %n
+   * @return A new String with the formatted text
    */
-  String
-  format_bytes(size_t n, const void *buf, size_t len,
-               const char *trailer = "...");
+  String format_bytes(size_t n, const void *buf, size_t len,
+          const char *trailer = "...");
 
   /**
    * Return a string presentation of a sequence. Is quite slow but versatile,
    * as it uses ostringstream.
+   *
+   * @param seq A STL-compatible sequence with forward-directional iterators
+   * @param sep A separator which is inserted after each list item
+   * @return A new String with the formatted text
    */
   template <class SequenceT>
   String format_list(const SequenceT &seq, const char *sep = ", ") {
     typedef typename SequenceT::const_iterator Iterator;
     Iterator it = seq.begin(), end = seq.end();
     std::ostringstream out;
-    out <<'[';
+    out << '[';
 
     if (it != end) {
       out << *it;
@@ -75,9 +108,11 @@ namespace Hypertable {
     for (; it != end; ++it)
       out << sep << *it;
 
-    out <<']';
+    out << ']';
     return out.str();
   }
+
+  /** @} */
 
 } // namespace Hypertable
 

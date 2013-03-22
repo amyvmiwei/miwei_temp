@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Functions to serialize/deserialize primitives to/from a memory buffer.
+ *
+ * These functions are used to implement Hypertable's network protocol.
+ */
+
 #ifndef HYPERTABLE_SERIALIZATION_H
 #define HYPERTABLE_SERIALIZATION_H
 
@@ -29,12 +35,16 @@
 
 namespace Hypertable { namespace Serialization {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
   /**
    * Encodes a byte into the given buffer.  Assumes there is
    * enough space available.  Increments buffer pointer.
    *
-   * @param bufp address of destination buffer
-   * @param val the byte
+   * @param bufp Address of the destination buffer
+   * @param val The byte
    */
   inline void encode_i8(uint8_t **bufp, uint8_t val) {
     HT_ENCODE_I8(*bufp, val);
@@ -43,9 +53,9 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a 8-bit integer (a byte/character)
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to the remaining size variable
-   * @return value
+   * @param bufp The pointer to the source buffer
+   * @param remainp The pointer to the remaining size variable
+   * @return The decoded value
    */
   inline uint8_t decode_i8(const uint8_t **bufp, size_t *remainp) {
     HT_DECODE_NEED(*remainp, 1);
@@ -56,9 +66,9 @@ namespace Hypertable { namespace Serialization {
    * Decodes a single byte from the given buffer. Increments buffer pointer
    * and decrements remainp on success.
    *
-   * @param bufp pointer of source buffer
-   * @param remainp pointer to variable of number of bytes remaining in buffer
-   * @return value of byte
+   * @param bufp Pointer to the source buffer pointer
+   * @param remainp Pointer to the number of bytes remaining in buffer
+   * @return The byte value
    */
   inline uint8_t decode_byte(const uint8_t **bufp, size_t *remainp) {
     return decode_i8(bufp, remainp);
@@ -68,8 +78,8 @@ namespace Hypertable { namespace Serialization {
    * Encodes a boolean into the given buffer.  Assumes there is
    * enough space available.  Increments buffer pointer.
    *
-   * @param bufp address of destination buffer
-   * @param bval the boolean value
+   * @param bufp Address of the destination buffer
+   * @param bval The boolean value
    */
   inline void encode_bool(uint8_t **bufp, bool bval) {
     HT_ENCODE_BOOL(*bufp, bval);
@@ -79,9 +89,9 @@ namespace Hypertable { namespace Serialization {
    * Decodes a boolean value from the given buffer. Increments buffer pointer
    * and decrements remainp on success.
    *
-   * @param bufp pointer to source buffer
-   * @param remainp pointer to variable of number of bytes remaining in buffer
-   * @return boolean value
+   * @param bufp Pointer to the source buffer pointer
+   * @param remainp Pointer to number of bytes remaining in buffer
+   * @return The boolean value
    */
   inline bool decode_bool(const uint8_t **bufp, size_t *remainp) {
     return decode_i8(bufp, remainp) != 0;
@@ -90,8 +100,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Encode a 16-bit integer in little-endian order
    *
-   * @param bufp - pointer to the destination buffer
-   * @param val value to encode
+   * @param bufp Pointer to the destination buffer
+   * @param val The value to encode
    */
   inline void encode_i16(uint8_t **bufp , uint16_t val) {
     HT_ENCODE_I16(*bufp, val);
@@ -100,9 +110,9 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a 16-bit integer in little-endian order
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to remaining size variable
-   * @return value
+   * @param bufp Pointer to the source buffer pointer
+   * @param remainp Pointer to the remaining size variable
+   * @return The decoded value
    */
   inline uint16_t decode_i16(const uint8_t **bufp, size_t *remainp) {
     uint16_t val;
@@ -113,8 +123,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Encode a 32-bit integer in little-endian order
    *
-   * @param bufp - pointer to the destination buffer
-   * @param val - value to encode
+   * @param bufp Pointer to the destination buffer pointer
+   * @param val The value to encode
    */
   inline void encode_i32(uint8_t **bufp, uint32_t val) {
     HT_ENCODE_I32(*bufp, val);
@@ -123,9 +133,9 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a 32-bit integer in little-endian order
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to remaining size variable
-   * @return value
+   * @param bufp Pointer to the source buffer pointer
+   * @param remainp Pointer to the remaining size variable
+   * @return The decoded value
    */
   inline uint32_t decode_i32(const uint8_t **bufp, size_t *remainp) {
     uint32_t val;
@@ -136,8 +146,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Encode a 64-bit integer in little-endian order
    *
-   * @param bufp - pointer to the destination buffer
-   * @param val - value to encode
+   * @param bufp Pointer to the destination buffer pointer
+   * @param val The value to encode
    */
   inline void encode_i64(uint8_t **bufp, uint64_t val) {
     HT_ENCODE_I64(*bufp, val);
@@ -146,9 +156,9 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a 64-bit integer in little-endian order
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to remaining size variable
-   * @return value
+   * @param bufp Pointer to the source buffer pointer
+   * @param remainp Pointer to the remaining size variable
+   * @return The decoded value
    */
   inline uint64_t decode_i64(const uint8_t **bufp, size_t *remainp) {
     uint64_t val;
@@ -159,8 +169,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Length of a variable length encoded 32-bit integer (up to 5 bytes)
    *
-   * @param val - 32-bit integer to encode
-   * @return number of bytes required
+   * @param val The 32-bit integer to encode
+   * @return The number of bytes required for serializing this number
    */
   inline int encoded_length_vi32(uint32_t val) {
     return HT_ENCODED_LEN_VI32(val);
@@ -169,8 +179,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Length of a variable length encoded 64-bit integer (up to 9 bytes)
    *
-   * @param val - 64-bit integer to encode
-   * @return number of bytes required
+   * @param val The 64-bit integer to encode
+   * @return The number of bytes required for serializing this number
    */
   inline int encoded_length_vi64(uint64_t val) {
     return HT_ENCODED_LEN_VI64(val);
@@ -179,8 +189,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Encode a integer (up to 32-bit) in variable length encoding
    *
-   * @param bufp - pointer to the destination buffer
-   * @param val - value to encode
+   * @param bufp Pointer to the destination buffer pointer
+   * @param val The value to encode
    */
   inline void encode_vi32(uint8_t **bufp, uint32_t val) {
     HT_ENCODE_VI32(*bufp, val, return);
@@ -189,8 +199,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Encode a integer (up to 64-bit) in variable length encoding
    *
-   * @param bufp - pointer to the destination buffer
-   * @param val - value to encode
+   * @param bufp The pointer to the destination buffer pointer
+   * @param val The value to encode
    */
   inline void encode_vi64(uint8_t **bufp, uint64_t val) {
     HT_ENCODE_VI64(*bufp, val, return);
@@ -199,9 +209,9 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a variable length encoded integer up to 32-bit
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to remaining size variable
-   * @return value
+   * @param bufp Pointer to the source buffer pointer
+   * @param remainp Pointer to the remaining size variable
+   * @return The decoded value
    */
   inline uint32_t decode_vi32(const uint8_t **bufp, size_t *remainp) {
     uint32_t n;
@@ -211,9 +221,9 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a variable length encoded integer up to 64-bit
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to remaining size variable
-   * @return value
+   * @param bufp Pointer to the source buffer pointer
+   * @param remainp Pointer to the remaining size variable
+   * @return The decoded value
    */
   inline uint64_t decode_vi64(const uint8_t **bufp, size_t *remainp) {
     uint64_t n;
@@ -223,8 +233,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a variable length encoded integer up to 32-bit
    *
-   * @param bufp - pointer to the source buffer
-   * @return value
+   * @param bufp Pointer to the source buffer pointer
+   * @return The decoded value
    */
   inline uint32_t decode_vi32(const uint8_t **bufp) {
     size_t remain = 6;
@@ -234,8 +244,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a variable length encoded integer up to 64-bit
    *
-   * @param bufp - pointer to the source buffer
-   * @return value
+   * @param bufp Pointer to the source buffer pointer
+   * @return The decoded value
    */
   inline uint64_t decode_vi64(const uint8_t **bufp) {
     size_t remain = 12;
@@ -245,8 +255,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Computes the encoded length of a 32-bit length byte array (i32, bytes)
    *
-   * @param len length of the byte array to be encoded
-   * @return the encoded length of a byte array of length len
+   * @param len Length of the byte array to be encoded
+   * @return The encoded length of a byte array of length len
    */
   inline size_t encoded_length_bytes32(int32_t len) {
     return len + 4;
@@ -257,9 +267,9 @@ namespace Hypertable { namespace Serialization {
    * 4 byte length followed by the data.  Assumes there is enough space
    * available.  Increments buffer pointer.
    *
-   * @param bufp address of destinatin buffer
-   * @param data pointer to array of bytes
-   * @param len the length of the byte array
+   * @param bufp Address of the destination buffer
+   * @param data Pointer to array of bytes
+   * @param len The length of the byte array
    */
   inline void encode_bytes32(uint8_t **bufp, const void *data, int32_t len) {
     HT_ENCODE_BYTES32(*bufp, data, len);
@@ -270,12 +280,12 @@ namespace Hypertable { namespace Serialization {
    * encoded as a 4 byte length followed by the data.  Increments buffer
    * pointer and decrements remainp on success.
    *
-   * @param bufp address of buffer containing encoded byte array
-   * @param remainp address of variable containing number of bytes remaini
-   * @param lenp address of length of decoded byte array
+   * @param bufp Address of buffer containing encoded byte array
+   * @param remainp Address of variable containing number of bytes remaining
+   * @param lenp Address of length of decoded byte array
    */
   inline uint8_t *decode_bytes32(const uint8_t **bufp, size_t *remainp,
-                                 uint32_t *lenp) {
+          uint32_t *lenp) {
     uint8_t *out;
     HT_DECODE_BYTES32(*bufp, *remainp, out, *lenp);
     return out;
@@ -284,8 +294,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Computes the encoded length of a string16 encoding
    *
-   * @param str pointer to the the c-style string
-   * @return the encoded length of str
+   * @param str Pointer to the c-style string
+   * @return The encoded length of str
    */
   inline size_t encoded_length_str16(const char *str) {
     return 2 + ((str == 0) ? 0 : strlen(str)) + 1;
@@ -294,8 +304,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Computes the encoded length of a String.
    *
-   * @param str reference to string object
-   * @return the encoded length of str
+   * @param str Reference to string object
+   * @return The encoded length of str
    */
   inline size_t encoded_length_str16(const String &str) {
     return 2 + str.length() + 1;
@@ -308,9 +318,9 @@ namespace Hypertable { namespace Serialization {
    * the '\\0'.  Assumes there is enough space available.  Increments
    * buffer pointer.
    *
-   * @param bufp address of destination buffer
-   * @param str the c-style string to encode
-   * @param len length of the string
+   * @param bufp Address of the destination buffer
+   * @param str The c-style string to encode
+   * @param len Length of the string
    */
   inline void encode_str16(uint8_t **bufp, const void *str, uint16_t len) {
     HT_ENCODE_STR16(*bufp, str, len);
@@ -323,8 +333,8 @@ namespace Hypertable { namespace Serialization {
    * the '\\0'.  Assumes there is enough space available.  Increments
    * buffer pointer.
    *
-   * @param bufp address of destination buffer
-   * @param str the c-style string to encode
+   * @param bufp Pointer to pointer of destination buffer
+   * @param str The c-style string to encode
    */
   inline void encode_str16(uint8_t **bufp, const char *str) {
     uint16_t len = (str == 0) ? 0 : strlen(str);
@@ -338,8 +348,8 @@ namespace Hypertable { namespace Serialization {
    * Assumes there is enough space available.  Increments buffer
    * pointer.
    *
-   * @param bufp address of destinatin buffer
-   * @param str the String to encode
+   * @param bufp Pointer to pointer of the destinatin buffer
+   * @param str The String to encode
    */
   template <class StringT>
   inline void encode_str16(uint8_t **bufp, const StringT &str) {
@@ -353,9 +363,9 @@ namespace Hypertable { namespace Serialization {
    * The decoded string pointer points back into the encoding buffer.
    * Increments buffer pointer and decrements remainp on success.
    *
-   * @param bufp address of buffer containing encoded string
-   * @param remainp address of variable of number of bytes remaining in buffer
-   * @return pointer to a c-style string
+   * @param bufp Pointer to pointer of buffer containing encoded string
+   * @param remainp Address of variable of number of bytes remaining in buffer
+   * @return Pointer to a c-style string
    */
   inline const char *decode_str16(const uint8_t **bufp, size_t *remainp) {
     const char *str;
@@ -371,10 +381,10 @@ namespace Hypertable { namespace Serialization {
    * The decoded string pointer points back into the encoding buffer.
    * Increments buffer pointer and decrements remainp on success.
    *
-   * @param bufp address of buffer containing encoded string
-   * @param remainp address of variable of number of bytes remaining in buffer
-   * @param lenp address of varaible to hold the len of the string
-   * @return pointer to a c-style string
+   * @param bufp Pointer to pointer of buffer containing encoded string
+   * @param remainp Address of variable of number of bytes remaining in buffer
+   * @param lenp Address of varaible to hold the len of the string
+   * @return Pointer to a c-style string
    */
   inline char *decode_str16(const uint8_t **bufp, size_t *remainp,
                                   uint16_t *lenp) {
@@ -389,9 +399,9 @@ namespace Hypertable { namespace Serialization {
    * termination byte.  The length does not include the '\\0' terminator.
    * Increments buffer pointer and decrements remainp on success.
    *
-   * @param bufp address of buffer containing encoded string
-   * @param remainp address of variable of number of bytes remaining in buffer
-   * @return true on success, false if buffer has insufficient room
+   * @param bufp Pointer to pointer of buffer containing encoded string
+   * @param remainp Address of variable of number of bytes remaining in buffer
+   * @return True on success, false if buffer has insufficient room
    */
   template <class StringT>
   inline StringT decode_str16(const uint8_t **bufp, size_t *remainp) {
@@ -404,41 +414,41 @@ namespace Hypertable { namespace Serialization {
   /**
    * Computes the encoded length of vstr (vint64, data, null)
    *
-   * @param len string length
-   * @return the encoded length of str
+   * @param len The string length
+   * @return The encoded length of str
    */
   inline size_t encoded_length_vstr(size_t len) {
     return encoded_length_vi64(len) + len + 1;
   }
 
   /**
-   * Computes the encoded length of vstr
-   * Assuming string length can be encoded in 32-bit integer
+   * Computes the encoded length of vstr. Assumes that the string length
+   * can be encoded in 32-bit integer
    *
-   * @param s pointer to the the c-style string
-   * @return the encoded length of str
+   * @param s Pointer to the the c-style string
+   * @return The encoded length of s
    */
   inline size_t encoded_length_vstr(const char *s) {
     return encoded_length_vstr(s ? strlen(s) : 0);
   }
 
   /**
-   * Computes the encoded length of vstr
-   * Assuming string length can be encoded in 32-bit integer
+   * Computes the encoded length of vstr. Assumes that the string length
+   * can be encoded in 32-bit integer
    *
-   * @param s string to encode
-   * @return the encoded length of str
+   * @param s The string to encode
+   * @return The encoded length of s
    */
   inline size_t encoded_length_vstr(const String &s) {
     return encoded_length_vstr(s.length());
   }
 
   /**
-   * Encode a buffer as vstr (vint64, data, null)
+   * Encode a buffer as variable length string (vint64, data, null)
    *
-   * @param bufp - pointer to destination buffer
-   * @param buf - pointer to the start of the input buffer
-   * @param len - length of the input buffer
+   * @param bufp Pointer to pointer of destination buffer
+   * @param buf Pointer to the start of the input buffer
+   * @param len Length of the input buffer
    */
   inline void encode_vstr(uint8_t **bufp, const void *buf, size_t len) {
     HT_ENCODE_VSTR(*bufp, buf, len);
@@ -447,8 +457,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Encode a c-style string as vstr
    *
-   * @param bufp - pointer to destination buffer
-   * @param s - pointer to the start of the string
+   * @param bufp Pointer to pointer of destination buffer
+   * @param s Pointer to the start of the string
    */
   inline void encode_vstr(uint8_t **bufp, const char *s) {
     encode_vstr(bufp, s, s ? strlen(s) : 0);
@@ -457,8 +467,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Encode a String as vstr
    *
-   * @param bufp - pointer to destination buffer
-   * @param s - string to encode
+   * @param bufp Pointer to pointer of destination buffer
+   * @param s The string to encode
    */
   template <class StringT>
   inline void encode_vstr(uint8_t **bufp, const StringT &s) {
@@ -466,13 +476,13 @@ namespace Hypertable { namespace Serialization {
   }
 
   /**
-   * Decode a vstr (vint64, data, null)
-   * Note, decoding a vstr longer than 4GiB on a 32-bit platform
+   * Decode a vstr (vint64, data, null).
+   * Note: decoding a vstr longer than 4GiB on a 32-bit platform
    * is obviously futile (throws bad vstr exception)
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to the remaining size variable
-   * @return str
+   * @param bufp Pointer to pointer of the source buffer
+   * @param remainp Pointer to the remaining size variable
+   * @return Pointer to the decoded string data
    */
   inline char *decode_vstr(const uint8_t **bufp, size_t *remainp) {
     char *buf;
@@ -485,9 +495,9 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a vstr (vint64, data, null)
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to the remaining size variable
-   * @return str
+   * @param bufp Pointer to pointer of the source buffer
+   * @param remainp Pointer to the remaining size variable
+   * @return The decoded string
    */
   template <class StringT>
   inline String decode_vstr(const uint8_t **bufp, size_t *remainp) {
@@ -500,13 +510,13 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode a vstr (vint64, data, null)
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to the remaining size variable
-   * @param lenp - pointer to
-   * @return str
+   * @param bufp Pointer to pointer of the source buffer
+   * @param remainp Pointer to the remaining size variable
+   * @param lenp Pointer to the string length
+   * @return Pointer to the decoded string
    */
   inline char *decode_vstr(const uint8_t **bufp, size_t *remainp,
-                           uint32_t *lenp) {
+          uint32_t *lenp) {
     char *buf;
     HT_DECODE_VSTR(*bufp, *remainp, buf, *lenp);
     return buf;
@@ -516,8 +526,8 @@ namespace Hypertable { namespace Serialization {
   /**
    * Encode an InetAddr structure
    *
-   * @param bufp - pointer to the destination buffer
-   * @param addr - address to encode
+   * @param bufp Pointer to pointer of the destination buffer
+   * @param addr Reference to the InetAddr object to encode
    */
   inline void encode_inet_addr(uint8_t **bufp, const InetAddr &addr) {
     HT_ENCODE_I16(*bufp, addr.sin_family);
@@ -528,9 +538,9 @@ namespace Hypertable { namespace Serialization {
   /**
    * Decode an InetAddr structure
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to remaining size variable
-   * @return value
+   * @param bufp Pointer to pointer of the source buffer
+   * @param remainp Pointer to remaining size variable
+   * @return The decoded InetAddr object
    */
   inline InetAddr decode_inet_addr(const uint8_t **bufp, size_t *remainp) {
     InetAddr addr;
@@ -546,8 +556,8 @@ namespace Hypertable { namespace Serialization {
    * left-of-decimal, followed by 64-bit right-of-decimal, both in
    * little-endian order
    *
-   * @param bufp - pointer to the destination buffer
-   * @param val - value to encode
+   * @param bufp Pointer to the destination buffer
+   * @param val The double to encode
    */
   inline void encode_double(uint8_t **bufp, double val) {
     int64_t lod = (int64_t)val;
@@ -560,9 +570,9 @@ namespace Hypertable { namespace Serialization {
    * Decodes a double as 64-bit left-of-decimal, followed by
    * 64-bit right-of-decimal, both in little-endian order
    *
-   * @param bufp - pointer to the source buffer
-   * @param remainp - pointer to remaining size variable
-   * @return value
+   * @param bufp Pointer to pointer of the source buffer
+   * @param remainp Pointer to remaining size variable
+   * @return The decoded value
    */
   inline double decode_double(const uint8_t **bufp, size_t *remainp) {
     int64_t lod, rod;
@@ -574,7 +584,7 @@ namespace Hypertable { namespace Serialization {
   /**
    * Length of an encoded double (16 bytes)
    *
-   * @return number of bytes required
+   * @return The number of bytes required to encode a double
    */
   inline int encoded_length_double() {
     return 16;
@@ -585,9 +595,9 @@ namespace Hypertable { namespace Serialization {
    * The serialization process loses precision, so this function is
    * necessary to compare pre-serialized with post-serialized values
    *
-   * @param a value to compare
-   * @param b value to compare
-   * @return true of values are logically equal, false otherwise
+   * @param a First value to compare
+   * @param b Second value to compare
+   * @return True of values are logically equal, false otherwise
    */
   inline bool equal(double a, double b) {
     int64_t lod_a = (int64_t)a;
@@ -598,6 +608,8 @@ namespace Hypertable { namespace Serialization {
     double bprime = (double)lod_b + ((double)rod_b / (double)1000000000000000000.00);
     return aprime == bprime;
   }
+
+  /** @} */
 
 }} // namespace Hypertable::Serialization
 

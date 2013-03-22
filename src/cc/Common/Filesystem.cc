@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,16 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Abstract base class for a filesystem.
+ * All commands have synchronous and asynchronous versions. Commands that
+ * operate on the same file descriptor are serialized by the underlying
+ * filesystem. In other words, if you issue three asynchronous commands,
+ * they will get carried out and their responses will come back in the
+ * same order in which they were issued. Unless otherwise mentioned, the
+ * methods could throw Exception.
  */
 
 #include "Common/Compat.h"
@@ -96,16 +106,12 @@ Filesystem::decode_response_read_header(EventPtr &event_ptr, uint64_t *offsetp,
 }
 
 
-/**
- */
 size_t
 Filesystem::decode_response_pread(EventPtr &event_ptr, void *dst, size_t len) {
   return decode_response_read(event_ptr, dst, len);
 }
 
 
-/**
- */
 size_t
 Filesystem::decode_response_append(EventPtr &event_ptr, uint64_t *offsetp) {
   const uint8_t *decode_ptr = event_ptr->payload;
@@ -122,8 +128,6 @@ Filesystem::decode_response_append(EventPtr &event_ptr, uint64_t *offsetp) {
 }
 
 
-/**
- */
 int64_t
 Filesystem::decode_response_length(EventPtr &event_ptr) {
   const uint8_t *decode_ptr = event_ptr->payload;
@@ -138,8 +142,6 @@ Filesystem::decode_response_length(EventPtr &event_ptr) {
 }
 
 
-/**
- */
 void
 Filesystem::decode_response_readdir(EventPtr &event_ptr,
                                     std::vector<String> &listing) {
@@ -156,15 +158,13 @@ Filesystem::decode_response_readdir(EventPtr &event_ptr,
   uint32_t len = decode_i32(&decode_ptr, &decode_remain);
   uint16_t slen;
 
-  for (uint32_t i=0; i<len; i++) {
+  for (uint32_t i = 0; i < len; i++) {
     const char *str = decode_str16(&decode_ptr, &decode_remain, &slen);
     listing.push_back(String(str, slen));
   }
 }
 
 
-/**
- */
 bool
 Filesystem::decode_response_exists(EventPtr &event_ptr) {
   const uint8_t *decode_ptr = event_ptr->payload;
@@ -179,9 +179,6 @@ Filesystem::decode_response_exists(EventPtr &event_ptr) {
 }
 
 
-
-/**
- */
 int
 Filesystem::decode_response(EventPtr &event_ptr) {
   const uint8_t *decode_ptr = event_ptr->payload;
@@ -191,11 +188,10 @@ Filesystem::decode_response(EventPtr &event_ptr) {
 }
 
 static String &
-remove_trailing_duplicates(String &s, char separator)
-{
+remove_trailing_duplicates(String &s, char separator) {
   while (s.size() > 1) {
-    if (s[s.size()-1]==separator)
-      s.resize(s.size()-1);
+    if (s[s.size()-1] == separator)
+      s.resize(s.size() - 1);
     else
       break;
   }
@@ -203,10 +199,7 @@ remove_trailing_duplicates(String &s, char separator)
   return s;
 }
 
-/** 
- */
-String Filesystem::dirname(String name, char separator)
-{
+String Filesystem::dirname(String name, char separator) {
   if (name.size() == 1 && name[0] == separator)
     return name;
 
@@ -232,10 +225,8 @@ String Filesystem::dirname(String name, char separator)
   return remove_trailing_duplicates(name, separator);
 }
 
-/** 
- */
-String Filesystem::basename(String name, char separator)
-{
+
+String Filesystem::basename(String name, char separator) {
   if (name.size() == 1 && name[0] == separator)
     return name;
 

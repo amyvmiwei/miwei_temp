@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,13 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Initialization helper for applications.
+ *
+ * The initialization routines help setting up application boilerplate,
+ * configuration policies and usage strings.
+ */
+
 #ifndef HYPERTABLE_INIT_H
 #define HYPERTABLE_INIT_H
 
@@ -25,11 +32,22 @@
 
 namespace Hypertable { namespace Config {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
   /**
    * Init with policy (with init_options (called before parse_args) and
-   * init (called after parse_args) methods
+   * init (called after parse_args) methods. The Policy template class is
+   * usually a list of configuration policies, i.e.
    *
-   * See parse_args for params
+   *    typedef Meta::list<Policy1, Policy2, ...> MyPolicy;
+   *
+   * @sa Config::parse_args for params.
+   *
+   * @param argc The argc parameter of the main() function
+   * @param argv The argv parameter of the main() function
+   * @param desc Optional command option descriptor
    */
   template <class PolicyT>
   inline void init_with_policy(int argc, char *argv[], const Desc *desc = 0) {
@@ -42,12 +60,10 @@ namespace Hypertable { namespace Config {
       if (desc)
         cmdline_desc(*desc);
 
-      file_loaded = false;
       PolicyT::init_options();
       parse_args(argc, argv);
       PolicyT::init();
       sync_aliases(); // init can generate more aliases
-      //properties->notify();
 
       if (get_bool("verbose"))
         properties->print(std::cout);
@@ -57,9 +73,12 @@ namespace Hypertable { namespace Config {
     }
   }
 
-  /**
-   * Convenience function (more of a demo) to init with a list of polices
-   * @see init_with
+  /** Convenience function (more of a demo) to init with a list of polices
+   * @sa init_with
+   *
+   * @param argc The argc parameter of the main() function
+   * @param argv The argv parameter of the main() function
+   * @param desc Optional command option descriptor
    */
   template <class PolicyListT>
   inline void init_with_policies(int argc, char *argv[], const Desc *desc = 0) {
@@ -67,12 +86,17 @@ namespace Hypertable { namespace Config {
     init_with_policy<Combined>(argc, argv, desc);
   }
 
-  /**
-   * Init with default policy
+  /** Initialize with default policy
+   *
+   * @param argc The argc parameter of the main() function
+   * @param argv The argv parameter of the main() function
+   * @param desc Optional command option descriptor
    */
   inline void init(int argc, char *argv[], const Desc *desc = NULL) {
     init_with_policy<DefaultPolicy>(argc, argv, desc);
   }
+
+  /** @} */
 
 }} // namespace Hypertable::Config
 

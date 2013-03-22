@@ -22,8 +22,6 @@
 #ifndef HYPERSPACE_REQUESTHANDLERREADPATHATTR_H
 #define HYPERSPACE_REQUESTHANDLERREADPATHATTR_H
 
-#include "Common/Runnable.h"
-
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"

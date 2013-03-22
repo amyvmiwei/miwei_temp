@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,13 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * SuperFastHash hash algorithm.
+ * The SuperFastHash from Paul Hsieh, recommended by google sparse hash
+ * folks. Slightly faster but weaker (crypto-wise) than Lookup3
+ * see http://www.azillionmonkeys.com/qed/weblicense.html
+ */
+
 #ifndef HYPERTABLE_SUPERFASTHASH_H
 #define HYPERTABLE_SUPERFASTHASH_H
 
@@ -26,30 +33,51 @@
 
 namespace Hypertable {
 
-/**
- * The SuperFastHash from Paul Hsieh, recommended by google sparse hash
- * folks. Slightly faster but weaker (crypto-wise) than Lookup3
+/** @addtogroup Common
+ *  @{
  */
-uint32_t superfasthash(const void *data, size_t len, uint32_t hash);
 
+/**
+ * The SuperFastHash implementation
+ *
+ * @param data Pointer to the input buffer
+ * @param len Size of the input buffer
+ * @param hash Initial seed for the hash; usually set to 0
+ * @return The 32bit hash of the input buffer
+ */
+extern uint32_t superfasthash(const void *data, size_t len, uint32_t hash);
+
+/**
+ * Helper structure using overloaded operator() to calculate hashes of various
+ * input types.
+ *
+ * This class is usually used as a template parameter, i.e. see
+ * BlobHashTraits.h.
+ */
 struct SuperFastHash {
-  uint32_t operator()(const String& s) const {
+  /** Returns the hash of a string */
+  uint32_t operator()(const String &s) const {
     return superfasthash(s.c_str(), s.length(), s.length());
   }
 
+  /** Returns the hash of a memory buffer */
   uint32_t operator()(const void *start, size_t len) const {
     return superfasthash(start, len, len);
   }
 
+  /** Returns the hash of a memory buffer; sets an initial seed */
   uint32_t operator()(const void *start, size_t len, uint32_t seed) const {
     return superfasthash(start, len, seed);
   }
 
+  /** Returns the hash of a null terminated memory buffer */
   uint32_t operator()(const char *s) const {
     size_t len = strlen(s);
     return superfasthash(s, len, len);
   }
 };
+
+/** @} */
 
 } // namespace Hypertable
 

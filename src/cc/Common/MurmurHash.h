@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,14 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * MurmurHash2 digest routine.
+ * The MurmurHash 2 from Austin Appleby is faster and better mixed (but weaker
+ * crypto-wise with one pair of obvious differential) than both Lookup3 and
+ * SuperFastHash. Not-endian neutral for speed.
+ * https://sites.google.com/site/murmurhash/
+ */
+
 #ifndef HYPERTABLE_MURMURHASH_H
 #define HYPERTABLE_MURMURHASH_H
 
@@ -26,30 +34,45 @@
 
 namespace Hypertable {
 
-/**
- * The MurmurHash 2 from Austin Appleby, faster and better mixed (but weaker
- * crypto-wise with one pair of obvious differential) than both Lookup3 and
- * SuperFastHash. Not-endian neutral for speed.
+/** @addtogroup Common
+ *  @{
  */
-uint32_t murmurhash2(const void *data, size_t len, uint32_t hash);
 
+/**
+ * The murmurhash2 implementation
+ *
+ * @param data Pointer to the input buffer
+ * @param len Size of the input buffer
+ * @param hash Initial seed for the hash; usually set to 0
+ * @return The 32bit hash of the input buffer
+ */
+extern uint32_t murmurhash2(const void *data, size_t len, uint32_t hash);
+
+/**
+ * Helper structure using overloaded operator() to calculate hashes of various
+ * input types.
+ *
+ * This class is usually used as a template parameter, i.e. see
+ * BlobHashTraits.h.
+ */
 struct MurmurHash2 {
+  /** Returns hash of a String */
   uint32_t operator()(const String& s) const {
     return murmurhash2(s.c_str(), s.length(), 0);
   }
 
-  uint32_t operator()(const void *start, size_t len) const {
-    return murmurhash2(start, len, 0);
-  }
-
-  uint32_t operator()(const void *start, size_t len, uint32_t seed) const {
+  /** Returns hash of a memory buffer */
+  uint32_t operator()(const void *start, size_t len, uint32_t seed = 0) const {
     return murmurhash2(start, len, seed);
   }
 
+  /** Returns hash of a null terminated memory buffer */
   uint32_t operator()(const char *s) const {
     return murmurhash2(s, strlen(s), 0);
   }
 };
+
+/** @} */
 
 } // namespace Hypertable
 

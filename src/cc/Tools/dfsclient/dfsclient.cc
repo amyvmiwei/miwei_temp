@@ -86,7 +86,7 @@ namespace {
 
     if (batch_mode) {
       if (!getline(cin, input_str))
-	return 0;
+        return 0;
       boost::trim(input_str);
       return (char *)input_str.c_str();
     }

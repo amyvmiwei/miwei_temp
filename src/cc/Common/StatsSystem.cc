@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,10 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Collecting and (de)serializing system-wide statistics.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
@@ -30,7 +34,6 @@
 using namespace Hypertable;
 
 namespace {
-
   enum Group {
     CPUINFO_GROUP  = 0,
     CPU_GROUP      = 1,
@@ -46,7 +49,6 @@ namespace {
     FS_GROUP       = 11,
     TERMINFO_GROUP = 12
   };
-
 }
 
 StatsSystem::StatsSystem(int32_t categories) 
@@ -62,7 +64,6 @@ StatsSystem::StatsSystem(int32_t categories, std::vector<String> &dirs)
   add_categories(categories, dirs);
   HT_ASSERT((categories&(DISK|FS)) != 0);
 }
-
 
 void StatsSystem::add_categories(int32_t categories) {
   m_categories |= categories;
@@ -116,7 +117,7 @@ void StatsSystem::add_categories(int32_t categories, std::vector<String> &dirs) 
   add_categories(categories);
 
   // strip trailing '/'
-  for (size_t i=0; i<dirs.size(); i++) {
+  for (size_t i = 0; i < dirs.size(); i++) {
     boost::trim_right_if(dirs[i], boost::is_any_of("/"));
     if (dirs[i] == "")
       dirs[i] = "/";
@@ -125,13 +126,13 @@ void StatsSystem::add_categories(int32_t categories, std::vector<String> &dirs) 
   if (categories & DISK) {
     group_ids[group_count++] = DISK_GROUP;
     disk_stat.resize(dirs.size());
-    for (size_t i=0; i<dirs.size(); i++)
+    for (size_t i = 0; i < dirs.size(); i++)
       disk_stat[i].prefix = dirs[i];
   }
   if (categories & FS) {
     group_ids[group_count++] = FS_GROUP;
     fs_stat.resize(dirs.size());
-    for (size_t i=0; i<dirs.size(); i++)
+    for (size_t i = 0; i < dirs.size(); i++)
       fs_stat[i].prefix = dirs[i];
   }
 }
@@ -150,11 +151,11 @@ void StatsSystem::refresh() {
   if (m_categories & PROC)
     proc_stat.refresh();
   if (m_categories & DISK) {
-    for (size_t i=0; i<disk_stat.size(); i++)
+    for (size_t i = 0; i < disk_stat.size(); i++)
       disk_stat[i].refresh(disk_stat[i].prefix.c_str());
   }
   if (m_categories & FS) {
-    for (size_t i=0; i<fs_stat.size(); i++)
+    for (size_t i = 0; i < fs_stat.size(); i++)
       fs_stat[i].refresh(fs_stat[i].prefix.c_str());
   }
 }
@@ -200,7 +201,7 @@ bool StatsSystem::operator==(const StatsSystem &other) const {
   if (m_categories & DISK) {
     if (disk_stat.size() != other.disk_stat.size())
       return false;
-    for (size_t i=0; i<disk_stat.size(); i++) {
+    for (size_t i = 0; i < disk_stat.size(); i++) {
       if (disk_stat[i] != other.disk_stat[i])
         return false;
     }
@@ -208,7 +209,7 @@ bool StatsSystem::operator==(const StatsSystem &other) const {
   if (m_categories & FS) {
     if (fs_stat.size() != other.fs_stat.size())
       return false;
-    for (size_t i=0; i<fs_stat.size(); i++) {
+    for (size_t i = 0; i < fs_stat.size(); i++) {
       if (fs_stat[i] != other.fs_stat[i])
         return false;
     }
@@ -218,73 +219,73 @@ bool StatsSystem::operator==(const StatsSystem &other) const {
 
 size_t StatsSystem::encoded_length_group(int group) const {
   if (group == CPUINFO_GROUP) {
-    return Serialization::encoded_length_vstr(cpu_info.vendor) + \
-      Serialization::encoded_length_vstr(cpu_info.model) + 5*4;
+    return Serialization::encoded_length_vstr(cpu_info.vendor)
+        + Serialization::encoded_length_vstr(cpu_info.model) + 5 * 4;
   }
   else if (group == CPU_GROUP) {
-    return 9*Serialization::encoded_length_double();
+    return 9 * Serialization::encoded_length_double();
   }
   else if (group == LOADAVG_GROUP) {
-    return 3*Serialization::encoded_length_double();
+    return 3 * Serialization::encoded_length_double();
   }
   else if (group == MEMORY_GROUP) {
-    return 6*Serialization::encoded_length_double();
+    return 6 * Serialization::encoded_length_double();
   }
   else if (group == DISK_GROUP) {
     size_t len = Serialization::encoded_length_vi32(disk_stat.size());
-    for (size_t i=0; i<disk_stat.size(); i++) {
-      len += Serialization::encoded_length_vstr(disk_stat[i].prefix) + \
-        4*Serialization::encoded_length_double();
+    for (size_t i = 0; i < disk_stat.size(); i++) {
+      len += Serialization::encoded_length_vstr(disk_stat[i].prefix)
+          + 4 * Serialization::encoded_length_double();
     }
     return len;
   }
   else if (group == SWAP_GROUP) {
-    return (3*Serialization::encoded_length_double()) + 16;
+    return (3 * Serialization::encoded_length_double()) + 16;
   }
   else if (group == NETINFO_GROUP) {
-    return Serialization::encoded_length_vstr(net_info.host_name) + \
-      Serialization::encoded_length_vstr(net_info.primary_if) + \
-      Serialization::encoded_length_vstr(net_info.primary_addr) + \
-      Serialization::encoded_length_vstr(net_info.default_gw);
+    return Serialization::encoded_length_vstr(net_info.host_name)
+        + Serialization::encoded_length_vstr(net_info.primary_if)
+        + Serialization::encoded_length_vstr(net_info.primary_addr)
+        + Serialization::encoded_length_vstr(net_info.default_gw);
   }
   else if (group == NET_GROUP) {
-    return (5*4) + (2*Serialization::encoded_length_double());
+    return (5 * 4) + (2 * Serialization::encoded_length_double());
   }
   else if (group == OSINFO_GROUP) {
-    return 6 + Serialization::encoded_length_vstr(os_info.name) + \
-      Serialization::encoded_length_vstr(os_info.version) + \
-      Serialization::encoded_length_vstr(os_info.arch) + \
-      Serialization::encoded_length_vstr(os_info.machine) + \
-      Serialization::encoded_length_vstr(os_info.description) + \
-      Serialization::encoded_length_vstr(os_info.patch_level) + \
-      Serialization::encoded_length_vstr(os_info.vendor) + \
-      Serialization::encoded_length_vstr(os_info.vendor_version) + \
-      Serialization::encoded_length_vstr(os_info.vendor_name) + \
-      Serialization::encoded_length_vstr(os_info.code_name);
+    return 6 + Serialization::encoded_length_vstr(os_info.name)
+        + Serialization::encoded_length_vstr(os_info.version)
+        + Serialization::encoded_length_vstr(os_info.arch)
+        + Serialization::encoded_length_vstr(os_info.machine)
+        + Serialization::encoded_length_vstr(os_info.description)
+        + Serialization::encoded_length_vstr(os_info.patch_level)
+        + Serialization::encoded_length_vstr(os_info.vendor)
+        + Serialization::encoded_length_vstr(os_info.vendor_version)
+        + Serialization::encoded_length_vstr(os_info.vendor_name)
+        + Serialization::encoded_length_vstr(os_info.code_name);
   }
   else if (group == PROCINFO_GROUP) {
-    size_t len = 8 + Serialization::encoded_length_vstr(proc_info.user) + \
-      Serialization::encoded_length_vstr(proc_info.exe) + \
-      Serialization::encoded_length_vstr(proc_info.cwd) + \
-      Serialization::encoded_length_vstr(proc_info.root);
+    size_t len = 8 + Serialization::encoded_length_vstr(proc_info.user)
+        + Serialization::encoded_length_vstr(proc_info.exe)
+        + Serialization::encoded_length_vstr(proc_info.cwd)
+        + Serialization::encoded_length_vstr(proc_info.root);
     len += Serialization::encoded_length_vi32(proc_info.args.size());
-    for (size_t i=0; i<proc_info.args.size(); i++)
+    for (size_t i = 0; i < proc_info.args.size(); i++)
       len += Serialization::encoded_length_vstr(proc_info.args[i]);
     return len;
   }
   else if (group == PROC_GROUP) {
-    return (6*8) + (4*Serialization::encoded_length_double()) + 2*8;
+    return (6 * 8) + (4 * Serialization::encoded_length_double()) + 2 * 8;
   }
   else if (group == FS_GROUP) {
     size_t len = Serialization::encoded_length_vi32(fs_stat.size());
-    for (size_t i=0; i<fs_stat.size(); i++) {
-      len += (6*8) + Serialization::encoded_length_double() + \
-        Serialization::encoded_length_vstr(fs_stat[i].prefix);
+    for (size_t i = 0; i < fs_stat.size(); i++) {
+      len += (6 * 8) + Serialization::encoded_length_double()
+          + Serialization::encoded_length_vstr(fs_stat[i].prefix);
     }
     return len;
   }
   else if (group == TERMINFO_GROUP) {
-    return (2*4) + Serialization::encoded_length_vstr(term_info.term);
+    return (2 * 4) + Serialization::encoded_length_vstr(term_info.term);
   }
   else
     HT_FATALF("Invalid group number (%d)", group);
@@ -327,7 +328,7 @@ void StatsSystem::encode_group(int group, uint8_t **bufp) const {
   }
   else if (group == DISK_GROUP) {
     Serialization::encode_vi32(bufp, disk_stat.size());
-    for (size_t i=0; i<disk_stat.size(); i++) {
+    for (size_t i = 0; i < disk_stat.size(); i++) {
       Serialization::encode_vstr(bufp, disk_stat[i].prefix);
       Serialization::encode_double(bufp, disk_stat[i].reads_rate);
       Serialization::encode_double(bufp, disk_stat[i].writes_rate);
@@ -379,7 +380,7 @@ void StatsSystem::encode_group(int group, uint8_t **bufp) const {
     Serialization::encode_vstr(bufp, proc_info.cwd);
     Serialization::encode_vstr(bufp, proc_info.root);
     Serialization::encode_vi32(bufp, proc_info.args.size());
-    for (size_t i=0; i<proc_info.args.size(); i++)
+    for (size_t i = 0; i < proc_info.args.size(); i++)
       Serialization::encode_vstr(bufp, proc_info.args[i]);
   }
   else if (group == PROC_GROUP) {
@@ -398,7 +399,7 @@ void StatsSystem::encode_group(int group, uint8_t **bufp) const {
   }
   else if (group == FS_GROUP) {
     Serialization::encode_vi32(bufp, fs_stat.size());
-    for (size_t i=0; i<fs_stat.size(); i++) {
+    for (size_t i = 0; i < fs_stat.size(); i++) {
       Serialization::encode_vstr(bufp, fs_stat[i].prefix);
       Serialization::encode_double(bufp, fs_stat[i].use_pct);
       Serialization::encode_i64(bufp, fs_stat[i].total);
@@ -418,7 +419,8 @@ void StatsSystem::encode_group(int group, uint8_t **bufp) const {
     HT_FATALF("Invalid group number (%d)", group);
 }
 
-void StatsSystem::decode_group(int group, uint16_t len, const uint8_t **bufp, size_t *remainp) {
+void StatsSystem::decode_group(int group, uint16_t len, const uint8_t **bufp,
+        size_t *remainp) {
   if (group == CPUINFO_GROUP) {
     cpu_info.vendor = Serialization::decode_vstr(bufp, remainp);
     cpu_info.model = Serialization::decode_vstr(bufp, remainp);
@@ -459,7 +461,7 @@ void StatsSystem::decode_group(int group, uint16_t len, const uint8_t **bufp, si
   else if (group == DISK_GROUP) {
     size_t count = Serialization::decode_vi32(bufp, remainp);
     disk_stat.resize(count);
-    for (size_t i=0; i<count; i++) {
+    for (size_t i = 0; i < count; i++) {
       disk_stat[i].prefix = Serialization::decode_vstr(bufp, remainp);
       disk_stat[i].reads_rate = Serialization::decode_double(bufp, remainp);
       disk_stat[i].writes_rate = Serialization::decode_double(bufp, remainp);
@@ -516,7 +518,7 @@ void StatsSystem::decode_group(int group, uint16_t len, const uint8_t **bufp, si
     proc_info.cwd = Serialization::decode_vstr(bufp, remainp);
     proc_info.root = Serialization::decode_vstr(bufp, remainp);
     size_t len = Serialization::decode_vi32(bufp, remainp);
-    for (size_t i=0; i<len; i++)
+    for (size_t i = 0; i < len; i++)
       proc_info.args.push_back(Serialization::decode_vstr(bufp, remainp));
     m_categories |= PROCINFO;
   }
@@ -538,7 +540,7 @@ void StatsSystem::decode_group(int group, uint16_t len, const uint8_t **bufp, si
   else if (group == FS_GROUP) {
     size_t count = Serialization::decode_vi32(bufp, remainp);
     fs_stat.resize(count);
-    for (size_t i=0; i<count; i++) {
+    for (size_t i = 0; i < count; i++) {
       fs_stat[i].prefix = Serialization::decode_vstr(bufp, remainp);
       fs_stat[i].use_pct = Serialization::decode_double(bufp, remainp);
       fs_stat[i].total = Serialization::decode_i64(bufp, remainp);

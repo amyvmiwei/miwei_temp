@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,10 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Helper class for printing usage banners to the command line.
+ */
+
 #include "Common/Compat.h"
 
 #include <iostream>
@@ -32,16 +36,14 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-
 void Usage::dump(const char **usage) {
-  for (int i=0; usage[i] != 0; i++)
+  for (int i = 0; usage[i] != 0; i++)
     cout << usage[i] << endl;
 }
-
 
 void Usage::dump_and_exit(const char **usage, int rcode) {
   cout << endl;
   dump(usage);
   cout << endl;
-  _exit(1);
+  _exit(rcode);
 }

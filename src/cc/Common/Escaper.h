@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,10 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Escape/Unescape routines for strings.
+ */
+
 #ifndef HYPERTABLE_ESCAPER_H
 #define HYPERTABLE_ESCAPER_H
 
@@ -26,9 +30,24 @@
 
 namespace Hypertable {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
+  /** Escapes a string
+   *
+   * @param str The string to escape [in/out]
+   * @param escape_chars All characters that are escaped
+   */
   void escape(String &str, const String &escape_chars);
+
+  /** Unescapes a string
+   *
+   * @param str The string to unescape [in/out]
+   */
   void unescape(String &str);
 
+  /** @} */
 }
 
 #endif // HYPERTABLE_ESCAPER_H

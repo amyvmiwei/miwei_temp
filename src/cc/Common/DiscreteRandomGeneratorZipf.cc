@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Discrete Random Generator creating a zipfian distribution.
+ * See http://en.wikipedia.org/wiki/Zipf%27s_law
+ */
+
 #include "DiscreteRandomGeneratorZipf.h"
 
 using namespace Hypertable;
@@ -31,11 +37,11 @@ DiscreteRandomGeneratorZipf::DiscreteRandomGeneratorZipf(double s)
 double DiscreteRandomGeneratorZipf::pmf(uint64_t val)
 {
   if (!m_initialized) {
-    m_norm = (1-m_s)/(pow(m_value_count+1, 1-m_s));
+    m_norm = (1 - m_s) / (pow(m_value_count + 1, 1 - m_s));
     m_initialized = true;
   }
-  assert(val>=0 && val <= m_value_count+1);
+  assert(val >= 0 && val <= m_value_count + 1);
   val++;
-  double prob = m_norm/pow(val, m_s);
+  double prob = m_norm / pow(val, m_s);
   return (prob);
 }

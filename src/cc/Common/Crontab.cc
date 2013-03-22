@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Crontab class for periodic events.
+ * The Crontab class is used to track the timing of a periodic event.
+ * This is used i.e. in the Hypertable.Master to schedule LoadBalancer events.
+ */
+
 #include "Compat.h"
 #include "Crontab.h"
 #include "Logger.h"
@@ -50,7 +57,7 @@ time_t Crontab::next_event(time_t now) {
   next_matching_day(&next_tm, day_increment);
 
  next_hour:
-  for (i=next_tm.tm_hour+hour_increment; i<24; i++) {
+  for (i = next_tm.tm_hour + hour_increment; i < 24; i++) {
     if (m_entry.hour[i]) {
       if (i > next_tm.tm_hour) {
         next_tm.tm_hour = i;
@@ -65,7 +72,7 @@ time_t Crontab::next_event(time_t now) {
     goto next_day;
   }
 
-  for (i=next_tm.tm_min; i<60; i++) {
+  for (i = next_tm.tm_min; i < 60; i++) {
     if (m_entry.minute[i]) {
       next_tm.tm_min = i;
       return mktime(&next_tm);
@@ -95,7 +102,7 @@ void Crontab::next_matching_day(struct tm *next_tm, bool increment) {
 
   while (true) {
     if (m_entry.month[next_tm->tm_mon] &&
-        (m_entry.dom[(next_tm->tm_mday-1)] || m_entry.dow[next_tm->tm_wday]))
+        (m_entry.dom[(next_tm->tm_mday - 1)] || m_entry.dow[next_tm->tm_wday]))
       break;
     t = mktime(next_tm) + 86400;
     localtime_r(&t, next_tm);
@@ -194,7 +201,8 @@ void Crontab::parse_entry(const String &spec, crontab_entry *entry) {
 }
 
 template <int N> 
-void Crontab::parse_range(const String &spec, std::bitset<N> &bits, bool zero_based) {
+void Crontab::parse_range(const String &spec, std::bitset<N> &bits,
+        bool zero_based) {
   String text = spec;
   String range, step_str;
   size_t count = 0;

@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,10 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Stl compatible memory allocator based on a %PageArena.
+ */
+
 #ifndef HYPERTABLE_STL_ALLOCATOR_H
 #define HYPERTABLE_STL_ALLOCATOR_H
 
@@ -24,8 +28,15 @@
 
 namespace Hypertable {
 
+/** @addtogroup Common
+ *  @{
+ */
+
 typedef PageArena<uint8_t, DefaultPageAllocator> StlArena;
 
+/**
+ * Stl compatible memory allocator based on a %PageArena.
+ */
 template <typename T, class Impl = PageArenaAllocator<T, StlArena> >
 struct StlAllocator : Impl {
  template <typename U>
@@ -38,6 +49,8 @@ struct StlAllocator : Impl {
   StlAllocator() {}
   StlAllocator(StlArena &arena) : Impl(arena) {}
 };
+
+/** @}*/
 
 } // namespace Hypertable
 

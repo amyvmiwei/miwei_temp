@@ -25,7 +25,6 @@ Abi.cc
 Checksum.cc
 Config.cc
 Crontab.cc
-Debug.cc
 DiscreteRandomGenerator.cc
 DiscreteRandomGeneratorFactory.cc
 DiscreteRandomGeneratorZipf.cc
@@ -38,7 +37,6 @@ InetAddr.cc
 InteractiveCommand.cc
 Logger.cc
 Lookup3.cc
-Math.cc
 MurmurHash.cc
 Properties.cc
 Random.cc
@@ -48,8 +46,6 @@ System.cc
 SystemInfo.cc
 StatsSerializable.cc
 StatsSystem.cc
-StringCompressorPrefix.cc
-StringDecompressorPrefix.cc
 Time.cc
 Usage.cc
 Version.cc

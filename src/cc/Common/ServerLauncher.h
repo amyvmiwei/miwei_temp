@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Launches an external command, redirects its output to a file. Used for
+ * testing.
+ */
+
 #ifndef HYPERTABLE_SERVERLAUNCHER_H
 #define HYPERTABLE_SERVERLAUNCHER_H
 
@@ -36,10 +41,30 @@ extern "C" {
 
 namespace Hypertable {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
+  /**
+   * Launches external commands and redirects their output to a file; kills
+   * the external process when going out of scope.
+   * This class is used for testing purposes.
+   */
   class ServerLauncher {
   public:
+    /** Constructor; launches the external command, optionally redirects the
+     * output.
+     *
+     * @param path The path of the external program
+     * @param argv The argument list of the program
+     * @param outfile Path of the redirected output file (for stdout AND
+     *      stderr); optional. If NULL then will use stdout/stderr of the
+     *      host program
+     * @param append_output If true, output will be appended. Otherwise output
+     *      file will be overwritten
+     */
     ServerLauncher(const char *path, char *const argv[],
-                   const char *outfile = 0, bool append_output = false) {
+            const char *outfile = 0, bool append_output = false) {
       int fd[2];
       m_path = path;
       if (pipe(fd) < 0) {
@@ -52,9 +77,9 @@ namespace Hypertable {
           int outfd = -1;
 
           if (append_output)
-            open_flags = O_CREAT|O_APPEND|O_RDWR;
+            open_flags = O_CREAT | O_APPEND | O_RDWR;
           else
-            open_flags = O_CREAT|O_TRUNC|O_WRONLY,
+            open_flags = O_CREAT | O_TRUNC | O_WRONLY,
 
           outfd = open(outfile, open_flags, 0644);
           if (outfd < 0) {
@@ -71,26 +96,40 @@ namespace Hypertable {
       }
       close(fd[0]);
       m_write_fd = fd[1];
-      poll(0,0,2000);
+      poll(0, 0, 2000);
     }
 
+    /** Destructor; kills the external program */
     ~ServerLauncher() {
       std::cerr << "Killing '" << m_path << "' pid=" << m_child_pid
-                << std::endl << std::flush;
+          << std::endl << std::flush;
       close(m_write_fd);
       if (kill(m_child_pid, 9) == -1)
         perror("kill");
     }
 
-    int get_write_descriptor() { return m_write_fd; }
+    /** Returns stdin of the external program */
+    int get_write_descriptor() const {
+      return m_write_fd;
+    }
 
-    pid_t get_pid() { return m_child_pid; }
+    /** Returns the pid of the external program */
+    pid_t get_pid() const {
+      return m_child_pid;
+    }
 
   private:
+    /** The path of the external program */
     const char *m_path;
+
+    /** The pid of the external program */
     pid_t m_child_pid;
-    int   m_write_fd;
+
+    /** The file descriptor writing to stdin of the external program */
+    int m_write_fd;
   };
+
+  /** @} */
 
 }
 

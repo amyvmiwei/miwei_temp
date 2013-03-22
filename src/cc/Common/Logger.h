@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Logging routines and macros.
+ * The LogWriter provides facilities to write debug, log, error- and other
+ * messages to stdout. The Logging namespaces provides std::ostream-
+ * and printf-like macros and convenience functions.
+ */
+
 #ifndef HYPERTABLE_LOGGER_H
 #define HYPERTABLE_LOGGER_H
 
@@ -33,6 +41,11 @@
 
 namespace Hypertable { namespace Logger {
 
+  /** @addtogroup Common
+   *  @{
+   */
+
+  /** Output priorities modelled after syslog */
   namespace Priority {
     enum {
       EMERG  = 0,
@@ -48,25 +61,39 @@ namespace Hypertable { namespace Logger {
     };
   } // namespace Priority
 
+  /** The LogWriter class writes to stdout. It's not used directly, but
+   * rather through the macros below (i.e. HT_ERROR_OUT, HT_ERRORF etc).
+   */
   class LogWriter {
     public:
+      /** Constructor
+       *
+       * @param name The name of the application
+       */
       LogWriter(const String &name)
         : m_show_line_numbers(true), m_test_mode(false), m_name(name),
           m_priority(Priority::INFO), m_file(stdout) {
       }
 
+      /** Sets the message level; all messages with a higher level are discarded
+       */
       void set_level(int level) {
         m_priority = level;
       }
 
+      /** Returns the message level */
       int  get_level() const {
         return m_priority;
       }
 
-      bool is_enabled(int priority) const {
-        return priority <= m_priority;
+      /** Returns true if a message with this level is not discarded */
+      bool is_enabled(int level) const {
+        return level <= m_priority;
       }
 
+      /** The test mode disables line numbers and timestamps and can
+       * redirect the output to a separate file descriptor
+       */
       void set_test_mode(int fd = -1) {
         if (fd != -1)
           m_file = fdopen(fd, "wt");
@@ -74,56 +101,78 @@ namespace Hypertable { namespace Logger {
         m_test_mode = true;
       }
 
+      /** Returns true if line numbers are printed */ 
       bool show_line_numbers() const {
         return m_show_line_numbers;
       }
 
+      /** Flushes the log file */
       void flush() {
         fflush(m_file);
       }
 
+      /** Prints a debug message with variable arguments (similar to printf) */
       void debug(const char *format, ...);
 
+      /** Prints a debug message */
       void debug(const String &message) {
         log(Priority::DEBUG, message);
       }
 
+      /** Prints a message with variable arguments */
       void log(int priority, const char *format, ...);
 
+      /** Prints a message */
       void log(int priority, const String &message) {
         log_string(priority, message.c_str());
       }
 
+    private:
+      /** Appends a string message to the log */
       void log_string(int priority, const char *message);
 
+      /** Appends a string message with variable arguments to the log */
       void log_varargs(int priority, const char *format, va_list ap);
 
+      /** True if line numbers are shown */
       bool m_show_line_numbers;
+
+      /** True if this log is in test mode */
       bool m_test_mode;
+
+      /** The name of the application */
       String m_name;
+
+      /** The current priority (everything above is filtered) */
       int m_priority;
+
+      /** The output file handle */
       FILE *m_file;
   };
 
-  // public initialization function
+  /** Public initialization function - creates a singleton instance of
+   * LogWriter
+   */
   extern void initialize(const String &name);
 
-  // public factory
+  /** Accessor for the LogWriter singleton instance */
   extern LogWriter *get();
+
+  /** @} */
 
 }} // namespace Hypertable::Logger
 
 
 #define HT_LOG_BUFSZ 1024
 
-// This should generate a core dump
+/** The HT_ABORT macro terminates the application and generates a core dump */
 #ifdef HT_USE_ABORT
-#define HT_ABORT abort()
+#  define HT_ABORT abort()
 #else
 #define HT_ABORT raise(SIGABRT)
 #endif
 
-// printf interface macro helper
+// printf interface macro helper; do not use directly
 #define HT_LOG(priority, msg) do { \
   if (Logger::get()->is_enabled(priority)) { \
     if (Logger::get()->show_line_numbers()) \

@@ -22,7 +22,6 @@
 #ifndef HYPERSPACE_REQUESTHANDLERDESTROYSESSION_H
 #define HYPERSPACE_REQUESTHANDLERDESTROYSESSION_H
 
-#include "Common/Runnable.h"
 #include "Common/Mutex.h"
 
 #include "AsyncComm/ApplicationHandler.h"
