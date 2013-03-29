@@ -56,8 +56,8 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
                                            RangeStatsGathererPtr &gatherer)
   : m_queue(queue), m_server_stats(server_stats), m_stats_gatherer(gatherer),
     m_prioritizer_log_cleanup(server_stats),
-    m_prioritizer_low_memory(server_stats), m_initialized(false),
-    m_low_memory_mode(false) {
+    m_prioritizer_low_memory(server_stats), m_start_offset(0),
+    m_initialized(false), m_low_memory_mode(false) {
   m_prioritizer = &m_prioritizer_log_cleanup;
   m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
   m_query_cache_memory = get_i64("Hypertable.RangeServer.QueryCache.MaxMemory");
@@ -71,6 +71,9 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
   m_merges_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MergesPerInterval",
                                   std::numeric_limits<int32_t>::max());
   m_move_compactions_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MoveCompactionsPerInterval");
+
+  m_maintenance_queue_worker_count = 
+    (int32_t)Global::maintenance_queue->worker_count();
 
   /** 
    * This code adds hashes for the four primary commit log
@@ -165,6 +168,14 @@ void MaintenanceScheduler::schedule() {
 
   if (range_data.empty())
     return;
+
+  // Rotate the starting point to avoid compaction starvation during high write
+  // activity with many ranges.
+  if (!low_memory) {
+    m_start_offset %= range_data.size();
+    range_data.rotate(m_start_offset);
+    m_start_offset += m_maintenance_queue_worker_count;
+  }
 
   HT_ASSERT(m_prioritizer);
 

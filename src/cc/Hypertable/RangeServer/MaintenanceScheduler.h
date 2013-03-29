@@ -77,6 +77,8 @@ namespace Hypertable {
     int32_t m_merging_delay;
     int32_t m_merges_per_interval;
     int32_t m_move_compactions_per_interval;
+    int32_t m_maintenance_queue_worker_count;
+    int32_t m_start_offset;
     std::set<int64_t> m_log_hashes;
     bool m_initialized;
     bool m_low_memory_prioritization;
