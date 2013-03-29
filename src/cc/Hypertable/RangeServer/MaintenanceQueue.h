@@ -195,8 +195,7 @@ namespace Hypertable {
 
   public:
 
-    /**
-     * Constructor to set up the application queue.  It creates a number
+    /** Constructor to set up the maintenance queue.  It creates a number
      * of worker threads specified by the worker_count argument.
      *
      * @param worker_count number of worker threads to create
@@ -210,8 +209,7 @@ namespace Hypertable {
       //threads
     }
 
-    /**
-     * Shuts down the application queue.  All "in flight" requests are carried
+    /** Shuts down the maintenance queue.  All "in flight" requests are carried
      * out and then all threads exit.  #join can be called to wait for
      * completion of the shutdown.
      */
@@ -220,9 +218,8 @@ namespace Hypertable {
       m_state.cond.notify_all();
     }
 
-    /**
-     * Waits for a shutdown to complete.  This method returns when all
-     * application queue threads exit.
+    /** Waits for a shutdown to complete.  This method returns when all
+     * maintenance queue threads exit.
      */
     void join() {
       if (!joined) {
@@ -231,8 +228,7 @@ namespace Hypertable {
       }
     }
 
-    /**
-     * Stops (suspends) queue processing
+    /** Stops (suspends) queue processing
      */
     void stop() {
       ScopedLock lock(m_state.mutex);
@@ -240,8 +236,7 @@ namespace Hypertable {
       ms_pause++;
     }
 
-    /**
-     * Starts queue processing
+    /** Starts queue processing
      */
     void start() {
       ScopedLock lock(m_state.mutex);
@@ -253,8 +248,7 @@ namespace Hypertable {
       }
     }
 
-    /**
-     * Drops all range maintenance tasks from the queue.
+    /** Drops all range maintenance tasks from the queue.
      */
     void drop_range_tasks() {
       ScopedLock lock(m_state.mutex);
@@ -356,6 +350,12 @@ namespace Hypertable {
       }
       return true;
     }
+
+    /** Returns the number of worker threads configured for the queue.
+     * @return Number of configured worker threads
+     */
+    int worker_count() { return m_worker_count; }
+
   };
 
   /// Smart pointer to MaintenanceQueue

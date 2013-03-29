@@ -22,6 +22,7 @@
 #ifndef HYPERTABLE_TABLEINFO_H
 #define HYPERTABLE_TABLEINFO_H
 
+#include <iterator>
 #include <set>
 #include <string>
 
@@ -51,9 +52,18 @@ namespace Hypertable {
   public:
     RangeDataVector() : std::vector<RangeData>() {}
     ByteArena& arena() { return m_arena; }
+    void rotate(int32_t starting_point) {
+      if (starting_point != 0) {
+        std::vector<RangeData> rotated;
+        rotated.reserve(size());
+        starting_point %= size();
+        std::vector<RangeData>::iterator iter = begin() + starting_point;
+        rotated.insert(rotated.end(), iter, end());
+        rotated.insert(rotated.end(), begin(), iter);
+        swap(rotated);
+      }
+    }
   private:
-    RangeDataVector(const RangeDataVector&);
-    RangeDataVector& operator = (const RangeDataVector&);
     ByteArena m_arena;
   };
 
