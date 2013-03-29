@@ -44,7 +44,7 @@ namespace Hypertable {
    *  @{
    */
 
-  /** Timer interrupt handler.  Currently, the primary purpose of this class
+  /** %Timer interrupt handler.  Currently, the primary purpose of this class
    * is to handle maintenance scheduling.  Usually, it adds a
    * RequestHandlerDoMaintenance object onto the application queue each
    * time it is called.  However, it also tests for low memory and if
@@ -71,30 +71,39 @@ namespace Hypertable {
      */
     TimerHandler(Comm *comm, RangeServer *range_server);
 
-    /** Timer event handler callback method.
-     * If #m_shutdown is <i>true</i>, this method sets #m_shutdown_complete to
-     * <i>true</i>, signals #m_shutdown_cond, and returns immediately.
-     * Otherwise, if the application queue is paused, it will restart it if 
-     * low memory mode was set and the system is no longer low on memory, or
-     * the maintenance queue generation has reached #m_restart_generation
-     * (meaning all of the maintenance that was last scheduled has been
-     * carried out), or #m_max_app_queue_pause milliseconds have elapsed since
-     * since the queue was paused.  Also, if application queue is paused,
-     * it disables the maintenance schedule operation (unless
-     * #m_immediate_maintenance_scheduled is <i>true</i>).  After the paused
-     * queue handling, if #m_immediate_maintenance_scheduled is <i>true</i>
-     * it will disable low memory mode so that the normal maintenance
-     * prioritization algorithm will be used, otherwise a low memory check
-     * is performed and #m_low_memory_mode is set accordingly.  If a maintenance
-     * schedule is not outstanding (#m_schedule_outstanding == <i>false</i>) and
-     * the application queue is not paused, it will schedule maintenance by
-     * adding a RequestHandlerDoMaintenance object to the application queue and
-     * set #m_schedule_outstanding to <i>true</i> and the timer will not be
-     * installed (because it was scheduled as a one-shot).  Otherwise if
-     * maintenance was <b>not</b> scheduled, the timer is registered for
-     * #m_current_interval milliseconds in the future.  If maintenance was
-     * scheduled, the #maintenance_scheduled_notify method will handle
-     * re-registering the timer.
+    /** %Timer event handler callback method.
+     * This method performs the following steps:
+     *   -# If #m_shutdown is <i>true</i>, this method sets #m_shutdown_complete
+     *      to <i>true</i>, signals #m_shutdown_cond, and returns immediately.
+     *   -# If the application queue is paused, it will restart it in the
+     *      following cirucmstances:
+     *        - Low memory mode is in effect and the system is no longer low on
+     *          memory.
+     *        - The maintenance queue generation has reached
+     *          #m_restart_generation (meaning all of the maintenance that was
+     *          last scheduled has been carried out).
+     *        - #m_max_app_queue_pause milliseconds have elapsed since the queue
+     *          was paused.
+     *   -# If the application queue was not paused upon entry to this method,
+     *      and low maintenance mode is in effect, and the system is low on
+     *      memory, then the application queue is paused.
+     *   -# If #m_immediate_maintenance_scheduled is <i>true</i>, low memory
+     *      mode is disabled, otherwise, a check for low memory is performed
+     *      and low memory mode will be enabled as long as the size of the
+     *      user commit log has not exceeded #m_userlog_size_threshold.
+     *   -# If <code>event</code> is not an Event::TIMER event, an error is
+     *      logged and the method returns.
+     *   -# If #m_schedule_outstanding is <i>false</i> a
+     *      RequestHandlerDoMaintenance object is added to the application
+     *      queue and #m_schedule_outstanding will be set to <i>true</i> under
+     *      the following circumstances:
+     *        - The application queue was <b>not</b> paused on entry to this
+     *          method.
+     *        - The application queue <b>was</b> paused on entry to this method
+     *          and #m_immediate_maintenance_scheduled is <i>true</i>.
+     *   -# If a RequestHandlerDoMaintenance object was not added to the
+     *      application queue, then the timer will get re-registered for
+     *      #m_current_interval milliseconds in the future.
      * @param event Event object
      */
     void handle(Hypertable::EventPtr &event);
@@ -108,19 +117,22 @@ namespace Hypertable {
 
     /** Signal maintenance scheduling complete.
      * This method is called by the RangeServer when it has finished scheduling
-     * maintenance.  It sets #m_schedule_outstanding to <i>false</i>,
-     * sets #m_last_schedule to the current time, and then if #RangeServer
-     * replay has finished, it will do the following:
-     *   - If the size of the user commit log is greater than
-     *     #m_userlog_size_threshold, or the system is low on memory, then
-     *     the application queue will get paused.
-     *   - Else-if, the application queue is paused, it will get restarted
-     *   - Else, low memory mode is turned off and the timer interval is
-     *     set back to normal
-     *
-     * If #m_immediate_maintenance_scheduled is <i>true</i>, it is set to
-     * <i>false</i>, otherwise, the timer is re-registered for
-     * #m_current_interval milliseconds in the future.
+     * maintenance and performs the following steps:
+     *   -# It sets #m_schedule_outstanding to <i>false</i> and
+     *      sets #m_last_schedule to the current time.
+     *   -# If %RangeServer replay has finished, it will do the following:
+     *        - If the size of the user commit log is greater than
+     *          #m_userlog_size_threshold, it will pause the application queue
+     *          if it is not already paused.
+     *        - Otherwise, if the application queue is paused an the system is
+     *          not low on memory, it will restart the application queue.
+     *   -# If #m_immediate_maintenance_scheduled is <i>true</i>, it is set to
+     *      <i>false</i>.  The timer is <b>not</b> re-registered because
+     *      #m_immediate_maintenance_scheduled implies that an additional
+     *      "one shot" timer was registered to handle the immediate mantenance
+     *   -# If #m_immediate_maintenance_scheduled was set to <i>false</i> upon
+     *      entry to this method, the timer is re-registered for
+     *      #m_current_interval milliseconds in the future.
      */
     void maintenance_scheduled_notify();
 
@@ -214,7 +226,8 @@ namespace Hypertable {
 
     /** Restarts the application queue.
      * Restarts the application queue, sets #m_low_memory_mode to <i>false</i>,
-     * and resets the timer interval back to normal
+     * and resets the timer interval #m_current_interval back to normal
+     * (#m_timer_interval).
      */
     void restart_app_queue();
 
