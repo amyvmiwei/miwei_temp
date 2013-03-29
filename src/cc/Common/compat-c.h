@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,10 +17,24 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
+/** @file
+ * Required portability definitions for all .cc files.
+ * This header file contains common macro definitions and includes required for
+ * portability.  This file must be the first header included in all
+ * <code>.cc</code> files.
+ */
+
 #ifndef HYPERTABLE_COMPAT_C_H
 #define HYPERTABLE_COMPAT_C_H
 
-/** Portability macros for C code. */
+/** @defgroup Common Common
+ * General purpose utility library.
+ * The %Common library contains general purpose utility classes used by all
+ * other modules within Hypertable.  It is not dependent on any other library
+ * defined in %Hypertable.
+ * @{
+ * @}
+ */
 
 /* Name mangling */
 #ifdef __cplusplus

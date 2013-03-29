@@ -157,10 +157,10 @@ void TimerHandler::handle(Hypertable::EventPtr &event) {
   boost::xtime_get(&now, TIME_UTC_);
 
   if (m_app_queue_paused) {
-    HT_INFOF("App queue paused (pause_time=%u, lmm=%s, restart_gen=%lld, "
-             "queue_gen=%lld)", (unsigned)xtime_diff_millis(m_pause_time, now),
-             m_low_memory_mode ? "true" : "false", (Lld)m_restart_generation,
-             (Lld)Global::maintenance_queue->generation());
+    HT_DEBUGF("App queue paused (pause_time=%u, lmm=%s, restart_gen=%lld, "
+              "queue_gen=%lld)", (unsigned)xtime_diff_millis(m_pause_time, now),
+              m_low_memory_mode ? "true" : "false", (Lld)m_restart_generation,
+              (Lld)Global::maintenance_queue->generation());
     if ((m_low_memory_mode && !low_memory()) ||
         xtime_diff_millis(m_pause_time, now) >= m_max_app_queue_pause ||
         m_restart_generation <= Global::maintenance_queue->generation())
@@ -181,13 +181,13 @@ void TimerHandler::handle(Hypertable::EventPtr &event) {
       m_low_memory_mode = user_log_size < m_userlog_size_threshold;
   }
 
-  HT_INFOF("aq_paused=%s, log_size=%lld, lmm=%s, ci=%d, ims=%s, so=%s, dm=%s",
-           m_app_queue_paused ? "true" : "false", (Lld)user_log_size,
-           m_low_memory_mode ? "true" : "false",
-           (int)m_current_interval,
-           m_immediate_maintenance_scheduled ? "true" : "false",
-           m_schedule_outstanding ? "true" : "false",
-           do_maintenance ? "true" : "false");
+  HT_DEBUGF("aq_paused=%s, log_size=%lld, lmm=%s, ci=%d, ims=%s, so=%s, dm=%s",
+            m_app_queue_paused ? "true" : "false", (Lld)user_log_size,
+            m_low_memory_mode ? "true" : "false",
+            (int)m_current_interval,
+            m_immediate_maintenance_scheduled ? "true" : "false",
+            m_schedule_outstanding ? "true" : "false",
+            do_maintenance ? "true" : "false");
 
   try {
 

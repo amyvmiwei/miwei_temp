@@ -126,10 +126,11 @@ namespace Hypertable {
 
             task = m_state.queue.top();
 	    m_state.queue.pop();
-	    m_state.inflight++;
 
 	    if (m_state.inflight == 0 || task->level < m_state.inflight_level)
 	      m_state.inflight_level = task->level;
+
+	    m_state.inflight++;
           }
 
           try {
