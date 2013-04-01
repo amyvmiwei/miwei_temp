@@ -184,7 +184,8 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeDataVector &range_da
   CommitLog::CumulativeSizeMap cumulative_size_map;
   CommitLog::CumulativeSizeMap::iterator iter;
   AccessGroup::MaintenanceData *ag_data;
-  int64_t disk_total;
+
+  // First do log cleanup compactions
 
   log->load_cumulative_size_map(cumulative_size_map);
 
@@ -193,36 +194,7 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeDataVector &range_da
     if (range_data[i].data->busy)
       continue;
 
-    disk_total = 0;
-
     for (ag_data = range_data[i].data->agdata; ag_data; ag_data = ag_data->next) {
-
-      // Schedule compaction for AGs that need garbage collection
-      if (ag_data->gc_needed) {
-        range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
-        ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_GC;
-        if (range_data[i].data->priority == 0)
-          range_data[i].data->priority = priority++;
-        continue;
-      }
-
-      // Compact LARGE CellCaches
-      if (!ag_data->in_memory && ag_data->mem_used > Global::access_group_max_mem) {
-        if (memory_state.need_more()) {
-          range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT|MaintenanceFlag::MEMORY_PURGE;
-          ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR|MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
-          memory_state.decrement_needed(ag_data->mem_allocated);
-        }
-        else {
-          range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
-          ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR;
-        }
-        if (range_data[i].data->priority == 0)
-          range_data[i].data->priority = priority++;
-        continue;
-      }
-
-      disk_total += ag_data->disk_estimate;
 
       if (ag_data->earliest_cached_revision != TIMESTAMP_MAX && !cumulative_size_map.empty()) {
 
@@ -267,16 +239,50 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeDataVector &range_da
           trace_str += String("STAT ") + ag_data->ag->get_full_name()+" cumulative_size "
             + (*iter).second.cumulative_size + " <= prune_threshold " + prune_threshold + "\n";
       }
+    }
+  }
 
-      // memory purge takes precedent over merging compactions
-      if (ag_data->needs_merging &&
-          (range_data[i].data->maintenance_flags & MaintenanceFlag::MEMORY_PURGE) == 0) {
+  // Other compactions
+
+  for (size_t i=0; i<range_data.size(); i++) {
+
+    if (range_data[i].data->busy)
+      continue;
+
+    for (ag_data = range_data[i].data->agdata; ag_data; ag_data = ag_data->next) {
+
+      // Maintenance already scheduled for this AG
+      if (ag_data->maintenance_flags != 0)
+        continue;
+
+      // Schedule compaction for AGs that need garbage collection
+      if (ag_data->gc_needed) {
+        range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
+        ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_GC;
+        if (range_data[i].data->priority == 0)
+          range_data[i].data->priority = priority++;
+      }
+      // Compact LARGE CellCaches
+      else if (!ag_data->in_memory && ag_data->mem_used > Global::access_group_max_mem) {
+        if (memory_state.need_more()) {
+          range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT|MaintenanceFlag::MEMORY_PURGE;
+          ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR|MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
+          memory_state.decrement_needed(ag_data->mem_allocated);
+        }
+        else {
+          range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
+          ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR;
+        }
+        if (range_data[i].data->priority == 0)
+          range_data[i].data->priority = priority++;
+      }
+      // Merging compactions
+      else if (ag_data->needs_merging) {
         if (range_data[i].data->priority == 0)
           range_data[i].data->priority = priority++;
         range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
         ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MERGING;
       }
-
     }
   }
 
