@@ -1,3 +1,34 @@
+Version 0.9.7.2:
+(2013-04-01)
+
+   Fixed bug in maintenance queue causing worker thread count to drop to 1 over time
+   Fixed CellStore concurrency and divide-by-zero problems
+   issue 1038: Stop connect retry attempts to recovered server
+   Added support for .cellstore.index pseudo-table
+   Schedule log cleanup compactions ahead of merging compactions
+   Rotate starting point in maintenance scheduler to avoid compaction starvation
+   Removed absolute path in jrun script
+   Implemented pure virtual function for older CellStore format
+   issue 991: added refresh_table to the Thrift interface
+   issue 999: needs_compaction bit not getting cleared
+   htpkg - don't build thriftbroker-only packages by default
+   Maintenance scheduler overhaul; Pause app queue if prune threshold exceeded by 20%
+   Improved CommitLog purge break log message
+   Only wait for system range recovery in RangeServer::phantom_ methods
+   Got rid of exception output for INFO messages (HT_INFO_OUT)
+   Removed dependency to log4cpp
+   Added doxygen comments to src/cc/Common
+   Added Hypertable.RangeServer.Maintenance.LowMemoryPrioritization property
+   Finished adding doxygen comments to AsyncComm
+   Fixed balance plan server assignment problem
+   Fixed hang problem in ~TableScanner on scanner errors
+   Fixed handling of missing transfer log directory in PhantomRange
+   Fixed problem with explicitly supplied timestamps and TIME_ORDER DESC
+   Changed "tar -xjv" to "tar xjv" in Capfiles
+   Checked in auto-generated code from recent Thrift changes
+   Added two-serial-failover test
+   Re-enable load balancer
+
 Version 0.9.7.1:
 (2013-02-28)
 
