@@ -114,7 +114,7 @@ int main(int argc, char **argv) {
       while (scanner->next(cell)) {
         // Verify that revision number assigned is greater than
         if ((int64_t)cell.revision < timestamp ||
-            (cell.revision - timestamp) >= 5000000000) {
+            (cell.revision - timestamp) >= 5000000000LL) {
           HT_ERRORF("Supplied timestamp = %lld, returned revision = %lld",
                     (Lld)timestamp, (Lld)cell.revision);
           _exit(1);

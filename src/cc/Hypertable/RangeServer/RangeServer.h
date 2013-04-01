@@ -181,13 +181,6 @@ namespace Hypertable {
                                   boost::xtime expire_time);
     bool replay_finished() { return m_replay_finished; }
 
-
-    void register_timer(TimerHandler *timer) {
-      ScopedLock lock(m_mutex);
-      HT_ASSERT(m_timer_handler == 0);
-      m_timer_handler = timer;
-    }
-
     void shutdown();
 
     void write_profile_data(const String &line) {
@@ -305,7 +298,7 @@ namespace Hypertable {
     NameIdMapperPtr        m_namemap;
 
     MaintenanceSchedulerPtr m_maintenance_scheduler;
-    TimerHandler           *m_timer_handler;
+    TimerHandlerPtr        m_timer_handler;
     GroupCommitInterfacePtr m_group_commit;
     GroupCommitTimerHandlerPtr m_group_commit_timer_handler;
     uint32_t               m_update_delay;
