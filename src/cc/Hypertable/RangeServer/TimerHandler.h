@@ -71,6 +71,12 @@ namespace Hypertable {
      */
     TimerHandler(Comm *comm, RangeServer *range_server);
 
+    /** Start timer.
+     * This method sets a timer for 0 milliseconds in the future with itself
+     * as the handler.
+     */
+    void start();
+
     /** %Timer event handler callback method.
      * This method performs the following steps:
      *   -# If #m_shutdown is <i>true</i>, this method sets #m_shutdown_complete

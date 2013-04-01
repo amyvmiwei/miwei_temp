@@ -56,7 +56,6 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
     m_shutdown(false), m_shutdown_complete(false),
     m_immediate_maintenance_scheduled(false), m_app_queue_paused(false),
     m_low_memory_mode(false), m_schedule_outstanding(false) {
-  int error;
   int32_t maintenance_interval;
 
   m_query_cache_memory = get_i64("Hypertable.RangeServer.QueryCache.MaxMemory");
@@ -77,12 +76,15 @@ TimerHandler::TimerHandler(Comm *comm, RangeServer *range_server)
 
   m_app_queue = m_range_server->get_application_queue();
 
-  range_server->register_timer(this);
+  return;
+}
 
+
+
+void TimerHandler::start() {
+  int error;
   if ((error = m_comm->set_timer(0, this)) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));
-
-  return;
 }
 
 

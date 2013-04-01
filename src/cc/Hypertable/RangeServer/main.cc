@@ -43,7 +43,6 @@
 #include "Global.h"
 #include "HyperspaceSessionHandler.h"
 #include "RangeServer.h"
-#include "TimerHandler.h"
 #include "IndexUpdater.h"
 
 using namespace Hypertable;
@@ -100,15 +99,11 @@ int main(int argc, char **argv) {
     RangeServerPtr range_server= new RangeServer(properties,
         conn_manager, app_queue, Global::hyperspace);
 
-    // install maintenance timer
-    TimerHandlerPtr timer_handler = new TimerHandler(comm, range_server.get());
-
     app_queue->join();
 
     IndexUpdaterFactory::close();
 
     range_server = 0;
-    timer_handler = 0;
 
     HT_ERROR("Exiting RangeServer.");
   }
