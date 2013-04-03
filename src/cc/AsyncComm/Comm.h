@@ -262,6 +262,8 @@ namespace Hypertable {
      * This method locates the I/O handler associated with <code>addr</code>
      * and then calls the private method
      * @ref private_send_request "send_request" to carry out the send request.
+     * If an error is encountered while trying to send the request, the
+     * associated handler will be decomissioned.
      *
      * @param addr Connection address (remote address)
      * @param timeout_ms Number of milliseconds to wait before delivering
@@ -290,6 +292,8 @@ namespace Hypertable {
      * cbp->append_i32(Error::OK);
      * </pre>
      *
+     * If an error is encountered while trying to send the response, the
+     * associated handler will be decomissioned.
      * @param addr Connection address (remote address)
      * @param cbuf Response message to send (must have valid header with
      *        matching request id)
@@ -325,8 +329,8 @@ namespace Hypertable {
      * by <code>addr</code> and the local socket address to send it from is
      * specified by <code>send_addr</code>.  The <code>send_addr</code> argument
      * must refer to a socket that was created with a call to
-     * #create_datagram_receive_socket.
-     *
+     * #create_datagram_receive_socket.  If an error is encountered while trying
+     * to send the datagram, the associated handler will be decomissioned.
      * @param addr Remote address to send datagram to
      * @param send_addr Local socket address to send from
      * @param cbuf Datagram message with valid header
@@ -343,7 +347,11 @@ namespace Hypertable {
      * to receive the Event::TIMER event.  This timer registration is
      * <i>one shot</i>.  To set up a periodic timer event, the timer must
      * be re-registered each time it is handled.
-     *
+     * @note This method sets a smart pointer to <code>handler</code>, so if
+     * the reference count to <code>handler</code> is zero when this method
+     * is called, it will be deleted after the event is delivered.  To prevent
+     * this from happening, the caller should hold a smart pointer
+     * (DispatchHandlerPtr) to <code>handler</code>.
      * @param duration_millis Number of milliseconds to wait
      * @param handler Dispatch handler to receive Event::TIMER event upon
      *        expiration
@@ -358,6 +366,11 @@ namespace Hypertable {
      * timer to receive Event::TIMER events.  This timer registration is
      * <i>one shot</i>.  To set up a periodic timer event, the timer must
      * be re-registered each time it is handled.
+     * @note This method sets a smart pointer to <code>handler</code>, so if
+     * the reference count to <code>handler</code> is zero when this method
+     * is called, it will be deleted after the event is delivered.  To prevent
+     * this from happening, the caller should hold a smart pointer
+     * (DispatchHandlerPtr) to <code>handler</code>.
      * @param expire_time Absolute expiration time
      * @param handler Dispatch handler to receive Event::TIMER event upon
      *        expiration

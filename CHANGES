@@ -1,5 +1,5 @@
 Version 0.9.7.2:
-(2013-04-01)
+(2013-04-04)
 
    Fixed bug in maintenance queue causing worker thread count to drop to 1 over time
    Fixed CellStore concurrency and divide-by-zero problems
@@ -28,6 +28,7 @@ Version 0.9.7.2:
    Checked in auto-generated code from recent Thrift changes
    Added two-serial-failover test
    Re-enable load balancer
+   Got rid of deadlock in AsyncComm
 
 Version 0.9.7.1:
 (2013-02-28)

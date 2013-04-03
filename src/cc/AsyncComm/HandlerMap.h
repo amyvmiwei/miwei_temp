@@ -199,7 +199,16 @@ namespace Hypertable {
      * thread after it has been removed from the polling interface.
      * @param handler Pointer to IOHandler to decomission
      */
-    void decomission_handler(IOHandler *handler);
+    void decomission_handler_unlocked(IOHandler *handler);
+
+    /** Decomissions <code>handler</code> with #m_mutex locked.
+     * This method locks #m_mutex and calls #decomission_handler_unlocked
+     * @param handler Pointer to IOHandler to decomission
+     */
+    void decomission_handler(IOHandler *handler) {
+      ScopedLock lock(m_mutex);
+      decomission_handler_unlocked(handler);
+    }
 
     /** Decomissions all handlers.  This method is called by the ~Comm to
      * decomission all of the handlers in the map.
@@ -305,7 +314,8 @@ namespace Hypertable {
      * following format:
      * @verbatim <proxy> '\t' <hostname> '\t' <addr> '\n' @endverbatim
      * Then the proxy map update message is sent via each of the handlers in
-     * the data (TCP) handler map.
+     * the data (TCP) handler map.  If an error is encountered on a
+     * handler when trying to send the proxy map, it will be decomissioned.
      * @param mappings Proxy map information to propagate.
      * @return Error::OK on success, or Error::COMM_NOT_CONNECTED or
      * Error::COMM_BROKEN_CONNECTION if an error was encountered while

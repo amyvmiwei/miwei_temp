@@ -50,8 +50,10 @@ int32_t HandlerMap::insert_handler(IOHandlerData *handler) {
   if (ReactorFactory::proxy_master) {
     CommBufPtr comm_buf = m_proxy_map.create_update_message();
     comm_buf->write_header_and_reset();
-    if ((error = handler->send_message(comm_buf)) != Error::OK)
+    if ((error = handler->send_message(comm_buf)) != Error::OK) {
+      remove_handler_unlocked(handler);
       error = Error::COMM_BROKEN_CONNECTION;
+    }
   }
   return error;
 }
@@ -189,8 +191,7 @@ int HandlerMap::remove_handler(IOHandler *handler) {
   return remove_handler_unlocked(handler);
 }
 
-void HandlerMap::decomission_handler(IOHandler *handler) {
-  ScopedLock lock(m_mutex);
+void HandlerMap::decomission_handler_unlocked(IOHandler *handler) {
   if (remove_handler_unlocked(handler) != Error::OK) {
     HT_ASSERT(m_decomissioned_handlers.count(handler) > 0);
     return;
@@ -357,6 +358,7 @@ int HandlerMap::propagate_proxy_map(ProxyMapT &mappings) {
   boost::shared_array<uint8_t> payload(buffer);
   CommHeader header;
   header.flags |= CommHeader::FLAGS_BIT_PROXY_MAP_UPDATE;
+  std::vector<IOHandler *> decomission;
   for (iter = m_data_handler_map.begin(); iter != m_data_handler_map.end(); ++iter) {
     IOHandlerData *handler = iter->second;
     if (handler) {
@@ -364,6 +366,7 @@ int HandlerMap::propagate_proxy_map(ProxyMapT &mappings) {
       comm_buf->write_header_and_reset();
       int error = handler->send_message(comm_buf);
       if (error != Error::OK) {
+        decomission.push_back(handler);
         HT_ERRORF("Unable to propagate proxy mappings to %s - %s",
                   InetAddr(handler->get_address()).format().c_str(),
                   Error::get_text(error));
@@ -371,6 +374,11 @@ int HandlerMap::propagate_proxy_map(ProxyMapT &mappings) {
       }
     }
   }
+
+  // Decomission any handlers that failed
+  foreach_ht (IOHandler *handler, decomission)
+    decomission_handler_unlocked(handler);
+
   return last_error;
 }
 

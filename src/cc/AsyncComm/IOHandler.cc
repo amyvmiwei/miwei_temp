@@ -50,22 +50,12 @@ extern "C" {
 using namespace Hypertable;
 
 #define HANDLE_POLL_INTERFACE_MODIFY \
-  if (ReactorFactory::use_poll) { \
-    int32_t error = m_reactor->modify_poll_interest(m_sd, poll_events(m_poll_interest)); \
-    if (error != Error::OK) { \
-      ReactorRunner::handler_map->decomission_handler(this); \
-    } \
-    return error; \
-  }
+  if (ReactorFactory::use_poll) \
+    return m_reactor->modify_poll_interest(m_sd, poll_events(m_poll_interest));
 
 #define HANDLE_POLL_INTERFACE_ADD \
-  if (ReactorFactory::use_poll) { \
-    int32_t error = m_reactor->add_poll_interest(m_sd, poll_events(m_poll_interest), this); \
-    if (error != Error::OK) { \
-      ReactorRunner::handler_map->decomission_handler(this); \
-    } \
-    return error; \
-  }
+  if (ReactorFactory::use_poll) \
+    return m_reactor->add_poll_interest(m_sd, poll_events(m_poll_interest), this);
 
 void IOHandler::display_event(struct pollfd *event) {
   char buf[128];
@@ -117,7 +107,7 @@ int IOHandler::start_polling(int mode) {
     event.events |= POLLRDHUP | EPOLLET;
   m_poll_interest = mode;
   if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
-    HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, %x) failed : %s",
+    HT_DEBUGF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, %x) failed : %s",
               m_reactor->poll_fd, m_sd, event.events, strerror(errno));
     return Error::COMM_POLL_ERROR;
   }
@@ -146,12 +136,8 @@ int IOHandler::add_poll_interest(int mode) {
       event.events |= EPOLLOUT;
 
     if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
-      /**
-         HT_ERRORF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
-         m_reactor->poll_fd, m_sd, mode, strerror(errno));
-         *((int *)0) = 1;
-         **/
-      ReactorRunner::handler_map->decomission_handler(this);
+      HT_DEBUGF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x, interest=%x) : %s",
+                m_reactor->poll_fd, m_sd, mode, m_poll_interest, strerror(errno));
       return Error::COMM_POLL_ERROR;
     }
   }
@@ -177,9 +163,8 @@ int IOHandler::remove_poll_interest(int mode) {
       event.events |= EPOLLOUT;
 
     if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
-      HT_ERRORF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
+      HT_DEBUGF("epoll_ctl(EPOLL_CTL_MOD, sd=%d) (mode=%x) : %s",
                 m_sd, mode, strerror(errno));
-      ReactorRunner::handler_map->decomission_handler(this);
       return Error::COMM_POLL_ERROR;
     }
   }
@@ -223,7 +208,6 @@ void IOHandler::display_event(struct epoll_event *event) {
 
 int IOHandler::add_poll_interest(int mode) {
   int events = 0;
-  int original_poll_interest = m_poll_interest;
 
   m_poll_interest |= mode;
 
@@ -238,10 +222,8 @@ int IOHandler::add_poll_interest(int mode) {
   if (events) {
     if (port_associate(m_reactor->poll_fd, PORT_SOURCE_FD,
 		       m_sd, events, this) < 0) {
-      HT_ERRORF("port_associate(%d, POLLIN, %d) - %s", m_reactor->poll_fd, m_sd,
+      HT_DEBUGF("port_associate(%d, POLLIN, %d) - %s", m_reactor->poll_fd, m_sd,
 		strerror(errno));
-      if (original_poll_interest)
-        ReactorRunner::handler_map->decomission_handler(this);
       return Error::COMM_POLL_ERROR;
     }
   }
@@ -249,6 +231,7 @@ int IOHandler::add_poll_interest(int mode) {
 }
 
 int IOHandler::remove_poll_interest(int mode) {
+  int error = Error::OK;
 
   if ((m_poll_interest & mode) == 0)
     return Error::OK;
@@ -258,16 +241,15 @@ int IOHandler::remove_poll_interest(int mode) {
   HANDLE_POLL_INTERFACE_MODIFY;
 
   if (m_poll_interest)
-    reset_poll_interest();
+    error = reset_poll_interest();
   else {
     if (port_dissociate(m_reactor->poll_fd, PORT_SOURCE_FD, m_sd) < 0) {
-      HT_ERRORF("port_dissociate(%d, PORT_SOURCE_FD, %d) - %s",
+      HT_DEBUGF("port_dissociate(%d, PORT_SOURCE_FD, %d) - %s",
 		m_reactor->poll_fd, m_sd, strerror(errno));
-      ReactorRunner::handler_map->decomission_handler(this);
       return Error::COMM_POLL_ERROR;
     }
   }
-  return Error::OK;
+  return error;
 }
 
 void IOHandler::display_event(port_event_t *event) {
@@ -308,7 +290,6 @@ void IOHandler::display_event(port_event_t *event) {
 int IOHandler::add_poll_interest(int mode) {
   struct kevent events[2];
   int count=0;
-  int original_poll_interest = m_poll_interest;
 
   m_poll_interest |= mode;
 
@@ -325,9 +306,7 @@ int IOHandler::add_poll_interest(int mode) {
   assert(count > 0);
 
   if (kevent(m_reactor->kqd, events, count, 0, 0, 0) == -1) {
-    HT_ERRORF("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
-    if (original_poll_interest)
-      ReactorRunner::handler_map->decomission_handler(this);
+    HT_DEBUGF("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     return Error::COMM_POLL_ERROR;
   }
   return Error::OK;
@@ -354,8 +333,7 @@ int IOHandler::remove_poll_interest(int mode) {
 
   if (kevent(m_reactor->kqd, devents, count, 0, 0, 0) == -1
       && errno != ENOENT) {
-    HT_ERRORF("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
-    ReactorRunner::handler_map->decomission_handler(this);
+    HT_DEBUGF("kevent(sd=%d) (mode=%x) : %s", m_sd, mode, strerror(errno));
     return Error::COMM_POLL_ERROR;
   }
   return Error::OK;

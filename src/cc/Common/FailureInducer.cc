@@ -118,6 +118,9 @@ void FailureInducer::parse_option_single(String option) {
   size_t failure_type_len = strlen(failure_type);
   failure_inducer_state *statep = new failure_inducer_state;
 
+  statep->error_code = 0;
+  statep->pause_millis = 0;
+
   if (!strcmp(failure_type, "exit"))
     statep->failure_type = FAILURE_TYPE_EXIT;
   else if (!strcmp(failure_type, "signal"))
