@@ -258,6 +258,8 @@ BalancePlanAuthority::create_recovery_plan(const String &location,
   m_context->get_available_servers(m_active);
   m_active_iter = m_active.begin();
 
+  HT_ASSERT(!m_active.empty());
+
   // walk through the existing plans and move all ranges from that server
   // to other servers
   RecoveryPlanMap::iterator it;

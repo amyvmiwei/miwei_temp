@@ -166,7 +166,7 @@ namespace Hypertable {
      * This method registers the poll interest, specified in <code>mode</code>,
      * with the polling interface and sets #m_poll_interest to
      * <code>mode</code>.  If an error is encountered, #m_error is
-     * set to the approprate error code and the handler is decomissioned.
+     * set to the approprate error code.
      * @return Error::OK on success, or one of Error::COMM_POLL_ERROR,
      * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR on error
      */
@@ -177,8 +177,7 @@ namespace Hypertable {
      * This method adds the poll interest, specified in <code>mode</code>,
      * to the polling interface for this handler and merges <code>mode</code>
      * into #m_poll_interest using bitwise OR (|).  If an error is encountered,
-     * #m_error is set to the approprate error code and the handler is
-     * decomissioned.
+     * #m_error is set to the approprate error code.
      * @return Error::OK on success, or one of Error::COMM_POLL_ERROR,
      * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR on error
      */
@@ -189,8 +188,7 @@ namespace Hypertable {
      * This method removes the poll interest, specified in <code>mode</code>,
      * from the polling interface for this handler and strips <code>mode</code>
      * from #m_poll_interest using boolean operations.  If an error is
-     * encountered, #m_error is set to the approprate error code and the handler
-     * is decomissioned.
+     * encountered, #m_error is set to the approprate error code.
      * @return Error::OK on success, or one of Error::COMM_POLL_ERROR,
      * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR on error
      */
@@ -198,7 +196,7 @@ namespace Hypertable {
 
     /** Resets poll interest by adding #m_poll_interest to the polling interface
      * for this handler.  If an error is encountered, #m_error is set to the
-     * approprate error code and the handler is decomissioned.
+     * approprate error code.
      * @return Error::OK on success, or one of Error::COMM_POLL_ERROR,
      * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR on error
      */

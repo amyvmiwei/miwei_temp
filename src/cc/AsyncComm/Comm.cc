@@ -296,7 +296,10 @@ int Comm::send_request(IOHandlerData *data_handler, uint32_t timeout_ms,
   cbuf->header.timeout_ms = timeout_ms;
   cbuf->write_header_and_reset();
 
-  return data_handler->send_message(cbuf, timeout_ms, resp_handler);
+  int error = data_handler->send_message(cbuf, timeout_ms, resp_handler);
+  if (error != Error::OK)
+    m_handler_map->decomission_handler(data_handler);
+  return error;
 }
 
 
@@ -316,7 +319,10 @@ int Comm::send_response(const CommAddress &addr, CommBufPtr &cbuf) {
 
   cbuf->write_header_and_reset();
 
-  return data_handler->send_message(cbuf);
+  error = data_handler->send_message(cbuf);
+  if (error != Error::OK)
+    m_handler_map->decomission_handler(data_handler);
+  return error;
 }
 
 
@@ -408,7 +414,10 @@ Comm::send_datagram(const CommAddress &addr, const CommAddress &send_addr,
 
   cbuf->write_header_and_reset();
 
-  return handler->send_message(addr.inet, cbuf);
+  error = handler->send_message(addr.inet, cbuf);
+  if (error != Error::OK)
+    m_handler_map->decomission_handler(handler);
+  return error;
 }
 
 
