@@ -31,12 +31,12 @@ namespace Hypertable {
     MaintenancePrioritizerLogCleanup(RSStatsPtr &server_stats)
       : MaintenancePrioritizer(server_stats) { }
     virtual void prioritize(RangeDataVector &range_data, MemoryState &memory_state,
-                            int32_t prioritize, String &trace_str);
+                            int32_t prioritize, String *trace);
 
   private:
     void assign_priorities(RangeDataVector &range_data, CommitLog *log,
                            int64_t prune_threshold, MemoryState &memory_state,
-                           int32_t &priority, String &trace_str);
+                           int32_t &priority, String *trace);
   };
 
 }

@@ -34,7 +34,7 @@ using namespace std;
 void
 MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
                                              MemoryState &memory_state,
-                                             int32_t priority, String &trace_str) {
+                                             int32_t priority, String *trace) {
   RangeDataVector range_data_root;
   RangeDataVector range_data_metadata;
   RangeDataVector range_data_system;
@@ -59,7 +59,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
   if (!range_data_root.empty())
     assign_priorities(range_data_root, Global::root_log,
 		      Global::log_prune_threshold_min,
-                      memory_state, priority, trace_str);
+                      memory_state, priority, trace);
 
 
   /**
@@ -68,7 +68,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
   if (!range_data_metadata.empty())
     assign_priorities(range_data_metadata, Global::metadata_log,
                       Global::log_prune_threshold_min,
-                      memory_state, priority, trace_str);
+                      memory_state, priority, trace);
 
   /**
    *  Compute prune threshold based on load activity
@@ -78,14 +78,15 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
     prune_threshold = Global::log_prune_threshold_min;
   else if (prune_threshold > Global::log_prune_threshold_max)
     prune_threshold = Global::log_prune_threshold_max;
-  trace_str += String("STATS user log prune threshold\t") + prune_threshold + "\n";
+  if (trace)
+    *trace += format("%d prune threshold\t%lld\n", __LINE__, (Lld)prune_threshold);
 
   /**
    * Assign priority other SYSTEM ranges
    */
   if (!range_data_system.empty())
     assign_priorities(range_data_system, Global::system_log, prune_threshold,
-                      memory_state, priority, trace_str);
+                      memory_state, priority, trace);
 
   /**
    * Assign priority for USER ranges
@@ -93,7 +94,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
 
   if (!range_data_user.empty())
     assign_priorities(range_data_user, Global::user_log, prune_threshold,
-                      memory_state, priority, trace_str);
+                      memory_state, priority, trace);
 
   /**
    *  If there is no update activity, or there is little update activity and
@@ -126,22 +127,22 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
 void
 MaintenancePrioritizerLogCleanup::assign_priorities(RangeDataVector &range_data,
               CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
-              int32_t &priority, String &trace_str) {
+              int32_t &priority, String *trace) {
 
   /**
    * 1. Schedule in-progress relinquish and/or split operations
    */
-  schedule_inprogress_operations(range_data, memory_state, priority, trace_str);
+  schedule_inprogress_operations(range_data, memory_state, priority, trace);
 
   /**
    * 2. Schedule splits and relinquishes
    */
-  schedule_splits_and_relinquishes(range_data, memory_state, priority, trace_str);
+  schedule_splits_and_relinquishes(range_data, memory_state, priority, trace);
 
   /**
    * 3. Schedule compactions for log cleaning purposes
    */
   schedule_necessary_compactions(range_data, log, prune_threshold,
-                                 memory_state, priority, trace_str);
+                                 memory_state, priority, trace);
 
 }

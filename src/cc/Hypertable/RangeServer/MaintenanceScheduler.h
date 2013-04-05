@@ -60,8 +60,14 @@ namespace Hypertable {
      */
     bool low_memory_mode() { return m_low_memory_mode; }
 
-    void check_file_dump_statistics(boost::xtime now, RangeDataVector &range_data,
-                                    const String &header_str);
+    /** Checks to see if scheduler debug signal file exists.
+     */
+    bool debug_signal_file_exists(boost::xtime now);
+
+    /** Writes debugging output and removes signal file.
+     */
+    void write_debug_output(boost::xtime now, RangeDataVector &range_data,
+                            const String &header_str);
 
     MaintenanceQueuePtr m_queue;
     RSStatsPtr m_server_stats;

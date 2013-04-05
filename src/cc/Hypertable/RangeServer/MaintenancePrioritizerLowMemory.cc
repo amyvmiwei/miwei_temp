@@ -37,7 +37,7 @@ using namespace std;
 void
 MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
                                             MemoryState &memory_state,
-                                            int32_t priority, String &trace_str) {
+                                            int32_t priority, String *trace) {
   RangeDataVector range_data_root;
   RangeDataVector range_data_metadata;
   RangeDataVector range_data_system;
@@ -63,7 +63,7 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
   if (!range_data_root.empty())
     assign_priorities_all(range_data_root, Global::root_log,
                           Global::log_prune_threshold_min,
-                          memory_state, priority, trace_str);
+                          memory_state, priority, trace);
 
 
   /**
@@ -72,7 +72,7 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
   if (!range_data_metadata.empty())
     assign_priorities_all(range_data_metadata, Global::metadata_log,
                           Global::log_prune_threshold_min, memory_state,
-                          priority, trace_str);
+                          priority, trace);
 
   /**
    *  Compute prune threshold based on load activity
@@ -82,27 +82,28 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
     prune_threshold = Global::log_prune_threshold_min;
   else if (prune_threshold > Global::log_prune_threshold_max)
     prune_threshold = Global::log_prune_threshold_max;
-  trace_str += String("STATS user log prune threshold\t") + prune_threshold + "\n";
+  if (trace)
+    *trace += format("%d prune threshold\t%lld\n", __LINE__, (Lld)prune_threshold);
 
   /**
    * Assign priority for SYSTEM ranges
    */
   if (!range_data_system.empty())
     assign_priorities_all(range_data_system, Global::system_log, prune_threshold,
-                          memory_state, priority, trace_str);
+                          memory_state, priority, trace);
 
   /**
    * Assign priority for USER ranges
    */
   if (!range_data_user.empty()) {
 
-    if (schedule_inprogress_operations(range_data_user, memory_state, priority, trace_str))
-      schedule_splits_and_relinquishes(range_data, memory_state, priority, trace_str);
+    if (schedule_inprogress_operations(range_data_user, memory_state, priority, trace))
+      schedule_splits_and_relinquishes(range_data, memory_state, priority, trace);
 
-    assign_priorities_user(range_data_user, memory_state, priority, trace_str);
+    assign_priorities_user(range_data_user, memory_state, priority, trace);
 
     schedule_necessary_compactions(range_data_user, Global::user_log, prune_threshold,
-                                   memory_state, priority, trace_str);
+                                   memory_state, priority, trace);
   }
 
 }
@@ -118,16 +119,16 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
 void
 MaintenancePrioritizerLowMemory::assign_priorities_all(RangeDataVector &range_data,
             CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
-	    int32_t &priority, String &trace_str) {
+	    int32_t &priority, String *trace) {
 
-  if (!schedule_inprogress_operations(range_data, memory_state, priority, trace_str))
+  if (!schedule_inprogress_operations(range_data, memory_state, priority, trace))
     return;
 
-  if (!schedule_splits_and_relinquishes(range_data, memory_state, priority, trace_str))
+  if (!schedule_splits_and_relinquishes(range_data, memory_state, priority, trace))
     return;
 
   if (!schedule_necessary_compactions(range_data, log, prune_threshold,
-                                      memory_state, priority, trace_str))
+                                      memory_state, priority, trace))
     return;
 
 }
@@ -155,12 +156,12 @@ MaintenancePrioritizerLowMemory::assign_priorities_all(RangeDataVector &range_da
 
 void
 MaintenancePrioritizerLowMemory::assign_priorities_user(RangeDataVector &range_data,
-                  MemoryState &memory_state, int32_t &priority, String &trace_str) {
+                  MemoryState &memory_state, int32_t &priority, String *trace) {
   int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
   uint64_t update_bytes = m_server_stats->get_update_bytes(collector_id);
   uint32_t scan_count = m_server_stats->get_scan_count(collector_id);
 
-  if (!purge_shadow_caches(range_data, memory_state, priority, trace_str))
+  if (!purge_shadow_caches(range_data, memory_state, priority, trace))
     return;
 
   if (update_bytes < 500000 && scan_count > 10) {
@@ -168,7 +169,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeDataVector &range_d
     HT_INFOF("READ workload prioritization (update_bytes=%llu, scan_count=%u)",
 	     (Llu)update_bytes, (unsigned)scan_count);
 
-    if (!compact_cellcaches(range_data, memory_state, priority, trace_str))
+    if (!compact_cellcaches(range_data, memory_state, priority, trace))
       return;
 
     if (Global::block_cache) {
@@ -178,7 +179,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeDataVector &range_d
         return;
     }
 
-    if (!purge_cellstore_indexes(range_data, memory_state, priority, trace_str))
+    if (!purge_cellstore_indexes(range_data, memory_state, priority, trace))
       return;
 
   }
@@ -194,10 +195,10 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeDataVector &range_d
         return;
     }
 
-    if (!purge_cellstore_indexes(range_data, memory_state, priority, trace_str))
+    if (!purge_cellstore_indexes(range_data, memory_state, priority, trace))
       return;
 
-    if (!compact_cellcaches(range_data, memory_state, priority, trace_str))
+    if (!compact_cellcaches(range_data, memory_state, priority, trace))
       return;
 
   }
