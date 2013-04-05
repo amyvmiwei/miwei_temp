@@ -54,7 +54,7 @@ namespace Hypertable {
       : m_cellstore_minimum_size(0), m_server_stats(server_stats) { }
 
     virtual void prioritize(RangeDataVector &range_data, MemoryState &memory_state,
-                            int32_t priority, String &trace_str) = 0;
+                            int32_t priority, String *trace) = 0;
 
   protected:
 
@@ -63,28 +63,28 @@ namespace Hypertable {
 
     bool schedule_inprogress_operations(RangeDataVector &range_data,
                                         MemoryState &memory_state,
-                                        int32_t &priority, String &trace_str);
+                                        int32_t &priority, String *trace);
 
     bool schedule_splits_and_relinquishes(RangeDataVector &range_data,
                                           MemoryState &memory_state,
-                                          int32_t &priority, String &trace_str);
+                                          int32_t &priority, String *trace);
 
     bool schedule_necessary_compactions(RangeDataVector &range_data,
                             CommitLog *log, int64_t prune_threshold,
                             MemoryState &memory_state,
-                            int32_t &priority, String &trace_str);
+                            int32_t &priority, String *trace);
 
     bool purge_shadow_caches(RangeDataVector &range_data,
                              MemoryState &memory_state,
-                             int32_t &priority, String &trace_str);
+                             int32_t &priority, String *trace);
 
     bool purge_cellstore_indexes(RangeDataVector &range_data,
                                  MemoryState &memory_state,
-                                 int32_t &priority, String &trace_str);
+                                 int32_t &priority, String *trace);
 
     bool compact_cellcaches(RangeDataVector &range_data,
                             MemoryState &memory_state,
-                            int32_t &priority, String &trace_str);
+                            int32_t &priority, String *trace);
 
 
   };
