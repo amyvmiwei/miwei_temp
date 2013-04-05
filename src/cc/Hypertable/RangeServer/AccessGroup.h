@@ -197,7 +197,6 @@ namespace Hypertable {
     void range_dir_initialize();
     void recompute_compression_ratio(int64_t *total_index_entriesp=0);
     bool find_merge_run(size_t *indexp=0, size_t *lenp=0);
-    bool needs_merging();
     void sort_cellstores_by_timestamp();
 
     Mutex                m_mutex;

@@ -697,7 +697,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
          */
         if (cellstore->get_total_entries() > 0) {
           m_stores.push_back( CellStoreInfo(cellstore, shadow_cache, m_earliest_cached_revision_saved) );
-          m_needs_merging = needs_merging();
+          m_needs_merging = find_merge_run();
           m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
           added_file = cellstore->get_filename();
         }
@@ -975,97 +975,44 @@ void AccessGroup::recompute_compression_ratio(int64_t *total_index_entriesp) {
 
 bool AccessGroup::find_merge_run(size_t *indexp, size_t *lenp) {
   size_t index = 0;
-  size_t count = 0;
   size_t i = 0;
+  size_t count;
   int64_t running_total = 0;
 
   if (m_in_memory || m_stores.size() == 0)
     return false;
 
-  do {
-    count++;
-    running_total += m_stores[i].cs->disk_usage();
+  std::vector<int64_t> disk_usage(m_stores.size());
 
-    if (running_total >= Global::cellstore_target_size_max) {
-      if (count > (size_t)Global::merge_cellstore_run_length_threshold) {
+  do {
+    disk_usage[i] = m_stores[i].cs->disk_usage();
+    running_total += disk_usage[i];
+
+    if (running_total >= Global::cellstore_target_size_min) {
+      count = i - index;
+      if (running_total < Global::cellstore_target_size_max)
+        count++;
+      if (count >= (size_t)Global::merge_cellstore_run_length_threshold) {
         if (indexp)
           *indexp = index;
         if (lenp)
-           *lenp = count-1;
+          *lenp = count;
         return true;
       }
-      index = i+1;
-      count = 0;
-      running_total = 0;
-    }
-    else if (running_total >= Global::cellstore_target_size_min &&
-             count > 1) {
-      if (indexp)
-        *indexp = index;
-      if (lenp)
-        *lenp = count;
-      return true;
+      // Otherwise, move the index forward by one and try again
+      running_total -= disk_usage[index];
+      index++;
     }
     i++;
   } while (i < m_stores.size());
 
-  if (count > (size_t)Global::merge_cellstore_run_length_threshold) {
+  if ((i-index) > (size_t)Global::merge_cellstore_run_length_threshold) {
     if (indexp)
       *indexp = index;
     if (lenp)
-      *lenp = count;
+      *lenp = i-index;
     return true;
   }
-
-  return false;
-}
-
-
-bool AccessGroup::needs_merging() {
-  size_t count = 0;
-  int i = 0;
-  int64_t running_total = 0;
-
-  if (m_in_memory || m_stores.size() == 0)
-    return false;
-
-  for (i = m_stores.size()-1; i>=0; i--) {
-    count++;
-    running_total += m_stores[i].cs->disk_usage();
-    if (running_total >= Global::cellstore_target_size_max)
-      break;
-    else if (running_total >= Global::cellstore_target_size_min &&
-             (m_stores.size() - i) > 1)
-      return true;
-  }
-
-  if (i < 0 && count > (size_t)Global::merge_cellstore_run_length_threshold)
-    return true;
-
-  /** Search from the beginning **/
-
-  i = 0;
-  count = 0;
-  running_total = 0;
-  do {
-    count++;
-    running_total += m_stores[i].cs->disk_usage();
-
-    if (running_total >= Global::cellstore_target_size_max) {
-      if (count > (size_t)Global::merge_cellstore_run_length_threshold)
-        return true;
-      count = 0;
-      running_total = 0;
-    }
-    else if (running_total >= Global::cellstore_target_size_min &&
-             count > 1) {
-      return true;
-    }
-    i++;
-  } while (i < (int)m_stores.size());
-
-  if (count > (size_t)Global::merge_cellstore_run_length_threshold)
-    return true;
 
   return false;
 }
