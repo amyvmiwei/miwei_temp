@@ -163,9 +163,6 @@ void MaintenanceScheduler::schedule() {
   }
 
   int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
-  bool do_merges = (!low_memory || !m_low_memory_prioritization) &&
-    ((m_server_stats->get_update_bytes(collector_id) < 1000 && m_server_stats->get_scan_count(collector_id) < 5) ||
-     xtime_diff_millis(m_last_low_memory, now) >= (int64_t)m_merging_delay);
 
   if (!do_scheduling)
     return;
@@ -364,7 +361,7 @@ void MaintenanceScheduler::schedule() {
                 MaintenanceFlag::gc_compaction(ag_data->maintenance_flags))
               task->add_subtask(ag_data->ag, ag_data->maintenance_flags);
             else if (MaintenanceFlag::merging_compaction(ag_data->maintenance_flags)) {
-              if (do_merges && merges_created < m_merges_per_interval) {
+              if (merges_created < m_merges_per_interval) {
                 task->add_subtask(ag_data->ag, ag_data->maintenance_flags);
                 merges_created++;
               }
