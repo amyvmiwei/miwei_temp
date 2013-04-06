@@ -113,8 +113,7 @@ void TimerHandler::maintenance_scheduled_notify() {
   boost::xtime_get(&m_last_schedule, TIME_UTC_);
 
   if (m_range_server->replay_finished()) {
-    int64_t user_log_size = Global::user_log ? Global::user_log->size() : 0;
-    if (user_log_size > m_userlog_size_threshold) {
+    if (Global::user_log && Global::user_log->size()>m_userlog_size_threshold) {
       if (!m_app_queue_paused)
         pause_app_queue();
     }
@@ -169,22 +168,26 @@ void TimerHandler::handle(Hypertable::EventPtr &event) {
       restart_app_queue();
     do_maintenance = !m_schedule_outstanding && m_immediate_maintenance_scheduled;
   }
-  else if (m_low_memory_mode && low_memory())
-    pause_app_queue();
-
-  // If immediate maintenance requested, disable low memory mode, otherwise,
-  // if low on memory, enable low memory mode
-  int64_t user_log_size = -1;
-  if (m_immediate_maintenance_scheduled)
-    m_low_memory_mode = false;
   else {
-    user_log_size = Global::user_log ? Global::user_log->size() : 0;
-    if (user_log_size > m_userlog_size_threshold || low_memory())
-      m_low_memory_mode = user_log_size < m_userlog_size_threshold;
+    if (low_memory()) {
+      if (m_low_memory_mode)
+        pause_app_queue();
+      else
+        m_low_memory_mode = true;
+    }
+    else {
+      m_low_memory_mode = false;
+      if (Global::user_log && Global::user_log->size()>m_userlog_size_threshold)
+        pause_app_queue();
+    }
   }
 
-  HT_DEBUGF("aq_paused=%s, log_size=%lld, lmm=%s, ci=%d, ims=%s, so=%s, dm=%s",
-            m_app_queue_paused ? "true" : "false", (Lld)user_log_size,
+  // If immediate maintenance requested, disable low memory mode
+  if (m_immediate_maintenance_scheduled)
+    m_low_memory_mode = false;
+
+  HT_DEBUGF("aq_paused=%s, , lowmm=%s, ci=%d, ims=%s, so=%s, dm=%s",
+            m_app_queue_paused ? "true" : "false",
             m_low_memory_mode ? "true" : "false",
             (int)m_current_interval,
             m_immediate_maintenance_scheduled ? "true" : "false",
