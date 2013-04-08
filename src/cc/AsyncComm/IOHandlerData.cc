@@ -718,11 +718,13 @@ IOHandlerData::send_message(CommBufPtr &cbp, uint32_t timeout_ms,
 
   if (initially_empty && !m_send_queue.empty()) {
     error = add_poll_interest(Reactor::WRITE_READY);
-    //HT_INFO("Adding Write interest");
+    if (error)
+      HT_ERRORF("Adding Write interest failed; error=%u", (unsigned)error);
   }
   else if (!initially_empty && m_send_queue.empty()) {
     error = remove_poll_interest(Reactor::WRITE_READY);
-    //HT_INFO("Removing Write interest");
+    if (error)
+      HT_INFOF("Removing Write interest failed; error=%u", (unsigned)error);
   }
 
   // Set m_error if not already set
