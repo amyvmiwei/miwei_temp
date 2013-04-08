@@ -68,7 +68,7 @@ class HypertableConnection
   public static function create_cell_unique($table, $row, $cf) {
     self::initialize();
 
-    $k=new Key();
+    $k=new Hypertable_ThriftGen_Key();
     $k->row=$row;
     $k->column_family=$cf;
     return self::$_client->create_cell_unique(self::$_namespace, 
