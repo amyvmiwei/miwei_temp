@@ -1,3 +1,14 @@
+Version 0.9.7.3:
+(2013-04-09)
+
+   Fixed bug in MaintenanceScheduler preventing merging compactions
+   Turn off low memory mode in TimerHandler when no longer low on memory
+   Fixed merge run calculation logic
+   Fixed epoll initialization error on Ubuntu 12.10
+   Improved maintenance scheduler debug output
+   Added doxygen comments to src/cc/Common
+   Fixed small bug in PHP microblog sample
+
 Version 0.9.7.2:
 (2013-04-04)
 
