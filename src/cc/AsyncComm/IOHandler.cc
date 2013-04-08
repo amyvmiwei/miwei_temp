@@ -107,8 +107,11 @@ int IOHandler::start_polling(int mode) {
     event.events |= POLLRDHUP | EPOLLET;
   m_poll_interest = mode;
   if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_ADD, m_sd, &event) < 0) {
-    HT_DEBUGF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, %x) failed : %s",
-              m_reactor->poll_fd, m_sd, event.events, strerror(errno));
+    // EEXIST means that the descriptor was already added; ignore this error
+    if (errno == EEXIST)
+      return Error::OK;
+    HT_WARNF("epoll_ctl(%d, EPOLL_CTL_ADD, %d, %x) failed : %s (errno %u)",
+              m_reactor->poll_fd, m_sd, event.events, strerror(errno), errno);
     return Error::COMM_POLL_ERROR;
   }
 #endif
@@ -135,10 +138,29 @@ int IOHandler::add_poll_interest(int mode) {
     if (m_poll_interest & Reactor::WRITE_READY)
       event.events |= EPOLLOUT;
 
-    if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
-      HT_DEBUGF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x, interest=%x) : %s",
-                m_reactor->poll_fd, m_sd, mode, m_poll_interest, strerror(errno));
-      return Error::COMM_POLL_ERROR;
+    bool has_retried = false;
+    while (true) {
+      if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_MOD, m_sd, &event) == 0)
+        break;
+      HT_WARNF("epoll_ctl(%d, EPOLL_CTL_MOD, sd=%d) (mode=%x, interest=%x): "
+              "%s (errno %u) (will %sretry)", m_reactor->poll_fd, m_sd, mode,
+              m_poll_interest, strerror(errno), (unsigned)errno,
+              has_retried ? "not " : "");
+      // if the epoll descriptor was not yet registered then do that now and
+      // retry
+      if (errno != ENOENT)
+        return Error::COMM_POLL_ERROR;
+      if (has_retried) {
+        HT_ERRORF("Retried, but still failing (errno %u, %s)", (unsigned)errno,
+                strerror(errno));
+        return Error::COMM_POLL_ERROR;
+      }
+      has_retried = true;
+      if (start_polling(Reactor::READ_READY | Reactor::WRITE_READY)) {
+        HT_ERRORF("add_poll_interest failed (errno %u, %s)", (unsigned)errno,
+                strerror(errno));
+        return Error::COMM_POLL_ERROR;
+      }
     }
   }
   return Error::OK;
