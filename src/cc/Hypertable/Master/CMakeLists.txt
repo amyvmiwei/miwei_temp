@@ -75,11 +75,6 @@ target_link_libraries(Hypertable.Master HyperMaster Hyperspace Hypertable HyperR
 add_executable(op_test_driver tests/op_test_driver.cc)
 target_link_libraries(op_test_driver HyperMaster HyperRanger Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
 
-# !!! Temporarily Removed !!!
-# context_test
-#add_executable(context_test tests/context_test.cc)
-#target_link_libraries(context_test HyperMaster Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
-
 # op_dependency_test
 add_executable(op_dependency_test tests/op_dependency_test.cc tests/OperationTest.cc)
 target_link_libraries(op_dependency_test HyperMaster HyperRanger Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
