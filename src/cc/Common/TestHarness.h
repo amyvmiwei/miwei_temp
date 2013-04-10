@@ -22,15 +22,15 @@
 #ifndef HYPERTABLE_TESTHARNESS_H
 #define HYPERTABLE_TESTHARNESS_H
 
-#include <log4cpp/FileAppender.hh>
-#include <log4cpp/Layout.hh>
-
 #include <iostream>
 #include <fstream>
 #include <string>
 
 extern "C" {
 #include <errno.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 }
 
 #include "Logger.h"
@@ -84,13 +84,6 @@ namespace Hypertable {
       HT_ASSERT(system(command.c_str()) == 0);
     }
 
-    void clear_output() {
-      if (!m_appender->reopen()) {
-        HT_ERRORF("Problem re-opening logging output file %s", m_output_file);
-        display_error_and_exit();
-      }
-    }
-
     void display_error_and_exit() {
       close(m_fd);
       std::cerr << "Error, see '" << m_output_file << "'" << std::endl;
@@ -99,7 +92,6 @@ namespace Hypertable {
 
   private:
     char m_output_file[128];
-    log4cpp::FileAppender *m_appender;
     const char *m_name;
     int m_fd;
     int m_error;
