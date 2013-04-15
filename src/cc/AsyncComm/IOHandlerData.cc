@@ -650,6 +650,7 @@ bool IOHandlerData::handle_write_readiness() {
 	HT_INFOF("getsockname(%d) failed - %s", m_sd, strerror(errno));
 	break;
       }
+      
       //HT_INFO("Connection established.");
       m_connected = true;
       deliver_conn_estab_event = true;
@@ -675,9 +676,18 @@ bool IOHandlerData::handle_write_readiness() {
     break;
   }
 
-  if (deliver_conn_estab_event)
+  if (deliver_conn_estab_event) {
+    if (ReactorFactory::proxy_master) {
+      if ((error = ReactorRunner::handler_map->propagate_proxy_map(this))
+          != Error::OK) {
+        HT_ERRORF("Problem sending proxy map to %s - %s",
+                  m_addr.format().c_str(), Error::get_text(error));
+        return true;
+      }
+    }
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, m_addr,
 			    m_proxy, Error::OK));
+  }
 
   return rval;
 }

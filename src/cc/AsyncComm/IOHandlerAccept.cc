@@ -155,6 +155,15 @@ bool IOHandlerAccept::handle_incoming_connection() {
       return true;
     }
 
+    if (ReactorFactory::proxy_master) {
+      if ((error = ReactorRunner::handler_map->propagate_proxy_map(handler))
+          != Error::OK) {
+        HT_ERRORF("Problem sending proxy map to %s - %s",
+                  m_addr.format().c_str(), Error::get_text(error));
+        return true;
+      }
+    }
+
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK));
   }
 
