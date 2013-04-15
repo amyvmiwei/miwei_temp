@@ -296,6 +296,14 @@ namespace Hypertable {
      */
     void update_proxy_map(const char *message, size_t message_len);
 
+    /** Sends the current proxy map over connection identified by
+     * <code>handler</code>.  This method must be called by the proxy
+     * master, otherwise it will assert.
+     * @param handler Connection over which to send proxy map
+     * @return Same set of error codes returned by IOHandlerdata#send_message
+     */
+    int32_t propagate_proxy_map(IOHandlerData *handler);
+
     /** Waits for proxy map to get updated from a proxy map update message
      * received from the master.  This method waits on #m_cond_proxy for
      * #m_proxies_loaded to become <i>true</i> or <code>timer</code> expires.

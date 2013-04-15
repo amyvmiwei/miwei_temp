@@ -43,19 +43,10 @@ int32_t HandlerMap::insert_handler(IOHandlerAccept *handler) {
 
 int32_t HandlerMap::insert_handler(IOHandlerData *handler) {
   ScopedLock lock(m_mutex);
-  int error = Error::OK;
   HT_ASSERT(m_data_handler_map.find(handler->get_address())
             == m_data_handler_map.end());
   m_data_handler_map[handler->get_address()] = handler;
-  if (ReactorFactory::proxy_master) {
-    CommBufPtr comm_buf = m_proxy_map.create_update_message();
-    comm_buf->write_header_and_reset();
-    if ((error = handler->send_message(comm_buf)) != Error::OK) {
-      remove_handler_unlocked(handler);
-      error = Error::COMM_BROKEN_CONNECTION;
-    }
-  }
-  return error;
+  return Error::OK;
 }
 
 int32_t HandlerMap::insert_handler(IOHandlerDatagram *handler) {
@@ -325,6 +316,15 @@ void HandlerMap::update_proxy_map(const char *message, size_t message_len) {
   m_proxies_loaded = true;
   m_cond_proxy.notify_all();
 }
+
+int32_t HandlerMap::propagate_proxy_map(IOHandlerData *handler) {
+  ScopedLock lock(m_mutex);
+  HT_ASSERT(ReactorFactory::proxy_master);
+  CommBufPtr comm_buf = m_proxy_map.create_update_message();
+  comm_buf->write_header_and_reset();
+  return handler->send_message(comm_buf);
+}
+
 
 bool HandlerMap::wait_for_proxy_map(Timer &timer) {
   ScopedLock lock(m_mutex);
