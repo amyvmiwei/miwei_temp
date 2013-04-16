@@ -281,8 +281,16 @@ int HandlerMap::add_proxy(const String &proxy, const String &hostname, const Ine
 int HandlerMap::remove_proxy(const String &proxy) {
  ScopedLock lock(m_mutex);
  ProxyMapT remove_map;
- if (m_proxy_map.remove_mapping(proxy, remove_map))
+ m_proxy_map.remove_mapping(proxy, remove_map);
+ if (!remove_map.empty()) {
+   IOHandler *handler;
+   foreach_ht(const ProxyMapT::value_type &v, remove_map) {
+     handler = lookup_data_handler(v.second.addr);
+     if (handler)
+       decomission_handler_unlocked(handler);
+   }
    return propagate_proxy_map(remove_map);
+ }
  return Error::OK;
 }
 
@@ -303,8 +311,12 @@ void HandlerMap::update_proxy_map(const char *message, size_t message_len) {
 
   foreach_ht(const ProxyMapT::value_type &v, invalidated_map) {
     IOHandler *handler = lookup_data_handler(v.second.addr);
-    if (handler)
-      handler->set_proxy("");
+    if (handler) {
+      if (v.second.hostname == "--DELETED--")
+        decomission_handler_unlocked(handler);
+      else
+        handler->set_proxy("");
+    }
   }
 
   foreach_ht(const ProxyMapT::value_type &v, new_map) {

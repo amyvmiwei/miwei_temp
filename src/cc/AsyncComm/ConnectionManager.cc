@@ -220,6 +220,7 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
 
   if (error == Error::COMM_ALREADY_CONNECTED) {
     conn_state->connected = true;
+    conn_state->remove_on_invalid_proxy = true;
     conn_state->cond.notify_all();
   }
   else if (error == Error::COMM_INVALID_PROXY &&
@@ -369,6 +370,7 @@ ConnectionManager::handle(EventPtr &event) {
       }
       else {
         conn_state->connected = true;
+        conn_state->remove_on_invalid_proxy = true;
         conn_state->cond.notify_all();
       }
     }
@@ -394,6 +396,7 @@ ConnectionManager::handle(EventPtr &event) {
                     conn_state->service_name.c_str());
         conn_state->initialized = true;
         conn_state->connected = true;
+        conn_state->remove_on_invalid_proxy = true;
         conn_state->cond.notify_all();
         return;
       }
