@@ -391,9 +391,9 @@ namespace Hypertable {
     short poll_events(int mode) {
       short events = 0;
       if (mode & Reactor::READ_READY)
-	events |= POLLIN;
+        events |= POLLIN;
       if (mode & Reactor::WRITE_READY)
-	events |= POLLOUT;
+        events |= POLLOUT;
       return events;
     }
 
@@ -402,9 +402,9 @@ namespace Hypertable {
      */
     void stop_polling() {
       if (ReactorFactory::use_poll) {
-	m_poll_interest = 0;
-	m_reactor->modify_poll_interest(m_sd, 0);
-	return;
+        m_poll_interest = 0;
+        m_reactor->modify_poll_interest(m_sd, 0);
+        return;
       }
 #if defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
       remove_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
