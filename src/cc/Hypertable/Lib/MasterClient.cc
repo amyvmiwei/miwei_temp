@@ -1070,8 +1070,12 @@ void MasterClient::reload_master() {
 
       InetAddr::initialize(&m_master_addr, m_master_addr_string.c_str());
 
-      m_conn_manager->add_with_initializer(m_master_addr, m_retry_interval, "Master",
-                                           m_dispatcher_handler, m_connection_initializer);
+      // If the new master is not yet fully initialized, the connect() can
+      // fail. In this case the clients can run into a timeout before the
+      // master attempts to re-connect. To avoid that, the retry interval is
+      // cut in half.
+      m_conn_manager->add_with_initializer(m_master_addr, m_retry_interval / 2,
+              "Master", m_dispatcher_handler, m_connection_initializer);
     }
     master_addr = m_master_addr;
   }

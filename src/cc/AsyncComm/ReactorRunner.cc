@@ -78,53 +78,53 @@ void ReactorRunner::operator()() {
     m_reactor->fetch_poll_array(pollfds, handlers);
 
     while ((n = poll(&pollfds[0], pollfds.size(),
-		     timeout.get_millis())) >= 0 || errno == EINTR) {
+                     timeout.get_millis())) >= 0 || errno == EINTR) {
 
       if (record_arrival_time)
-	got_arrival_time = false;
+        got_arrival_time = false;
 
       if (dispatch_delay)
-	did_delay = false;
+        did_delay = false;
 
       m_reactor->get_removed_handlers(removed_handlers);
       if (!shutdown)
-	HT_DEBUGF("poll returned %d events", n);
+        HT_DEBUGF("poll returned %d events", n);
       for (size_t i=0; i<pollfds.size(); i++) {
 
-	if (pollfds[i].revents == 0)
-	  continue;
+        if (pollfds[i].revents == 0)
+          continue;
 
-	if (pollfds[i].fd == m_reactor->interrupt_sd()) {
-	  char buf[8];
-	  int nread;
-	  errno = 0;
-	  if ((nread = FileUtils::recv(pollfds[i].fd, buf, 8)) == -1 &&
-	      errno != EAGAIN && errno != EINTR) {
-	    HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
-	    exit(1);
-	  }
-	}
-	
-	if (handlers[i] && removed_handlers.count(handlers[i]) == 0) {
-	  // dispatch delay for testing
-	  if (dispatch_delay && !did_delay && (pollfds[i].revents & POLLIN)) {
-	    poll(0, 0, (int)dispatch_delay);
-	    did_delay = true;
-	  }
-	  if (record_arrival_time && !got_arrival_time
-	      && (pollfds[i].revents & POLLIN)) {
-	    arrival_time = time(0);
-	    got_arrival_time = true;
-	  }
+        if (pollfds[i].fd == m_reactor->interrupt_sd()) {
+          char buf[8];
+          int nread;
+          errno = 0;
+          if ((nread = FileUtils::recv(pollfds[i].fd, buf, 8)) == -1 &&
+              errno != EAGAIN && errno != EINTR) {
+            HT_ERRORF("recv(interrupt_sd) failed - %s", strerror(errno));
+            exit(1);
+          }
+        }
+        
+        if (handlers[i] && removed_handlers.count(handlers[i]) == 0) {
+          // dispatch delay for testing
+          if (dispatch_delay && !did_delay && (pollfds[i].revents & POLLIN)) {
+            poll(0, 0, (int)dispatch_delay);
+            did_delay = true;
+          }
+          if (record_arrival_time && !got_arrival_time
+              && (pollfds[i].revents & POLLIN)) {
+            arrival_time = time(0);
+            got_arrival_time = true;
+          }
           if (handlers[i]->handle_event(&pollfds[i], arrival_time))
             removed_handlers.insert(handlers[i]);
-	}
+        }
       }
       if (!removed_handlers.empty())
-	cleanup_and_remove_handlers(removed_handlers);
+        cleanup_and_remove_handlers(removed_handlers);
       m_reactor->handle_timeouts(timeout);
       if (shutdown)
-	return;
+        return;
 
       m_reactor->fetch_poll_array(pollfds, handlers);
     }
@@ -161,7 +161,7 @@ void ReactorRunner::operator()() {
         }
         if (record_arrival_time && !got_arrival_time
             && (events[i].events & EPOLLIN)) {
-	  arrival_time = time(0);
+          arrival_time = time(0);
           got_arrival_time = true;
         }
         if (handler->handle_event(&events[i], arrival_time))
@@ -190,8 +190,8 @@ void ReactorRunner::operator()() {
   events = (port_event_t *)calloc(33, sizeof (port_event_t));
 
   while ((ret = port_getn(m_reactor->poll_fd, events, 32,
-			  &nget, timeout.get_timespec())) >= 0 ||
-	 errno == EINTR || errno == EAGAIN || errno == ETIME) {
+                          &nget, timeout.get_timespec())) >= 0 ||
+         errno == EINTR || errno == EAGAIN || errno == ETIME) {
 
     //HT_INFOF("port_getn returned with %d", nget);
 
@@ -206,7 +206,7 @@ void ReactorRunner::operator()() {
 
       // handle interrupt
       if (events[i].portev_source == PORT_SOURCE_ALERT)
-	break;
+        break;
 
       handler = (IOHandler *)events[i].portev_user;
       if (handler && removed_handlers.count(handler) == 0) {
@@ -216,7 +216,7 @@ void ReactorRunner::operator()() {
           did_delay = true;
         }
         if (record_arrival_time && !got_arrival_time && events[i].portev_events == POLLIN) {
-	  arrival_time = time(0);
+          arrival_time = time(0);
           got_arrival_time = true;
         }
         if (handler->handle_event(&events[i], arrival_time))
@@ -263,7 +263,7 @@ void ReactorRunner::operator()() {
           did_delay = true;
         }
         if (record_arrival_time && !got_arrival_time && events[i].filter == EVFILT_READ) {
-	  arrival_time = time(0);
+          arrival_time = time(0);
           got_arrival_time = true;
         }
         if (handler->handle_event(&events[i], arrival_time))
@@ -306,18 +306,18 @@ ReactorRunner::cleanup_and_remove_handlers(std::set<IOHandler *> &handlers) {
       struct epoll_event event;
       memset(&event, 0, sizeof(struct epoll_event));
       if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_DEL, handler->get_sd(), &event) < 0) {
-	if (!shutdown)
-	  HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
-		    strerror(errno));
+        if (!shutdown)
+          HT_ERRORF("epoll_ctl(EPOLL_CTL_DEL, %d) failure, %s", handler->get_sd(),
+                    strerror(errno));
       }
 #elif defined(__APPLE__) || defined(__FreeBSD__)
       struct kevent devents[2];
       EV_SET(&devents[0], handler->get_sd(), EVFILT_READ, EV_DELETE, 0, 0, 0);
       EV_SET(&devents[1], handler->get_sd(), EVFILT_WRITE, EV_DELETE, 0, 0, 0);
       if (kevent(m_reactor->kqd, devents, 2, NULL, 0, NULL) == -1
-	  && errno != ENOENT) {
-	if (!shutdown)
-	  HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
+          && errno != ENOENT) {
+        if (!shutdown)
+          HT_ERRORF("kevent(%d) : %s", handler->get_sd(), strerror(errno));
       }
 #elif !defined(__sun__)
       ImplementMe;
