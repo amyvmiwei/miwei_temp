@@ -136,10 +136,8 @@ namespace Hypertable {
      * <code>remove_map</code> to all connections.
      * @param proxy Proxy for which mapping is to be removed
      * @param remove_map Reference to return map to hold removed mappings
-     * @return <i>true</i> if mapping for <code>proxy</code> and removed,
-     * <i>false</i> otherwise.
      */
-    bool remove_mapping(const String &proxy, ProxyMapT &remove_map);
+    void remove_mapping(const String &proxy, ProxyMapT &remove_map);
 
     /** Returns proxy map data for <code>proxy</code>.
      * This method looks up <code>proxy</code> in the forward map and returns
@@ -183,18 +181,32 @@ namespace Hypertable {
 
   private:
 
-    /** Invalidates (removes) mapping from forward and reverse maps.
+    /** Invalidates (removes) mapping, if changed, from forward and reverse maps.
      * This method looks up <code>proxy</code> in the forward map and removes
-     * it if it exists.  It also looks up <code>addr</code> in the reverse map
-     * and removes it if it exists.  The removed mappings are added to
+     * it if it exists but maps to an address different from <code>addr</code>.
+     * It also looks up <code>addr</code> in the reverse map
+     * and removes it if it exists and it maps to a proxy different than
+     * <code>proxy</code>.  The removed mappings are added to
      * <code>invalidated_mappings</code>.
      * @param proxy Proxy name to invalidate
      * @param addr IP address to invalidate
      * @param invalidated_mappings Reference to ProxyMapT object to hold
      * invalidated mappings.
      */
-    void invalidate(const String &proxy, const InetAddr &addr,
-		    ProxyMapT &invalidated_mappings);
+    void invalidate_old_mapping(const String &proxy, const InetAddr &addr,
+                                ProxyMapT &invalidated_mappings);
+
+    /** Invalidates (removes) mapping from forward and reverse maps.
+     * This method looks up <code>proxy</code> in the forward map and removes
+     * it, if it exists.  If mapping found in forward map, the corresponding
+     * mapping is also removed from the reverse map.  The removed mapping is
+     * added to <code>invalidated_mappings</code> with the hostname set to
+     * "--DELETED--".
+     * @param proxy Proxy name to invalidate
+     * @param invalidated_mappings Reference to ProxyMapT object to hold
+     * invalidated mapping.
+     */
+    void invalidate(const String &proxy, ProxyMapT &invalidated_mappings);
 
     /// %Mutex for serializing concurrent access
     Mutex m_mutex;

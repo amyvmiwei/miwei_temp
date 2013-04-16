@@ -256,16 +256,18 @@ void IntervalScannerAsync::find_range_and_start_scan(const char *row_key, bool h
                           m_next_range_info.addr.to_str().c_str(), m_table_identifier.id,
                           range.start_row, range.end_row, e.what());
       reset_outstanding_status(true, false);
-      if ((e.code() != Error::REQUEST_TIMEOUT
-           && e.code() != Error::COMM_NOT_CONNECTED
-           && e.code() != Error::COMM_BROKEN_CONNECTION)) {
+      if (e.code() != Error::REQUEST_TIMEOUT &&
+          e.code() != Error::COMM_NOT_CONNECTED &&
+          e.code() != Error::COMM_BROKEN_CONNECTION &&
+          e.code() != Error::COMM_INVALID_PROXY) {
         HT_ERROR_OUT << e << HT_END;
         HT_THROW2(e.code(), e, msg);
       }
       else if (m_create_timer.remaining() <= 1000) {
         uint32_t duration  = m_create_timer.duration();
         HT_ERRORF("Scanner creation request will time out. Initial timer "
-                  "duration %d", (int)duration);
+                  "duration %d (last error = %s - %s)", (int)duration,
+                  Error::get_text(e.code()), e.what());
         HT_THROW2(Error::REQUEST_TIMEOUT, e, msg + format(". Unable to "
                   "complete request within %d ms", (int)duration));
       }
@@ -359,7 +361,8 @@ bool IntervalScannerAsync::retry_or_abort(bool refresh, bool hard, bool is_creat
   }
 
   if (last_error == Error::COMM_NOT_CONNECTED ||
-      last_error == Error::COMM_BROKEN_CONNECTION)
+      last_error == Error::COMM_BROKEN_CONNECTION ||
+      last_error == Error::COMM_INVALID_PROXY)
     m_state = RESTART;
 
   if (m_state == RESTART) {
@@ -617,7 +620,8 @@ void IntervalScannerAsync::do_readahead() {
       m_fetch_outstanding = false;
       m_fetch_timer.reset();
       if (e.code() == Error::COMM_NOT_CONNECTED ||
-          e.code() == Error::COMM_BROKEN_CONNECTION) {
+          e.code() == Error::COMM_BROKEN_CONNECTION ||
+          e.code() == Error::COMM_INVALID_PROXY) {
         HT_ASSERT(m_state == 0);
         m_state = RESTART;
         return;
