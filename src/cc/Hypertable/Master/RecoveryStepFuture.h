@@ -87,8 +87,6 @@ namespace Hypertable {
         return;
       }
 
-      ErrorMapT::iterator iter = m_error_map.find(location);
-
       m_outstanding.erase(location);
 
       if (m_success.count(location) == 0)

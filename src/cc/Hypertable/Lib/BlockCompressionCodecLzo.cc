@@ -77,6 +77,7 @@ BlockCompressionCodecLzo::deflate(const DynamicBuffer &input,
   ret = lzo1x_1_compress(input.base, input.fill(), output.base+header.length(),
                          &out_len, m_workmem);
   assert(ret == LZO_E_OK);
+  (void)ret;
 
   /* check for an incompressible block */
   if (out_len >= input.fill()) {

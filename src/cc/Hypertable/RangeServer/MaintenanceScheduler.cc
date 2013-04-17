@@ -162,8 +162,6 @@ void MaintenanceScheduler::schedule() {
     }
   }
 
-  int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
-
   if (!do_scheduling)
     return;
 

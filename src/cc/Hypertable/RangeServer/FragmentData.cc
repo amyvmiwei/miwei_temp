@@ -39,7 +39,6 @@ void FragmentData::merge(RangePtr &range, const char *split_point,
   Key key;
   SerializedKey serkey;
   ByteString value;
-  int plan_generation;
   size_t total_size = 0;
 
   *latest_revision = TIMESTAMP_MIN;
@@ -49,7 +48,7 @@ void FragmentData::merge(RangePtr &range, const char *split_point,
     const uint8_t *decode_ptr = event->payload;
     size_t decode_remain = event->payload_len;
     location = Serialization::decode_vstr(&decode_ptr, &decode_remain);
-    plan_generation = Serialization::decode_i32(&decode_ptr, &decode_remain);
+    (void)Serialization::decode_i32(&decode_ptr, &decode_remain);
     range_spec.decode(&decode_ptr, &decode_remain);
     // skip "fragment"
     (void)Serialization::decode_i32(&decode_ptr, &decode_remain);
