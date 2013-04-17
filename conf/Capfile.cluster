@@ -12,11 +12,11 @@ role :hyperspace, "mothercompiler", "motherlode000", "motherlode001"
 role :slave,  "motherlode000", "motherlode001", "motherlode002", "motherlode003", "motherlode004", "
 motherlode005", "motherlode006", "motherlode007", "motherlode008"
 role :localhost, "mothercompiler"
-role :thriftbroker,  "thrift001", "thrift002", "thrift003", "thrift004", "thrift005"
+role :thriftbroker_additional, "thrift001", "thrift002", "thrift003", "thrift004", "thrift005"
 role :spare, "spare000", "spare001"
 
 ######################### END OF USER CONFIGURATION ############################
-set :prompt_stop, 1
+set :prompt_stop, 0
 set :prompt_clean, 1
 
 #ssh_options[:forward_agent] = true
@@ -113,7 +113,7 @@ end
     to point to the directory of the current version
     (default=#{hypertable_version})
  DESC
-task :set_current, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare] do
+task :set_current, :roles => [:master, :hyperspace, :slave, :thriftbroker_additional, :spare] do
   run <<-CMD
    cd #{install_dir} &&
    rm -f current &&
@@ -143,7 +143,7 @@ end
  desc <<-DESC
     rsyncs binary packages and installs on each machine in the cluster
  DESC
-task :install_package, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare] do
+task :install_package, :roles => [:master, :hyperspace, :slave, :thriftbroker_additional, :spare] do
   pkg_basename = File.basename(pkg)
   pkg_basename =~ /#{pkg_regex}/
   pkg_type = $1
@@ -215,7 +215,7 @@ end
     installation specified by the hypertable_version
     (#{hypertable_version})
 DESC
-task :upgrade_all, :roles => [:master, :hyperspace, :slave, :thriftbroker, :spare] do
+task :upgrade_all, :roles => [:master, :hyperspace, :slave, :thriftbroker_additional, :spare] do
   run <<-CMD
     #{install_dir}/#{hypertable_version}/bin/upgrade.sh \
         #{install_dir}/current #{hypertable_version}
@@ -225,10 +225,25 @@ end
 desc "Starts all processes."
 task :start do
   transaction do
+    start_servers
+    start_thriftbrokers
+  end
+end
+
+desc "Stops all processes."
+task :stop do
+  transaction do
+    stop_thriftbrokers
+    stop_servers
+  end
+end
+
+desc "Starts Hyperspace, Master, and Slave processes."
+task :start_servers do
+  transaction do
     start_hyperspace
     start_master
     start_slaves
-    start_master_thriftbroker
   end
 end
 
@@ -255,14 +270,6 @@ task :start_monitoring, :roles => :master do
   #{install_dir}/current/bin/start-monitoring.sh
 end
 
-desc "Starts ThriftBroker on master."
-task :start_master_thriftbroker, :roles => :master do
-  run <<-CMD
-   #{install_dir}/current/bin/start-thriftbroker.sh \
-      #{config_option} #{thriftbroker_args}
-  CMD
-end
-
 desc "Starts slave processes."
 task :start_slaves, :roles => :slave do
   run <<-CMD
@@ -270,14 +277,48 @@ task :start_slaves, :roles => :slave do
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
       #{config_option} &&
    #{install_dir}/current/bin/start-rangeserver.sh \
-      #{config_option} &&
+      #{config_option}
+  CMD
+end
+
+desc "Starts ThriftBrokers."
+task :start_thriftbrokers do
+  transaction do
+    start_thriftbrokers_primary
+    if !roles[:thriftbroker_additional].empty?
+      start_thriftbrokers_additional
+    end
+  end
+end
+
+desc "Stops ThriftBrokers."
+task :stop_thriftbrokers do
+  transaction do
+    stop_thriftbrokers_primary
+    if !roles[:thriftbroker_additional].empty?
+      stop_thriftbrokers_additional
+    end
+  end
+end
+
+desc "Starts ThriftBroker on master and slave machines."
+task :start_thriftbrokers_primary, :roles => [:master, :slave] do
+  run <<-CMD
+   #{install_dir}/current/bin/random-wait.sh 5 &&
    #{install_dir}/current/bin/start-thriftbroker.sh \
       #{config_option} #{thriftbroker_args}
   CMD
 end
 
-desc "Starts ThriftBroker processes."
-task :start_thriftbrokers, :roles => :thriftbroker do
+desc "Stops ThriftBroker on master and slave machines."
+task :stop_thriftbrokers_primary, :roles => [:master, :slave] do
+  run <<-CMD
+   #{install_dir}/current/bin/stop-servers.sh thriftbroker
+  CMD
+end
+
+desc "Starts ThriftBroker on thriftbroker_additional machines."
+task :start_thriftbrokers_additional, :roles => :thriftbroker_additional do
   run <<-CMD
    #{install_dir}/current/bin/random-wait.sh 5 &&
    #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
@@ -287,6 +328,12 @@ task :start_thriftbrokers, :roles => :thriftbroker do
   CMD
 end
 
+desc "Stops ThriftBroker on thriftbroker_additional machines."
+task :stop_thriftbrokers_additional, :roles => :thriftbroker_additional do
+  run <<-CMD
+   #{install_dir}/current/bin/stop-servers.sh thriftbroker dfsbroker
+  CMD
+end
 
 desc "Starts DFS brokers."
 task :start_dfsbrokers, :roles => [:master, :slave] do
@@ -294,8 +341,8 @@ task :start_dfsbrokers, :roles => [:master, :slave] do
       #{config_option}"
 end
 
-desc "Stops all servers."
-task :stop do
+desc "Stops Slave, Master, and Hyperspace processes."
+task :stop_servers do
    
   if (prompt_stop == 1)
     puts "This will STOP ALL SERVERS in the Hypertable instance with MASTER='#{roles[:master].first}'. Proceed? ('yes' to proceed)"
@@ -342,13 +389,6 @@ desc "Stops hyperspace processes."
 task :stop_hyperspace, :roles => :hyperspace do
   run <<-CMD 
   #{install_dir}/current/bin/stop-hyperspace.sh
-  CMD
-end
-
-desc "Stops ThriftBroker processes."
-task :stop_thriftbrokers, :roles => :thriftbroker do
-  run <<-CMD 
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master --no-rangeserver
   CMD
 end
 
