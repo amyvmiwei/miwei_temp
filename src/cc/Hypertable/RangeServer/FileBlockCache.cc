@@ -107,6 +107,7 @@ FileBlockCache::insert(int file_id, uint64_t file_offset,
 
   pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
   assert(insert_result.second);
+  (void)insert_result;
 
   m_available -= length;
 
