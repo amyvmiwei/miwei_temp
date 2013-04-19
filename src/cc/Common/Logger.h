@@ -25,8 +25,9 @@
 #include "String.h"
 
 #include <iostream>
-#include <stdio.h>
+#include <signal.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "FixedStream.h"
 
@@ -119,7 +120,7 @@ namespace Hypertable { namespace Logger {
 #ifdef HT_USE_ABORT
 #define HT_ABORT abort()
 #else
-#define HT_ABORT *((int *)0) = 1
+#define HT_ABORT raise(SIGABRT)
 #endif
 
 // printf interface macro helper

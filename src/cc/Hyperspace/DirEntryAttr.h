@@ -69,7 +69,7 @@ namespace Hyperspace {
   };
 
   struct LtDirEntryAttr {
-    bool operator()(const struct DirEntryAttr &x, const struct DirEntryAttr &y) const {
+    bool operator()(const class DirEntryAttr &x, const class DirEntryAttr &y) const {
       if (x.name == y.name)
         return (int)x.is_dir < (int)y.is_dir;
       return x.name < y.name;

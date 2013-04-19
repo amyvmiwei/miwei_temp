@@ -62,7 +62,7 @@ void OperationTest::execute() {
       DependencySet exclusivities;
       DependencySet dependencies;
       DependencySet obstructions;
-      String sub_node_id = String("node-") + header.id + "[0]";
+      String sub_node_id = format("node-%d[0]", (int)header.id);
       obstructions.insert( sub_node_id );
       m_dependencies.insert( sub_node_id );
       m_sub_ops.clear();

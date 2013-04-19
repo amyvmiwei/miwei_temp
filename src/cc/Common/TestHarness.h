@@ -40,7 +40,7 @@ namespace Hypertable {
 
   class TestHarness {
   public:
-    TestHarness(const char *name) : m_name(name), m_error(0) {
+    TestHarness(const char *name) : m_error(0) {
       Logger::initialize(name);
 
       // open temporary output file
@@ -92,7 +92,6 @@ namespace Hypertable {
 
   private:
     char m_output_file[128];
-    const char *m_name;
     int m_fd;
     int m_error;
   };

@@ -35,13 +35,12 @@ namespace Hypertable {
 
   class RequestHandlerGroupCommit : public ApplicationHandler {
   public:
-    RequestHandlerGroupCommit(Comm *comm, RangeServer *rs)
-      : ApplicationHandler(true), m_comm(comm), m_range_server(rs) { m_urgent=true; }
+    RequestHandlerGroupCommit(RangeServer *rs)
+      : ApplicationHandler(true), m_range_server(rs) { m_urgent=true; }
 
     virtual void run();
 
   private:
-    Comm        *m_comm;
     RangeServer *m_range_server;
   };
 

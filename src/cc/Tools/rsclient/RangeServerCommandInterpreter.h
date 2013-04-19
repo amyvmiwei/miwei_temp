@@ -42,7 +42,7 @@ namespace Hypertable {
 
   class RangeServerCommandInterpreter : public CommandInterpreter {
   public:
-    RangeServerCommandInterpreter(Comm *, Hyperspace::SessionPtr &,
+    RangeServerCommandInterpreter(Hyperspace::SessionPtr &,
         const sockaddr_in addr, RangeServerClientPtr &);
 
     virtual void execute_line(const String &line);
@@ -52,7 +52,6 @@ namespace Hypertable {
     void display_scan_data(const SerializedKey &key, const ByteString &value,
                            SchemaPtr &schema_ptr);
 
-    Comm *m_comm;
     Hyperspace::SessionPtr m_hyperspace;
     NameIdMapperPtr         m_namemap;
     struct sockaddr_in m_addr;

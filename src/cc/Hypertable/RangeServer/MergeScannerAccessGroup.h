@@ -262,7 +262,6 @@ namespace Hypertable {
     uint64_t      m_count;
     Key           m_counted_key;
     DynamicBuffer m_counted_value;
-    int64_t       m_cell_cutoff;
     int64_t       m_start_timestamp;
     int64_t       m_end_timestamp;
     int64_t       m_revision;

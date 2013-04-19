@@ -238,15 +238,15 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeDataVector &range_da
         if (iter == cumulative_size_map.end()) {
           String errstr;
           for (iter = cumulative_size_map.begin(); iter != cumulative_size_map.end(); iter++) {
-            errstr += String("PERROR frag-") + (*iter).second.fragno +
-              "\trevision\t" + (*iter).first + "\n";
-            errstr += String("PERROR frag-") + (*iter).second.fragno +
-              "\tdistance\t" + (*iter).second.distance + "\n";
-            errstr += String("PERROR frag-") + (*iter).second.fragno +
-              "\tsize\t" + (*iter).second.cumulative_size + "\n";
+            errstr += format("PERROR frag-%d\trevision\t%lld\n",
+                             (int)(*iter).second.fragno, (Lld)(*iter).first);
+            errstr += format("PERROR frag-%d\tdistance\t%lld\n",
+                             (*iter).second.fragno, (Lld)(*iter).second.distance);
+            errstr += format("PERROR frag-%d\tsize\t%lld\n",
+                             (*iter).second.fragno, (Lld)(*iter).second.cumulative_size);
           }
-          errstr += String("PERROR revision ") +
-            ag_data->earliest_cached_revision + " not found in map\n";
+          errstr += format("PERROR revision %lld not found in map\n",
+                           (Lld)ag_data->earliest_cached_revision);
           cout << flush << errstr << flush;
           if (trace)
             *trace += format("%d THIS SHOULD NEVER HAPPEN, ecr=%lld\n",

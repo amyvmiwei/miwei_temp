@@ -71,7 +71,7 @@ const char *Hyperspace::Protocol::command_strs[COMMAND_MAX] = {
  *
  */
 const char *Hyperspace::Protocol::command_text(uint64_t command) {
-  if (command < 0 || command >= COMMAND_MAX)
+  if (command >= COMMAND_MAX)
     return "UNKNOWN";
   return command_strs[command];
 }

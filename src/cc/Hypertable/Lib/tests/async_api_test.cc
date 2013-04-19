@@ -113,7 +113,7 @@ namespace {
 
   class FruitCallback: public ResultCallback {
   public:
-    FruitCallback(bool show_complete=true):m_error(Error::OK), m_show_complete(show_complete) {
+    FruitCallback(bool show_complete=true): m_show_complete(show_complete) {
       clear();
     }
 
@@ -191,7 +191,6 @@ namespace {
     Mutex mutex;
     boost::condition m_cond;
     Fruit m_fruit;
-    int m_error;
     String m_error_msg;
     bool m_show_complete;
     bool m_complete_shown;

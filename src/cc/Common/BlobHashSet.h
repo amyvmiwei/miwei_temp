@@ -92,7 +92,7 @@ public:
    *        the blob already existed in the set
    */
   InsRet insert(const Blob &blob) {
-    return insert_blob(blob.size(), Base::insert(blob));
+    return insert_blob(blob.size, Base::insert(blob));
   }
 
   /** Looks up the blob and returns an iterator to it. Hides all find methods

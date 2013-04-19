@@ -119,8 +119,8 @@ void OperationAlterTable::execute() {
       uint32_t generation =  existing_schema->get_generation()+1;
       if (alter_schema->get_generation() != generation) {
         HT_THROW(Error::MASTER_SCHEMA_GENERATION_MISMATCH,
-                 (String) "Expected updated schema generation " + generation
-                 + " got " + alter_schema->get_generation());
+                 format("Expected updated schema generation %lld got %lld",
+                        (Lld)generation, (Lld)alter_schema->get_generation()));
       }
     }
     catch (Exception &e) {

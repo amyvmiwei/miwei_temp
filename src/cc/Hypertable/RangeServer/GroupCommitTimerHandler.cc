@@ -64,7 +64,7 @@ void GroupCommitTimerHandler::handle(Hypertable::EventPtr &event_ptr) {
     return;
   }
 
-  m_app_queue->add( new RequestHandlerGroupCommit(m_comm, m_range_server) );
+  m_app_queue->add( new RequestHandlerGroupCommit(m_range_server) );
 
   if ((error = m_comm->set_timer(m_commit_interval, this)) != Error::OK)
     HT_FATALF("Problem setting timer - %s", Error::get_text(error));

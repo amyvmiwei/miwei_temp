@@ -43,12 +43,13 @@ void ServerMeasurement::parse_measurement(const char *measurement, size_t len) {
 
   version = atoi(splits[0].c_str());
   if (version != 2)
-    HT_THROW(Error::NOT_IMPLEMENTED, (String) "ServerMetrics version=" + version
-        + " expected 2");
+    HT_THROW(Error::NOT_IMPLEMENTED,
+             format("ServerMetrics version=%d expected 2", (int)version));
 
   if (splits.size() != 12)
-    HT_THROW(Error::PROTOCOL_ERROR, (String) "Measurement string '" + str
-        + "' has " + (int)(splits.size()) + (String)" components, expected 12.");
+    HT_THROW(Error::PROTOCOL_ERROR,
+             format("Measurement string '%s' has %d components, expected 12.",
+                    str.c_str(), (int)splits.size()));
 
   timestamp             = strtoll(splits[1].c_str(), 0, 0);
   loadavg               = strtod(splits[2].c_str(), 0);

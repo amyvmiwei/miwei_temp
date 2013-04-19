@@ -155,7 +155,6 @@ namespace Hypertable {
     int64_t      m_max_memory;
     int64_t      m_limit;
     int64_t      m_available;
-    int32_t      m_blocks;
     uint64_t     m_accesses;
     uint64_t     m_hits;
     bool         m_compressed;

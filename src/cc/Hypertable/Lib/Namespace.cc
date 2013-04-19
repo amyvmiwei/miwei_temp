@@ -166,9 +166,9 @@ void Namespace::alter_table(const String &table_name, const String &alter_schema
     else {
       // add column family
       if(final_schema->get_max_column_family_id() >= Schema::ms_max_column_id)
-        HT_THROW(Error::TOO_MANY_COLUMNS, (String)"Attempting to add > "
-                 + Schema::ms_max_column_id
-                 + (String) " column families to table");
+        HT_THROW(Error::TOO_MANY_COLUMNS,
+                 format("Attempting to add > %d column families to table",
+                        (int)Schema::ms_max_column_id));
       final_schema->incr_max_column_family_id();
       final_cf = new Schema::ColumnFamily(*alter_cf);
       final_cf->id = (uint32_t) final_schema->get_max_column_family_id();

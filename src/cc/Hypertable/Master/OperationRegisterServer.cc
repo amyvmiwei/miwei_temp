@@ -74,7 +74,7 @@ void OperationRegisterServer::execute() {
     uint64_t id = m_context->hyperspace->attr_incr(m_context->master_file_handle,
                                                    "next_server_id");
     if (m_context->location_hash.empty())
-      m_location = String("rs") + id;
+      m_location = format("rs%llu", (Llu)id);
     else
       m_location = format("rs-%s-%llu", m_context->location_hash.c_str(),
                           (Llu)id);

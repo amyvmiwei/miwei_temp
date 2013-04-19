@@ -29,19 +29,19 @@
 
 namespace Hypertable {
 
-  class CpuInfo;
-  class CpuStat;
-  class LoadAvgStat;
-  class MemStat;
-  class DiskStat;
-  class OsInfo;
-  class SwapStat;
-  class NetInfo;
-  class NetStat;
-  class ProcInfo;
-  class ProcStat;
-  class FsStat;
-  class TermInfo;
+  struct CpuInfo;
+  struct CpuStat;
+  struct LoadAvgStat;
+  struct MemStat;
+  struct DiskStat;
+  struct OsInfo;
+  struct SwapStat;
+  struct NetInfo;
+  struct NetStat;
+  struct ProcInfo;
+  struct ProcStat;
+  struct FsStat;
+  struct TermInfo;
 
   class System {
   public:

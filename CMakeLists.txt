@@ -160,6 +160,37 @@ elseif (NOT USE_GLIBC_MALLOC AND Tcmalloc_FOUND)
   endif ()
 endif ()
 
+# Use llvm instead of gcc
+if (LLVM)
+  message(STATUS "Using llvm: ${LLVM}")
+  SET (CMAKE_C_COMPILER             "${LLVM}/bin/clang")
+  SET (CMAKE_C_FLAGS                "-Wall -std=c99")
+  if (ADDRESS_SANITIZER)
+    SET (CMAKE_C_FLAGS_DEBUG        "-fsanitize=address -O1 -fno-omit-frame-pointer -g")
+  else ()
+    SET (CMAKE_C_FLAGS_DEBUG        "-g")
+  endif ()
+  SET (CMAKE_C_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
+  SET (CMAKE_C_FLAGS_RELEASE        "-O3 -DNDEBUG")
+  SET (CMAKE_C_FLAGS_RELWITHDEBINFO "-O2 -g")
+
+  SET (CMAKE_CXX_COMPILER             "${LLVM}/bin/clang++")
+  SET (CMAKE_CXX_FLAGS                "-Wall")
+  if (ADDRESS_SANITIZER)
+    SET (CMAKE_CXX_FLAGS_DEBUG        "-fsanitize=address -O1 -fno-omit-frame-pointer -g")
+  else ()
+    SET (CMAKE_CXX_FLAGS_DEBUG        "-g")
+  endif ()
+  SET (CMAKE_CXX_FLAGS_MINSIZEREL     "-Os -DNDEBUG")
+  SET (CMAKE_CXX_FLAGS_RELEASE        "-O3 -DNDEBUG")
+  SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
+
+  LINK_LIBRARIES(tinfo)
+
+elseif (ADDRESS_SANITIZER)
+  MESSAGE (FATAL_ERROR "ADDRESS_SANITIZER can only be used in conjunction with LLVM")
+endif ()
+
 # include directories
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
     ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}

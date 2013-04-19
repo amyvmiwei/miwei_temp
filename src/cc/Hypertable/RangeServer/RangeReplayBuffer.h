@@ -41,7 +41,7 @@ namespace Hypertable {
   class RangeReplayBuffer : public ReferenceCount {
   public:
     RangeReplayBuffer(const String &location, const QualifiedRangeSpec &range) :
-        m_location(location), m_range(range), m_memory_used(0) {
+      m_location(location), m_range(range) {
       m_addr.set_proxy(location);
     }
     String get_location() const {return m_location; }
@@ -56,7 +56,6 @@ namespace Hypertable {
     String m_location;
     CommAddress m_addr;
     QualifiedRangeSpec m_range;
-    size_t m_memory_used;
     DynamicBuffer m_accum;
   };
 

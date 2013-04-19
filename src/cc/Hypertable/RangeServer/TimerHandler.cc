@@ -186,7 +186,7 @@ void TimerHandler::handle(Hypertable::EventPtr &event) {
   if (m_immediate_maintenance_scheduled)
     m_low_memory_mode = false;
 
-  HT_DEBUGF("aq_paused=%s, , lowmm=%s, ci=%d, ims=%s, so=%s, dm=%s",
+  HT_DEBUGF("aq_paused=%s, lowmm=%s, ci=%d, ims=%s, so=%s, dm=%s",
             m_app_queue_paused ? "true" : "false",
             m_low_memory_mode ? "true" : "false",
             (int)m_current_interval,
@@ -199,7 +199,7 @@ void TimerHandler::handle(Hypertable::EventPtr &event) {
     if (event->type == Hypertable::Event::TIMER) {
 
       if (do_maintenance) {
-        m_app_queue->add( new RequestHandlerDoMaintenance(m_comm, m_range_server) );
+        m_app_queue->add( new RequestHandlerDoMaintenance(m_range_server) );
         m_schedule_outstanding = true;
       }
       else {

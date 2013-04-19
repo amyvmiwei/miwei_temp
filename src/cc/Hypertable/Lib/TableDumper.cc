@@ -40,7 +40,7 @@ using namespace Hypertable;
  */
 TableDumper::TableDumper(NamespacePtr &ns, const String &name,
 			 ScanSpec &scan_spec, size_t target_node_count)
-  : m_scan_spec(scan_spec), m_eod(false), m_rows_seen(0) {
+  : m_scan_spec(scan_spec), m_eod(false) {
   TableScannerPtr scanner;
   RowInterval ri;
 

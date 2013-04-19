@@ -36,7 +36,6 @@ namespace Hypertable {
 
   TableInfo::TableInfo(const String &toplevel_dir, const String &table_id)
     : m_toplevel_dir(toplevel_dir) {
-    memset(&m_table, 0, sizeof(TableIdentifier));
     m_table.set_id(table_id);
   }
 

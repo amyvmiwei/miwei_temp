@@ -266,7 +266,7 @@ namespace Hypertable {
     }
 
     const char *Protocol::command_text(uint64_t command) {
-      if (command < 0 || command >= COMMAND_MAX)
+      if (command >= COMMAND_MAX)
         return "UNKNOWN";
       return ms_command_strings[command];
     }

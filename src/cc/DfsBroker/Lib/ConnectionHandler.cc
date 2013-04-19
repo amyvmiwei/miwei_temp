@@ -65,8 +65,7 @@ void ConnectionHandler::handle(EventPtr &event) {
 
     try {
       // sanity check command code
-      if (event->header.command < 0
-          || event->header.command >= Protocol::COMMAND_MAX)
+      if (event->header.command >= Protocol::COMMAND_MAX)
         HT_THROWF(Error::PROTOCOL_ERROR, "Invalid command (%llx)",
                   (Llu)event->header.command);
 

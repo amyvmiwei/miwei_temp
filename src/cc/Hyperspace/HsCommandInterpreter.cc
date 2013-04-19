@@ -254,7 +254,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
 
     else if (state.command == COMMAND_READDIRATTR) {
       ::uint64_t handle;
-      vector<struct DirEntryAttr> listing;
+      vector<DirEntryAttr> listing;
       String fname = state.dir_name;
       String name = state.last_attr_name;
 
@@ -268,7 +268,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
 
     else if (state.command == COMMAND_READPATHATTR) {
       ::uint64_t handle;
-      vector<struct DirEntryAttr> listing;
+      vector<DirEntryAttr> listing;
       String fname = state.dir_name;
       String name = state.last_attr_name;
 

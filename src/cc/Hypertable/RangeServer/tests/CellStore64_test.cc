@@ -110,7 +110,6 @@ int main(int argc, char **argv) {
     String testdir = "/test/CellStore";
     String csname = testdir + "/cs64";
     TableIdentifier table_id;
-    memset(&table_id, 0, sizeof(table_id));
 
     client->mkdirs(testdir);
 

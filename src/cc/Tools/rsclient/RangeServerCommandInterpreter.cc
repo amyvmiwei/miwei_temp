@@ -87,10 +87,10 @@ namespace {
 
 }
 
-RangeServerCommandInterpreter::RangeServerCommandInterpreter(Comm *comm,
+RangeServerCommandInterpreter::RangeServerCommandInterpreter(
     Hyperspace::SessionPtr &hyperspace, const sockaddr_in addr,
     RangeServerClientPtr &range_server)
-  : m_comm(comm), m_hyperspace(hyperspace), m_addr(addr),
+  : m_hyperspace(hyperspace), m_addr(addr),
     m_range_server(range_server), m_cur_scanner_id(-1) {
   HqlHelpText::install_range_server_client_text();
   if (m_hyperspace) {

@@ -1336,11 +1336,11 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     // verify schema
     if (schema->get_generation() != table->generation) {
-      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
-               (String)"RangeServer Schema generation for table '"
-               + table->id + "' is " +
-               schema->get_generation() + " but supplied is "
-               + table->generation);
+      HT_THROWF(Error::RANGESERVER_GENERATION_MISMATCH,
+                "RangeServer Schema generation for table '%s'"
+                " is %lld but supplied is %lld",
+                table->id, (Lld)schema->get_generation(),
+                (Lld)table->generation);
     }
 
     if (!range->increment_scan_counter())
@@ -1991,7 +1991,7 @@ RangeServer::commit_log_sync(ResponseCallback *cb,
   // normal sync...
   try {
     UpdateRequest *request = new UpdateRequest();
-    memcpy(&table_update->id, table, sizeof(TableIdentifier));
+    table_update->id = *table;
     table_update->commit_interval = 0;
     table_update->total_count = 0;
     table_update->total_buffer_size = 0;;
@@ -2073,7 +2073,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
 
   std::vector<TableUpdate *> table_update_vector;
 
-  memcpy(&table_update->id, table, sizeof(TableIdentifier));
+  table_update->id = *table;
   table_update->commit_interval = 0;
   table_update->total_count = count;
   table_update->total_buffer_size = buffer.size;
@@ -4502,10 +4502,10 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation,
 
     // Generation check ...
     if (schema->get_generation() < generation)
-      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
-              (String)"Fetched Schema generation for table '"
-              + table_info->identifier().id + "' is " + schema->get_generation()
-              + " but supplied is " + generation);
+      HT_THROWF(Error::RANGESERVER_GENERATION_MISMATCH,
+                "Fetched Schema generation for table '%s' is %lld"
+                " but supplied is %lld", table_info->identifier().id,
+                (Lld)schema->get_generation(), (Lld)generation);
   }
 }
 

@@ -129,7 +129,7 @@ namespace Hypertable {
                                             int32_t flags = 0);
 
     void get_identifier(TableIdentifier *table_id_p) {
-      memcpy(table_id_p, &m_table, sizeof(TableIdentifier));
+      *table_id_p = m_table;
     }
 
     String get_name() {
