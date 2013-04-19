@@ -283,7 +283,7 @@ bool NameIdMapper::exists_mapping(const String &name, bool *is_namespace) {
 
 bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
                               bool *is_namespacep) {
-  vector <struct DirEntryAttr> listing;
+  vector <DirEntryAttr> listing;
   int num_path_components = 0;
   String hyperspace_file;
   String attr;
@@ -347,7 +347,7 @@ bool NameIdMapper::do_mapping(const String &input, bool id_in, String &output,
 }
 
 void NameIdMapper::id_to_sublisting(const String &id, bool include_sub_entries, vector<NamespaceListing> &listing) {
-  vector <struct DirEntryAttr> dir_listing;
+  vector <DirEntryAttr> dir_listing;
   String hyperspace_dir;
   String attr;
 

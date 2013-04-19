@@ -30,9 +30,8 @@ using namespace Hypertable;
 using namespace Hql;
 using namespace std;
 
-MasterCommandInterpreter::MasterCommandInterpreter(Comm *comm,
-           const sockaddr_in addr, MasterClientPtr &master)
-  : m_comm(comm), m_addr(addr), m_master(master) {
+MasterCommandInterpreter::MasterCommandInterpreter(MasterClientPtr &master)
+  : m_master(master) {
   HqlHelpText::install_master_client_text();
 }
 

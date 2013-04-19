@@ -63,7 +63,6 @@ namespace Hypertable {
     String m_source;
     String m_destination;
     String m_range_name;
-    bool m_in_progress;
   };
 
   typedef intrusive_ptr<OperationMoveRange> OperationMoveRangePtr;

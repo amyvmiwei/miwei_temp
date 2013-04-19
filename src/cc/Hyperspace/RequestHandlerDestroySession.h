@@ -34,17 +34,15 @@ namespace Hyperspace {
 
   class RequestHandlerDestroySession : public ApplicationHandler {
   public:
-    RequestHandlerDestroySession(Comm *comm, Master *master,
-        uint64_t session_id)
-      : m_comm(comm), m_master(master), m_session_id(session_id) { }
+    RequestHandlerDestroySession(Master *master, uint64_t session_id)
+      : m_master(master), m_session_id(session_id) { }
     virtual ~RequestHandlerDestroySession() { }
 
     virtual void run();
 
   private:
-    Comm        *m_comm;
-    Master      *m_master;
-    uint64_t     m_session_id;
+    Master   *m_master;
+    uint64_t  m_session_id;
   };
 }
 

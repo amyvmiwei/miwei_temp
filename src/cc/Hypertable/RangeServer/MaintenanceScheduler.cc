@@ -135,16 +135,16 @@ void MaintenanceScheduler::schedule() {
 
   if (debug) {
     trace_str += String("low_memory\t") + (low_memory ? "true" : "false") + "\n";
-    trace_str += String("Global::memory_tracker->balance()\t") + Global::memory_tracker->balance() + "\n";
-    trace_str += String("Global::memory_limit\t") + Global::memory_limit + "\n";
-    trace_str += String("Global::memory_limit_ensure_unused_current\t") + Global::memory_limit_ensure_unused_current + "\n";
-    trace_str += String("m_query_cache_memory\t") + m_query_cache_memory + "\n";
-    trace_str += String("excess\t") + excess + "\n";
+    trace_str += format("Global::memory_tracker->balance()\t%lld\n", (Lld)Global::memory_tracker->balance());
+    trace_str += format("Global::memory_limit\t%lld\n", (Lld)Global::memory_limit);
+    trace_str += format("Global::memory_limit_ensure_unused_current\t%lld\n", (Lld)Global::memory_limit_ensure_unused_current);
+    trace_str += format("m_query_cache_memory\t%lld\n", (Lld)m_query_cache_memory);
+    trace_str += format("excess\t%lld\n", (Lld)excess);
     trace_str += String("Global::maintenance_queue->full()\t") + (Global::maintenance_queue->full() ? "true" : "false") + "\n";
-    trace_str += String("m_low_memory_limit_percentage\t") + m_low_memory_limit_percentage + "\n";
-    trace_str += String("memory_state.balance\t") + memory_state.balance + "\n";
-    trace_str += String("memory_state.limit\t") + memory_state.limit + "\n";
-    trace_str += String("memory_state.needed\t") + memory_state.needed + "\n";
+    trace_str += format("m_low_memory_limit_percentage\t%lld\n", (Lld)m_low_memory_limit_percentage);
+    trace_str += format("memory_state.balance\t%lld\n", (Lld)memory_state.balance);
+    trace_str += format("memory_state.limit\t%lld\n", (Lld)memory_state.limit);
+    trace_str += format("memory_state.needed\t%lld\n", (Lld)memory_state.needed);
   }
 
   {
@@ -155,10 +155,10 @@ void MaintenanceScheduler::schedule() {
     if (Global::block_cache)
       Global::block_cache->get_stats(&max_memory, &available_memory, &accesses, &hits);
     if (debug) {
-      trace_str += String("FileBlockCache-max_memory\t") + max_memory + "\n";
-      trace_str += String("FileBlockCache-available_memory\t") + available_memory + "\n";
-      trace_str += String("FileBlockCache-accesses\t") + accesses + "\n";
-      trace_str += String("FileBlockCache-hits\t") + hits + "\n";
+      trace_str += format("FileBlockCache-max_memory\t%llu\n", (Llu)max_memory);
+      trace_str += format("FileBlockCache-available_memory\t%llu\n", (Llu)available_memory);
+      trace_str += format("FileBlockCache-accesses\t%llu\n", (Llu)accesses);
+      trace_str += format("FileBlockCache-hits\t%llu\n", (Llu)hits);
     }
   }
 
@@ -200,10 +200,10 @@ void MaintenanceScheduler::schedule() {
     std::set<int64_t> log_dir_hashes = m_log_hashes;
 
     if (debug) {
-      trace_str += String("before revision_root\t") + revision_root + "\n";
-      trace_str += String("before revision_metadata\t") + revision_metadata + "\n";
-      trace_str += String("before revision_system\t") + revision_system + "\n";
-      trace_str += String("before revision_user\t") + revision_user + "\n";
+      trace_str += format("before revision_root\t%llu\n", (Llu)revision_root);
+      trace_str += format("before revision_metadata\t%llu\n", (Llu)revision_metadata);
+      trace_str += format("before revision_system\t%llu\n", (Llu)revision_system);
+      trace_str += format("before revision_user\t%llu\n", (Llu)revision_user);
     }
 
     for (size_t i=0; i<range_data.size(); i++) {
@@ -250,10 +250,10 @@ void MaintenanceScheduler::schedule() {
     }
 
     if (debug) {
-      trace_str += String("after revision_root\t") + revision_root + "\n";
-      trace_str += String("after revision_metadata\t") + revision_metadata + "\n";
-      trace_str += String("after revision_system\t") + revision_system + "\n";
-      trace_str += String("after revision_user\t") + revision_user + "\n";
+      trace_str += format("after revision_root\t%llu\n", (Llu)revision_root);
+      trace_str += format("after revision_metadata\t%llu\n", (Llu)revision_metadata);
+      trace_str += format("after revision_system\t%llu\n", (Llu)revision_system);
+      trace_str += format("after revision_user\t%llu\n", (Llu)revision_user);
     }
 
     if (Global::root_log)

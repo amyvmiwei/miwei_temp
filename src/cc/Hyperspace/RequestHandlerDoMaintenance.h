@@ -35,14 +35,13 @@ namespace Hyperspace {
 
   class RequestHandlerDoMaintenance : public ApplicationHandler {
   public:
-    RequestHandlerDoMaintenance(Comm *comm, Master *master, EventPtr &event_ptr)
-      : ApplicationHandler(event_ptr), m_comm(comm), m_master(master) { }
+    RequestHandlerDoMaintenance(Master *master, EventPtr &event)
+      : ApplicationHandler(event), m_master(master) { }
 
     virtual void run();
 
   private:
-    Comm        *m_comm;
-    Master      *m_master;
+    Master *m_master;
   };
 
 } // namespace Hyperspace

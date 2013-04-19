@@ -166,8 +166,7 @@ void ServerConnectionHandler::handle(EventPtr &event) {
                                             m_session_id, event);
         break;
       case Protocol::COMMAND_STATUS:
-        handler = new RequestHandlerStatus(m_comm, m_master_ptr.get(),
-                                           m_session_id, event);
+        handler = new RequestHandlerStatus(m_comm, event);
         break;
       case Protocol::COMMAND_SHUTDOWN:
         handler = new RequestHandlerShutdown(m_comm, m_master_ptr.get(),
@@ -190,14 +189,13 @@ void ServerConnectionHandler::handle(EventPtr &event) {
     HT_INFOF("%s", event->to_str().c_str());
   }
   else if (event->type == Hypertable::Event::DISCONNECT) {
-    m_app_queue_ptr->add( new RequestHandlerDestroySession(m_comm, m_master_ptr.get(), m_session_id) );
+    m_app_queue_ptr->add( new RequestHandlerDestroySession(m_master_ptr.get(), m_session_id) );
     cout << flush;
   }
   else if (event->type == Hypertable::Event::TIMER) {
     int error;
     try {
-      m_app_queue_ptr->add(new Hyperspace::RequestHandlerDoMaintenance(m_comm,
-          m_master_ptr.get(), event) );
+      m_app_queue_ptr->add(new Hyperspace::RequestHandlerDoMaintenance(m_master_ptr.get(), event) );
     }
     catch (Exception &e) {
       HT_ERROR_OUT << e << HT_END;

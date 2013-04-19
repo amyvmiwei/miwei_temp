@@ -46,7 +46,7 @@ namespace {
 IntervalScannerAsync::IntervalScannerAsync(Comm *comm, ApplicationQueueInterfacePtr &app_queue,
     Table *table, RangeLocatorPtr &range_locator, const ScanSpec &scan_spec,
     uint32_t timeout_ms, bool current, TableScannerAsync *scanner, int id)
-  : m_comm(comm), m_table(table), m_range_locator(range_locator),
+  : m_table(table), m_range_locator(range_locator),
     m_loc_cache(range_locator->location_cache()),
     m_scan_limit_state(scan_spec), m_range_server(comm, timeout_ms), m_eos(false),
     m_fetch_outstanding(false), m_create_outstanding(false),
@@ -54,7 +54,7 @@ IntervalScannerAsync::IntervalScannerAsync(Comm *comm, ApplicationQueueInterface
     m_current(current), m_bytes_scanned(0),
     m_create_handler(app_queue, scanner, id, true),
     m_fetch_handler(app_queue, scanner, id, false),
-    m_scanner(scanner), m_id(id), m_create_timer(timeout_ms), m_fetch_timer(timeout_ms),
+    m_create_timer(timeout_ms), m_fetch_timer(timeout_ms),
     m_cur_scanner_finished(false), m_cur_scanner_id(0), m_state(0),
     m_create_event_saved(false), m_invalid_scanner_id_ok(false) {
 

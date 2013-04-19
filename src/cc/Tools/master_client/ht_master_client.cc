@@ -108,7 +108,7 @@ int main(int argc, char **argv) {
     poll(0, 0, 100);
 
     CommandInterpreterPtr interp =
-        new MasterCommandInterpreter(comm, addr, client);
+      new MasterCommandInterpreter(client);
 
     CommandShellPtr shell = new CommandShell("master", interp, properties);
 

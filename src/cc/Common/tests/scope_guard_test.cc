@@ -52,17 +52,18 @@ void test_meth0(Obj &obj) { HT_ON_OBJ_SCOPE_EXIT(obj, &Obj::meth0); }
 void test_meth1(Obj &obj) { HT_ON_OBJ_SCOPE_EXIT(obj, &Obj::meth1, 1); }
 void test_meth2(Obj &obj) { HT_ON_OBJ_SCOPE_EXIT(obj, &Obj::meth2, 1, 2); }
 
-inline void incr(int &i) { ++i; }
-
-void test_by_ref() {
 #if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ == 2
-  // http://gcc.gnu.org/bugzilla/show_bug.cgi?id=31947
+  void test_by_ref() {
+    // http://gcc.gnu.org/bugzilla/show_bug.cgi?id=31947
+  }
 #else
-  int i = 0;
-  { HT_ON_SCOPE_EXIT(&incr, by_ref(i)); }
-  HT_ASSERT(i == 1);
+  inline void incr(int &i) { ++i; }
+  void test_by_ref() {
+    int i = 0;
+    { HT_ON_SCOPE_EXIT(&incr, by_ref(i)); }
+    HT_ASSERT(i == 1);
+  }
 #endif
-}
 
 } // local namespace
 

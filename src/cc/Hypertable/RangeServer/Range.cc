@@ -657,7 +657,10 @@ void Range::relinquish_install_log() {
       if (now != 0)
         poll(0, 0, 1200);
       now = time(0);
-      m_metalog_entity->state.set_transfer_log(Global::log_dir + "/" + m_metalog_entity->table.id + "/" + md5DigestStr + "-" + (int)now);
+      m_metalog_entity->state.set_transfer_log(format("%s/%s/%s-%d",
+                                                      Global::log_dir.c_str(),
+                                                     m_metalog_entity->table.id,
+                                                      md5DigestStr, (int)now));
     }
     while (Global::log_dfs->exists(m_metalog_entity->state.transfer_log));
 
@@ -959,7 +962,10 @@ void Range::split_install_log() {
       if (now != 0)
         poll(0, 0, 1200);
       now = time(0);
-      m_metalog_entity->state.set_transfer_log(Global::log_dir + "/" + m_metalog_entity->table.id + "/" + md5DigestStr + "-" + (int)now);
+      m_metalog_entity->state.set_transfer_log(format("%s/%s/%s-%d",
+                                                      Global::log_dir.c_str(),
+                                                     m_metalog_entity->table.id,
+                                                      md5DigestStr, (int)now));
     }
     while (Global::log_dfs->exists(m_metalog_entity->state.transfer_log));
 

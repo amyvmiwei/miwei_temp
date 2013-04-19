@@ -47,7 +47,7 @@ namespace Hypertable {
                           int plan_generation, int32_t timeout_ms) :
       m_rsclient(comm, timeout_ms), m_recover_location(location),
       m_error(Error::OK), m_plan_generation(plan_generation),
-      m_timeout_ms(timeout_ms), m_outstanding(0) { }
+      m_outstanding(0) { }
 
     virtual void handle(EventPtr &event);
 
@@ -64,7 +64,6 @@ namespace Hypertable {
     String m_error_msg;
     int32_t m_error;
     int m_plan_generation;
-    int32_t m_timeout_ms;
     size_t  m_outstanding;
   };
 }

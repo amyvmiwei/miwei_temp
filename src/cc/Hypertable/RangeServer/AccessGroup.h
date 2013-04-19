@@ -219,11 +219,9 @@ namespace Hypertable {
     uint32_t             m_next_cs_id;
     uint64_t             m_disk_usage;
     float                m_compression_ratio;
-    int64_t              m_compaction_revision;
     int64_t              m_earliest_cached_revision;
     int64_t              m_earliest_cached_revision_saved;
     int64_t              m_latest_stored_revision;
-    uint64_t             m_collisions;
     LiveFileTracker      m_file_tracker;
     AccessGroupGarbageTracker m_garbage_tracker;
     bool                 m_is_root;

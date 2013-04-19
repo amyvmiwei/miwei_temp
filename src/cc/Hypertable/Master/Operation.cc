@@ -40,9 +40,11 @@ const char *Dependency::RECOVER_SERVER = "RECOVER_SERVER";
 const char *Dependency::RECOVERY_BLOCKER= "RECOVERY_BLOCKER";
 const char *Dependency::RECOVERY = "RECOVERY";
 
-
-/** @relates Operation */
-const char *OperationState::get_text(int32_t state);
+namespace Hypertable {
+  namespace OperationState {
+    const char *get_text(int32_t state);
+  }
+}
 
 Operation::Operation(ContextPtr &context, int32_t type)
   : MetaLog::Entity(type), m_context(context), m_state(OperationState::INITIAL),
@@ -332,30 +334,30 @@ namespace {
   };
 
   StateInfo state_info[] = {
-    { OperationState::INITIAL, "INITIAL" },
-    { OperationState::COMPLETE, "COMPLETE" },
-    { OperationState::UNUSED, "UNUSED" },
-    { OperationState::STARTED, "STARTED" },
-    { OperationState::ASSIGN_ID, "ASSIGN_ID" },
-    { OperationState::ASSIGN_LOCATION,"ASSIGN_LOCATION" },
-    { OperationState::ASSIGN_METADATA_RANGES, "ASSIGN_METADATA_RANGES" },
-    { OperationState::LOAD_RANGE, "LOAD_RANGE" },
-    { OperationState::LOAD_ROOT_METADATA_RANGE, "LOAD_ROOT_METADATA_RANGE" },
-    { OperationState::LOAD_SECOND_METADATA_RANGE, "LOAD_SECOND_METADATA_RANGE" },
-    { OperationState::WRITE_METADATA, "WRITE_METADATA" },
-    { OperationState::CREATE_RS_METRICS, "CREATE_RS_METRICS" },
-    { OperationState::VALIDATE_SCHEMA, "VALIDATE_SCHEMA" },
-    { OperationState::SCAN_METADATA, "SCAN_METADATA" },
-    { OperationState::ISSUE_REQUESTS, "ISSUE_REQUESTS" },
-    { OperationState::UPDATE_HYPERSPACE, "UPDATE_HYPERSPACE" },
-    { OperationState::ACKNOWLEDGE, "ACKNOWLEDGE" },
-    { OperationState::FINALIZE, "FINALIZE" },
-    { OperationState::CREATE_INDEX, "CREATE_INDEX" },
-    { OperationState::CREATE_QUALIFIER_INDEX, "CREATE_QUALIFIER_INDEX" },
-    { OperationState::PREPARE, "PREPARE" },
-    { OperationState::COMMIT, "COMMIT" },
-    { OperationState::PHANTOM_LOAD, "PHANTOM_LOAD" },
-    { OperationState::REPLAY_FRAGMENTS, "REPLAY_FRAGMENTS" },
+    { Hypertable::OperationState::INITIAL, "INITIAL" },
+    { Hypertable::OperationState::COMPLETE, "COMPLETE" },
+    { Hypertable::OperationState::UNUSED, "UNUSED" },
+    { Hypertable::OperationState::STARTED, "STARTED" },
+    { Hypertable::OperationState::ASSIGN_ID, "ASSIGN_ID" },
+    { Hypertable::OperationState::ASSIGN_LOCATION,"ASSIGN_LOCATION" },
+    { Hypertable::OperationState::ASSIGN_METADATA_RANGES, "ASSIGN_METADATA_RANGES" },
+    { Hypertable::OperationState::LOAD_RANGE, "LOAD_RANGE" },
+    { Hypertable::OperationState::LOAD_ROOT_METADATA_RANGE, "LOAD_ROOT_METADATA_RANGE" },
+    { Hypertable::OperationState::LOAD_SECOND_METADATA_RANGE, "LOAD_SECOND_METADATA_RANGE" },
+    { Hypertable::OperationState::WRITE_METADATA, "WRITE_METADATA" },
+    { Hypertable::OperationState::CREATE_RS_METRICS, "CREATE_RS_METRICS" },
+    { Hypertable::OperationState::VALIDATE_SCHEMA, "VALIDATE_SCHEMA" },
+    { Hypertable::OperationState::SCAN_METADATA, "SCAN_METADATA" },
+    { Hypertable::OperationState::ISSUE_REQUESTS, "ISSUE_REQUESTS" },
+    { Hypertable::OperationState::UPDATE_HYPERSPACE, "UPDATE_HYPERSPACE" },
+    { Hypertable::OperationState::ACKNOWLEDGE, "ACKNOWLEDGE" },
+    { Hypertable::OperationState::FINALIZE, "FINALIZE" },
+    { Hypertable::OperationState::CREATE_INDEX, "CREATE_INDEX" },
+    { Hypertable::OperationState::CREATE_QUALIFIER_INDEX, "CREATE_QUALIFIER_INDEX" },
+    { Hypertable::OperationState::PREPARE, "PREPARE" },
+    { Hypertable::OperationState::COMMIT, "COMMIT" },
+    { Hypertable::OperationState::PHANTOM_LOAD, "PHANTOM_LOAD" },
+    { Hypertable::OperationState::REPLAY_FRAGMENTS, "REPLAY_FRAGMENTS" },
     { 0, 0 }
   };
 
@@ -372,10 +374,13 @@ namespace {
 
 } // local namespace
 
-/** @relates Operation */
-const char *OperationState::get_text(int32_t state) {
-  const char *text = text_map[state];
-  if (text == 0)
-    return "STATE NOT REGISTERED";
-  return text;
+namespace Hypertable {
+  namespace OperationState {
+    const char *get_text(int32_t state) {
+      const char *text = text_map[state];
+      if (text == 0)
+        return "STATE NOT REGISTERED";
+      return text;
+    }
+  }
 }

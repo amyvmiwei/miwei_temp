@@ -33,7 +33,7 @@ namespace Hypertable {
   public:
  
     SerializedCellsWriter(int32_t size, bool grow = false)
-      :  m_buf(size), m_finalized(false), m_grow(grow), m_version_sent(false),
+      :  m_buf(size), m_finalized(false), m_grow(grow),
          m_previous_row_offset(-1), m_previous_row_length(0) { }
 
     bool add(Cell &cell) {
@@ -83,8 +83,7 @@ namespace Hypertable {
     DynamicBuffer m_buf;
     bool m_finalized;
     bool m_grow;
-    bool m_version_sent;
-    size_t m_previous_row_offset;
+    int  m_previous_row_offset;
     int32_t m_previous_row_length;
   };
 

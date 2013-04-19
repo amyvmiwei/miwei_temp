@@ -185,9 +185,9 @@ add_executable(CellStoreScanner_delete_test tests/CellStoreScanner_delete_test.c
 target_link_libraries(CellStoreScanner_delete_test HyperRanger Hypertable)
 
 # 64-bit CellStore test
-add_executable(CellStore64_test tests/CellStore64_test.cc
-               ${TEST_DEPENDENCIES})
-target_link_libraries(CellStore64_test HyperRanger Hypertable)
+#add_executable(CellStore64_test tests/CellStore64_test.cc
+#               ${TEST_DEPENDENCIES})
+#target_link_libraries(CellStore64_test HyperRanger Hypertable)
 
 # AccessGroupGarbageTracker test
 add_executable(AccessGroupGarbageTracker_test tests/AccessGroupGarbageTracker_test.cc)
@@ -197,8 +197,8 @@ configure_file(${SRC_DIR}/CellStoreScanner_test.golden
                ${DST_DIR}/CellStoreScanner_test.golden)
 configure_file(${SRC_DIR}/CellStoreScanner_delete_test.golden
                ${DST_DIR}/CellStoreScanner_delete_test.golden)
-configure_file(${SRC_DIR}/CellStore64_test.golden
-               ${DST_DIR}/CellStore64_test.golden)
+#configure_file(${SRC_DIR}/CellStore64_test.golden
+#               ${DST_DIR}/CellStore64_test.golden)
 
 add_custom_command(SOURCE ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz
     COMMAND gzip ARGS -d < ${HYPERTABLE_SOURCE_DIR}/tests/data/words.gz

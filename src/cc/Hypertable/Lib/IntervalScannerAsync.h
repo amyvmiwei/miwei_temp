@@ -82,7 +82,6 @@ namespace Hypertable {
     void set_range_spec(DynamicBuffer &dbuf, RangeSpec &range);
     void restart_scan(bool refresh=false);
 
-    Comm               *m_comm;
     Table              *m_table;
     SchemaPtr           m_schema;
     RangeLocatorPtr     m_range_locator;
@@ -107,8 +106,6 @@ namespace Hypertable {
     CstrSet             m_rowset;
     TableScannerDispatchHandler m_create_handler;
     TableScannerDispatchHandler m_fetch_handler;
-    TableScannerAsync  *m_scanner;
-    int                 m_id;
     Timer               m_create_timer;
     Timer               m_fetch_timer;
     bool                m_cur_scanner_finished;

@@ -63,7 +63,7 @@ namespace Hypertable {
   };
 
   const char *RangeServerProtocol::command_text(uint64_t command) {
-    if (command < 0 || command >= COMMAND_MAX)
+    if (command >= COMMAND_MAX)
       return "UNKNOWN";
     return m_command_strings[command];
   }

@@ -113,21 +113,6 @@ void test_str16() {
     HT_ASSERT(len == sizeof(buf) - (p2 - buf)));
 }
 
-void test_bytes32() {
-  uint8_t buf[128], *p = buf;
-  const char *input = "the quick brown fox jumps over a lazy dog";
-  size_t ilen = strlen(input);
-  encode_bytes32(&p, input, ilen);
-  const uint8_t *p2 = buf;
-  size_t len = sizeof(buf);
-  uint32_t olen = 0;
-  HT_TRY("testing bytes32",
-    HT_EXPECT(olen == ilen && !memcmp(decode_bytes32(&p2, &len, &olen), input,
-              ilen), -1);
-    HT_ASSERT(p2 - buf == (int)(encoded_length_bytes32(ilen)));
-    HT_ASSERT(len == sizeof(buf) - (p2 - buf)));
-}
-
 void test_vstr() {
   uint8_t buf[128], *p = buf;
   const char *input = "the quick brown fox jumps over a lazy dog";
@@ -138,49 +123,6 @@ void test_vstr() {
     HT_ASSERT(!strcmp(decode_vstr(&p2, &len), input));
     HT_ASSERT(p2 - buf == (int)(encoded_length_vstr(input)));
     HT_ASSERT(len == sizeof(buf) - (p2 - buf)));
-}
-
-void test_double() {
-  double val;
-  uint8_t buf[128], *p = buf;
-  const uint8_t *p2;
-  size_t remain = sizeof(buf);
-
-  val = 123456789876543212.123456789876543212;
-  encode_double(&p, val);
-  p2 = buf;
-  HT_ASSERT(decode_double(&p2, &remain) == 123456789876543212.123456789876543212);
-
-  val = -123456789876543212.123456789876543212;
-  encode_double(&p, val);
-  p2 = buf;
-  HT_ASSERT(decode_double(&p2, &remain) == -123456789876543212.123456789876543212);
-
-  val = 0.123456789876543212;
-  encode_double(&p, val);
-  p2 = buf;
-  HT_ASSERT(decode_double(&p2, &remain) == 0.123456789876543212);
-
-  val = -0.123456789876543212;
-  encode_double(&p, val);
-  p2 = buf;
-  HT_ASSERT(decode_double(&p2, &remain) == -0.123456789876543212);
-
-  val = 123456789876543212.0;
-  encode_double(&p, val);
-  p2 = buf;
-  HT_ASSERT(decode_double(&p2, &remain) == 123456789876543212.0);
-
-  val = -123456789876543212.0;
-  encode_double(&p, val);
-  p2 = buf;
-  HT_ASSERT(decode_double(&p2, &remain) == -123456789876543212.0);
-
-  val = 0.0;
-  encode_double(&p, val);
-  p2 = buf;
-  HT_ASSERT(decode_double(&p2, &remain) == 0.0);
-
 }
 
 void test_bad_vi32() {
@@ -225,11 +167,13 @@ void test_bad_vstr() {
 }
 
 void test_ser() {
+  test_i8();
   test_i16();
   test_i32();
   test_i64();
   test_vi32();
   test_vi64();
+  test_str16();
   test_vstr();
   test_bad_vi32();
   test_bad_vi64();

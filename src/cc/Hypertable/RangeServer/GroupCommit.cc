@@ -53,7 +53,7 @@ void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier 
     tid.id = m_flyweight_strings.get(table->id);
 
     TableUpdate *tu = new TableUpdate();
-    memcpy(&tu->id, &tid, sizeof(TableIdentifier));
+    tu->id = tid;
     tu->commit_interval = schema->get_group_commit_interval();
     tu->commit_iteration = (tu->commit_interval+(m_commit_interval-1)) / m_commit_interval;
     tu->total_count = count;

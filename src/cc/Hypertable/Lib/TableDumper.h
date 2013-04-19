@@ -62,7 +62,6 @@ namespace Hypertable {
     std::list<TableScannerPtr> m_scanners;
     std::list<TableScannerPtr>::iterator m_scanner_iter;
     bool      m_eod;
-    int64_t   m_rows_seen;
   };
 
   typedef intrusive_ptr<TableDumper> TableDumperPtr;

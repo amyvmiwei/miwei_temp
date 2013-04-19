@@ -361,8 +361,9 @@ TableMutatorAsyncScatterBuffer::create_redo_buffer(uint32_t id) {
   try {
     if (m_timer.remaining() < m_wait_time) {
       set_retries_to_fail(Error::REQUEST_TIMEOUT);
-      HT_THROW(Error::REQUEST_TIMEOUT, (String)"Time remaining=" + m_timer.remaining()
-          + " wait_time =" + m_wait_time );
+      HT_THROW(Error::REQUEST_TIMEOUT,
+               format("Timer remaining=%lld wait_time=%lld",
+                      (Lld)m_timer.remaining(), (Lld)m_wait_time));
     }
 
     m_timer.start();

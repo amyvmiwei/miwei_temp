@@ -758,8 +758,9 @@ void Master::close(CommandContext &ctx, uint64_t handle)
   BDbTxn &txn = *ctx.txn;
 
   if (!m_bdb_fs->session_exists(txn, ctx.session_id)) {
-    ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION, (String)"Session " + ctx.session_id
-              + ctx.session_data->get_name() + " does not exist");
+    ctx.set_error(Error::HYPERSPACE_EXPIRED_SESSION,
+                  format("Session %llu (%s) does not exist",
+                         (Llu)ctx.session_id, ctx.session_data->get_name()));
     return;
   }
 
@@ -1240,7 +1241,7 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
     // make sure session is still valid
     if (!m_bdb_fs->session_exists(txn, session_id)) {
       error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
+      error_msg = format("session: %lld", (Lld)session_id);
       aborted = true;
       goto txn_commit;
     }
@@ -1441,14 +1442,14 @@ Master::release(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
     // make sure session is still valid
     if (!m_bdb_fs->session_exists(txn, session_id)) {
       error = Error::HYPERSPACE_EXPIRED_SESSION;
-      error_msg = (String) "session:" + session_id;
+      error_msg = format("session: %lld", (Lld)session_id);
       aborted = true;
       goto txn_commit_1;
     }
 
     if (!m_bdb_fs->handle_exists(txn, handle)) {
       error = Error::HYPERSPACE_INVALID_HANDLE;
-      error_msg = (String) "handle=" + handle;
+      error_msg = format("handle=%lld", (Lld)handle);
       aborted = true;
       goto txn_commit_1;
     }
@@ -1750,7 +1751,7 @@ Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
         m_bdb_fs->get_handle_del_state(txn, handle) != HANDLE_NOT_DEL) {
       aborted = true;
       error = Error::HYPERSPACE_INVALID_HANDLE;
-      errmsg = (String) "Handle " + handle + " already deleted or being deleted";
+      errmsg = format("Handle %lld already deleted or being deleted", (Lld)handle);
       goto txn_commit;
     }
     m_bdb_fs->set_handle_del_state(txn, handle, HANDLE_MARKED_FOR_DEL);
@@ -2256,7 +2257,8 @@ void Master::attr_list(CommandContext& ctx, uint64_t handle, std::vector<String>
     return;
 
   if (!m_bdb_fs->list_xattr(txn, node, attributes)) {
-    ctx.set_error(Error::HYPERSPACE_ATTR_NOT_FOUND, (String) "handle=" + handle + " node=" + node);
+    ctx.set_error(Error::HYPERSPACE_ATTR_NOT_FOUND,
+                  format("handle=%lld node=%s", (Lld)handle, node.c_str()));
     return;
   }
 }

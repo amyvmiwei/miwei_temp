@@ -125,7 +125,7 @@ int main(int argc, char **argv) {
     }
 
     CommandInterpreterPtr interp =
-        new RangeServerCommandInterpreter(comm, hyperspace, addr, client);
+        new RangeServerCommandInterpreter(hyperspace, addr, client);
 
     CommandShellPtr shell = new CommandShell("rsclient", interp, properties);
 

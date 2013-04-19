@@ -100,8 +100,7 @@ void ConnectionHandler::handle(EventPtr &event) {
     try {
 
       // sanity check command code
-      if (event->header.command < 0
-          || event->header.command >= RangeServerProtocol::COMMAND_MAX)
+      if (event->header.command >= RangeServerProtocol::COMMAND_MAX)
         HT_THROWF(PROTOCOL_ERROR, "Invalid command (%llu)",
                   (Llu)event->header.command);
 
@@ -148,8 +147,7 @@ void ConnectionHandler::handle(EventPtr &event) {
                                                     event);
         break;
       case RangeServerProtocol::COMMAND_STATUS:
-        handler = new RequestHandlerStatus(m_comm, m_range_server_ptr.get(),
-                                           event);
+        handler = new RequestHandlerStatus(m_comm, event);
         break;
       case RangeServerProtocol::COMMAND_WAIT_FOR_MAINTENANCE:
         handler = new RequestHandlerWaitForMaintenance(m_comm, m_range_server_ptr.get(), event);

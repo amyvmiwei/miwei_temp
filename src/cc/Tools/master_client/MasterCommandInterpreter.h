@@ -34,13 +34,11 @@ namespace Hypertable {
 
   class MasterCommandInterpreter : public CommandInterpreter {
   public:
-    MasterCommandInterpreter(Comm *, const sockaddr_in addr, MasterClientPtr &);
+    MasterCommandInterpreter(MasterClientPtr &master);
 
     virtual void execute_line(const String &line);
 
   private:
-    Comm *m_comm;
-    struct sockaddr_in m_addr;
     MasterClientPtr m_master;
   };
 

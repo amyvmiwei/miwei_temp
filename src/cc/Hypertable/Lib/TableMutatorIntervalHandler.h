@@ -31,7 +31,8 @@ namespace Hypertable {
 class Comm;
 class TableMutatorShared;
 
-struct TableMutatorIntervalHandler : DispatchHandler {
+class TableMutatorIntervalHandler : public DispatchHandler {
+public:
   TableMutatorIntervalHandler(Comm *comm, ApplicationQueueInterface *app_queue,
                               TableMutatorShared *mutator)
     : active(true), complete(false), comm(comm), app_queue(app_queue), mutator(mutator) {
@@ -55,6 +56,8 @@ struct TableMutatorIntervalHandler : DispatchHandler {
     ScopedLock lock(mutex);
     return !active;
   }
+
+private:
 
   Mutex               mutex;
   boost::condition    cond;
