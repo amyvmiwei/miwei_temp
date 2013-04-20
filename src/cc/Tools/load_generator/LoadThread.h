@@ -34,14 +34,19 @@ namespace Hypertable {
   class LoadThread {
 
   public:
-  LoadThread(TablePtr &table, ::uint32_t mutator_flags, ParallelStateRec &state)
-    : m_table(table), m_mutator_flags(mutator_flags), m_state(state) { }
+  LoadThread(TablePtr &table, ::uint32_t mutator_flags,
+             ::uint64_t shared_mutator_flush_interval, ParallelStateRec &state)
+    : m_table(table), m_mutator_flags(mutator_flags), 
+      m_shared_mutator_flush_interval(shared_mutator_flush_interval),
+      m_state(state) { }
+
     void operator()();
 
   private:
     TablePtr m_table;
     TableMutatorPtr m_mutator;
     ::uint32_t m_mutator_flags;
+    ::uint64_t m_shared_mutator_flush_interval;
     ParallelStateRec &m_state;
   };
 
