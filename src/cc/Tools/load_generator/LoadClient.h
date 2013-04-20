@@ -61,7 +61,8 @@ class LoadClient : public ReferenceCount {
     LoadClient(bool thrift=false);
     ~LoadClient();
 
-    void create_mutator(const String &tablename, int mutator_flags);
+    void create_mutator(const String &tablename, int mutator_flags,
+                        ::uint64_t shared_mutator_flush_interval);
     /**
      * Create a scanner.
      * For thrift scanners, just use the 1st column and 1st row_interval specified in the

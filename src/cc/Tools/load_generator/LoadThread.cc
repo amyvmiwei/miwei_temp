@@ -34,7 +34,8 @@ void LoadThread::operator()() {
   double clocks_per_usec = (double)CLOCKS_PER_SEC / 1000000.0;
 
   try {
-    m_mutator = m_table->create_mutator(0, m_mutator_flags);
+    m_mutator = m_table->create_mutator(0, m_mutator_flags,
+                                        m_shared_mutator_flush_interval);
   }
   catch (Exception &e) {
     HT_FATAL_OUT << e << HT_END;
