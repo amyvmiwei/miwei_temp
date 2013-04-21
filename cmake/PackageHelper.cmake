@@ -202,6 +202,7 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
 # RPM package variables
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv3+")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/Databases")
+set(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE ${CMAKE_INSTALL_PREFIX}/bin/prerm.sh)
 
 # rpm perl dependencies stuff is dumb
 set(CPACK_RPM_SPEC_MORE_DEFINE "
@@ -213,8 +214,6 @@ Provides: perl(Hypertable::ThriftGen2::HqlService)
 Provides: perl(Hypertable::ThriftGen2::Types)
 Provides: perl(Hypertable::ThriftGen::ClientService)
 Provides: perl(Hypertable::ThriftGen::Types)
-
-%preun
-${CMAKE_INSTALL_PREFIX}/bin/prerm.sh")
+")
 
 include(CPack)
