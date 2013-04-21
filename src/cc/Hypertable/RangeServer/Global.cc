@@ -51,6 +51,7 @@ namespace Hypertable {
   LocationInitializerPtr Global::location_initializer;
   int64_t                Global::range_split_size = 0;
   int64_t                Global::range_maximum_size = 0;
+  int32_t                Global::failover_timeout = 0;
   int32_t                Global::access_group_garbage_compaction_threshold = 0;
   int32_t                Global::access_group_max_mem = 0;
   int32_t                Global::cell_cache_scanner_cache_size = 0;

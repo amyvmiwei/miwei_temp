@@ -944,6 +944,35 @@ void MasterClient::fetch_result(int64_t id, Timer *timer, EventPtr &event, const
 }
 
 void
+MasterClient::replay_status(int64_t op_id, const String &location,
+                            int plan_generation) {
+  Timer timer(m_timeout_ms, true);
+  CommBufPtr cbp;
+  EventPtr event;
+  String label = format("replay_status op_id=%llu location=%s "
+                        "plan_generation=%d", (Llu)op_id,
+                        location.c_str(), plan_generation);
+
+  while (!timer.expired()) {
+    cbp = MasterProtocol::create_replay_status_request(op_id,
+                            location, plan_generation);
+    if (!send_message(cbp, &timer, event, label)) {
+      poll(0, 0, std::min(timer.remaining(), (System::rand32() % 3000)));
+      continue;
+    }
+    return;
+  }
+
+  {
+    ScopedLock lock(m_mutex);
+    HT_THROWF(Error::REQUEST_TIMEOUT,
+        "MasterClient operation %s to master %s failed", label.c_str(),
+        m_master_addr.format().c_str());
+  }
+}
+
+
+void
 MasterClient::replay_complete(int64_t op_id, const String &location,
                               int plan_generation, int32_t error,
                               const String message) {

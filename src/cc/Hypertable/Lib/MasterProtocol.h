@@ -58,7 +58,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_PHANTOM_PREPARE_COMPLETE    = 16;
     static const uint64_t COMMAND_PHANTOM_COMMIT_COMPLETE     = 17;
     static const uint64_t COMMAND_STOP                        = 18;
-    static const uint64_t COMMAND_MAX                         = 19;
+    static const uint64_t COMMAND_REPLAY_STATUS               = 19;
+    static const uint64_t COMMAND_MAX                         = 20;
 
     static const char *m_command_strings[];
 
@@ -97,6 +98,9 @@ namespace Hypertable {
     static CommBuf *create_balance_request(BalancePlan &plan);
 
     static CommBuf *create_stop_request(const String &rsname, bool recover);
+
+    static CommBuf *create_replay_status_request(int64_t op_id,
+                                    const String &location, int plan_generation);
 
     static CommBuf *create_replay_complete_request(int64_t op_id,
                                     const String &location, int plan_generation,
