@@ -198,8 +198,9 @@ char *CommandShell::rl_gets () {
       char *tmp;
       // copy bcos readline uses malloc, FileUtils::file_to_buffer uses new
       tmp = FileUtils::file_to_buffer(m_cmd_file, &len);
-      m_line_read = (char *)malloc(len);
+      m_line_read = (char *)malloc(len+1);
       memcpy(m_line_read, tmp, len);
+      m_line_read[len] = 0;
       delete[] tmp;
     }
 
