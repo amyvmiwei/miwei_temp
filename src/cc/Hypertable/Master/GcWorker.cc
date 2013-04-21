@@ -94,7 +94,7 @@ void GcWorker::scan_metadata(CountMap &files_map) {
       // new access group
       last_cq = cell.column_qualifier;
       last_time = cell.timestamp;
-      bool is_valid_files = *cell.value != '!';
+      bool is_valid_files = (cell.value_len == 0) || (*cell.value != '!');
       found_valid_files |= is_valid_files;
 
       if (is_valid_files)
@@ -106,7 +106,7 @@ void GcWorker::scan_metadata(CountMap &files_map) {
         HT_ERROR("Unexpected timestamp order while scanning METADATA");
         continue;
       }
-      if (*cell.value != '!') {
+      if (cell.value_len == 0 || *cell.value != '!') {
         insert_files(files_map, (char *)cell.value, cell.value_len);
         delete_cell(cell, mutator);
       }
