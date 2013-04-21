@@ -43,7 +43,8 @@ namespace Hypertable {
     typedef std::map<const String, std::pair<int32_t, String> > ErrorMapT;
 
     RecoveryStepFuture(const String &label, int plan_generation) :
-      m_label(label), m_plan_generation(plan_generation) { }
+      m_label(label), m_plan_generation(plan_generation),
+      m_extend_timeout(false) { }
 
     void register_locations(StringSet &locations) {
       ScopedLock lock(m_mutex);
@@ -52,6 +53,12 @@ namespace Hypertable {
       m_outstanding.clear();
       m_outstanding.insert(locations.begin(), locations.end());
       m_error_map.clear();
+    }
+
+    void status(const String &location, int plan_generation) {
+      ScopedLock lock(m_mutex);
+      m_extend_timeout = true;
+      m_cond.notify_all();
     }
 
     void success(const String &location, int plan_generation) {
@@ -97,16 +104,15 @@ namespace Hypertable {
       
     }
 
-    bool wait_for_completion(Timer &timer) {
+    bool wait_for_completion(uint32_t initial_timeout) {
       ScopedLock lock(m_mutex);
       boost::xtime expire_time;
       ErrorMapT::iterator iter;
 
-      timer.start();
+      boost::xtime_get(&expire_time, boost::TIME_UTC_);
+      xtime_add_millis(expire_time, initial_timeout);
 
       while (!m_outstanding.empty()) {
-        boost::xtime_get(&expire_time, boost::TIME_UTC_);
-        xtime_add_millis(expire_time, timer.remaining());
         if (!m_cond.timed_wait(lock, expire_time)) {
           if (!m_outstanding.empty()) {
             foreach_ht (const String &location, m_outstanding) {
@@ -116,6 +122,11 @@ namespace Hypertable {
             }
             m_outstanding.clear();
           }
+        }
+        if (m_extend_timeout) {
+          boost::xtime_get(&expire_time, boost::TIME_UTC_);
+          xtime_add_millis(expire_time, initial_timeout);
+          m_extend_timeout = false;
         }
       }
       return m_error_map.empty();
@@ -134,6 +145,7 @@ namespace Hypertable {
     StringSet m_success;
     ErrorMapT m_error_map;
     int m_plan_generation;
+    bool m_extend_timeout;
   };
   typedef intrusive_ptr<RecoveryStepFuture> RecoveryStepFuturePtr;
 }

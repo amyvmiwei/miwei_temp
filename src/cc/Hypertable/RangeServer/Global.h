@@ -76,6 +76,7 @@ namespace Hypertable {
     static LocationInitializerPtr location_initializer;
     static int64_t        range_split_size;
     static int64_t        range_maximum_size;
+    static int32_t        failover_timeout;
     static int32_t        access_group_garbage_compaction_threshold;
     static int32_t        access_group_max_mem;
     static int32_t        cell_cache_scanner_cache_size;

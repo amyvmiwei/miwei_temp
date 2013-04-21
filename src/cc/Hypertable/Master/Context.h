@@ -142,6 +142,7 @@ namespace Hypertable {
     void get_available_servers(StringSet &servers);
 
     bool can_accept_ranges(const RangeServerStatistics &stats);
+    void replay_status(EventPtr &event);
     void replay_complete(EventPtr &event);
     void prepare_complete(EventPtr &event);
     void commit_complete(EventPtr &event);

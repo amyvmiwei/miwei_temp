@@ -111,6 +111,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_verbose = props->get_bool("verbose");
   Global::row_size_unlimited = cfg.get_bool("Range.RowSize.Unlimited", false);
+  Global::failover_timeout = props->get_i32("Hypertable.Failover.Timeout");
   Global::range_split_size = cfg.get_i64("Range.SplitSize");
   Global::range_maximum_size = cfg.get_i64("Range.MaximumSize");
   Global::range_metadata_split_size = cfg.get_i64("Range.MetadataSplitSize",
@@ -3635,6 +3636,8 @@ void RangeServer::replay_fragments(ResponseCallback *cb, int64_t op_id,
         int type, const vector<uint32_t> &fragments,
         RangeRecoveryReceiverPlan &receiver_plan,
         uint32_t replay_timeout) {
+  Timer timer(Global::failover_timeout/2, true);
+
   HT_INFOF("replay_fragments location=%s, plan_generation=%d, num_fragments=%d",
            location.c_str(), plan_generation, (int)fragments.size());
 
@@ -3720,6 +3723,17 @@ void RangeServer::replay_fragments(ResponseCallback *cb, int64_t op_id,
         HT_INFOF("Replayed %d key/value pairs from fragment %s",
                  (int)num_kv_pairs, log_reader->last_fragment_fname().c_str());
         block_count++;
+
+        // report back status
+        if (timer.expired()) {
+          try {
+            m_master_client->replay_status(op_id, location, plan_generation);
+          }
+          catch (Exception &ee) {
+            HT_ERROR_OUT << ee << HT_END;
+          }
+          timer.reset(true);
+        }
       }
 
       HT_MAYBE_FAIL_X("replay-fragments-user-0", type==RangeSpec::USER);

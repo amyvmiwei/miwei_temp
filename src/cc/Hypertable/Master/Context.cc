@@ -69,6 +69,26 @@ BalancePlanAuthority *Context::get_balance_plan_authority() {
   return m_balance_plan_authority;
 }
 
+void Context::replay_status(EventPtr &event) {
+  const uint8_t *decode_ptr = event->payload;
+  size_t decode_remain = event->payload_len;
+
+  int64_t id       = Serialization::decode_i64(&decode_ptr, &decode_remain);
+  String location  = Serialization::decode_vstr(&decode_ptr, &decode_remain);
+  int plan_generation = Serialization::decode_i32(&decode_ptr, &decode_remain);
+
+  HT_INFOF("replay_status(id=%lld, %s, plan_generation=%d) from %s",
+           (Lld)id, location.c_str(), plan_generation, event->proxy);
+
+  RecoveryStepFuturePtr future = m_recovery_state.get_replay_future(id);
+
+  if (future)
+    future->status(event->proxy, plan_generation);
+  else
+    HT_WARN_OUT << "No Recovery replay step future found for operation=" << id << HT_END;
+
+}
+
 void Context::replay_complete(EventPtr &event) {
   const uint8_t *decode_ptr = event->payload;
   size_t decode_remain = event->payload_len;

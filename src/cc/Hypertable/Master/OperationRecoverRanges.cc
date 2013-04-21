@@ -464,8 +464,7 @@ bool OperationRecoverRanges::replay_fragments() {
     }
   }
 
-  Timer tt(m_timeout);
-  if (!future->wait_for_completion(tt)) {
+  if (!future->wait_for_completion(m_timeout)) {
     String str;
     String message = 
       format("Failure encountered during REPLAY FRAGMENTS step of recovery\\n"
@@ -524,8 +523,7 @@ bool OperationRecoverRanges::prepare_to_commit() {
     }
   }
 
-  Timer tt(m_timeout);
-  if (!future->wait_for_completion(tt)) {
+  if (!future->wait_for_completion(m_timeout)) {
     HT_ERROR_OUT << "prepare_to_commit failed" << HT_END;
     return false;
   }
@@ -579,8 +577,7 @@ bool OperationRecoverRanges::commit() {
     }
   }
 
-  Timer tt(m_timeout);
-  if (!future->wait_for_completion(tt)) {
+  if (!future->wait_for_completion(m_timeout)) {
     bool retval = true;
     RecoveryStepFuture::ErrorMapT error_map;
     future->get_error_map(error_map);

@@ -131,6 +131,9 @@ namespace Hypertable {
 
     void set_verbose_flag(bool verbose) { m_verbose = verbose; }
 
+    void replay_status(int64_t op_id, const String &location,
+                       int plan_generation);
+
     void replay_complete(int64_t op_id, const String &location,
                          int plan_generation, int32_t error, const String message);
 
