@@ -8,6 +8,6 @@ i16=64000
 i32=20000000
 i64=8000000000
 int64s=[16000000000, 32000000000]
-mode=value of type '(anonymous namespace)::Mode'
+mode=invalid option type
 string=foo
 strs=[s1, s2]

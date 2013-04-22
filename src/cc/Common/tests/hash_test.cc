@@ -27,10 +27,7 @@
 #include "Common/Stopwatch.h"
 #include "Common/md5.h"
 #include "Common/HashMap.h"
-#include "Common/StlHash.h"
 #include "Common/TclHash.h"
-#include "Common/Lookup3.h"
-#include "Common/SuperFastHash.h"
 #include "Common/MurmurHash.h"
 #include "Common/BlobHashSet.h"
 #include "Common/CstrHashMap.h"
@@ -45,13 +42,9 @@ namespace {
 struct MyPolicy : Config::Policy {
   static void init_options() {
     cmdline_desc("Usage: %s [Options] [<num_items>]\nOptions").add_options()
-      ("SgiHash", "Test SGI STL hash")
       ("TclHash", "Test Tcl hash")
       ("TclHash2", "Test manually unrolled Tcl hash")
-      ("Tr1Hash", "Test STL TR1 hash")
       ("MurmurHash2", "Test MurmurHash2 by Austin Appleby")
-      ("Lookup3", "Test Lookup3 by Bob Jenkins")
-      ("SuperFastHash", "Test SuperFastHash by Paul Hsieh")
       ("StringHashSet", "Test with hash_set<string>")
       ("CstrHashMap", "Test with CstrHashMap")
       ("BlobHashSet", "Test with BlobHashSet")
@@ -96,9 +89,9 @@ typedef std::vector<HashItem> Items;
 
 struct HashTest {
   HashTest(size_t nitems, size_t len) {
-    has_hash_choice = has("SgiHash") || has("Tr1Hash") || has("TclHash")
-                      || has("TclHash2") || has("Lookup3")
-                      || has("SuperFastHash") || has("MurmurHash2");
+    has_hash_choice = has("TclHash")
+                      || has("TclHash2") 
+                      || has("MurmurHash2");
     has_set_choice = has("StringHashSet") || has("BlobHashSet")
                      || has("CstrHashMap");
 
@@ -187,12 +180,8 @@ struct HashTest {
   void run() {
     int repeats = get_i32("repeats");
 
-    TEST_IF(SgiHash);
-    TEST_IF(Tr1Hash);
     TEST_IF(TclHash);
     TEST_IF(TclHash2);
-    TEST_IF(Lookup3);
-    TEST_IF(SuperFastHash);
     TEST_IF(MurmurHash2);
   }
 

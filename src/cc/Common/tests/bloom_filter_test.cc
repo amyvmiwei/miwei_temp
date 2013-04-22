@@ -23,8 +23,6 @@
 #include "Common/BloomFilterWithChecksum.h"
 #include "Common/Logger.h"
 #include "Common/Stopwatch.h"
-#include "Common/Lookup3.h"
-#include "Common/SuperFastHash.h"
 #include "Common/MurmurHash.h"
 #include "Common/md5.h"
 
@@ -38,8 +36,6 @@ struct MyPolicy : Config::Policy {
   static void init_options() {
     cmdline_desc("Usage: %s [Options] [<num_items>]\nOptions").add_options()
       ("MurmurHash2", "Test with MurmurHash2 by Austin Appleby")
-      ("Lookup3", "Test with Lookup3 by Bob Jenkins")
-      ("SuperFastHash", "Test with SuperFastHash by Paul Hsieh")
       ("length", i16()->default_value(32), "length of test strings")
       ("false-positive,p", f64()->default_value(0.01),
           "false positive probability for Bloomfilter")
@@ -81,7 +77,7 @@ struct BloomFilterTest {
   Items items;
 
   BloomFilterTest(int nitems, size_t len) {
-    has_choice = has("Lookup3") || has("SuperFastHash") || has("MurmurHash2");
+    has_choice = has("MurmurHash2");
     fp_prob = get_f64("false-positive");
     double total = 0.;
     nitems *= 2;
@@ -179,8 +175,6 @@ struct BloomFilterTest {
   }
 
   void run() {
-    TEST_IF(Lookup3);
-    TEST_IF(SuperFastHash);
     TEST_IF(MurmurHash2);
   }
 };
