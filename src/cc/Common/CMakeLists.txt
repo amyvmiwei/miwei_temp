@@ -21,7 +21,6 @@ set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Common")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Common")
 
 set(Common_SRCS
-Abi.cc
 Checksum.cc
 Config.cc
 Crontab.cc
@@ -36,12 +35,10 @@ Filesystem.cc
 InetAddr.cc
 InteractiveCommand.cc
 Logger.cc
-Lookup3.cc
 MurmurHash.cc
 Properties.cc
 Random.cc
 String.cc
-SuperFastHash.cc
 System.cc
 SystemInfo.cc
 StatsSerializable.cc

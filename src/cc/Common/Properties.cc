@@ -27,7 +27,6 @@
 #include "Common/Compat.h"
 #include "Common/Properties.h"
 #include "Common/Logger.h"
-#include "Common/Abi.h"
 
 #include <errno.h>
 #include <fstream>
@@ -268,7 +267,7 @@ String Properties::to_str(const boost::any &v) {
     return format_list(*f64s);
   }
 
-  return format("value of type '%s'", demangle(v.type().name()).c_str());
+  return "invalid option type";
 }
 
 void
