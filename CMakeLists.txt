@@ -185,7 +185,9 @@ if (LLVM)
   SET (CMAKE_CXX_FLAGS_RELEASE        "-O3 -DNDEBUG")
   SET (CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g")
 
-  LINK_LIBRARIES(tinfo)
+  if (NOT APPLE)
+    LINK_LIBRARIES(tinfo)
+  endif ()
 
 elseif (ADDRESS_SANITIZER)
   MESSAGE (FATAL_ERROR "ADDRESS_SANITIZER can only be used in conjunction with LLVM")
