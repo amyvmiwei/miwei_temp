@@ -1,3 +1,23 @@
+Version 0.9.7.4:
+(2013-04-24)
+
+   Added periodic reporting during failover replay fragments to prevent timeouts
+   Fixed AsyncComm proxy map propagation / connect() order problem
+   Capfile changes to facilitate starting/stopping ThriftBrokers independently
+   Increased failover timeout to 5 minutes and MaxAppQueuePause to 2 minutes
+   Fixed memory errors caught by llvm AddressSanitizer
+   Added support for llvm compiler; Fixed warnings reported by llvm
+   Doxygen comments
+   Removed unnecessary files
+   Added doxygen comments to src/cc/Common
+   Fixed %preun specification in RPM packaging
+   Added --shared-mutator-flush-interval to load_generator
+   Eliminated compiler warnings
+   Fixed integration test METADATA-split-recovery-11
+   issue 1038: Stop connect retry attempts to recovered server (part 2)
+   Removed unused files
+   issue 1052: removed dependency to log4cpp
+
 Version 0.9.7.3:
 (2013-04-09)
 
