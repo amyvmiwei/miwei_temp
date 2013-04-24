@@ -117,7 +117,8 @@ namespace Hypertable {
      */
     ~Event() {
       delete [] payload;
-      delete [] proxy_buf;
+      if (proxy_buf != proxy_buf_static)
+        delete [] proxy_buf;
     }
 
     /** Loads header object from serialized message buffer.  This method

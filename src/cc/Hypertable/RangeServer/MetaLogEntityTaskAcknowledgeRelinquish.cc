@@ -42,7 +42,7 @@ bool EntityTaskAcknowledgeRelinquish::execute() {
     Global::immovable_range_set_remove(table, range_spec);
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << "Master::relinquish_acknowledge(" << label << ") error - " << e << HT_END;
+    HT_WARN_OUT << "Master::relinquish_acknowledge(" << label << ") error - " << e << HT_END;
     return false;
   }
 
