@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Declarations for ResponseManager.
+ * This file contains declarations for ResponseManager, a class for managing
+ * the sending operation results back to requesting clients.
+ */
+
 
 #include "Common/Compat.h"
 
@@ -166,12 +173,6 @@ void ResponseManager::add_operation(OperationPtr &operation) {
   }
 }
 
-
-bool ResponseManager::operation_complete(int64_t hash_code) {
-  ScopedLock lock(m_context->mutex);
-  ResponseManagerContext::OperationHashCodeIndex &hash_index = m_context->expirable_ops.get<3>();
-  return hash_index.find(hash_code) != hash_index.end();
-}
 
 void ResponseManager::shutdown() {
   ScopedLock lock(m_context->mutex);

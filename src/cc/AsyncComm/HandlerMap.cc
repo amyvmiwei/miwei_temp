@@ -33,28 +33,25 @@
 
 using namespace Hypertable;
 
-int32_t HandlerMap::insert_handler(IOHandlerAccept *handler) {
+void HandlerMap::insert_handler(IOHandlerAccept *handler) {
   ScopedLock lock(m_mutex);
   HT_ASSERT(m_accept_handler_map.find(handler->get_address()) 
             == m_accept_handler_map.end());
   m_accept_handler_map[handler->get_local_address()] = handler;
-  return Error::OK;
 }
 
-int32_t HandlerMap::insert_handler(IOHandlerData *handler) {
+void HandlerMap::insert_handler(IOHandlerData *handler) {
   ScopedLock lock(m_mutex);
   HT_ASSERT(m_data_handler_map.find(handler->get_address())
             == m_data_handler_map.end());
   m_data_handler_map[handler->get_address()] = handler;
-  return Error::OK;
 }
 
-int32_t HandlerMap::insert_handler(IOHandlerDatagram *handler) {
+void HandlerMap::insert_handler(IOHandlerDatagram *handler) {
   ScopedLock lock(m_mutex);
   HT_ASSERT(m_datagram_handler_map.find(handler->get_local_address())
             == m_datagram_handler_map.end());
   m_datagram_handler_map[handler->get_local_address()] = handler;
-  return Error::OK;
 }
 
 

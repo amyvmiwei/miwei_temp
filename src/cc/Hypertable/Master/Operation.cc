@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for Operation.
+ * This file contains definitions for Operation, an abstract base class that
+ * that represents a master operation, and from which specific/concrete
+ * operation classes are derived.
  */
 
 #include "Common/Compat.h"

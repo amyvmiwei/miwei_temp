@@ -97,10 +97,10 @@ namespace Hypertable {
     public:
       GroupState() : group_id(0), running(false), outstanding(1) { return; }
       uint64_t group_id;    //!< Group ID
-      bool     running;     //!< <i>True</i> if a request from this group is
-                            //!< being executed
-      int      outstanding; //!< Number of outstanding (uncompleted) requests
-                            //!< in queue for this group
+      /** <i>true</i> if a request from this group is being executed */
+      bool     running;
+      /** Number of outstanding (uncompleted) requests in queue for this group*/
+      int      outstanding;
     };
 
     /** Hash map of thread group ID to GroupState

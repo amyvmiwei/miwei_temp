@@ -108,12 +108,34 @@ namespace {
  * server process which is responsible for handling meta operations such
  * the following
  *   - Creating, altering, and dropping tables
- *   - CellStore garbage collection
- *   - RangeServer failover orchestration
+ *   - %CellStore garbage collection
+ *   - Orchestration of %RangeServer failover
  *   - Load balancing
  * @{
  */
 
+/** Acquires lock on <code>/hypertable/master</code> file in hyperspace.
+ * Attempts to acquire an exclusive lock on the file
+ * <code>/hypertable/master</code> in Hyperspace.  The file is opened and the
+ * handle is stored in the Context::master_file_handle member of
+ * <code>context</code>.  If the lock is successfully acquired, the address on
+ * which this master process listens for connections is written into the
+ * <i>address</i> attribute (format is IP:port)and the <i>next_server_id</i> attribute is created
+ * and initialized to "1" if it doesn't already exist.  It also creates the
+ * following directories in Hyperspace if they do not already exist:
+ * 
+ *   - <code>/hypertable/servers</code>
+ *   - <code>/hypertable/tables</code>
+ *   - <code>/hypertable/root</code>
+ * 
+ * If the the lock is not successfully acquired, it will go into a retry loop
+ * in which the function will sleep for 
+ * <code>Hypertable.Connection.Retry.Interval</code> milliseconds and then
+ * re-attempt to acquire the lock.
+ * @param context Reference to context object
+ * @note The top-level directory <code>/hypertable</code> may be different
+ * depending on the <code>Hypertable.Directory</code> property.
+ */
 void obtain_master_lock(ContextPtr &context);
 
 int main(int argc, char **argv) {
@@ -346,14 +368,10 @@ void obtain_master_lock(ContextPtr &context) {
     uint64_t handle = 0;
     HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, context->hyperspace, &handle);
 
-    /**
-     *  Create TOPLEVEL directory if not exist
-     */
+    // Create TOPLEVEL directory if not exist
     context->hyperspace->mkdirs(context->toplevel_dir);
 
-    /**
-     * Create /hypertable/master if not exist
-     */
+    // Create /hypertable/master if not exist
     if (!context->hyperspace->exists( context->toplevel_dir + "/master" )) {
       handle = context->hyperspace->open( context->toplevel_dir + "/master",
                                    OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
@@ -387,9 +405,7 @@ void obtain_master_lock(ContextPtr &context) {
 
       HT_INFOF("Obtained lock on '%s/master'", context->toplevel_dir.c_str());
 
-      /**
-       * Write master location in 'address' attribute, format is IP:port
-       */
+      // Write master location in 'address' attribute, format is IP:port
       uint16_t port = context->props->get_i16("Hypertable.Master.Port");
       InetAddr addr(System::net_info().primary_addr, port);
       String addr_s = addr.format();

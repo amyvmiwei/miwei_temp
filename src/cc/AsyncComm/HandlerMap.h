@@ -75,38 +75,31 @@ namespace Hypertable {
     /** Inserts an accept handler.
      * Uses IOHandler#m_local_addr as the key
      * @param handler Accept I/O handler to insert
-     * @return Error::OK
      */
-    int32_t insert_handler(IOHandlerAccept *handler);
+    void insert_handler(IOHandlerAccept *handler);
 
     /** Inserts a data (TCP) handler.
      * Uses IOHandler#m_addr as the key.  If program is the proxy master,
      * a proxy map update message with the new mapping is broadcast to
      * all connections.
      * @param handler Data (TCP) I/O handler to insert
-     * @return Error::OK on success, or Error::COMM_BROKEN_CONNECTION on
-     * proxy map broadcast failure.
      */
-    int32_t insert_handler(IOHandlerData *handler);
+    void insert_handler(IOHandlerData *handler);
 
     /** Inserts a datagram (UDP) handler.
      * Uses IOHandler#m_local_addr as the key.
      * @param handler Datagram (UDP) I/O handler to insert
-     * @return Error::OK
      */
-    int32_t insert_handler(IOHandlerDatagram *handler);
+    void insert_handler(IOHandlerDatagram *handler);
 
     /** Checks out accept I/O handler associated with <code>addr</code>.
-     * First translates <code>addr</code> to socket address and then
-     * looks up translated address in accept map.  If an entry is found,
+     * Looks up <code>addr</code> in accept map.  If an entry is found,
      * then its reference count is incremented and it is returned
      * in <code>handler</code>.
      * @param addr Connection address
      * @param handler Address of handler pointer returned
-     * @return Error::OK on success, Error::COMM_INVALID_PROXY if
-     * <code>addr</code> is of type CommAddress::PROXY and no translation
-     * exists, or Error::COMM_NOT_CONNECTED if no mapping found for
-     * translated address.
+     * @return Error::OK on success, or Error::COMM_NOT_CONNECTED if no mapping
+     * found for <code>addr</code>.
      */
     int checkout_handler(const CommAddress &addr, IOHandlerAccept **handler);
 
@@ -125,16 +118,13 @@ namespace Hypertable {
     int checkout_handler(const CommAddress &addr, IOHandlerData **handler);
 
     /** Checks out datagram (UDP) I/O handler associated with <code>addr</code>.
-     * First translates <code>addr</code> to socket address and then
-     * looks up translated address in datagram map.  If an entry is found,
+     * Looks up <code>addr</code> in datagram map.  If an entry is found,
      * then its reference count is incremented and it is returned
      * in <code>handler</code>.
      * @param addr Connection address
      * @param handler Address of handler pointer returned
-     * @return Error::OK on success, Error::COMM_INVALID_PROXY if
-     * <code>addr</code> is of type CommAddress::PROXY and no translation
-     * exists, or Error::COMM_NOT_CONNECTED if no mapping found for
-     * translated address.
+     * @return Error::OK on success, or Error::COMM_NOT_CONNECTED if no mapping
+     * found for <code>addr</code>.
      */
     int checkout_handler(const CommAddress &addr, IOHandlerDatagram **handler);
 
@@ -262,10 +252,8 @@ namespace Hypertable {
      * @param proxy Proxy name of new/updated mapping
      * @param hostname Hostname of new/updated mapping
      * @param addr InetAddr of new/updated mapping
-     * @return Error::OK on success, or Error::COMM_NOT_CONNECTED or
-     * Error::COMM_BROKEN_CONNECTION if an error was encountered while
-     * propagating the new mapping information over any of the active data
-     * connections.
+     * @return Error::OK on success, or one of the errors returned by
+     * #propagate_proxy_map
      */
     int add_proxy(const String &proxy, const String &hostname, const InetAddr &addr);
 
@@ -274,10 +262,9 @@ namespace Hypertable {
      * to propagate the removed mapping information to all connections.
      * @note This method should only be called by the proxy master.
      * @param proxy Proxy name to remove
-     * @return Error::OK on success, or Error::COMM_NOT_CONNECTED or
-     * Error::COMM_BROKEN_CONNECTION if an error was encountered while
-     * propagating the new mapping information over any of the active data
-     * connections.
+     * @return Error::OK if <code>proxy</code> not found in proxy map or if
+     * it was successfully removed, or one of the errors returned by
+     * #propagate_proxy_map
      */
     int remove_proxy(const String &proxy);
 
@@ -287,20 +274,24 @@ namespace Hypertable {
     void get_proxy_map(ProxyMapT &proxy_map);
 
     /** Updates the proxy map with a proxy map update message received from the
-     * proxy master.  If any of the proxy names have changed, the corresponding
-     * data handlers are updated with a call to IOHandler::set_proxy.  After
-     * the proxy map has been successfuly updated, the #m_proxies_loaded flag is
-     * set to <i>true</i> and the #m_cond_proxy condition variable is signalled.
+     * proxy master.  Calls ProxyMap::update_mappings with <code>message</code>
+     * to update the proxy map.  If any of the proxy names have changed, the
+     * corresponding data handlers are updated with a call to
+     * IOHandler::set_proxy.  For each mapping in <code>message</code> that has
+     * the hostname set to <code>--DELETED--<code>, the associated data handler
+     * is decomissioned.  After the proxy map has been successfuly updated, the
+     * #m_proxies_loaded flag is set to <i>true</i> and the #m_cond_proxy
+     * condition variable is signalled.
      * @param message Pointer to proxy map update message
      * @param message_len Length of proxy map update message
      */
     void update_proxy_map(const char *message, size_t message_len);
 
     /** Sends the current proxy map over connection identified by
-     * <code>handler</code>.  This method must be called by the proxy
+     * <code>handler</code>.  This method must only be called by the proxy
      * master, otherwise it will assert.
      * @param handler Connection over which to send proxy map
-     * @return Same set of error codes returned by IOHandlerdata#send_message
+     * @return Same set of error codes returned by IOHandlerData#send_message
      */
     int32_t propagate_proxy_map(IOHandlerData *handler);
 
@@ -325,10 +316,9 @@ namespace Hypertable {
      * the data (TCP) handler map.  If an error is encountered on a
      * handler when trying to send the proxy map, it will be decomissioned.
      * @param mappings Proxy map information to propagate.
-     * @return Error::OK on success, or Error::COMM_NOT_CONNECTED or
-     * Error::COMM_BROKEN_CONNECTION if an error was encountered while
-     * sending the proxy map update message over any of the active data
-     * connections.
+     * @return Error::OK if proxy map update message was successfully
+     * sent across all data handlers, otherwise one of the error
+     * codes returned by IOHandlerData#send_message
      */
     int propagate_proxy_map(ProxyMapT &mappings);
 
