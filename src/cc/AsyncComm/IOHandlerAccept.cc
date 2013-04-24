@@ -138,14 +138,9 @@ bool IOHandlerAccept::handle_incoming_connection() {
 
     handler = new IOHandlerData(sd, addr, dhp, true);
 
-    int32_t error = m_handler_map->insert_handler(handler);
-    if (error != Error::OK) {
-      HT_ERRORF("Problem registering accepted connection in handler map - %s",
-                Error::get_text(error));
-      delete handler;
-      ReactorRunner::handler_map->decomission_handler(this);
-      return true;
-    }
+    m_handler_map->insert_handler(handler);
+
+    int32_t error;
     if ((error = handler->start_polling(Reactor::READ_READY |
                                         Reactor::WRITE_READY)) != Error::OK) {
       HT_ERRORF("Problem starting polling on incoming connection - %s",

@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for Operation.
+ * This file contains declarations for Operation, an abstract base class that
+ * that represents a master operation, and from which specific/concrete
+ * operation classes are derived.
  */
 
 #ifndef HYPERTABLE_OPERATION_H
@@ -38,7 +45,14 @@
 
 namespace Hypertable {
 
+  /** @addtogroup Master
+   *  @{
+   */
+
+  /** %Operation state constants */
   namespace OperationState {
+
+    /** Enumeration for operation states */
     enum {
       INITIAL = 0,
       COMPLETE = 1,
@@ -65,9 +79,14 @@ namespace Hypertable {
       PHANTOM_LOAD = 22,
       REPLAY_FRAGMENTS = 23
     };
+    /** Converts operation state constant to human readable string.
+     * @param state %Operation state constant
+     * @return Human readable string representation for <code>state</code>.
+     */
     const char *get_text(int state);
   }
 
+  /** %Dependency string constants */
   namespace Dependency {
     extern const char *INIT;
     extern const char *SERVERS;
@@ -79,7 +98,9 @@ namespace Hypertable {
     extern const char *RECOVERY;
   }
 
+  /** %Namespace operation flag constants */
   namespace NamespaceFlag {
+    /** Enumeration for namespace operation flags */
     enum {
       CREATE_INTERMEDIATE = 0x0001,
       IF_EXISTS           = 0x0002,
@@ -87,40 +108,259 @@ namespace Hypertable {
     };
   }
 
+  /** Set of dependency string */
   typedef std::set<String> DependencySet;
 
+  /** Abstract base class for master operations.
+   * The master is implemented as a dependency graph of operations that
+   * are executed by the OperationProcessor.  Each operation is implemented as a
+   * state machine and has a dependency relationship with other operations. This
+   * class is the base class for all operations and defines a common interface.
+   * The #execute method is called by the OperationProcessor to run the
+   * operation's state machine and the dependency relationship is defined by
+   * sets of dependency strings returned by the following methods:
+   *
+   *   - #exclusivities
+   *   - #dependencies
+   *   - #obstructions
+   * 
+   * See OperationProcessor for details on how the operation dependency graph
+   * is setup and how operations are carried out.
+   */
   class Operation : public MetaLog::Entity {
   public:
+
+    /** Constructor with operation type specifier.
+     * Initializes #m_state to OperationState::INITIAL, initializes
+     * #m_expiration_time to number of milliseconds in the future as specified
+     * by the <code>Hypertable.Request.Timeout</code> property, and initializes
+     * #m_hash_code to the <i>id</i> field of MetaLog::Entity#header.
+     * @param context %Master context
+     * @param type %Operation type
+     */
     Operation(ContextPtr &context, int32_t type);
+
+    /** Constructor with request Event and operation type specifier.
+     * Constructs an operation from a client request read off the wire.  Derived
+     * class constructor should call #decode_request to decode request
+     * parameters from <code>event</code>. Initializes #m_expiration_time to
+     * number of milliseconds in the future as specified by the
+     * <code>Hypertable.Request.Timeout</code> property and initializes
+     * #m_hash_code to the <i>id</i> field of MetaLog::Entity#header.
+     * @param context %Master context
+     * @param event Event object
+     * @param type %Operation type
+     */
     Operation(ContextPtr &context, EventPtr &event, int32_t type);
+
+    /** Constructor with MetaLog::EntityHeader.
+     * Constructs an operation from <code>header_</code> read from a MetaLog.
+     * After object has been constructed, the MetaLogReader class will
+     * read the rest of the MetaLog entry and will reconstruct the object
+     * state with a call to #decode.  This constructor initializes #m_hash_code
+     * to the <i>id</i> field of MetaLog::Entity#header.
+     * @note Object initialization wont be complete until after the call to
+     * #decode, so any post-initialization setup should be performed at the
+     * end of the #decode method.
+     * @param context %Master context
+     * @param header_ MetaLog header
+     */
     Operation(ContextPtr &context, const MetaLog::EntityHeader &header_);
+
+    /** Destructor */
     virtual ~Operation() { }
 
+    /** Executes (carries out) the operation.
+     * This method is called by the OperationProcessor to carry out the
+     * operation.  After calling this method, the OperationProcessor will check
+     * the state of the operation with a call to #get_state.  If the state is
+     * OperationState::COMPLETE, then it assumes that the operation is complete
+     * and will destory it.  Otherwise, it will remain in the operation dependency
+     * graph and will get re-executed at a later time.  After the call to this
+     * method, the OperationProcessor will re-compute the operation dependency
+     * graph (which may have changed due to the removal of this operation or if
+     * there were modifications to #m_exclusivities, #m_dependencies, or
+     * #m_obstructions) and will continue operation execution in the approprate
+     * order.
+     */
     virtual void execute() = 0;
+
+    /** Name of operation used for exclusivity.
+     * An operation can be marked <i>exclusive</i> (see #exclusvive) which tells
+     * the Operation processor that only one operation of this name may be added
+     * to the dependency graph.  If an attempt to add an an exclusive operation
+     * is made and the OperationProcessor already contains an exclusive operation
+     * with the same name, the attempt will fail and will result in
+     * an Exception with error code Error::MASTER_OPERATION_IN_PROGRESS.
+     * @return Name of operation used to enforce exclusivity constraint
+     */
     virtual const String name() = 0;
+
+    /** Human readable label for operation.
+     * This method is used to generate a human readable string describing the
+     * operation and is typically used for generating log messages.
+     * @return Human readable string describing operation
+     */
     virtual const String label() = 0;
+
+    /** Human readable operation label used in graphviz output.
+     * The OperationProcessor periodically generates graphviz output
+     * describing the operation dependency graph.  This method is
+     * simlar to #label, but can be modified to produce a string that
+     * renders better in the dependency graph visualization.  It is typically
+     * the same as what's produce by #label, but may contain newlines or
+     * elided strings to reduce the width of the label.
+     * @return Human readable operation label for use with graphviz.
+     */
     virtual const String graphviz_label() { return label(); }
+
+    /** Indicates if operation is exclusive.
+     * An operation can be designated as <i>exclusive</i> which means that only
+     * one operation of this type may be added to the OperationProcessor at
+     * any given time.  This method is used in conjunction with the #name
+     * method to determine if the operation can be added to the
+     * OperationProcessor.  If this method returns <i>true</i> and another
+     * exclusive operation exists in the OperationProcessor with the same name
+     * as returned by #name, then the attempt to add the operation will throw
+     * an Exception with error code Error::MASTER_OPERATION_IN_PROGRESS.
+     * @return <i>true</i> if operation is exclusive, <i>false</i> otherwise.
+     */
     virtual bool exclusive() { return false; }
 
+    /** Decodes initial operation state from Event payload.
+     * Operations can be created in response to request events sent to the
+     * master by clients.  This method is used to decode the initial operation
+     * state from an Event object created in response to a client request.
+     * This method should be called with <code>bufp</code> initialized to
+     * Event::payload and <code>remainp</code> initialized from
+     * Event::payload_len.  The payload contains initial operation state
+     * (request parameters) to be used to initialize the operation.
+     * @param bufp Address of buffer pointer (initialized to Event payload)
+     * @param remainp Address of integer indicating how much buffer remains
+     */
     virtual void decode_request(const uint8_t **bufp, size_t *remainp) = 0;
+
+    /** Encoded length of operation state.
+     * @return Length of encoded operation state.
+     */
     virtual size_t encoded_state_length() const = 0;
+
+    /** Encode operation state.
+     * This method is called by #encode to encode state that is specific
+     * to the operation.  The encoded state is written to the memory location
+     * pointed to by <code>*bufp</code>, which is modified to point to the
+     * first byte after the encoded state.
+     * @param bufp Address of pointer to destination buffer (modified by call)
+     */
     virtual void encode_state(uint8_t **bufp) const = 0;
+
+    /** Decode operation state.
+     * This method is called by #decode to decode state that is specific
+     * to the operation.  The encoded state should start at the memory location
+     * pointed to by <code>*bufp</code>, and if successfully decoded, will be
+     * modified to point to the first byte past the encoded state.  The
+     * <code>remainp</code> parameter is a pointer to an integer holding the
+     * number of valid/readable bytes pointed to by <code>*bufp</code> and
+     * if decoding is sucessful, will be decremented by the length of the
+     * encoded state.
+     * @param bufp Address of pointer to destination buffer
+     * @param remainp Address of integer holding amount of remaining buffer
+     */
     virtual void decode_state(const uint8_t **bufp, size_t *remainp) = 0;
+
+    /** Write human readable operation state to output stream.
+     * This method is called by #display to write a human readable string
+     * representation of the operation state to <code>os</code>
+     * @param os Output stream to which state string is to be written
+     */
     virtual void display_state(std::ostream &os) = 0;
 
+    /** Length of encoded operation result.
+     * This method returns the length of the encoded result, which is
+     * encoded as follows:
+     * <pre>
+     *   i32  error code
+     *   vstr error message (if error code != Error::OK)
+     * </pre>
+     * @return length of encoded result
+     */
     virtual size_t encoded_result_length() const;
+
+    /** Encode operation result.
+     * Encodes the result of the operation as follows:
+     * <pre>
+     *   i32  error code
+     *   vstr error message (if error code != Error::OK)
+     * </pre>
+     * This method is called by #encode to handle encoding of the operation
+     * result.
+     * @param bufp Address of pointer to destination buffer
+     */
     virtual void encode_result(uint8_t **bufp) const;
+
+    /** Decode operation result.
+     * Decodes the result of the operation encoded as follows:
+     * <pre>
+     *   i32  error code
+     *   vstr error message (if error code != Error::OK)
+     * </pre>
+     * This method is called by #decode to handle decoding of the operation
+     * result.
+     * @param bufp Address of pointer to encoded result
+     * @param remainp Address of integer holding amount of remaining buffer
+     */
     virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
-    virtual void display_results(std::ostream &os) { }
-
+    /** Length of encoded operation.
+     * Length of encoded operation.  See #encode for description of encoding
+     * format.
+     * @return length of encoded operation
+     */
     virtual size_t encoded_length() const;
+
+    /** Encode operation.
+     * Encodes operation in the following format:
+     * <pre>
+     *   i32  operation state
+     *   i64  expiration time seconds
+     *   i32  expiration time nanoseconds
+     *   i32  remove approvals flag
+     *   if (m_state == %COMPLETE)
+     *     i64  hash code
+     *     result
+     *   else
+     *     state
+     *     exclusivities
+     *     dependencies
+     *     obstructions
+     *   end
+     * </pre>
+     */
     virtual void encode(uint8_t **bufp) const;
+
+    /** Decode operation.
+     * Decodes operation.  See #encode for description of encoding format.
+     * Upon successful decode, this method will modify <code>*bufp</code>
+     * to point to the first byte past the encoded result and will decrement
+     * <code>*remainp</code> by the length of the encoded result.
+     * @param bufp Address of pointer to encoded operation
+     * @param remainp Address of integer holding amount of remaining buffer
+     */
     virtual void decode(const uint8_t **bufp, size_t *remainp);
 
+    /** Write human readable string represenation of operation to output stream.
+     * @param os Output stream to which string is written
+     */
     virtual void display(std::ostream &os);
 
+    /** Operation identifier.
+     * Returns an integer identifier that uniquely identifies this operation.
+     * The ID that is returned is the same as the <i>id</i> field of the
+     * Metalog::Entity#header member of the base class.
+     * @return operation identifier.
+     */
     int64_t id() { return header.id; }
+
     HiResTime expiration_time() { ScopedLock lock(m_mutex); return m_expiration_time; }
 
     virtual bool remove_explicitly() { return false; }
@@ -181,7 +421,11 @@ namespace Hypertable {
     DependencySet m_obstructions;
     std::vector<Operation *> m_sub_ops;
   };
+
+  /** Smart pointer to Operation */
   typedef intrusive_ptr<Operation> OperationPtr;
+
+  /** @} */
 
 } // namespace Hypertable
 

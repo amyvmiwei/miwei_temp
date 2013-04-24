@@ -238,6 +238,8 @@ namespace Hypertable {
      *     bytes
      *   - Reads the local socket address and initializes #m_local_addr
      *   - Sets #m_connected to <i>true</i>
+     *   - If <i>proxy master</i>, propagate proxy map over newly established
+     *     connection.
      *   - Delivers Event::CONNECTION_ESTABLISHED event via the default
      *     dispatch handler
      * After completion has been handled (if needed) then this method

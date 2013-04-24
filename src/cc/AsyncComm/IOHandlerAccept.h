@@ -123,6 +123,8 @@ namespace Hypertable {
      *   - Creates an IOHandlerData object with socket returned by
      *     <code>accept</code> and default dispatch handler
      *   - Inserts newly created handler in #m_handler_map
+     *   - If <i>proxy master</i>, propagate proxy map over newly established
+     *     connection.
      *   - Starts polling on newly created handler with Reactor::READ_READY and
      *     Reactor::WRITE_READY interest
      *   - Delivers Event::CONNECTION_ESTABLISHED event

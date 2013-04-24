@@ -93,10 +93,12 @@ namespace Hypertable {
      *   -# If the application queue was not paused upon entry to this method,
      *      and low maintenance mode is in effect, and the system is low on
      *      memory, then the application queue is paused.
+     *   -# If the application queue was not paused upon entry to this method,
+     *      and the system is not low on memory, #m_low_memory_mode is set to
+     *      <i>false</i>.  If the size of the USER log has exceeded
+     *      #m_userlog_size_threshold, then the application queue is paused.
      *   -# If #m_immediate_maintenance_scheduled is <i>true</i>, low memory
-     *      mode is disabled, otherwise, a check for low memory is performed
-     *      and low memory mode will be enabled as long as the size of the
-     *      user commit log has not exceeded #m_userlog_size_threshold.
+     *      mode is disabled.
      *   -# If <code>event</code> is not an Event::TIMER event, an error is
      *      logged and the method returns.
      *   -# If #m_schedule_outstanding is <i>false</i> a
@@ -225,15 +227,17 @@ namespace Hypertable {
     bool m_schedule_outstanding;
 
     /** Pauses the application queue.
-     * Restarts the application queue, sets #m_low_memory_mode to <i>false</i>,
-     * and resets the timer interval back to normal
+     * Pauses the application queue, sets #m_app_queue_paused to <i>true</i>,
+     * sets #m_current_interval to 500, sets #m_restart_generation to the
+     * current maintenance queue generation plus the size of the maintenance
+     * queue, and sets #m_pause_time to the current time.
      */
     void pause_app_queue();
 
     /** Restarts the application queue.
-     * Restarts the application queue, sets #m_low_memory_mode to <i>false</i>,
-     * and resets the timer interval #m_current_interval back to normal
-     * (#m_timer_interval).
+     * Restarts the application queue, sets #m_app_queue_paused to <i>false</i>,
+     * sets #m_low_memory_mode to <i>false</i>, and resets the timer interval
+     * #m_current_interval back to normal (#m_timer_interval).
      */
     void restart_app_queue();
 
