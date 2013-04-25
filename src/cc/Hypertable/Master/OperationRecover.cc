@@ -278,7 +278,7 @@ const String OperationRecover::name() {
 }
 
 const String OperationRecover::label() {
-  return format("RecoverServer %s", m_location.c_str());
+  return format("OperationRecover %s", m_location.c_str());
 }
 
 void OperationRecover::clear_server_state() {
