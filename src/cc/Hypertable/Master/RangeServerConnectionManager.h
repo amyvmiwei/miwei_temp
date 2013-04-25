@@ -102,7 +102,7 @@ namespace Hypertable {
             &RangeServerConnectionEntry::location> >,
         hashed_non_unique<const_mem_fun<RangeServerConnectionEntry, String,
             &RangeServerConnectionEntry::hostname> >,
-        hashed_unique<const_mem_fun<RangeServerConnectionEntry, InetAddr,
+        hashed_non_unique<const_mem_fun<RangeServerConnectionEntry, InetAddr,
             &RangeServerConnectionEntry::public_addr>, InetAddrHash>,
         hashed_non_unique<const_mem_fun<RangeServerConnectionEntry, InetAddr,
             &RangeServerConnectionEntry::local_addr>, InetAddrHash>

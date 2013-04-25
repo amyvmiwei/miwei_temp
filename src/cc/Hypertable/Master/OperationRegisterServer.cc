@@ -60,8 +60,13 @@ void OperationRegisterServer::execute() {
   if (m_location == "") {
     if (!m_context->rsc_manager->find_server_by_hostname(m_system_stats.net_info.host_name, m_rsc))
       m_context->rsc_manager->find_server_by_public_addr(m_public_addr, m_rsc);
-    if (m_rsc)
-      m_location = m_rsc->location();
+    if (m_rsc) {
+      // If range server has been removed, let it get re-assigned a new location
+      if (m_rsc->get_removed())
+        m_rsc = 0;
+      else
+        m_location = m_rsc->location();
+    }
   }
   else
     m_context->rsc_manager->find_server_by_location(m_location, m_rsc);
