@@ -21,15 +21,31 @@
 
 #include "Common/Compat.h"
 
+#include "Global.h"
 #include "FragmentData.h"
 
 using namespace std;
 using namespace Hypertable;
 
+FragmentData::~FragmentData() {
+  Global::memory_tracker->subtract(m_memory_consumption);
+}
+
 void FragmentData::add(EventPtr &event) {
   m_data.push_back(event);
+  int64_t memory_added = sizeof(Event) + event->payload_len;
+  Global::memory_tracker->add(memory_added);
+  m_memory_consumption += memory_added;
   return;
 }
+
+void FragmentData::clear() {
+  HT_ASSERT(!m_done);
+  m_data.clear();
+  Global::memory_tracker->subtract(m_memory_consumption);
+  m_memory_consumption = 0;
+}
+
 
 void FragmentData::merge(RangePtr &range, const char *split_point,
                          DynamicBuffer &dbuf, int64_t *latest_revision) {
