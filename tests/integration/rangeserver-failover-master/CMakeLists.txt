@@ -169,3 +169,15 @@ add_test(RangeServer-failover-master-42 env TEST=42 DATA_SIZE=200000
 add_test(RangeServer-failover-master-43 env TEST=43 DATA_SIZE=200000
          INSTALL_DIR=${INSTALL_DIR}
          bash -x ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)
+
+add_test(RangeServer-failover-master-44 env TEST=44 DATA_SIZE=200000
+         INSTALL_DIR=${INSTALL_DIR}
+         bash -x ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)
+
+add_test(RangeServer-failover-master-45 env TEST=45 DATA_SIZE=200000
+         INSTALL_DIR=${INSTALL_DIR}
+         bash -x ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)
+
+add_test(RangeServer-failover-master-46 env TEST=46 DATA_SIZE=200000
+         INSTALL_DIR=${INSTALL_DIR}
+         bash -x ${CMAKE_CURRENT_SOURCE_DIR}/run.sh)

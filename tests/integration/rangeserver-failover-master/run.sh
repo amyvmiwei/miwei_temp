@@ -92,6 +92,11 @@ kill_rs() {
 # Runs an individual test with two RangeServers; the master goes down
 # during recovery
 run_test() {
+    local RESTART_RANGESERVERS_ARG
+    if [ $1 == "--restart-rangeservers" ]; then
+        RESTART_RANGESERVERS_ARG=$1
+        shift
+    fi
     local MASTER_INDUCED_FAILURE=$1
     local i port WAIT_ARGS INDUCED_FAILURE PIDFILE PORT
     shift
@@ -105,6 +110,9 @@ run_test() {
         shift
     done
     let RS_COUNT=i-1
+    if [ ! -z "${RESTART_RANGESERVERS_ARG}" ]; then
+        RESTART_RANGESERVERS_ARG="${RESTART_RANGESERVERS_ARG} ${RS_COUNT}"
+    fi
 
     echo "Running test $TEST." >> report.txt
     let i=1
@@ -131,7 +139,7 @@ run_test() {
     if [ $? == 0 ] ; then
         MASTER_EXIT=true
         set_start_vars Hypertable.Master
-        $SCRIPT_DIR/master-launcher.sh $INDUCER_ARG > master.output.$TEST 2>&1 &
+        $SCRIPT_DIR/master-launcher.sh $RESTART_RANGESERVERS_ARG $INDUCER_ARG > master.output.$TEST 2>&1 &
         wait_for_server_up master "$pidname" --config=${SCRIPT_DIR}/test.cfg        
     else
         start_master $INDUCER_ARG
@@ -257,7 +265,7 @@ run_test() {
     let j=2
     while [ $j -le $RS_COUNT ] ; do
         if test -z "${INDUCED_FAILURE[$j]}" ; then
-            $HT_HOME/bin/metalog_dump /hypertable/servers/rs$j/log/rsml | fgrep "load_acknowledged=false"
+            $HT_HOME/bin/metalog_dump /hypertable/servers/rs$j/log/rsml | fgrep -v "PHANTOM" | fgrep "load_acknowledged=false"
             if [ $? == 0 ] ; then
                 echo "ERROR: Unacknowledged ranges"
                 exit 1
@@ -308,9 +316,15 @@ let j+=1
 let j+=1
 [ $TEST == $j ] && run_test "recover-server-ranges-user-replay-3:exit:0" "" ""
 let j+=1
+[ $TEST == $j ] && run_test --restart-rangeservers "recover-server-ranges-user-replay-3:exit:0" "" ""
+let j+=1
 [ $TEST == $j ] && run_test "recover-server-ranges-user-prepare-3:exit:0" "" ""
 let j+=1
+[ $TEST == $j ] && run_test --restart-rangeservers "recover-server-ranges-user-prepare-3:exit:0" "" ""
+let j+=1
 [ $TEST == $j ] && run_test "recover-server-ranges-user-commit-3:exit:0" "" ""
+let j+=1
+[ $TEST == $j ] && run_test --restart-rangeservers "recover-server-ranges-user-commit-3:exit:0" "" ""
 let j+=1
 [ $TEST == $j ] && run_test "recover-server-ranges-user-ack-3:exit:0" "" ""
 let j+=1

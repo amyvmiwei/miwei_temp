@@ -631,7 +631,9 @@ void RangeServer::local_recover() {
             Global::add_to_work_queue(task_entity);
           else if ((range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get())) != 0 &&
                    (range_entity->state.state & RangeState::PHANTOM) != 0) {
-            Global::log_dfs->rmdir(range_entity->state.transfer_log);
+            // If log was created originally for the phantom range, remove it
+            if (strstr(range_entity->state.transfer_log, "/phantom-") != 0)
+              Global::log_dfs->rmdir(range_entity->state.transfer_log);
             continue;
           }
           stripped_entities.push_back(entity);
