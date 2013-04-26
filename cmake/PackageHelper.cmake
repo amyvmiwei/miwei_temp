@@ -200,6 +200,10 @@ set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
     "${CMAKE_BINARY_DIR}/prerm")
 
 # RPM package variables
+
+configure_file (${CMAKE_SOURCE_DIR}/bin/prerm.sh.in ${CMAKE_BINARY_DIR}/prerm.sh)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/prerm.sh DESTINATION bin)
+
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv3+")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/Databases")
 set(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE ${CMAKE_INSTALL_PREFIX}/bin/prerm.sh)
