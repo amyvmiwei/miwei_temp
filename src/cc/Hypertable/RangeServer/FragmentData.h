@@ -46,8 +46,8 @@ namespace Hypertable {
   class FragmentData : public ReferenceCount {
   public:
 
-    FragmentData(uint32_t id) : m_id(id), m_done(false) {}
-    ~FragmentData() {}
+    FragmentData(uint32_t id) : m_memory_consumption(0), m_id(id), m_done(false) {}
+    virtual ~FragmentData();
 
     /**
      * Adds EventPtr to data for this fragment
@@ -56,10 +56,7 @@ namespace Hypertable {
      */
     void add(EventPtr &event);
     bool complete() const { return m_done; }
-    void clear() {
-      HT_ASSERT(!m_done);
-      m_data.clear();
-    }
+    void clear();
 
     /**
      * write the contents of this fragment into the Range and the dynamic buffer
@@ -68,9 +65,10 @@ namespace Hypertable {
                DynamicBuffer &dbuf, int64_t *latest_revision);
 
   protected:
+    vector<EventPtr> m_data;
+    int64_t m_memory_consumption;
     uint32_t m_id;
     bool m_done;
-    vector<EventPtr> m_data;
 
     typedef std::pair<uint8_t *, size_t> Fragment;
     typedef std::vector<Fragment> DeserializedFragments;
