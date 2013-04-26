@@ -18,7 +18,5 @@
 # along with Hypertable. If not, see <http://www.gnu.org/licenses/>
 #
 
-export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
-
 # remove the symlinks that could cause troubles for package managers.
-rm -f $HYPERTABLE_HOME/{hyperspace,fs,run,log,conf}
+rm -f /opt/hypertable/@VERSION@/{hyperspace,fs,run,log,conf}
