@@ -465,6 +465,7 @@ bool OperationRecoverRanges::replay_fragments() {
   }
 
   if (!future->wait_for_completion(m_timeout)) {
+    bool range_map_not_found = false;
     String str;
     String message = 
       format("Failure encountered during REPLAY FRAGMENTS step of recovery\\n"
@@ -477,13 +478,19 @@ bool OperationRecoverRanges::replay_fragments() {
         + " - " + iter->second.second;
       message += str + "\\n";
       HT_ERROR_OUT << "replay_fragments failed for " << str << HT_END;
+      if (iter->second.first == Error::RANGESERVER_PHANTOM_RANGE_MAP_NOT_FOUND)
+        range_map_not_found = true;
     }
-    time_t now = time(0);
-    if (now - m_last_notification > 60) {
-      String subject = format("ERROR: Replay failure during recovery of %s",
-                              m_location.c_str());
-      m_context->notification_hook(subject, message);
-      m_last_notification = now;
+    if (range_map_not_found)
+      set_state(OperationState::INITIAL);
+    else {
+      time_t now = time(0);
+      if (now - m_last_notification > 60) {
+        String subject = format("ERROR: Replay failure during recovery of %s",
+                                m_location.c_str());
+        m_context->notification_hook(subject, message);
+        m_last_notification = now;
+      }
     }
     return false;
   }
@@ -524,7 +531,18 @@ bool OperationRecoverRanges::prepare_to_commit() {
   }
 
   if (!future->wait_for_completion(m_timeout)) {
-    HT_ERROR_OUT << "prepare_to_commit failed" << HT_END;
+    bool range_map_not_found = false;
+    RecoveryStepFuture::ErrorMapT error_map;
+    future->get_error_map(error_map);
+    for (RecoveryStepFuture::ErrorMapT::iterator iter=error_map.begin();
+         iter != error_map.end(); ++iter) {
+      HT_ERRORF("phantom commit at %s failed - %s (%s)", iter->first.c_str(),
+                Error::get_text(iter->second.first), iter->second.second.c_str());
+      if (iter->second.first == Error::RANGESERVER_PHANTOM_RANGE_MAP_NOT_FOUND)
+        range_map_not_found = true;
+    }
+    if (range_map_not_found)
+      set_state(OperationState::INITIAL);
     return false;
   }
 
