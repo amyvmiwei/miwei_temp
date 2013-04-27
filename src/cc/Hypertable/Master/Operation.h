@@ -93,6 +93,7 @@ namespace Hypertable {
     extern const char *ROOT;
     extern const char *METADATA;
     extern const char *SYSTEM;
+    extern const char *USER;
     extern const char *RECOVER_SERVER;
     extern const char *RECOVERY_BLOCKER;
     extern const char *RECOVERY;
