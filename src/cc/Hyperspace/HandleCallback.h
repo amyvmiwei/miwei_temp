@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -29,7 +29,7 @@
 namespace Hyperspace {
   using namespace Hypertable;
 
-  /**
+  /*
    * The following event masks are ORed together and
    * passed in as the event_mask argument to Open()
    * to indicate which events should be reported to
@@ -47,7 +47,7 @@ namespace Hyperspace {
 
   const char *event_mask_to_string(uint32_t mask);
 
-  /**
+  /*
    * A callback object derived from this class gets passed
    * into each Open() call.  Node state changes get reported
    * to the application via this callback.  Internally, this

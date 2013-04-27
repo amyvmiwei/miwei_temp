@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -137,7 +137,7 @@ void ServerKeepaliveHandler::deliver_event_notifications(uint64_t session_id) {
     return;
   }
 
-  /**
+  /*
   HT_INFOF("Sending Keepalive request to %s",
            InetAddr::format(session_ptr->addr));
   **/

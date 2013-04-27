@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for ReferenceManager.
+ * This file contains definitions for ReferenceManager, a class for tracking
+ * outstanding OperationMoveRange operations.
+ */
+
 
 #include "Common/Compat.h"
 

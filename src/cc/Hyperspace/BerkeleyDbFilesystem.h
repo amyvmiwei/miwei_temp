@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -168,7 +168,7 @@ namespace Hyperspace {
       }
     }
 
-    /**
+    /*
      * Creates a new BerkeleyDB transaction within the context of a parent
      * transaction.
      *
@@ -205,7 +205,7 @@ namespace Hyperspace {
                                     std::vector<DirEntryAttr> &listing);
     void get_all_names(BDbTxn &txn, std::vector<String> &names);
     bool list_xattr(BDbTxn &txn, const String& fname, std::vector<String> &anames);
-    /**
+    /*
      * Persists a new event in the StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -221,7 +221,7 @@ namespace Hyperspace {
     void create_event(BDbTxn &txn, uint32_t type, uint64_t id, uint32_t mask,
                       uint32_t mode, uint64_t generation);
 
-    /**
+    /*
      * Remove specified event from the StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -229,7 +229,7 @@ namespace Hyperspace {
      */
     void delete_event(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Set the handles that are affected by this event
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -239,7 +239,7 @@ namespace Hyperspace {
     void set_event_notification_handles(BDbTxn &txn, uint64_t id,
                                         const std::vector<uint64_t> &handles);
 
-    /**
+    /*
      * Check if the specified event is in the StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -248,7 +248,7 @@ namespace Hyperspace {
      */
     bool event_exists(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Persist a new SessionData object in the StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -257,7 +257,7 @@ namespace Hyperspace {
      */
     void create_session(BDbTxn &txn, uint64_t id, const String &addr);
 
-    /**
+    /*
      * Delete info for specified session from StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -265,7 +265,7 @@ namespace Hyperspace {
      */
     void delete_session(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Delete info for specified session from StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -274,7 +274,7 @@ namespace Hyperspace {
     void expire_session(BDbTxn &txn, uint64_t id);
 
 
-    /**
+    /*
      * Store new handle opened by specified session
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -283,7 +283,7 @@ namespace Hyperspace {
      */
     void add_session_handle(BDbTxn &txn, uint64_t id, uint64_t handle_id);
 
-    /**
+    /*
      * return all the handles a session has open
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -293,7 +293,7 @@ namespace Hyperspace {
     void get_session_handles(BDbTxn &txn, uint64_t id, vector<uint64_t> &handles);
 
 
-    /**
+    /*
      * Remove a handle from a session
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -304,7 +304,7 @@ namespace Hyperspace {
     bool delete_session_handle(BDbTxn &txn, uint64_t id, uint64_t handle_id);
 
 
-    /**
+    /*
      * Check if specified session exists in StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -313,7 +313,7 @@ namespace Hyperspace {
      */
     bool session_exists(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Get name of session executable
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -322,7 +322,7 @@ namespace Hyperspace {
      */
     String get_session_name(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Set name of session executable
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -332,7 +332,7 @@ namespace Hyperspace {
     void set_session_name(BDbTxn &txn, uint64_t id, const String &name);
 
 
-    /**
+    /*
      * Persist a new handle in StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -348,7 +348,7 @@ namespace Hyperspace {
         uint32_t open_flags, uint32_t event_mask, uint64_t session_id,
         bool locked, uint32_t del_state);
 
-    /**
+    /*
      * Delete all info for this handle from StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -356,7 +356,7 @@ namespace Hyperspace {
      */
     void delete_handle(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Get open flags for handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -365,7 +365,7 @@ namespace Hyperspace {
      */
     uint32_t get_handle_open_flags(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Set deletion state for handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -374,7 +374,7 @@ namespace Hyperspace {
      */
     void set_handle_del_state(BDbTxn &txn, uint64_t id, uint32_t del_state);
 
-    /**
+    /*
      * Get handle deletion state for handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -383,7 +383,7 @@ namespace Hyperspace {
      */
     uint32_t get_handle_del_state(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Set open flags for handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -392,7 +392,7 @@ namespace Hyperspace {
      */
     void set_handle_open_flags(BDbTxn &txn, uint64_t id, uint32_t open_flags);
 
-    /**
+    /*
      * Set event mask for handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -401,7 +401,7 @@ namespace Hyperspace {
      */
     void set_handle_event_mask(BDbTxn &txn, uint64_t id, uint32_t event_mask);
 
-    /**
+    /*
      * Get event mask for handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -410,7 +410,7 @@ namespace Hyperspace {
      */
     uint32_t get_handle_event_mask(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Set the node associated with this handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -419,7 +419,7 @@ namespace Hyperspace {
      */
     void set_handle_node(BDbTxn &txn, uint64_t id, const String &node_name);
 
-    /**
+    /*
      * Get the node associated with this handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -428,7 +428,7 @@ namespace Hyperspace {
      */
     void get_handle_node(BDbTxn &txn, uint64_t id, String &node_name);
 
-    /**
+    /*
      * Get the session associated with this handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -438,7 +438,7 @@ namespace Hyperspace {
     uint64_t get_handle_session(BDbTxn &txn, uint64_t id);
 
 
-    /**
+    /*
      * Set the locked-ness this handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -447,7 +447,7 @@ namespace Hyperspace {
      */
     void set_handle_locked(BDbTxn &txn, uint64_t id, bool locked);
 
-    /**
+    /*
      * Get the locked-ness this handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -456,7 +456,7 @@ namespace Hyperspace {
      */
     bool handle_is_locked(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Check if info for this handle is in the StateDb
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -465,7 +465,7 @@ namespace Hyperspace {
      */
     bool handle_exists(BDbTxn &txn, uint64_t id);
 
-    /**
+    /*
      * Persist a new node in StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -478,7 +478,7 @@ namespace Hyperspace {
     void create_node(BDbTxn &txn, const String &name, bool ephemeral=false,
         uint64_t lock_generation=0, uint32_t cur_lock_mode=0, uint64_t exclusive_handle=0);
 
-    /**
+    /*
      * Set the lock generation this node
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -487,7 +487,7 @@ namespace Hyperspace {
      */
     void set_node_lock_generation(BDbTxn &txn, const String &name, uint64_t lock_generation);
 
-    /**
+    /*
      * Increment the lock generation this node
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -497,7 +497,7 @@ namespace Hyperspace {
     uint64_t incr_node_lock_generation(BDbTxn &txn, const String &name);
 
 
-    /**
+    /*
      * Set the node ephemeral-ness
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -506,7 +506,7 @@ namespace Hyperspace {
      */
     void set_node_ephemeral(BDbTxn &txn, const String &name, bool ephemeral);
 
-    /**
+    /*
      * Set the node ephemeral-ness
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -515,7 +515,7 @@ namespace Hyperspace {
      */
     bool node_is_ephemeral(BDbTxn &txn, const String &name);
 
-    /**
+    /*
      * Set the node current lock mode
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -524,7 +524,7 @@ namespace Hyperspace {
      */
     void set_node_cur_lock_mode(BDbTxn &txn, const String &name, uint32_t lock_mode);
 
-    /**
+    /*
      * Get the node current lock mode
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -533,7 +533,7 @@ namespace Hyperspace {
      */
     uint32_t get_node_cur_lock_mode(BDbTxn &txn, const String &name);
 
-    /**
+    /*
      * Set the node exclusive_lock_handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -543,7 +543,7 @@ namespace Hyperspace {
     void set_node_exclusive_lock_handle(BDbTxn &txn, const String &name,
                                         uint64_t exclusive_lock_handle);
 
-    /**
+    /*
      * Get the node exclusive_lock_handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -553,7 +553,7 @@ namespace Hyperspace {
     uint64_t get_node_exclusive_lock_handle(BDbTxn &txn, const String &name);
 
 
-    /**
+    /*
      * Add a handle to the node
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -562,7 +562,7 @@ namespace Hyperspace {
      */
     void add_node_handle(BDbTxn &txn, const String &name, uint64_t handle);
 
-    /**
+    /*
      * Remove a handle from the node
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -571,7 +571,7 @@ namespace Hyperspace {
      */
     void delete_node_handle(BDbTxn &txn, const String &name, uint64_t handle);
 
-    /**
+    /*
      * Returns whether any handles have this node open
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -580,7 +580,7 @@ namespace Hyperspace {
      */
     bool node_has_open_handles(BDbTxn &txn, const String &name);
 
-    /**
+    /*
      * Check if a node has any pending lock requests from non-expired handles
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -589,7 +589,7 @@ namespace Hyperspace {
      */
     bool node_has_pending_lock_request(BDbTxn &txn, const String &name);
 
-    /**
+    /*
      * Check if a node has any pending lock requests from non-expired handles
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -601,7 +601,7 @@ namespace Hyperspace {
                                              LockRequest &front_req);
 
 
-    /**
+    /*
      * Add a lock request to the node
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -611,7 +611,7 @@ namespace Hyperspace {
      */
     void add_node_pending_lock_request(BDbTxn &txn, const String &name,
                                        uint64_t handle, uint32_t mode );
-    /**
+    /*
      * Remove a lock request to the node
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -620,7 +620,7 @@ namespace Hyperspace {
      */
     void delete_node_pending_lock_request(BDbTxn &txn, const String &name, uint64_t handle);
 
-    /**
+    /*
      * Add a shared lock handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -629,7 +629,7 @@ namespace Hyperspace {
      */
     void add_node_shared_lock_handle(BDbTxn &txn, const String &name, uint64_t handle);
 
-    /**
+    /*
      * Get a map of(handle id,  session id) for notifications registered for a certain
      * event occuring to a node
      *
@@ -642,7 +642,7 @@ namespace Hyperspace {
     bool get_node_event_notification_map(BDbTxn &txn, const String &name, uint32_t event_mask,
         NotificationMap &handles_to_sessions);
 
-    /**
+    /*
      * Get all open handles for a node
      *
      * @param txn BerkeleyDB txn
@@ -651,7 +651,7 @@ namespace Hyperspace {
      */
     void get_node_handles(BDbTxn &txn, const String &name, std::vector<uint64_t> &handles);
 
-    /**
+    /*
      * Remove node shared lock handle
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -660,7 +660,7 @@ namespace Hyperspace {
      */
     void delete_node_shared_lock_handle(BDbTxn &txn, const String &name, uint64_t handle_id);
 
-    /**
+    /*
      * Delete all info for this node from StateDB
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -669,7 +669,7 @@ namespace Hyperspace {
      */
     bool delete_node(BDbTxn &txn, const String &name);
 
-    /**
+    /*
      * Check if info for this node is in the StateDb
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -678,7 +678,7 @@ namespace Hyperspace {
      */
     bool node_exists(BDbTxn &txn, const String &name);
 
-    /**
+    /*
      * Check if node has any shared lock handles
      *
      * @param txn BerkeleyDB txn for this DB update
@@ -699,7 +699,7 @@ namespace Hyperspace {
 
 
   private:
-    /**
+    /*
      * Initialize per worker thread DB handles
      */
     void init_db_handles(const vector<Thread::id> &thread_ids);

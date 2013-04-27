@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -31,7 +31,7 @@ using namespace std;
 using namespace Hyperspace;
 using namespace Hypertable;
 
-/**
+/*
  *
  */
 int ResponseCallbackAttrList::response(const vector<string> &anames) {

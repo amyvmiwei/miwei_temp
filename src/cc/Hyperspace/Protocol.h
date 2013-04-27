@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -33,7 +33,7 @@
 
 namespace Hyperspace {
 
-  /**
+  /*
    * Structure to hold extended attribute and value
    */
   struct Attribute {

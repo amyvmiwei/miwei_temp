@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -149,7 +149,7 @@ namespace Hyperspace {
   typedef boost::intrusive_ptr<Event> HyperspaceEventPtr;
 
 
-  /**
+  /*
    * EventNamed class.  Encapsulates named events (e.g. ATTR_SET,
    * ATTR_DEL, CHILD_NODE_ADDED, CHILD_NODE_REMOVED)
    */
@@ -173,7 +173,7 @@ namespace Hyperspace {
   };
 
 
-  /**
+  /*
    * EventLockAcquired class.  Used to notify handles when a lock is acquired
    * on the node it points to.
    */
@@ -192,7 +192,7 @@ namespace Hyperspace {
     uint32_t m_mode;
   };
 
-  /**
+  /*
    * EventLockReleased class.  Used to notify handles when a lock is released
    * on the node it points to.
    */
@@ -206,7 +206,7 @@ namespace Hyperspace {
     }
   };
 
-  /**
+  /*
    * EventLockGranted class.  Used to notify handles that a prior lock request
    * been granted.
    */

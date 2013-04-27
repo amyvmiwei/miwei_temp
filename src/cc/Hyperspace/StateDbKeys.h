@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -132,7 +132,7 @@ namespace StateDbKeys {
     const String NEXT_EVENT_ID   = NEXT_IDS + "EVT";
     const String NEXT_HANDLE_ID  = NEXT_IDS + "HDL";
 
-    /**
+    /*
      * Get State key for specified piece of state for specified session
      *
      * @param id Session id
@@ -141,7 +141,7 @@ namespace StateDbKeys {
      */
     String get_session_key(uint64_t id, uint32_t key_type);
 
-    /**
+    /*
      * Get State key to a piece of Event object
      *
      * @param id Event id
@@ -150,7 +150,7 @@ namespace StateDbKeys {
      */
     String get_event_key(uint64_t id, uint32_t key_type);
 
-    /**
+    /*
      * Get State key to a piece of handle data
      *
      * @param id handle id
@@ -159,7 +159,7 @@ namespace StateDbKeys {
      */
     String get_handle_key(uint64_t id, uint32_t key_type);
 
-    /**
+    /*
      * Get State key to a piece of a node state
      *
      * @param name Node name
@@ -168,7 +168,7 @@ namespace StateDbKeys {
      */
     String get_node_key(const String &name, uint32_t key_type);
 
-    /**
+    /*
      * Get State key to access/store a specific node lock request
      *
      * @param name Node name

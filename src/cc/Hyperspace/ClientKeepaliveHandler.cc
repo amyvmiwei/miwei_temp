@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -101,7 +101,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
     return;
   }
 
-  /**
+  /*
   if (m_verbose) {
     HT_INFOF("%s", event->to_str().c_str());
   }
@@ -324,7 +324,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
             m_last_known_event = event_id;
           }
-          /**
+          /*
           if (m_verbose) {
             HT_INFOF("session_id = %lld", m_session_id);
           }

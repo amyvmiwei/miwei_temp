@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -70,7 +70,7 @@ void close_db_cursor(Dbc **cursor) {
 const char* BerkeleyDbFilesystem::ms_name_namespace_db = "namespace.db";
 const char* BerkeleyDbFilesystem::ms_name_state_db = "state.db";
 
-/**
+/*
  */
 BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
                                            const std::string &basedir,
@@ -98,7 +98,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
 
    m_db_flags = DB_CREATE | DB_AUTO_COMMIT | DB_THREAD;
 
-  /**
+  /*
    * Open Berkeley DB environment and namespace database
    */
   try {
@@ -128,7 +128,7 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
       }
     }
 
-    /**
+    /*
      * Setup replication
      * TODO: add condition to replication info object to keep track of whether local
      * replica is a master or not. If it is the master then setup changes that the master
@@ -366,10 +366,10 @@ BerkeleyDbFilesystem::BerkeleyDbFilesystem(PropertiesPtr &props,
   HT_DEBUG_OUT <<"namespace initialized"<< HT_END;
 }
 
-/**
+/*
  */
 BerkeleyDbFilesystem::~BerkeleyDbFilesystem() {
-  /**
+  /*
    * Close Berkeley DB "namespace" database and environment
    */
   try {
@@ -618,7 +618,7 @@ void BerkeleyDbFilesystem::start_transaction(BDbTxn &txn) {
 }
 
 
-/**
+/*
  */
 bool
 BerkeleyDbFilesystem::get_xattr_i32(BDbTxn &txn, const String &fname,
@@ -651,7 +651,7 @@ BerkeleyDbFilesystem::get_xattr_i32(BDbTxn &txn, const String &fname,
 
 
 
-/**
+/*
  */
 void
 BerkeleyDbFilesystem::set_xattr_i32(BDbTxn &txn, const String &fname,
@@ -685,7 +685,7 @@ BerkeleyDbFilesystem::set_xattr_i32(BDbTxn &txn, const String &fname,
 }
 
 
-/**
+/*
  */
 bool
 BerkeleyDbFilesystem::get_xattr_i64(BDbTxn &txn, const String &fname,
@@ -718,7 +718,7 @@ BerkeleyDbFilesystem::get_xattr_i64(BDbTxn &txn, const String &fname,
 
 
 
-/**
+/*
  */
 void
 BerkeleyDbFilesystem::set_xattr_i64(BDbTxn &txn, const String &fname,
@@ -751,7 +751,7 @@ BerkeleyDbFilesystem::set_xattr_i64(BDbTxn &txn, const String &fname,
   HT_ASSERT(ret == 0);
 }
 
-/**
+/*
  */
 bool
 BerkeleyDbFilesystem::incr_attr(BDbTxn &txn, const String &fname, const String &aname,
@@ -813,7 +813,7 @@ BerkeleyDbFilesystem::incr_attr(BDbTxn &txn, const String &fname, const String &
 
   return false;
 }
-/**
+/*
  */
 void
 BerkeleyDbFilesystem::set_xattr(BDbTxn &txn, const String &fname,
@@ -843,7 +843,7 @@ BerkeleyDbFilesystem::set_xattr(BDbTxn &txn, const String &fname,
 }
 
 
-/**
+/*
  */
 bool
 BerkeleyDbFilesystem::get_xattr(BDbTxn &txn, const String &fname,
@@ -878,7 +878,7 @@ BerkeleyDbFilesystem::get_xattr(BDbTxn &txn, const String &fname,
   return false;
 }
 
-/**
+/*
  */
 bool
 BerkeleyDbFilesystem::exists_xattr(BDbTxn &txn, const String &fname, const String &aname)
@@ -936,7 +936,7 @@ BerkeleyDbFilesystem::del_xattr(BDbTxn &txn, const String &fname,
 }
 
 
-/**
+/*
  */
 void BerkeleyDbFilesystem::mkdir(BDbTxn &txn, const String &name) {
   int ret;
@@ -946,7 +946,7 @@ void BerkeleyDbFilesystem::mkdir(BDbTxn &txn, const String &name) {
   String dirname = name.substr(0, lastslash+1);
 
   try {
-    /**
+    /*
      * Make sure parent directory exists
      */
     key.set_data((void *)dirname.c_str());
@@ -962,7 +962,7 @@ void BerkeleyDbFilesystem::mkdir(BDbTxn &txn, const String &name) {
 
     HT_DEBUG_OUT <<"dirname='"<< dirname <<"'"<< HT_END;
 
-    /**
+    /*
      * Make sure directory does not already exists
      */
     key.set_data((void *)dirname.c_str());
@@ -971,7 +971,7 @@ void BerkeleyDbFilesystem::mkdir(BDbTxn &txn, const String &name) {
     if ((ret = txn.m_handle_namespace_db->get(txn.m_db_txn, &key, &data, 0)) != DB_NOTFOUND)
       HT_THROW(HYPERSPACE_FILE_EXISTS, dirname);
 
-    /**
+    /*
      * Create directory entry
      */
     key.set_data((void *)dirname.c_str());
@@ -1099,7 +1099,7 @@ BerkeleyDbFilesystem::exists(BDbTxn &txn, String fname, bool *is_dir_p) {
 }
 
 
-/**
+/*
  *
  */
 void
@@ -1428,7 +1428,7 @@ BerkeleyDbFilesystem::list_xattr(BDbTxn &txn, const String& fname,
   return true;
 }
 
-/**
+/*
  *
  */
 void
@@ -1485,7 +1485,7 @@ BerkeleyDbFilesystem::create_event(BDbTxn &txn, uint32_t type, uint64_t id,
   }
 }
 
-/**
+/*
  *
  */
 void
@@ -1516,7 +1516,7 @@ BerkeleyDbFilesystem::create_event(BDbTxn &txn, uint32_t type, uint64_t id,
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
   }
 }
-/**
+/*
  *
  */
 void
@@ -1548,7 +1548,7 @@ BerkeleyDbFilesystem::create_event(BDbTxn &txn, uint32_t type, uint64_t id,
     HT_THROW(HYPERSPACE_BERKELEYDB_ERROR, e.what());
    }
 }
-/**
+/*
  *
  */
 void
@@ -1582,7 +1582,7 @@ BerkeleyDbFilesystem::create_event(BDbTxn &txn, uint32_t type, uint64_t id,
    }
 }
 
-/**
+/*
  *
  */
 void
@@ -1627,7 +1627,7 @@ BerkeleyDbFilesystem::set_event_notification_handles(BDbTxn &txn, uint64_t id,
   }
 }
 
-/**
+/*
  *
  */
 void
@@ -1711,7 +1711,7 @@ BerkeleyDbFilesystem::delete_event(BDbTxn &txn, uint64_t id)
   }
 }
 
-/**
+/*
  *
  */
 bool
@@ -1753,7 +1753,7 @@ BerkeleyDbFilesystem::event_exists(BDbTxn &txn, uint64_t id)
   return exists;
 }
 
-/**
+/*
  *
  */
 void
@@ -1813,7 +1813,7 @@ BerkeleyDbFilesystem::create_session(BDbTxn &txn, uint64_t id, const String& add
 
 }
 
-/**
+/*
  *
  */
 void
@@ -1885,7 +1885,7 @@ BerkeleyDbFilesystem::delete_session(BDbTxn &txn, uint64_t id)
   HT_DEBUG_OUT << "exitting delete_session txn=" << txn << " session id=" << id << HT_END;
 }
 
-/**
+/*
  *
  */
 void
@@ -1925,7 +1925,7 @@ BerkeleyDbFilesystem::expire_session(BDbTxn &txn, uint64_t id)
 
 }
 
-/**
+/*
  *
  */
 void
@@ -1964,7 +1964,7 @@ BerkeleyDbFilesystem::add_session_handle(BDbTxn &txn, uint64_t id, uint64_t hand
               << " handle id=" << handle_id << HT_END;
 }
 
-/**
+/*
  *
  */
 void
@@ -2003,7 +2003,7 @@ BerkeleyDbFilesystem::get_session_handles(BDbTxn &txn, uint64_t id, vector<uint6
   HT_DEBUG_OUT <<"exitting get_session_handles txn="<< txn <<" session id="<< id << HT_END;
 }
 
-/**
+/*
  *
  */
 bool
@@ -2052,7 +2052,7 @@ BerkeleyDbFilesystem::delete_session_handle(BDbTxn &txn, uint64_t id, uint64_t h
   return deleted;
 }
 
-/**
+/*
  *
  */
 bool
@@ -2095,7 +2095,7 @@ BerkeleyDbFilesystem::session_exists(BDbTxn &txn, uint64_t id)
   return exists;
 }
 
-/**
+/*
  *
  */
 void
@@ -2135,7 +2135,7 @@ BerkeleyDbFilesystem::set_session_name(BDbTxn &txn, uint64_t id, const String &n
   HT_DEBUG_OUT <<"exitting set_session_name txn="<< txn <<" name='"<< name << "'" << HT_END;
 }
 
-/**
+/*
  *
  */
 String
@@ -2179,7 +2179,7 @@ BerkeleyDbFilesystem::get_session_name(BDbTxn &txn, uint64_t id)
   return name;
 }
 
-/**
+/*
  *
  */
 void
@@ -2283,7 +2283,7 @@ BerkeleyDbFilesystem::create_handle(BDbTxn &txn, uint64_t id, String node_name,
                << " del_state=" << del_state << HT_END;
 }
 
-/**
+/*
  *
  */
 void
@@ -2368,7 +2368,7 @@ BerkeleyDbFilesystem::delete_handle(BDbTxn &txn, uint64_t id)
 
 }
 
-/**
+/*
  *
  */
 void
@@ -2413,7 +2413,7 @@ BerkeleyDbFilesystem::set_handle_del_state(BDbTxn &txn, uint64_t id, uint32_t de
 
 }
 
-/**
+/*
  *
  */
 void
@@ -2459,7 +2459,7 @@ BerkeleyDbFilesystem::set_handle_open_flags(BDbTxn &txn, uint64_t id, uint32_t o
 
 }
 
-/**
+/*
  *
  */
 void
@@ -2505,7 +2505,7 @@ BerkeleyDbFilesystem::set_handle_event_mask(BDbTxn &txn, uint64_t id, uint32_t e
 
 }
 
-/**
+/*
  *
  */
 uint32_t
@@ -2546,7 +2546,7 @@ BerkeleyDbFilesystem::get_handle_event_mask(BDbTxn &txn, uint64_t id)
   return event_mask;
 }
 
-/**
+/*
  *
  */
 void
@@ -2591,7 +2591,7 @@ BerkeleyDbFilesystem::set_handle_locked(BDbTxn &txn, uint64_t id, bool locked)
               << " locked=" << locked << HT_END;
 }
 
-/**
+/*
  *
  */
 bool
@@ -2632,7 +2632,7 @@ BerkeleyDbFilesystem::handle_exists(BDbTxn &txn, uint64_t id)
   return exists;
 }
 
-/**
+/*
  *
  */
 
@@ -2681,7 +2681,7 @@ BerkeleyDbFilesystem::handle_is_locked(BDbTxn &txn, uint64_t id)
   return locked;
 }
 
-/**
+/*
  *
  */
 void
@@ -2718,7 +2718,7 @@ BerkeleyDbFilesystem::get_handle_node(BDbTxn &txn, uint64_t id, String &node_nam
                <<" node_name=" << node_name << HT_END;
 }
 
-/**
+/*
  *
  */
 uint32_t
@@ -2756,7 +2756,7 @@ BerkeleyDbFilesystem::get_handle_del_state(BDbTxn &txn, uint64_t id)
   return del_state;
 }
 
-/**
+/*
  *
  */
 uint32_t
@@ -2796,7 +2796,7 @@ BerkeleyDbFilesystem::get_handle_open_flags(BDbTxn &txn, uint64_t id)
   return open_flags;
 }
 
-/**
+/*
  *
  */
 uint64_t
@@ -2838,7 +2838,7 @@ BerkeleyDbFilesystem::get_handle_session(BDbTxn &txn, uint64_t id)
 }
 
 
-/**
+/*
  *
  */
 void
@@ -2926,7 +2926,7 @@ BerkeleyDbFilesystem::create_node(BDbTxn &txn, const String &name,
 
 }
 
-/**
+/*
  *
  */
 void
@@ -2973,7 +2973,7 @@ BerkeleyDbFilesystem::set_node_lock_generation(BDbTxn &txn, const String &name,
                <<" lock_generation=" << lock_generation << HT_END;
 }
 
-/**
+/*
  *
  */
 uint64_t
@@ -3024,7 +3024,7 @@ BerkeleyDbFilesystem::incr_node_lock_generation(BDbTxn &txn, const String &name)
   return lock_generation;
 }
 
-/**
+/*
  *
  */
 void
@@ -3071,7 +3071,7 @@ BerkeleyDbFilesystem::set_node_ephemeral(BDbTxn &txn, const String &name,
                <<" ephemeral=" << ephemeral << HT_END;
 }
 
-/**
+/*
  *
  */
 bool
@@ -3116,7 +3116,7 @@ BerkeleyDbFilesystem::node_is_ephemeral(BDbTxn &txn, const String &name)
   return ephemeral;
 }
 
-/**
+/*
  *
  */
 void
@@ -3162,7 +3162,7 @@ BerkeleyDbFilesystem::set_node_cur_lock_mode(BDbTxn &txn, const String &name,
                << " lock_mode=" << lock_mode << HT_END;
 }
 
-/**
+/*
  *
  */
 uint32_t
@@ -3203,7 +3203,7 @@ BerkeleyDbFilesystem::get_node_cur_lock_mode(BDbTxn &txn, const String &name)
   return lock_mode;
 }
 
-/**
+/*
  *
  */
 void
@@ -3248,7 +3248,7 @@ BerkeleyDbFilesystem::set_node_exclusive_lock_handle(BDbTxn &txn,
                <<" exclusive_lock_handle=" << exclusive_lock_handle << HT_END;
 }
 
-/**
+/*
  *
  */
 uint64_t
@@ -3290,7 +3290,7 @@ BerkeleyDbFilesystem::get_node_exclusive_lock_handle(BDbTxn &txn, const String &
   return exclusive_lock_handle;
 }
 
-/**
+/*
  *
  */
 void
@@ -3331,7 +3331,7 @@ BerkeleyDbFilesystem::add_node_handle(BDbTxn &txn, const String &name,
                << " handle id=" << handle_id << HT_END;
 }
 
-/**
+/*
  *
  */
 bool
@@ -3385,7 +3385,7 @@ BerkeleyDbFilesystem::get_node_event_notification_map(BDbTxn &txn, const String 
   return has_notifications;
 }
 
-/**
+/*
  *
  */
 void
@@ -3430,7 +3430,7 @@ BerkeleyDbFilesystem::delete_node_handle(BDbTxn &txn, const String &name,
 
 
 
-/**
+/*
  *
  */
 void
@@ -3478,7 +3478,7 @@ BerkeleyDbFilesystem::add_node_pending_lock_request(BDbTxn &txn,
                <<" handle id=" << handle_id << " mode=" << mode << HT_END;
 }
 
-/**
+/*
  *
  */
 
@@ -3531,7 +3531,7 @@ BerkeleyDbFilesystem::node_has_pending_lock_request(BDbTxn &txn, const String &n
   return has_pending_lock_request;
 }
 
-/**
+/*
  *
  */
 
@@ -3586,7 +3586,7 @@ BerkeleyDbFilesystem::get_node_pending_lock_request(BDbTxn &txn, const String &n
 
   return has_pending_lock_request;
 }
-/**
+/*
  *
  */
 void
@@ -3636,7 +3636,7 @@ BerkeleyDbFilesystem::delete_node_pending_lock_request(BDbTxn &txn,
                <<" node=" << name << " handle id=" << handle_id << HT_END;
 }
 
-/**
+/*
  *
  */
 void
@@ -3677,7 +3677,7 @@ BerkeleyDbFilesystem::add_node_shared_lock_handle(BDbTxn &txn, const String &nam
                << " handle id=" << handle_id << HT_END;
 }
 
-/**
+/*
  *
  */
 bool
@@ -3718,7 +3718,7 @@ BerkeleyDbFilesystem::node_has_shared_lock_handles(BDbTxn &txn, const String &na
   return has_shared_lock_handles;
 }
 
-/**
+/*
  *
  */
 void
@@ -3761,7 +3761,7 @@ BerkeleyDbFilesystem::delete_node_shared_lock_handle(BDbTxn &txn, const String &
                <<" handle_id=" << handle_id << HT_END;
 }
 
-/**
+/*
  *
  */
 bool
@@ -3830,7 +3830,7 @@ BerkeleyDbFilesystem::delete_node(BDbTxn &txn, const String &name)
 }
 
 
-/**
+/*
  *
  */
 bool
@@ -3870,7 +3870,7 @@ BerkeleyDbFilesystem::node_exists(BDbTxn &txn, const String &name)
   return exists;
 }
 
-/**
+/*
  *
  */
 void
@@ -3912,7 +3912,7 @@ BerkeleyDbFilesystem::get_node_handles(BDbTxn &txn, const String &name,
   HT_DEBUG_OUT << "get_node_handles txn=" << txn << " node=" << name << HT_END;
 }
 
-/**
+/*
  *
  */
 bool
@@ -3959,7 +3959,7 @@ BerkeleyDbFilesystem::node_has_open_handles(BDbTxn &txn, const String &name)
   return has_open_handles;
 }
 
-/**
+/*
  *
  */
 uint64_t

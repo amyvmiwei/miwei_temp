@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -222,7 +222,7 @@ Session::create(const std::string &name, uint32_t flags,
 }
 
 
-/**
+/*
  *
  */
 void Session::close(uint64_t handle, Timer *timer) {
@@ -258,7 +258,7 @@ void Session::close_nowait(uint64_t handle) {
 }
 
 
-/**
+/*
  *
  */
 void Session::mkdir(const std::string &name, const std::vector<Attribute> &init_attrs, Timer *timer) {
@@ -337,7 +337,7 @@ bool Session::exists(const std::string &name, Timer *timer) {
 }
 
 
-/**
+/*
  */
 void Session::attr_set(uint64_t handle, const std::string &attr,
                        const void *value, size_t value_len, Timer *timer) {
@@ -368,7 +368,7 @@ void Session::attr_set(uint64_t handle, const std::string &attr,
   goto try_again;
 }
 
-/**
+/*
  */
 void Session::attr_set(uint64_t handle, const std::vector<Attribute> &attrs,
                        Timer *timer) {
@@ -397,7 +397,7 @@ void Session::attr_set(uint64_t handle, const std::vector<Attribute> &attrs,
   goto try_again;
 }
 
-/**
+/*
  */
 void Session::attr_set(const std::string &name, const std::string &attr,
                        const void *value, size_t value_len, Timer *timer) {
@@ -453,7 +453,7 @@ void Session::attr_set(const std::string &name, uint32_t oflags,
   goto try_again;
 }
 
-/**
+/*
  */
 uint64_t Session::attr_incr(uint64_t handle, const std::string &attr, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
@@ -490,7 +490,7 @@ uint64_t Session::attr_incr(uint64_t handle, const std::string &attr, Timer *tim
 
 }
 
-/**
+/*
  */
 uint64_t Session::attr_incr(const std::string &name, const std::string &attr, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
@@ -714,7 +714,7 @@ Session::attr_exists(const std::string& name, const std::string& attr, Timer *ti
   goto try_again;
 }
 
-/**
+/*
  *
  */
 void Session::attr_del(uint64_t handle, const std::string &name, Timer *timer) {
@@ -1108,13 +1108,13 @@ Session::get_sequencer(uint64_t handle, LockSequencer *sequencerp,
 }
 
 
-/**
+/*
  */
 void Session::check_sequencer(LockSequencer &sequencer, Timer *timer) {
   HT_WARN("CheckSequencer not implemented.");
 }
 
-/**
+/*
  */
 String Session::locate(int type) {
   String location;
@@ -1131,7 +1131,7 @@ String Session::locate(int type) {
   return location;
 }
 
-/**
+/*
  */
 int Session::status(Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
@@ -1221,7 +1221,7 @@ bool Session::wait_for_connection(uint32_t max_wait_ms) {
 }
 
 
-/**
+/*
  */
 bool Session::wait_for_connection(Timer &timer) {
   boost::mutex::scoped_lock lock(m_mutex);
@@ -1376,7 +1376,7 @@ void Session::normalize_name(const String &name, String &normal) {
     normal += name.substr(0, name.length()-1);
 }
 
-/**
+/*
  *
  */
 HsCommandInterpreter *Session::create_hs_interpreter()

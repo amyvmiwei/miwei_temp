@@ -49,7 +49,7 @@ namespace Hypertable {
    *  @{
    */
 
-  /** %Operation state constants */
+  /** %Operation states */
   namespace OperationState {
 
     /** Enumeration for operation states */
@@ -86,7 +86,7 @@ namespace Hypertable {
     const char *get_text(int state);
   }
 
-  /** %Dependency string constants */
+  /** %Master dependency strings */
   namespace Dependency {
     extern const char *INIT;
     extern const char *SERVERS;
@@ -98,7 +98,7 @@ namespace Hypertable {
     extern const char *RECOVERY;
   }
 
-  /** %Namespace operation flag constants */
+  /** %Namespace operation flags */
   namespace NamespaceFlag {
     /** Enumeration for namespace operation flags */
     enum {
@@ -116,7 +116,7 @@ namespace Hypertable {
    * are executed by the OperationProcessor.  Each operation is implemented as a
    * state machine and has a dependency relationship with other operations. This
    * class is the base class for all operations and defines a common interface.
-   * The #execute method is called by the OperationProcessor to run the
+   * The execute() method is called by the OperationProcessor to run the
    * operation's state machine and the dependency relationship is defined by
    * sets of dependency strings returned by the following methods:
    *
@@ -142,7 +142,7 @@ namespace Hypertable {
 
     /** Constructor with request Event and operation type specifier.
      * Constructs an operation from a client request read off the wire.  Derived
-     * class constructor should call #decode_request to decode request
+     * class constructor should call decode_request() to decode request
      * parameters from <code>event</code>. Initializes #m_expiration_time to
      * number of milliseconds in the future as specified by the
      * <code>Hypertable.Request.Timeout</code> property and initializes
@@ -157,11 +157,11 @@ namespace Hypertable {
      * Constructs an operation from <code>header_</code> read from a MetaLog.
      * After object has been constructed, the MetaLogReader class will
      * read the rest of the MetaLog entry and will reconstruct the object
-     * state with a call to #decode.  This constructor initializes #m_hash_code
+     * state with a call to decode().  This constructor initializes #m_hash_code
      * to the <i>id</i> field of MetaLog::Entity#header.
      * @note Object initialization wont be complete until after the call to
-     * #decode, so any post-initialization setup should be performed at the
-     * end of the #decode method.
+     * decode(), so any post-initialization setup should be performed at the
+     * end of the decode() method.
      * @param context %Master context
      * @param header_ MetaLog header
      */
@@ -173,7 +173,7 @@ namespace Hypertable {
     /** Executes (carries out) the operation.
      * This method is called by the OperationProcessor to carry out the
      * operation.  After calling this method, the OperationProcessor will check
-     * the state of the operation with a call to #get_state.  If the state is
+     * the state of the operation with a call to get_state().  If the state is
      * OperationState::COMPLETE, then it assumes that the operation is complete
      * and will destory it.  Otherwise, it will remain in the operation dependency
      * graph and will get re-executed at a later time.  After the call to this
@@ -186,7 +186,7 @@ namespace Hypertable {
     virtual void execute() = 0;
 
     /** Name of operation used for exclusivity.
-     * An operation can be marked <i>exclusive</i> (see #exclusvive) which tells
+     * An operation can be marked <i>exclusive</i> (see exclusvive()) which tells
      * the Operation processor that only one operation of this name may be added
      * to the dependency graph.  If an attempt to add an an exclusive operation
      * is made and the OperationProcessor already contains an exclusive operation
@@ -206,9 +206,9 @@ namespace Hypertable {
     /** Human readable operation label used in graphviz output.
      * The OperationProcessor periodically generates graphviz output
      * describing the operation dependency graph.  This method is
-     * simlar to #label, but can be modified to produce a string that
+     * simlar to label(), but can be modified to produce a string that
      * renders better in the dependency graph visualization.  It is typically
-     * the same as what's produce by #label, but may contain newlines or
+     * the same as what's produce by label(), but may contain newlines or
      * elided strings to reduce the width of the label.
      * @return Human readable operation label for use with graphviz.
      */
@@ -217,11 +217,11 @@ namespace Hypertable {
     /** Indicates if operation is exclusive.
      * An operation can be designated as <i>exclusive</i> which means that only
      * one operation of this type may be added to the OperationProcessor at
-     * any given time.  This method is used in conjunction with the #name
+     * any given time.  This method is used in conjunction with the name()
      * method to determine if the operation can be added to the
      * OperationProcessor.  If this method returns <i>true</i> and another
      * exclusive operation exists in the OperationProcessor with the same name
-     * as returned by #name, then the attempt to add the operation will throw
+     * as returned by name(), then the attempt to add the operation will throw
      * an Exception with error code Error::MASTER_OPERATION_IN_PROGRESS.
      * @return <i>true</i> if operation is exclusive, <i>false</i> otherwise.
      */
@@ -246,7 +246,7 @@ namespace Hypertable {
     virtual size_t encoded_state_length() const = 0;
 
     /** Encode operation state.
-     * This method is called by #encode to encode state that is specific
+     * This method is called by encode() to encode state that is specific
      * to the operation.  The encoded state is written to the memory location
      * pointed to by <code>*bufp</code>, which is modified to point to the
      * first byte after the encoded state.
@@ -255,7 +255,7 @@ namespace Hypertable {
     virtual void encode_state(uint8_t **bufp) const = 0;
 
     /** Decode operation state.
-     * This method is called by #decode to decode state that is specific
+     * This method is called by decode() to decode state that is specific
      * to the operation.  The encoded state should start at the memory location
      * pointed to by <code>*bufp</code>, and if successfully decoded, will be
      * modified to point to the first byte past the encoded state.  The
@@ -269,7 +269,7 @@ namespace Hypertable {
     virtual void decode_state(const uint8_t **bufp, size_t *remainp) = 0;
 
     /** Write human readable operation state to output stream.
-     * This method is called by #display to write a human readable string
+     * This method is called by display() to write a human readable string
      * representation of the operation state to <code>os</code>
      * @param os Output stream to which state string is to be written
      */
@@ -292,7 +292,7 @@ namespace Hypertable {
      *   i32  error code
      *   vstr error message (if error code != Error::OK)
      * </pre>
-     * This method is called by #encode to handle encoding of the operation
+     * This method is called by encode() to handle encoding of the operation
      * result.
      * @param bufp Address of pointer to destination buffer
      */
@@ -304,7 +304,7 @@ namespace Hypertable {
      *   i32  error code
      *   vstr error message (if error code != Error::OK)
      * </pre>
-     * This method is called by #decode to handle decoding of the operation
+     * This method is called by decode() to handle decoding of the operation
      * result.
      * @param bufp Address of pointer to encoded result
      * @param remainp Address of integer holding amount of remaining buffer
@@ -312,7 +312,7 @@ namespace Hypertable {
     virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
     /** Length of encoded operation.
-     * Length of encoded operation.  See #encode for description of encoding
+     * Length of encoded operation.  See encode() for description of encoding
      * format.
      * @return length of encoded operation
      */
@@ -339,7 +339,7 @@ namespace Hypertable {
     virtual void encode(uint8_t **bufp) const;
 
     /** Decode operation.
-     * Decodes operation.  See #encode for description of encoding format.
+     * Decodes operation.  See encode() for description of encoding format.
      * Upon successful decode, this method will modify <code>*bufp</code>
      * to point to the first byte past the encoded result and will decrement
      * <code>*remainp</code> by the length of the encoded result.
@@ -361,16 +361,68 @@ namespace Hypertable {
      */
     int64_t id() { return header.id; }
 
+    /** Returns operation expiration time.
+     * Operations have an expiration time held in the #m_expiration_time member.
+     * It is initialized to either the value of the property
+     * <code>Hypertable.Request.Timeout</code> or the timeout value of the
+     * client request that caused the operation to be created.  Currently
+     * it is only used by the ResponseManager class.  When a completed
+     * operation is added to the ResponseManager, it will be held there until
+     * either a FETCH_RESULT command for the operation has be received from
+     * the client, or the expiration time has been reached, after which the
+     * operation will be permanently removed.
+     * @return Expiration time of the operation
+     */
     HiResTime expiration_time() { ScopedLock lock(m_mutex); return m_expiration_time; }
 
+    /** Indicates if operation is to be removed explicitly.
+     * By default, operations are implicitly removed (deleted and removed from MML)
+     * when they enter the state OperationState::COMPLETE.  This method can be
+     * overridden to return true, indicating that the operation won't be removed
+     * when it enters the state OperationState::COMPLETE, but will be removed
+     * explicitly.  This method is used in conjunction with remove_approval_mask(),
+     * remove_approval_add(), and remove_ok().  When remove_ok() returns <i>true</i>
+     * the operation can be safely removed.
+     * @return <i>true</i> if operation is to be removed explicitly, <i>false</i>
+     * otherwise.
+     */
     virtual bool remove_explicitly() { return false; }
+
+    /** Returns remove approval bitmask.
+     * This method is used for operations that are to be removed explicitly and
+     * returns a bitmask indicating the bits in #m_remove_approvals that
+     * need to be set before the operation can be safely removed.
+     * @see remove_explicitly, remove_approval_add, remove_ok
+     * @return remove approval bitmask
+     */
     virtual int32_t remove_approval_mask() { return 0; }
+
+    /** Sets #m_remove_approvals bits.
+     * This method is used for operations that are to be removed explicitly.
+     * It sets bits in #m_remove_approvals by bitwise OR'ing it with
+     * <code>approval</code>.  Once the bits in #m_remove_approvals are set such
+     * that #m_remove_approvals is equal to those returned by
+     * remove_approval_mask(), the operation can be safely removed.
+     * @see remove_explicitly, remove_approval_mask, remove_ok
+     * @param approval Integer flag indicating bits to be set in #m_remove_approvals
+     * @return <i>true</i> if all required approval bits have been set and
+     * the operation can be safely removed, <i>false<i> otherwise.
+     */
     bool remove_approval_add(int32_t approval) {
       ScopedLock lock(m_mutex);
       m_remove_approvals |= approval;
       return m_remove_approvals == remove_approval_mask();
     }
-    bool remove_ok() { ScopedLock lock(m_mutex); return m_remove_approvals == remove_approval_mask(); }
+
+    /** Indicates if operation can be safely removed.
+     * This method is used for operations that are to be removed explicitly. It
+     * returns <i>true</i> if #m_remove_approvals equals what is returned by
+     * remove_approval_mask(), indicating that the operation can be safely
+     * removed.
+     * @see remove_explicitly, remove_approval_mask, remove_approval_add
+     * @return <i>true</i> if operation can be safely removed.
+     */
+    bool remove_ok();
 
     void complete_error(int error, const String &msg);
     void complete_error_no_log(int error, const String &msg);
@@ -414,6 +466,8 @@ namespace Hypertable {
     bool m_unblock_on_exit;
     bool m_blocked;
     String m_error_msg;
+
+    // Expiration time (used by ResponseManager)
     HiResTime m_expiration_time;
     int64_t m_hash_code;
     DependencySet m_exclusivities;
