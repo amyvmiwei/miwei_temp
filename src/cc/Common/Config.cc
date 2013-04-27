@@ -332,6 +332,8 @@ void DefaultPolicy::init_options() {
         "Timeout for failover operations")
     ("Hypertable.Failover.Quorum.Percentage", i32()->default_value(90),
         "Percentage of live RangeServers required for failover to proceed")
+    ("Hypertable.Failover.RecoverInSeries", boo()->default_value(false),
+        "Carry out USER log recovery for failed servers in series")
     ("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage",
      i32()->default_value(20), "Perform major compaction when garbage accounts "
      "for this percentage of the data")

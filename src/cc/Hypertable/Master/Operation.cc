@@ -43,6 +43,7 @@ const char *Dependency::SERVERS = "SERVERS";
 const char *Dependency::ROOT = "ROOT";
 const char *Dependency::METADATA = "METADATA";
 const char *Dependency::SYSTEM = "SYSTEM";
+const char *Dependency::USER = "USER";
 const char *Dependency::RECOVER_SERVER = "RECOVER_SERVER";
 const char *Dependency::RECOVERY_BLOCKER= "RECOVERY_BLOCKER";
 const char *Dependency::RECOVERY = "RECOVERY";

@@ -261,6 +261,8 @@ void OperationRecoverRanges::initialize_obstructions_dependencies() {
     m_dependencies.insert(Dependency::METADATA);
     break;
   case RangeSpec::USER:
+    if (m_context->props->get_bool("Hypertable.Failover.RecoverInSeries"))
+      m_exclusivities.insert(Dependency::USER);
     m_obstructions.insert(format("%s-user", m_location.c_str()));
     m_dependencies.insert(Dependency::ROOT);
     m_dependencies.insert(Dependency::METADATA);
