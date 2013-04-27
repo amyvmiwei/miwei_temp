@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -67,7 +67,7 @@ const char *Hyperspace::Protocol::command_strs[COMMAND_MAX] = {
 };
 
 
-/**
+/*
  *
  */
 const char *Hyperspace::Protocol::command_text(uint64_t command) {
@@ -76,7 +76,7 @@ const char *Hyperspace::Protocol::command_text(uint64_t command) {
   return command_strs[command];
 }
 
-/**
+/*
  *
  */
 CommBuf *
@@ -92,7 +92,7 @@ Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_id,
 }
 
 
-/**
+/*
  *
  */
 CommBuf *
@@ -108,7 +108,7 @@ Hyperspace::Protocol::create_server_keepalive_request(uint64_t session_id,
 }
 
 
-/**
+/*
  *
  */
 CommBuf *
@@ -123,7 +123,7 @@ Hyperspace::Protocol::create_server_keepalive_request(
   return cbuf;
 }
 
-/**
+/*
  *
  */
 CommBuf *Hyperspace::Protocol::create_server_redirect_request(const std::string &host) {
@@ -135,7 +135,7 @@ CommBuf *Hyperspace::Protocol::create_server_redirect_request(const std::string 
   return cbuf;
 }
 
-/**
+/*
  *
  */
 CommBuf *Hyperspace::Protocol::create_handshake_request(uint64_t session_id,
@@ -150,7 +150,7 @@ CommBuf *Hyperspace::Protocol::create_handshake_request(uint64_t session_id,
 }
 
 
-/**
+/*
  *
  */
 CommBuf *
@@ -491,7 +491,7 @@ CommBuf *Hyperspace::Protocol::create_release_request(uint64_t handle) {
 }
 
 
-/**
+/*
  *
  */
 CommBuf *Hyperspace::Protocol::create_status_request() {

@@ -229,6 +229,12 @@ void Operation::decode_result(const uint8_t **bufp, size_t *remainp) {
     m_error_msg = Serialization::decode_vstr(bufp, remainp);
 }
 
+bool Operation::remove_ok() {
+  ScopedLock lock(m_mutex);
+  HT_ASSERT(remove_explicitly());
+  return m_remove_approvals == remove_approval_mask();
+}
+
 
 void Operation::complete_error(int error, const String &msg) {
   {

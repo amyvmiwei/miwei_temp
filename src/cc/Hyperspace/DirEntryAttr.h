@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -32,7 +32,7 @@ namespace Hyperspace {
 
   using namespace Hypertable;
 
-  /**
+  /*
    * Listing information for each node within a directory.  A vector
    * of these objects gets passed back to the application via a call to
    * Readdirfileattr()

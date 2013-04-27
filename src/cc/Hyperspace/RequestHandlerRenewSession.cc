@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -34,7 +34,7 @@
 using namespace Hyperspace;
 using namespace Hypertable;
 
-/**
+/*
  *
  */
 void RequestHandlerRenewSession::run() {
@@ -96,7 +96,7 @@ void RequestHandlerRenewSession::run() {
 
     session_ptr->purge_notifications(m_last_known_event);
 
-    /**
+    /*
     HT_INFOF("Sending Keepalive request to %s (m_last_known_event=%lld)",
              InetAddr::format(m_event->addr), m_last_known_event);
     **/

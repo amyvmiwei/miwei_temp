@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -299,7 +299,7 @@ namespace Hyperspace {
           keywords =
             "flags", "FLAGS", "attr", "ATTR", "event-mask", "EVENT-MASK";
 
-          /**
+          /*
            * OPERATORS
            */
           chlit<>     ONE('1');
@@ -331,7 +331,7 @@ namespace Hyperspace {
           strlit<>    DOTDOT("..");
           strlit<>    DOUBLEQUESTIONMARK("??");
 
-          /**
+          /*
            * TOKENS
            */
           typedef inhibit_case<strlit<> > Token;
@@ -386,7 +386,7 @@ namespace Hyperspace {
           Token R_REPLICAS           = as_lower_d["replicas"];
           Token FLAG_R               = as_lower_d["-r"];
 
-          /**
+          /*
            * Start grammar definition
            */
 
@@ -625,7 +625,7 @@ namespace Hyperspace {
             | R_REPLICAS[set_locate_type(self.state, LOCATE_REPLICAS)]
             ;
 
-          /**
+          /*
            * End grammar definition
            */
 

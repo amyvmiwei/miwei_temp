@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -59,7 +59,7 @@ namespace Hyperspace {
 
     enum { TIMER_INTERVAL_MS=1000 };
 
-    /**
+    /*
      * Enumerate handle deletion states
      * TODO: Add more states as part of Hyperspace state recovery. Hence don't use bool now
      */
@@ -117,7 +117,7 @@ namespace Hyperspace {
               uint32_t mode, bool try_lock);
     void release(ResponseCallback *cb, uint64_t session_id, uint64_t handle);
 
-    /**
+    /*
      * Creates a new session by allocating a new SessionData object, obtaining a
      * new session ID and inserting the object into the Session map.
      *
@@ -126,7 +126,7 @@ namespace Hyperspace {
      */
     uint64_t create_session(struct sockaddr_in &addr);
 
-    /**
+    /*
      * Obtains the SessionData object for the given id from the session map.
      *
      * @param session_id Session ID to lookup
@@ -138,7 +138,7 @@ namespace Hyperspace {
     void destroy_session(uint64_t session_id);
     void initialize_session(uint64_t session_id, const String &name);
 
-    /**
+    /*
      * Attempts to renew the session lease for session with the given ID.  If
      * the session cannot be found or if it is expired, the method returns
      * Error::HYPERSPACE_EXPIRED_SESSION otherwise, it renews the session
@@ -271,7 +271,7 @@ namespace Hyperspace {
                                      NotificationMap &handles_to_sessions);
     void persist_event_notifications(BDbTxn &txn, uint64_t event_id, uint64_t handle);
     bool validate_and_create_node_data(BDbTxn &txn, const String &node);
-    /**
+    /*
      * Locates the parent 'node' of the given pathname.  It determines the name
      * of the parent node by stripping off the characters incuding and after
      * the last '/' character.  It then looks up the name in the m_node_map and

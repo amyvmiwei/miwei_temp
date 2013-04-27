@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -47,7 +47,13 @@
 #include "DirEntryAttr.h"
 #include "HsCommandInterpreter.h"
 
+/** %Hyperspace definitions */
 namespace Hyperspace {
+
+  /** @defgroup Hyperspace Hyperspace
+   * %Hyperspace highly available lock manager
+   * @{
+   */
 
   using namespace std;
   class HsCommandInterpreter;
@@ -711,6 +717,8 @@ namespace Hyperspace {
 
   void close_handle(SessionPtr hyperspace, uint64_t handle);
   void close_handle_ptr(SessionPtr hyperspace, uint64_t *handlep);
+
+  /** @}*/
 
 } // namespace Hyperspace
 

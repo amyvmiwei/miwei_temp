@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -26,7 +26,7 @@
 
 namespace Hyperspace {
 
-  /**
+  /*
    * Lock sequencer.  This object gets created with each lock
    * acquisition and gets passed to each service that expects
    * to be protected by the lock.  The service will check the

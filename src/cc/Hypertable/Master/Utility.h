@@ -36,7 +36,7 @@
 
 namespace Hypertable {
 
-  /** General-purpose utility definitions. */
+  /** General-purpose utilities */
   namespace Utility {
 
     /** @addtogroup Master
