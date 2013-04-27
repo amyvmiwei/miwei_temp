@@ -1,3 +1,17 @@
+Version 0.9.7.5:
+(2013-04-27)
+
+   Reset state to INITIAL in OperationRecoverRanges on PHANTOM_RANGE_MAP_NOT_FOUND
+   Allow mid-recovery servers to be added back into pool of RangeServers
+   Added memory tracking to recovery
+   Fixed prerm.sh script for packages
+   Fixed a delete issue caught by AddressSanitizer
+   More doxygen comments
+   ScanSpec column predicate validation fix
+   Removed ReferenceCount base class of IOHandler
+   Change name() of OperationRecover to match class name
+   Fixed llvm build for Mac OSX
+
 Version 0.9.7.4:
 (2013-04-24)
 
