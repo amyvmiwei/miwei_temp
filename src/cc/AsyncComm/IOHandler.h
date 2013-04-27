@@ -51,7 +51,6 @@ extern "C" {
 
 #include "Common/Logger.h"
 #include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
 #include "Common/Time.h"
 
 #include "DispatchHandler.h"
@@ -72,7 +71,7 @@ namespace Hypertable {
    * reads messages off the socket and sends then to the application via the
    * installed DispatchHandler object.
    */
-  class IOHandler : public ReferenceCount {
+  class IOHandler {
 
   public:
 
