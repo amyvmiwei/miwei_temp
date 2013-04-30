@@ -697,7 +697,6 @@ void RangeServer::local_recover() {
       if (!maintenance_tasks.empty()) {
         for (size_t i=0; i<maintenance_tasks.size(); i++)
           Global::maintenance_queue->add(maintenance_tasks[i]);
-        Global::maintenance_queue->wait_for_empty();
         maintenance_tasks.clear();
       }
 
@@ -756,7 +755,6 @@ void RangeServer::local_recover() {
       if (!maintenance_tasks.empty()) {
         for (size_t i=0; i<maintenance_tasks.size(); i++)
           Global::maintenance_queue->add(maintenance_tasks[i]);
-        Global::maintenance_queue->wait_for_empty();
         maintenance_tasks.clear();
       }
 
@@ -812,7 +810,6 @@ void RangeServer::local_recover() {
       if (!maintenance_tasks.empty()) {
         for (size_t i=0; i<maintenance_tasks.size(); i++)
           Global::maintenance_queue->add(maintenance_tasks[i]);
-        Global::maintenance_queue->wait_for_empty();
         maintenance_tasks.clear();
       }
 
@@ -873,7 +870,6 @@ void RangeServer::local_recover() {
       if (!maintenance_tasks.empty()) {
         for (size_t i=0; i<maintenance_tasks.size(); i++)
           Global::maintenance_queue->add(maintenance_tasks[i]);
-        Global::maintenance_queue->wait_for_empty();
         maintenance_tasks.clear();
       }
     }
@@ -1370,8 +1366,9 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       }
     }
 
-    scan_ctx = new ScanContext(range->get_scan_revision(),
+    scan_ctx = new ScanContext(range->get_scan_revision(cb->get_event()->header.timeout_ms),
                                scan_spec, range_spec, schema);
+    scan_ctx->timeout_ms = cb->get_event()->header.timeout_ms;
 
     scanner = range->create_scanner(scan_ctx);
 
@@ -1755,6 +1752,17 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
     HT_MAYBE_FAIL_X("metadata-load-range-3", table->is_metadata());
 
+    // make sure that we don't have a clock skew
+    // poll() timeout is in milliseconds, revision and now is in nanoseconds
+    int64_t now = Hypertable::get_ts64();
+    int64_t revision = range->get_scan_revision(cb->get_event()->header.timeout_ms);
+    if (revision > now) {
+      int64_t diff = (revision - now) / 1000000;
+      HT_WARNF("Clock skew detected when loading range; waiting for %lld "
+               "millisec", (long long int)diff);
+      poll(0, 0, diff);
+    }
+
     {
       ScopedLock lock(m_drop_table_mutex);
 
@@ -1765,17 +1773,6 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         return;
       }
       
-      // make sure that we don't have a clock skew
-      // poll() timeout is in milliseconds, revision and now is in nanoseconds
-      int64_t now = Hypertable::get_ts64();
-      int64_t revision = range->get_scan_revision();
-      if (revision > now) {
-        int64_t diff = (revision - now) / 1000000;
-        HT_WARNF("Clock skew detected when loading range; waiting for %lld "
-                 "millisec", (long long int)diff);
-        poll(0, 0, diff);
-      }
-
       m_live_map->add_staged_range(table, range, range_state->transfer_log);
     }
 
@@ -1844,7 +1841,7 @@ RangeServer::acknowledge_load(ResponseCallbackAcknowledgeLoad *cb,
       }
 
       try {
-        range->acknowledge_load();
+        range->acknowledge_load(cb->get_event()->header.timeout_ms);
       }
       catch(Exception &e) {
         error_map[rr] = e.code();
@@ -3045,6 +3042,8 @@ RangeServer::dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *tabl
       cb->error(Error::TABLE_NOT_FOUND, table->id);
       return;
     }
+
+    scan_ctx->timeout_ms = cb->get_event()->header.timeout_ms;
 
     table_info->get_range_data(range_data);
     foreach_ht(RangeData &rd, range_data) {

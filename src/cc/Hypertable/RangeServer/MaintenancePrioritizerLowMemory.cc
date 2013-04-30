@@ -56,22 +56,28 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
 
   m_cellstore_minimum_size = get_i64("Hypertable.RangeServer.CellStore.TargetSize.Minimum");
 
+  m_uninitialized_ranges_seen = false;
+
   /**
    * Assign priority for ROOT range
    */
-  if (!range_data_root.empty())
+  if (!range_data_root.empty()) {
     assign_priorities_all(range_data_root, Global::root_log,
                           Global::log_prune_threshold_min,
                           memory_state, priority, trace);
+    schedule_initialization_operations(range_data_root, priority);
+  }
 
 
   /**
    * Assign priority for METADATA ranges
    */
-  if (!range_data_metadata.empty())
+  if (!range_data_metadata.empty()) {
     assign_priorities_all(range_data_metadata, Global::metadata_log,
                           Global::log_prune_threshold_min, memory_state,
                           priority, trace);
+    schedule_initialization_operations(range_data_metadata, priority);
+  }
 
   /**
    *  Compute prune threshold based on load activity
@@ -87,9 +93,11 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
   /**
    * Assign priority for SYSTEM ranges
    */
-  if (!range_data_system.empty())
+  if (!range_data_system.empty()) {
     assign_priorities_all(range_data_system, Global::system_log, prune_threshold,
                           memory_state, priority, trace);
+    schedule_initialization_operations(range_data_system, priority);
+  }
 
   /**
    * Assign priority for USER ranges
@@ -103,7 +111,12 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
 
     schedule_necessary_compactions(range_data_user, Global::user_log, prune_threshold,
                                    memory_state, priority, trace);
+
+    schedule_initialization_operations(range_data_user, priority);
   }
+
+  if (m_uninitialized_ranges_seen == false)
+    m_initialization_complete = true;
 
 }
 

@@ -75,6 +75,7 @@ MaintenancePrioritizerLowMemory.cc
 MaintenanceQueue.cc
 MaintenanceScheduler.cc
 MaintenanceTaskCompaction.cc
+MaintenanceTaskDeferredInitialization.cc
 MaintenanceTaskMemoryPurge.cc
 MaintenanceTaskRelinquish.cc
 MaintenanceTaskSplit.cc

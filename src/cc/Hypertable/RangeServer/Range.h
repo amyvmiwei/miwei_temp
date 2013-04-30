@@ -101,6 +101,7 @@ namespace Hypertable {
       uint64_t shadow_cache_memory;
       uint64_t block_index_memory;
       uint64_t bloom_filter_memory;
+      int64_t  log_hash;
       uint32_t bloom_filter_accesses;
       uint32_t bloom_filter_maybes;
       uint32_t bloom_filter_fps;
@@ -111,7 +112,7 @@ namespace Hypertable {
       bool     needs_major_compaction;
       bool     needs_split;
       bool     load_acknowledged;
-      int64_t  log_hash;
+      bool     initialized;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
@@ -125,8 +126,10 @@ namespace Hypertable {
     virtual const char *get_split_row() { return 0; }
 
     virtual int64_t get_total_entries() {
-      boost::mutex::scoped_lock lock(m_mutex);
+      if (!m_initialized)
+        deferred_initialization();
       int64_t total = 0;
+      boost::mutex::scoped_lock lock(m_schema_mutex);
       for (size_t i=0; i<m_access_group_vector.size(); i++)
         total += m_access_group_vector[i]->get_total_entries();
       return total;
@@ -136,8 +139,6 @@ namespace Hypertable {
     void unlock();
 
     MetaLog::EntityRange *metalog_entity() { return m_metalog_entity.get(); }
-
-    uint64_t disk_usage();
 
     CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
@@ -160,6 +161,10 @@ namespace Hypertable {
     CellListScanner *create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
                                                  const String &table_name);
 
+    void deferred_initialization();
+
+    void deferred_initialization(boost::xtime deadline);
+
     String start_row() {
       ScopedLock lock(m_mutex);
       return m_metalog_entity->spec.start_row;
@@ -181,7 +186,7 @@ namespace Hypertable {
       return m_metalog_entity->spec.end_row;
     }
 
-    int64_t get_scan_revision();
+    int64_t get_scan_revision(uint32_t timeout_ms);
 
     void replay_transfer_log(CommitLogReader *commit_log_reader);
 
@@ -333,7 +338,7 @@ namespace Hypertable {
       return m_metalog_entity->needs_compaction;
     }
 
-    void acknowledge_load();
+    void acknowledge_load(uint32_t timeout_ms);
 
     bool load_acknowledged() {
       // Not locking this mutex for performance reasons.  Ranges start out
@@ -359,7 +364,9 @@ namespace Hypertable {
 
     void initialize();
 
-    void load_cell_stores(Metadata *metadata);
+    void load_cell_stores();
+
+    void split_install_log_rollback_metadata();
 
     bool cancel_maintenance();
 
@@ -371,8 +378,6 @@ namespace Hypertable {
     void split_install_log();
     void split_compact_and_shrink();
     void split_notify_master();
-
-    void split_install_log_rollback_metadata();
 
     void maybe_create_log_removal_task(MetaLog::EntityTaskPtr &log_removal_task);
 
@@ -402,9 +407,9 @@ namespace Hypertable {
     int64_t          m_split_threshold;
     String           m_split_row;
     CommitLogPtr     m_transfer_log;
-    bool             m_split_off_high;
     Barrier          m_update_barrier;
     Barrier          m_scan_barrier;
+    bool             m_split_off_high;
     bool             m_is_root;
     bool             m_is_metadata;
     bool             m_unsplittable;
@@ -419,6 +424,7 @@ namespace Hypertable {
     int64_t          m_maintenance_generation;
     LoadMetricsRange m_load_metrics;
     int64_t          m_log_hash;
+    bool             m_initialized;
   };
 
   typedef intrusive_ptr<Range> RangePtr;

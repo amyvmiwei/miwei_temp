@@ -149,7 +149,15 @@ namespace Hypertable {
     uint64_t disk_usage();
     uint64_t memory_usage();
     void space_usage(int64_t *memp, int64_t *diskp);
-    void add_cell_store(CellStorePtr &cellstore);
+
+    void load_cellstore(CellStorePtr &cellstore);
+
+    void post_load_cellstores() {
+      sort_cellstores_by_timestamp();
+      m_needs_merging = find_merge_run();
+      if (!m_in_memory)
+        purge_stored_cells_from_cache();
+    }
 
     void compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp);
 
@@ -176,11 +184,7 @@ namespace Hypertable {
     void release_files(const std::vector<String> &files);
 
     void recovery_initialize() { m_recovering = true; }
-    void recovery_finalize() {
-      sort_cellstores_by_timestamp();
-      m_needs_merging = find_merge_run();
-      m_recovering = false;
-    }
+    void recovery_finalize() { m_recovering = false; }
 
     void dump_keys(std::ofstream &out);
 
@@ -193,6 +197,7 @@ namespace Hypertable {
 
   private:
 
+    void purge_stored_cells_from_cache();
     void merge_caches(bool reset_earliest_cached_revision=true);
     void range_dir_initialize();
     void recompute_compression_ratio(int64_t *total_index_entriesp=0);

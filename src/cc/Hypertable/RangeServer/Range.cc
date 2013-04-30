@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -45,6 +45,7 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/md5.h"
 #include "Common/Random.h"
+#include "Common/ScopeGuard.h"
 #include "Common/StringExt.h"
 
 #include "Hypertable/Lib/CommitLog.h"
@@ -75,7 +76,7 @@ Range::Range(MasterClientPtr &master_client,
     m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
     m_relinquish(false), m_removed_from_working_set(false), m_maintenance_generation(0),
     m_load_metrics(identifier->id, range->start_row, range->end_row),
-    m_log_hash(0) {
+    m_log_hash(0), m_initialized(false) {
   m_metalog_entity = new MetaLog::EntityRange(*identifier, *range, *state, needs_compaction);
   initialize();
 }
@@ -92,7 +93,8 @@ Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
     m_capacity_exceeded_throttle(false), m_relinquish(false),
     m_removed_from_working_set(false), m_maintenance_generation(0),
     m_load_metrics(range_entity->table.id, range_entity->spec.start_row,
-                   range_entity->spec.end_row), m_log_hash(0) {
+                   range_entity->spec.end_row), m_log_hash(0),
+    m_initialized(false) {
   initialize();
 }
 
@@ -104,7 +106,7 @@ void Range::initialize() {
     m_log_hash = md5_hash(m_metalog_entity->state.transfer_log);
   }
 
-  memset(m_added_deletes, 0, 3*sizeof(int64_t));
+  memset(m_added_deletes, 0, sizeof(m_added_deletes));
 
   if (m_metalog_entity->table.is_metadata()) {
     if (m_metalog_entity->state.soft_limit == 0)
@@ -139,9 +141,6 @@ void Range::initialize() {
       HT_ASSERT(split_off == "low");
   }
 
-  if (m_metalog_entity->state.state == RangeState::SPLIT_LOG_INSTALLED)
-    split_install_log_rollback_metadata();
-
   m_name = format("%s[%s..%s]", m_metalog_entity->table.id,
                   m_metalog_entity->spec.start_row,
                   m_metalog_entity->spec.end_row);
@@ -163,64 +162,88 @@ void Range::initialize() {
       m_column_family_vector[scf->id] = ag;
   }
 
-  if (m_is_root) {
-    MetadataRoot metadata(m_schema);
-    load_cell_stores(&metadata);
-  }
-  else {
-    MetadataNormal metadata(&m_metalog_entity->table, m_metalog_entity->spec.end_row);
-    load_cell_stores(&metadata);
-  }
-
   HT_DEBUG_OUT << "Range object for " << m_name << " constructed\n"
                << &m_metalog_entity->state << HT_END;
 }
 
+void Range::deferred_initialization() {
+  RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
 
-void Range::split_install_log_rollback_metadata() {
+  if (m_initialized)
+    return;
 
-  try {
-    String metadata_key_str;
-    KeySpec key;
+  if (m_metalog_entity->state.state == RangeState::SPLIT_LOG_INSTALLED)
+    split_install_log_rollback_metadata();
 
-    TableMutatorPtr mutator = Global::metadata_table->create_mutator();
+  load_cell_stores();
 
-    // Reset start row
-    metadata_key_str = String("") + m_metalog_entity->table.id + ":" + m_metalog_entity->spec.end_row;
-    key.row = metadata_key_str.c_str();
-    key.row_len = metadata_key_str.length();
-    key.column_qualifier = 0;
-    key.column_qualifier_len = 0;
-    key.column_family = "StartRow";
-    mutator->set(key, (uint8_t *)m_metalog_entity->spec.start_row,
-                 strlen(m_metalog_entity->spec.start_row));
-
-    // Get rid of new range
-    metadata_key_str = format("%s:%s", m_metalog_entity->table.id, m_metalog_entity->state.split_point);
-    key.flag = FLAG_DELETE_ROW;
-    key.row = metadata_key_str.c_str();
-    key.row_len = metadata_key_str.length();
-    key.column_qualifier = 0;
-    key.column_qualifier_len = 0;
-    key.column_family = 0;
-    mutator->set_delete(key);
-
-    mutator->flush();
-
-  }
-  catch (Hypertable::Exception &e) {
-    // TODO: propagate exception
-    HT_ERROR_OUT << "Problem rolling back Range from SPLIT_LOG_INSTALLED state " << e << HT_END;
-    HT_ABORT;
+  {
+    ScopedLock schema_lock(m_schema_mutex);
+    foreach_ht (AccessGroupPtr ag, m_access_group_vector)
+      ag->post_load_cellstores();
   }
 
+  m_initialized = true;
+}
+
+void Range::deferred_initialization(boost::xtime deadline) {
+  boost::xtime now;
+  while (true) {
+    try {
+      deferred_initialization();
+    }
+    catch (Exception &e) {
+      boost::xtime_get(&now, TIME_UTC_);
+      if (boost::xtime_cmp(now, deadline) < 0) {
+        poll(0, 0, 10000);
+        continue;
+      }
+      throw;
+    }
+    break;
+  }
 }
 
 
-/**
- *
- */
-void Range::load_cell_stores(Metadata *metadata) {
+void Range::split_install_log_rollback_metadata() {
+  String metadata_key_str;
+  KeySpec key;
+
+  TableMutatorPtr mutator = Global::metadata_table->create_mutator();
+
+  // Reset start row
+  metadata_key_str = String("") + m_metalog_entity->table.id + ":" + m_metalog_entity->spec.end_row;
+  key.row = metadata_key_str.c_str();
+  key.row_len = metadata_key_str.length();
+  key.column_qualifier = 0;
+  key.column_qualifier_len = 0;
+  key.column_family = "StartRow";
+  mutator->set(key, (uint8_t *)m_metalog_entity->spec.start_row,
+               strlen(m_metalog_entity->spec.start_row));
+
+  // Get rid of new range
+  metadata_key_str = format("%s:%s", m_metalog_entity->table.id, m_metalog_entity->state.split_point);
+  key.flag = FLAG_DELETE_ROW;
+  key.row = metadata_key_str.c_str();
+  key.row_len = metadata_key_str.length();
+  key.column_qualifier = 0;
+  key.column_qualifier_len = 0;
+  key.column_family = 0;
+  mutator->set_delete(key);
+
+  mutator->flush();
+}
+
+namespace {
+  void delete_metadata_pointer(Metadata **metadata) {
+    delete *metadata;
+    *metadata = 0;
+  }
+}
+
+
+void Range::load_cell_stores() {
+  Metadata *metadata = 0;
   AccessGroup *ag;
   CellStorePtr cellstore;
   const char *base, *ptr, *end;
@@ -230,9 +253,22 @@ void Range::load_cell_stores(Metadata *metadata) {
   String file_str;
   uint32_t nextcsid;
 
+  HT_INFOF("Loading cellstores for '%s'", m_name.c_str());
+
+  HT_ON_SCOPE_EXIT(&delete_metadata_pointer, &metadata);
+
+  if (m_is_root) {
+    ScopedLock schema_lock(m_schema_mutex);
+    metadata = new MetadataRoot(m_schema);
+  }
+  else
+    metadata = new MetadataNormal(&m_metalog_entity->table,
+                                  m_metalog_entity->spec.end_row);
+
   metadata->reset_files_scan();
 
   while (metadata->get_next_files(ag_name, files, &nextcsid)) {
+    ScopedLock schema_lock(m_schema_mutex);
     csvec.clear();
 
     if ((ag = m_access_group_map[ag_name]) == 0) {
@@ -301,9 +337,11 @@ void Range::load_cell_stores(Metadata *metadata) {
       if (revision > m_latest_revision)
         m_latest_revision = revision;
 
-      ag->add_cell_store(cellstore);
+      ag->load_cellstore(cellstore);
     }
   }
+
+  HT_INFOF("Finished loading cellstores for '%s'", m_name.c_str());
 }
 
 
@@ -405,6 +443,14 @@ CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
   MergeScanner *mscanner = new MergeScannerRange(scan_ctx);
   AccessGroupVector  ag_vector(0);
 
+
+  if (!m_initialized) {
+    boost::xtime expiration_time;
+    boost::xtime_get(&expiration_time, TIME_UTC_);
+    expiration_time.sec += scan_ctx->timeout_ms/1000;
+    deferred_initialization(expiration_time);
+  }
+
   {
     ScopedLock lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
@@ -431,6 +477,13 @@ CellListScanner *Range::create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
   CellListScannerBuffer *scanner = 0;
   AccessGroupVector ag_vector(0);
 
+  if (!m_initialized) {
+    boost::xtime expiration_time;
+    boost::xtime_get(&expiration_time, TIME_UTC_);
+    expiration_time.sec += scan_ctx->timeout_ms/1000;
+    deferred_initialization(expiration_time);
+  }
+
   {
     ScopedLock lock(m_schema_mutex);
     ag_vector = m_access_group_vector;
@@ -454,14 +507,6 @@ CellListScanner *Range::create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
   return scanner;
 }
 
-
-uint64_t Range::disk_usage() {
-  ScopedLock lock(m_schema_mutex);
-  uint64_t usage = 0;
-  for (size_t i=0; i<m_access_group_vector.size(); i++)
-    usage += m_access_group_vector[i]->disk_usage();
-  return usage;
-}
 
 bool Range::need_maintenance() {
   ScopedLock lock(m_schema_mutex);
@@ -527,6 +572,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->soft_limit = m_metalog_entity->state.soft_limit;
     mdata->busy = m_maintenance_guard.in_progress() || !m_metalog_entity->load_acknowledged;
     mdata->needs_major_compaction = m_metalog_entity->needs_compaction;
+    mdata->initialized = m_initialized;
   }
 
   for (size_t i=0; i<ag_vector.size(); i++) {
@@ -586,6 +632,10 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
 
 
 void Range::relinquish() {
+
+  if (!m_initialized)
+    deferred_initialization();
+
   RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
 
   // NOTE: We're not locking m_mutex when referencing m_metalog_entity
@@ -834,6 +884,10 @@ void Range::relinquish_compact_and_finish() {
 
 
 void Range::split() {
+
+  if (!m_initialized)
+    deferred_initialization();
+
   RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
   String old_start_row;
 
@@ -1352,6 +1406,10 @@ void Range::split_notify_master() {
 
 
 void Range::compact(MaintenanceFlag::Map &subtask_map) {
+
+  if (!m_initialized)
+    deferred_initialization();
+
   RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
   AccessGroupVector ag_vector(0);
   int flags = 0;
@@ -1429,6 +1487,10 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
 
 
 void Range::purge_memory(MaintenanceFlag::Map &subtask_map) {
+
+  if (!m_initialized)
+    deferred_initialization();
+
   RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
   AccessGroupVector ag_vector(0);
   uint64_t memory_purged = 0;
@@ -1598,12 +1660,28 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
 }
 
 
-int64_t Range::get_scan_revision() {
+int64_t Range::get_scan_revision(uint32_t timeout_ms) {
+
+  if (!m_initialized) {
+    boost::xtime expiration_time;
+    boost::xtime_get(&expiration_time, TIME_UTC_);
+    expiration_time.sec += timeout_ms/1000;
+    deferred_initialization(expiration_time);
+  }
+
   ScopedLock lock(m_mutex);
   return m_latest_revision;
 }
 
-void Range::acknowledge_load() {
+void Range::acknowledge_load(uint32_t timeout_ms) {
+
+  if (!m_initialized) {
+    boost::xtime expiration_time;
+    boost::xtime_get(&expiration_time, TIME_UTC_);
+    expiration_time.sec += timeout_ms/1000;
+    deferred_initialization(expiration_time);
+  }
+
   ScopedLock lock(m_mutex);
   m_metalog_entity->load_acknowledged = true;
 

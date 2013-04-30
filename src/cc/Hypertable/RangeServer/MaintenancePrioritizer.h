@@ -51,7 +51,8 @@ namespace Hypertable {
     };
 
     MaintenancePrioritizer(RSStatsPtr &server_stats)
-      : m_cellstore_minimum_size(0), m_server_stats(server_stats) { }
+      : m_cellstore_minimum_size(0), m_server_stats(server_stats),
+        m_initialization_complete(false), m_uninitialized_ranges_seen(false) { }
 
     virtual void prioritize(RangeDataVector &range_data, MemoryState &memory_state,
                             int32_t priority, String *trace) = 0;
@@ -60,6 +61,11 @@ namespace Hypertable {
 
     int64_t m_cellstore_minimum_size;
     RSStatsPtr m_server_stats;
+    bool m_initialization_complete;
+    bool m_uninitialized_ranges_seen;
+
+    void schedule_initialization_operations(RangeDataVector &range_data,
+                                            int32_t &priority);
 
     bool schedule_inprogress_operations(RangeDataVector &range_data,
                                         MemoryState &memory_state,
