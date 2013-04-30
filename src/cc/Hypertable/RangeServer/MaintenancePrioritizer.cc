@@ -85,6 +85,23 @@ namespace {
 
 }
 
+void
+MaintenancePrioritizer::schedule_initialization_operations(
+                           RangeDataVector &range_data, int32_t &priority) {
+  if (m_initialization_complete)
+    return;
+
+  for (size_t i=0; i<range_data.size(); i++) {
+    if (!range_data[i].data->initialized)
+      m_uninitialized_ranges_seen = true;
+    if (range_data[i].data->busy || range_data[i].data->priority)
+      continue;
+    if (!range_data[i].data->initialized)
+      range_data[i].data->priority = priority++;
+  }
+}
+
+
 
 bool
 MaintenancePrioritizer::schedule_inprogress_operations(RangeDataVector &range_data,

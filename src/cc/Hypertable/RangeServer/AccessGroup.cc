@@ -401,7 +401,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 }
 
 
-void AccessGroup::add_cell_store(CellStorePtr &cellstore) {
+void AccessGroup::load_cellstore(CellStorePtr &cellstore) {
   ScopedLock lock(m_mutex);
 
   m_disk_usage += cellstore->disk_usage();
@@ -737,6 +737,37 @@ void AccessGroup::run_compaction(int maintenance_flags) {
 }
 
 
+void AccessGroup::purge_stored_cells_from_cache() {
+  ScopedLock lock(m_mutex);
+  ScanContextPtr scan_context = new ScanContext(m_schema);
+  CellCachePtr old_cell_cache;
+  Key key;
+  ByteString value;
+
+  m_earliest_cached_revision_saved = m_earliest_cached_revision;
+  m_earliest_cached_revision = TIMESTAMP_MAX;
+
+  m_cell_cache_manager->get_read_cache(old_cell_cache);
+
+  CellCachePtr new_cell_cache = new CellCache();
+  new_cell_cache->lock();
+  m_cell_cache_manager->install_new_cell_cache(new_cell_cache);
+  
+  CellListScannerPtr old_scanner = old_cell_cache->create_scanner(scan_context);
+
+  m_recovering = true;
+  while (old_scanner->get(key, value)) {
+    if (key.revision > m_latest_stored_revision)
+      add(key, value);
+    old_scanner->forward();
+  }
+  m_recovering = false;
+
+  m_earliest_cached_revision_saved = TIMESTAMP_MAX;
+  
+  new_cell_cache->unlock();
+}
+
 
 /**
  *
@@ -749,8 +780,6 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
   ByteString value;
   Key key_comps;
   CellStore *new_cell_store;
-  uint64_t memory_added = 0;
-  uint64_t items_added = 0;
   int cmp;
 
   m_cell_cache_manager->get_read_cache(old_cell_cache);
@@ -801,8 +830,6 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
         else if (key_comps.revision < m_earliest_cached_revision)
           m_earliest_cached_revision = key_comps.revision;
         add(key_comps, value);
-        memory_added += key.length() + value.length();
-        items_added++;
       }
       old_scanner->forward();
     }

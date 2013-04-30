@@ -51,6 +51,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
       range_data_user.push_back(range_data[i]);
   }
 
+  m_uninitialized_ranges_seen = false;
 
   /**
    * Assign priority for ROOT range
@@ -95,6 +96,9 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
     assign_priorities(range_data_user, Global::user_log, prune_threshold,
                       memory_state, priority, trace);
 
+  if (m_uninitialized_ranges_seen == false)
+    m_initialization_complete = true;
+
   /**
    *  If there is no update activity, or there is little update activity and
    *  scan activity, then increase the block cache size
@@ -128,19 +132,16 @@ MaintenancePrioritizerLogCleanup::assign_priorities(RangeDataVector &range_data,
               CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
               int32_t &priority, String *trace) {
 
-  /**
-   * 1. Schedule in-progress relinquish and/or split operations
-   */
+  // 1. Schedule deferred initialization tasks
+  schedule_initialization_operations(range_data, priority);
+
+  // 2. Schedule in-progress relinquish and/or split operations
   schedule_inprogress_operations(range_data, memory_state, priority, trace);
 
-  /**
-   * 2. Schedule splits and relinquishes
-   */
+  // 3. Schedule splits and relinquishes
   schedule_splits_and_relinquishes(range_data, memory_state, priority, trace);
 
-  /**
-   * 3. Schedule compactions for log cleaning purposes
-   */
+  // 4. Schedule compactions for log cleaning purposes
   schedule_necessary_compactions(range_data, log, prune_threshold,
                                  memory_state, priority, trace);
 

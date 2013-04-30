@@ -33,6 +33,7 @@
 #include "MaintenancePrioritizerLogCleanup.h"
 #include "MaintenanceScheduler.h"
 #include "MaintenanceTaskCompaction.h"
+#include "MaintenanceTaskDeferredInitialization.h"
 #include "MaintenanceTaskMemoryPurge.h"
 #include "MaintenanceTaskRelinquish.h"
 #include "MaintenanceTaskSplit.h"
@@ -337,6 +338,12 @@ void MaintenanceScheduler::schedule() {
     int level = 0;
 
     for (size_t i=0; i<range_data_prioritized.size(); i++) {
+      if (!range_data_prioritized[i].data->initialized) {
+        level = get_level(range_data_prioritized[i]);
+        Global::maintenance_queue->add(new MaintenanceTaskDeferredInitialization(
+                                  level, range_data_prioritized[i].data->priority,
+                                  schedule_time, range_data_prioritized[i].range));
+      }
       if (range_data_prioritized[i].data->maintenance_flags & MaintenanceFlag::SPLIT) {
         level = get_level(range_data_prioritized[i]);
         Global::maintenance_queue->add(new MaintenanceTaskSplit(level, range_data_prioritized[i].data->priority,

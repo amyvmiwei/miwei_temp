@@ -78,6 +78,7 @@ void PhantomRange::create_range(MasterClientPtr &master_client,
 
   m_range = new Range(master_client, &m_range_spec.table, m_schema,
                       &m_range_spec.range, table_info.get(), &m_range_state, true);
+  m_range->deferred_initialization();
   m_range->metalog_entity()->state.state |= RangeState::PHANTOM;
   m_range_state.state |= RangeState::PHANTOM;
 }
