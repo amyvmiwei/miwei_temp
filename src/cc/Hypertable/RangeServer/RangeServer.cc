@@ -177,11 +177,6 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
         + (Random::number32() % 300);
   }
 
-  // If METADATA-only load, then prevent metrics update by pushing
-  // the update time out by a couple of weeks.
-  if (props->get_bool("Hypertable.RangeServer.LoadMetadataOnly"))
-    m_next_metrics_update += 1000000;
-
   Global::cell_cache_scanner_cache_size =
     cfg.get_i32("AccessGroup.CellCache.ScannerCacheSize");
 
@@ -765,9 +760,6 @@ void RangeServer::local_recover() {
         maintenance_tasks.clear();
       }
 
-      if (m_props->get_bool("Hypertable.RangeServer.LoadMetadataOnly"))
-        return;
-
       // Then recover SYSTEM ranges
       m_replay_group = RangeServerProtocol::GROUP_SYSTEM;
 
@@ -823,6 +815,9 @@ void RangeServer::local_recover() {
         Global::maintenance_queue->wait_for_empty();
         maintenance_tasks.clear();
       }
+
+      if (m_props->get_bool("Hypertable.RangeServer.LoadSystemTablesOnly"))
+        return;
 
       // Then recover the USER ranges
       m_replay_group = RangeServerProtocol::GROUP_USER;
