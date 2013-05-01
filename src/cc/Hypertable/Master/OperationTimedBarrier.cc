@@ -31,14 +31,15 @@ OperationTimedBarrier::OperationTimedBarrier(ContextPtr &context,
                                              const String &block_dependency,
                                              const String &wakeup_dependency)
   : Operation(context, MetaLog::EntityType::OPERATION_TIMED_BARRIER),
-    m_block_dependency(block_dependency), m_wakeup_dependency(wakeup_dependency) {
+    m_block_dependency(block_dependency), m_wakeup_dependency(wakeup_dependency),
+    m_shutdown(false) {
   m_obstructions.insert(block_dependency);
   boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
 }
 
 OperationTimedBarrier::OperationTimedBarrier(ContextPtr &context,
         const MetaLog::EntityHeader &header_)
-    : Operation(context, header_) {
+    : Operation(context, header_), m_shutdown(false) {
   HT_ASSERT(!"Invalid OperationTimedBarrier constructor called");
 }
 
@@ -49,7 +50,7 @@ void OperationTimedBarrier::execute() {
            OperationState::get_text(m_state));
 
   HiResTime now;
-  while (now < m_expire_time) {
+  while (now < m_expire_time && !m_shutdown) {
     HT_INFOF("Barrier for %s will be up for %lld milliseconds",
              m_block_dependency.c_str(), (Lld)xtime_diff_millis(now, m_expire_time));
     m_cond.timed_wait(lock, (boost::xtime)m_expire_time);
@@ -80,5 +81,10 @@ void OperationTimedBarrier::advance_into_future(uint32_t millis) {
 
   if (m_expire_time < new_time)
     m_expire_time = new_time;
+}
 
+void OperationTimedBarrier::shutdown() {
+  ScopedLock lock(m_mutex);
+  m_shutdown = true;
+  m_cond.notify_all();
 }
