@@ -93,10 +93,10 @@ void CellCacheManager::add_counter(const Key &key, const ByteString value) {
 }
 
 void CellCacheManager::add_to_read_cache(CellListScannerPtr &scanner) {
-  ByteString key, value;
-  Key key_comps;
-  while (scanner->get(key_comps, value)) {
-    m_read_cache->add(key_comps, value);
+  ByteString value;
+  Key key;
+  while (scanner->get(key, value)) {
+    m_read_cache->add(key, value);
     scanner->forward();
   }
 }
