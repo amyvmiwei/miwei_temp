@@ -51,12 +51,14 @@ namespace Hypertable {
     virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
 
     void advance_into_future(uint32_t millis);
+    void shutdown();
 
   private:
     boost::condition m_cond;
     HiResTime m_expire_time;
     String m_block_dependency;
     String m_wakeup_dependency;
+    bool m_shutdown;
   };
   typedef intrusive_ptr<OperationTimedBarrier> OperationTimedBarrierPtr;
 

@@ -50,6 +50,7 @@
 #include "OperationRenameTable.h"
 #include "OperationStatus.h"
 #include "OperationStop.h"
+#include "OperationTimedBarrier.h"
 #include "RangeServerConnection.h"
 #include "ReferenceManager.h"
 
@@ -139,7 +140,8 @@ void ConnectionHandler::handle(EventPtr &event) {
       case MasterProtocol::COMMAND_SHUTDOWN:
         HT_INFO("Received shutdown command");
         m_shutdown = true;
-        m_context->op->shutdown();
+        if (m_context->recovery_barrier_op)
+          m_context->recovery_barrier_op->shutdown();
         boost::xtime_get(&expire_time, boost::TIME_UTC_);
         expire_time.sec += 15;
         m_context->op->timed_wait_for_idle(expire_time);
@@ -201,7 +203,7 @@ void ConnectionHandler::handle(EventPtr &event) {
       }
     }
   }
-  else if (event->type == Hypertable::Event::TIMER) {
+  else if (event->type == Hypertable::Event::TIMER && !m_shutdown) {
     OperationPtr operation;
     int error;
     time_t now = time(0);
