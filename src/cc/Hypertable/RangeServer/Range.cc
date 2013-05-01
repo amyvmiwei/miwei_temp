@@ -996,6 +996,9 @@ void Range::split_install_log() {
                 m_metalog_entity->spec.end_row);
     }
 
+    HT_ASSERT(strcmp(m_split_row.c_str(), m_metalog_entity->spec.end_row) < 0 &&
+              strcmp(m_split_row.c_str(), m_metalog_entity->spec.start_row) > 0);
+
     HT_INFOF("Split row estimate for %s is '%s'",
              m_name.c_str(), m_split_row.c_str());
   }

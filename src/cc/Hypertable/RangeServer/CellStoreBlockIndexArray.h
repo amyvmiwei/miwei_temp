@@ -143,8 +143,8 @@ namespace Hypertable {
           variable_start = key.ptr;
           in_scope = true;
         }
-        else if (check_for_end_row &&
-                 strcmp(key.row(), end_row.c_str()) > 0) {
+
+        if (check_for_end_row && strcmp(key.row(), end_row.c_str()) > 0) {
           ee.key = key;
           ee.offset = offset;
           m_array.push_back(ee);
@@ -262,13 +262,8 @@ namespace Hypertable {
         }
         last_count += keys_per_block;
       }
-      if (last_count > 0) {
-        CstrToInt64MapT::iterator iter = split_row_data.find(last_row);
-        if (iter == split_row_data.end())
-          split_row_data[last_row] = last_count;
-        else
-          iter->second += last_count;
-      }
+      // Deliberately skipping last entry in m_array because it is
+      // larger than end_row
     }
 
     /** Populates <code>scanner</code> with data for <i>.cellstore.index</i>
