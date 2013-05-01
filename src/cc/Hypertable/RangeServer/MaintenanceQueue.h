@@ -165,8 +165,8 @@ namespace Hypertable {
 		m_state.inflight--;
                 continue;
               }
-              HT_ERRORF("Maintenance Task '%s' failed, dropping task ...",
-                        task->description().c_str());
+              HT_WARNF("Maintenance Task '%s' failed, dropping task ...",
+                       task->description().c_str());
             }
           }
 
