@@ -1,15 +1,25 @@
 Version 0.9.7.5:
-(2013-04-27)
+(2013-05-03)
 
+   Fixed split row estimation bug (CRITICAL)
+   Fixed problem with RPM package
+   issue 934: Defer CellStore loading (eliminate METADATA table access on startup)
    Reset state to INITIAL in OperationRecoverRanges on PHANTOM_RANGE_MAP_NOT_FOUND
    Allow mid-recovery servers to be added back into pool of RangeServers
    Added memory tracking to recovery
-   Fixed prerm.sh script for packages
+   Allow MasterClient to be constructed before Master is live
+   Fixed RelinquishAcknowledge early expiration bug
+   Fixed uninitialized m_recovering member of RangeServerConnection
+   Remove pending recover operation for re-connected server
+   Fixed master shutdown
+   Changed LoadMetadataOnly property to LoadSystemTablesOnly
+   Added support for Hypertable.Failover.RecoverInSeries
    Fixed a delete issue caught by AddressSanitizer
    More doxygen comments
    ScanSpec column predicate validation fix
    Removed ReferenceCount base class of IOHandler
    Change name() of OperationRecover to match class name
+   Changed ERROR message to WARN
    Fixed llvm build for Mac OSX
 
 Version 0.9.7.4:
