@@ -196,9 +196,6 @@ namespace {
 
     MasterClient *master = new MasterClient(conn_mgr, hyperspace_ptr,
                                             toplevel_dir, wait_ms, app_queue);
-    master->set_verbose_flag(get_bool("verbose"));
-
-    master->initiate_connection(0);
 
     if (!master->wait_for_connection(wait_ms))
       HT_THROW(Error::REQUEST_TIMEOUT, "connecting to master");
@@ -228,7 +225,6 @@ namespace {
     // the host name is localhost then check if there's a
     // Hypertable.Master.state file and verify the pid
     MasterClient *master = new MasterClient(conn_mgr, addr, wait_ms);
-    master->set_verbose_flag(get_bool("verbose"));
 
     if (!master->wait_for_connection(wait_ms)) {
       if (strcmp(host, "localhost") && strcmp(host, "127.0.0.1"))

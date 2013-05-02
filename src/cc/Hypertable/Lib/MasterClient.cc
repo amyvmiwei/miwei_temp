@@ -41,10 +41,12 @@ using namespace Serialization;
 
 
 MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
-    Hyperspace::SessionPtr &hyperspace, const String &toplevel_dir,
-    uint32_t timeout_ms, ApplicationQueueInterfacePtr &app_queue)
-  : m_verbose(true), m_conn_manager(conn_mgr),
-    m_hyperspace(hyperspace), m_app_queue(app_queue),
+                           Hyperspace::SessionPtr &hyperspace,
+                           const String &toplevel_dir, uint32_t timeout_ms,
+                           ApplicationQueueInterfacePtr &app_queue,
+                           DispatchHandlerPtr dhp,ConnectionInitializerPtr init)
+  : m_conn_manager(conn_mgr), m_hyperspace(hyperspace), m_app_queue(app_queue),
+    m_dispatcher_handler(dhp), m_connection_initializer(init),
     m_hyperspace_init(false), m_hyperspace_connected(true),
     m_timeout_ms(timeout_ms), m_toplevel_dir(toplevel_dir) {
 
@@ -52,6 +54,7 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
   memset(&m_master_addr, 0, sizeof(m_master_addr));
 
   m_retry_interval = Config::properties->get_i32("Hypertable.Connection.Retry.Interval");
+  m_verbose = Config::get_bool("verbose");
 
   /**
    * Open toplevel_dir + /master Hyperspace file to discover the master.
@@ -65,24 +68,30 @@ MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr,
 
   // no need to serialize access in ctor
   initialize_hyperspace();
+  reload_master();
 }
 
 
 MasterClient::MasterClient(ConnectionManagerPtr &conn_mgr, InetAddr &addr, 
-                            uint32_t timeout_ms)
-  : m_conn_manager(conn_mgr), m_master_addr(addr), m_timeout_ms(timeout_ms) {
+                           uint32_t timeout_ms,
+                           DispatchHandlerPtr dhp,ConnectionInitializerPtr init)
+  : m_conn_manager(conn_mgr), m_master_addr(addr), m_dispatcher_handler(dhp),
+    m_connection_initializer(init), m_timeout_ms(timeout_ms) {
   m_comm = m_conn_manager->get_comm();
   m_retry_interval = Config::properties->get_i32("Hypertable.Connection.Retry.Interval");
-
+  m_verbose = Config::get_bool("verbose");
   m_conn_manager->add_with_initializer(m_master_addr, m_retry_interval, "Master",
-                                       m_dispatcher_handler, 
+                                       m_dispatcher_handler,
                                        m_connection_initializer);
 }
 
 
-MasterClient::MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms)
-  : m_comm(comm), m_master_addr(addr), m_timeout_ms(timeout_ms) {
+MasterClient::MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms,
+                           DispatchHandlerPtr dhp,ConnectionInitializerPtr init)
+  : m_comm(comm), m_master_addr(addr), m_dispatcher_handler(dhp),
+    m_connection_initializer(init), m_timeout_ms(timeout_ms) {
   m_retry_interval = Config::properties->get_i32("Hypertable.Connection.Retry.Interval");
+  m_verbose = Config::get_bool("verbose");
 }
 
 
@@ -92,16 +101,6 @@ MasterClient::~MasterClient() {
       m_hyperspace->close(m_master_file_handle);
     m_hyperspace->remove_callback(&m_hyperspace_session_callback);
   }
-}
-
-
-void MasterClient::initiate_connection(DispatchHandlerPtr dhp, ConnectionInitializerPtr init) {
-  m_connection_initializer = init;
-  m_dispatcher_handler = dhp;
-  if (m_master_file_handle == 0)
-    HT_THROW(Error::MASTER_NOT_RUNNING,
-             "MasterClient unable to connect to Master");
-  reload_master();
 }
 
 
@@ -130,16 +129,9 @@ void MasterClient::initialize_hyperspace() {
     return;
   HT_ASSERT(m_hyperspace_connected);
 
-  try {
-    Timer timer(m_timeout_ms, true);
-    m_master_file_handle = m_hyperspace->open(m_toplevel_dir + "/master",
-        OPEN_FLAG_READ, m_master_file_callback, &timer);
-  }
-  catch (Exception &e) {
-    if (e.code() != Error::HYPERSPACE_FILE_NOT_FOUND && e.code()
-        != Error::HYPERSPACE_BAD_PATHNAME)
-      HT_THROW2(e.code(), e, e.what());
-  }
+  Timer timer(m_timeout_ms, true);
+  m_master_file_handle = m_hyperspace->open(m_toplevel_dir + "/master",
+           OPEN_FLAG_READ|OPEN_FLAG_CREATE, m_master_file_callback, &timer);
   m_hyperspace_init=true;
 }
 
@@ -1071,11 +1063,24 @@ void MasterClient::reload_master() {
 
     {
       ScopedLock lock(m_hyperspace_mutex);
-      if (m_hyperspace_init)
-        m_hyperspace->attr_get(m_master_file_handle, "address", value);
+      if (m_hyperspace_init) {
+        try {
+          m_hyperspace->attr_get(m_master_file_handle, "address", value);
+        }
+        catch (Exception &e) {
+          HT_WARN("Unable to determinte master address from Hyperspace");
+          return;
+        }
+      }
       else if (m_hyperspace_connected) {
         initialize_hyperspace();
-        m_hyperspace->attr_get(m_master_file_handle, "address", value);
+        try {
+          m_hyperspace->attr_get(m_master_file_handle, "address", value);
+        }
+        catch (Exception &e) {
+          HT_WARN("Unable to determinte master address from Hyperspace");
+          return;
+        }
       }
       else
         HT_THROW(Error::CONNECT_ERROR_HYPERSPACE, "MasterClient not connected to Hyperspace");

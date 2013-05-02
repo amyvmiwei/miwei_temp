@@ -118,11 +118,10 @@ namespace {
  * Attempts to acquire an exclusive lock on the file
  * <code>/hypertable/master</code> in Hyperspace.  The file is opened and the
  * handle is stored in the Context::master_file_handle member of
- * <code>context</code>.  If the lock is successfully acquired, the address on
- * which this master process listens for connections is written into the
- * <i>address</i> attribute (format is IP:port)and the <i>next_server_id</i> attribute is created
- * and initialized to "1" if it doesn't already exist.  It also creates the
- * following directories in Hyperspace if they do not already exist:
+ * <code>context</code>.  If the lock is successfully acquired, the
+ * <i>next_server_id</i> attribute is created and initialized to "1" if it
+ * doesn't already exist.  It also creates the following directories in
+ * Hyperspace if they do not already exist:
  * 
  *   - <code>/hypertable/servers</code>
  *   - <code>/hypertable/tables</code>
@@ -137,6 +136,16 @@ namespace {
  * depending on the <code>Hypertable.Directory</code> property.
  */
 void obtain_master_lock(ContextPtr &context);
+
+/** Writes Master's listen address to Hyperspace.
+ * This method writes the address on which the Master is listening to
+ * the <i>address</i> attribute of the <code>/hypertable/master</code>
+ * in Hyperspace (format is IP:port).
+ * @param context Reference to context object
+ * @note The top-level directory <code>/hypertable</code> may be different
+ * depending on the <code>Hypertable.Directory</code> property.
+ */
+void write_master_address(ContextPtr &context);
 
 int main(int argc, char **argv) {
   ContextPtr context = new Context();
@@ -341,6 +350,8 @@ int main(int argc, char **argv) {
 
     context->comm->listen(listen_addr, hf);
 
+    write_master_address(context);
+
     context->op->join();
     context->mml_writer->close();
     context->comm->close_socket(listen_addr);
@@ -405,13 +416,6 @@ void obtain_master_lock(ContextPtr &context) {
 
       HT_INFOF("Obtained lock on '%s/master'", context->toplevel_dir.c_str());
 
-      // Write master location in 'address' attribute, format is IP:port
-      uint16_t port = context->props->get_i16("Hypertable.Master.Port");
-      InetAddr addr(System::net_info().primary_addr, port);
-      String addr_s = addr.format();
-      context->hyperspace->attr_set(context->master_file_handle, "address",
-                             addr_s.c_str(), addr_s.length());
-
       if (!context->hyperspace->attr_exists(context->master_file_handle, "next_server_id"))
         context->hyperspace->attr_set(context->master_file_handle, "next_server_id", "1", 2);
     }
@@ -423,11 +427,20 @@ void obtain_master_lock(ContextPtr &context) {
     handle = context->hyperspace->open(context->toplevel_dir + "/root",
         OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
 
-    HT_INFO("Successfully Initialized.");
   }
   catch (Exception &e) {
     HT_FATAL_OUT << e << HT_END;
   }
 }
+
+void write_master_address(ContextPtr &context) {
+  uint16_t port = context->props->get_i16("Hypertable.Master.Port");
+  InetAddr addr(System::net_info().primary_addr, port);
+  String addr_s = addr.format();
+  context->hyperspace->attr_set(context->master_file_handle, "address",
+                                addr_s.c_str(), addr_s.length());
+  HT_INFO("Successfully Initialized.");
+}
+
 
 /** @}*/
