@@ -38,7 +38,7 @@ RangeServerConnection::RangeServerConnection(const String &location,
 
 RangeServerConnection::RangeServerConnection(const MetaLog::EntityHeader &header_)
   : MetaLog::Entity(header_), m_handle(0),
-    m_connected(false) {
+    m_connected(false), m_recovering(false) {
   m_comm_addr.set_proxy(m_location);
 }
 
