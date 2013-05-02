@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -17,6 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for OperationProcessor.
+ * This file contains declarations for OperationProcessor, a class for executing
+ * operations that have a dependency relationship in reverse topological
+ * order.
  */
 
 #ifndef HYPERTABLE_OPERATIONPROCESSOR_H
@@ -42,13 +49,18 @@
 
 namespace Hypertable {
 
-  /**
+  /** @addtogroup Master
+   *  @{
+   */
+
+  /** Manages the execution of operations with dependency relationship.
    */
   class OperationProcessor : public ReferenceCount {
   public:
     OperationProcessor(ContextPtr &context, size_t thread_count);
     void add_operation(OperationPtr &operation);
     void add_operations(std::vector<OperationPtr> &operations);
+    OperationPtr remove_operation(int64_t hash_code);
     void shutdown();
     void join();
     void wait_for_empty();
@@ -123,7 +135,43 @@ namespace Hypertable {
     void add_edge(Vertex v, Vertex u);
     void add_edge_permanent(Vertex v, Vertex u);
 
+    /** Retires (remove) an operation.
+     * @param v Vertex of operation
+     * @param operation Reference to operation smart pointer
+     * @note <code>m_context.mutex</code> must be locked when calling this
+     * method
+     */
+    void retire_operation(Vertex v, OperationPtr &operation);
+
+    /** Updates dependency relationship of an operation.
+     * @note <code>m_context.mutex</code> must be locked when calling this
+     * method
+     */
+    void update_operation(Vertex v, OperationPtr &operation);
+
+    /** Recomputes operation execution order.
+     * @note <code>m_context.mutex</code> must be locked when calling this
+     * method
+     */
+    void recompute_order();
+
+    /** Loads <code>m_context.current</code> list with operations to be
+     * executed.
+     * @note <code>m_context.mutex</code> must be locked when calling this
+     * method
+     */
+    bool load_current();
+
     typedef std::set<OperationPtr> PerpetualSet;
+    
+    class OperationVertex {
+    public:
+      OperationVertex() : vertex(0) { }
+      OperationVertex(OperationPtr &op, Vertex &v) :
+        operation(op), vertex(v) { }
+      OperationPtr operation;
+      Vertex vertex;
+    };
 
     class ThreadContext {
     public:
@@ -136,6 +184,7 @@ namespace Hypertable {
       ContextPtr &master_context;
       OperationGraph graph;
       VertexSet current_active;
+      hash_map<int64_t, OperationVertex> operation_hash;
       size_t current_blocked;
       StringSet exclusive_ops;
       ExecutionList current;
@@ -182,17 +231,17 @@ namespace Hypertable {
       Worker(ThreadContext &context) : m_context(context) { return; }
       void operator()();
     private:
-      void retire_operation(Vertex v, OperationPtr &operation);
-      void update_operation(Vertex v, OperationPtr &operation);
-      void recompute_order();
-      bool load_current();
       ThreadContext &m_context;
     };
 
     ThreadContext m_context;
     ThreadGroup m_threads;
   };
+
+  /// Smart pointer to OperationProcessor
   typedef intrusive_ptr<OperationProcessor> OperationProcessorPtr;
+
+  /** @} */
 
 } // namespace Hypertable
 

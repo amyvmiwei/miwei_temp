@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for OperationProcessor.
+ * This file contains definitions for OperationProcessor, a class for executing
+ * operations that have a dependency relationship in reverse topological
+ * order.
+ */
+
 
 #include "Common/Compat.h"
 #include "Common/StringExt.h"
@@ -110,8 +118,30 @@ void OperationProcessor::add_operation_internal(OperationPtr &operation) {
   put(m_context.ops, v, operation);
   put(m_context.busy, v, false);
   m_context.live.insert(v);
-
+  m_context.operation_hash[operation->hash_code()]=OperationVertex(operation,v);
   add_dependencies(v, operation);
+}
+
+OperationPtr OperationProcessor::remove_operation(int64_t hash_code) {
+  ScopedLock lock(m_context.mutex);
+  OperationPtr operation;
+  Vertex vertex;
+
+  hash_map<int64_t, OperationVertex>::iterator iter =
+    m_context.operation_hash.find(hash_code);
+
+  // If not found, busy, or not in INITIAL state, return NULL
+  if (iter == m_context.operation_hash.end() ||
+      m_context.busy[iter->second.vertex] ||
+      iter->second.operation->get_state() != OperationState::INITIAL)
+    return 0;
+
+  operation = iter->second.operation;
+  vertex = iter->second.vertex;
+
+  retire_operation(vertex, operation);
+
+  return operation;
 }
 
 void OperationProcessor::shutdown() {
@@ -236,7 +266,7 @@ void OperationProcessor::Worker::operator()() {
         while (m_context.current_iter == m_context.current.end()) {
 
           if (m_context.need_order_recompute) {
-            recompute_order();
+            m_context.op->recompute_order();
             current_needs_loading = true;
           }
           else
@@ -245,7 +275,7 @@ void OperationProcessor::Worker::operator()() {
 
           if (current_needs_loading &&
               m_context.execution_order_iter != m_context.execution_order.end()) {
-            if (load_current()) {
+            if (m_context.op->load_current()) {
               if (m_context.shutdown)
                 return;
               continue;
@@ -284,11 +314,11 @@ void OperationProcessor::Worker::operator()() {
           m_context.busy_count--;
           m_context.current_active.erase(vertex);
           if (operation->is_complete())
-            retire_operation(vertex, operation);
+            m_context.op->retire_operation(vertex, operation);
           else if (operation->is_blocked())
             m_context.current_blocked++;
           else
-            update_operation(vertex, operation);
+            m_context.op->update_operation(vertex, operation);
         }
       }
       catch (Exception &e) {
@@ -619,7 +649,7 @@ void OperationProcessor::state_description(String &output) {
 }
 
 
-void OperationProcessor::Worker::retire_operation(Vertex v, OperationPtr &operation) {
+void OperationProcessor::retire_operation(Vertex v, OperationPtr &operation) {
   m_context.op->purge_from_obstruction_index(v);
   m_context.op->purge_from_dependency_index(v);
   m_context.op->purge_from_exclusivity_index(v);
@@ -628,6 +658,7 @@ void OperationProcessor::Worker::retire_operation(Vertex v, OperationPtr &operat
   clear_vertex(v, m_context.graph);
   remove_vertex(v, m_context.graph);
   m_context.live.erase(v);
+  m_context.operation_hash.erase(operation->hash_code());
   if (operation->exclusive())
     m_context.exclusive_ops.erase(operation->name());
   //HT_INFOF("Retiring op %p vertex %p", operation.get(), v);
@@ -635,14 +666,14 @@ void OperationProcessor::Worker::retire_operation(Vertex v, OperationPtr &operat
   if (operation->is_perpetual())
     m_context.perpetual_ops.insert(operation);
   else {
-    if (!operation->remove_explicitly())
+    if (!operation->remove_explicitly() &&
+        operation->get_state() == OperationState::COMPLETE)
       m_context.master_context->response_manager->add_operation(operation);
   }
-
 }
 
 
-void OperationProcessor::Worker::update_operation(Vertex v, OperationPtr &operation) {
+void OperationProcessor::update_operation(Vertex v, OperationPtr &operation) {
   not_permanent np(m_context);
 
   m_context.op->purge_from_obstruction_index(v);
@@ -658,7 +689,7 @@ void OperationProcessor::Worker::update_operation(Vertex v, OperationPtr &operat
 }
 
 
-void OperationProcessor::Worker::recompute_order() {
+void OperationProcessor::recompute_order() {
 
   // re-assign vertex indexes
   property_map<OperationGraph, vertex_index_t>::type index = get(vertex_index, m_context.graph);
@@ -724,7 +755,7 @@ void OperationProcessor::Worker::recompute_order() {
 }
 
 
-bool OperationProcessor::Worker::load_current() {
+bool OperationProcessor::load_current() {
   size_t blocked = 0;
   size_t retired = 0;
 
