@@ -28,6 +28,7 @@
 #include "Common/Serialization.h"
 #include "Common/StringExt.h"
 #include "Common/Time.h"
+#include "Common/md5.h"
 
 #include "Hyperspace/Session.h"
 
@@ -92,6 +93,14 @@ void OperationRegisterServer::execute() {
     // !!! wrap in try/catch
     uint64_t handle = m_context->hyperspace->open(fname, oflags);
     m_context->hyperspace->close(handle);
+  }
+
+  // Remove pending OperationRecover operations for this location
+  {
+    int64_t hash_code= md5_hash("RecoverServer") ^ md5_hash(m_location.c_str());
+    OperationPtr operation = m_context->op->remove_operation(hash_code);
+    if (operation)
+      operation->complete_ok();
   }
 
   if (!m_rsc) {
