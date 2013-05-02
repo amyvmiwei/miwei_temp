@@ -63,14 +63,20 @@ namespace Hypertable {
   class MasterClient : public ReferenceCount {
   public:
 
-    MasterClient(ConnectionManagerPtr &, Hyperspace::SessionPtr &,
+    MasterClient(ConnectionManagerPtr &conn_mgr,
+                 Hyperspace::SessionPtr &hyperspace,
                  const String &toplevel_dir, uint32_t timeout_ms,
-                 ApplicationQueueInterfacePtr &);
-    MasterClient(ConnectionManagerPtr &, InetAddr &addr, uint32_t timeout_ms);
-    MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms);
-    ~MasterClient();
+                 ApplicationQueueInterfacePtr &app_queue,
+                 DispatchHandlerPtr dhp=0, ConnectionInitializerPtr init=0);
 
-    void initiate_connection(DispatchHandlerPtr dhp=0, ConnectionInitializerPtr init=0);
+    MasterClient(ConnectionManagerPtr &conn_mgr, InetAddr &addr,
+                 uint32_t timeout_ms, DispatchHandlerPtr dhp=0,
+                 ConnectionInitializerPtr init=0);
+
+    MasterClient(Comm *comm, InetAddr &addr, uint32_t timeout_ms,
+                 DispatchHandlerPtr dhp=0, ConnectionInitializerPtr init=0);
+
+    ~MasterClient();
 
     bool wait_for_connection(uint32_t max_wait_ms);
     bool wait_for_connection(Timer &timer);

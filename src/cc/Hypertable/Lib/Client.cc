@@ -228,8 +228,6 @@ void Client::initialize() {
   m_master_client = new MasterClient(m_conn_manager, m_hyperspace, m_toplevel_dir,
                                      m_timeout_ms, m_app_queue);
 
-  m_master_client->initiate_connection();
-
   if (!m_master_client->wait_for_connection(timer))
     HT_THROW(Error::REQUEST_TIMEOUT, "Waiting for Master connection");
 

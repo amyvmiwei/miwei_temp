@@ -299,24 +299,22 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     _exit(0);
   }
 
-  /**
-   * Create Master client
-   */
-  int timeout = props->get_i32("Hypertable.Request.Timeout");
-  ApplicationQueueInterfacePtr aq = m_app_queue;
-  m_master_client = new MasterClient(m_conn_manager, m_hyperspace,
-                                     Global::toplevel_dir, timeout, aq);
-  m_master_connection_handler = new ConnectionHandler(m_comm, m_app_queue, this);
   Global::location_initializer = new LocationInitializer(m_props);
 
-  // make sure this location has not been removed
   if(Global::location_initializer->is_removed(Global::toplevel_dir+"/servers", m_hyperspace)) {
     HT_ERROR_OUT << "location " << Global::location_initializer->get()
         << " has been marked removed in hyperspace" << HT_END;
     _exit(1);
   }
 
-  m_master_client->initiate_connection(m_master_connection_handler, Global::location_initializer);
+  // Create Master client
+  int timeout = props->get_i32("Hypertable.Request.Timeout");
+  ApplicationQueueInterfacePtr aq = m_app_queue;
+  m_master_connection_handler = new ConnectionHandler(m_comm, m_app_queue, this);
+  m_master_client = new MasterClient(m_conn_manager, m_hyperspace,
+                                     Global::toplevel_dir, timeout, aq,
+                                     m_master_connection_handler,
+                                     Global::location_initializer);
   Global::master_client = m_master_client;
 
   Global::location_initializer->wait_for_handshake();
