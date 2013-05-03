@@ -189,7 +189,9 @@ const String OperationBalance::name() {
 }
 
 const String OperationBalance::label() {
-  return format("Balance %s (%u moves)", m_plan->algorithm.c_str(),
-                (unsigned)m_plan->moves.size());
+  if (m_plan)
+    return format("Balance %s (%u moves)", m_plan->algorithm.c_str(),
+                  (unsigned)m_plan->moves.size());
+  return name();
 }
 
