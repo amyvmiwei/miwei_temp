@@ -75,11 +75,6 @@ void OperationRelinquishAcknowledge::execute() {
   }
 
   complete_ok_no_log();
-  {
-    ScopedLock lock(m_mutex);
-    m_expiration_time.reset();
-    m_state = OperationState::COMPLETE;
-  }
 
   HT_INFOF("Leaving RelinquishAcknowledge-%lld %s[%s..%s] from %s",
            (Lld)header.id, m_table.id, m_range.start_row, m_range.end_row,

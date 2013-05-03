@@ -58,6 +58,9 @@ OperationRecover::OperationRecover(ContextPtr &context,
   m_obstructions.insert(Dependency::RECOVER_SERVER);
   m_hash_code = md5_hash("RecoverServer") ^ md5_hash(m_rsc->location().c_str());
   HT_ASSERT(m_rsc != 0);
+  HT_INFOF("OperationRecover %s state=%s restart=%s",
+           m_location.c_str(), OperationState::get_text(get_state()),
+           m_restart ? "true" : "false");
 }
 
 OperationRecover::OperationRecover(ContextPtr &context,
@@ -461,6 +464,8 @@ void OperationRecover::encode_state(uint8_t **bufp) const {
 
 void OperationRecover::decode_state(const uint8_t **bufp, size_t *remainp) {
   decode_request(bufp, remainp);
+  HT_INFOF("OperationRecover %s state=%s",
+           m_location.c_str(), OperationState::get_text(get_state()));
 }
 
 void OperationRecover::decode_request(const uint8_t **bufp, size_t *remainp) {
