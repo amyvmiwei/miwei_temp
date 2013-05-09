@@ -294,6 +294,8 @@ let j+=1
 let j+=1
 [ $TEST == $j ] && run_test "recover-server-ranges-root-load-3:exit:0" "" ""
 let j+=1
+[ $TEST == $j ] && run_test --restart-rangeservers "recover-server-ranges-root-load-3:exit:0" "" ""
+let j+=1
 [ $TEST == $j ] && run_test "recover-server-ranges-root-replay-3:exit:0" "" ""
 let j+=1
 [ $TEST == $j ] && run_test "recover-server-ranges-root-prepare-3:exit:0" "" ""
