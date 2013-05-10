@@ -186,6 +186,13 @@ void LiveFileTracker::get_file_data(String &file_list, int64_t *block_countp, bo
   *block_countp = m_total_blocks;
 }
 
+void LiveFileTracker::get_file_list(String &file_list) {
+  ScopedLock lock(m_mutex);
+  file_list = "";
+  foreach_ht(const String &file, m_live)
+    file_list += file + ";";
+}
+
 String LiveFileTracker::strip_basename(const String &fname) {
   size_t basename_len = m_file_basename.length();
   HT_ASSERT(!strncmp(fname.c_str(), m_file_basename.c_str(), basename_len));

@@ -58,7 +58,7 @@ void CellStoreTrailerV4::clear() {
   filter_items_estimate = 0;
   filter_items_actual = 0;
   blocksize = 0;
-  revision = 0;
+  revision = TIMESTAMP_MIN;
   timestamp_min = TIMESTAMP_MAX;
   timestamp_max = TIMESTAMP_MIN;
   expiration_time = TIMESTAMP_NULL;

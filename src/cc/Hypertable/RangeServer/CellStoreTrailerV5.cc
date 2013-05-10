@@ -61,7 +61,7 @@ void CellStoreTrailerV5::clear() {
   replaced_files_length = 0;
   replaced_files_entries = 0;
   blocksize = 0;
-  revision = 0;
+  revision = TIMESTAMP_MIN;
   timestamp_min = TIMESTAMP_MAX;
   timestamp_max = TIMESTAMP_MIN;
   expiration_time = TIMESTAMP_NULL;

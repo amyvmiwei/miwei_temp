@@ -55,7 +55,7 @@ void CellStoreTrailerV1::clear() {
   num_filter_items = 0;
   filter_false_positive_prob = 0.0;
   blocksize = 0;
-  revision = 0;
+  revision = TIMESTAMP_MIN;
   timestamp_min = TIMESTAMP_MAX;
   timestamp_max = TIMESTAMP_MIN;
   create_time = 0;

@@ -26,6 +26,7 @@
 #include <iterator>
 #include <vector>
 
+#include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
 #include "Common/md5.h"
 
@@ -46,12 +47,14 @@ using namespace Hypertable;
 
 
 AccessGroup::AccessGroup(const TableIdentifier *identifier,
-    SchemaPtr &schema, Schema::AccessGroup *ag, const RangeSpec *range)
+                         SchemaPtr &schema, Schema::AccessGroup *ag,
+                         const RangeSpec *range, const Hints *hints)
   : m_outstanding_scanner_count(0), m_identifier(*identifier), m_schema(schema),
     m_name(ag->name), m_next_cs_id(0), m_disk_usage(0),
     m_compression_ratio(1.0), m_earliest_cached_revision(TIMESTAMP_MAX),
     m_earliest_cached_revision_saved(TIMESTAMP_MAX),
     m_latest_stored_revision(TIMESTAMP_MIN),
+    m_latest_stored_revision_hint(TIMESTAMP_MIN),
     m_file_tracker(identifier, schema, range, ag->name), m_is_root(false),
     m_recovering(false), m_needs_merging(false) {
 
@@ -90,6 +93,13 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
   }
   m_bloom_filter_disabled = BLOOM_FILTER_DISABLED ==
       m_cellstore_props->get<BloomFilterMode>("bloom-filter-mode");
+
+  // Restore state from hints
+  if (hints) {
+    m_latest_stored_revision = hints->latest_stored_revision;
+    m_latest_stored_revision_hint = hints->latest_stored_revision;
+    m_disk_usage = hints->disk_usage;
+  }
 }
 
 
@@ -453,7 +463,7 @@ void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output
 }
 
 
-void AccessGroup::run_compaction(int maintenance_flags) {
+void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
   ByteString bskey;
   ByteString value;
   Key key;
@@ -470,6 +480,9 @@ void AccessGroup::run_compaction(int maintenance_flags) {
   bool garbage_check_performed = false;
   size_t merge_offset=0, merge_length=0;
   String added_file;
+
+  hints->ag_name = m_name;
+  m_file_tracker.get_file_list(hints->files);
 
   while (abort_loop) {
     ScopedLock lock(m_mutex);
@@ -519,6 +532,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
   if (abort_loop) {
     ScopedLock lock(m_mutex);
     merge_caches();
+    hints->latest_stored_revision = m_latest_stored_revision;
+    hints->disk_usage = m_disk_usage;
     return;
   }
 
@@ -559,6 +574,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
         }
         else {
           merge_caches();
+          hints->latest_stored_revision = m_latest_stored_revision;
+          hints->disk_usage = m_disk_usage;
           return;
         }
       }
@@ -704,6 +721,8 @@ void AccessGroup::run_compaction(int maintenance_flags) {
       }
 
       recompute_compression_ratio(&total_index_entries);
+      hints->latest_stored_revision = m_latest_stored_revision;
+      hints->disk_usage = m_disk_usage;
     }
 
     if (cellstore->get_total_entries() == 0) {
@@ -719,6 +738,7 @@ void AccessGroup::run_compaction(int maintenance_flags) {
 
     m_file_tracker.update_live(added_file, removed_files, m_next_cs_id, total_index_entries);
     m_file_tracker.update_files_column();
+    m_file_tracker.get_file_list(hints->files);
 
     if (merging)
       m_needs_merging = find_merge_run();
@@ -733,7 +753,14 @@ void AccessGroup::run_compaction(int maintenance_flags) {
     HT_ERROR_OUT << m_range_name << "(" << m_name << ") " << e << HT_END;
     throw;
   }
+}
 
+void AccessGroup::load_hints(Hints *hints) {
+  hints->ag_name = m_name;
+  m_file_tracker.get_file_list(hints->files);
+  ScopedLock lock(m_mutex);
+  hints->latest_stored_revision = m_latest_stored_revision;
+  hints->disk_usage = m_disk_usage;
 }
 
 
