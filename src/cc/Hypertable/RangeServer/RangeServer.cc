@@ -970,8 +970,8 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader) {
     if (!m_replay_map->get(table_id.id, table_info))
       continue;
 
-    dbuf.ensure(table_id.encoded_length() + 12 + len);
     dbuf.clear();
+    dbuf.ensure(table_id.encoded_length() + 12 + len);
 
     dbuf.ptr += 4;  // skip size
     encode_i64(&dbuf.ptr, revision);

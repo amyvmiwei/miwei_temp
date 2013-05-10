@@ -109,6 +109,11 @@ namespace Hypertable {
      */
     void get_file_data(String &file_list, int64_t *block_countp, bool include_blocked);
 
+    /** Populates string with live files separated by ';'
+     * @param file_list Output string to hold file list
+     */
+    void get_file_list(String &file_list);
+
     void set_next_csid(uint32_t nid) { 
       m_last_nextcsid = m_cur_nextcsid = nid;
     }

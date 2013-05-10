@@ -26,6 +26,8 @@
 #include "Common/Serialization.h"
 #include "Common/Logger.h"
 
+#include "Hypertable/Lib/KeySpec.h"
+
 #include "CellStoreTrailerV0.h"
 
 using namespace std;
@@ -53,7 +55,7 @@ void CellStoreTrailerV0::clear() {
   num_filter_items = 0;
   filter_false_positive_prob = 0.0;
   blocksize = 0;
-  revision = 0;
+  revision = TIMESTAMP_MIN;
   table_id = 0xffffffff;
   table_generation = 0;
   compression_ratio = 0.0;

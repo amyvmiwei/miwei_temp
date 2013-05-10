@@ -242,7 +242,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while opening file '" + fileName + "' - "
@@ -365,7 +365,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while creating file '" + fileName + "' - "
@@ -409,7 +409,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while getting length of file '" + fileName
@@ -444,7 +444,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while making directory '" + fileName
@@ -658,7 +658,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while removing file '" + fileName + "' - "
@@ -765,7 +765,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while removing directory '" + fileName
@@ -816,7 +816,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + dirName);
-            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while reading directory '" + dirName
@@ -843,7 +843,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while checking for existence of file '"

@@ -45,6 +45,7 @@
 #include "Hypertable/Lib/MetaLogEntityRange.h"
 
 #include "AccessGroup.h"
+#include "AccessGroupHintsFile.h"
 #include "CellStore.h"
 #include "LoadFactors.h"
 #include "LoadMetricsRange.h"
@@ -396,6 +397,7 @@ namespace Hypertable {
     Mutex            m_schema_mutex;
     MasterClientPtr  m_master_client;
     MetaLog::EntityRangePtr m_metalog_entity;
+    AccessGroupHintsFile m_hints_file;
     SchemaPtr        m_schema;
     String           m_name;
     AccessGroupMap     m_access_group_map;

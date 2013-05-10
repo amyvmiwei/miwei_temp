@@ -103,8 +103,30 @@ namespace Hypertable {
       bool     needs_merging;
     };
 
+    class Hints {
+    public:
+      Hints() : latest_stored_revision(TIMESTAMP_MIN), disk_usage(0) { }
+      void clear() {
+        ag_name.clear();
+        latest_stored_revision = TIMESTAMP_MIN;
+        disk_usage = 0;
+        files.clear();
+      }
+      bool operator==(const Hints &other) const {
+        return ag_name == other.ag_name &&
+          latest_stored_revision == other.latest_stored_revision &&
+          disk_usage == other.disk_usage &&
+          files == other.files;
+      }
+      String ag_name;
+      int64_t latest_stored_revision;
+      uint64_t disk_usage;
+      String files;
+    };
+
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema,
-                Schema::AccessGroup *ag, const RangeSpec *range);
+                Schema::AccessGroup *ag, const RangeSpec *range,
+                const Hints *hints=0);
 
     virtual void add(const Key &key, const ByteString value);
 
@@ -152,16 +174,23 @@ namespace Hypertable {
 
     void load_cellstore(CellStorePtr &cellstore);
 
+    void pre_load_cellstores() {
+      ScopedLock lock(m_mutex);
+      m_latest_stored_revision = TIMESTAMP_MIN;
+    }
+
     void post_load_cellstores() {
+      HT_ASSERT(m_latest_stored_revision >= m_latest_stored_revision_hint);
       sort_cellstores_by_timestamp();
       m_needs_merging = find_merge_run();
-      if (!m_in_memory)
+      if (!m_in_memory &&
+          m_latest_stored_revision > m_latest_stored_revision_hint)
         purge_stored_cells_from_cache();
     }
 
     void compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp);
 
-    void run_compaction(int maintenance_flags);
+    void run_compaction(int maintenance_flags, Hints *hints);
 
     uint64_t purge_memory(MaintenanceFlag::Map &subtask_map);
 
@@ -195,6 +224,8 @@ namespace Hypertable {
       }
     }
 
+    void load_hints(Hints *hints);
+
   private:
 
     void purge_stored_cells_from_cache();
@@ -227,6 +258,7 @@ namespace Hypertable {
     int64_t              m_earliest_cached_revision;
     int64_t              m_earliest_cached_revision_saved;
     int64_t              m_latest_stored_revision;
+    int64_t              m_latest_stored_revision_hint;
     LiveFileTracker      m_file_tracker;
     AccessGroupGarbageTracker m_garbage_tracker;
     bool                 m_is_root;

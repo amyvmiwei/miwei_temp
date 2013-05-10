@@ -71,10 +71,12 @@ Range::Range(MasterClientPtr &master_client,
   : m_scans(0), m_cells_scanned(0), m_cells_returned(0), m_cells_written(0),
     m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
     m_disk_bytes_read(0), m_master_client(master_client),
-    m_schema(schema), m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
-    m_split_off_high(false), m_unsplittable(false), m_added_inserts(0), m_range_set(range_set),
-    m_error(Error::OK), m_dropped(false), m_capacity_exceeded_throttle(false),
-    m_relinquish(false), m_removed_from_working_set(false), m_maintenance_generation(0),
+    m_hints_file(identifier->id, range->end_row), m_schema(schema),
+    m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
+    m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
+    m_range_set(range_set), m_error(Error::OK), m_dropped(false),
+    m_capacity_exceeded_throttle(false), m_relinquish(false),
+    m_removed_from_working_set(false), m_maintenance_generation(0),
     m_load_metrics(identifier->id, range->start_row, range->end_row),
     m_log_hash(0), m_initialized(false) {
   m_metalog_entity = new MetaLog::EntityRange(*identifier, *range, *state, needs_compaction);
@@ -86,7 +88,9 @@ Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
   : m_scans(0), m_cells_scanned(0), m_cells_returned(0), m_cells_written(0),
     m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
     m_disk_bytes_read(0), m_master_client(master_client),
-    m_metalog_entity(range_entity), m_schema(schema), m_revision(TIMESTAMP_MIN),
+    m_metalog_entity(range_entity), 
+    m_hints_file(range_entity->table.id, range_entity->spec.end_row),
+    m_schema(schema), m_revision(TIMESTAMP_MIN),
     m_latest_revision(TIMESTAMP_MIN), m_split_threshold(0),
     m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
     m_range_set(range_set), m_error(Error::OK), m_dropped(false),
@@ -153,8 +157,19 @@ void Range::initialize() {
 
   m_column_family_vector.resize(m_schema->get_max_column_family_id() + 1);
 
+  // Read hints file and load AGname-to-hints map
+  std::vector<AccessGroup::Hints> hints;
+  std::map<String, const AccessGroup::Hints *> hints_map;
+  m_hints_file.read(hints);
+  foreach_ht (const AccessGroup::Hints &h, hints)
+    hints_map[h.ag_name] = &h;
+
   foreach_ht(Schema::AccessGroup *sag, m_schema->get_access_groups()) {
-    ag = new AccessGroup(&m_metalog_entity->table, m_schema, sag, &m_metalog_entity->spec);
+    const AccessGroup::Hints *h = 0;
+    std::map<String, const AccessGroup::Hints *>::iterator iter = hints_map.find(sag->name);
+    if (iter != hints_map.end())
+      h = iter->second;
+    ag = new AccessGroup(&m_metalog_entity->table, m_schema, sag, &m_metalog_entity->spec, h);
     m_access_group_map[sag->name] = ag;
     m_access_group_vector.push_back(ag);
 
@@ -176,12 +191,6 @@ void Range::deferred_initialization() {
     split_install_log_rollback_metadata();
 
   load_cell_stores();
-
-  {
-    ScopedLock schema_lock(m_schema_mutex);
-    foreach_ht (AccessGroupPtr ag, m_access_group_vector)
-      ag->post_load_cellstores();
-  }
 
   m_initialized = true;
 }
@@ -267,6 +276,12 @@ void Range::load_cell_stores() {
 
   metadata->reset_files_scan();
 
+  {
+    ScopedLock schema_lock(m_schema_mutex);
+    foreach_ht (AccessGroupPtr ag, m_access_group_vector)
+      ag->pre_load_cellstores();
+  }
+
   while (metadata->get_next_files(ag_name, files, &nextcsid)) {
     ScopedLock schema_lock(m_schema_mutex);
     csvec.clear();
@@ -341,13 +356,16 @@ void Range::load_cell_stores() {
     }
   }
 
+  {
+    ScopedLock schema_lock(m_schema_mutex);
+    foreach_ht (AccessGroupPtr ag, m_access_group_vector)
+      ag->post_load_cellstores();
+  }
+
   HT_INFOF("Finished loading cellstores for '%s'", m_name.c_str());
 }
 
 
-/**
- *
- */
 void Range::update_schema(SchemaPtr &schema) {
   ScopedLock lock(m_schema_mutex);
 
@@ -384,7 +402,7 @@ void Range::update_schema(SchemaPtr &schema) {
     ScopedLock lock(m_mutex);
     m_metalog_entity->table.generation = schema->get_generation();
     foreach_ht(Schema::AccessGroup *s_ag, new_access_groups) {
-      ag = new AccessGroup(&m_metalog_entity->table, schema, s_ag, &m_metalog_entity->spec);
+      ag = new AccessGroup(&m_metalog_entity->table, schema, s_ag, &m_metalog_entity->spec, 0);
       m_access_group_map[s_ag->name] = ag;
       m_access_group_vector.push_back(ag);
 
@@ -778,8 +796,10 @@ void Range::relinquish_compact_and_finish() {
     /**
      * Perform minor compactions
      */
+    std::vector<AccessGroup::Hints> hints(ag_vector.size());
     for (size_t i=0; i<ag_vector.size(); i++)
-      ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR);
+      ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR, &hints[i]);
+    m_hints_file.write(hints);
 
     {
       ScopedLock lock(m_schema_mutex);
@@ -1138,8 +1158,11 @@ void Range::split_compact_and_shrink() {
   /**
    * Perform major compactions
    */
+  std::vector<AccessGroup::Hints> hints(ag_vector.size());
   for (size_t i=0; i<ag_vector.size(); i++)
-    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MAJOR|MaintenanceFlag::SPLIT);
+    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MAJOR|MaintenanceFlag::SPLIT,
+                                 &hints[i]);
+  m_hints_file.write(hints);
 
   String files;
   String metadata_row_low, metadata_row_high;
@@ -1215,8 +1238,6 @@ void Range::split_compact_and_shrink() {
     Barrier::ScopedActivator block_scans(m_scan_barrier);
     ScopedLock lock(m_mutex);
 
-    // drj
-
     // Shrink access groups
     if (m_split_off_high) {
       if (!m_range_set->change_end_row(m_metalog_entity->spec.start_row, m_metalog_entity->spec.end_row, m_metalog_entity->state.split_point)) {
@@ -1236,8 +1257,10 @@ void Range::split_compact_and_shrink() {
     String split_row = m_metalog_entity->state.split_point;
 
     // Shrink access groups
-    if (m_split_off_high)
+    if (m_split_off_high) {
       m_metalog_entity->spec.set_end_row(m_metalog_entity->state.split_point);
+      m_hints_file.change_end_row(m_metalog_entity->state.split_point);
+    }
     else
       m_metalog_entity->spec.set_start_row(m_metalog_entity->state.split_point);
 
@@ -1445,6 +1468,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
     }
 
     // do compactions
+    std::vector<AccessGroup::Hints> hints(ag_vector.size());
     for (size_t i=0; i<ag_vector.size(); i++) {
 
       if (m_metalog_entity->needs_compaction)
@@ -1454,13 +1478,17 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
 
       if (flags & MaintenanceFlag::COMPACT) {
         try {
-          ag_vector[i]->run_compaction(flags);
+          ag_vector[i]->run_compaction(flags, &hints[i]);
         }
         catch (Exception &e) {
           ag_vector[i]->unstage_compaction();
+          ag_vector[i]->load_hints(&hints[i]);
         }
       }
+      else
+        ag_vector[i]->load_hints(&hints[i]);
     }
+    m_hints_file.write(hints);
 
   }
   catch (Exception &e) {
