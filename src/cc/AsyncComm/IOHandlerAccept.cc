@@ -138,14 +138,15 @@ bool IOHandlerAccept::handle_incoming_connection() {
 
     handler = new IOHandlerData(sd, addr, dhp, true);
 
-    m_handler_map->insert_handler(handler);
+    m_handler_map->insert_handler(handler, true);
 
     int32_t error;
     if ((error = handler->start_polling(Reactor::READ_READY |
                                         Reactor::WRITE_READY)) != Error::OK) {
       HT_ERRORF("Problem starting polling on incoming connection - %s",
                 Error::get_text(error));
-      delete handler;
+      ReactorRunner::handler_map->decrement_reference_count(handler);
+      ReactorRunner::handler_map->decomission_handler(handler);
       ReactorRunner::handler_map->decomission_handler(this);
       return true;
     }
@@ -155,9 +156,13 @@ bool IOHandlerAccept::handle_incoming_connection() {
           != Error::OK) {
         HT_ERRORF("Problem sending proxy map to %s - %s",
                   m_addr.format().c_str(), Error::get_text(error));
+        ReactorRunner::handler_map->decrement_reference_count(handler);
+        ReactorRunner::handler_map->decomission_handler(handler);
         return true;
       }
     }
+
+    ReactorRunner::handler_map->decrement_reference_count(handler);
 
     deliver_event(new Event(Event::CONNECTION_ESTABLISHED, addr, Error::OK));
   }

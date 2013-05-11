@@ -83,8 +83,9 @@ namespace Hypertable {
      * a proxy map update message with the new mapping is broadcast to
      * all connections.
      * @param handler Data (TCP) I/O handler to insert
+     * @param checkout Atomically checkout handler
      */
-    void insert_handler(IOHandlerData *handler);
+    void insert_handler(IOHandlerData *handler, bool checkout=false);
 
     /** Inserts a datagram (UDP) handler.
      * Uses IOHandler#m_local_addr as the key.
