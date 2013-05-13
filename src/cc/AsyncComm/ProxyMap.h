@@ -115,7 +115,7 @@ namespace Hypertable {
      * forward and reverse maps for the new mapping.  Any invalidated mappings
      * are added to <code>invalidated_map</code> and the new forward mapping
      * from <code>proxy</code> to ProxyAddressInfo is added to
-     * <code>new_map</code>.  A hostname entry of <code>--DELETED--<code>
+     * <code>new_map</code>.  A hostname entry of <code>--DELETED--</code>
      * means that the entry is to be removed.  In this situation, this method
      * invalidates <code>proxy</code> from the forward map and <code>addr</code>
      * from the reverse map and the invalidated mappings are added to

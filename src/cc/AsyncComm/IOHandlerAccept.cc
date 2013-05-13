@@ -56,7 +56,7 @@ using namespace std;
 
 
 bool
-IOHandlerAccept::handle_event(struct pollfd *event, time_t arival_time) {
+IOHandlerAccept::handle_event(struct pollfd *event, time_t arrival_time) {
   if (event->revents & POLLIN)
     return handle_incoming_connection();
   ReactorRunner::handler_map->decomission_handler(this);

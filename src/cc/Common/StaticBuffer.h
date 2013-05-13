@@ -131,7 +131,7 @@ namespace Hypertable {
 
     /** Assignment operator for DynamicBuffer
      *
-     * @param other Reference to the original DynamicBuffer instance
+     * @param dbuf Reference to the original DynamicBuffer instance
      */
     StaticBuffer &operator=(DynamicBuffer &dbuf) {
       base = dbuf.base;

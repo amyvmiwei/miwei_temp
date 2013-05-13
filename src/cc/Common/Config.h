@@ -104,7 +104,7 @@ namespace Hypertable { namespace Config {
   /**
    * Get the command line options description
    *
-   * @param usage - optional usage string (first time)
+   * @param usage Optional usage string (first time)
    * @return Reference to the Description object
    */
   Desc &cmdline_desc(const char *usage = NULL);
@@ -116,14 +116,12 @@ namespace Hypertable { namespace Config {
   void cmdline_desc(const Desc &desc);
 
   /** Get the command line hidden options description (for positional options)
-   *
-   * @return desc Reference to the Description object
+   * @return desc Reference to the hidden description object
    */
   Desc &cmdline_hidden_desc();
 
   /** Get the command line positional options description
-   *
-   * @param desc Reference to the Description object
+   * @return Reference to the positional escription object
    */
   PositionalDesc &cmdline_positional_desc();
 
