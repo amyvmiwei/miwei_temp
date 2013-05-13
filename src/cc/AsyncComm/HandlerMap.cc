@@ -393,9 +393,6 @@ int HandlerMap::propagate_proxy_map(ProxyMapT &mappings) {
   return last_error;
 }
 
-    /**
-     * Translates CommAddress into INET socket address
-     */
 int HandlerMap::translate_address(const CommAddress &addr, InetAddr *inet_addr) {
   String hostname;
 

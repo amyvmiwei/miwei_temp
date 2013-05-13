@@ -247,6 +247,7 @@ public:
    * @param column_str column specified string
    * @param family family name
    * @param qualifier column qualifier
+   * @param has_qualifier Output parameter set if column_str has qualifer
    * @param is_regexp true if the qualifier string is a regexp
    * @param is_prefix true if the qualifier string is a prefix search
    *

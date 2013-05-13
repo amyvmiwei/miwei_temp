@@ -407,7 +407,7 @@ namespace Hypertable {
      * @see remove_explicitly, remove_approval_mask, remove_ok
      * @param approval Integer flag indicating bits to be set in #m_remove_approvals
      * @return <i>true</i> if all required approval bits have been set and
-     * the operation can be safely removed, <i>false<i> otherwise.
+     * the operation can be safely removed, <i>false</i> otherwise.
      */
     bool remove_approval_add(int32_t approval) {
       ScopedLock lock(m_mutex);

@@ -76,7 +76,7 @@ namespace Hypertable {
      * the handler in the HandlerMap, cancels any outstanding requests
      * on the handler, removes polling interest from polling mechanism,
      * an purges the handler from the HandlerMap.
-     * @param handles Set of IOHandlers to remove
+     * @param handlers Set of IOHandlers to remove
      */
     void cleanup_and_remove_handlers(std::set<IOHandler *> &handlers);
 

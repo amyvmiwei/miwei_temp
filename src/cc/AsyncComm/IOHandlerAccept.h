@@ -69,7 +69,7 @@ namespace Hypertable {
      * @return <i>false</i> on success, <i>true</i> if error encountered and
      * handler was decomissioned
      */
-    virtual bool handle_event(struct pollfd *event, time_t arival_time=0);
+    virtual bool handle_event(struct pollfd *event, time_t arrival_time=0);
 
 #if defined(__APPLE__) || defined(__FreeBSD__)
     /** Handle <code>kqueue()</code> interface events.  This method handles
@@ -81,7 +81,7 @@ namespace Hypertable {
      * @return <i>false</i> on success, <i>true</i> if error encountered and
      * handler was decomissioned
      */
-    virtual bool handle_event(struct kevent *event, time_t arival_time=0);
+    virtual bool handle_event(struct kevent *event, time_t arrival_time=0);
 #elif defined(__linux__)
     /** Handle <code>epoll()</code> interface events.  This method handles
      * all events by calling #handle_incoming_connection.
@@ -91,7 +91,7 @@ namespace Hypertable {
      * @return <i>false</i> on success, <i>true</i> if error encountered and
      * handler was decomissioned
      */
-    virtual bool handle_event(struct epoll_event *event, time_t arival_time=0);
+    virtual bool handle_event(struct epoll_event *event, time_t arrival_time=0);
 #elif defined(__sun__)
     /** Handle <code>port_associate()</code> interface events.  This method
      * handles <code>POLLIN</code> by calling #handle_incoming_connection.  Any
@@ -103,7 +103,7 @@ namespace Hypertable {
      * @return <i>false</i> on success, <i>true</i> if error encountered and
      * handler was decomissioned
      */
-    virtual bool handle_event(port_event_t *event, time_t arival_time=0);
+    virtual bool handle_event(port_event_t *event, time_t arrival_time=0);
 #else
     ImplementMe;
 #endif

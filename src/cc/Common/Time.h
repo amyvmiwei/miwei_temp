@@ -90,7 +90,7 @@ namespace Hypertable {
      * Initializes object with the current point in time as a duration
      * since the epoch specified by clock_type.
      *
-     * @param type The requested clock type (see boost::xtime documentation)
+     * @param clock_type Requested clock type (see boost::xtime documentation)
      * @return true on success; otherwise false
      */
     bool reset(int clock_type = TIME_UTC_) {

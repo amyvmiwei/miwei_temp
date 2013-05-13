@@ -58,8 +58,8 @@ namespace Hypertable {
    * <pre>
    * ag_name: {
    *   LatestStoredRevision: <revision>,
-   *   DiskUsage: <bytes>,
-   *   Files: <file-list>
+   *   DiskUsage: $bytes,
+   *   Files: $file_list
    * }
    * </pre>
    * The fields in the mapping for each access group are described below.

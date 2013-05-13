@@ -279,7 +279,7 @@ namespace Hypertable {
      * to update the proxy map.  If any of the proxy names have changed, the
      * corresponding data handlers are updated with a call to
      * IOHandler::set_proxy.  For each mapping in <code>message</code> that has
-     * the hostname set to <code>--DELETED--<code>, the associated data handler
+     * the hostname set to <code>--DELETED--</code>, the associated data handler
      * is decomissioned.  After the proxy map has been successfuly updated, the
      * #m_proxies_loaded flag is set to <i>true</i> and the #m_cond_proxy
      * condition variable is signalled.
@@ -331,7 +331,7 @@ namespace Hypertable {
      * @param addr Address to translate
      * @param inet_addr Pointer to valid InetAddr object to hold translated
      * address
-     * @param Error::OK on success, Error::COMM_INVALID_PROXY if
+     * @return Error::OK on success, Error::COMM_INVALID_PROXY if
      * <code>addr</code> is of type CommAddress::PROXY and no mapping is found.
      */
     int translate_address(const CommAddress &addr, InetAddr *inet_addr);

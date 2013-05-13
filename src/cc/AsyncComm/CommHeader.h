@@ -104,6 +104,8 @@ namespace Hypertable {
      * following the decoded header and <code>remainp</code> is decremented
      * by the length of the serialized header.
      * @param bufp Address of memory pointer to where header is to be encoded.
+     * @param remainp Pointer to valid bytes remaining in buffer (decremented
+     *                by call)
      * @throws Error::COMM_BAD_HEADER If fixed header size is less than
      * <code>*remainp</code>.
      * @throws Error::COMM_HEADER_CHECKSUM_MISMATCH If computed checksum does

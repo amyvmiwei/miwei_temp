@@ -140,8 +140,8 @@ void OperationBalance::execute() {
           catch (Exception &e) {
             move->complete = true;
             move->error = e.code();
-            m_context->get_balance_plan_authority()->balance_move_complete(move->table,
-                    move->range, move->error);
+            BalancePlanAuthority *bpa = m_context->get_balance_plan_authority();
+            bpa->balance_move_complete(move->table, move->range);
           }
         }
         std::stringstream sout;
