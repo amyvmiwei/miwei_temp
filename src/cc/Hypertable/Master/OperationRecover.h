@@ -26,8 +26,8 @@
 
 #include "Common/PageArenaAllocator.h"
 
-#include "Hypertable/Lib/MetaLogEntityRange.h"
 #include "Hypertable/Lib/Types.h"
+#include "Hypertable/RangeServer/MetaLogEntityRange.h"
 
 #include "Operation.h"
 #include "RangeServerConnection.h"

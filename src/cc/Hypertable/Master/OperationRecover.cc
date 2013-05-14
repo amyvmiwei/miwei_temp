@@ -29,10 +29,10 @@
 #include "OperationRecoverRanges.h"
 #include "OperationRelinquishAcknowledge.h"
 #include "Hypertable/Lib/MetaLogReader.h"
-#include "Hypertable/Lib/MetaLogEntityRange.h"
+#include "Hypertable/RangeServer/MetaLogDefinitionRangeServer.h"
+#include "Hypertable/RangeServer/MetaLogEntityRange.h"
 #include "Hypertable/RangeServer/MetaLogEntityTaskAcknowledgeRelinquish.h"
 #include "Hypertable/RangeServer/MetaLogEntityTaskRemoveTransferLog.h"
-#include "Hypertable/RangeServer/MetaLogDefinitionRangeServer.h"
 #include "BalancePlanAuthority.h"
 #include "ReferenceManager.h"
 #include "Utility.h"
@@ -402,10 +402,9 @@ void OperationRecover::handle_split_shrunk(MetaLog::EntityRange *range_entity) {
 
   OperationPtr operation = m_context->reference_manager->get(hash_code);
   if (operation) {
-    if (operation->remove_approval_add(0x01)) {
+    operation->remove_approval_add(0x01);
+    if (operation->remove_if_ready())
       m_context->reference_manager->remove(hash_code);
-      m_context->mml_writer->record_removal(operation.get());
-    }
     int64_t soft_limit = range_entity->state.soft_limit;
     range_entity->state.clear();
     range_entity->state.soft_limit = soft_limit;

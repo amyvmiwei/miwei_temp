@@ -48,12 +48,12 @@
 #include "Hypertable/Lib/Types.h"
 #include "Hypertable/Lib/NameIdMapper.h"
 #include "Hypertable/Lib/StatsRangeServer.h"
-#include "Hypertable/Lib/MetaLogEntityRange.h"
 
 #include "Global.h"
 #include "GroupCommitInterface.h"
 #include "GroupCommitTimerHandler.h"
 #include "MaintenanceScheduler.h"
+#include "MetaLogEntityRange.h"
 #include "QueryCache.h"
 #include "RSStats.h"
 #include "ResponseCallbackCreateScanner.h"

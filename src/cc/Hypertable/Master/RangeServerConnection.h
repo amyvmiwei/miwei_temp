@@ -25,7 +25,6 @@
 #include "AsyncComm/CommAddress.h"
 
 #include "Common/InetAddr.h"
-#include "Common/Mutex.h"
 
 #include "Hypertable/Lib/MetaLogWriter.h"
 
@@ -75,7 +74,6 @@ namespace Hypertable {
     virtual void decode(const uint8_t **bufp, size_t *remainp);
 
   private:
-    Mutex m_mutex;
     uint64_t m_handle;
     String m_location;
     String m_hostname;

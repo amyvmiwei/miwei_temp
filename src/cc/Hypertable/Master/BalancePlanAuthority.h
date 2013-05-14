@@ -343,9 +343,6 @@ namespace Hypertable {
     void update_range_plan(RangeRecoveryPlanPtr &plan, const String &location,
                            const vector<QualifiedRangeSpec> &new_specs);
 
-    /// %Mutex for serializing access to members
-    Mutex m_mutex;
-
     /// Pointer to master context
     ContextPtr m_context;
 

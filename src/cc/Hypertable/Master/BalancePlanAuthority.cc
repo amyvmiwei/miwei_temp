@@ -165,28 +165,31 @@ BalancePlanAuthority::copy_recovery_plan(const String &location, int type,
 void
 BalancePlanAuthority::remove_recovery_plan(const String &location)
 {
-  ScopedLock lock(m_mutex);
-  RecoveryPlanMap::iterator it = m_map.find(location);
-  if (it == m_map.end())
-     return;
-  m_map.erase(it);
+  {
+    ScopedLock lock(m_mutex);
+    RecoveryPlanMap::iterator it = m_map.find(location);
+    if (it == m_map.end())
+      return;
+    m_map.erase(it);
+  }
   m_mml_writer->record_state(this);
 }
 
 
 void BalancePlanAuthority::remove_from_receiver_plan(const String &location, int type,
                                                      const vector<QualifiedRangeSpec> &specs) {
-  ScopedLock lock(m_mutex);
+  {
+    ScopedLock lock(m_mutex);
 
-  HT_ASSERT(m_map.find(location) != m_map.end());
+    HT_ASSERT(m_map.find(location) != m_map.end());
 
-  RangeRecoveryPlanPtr plan = m_map[location].plans[type];
+    RangeRecoveryPlanPtr plan = m_map[location].plans[type];
 
-  HT_ASSERT(plan && plan->type == type);
+    HT_ASSERT(plan && plan->type == type);
 
-  foreach_ht (const QualifiedRangeSpec &spec, specs)
-    plan->receiver_plan.remove(spec);
-
+    foreach_ht (const QualifiedRangeSpec &spec, specs)
+      plan->receiver_plan.remove(spec);
+  }
   m_mml_writer->record_state(this);
 }
 
@@ -370,6 +373,8 @@ BalancePlanAuthority::create_recovery_plan(const String &location,
   m_generation++;
   m_map[location] = plans;
 
+  lock.unlock(); // otherwise operator<< will deadlock
+
   /**
    * Put the RangeServerConnection object into the 'removed' state and then
    * atomically persist both the RangeServerConnection object and the plan to
@@ -386,7 +391,6 @@ BalancePlanAuthority::create_recovery_plan(const String &location,
     m_mml_writer->record_state(entities);
   }
 
-  lock.unlock(); // otherwise operator<< will deadlock
   std::stringstream sout;
   sout << "Global recovery plan was modified: " << *this;
   HT_INFOF("%s", sout.str().c_str());
@@ -483,14 +487,16 @@ BalancePlanAuthority::update_range_plan(RangeRecoveryPlanPtr &plan,
 bool
 BalancePlanAuthority::register_balance_plan(BalancePlanPtr &plan, int generation,
                                             std::vector<Entity *> &entities) {
-  ScopedLock lock(m_mutex);
+  {
+    ScopedLock lock(m_mutex);
 
-  if (generation != m_generation)
-    return false;
+    if (generation != m_generation)
+      return false;
 
-  // Insert moves into current set
-  foreach_ht (RangeMoveSpecPtr &move, plan->moves)
-    m_current_set.insert(move);
+    // Insert moves into current set
+    foreach_ht (RangeMoveSpecPtr &move, plan->moves)
+      m_current_set.insert(move);
+  }
 
   entities.push_back(this);
   m_mml_writer->record_state(entities);
@@ -506,24 +512,30 @@ BalancePlanAuthority::register_balance_plan(BalancePlanPtr &plan, int generation
 bool
 BalancePlanAuthority::get_balance_destination(const TableIdentifier &table,
                   const RangeSpec &range, String &location) {
-  ScopedLock lock(m_mutex);
+  bool modified = false;
+  {
+    ScopedLock lock(m_mutex);
 
-  RangeMoveSpecPtr move_spec = new RangeMoveSpec();
+    RangeMoveSpecPtr move_spec = new RangeMoveSpec();
 
-  move_spec->table = table;
-  move_spec->range = range;
+    move_spec->table = table;
+    move_spec->range = range;
 
-  MoveSetT::iterator iter;
+    MoveSetT::iterator iter;
 
-  if ((iter = m_current_set.find(move_spec)) != m_current_set.end())
-    location = (*iter)->dest_location;
-  else {
-    if (!Utility::next_available_server(m_context, location))
-      return false;
-    move_spec->dest_location = location;
-    m_current_set.insert(move_spec);
-    m_mml_writer->record_state(this);
+    if ((iter = m_current_set.find(move_spec)) != m_current_set.end())
+      location = (*iter)->dest_location;
+    else {
+      if (!Utility::next_available_server(m_context, location))
+        return false;
+      move_spec->dest_location = location;
+      m_current_set.insert(move_spec);
+      modified = true;
+    }
   }
+
+  if (modified)
+    m_mml_writer->record_state(this);
 
   return true;
 }

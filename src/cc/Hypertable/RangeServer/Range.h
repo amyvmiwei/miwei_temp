@@ -42,7 +42,6 @@
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/Timestamp.h"
 #include "Hypertable/Lib/Types.h"
-#include "Hypertable/Lib/MetaLogEntityRange.h"
 
 #include "AccessGroup.h"
 #include "AccessGroupHintsFile.h"

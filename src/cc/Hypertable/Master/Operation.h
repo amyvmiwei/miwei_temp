@@ -382,8 +382,7 @@ namespace Hypertable {
      * overridden to return true, indicating that the operation won't be removed
      * when it enters the state OperationState::COMPLETE, but will be removed
      * explicitly.  This method is used in conjunction with remove_approval_mask(),
-     * remove_approval_add(), and remove_ok().  When remove_ok() returns <i>true</i>
-     * the operation can be safely removed.
+     * remove_approval_add(), and remove_if_ready().
      * @return <i>true</i> if operation is to be removed explicitly, <i>false</i>
      * otherwise.
      */
@@ -393,7 +392,7 @@ namespace Hypertable {
      * This method is used for operations that are to be removed explicitly and
      * returns a bitmask indicating the bits in #m_remove_approvals that
      * need to be set before the operation can be safely removed.
-     * @see remove_explicitly, remove_approval_add, remove_ok
+     * @see remove_explicitly, remove_approval_add, remove_if_ready
      * @return remove approval bitmask
      */
     virtual int32_t remove_approval_mask() { return 0; }
@@ -404,31 +403,28 @@ namespace Hypertable {
      * <code>approval</code>.  Once the bits in #m_remove_approvals are set such
      * that #m_remove_approvals is equal to those returned by
      * remove_approval_mask(), the operation can be safely removed.
-     * @see remove_explicitly, remove_approval_mask, remove_ok
+     * @see remove_explicitly, remove_approval_mask, remove_if_ready
      * @param approval Integer flag indicating bits to be set in #m_remove_approvals
-     * @return <i>true</i> if all required approval bits have been set and
-     * the operation can be safely removed, <i>false</i> otherwise.
      */
-    bool remove_approval_add(int32_t approval) {
-      ScopedLock lock(m_mutex);
+    void remove_approval_add(int32_t approval) {
+      ScopedLock lock(m_remove_approval_mutex);
       m_remove_approvals |= approval;
-      return m_remove_approvals == remove_approval_mask();
     }
 
-    /** Indicates if operation can be safely removed.
+    /** Remove operation from MML if received all approvals.
      * This method is used for operations that are to be removed explicitly. It
-     * returns <i>true</i> if #m_remove_approvals equals what is returned by
-     * remove_approval_mask(), indicating that the operation can be safely
-     * removed.
+     * removes the operation from the MML if #m_remove_approvals equals what is
+     * returned by remove_approval_mask(), indicating that the operation can be
+     * safely removed.
      * @see remove_explicitly, remove_approval_mask, remove_approval_add
-     * @return <i>true</i> if operation can be safely removed.
+     * @return <i>true</i> if operation was removed, <i>false</i> otherwise.
      */
-    bool remove_ok();
+    bool remove_if_ready();
 
     void complete_error(int error, const String &msg);
     void complete_error_no_log(int error, const String &msg);
     void complete_error(Exception &e);
-    void complete_ok();
+    void complete_ok(MetaLog::Entity *additional=0);
     void complete_ok_no_log();
 
     virtual int64_t hash_code() const { return m_hash_code; }
@@ -457,7 +453,7 @@ namespace Hypertable {
     void set_original_type(int32_t original_type) { m_original_type = original_type; }
 
   protected:
-    Mutex m_mutex;
+    Mutex m_remove_approval_mutex;
     ContextPtr m_context;
     EventPtr m_event;
     int32_t m_state;
