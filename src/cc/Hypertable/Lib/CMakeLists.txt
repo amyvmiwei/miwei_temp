@@ -60,7 +60,6 @@ MasterProtocol.cc
 MetaLog.cc
 MetaLogEntity.cc
 MetaLogEntityHeader.cc
-MetaLogEntityRange.cc
 MetaLogReader.cc
 MetaLogWriter.cc
 NameIdMapper.cc

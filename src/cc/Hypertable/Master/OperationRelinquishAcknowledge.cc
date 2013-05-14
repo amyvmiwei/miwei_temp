@@ -65,14 +65,14 @@ void OperationRelinquishAcknowledge::execute() {
 
   OperationPtr move_op = m_context->reference_manager->get(hash_code);
 
-  if (move_op && move_op->remove_approval_add(0x01)) {
-    m_context->reference_manager->remove(hash_code);
-    m_context->mml_writer->record_removal(move_op.get());
+  if (move_op) {
+    move_op->remove_approval_add(0x01);
+    if (move_op->remove_if_ready())
+      m_context->reference_manager->remove(hash_code);
   }
-  else if (!move_op) {
+  else
     HT_WARNF("Skipping relinquish_acknowledge(%s %s[%s..%s] because correspoing MoveRange does not exist",
              m_source.c_str(), m_table.id, m_range.start_row, m_range.end_row);
-  }
 
   complete_ok_no_log();
 

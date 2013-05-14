@@ -155,7 +155,7 @@ void OperationMoveRange::execute() {
                     m_range_name.c_str());
             bpa->balance_move_complete(m_table, m_range);
             remove_approval_add(0x03);
-            complete_ok();
+            complete_ok(bpa);
             return;
           }
           // server might be down - go back to the initial state and pick a
@@ -169,7 +169,7 @@ void OperationMoveRange::execute() {
         }
         bpa->balance_move_complete(m_table, m_range);
         remove_approval_add(0x03);
-        complete_ok();
+        complete_ok(bpa);
         return;
       }
     }
@@ -219,7 +219,7 @@ void OperationMoveRange::execute() {
     }
     bpa->balance_move_complete(m_table, m_range);
     remove_approval_add(0x02);
-    complete_ok();
+    complete_ok(bpa);
     break;
 
   case OperationState::COMPLETE:

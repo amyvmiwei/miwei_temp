@@ -300,7 +300,7 @@ void OperationCreateTable::execute() {
       m_context->hyperspace->attr_set(handle, "x", "", 0);
     }
     HT_MAYBE_FAIL("create-table-FINALIZE");
-    complete_ok();
+    complete_ok(m_context->get_balance_plan_authority());
     break;
 
   default:

@@ -230,12 +230,15 @@ void Operation::decode_result(const uint8_t **bufp, size_t *remainp) {
     m_error_msg = Serialization::decode_vstr(bufp, remainp);
 }
 
-bool Operation::remove_ok() {
-  ScopedLock lock(m_mutex);
+bool Operation::remove_if_ready() {
+  ScopedLock lock(m_remove_approval_mutex);
   HT_ASSERT(remove_explicitly());
-  return m_remove_approvals == remove_approval_mask();
+  if (m_remove_approvals == remove_approval_mask()) {
+    m_context->mml_writer->record_removal(this);
+    return true;
+  }
+  return false;
 }
-
 
 void Operation::complete_error(int error, const String &msg) {
   {
@@ -270,14 +273,20 @@ void Operation::complete_error(Exception &e) {
   complete_error(e.code(), e.what());
 }
 
-void Operation::complete_ok() {
+void Operation::complete_ok(MetaLog::Entity *additional) {
   complete_ok_no_log();
-  if (remove_explicitly() && remove_ok()) {
-    m_context->reference_manager->remove(this);
-    m_context->mml_writer->record_removal(this);
+  {
+    ScopedLock lock(m_remove_approval_mutex);
+    std::vector<MetaLog::Entity *> entities;
+    if (remove_explicitly() && m_remove_approvals == remove_approval_mask()) {
+      m_context->reference_manager->remove(this);
+      mark_for_removal();
+    }
+    entities.push_back(this);
+    if (additional)
+      entities.push_back(additional);
+    m_context->mml_writer->record_state(entities);
   }
-  else
-    m_context->mml_writer->record_state(this);
 }
 
 void Operation::complete_ok_no_log() {

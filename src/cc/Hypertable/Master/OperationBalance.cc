@@ -127,6 +127,7 @@ void OperationBalance::execute() {
     {
       RangeServerClient rsc(m_context->comm);
       CommAddress addr;
+      BalancePlanAuthority *bpa = 0;
 
       if (!m_plan->moves.empty()) {
         uint32_t wait_millis = m_plan->duration_millis / m_plan->moves.size();
@@ -140,7 +141,8 @@ void OperationBalance::execute() {
           catch (Exception &e) {
             move->complete = true;
             move->error = e.code();
-            BalancePlanAuthority *bpa = m_context->get_balance_plan_authority();
+            if (bpa == 0)
+              bpa = m_context->get_balance_plan_authority();
             bpa->balance_move_complete(move->table, move->range);
           }
         }
@@ -151,7 +153,7 @@ void OperationBalance::execute() {
           HT_INFOF("%s", sout.str().c_str());
         }
       }
-      complete_ok();
+      complete_ok(bpa);
     }
     break;
 

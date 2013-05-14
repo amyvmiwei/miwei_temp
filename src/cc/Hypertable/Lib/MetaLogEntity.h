@@ -30,6 +30,7 @@ extern "C" {
 
 #include <boost/algorithm/string.hpp>
 
+#include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 
 #include "MetaLogEntityHeader.h"
@@ -50,6 +51,9 @@ namespace Hypertable {
       virtual void encode(uint8_t **bufp) const { return; }
       virtual void decode(const uint8_t **bufp, size_t *remainp) { return; }
 
+      void lock() { m_mutex.lock(); }
+      void unlock() { m_mutex.unlock(); }
+
       void mark_for_removal() { header.flags |= EntityHeader::FLAG_REMOVE; header.length = header.checksum = 0; }
       bool marked_for_removal() { return (header.flags & EntityHeader::FLAG_REMOVE) != 0; }
 
@@ -69,6 +73,11 @@ namespace Hypertable {
     protected:
       void encode_entry(uint8_t **bufp);
       void decode_entry(const uint8_t **bufp, size_t *remainp);
+
+      /// %Mutex for serializing access to members
+      Mutex m_mutex;
+
+      /// %Entity header
       EntityHeader header;
     };
     typedef intrusive_ptr<Entity> EntityPtr;
