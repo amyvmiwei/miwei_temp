@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -223,12 +223,13 @@ int main(int argc, char **argv) {
     String log_dir = context->toplevel_dir + "/servers/master/log/"
         + context->mml_definition->name();
     size_t added_servers = 0;
+    MetaLog::EntityPtr bpa;    
 
     mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition,
             log_dir);
     mml_reader->get_entities(entities);
 
-    // Uniq-ify the RangeServerConnection objects
+    // Uniq-ify the RangeServerConnection and BalancePlanAuthority objects
     {
       std::vector<MetaLog::EntityPtr> entities2;
       std::set<RangeServerConnectionPtr, ltrsc> rsc_set;
@@ -241,12 +242,22 @@ int main(int argc, char **argv) {
             rsc_set.erase(rsc.get());
           rsc_set.insert(rsc.get());
         }
+        else if (dynamic_cast<BalancePlanAuthority *>(entity.get()))
+          bpa = entity;
         else
           entities2.push_back(entity);
       }
       foreach_ht (const RangeServerConnectionPtr &rsc, rsc_set)
         entities2.push_back(rsc.get());
       entities.swap(entities2);
+    }
+
+    if (bpa) {
+      entities.push_back(bpa);
+      context->set_balance_plan_authority(dynamic_cast<BalancePlanAuthority *>(bpa.get()));
+      std::stringstream sout;
+      sout << "Loading BalancePlanAuthority: " << *bpa;
+      HT_INFOF("%s", sout.str().c_str());
     }
 
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
@@ -294,18 +305,6 @@ int main(int argc, char **argv) {
           recovery_operations[rsc->location()] =
             new OperationRecover(context, rsc, OperationRecover::RESTART);
         added_servers++;
-      }
-      else {
-        BalancePlanAuthority *bpa
-            = dynamic_cast<BalancePlanAuthority *>(entities[i].get());
-        HT_ASSERT(bpa);
-        if (!bpa->is_empty()) {
-          std::stringstream sout;
-          sout << "Loading BalancePlanAuthority: " << *bpa;
-          HT_INFOF("%s", sout.str().c_str());
-          bpa->set_mml_writer(context->mml_writer);
-          context->set_balance_plan_authority(bpa);
-        }
       }
     }
     context->balancer = new LoadBalancer(context);
