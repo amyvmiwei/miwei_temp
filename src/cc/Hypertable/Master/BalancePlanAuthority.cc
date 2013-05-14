@@ -38,7 +38,7 @@
 
 #include <sstream>
 
-#define BPA_VERSION 1
+#define BPA_VERSION 2
 
 using namespace Hypertable;
 
@@ -87,6 +87,11 @@ BalancePlanAuthority::encoded_length() const
     }
     it++;
   }
+  if (BPA_VERSION >= 2) {
+    len += 4;
+    foreach_ht (const RangeMoveSpecPtr &move_spec, m_current_set)
+      len += move_spec->encoded_length();
+  }
   return len;
 }
 
@@ -109,6 +114,11 @@ BalancePlanAuthority::encode(uint8_t **bufp) const
     }
     it++;
   }
+  if (BPA_VERSION >= 2) {
+    Serialization::encode_i32(bufp, m_current_set.size());
+    foreach_ht (const RangeMoveSpecPtr &move_spec, m_current_set)
+      move_spec->encode(bufp);
+  }
 }
 
 void 
@@ -116,8 +126,7 @@ BalancePlanAuthority::decode(const uint8_t **bufp, size_t *remainp)
 {
   ScopedLock lock(m_mutex);
 
-  // skip version for now
-  Serialization::decode_i16(bufp, remainp);
+  uint16_t version = Serialization::decode_i16(bufp, remainp);
   m_generation = Serialization::decode_i32(bufp, remainp);
   int num_servers = Serialization::decode_i32(bufp, remainp);
   for (int i = 0; i < num_servers; i++) {
@@ -133,6 +142,15 @@ BalancePlanAuthority::decode(const uint8_t **bufp, size_t *remainp)
       plans.plans[j]->decode(bufp, remainp);
     }
     m_map[rs] = plans;
+  }
+  if (version >= 2) {
+    size_t count = Serialization::decode_i32(bufp, remainp);
+    RangeMoveSpecPtr move_spec;
+    for (size_t i=0; i<count; i++) {
+      move_spec = new RangeMoveSpec();
+      move_spec->decode(bufp, remainp);
+      m_current_set.insert(move_spec);
+    }
   }
 }
 
