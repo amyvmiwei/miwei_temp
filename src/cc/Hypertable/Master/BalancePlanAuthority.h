@@ -67,7 +67,8 @@ namespace Hypertable {
   public:
 
     /** Constructor.
-     * This constructor constructs an empty object.
+     * This constructor constructs an empty object.  Persists the object state
+     * in the MML.
      * @param context Master context
      * @param mml_writer MML writer for persisting state changes
      */
@@ -105,7 +106,10 @@ namespace Hypertable {
      *   4. USER
      *
      * This method is called by OperationRecover to create and register
-     * a balance plan for a failed range server.
+     * a balance plan for a failed range server.  This method sets the
+     * "removed" bit on the RangeServerConnection object associated with the
+     * failed server and persists the modified RangeServerConnection object
+     * and this object's state as a single write to the MML.
      * @param location Proxy name for failed range server
      * @param root_specs Vector holding ROOT range spec
      * @param root_states Vector holding ROOT range state
@@ -288,6 +292,14 @@ namespace Hypertable {
      *   <tr>
      *   <td>[variable-byte]</td>
      *   <td>- Failover recovery plans</td>
+     *   </tr>
+     *   <tr>
+     *   <td>[four-byte]</td>
+     *   <td>- Size of "current" set</td>
+     *   </tr>
+     *   <tr>
+     *   <td>[variable-byte]</td>
+     *   <td>- RangeMove specs</td>
      *   </tr>
      * </table>
      * @param bufp Address of destination buffer pointer (advanced by call)
