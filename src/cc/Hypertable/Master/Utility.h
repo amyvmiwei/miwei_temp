@@ -48,10 +48,11 @@ namespace Hypertable {
      * hold ranges for the table with identifier <code>id</code>.
      * @param context %Master context
      * @param id %Table identifier
+     * @param row Get servers containing this row ("" implies all)
      * @param servers Reference to string set to hold %RangeServer names
      */
     extern void get_table_server_set(ContextPtr &context, const String &id,
-                                     StringSet &servers);
+                                     const String &row, StringSet &servers);
 
     /** Checks if table exists and returns table ID.
      * Checks to see if table <code>name</code> exists and returns the

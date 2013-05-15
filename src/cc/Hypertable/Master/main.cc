@@ -103,6 +103,7 @@ namespace {
 } // local namespace
 
 /** @defgroup Master Master
+ * @ingroup Hypertable
  * %Master server.
  * The Master module contains all of the definitions that make up the Master
  * server process which is responsible for handling meta operations such

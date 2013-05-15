@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Definitions for OperationAlterTable.
+ * This file contains definitions for OperationAlterTable, an Operation class
+ * for carrying out an ALTER TABLE operation.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/FailureInducer.h"
@@ -37,11 +43,6 @@
 
 using namespace Hypertable;
 using namespace Hyperspace;
-
-OperationAlterTable::OperationAlterTable(ContextPtr &context, const String &name, const String &schema)
-  : Operation(context, MetaLog::EntityType::OPERATION_ALTER_TABLE), m_name(name), m_schema(schema) {
-  initialize_dependencies();
-}
 
 OperationAlterTable::OperationAlterTable(ContextPtr &context,
                                          const MetaLog::EntityHeader &header_)
@@ -101,7 +102,6 @@ void OperationAlterTable::execute() {
       SchemaPtr alter_schema;
       SchemaPtr existing_schema;
       DynamicBuffer value_buf;
-      String filename;
 
       alter_schema = Schema::new_instance(m_schema, m_schema.length());
       if (!alter_schema->is_valid())
@@ -134,7 +134,7 @@ void OperationAlterTable::execute() {
 
   case OperationState::SCAN_METADATA:  // Mabye ditch this state???
     servers.clear();
-    Utility::get_table_server_set(m_context, m_id, servers);
+    Utility::get_table_server_set(m_context, m_id, "", servers);
     {
       ScopedLock lock(m_mutex);
       m_dependencies.clear();
@@ -186,7 +186,7 @@ void OperationAlterTable::execute() {
 
   case OperationState::UPDATE_HYPERSPACE:
     {
-      String filename = m_context->toplevel_dir + "/tables/" + m_id;
+      filename = m_context->toplevel_dir + "/tables/" + m_id;
       m_context->hyperspace->attr_set(filename, OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_LOCK_EXCLUSIVE,
                                       "schema", m_schema.c_str(), m_schema.length());
     }
@@ -197,8 +197,8 @@ void OperationAlterTable::execute() {
     HT_FATALF("Unrecognized state %d", state);
   }
 
-  HT_INFOF("Leaving AlterTable-%lld(%s)", (Lld)header.id, m_name.c_str());
-
+  HT_INFOF("Leaving AlterTable-%lld (%s) state=%s", (Lld)header.id,
+           m_name.c_str(), OperationState::get_text(get_state()));
 }
 
 

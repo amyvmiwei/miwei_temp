@@ -77,6 +77,7 @@ namespace Hypertable {
   class UpdateThread;
 
   /** @defgroup RangeServer RangeServer
+   * @ingroup Hypertable
    * %Range server.
    * The @ref RangeServer module contains the definition of the RangeServer
    * @{
@@ -89,7 +90,8 @@ namespace Hypertable {
     virtual ~RangeServer();
 
     // range server protocol implementations
-    void compact(ResponseCallback *, const char *, uint32_t flags);
+    void compact(ResponseCallback *, const TableIdentifier *,
+                 const char *row, uint32_t flags);
     void create_scanner(ResponseCallbackCreateScanner *,
                         const TableIdentifier *,
                         const  RangeSpec *, const ScanSpec *,

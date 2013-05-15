@@ -359,12 +359,12 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
       m_range_server->heapcheck(m_addr, state.output_file);
     }
     else if (state.command == COMMAND_COMPACT) {
-      if (state.table_name != "") {
-        m_range_server->compact(m_addr, table->id, 0);
-      }
+      if (table)
+        m_range_server->compact(m_addr, *table, state.str, 0);
       else {
+        TableIdentifier empty_table;
         HT_ASSERT(state.flags);
-        m_range_server->compact(m_addr, "", state.flags);
+        m_range_server->compact(m_addr, empty_table, "", state.flags);
       }
     }
     else if (state.command == COMMAND_METADATA_SYNC) {

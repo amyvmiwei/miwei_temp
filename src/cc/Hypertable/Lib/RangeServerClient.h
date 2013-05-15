@@ -63,30 +63,38 @@ namespace Hypertable {
     /** Issues a "compact" request synchronously.
      *
      * @param addr address of RangeServer
-     * @param table_id table identifier
-     * @param flags compact flags
+     * @param table %Table identifier of table to compact
+     * @param row Row containing range to compact
+     * @param flags Range type specification
+     *        (see RangeServerProtocol::RangeType)
      */
-    void compact(const CommAddress &addr, const String &table_id, uint32_t flags);
+    void compact(const CommAddress &addr, const TableIdentifier &table,
+                 const String &row, uint32_t flags);
 
     /** Issues a "compact" request asynchronously.
      *
      * @param addr address of RangeServer
-     * @param table_id table identifier
-     * @param flags compact flags
-     * @param handler dispatch handler
+     * @param table %Table identifier of table to compact
+     * @param row Row containing range to compact
+     * @param flags Range type specification
+     *        (see RangeServerProtocol::RangeType)
+     * @param handler Dispatch handler
      */
-    void compact(const CommAddress &addr, const String &table_id, uint32_t flags,
-                 DispatchHandler *handler);
+    void compact(const CommAddress &addr, const TableIdentifier &table,
+                 const String &row, uint32_t flags, DispatchHandler *handler);
 
     /** Issues a "compact" request asynchronously with a timer
      *
      * @param addr address of RangeServer
-     * @param table_id table identifier
-     * @param flags compact flags
+     * @param table %Table identifier of table to compact
+     * @param row Row containing range to compact
+     * @param flags Range type specification
+     *        (see RangeServerProtocol::RangeType)
      * @param handler dispatch handler
-     * @param timer timer
+     * @param timer Deadline timer
      */
-    void compact(const CommAddress &addr, const String &table_id, uint32_t flags,
+    void compact(const CommAddress &addr, const TableIdentifier &table,
+                 const String &row, uint32_t flags,
                  DispatchHandler *handler, Timer &timer);
 
     /** Issues a "metadata_sync" request synchronously.

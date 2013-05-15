@@ -89,6 +89,11 @@ namespace Hypertable {
                         DispatchHandler *handler, Timer *timer=0);
     void drop_namespace(const String &name, bool if_exists, Timer *timer=0);
 
+    void compact(const String &tablename, const String &row,
+                 uint32_t range_types, DispatchHandler *handler,
+                 Timer *timer = 0);
+    void compact(const String &tablename, const String &row,
+                 uint32_t range_types, Timer *timer = 0);
     void create_table(const String &tablename, const String &schema,
                       DispatchHandler *handler, Timer *timer = 0);
     void create_table(const String &tablename, const String &schema,

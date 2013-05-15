@@ -144,7 +144,7 @@ void OperationDropTable::execute() {
 
   case OperationState::SCAN_METADATA:
     servers.clear();
-    Utility::get_table_server_set(m_context, m_id, servers);
+    Utility::get_table_server_set(m_context, m_id, "", servers);
     {
       ScopedLock lock(m_mutex);
       m_dependencies.clear();
