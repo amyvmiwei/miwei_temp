@@ -2107,6 +2107,7 @@ namespace Hypertable {
 
           compact_statement
             = COMPACT >> TABLE >> user_identifier[set_table_name(self.state)]
+                      >> *(string_literal[set_str(self.state)])
             | COMPACT >> RANGES
                       >> (range_type[set_flags_range_type(self.state)]
                           >> *(PIPE >> range_type[set_flags_range_type(self.state)]))

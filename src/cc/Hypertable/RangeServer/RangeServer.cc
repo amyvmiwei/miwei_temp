@@ -1015,13 +1015,16 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader) {
 }
 
 void
-RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags) {
+RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
+                     const char *row, uint32_t flags) {
   RangeDataVector range_data;
   TableInfoPtr table_info;
+  String start_row, end_row;
+  RangePtr range;
   size_t range_count = 0;
 
-  if (*table_id)
-    HT_INFOF("compacting table ID=%s", table_id);
+  if (table)
+    HT_INFOF("compacting table ID=%s ROW=%s", table->id, row ? row : "");
   else
     HT_INFOF("compacting ranges FLAGS=%s", RangeServerProtocol::compact_flags_to_string(flags).c_str());
 
@@ -1032,19 +1035,29 @@ RangeServer::compact(ResponseCallback *cb, const char *table_id, uint32_t flags)
 
   try {
 
-    if (*table_id) {
+    if (table) {
 
-      if (!m_live_map->get(table_id, table_info)) {
-        cb->error(Error::TABLE_NOT_FOUND, table_id);
+      if (!m_live_map->get(table->id, table_info)) {
+        cb->error(Error::TABLE_NOT_FOUND, table->id);
         return;
       }
 
-      range_data.clear();
-      table_info->get_range_data(range_data);
-      foreach_ht(RangeData &rd, range_data)
-        rd.range->set_needs_compaction(true);
-
-      range_count = range_data.size();
+      if (row) {
+        if (!table_info->find_containing_range(row, range, start_row, end_row)) {
+          cb->error(Error::RANGESERVER_RANGE_NOT_FOUND, 
+                    format("Unable to find range for row '%s'", row));
+          return;
+        }
+        range->set_needs_compaction(true);
+        range_count = 1;
+      }
+      else {
+        range_data.clear();
+        table_info->get_range_data(range_data);
+        foreach_ht(RangeData &rd, range_data)
+          rd.range->set_needs_compaction(true);
+        range_count = range_data.size();
+      }
     }
     else {
       std::vector<TableInfoPtr> tables;

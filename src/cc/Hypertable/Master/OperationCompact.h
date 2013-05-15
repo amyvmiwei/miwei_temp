@@ -20,13 +20,13 @@
  */
 
 /** @file
- * Declarations for OperationAlterTable.
- * This file contains declarations for OperationAlterTable, an Operation class
- * for carrying out an ALTER TABLE operation.
+ * Declarations for OperationCompact.
+ * This file contains declarations for OperationCompact, an Operation class
+ * for carrying out a manual compaction operation.
  */
 
-#ifndef HYPERTABLE_OPERATIONALTERTABLE_H
-#define HYPERTABLE_OPERATIONALTERTABLE_H
+#ifndef HYPERTABLE_OPERATIONCOMPACT_H
+#define HYPERTABLE_OPERATIONCOMPACT_H
 
 #include "Common/StringExt.h"
 
@@ -38,49 +38,45 @@ namespace Hypertable {
    *  @{
    */
 
-  /** Carries out an alter table operation. */
-  class OperationAlterTable : public Operation {
+  /** Carries out a manual compaction operation. */
+  class OperationCompact : public Operation {
   public:
 
     /** Constructor for constructing object from %MetaLog entry.
      * @param context %Master context
      * @param header_ %MetaLog header
      */
-    OperationAlterTable(ContextPtr &context, const MetaLog::EntityHeader &header_);
+    OperationCompact(ContextPtr &context, const MetaLog::EntityHeader &header_);
     
     /** Constructor for constructing object from AsyncComm event 
      * @param context %Master context
      * @param event %Event received from AsyncComm from client request
      */
-    OperationAlterTable(ContextPtr &context, EventPtr &event);
+    OperationCompact(ContextPtr &context, EventPtr &event);
 
     /** Destructor. */
-    virtual ~OperationAlterTable() { }
+    virtual ~OperationCompact() { }
 
-    /** Carries out the alter table operation.
+    /** Carries out the manual compaction operation.
      * This method carries out the operation via the following states:
      *
-     *   - OperationState::INITIAL - Maps the full table pathname to the
-     *     table identifier and then drops through to the next state.
-     *   - OperationState::VALIDATE_SCHEMA - Verifies that the new schema
-     *     generation is exactly one more than the existing table schema
-     *     and then drops through to the next state.
+     *   - OperationState::INITIAL - If a table name was supplied, it maps it
+     *     to a table identifier and then drops through to the next state.
      *   - OperationState::SCAN_METADATA - Scans the METADATA table to build
-     *     the list of servers that hold the table to be altered.  The
+     *     the list of servers that hold the table to be altered.  If no table
+     *     name was supplied, then all available servers are chosen.  The
      *     dependencies are reset to be Dependency::INIT, Dependency::METADATA,
      *     Dependency::SYSTEM, and the list of server proxy names.  The state
      *     is advanced to OperationState::ISSUE_REQUESTS and the method returns
      *     to allow the operation processor to update the dependency graph.
-     *   - OperationState::ISSUE_REQUESTS - Issues an alter_table request to
+     *   - OperationState::ISSUE_REQUESTS - Issues a compact request to
      *     all participating servers and waits for their completion.  If there
      *     are any errors, state is reset back to OperationState::SCAN_METADATA,
-     *     otherwise it drops through to the next state.
-     *   - OperationState::UPDATE_HYPERSPACE - Updates the schema attribute of
-     *     table in hyperspace and then completes.
+     *     otherwise it completes.
      */
     virtual void execute();
 
-    /** Returns name of operation ("OperationAlterTable")
+    /** Returns name of operation ("OperationCompact")
      * @return %Operation name
      */
     virtual const String name();
@@ -109,11 +105,15 @@ namespace Hypertable {
      * <table style="font-family:monospace; ">
      *   <tr>
      *   <td>[vstring]</td>
-     *   <td>- Full table pathname</td>
+     *   <td>- Pathname of table to compact</td>
      *   </tr>
      *   <tr>
      *   <td>[vstring]</td>
-     *   <td>- New table schema</td>
+     *   <td>- Row key of range to compact</td>
+     *   </tr>
+     *   <tr>
+     *   <td>[4-byte integer]</td>
+     *   <td>- %Range types (see RangeServerProtocol::RangeType)</td>
      *   </tr>
      *   <tr>
      *   <td>[vstring]</td>
@@ -149,11 +149,15 @@ namespace Hypertable {
      * <table style="font-family:monospace; ">
      *   <tr>
      *   <td>[vstring]</td>
-     *   <td>- Full table pathname</td>
+     *   <td>- Pathname of table to compact</td>
      *   </tr>
      *   <tr>
      *   <td>[vstring]</td>
-     *   <td>- New table schema</td>
+     *   <td>- Row key of range to compact</td>
+     *   </tr>
+     *   <tr>
+     *   <td>[4-byte integer]</td>
+     *   <td>- %Range types (see RangeServerProtocol::RangeType)</td>
      *   </tr>
      * </table>
      * @param bufp Address of source buffer pointer (advanced by call)
@@ -173,11 +177,14 @@ namespace Hypertable {
      */
     void initialize_dependencies();
 
-    /// Full table pathname
+    /// Pathname of table to compact
     String m_name;
 
-    /// New schema
-    String m_schema;
+    /// Row key of range to compact
+    String m_row;
+
+    /// %Range type specification (see RangeServerProtocol::RangeType)
+    uint32_t m_range_types;
 
     /// %Table identifier
     String m_id;
@@ -186,11 +193,11 @@ namespace Hypertable {
     StringSet m_completed;
   };
 
-  /// Smart pointer to OperationAlterTable
-  typedef intrusive_ptr<OperationAlterTable> OperationAlterTablePtr;
+  /// Smart pointer to OperationCompact
+  typedef intrusive_ptr<OperationCompact> OperationCompactPtr;
 
   /* @}*/
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_OPERATIONALTERTABLE_H
+#endif // HYPERTABLE_OPERATIONCOMPACT_H

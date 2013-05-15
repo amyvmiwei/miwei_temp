@@ -79,8 +79,15 @@ namespace Hypertable {
       return dstr;
     }
 
-    /**
-     * Creates a table
+    /** Performs a manual compaction.
+     * @param name Name of table to compact
+     * @param row Optional row identifying range withing table to compact
+     * @param range_types Range type specification
+     *        (see RangeServerProtocol::RangeType)
+     */
+    void compact(const String &name, const String &row, uint32_t range_types);
+
+    /** Creates a table.
      *
      * The schema parameter is a string that contains an XML-style
      * schema specification.  The best way to learn the syntax

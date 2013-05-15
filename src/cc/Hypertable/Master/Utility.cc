@@ -50,7 +50,8 @@ using namespace Hyperspace;
 
 namespace Hypertable { namespace Utility {
 
-void get_table_server_set(ContextPtr &context, const String &id, StringSet &servers) {
+void get_table_server_set(ContextPtr &context, const String &id,
+                          const String &row, StringSet &servers) {
   String start_row, end_row;
   ScanSpec scan_spec;
   RowInterval ri;
@@ -58,10 +59,17 @@ void get_table_server_set(ContextPtr &context, const String &id, StringSet &serv
   Cell cell;
   String location;
 
-  start_row = format("%s:", id.c_str());
+  if (row.empty()) {
+    start_row = format("%s:", id.c_str());
+    scan_spec.row_limit = 0;
+  }
+  else {
+    start_row = format("%s:%s", id.c_str(), row.c_str());
+    scan_spec.row_limit = 1;
+  }
+
   end_row = format("%s:%s", id.c_str(), Key::END_ROW_MARKER);
 
-  scan_spec.row_limit = 0;
   scan_spec.max_versions = 1;
   scan_spec.columns.clear();
   scan_spec.columns.push_back("Location");

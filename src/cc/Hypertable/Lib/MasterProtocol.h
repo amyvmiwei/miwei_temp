@@ -59,7 +59,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_PHANTOM_COMMIT_COMPLETE     = 17;
     static const uint64_t COMMAND_STOP                        = 18;
     static const uint64_t COMMAND_REPLAY_STATUS               = 19;
-    static const uint64_t COMMAND_MAX                         = 20;
+    static const uint64_t COMMAND_COMPACT                     = 20;
+    static const uint64_t COMMAND_MAX                         = 21;
 
     static const char *m_command_strings[];
 
@@ -71,6 +72,9 @@ namespace Hypertable {
     create_create_table_request(const String &tablename, const String &schemastr);
     static CommBuf *
     create_alter_table_request(const String &tablename, const String &schemastr);
+    static CommBuf *
+    create_compact_request(const String &tablename, const String &row,
+                           uint32_t range_types);
 
     static CommBuf *create_get_schema_request(const String &tablename);
 

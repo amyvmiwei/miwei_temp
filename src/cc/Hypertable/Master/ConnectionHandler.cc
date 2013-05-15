@@ -37,6 +37,7 @@
 #include "OperationAlterTable.h"
 #include "OperationBalance.h"
 #include "OperationCollectGarbage.h"
+#include "OperationCompact.h"
 #include "OperationCreateNamespace.h"
 #include "OperationCreateTable.h"
 #include "OperationDropNamespace.h"
@@ -98,6 +99,9 @@ void ConnectionHandler::handle(EventPtr &event) {
                   (Llu)event->header.command);
 
       switch (event->header.command) {
+      case MasterProtocol::COMMAND_COMPACT:
+        operation = new OperationCompact(m_context, event);
+        break;
       case MasterProtocol::COMMAND_CREATE_TABLE:
         operation = new OperationCreateTable(m_context, event);
         break;

@@ -101,6 +101,15 @@ void Namespace::canonicalize(String *original) {
   *original = output;
 }
 
+void Namespace::compact(const String &name, const String &row, uint32_t range_types) {
+  if (name.empty())
+    m_master_client->compact("", "", range_types);
+  else {
+    String full_name = get_full_name(name);
+    m_master_client->compact(full_name, row, 0);
+  }
+}
+
 void Namespace::create_table(const String &table_name, const String &schema) {
   String name = Filesystem::basename(table_name);
   if (name.size() && name[0]=='^')

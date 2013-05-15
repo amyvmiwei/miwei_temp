@@ -39,16 +39,24 @@ using namespace Serialization;
  */
 void RequestHandlerCompact::run() {
   ResponseCallback cb(m_comm, m_event);
-  const char *table_id;
+  TableIdentifier table;
+  const char *row;
   uint32_t flags;
   const uint8_t *decode_ptr = m_event->payload;
   size_t decode_remain = m_event->payload_len;
 
   try {
-    table_id = decode_vstr(&decode_ptr, &decode_remain);
+    table.decode(&decode_ptr, &decode_remain);
+    row = decode_vstr(&decode_ptr, &decode_remain);
     flags = decode_i32(&decode_ptr, &decode_remain);
 
-    m_range_server->compact(&cb, table_id, flags);
+    if (*row == 0)
+      row = 0;
+
+    if (*table.id)
+      m_range_server->compact(&cb, &table, row, 0);
+    else
+      m_range_server->compact(&cb, 0, 0, flags);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

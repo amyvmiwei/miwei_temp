@@ -86,7 +86,7 @@ namespace Hypertable {
     };
 
     // Flags for
-    enum {
+    enum RangeType {
       COMPACT_FLAG_ROOT     = 0x0001,
       COMPACT_FLAG_METADATA = 0x0002,
       COMPACT_FLAG_SYSTEM   = 0x0004,
@@ -98,11 +98,13 @@ namespace Hypertable {
 
     /** Creates a "compact" request message
      *
-     * @param table_id table identifier
-     * @param flags compact flags
+     * @param table &Table identifier of table to compact
+     * @param row Row of range to compact
+     * @param flags &Range type specifier (see RangeType)
      * @return protocol message
      */
-    static CommBuf *create_request_compact(const String &table_id, uint32_t flags);
+    static CommBuf *create_request_compact(const TableIdentifier &table,
+                                           const String &row, uint32_t flags);
 
     /** Creates a "metadata_sync" request message
      *

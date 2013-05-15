@@ -46,10 +46,12 @@ RangeServerClient::~RangeServerClient() {
 
 
 void
-RangeServerClient::compact(const CommAddress &addr, const String &table_id, uint32_t flags) {
+RangeServerClient::compact(const CommAddress &addr,
+                           const TableIdentifier &table,
+                           const String &row, uint32_t flags) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
-  CommBufPtr cbp(RangeServerProtocol::create_request_compact(table_id, flags));
+  CommBufPtr cbp(RangeServerProtocol::create_request_compact(table, row, flags));
 
   send_message(addr, cbp, &sync_handler, m_default_timeout_ms);
 
@@ -60,16 +62,19 @@ RangeServerClient::compact(const CommAddress &addr, const String &table_id, uint
 }
 
 void
-RangeServerClient::compact(const CommAddress &addr, const String &table_id, uint32_t flags,
-                           DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_compact(table_id, flags));
+RangeServerClient::compact(const CommAddress &addr,
+                           const TableIdentifier &table, const String &row,
+                           uint32_t flags, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_compact(table, row, flags));
   send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
 void
-RangeServerClient::compact(const CommAddress &addr, const String &table_id, uint32_t flags,
-                           DispatchHandler *handler, Timer &timer) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_compact(table_id, flags));
+RangeServerClient::compact(const CommAddress &addr,
+                           const TableIdentifier &table, const String &row,
+                           uint32_t flags, DispatchHandler *handler,
+                           Timer &timer) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_compact(table, row, flags));
   send_message(addr, cbp, handler, timer.remaining());
 }
 

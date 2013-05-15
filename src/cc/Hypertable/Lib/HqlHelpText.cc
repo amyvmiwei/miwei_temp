@@ -34,6 +34,7 @@ namespace {
   const char *help_text_contents[] = {
     "",
     "USE ................ Sets the current namespace",
+    "COMPACT ............ Schedules manual compaction",
     "CREATE NAMESPACE ... Creates a new namespace",
     "DROP NAMESPACE ..... Removes a namespace",
     "EXISTS TABLE ....... Check if table exists",
@@ -94,7 +95,7 @@ namespace {
 
   const char *help_text_compact[] = {
     "",
-    "COMPACT TABLE table_name",
+    "COMPACT TABLE table_name [row]",
     "COMPACT RANGES range_type ['|' range_type ...]",
     "",
     "range_type:",
@@ -106,9 +107,10 @@ namespace {
     "",
     "This command schedules a major compaction for each range specified",
     "in the command.  The TABLE version of the command will schedule",
-    "a major compaction for each range in the given table.  The RANGES",
-    "version of the command will schedule compactions for all the ranges",
-    "of the given type(s), regardless of what table they belong to.",
+    "a major compaction for each range in the given table, or just the",
+    "range containing the row, if specified.  The RANGES version of the",
+    "command will schedule compactions for all the ranges of the given",
+    "type(s), regardless of what table they belong to.",
     "",
     "NOTE:  Compactions scheduled by this command are spread out over time.",
     "During each maintenance interval, which by default happens once every",
@@ -1870,6 +1872,9 @@ namespace {
   HelpTextMap &build_help_text_map() {
     HelpTextMap *map = new HelpTextMap();
     (*map)[""] = help_text_contents;
+    (*map)["compact"] = help_text_compact;
+    (*map)["compact table"] = help_text_compact;
+    (*map)["compact ranges"] = help_text_compact;
     (*map)["contents"] = help_text_contents;
     (*map)["use"] = help_text_use;
     (*map)["create namespace"] = help_text_create_namespace;

@@ -105,10 +105,14 @@ namespace Hypertable {
   }
 
   CommBuf *
-  RangeServerProtocol::create_request_compact(const String &table_id, uint32_t flags) {
+  RangeServerProtocol::create_request_compact(const TableIdentifier &table,
+                                              const String &row,
+                                              uint32_t flags) {
     CommHeader header(COMMAND_COMPACT);
-    CommBuf *cbuf = new CommBuf(header, Serialization::encoded_length_vstr(table_id) + 4);
-    Serialization::encode_vstr(cbuf->get_data_ptr_address(), table_id);
+    CommBuf *cbuf = new CommBuf(header, table.encoded_length() +
+                                Serialization::encoded_length_vstr(row) + 4);
+    table.encode(cbuf->get_data_ptr_address());
+    Serialization::encode_vstr(cbuf->get_data_ptr_address(), row);
     Serialization::encode_i32(cbuf->get_data_ptr_address(), flags);
     return cbuf;
   }

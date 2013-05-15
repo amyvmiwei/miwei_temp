@@ -81,6 +81,20 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *
+  MasterProtocol::create_compact_request(const String &tablename,
+                                         const String &row,
+                                         uint32_t range_types) {
+    CommHeader header(COMMAND_COMPACT);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename)
+                                + encoded_length_vstr(row) + 4);
+    cbuf->append_vstr(tablename);
+    cbuf->append_vstr(row);
+    cbuf->append_i32(range_types);
+    return cbuf;
+  }
+
+
   CommBuf *MasterProtocol::create_get_schema_request(const String &tablename) {
     CommHeader header(COMMAND_GET_SCHEMA);
     CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(tablename));
