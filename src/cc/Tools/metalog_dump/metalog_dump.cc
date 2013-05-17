@@ -105,7 +105,7 @@ namespace {
     }
 
     if (*is_file || check_file) {
-      int fd = fs->open(path, 0);
+      int fd = fs->open(path, Filesystem::OPEN_FLAG_VERIFY_CHECKSUM);
       MetaLog::Header header;
       uint8_t buf[MetaLog::Header::LENGTH];
       const uint8_t *ptr = buf;
