@@ -639,19 +639,21 @@ namespace Hypertable {
         while(*unit_ptr == ' ' &&  unit_ptr < end )
           ++unit_ptr;
 
-        String unit_str = String(unit_ptr, end-unit_ptr);
-        to_lower(unit_str);
+        if (unit_ptr < end) {
+          String unit_str = String(unit_ptr, end-unit_ptr);
+          to_lower(unit_str);
 
-        if (unit_str.find("month") == 0)
-          ttl *= 2592000.0;
-        else if (unit_str.find("week") == 0)
-          ttl *= 604800.0;
-        else if (unit_str.find("day") == 0)
-          ttl *= 86400.0;
-        else if (unit_str.find("hour") == 0)
-          ttl *= 3600.0;
-        else if (unit_str.find("minute") == 0)
-          ttl *= 60.0;
+          if (unit_str.find("month") == 0)
+            ttl *= 2592000.0;
+          else if (unit_str.find("week") == 0)
+            ttl *= 604800.0;
+          else if (unit_str.find("day") == 0)
+            ttl *= 86400.0;
+          else if (unit_str.find("hour") == 0)
+            ttl *= 3600.0;
+          else if (unit_str.find("minute") == 0)
+            ttl *= 60.0;
+        }
 
         if (state.cf == 0)
           state.ttl = (time_t)ttl;
