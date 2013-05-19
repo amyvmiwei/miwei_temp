@@ -91,9 +91,6 @@ namespace Hypertable {
       bool connected;
       /// Set when connection is removed, prevents connect retry attempts
       bool decomissioned;
-      /// Set to <i>true</i> if connection should be removed on
-      /// Error::COMM_INVALID_PROXY
-      bool remove_on_invalid_proxy;
       /// Mutex to serialize concurrent access
       Mutex mutex;
       /// Condition variable used to signal connection state change
