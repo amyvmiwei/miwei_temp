@@ -123,7 +123,6 @@ ConnectionManager::add_internal(const CommAddress &addr,
   conn_state->handler = handler;
   conn_state->initializer = initializer;
   conn_state->initialized = false;
-  conn_state->remove_on_invalid_proxy = false;
   conn_state->service_name = (service_name) ? service_name : "";
   boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
 
@@ -220,11 +219,9 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
 
   if (error == Error::COMM_ALREADY_CONNECTED) {
     conn_state->connected = true;
-    conn_state->remove_on_invalid_proxy = true;
     conn_state->cond.notify_all();
   }
-  else if (error == Error::COMM_INVALID_PROXY &&
-           conn_state->remove_on_invalid_proxy) {
+  else if (error == Error::COMM_INVALID_PROXY) {
     conn_state->decomissioned = true;
     conn_state->cond.notify_all();
   }
@@ -374,7 +371,6 @@ ConnectionManager::handle(EventPtr &event) {
       }
       else {
         conn_state->connected = true;
-        conn_state->remove_on_invalid_proxy = true;
         conn_state->cond.notify_all();
       }
     }
@@ -401,7 +397,6 @@ ConnectionManager::handle(EventPtr &event) {
                     conn_state->service_name.c_str());
         conn_state->initialized = true;
         conn_state->connected = true;
-        conn_state->remove_on_invalid_proxy = true;
         conn_state->cond.notify_all();
         return;
       }
