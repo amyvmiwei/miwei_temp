@@ -45,14 +45,15 @@ namespace Hypertable {
       PHANTOM =  0x80
       };
     RangeState() : state(STEADY), timestamp(0), soft_limit(0), transfer_log(0),
-                   split_point(0), old_boundary_row(0) { }
+                   split_point(0), old_boundary_row(0), source(0) { }
     RangeState(CharArena &arena, const RangeState &other) {
       state = other.state;
       timestamp = other.timestamp;
       soft_limit = other.soft_limit;
-      transfer_log = arena.dup(other.transfer_log);
-      split_point = arena.dup(other.split_point);
-      old_boundary_row = arena.dup(other.old_boundary_row);
+      transfer_log = other.transfer_log ? arena.dup(other.transfer_log) : 0;
+      split_point = other.split_point ? arena.dup(other.split_point) : 0;
+      old_boundary_row = other.old_boundary_row ? arena.dup(other.old_boundary_row) : 0;
+      source = other.source ? arena.dup(other.source) : 0;
     }
     virtual ~RangeState() {}
 
@@ -70,6 +71,7 @@ namespace Hypertable {
     const char *transfer_log;
     const char *split_point;
     const char *old_boundary_row;
+    const char *source;
   };
 
   std::ostream &operator<<(std::ostream &, const RangeState &);
@@ -119,6 +121,13 @@ namespace Hypertable {
       else
         clear_old_boundary_row();
 
+      if (rs.source) {
+        m_source = rs.source;
+        source = m_source.c_str();
+      }
+      else
+        clear_source();
+
       return *this;
     }
 
@@ -152,12 +161,23 @@ namespace Hypertable {
       old_boundary_row = 0;
     }
 
+    void set_source(const String &osr) {
+      m_source = osr;
+      source = m_source.c_str();
+    }
+
+    void clear_source() {
+      m_source = "";
+      source = 0;
+    }
+
     virtual void decode(const uint8_t **bufp, size_t *remainp);
 
   private:
     String m_transfer_log;
     String m_split_point;
     String m_old_boundary_row;
+    String m_source;
   };
 
 } // namespace Hypertable
