@@ -1098,6 +1098,14 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct scan_clear_display_timestamps {
+      scan_clear_display_timestamps(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.scan.display_timestamps=false;
+      }
+      ParserState &state;
+    };
+
     struct scan_add_row_interval {
       scan_add_row_interval(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1917,6 +1925,7 @@ namespace Hypertable {
           Token IGNORE_UNKNOWN_COLUMNS  = as_lower_d["ignore_unknown_columns"];
           Token DUP_KEY_COLS            = as_lower_d["dup_key_cols"];
           Token DUPLICATE_KEY_COLUMNS   = as_lower_d["duplicate_key_columns"];
+          Token NO_TIMESTAMPS = as_lower_d["no_timestamps"];
           Token START_ROW    = as_lower_d["start_row"];
           Token END_ROW      = as_lower_d["end_row"];
           Token INCLUSIVE    = as_lower_d["inclusive"];
@@ -2217,10 +2226,12 @@ namespace Hypertable {
             | BUCKETS >> uint_p[scan_set_buckets(self.state)]
             | REVS >> !EQUAL >> uint_p[scan_set_max_versions(self.state)]
             | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
+            | NO_TIMESTAMPS[scan_clear_display_timestamps(self.state)]
             ;
 
           dump_table_statement
-	          = DUMP >> TABLE >> table_identifier[set_table_name(self.state)]
+	          = DUMP >> TABLE[scan_set_display_timestamps(self.state)]
+                         >> table_identifier[set_table_name(self.state)]
             >> !(COLUMNS >> ('*' | (column_selection >> *(COMMA >> column_selection))))
 		        >> !(dump_where_clause)
 		        >> *(dump_table_option_spec)

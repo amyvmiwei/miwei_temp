@@ -492,7 +492,10 @@ cmd_dump_table(NamespacePtr &ns,
     else
       fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
 
-    fout << "#timestamp\trow\tcolumn\tvalue\n";
+    if (state.scan.display_timestamps)
+      fout << "#timestamp\trow\tcolumn\tvalue\n";
+    else
+      fout << "#row\tcolumn\tvalue\n";
   }
   else if (!outf) {
     cb.on_dump(*dumper.get());
@@ -522,7 +525,8 @@ cmd_dump_table(NamespacePtr &ns,
       cb.total_values_size += cell.value_len;
     }
 
-    fout << cell.timestamp << "\t";
+    if (state.scan.display_timestamps)
+      fout << cell.timestamp << "\t";
 
     if (state.escape)
       row_escaper.escape(cell.row_key, strlen(cell.row_key),
