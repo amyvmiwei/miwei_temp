@@ -1,3 +1,24 @@
+Version 0.9.7.6:
+(2013-05-23)
+
+   Fixed stuck CommitLog purge problem
+   Added COMPACT command
+   Added NO_TIMESTAMPS option to DUMP TABLE command
+   Added hints file to range directory to bootstrap AccessGroup state
+   Removed deadlock in Range::create_scanner introduced w/ deferred init commit
+   Fixed source server state tracking for consistent MasterClient::move_range calls
+   Added "current" set to BalancePlanAuthority serialization
+   Fixed MetaLog writer encoded_length/encode race condition
+   issue 1068: Fixed race condition in creating IOHandlerData
+   Fixed multiple BalancePlanAuthority creation problem
+   Fixed bad string create in TTL parsing
+   Fixed bug in metalog_dump that prevented it from working on HDFS
+   Remove connection from ConnectionManager unconditionally on invalid proxy
+   Added methods to BalancePlanAuthority for metalog_tool + doxygen comments
+   Fixed "Created DB handles" logging output in Hyperspace
+   Added test - ROOT RangeServer failure with cluster restart
+   Only set urgent bit on phantom_update if for metadata
+
 Version 0.9.7.5:
 (2013-05-03)
 
