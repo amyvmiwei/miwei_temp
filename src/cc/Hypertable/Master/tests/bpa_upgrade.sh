@@ -8,4 +8,6 @@ cp $SCRIPT_DIR/bpa_upgrade.mml $HT_HOME/fs/local/hypertable/tmp/mml/1
 
 $HT_HOME/bin/ht metalog_dump /hypertable/tmp/mml | grep -v WARN > bpa_upgrade.output
 
-diff bpa_upgrade.output $SCRIPT_DIR/bpa_upgrade.golden
+cat bpa_upgrade.output | perl -e 'while (<>) { s/timestamp=.*?201\d,/timestamp=0,/g; print; }' > bpa_upgrade.output.filtered
+
+diff bpa_upgrade.output.filtered $SCRIPT_DIR/bpa_upgrade.golden
