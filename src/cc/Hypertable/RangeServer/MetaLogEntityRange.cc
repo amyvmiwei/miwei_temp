@@ -86,9 +86,10 @@ void MetaLogEntityRange::clear_state_bits(uint8_t bits) {
   m_state.state &= ~bits;
 }
 
-void MetaLogEntityRange::set_state(uint8_t state) {
+void MetaLogEntityRange::set_state(uint8_t state, const String &source) {
   ScopedLock lock(m_mutex);
   m_state.state = state;
+  m_state.set_source(source);
 }
 
 void MetaLogEntityRange::clear_state() {
@@ -202,6 +203,11 @@ void MetaLogEntityRange::save_original_transfer_log() {
 void MetaLogEntityRange::rollback_transfer_log() {
   ScopedLock lock(m_mutex);
   m_state.set_transfer_log(m_original_transfer_log);
+}
+
+String MetaLogEntityRange::get_source() {
+  ScopedLock lock(m_mutex);
+  return m_state.source ? m_state.source : "";
 }
 
 size_t MetaLogEntityRange::encoded_length() const {

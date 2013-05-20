@@ -747,7 +747,8 @@ void Range::relinquish_install_log() {
     /**
      * Persist RELINQUISH_LOG_INSTALLED Metalog state
      */
-    m_metalog_entity->set_state(RangeState::RELINQUISH_LOG_INSTALLED);
+    m_metalog_entity->set_state(RangeState::RELINQUISH_LOG_INSTALLED,
+                                Global::location_initializer->get());
 
     for (int i=0; true; i++) {
       try {
@@ -850,7 +851,7 @@ void Range::relinquish_compact_and_finish() {
   RangeSpecManaged range_spec;
   m_metalog_entity->get_range_spec(range_spec);
 
-  m_master_client->move_range(Global::location_initializer->get(),
+  m_master_client->move_range(m_metalog_entity->get_source(),
 			      &table_frozen, range_spec,
                               m_metalog_entity->get_transfer_log(),
                               m_metalog_entity->get_soft_limit(), false);
@@ -866,7 +867,7 @@ void Range::relinquish_compact_and_finish() {
 
   // Add acknowledge relinquish task
   acknowledge_relinquish_task = 
-    new MetaLog::EntityTaskAcknowledgeRelinquish(Global::location_initializer->get(),
+    new MetaLog::EntityTaskAcknowledgeRelinquish(m_metalog_entity->get_source(),
                                                  table_frozen, range_spec);
   entities.push_back(acknowledge_relinquish_task.get());
 
@@ -1061,7 +1062,8 @@ void Range::split_install_log() {
     /**
      * Persist SPLIT_LOG_INSTALLED Metalog state
      */
-    m_metalog_entity->set_state(RangeState::SPLIT_LOG_INSTALLED);
+    m_metalog_entity->set_state(RangeState::SPLIT_LOG_INSTALLED,
+                                Global::location_initializer->get());
     for (int i=0; true; i++) {
       try {
         Global::rsml_writer->record_state(m_metalog_entity.get());
@@ -1295,7 +1297,8 @@ void Range::split_compact_and_shrink() {
    */
   {
     ScopedLock lock(m_mutex);
-    m_metalog_entity->set_state(RangeState::SPLIT_SHRUNK);
+    m_metalog_entity->set_state(RangeState::SPLIT_SHRUNK,
+                                Global::location_initializer->get());
     for (int i=0; true; i++) {
       try {
         Global::rsml_writer->record_state(m_metalog_entity.get());
@@ -1356,7 +1359,7 @@ void Range::split_notify_master() {
       soft_limit = Global::range_split_size;
   }
 
-  m_master_client->move_range(Global::location_initializer->get(),
+  m_master_client->move_range(m_metalog_entity->get_source(),
 			      &table_frozen, range,
                               m_metalog_entity->get_transfer_log(),
                               soft_limit, true);
@@ -1379,7 +1382,7 @@ void Range::split_notify_master() {
 
   // Add acknowledge relinquish task
   acknowledge_relinquish_task = 
-    new MetaLog::EntityTaskAcknowledgeRelinquish(Global::location_initializer->get(),
+    new MetaLog::EntityTaskAcknowledgeRelinquish(m_metalog_entity->get_source(),
                                                  table_frozen, range);
   entities.push_back(acknowledge_relinquish_task.get());
 

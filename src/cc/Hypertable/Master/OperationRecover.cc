@@ -404,7 +404,7 @@ void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity) {
   }
 
   int64_t hash_code = Utility::range_hash_code(table, range,
-                                               String("OperationMoveRange-") + m_location);
+                 String("OperationMoveRange-")+range_entity->get_source());
 
   OperationPtr operation = m_context->reference_manager->get(hash_code);
   if (operation) {

@@ -28,38 +28,52 @@
 using namespace Hypertable;
 using namespace Serialization;
 
+#define RANGESTATE_VERSION 100
+
 void RangeState::clear() {
   state = STEADY;
   // timestmp shouldn't be cleared
   soft_limit = 0;
-  transfer_log = split_point = old_boundary_row = 0;
+  transfer_log = split_point = old_boundary_row = source = 0;
 }
 
 
 size_t RangeState::encoded_length() const {
-  return 9 + 8 + encoded_length_vstr(transfer_log) +
-      encoded_length_vstr(split_point) + encoded_length_vstr(old_boundary_row);
+  return 10 + 8 + encoded_length_vstr(transfer_log) +
+      encoded_length_vstr(split_point) + encoded_length_vstr(old_boundary_row) +
+    encoded_length_vstr(source);
 }
 
 
 void RangeState::encode(uint8_t **bufp) const {
+  *(*bufp)++ = RANGESTATE_VERSION;
   *(*bufp)++ = state;
   encode_i64(bufp, timestamp);
   encode_i64(bufp, soft_limit);
   encode_vstr(bufp, transfer_log);
   encode_vstr(bufp, split_point);
   encode_vstr(bufp, old_boundary_row);
+  encode_vstr(bufp, source);
 }
 
 
 void RangeState::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY("decoding range state",
-    state = decode_byte(bufp, remainp);
+  uint8_t version;
+  try {
+    version = decode_byte(bufp, remainp);
+    if (version == RANGESTATE_VERSION)
+      state = decode_byte(bufp, remainp);
+    else
+      state = version;
     timestamp = decode_i64(bufp, remainp);
     soft_limit = decode_i64(bufp, remainp);
     transfer_log = decode_vstr(bufp, remainp);
     split_point = decode_vstr(bufp, remainp);
-    old_boundary_row = decode_vstr(bufp, remainp));
+    old_boundary_row = decode_vstr(bufp, remainp);
+    if (version == RANGESTATE_VERSION)
+      source = decode_vstr(bufp, remainp);
+  }
+  HT_RETHROW("decoding range state")
 }
 
 void RangeStateManaged::clear() {
@@ -98,6 +112,8 @@ std::ostream& Hypertable::operator<<(std::ostream &out, const RangeState &st) {
     out <<" split_point='"<< st.split_point << "'";
   if (st.old_boundary_row)
     out <<" old_boundary_row='"<< st.old_boundary_row << "'";
+  if (st.source)
+    out <<" source='"<< st.source << "'";
   out <<"}";
   return out;
 }

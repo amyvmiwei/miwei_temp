@@ -94,8 +94,9 @@ namespace Hypertable {
 
     /** Sets range state
      * @param state New range state
+     * @param souce Proxy name of server making state change
      */
-    void set_state(uint8_t state);
+    void set_state(uint8_t state, const String &source);
 
     /** Sets bits of range state
      * @param bits Bitmask representing bits to set
@@ -221,6 +222,11 @@ namespace Hypertable {
      * #m_original_transfer_log
      */
     void rollback_transfer_log();
+
+    /** Gets source server
+     * @return Source server
+     */
+    String get_source();
 
     /** Gets serialized length
      * @see encode() for serialization %format
