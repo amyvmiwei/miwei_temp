@@ -115,6 +115,7 @@ fi
 
 diff dump.output dump.golden
 if [ $? != 0 ] ; then
+  sleep 86400
   save_failure_state
   kill_range_servers
   $HT_HOME/bin/clean-database.sh
