@@ -1383,6 +1383,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
                 (Lld)table->generation);
     }
 
+    range->deferred_initialization(cb->get_event()->header.timeout_ms);
+
     if (!range->increment_scan_counter())
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND,
                 "Range %s[%s..%s] dropped or relinquished",
