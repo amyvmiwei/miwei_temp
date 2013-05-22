@@ -196,15 +196,22 @@ void Range::deferred_initialization() {
   m_initialized = true;
 }
 
-void Range::deferred_initialization(boost::xtime deadline) {
-  boost::xtime now;
+void Range::deferred_initialization(uint32_t timeout_millis) {
+  boost::xtime now, expiration_time;
+
+  if (m_initialized)
+    return;
+
+  boost::xtime_get(&expiration_time, TIME_UTC_);
+  expiration_time.sec += timeout_millis/1000;
+
   while (true) {
     try {
       deferred_initialization();
     }
     catch (Exception &e) {
       boost::xtime_get(&now, TIME_UTC_);
-      if (boost::xtime_cmp(now, deadline) < 0) {
+      if (boost::xtime_cmp(now, expiration_time) < 0) {
         poll(0, 0, 10000);
         continue;
       }
@@ -467,12 +474,7 @@ CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
   AccessGroupVector  ag_vector(0);
 
 
-  if (!m_initialized) {
-    boost::xtime expiration_time;
-    boost::xtime_get(&expiration_time, TIME_UTC_);
-    expiration_time.sec += scan_ctx->timeout_ms/1000;
-    deferred_initialization(expiration_time);
-  }
+  HT_ASSERT(m_initialized);
 
   {
     ScopedLock lock(m_schema_mutex);
@@ -500,12 +502,8 @@ CellListScanner *Range::create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
   CellListScannerBuffer *scanner = 0;
   AccessGroupVector ag_vector(0);
 
-  if (!m_initialized) {
-    boost::xtime expiration_time;
-    boost::xtime_get(&expiration_time, TIME_UTC_);
-    expiration_time.sec += scan_ctx->timeout_ms/1000;
-    deferred_initialization(expiration_time);
-  }
+  if (!m_initialized)
+    deferred_initialization(scan_ctx->timeout_ms);
 
   {
     ScopedLock lock(m_schema_mutex);
@@ -1681,12 +1679,8 @@ void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
 
 int64_t Range::get_scan_revision(uint32_t timeout_ms) {
 
-  if (!m_initialized) {
-    boost::xtime expiration_time;
-    boost::xtime_get(&expiration_time, TIME_UTC_);
-    expiration_time.sec += timeout_ms/1000;
-    deferred_initialization(expiration_time);
-  }
+  if (!m_initialized)
+    deferred_initialization(timeout_ms);
 
   ScopedLock lock(m_mutex);
   return m_latest_revision;
@@ -1694,12 +1688,8 @@ int64_t Range::get_scan_revision(uint32_t timeout_ms) {
 
 void Range::acknowledge_load(uint32_t timeout_ms) {
 
-  if (!m_initialized) {
-    boost::xtime expiration_time;
-    boost::xtime_get(&expiration_time, TIME_UTC_);
-    expiration_time.sec += timeout_ms/1000;
-    deferred_initialization(expiration_time);
-  }
+  if (!m_initialized)
+    deferred_initialization(timeout_ms);
 
   ScopedLock lock(m_mutex);
   m_metalog_entity->set_load_acknowledged(true);
