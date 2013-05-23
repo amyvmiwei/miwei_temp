@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for RangeServer.
+ * This file contains method and type definitions for the RangeServer
+ */
+
 
 #include "Common/Compat.h"
 #include <algorithm>
@@ -77,13 +83,14 @@ extern "C" {
 #include "MergeScanner.h"
 #include "MergeScannerRange.h"
 #include "MetaLogEntityRange.h"
+#include "MetaLogEntityRemoveOkLogs.h"
 #include "MetaLogEntityTask.h"
 #include "RangeServer.h"
-#include "RangeStatsGatherer.h"
 #include "ScanContext.h"
 #include "UpdateThread.h"
 #include "ReplayBuffer.h"
 #include "MetaLogDefinitionRangeServer.h"
+#include "TableSchemaCache.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -279,9 +286,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   // Create the maintenance queue
   Global::maintenance_queue = new MaintenanceQueue(maintenance_threads);
 
-  // Create table info maps
   m_live_map = new TableInfoMap();
-  m_replay_map = new TableInfoMap();
 
   /**
    * Listen for incoming connections
@@ -338,8 +343,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   /**
    * Create maintenance scheduler
    */
-  m_maintenance_stats_gatherer = new RangeStatsGatherer(m_live_map);
-  m_maintenance_scheduler = new MaintenanceScheduler(Global::maintenance_queue, m_server_stats, m_maintenance_stats_gatherer);
+  m_maintenance_scheduler = new MaintenanceScheduler(Global::maintenance_queue, m_server_stats, m_live_map);
 
   // Install maintenance timer
   m_timer_handler = new TimerHandler(m_comm, this);
@@ -590,7 +594,9 @@ void RangeServer::local_recover() {
   CommitLogReaderPtr user_log_reader;
   RangeDataVector range_data;
   std::vector<MetaLog::EntityPtr> entities, stripped_entities;
-  MetaLog::EntityRange *range_entity;
+  MetaLogEntityRange *range_entity;
+  StringSet transfer_logs;
+  TableInfoMap replay_map(new TableSchemaCache(m_hyperspace, Global::toplevel_dir));
   int priority = 0;
 
   try {
@@ -609,7 +615,7 @@ void RangeServer::local_recover() {
 
       // Temporary code to handle upgrade from RANGE to RANGE2
       // Metalog entries.  Should be removed around 12/2013
-      if (MetaLog::EntityRange::encountered_upgrade) {
+      if (MetaLogEntityRange::encountered_upgrade) {
         add_mark_file_to_commit_logs("root");
         add_mark_file_to_commit_logs("metadata");
         add_mark_file_to_commit_logs("system");
@@ -620,15 +626,18 @@ void RangeServer::local_recover() {
       {
         MetaLog::EntityTask *task_entity;
         foreach_ht(MetaLog::EntityPtr &entity, entities) {
-          if ((task_entity = dynamic_cast<MetaLog::EntityTask *>(entity.get())) != 0)
+          if ((task_entity = dynamic_cast<MetaLog::EntityTask *>(entity.get())))
             Global::add_to_work_queue(task_entity);
-          else if ((range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get())) != 0 &&
-                   (range_entity->state.state & RangeState::PHANTOM) != 0) {
+          else if ((range_entity = dynamic_cast<MetaLogEntityRange *>(entity.get())) != 0 &&
+                   (range_entity->get_state() & RangeState::PHANTOM) != 0) {
             // If log was created originally for the phantom range, remove it
-            if (strstr(range_entity->state.transfer_log, "/phantom-") != 0)
-              Global::log_dfs->rmdir(range_entity->state.transfer_log);
+            String transfer_log = range_entity->get_transfer_log();
+            if (strstr(transfer_log.c_str(), "/phantom-") != 0)
+              Global::log_dfs->rmdir(transfer_log);
             continue;
           }
+          else if (dynamic_cast<MetaLogEntityRemoveOkLogs *>(entity.get()))
+            Global::remove_ok_logs = (MetaLogEntityRemoveOkLogs *)entity.get();
           stripped_entities.push_back(entity);
         }
       }
@@ -639,32 +648,27 @@ void RangeServer::local_recover() {
               rsml_definition, Global::log_dir + "/" + rsml_definition->name(),
               entities);
 
-      // get all table schemas
-      TableSchemaMap table_schemas;
-      get_table_schemas(table_schemas);
-
-      // First ROOT metadata range
-      m_replay_group = RangeServerProtocol::GROUP_METADATA_ROOT;
-
-      // clear the replay map
-      m_replay_map->clear();
-
+      replay_map.clear();
       foreach_ht(MetaLog::EntityPtr &entity, entities) {
-        range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get());
-        if (range_entity && range_entity->table.is_metadata() &&
-            range_entity->spec.end_row && !strcmp(range_entity->spec.end_row, Key::END_ROOT_ROW)) {
-          replay_load_range(0, range_entity, false, &table_schemas);
+        if ((range_entity = dynamic_cast<MetaLogEntityRange *>(entity.get()))) {
+          TableIdentifier table;
+          String end_row = range_entity->get_end_row();
+          range_entity->get_table_identifier(table);
+          if (table.is_metadata() && !end_row.compare(Key::END_ROOT_ROW))
+            replay_load_range(replay_map, range_entity);
         }
       }
 
-      if (!m_replay_map->empty()) {
+      if (!replay_map.empty()) {
         root_log_reader = new CommitLogReader(Global::log_dfs,
                                               Global::log_dir + "/root");
-        replay_log(root_log_reader);
+        replay_log(replay_map, root_log_reader);
+
+        root_log_reader->get_linked_logs(transfer_logs);
 
         // Perform any range specific post-replay tasks
         range_data.clear();
-        m_replay_map->get_range_data(range_data);
+        replay_map.get_range_data(range_data);
         foreach_ht(RangeData &rd, range_data) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
@@ -677,16 +681,14 @@ void RangeServer::local_recover() {
         }
       }
 
-      // Create ROOT log and wake up anybody waiting for root replay to complete
+      m_live_map->merge(&replay_map);
+
+      if (root_log_reader)
+        Global::root_log = new CommitLog(Global::log_dfs, Global::log_dir
+                                         + "/root", m_props, root_log_reader.get());
+
       {
         ScopedLock lock(m_mutex);
-
-        if (!m_replay_map->empty())
-          m_live_map->merge(m_replay_map);
-
-        if (root_log_reader)
-          Global::root_log = new CommitLog(Global::log_dfs, Global::log_dir
-              + "/root", m_props, root_log_reader.get());
         m_root_replay_finished = true;
         m_root_replay_finished_cond.notify_all();
       }
@@ -698,29 +700,28 @@ void RangeServer::local_recover() {
         maintenance_tasks.clear();
       }
 
-      // Then recover other METADATA ranges
-      m_replay_group = RangeServerProtocol::GROUP_METADATA;
-
-      // clear the replay map
-      m_replay_map->clear();
-
-      foreach_ht(MetaLog::EntityPtr &entity, entities) {
-        range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get());
-        if (range_entity && range_entity->table.is_metadata() &&
-            !(range_entity->spec.end_row &&
-              !strcmp(range_entity->spec.end_row, Key::END_ROOT_ROW))) {
-          replay_load_range(0, range_entity, false, &table_schemas);
+      replay_map.clear();
+      foreach_ht (MetaLog::EntityPtr &entity, entities) {
+        if ((range_entity = dynamic_cast<MetaLogEntityRange *>(entity.get()))) {
+          TableIdentifier table;
+          String end_row = range_entity->get_end_row();
+          range_entity->get_table_identifier(table);
+          if (table.is_metadata() && end_row.compare(Key::END_ROOT_ROW))
+            replay_load_range(replay_map, range_entity);
         }
       }
 
-      if (!m_replay_map->empty()) {
+      if (!replay_map.empty()) {
         metadata_log_reader =
           new CommitLogReader(Global::log_dfs, Global::log_dir + "/metadata");
-        replay_log(metadata_log_reader);
+
+        replay_log(replay_map, metadata_log_reader);
+
+        metadata_log_reader->get_linked_logs(transfer_logs);
 
         // Perform any range specific post-replay tasks
         range_data.clear();
-        m_replay_map->get_range_data(range_data);
+        replay_map.get_range_data(range_data);
         foreach_ht(RangeData &rd, range_data) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
@@ -733,18 +734,14 @@ void RangeServer::local_recover() {
         }
       }
 
-      // Create metadata log and wake up anybody waiting for metadata replay to
-      // complete
+      m_live_map->merge(&replay_map);
+
+      if (metadata_log_reader)
+        Global::metadata_log = new CommitLog(Global::log_dfs,
+                                             Global::log_dir + "/metadata",
+                                             m_props, metadata_log_reader.get());
       {
         ScopedLock lock(m_mutex);
-
-        if (!m_replay_map->empty())
-          m_live_map->merge(m_replay_map);
-
-        if (metadata_log_reader)
-          Global::metadata_log = new CommitLog(Global::log_dfs,
-              Global::log_dir + "/metadata", m_props,
-              metadata_log_reader.get());
         m_metadata_replay_finished = true;
         m_metadata_replay_finished_cond.notify_all();
       }
@@ -756,27 +753,28 @@ void RangeServer::local_recover() {
         maintenance_tasks.clear();
       }
 
-      // Then recover SYSTEM ranges
-      m_replay_group = RangeServerProtocol::GROUP_SYSTEM;
-
-      // clear the replay map
-      m_replay_map->clear();
-
-      foreach_ht(MetaLog::EntityPtr &entity, entities) {
-        range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get());
-        if (range_entity && range_entity->table.is_system() && !range_entity->table.is_metadata())
-          replay_load_range(0, range_entity, false, &table_schemas);
+      replay_map.clear();
+      foreach_ht (MetaLog::EntityPtr &entity, entities) {
+        if ((range_entity = dynamic_cast<MetaLogEntityRange *>(entity.get()))) {
+          TableIdentifier table;
+          range_entity->get_table_identifier(table);
+          if (table.is_system() && !table.is_metadata())
+            replay_load_range(replay_map, range_entity);
+        }
       }
 
-      if (!m_replay_map->empty()) {
+      if (!replay_map.empty()) {
         system_log_reader =
           new CommitLogReader(Global::log_dfs, Global::log_dir + "/system");
-        replay_log(system_log_reader);
+
+        replay_log(replay_map, system_log_reader);
+
+        system_log_reader->get_linked_logs(transfer_logs);
 
         // Perform any range specific post-replay tasks
         range_data.clear();
-        m_replay_map->get_range_data(range_data);
-        foreach_ht(RangeData &rd, range_data) {
+        replay_map.get_range_data(range_data);
+        foreach_ht (RangeData &rd, range_data) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -788,18 +786,17 @@ void RangeServer::local_recover() {
         }
       }
 
+      m_live_map->merge(&replay_map);
+
       // Create system log and wake up anybody waiting for system replay to
       // complete
+      if (system_log_reader)
+        Global::system_log = new CommitLog(Global::log_dfs,
+                                           Global::log_dir + "/system", m_props,
+                                           system_log_reader.get());
+
       {
         ScopedLock lock(m_mutex);
-
-        if (!m_replay_map->empty())
-          m_live_map->merge(m_replay_map);
-
-        if (system_log_reader)
-          Global::system_log = new CommitLog(Global::log_dfs,
-              Global::log_dir + "/system", m_props,
-              system_log_reader.get());
         m_system_replay_finished = true;
         m_system_replay_finished_cond.notify_all();
       }
@@ -814,26 +811,27 @@ void RangeServer::local_recover() {
       if (m_props->get_bool("Hypertable.RangeServer.LoadSystemTablesOnly"))
         return;
 
-      // Then recover the USER ranges
-      m_replay_group = RangeServerProtocol::GROUP_USER;
-
-      // clear the replay map
-      m_replay_map->clear();
-
-      foreach_ht(MetaLog::EntityPtr &entity, entities) {
-        range_entity = dynamic_cast<MetaLog::EntityRange *>(entity.get());
-        if (range_entity && !range_entity->table.is_system())
-          replay_load_range(0, range_entity, false, &table_schemas);
+      replay_map.clear();
+      foreach_ht (MetaLog::EntityPtr &entity, entities) {
+        if ((range_entity = dynamic_cast<MetaLogEntityRange *>(entity.get()))) {
+          TableIdentifier table;
+          range_entity->get_table_identifier(table);
+          if (!table.is_system())
+            replay_load_range(replay_map, range_entity);
+        }
       }
 
-      if (!m_replay_map->empty()) {
+      if (!replay_map.empty()) {
         user_log_reader = new CommitLogReader(Global::log_dfs,
                                               Global::log_dir + "/user");
-        replay_log(user_log_reader);
+
+        replay_log(replay_map, user_log_reader);
+
+        user_log_reader->get_linked_logs(transfer_logs);
 
         // Perform any range specific post-replay tasks
         range_data.clear();
-        m_replay_map->get_range_data(range_data);
+        replay_map.get_range_data(range_data);
         foreach_ht(RangeData &rd, range_data) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
@@ -847,21 +845,15 @@ void RangeServer::local_recover() {
         }
       }
 
+      m_live_map->merge(&replay_map);
 
-      // Create user log and range txn log and
-      // wake up anybody waiting for replay to complete
+      Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir
+                                       + "/user", m_props, user_log_reader.get(), false);
+
       {
         ScopedLock lock(m_mutex);
-
-        if (!m_replay_map->empty())
-          m_live_map->merge(m_replay_map);
-
-        Global::user_log = new CommitLog(Global::log_dfs, Global::log_dir
-            + "/user", m_props, user_log_reader.get(), false);
         m_replay_finished = true;
         m_replay_finished_cond.notify_all();
-
-        HT_NOTICE("Replay finished");
       }
 
       // Finish mid-maintenance
@@ -870,6 +862,9 @@ void RangeServer::local_recover() {
           Global::maintenance_queue->add(maintenance_tasks[i]);
         maintenance_tasks.clear();
       }
+
+      HT_NOTICE("Replay finished");
+
     }
     else {
       ScopedLock lock(m_mutex);
@@ -907,7 +902,11 @@ void RangeServer::local_recover() {
       m_system_replay_finished_cond.notify_all();
       m_replay_finished_cond.notify_all();
 
-      HT_NOTICE("Replay finished");
+    }
+
+    if (!Global::remove_ok_logs) {
+      Global::remove_ok_logs = new MetaLogEntityRemoveOkLogs(transfer_logs);
+      Global::rsml_writer->record_state(Global::remove_ok_logs.get());
     }
 
   }
@@ -917,34 +916,66 @@ void RangeServer::local_recover() {
   }
 }
 
-void RangeServer::get_table_schemas(TableSchemaMap &table_schemas) {
-  table_schemas.clear();
+
+void
+RangeServer::replay_load_range(TableInfoMap &replay_map,
+                               MetaLogEntityRange *range_entity) {
+  SchemaPtr schema;
+  TableInfoPtr table_info, live_table_info;
+  TableIdentifier table;
+  RangeSpecManaged range_spec;
+  RangePtr range;
+
+  HT_DEBUG_OUT << "replay_load_range " << *(MetaLog::Entity *)range_entity
+      << HT_END;
+
+  range_entity->get_table_identifier(table);
+  range_entity->get_range_spec(range_spec);
+
   try {
-    std::vector<DirEntryAttr> listing;
-    m_hyperspace->readdir_attr(Global::toplevel_dir + "/tables", "schema", true, listing);
-    map_table_schemas("", listing, table_schemas);
-  }
-  catch (Exception &e) {
-    HT_ERROR_OUT << "Problem getting all table schemas " << e << HT_END;
-    HT_ABORT;
-  }
-}
 
-void RangeServer::map_table_schemas(const String &parent,
-                                    const std::vector<DirEntryAttr> &listing,
-                                    TableSchemaMap &table_schemas) {
-  String preffix = !parent.empty() ? parent + "/" : ""; // avoid leading slash
-  foreach_ht(const DirEntryAttr& e, listing) {
-    String name = preffix + e.name;
-    if (e.has_attr) {
-      SchemaPtr schema = Schema::new_instance((char*)e.attr.base, e.attr.size);
-      table_schemas.insert(TableSchemaMap::value_type(name, schema));
+    replay_map.get(table, table_info);
+
+    m_live_map->get(table, live_table_info);
+
+    // Range should not already be loaded
+    HT_ASSERT(!live_table_info->get_range(&range_spec, range));
+
+    /**
+     * Lazily create sys/METADATA table pointer
+     */
+    if (!Global::metadata_table) {
+      ScopedLock lock(Global::mutex);
+      uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
+      if (!Global::range_locator)
+        Global::range_locator = new Hypertable::RangeLocator(m_props,
+                m_conn_manager, Global::hyperspace, timeout_ms);
+      ApplicationQueueInterfacePtr aq = m_app_queue;
+      Global::metadata_table = new Table(m_props, Global::range_locator,
+              m_conn_manager, Global::hyperspace, aq, m_namemap,
+                           TableIdentifier::METADATA_NAME, 0, timeout_ms);
     }
-    map_table_schemas(name, e.sub_entries, table_schemas);
+
+    schema = table_info->get_schema();
+
+    range = new Range(m_master_client, schema, range_entity,
+                      live_table_info.get());
+
+    range->recovery_initialize();
+
+    table_info->add_range(range);
+
+    HT_INFOF("Successfully replay loaded range %s", range->get_name().c_str());
+
+  }
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << "Problem loading range during replay - " << e << HT_END;
   }
 }
 
-void RangeServer::replay_log(CommitLogReaderPtr &log_reader) {
+
+void RangeServer::replay_log(TableInfoMap &replay_map,
+                             CommitLogReaderPtr &log_reader) {
   BlockCompressionHeaderCommitLog header;
   uint8_t *base;
   size_t len;
@@ -967,7 +998,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader) {
     table_id.decode(&ptr, &len);
 
     // Fetch table info
-    if (!m_replay_map->get(table_id.id, table_info))
+    if (!replay_map.lookup(table_id.id, table_info))
       continue;
 
     dbuf.clear();
@@ -1006,7 +1037,7 @@ void RangeServer::replay_log(CommitLogReaderPtr &log_reader) {
     base = dbuf.base;
     encode_i32(&base, block_size);
 
-    replay_update(0, dbuf.base, dbuf.fill());
+    replay_update(replay_map, dbuf.base, dbuf.fill());
     block_count++;
   }
 
@@ -1037,7 +1068,7 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
 
     if (table) {
 
-      if (!m_live_map->get(table->id, table_info)) {
+      if (!m_live_map->lookup(table->id, table_info)) {
         cb->error(Error::TABLE_NOT_FOUND, table->id);
         return;
       }
@@ -1129,9 +1160,12 @@ namespace {
   void do_metadata_sync(RangeData &rd, TableMutatorPtr &mutator,
                         const char *table_id, bool do_start_row, bool do_location) {
     String metadata_key_str;
+    String start_row, end_row;
     KeySpec key;
 
-    metadata_key_str = String(table_id) + ":" + rd.range->end_row();
+    rd.range->get_boundary_rows(start_row, end_row);
+
+    metadata_key_str = String(table_id) + ":" + end_row;
     key.row = metadata_key_str.c_str();
     key.row_len = metadata_key_str.length();
     key.column_qualifier = 0;
@@ -1139,7 +1173,7 @@ namespace {
 
     if (do_start_row) {
       key.column_family = "StartRow";
-      mutator->set(key, rd.range->start_row());
+      mutator->set(key, start_row);
     }
     if (do_location) {
       key.column_family = "Location";
@@ -1211,7 +1245,7 @@ RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id,
 
     if (*table_id) {
 
-      if (!m_live_map->get(table_id, table_info)) {
+      if (!m_live_map->lookup(table_id, table_info)) {
         cb->error(Error::TABLE_NOT_FOUND, table_id);
         return;
       }
@@ -1331,7 +1365,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
                "can only scan one cell interval");
 
-    m_live_map->get(table, table_info);
+    if (!m_live_map->lookup(table->id, table_info))
+      HT_THROW(Error::TABLE_NOT_FOUND, table->id);
 
     if (!table_info->get_range(range_spec, range))
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(a) %s[%s..%s]",
@@ -1355,9 +1390,12 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     decrement_needed = true;
 
+    String start_row, end_row;
+    range->get_boundary_rows(start_row, end_row);
+
     // Check to see if range just shrunk
-    if (strcmp(range->start_row().c_str(), range_spec->start_row) ||
-        strcmp(range->end_row().c_str(), range_spec->end_row))
+    if (strcmp(start_row.c_str(), range_spec->start_row) ||
+        strcmp(end_row.c_str(), range_spec->end_row))
       HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "(b) %s[%s..%s]",
                 table->id, range_spec->start_row, range_spec->end_row);
 
@@ -1491,7 +1529,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
     HT_MAYBE_FAIL_X("fetch-scanblock-user-1", !scanner_table.is_system());
 
-    if (!m_live_map->get(scanner_table.id, table_info))
+    if (!m_live_map->lookup(scanner_table.id, table_info))
       HT_THROWF(Error::TABLE_NOT_FOUND, "%s", scanner_table.id);
 
     schema = table_info->get_schema();
@@ -1564,7 +1602,6 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
   String table_dfsdir;
   String range_dfsdir;
   char md5DigestStr[33];
-  bool register_table = false;
   String location;
 
   try {
@@ -1600,32 +1637,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
       HT_MAYBE_FAIL_X("load-range-1", !table->is_system());
 
-      /** Get TableInfo, create if doesn't exist **/
-      if (!m_live_map->get(table->id, table_info)) {
-        table_info = new TableInfo(m_master_client, table, schema);
-        register_table = true;
-      }
-
-      // Verify schema, this will create the Schema object and add it to
-      // table_info if it doesn't exist
-      try {
-        verify_schema(table_info, table->generation);
-      }
-      catch (Hypertable::Exception &e) {
-        if (e.code() == Error::HYPERSPACE_BAD_PATHNAME ||
-            e.code() == Error::HYPERSPACE_FILE_NOT_FOUND) {
-          HT_WARNF("Table %s file error in hyperspace '%s'", table->id,
-                  e.what());
-          cb->error(e.code(), table->id);
-          return;
-        }
-        else {
-          HT_THROW(e.code(), e.what());
-        }
-      }
-
-      if (register_table)
-        m_live_map->set(table->id, table_info);
+      m_live_map->get(*table, table_info);
 
       // Make sure this range is not already loaded
       if (table_info->has_range(range_spec)) {
@@ -1833,7 +1845,7 @@ RangeServer::acknowledge_load(ResponseCallbackAcknowledgeLoad *cb,
         continue;
       }
 
-      if (!m_live_map->get(rr.table.id, table_info)) {
+      if (!m_live_map->lookup(rr.table.id, table_info)) {
         error_map[rr] = Error::TABLE_NOT_FOUND;
         HT_WARN_OUT << "Table " << rr.table.id << " not found" << HT_END;
         continue;
@@ -1897,9 +1909,8 @@ RangeServer::update_schema(ResponseCallback *cb,
                (String) "Update schema Parse Error for table '"
                + table->id + "' : needs ID assignment");
 
-    m_live_map->get(table, table_info);
-
-    table_info->update_schema(schema);
+    if (m_live_map->lookup(table->id, table_info))
+      table_info->update_schema(schema);
 
   }
   catch(Exception &e) {
@@ -1960,7 +1971,7 @@ RangeServer::transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
 
 void
 RangeServer::commit_log_sync(ResponseCallback *cb, 
-        const TableIdentifier *table) {
+                             const TableIdentifier *table) {
   String errmsg;
   int error = Error::OK;
   TableUpdate *table_update = new TableUpdate();
@@ -1975,27 +1986,23 @@ RangeServer::commit_log_sync(ResponseCallback *cb,
       return;
   }
 
-  m_live_map->get(table, table_update->table_info);
-
-  // verify schema
-  schema = table_update->table_info->get_schema();
-  if (schema.get()->get_generation() != table->generation) {
-    if ((error = cb->error(Error::RANGESERVER_GENERATION_MISMATCH,
-        format("Commit log sync schema generation mismatch for table %s (received %u != %u)",
-               table->id, table->generation,
-               table_update->table_info->get_schema()->get_generation()))) != Error::OK)
-      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
-    return;
-  }
-
-  // Check for group commit
-  if (schema->get_group_commit_interval() > 0) {
-    m_group_commit->add(cb->get_event(), schema, table, 0, buffer, 0);
-    return;
-  }
-
-  // normal sync...
   try {
+
+    if (!m_live_map->lookup(table->id, table_update->table_info)) {
+      if ((error = cb->error(Error::TABLE_NOT_FOUND, table->id)) != Error::OK)
+        HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
+      return;
+    }
+
+    schema = table_update->table_info->get_schema();
+
+    // Check for group commit
+    if (schema->get_group_commit_interval() > 0) {
+      m_group_commit->add(cb->get_event(), schema, table, 0, buffer, 0);
+      return;
+    }
+
+    // normal sync...
     UpdateRequest *request = new UpdateRequest();
     table_update->id = *table;
     table_update->commit_interval = 0;
@@ -2030,7 +2037,6 @@ void
 RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
                     uint32_t count, StaticBuffer &buffer, uint32_t flags) {
   SchemaPtr schema;
-  int error;
   TableUpdate *table_update = new TableUpdate();
 
   if (m_update_delay)
@@ -2055,18 +2061,10 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
     }
   }
 
-  m_live_map->get(table, table_update->table_info);
+  if (!m_live_map->lookup(table->id, table_update->table_info))
+    HT_THROW(Error::TABLE_NOT_FOUND, table->id);
 
-  // verify schema
   schema = table_update->table_info->get_schema();
-  if (schema.get()->get_generation() != table->generation) {
-    if ((error = cb->error(Error::RANGESERVER_GENERATION_MISMATCH,
-                           format("Update schema generation mismatch for table %s (received %u != %u)",
-                                  table->id, table->generation,
-                                  table_update->table_info->get_schema()->get_generation()))) != Error::OK)
-      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
-    return;
-  }
 
   // Check for group commit
   if (schema->get_group_commit_interval() > 0) {
@@ -2182,7 +2180,7 @@ void RangeServer::update_qualify_and_transform() {
       HT_DEBUG_OUT <<"Update: "<< table_update->id << HT_END;
 
       try {
-        if (!m_live_map->get(table_update->id.id, table_update->table_info)) {
+        if (!m_live_map->lookup(table_update->id.id, table_update->table_info)) {
           table_update->error = Error::TABLE_NOT_FOUND;
           table_update->error_msg = table_update->id.id;
           continue;
@@ -2340,9 +2338,11 @@ void RangeServer::update_qualify_and_transform() {
             rulist->range_blocked = true;
           }
 
+          String range_start_row, range_end_row;
+          rulist->range->get_boundary_rows(range_start_row, range_end_row);
+
           // Make sure range didn't just shrink
-          if (rulist->range->start_row() != start_row ||
-              rulist->range->end_row() != end_row) {
+          if (range_start_row != start_row || range_end_row != end_row) {
             rulist->range->decrement_update_counter();
             table_update->range_map.erase(rulist->range.get());
             delete rulist;
@@ -2901,24 +2901,21 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
       cb->error(Error::TABLE_NOT_FOUND, table->id);
       return;
     }
-
   }
 
-  /*
-   * Set "drop" bit on all ranges
-   */
+  // Set "drop" bit on all ranges
   range_data.clear();
   table_info->get_range_data(range_data);
   foreach_ht(RangeData &rd, range_data)
     rd.range->drop();
 
-  /**
-   *  Wait for maintenance to complete and record removal in RSML
-   */
+  // Disable maintenance for range, remove the range's original transfer
+  // log, and remove the range from the RSML
   foreach_ht(RangeData &rd, range_data) {
-    rd.range->wait_for_maintenance_to_complete();
+    rd.range->disable_maintenance();
     try {
-      rd.range->record_removal_rsml();
+      rd.range->remove_original_transfer_log();
+      Global::rsml_writer->record_removal(rd.range->metalog_entity());
     }
     catch (Exception &e) {
       cb->error(e.code(), Global::location_initializer->get());
@@ -2969,7 +2966,6 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
                        bool nokeys) {
   RangeDataVector range_data;
   AccessGroup::MaintenanceData *ag_data;
-  RangeStatsGatherer stats_gatherer(m_live_map);
   String str;
 
   HT_INFO("dump");
@@ -2977,12 +2973,13 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
   try {
     std::ofstream out(outfile);
 
-    stats_gatherer.fetch(range_data);
-
-    for (size_t i=0; i<range_data.size(); i++) {
-      out << "RANGE " << range_data[i].range->get_name() << "\n";
-      out << *range_data[i].data << "\n";
-      for (ag_data = range_data[i].data->agdata; ag_data; ag_data = ag_data->next)
+    m_live_map->get_range_data(range_data);
+    time_t now = time(0);
+    foreach_ht (RangeData &rd, range_data) {
+      rd.data = rd.range->get_maintenance_data(range_data.arena(), now);
+      out << "RANGE " << rd.range->get_name() << "\n";
+      out << *rd.data << "\n";
+      for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)
         out << *ag_data << "\n";
     }
 
@@ -3049,7 +3046,7 @@ RangeServer::dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *tabl
 
     std::ofstream out(outfile);
 
-    if (!m_live_map->get(table->id, table_info)) {
+    if (!m_live_map->lookup(table->id, table_info)) {
       cb->error(Error::TABLE_NOT_FOUND, table->id);
       return;
     }
@@ -3117,7 +3114,6 @@ void RangeServer::heapcheck(ResponseCallback *cb, const char *outfile) {
 
 void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   ScopedLock lock(m_stats_mutex);
-  RangeStatsGathererPtr stats_gatherer = new RangeStatsGatherer(m_live_map);
   RangeDataVector range_data;
   int64_t timestamp = Hypertable::get_ts64();
   time_t now = (time_t)(timestamp/1000000000LL);
@@ -3227,17 +3223,19 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   StatsTable table_stat;
   StatsTableMap::iterator iter;
   m_stats->tables.clear();
-  stats_gatherer->fetch(range_data, mutator.get());
-  for (size_t ii=0; ii<range_data.size(); ii++) {
 
-    if (range_data[ii].data->table_id == 0) {
+  m_live_map->get_range_data(range_data);
+  foreach_ht (RangeData &rd, range_data) {
+    rd.data = rd.range->get_maintenance_data(range_data.arena(), now, mutator.get());
+
+    if (rd.data->table_id == 0) {
       HT_ERROR_OUT << "Range statistics object found without table ID" << HT_END;
       continue;
     }
 
     if (table_stat.table_id == "")
-      table_stat.table_id = range_data[ii].data->table_id;
-    else if (strcmp(table_stat.table_id.c_str(), range_data[ii].data->table_id)) {
+      table_stat.table_id = rd.data->table_id;
+    else if (strcmp(table_stat.table_id.c_str(), rd.data->table_id)) {
       if (table_stat.disk_used > 0)
         table_stat.compression_ratio = (double)table_stat.disk_used / table_stat.compression_ratio;
       else
@@ -3245,37 +3243,37 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
       m_stats->tables.push_back(table_stat);
       table_scanner_count_map[table_stat.table_id.c_str()] = 0;
       table_stat.clear();
-      table_stat.table_id = range_data[ii].data->table_id;
+      table_stat.table_id = rd.data->table_id;
     }
 
-    table_stat.scans += range_data[ii].data->load_factors.scans;
-    m_load_factors.scans += range_data[ii].data->load_factors.scans;
-    table_stat.updates += range_data[ii].data->load_factors.updates;
-    m_load_factors.updates += range_data[ii].data->load_factors.updates;
-    table_stat.cells_scanned += range_data[ii].data->load_factors.cells_scanned;
-    m_load_factors.cells_scanned += range_data[ii].data->load_factors.cells_scanned;
-    table_stat.cells_returned += range_data[ii].data->cells_returned;
-    table_stat.cells_written += range_data[ii].data->load_factors.cells_written;
-    m_load_factors.cells_written += range_data[ii].data->load_factors.cells_written;
-    table_stat.bytes_scanned += range_data[ii].data->load_factors.bytes_scanned;
-    table_stat.bytes_returned += range_data[ii].data->bytes_returned;
-    table_stat.bytes_written += range_data[ii].data->load_factors.bytes_written;
-    table_stat.disk_bytes_read += range_data[ii].data->load_factors.disk_bytes_read;
-    m_load_factors.disk_bytes_read += range_data[ii].data->load_factors.disk_bytes_read;
-    table_stat.disk_bytes_read += range_data[ii].data->load_factors.disk_bytes_read;
-    table_stat.disk_used += range_data[ii].data->disk_used;
-    table_stat.key_bytes += range_data[ii].data->key_bytes;
-    table_stat.value_bytes += range_data[ii].data->value_bytes;
-    table_stat.compression_ratio += (double)range_data[ii].data->disk_used / range_data[ii].data->compression_ratio;
-    table_stat.memory_used += range_data[ii].data->memory_used;
-    table_stat.memory_allocated += range_data[ii].data->memory_allocated;
-    table_stat.shadow_cache_memory += range_data[ii].data->shadow_cache_memory;
-    table_stat.block_index_memory += range_data[ii].data->block_index_memory;
-    table_stat.bloom_filter_memory += range_data[ii].data->bloom_filter_memory;
-    table_stat.bloom_filter_accesses += range_data[ii].data->bloom_filter_accesses;
-    table_stat.bloom_filter_maybes += range_data[ii].data->bloom_filter_maybes;
-    table_stat.cell_count += range_data[ii].data->cell_count;
-    table_stat.file_count += range_data[ii].data->file_count;
+    table_stat.scans += rd.data->load_factors.scans;
+    m_load_factors.scans += rd.data->load_factors.scans;
+    table_stat.updates += rd.data->load_factors.updates;
+    m_load_factors.updates += rd.data->load_factors.updates;
+    table_stat.cells_scanned += rd.data->load_factors.cells_scanned;
+    m_load_factors.cells_scanned += rd.data->load_factors.cells_scanned;
+    table_stat.cells_returned += rd.data->cells_returned;
+    table_stat.cells_written += rd.data->load_factors.cells_written;
+    m_load_factors.cells_written += rd.data->load_factors.cells_written;
+    table_stat.bytes_scanned += rd.data->load_factors.bytes_scanned;
+    table_stat.bytes_returned += rd.data->bytes_returned;
+    table_stat.bytes_written += rd.data->load_factors.bytes_written;
+    table_stat.disk_bytes_read += rd.data->load_factors.disk_bytes_read;
+    m_load_factors.disk_bytes_read += rd.data->load_factors.disk_bytes_read;
+    table_stat.disk_bytes_read += rd.data->load_factors.disk_bytes_read;
+    table_stat.disk_used += rd.data->disk_used;
+    table_stat.key_bytes += rd.data->key_bytes;
+    table_stat.value_bytes += rd.data->value_bytes;
+    table_stat.compression_ratio += (double)rd.data->disk_used / rd.data->compression_ratio;
+    table_stat.memory_used += rd.data->memory_used;
+    table_stat.memory_allocated += rd.data->memory_allocated;
+    table_stat.shadow_cache_memory += rd.data->shadow_cache_memory;
+    table_stat.block_index_memory += rd.data->block_index_memory;
+    table_stat.bloom_filter_memory += rd.data->bloom_filter_memory;
+    table_stat.bloom_filter_accesses += rd.data->bloom_filter_accesses;
+    table_stat.bloom_filter_maybes += rd.data->bloom_filter_maybes;
+    table_stat.cell_count += rd.data->cell_count;
+    table_stat.file_count += rd.data->file_count;
     table_stat.range_count++;
   }
 
@@ -3380,15 +3378,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
 
 
 void
-RangeServer::replay_load_range(ResponseCallback *cb,
-                               MetaLog::EntityRange *range_entity,
-                               bool write_rsml) {
-  replay_load_range(cb, range_entity, write_rsml, 0);
-}
-
-void
-RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
-                           size_t len) {
+RangeServer::replay_update(TableInfoMap &replay_map,
+                           const uint8_t *data, size_t len) {
   TableIdentifier table_identifier;
   TableInfoPtr table_info;
   SerializedKey serkey;
@@ -3403,8 +3394,7 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
   String err_msg;
   int64_t revision;
   RangePtr range;
-  const char *start_row, *end_row;
-  int error;
+  String start_row, end_row;
 
   //HT_DEBUGF("replay_update - length=%ld", len);
 
@@ -3416,15 +3406,6 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
       block_size = decode_i32(&ptr, &remaining);
       revision = decode_i64(&ptr, &remaining);
 
-      if (m_replay_log) {
-        DynamicBuffer dbuf(0, false);
-        dbuf.base = (uint8_t *)ptr;
-        dbuf.ptr = dbuf.base + remaining;
-
-        if ((error = m_replay_log->write(dbuf, revision)) != Error::OK)
-          HT_THROW(error, "");
-      }
-
       // decode table identifier
       table_identifier.decode(&ptr, &remaining);
 
@@ -3435,7 +3416,7 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
       block_end = ptr + block_size;
 
       // Fetch table info
-      if (!m_replay_map->get(table_identifier.id, table_info))
+      if (!replay_map.lookup(table_identifier.id, table_info))
         HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
                   "table info for table name='%s'",
                   table_identifier.id);
@@ -3445,13 +3426,13 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
         row = SerializedKey(ptr).row();
 
         // Look for containing range, add to stop mods if not found
-        if (!table_info->find_containing_range(row, range, &start_row, &end_row))
+        if (!table_info->find_containing_range(row, range, start_row, end_row))
           HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
                     "range for row '%s'", row);
 
         serkey.ptr = ptr;
 
-        while (ptr < block_end && (end_row == 0 || (strcmp(row, end_row) <= 0))) {
+        while (ptr < block_end && (end_row.empty() || (strcmp(row, end_row.c_str()) <= 0))) {
 
           // extract the key
           ptr += serkey.length();
@@ -3481,70 +3462,14 @@ RangeServer::replay_update(ResponseCallback *cb, const uint8_t *data,
 
   }
   catch (Exception &e) {
-
     if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
       HT_INFOF("Range not found - %s", e.what());
     else
       HT_ERROR_OUT << e << HT_END;
-
-    if (cb) {
-      cb->error(e.code(), format("%s - %s", e.what(),
-                Error::get_text(e.code())));
-      return;
-    }
     HT_THROW(e.code(), e.what());
   }
-
-  if (cb)
-    cb->response_ok();
 }
 
-void RangeServer::replay_commit(ResponseCallback *cb) {
-  int error;
-
-  HT_INFO("replay_commit");
-
-  try {
-    CommitLog *log = 0;
-    std::vector<RangePtr> rangev;
-
-    if (m_replay_group == RangeServerProtocol::GROUP_METADATA_ROOT)
-      log = Global::root_log;
-    else if (m_replay_group == RangeServerProtocol::GROUP_METADATA)
-      log = Global::metadata_log;
-    else if (m_replay_group == RangeServerProtocol::GROUP_SYSTEM)
-      log = Global::system_log;
-    else if (m_replay_group == RangeServerProtocol::GROUP_USER)
-      log = Global::user_log;
-
-    /** FIX ME - should we link here?  what about stitch_in? **/
-    if ((error = log->link_log(m_replay_log.get())) != Error::OK)
-      HT_THROW(error, String("Problem linking replay log (")
-               + m_replay_log->get_log_dir() + ") into commit log ("
-               + log->get_log_dir() + ")");
-
-    // Perform any range specific post-replay tasks
-    /*
-    m_replay_map->get_range_vector(rangev);
-    foreach_ht(RangePtr &range, rangev)
-      range->recovery_finalize();
-    */
-
-    m_live_map->merge(m_replay_map);
-
-  }
-  catch (Hypertable::Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    if (cb) {
-      cb->error(e.code(), e.what());
-      return;
-    }
-    HT_THROW(e.code(), e.what());
-  }
-
-  if (cb)
-    cb->response_ok();
-}
 
 void
 RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
@@ -3569,7 +3494,7 @@ RangeServer::drop_range(ResponseCallback *cb, const TableIdentifier *table,
 
   try {
 
-    if (!m_live_map->get(table->id, table_info))
+    if (!m_live_map->lookup(table->id, table_info))
       HT_THROWF(Error::TABLE_NOT_FOUND, "%s", table->id);
 
     /** Remove the range **/
@@ -3609,7 +3534,7 @@ RangeServer::relinquish_range(ResponseCallback *cb,
   }
 
   try {
-    if (!m_live_map->get(table->id, table_info)) {
+    if (!m_live_map->lookup(table->id, table_info)) {
       cb->error(Error::TABLE_NOT_FOUND, table->id);
       return;
     }
@@ -3789,10 +3714,10 @@ void RangeServer::phantom_load(ResponseCallback *cb, const String &location,
         const vector<QualifiedRangeSpec> &specs,
         const vector<RangeState> &states) {
   TableInfoPtr table_info;
-  SchemaPtr schema;
   FailoverPhantomRangeMap::iterator failover_map_it;
   PhantomRangeMapPtr phantom_range_map;
   TableInfoMapPtr phantom_tableinfo_map;
+  int error;
 
   HT_INFOF("phantom_load location=%s, plan_generation=%d, num_fragments=%d,"
            " num_ranges=%d", location.c_str(), plan_generation,
@@ -3845,35 +3770,16 @@ void RangeServer::phantom_load(ResponseCallback *cb, const String &location,
         //  cb->error(Error::RANGESERVER_TABLE_DROPPED, range.qualified_range.table.id);
         //  return;
         //}
-        // Get TableInfo, create if doesn't exist
-        if (!phantom_tableinfo_map->get(spec.table.id, table_info)) {
-          table_info = new TableInfo(m_master_client, &(spec.table), schema);
+        phantom_tableinfo_map->get(spec.table, table_info);
 
-          // Verify schema, this will create the Schema object and add it to
-          // table_info if it doesn't exist
-          try {
-            verify_schema(table_info, spec.table.generation);
-          }
-          catch (Hypertable::Exception &e) {
-            String errstr = String("Unable to verify schema for ") +
-              spec.table.id + e.what();
-            HT_WARN(errstr.c_str());
-            cb->error(e.code(), errstr);
-            return;
-          }
-
-          phantom_tableinfo_map->set(spec.table.id, table_info);
-        }
-
-        if (!live(spec)) {
-          SchemaPtr schema = table_info->get_schema();
-          phantom_range_map->insert(spec, state, schema, fragments);
-        }
+        if (!live(spec))
+          phantom_range_map->insert(spec, state, table_info->get_schema(), fragments);
       }
     }
     catch (Exception &e) {
       HT_ERROR_OUT << "Phantom load failed - " << e << HT_END;
-      cb->error(e.code(), e.what());
+      if ((error = cb->error(e.code(), e.what())))
+        HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
       return;
     }
 
@@ -4000,15 +3906,10 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
 
     foreach_ht(const QualifiedRangeSpec &rr, specs) {
       phantom_table_info = 0;
-      HT_ASSERT(phantom_map->get(rr.table.id, phantom_table_info)
-                && phantom_table_info);
+      HT_ASSERT(phantom_map->lookup(rr.table.id, phantom_table_info));
       TableInfoPtr table_info;
-      m_live_map->get(rr.table.id, table_info);
-      if (!table_info) {
-        SchemaPtr schema = phantom_table_info->get_schema();
-        table_info = new TableInfo(m_master_client, &rr.table, schema);
-        m_live_map->set(rr.table.id, table_info);
-      }
+      m_live_map->get(rr.table, table_info);
+
       //HT_DEBUG_OUT << "Creating Range object for range " << rr << HT_END;
       // create a real range and its transfer log
       phantom_range_map->get(rr, phantom_range);
@@ -4113,7 +4014,7 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
 
       metalog_entities.push_back( range->metalog_entity() );
 
-      HT_ASSERT(phantom_map->get(rr.table.id, phantom_table_info));
+      HT_ASSERT(phantom_map->lookup(rr.table.id, phantom_table_info));
 
       HT_INFO("phantom adding range");
 
@@ -4170,6 +4071,7 @@ void RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_id,
   KeySpec key;
   String our_location = Global::location_initializer->get();
   vector<MetaLog::Entity *> entities;
+  StringSet linked_logs;
   map<QualifiedRangeSpec, TableInfoPtr> phantom_table_info_map;
   map<QualifiedRangeSpec, int> error_map;
   vector<RangePtr> range_vec;
@@ -4254,11 +4156,12 @@ void RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_id,
       HT_ASSERT(range);
 
       bool is_root = range->is_root();
-      MetaLog::EntityRange *entity = range->metalog_entity();
-      entity->needs_compaction = true;
-      entity->load_acknowledged = false;
-      entity->state.state &= ~RangeState::PHANTOM;
+      MetaLogEntityRange *entity = range->metalog_entity();
+      entity->set_needs_compaction(true);
+      entity->set_load_acknowledged(false);
+      entity->clear_state_bits(RangeState::PHANTOM);
       entities.push_back(entity);
+      phantom_range->get_linked_logs(linked_logs);
 
       HT_MAYBE_FAIL_X("phantom-commit-user-1", rr.table.is_user());
 
@@ -4313,18 +4216,18 @@ void RangeServer::phantom_commit_ranges(ResponseCallback *cb, int64_t op_id,
 
     HT_MAYBE_FAIL_X("phantom-commit-user-2", specs.back().table.is_user());
 
-    // persist RSML entities
-    if (Global::rsml_writer)
-      Global::rsml_writer->record_state(entities);
-    else
-      HT_THROW(Error::SERVER_SHUTTING_DOWN, our_location);
+    /*
+     * This method atomically does the following:
+     *   1. Adds linked_logs (transfer logs + children) to RemoveOkLogs entity
+     *   2. Persists entities and RemoveOkLogs entity to RSML
+     *   3. Merges phantom_map into the live map
+     */
+    m_live_map->merge(phantom_map.get(), entities, linked_logs);
 
     HT_MAYBE_FAIL_X("phantom-commit-user-3", specs.back().table.is_user());
 
-    // make ranges live
     HT_INFOF("Merging phantom map into live map for recovery of %s (ID=%lld)",
              location.c_str(), (Lld)op_id);
-    m_live_map->merge(phantom_map);
 
     {
       ScopedLock lock(m_failover_mutex);
@@ -4377,7 +4280,7 @@ bool RangeServer::live(const vector<QualifiedRangeSpec> &ranges) {
   TableInfoPtr table_info;
   size_t live_count = 0;
   foreach_ht (const QualifiedRangeSpec &qrs, ranges) {
-    if (m_live_map->get(qrs.table.id, table_info)) {
+    if (m_live_map->lookup(qrs.table.id, table_info)) {
       if (table_info->has_range(&qrs.range))
         live_count++;
     }
@@ -4388,7 +4291,7 @@ bool RangeServer::live(const vector<QualifiedRangeSpec> &ranges) {
 
 bool RangeServer::live(const QualifiedRangeSpec &spec) {
   TableInfoPtr table_info;
-  if (m_live_map->get(spec.table.id, table_info)) {
+  if (m_live_map->lookup(spec.table.id, table_info)) {
     if (table_info->has_range(&spec.range))
       return true;
   }
@@ -4404,89 +4307,6 @@ void RangeServer::wait_for_maintenance(ResponseCallback *cb) {
   cb->response_ok();
 }
 
-void
-RangeServer::replay_load_range(ResponseCallback *cb,
-        MetaLog::EntityRange *range_entity,
-        bool write_rsml, const TableSchemaMap *table_schemas) {
-  int error = Error::OK;
-  SchemaPtr schema;
-  TableInfoPtr table_info, live_table_info;
-  RangePtr range;
-  bool register_table = false;
-
-  HT_DEBUG_OUT << "replay_load_range " << *(MetaLog::Entity *)range_entity
-      << HT_END;
-
-  try {
-    /** Get TableInfo from replay map, or copy it from live map, or create if
-     * doesn't exist **/
-    if (!m_replay_map->get(range_entity->table.id, table_info)) {
-      table_info = new TableInfo(m_master_client, &range_entity->table, schema);
-      register_table = true;
-    }
-
-    if (!m_live_map->get(range_entity->table.id, live_table_info))
-      live_table_info = table_info;
-
-    // Verify schema, this will create the Schema object and add it to
-    // table_info if it doesn't exist
-    verify_schema(table_info, range_entity->table.generation, table_schemas);
-
-    if (register_table)
-      m_replay_map->set(range_entity->table.id, table_info);
-
-    /**
-     * Make sure this range is not already loaded
-     */
-    if (table_info->get_range(&range_entity->spec, range) ||
-        live_table_info->get_range(&range_entity->spec, range))
-      HT_THROWF(Error::RANGESERVER_RANGE_ALREADY_LOADED, "%s[%s..%s]",
-                range_entity->table.id, range_entity->spec.start_row,
-                range_entity->spec.end_row);
-
-    /**
-     * Lazily create sys/METADATA table pointer
-     */
-    if (!Global::metadata_table) {
-      ScopedLock lock(Global::mutex);
-      uint32_t timeout_ms = m_props->get_i32("Hypertable.Request.Timeout");
-      if (!Global::range_locator)
-        Global::range_locator = new Hypertable::RangeLocator(m_props,
-                m_conn_manager, Global::hyperspace, timeout_ms);
-      ApplicationQueueInterfacePtr aq = m_app_queue;
-      Global::metadata_table = new Table(m_props, Global::range_locator,
-              m_conn_manager, Global::hyperspace, aq, m_namemap,
-                           TableIdentifier::METADATA_NAME, 0, timeout_ms);
-    }
-
-    schema = table_info->get_schema();
-
-    range = new Range(m_master_client, schema, range_entity,
-            live_table_info.get());
-    range->recovery_initialize();
-    HT_INFO("adding range");
-    table_info->add_range(range);
-
-    //if (write_rsml)
-    //Global::rsml_writer->record_state( range->metalog_entity() );
-    HT_ASSERT(!write_rsml);
-
-    if (cb && (error = cb->response_ok()) != Error::OK) {
-      HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
-    }
-    else {
-      HT_INFOF("Successfully replay loaded range %s[%s..%s]",
-              range_entity->table.id, range_entity->spec.start_row,
-              range_entity->spec.end_row);
-    }
-
-  }
-  catch (Hypertable::Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
-    if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
-      HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
-  }
-}
 
 void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation,
                                 const TableSchemaMap *table_schemas) {

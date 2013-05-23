@@ -28,7 +28,6 @@
 
 #include "Global.h"
 #include "RSStats.h"
-#include "RangeStatsGatherer.h"
 
 namespace Hypertable {
 

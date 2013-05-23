@@ -22,7 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/Serialization.h"
 
-#include "EntityType.h"
+#include "MetaLogEntityTypes.h"
 #include "RangeServerConnection.h"
 
 using namespace Hypertable;

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Definitions for TableInfoMap.
+ * This file contains method definitions for for TableInfoMap, a class used to
+ * map table IDs to TableInfo objects and manage the set of "remove ok" logs.
+ */
+
 #include "Common/Compat.h"
 #include "Common/FailureInducer.h"
 
@@ -36,41 +42,48 @@ TableInfoMap::~TableInfoMap() {
 }
 
 
-bool TableInfoMap::get(const String &name, TableInfoPtr &info) {
+bool TableInfoMap::lookup(const String &table_id, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
-  InfoMap::iterator iter = m_map.find(name);
+  InfoMap::iterator iter = m_map.find(table_id);
   if (iter == m_map.end())
     return false;
   info = (*iter).second;
   return true;
 }
 
-void TableInfoMap::get(const TableIdentifier *table, TableInfoPtr &info) {
+void TableInfoMap::get(const TableIdentifier &table, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
-  InfoMap::iterator iter = m_map.find(table->id);
-  if (iter == m_map.end())
-    HT_THROWF(Error::RANGESERVER_TABLE_NOT_FOUND, "unknown table '%s'",
-              table->id);
-  info = (*iter).second;
-}
 
-
-void TableInfoMap::set(const String &name, TableInfoPtr &info) {
-  ScopedLock lock(m_mutex);
-  InfoMap::iterator iter = m_map.find(name);
+  InfoMap::iterator iter = m_map.find(table.id);
   if (iter != m_map.end()) {
-    HT_ERRORF("Table %s already exists in map", name.c_str());
-    m_map.erase(iter);
+    info = (*iter).second;
+    return;
   }
-  m_map[name] = info;
-}
 
-bool TableInfoMap::insert(const String &name, TableInfoPtr &info) {
-  ScopedLock lock(m_mutex);
-  if (m_map.find(name) != m_map.end())
-    return false;
-  m_map[name] = info;
-  return true;
+  SchemaPtr schema;
+
+  if (m_schema_cache)
+    m_schema_cache->get(table.id, schema);
+  else {
+    DynamicBuffer valbuf;
+    String tablefile = Global::toplevel_dir + "/tables/" + table.id;
+
+    Global::hyperspace->attr_get(tablefile, "schema", valbuf);
+    schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
+
+    if (!schema->is_valid())
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table.id);
+
+    if (schema->need_id_assignment())
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table.id);
+
+    if (schema->get_generation() != table.generation)
+      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH, table.id);
+  }
+
+  info = new TableInfo(Global::master_client, &table, schema);
+
+  m_map[table.id] = info;
 }
 
 
@@ -95,6 +108,7 @@ void TableInfoMap::unstage_range(const TableIdentifier *table, const RangeSpec *
 
 void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log) {
   ScopedLock lock(m_mutex);
+  StringSet linked_logs;
   int error;
 
   InfoMap::iterator iter = m_map.find(table->id);
@@ -117,6 +131,8 @@ void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &rang
 
       range->replay_transfer_log(commit_log_reader.get());
 
+      commit_log_reader->get_linked_logs(linked_logs);
+
       if ((error = log->link_log(commit_log_reader.get())) != Error::OK)
         HT_THROWF(error, "Unable to link transfer log (%s) into commit log(%s)",
                   transfer_log, log->get_log_dir().c_str());
@@ -125,16 +141,25 @@ void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &rang
 
   HT_MAYBE_FAIL_X("add-staged-range-2", !table->is_system());
 
-  // Record range in RSML
-  range->record_state_rsml();
+  linked_logs.insert(transfer_log);
+
+  Global::remove_ok_logs->insert(linked_logs);
+
+  // Record Range and RemoveOkLogs entities in RSML
+  if (Global::rsml_writer == 0)
+    HT_THROW(Error::SERVER_SHUTTING_DOWN, "Pointer to RSML Writer is NULL");
+  std::vector<MetaLog::Entity *> entities;
+  entities.push_back(range->metalog_entity());
+  entities.push_back(Global::remove_ok_logs.get());
+  Global::rsml_writer->record_state(entities);
 
   (*iter).second->add_staged_range(range);
 }
 
 
-bool TableInfoMap::remove(const String &name, TableInfoPtr &info) {
+bool TableInfoMap::remove(const String &table_id, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
-  InfoMap::iterator iter = m_map.find(name);
+  InfoMap::iterator iter = m_map.find(table_id);
   if (iter == m_map.end())
     return false;
   info = (*iter).second;
@@ -150,12 +175,9 @@ void TableInfoMap::get_all(std::vector<TableInfoPtr> &tv) {
 }
 
 
-void TableInfoMap::get_range_data(RangeDataVector &range_data, int *log_generation) {
+void TableInfoMap::get_range_data(RangeDataVector &range_data, StringSet *remove_ok_logs) {
   ScopedLock lock(m_mutex);
   int32_t count = 0;
-
-  if (log_generation)
-    *log_generation = atomic_read(&g_log_generation);
 
   // reserve space in vector
   for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
@@ -164,14 +186,10 @@ void TableInfoMap::get_range_data(RangeDataVector &range_data, int *log_generati
 
   for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
     (*iter).second->get_range_data(range_data);
-}
 
-int32_t TableInfoMap::get_range_count() {
-  ScopedLock lock(m_mutex);
-  int32_t count = 0;
-  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
-    count += (*iter).second->get_range_count();
-  return count;
+  if (remove_ok_logs)
+    Global::remove_ok_logs->get(*remove_ok_logs);
+    
 }
 
 
@@ -180,42 +198,58 @@ void TableInfoMap::clear() {
   m_map.clear();
 }
 
-
-void TableInfoMap::clear_ranges() {
+bool TableInfoMap::empty() {
   ScopedLock lock(m_mutex);
-  for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); ++iter)
-    (*iter).second->clear();
+  return m_map.empty();
 }
 
 
-void TableInfoMap::merge(TableInfoMapPtr &table_info_map_ptr) {
+void TableInfoMap::merge(TableInfoMap *other) {
   ScopedLock lock(m_mutex);
-  InfoMap::iterator from_iter, to_iter;
+  merge_unlocked(other);
+}
+
+void TableInfoMap::merge(TableInfoMap *other,
+                         vector<MetaLog::Entity *> &entities,
+                         StringSet &transfer_logs) {
+  ScopedLock lock(m_mutex);
+  if (Global::rsml_writer == 0)
+    HT_THROW(Error::SERVER_SHUTTING_DOWN, "");
+  Global::remove_ok_logs->insert(transfer_logs);
+  entities.push_back(Global::remove_ok_logs.get());
+  Global::rsml_writer->record_state(entities);
+  merge_unlocked(other);
+  entities.clear();
+}
+
+
+void TableInfoMap::merge_unlocked(TableInfoMap *other) {
+  InfoMap::iterator other_iter, iter;
   RangeDataVector range_data;
 
-  for (from_iter = table_info_map_ptr->m_map.begin();
-       from_iter != table_info_map_ptr->m_map.end(); ++from_iter) {
+  for (other_iter = other->m_map.begin();
+       other_iter != other->m_map.end(); ++other_iter) {
 
-    to_iter = m_map.find( (*from_iter).first );
+    iter = m_map.find( (*other_iter).first );
 
-    if (to_iter == m_map.end()) {
-      m_map[ (*from_iter).first ] = (*from_iter).second;
+    if (iter == m_map.end()) {
+      m_map[ (*other_iter).first ] = (*other_iter).second;
     }
     else {
       range_data.clear();
-      (*from_iter).second->get_range_data(range_data);
+      (*other_iter).second->get_range_data(range_data);
       foreach_ht (RangeData &rd, range_data)
-        (*to_iter).second->add_range(rd.range);
+        (*iter).second->add_range(rd.range);
     }
 
   }
-
-  table_info_map_ptr->clear();
+  other->clear();
 }
 
 
 
 void TableInfoMap::dump() {
+  ScopedLock lock(m_mutex);
   InfoMap::iterator table_iter;
   for (table_iter = m_map.begin(); table_iter != m_map.end(); ++table_iter)
     (*table_iter).second->dump_range_table();

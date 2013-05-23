@@ -41,7 +41,7 @@
 #include "Hypertable/Lib/MetaLogEntity.h"
 
 #include "Context.h"
-#include "EntityType.h"
+#include "MetaLogEntityTypes.h"
 
 namespace Hypertable {
 

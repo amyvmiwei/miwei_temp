@@ -55,28 +55,18 @@ bool TableInfo::remove(const String &start_row, const String &end_row) {
 }
 
 
-bool
+void
 TableInfo::change_end_row(const String &start_row, const String &old_end_row,
                           const String &new_end_row) {
   ScopedLock lock(m_mutex);
   RangeInfo range_info(start_row, old_end_row);
   RangeInfoSet::iterator iter = m_range_set.find(range_info);
 
-  if (iter == m_range_set.end() || iter->get_range() == 0) {
-    HT_ERRORF("%p: Problem changing old end row '%s' to '%s' (start row '%s')",
-            (void *)this, old_end_row.c_str(), new_end_row.c_str(),
-            start_row.c_str());
-    for (m_range_set.begin(); iter != m_range_set.end(); ++iter) {
-      if (iter->get_range())
-        HT_INFOF("%p: [%s..%s] -> %s[%s..%s]", (void *)this,
-                 iter->get_start_row().c_str(),
-                 iter->get_end_row().c_str(),
-                 m_identifier.id,
-                 iter->get_range()->start_row().c_str(),
-                 iter->get_range()->end_row().c_str());
-    }
-    return false;
-  }
+  if (iter == m_range_set.end() || iter->get_range() == 0)
+    HT_FATALF("%p: Problem changing old end row '%s' to '%s' (start row '%s')",
+              (void *)this, old_end_row.c_str(), new_end_row.c_str(),
+              start_row.c_str());
+
   RangePtr range = iter->get_range();
   range_info.set_range(range);
   range_info.set_end_row(new_end_row);
@@ -92,31 +82,19 @@ TableInfo::change_end_row(const String &start_row, const String &old_end_row,
   HT_INFOF("Changing end row %s adding new row '%s' (start row '%s')",
            m_identifier.id, new_end_row.c_str(), start_row.c_str());
 
-  return true;
 }
 
-bool
+void
 TableInfo::change_start_row(const String &old_start_row, const String &new_start_row,
                             const String &end_row) {
   ScopedLock lock(m_mutex);
   RangeInfo range_info(old_start_row, end_row);
   RangeInfoSet::iterator iter = m_range_set.find(range_info);
 
-  if (iter == m_range_set.end()|| !iter->get_range()) {
-    HT_ERRORF("%p: Problem changing old start row '%s' to '%s' (end row '%s')",
+  if (iter == m_range_set.end()|| !iter->get_range())
+    HT_FATALF("%p: Problem changing old start row '%s' to '%s' (end row '%s')",
             (void *)this, old_start_row.c_str(), new_start_row.c_str(),
             end_row.c_str());
-    for (m_range_set.begin(); iter != m_range_set.end(); ++iter) {
-      if (iter->get_range())
-        HT_INFOF("%p: [%s..%s] -> %s[%s..%s]", (void *)this,
-                 iter->get_start_row().c_str(),
-                 iter->get_end_row().c_str(),
-                 m_identifier.id,
-                 iter->get_start_row().c_str(),
-                 iter->get_end_row().c_str());
-    }
-    return false;
-  }
 
   RangePtr range = iter->get_range();
   range_info.set_range(range);
@@ -134,7 +112,6 @@ TableInfo::change_start_row(const String &old_start_row, const String &new_start
   HT_INFOF("Changing start row %s adding new start row '%s' (end row '%s')",
            m_identifier.id, new_start_row.c_str(), end_row.c_str());
 
-  return true;
 }
 
 void TableInfo::dump_range_table() {
@@ -232,7 +209,9 @@ void TableInfo::unstage_range(const RangeSpec *range_spec) {
 
 void TableInfo::add_staged_range(RangePtr &range) {
   ScopedLock lock(m_mutex);
-  RangeInfo range_info(range->start_row(), range->end_row());
+  String start_row, end_row;
+  range->get_boundary_rows(start_row, end_row);
+  RangeInfo range_info(start_row, end_row);
   RangeInfoSet::iterator iter = m_range_set.find(range_info);
 
   HT_ASSERT(iter != m_range_set.end());
@@ -247,7 +226,9 @@ void TableInfo::add_staged_range(RangePtr &range) {
 
 void TableInfo::add_range(RangePtr &range, bool remove_if_exists) {
   ScopedLock lock(m_mutex);
-  RangeInfo range_info(range->start_row(), range->end_row());
+  String start_row, end_row;
+  range->get_boundary_rows(start_row, end_row);
+  RangeInfo range_info(start_row, end_row);
   range_info.set_range(range);
   RangeInfoSet::iterator iter = m_range_set.find(range_info);
 
@@ -289,33 +270,6 @@ TableInfo::find_containing_range(const String &row, RangePtr &range,
   return false;
 }
 
-bool
-TableInfo::find_containing_range(const String &row, RangePtr &range,
-                                 const char **start_rowp, const char **end_rowp) const {
-  RangeInfo range_info((String)"", row);
-  RangeInfoSet::const_iterator iter = m_range_set.lower_bound(range_info);
-
-  if (iter == m_range_set.end())
-    return false;
-
-  int num_matches=0;
-  RangeInfoSet::const_iterator tmp = iter;
-  for (tmp=tmp; tmp != m_range_set.end() && tmp->get_start_row() < row; tmp++)
-    if (tmp->get_range())
-      num_matches++;
-
-  for (iter=iter; iter != m_range_set.end() && iter->get_start_row()<row ; iter++) {
-    range = iter->get_range();
-    if (range && (num_matches==1 || !range->get_relinquish())) {
-      *start_rowp = range->start_row_cstring();
-      *end_rowp = range->end_row_cstring();
-      HT_ASSERT(row <= *end_rowp);
-      return true;
-    }
-  }
-  range=0;
-  return false;
-}
 
 bool TableInfo::includes_row(const String &row) const {
   RangeInfo range_info(String(""), row);
@@ -362,14 +316,16 @@ void TableInfo::clear() {
   m_range_set.clear();
 }
 
-void TableInfo::update_schema(SchemaPtr &schema_ptr) {
+void TableInfo::update_schema(SchemaPtr &schema) {
   ScopedLock lock(m_mutex);
-  // Update individual ranges
+
+  if (schema->get_generation() < m_schema->get_generation())
+    HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH, "");
+
   for (RangeInfoSet::iterator iter = m_range_set.begin();
        iter != m_range_set.end(); ++iter) {
     if (iter->get_range())
-      iter->get_range()->update_schema(schema_ptr);
+      iter->get_range()->update_schema(schema);
   }
-  // update table info
-  m_schema = schema_ptr;
+  m_schema = schema;
 }

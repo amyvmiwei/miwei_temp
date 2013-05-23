@@ -213,24 +213,30 @@ int main(int argc, char **argv) {
     else
       rsml_reader->get_entities(entities);
 
-    MetaLog::EntityRange *entity_range;
+    MetaLogEntityRange *entity_range;
     if (metadata_tsv) {
       for (size_t i=0; i<entities.size(); i++) {
-        entity_range = dynamic_cast<MetaLog::EntityRange *>(entities[i].get());
+        entity_range = dynamic_cast<MetaLogEntityRange *>(entities[i].get());
         if (entity_range) {
-          cout << entity_range->table.id << ":" << entity_range->spec.end_row << "\tStartRow\t" << entity_range->spec.start_row << "\n";
-          cout << entity_range->table.id << ":" << entity_range->spec.end_row << "\tLocation\t" << location << "\n";
+          TableIdentifier table;
+          String start_row, end_row;
+          entity_range->get_table_identifier(table);
+          entity_range->get_boundary_rows(start_row, end_row);
+          cout << table.id << ":" << end_row << "\tStartRow\t" << start_row << "\n";
+          cout << table.id << ":" << end_row << "\tLocation\t" << location << "\n";
         }
       }
     }
     else if (print_logs) {
       foreach_ht (MetaLog::EntityPtr &entity, entities) {
-        entity_range = dynamic_cast<MetaLog::EntityRange *>(entity.get());
+        entity_range = dynamic_cast<MetaLogEntityRange *>(entity.get());
         if (entity_range) {
-          if (entity_range->state.transfer_log && *entity_range->state.transfer_log)
-            std::cout << entity_range->state.transfer_log << "\n";
-          if (!entity_range->original_transfer_log.empty())
-            std::cout << entity_range->original_transfer_log << "\n";
+          String log = entity_range->get_transfer_log();
+          if (!log.empty())
+            std::cout << log << "\n";
+          log = entity_range->get_original_transfer_log();
+          if (!log.empty())
+            std::cout << log << "\n";
         }
       }
       std::cout << std::flush;

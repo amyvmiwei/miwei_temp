@@ -66,6 +66,10 @@ namespace Hypertable {
       m_error_map.clear();
     }
 
+    void get_linked_logs(StringSet &linked_logs) {
+      linked_logs.insert(m_linked_logs.begin(), m_linked_logs.end());
+    }
+
     const std::map<uint32_t, uint32_t> &get_error_map() { return m_error_map; }
 
     String last_fragment_fname() { return m_last_fragment_fname; }
@@ -90,6 +94,7 @@ namespace Hypertable {
     std::set<uint64_t>     m_fragment_filter;
     std::vector<uint32_t>  m_init_fragments;
     std::map<uint32_t, uint32_t> m_error_map;
+    StringSet              m_linked_logs;
     String                 m_last_fragment_fname;
     int32_t                m_last_fragment_id;
     bool                   m_verbose;

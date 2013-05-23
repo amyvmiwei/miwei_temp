@@ -47,6 +47,7 @@
 #include "MaintenanceQueue.h"
 #include "MemoryTracker.h"
 #include "MetaLogEntityTask.h"
+#include "MetaLogEntityRemoveOkLogs.h"
 #include "ScannerMap.h"
 #include "TableInfo.h"
 
@@ -65,6 +66,7 @@ namespace Hypertable {
     static Hypertable::RangeServerProtocol *protocol;
     static Hypertable::RangeLocatorPtr range_locator;
     static Hypertable::PseudoTables *pseudo_tables;
+    static MetaLogEntityRemoveOkLogsPtr remove_ok_logs;
     static bool           verbose;
     static bool           row_size_unlimited;
     static CommitLog     *user_log;

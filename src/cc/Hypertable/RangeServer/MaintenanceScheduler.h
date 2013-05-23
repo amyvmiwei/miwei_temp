@@ -27,13 +27,14 @@
 #include "MaintenancePrioritizerLogCleanup.h"
 #include "MaintenancePrioritizerLowMemory.h"
 #include "RSStats.h"
+#include "TableInfoMap.h"
 
 namespace Hypertable {
 
   class MaintenanceScheduler : public ReferenceCount {
   public:
     MaintenanceScheduler(MaintenanceQueuePtr &queue, RSStatsPtr &server_stats,
-                         RangeStatsGathererPtr &gatherer);
+                         TableInfoMapPtr &live_map);
 
     void schedule();
 
@@ -71,7 +72,7 @@ namespace Hypertable {
 
     MaintenanceQueuePtr m_queue;
     RSStatsPtr m_server_stats;
-    RangeStatsGathererPtr m_stats_gatherer;
+    TableInfoMapPtr m_live_map;
     MaintenancePrioritizer *m_prioritizer;
     MaintenancePrioritizerLogCleanup m_prioritizer_log_cleanup;
     MaintenancePrioritizerLowMemory  m_prioritizer_low_memory;
@@ -85,7 +86,6 @@ namespace Hypertable {
     int32_t m_move_compactions_per_interval;
     int32_t m_maintenance_queue_worker_count;
     int32_t m_start_offset;
-    std::set<int64_t> m_log_hashes;
     bool m_initialized;
     bool m_low_memory_prioritization;
     bool m_low_memory_mode;

@@ -47,9 +47,8 @@ namespace Hypertable {
      * @param start_row start row of range to remove
      * @param old_end_row old end row key of range
      * @param new_end_row new end row key for range
-     * @return true if range found and end row changed, false otherwise
      */
-    virtual bool change_end_row(const String &start_row,
+    virtual void change_end_row(const String &start_row,
                                 const String &old_end_row, const String &new_end_row) = 0;
 
     /**
@@ -58,9 +57,8 @@ namespace Hypertable {
      * @param old_start_row Old start row of range to remove
      * @param new_start_row New start row key of range
      * @param new_end_row New end row key for range
-     * @return true if range found and end row changed, false otherwise
      */
-    virtual bool change_start_row(const String &old_start_row, const String &new_start_row,
+    virtual void change_start_row(const String &old_start_row, const String &new_start_row,
                                   const String &new_end_row) = 0;
 
   };

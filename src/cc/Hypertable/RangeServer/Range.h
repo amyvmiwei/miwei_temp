@@ -101,7 +101,6 @@ namespace Hypertable {
       uint64_t shadow_cache_memory;
       uint64_t block_index_memory;
       uint64_t bloom_filter_memory;
-      int64_t  log_hash;
       uint32_t bloom_filter_accesses;
       uint32_t bloom_filter_maybes;
       uint32_t bloom_filter_fps;
@@ -120,7 +119,7 @@ namespace Hypertable {
 
     Range(MasterClientPtr &, const TableIdentifier *, SchemaPtr &,
           const RangeSpec *, RangeSet *, const RangeState *, bool needs_compaction=false);
-    Range(MasterClientPtr &, SchemaPtr &, MetaLog::EntityRange *, RangeSet *);
+    Range(MasterClientPtr &, SchemaPtr &, MetaLogEntityRange *, RangeSet *);
     virtual ~Range() {}
     virtual void add(const Key &key, const ByteString value);
     virtual const char *get_split_row() { return 0; }
@@ -138,7 +137,7 @@ namespace Hypertable {
     void lock();
     void unlock();
 
-    MetaLog::EntityRange *metalog_entity() { return m_metalog_entity.get(); }
+    MetaLogEntityRange *metalog_entity() { return m_metalog_entity.get(); }
 
     CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
 
@@ -165,35 +164,23 @@ namespace Hypertable {
 
     void deferred_initialization(boost::xtime deadline);
 
-    String start_row() {
-      ScopedLock lock(m_mutex);
-      return m_metalog_entity->spec.start_row;
+    void get_boundary_rows(String &start, String &end) {
+      m_metalog_entity->get_boundary_rows(start, end);
     }
 
-    const char *start_row_cstring() const {
-      return m_metalog_entity->spec.start_row;
-    }
-
-    /**
-     * Returns the end row of the range.
-     */
     String end_row() {
-      ScopedLock lock(m_mutex);
-      return m_metalog_entity->spec.end_row;
-    }
-
-    const char *end_row_cstring() {
-      return m_metalog_entity->spec.end_row;
+      return m_metalog_entity->get_end_row();
     }
 
     int64_t get_scan_revision(uint32_t timeout_ms);
 
     void replay_transfer_log(CommitLogReader *commit_log_reader);
 
-    MaintenanceData *get_maintenance_data(ByteArena &arena, time_t now, TableMutator *mutator);
+    MaintenanceData *get_maintenance_data(ByteArena &arena, time_t now,
+                                          TableMutator *mutator=0);
 
-    void wait_for_maintenance_to_complete() {
-      m_maintenance_guard.wait_for_complete();
+    void disable_maintenance() {
+      m_maintenance_guard.wait_for_complete(true);
     }
 
     void update_schema(SchemaPtr &schema);
@@ -266,7 +253,7 @@ namespace Hypertable {
       if (m_transfer_log)
         retval = true;
 
-      if (m_split_row.length())
+      if (!m_split_row.empty())
         transfer_info.set_split(m_split_row, m_split_off_high);
       else
         transfer_info.clear();
@@ -313,52 +300,33 @@ namespace Hypertable {
       return (String)m_name;
     }
 
-    /**
-     * Only called during startup (before range is live) so locking is not
-     * necessary
-     */
     int get_state() {
-      return m_metalog_entity->state.state;
+      return m_metalog_entity->get_state();
     }
 
     int32_t get_error() {
       ScopedLock lock(m_mutex);
-      if (!m_metalog_entity->load_acknowledged)
+      if (!m_metalog_entity->get_load_acknowledged())
         return Error::RANGESERVER_RANGE_NOT_YET_ACKNOWLEDGED;
       return m_error;
     }
 
     void set_needs_compaction(bool needs_compaction) {
       ScopedLock lock(m_mutex);
-      m_metalog_entity->needs_compaction = needs_compaction;
+      m_metalog_entity->set_needs_compaction(needs_compaction);
     }
 
     bool get_needs_compaction() {
-      ScopedLock lock(m_mutex);
-      return m_metalog_entity->needs_compaction;
+      return m_metalog_entity->get_needs_compaction();
     }
 
     void acknowledge_load(uint32_t timeout_ms);
 
     bool load_acknowledged() {
-      // Not locking this mutex for performance reasons.  Ranges start out
-      // in life unacknowledged and then quickly become acknowledged.
-      // There is a potential race condition at the brief time this variable
-      // is set, but it should not cause any logic problems and saves
-      // us the lock cost every time this method is called.
-      //ScopedLock lock(m_mutex);
-      return m_metalog_entity->load_acknowledged;
+      return m_metalog_entity->get_load_acknowledged();
     }
 
-    void record_state_rsml();
-
-    /**
-     * Updates RSML to signal the removal of this Range.  It writes two
-     * RSML entries, a TaskRemoveTansferLog entity to remove the transfer
-     * log and the EntityRange for this range marked for removal.  The
-     * TaskRemoveTransferLog is also enqueued on the global work queue.
-     */
-    void record_removal_rsml();
+    void remove_original_transfer_log();
 
   private:
 
@@ -379,8 +347,6 @@ namespace Hypertable {
     void split_compact_and_shrink();
     void split_notify_master();
 
-    void maybe_create_log_removal_task(MetaLog::EntityTaskPtr &log_removal_task);
-
     // these need to be aligned
     uint64_t         m_scans;
     uint64_t         m_cells_scanned;
@@ -395,10 +361,11 @@ namespace Hypertable {
     Mutex            m_mutex;
     Mutex            m_schema_mutex;
     MasterClientPtr  m_master_client;
-    MetaLog::EntityRangePtr m_metalog_entity;
+    MetaLogEntityRangePtr m_metalog_entity;
     AccessGroupHintsFile m_hints_file;
     SchemaPtr        m_schema;
     String           m_name;
+    TableIdentifier  m_table;
     AccessGroupMap     m_access_group_map;
     AccessGroupVector  m_access_group_vector;
     std::vector<AccessGroup *>       m_column_family_vector;
@@ -424,7 +391,6 @@ namespace Hypertable {
     bool             m_removed_from_working_set;
     int64_t          m_maintenance_generation;
     LoadMetricsRange m_load_metrics;
-    int64_t          m_log_hash;
     bool             m_initialized;
   };
 

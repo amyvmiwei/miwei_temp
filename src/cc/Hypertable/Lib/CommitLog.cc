@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -69,7 +69,6 @@ CommitLog::initialize(const String &log_dir, PropertiesPtr &props,
   m_cur_fragment_num = 0;
   m_needs_roll = false;
   m_replication = -1;
-  m_purge_report_revision = TIMESTAMP_NULL;
 
   if (is_meta)
     m_replication = props->get_i32("Hypertable.Metadata.Replication");
@@ -195,7 +194,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
 
-  if (m_linked_logs.count(md5_hash(log_dir.c_str())) > 0) {
+  if (m_linked_log_hashes.count(md5_hash(log_dir.c_str())) > 0) {
     HT_WARNF("Skipping log %s because it is already linked in", log_dir.c_str());
     return Error::OK;
   }
@@ -259,7 +258,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
     return e.code();
   }
 
-  m_linked_logs.insert(md5_hash(log_dir.c_str()));
+  m_linked_log_hashes.insert(md5_hash(log_dir.c_str()));
 
   return Error::OK;
 }
@@ -285,35 +284,8 @@ int CommitLog::close() {
 }
 
 
-void CommitLog::remove_linked_log(const String &log_dir) {
-  ScopedLock lock(m_mutex);
-  int64_t log_dir_hash = md5_hash(log_dir.c_str());
-  LogFragmentQueue::iterator iter = m_fragment_queue.begin();
-  while (iter != m_fragment_queue.end()) {
-    if ((*iter)->log_dir_hash == log_dir_hash) {
-      (*iter)->verify();
-      // Decrement parent reference count
-      if ((*iter)->parent) {
-        HT_ASSERT((*iter)->parent->references > 0);
-        (*iter)->parent->references--;
-      }
-      iter = m_fragment_queue.erase(iter);
-    }
-    else
-      iter++;
-  }
-}
-
-
-/**
- * The remove_ok set avoids a race condition by only allowing fragments of
- * transfer logs to be removed if the Ranges that own the transfer log
- * are live.  There was a situation where a transfer log got stitched into
- * the commit log, but the RS crashed before the corresponding Range was
- * loaded.  When the RS came up again, it removed the transfer log
- * prematurely, resulting in data loss.
- */
-int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok, int generation) {
+int CommitLog::purge(int64_t revision, StringSet &remove_ok_logs,
+                     StringSet &removed_logs) {
   ScopedLock lock(m_mutex);
 
   if (m_fd == -1)
@@ -322,8 +294,9 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok, int generati
   // Process "reap" set
   std::set<CommitLogFileInfo *>::iterator rm_iter, iter = m_reap_set.begin();
   while (iter != m_reap_set.end()) {
-    if ((*iter)->references == 0 && (*iter)->generation <= generation) {
-      remove_file_info(*iter);
+    if ((*iter)->references == 0 && 
+        ((*iter)->remove_ok(remove_ok_logs) || !m_range_reference_required)) {
+      remove_file_info(*iter, removed_logs);
       delete *iter;
       rm_iter = iter++;
       m_reap_set.erase(rm_iter);
@@ -335,26 +308,25 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok, int generati
   CommitLogFileInfo *fi;
   while (!m_fragment_queue.empty()) {
     fi = m_fragment_queue.front();
-    if (fi->revision < revision && fi->generation <= generation &&
-       (!m_range_reference_required || remove_ok.count(fi->log_dir_hash) > 0)) {
+    if (fi->revision < revision &&
+        (fi->remove_ok(remove_ok_logs) || !m_range_reference_required)) {
       if (fi->references == 0) {
-        remove_file_info(fi);
+        remove_file_info(fi, removed_logs);
         delete fi;
       }
       else
         m_reap_set.insert(fi);
-
       m_fragment_queue.pop_front();
     }
     else {
-      if (revision != m_purge_report_revision) {
-        HT_INFOF("purge('%s') breaking on fragment %u (rev=%llu gen=%d); "
-                 "rev=%llu gen=%d; ref_req=%s rm_ok=%s", m_log_dir.c_str(),
-                 (unsigned)fi->num, (Llu)fi->revision, fi->generation,
-                 (Llu)revision, generation,
-                 m_range_reference_required ? "yes" : "no",
-                 remove_ok.count(fi->log_dir_hash) ? "yes" : "no");
-      }
+      if (fi->revision < revision)
+        HT_INFOF("purge(%s,rev=%llu) breaking on %s/%u: unremovable",
+                 m_log_dir.c_str(), (Llu)revision, fi->log_dir.c_str(),
+                 (unsigned)fi->num);
+      else
+        HT_INFOF("purge(%s,rev=%llu) breaking on %s/%u: fi->rev=%llu",
+                 m_log_dir.c_str(), (Llu)revision, fi->log_dir.c_str(),
+                 (unsigned)fi->num, (Llu)fi->revision);
       break;
     }
   }
@@ -363,7 +335,7 @@ int CommitLog::purge(int64_t revision, std::set<int64_t> remove_ok, int generati
 }
 
 
-void CommitLog::remove_file_info(CommitLogFileInfo *fi) {
+void CommitLog::remove_file_info(CommitLogFileInfo *fi, StringSet &removed_logs) {
   String fname;
 
   fi->verify();
@@ -372,6 +344,7 @@ void CommitLog::remove_file_info(CommitLogFileInfo *fi) {
   foreach_ht (const String &logdir, fi->purge_dirs) {
     try {
       HT_INFOF("Removing linked log directory '%s' because all fragments have been removed", logdir.c_str());
+      removed_logs.insert(logdir);
       m_fs->rmdir(logdir);
     }
     catch (Exception &e) {
@@ -380,19 +353,18 @@ void CommitLog::remove_file_info(CommitLogFileInfo *fi) {
     }
   }
 
-  // Remove log fragment
+  // Remove fragment file
   try {
     fname = fi->log_dir + "/" + fi->num;
     HT_INFOF("Removing log fragment '%s' revision=%lld", fname.c_str(), (Lld)fi->revision);
     m_fs->remove(fname);
   }
   catch (Exception &e) {
-    HT_ERRORF("Problem removing log fragment '%s' (%s - %s)",
-              fname.c_str(), Error::get_text(e.code()), e.what());
+    if (e.code() != Error::DFSBROKER_BAD_FILENAME &&
+        e.code() != Error::DFSBROKER_FILE_NOT_FOUND)
+      HT_ERRORF("Problem removing log fragment '%s' (%s - %s)",
+                fname.c_str(), Error::get_text(e.code()), e.what());
   }
-
-  HT_DEBUGF("clgc Removed log fragment file='%s' revision=%lld", fname.c_str(),
-            (Lld)fi->revision);
 
   // Decrement parent reference count
   if (fi->parent) {

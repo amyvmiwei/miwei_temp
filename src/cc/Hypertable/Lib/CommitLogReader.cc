@@ -131,8 +131,9 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
     assert(header->get_compression_type() == BlockCompressionCodec::NONE);
     String log_dir = (const char *)(infop->block_ptr + header->length());
     boost::trim_right_if(log_dir, boost::is_any_of("/"));
+    m_linked_log_hashes.insert(md5_hash(log_dir.c_str()));
+    m_linked_logs.insert(log_dir);
     load_fragments(log_dir, *fragment_queue_iter);
-    m_linked_logs.insert(md5_hash(log_dir.c_str()));
     if (header->get_revision() > m_latest_revision)
       m_latest_revision = header->get_revision();
     if (header->get_revision() > m_revision)

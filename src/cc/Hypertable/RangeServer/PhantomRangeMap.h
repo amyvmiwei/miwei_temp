@@ -61,7 +61,7 @@ namespace Hypertable {
      * @param fragments fragments to be played
      */
     void insert(const QualifiedRangeSpec &range, const RangeState &state,
-                SchemaPtr &schema, const vector<uint32_t> &fragments);
+                SchemaPtr schema, const vector<uint32_t> &fragments);
 
     /**
      * Gets the phantom range if it is in map

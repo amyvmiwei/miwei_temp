@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -24,7 +24,10 @@
 
 #include "Hypertable/Lib/MetaLogEntity.h"
 
+#include "MetaLogEntityTypes.h"
+
 namespace Hypertable {
+
   namespace MetaLog {
 
     class EntityTask : public Entity {
@@ -37,13 +40,6 @@ namespace Hypertable {
       virtual void work_queue_add_hook() { }
     };
     typedef intrusive_ptr<EntityTask> EntityTaskPtr;
-
-    namespace EntityType {
-      enum {
-        TASK_REMOVE_TRANSFER_LOG    = 0x00010003,
-        TASK_ACKNOWLEDGE_RELINQUISH = 0x00010004
-      };
-    }
 
   } // namespace MetaLog
 } // namespace Hypertable

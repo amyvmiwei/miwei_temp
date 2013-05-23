@@ -32,7 +32,6 @@ BlockCompressionHeaderCommitLog.cc
 Cell.cc
 Client.cc
 CommitLog.cc
-CommitLogBase.cc
 CommitLogBlockStream.cc
 CommitLogReader.cc
 CompressorFactory.cc
