@@ -135,12 +135,11 @@ namespace Hypertable {
      * a revision that is less than the given revision.
      *
      * @param revision real cutoff revision
-     * @param remove_ok set of md5 hashes of logs that are ok to remove
-     * @param generation Only consider fragemnts with this generation or less
+     * @param remove_ok_logs Set of log pathnames that can be safely removed
+     * @param removed_logs Set of logs that were removed by this call
      */
-    int purge(int64_t revision, std::set<int64_t> remove_ok, int generation);
-
-    void remove_linked_log(const String &log_dir);
+    int purge(int64_t revision, StringSet &remove_ok_logs,
+              StringSet &removed_logs);
 
     /**
      * Fills up a map of cumulative fragment size data.  One entry per log
@@ -193,12 +192,11 @@ namespace Hypertable {
     int roll(CommitLogFileInfo **clfip=0);
     int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header,
                            int64_t revision, bool sync);
-    void remove_file_info(CommitLogFileInfo *fi);
+    void remove_file_info(CommitLogFileInfo *fi, StringSet &removed_logs);
 
     FilesystemPtr           m_fs;
     std::set<CommitLogFileInfo *> m_reap_set;
     BlockCompressionCodec  *m_compressor;
-    int64_t                 m_purge_report_revision;
     String                  m_cur_fragment_fname;
     int64_t                 m_cur_fragment_length;
     int64_t                 m_max_fragment_size;

@@ -23,8 +23,8 @@
 #include "MetaLogDefinitionRangeServer.h"
 
 #include "MetaLogEntityRange.h"
+#include "MetaLogEntityRemoveOkLogs.h"
 #include "MetaLogEntityTaskAcknowledgeRelinquish.h"
-#include "MetaLogEntityTaskRemoveTransferLog.h"
 
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
@@ -44,13 +44,15 @@ const char *DefinitionRangeServer::name() {
 Entity *DefinitionRangeServer::create(uint16_t log_version, const EntityHeader &header) {
 
   if (header.type == EntityType::RANGE)
-    return new EntityRange(header);
+    return new MetaLogEntityRange(header);
   else if (header.type == EntityType::RANGE2)
-    return new EntityRange(header);
+    return new MetaLogEntityRange(header);
   else if (header.type == EntityType::TASK_REMOVE_TRANSFER_LOG)
-    return new EntityTaskRemoveTransferLog(header);
+    return 0;  // no longer used
   else if (header.type == EntityType::TASK_ACKNOWLEDGE_RELINQUISH)
     return new EntityTaskAcknowledgeRelinquish(header);
+  else if (header.type == EntityType::REMOVE_OK_LOGS)
+    return new MetaLogEntityRemoveOkLogs(header);
 
   HT_THROWF(Error::METALOG_ENTRY_BAD_TYPE,
             "Unrecognized type (%d) encountered in rsml",

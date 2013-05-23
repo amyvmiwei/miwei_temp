@@ -180,14 +180,6 @@ namespace Hypertable {
       m_end = e;
       end_row = m_end.c_str();
     }
-    void set_start_row(const char *s) {
-      m_start = s;
-      start_row = m_start.c_str();
-    }
-    void set_end_row(const char *e) {
-      m_end = e;
-      end_row = m_end.c_str();
-    }
 
     void decode(const uint8_t **bufp, size_t *remainp);
 

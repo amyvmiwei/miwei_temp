@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -112,18 +112,17 @@ namespace Hypertable {
     void batch_update(std::vector<TableUpdate *> &updates, boost::xtime expire_time);
 
     void commit_log_sync(ResponseCallback *, const TableIdentifier *);
-    void drop_table(ResponseCallback *, const TableIdentifier *);
+
+    /**
+     */
+    void drop_table(ResponseCallback *cb, const TableIdentifier *table);
+
     void dump(ResponseCallback *, const char *, bool);
 
     /** @deprecated */
     void dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *table,
                            const char *pseudo_table, const char *outfile);
     void get_statistics(ResponseCallbackGetStatistics *);
-
-    void replay_load_range(ResponseCallback *, MetaLog::EntityRange *,
-                           bool write_rsml=true);
-    void replay_update(ResponseCallback *, const uint8_t *data, size_t len);
-    void replay_commit(ResponseCallback *cb);
 
     void drop_range(ResponseCallback *, const TableIdentifier *,
                     const RangeSpec *);
@@ -208,9 +207,11 @@ namespace Hypertable {
     void get_table_schemas(TableSchemaMap &table_schemas);
     static void map_table_schemas(const String &parent, const std::vector<DirEntryAttr> &listing,
                                   TableSchemaMap &table_schemas);
-    void replay_log(CommitLogReaderPtr &log_reader);
-    void replay_load_range(ResponseCallback *, MetaLog::EntityRange *,
-                           bool write_rsml, const TableSchemaMap *table_schemas);
+    void replay_load_range(TableInfoMap &replay_map,
+                           MetaLogEntityRange *range_entity);
+    void replay_log(TableInfoMap &replay_map, CommitLogReaderPtr &log_reader);
+    void replay_update(TableInfoMap &replay_map, const uint8_t *data, size_t len);
+
     void verify_schema(TableInfoPtr &, uint32_t generation, const TableSchemaMap *table_schemas=0);
     void transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,
                        int64_t revision, int64_t *revisionp,
@@ -271,12 +272,10 @@ namespace Hypertable {
     bool                   m_shutdown;
     Comm                  *m_comm;
     TableInfoMapPtr        m_live_map;
-    TableInfoMapPtr        m_replay_map;
     typedef map<String, PhantomRangeMapPtr> FailoverPhantomRangeMap;
     FailoverPhantomRangeMap m_failover_map;
     Mutex                  m_failover_mutex;
 
-    CommitLogPtr           m_replay_log;
     ConnectionManagerPtr   m_conn_manager;
     ApplicationQueuePtr    m_app_queue;
     uint64_t               m_existence_file_handle;
@@ -289,14 +288,12 @@ namespace Hypertable {
     uint64_t               m_bytes_loaded;
     uint64_t               m_log_roll_limit;
     uint64_t               m_update_coalesce_limit;
-    int                    m_replay_group;
     TableIdCachePtr        m_dropped_table_id_cache;
 
     StatsRangeServerPtr    m_stats;
     RSStatsPtr             m_server_stats;
     int64_t                m_server_stats_timestamp;
 
-    RangeStatsGathererPtr  m_maintenance_stats_gatherer;
     NameIdMapperPtr        m_namemap;
 
     MaintenanceSchedulerPtr m_maintenance_scheduler;

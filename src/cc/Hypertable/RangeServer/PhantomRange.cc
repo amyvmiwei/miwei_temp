@@ -79,7 +79,7 @@ void PhantomRange::create_range(MasterClientPtr &master_client,
   m_range = new Range(master_client, &m_range_spec.table, m_schema,
                       &m_range_spec.range, table_info.get(), &m_range_state, true);
   m_range->deferred_initialization();
-  m_range->metalog_entity()->state.state |= RangeState::PHANTOM;
+  m_range->metalog_entity()->set_state_bits(RangeState::PHANTOM);
   m_range_state.state |= RangeState::PHANTOM;
 }
 
@@ -93,29 +93,31 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
 
   *is_empty = true;
 
-  MetaLog::EntityRange *metalog_entity = m_range->metalog_entity();
-  int state = metalog_entity->state.state & ~RangeState::PHANTOM;
+  String original_transfer_log, transfer_log;
+  MetaLogEntityRange *metalog_entity = m_range->metalog_entity();
+  int state = metalog_entity->get_state() & ~RangeState::PHANTOM;
 
   if (state == RangeState::RELINQUISH_LOG_INSTALLED ||
       state == RangeState::SPLIT_LOG_INSTALLED ||
       state == RangeState::SPLIT_SHRUNK) {
     // Set phantom log to "original transfer log"
-    if (!metalog_entity->original_transfer_log.empty())
-      m_phantom_logname = metalog_entity->original_transfer_log;
+    original_transfer_log = metalog_entity->get_original_transfer_log();
+    if (!original_transfer_log.empty())
+      m_phantom_logname = original_transfer_log;
     else {
       m_phantom_logname = create_log(log_dfs, log_dir, metalog_entity);
-      metalog_entity->original_transfer_log = m_phantom_logname;
+      metalog_entity->set_original_transfer_log(m_phantom_logname);
     }
   }  
   else {
     // Set phantom log to "transfer log"
-    if (metalog_entity->state.transfer_log &&
-        *metalog_entity->state.transfer_log != 0 &&
-        log_dfs->exists(metalog_entity->state.transfer_log))
-      m_phantom_logname = metalog_entity->state.transfer_log;
+    transfer_log = metalog_entity->get_transfer_log();
+    if (!transfer_log.empty() &&
+        log_dfs->exists(transfer_log))
+      m_phantom_logname = transfer_log;
     else {
       m_phantom_logname = create_log(log_dfs, log_dir, metalog_entity);
-      metalog_entity->state.set_transfer_log(m_phantom_logname);
+      metalog_entity->set_transfer_log(m_phantom_logname);
     }
   }
 
@@ -146,9 +148,11 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
 
   std::stringstream sout;
 
+  RangeStateManaged range_state;
+  metalog_entity->get_range_state(range_state);
   sout << "Created phantom log " << m_phantom_logname
        << " for range " << m_range_spec << ", state="
-       << metalog_entity->state;
+       << range_state;
   HT_INFOF("%s", sout.str().c_str());
 
   // Scan log to load blocks and determine if log is empty
@@ -160,6 +164,8 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
     ;
   *is_empty = m_phantom_log->get_latest_revision() == TIMESTAMP_MIN;
 
+  m_phantom_log->get_linked_logs(m_linked_logs);
+  m_linked_logs.insert(m_phantom_logname);
 }
 
 const String & PhantomRange::get_phantom_logname() {
@@ -171,6 +177,12 @@ CommitLogReaderPtr PhantomRange::get_phantom_log() {
   ScopedLock lock(m_mutex);
   return m_phantom_log;
 }
+
+void PhantomRange::get_linked_logs(StringSet &linked_logs) {
+  ScopedLock lock(m_mutex);
+  linked_logs.insert(m_linked_logs.begin(), m_linked_logs.end());
+}
+
 
 void PhantomRange::set_replayed() {
   ScopedLock lock(m_mutex);
@@ -206,11 +218,16 @@ bool PhantomRange::committed() {
 }
 
 String PhantomRange::create_log(FilesystemPtr &log_dfs, const String &log_dir,
-                                MetaLog::EntityRange *range_entity) {
+                                MetaLogEntityRange *range_entity) {
+  TableIdentifier table;
+  String start_row, end_row;
   char md5DigestStr[33];
   String logname;
 
-  md5_trunc_modified_base64(range_entity->spec.end_row, md5DigestStr);
+  range_entity->get_table_identifier(table);
+  range_entity->get_boundary_rows(start_row, end_row);
+
+  md5_trunc_modified_base64(end_row.c_str(), md5DigestStr);
   md5DigestStr[16] = 0;
   time_t now = 0;
 
@@ -219,7 +236,7 @@ String PhantomRange::create_log(FilesystemPtr &log_dfs, const String &log_dir,
       poll(0, 0, 1200);
     now = time(0);
     logname = format("%s/%s/phantom-%s-%d", log_dir.c_str(),
-                     range_entity->table.id, md5DigestStr, (int)now);
+                     table.id, md5DigestStr, (int)now);
   } while (log_dfs->exists(logname));
 
   log_dfs->mkdirs(logname);

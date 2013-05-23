@@ -43,7 +43,7 @@ void PhantomRangeMap::reset(int plan_generation) {
 
 
 void PhantomRangeMap::insert(const QualifiedRangeSpec &spec,
-                             const RangeState &state, SchemaPtr &schema,
+                             const RangeState &state, SchemaPtr schema,
                              const vector<uint32_t> &fragments) {
   if (m_map.find(spec) == m_map.end()) {
     QualifiedRangeSpec copied_spec(m_arena, spec);

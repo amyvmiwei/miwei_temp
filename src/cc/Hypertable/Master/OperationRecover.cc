@@ -32,7 +32,6 @@
 #include "Hypertable/RangeServer/MetaLogDefinitionRangeServer.h"
 #include "Hypertable/RangeServer/MetaLogEntityRange.h"
 #include "Hypertable/RangeServer/MetaLogEntityTaskAcknowledgeRelinquish.h"
-#include "Hypertable/RangeServer/MetaLogEntityTaskRemoveTransferLog.h"
 #include "BalancePlanAuthority.h"
 #include "ReferenceManager.h"
 #include "Utility.h"
@@ -317,9 +316,8 @@ void OperationRecover::read_rsml() {
   MetaLog::DefinitionPtr rsml_definition
       = new MetaLog::DefinitionRangeServer(m_location.c_str());
   MetaLog::ReaderPtr rsml_reader;
-  MetaLog::EntityRange *range;
+  MetaLogEntityRange *range;
   MetaLog::EntityTaskAcknowledgeRelinquish *ack_task;
-  MetaLog::EntityTaskRemoveTransferLog *rm_log_task;
   vector<MetaLog::EntityPtr> entities;
   String logfile;
 
@@ -329,38 +327,45 @@ void OperationRecover::read_rsml() {
     rsml_reader = new MetaLog::Reader(m_context->dfs, rsml_definition, logfile);
     rsml_reader->get_entities(entities);
     foreach_ht (MetaLog::EntityPtr &entity, entities) {
-      if ((range = dynamic_cast<MetaLog::EntityRange *>(entity.get())) != 0) {
+      if ((range = dynamic_cast<MetaLogEntityRange *>(entity.get())) != 0) {
         QualifiedRangeSpec spec;
+        RangeStateManaged range_state;
+        RangeSpecManaged range_spec;
         std::stringstream sout;
+
         // skip phantom ranges, let whoever was recovering them deal with them
-        if (range->state.state & RangeState::PHANTOM) {
+        if (range->get_state() & RangeState::PHANTOM) {
           sout << "Skipping PHANTOM range " << *range;
           HT_INFOF("%s", sout.str().c_str());
         }
         else {
           sout << "Range " << *range << ": not PHANTOM; including";
           HT_INFOF("%s", sout.str().c_str());
-          spec.table = range->table;
-          spec.range = range->spec;
 
-          if (range->state.state == RangeState::SPLIT_SHRUNK)
+          if (range->get_state() == RangeState::SPLIT_SHRUNK)
             handle_split_shrunk(range);
+
+          range->get_table_identifier(spec.table);
+          range->get_range_spec(range_spec);
+          range->get_range_state(range_state);
+
+          spec.range = range_spec;
 
           if (spec.is_root()) {
             m_root_specs.push_back(QualifiedRangeSpec(m_arena, spec));
-            m_root_states.push_back(RangeState(m_arena, range->state));
+            m_root_states.push_back(RangeState(m_arena, range_state));
           }
           else if (spec.table.is_metadata()) {
             m_metadata_specs.push_back(QualifiedRangeSpec(m_arena, spec));
-            m_metadata_states.push_back(RangeState(m_arena, range->state));
+            m_metadata_states.push_back(RangeState(m_arena, range_state));
           }
           else if (spec.table.is_system()) {
             m_system_specs.push_back(QualifiedRangeSpec(m_arena, spec));
-            m_system_states.push_back(RangeState(m_arena, range->state));
+            m_system_states.push_back(RangeState(m_arena, range_state));
           }
           else {
             m_user_specs.push_back(QualifiedRangeSpec(m_arena, spec));
-            m_user_states.push_back(RangeState(m_arena, range->state));
+            m_user_states.push_back(RangeState(m_arena, range_state));
           }
         }
       }
@@ -368,11 +373,6 @@ void OperationRecover::read_rsml() {
         OperationRelinquishAcknowledge ack_op(m_context, ack_task->location,
                                       &ack_task->table, &ack_task->range_spec);
         ack_op.execute();
-      }
-      else if ((rm_log_task = dynamic_cast<MetaLog::EntityTaskRemoveTransferLog *>(entity.get())) != 0) {
-        HT_INFOF("Removing transfer log %s", rm_log_task->transfer_log.c_str());
-        if (m_context->dfs->exists(rm_log_task->transfer_log))
-          m_context->dfs->rmdir(rm_log_task->transfer_log);
       }
     }
   }
@@ -382,22 +382,28 @@ void OperationRecover::read_rsml() {
 }
 
 
-void OperationRecover::handle_split_shrunk(MetaLog::EntityRange *range_entity) {
-  bool split_off_high = strcmp(range_entity->state.split_point,
-                               range_entity->state.old_boundary_row) < 0;
-  RangeSpec range;
-  TableIdentifier *tablep = &range_entity->table;
+void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity) {
+  String start_row, end_row;
+  String split_row = range_entity->get_split_row();
+  String old_boundary_row = range_entity->get_old_boundary_row();
+  bool split_off_high = split_row.compare(old_boundary_row) < 0;
+
+  TableIdentifier table;
+  RangeSpecManaged range;
+
+  range_entity->get_table_identifier(table);
+  range_entity->get_boundary_rows(start_row, end_row);
 
   if (split_off_high) {
-    range.start_row = range_entity->spec.end_row;
-    range.end_row = range_entity->state.old_boundary_row;
+    range.set_start_row(end_row);
+    range.set_end_row(old_boundary_row);
   }
   else {
-    range.start_row = range_entity->state.old_boundary_row;
-    range.end_row = range_entity->spec.start_row;
+    range.set_start_row(old_boundary_row);
+    range.set_end_row(start_row);
   }
 
-  int64_t hash_code = Utility::range_hash_code(*tablep, range,
+  int64_t hash_code = Utility::range_hash_code(table, range,
                                                String("OperationMoveRange-") + m_location);
 
   OperationPtr operation = m_context->reference_manager->get(hash_code);
@@ -405,14 +411,15 @@ void OperationRecover::handle_split_shrunk(MetaLog::EntityRange *range_entity) {
     operation->remove_approval_add(0x01);
     if (operation->remove_if_ready())
       m_context->reference_manager->remove(hash_code);
-    int64_t soft_limit = range_entity->state.soft_limit;
-    range_entity->state.clear();
-    range_entity->state.soft_limit = soft_limit;
+    int64_t soft_limit = range_entity->get_soft_limit();
+    range_entity->clear_state();
+    range_entity->set_soft_limit(soft_limit);
 
-    if (!range_entity->original_transfer_log.empty()) {
-      HT_INFOF("Removing transfer log %s", range_entity->original_transfer_log.c_str());
-      if (m_context->dfs->exists(range_entity->original_transfer_log))
-        m_context->dfs->rmdir(range_entity->original_transfer_log);
+    String original_transfer_log = range_entity->get_original_transfer_log();
+    if (!original_transfer_log.empty()) {
+      HT_INFOF("Removing transfer log %s", original_transfer_log.c_str());
+      if (m_context->dfs->exists(original_transfer_log))
+        m_context->dfs->rmdir(original_transfer_log);
     }
   }
   

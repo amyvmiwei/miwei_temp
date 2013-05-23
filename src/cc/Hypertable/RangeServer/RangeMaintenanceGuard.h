@@ -48,10 +48,12 @@ namespace Hypertable {
       m_cond.notify_all();
     }
 
-    void wait_for_complete() {
+    void wait_for_complete(bool disable=false) {
       ScopedLock lock(m_mutex);
       while (m_in_progress)
         m_cond.wait(lock);
+      if (disable)
+        m_disabled = true;
     }
 
     bool in_progress() {

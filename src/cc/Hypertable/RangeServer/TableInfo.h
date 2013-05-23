@@ -116,9 +116,9 @@ namespace Hypertable {
     virtual ~TableInfo() { }
 
     virtual bool remove(const String &start_row, const String &end_row);
-    virtual bool change_end_row(const String &start_row, const String &old_end_row,
+    virtual void change_end_row(const String &start_row, const String &old_end_row,
                                 const String &new_end_row);
-    virtual bool change_start_row(const String &old_start_row, const String &new_start_row,
+    virtual void change_start_row(const String &old_start_row, const String &new_start_row,
                                   const String &end_row);
 
 
@@ -135,9 +135,9 @@ namespace Hypertable {
     /**
      * Updates the schema object for this entry
      * and propagates the change to all ranges.
-     * @param schema_ptr smart pointer to new schema object
+     * @param schema Smart pointer to new schema object
      */
-    void update_schema(SchemaPtr &schema_ptr);
+    void update_schema(SchemaPtr &schema);
 
     /**
      * Returns the range object corresponding to the given range specification
@@ -207,18 +207,6 @@ namespace Hypertable {
      */
     bool find_containing_range(const String &row, RangePtr &range,
                                String &start_row, String &end_row);
-
-    /**
-     * Finds the range that the given row belongs to
-     *
-     * @param row Row key used to locate range (in)
-     * @param range Reference to smart pointer to hold removed range (out)
-     * @param start_rowp Starting row of range (out)
-     * @param end_rowp Ending row of range (out)
-     * @return <i>true</i> if found, <i>false</i> otherwise
-     */
-    bool find_containing_range(const String &row, RangePtr &range,
-                               const char **start_rowp, const char **end_rowp) const;
 
     /**
      * Returns true if the given row belongs to the set of ranges

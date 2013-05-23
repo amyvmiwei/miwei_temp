@@ -53,7 +53,7 @@ void TableMutatorAsyncDispatchHandler::handle(EventPtr &event_ptr) {
     if (error != Error::OK) {
       if (m_auto_refresh &&
           (error == Error::RANGESERVER_GENERATION_MISMATCH ||
-           error == Error::RANGESERVER_TABLE_NOT_FOUND))
+           error == Error::TABLE_NOT_FOUND))
         m_send_buffer->add_retries_all(true, error);
       else
         m_send_buffer->add_errors_all(error);

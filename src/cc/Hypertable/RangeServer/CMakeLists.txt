@@ -82,8 +82,8 @@ MergeScanner.cc
 MergeScannerRange.cc
 MergeScannerAccessGroup.cc
 MetaLogEntityRange.cc
+MetaLogEntityRemoveOkLogs.cc
 MetaLogEntityTaskAcknowledgeRelinquish.cc
-MetaLogEntityTaskRemoveTransferLog.cc
 MetaLogDefinitionRangeServer.cc
 MetadataNormal.cc
 MetadataRoot.cc
@@ -92,7 +92,6 @@ PhantomRangeMap.cc
 QueryCache.cc
 Range.cc
 RangeServer.cc
-RangeStatsGatherer.cc
 RequestHandlerAcknowledgeLoad.cc
 RequestHandlerCompact.cc
 RequestHandlerCreateScanner.cc
@@ -134,6 +133,7 @@ ScannerMap.cc
 TableIdCache.cc
 TableInfo.cc
 TableInfoMap.cc
+TableSchemaCache.cc
 TimerHandler.cc
 UpdateThread.cc
 )

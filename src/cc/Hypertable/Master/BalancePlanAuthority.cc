@@ -33,7 +33,7 @@
 
 #include "BalancePlanAuthority.h"
 #include "Context.h"
-#include "EntityType.h"
+#include "MetaLogEntityTypes.h"
 #include "Utility.h"
 
 #include <sstream>

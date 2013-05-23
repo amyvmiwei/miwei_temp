@@ -352,7 +352,6 @@ void TableScannerAsync::handle_error(int scanner_id, int error, const String &er
   else {
     switch(error) {
       case (Error::TABLE_NOT_FOUND):
-      case (Error::RANGESERVER_TABLE_NOT_FOUND):
         if (m_table->auto_refresh() && is_create)
         abort = !(m_interval_scanners[scanner_id]->retry_or_abort(true, true, 
                     is_create, &next, error));

@@ -54,8 +54,8 @@ namespace {
 
 MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
                                            RSStatsPtr &server_stats,
-                                           RangeStatsGathererPtr &gatherer)
-  : m_queue(queue), m_server_stats(server_stats), m_stats_gatherer(gatherer),
+                                           TableInfoMapPtr &live_map)
+  : m_queue(queue), m_server_stats(server_stats), m_live_map(live_map),
     m_prioritizer_log_cleanup(server_stats),
     m_prioritizer_low_memory(server_stats), m_start_offset(0),
     m_initialized(false), m_low_memory_mode(false) {
@@ -75,22 +75,6 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
 
   m_maintenance_queue_worker_count = 
     (int32_t)Global::maintenance_queue->worker_count();
-
-  /** 
-   * This code adds hashes for the four primary commit log
-   * directories to the m_log_hashes set.  This set is passed
-   * into CommitLog::purge to tell the commit log that fragments
-   * from these directories are OK to remove.
-   */
-  String log_dir = Global::log_dir + "/root";
-  m_log_hashes.insert( md5_hash(log_dir.c_str()) );
-  log_dir = Global::log_dir + "/metadata";
-  m_log_hashes.insert( md5_hash(log_dir.c_str()) );
-  log_dir = Global::log_dir + "/system";
-  m_log_hashes.insert( md5_hash(log_dir.c_str()) );
-  log_dir = Global::log_dir + "/user";
-  m_log_hashes.insert( md5_hash(log_dir.c_str()) );
-
 }
 
 
@@ -105,7 +89,6 @@ void MaintenanceScheduler::schedule() {
   int64_t excess = 0;
   MaintenancePrioritizer::MemoryState memory_state;
   int32_t priority = 1;
-  int log_generation;
   bool low_memory = low_memory_mode();
   bool do_scheduling = true;
   bool debug = false;
@@ -168,7 +151,11 @@ void MaintenanceScheduler::schedule() {
 
   Global::maintenance_queue->drop_range_tasks();
 
-  m_stats_gatherer->fetch(range_data, 0, &log_generation);
+  StringSet remove_ok_logs, removed_logs;
+  m_live_map->get_range_data(range_data, &remove_ok_logs);
+  time_t current_time = time(0);
+  foreach_ht (RangeData &rd, range_data)
+    rd.data = rd.range->get_maintenance_data(range_data.arena(), current_time);
 
   if (range_data.empty())
     return;
@@ -198,7 +185,6 @@ void MaintenanceScheduler::schedule() {
     int64_t revision_system = TIMESTAMP_MAX;
     int64_t revision_root = TIMESTAMP_MAX;
     AccessGroup::CellStoreMaintenanceData *cs_data;
-    std::set<int64_t> log_dir_hashes = m_log_hashes;
 
     if (debug) {
       trace_str += format("before revision_root\t%llu\n", (Llu)revision_root);
@@ -208,8 +194,6 @@ void MaintenanceScheduler::schedule() {
     }
 
     for (size_t i=0; i<range_data.size(); i++) {
-
-      log_dir_hashes.insert(range_data[i].data->log_hash);
 
       if (range_data[i].data->needs_major_compaction && priority <= m_move_compactions_per_interval) {
         range_data[i].data->priority = priority++;
@@ -258,16 +242,22 @@ void MaintenanceScheduler::schedule() {
     }
 
     if (Global::root_log)
-      Global::root_log->purge(revision_root, log_dir_hashes, log_generation);
+      Global::root_log->purge(revision_root, remove_ok_logs, removed_logs);
 
     if (Global::metadata_log)
-      Global::metadata_log->purge(revision_metadata, log_dir_hashes, log_generation);
+      Global::metadata_log->purge(revision_metadata, remove_ok_logs, removed_logs);
 
     if (Global::system_log)
-      Global::system_log->purge(revision_system, log_dir_hashes, log_generation);
+      Global::system_log->purge(revision_system, remove_ok_logs, removed_logs);
 
     if (Global::user_log)
-      Global::user_log->purge(revision_user, log_dir_hashes, log_generation);
+      Global::user_log->purge(revision_user, remove_ok_logs, removed_logs);
+
+    // Remove logs that were removed from the MetaLogEntityRemoveOkLogs entity
+    if (!removed_logs.empty()) {
+      Global::remove_ok_logs->remove(removed_logs);
+      Global::rsml_writer->record_state(Global::remove_ok_logs.get());
+    }
   }
 
   {

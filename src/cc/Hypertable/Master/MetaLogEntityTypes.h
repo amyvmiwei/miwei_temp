@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,14 +19,27 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_ENTITYTYPE_H
-#define HYPERTABLE_ENTITYTYPE_H
+/** @file
+ * %Master %MetaLog entity type constants.
+ * This file contains MetaLog entity type constants for the %Master
+ */
+
+#ifndef HYPERTABLE_MASTERMETALOGENTITYTYPES_H
+#define HYPERTABLE_MASTERMETALOGENTITYTYPES_H
 
 namespace Hypertable {
 
+  /** @addtogroup libHypertable
+   *  @{
+   */
+
   namespace MetaLog {
+
+    /** %MetaLog entity type constants */
     namespace EntityType {
-      enum {
+
+      /** %Master %MetaLog entity type constants */
+      enum MasterTypes {
 
         RANGE_SERVER_CONNECTION              = 0x00020000,
 
@@ -82,6 +95,8 @@ namespace Hypertable {
       };
     }
   }
+
+  /* @}*/
 }
 
-#endif // HYPERTABLE_ENTITYTYPE_H
+#endif // HYPERTABLE_MASTERMETALOGENTITYTYPES_H

@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -36,16 +36,16 @@
 
 namespace Hypertable {
 
-  extern atomic_t g_log_generation;
-
   class CommitLogFileInfo {
   public:
     CommitLogFileInfo() : num(0), size(0), revision(0), log_dir_hash(0), references(0), block_stream(0), parent(0), verification(123456789LL) {
-      generation = atomic_inc_return(&g_log_generation);
     }
     ~CommitLogFileInfo() { verify(); verification = 0; }
     void verify() {
       HT_ASSERT(verification == 123456789LL);
+    }
+    bool remove_ok(StringSet &remove_ok_logs) {
+      return parent == 0 || remove_ok_logs.count(log_dir);
     }
     String     log_dir;
     uint32_t   num;
@@ -53,7 +53,6 @@ namespace Hypertable {
     int64_t    revision;
     int64_t    log_dir_hash;
     size_t     references;
-    int        generation;
     CommitLogBlockStream *block_stream;
     CommitLogFileInfo *parent;
     StringSet  purge_dirs;
@@ -102,8 +101,6 @@ namespace Hypertable {
 
     bool empty() { ScopedLock lock(m_mutex); return m_fragment_queue.empty(); }
 
-    std::set<int64_t> &get_linked_log_set() { return m_linked_logs; }
-
     bool range_reference_required() { return m_range_reference_required; }
 
     LogFragmentQueue &fragment_queue() { return m_fragment_queue; }
@@ -120,7 +117,7 @@ namespace Hypertable {
     String            m_log_name;
     LogFragmentQueue  m_fragment_queue;
     int64_t           m_latest_revision;
-    std::set<int64_t> m_linked_logs;
+    std::set<int64_t> m_linked_log_hashes;
     bool m_range_reference_required;
   };
 

@@ -76,6 +76,7 @@ namespace Hypertable {
     void populate_range_and_log(FilesystemPtr &log_dfs, const String &log_dir, bool *is_empty);
     CommitLogReaderPtr get_phantom_log();
     const String &get_phantom_logname();
+    void get_linked_logs(StringSet &linked_logs);
 
     void set_replayed();
     bool replayed();
@@ -89,7 +90,7 @@ namespace Hypertable {
   private:
 
     String create_log(FilesystemPtr &log_dfs, const String &log_dir,
-                      MetaLog::EntityRange *range_entity);
+                      MetaLogEntityRange *range_entity);
 
     typedef std::map<uint32_t, FragmentDataPtr> FragmentMap;
     Mutex            m_mutex;
@@ -101,6 +102,7 @@ namespace Hypertable {
     RangePtr         m_range;
     CommitLogReaderPtr m_phantom_log;
     String           m_phantom_logname;
+    StringSet        m_linked_logs;
     int              m_state;
   };
 
