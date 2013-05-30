@@ -90,8 +90,21 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
   write_header();
 
   // Write existing entries
-  foreach_ht (EntityPtr &entity, initial_entities)
-    record_state(entity.get());
+  std::vector<Entity *> entities;
+  entities.reserve(initial_entities.size());
+  size_t total_length = 0;
+  foreach_ht (EntityPtr &entity, initial_entities) {
+    entities.push_back(entity.get());
+    total_length += EntityHeader::LENGTH + (entity->marked_for_removal() ? 0 : entity->encoded_length());
+    if (total_length > 10*Property::MiB) {
+      record_state(entities);
+      entities.clear();
+      total_length = 0;
+    }
+  }
+  if (total_length) {
+    record_state(entities);
+  }
 
   // Write "Recover" entity
   if (!skip_recover_entry) {
@@ -138,6 +151,7 @@ void Writer::purge_old_log_files(std::vector<int32_t> &file_ids, size_t keep_cou
 
       // remove local backup
       tmp_name = m_backup_path + String("/") + file_ids[i];
+
       if (FileUtils::exists(tmp_name))
         FileUtils::unlink(tmp_name);
     }
@@ -244,7 +258,6 @@ void Writer::record_state(std::vector<Entity *> &entities) {
   FileUtils::write(m_backup_fd, backup_buf.get(), buf.size);
   m_offset += buf.size;
 }
-
 
 void Writer::record_removal(Entity *entity) {
   ScopedLock lock(m_mutex);
