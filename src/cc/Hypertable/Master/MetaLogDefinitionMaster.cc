@@ -24,6 +24,7 @@
 
 #include "OperationAlterTable.h"
 #include "OperationBalance.h"
+#include "OperationCompact.h"
 #include "OperationCreateNamespace.h"
 #include "OperationCreateTable.h"
 #include "OperationDropTable.h"
@@ -137,6 +138,8 @@ Entity *DefinitionMaster::create(uint16_t log_version, const EntityHeader &heade
       operation = new OperationRecoverRanges(m_context, header);
     else if (header.type == EntityType::OPERATION_BALANCE)
       operation = new OperationBalance(m_context, header);
+    else if (header.type == EntityType::OPERATION_COMPACT)
+      operation = new OperationCompact(m_context, header);
   }
 
   if (operation)
