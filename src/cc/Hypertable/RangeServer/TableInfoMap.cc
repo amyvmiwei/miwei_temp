@@ -51,10 +51,11 @@ bool TableInfoMap::lookup(const String &table_id, TableInfoPtr &info) {
   return true;
 }
 
-void TableInfoMap::get(const TableIdentifier &table, TableInfoPtr &info) {
+void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
   ScopedLock lock(m_mutex);
+  TableIdentifier table;
 
-  InfoMap::iterator iter = m_map.find(table.id);
+  InfoMap::iterator iter = m_map.find(table_id);
   if (iter != m_map.end()) {
     info = (*iter).second;
     return;
@@ -63,27 +64,28 @@ void TableInfoMap::get(const TableIdentifier &table, TableInfoPtr &info) {
   SchemaPtr schema;
 
   if (m_schema_cache)
-    m_schema_cache->get(table.id, schema);
+    m_schema_cache->get(table_id, schema);
   else {
     DynamicBuffer valbuf;
-    String tablefile = Global::toplevel_dir + "/tables/" + table.id;
+    String tablefile = Global::toplevel_dir + "/tables/" + table_id;
 
     Global::hyperspace->attr_get(tablefile, "schema", valbuf);
     schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
 
     if (!schema->is_valid())
-      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table.id);
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table_id);
 
     if (schema->need_id_assignment())
-      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table.id);
+      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table_id);
 
-    if (schema->get_generation() != table.generation)
-      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH, table.id);
   }
+
+  table.id = table_id.c_str();
+  table.generation = schema->get_generation();
 
   info = new TableInfo(Global::master_client, &table, schema);
 
-  m_map[table.id] = info;
+  m_map[table_id] = info;
 }
 
 
