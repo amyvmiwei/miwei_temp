@@ -93,13 +93,11 @@ namespace Hypertable {
     bool lookup(const String &table_id, TableInfoPtr &info);
 
     /** Gets the TableInfo object for a table, creating one if not found.
-     * @param table Table identifier
+     * @param table_id %Table identifier string
      * @param info Output parameter to hold TableInfo object
-     * @throws Exception with code set to either
-     * Error::RANGESERVER_SCHEMA_PARSE_ERROR or
-     * Error::RANGESERVER_GENERATION_MISMATCH
+     * @throws Exception with code set to Error::RANGESERVER_SCHEMA_PARSE_ERROR
      */
-    void get(const TableIdentifier &table, TableInfoPtr &info);
+    void get(const String &table_id, TableInfoPtr &info);
 
     /** Stages a range.
      * When a range is loaded by the RangeServer, it first gets <i>staged</i>

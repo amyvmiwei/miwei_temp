@@ -934,12 +934,22 @@ RangeServer::replay_load_range(TableInfoMap &replay_map,
 
   try {
 
-    replay_map.get(table, table_info);
+    replay_map.get(table.id, table_info);
 
-    m_live_map->get(table, live_table_info);
+    m_live_map->get(table.id, live_table_info);
 
     // Range should not already be loaded
     HT_ASSERT(!live_table_info->get_range(&range_spec, range));
+
+    // Check table generation.  If table generation obtained from TableInfoMap
+    // is greater than the table generation in the range entity, then
+    // automatically upgrade to new generation
+    uint32_t generation = live_table_info->get_schema()->get_generation();
+    if (generation > table.generation) {
+      range_entity->set_table_generation(generation);
+      table.generation = generation;
+    }
+    HT_ASSERT(generation == table.generation);
 
     /**
      * Lazily create sys/METADATA table pointer
@@ -969,7 +979,7 @@ RangeServer::replay_load_range(TableInfoMap &replay_map,
 
   }
   catch (Hypertable::Exception &e) {
-    HT_ERROR_OUT << "Problem loading range during replay - " << e << HT_END;
+    HT_FATAL_OUT << "Problem loading range during replay - " << e << HT_END;
   }
 }
 
@@ -1639,7 +1649,14 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
 
       HT_MAYBE_FAIL_X("load-range-1", !table->is_system());
 
-      m_live_map->get(*table, table_info);
+      m_live_map->get(table->id, table_info);
+
+      uint32_t generation = table_info->get_schema()->get_generation();
+      if (generation > table->generation) {
+        HT_WARNF("Table generation mismatch in load range request (%d < %d),"
+                 " automatically upgrading", (int)table->generation, (int)generation);
+        ((TableIdentifier *)table)->generation = generation;
+      }
 
       // Make sure this range is not already loaded
       if (table_info->has_range(range_spec)) {
@@ -3772,7 +3789,14 @@ void RangeServer::phantom_load(ResponseCallback *cb, const String &location,
         //  cb->error(Error::RANGESERVER_TABLE_DROPPED, range.qualified_range.table.id);
         //  return;
         //}
-        phantom_tableinfo_map->get(spec.table, table_info);
+        phantom_tableinfo_map->get(spec.table.id, table_info);
+
+        uint32_t generation = table_info->get_schema()->get_generation();
+        if (generation > spec.table.generation) {
+          HT_WARNF("Table generation mismatch in phantom load request (%d < %d),"
+                   " automatically upgrading", (int)spec.table.generation, (int)generation);
+          ((QualifiedRangeSpec *)&spec)->table.generation = generation;
+        }
 
         if (!live(spec))
           phantom_range_map->insert(spec, state, table_info->get_schema(), fragments);
@@ -3910,7 +3934,12 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
       phantom_table_info = 0;
       HT_ASSERT(phantom_map->lookup(rr.table.id, phantom_table_info));
       TableInfoPtr table_info;
-      m_live_map->get(rr.table, table_info);
+      m_live_map->get(rr.table.id, table_info);
+
+      if (rr.table.generation != table_info->get_schema()->get_generation())
+        HT_WARNF("Table (id=%s) generation mismatch %d != %d", rr.table.id, 
+                 rr.table.generation,
+                 table_info->get_schema()->get_generation());
 
       //HT_DEBUG_OUT << "Creating Range object for range " << rr << HT_END;
       // create a real range and its transfer log
