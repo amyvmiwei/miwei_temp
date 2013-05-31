@@ -59,6 +59,8 @@ namespace Hypertable {
 
       virtual const String name() = 0;
 
+      int64_t id() const { return header.id; }
+
       /**
        * Prints a textual representation of the entity state to the given ostream
        *
