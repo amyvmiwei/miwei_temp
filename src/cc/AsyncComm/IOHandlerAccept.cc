@@ -147,8 +147,7 @@ bool IOHandlerAccept::handle_incoming_connection() {
                 Error::get_text(error));
       ReactorRunner::handler_map->decrement_reference_count(handler);
       ReactorRunner::handler_map->decomission_handler(handler);
-      ReactorRunner::handler_map->decomission_handler(this);
-      return true;
+      return false;
     }
 
     if (ReactorFactory::proxy_master) {
@@ -157,8 +156,7 @@ bool IOHandlerAccept::handle_incoming_connection() {
         HT_ERRORF("Problem sending proxy map to %s - %s",
                   m_addr.format().c_str(), Error::get_text(error));
         ReactorRunner::handler_map->decrement_reference_count(handler);
-        ReactorRunner::handler_map->decomission_handler(handler);
-        return true;
+        return false;
       }
     }
 
