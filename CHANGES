@@ -1,3 +1,12 @@
+Version 0.9.7.7:
+(2013-06-03)
+
+   Automatically upgrade table generation during range recovery
+   Added missing MML decoding of OperationCompact entity
+   Don't decomission handler after propagate_proxy_map() failure
+   Added id() accessor method to MetaLog::Entity class
+   Batch entity writes in MetaLog::Writer constructor
+
 Version 0.9.7.6:
 (2013-05-23)
 
