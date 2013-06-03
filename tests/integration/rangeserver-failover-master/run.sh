@@ -47,6 +47,7 @@ wait_for_recovery() {
     (( n += 1 ))
     if [ "$n" -gt "300" ]; then
       echo "wait_for_recovery: time exceeded"
+      save_failure_state
       exit 1
     fi
     sleep 2
@@ -87,6 +88,28 @@ kill_rs() {
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
     \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
 }
+
+save_failure_state() {
+  touch $HT_HOME/run/debug-op
+  tar czvf fs-backup.tgz $HT_HOME/fs/local
+  ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
+  mkdir $ARCHIVE_DIR
+  mv fs-backup.tgz core.* *.output.$TEST $HT_HOME/run/monitoring/mop.dot $ARCHIVE_DIR
+  if [ -e Testing/Temporary/LastTest.log.tmp ] ; then
+    cp Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR/LastTest.log.tmp
+  elif [ -e ../../../Testing/Temporary/LastTest.log.tmp ] ; then
+    cp ../../../Testing/Temporary/LastTest.log.tmp $ARCHIVE_DIR/LastTest.log.tmp
+  fi
+  for f in $HT_HOME/run/*.pid; do
+    pstack `cat $f` > $ARCHIVE_DIR/`basename $f | sed 's/\.pid//g'`.stack ;
+  done
+  sleep 60
+  mv $HT_HOME/run/op.output $ARCHIVE_DIR
+  echo "Failure state saved to directory $ARCHIVE_DIR"
+  exec 1>&-
+  sleep 86400
+}
+
 
 
 # Runs an individual test with two RangeServers; the master goes down
@@ -172,6 +195,7 @@ run_test() {
     $HT_SHELL --batch < $SCRIPT_DIR/create-test-table.hql
     if [ $? != 0 ] ; then
         echo "Unable to create table 'failover-test', exiting ..."
+        save_failure_state
         exit 1
     fi
 
@@ -181,6 +205,7 @@ run_test() {
         update
     if [ $? != 0 ] ; then
         echo "Problem loading table 'FailoverTest', exiting ..."
+        save_failure_state
         exit 1
     fi
     
@@ -205,6 +230,7 @@ run_test() {
         fgrep "CRASH" master.output.$TEST
         if [ $? != 0 ] ; then
             echo "ERROR: Failure was not induced in Master."
+            save_failure_state
             exit 1
         fi
     fi
@@ -214,6 +240,7 @@ run_test() {
         | grep -v "hypertable" | grep -v "Waiting for connection to Hyperspace" > dbdump.$TEST
     if [ $? != 0 ] ; then
         echo "Problem dumping table 'failover-test', exiting ..."
+        save_failure_state
         exit 1
     fi
     
