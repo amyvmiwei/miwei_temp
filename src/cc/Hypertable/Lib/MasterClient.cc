@@ -1130,7 +1130,7 @@ void MasterClient::reload_master() {
           m_hyperspace->attr_get(m_master_file_handle, "address", value);
         }
         catch (Exception &e) {
-          HT_WARN("Unable to determinte master address from Hyperspace");
+          HT_WARN("Unable to determine master address from Hyperspace");
           return;
         }
       }
@@ -1140,7 +1140,7 @@ void MasterClient::reload_master() {
           m_hyperspace->attr_get(m_master_file_handle, "address", value);
         }
         catch (Exception &e) {
-          HT_WARN("Unable to determinte master address from Hyperspace");
+          HT_WARN("Unable to determine master address from Hyperspace");
           return;
         }
       }
