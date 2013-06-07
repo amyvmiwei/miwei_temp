@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+
+Copyright (C) 2007-2012 Hypertable, Inc.
+
+This file is part of Hypertable.
+
+Hypertable is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; version 3 of the
+License, or any later version.
+
+Hypertable is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU General Public License for more details.
+
+You should have received a copy of the GNU General Public License
+along with this program; if not, write to the Free Software
+Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+02110-1301, USA.
+
+-->
+
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           version="1.0"
+           id="TableSchem.xsd"
+           attributeFormDefault="unqualified"
+           elementFormDefault="qualified">
+
+  <xs:simpleType name="timeOrderType">
+    <xs:restriction base="xs:string">
+      <xs:enumeration value="ASC"/>
+      <xs:enumeration value="DESC"/>
+    </xs:restriction>
+  </xs:simpleType>
+
+  <xs:element name="Schema">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="AccessGroup" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:sequence>
+              <xs:element name="ColumnFamily" maxOccurs="unbounded">
+                <xs:complexType>
+                  <xs:all>
+                    <xs:element name="Name" type="xs:string" minOccurs="1" />
+                    <xs:element name="Generation" type="xs:unsignedByte" minOccurs="0" />
+                    <xs:element name="Counter" type="xs:boolean" minOccurs="0" />
+                    <xs:element name="MaxVersions" type="xs:unsignedInt" minOccurs="0" />
+                    <xs:element name="TimeOrder" type="timeOrderType" minOccurs="0" />
+                    <xs:element name="ttl" type="xs:unsignedInt" minOccurs="0" />
+                    <xs:element name="deleted" type="xs:boolean" minOccurs="0" />
+                    <xs:element name="renamed" type="xs:boolean" minOccurs="0" />
+                    <xs:element name="NewName" type="xs:string" minOccurs="0" />
+                    <xs:element name="Index" type="xs:boolean" minOccurs="0" />
+                    <xs:element name="QualifierIndex" type="xs:boolean" minOccurs="0" />
+                  </xs:all>
+                  <xs:attribute name="id" type="xs:unsignedInt" use="optional" />
+                </xs:complexType>
+              </xs:element>
+            </xs:sequence>
+            <xs:attribute name="name" type="xs:string" use="optional" />
+            <xs:attribute name="inMemory" type="xs:boolean" use="optional" />
+            <xs:attribute name="counter" type="xs:boolean" use="optional" />
+            <xs:attribute name="replication" type="xs:unsignedInt" use="optional" />
+            <xs:attribute name="blksz" type="xs:unsignedInt" use="optional" />
+            <xs:attribute name="compressor" type="xs:string" use="optional" />
+            <xs:attribute name="bloomFilter" type="xs:string" use="optional" />
+          </xs:complexType>
+        </xs:element>
+      </xs:sequence>
+      <xs:attribute name="generation" type="xs:unsignedByte" use="optional" />
+      <xs:attribute name="compressor" type="xs:string" use="optional" />
+      <xs:attribute name="group_commit_interval" type="xs:unsignedInt" use="optional" />
+    </xs:complexType>
+
+    <xs:unique name="uniqueAccessGroupNames">
+      <xs:selector xpath="AccessGroup" />
+      <xs:field xpath="@name" />
+    </xs:unique>
+
+    <xs:unique name="uniqueColumnFamilyNames">
+      <xs:selector xpath="AccessGroup/ColumnFamily/Name" />
+      <xs:field xpath="." />
+    </xs:unique>
+
+  </xs:element>
+
+</xs:schema>
