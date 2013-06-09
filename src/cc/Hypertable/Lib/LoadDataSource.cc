@@ -69,7 +69,8 @@ LoadDataSource::LoadDataSource(const String &header_fname,
     m_timestamp_index(-1), m_timestamp(AUTO_ASSIGN), m_offset(0),
     m_zipped(false), m_rsgen(0), m_header_fname(header_fname),
     m_row_uniquify_chars(row_uniquify_chars),
-    m_load_flags(load_flags), m_first_line_cached(false), m_source_size(0) 
+    m_load_flags(load_flags), m_source_size(0), m_first_line_cached(false),
+    m_field_separator('\t')
 {
   if (row_uniquify_chars)
     m_rsgen = new FixedRandomStringGenerator(row_uniquify_chars);
@@ -87,6 +88,10 @@ LoadDataSource::LoadDataSource(const String &header_fname,
 String
 LoadDataSource::get_header()
 {
+  String three_column_header = format("#row%ccolumn%cvalue",
+                                      m_field_separator, m_field_separator);
+  String four_column_header = format("#timestamp%crow%ccolumn%cvalue",
+                   m_field_separator, m_field_separator, m_field_separator);
   String header = "";
   if (m_header_fname != "") {
     std::ifstream in(m_header_fname.c_str());
@@ -97,22 +102,22 @@ LoadDataSource::get_header()
     size_t tabs = 0;
     getline(m_fin, m_first_line);
     for (const char *ptr = m_first_line.c_str(); *ptr; ptr++) {
-      if (*ptr == '\t')
+      if (*ptr == m_field_separator)
         tabs++;
     }
     if (tabs == 2) {
-      if (strcmp(m_first_line.c_str(), "#row\tcolumn\tvalue"))
+      if (m_first_line.compare(three_column_header))
         m_first_line_cached = true;
-      header = "#row\tcolumn\tvalue";
+      header = three_column_header;
     }
     else if (tabs == 3) {
-      if (strcmp(m_first_line.c_str(), "#timestamp\trow\tcolumn\tvalue"))
+      if (m_first_line.compare(four_column_header))
         m_first_line_cached = true;
-      header = "#timestamp\trow\tcolumn\tvalue";
+      header = four_column_header;
     }
     else
       HT_THROWF(Error::HQL_BAD_LOAD_FILE_FORMAT,
-                "Untable to autodetect format, expected 2 or 3 tabs, got %d", (int)tabs);
+                "Untable to autodetect format, expected 2 or 3 field separators, got %d", (int)tabs);
   }
   else {
     // autodetect
@@ -122,7 +127,7 @@ LoadDataSource::get_header()
     else {
       size_t tabs = 0;
       for (const char *ptr = m_first_line.c_str(); *ptr; ptr++) {
-        if (*ptr == '\t')
+        if (*ptr == m_field_separator)
           tabs++;
       }
       if (tabs == 2)
@@ -141,9 +146,11 @@ LoadDataSource::get_header()
 }
 
 void
-LoadDataSource::init(const std::vector<String> &key_columns, const String &timestamp_column)
-{
+LoadDataSource::init(const std::vector<String> &key_columns,
+                     const String &timestamp_column,
+                     char field_separator) {
   String header;
+  m_field_separator = field_separator;
   init_src();
   header = get_header();
   parse_header(header, key_columns, timestamp_column);
@@ -171,7 +178,7 @@ LoadDataSource::parse_header(const String &header,
       base++;
   }
 
-  ptr = strchr(base, '\t');
+  ptr = strchr(base, m_field_separator);
 
   while (base) {
 
@@ -200,7 +207,7 @@ LoadDataSource::parse_header(const String &header,
 
     if (ptr) {
       base = ptr;
-      ptr = strchr(base, '\t');
+      ptr = strchr(base, m_field_separator);
     }
     else
       base = 0;
@@ -327,7 +334,7 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
        *  Get timestamp
        */
       if (m_leading_timestamps) {
-        if ((ptr = strchr(base, '\t')) == 0) {
+        if ((ptr = strchr(base, m_field_separator)) == 0) {
           cerr << "warning: too few fields on line " << m_cur_line << endl;
           continue;
         }
@@ -349,7 +356,7 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
       /**
        * Get row key
        */
-      if ((ptr = strchr(base, '\t')) == 0) {
+      if ((ptr = strchr(base, m_field_separator)) == 0) {
         cerr << "warning: too few fields on line " << m_cur_line << endl;
         continue;
       }
@@ -378,7 +385,7 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
       /**
        * Get column family and qualifier
        */
-      if ((ptr = strchr(base, '\t')) == 0) {
+      if ((ptr = strchr(base, m_field_separator)) == 0) {
         cerr << "warning: too few fields on line " << m_cur_line << endl;
         continue;
       }
@@ -407,7 +414,7 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
        */
       base = ptr;
       *valuep = (uint8_t *)base;
-      if ((ptr = strchr(base, '\t')) == 0) {
+      if ((ptr = strchr(base, m_field_separator)) == 0) {
         *value_lenp = strlen((char *)*valuep);
       }
       else {
@@ -504,7 +511,7 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
 
       base = (char *)m_line_buffer.base;
 
-      while ((ptr = strchr(base, '\t')) != 0) {
+      while ((ptr = strchr(base, m_field_separator)) != 0) {
         *ptr++ = 0;
 
         if (strlen(base) == 0 || !strcmp(base, "NULL") ||

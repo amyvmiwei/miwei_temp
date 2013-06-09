@@ -316,6 +316,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
   int out_fd = -1;
   String dfs = "dfs://";
   String localfs = "file://";
+  char fs = state.field_separator ? state.field_separator : '\t';
 
   table = ns->open_table(state.table_name);
   scanner = table->create_scanner(state.scan.builder.get(), 0, true);
@@ -340,15 +341,15 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
 
     if (state.scan.display_timestamps) {
       if (state.scan.keys_only)
-        fout << "#timestamp\trow\n";
+        fout << "#timestamp" << fs << "row\n";
       else
-        fout << "#timestamp\trow\tcolumn\tvalue\n";
+        fout << "#timestamp" << fs << "row" << fs << "column" << fs << "value\n";
     }
     else {
       if (state.scan.keys_only)
         fout << "#row\n";
       else
-        fout << "#row\tcolumn\tvalue\n";
+        fout << "#row" << fs << "column" << fs << "value\n";
     }
   }
   else if (!outf) {
@@ -370,6 +371,11 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
   const char *unescaped_buf, *row_unescaped_buf;
   size_t unescaped_len, row_unescaped_len;
 
+  if (fs != '\t') {
+    row_escaper.set_field_separator(fs);
+    escaper.set_field_separator(fs);
+  }
+
   while (scanner->next(cell)) {
     if (cb.normal_mode) {
       // do some stats
@@ -383,15 +389,15 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
     }
     if (state.scan.display_timestamps) {
       if (cb.format_ts_in_usecs) {
-        fout << cell.timestamp << "\t";
+        fout << cell.timestamp << fs;
       }
       else {
         nsec = cell.timestamp % 1000000000LL;
         unix_time = cell.timestamp / 1000000000LL;
         gmtime_r(&unix_time, &tms);
-        fout << Hypertable::format("%d-%02d-%02d %02d:%02d:%02d.%09d\t", 
+        fout << Hypertable::format("%d-%02d-%02d %02d:%02d:%02d.%09d%c", 
                         tms.tm_year + 1900, tms.tm_mon + 1, tms.tm_mday, 
-                        tms.tm_hour, tms.tm_min, tms.tm_sec, nsec);
+                        tms.tm_hour, tms.tm_min, tms.tm_sec, nsec, fs);
       }
     }
     if (state.escape)
@@ -401,7 +407,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
       row_unescaped_buf = cell.row_key;
     if (!state.scan.keys_only) {
       if (cell.column_family && *cell.column_family) {
-        fout << row_unescaped_buf << "\t" << cell.column_family;
+        fout << row_unescaped_buf << fs << cell.column_family;
         if (cell.column_qualifier && *cell.column_qualifier) {
           if (state.escape)
             escaper.escape(cell.column_qualifier, strlen(cell.column_qualifier),
@@ -423,29 +429,29 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
         unescaped_len = (size_t)cell.value_len;
       }
 
-      fout << "\t" ;
+      fout << fs;
       switch(cell.flag) {
       case FLAG_INSERT:
         fout.write(unescaped_buf, unescaped_len);
         fout << "\n";
         break;
       case FLAG_DELETE_ROW:
-        fout << "\tDELETE ROW\n";
+        fout << fs << "DELETE ROW\n";
         break;
        case FLAG_DELETE_COLUMN_FAMILY:
         fout.write(unescaped_buf, unescaped_len);
-        fout << "\tDELETE COLUMN FAMILY\n";
+        fout << fs << "DELETE COLUMN FAMILY\n";
         break;
       case FLAG_DELETE_CELL:
         fout.write(unescaped_buf, unescaped_len);
-        fout << "\tDELETE CELL\n";
+        fout << fs << "DELETE CELL\n";
         break;
       case FLAG_DELETE_CELL_VERSION:
         fout.write(unescaped_buf, unescaped_len);
-        fout << "\tDELETE CELL VERSION\n";
+        fout << fs << "DELETE CELL VERSION\n";
         break;
       default:
-        fout << "\tBAD KEY FLAG\n";
+        fout << fs << "BAD KEY FLAG\n";
       }
     }
     else
@@ -470,6 +476,7 @@ cmd_dump_table(NamespacePtr &ns,
   int out_fd = -1;
   String dfs = "dfs://";
   String localfs = "file://";
+  char fs = state.field_separator ? state.field_separator : '\t';
 
   // verify parameters
 
@@ -493,9 +500,9 @@ cmd_dump_table(NamespacePtr &ns,
       fout.push(boost::iostreams::file_descriptor_sink(state.scan.outfile));
 
     if (state.scan.display_timestamps)
-      fout << "#timestamp\trow\tcolumn\tvalue\n";
+      fout << "#timestamp" << fs << "row" << fs << "column" << fs << "value\n";
     else
-      fout << "#row\tcolumn\tvalue\n";
+      fout << "#row" << fs << "column" << fs << "value\n";
   }
   else if (!outf) {
     cb.on_dump(*dumper.get());
@@ -513,6 +520,11 @@ cmd_dump_table(NamespacePtr &ns,
   const char *unescaped_buf, *row_unescaped_buf;
   size_t unescaped_len, row_unescaped_len;
 
+  if (fs != '\t') {
+    row_escaper.set_field_separator(fs);
+    escaper.set_field_separator(fs);
+  }
+
   while (dumper->next(cell)) {
     if (cb.normal_mode) {
       // do some stats
@@ -526,7 +538,7 @@ cmd_dump_table(NamespacePtr &ns,
     }
 
     if (state.scan.display_timestamps)
-      fout << cell.timestamp << "\t";
+      fout << cell.timestamp << fs;
 
     if (state.escape)
       row_escaper.escape(cell.row_key, strlen(cell.row_key),
@@ -535,7 +547,7 @@ cmd_dump_table(NamespacePtr &ns,
       row_unescaped_buf = cell.row_key;
 
     if (cell.column_family) {
-      fout << row_unescaped_buf << "\t" << cell.column_family;
+      fout << row_unescaped_buf << fs << cell.column_family;
       if (cell.column_qualifier && *cell.column_qualifier) {
         if (state.escape)
           escaper.escape(cell.column_qualifier, strlen(cell.column_qualifier),
@@ -558,7 +570,7 @@ cmd_dump_table(NamespacePtr &ns,
 
     HT_ASSERT(cell.flag == FLAG_INSERT);
 
-    fout << "\t" ;
+    fout << fs ;
     fout.write(unescaped_buf, unescaped_len);
     fout << "\n";
   }
@@ -586,6 +598,7 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   ::uint64_t running_total = 0;
   ::uint64_t consume_threshold = 0;
   bool ignore_unknown_columns = false;
+  char fs = state.field_separator ? state.field_separator : '\t';
 
   if (LoadDataFlags::ignore_unknown_cfs(state.load_flags))
     ignore_unknown_columns = true;
@@ -621,10 +634,10 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   if(state.input_file_src == DFS_FILE && !dfs_client)
     dfs_client = new DfsBroker::Client(conn_manager, Config::properties);
 
-  lds = LoadDataSourceFactory::create(dfs_client, state.input_file, 
-               state.input_file_src, state.header_file, state.header_file_src, 
-               state.columns, state.timestamp_column, state.row_uniquify_chars, 
-               state.load_flags);
+  lds = LoadDataSourceFactory::create(dfs_client, state.input_file,
+               state.input_file_src, state.header_file, state.header_file_src,
+               state.columns, state.timestamp_column, fs,
+               state.row_uniquify_chars, state.load_flags);
 
   cb.file_size = lds->get_source_size();
   if (cb.file_size > std::numeric_limits<unsigned long>::max()) {
@@ -639,9 +652,9 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   if (!into_table) {
     display_timestamps = lds->has_timestamps();
     if (display_timestamps)
-      fout << "timestamp\trow\tcolumn\tvalue\n";
+      fout << "timestamp" << fs << "row" << fs << "column" << fs << "value\n";
     else
-      fout << "row\tcolumn\tvalue\n";
+      fout << "row" << fs << "column" << fs << "value\n";
   }
 
   KeySpec key;
@@ -653,6 +666,12 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
   LoadDataEscape value_escaper;
   const char *escaped_buf;
   size_t escaped_len;
+
+  if (fs != '\t') {
+    row_escaper.set_field_separator(fs);
+    qualifier_escaper.set_field_separator(fs);
+    value_escaper.set_field_separator(fs);
+  }
 
   try {
 
@@ -702,10 +721,10 @@ cmd_load_data(NamespacePtr &ns, ::uint32_t mutator_flags,
       }
       else {
         if (display_timestamps)
-          fout << key.timestamp << "\t" << key.row << "\t" 
-               << key.column_family << "\t" << escaped_buf << "\n";
+          fout << key.timestamp << fs << key.row << fs
+               << key.column_family << fs << escaped_buf << "\n";
         else
-          fout << key.row << "\t" << key.column_family << "\t" 
+          fout << key.row << fs << key.column_family << fs
                << escaped_buf << "\n";
       }
 

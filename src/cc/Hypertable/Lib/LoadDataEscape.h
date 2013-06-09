@@ -29,13 +29,16 @@ namespace Hypertable {
   class LoadDataEscape {
 
   public:
+    LoadDataEscape() : m_field_separator('\t') { }
     bool escape(const char *in_buf, size_t in_len, const char **out_bufp,
                 size_t *out_lenp);
     bool unescape(const char *in_buf, size_t in_len, const char **out_bufp,
                   size_t *out_lenp);
+    void set_field_separator(char fs) { m_field_separator=fs; }
 
   private:
     DynamicBuffer m_buf;
+    char m_field_separator;
 
   };
 

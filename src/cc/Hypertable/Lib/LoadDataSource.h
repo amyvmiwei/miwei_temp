@@ -65,7 +65,8 @@ namespace Hypertable {
                       bool *is_deletep, uint32_t *consumedp);
 
     virtual void init(const std::vector<String> &key_columns, 
-                      const String &timestamp_column);
+                      const String &timestamp_column,
+                      char field_separator);
 
     int64_t get_current_lineno() { return m_cur_line; }
     unsigned long get_source_size() const { return m_source_size; }
@@ -142,8 +143,9 @@ namespace Hypertable {
     int m_row_uniquify_chars;
     int m_load_flags;
     String m_first_line;
-    bool m_first_line_cached;
     unsigned long m_source_size;
+    bool m_first_line_cached;
+    char m_field_separator;
   };
 
  typedef boost::intrusive_ptr<LoadDataSource> LoadDataSourcePtr;

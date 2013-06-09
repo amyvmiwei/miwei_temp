@@ -43,7 +43,6 @@ extern "C" {
 #include "Hypertable/Lib/HqlHelpText.h"
 #include "Hypertable/Lib/HqlParser.h"
 #include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/LoadDataSource.h"
 #include "Hypertable/Lib/RangeState.h"
 #include "Hypertable/Lib/ScanBlock.h"
 #include "Hypertable/Lib/ScanSpec.h"

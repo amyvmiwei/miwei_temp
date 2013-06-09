@@ -37,6 +37,10 @@ LoadDataEscape::escape(const char *in_buf, size_t in_len,
 
   while (in_ptr < in_end) {
     if (*in_ptr == '\n' || *in_ptr == '\t' || *in_ptr == '\0' || *in_ptr == '\\') {
+      if (*in_ptr == '\t' && m_field_separator != '\t') {
+        in_ptr++;
+        continue;
+      }
       if (!transformed) {
         m_buf.clear();
         m_buf.reserve((in_len*2)+1);
@@ -93,6 +97,12 @@ LoadDataEscape::unescape(const char *in_buf, size_t in_len,
   while (in_ptr < in_end) {
     if (*in_ptr == '\\' &&
         (*(in_ptr+1) == 'n' || *(in_ptr+1) == 't' || *(in_ptr+1) == '0' || *(in_ptr+1) == '\\')) {
+      // if field separator is not a tab and we're looking at '\' 't',
+      // increment and continue
+      if (*(in_ptr+1) == 't' && m_field_separator != '\t') {
+        in_ptr++;
+        continue;
+      }
       if (!transformed) {
         m_buf.clear();
         m_buf.reserve(in_len+1);

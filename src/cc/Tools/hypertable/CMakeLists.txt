@@ -63,6 +63,7 @@ configure_file(${SRC_DIR}/test/foobar.tsv
                ${DST_DIR}/foobar.tsv)
 configure_file(${SRC_DIR}/test/single_cell_test.tsv
                ${DST_DIR}/single_cell_test.tsv)
+
 add_test(Hypertable-shell env INSTALL_DIR=${INSTALL_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/test/hypertable_test.sh hypertable_test)
 
@@ -83,6 +84,13 @@ configure_file(${SRC_DIR}/test/hypertable_escape_test.tsv
 configure_file(${SRC_DIR}/test/hypertable_escape_test.golden
                ${DST_DIR}/hypertable_escape_test.golden COPYONLY)
 add_test(Hypertable-shell-ldi-select hypertable_ldi_select_test ${INSTALL_DIR})
+
+
+configure_file(${SRC_DIR}/test/field_separator_test.tsv
+               ${DST_DIR}/field_separator_test.tsv)
+add_test(Alternate-field-separator env INSTALL_DIR=${INSTALL_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/field_separator_test.sh)
+
 
 if (NOT HT_COMPONENT_INSTALL)
   install(TARGETS hypertable RUNTIME DESTINATION bin)

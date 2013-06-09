@@ -38,8 +38,9 @@ namespace Hypertable {
                                   const String &header_fname, const int header_src,
                                   const std::vector<String> &key_columns,
                                   const String &timestamp_column,
-                                  int row_uniquify_chars = 0,
-                                  int load_flags = 0
+                                  char field_separator,
+                                  int row_uniquify_chars,
+                                  int load_flags
                                   );
   };
 
