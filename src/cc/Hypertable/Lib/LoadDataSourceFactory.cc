@@ -37,7 +37,7 @@ LoadDataSourceFactory::create(DfsBroker::ClientPtr &dfs_client,
     const String &input_fname, const int src,
     const String &header_fname, const int header_src,
     const std::vector<String> &key_columns, const String &timestamp_column,
-    int row_uniquify_chars, int load_flags) {
+    char field_separator, int row_uniquify_chars, int load_flags) {
 
   LoadDataSource *lds;
 
@@ -57,7 +57,7 @@ LoadDataSourceFactory::create(DfsBroker::ClientPtr &dfs_client,
       HT_THROW(Error::HQL_PARSE_ERROR, "LOAD DATA - bad filename");
   }
 
-  lds->init(key_columns, timestamp_column);
+  lds->init(key_columns, timestamp_column, field_separator);
   return lds;
 }
 

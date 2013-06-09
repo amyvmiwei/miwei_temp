@@ -276,7 +276,7 @@ namespace Hypertable {
                       delete_time(0), delete_version_time(0),
                       if_exists(false), tables_only(false), with_ids(false),
                       replay(false), scanner_id(-1), row_uniquify_chars(0),
-                      escape(true), nokeys(false) {
+                      escape(true), nokeys(false), field_separator(0) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -336,6 +336,7 @@ namespace Hypertable {
       bool nokeys;
       String current_rename_column_old_name;
       String current_column_family;
+      char field_separator;
 
       void validate_function(const String &s) {
         if (s=="guid")
@@ -1054,6 +1055,19 @@ namespace Hypertable {
       set_single_cell_format(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         state.load_flags |= LoadDataFlags::SINGLE_CELL_FORMAT;
+      }
+      ParserState &state;
+    };
+
+    struct set_field_separator {
+      set_field_separator(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String field_separator(str, end-str);
+        trim_if(field_separator, is_any_of("'\""));
+        if (field_separator.length() != 1)
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   "Field separator must be a single character");
+        state.field_separator = field_separator[0];
       }
       ParserState &state;
     };
@@ -2008,6 +2022,7 @@ namespace Hypertable {
           Token USER         = as_lower_d["user"];
           Token RANGES       = as_lower_d["ranges"];
           Token SYNC         = as_lower_d["sync"];
+          Token FS           = as_lower_d["fs"];
 
           /**
            * Start grammar definition
@@ -2227,6 +2242,7 @@ namespace Hypertable {
             | REVS >> !EQUAL >> uint_p[scan_set_max_versions(self.state)]
             | INTO >> FILE >> string_literal[scan_set_outfile(self.state)]
             | NO_TIMESTAMPS[scan_clear_display_timestamps(self.state)]
+            | FS >> EQUAL >> single_string_literal[set_field_separator(self.state)]
             ;
 
           dump_table_statement
@@ -2636,6 +2652,7 @@ namespace Hypertable {
             | NOESCAPE[set_noescape(self.state)]
             | NO_ESCAPE[set_noescape(self.state)]
             | SCAN_AND_FILTER_ROWS[scan_set_scan_and_filter_rows(self.state)]
+            | FS >> EQUAL >> single_string_literal[set_field_separator(self.state)]
             ;
 
           unused_tokens
@@ -2717,6 +2734,7 @@ namespace Hypertable {
             | IGNORE_UNKNOWN_CFS[set_ignore_unknown_cfs(self.state)]
             | IGNORE_UNKNOWN_COLUMNS[set_ignore_unknown_cfs(self.state)]
             | SINGLE_CELL_FORMAT[set_single_cell_format(self.state)]
+            | FS >> EQUAL >> single_string_literal[set_field_separator(self.state)]
             ;
 
           /**
