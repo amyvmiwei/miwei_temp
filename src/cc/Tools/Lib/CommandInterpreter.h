@@ -29,7 +29,7 @@ namespace Hypertable {
 
   class CommandInterpreter : public ReferenceCount {
   public:
-    enum { TIMESTAMP_FORMAT_DEFAULT, TIMESTAMP_FORMAT_USECS };
+    enum { TIMESTAMP_FORMAT_DEFAULT, TIMESTAMP_FORMAT_NANOS };
 
     CommandInterpreter();
     virtual void execute_line(const String &line) = 0;

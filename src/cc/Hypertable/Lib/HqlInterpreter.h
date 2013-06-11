@@ -48,7 +48,7 @@ namespace Hypertable {
     struct Callback {
       FILE *output;             // default is NULL
       bool normal_mode;         // default true
-      bool format_ts_in_usecs;  // default false
+      bool format_ts_in_nanos;  // default false
       // mutator stats
       uint64_t total_cells,
                total_keys_size,
@@ -56,7 +56,7 @@ namespace Hypertable {
                file_size;
 
       Callback(bool normal = true) : output(0), normal_mode(normal),
-          format_ts_in_usecs(false), total_cells(0), total_keys_size(0),
+          format_ts_in_nanos(false), total_cells(0), total_keys_size(0),
           total_values_size(0), file_size(0) { }
       virtual ~Callback() { }
 

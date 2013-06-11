@@ -388,7 +388,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
       cb.total_values_size += cell.value_len;
     }
     if (state.scan.display_timestamps) {
-      if (cb.format_ts_in_usecs) {
+      if (cb.format_ts_in_nanos) {
         fout << cell.timestamp << fs;
       }
       else {

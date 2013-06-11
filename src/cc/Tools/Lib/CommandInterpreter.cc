@@ -40,8 +40,12 @@ void
 CommandInterpreter::set_timestamp_output_format(const String &format) {
   if (format == "default")
     m_timestamp_output_format = TIMESTAMP_FORMAT_DEFAULT;
-  else if (format == "usecs")
-    m_timestamp_output_format = TIMESTAMP_FORMAT_USECS;
+  else if (format == "nanos")
+    m_timestamp_output_format = TIMESTAMP_FORMAT_NANOS;
+  else if (format == "nanoseconds")
+    m_timestamp_output_format = TIMESTAMP_FORMAT_NANOS;
+  else if (format == "usecs")  // backward compatibilty
+    m_timestamp_output_format = TIMESTAMP_FORMAT_NANOS;
   else {
     assert(!"invalid timestamp format");
   }
