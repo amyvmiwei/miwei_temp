@@ -111,7 +111,10 @@ add_test(MasterOperation-MoveRange op_test_driver move_range)
 add_test(MasterOperation-BalancePlanAuthority op_test_driver balance_plan_authority)
 
 if (NOT HT_COMPONENT_INSTALL)
-    install(TARGETS HyperMaster Hypertable.Master htgc op_test_driver op_dependency_test
+  file(GLOB HEADERS *.h)
+  install(FILES ${HEADERS}
+      DESTINATION include/Hypertable/Master)
+  install(TARGETS HyperMaster Hypertable.Master htgc op_test_driver op_dependency_test
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
           ARCHIVE DESTINATION lib)

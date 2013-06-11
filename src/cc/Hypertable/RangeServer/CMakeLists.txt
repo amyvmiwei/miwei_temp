@@ -163,6 +163,9 @@ add_executable(count_stored count_stored.cc)
 target_link_libraries(count_stored HyperRanger)
 
 if (NOT HT_COMPONENT_INSTALL)
+  file(GLOB HEADERS *.h)
+  install(FILES ${HEADERS}
+      DESTINATION include/Hypertable/RangeServer)
   install(TARGETS HyperRanger Hypertable.RangeServer csdump csvalidate count_stored
           RUNTIME DESTINATION bin
           LIBRARY DESTINATION lib
