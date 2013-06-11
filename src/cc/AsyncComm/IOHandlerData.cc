@@ -602,7 +602,10 @@ void IOHandlerData::handle_message_body() {
     m_event->payload = m_message;
     m_event->payload_len = m_event->header.total_len
                            - m_event->header.header_len;
-    m_event->set_proxy(m_proxy);
+    {
+      ScopedLock lock(m_mutex);
+      m_event->set_proxy(m_proxy);
+    }
     //HT_INFOF("Just received messaage of size %d", m_event->header.total_len);
     deliver_event( m_event, dh );
   }
