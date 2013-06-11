@@ -262,12 +262,6 @@ int HandlerMap::add_proxy(const String &proxy, const String &hostname, const Ine
 
   m_proxy_map.update_mapping(proxy, hostname, addr, invalidated_map, new_map);
 
-  foreach_ht(const ProxyMapT::value_type &v, invalidated_map) {
-    IOHandler *handler = lookup_data_handler(v.second.addr);
-    if (handler)
-      handler->set_proxy("");
-  }
-
   foreach_ht(const ProxyMapT::value_type &v, new_map) {
     IOHandler *handler = lookup_data_handler(v.second.addr);
     if (handler)
@@ -313,8 +307,6 @@ void HandlerMap::update_proxy_map(const char *message, size_t message_len) {
     if (handler) {
       if (v.second.hostname == "--DELETED--")
         decomission_handler_unlocked(handler);
-      else
-        handler->set_proxy("");
     }
   }
 
