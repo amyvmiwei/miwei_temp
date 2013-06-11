@@ -60,8 +60,8 @@ namespace {
     CommandCallback(CommandInterpreter &interp)
       : HqlInterpreter::Callback(interp.normal_mode()), commander(interp),
         command(0), progress(0) {
-      format_ts_in_usecs = interp.timestamp_output_format()
-          == CommandInterpreter::TIMESTAMP_FORMAT_USECS;
+      format_ts_in_nanos = interp.timestamp_output_format()
+          == CommandInterpreter::TIMESTAMP_FORMAT_NANOS;
       output = stdout; // set to stdout
     }
 

@@ -272,7 +272,7 @@ void CommandShell::add_options(PropertiesDesc &desc) {
     ("test-mode", "Don't display anything that might change from run to run "
         "(e.g. timing statistics)")
     ("timestamp-format", Property::str(), "Output format for timestamp. "
-        "Currently the only formats are 'default' and 'usecs'")
+        "Currently the only formats are 'default' and 'nanoseconds'")
     ("notification-address", Property::str(), "[<host>:]<port> "
         "Send notification datagram to this address after each command.")
     ("execute,e", Property::str(), "Execute specified commands.")
