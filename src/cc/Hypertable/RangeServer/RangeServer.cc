@@ -984,6 +984,12 @@ RangeServer::replay_load_range(TableInfoMap &replay_map,
 
   }
   catch (Hypertable::Exception &e) {
+    if (e.code() == Error::RANGESERVER_TABLE_NOT_FOUND && !table.is_system()) {
+      HT_WARNF("Skipping recovery of %s[%s..%s] - %s",
+               table.id, range_spec.start_row, range_spec.end_row,
+               e.what());
+      return;
+    }
     HT_FATAL_OUT << "Problem loading range during replay - " << e << HT_END;
   }
 }
