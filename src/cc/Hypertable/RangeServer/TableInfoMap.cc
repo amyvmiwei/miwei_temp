@@ -189,8 +189,11 @@ void TableInfoMap::get_range_data(RangeDataVector &range_data, StringSet *remove
   for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
     (*iter).second->get_range_data(range_data);
 
-  if (remove_ok_logs)
-    Global::remove_ok_logs->get(*remove_ok_logs);
+  {
+    ScopedLock lock2(Global::mutex);
+    if (Global::remove_ok_logs && remove_ok_logs)
+      Global::remove_ok_logs->get(*remove_ok_logs);
+  }
     
 }
 
