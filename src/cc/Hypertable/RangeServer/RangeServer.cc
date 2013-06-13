@@ -636,8 +636,10 @@ void RangeServer::local_recover() {
               Global::log_dfs->rmdir(transfer_log);
             continue;
           }
-          else if (dynamic_cast<MetaLogEntityRemoveOkLogs *>(entity.get()))
+          else if (dynamic_cast<MetaLogEntityRemoveOkLogs *>(entity.get())) {
+            ScopedLock glock(Global::mutex);
             Global::remove_ok_logs = (MetaLogEntityRemoveOkLogs *)entity.get();
+          }
           stripped_entities.push_back(entity);
         }
       }
@@ -905,7 +907,10 @@ void RangeServer::local_recover() {
     }
 
     if (!Global::remove_ok_logs) {
-      Global::remove_ok_logs = new MetaLogEntityRemoveOkLogs(transfer_logs);
+      {
+        ScopedLock glock(Global::mutex);
+        Global::remove_ok_logs = new MetaLogEntityRemoveOkLogs(transfer_logs);
+      }
       Global::rsml_writer->record_state(Global::remove_ok_logs.get());
     }
 
