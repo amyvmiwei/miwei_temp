@@ -314,8 +314,10 @@ int CommandShell::run() {
   if (!m_batch_mode)
     using_history();
 
-  trim_if(m_namespace, boost::is_any_of(" \t\n\r;"));
-  if (m_namespace.size()) {
+  if (!m_program_name.compare("hypertable")) {
+    trim_if(m_namespace, boost::is_any_of(" \t\n\r;"));
+    if (m_namespace.empty())
+      m_namespace = "/";
     use_ns = "USE \"" + m_namespace + "\";";
     line = use_ns.c_str();
     goto process_line;
