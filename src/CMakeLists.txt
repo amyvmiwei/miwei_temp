@@ -37,3 +37,7 @@ endif ()
 if (Mapr_FOUND)
    add_subdirectory(cc/DfsBroker/mapr)
 endif ()
+
+if (Qfs_FOUND)
+   add_subdirectory(cc/DfsBroker/qfs)
+endif ()
