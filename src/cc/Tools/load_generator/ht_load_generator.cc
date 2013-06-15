@@ -100,6 +100,7 @@ namespace {
          "Show more verbose output")
         ("flush", boo()->zero_tokens()->default_value(false), "Flush after each update")
         ("no-log-sync", boo()->zero_tokens()->default_value(false), "Don't sync rangeserver commit logs on autoflush")
+        ("no-log", "Don't write to the commit log")
         ("flush-interval", i64()->default_value(0),
          "Amount of data after which to mutator buffers are flushed "
          "and commit log is synced. Only used if no-log-sync flag is on")
@@ -127,13 +128,13 @@ typedef Meta::list<AppPolicy, DataGeneratorPolicy, DefaultCommPolicy> Policies;
 
 void 
 generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
-                     bool no_log_sync, ::uint64_t flush_interval,
+                     ::uint32_t mutator_flags, ::uint64_t flush_interval,
                      ::uint64_t shared_mutator_flush_interval, bool to_stdout,
                      String &sample_fname, ::int32_t delete_pct, bool thrift);
 
 void 
 generate_update_load_parallel(PropertiesPtr &props, String &tablename,
-                              ::int32_t parallel, bool flush, bool no_log_sync,
+                              ::int32_t parallel, bool flush, ::uint32_t mutator_flags,
                               ::uint64_t flush_interval, 
                               ::uint64_t shared_mutator_flush_interval, 
                               ::int32_t delete_pct, bool thrift);
@@ -152,12 +153,13 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props);
 int main(int argc, char **argv) {
   String table, load_type, spec_file, sample_fname;
   PropertiesPtr generator_props = new Properties();
-  bool flush, to_stdout, no_log_sync, thrift;
+  bool flush, to_stdout, thrift;
   ::uint64_t flush_interval=0;
   ::uint64_t shared_mutator_flush_interval=0;
   ::int32_t query_delay = 0;
   ::int32_t delete_pct = 0;
   ::int32_t parallel = 0;
+  ::uint32_t mutator_flags = 0;
 
   try {
     init_with_policies<Policies>(argc, argv);
@@ -179,9 +181,12 @@ int main(int argc, char **argv) {
       query_delay = get_i32("query-delay");
 
     flush = get_bool("flush");
-    no_log_sync = get_bool("no-log-sync");
+    if (has("no-log"))
+      mutator_flags |= Table::MUTATOR_FLAG_NO_LOG;
+    else if (get_bool("no-log-sync"))
+      mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
     to_stdout = get_bool("stdout");
-    if (no_log_sync)
+    if (mutator_flags & Table::MUTATOR_FLAG_NO_LOG_SYNC)
       flush_interval = get_i64("flush-interval");
     shared_mutator_flush_interval = get_i64("shared-mutator-flush-interval");
     thrift = get_bool("thrift");
@@ -210,11 +215,11 @@ int main(int argc, char **argv) {
 
     if (load_type == "update" && parallel > 0)
       generate_update_load_parallel(generator_props, table, parallel, flush,
-                                    no_log_sync, flush_interval, 
+                                    mutator_flags, flush_interval, 
                                     shared_mutator_flush_interval, delete_pct,
                                     thrift);
     else if (load_type == "update")
-      generate_update_load(generator_props, table, flush, no_log_sync,
+      generate_update_load(generator_props, table, flush, mutator_flags,
                            flush_interval, shared_mutator_flush_interval,
                            to_stdout, sample_fname, delete_pct, thrift);
     else if (load_type == "query") {
@@ -311,7 +316,7 @@ void parse_command_line(int argc, char **argv, PropertiesPtr &props) {
 
 void
 generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
-                     bool no_log_sync, ::uint64_t flush_interval,
+                     ::uint32_t mutator_flags, ::uint64_t flush_interval,
                      ::uint64_t shared_mutator_flush_interval, bool to_stdout,
                      String &sample_fname, ::int32_t delete_pct, bool thrift)
 {
@@ -324,13 +329,9 @@ generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
   bool output_samples = false;
   ofstream sample_file;
   DataGenerator dg(props);
-  ::uint32_t mutator_flags=0;
   ::uint64_t unflushed_data=0;
   ::uint64_t total_bytes = 0;
   ::uint64_t consume_threshold = 0;
-
-  if (no_log_sync)
-    mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
 
   if (to_stdout) {
     cout << "rowkey\tcolumnkey\tvalue\n";
@@ -515,7 +516,7 @@ generate_update_load(PropertiesPtr &props, String &tablename, bool flush,
 
 void
 generate_update_load_parallel(PropertiesPtr &props, String &tablename,
-                              ::int32_t parallel, bool flush, bool no_log_sync,
+                              ::int32_t parallel, bool flush, ::uint32_t mutator_flags,
                               ::uint64_t flush_interval,
                               ::uint64_t shared_mutator_flush_interval,
                               ::int32_t delete_pct, bool thrift)
@@ -528,14 +529,10 @@ generate_update_load_parallel(PropertiesPtr &props, String &tablename,
   ofstream sample_file;
   DataGenerator dg(props);
   std::vector<ParallelStateRec> load_vector(parallel);
-  ::uint32_t mutator_flags=0;
   ::uint32_t next = 0;
   ::uint64_t consume_threshold = 0;
   ::uint64_t consume_total = 0;
   boost::thread_group threads;
-
-  if (no_log_sync)
-    mutator_flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
 
   Stopwatch stopwatch;
 

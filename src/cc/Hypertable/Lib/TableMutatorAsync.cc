@@ -546,7 +546,10 @@ void TableMutatorAsync::flush_with_tablequeue(TableMutator *mutator, bool sync) 
   if (is_cancelled())
     return;
 
-  uint32_t flags = sync ? 0:Table::MUTATOR_FLAG_NO_LOG_SYNC;
+  uint32_t flags = m_flags;
+
+  if (!sync)
+    flags |= Table::MUTATOR_FLAG_NO_LOG_SYNC;
 
   try {
     {

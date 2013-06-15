@@ -65,7 +65,8 @@ namespace Hypertable {
     };
 
     enum {
-      MUTATOR_FLAG_NO_LOG_SYNC = RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC
+      MUTATOR_FLAG_NO_LOG_SYNC = RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC,
+      MUTATOR_FLAG_NO_LOG      = RangeServerProtocol::UPDATE_FLAG_NO_LOG
     };
 
     Table(PropertiesPtr &, ConnectionManagerPtr &, Hyperspace::SessionPtr &,

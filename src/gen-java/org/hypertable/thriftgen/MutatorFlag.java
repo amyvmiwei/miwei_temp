@@ -16,10 +16,12 @@ import org.apache.thrift.TEnum;
  * 
  * NO_LOG_SYNC: Do not sync the commit log
  * IGNORE_UNKNOWN_CFS: Don't throw exception if mutator writes to unknown column family
+ * NO_LOG: Don't write to the commit log
  */
 public enum MutatorFlag implements org.apache.thrift.TEnum {
   NO_LOG_SYNC(1),
-  IGNORE_UNKNOWN_CFS(2);
+  IGNORE_UNKNOWN_CFS(2),
+  NO_LOG(4);
 
   private final int value;
 
@@ -44,6 +46,8 @@ public enum MutatorFlag implements org.apache.thrift.TEnum {
         return NO_LOG_SYNC;
       case 2:
         return IGNORE_UNKNOWN_CFS;
+      case 4:
+        return NO_LOG;
       default:
         return null;
     }

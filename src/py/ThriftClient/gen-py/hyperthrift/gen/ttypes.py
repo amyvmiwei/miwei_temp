@@ -83,18 +83,22 @@ class MutatorFlag(object):
 
   NO_LOG_SYNC: Do not sync the commit log
   IGNORE_UNKNOWN_CFS: Don't throw exception if mutator writes to unknown column family
+  NO_LOG: Don't write to the commit log
   """
   NO_LOG_SYNC = 1
   IGNORE_UNKNOWN_CFS = 2
+  NO_LOG = 4
 
   _VALUES_TO_NAMES = {
     1: "NO_LOG_SYNC",
     2: "IGNORE_UNKNOWN_CFS",
+    4: "NO_LOG",
   }
 
   _NAMES_TO_VALUES = {
     "NO_LOG_SYNC": 1,
     "IGNORE_UNKNOWN_CFS": 2,
+    "NO_LOG": 4,
   }
 
 

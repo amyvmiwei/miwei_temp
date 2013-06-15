@@ -2614,6 +2614,7 @@ void RangeServer::update_commit() {
   int error = Error::OK;
   uint32_t committed_transfer_data;
   bool user_log_needs_syncing;
+  bool write_log;
 
   while (true) {
 
@@ -2631,6 +2632,7 @@ void RangeServer::update_commit() {
 
     committed_transfer_data = 0;
     user_log_needs_syncing = false;
+    write_log = true;
 
     /**
      * Commit ROOT mutations
@@ -2672,7 +2674,9 @@ void RangeServer::update_commit() {
         bool sync = false;
         if (table_update->id.is_user()) {
           log = Global::user_log;
-          if ((table_update->flags & RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC) == 0)
+          if ((table_update->flags & RangeServerProtocol::UPDATE_FLAG_NO_LOG) != 0)
+            write_log = false;
+          else if ((table_update->flags & RangeServerProtocol::UPDATE_FLAG_NO_LOG_SYNC) == 0)
             user_log_needs_syncing = true;
         }
         else if (table_update->id.is_metadata()) {
@@ -2685,14 +2689,16 @@ void RangeServer::update_commit() {
           log = Global::system_log;
         }
 
-        if ((error = log->write(table_update->go_buf, uc->last_revision, sync)) != Error::OK) {
-          table_update->error_msg = format("Problem writing %d bytes to commit log (%s) - %s",
-                                           (int)table_update->go_buf.fill(),
-                                           log->get_log_dir().c_str(),
-                                           Error::get_text(error));
-          HT_ERRORF("%s", table_update->error_msg.c_str());
-          table_update->error = error;
-          continue;
+        if (write_log) {
+          if ((error = log->write(table_update->go_buf, uc->last_revision, sync)) != Error::OK) {
+            table_update->error_msg = format("Problem writing %d bytes to commit log (%s) - %s",
+                                             (int)table_update->go_buf.fill(),
+                                             log->get_log_dir().c_str(),
+                                             Error::get_text(error));
+            HT_ERRORF("%s", table_update->error_msg.c_str());
+            table_update->error = error;
+            continue;
+          }
         }
       }
       else if (table_update->sync)

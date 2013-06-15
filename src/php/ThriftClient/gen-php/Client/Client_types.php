@@ -48,14 +48,17 @@ final class KeyFlag {
 $GLOBALS['Hypertable_ThriftGen_E_MutatorFlag'] = array(
   'NO_LOG_SYNC' => 1,
   'IGNORE_UNKNOWN_CFS' => 2,
+  'NO_LOG' => 4,
 );
 
 final class MutatorFlag {
   const NO_LOG_SYNC = 1;
   const IGNORE_UNKNOWN_CFS = 2;
+  const NO_LOG = 4;
   static public $__names = array(
     1 => 'NO_LOG_SYNC',
     2 => 'IGNORE_UNKNOWN_CFS',
+    4 => 'NO_LOG',
   );
 }
 

@@ -54,7 +54,8 @@ namespace Hypertable {
 
   public:
     enum {
-      FLAG_NO_LOG_SYNC             = Table::MUTATOR_FLAG_NO_LOG_SYNC
+      FLAG_NO_LOG_SYNC  = Table::MUTATOR_FLAG_NO_LOG_SYNC,
+      FLAG_NO_LOG       = Table::MUTATOR_FLAG_NO_LOG
     };
 
     /**

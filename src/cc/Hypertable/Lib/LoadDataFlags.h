@@ -28,7 +28,8 @@ namespace Hypertable { namespace LoadDataFlags {
     DUP_KEY_COLS           = 0x0001,
     NO_ESCAPE              = 0x0002,
     IGNORE_UNKNOWN_COLUMNS = 0x0004,
-    SINGLE_CELL_FORMAT     = 0x0008
+    SINGLE_CELL_FORMAT     = 0x0008,
+    NO_LOG                 = 0x0010
   };
 
   inline bool duplicate_key_columns(int flags) {
@@ -45,6 +46,10 @@ namespace Hypertable { namespace LoadDataFlags {
 
   inline bool single_cell_format(int flags) {
     return (flags & SINGLE_CELL_FORMAT) == SINGLE_CELL_FORMAT;
+  }
+
+  inline bool no_log(int flags) {
+    return (flags & NO_LOG) == NO_LOG;
   }
 
 } }

@@ -36,13 +36,15 @@ const std::map<int, const char*> _KeyFlag_VALUES_TO_NAMES(::apache::thrift::TEnu
 
 int _kMutatorFlagValues[] = {
   MutatorFlag::NO_LOG_SYNC,
-  MutatorFlag::IGNORE_UNKNOWN_CFS
+  MutatorFlag::IGNORE_UNKNOWN_CFS,
+  MutatorFlag::NO_LOG
 };
 const char* _kMutatorFlagNames[] = {
   "NO_LOG_SYNC",
-  "IGNORE_UNKNOWN_CFS"
+  "IGNORE_UNKNOWN_CFS",
+  "NO_LOG"
 };
-const std::map<int, const char*> _MutatorFlag_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(2, _kMutatorFlagValues, _kMutatorFlagNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
+const std::map<int, const char*> _MutatorFlag_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(3, _kMutatorFlagValues, _kMutatorFlagNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
 
 const char* RowInterval::ascii_fingerprint = "E1A4BCD94F003EFF8636F1C98591705A";
 const uint8_t RowInterval::binary_fingerprint[16] = {0xE1,0xA4,0xBC,0xD9,0x4F,0x00,0x3E,0xFF,0x86,0x36,0xF1,0xC9,0x85,0x91,0x70,0x5A};
