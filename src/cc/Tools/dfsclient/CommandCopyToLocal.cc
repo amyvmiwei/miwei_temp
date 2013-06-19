@@ -59,6 +59,7 @@ void CommandCopyToLocal::run() {
   uint64_t offset;
   uint32_t amount;
   uint8_t *dst;
+  uint64_t pos;
 
   if (m_args.size() < 2)
     HT_THROW(Error::COMMAND_PARSE_ERROR, "Insufficient number of arguments");
@@ -86,6 +87,8 @@ void CommandCopyToLocal::run() {
     while (sync_handler.wait_for_reply(event_ptr)) {
       amount = Filesystem::decode_response_read_header(event_ptr, &offset,
                                                        &dst);
+      fseek(fp, offset, SEEK_SET);
+
       if (amount > 0) {
         if (fwrite(dst, amount, 1, fp) != 1)
           HT_THROW(Error::EXTERNAL, strerror(errno));

@@ -73,19 +73,16 @@ void CommandCopyFromLocal::run() {
       if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
         goto done;
       send_buf.set(buf, nread, true);
-      m_client->append(fd, send_buf, 0, &sync_handler);
+      m_client->append(fd, send_buf, 0);
     }
 
     while (true) {
-
-      if (!sync_handler.wait_for_reply(event_ptr))
-        HT_THROW(event_ptr->error, event_ptr->to_str());
 
       buf = new uint8_t [BUFFER_SIZE];
       if ((nread = fread(buf, 1, BUFFER_SIZE, fp)) == 0)
         break;
       send_buf.set(buf, nread, true);
-      m_client->append(fd, send_buf, 0, &sync_handler);
+      m_client->append(fd, send_buf, 0);
     }
 
   done:
