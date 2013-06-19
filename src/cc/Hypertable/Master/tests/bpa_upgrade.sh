@@ -3,8 +3,8 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 
-mkdir -p $HT_HOME/fs/local/hypertable/tmp/mml
-cp $SCRIPT_DIR/bpa_upgrade.mml $HT_HOME/fs/local/hypertable/tmp/mml/1
+$HT_HOME/bin/dfsclient -e 'mkdirs hypertable/tmp/mml'
+$HT_HOME/bin/dfsclient -e "copyFromLocal $SCRIPT_DIR/bpa_upgrade.mml /hypertable/tmp/mml/1"
 
 $HT_HOME/bin/ht metalog_dump /hypertable/tmp/mml | grep -v WARN > bpa_upgrade.output
 

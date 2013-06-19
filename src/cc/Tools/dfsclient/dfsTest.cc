@@ -87,10 +87,10 @@ namespace {
     thread1.join();
     thread2.join();
 
-    if (system("diff words output.a"))
+    if (system("cmp words output.a"))
       exit(1);
 
-    if (system("diff output.a output.b"))
+    if (system("cmp output.a output.b"))
       exit(1);
   }
 

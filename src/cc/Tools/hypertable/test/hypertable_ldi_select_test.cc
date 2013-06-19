@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include <cstdlib>
 #include <iostream>
+#include <fstream>
 #include <string>
 
 extern "C" {
@@ -33,9 +34,16 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
+#include "Common/Init.h"
+#include "Common/Usage.h"
+
+#include "AsyncComm/Comm.h"
+#include "AsyncComm/Config.h"
+
 #include "DfsBroker/Lib/Client.h"
 
 using namespace Hypertable;
+using namespace Config;
 using namespace std;
 
 
@@ -49,17 +57,85 @@ namespace {
     "./hypertable_ldi_select_test.golden",
     0
   };
+
+  static const size_t amount = 4096;
+
+  bool copyToDfs(DfsBroker::Client *client, const char *src, const char *dst) {
+    client->mkdirs("/ldi_test");
+
+    std::filebuf src_file;
+    if(!src_file.open(src, std::ios_base::in))
+      return false;
+    
+    int fd = client->create(dst, Filesystem::OPEN_FLAG_OVERWRITE, -1, -1, -1);
+    if(fd<0)
+      return false;
+
+
+#if defined(__linux__)
+    void *vptr = 0;
+    HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
+    uint8_t *readbuf = (uint8_t *)vptr;
+#else
+    uint8_t *readbuf = new uint8_t [amount];
+#endif
+
+    StaticBuffer buf(readbuf, amount);
+    while((buf.size = src_file.sgetn(reinterpret_cast<char*>(readbuf), amount))) {
+      client->append(fd, buf);
+    }
+    client->close(fd);
+
+    return true;
+  }
+
+  bool copyFromDfs(DfsBroker::Client *client, const char *src, const char *dst) {
+    client->mkdirs("/ldi_test");
+
+    int fd=client->open(src,0);
+    if(fd<0)
+      return false;
+
+    std::ofstream dst_file(dst);
+    if(!dst_file.is_open())
+      return false;
+
+#if defined(__linux__)
+    void *vptr = 0;
+    HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
+    uint8_t *readbuf = (uint8_t *)vptr;
+#else
+    uint8_t *readbuf = new uint8_t [amount];
+#endif
+
+    int nread;
+    while((nread = client->read(fd, readbuf, amount)) > 0) {
+      dst_file << std::string(reinterpret_cast<const char*>(readbuf), nread);
+    }
+    client->close(fd);
+
+    delete[] readbuf;
+
+    return true;
+  }
+
+  struct AppPolicy : Policy {
+    static void init_options() {
+      cmdline_desc().add_options()
+        ("install-dir", str()->default_value("/opt/hypertable/current"), "Path to hypertable installation");
+    }
+  };
+    
+  typedef Meta::list<AppPolicy, DefaultCommPolicy> Policies;
+
 }
 
 
 int main(int argc, char **argv) {
+  init_with_policies<Policies>(argc, argv);
   String cmd_str;
-
-  if (argc != 2) {
-    HT_ERRORF("Usage: %s $INSTALL_DIR", argv[0]);
-    _exit(1);
-  }
-  String install_dir = argv[1];
+  
+  String install_dir = get_str("install-dir");
   System::initialize(argv[0]);
 
   for (int i=0; required_files[i]; i++) {
@@ -68,6 +144,27 @@ int main(int argc, char **argv) {
       _exit(1);
     }
   }
+
+  String host = get_str("DfsBroker.Host");
+  uint16_t port = get_i16("DfsBroker.Port");
+  uint32_t timeout_ms = get_i32("Hypertable.Request.Timeout");
+
+  InetAddr addr;
+  InetAddr::initialize(&addr, host.c_str(), port);
+  DispatchHandlerSynchronizer *sync_handler = new DispatchHandlerSynchronizer();
+  DispatchHandlerPtr default_handler(sync_handler);
+  EventPtr event;
+  Comm *comm = Comm::instance();
+
+  comm->connect(addr, default_handler);
+  sync_handler->wait_for_reply(event);
+  if(event->type == Event::DISCONNECT || event->error == Error::COMM_CONNECT_ERROR) {
+    HT_ERRORF("Unable to connect to %s:%d", host.c_str(), port);
+    exit(1);
+  }
+
+
+  DfsBroker::Client *client = new DfsBroker::Client(comm, addr, timeout_ms);
 
   /**
    * LDI and Select using stdin
@@ -85,18 +182,11 @@ int main(int argc, char **argv) {
   /**
    * LDI and Select using DfsBroker
    */
-  String test_dir = install_dir + "/fs/local/ldi_test/";
-  // copy data file to dfs dir
 
-  cmd_str = "rm -rf " + test_dir;
-  if (system(cmd_str.c_str()) != 0)
-    _exit(1);
-  cmd_str = "mkdir " + test_dir;
-  if (system(cmd_str.c_str()) != 0)
-    _exit(1);
-  cmd_str = "cp hypertable_test.tsv.gz " + test_dir;
-  if (system(cmd_str.c_str()) != 0)
-    _exit(1);
+
+  clog << "Completed Select using stdin\n";
+
+  copyToDfs(client, "hypertable_test.tsv.gz", "/ldi_test/hypertable_test.tsv.gz");
 
   String hql = (String)" USE \"/test\";" +
                 " DROP TABLE IF EXISTS hypertable;" +
@@ -115,6 +205,7 @@ int main(int argc, char **argv) {
   if (system(cmd_str.c_str()) != 0)
     _exit(1);
 
+#if 0
   // cp from dfs dir
   cmd_str = "cp " + test_dir + "dfs_select.gz .";
   if (system(cmd_str.c_str()) != 0)
@@ -123,6 +214,9 @@ int main(int argc, char **argv) {
   cmd_str = "rm -rf " + test_dir;
   if (system(cmd_str.c_str()) != 0)
     _exit(1);
+#endif
+
+  copyFromDfs(client, "/ldi_test/dfs_select.gz", "dfs_select.gz");
 
   cmd_str = "gunzip -f dfs_select.gz";
   if (system(cmd_str.c_str()) != 0)
