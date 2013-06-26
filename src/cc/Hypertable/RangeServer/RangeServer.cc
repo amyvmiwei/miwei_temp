@@ -632,8 +632,15 @@ void RangeServer::local_recover() {
                    (range_entity->get_state() & RangeState::PHANTOM) != 0) {
             // If log was created originally for the phantom range, remove it
             String transfer_log = range_entity->get_transfer_log();
-            if (strstr(transfer_log.c_str(), "/phantom-") != 0)
-              Global::log_dfs->rmdir(transfer_log);
+            if (strstr(transfer_log.c_str(), "/phantom-") != 0) {
+	      try {
+		Global::log_dfs->rmdir(transfer_log);
+	      }
+	      catch (Exception &e) {
+		HT_WARNF("Problem removing phantom log %s - %s", transfer_log.c_str(),
+			 Error::get_text(e.code()));
+	      }
+	    }
             continue;
           }
           else if (dynamic_cast<MetaLogEntityRemoveOkLogs *>(entity.get())) {
@@ -3899,8 +3906,8 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
            " num_ranges=%d", (Lld)op_id, location.c_str(), plan_generation,
            (int)specs.size());
 
-  if (!m_system_replay_finished) {
-    if (!wait_for_system_recovery_finish(cb->get_event()->expiration_time()))
+  if (!m_replay_finished) {
+    if (!wait_for_recovery_finish(cb->get_event()->expiration_time()))
       return;
   }
 

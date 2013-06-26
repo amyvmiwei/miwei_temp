@@ -320,6 +320,8 @@ void OperationRecover::read_rsml() {
   MetaLog::EntityTaskAcknowledgeRelinquish *ack_task;
   vector<MetaLog::EntityPtr> entities;
   String logfile;
+  StringSet missing_tables, valid_tables;
+  String tablename;
 
   try {
     logfile = m_context->toplevel_dir + "/servers/" + m_location + "/log/"
@@ -339,6 +341,24 @@ void OperationRecover::read_rsml() {
           HT_INFOF("%s", sout.str().c_str());
         }
         else {
+	  TableIdentifier table;
+
+	  // Check for missing table
+          range->get_table_identifier(table);
+	  if (!table.is_system() && valid_tables.count(table.id) == 0) {
+	    if (missing_tables.count(table.id) == 0) {
+	      if (!m_context->namemap->id_to_name(table.id, tablename))
+		missing_tables.insert(table.id);
+	      else
+		valid_tables.insert(table.id);
+	    }
+	    if (missing_tables.count(table.id) != 0) {
+	      sout << "Range " << *range << ": table does not exist, skipping ...";
+	      HT_WARNF("%s", sout.str().c_str());
+	      continue;
+	    }
+	  }
+
           sout << "Range " << *range << ": not PHANTOM; including";
           HT_INFOF("%s", sout.str().c_str());
 
