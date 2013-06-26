@@ -101,8 +101,11 @@ void Context::replay_complete(EventPtr &event) {
   int32_t error    = Serialization::decode_i32(&decode_ptr, &decode_remain);
   String error_msg = Serialization::decode_vstr(&decode_ptr, &decode_remain);
 
-  HT_INFOF("replay_complete(id=%lld, %s, plan_generation=%d) = %s",
-           (Lld)id, location.c_str(), plan_generation, Error::get_text(error));
+  String proxy = event->proxy ? event->proxy : "?";
+
+  HT_INFOF("from %s replay_complete(id=%lld, %s, plan_generation=%d) = %s",
+           proxy.c_str(), (Lld)id, location.c_str(), plan_generation,
+           Error::get_text(error));
 
   RecoveryStepFuturePtr future = m_recovery_state.get_replay_future(id);
 

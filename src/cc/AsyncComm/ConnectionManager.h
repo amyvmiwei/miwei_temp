@@ -396,7 +396,7 @@ namespace Hypertable {
      * @param conn_state Pointer to connection state object representing
      * connection
      */
-    void send_connect_request(ConnectionState *conn_state);
+    void send_connect_request(ConnectionStatePtr &conn_state);
 
     /** Sets <code>conn_state</code> to <i>disconnected</i> and schedules
      * another connection attempt in the future.

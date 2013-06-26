@@ -97,7 +97,7 @@ ConnectionManager::add_internal(const CommAddress &addr,
           const char *service_name, DispatchHandlerPtr &handler,
           ConnectionInitializerPtr &initializer) {
   ScopedLock lock(m_impl->mutex);
-  ConnectionState *conn_state;
+  ConnectionStatePtr conn_state;
 
   HT_ASSERT(addr.is_set());
 
@@ -127,9 +127,9 @@ ConnectionManager::add_internal(const CommAddress &addr,
   boost::xtime_get(&conn_state->next_retry, boost::TIME_UTC_);
 
   if (addr.is_proxy())
-    m_impl->conn_map_proxy[addr.proxy] = ConnectionStatePtr(conn_state);
+    m_impl->conn_map_proxy[addr.proxy] = conn_state;
   else
-    m_impl->conn_map[addr.inet] = ConnectionStatePtr(conn_state);
+    m_impl->conn_map[addr.inet] = conn_state;
 
   {
     ScopedLock conn_lock(conn_state->mutex);
@@ -207,7 +207,7 @@ bool ConnectionManager::wait_for_connection(ConnectionState *conn_state,
  * @param conn_state The connection state record
  */
 void
-ConnectionManager::send_connect_request(ConnectionState *conn_state) {
+ConnectionManager::send_connect_request(ConnectionStatePtr &conn_state) {
   int error;
   DispatchHandlerPtr handler(this);
 
@@ -222,6 +222,8 @@ ConnectionManager::send_connect_request(ConnectionState *conn_state) {
     conn_state->cond.notify_all();
   }
   else if (error == Error::COMM_INVALID_PROXY) {
+    m_impl->conn_map.erase(conn_state->inet_addr);
+    m_impl->conn_map_proxy.erase(conn_state->addr.proxy);
     conn_state->decomissioned = true;
     conn_state->cond.notify_all();
   }
@@ -329,22 +331,22 @@ int ConnectionManager::remove(const CommAddress &addr) {
 void
 ConnectionManager::handle(EventPtr &event) {
   ScopedLock lock(m_impl->mutex);
-  ConnectionState *conn_state = 0;
+  ConnectionStatePtr conn_state;
 
   {
     SockAddrMap<ConnectionStatePtr>::iterator iter =
       m_impl->conn_map.find(event->addr);
     if (iter != m_impl->conn_map.end())
-      conn_state = (*iter).second.get();
+      conn_state = (*iter).second;
   }
 
   if (conn_state == 0 && event->proxy) {
     hash_map<String, ConnectionStatePtr>::iterator iter = 
       m_impl->conn_map_proxy.find(event->proxy);
     if (iter != m_impl->conn_map_proxy.end()) {
-      conn_state = (*iter).second.get();
+      conn_state = (*iter).second;
       /** register address **/
-      m_impl->conn_map[event->addr] = ConnectionStatePtr(conn_state);
+      m_impl->conn_map[event->addr] = conn_state;
       conn_state->inet_addr = event->addr;
     }
   }
@@ -362,7 +364,7 @@ ConnectionManager::handle(EventPtr &event) {
             error == Error::COMM_INVALID_PROXY) {
           if (!m_impl->quiet_mode)
             HT_INFOF("Received error %d", error);
-          set_retry_state(conn_state, event);
+          set_retry_state(conn_state.get(), event);
           dont_forward = true;
         }
         else if (error != Error::OK)
@@ -376,9 +378,17 @@ ConnectionManager::handle(EventPtr &event) {
     }
     else if (event->type == Event::ERROR ||
              event->type == Event::DISCONNECT) {
-      if (!m_impl->quiet_mode)
-        HT_INFOF("Received event %s", event->to_str().c_str());
-      set_retry_state(conn_state, event);
+      if (event->proxy && !m_impl->comm->translate_proxy(event->proxy, 0)) {
+        m_impl->conn_map.erase(conn_state->inet_addr);
+        m_impl->conn_map_proxy.erase(conn_state->addr.proxy);
+        conn_state->decomissioned = true;
+        conn_state->cond.notify_all();
+      }
+      else {
+        if (!m_impl->quiet_mode)
+          HT_INFOF("Received event %s", event->to_str().c_str());
+        set_retry_state(conn_state.get(), event);
+      }
     }
     else if (event->type == Event::MESSAGE) {
       if (conn_state->initializer && !conn_state->initialized) {
@@ -466,7 +476,7 @@ void ConnectionManager::operator()() {
 
         if (xtime_cmp(conn_state->next_retry, now) <= 0) {
           m_impl->retry_queue.pop();
-          send_connect_request(conn_state.get());
+          send_connect_request(conn_state);
           continue;
         }
       }

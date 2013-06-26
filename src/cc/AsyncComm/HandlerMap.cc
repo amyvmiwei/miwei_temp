@@ -227,13 +227,14 @@ bool HandlerMap::destroy_ok(IOHandler *handler) {
   return is_decomissioned && handler->reference_count() == 0;
 }
 
-bool HandlerMap::translate_proxy_address(const CommAddress &proxy_addr, CommAddress &addr) {
+bool HandlerMap::translate_proxy_address(const CommAddress &proxy_addr, InetAddr *addr) {
   InetAddr inet_addr;
   String hostname;
   HT_ASSERT(proxy_addr.is_proxy());
   if (!m_proxy_map.get_mapping(proxy_addr.proxy, hostname, inet_addr))
     return false;
-  addr.set_inet(inet_addr);
+  if (addr)
+    *addr = inet_addr;
   return true;
 }
 
@@ -316,6 +317,8 @@ void HandlerMap::update_proxy_map(const char *message, size_t message_len) {
       handler->set_proxy(v.first);
   }
 
+  //HT_INFOF("Updated proxy map = %s", m_proxy_map.to_str().c_str());
+  
   m_proxies_loaded = true;
   m_cond_proxy.notify_all();
 }
