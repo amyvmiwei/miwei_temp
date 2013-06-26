@@ -191,6 +191,12 @@ int Comm::remove_proxy(const String &proxy) {
   return m_handler_map->remove_proxy(proxy);
 }
 
+bool Comm::translate_proxy(const String &proxy, InetAddr *addr) {
+  CommAddress proxy_addr;
+  proxy_addr.set_proxy(proxy);
+  return m_handler_map->translate_proxy_address(proxy_addr, addr);
+}
+
 void Comm::get_proxy_map(ProxyMapT &proxy_map) {
   m_handler_map->get_proxy_map(proxy_map);
 }
@@ -545,8 +551,10 @@ Comm::connect_socket(int sd, const CommAddress &addr,
   CommAddress connectable_addr;
 
   if (addr.is_proxy()) {
-    if (!m_handler_map->translate_proxy_address(addr, connectable_addr))
+    InetAddr inet_addr;
+    if (!m_handler_map->translate_proxy_address(addr, &inet_addr))
       return Error::COMM_INVALID_PROXY;
+    connectable_addr.set_inet(inet_addr);
   }
   else
     connectable_addr = addr;

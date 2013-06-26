@@ -182,6 +182,22 @@ namespace Hypertable {
      */
     int remove_proxy(const String &proxy);
 
+    /** Translates a proxy name to an IP address.
+     * Hypertable uses <i>proxy names</i> (e.g. "rs1") to refer to servers so
+     * that the system can continue to operate properly even when servers are
+     * reassigned IP addresses, such as starting and stopping Hypertable running
+     * on EBS volumes in AWS EC2.  This method translates <code>proxy</code>
+     * to its associated address that was registered with a prior call to
+     * add_proxy().  If <code>addr</code> is NULL, then the method just checks
+     * to see if the proxy name has been registered and represents a valid
+     * mapping.
+     * @param proxy Proxy name to translate
+     * @param proxy Address of object to hold translated address
+     * @param <i>true</i> if address was translated or could be translated,
+     * <i>false</i> otherwise
+     */
+    bool translate_proxy(const String &proxy, InetAddr *addr);
+
     /** Returns the proxy map.
      * @param proxy_map Reference to return proxy map
      */

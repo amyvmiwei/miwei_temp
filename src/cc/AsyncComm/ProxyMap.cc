@@ -187,3 +187,13 @@ void ProxyMap::invalidate(const String &proxy, ProxyMapT &invalidated_map) {
       m_reverse_map.erase((*rev_iter).first);
   }
 }
+
+String ProxyMap::to_str() {
+  ScopedLock lock(m_mutex);
+  ProxyMapT::iterator iter;
+  String str;
+  for (iter = m_forward_map.begin(); iter != m_forward_map.end(); ++iter)
+    str += format("(%s,%s,%s),", (*iter).first.c_str(),
+                  (*iter).second.hostname.c_str(), (*iter).second.addr.format().c_str());
+  return str;
+}

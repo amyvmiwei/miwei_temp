@@ -179,6 +179,8 @@ namespace Hypertable {
      */
     CommBuf *create_update_message();
 
+    String to_str();
+
   private:
 
     /** Invalidates (removes) mapping, if changed, from forward and reverse maps.

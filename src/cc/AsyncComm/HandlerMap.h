@@ -217,13 +217,14 @@ namespace Hypertable {
     /** Translates <code>proxy_addr</code> to its corresponding IPV4 address.
      * This method fetches the mapping for <code>proxy_addr</code> from
      * #m_proxy_map and returns the associated IPV4 address in
-     * <code>addr</code>.
+     * <code>addr</code>.  If <code>addr</code> is NULL, then no translation
+     * occurs but the return value can be checked to see if the proxy name
+     * contains a mapping.
      * @param proxy_addr Reference to proxy address
-     * @param addr Reference to return IPV4 address
-     * @return <i>true</i> if mapping found and address translated, <i>false</i>
-     * if not.
+     * @param addr Pointer to return IPV4 address
+     * @return <i>true</i> if mapping found, <i>false</i> otherwise
      */
-    bool translate_proxy_address(const CommAddress &proxy_addr, CommAddress &addr);
+    bool translate_proxy_address(const CommAddress &proxy_addr, InetAddr *addr);
 
     /** Purges (removes) <code>handler</code>.  This method removes
      * <code>handler</code> from the #m_decomissioned_handlers set, signals
