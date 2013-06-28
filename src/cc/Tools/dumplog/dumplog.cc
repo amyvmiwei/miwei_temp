@@ -199,26 +199,26 @@ namespace {
 
       HT_ASSERT(header.check_magic(CommitLog::MAGIC_DATA));
 
-      printf("%s%s\trevision\t%llu\n",
+      printf("%s/%s\trevision\t%llu\n",
              binfo.log_dir, binfo.file_fragment, (Llu)header.get_revision());
-      printf("%s%s\tstart-offset\t%llu\n",
+      printf("%s/%s\tstart-offset\t%llu\n",
              binfo.log_dir, binfo.file_fragment, (Llu)binfo.start_offset);
-      printf("%s%s\tend-offset\t%llu\n",
+      printf("%s/%s\tend-offset\t%llu\n",
              binfo.log_dir, binfo.file_fragment, (Llu)binfo.end_offset);
 
       if (binfo.error == Error::OK) {
-        printf("%s%s\tlength\t%u\n",
+        printf("%s/%s\tlength\t%u\n",
                binfo.log_dir, binfo.file_fragment,
                header.get_data_length());
-        printf("%s%s\tztype\t%s\n",
+        printf("%s/%s\tztype\t%s\n",
                binfo.log_dir, binfo.file_fragment,
                BlockCompressionCodec::get_compressor_name(header.get_compression_type()));
-        printf("%s%s\tzlen\t%u\n",
+        printf("%s/%s\tzlen\t%u\n",
                binfo.log_dir, binfo.file_fragment,
                header.get_data_zlength());
       }
       else
-        printf("%s%s\terror\t%s\n",
+        printf("%s/%s\terror\t%s\n",
                binfo.log_dir, binfo.file_fragment,
                Error::get_text(binfo.error));
     }
