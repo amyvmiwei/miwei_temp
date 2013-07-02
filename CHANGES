@@ -1,3 +1,22 @@
+Version 0.9.7.8:
+(2013-07-02)
+
+   Skip recovery of ranges from deleted tables; Other failover fixes
+   issue 1088: Fixed connection purging issue in ConnectionManager
+   issue 1091: Skip RSML entries if schema for table not found
+   issue1094: Fixed race condition in Global::remove_ok_logs initialization
+   Can build on more systems
+   Fixed malformed path in dumplog --block-summary output
+   issue1093: Hypertable shell now opens '/' namespace by default
+   issue1082: Changed shell --timestamp-format option from usecs to nanoseconds
+   Added missing header files in installation
+   Got rid of unnecessary clearing of IOHandler proxy
+   Added support for alternate field separator in .tsv format
+   Added TableSchema.xsd
+   Fix a typo: determinte -> determine
+   Capture error state in master-failover tests
+
+
 Version 0.9.7.7:
 (2013-06-03)
 
