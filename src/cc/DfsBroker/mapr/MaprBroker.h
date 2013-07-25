@@ -98,6 +98,8 @@ namespace Hypertable {
     virtual void mkdirs(ResponseCallback *cb, const char *dname);
     virtual void rmdir(ResponseCallback *cb, const char *dname);
     virtual void readdir(ResponseCallbackReaddir *cb, const char *dname);
+    virtual void posix_readdir(ResponseCallbackPosixReaddir *cb,
+            const char *dname);
     virtual void flush(ResponseCallback *cb, uint32_t fd);
     virtual void status(ResponseCallback *cb);
     virtual void shutdown(ResponseCallback *cb);

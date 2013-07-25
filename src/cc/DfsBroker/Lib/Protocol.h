@@ -69,6 +69,8 @@ namespace Hypertable {
 
       static CommBuf *create_readdir_request(const String &fname);
 
+      static CommBuf *create_posix_readdir_request(const String &fname);
+
       static CommBuf *create_flush_request(int32_t fd);
 
       static CommBuf *create_status_request();
@@ -85,25 +87,26 @@ namespace Hypertable {
 
       virtual const char *command_text(uint64_t command);
 
-      static const uint64_t COMMAND_OPEN     = 0;
-      static const uint64_t COMMAND_CREATE   = 1;
-      static const uint64_t COMMAND_CLOSE    = 2;
-      static const uint64_t COMMAND_READ     = 3;
-      static const uint64_t COMMAND_APPEND   = 4;
-      static const uint64_t COMMAND_SEEK     = 5;
-      static const uint64_t COMMAND_REMOVE   = 6;
-      static const uint64_t COMMAND_SHUTDOWN = 7;
-      static const uint64_t COMMAND_LENGTH   = 8;
-      static const uint64_t COMMAND_PREAD    = 9;
-      static const uint64_t COMMAND_MKDIRS   = 10;
-      static const uint64_t COMMAND_STATUS   = 11;
-      static const uint64_t COMMAND_FLUSH    = 12;
-      static const uint64_t COMMAND_RMDIR    = 13;
-      static const uint64_t COMMAND_READDIR  = 14;
-      static const uint64_t COMMAND_EXISTS   = 15;
-      static const uint64_t COMMAND_RENAME   = 16;
-      static const uint64_t COMMAND_DEBUG    = 17;
-      static const uint64_t COMMAND_MAX      = 18;
+      static const uint64_t COMMAND_OPEN            = 0;
+      static const uint64_t COMMAND_CREATE          = 1;
+      static const uint64_t COMMAND_CLOSE           = 2;
+      static const uint64_t COMMAND_READ            = 3;
+      static const uint64_t COMMAND_APPEND          = 4;
+      static const uint64_t COMMAND_SEEK            = 5;
+      static const uint64_t COMMAND_REMOVE          = 6;
+      static const uint64_t COMMAND_SHUTDOWN        = 7;
+      static const uint64_t COMMAND_LENGTH          = 8;
+      static const uint64_t COMMAND_PREAD           = 9;
+      static const uint64_t COMMAND_MKDIRS          = 10;
+      static const uint64_t COMMAND_STATUS          = 11;
+      static const uint64_t COMMAND_FLUSH           = 12;
+      static const uint64_t COMMAND_RMDIR           = 13;
+      static const uint64_t COMMAND_READDIR         = 14;
+      static const uint64_t COMMAND_EXISTS          = 15;
+      static const uint64_t COMMAND_RENAME          = 16;
+      static const uint64_t COMMAND_DEBUG           = 17;
+      static const uint64_t COMMAND_POSIX_READDIR   = 18;
+      static const uint64_t COMMAND_MAX             = 19;
 
       static const uint16_t SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 

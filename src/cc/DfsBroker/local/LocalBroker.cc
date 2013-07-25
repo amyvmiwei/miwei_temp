@@ -346,7 +346,7 @@ void LocalBroker::remove(ResponseCallback *cb, const char *fname) {
   String abspath;
   int error;
 
-  HT_DEBUGF("remove file='%s'", fname);
+  HT_INFOF("remove file='%s'", fname);
 
   if (fname[0] == '/')
     abspath = m_rootdir + fname;
@@ -474,9 +474,8 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dname) {
   String cmd_str;
   int error;
 
-  if (m_verbose) {
-    HT_DEBUGF("rmdir dir='%s'", dname);
-  }
+  if (m_verbose)
+    HT_INFOF("rmdir dir='%s'", dname);
 
   if (dname[0] == '/')
     absdir = m_rootdir + dname;
@@ -574,6 +573,76 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
 }
 
 
+void LocalBroker::posix_readdir(ResponseCallbackPosixReaddir *cb,
+            const char *dname) {
+  std::vector<Filesystem::DirectoryEntry> listing;
+  String absdir;
+
+  HT_DEBUGF("PosixReaddir dir='%s'", dname);
+
+  if (dname[0] == '/')
+    absdir = m_rootdir + dname;
+  else
+    absdir = m_rootdir + "/" + dname;
+
+  DIR *dirp = opendir(absdir.c_str());
+  if (dirp == 0) {
+    report_error(cb);
+    HT_ERRORF("opendir('%s') failed - %s", absdir.c_str(), strerror(errno));
+    return;
+  }
+
+  struct dirent *dp = (struct dirent *)new uint8_t [sizeof(struct dirent)+1025];
+  struct dirent *result;
+
+  if (readdir_r(dirp, dp, &result) != 0) {
+    report_error(cb);
+    HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
+    (void)closedir(dirp);
+    delete [] (uint8_t *)dp;
+    return;
+  }
+
+  while (result != 0) {
+    if (result->d_name[0] != '.' && result->d_name[0] != 0) {
+      Filesystem::DirectoryEntry dirent;
+      if (m_no_removal) {
+        size_t len = strlen(result->d_name);
+        if (len <= 8 || strcmp(&result->d_name[len-8], ".deleted"))
+          dirent.name = result->d_name;
+      }
+      else
+        dirent.name = result->d_name;
+      dirent.flags = 0;
+      if (result->d_type & DT_DIR) {
+        dirent.flags |= Filesystem::DIRENT_DIRECTORY;
+        dirent.length = 0;
+      }
+      else {
+        dirent.length = (uint32_t)FileUtils::size(absdir + "/"
+                + result->d_name);
+      }
+      listing.push_back(dirent);
+      //HT_INFOF("readdir Adding listing '%s'", result->d_name);
+    }
+
+    if (readdir_r(dirp, dp, &result) != 0) {
+      report_error(cb);
+      HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
+      delete [] (uint8_t *)dp;
+      return;
+    }
+  }
+  (void)closedir(dirp);
+
+  delete [] (uint8_t *)dp;
+
+  HT_DEBUGF("Sending back %d listings", (int)listing.size());
+
+  cb->response(listing);
+}
+
+
 void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataLocalPtr fdata;
 
@@ -624,12 +693,12 @@ void LocalBroker::exists(ResponseCallbackExists *cb, const char *fname) {
 
 void
 LocalBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
+  HT_INFOF("rename %s -> %s", src, dst);
+
   String asrc =
     format("%s%s%s", m_rootdir.c_str(), *src == '/' ? "" : "/", src);
   String adst =
     format("%s%s%s", m_rootdir.c_str(), *dst == '/' ? "" : "/", dst);
-
-  HT_DEBUGF("rename %s -> %s", asrc.c_str(), adst.c_str());
 
   if (std::rename(asrc.c_str(), adst.c_str()) != 0) {
     report_error(cb);

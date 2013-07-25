@@ -94,6 +94,8 @@ namespace Hypertable {
     virtual void status(ResponseCallback *cb);
     virtual void shutdown(ResponseCallback *cb);
     virtual void readdir(ResponseCallbackReaddir *cb, const char *dname);
+    virtual void posix_readdir(ResponseCallbackPosixReaddir *cb,
+                        const char *dname);
     virtual void exists(ResponseCallbackExists *cb, const char *fname);
     virtual void rename(ResponseCallback *cb, const char *src, const char *dst);
     virtual void debug(ResponseCallback *, int32_t command,

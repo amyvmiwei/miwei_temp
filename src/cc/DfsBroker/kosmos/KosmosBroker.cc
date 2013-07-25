@@ -504,6 +504,13 @@ void KosmosBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
 }
 
 
+void KosmosBroker::posix_readdir(ResponseCallbackPosixReaddir *cb,
+        const char *dname) {
+  HT_ERRORF("posix_readdir %s is NOT supported", dname);
+  cb->error(Error::NOT_IMPLEMENTED, "Unsupported command posix_readdir");
+}
+
+
 void KosmosBroker::exists(ResponseCallbackExists *cb, const char *fname) {
   String abspath;
   KfsClientPtr clnt = KFS::getKfsClientFactory()->GetClient();

@@ -624,6 +624,30 @@ Client::readdir(const String &name, std::vector<String> &listing) {
 
 
 void
+Client::posix_readdir(const String &name,
+              std::vector<DirectoryEntry> &listing) {
+  DispatchHandlerSynchronizer sync_handler;
+  EventPtr event_ptr;
+
+  CommBufPtr cbp(m_protocol.create_posix_readdir_request(name));
+
+  try {
+    send_message(cbp, &sync_handler);
+
+    if (!sync_handler.wait_for_reply(event_ptr))
+      HT_THROW(Protocol::response_code(event_ptr.get()),
+               m_protocol.string_format_message(event_ptr).c_str());
+
+    decode_response_posix_readdir(event_ptr, listing);
+  }
+  catch (Exception &e) {
+    HT_THROW2F(e.code(), e, "Error reading (posix) directory entries for DFS "
+               "directory: %s", name.c_str());
+  }
+}
+
+
+void
 Client::exists(const String &name, DispatchHandler *handler) {
   CommBufPtr cbp(m_protocol.create_exists_request(name));
 

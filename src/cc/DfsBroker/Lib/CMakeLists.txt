@@ -39,6 +39,7 @@ RequestHandlerFlush.cc
 RequestHandlerStatus.cc
 RequestHandlerRmdir.cc
 RequestHandlerReaddir.cc
+RequestHandlerPosixReaddir.cc
 RequestHandlerExists.cc
 RequestHandlerRename.cc
 ResponseCallbackOpen.cc
@@ -46,6 +47,7 @@ ResponseCallbackRead.cc
 ResponseCallbackAppend.cc
 ResponseCallbackLength.cc
 ResponseCallbackReaddir.cc
+ResponseCallbackPosixReaddir.cc
 ResponseCallbackExists.cc
 )
 

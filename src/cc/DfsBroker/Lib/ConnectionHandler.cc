@@ -44,6 +44,7 @@
 #include "RequestHandlerStatus.h"
 #include "RequestHandlerRmdir.h"
 #include "RequestHandlerReaddir.h"
+#include "RequestHandlerPosixReaddir.h"
 #include "RequestHandlerExists.h"
 #include "RequestHandlerRename.h"
 
@@ -108,6 +109,10 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case Protocol::COMMAND_READDIR:
         handler = new RequestHandlerReaddir(m_comm, m_broker_ptr.get(), event);
+        break;
+      case Protocol::COMMAND_POSIX_READDIR:
+        handler = new RequestHandlerPosixReaddir(m_comm, m_broker_ptr.get(),
+                event);
         break;
       case Protocol::COMMAND_EXISTS:
         handler = new RequestHandlerExists(m_comm, m_broker_ptr.get(), event);
