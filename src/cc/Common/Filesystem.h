@@ -417,6 +417,34 @@ namespace Hypertable {
     static void decode_response_readdir(EventPtr &event_ptr,
             std::vector<String> &listing);
 
+    /** directory entries for the posix_readdir request */
+    struct DirectoryEntry {
+      String name;
+      uint32_t flags;
+      uint32_t length;
+    };
+
+    /** DirectoryEntry is a directory */
+    static const int DIRENT_DIRECTORY = 1;
+
+    /** Obtains a listing of all files in a directory, including additional
+     * information for each file. Issues a posix_readdir request
+     * and waits for it to complete.
+     *
+     * @param name absolute pathname of directory
+     * @param listing reference to vector of directory entries
+     */
+    virtual void posix_readdir(const String &name,
+            std::vector<DirectoryEntry> &listing) = 0;
+
+    /** Decodes the response from a posix-style readdir request
+     *
+     * @param event_ptr reference to response event
+     * @param listing reference to vector of DirectoryEntries
+     */
+    static void decode_response_posix_readdir(EventPtr &event_ptr,
+                                        std::vector<DirectoryEntry> &listing);
+
     /** Flushes a file asynchronously.  Isues a flush command which causes all
      * buffered writes to get persisted to disk.  The caller will get notified
      * of successful completion or error via the given dispatch handler.  This

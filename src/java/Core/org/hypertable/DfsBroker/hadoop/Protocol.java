@@ -23,25 +23,26 @@ package org.hypertable.DfsBroker.hadoop;
 
 public class Protocol extends org.hypertable.AsyncComm.Protocol {
 
-    public static final short COMMAND_OPEN     = 0;
-    public static final short COMMAND_CREATE   = 1;
-    public static final short COMMAND_CLOSE    = 2;
-    public static final short COMMAND_READ     = 3;
-    public static final short COMMAND_WRITE    = 4;
-    public static final short COMMAND_SEEK     = 5;
-    public static final short COMMAND_REMOVE   = 6;
-    public static final short COMMAND_SHUTDOWN = 7;
-    public static final short COMMAND_LENGTH   = 8;
-    public static final short COMMAND_PREAD    = 9;
-    public static final short COMMAND_MKDIRS   = 10;
-    public static final short COMMAND_STATUS   = 11;
-    public static final short COMMAND_FLUSH    = 12;
-    public static final short COMMAND_RMDIR    = 13;
-    public static final short COMMAND_READDIR  = 14;
-    public static final short COMMAND_EXISTS   = 15;
-    public static final short COMMAND_RENAME   = 16;
-    public static final short COMMAND_DEBUG    = 17;
-    public static final short COMMAND_MAX      = 18;
+    public static final short COMMAND_OPEN          = 0;
+    public static final short COMMAND_CREATE        = 1;
+    public static final short COMMAND_CLOSE         = 2;
+    public static final short COMMAND_READ          = 3;
+    public static final short COMMAND_WRITE         = 4;
+    public static final short COMMAND_SEEK          = 5;
+    public static final short COMMAND_REMOVE        = 6;
+    public static final short COMMAND_SHUTDOWN      = 7;
+    public static final short COMMAND_LENGTH        = 8;
+    public static final short COMMAND_PREAD         = 9;
+    public static final short COMMAND_MKDIRS        = 10;
+    public static final short COMMAND_STATUS        = 11;
+    public static final short COMMAND_FLUSH         = 12;
+    public static final short COMMAND_RMDIR         = 13;
+    public static final short COMMAND_READDIR       = 14;
+    public static final short COMMAND_EXISTS        = 15;
+    public static final short COMMAND_RENAME        = 16;
+    public static final short COMMAND_DEBUG         = 17;
+    public static final short COMMAND_POSIX_READDIR = 18;
+    public static final short COMMAND_MAX           = 19;
 
     public static final short SHUTDOWN_FLAG_IMMEDIATE = 0x0001;
 
@@ -63,7 +64,8 @@ public class Protocol extends org.hypertable.AsyncComm.Protocol {
         "readdir",
         "exists",
         "rename",
-        "debug"
+        "debug",
+        "posix_readdir"
     };
 
     public String CommandText(short command) {

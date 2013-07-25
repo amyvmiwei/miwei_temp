@@ -52,9 +52,19 @@ import org.apache.hadoop.fs.FileStatus;
  */
 public class HadoopBroker {
 
+    /**
+     * A directory entry for posix_readdir
+     */
+    public class DirectoryEntry {
+        String name;
+        int flags;
+        int length;
+    }
+
     private static final int OPEN_FLAG_DIRECT          = 0x00000001;
     private static final int OPEN_FLAG_OVERWRITE       = 0x00000002;
     private static final int OPEN_FLAG_VERIFY_CHECKSUM = 0x00000004;
+    private static final int MAX_RETRIES = 10;
 
     static final Logger log = Logger.getLogger(
                                  "org.hypertable.DfsBroker.hadoop");
@@ -212,42 +222,58 @@ public class HadoopBroker {
         OpenFileData ofd;
         int error = Error.OK;
 
-        try {
+        for (int i = 0; i < MAX_RETRIES; i++) {
+            try {
+                if (fileName.endsWith("/")) {
+                    log.severe("Unable to open file, bad filename: " + fileName);
+                    error = cb.error(Error.DFSBROKER_BAD_FILENAME, fileName);
+                    break;
+                }
 
-            if (fileName.endsWith("/")) {
-                log.severe("Unable to open file, bad filename: " + fileName);
-                error = cb.error(Error.DFSBROKER_BAD_FILENAME, fileName);
-                return;
+                fd = msUniqueId.incrementAndGet();
+
+                if (mVerbose)
+                  log.info("Opening file '" + fileName + "' flags=" + flags
+                        + " bs=" + bufferSize + " handle = " + fd);
+
+                ofd = mOpenFileMap.Create(fd, cb.GetAddress());
+
+                if ((flags & OPEN_FLAG_VERIFY_CHECKSUM) == 0)
+                    ofd.is_noverify = mFilesystem_noverify.open(new
+                            Path(fileName));
+                else
+                    ofd.is = mFilesystem.open(new Path(fileName));
+
+                ofd.pathname = fileName;
+                // todo:  do something with bufferSize
+                error = cb.response(fd);
+                break;
             }
-
-            fd = msUniqueId.incrementAndGet();
-
-            if (mVerbose)
-              log.info("Opening file '" + fileName + "' flags=" + flags + " bs=" + bufferSize
-                         + " handle = " + fd);
-
-            ofd = mOpenFileMap.Create(fd, cb.GetAddress());
-
-	    if ((flags & OPEN_FLAG_VERIFY_CHECKSUM) == 0)
-		ofd.is_noverify = mFilesystem_noverify.open(new Path(fileName));
-	    else
-		ofd.is = mFilesystem.open(new Path(fileName));
-
-            ofd.pathname = fileName;
-
-            // todo:  do something with bufferSize
-
-            error = cb.response(fd);
-
-        }
-        catch (FileNotFoundException e) {
-            log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
-        }
-        catch (IOException e) {
-            log.severe("I/O exception while opening file '" + fileName + "' - "
-                       + e.toString());
-            error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
+            catch (FileNotFoundException e) {
+                log.severe("File not found: " + fileName);
+                error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
+                break;
+            }
+            catch (IOException e) {
+                log.severe("I/O exception while opening file '" + fileName
+                            + "' - "+ e.toString());
+                error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
+                break;
+            }
+            catch (java.lang.NullPointerException e) {
+                // workaround for an HDFS bug
+                // https://issues.apache.org/jira/browse/HDFS-3533?page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel&focusedCommentId=13296083#comment-13296083
+                log.info("Catching NullPointerException when opening "
+                      + fileName);
+                e.printStackTrace();
+                try {
+                    Thread.sleep(1000);
+                }
+                catch (java.lang.InterruptedException ex) {
+                }
+                error = Error.DFSBROKER_IO_ERROR;
+                // fall through and retry
+            }
         }
 
         if (error != Error.OK)
@@ -365,7 +391,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
+            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while creating file '" + fileName + "' - "
@@ -387,34 +413,65 @@ public class HadoopBroker {
     public void Length(ResponseCallbackLength cb, String fileName,
             boolean accurate) {
         int error = Error.OK;
-        long length;
+        String message = "";
+        long length = 0;
 
-        try {
-            if (mVerbose)
-                log.info("Getting length of file '" + fileName +
-                        "' (accurate: " + accurate + ")");
+        /* - this floods the log if Replication is enabled
+        if (mVerbose)
+            log.info("Getting length of file '" + fileName +
+                    "' (accurate: " + accurate + ")"); */
 
-            Path path = new Path(fileName);
-            if (accurate) {
-                DFSClient.DFSDataInputStream in =
-                    (DFSClient.DFSDataInputStream)mFilesystem.open(path);
-                length = in.getVisibleLength();
-                in.close();
+        Path path = new Path(fileName);
+
+        for (int i = 0; i < MAX_RETRIES; i++) {
+            try {
+                if (accurate) {
+                    DFSClient.DFSDataInputStream in =
+                        (DFSClient.DFSDataInputStream)mFilesystem.open(path);
+                    length = in.getVisibleLength();
+                    in.close();
+                }
+                else {
+                    length = mFilesystem.getFileStatus(path).getLen();
+                }
+                // success
+                error = Error.OK;
+                message = "";
+                break;
             }
-            else {
-                length = mFilesystem.getFileStatus(path).getLen();
+            catch (FileNotFoundException e) {
+                error = Error.DFSBROKER_FILE_NOT_FOUND;
+                message = "File not found: " + e.getMessage();
+                break;
             }
+            catch (IOException e) {
+                error = Error.DFSBROKER_IO_ERROR;
+                message = "IOException: " + e.toString();
+                break;
+            }
+            catch (java.lang.NullPointerException e) {
+                // workaround for an HDFS bug
+                // https://issues.apache.org/jira/browse/HDFS-3533?page=com.atlassian.jira.plugin.system.issuetabpanels:comment-tabpanel&focusedCommentId=13296083#comment-13296083
+                log.info("Catching NullPointerException when getting length " +
+                      "of '" + fileName + "' (accurate: " + accurate + ")");
+                e.printStackTrace();
+                try {
+                    Thread.sleep(1000);
+                }
+                catch (java.lang.InterruptedException ex) {
+                }
+                error = Error.DFSBROKER_IO_ERROR;
+                message = "File not found (HDFS exception): " + e.getMessage();
+                // fall through and retry
+            }
+        }
 
+        if (error == Error.OK)
             error = cb.response(length);
-        }
-        catch (FileNotFoundException e) {
-            log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
-        }
-        catch (IOException e) {
-            log.severe("I/O exception while getting length of file '" + fileName
-                       + "' - " + e.toString());
-            error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
+        else {
+            log.severe("Error getting LENGTH of " + fileName + ": error code "
+                    + error + ", message: " + message);
+            error = cb.error(error, message);
         }
 
         if (error != Error.OK)
@@ -444,7 +501,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
+            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while making directory '" + fileName
@@ -485,9 +542,8 @@ public class HadoopBroker {
 
             while (nread < amount) {
                 int r = ofd.is.read(data, nread, amount - nread);
-
-                if (r < 0) break;
-
+                if (r < 0)
+                    break;
                 nread += r;
             }
 
@@ -658,7 +714,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
+            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while removing file '" + fileName + "' - "
@@ -765,7 +821,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
+            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while removing directory '" + fileName
@@ -816,7 +872,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + dirName);
-            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
+            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while reading directory '" + dirName
@@ -826,6 +882,56 @@ public class HadoopBroker {
 
         if (error != Error.OK)
             log.severe("Error sending READDIR response back (error="
+                    + error + ", dirName=" + dirName + ")");
+    }
+
+
+    /**
+     *
+     */
+    public void PosixReaddir(ResponseCallbackPosixReaddir cb, String dirName) {
+        int error = Error.OK;
+        String pathStr;
+
+        try {
+            if (mVerbose)
+                log.info("PosixReaddir('" + dirName + "')");
+
+            DirectoryEntry [] listing = null;
+            FileStatus[] statuses = null;
+            // if the directory doesn't exist then CDH4 throws
+            // FileNotFoundException, but CDH3 returns NULL
+            try {
+                statuses = mFilesystem.listStatus(new Path(dirName));
+            }
+            catch (FileNotFoundException e) {
+                // ignore
+            }
+
+            if (statuses != null) {
+                listing = new DirectoryEntry[statuses.length];
+                for (int k = 0; k < statuses.length; k++) {
+                    DirectoryEntry dirent = new DirectoryEntry();
+                    dirent.name = statuses[k].getPath().toString();
+                    dirent.length = (int)statuses[k].getLen();
+                    int lastSlash = dirent.name.lastIndexOf('/');
+                    if (lastSlash != -1)
+                        dirent.name = dirent.name.substring(lastSlash + 1);
+                    dirent.flags = statuses[k].isDir() ? 1 : 0;
+                    listing[k] = dirent;
+                }
+            }
+
+            error = cb.response(listing);
+        }
+        catch (IOException e) {
+            log.severe("I/O exception while reading (posix) directory '"
+                       + dirName + "' - " + e.toString());
+            error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
+        }
+
+        if (error != Error.OK)
+            log.severe("Error sending POSIX_READDIR response back (error="
                     + error + ", dirName=" + dirName + ")");
     }
 
@@ -843,7 +949,7 @@ public class HadoopBroker {
         }
         catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
-            error = cb.error(Error.DFSBROKER_BAD_FILENAME, e.getMessage());
+            error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
             log.severe("I/O exception while checking for existence of file '"

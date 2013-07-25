@@ -164,6 +164,31 @@ Filesystem::decode_response_readdir(EventPtr &event_ptr,
   }
 }
 
+void
+Filesystem::decode_response_posix_readdir(EventPtr &event_ptr,
+        std::vector<DirectoryEntry> &listing) {
+  const uint8_t *decode_ptr = event_ptr->payload;
+  size_t decode_remain = event_ptr->payload_len;
+
+  int error = decode_i32(&decode_ptr, &decode_remain);
+
+  if (error != Error::OK)
+    HT_THROW(error, "");
+
+  listing.clear();
+
+  uint32_t len = decode_i32(&decode_ptr, &decode_remain);
+  uint16_t slen;
+
+  for (uint32_t i = 0; i < len; i++) {
+    DirectoryEntry dirent;
+    dirent.name = decode_str16(&decode_ptr, &decode_remain, &slen);
+    dirent.flags = decode_i32(&decode_ptr, &decode_remain);
+    dirent.length = decode_i32(&decode_ptr, &decode_remain);
+    listing.push_back(dirent);
+  }
+}
+
 
 bool
 Filesystem::decode_response_exists(EventPtr &event_ptr) {

@@ -152,6 +152,9 @@ namespace Hypertable { namespace DfsBroker {
       virtual void readdir(const String &name, DispatchHandler *handler);
       virtual void readdir(const String &name, std::vector<String> &listing);
 
+      virtual void posix_readdir(const String &name,
+              std::vector<Filesystem::DirectoryEntry> &listing);
+
       virtual void exists(const String &name, DispatchHandler *handler);
       virtual bool exists(const String &name);
 

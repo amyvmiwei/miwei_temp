@@ -111,6 +111,10 @@ public class ConnectionHandler implements DispatchHandler {
                 requestHandler = new RequestHandlerReaddir(mComm, mBroker,
                                                            event);
                 break;
+            case Protocol.COMMAND_POSIX_READDIR:
+                requestHandler = new RequestHandlerPosixReaddir(mComm, mBroker,
+                                                           event);
+                break;
             case Protocol.COMMAND_EXISTS:
                 requestHandler = new RequestHandlerExists(mComm, mBroker,
                                                           event);

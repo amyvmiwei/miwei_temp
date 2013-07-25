@@ -32,6 +32,7 @@
 #include "ResponseCallbackAppend.h"
 #include "ResponseCallbackLength.h"
 #include "ResponseCallbackReaddir.h"
+#include "ResponseCallbackPosixReaddir.h"
 #include "ResponseCallbackExists.h"
 
 
@@ -61,6 +62,8 @@ namespace Hypertable {
       virtual void mkdirs(ResponseCallback *, const char *dname) = 0;
       virtual void rmdir(ResponseCallback *, const char *dname) = 0;
       virtual void readdir(ResponseCallbackReaddir *, const char *dname) = 0;
+      virtual void posix_readdir(ResponseCallbackPosixReaddir *,
+                        const char *dname) = 0;
       virtual void flush(ResponseCallback *, uint32_t fd) = 0;
       virtual void status(ResponseCallback *) = 0;
       virtual void shutdown(ResponseCallback *) = 0;

@@ -60,7 +60,8 @@ namespace Hypertable {
       "readdir",
       "exists",
       "rename",
-      "debug"
+      "debug",
+      "posix_readdir"
     };
 
 
@@ -210,6 +211,15 @@ namespace Hypertable {
      */
     CommBuf *Protocol::create_readdir_request(const String &fname) {
       CommHeader header(COMMAND_READDIR);
+      CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname));
+      cbuf->append_str16(fname);
+      return cbuf;
+    }
+
+    /**
+     */
+    CommBuf *Protocol::create_posix_readdir_request(const String &fname) {
+      CommHeader header(COMMAND_POSIX_READDIR);
       CommBuf *cbuf = new CommBuf(header, encoded_length_str16(fname));
       cbuf->append_str16(fname);
       return cbuf;

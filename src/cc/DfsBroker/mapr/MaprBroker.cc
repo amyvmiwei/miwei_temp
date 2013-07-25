@@ -492,6 +492,13 @@ void MaprBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
 }
 
 
+void MaprBroker::posix_readdir(ResponseCallbackPosixReaddir *cb,
+        const char *dname) {
+  HT_ERROR("posix_readdir is not implemented");
+  cb->error(Error::NOT_IMPLEMENTED, "posix_readdir is not implemented");
+}
+
+
 void MaprBroker::flush(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataMaprPtr fdata;
 

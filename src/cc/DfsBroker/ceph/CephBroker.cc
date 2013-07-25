@@ -441,6 +441,13 @@ void CephBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   cb->response(listing);
 }
 
+void CephBroker::posix_readdir(ResponseCallbackPosixReaddir *cb,
+        const char *dname) {
+  HT_ERROR("posix_readdir is not implemented");
+  cb->error(Error::NOT_IMPLEMENTED, "posix_readdir is not implemented");
+}
+
+
 void CephBroker::exists(ResponseCallbackExists *cb, const char *fname) {
   String abspath;
   struct stat statbuf;
