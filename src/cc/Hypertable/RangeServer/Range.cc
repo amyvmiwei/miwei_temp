@@ -641,7 +641,8 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
 
   if (mutator)
     m_load_metrics.compute_and_store(mutator, now, mdata->load_factors,
-                                     mdata->disk_used, mdata->memory_used);
+                                     mdata->disk_used, mdata->memory_used,
+                                     mdata->compression_ratio);
 
   return mdata;
 }

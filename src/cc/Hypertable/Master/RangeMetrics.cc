@@ -46,25 +46,36 @@ void RangeMeasurement::parse_measurement(const char *measurement, size_t len) {
   boost::split(splits, str, boost::is_any_of(":,"));
   version = atoi(splits[0].c_str());
 
-  if (version != 2)
+  if (version == 2) {
+    if (splits.size() != 11)
+      HT_THROW(Error::PROTOCOL_ERROR,
+               format("Measurement string '%s' has %d components, expected 11.",
+                      str.c_str(), (int)splits.size()));
+  }
+  else if (version == 3) {
+    if (splits.size() != 12)
+      HT_THROW(Error::PROTOCOL_ERROR,
+               format("Measurement string '%s' has %d components, expected 12.",
+                      str.c_str(), (int)splits.size()));
+  }
+  else
     HT_THROW(Error::NOT_IMPLEMENTED,
              format("ServerMetrics version=%d expected 2", (int)version));
 
-  if (splits.size() != 11)
-    HT_THROW(Error::PROTOCOL_ERROR,
-             format("Measurement string '%s' has %d components, expected 11.",
-                    str.c_str(), (int)splits.size()));
 
-  timestamp             = strtoll(splits[1].c_str(), 0, 0);
-  disk_used             = strtoll(splits[2].c_str(), 0, 0);
-  memory_used           = strtoll(splits[3].c_str(), 0, 0);
-  disk_byte_read_rate   = strtod(splits[4].c_str(), 0);
-  byte_write_rate       = strtod(splits[5].c_str(), 0);
-  byte_read_rate        = strtod(splits[6].c_str(), 0);
-  update_rate           = strtod(splits[7].c_str(), 0);
-  scan_rate             = strtod(splits[8].c_str(), 0);
-  cell_write_rate       = strtod(splits[9].c_str(), 0);
-  cell_read_rate        = strtod(splits[10].c_str(), 0);
+  size_t i=1;
+  timestamp             = strtoll(splits[i++].c_str(), 0, 0);
+  disk_used             = strtoll(splits[i++].c_str(), 0, 0);
+  memory_used           = strtoll(splits[i++].c_str(), 0, 0);
+  if (version == 3)
+    compression_ratio   = strtod(splits[i++].c_str(), 0);
+  disk_byte_read_rate   = strtod(splits[i++].c_str(), 0);
+  byte_write_rate       = strtod(splits[i++].c_str(), 0);
+  byte_read_rate        = strtod(splits[i++].c_str(), 0);
+  update_rate           = strtod(splits[i++].c_str(), 0);
+  scan_rate             = strtod(splits[i++].c_str(), 0);
+  cell_write_rate       = strtod(splits[i++].c_str(), 0);
+  cell_read_rate        = strtod(splits[i++].c_str(), 0);
 }
 
 RangeMetrics::RangeMetrics(const char *server_id, const char *table_id,

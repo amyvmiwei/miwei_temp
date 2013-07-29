@@ -3166,6 +3166,13 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   m_server_stats->recompute(collector_id);
   m_stats->system.refresh();
 
+  uint64_t disk_total = 0;
+  uint64_t disk_avail = 0;
+  foreach_ht (struct FsStat &fss, m_stats->system.fs_stat) {
+    disk_total += fss.total;
+    disk_avail += fss.avail;
+  }
+
   m_loadavg_accum += m_stats->system.loadavg_stat.loadavg[0];
   m_page_in_accum += m_stats->system.swap_stat.page_in;
   m_page_out_accum += m_stats->system.swap_stat.page_out;
@@ -3365,7 +3372,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     time_t rounded_time = (now+(Global::metrics_interval/2)) - ((now+(Global::metrics_interval/2))%Global::metrics_interval);
     if (m_last_metrics_update != 0) {
       double time_interval = (double)now - (double)m_last_metrics_update;
-      String value = format("2:%ld,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f", rounded_time,
+      String value = format("3:%ld,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f:%lld:%lld",
+                            rounded_time,
                             m_loadavg_accum / (double)(m_metric_samples * m_cores),
                             (double)m_load_factors.disk_bytes_read / time_interval,
                             (double)m_load_factors.bytes_written / time_interval,
@@ -3375,7 +3383,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
                             (double)m_load_factors.cells_written / time_interval,
                             (double)m_load_factors.cells_scanned / time_interval,
                             (double)m_page_in_accum / (double)m_metric_samples,
-                            (double)m_page_out_accum / (double)m_metric_samples);
+                            (double)m_page_out_accum / (double)m_metric_samples,
+                            (Lld)disk_total, (Lld)disk_avail);
       String location = Global::location_initializer->get();
       KeySpec key;
       key.row = location.c_str();

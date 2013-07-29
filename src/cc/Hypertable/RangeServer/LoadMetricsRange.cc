@@ -44,7 +44,8 @@ LoadMetricsRange::LoadMetricsRange(const String &table_id, const String &start_r
 
 void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
                                          LoadFactors &load_factors,
-                                         uint64_t disk_used, uint64_t memory_used) {
+                                         uint64_t disk_used, uint64_t memory_used,
+                                         double compression_ratio) {
   bool update_start_row = false;
   String old_start_row, old_end_row;
 
@@ -72,10 +73,11 @@ void LoadMetricsRange::compute_and_store(TableMutator *mutator, time_t now,
   double byte_write_rate = (double)(load_factors.bytes_written-m_load_factors.bytes_written) / time_interval;
   double disk_byte_read_rate = (double)(load_factors.disk_bytes_read-m_load_factors.disk_bytes_read) / time_interval;
 
-  String value = format("2:%ld,%llu,%llu,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
+  String value = format("3:%ld,%llu,%llu,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f,%.6f",
                         rounded_time, (Llu)disk_used, (Llu)memory_used,
-                        disk_byte_read_rate, byte_write_rate, byte_read_rate,
-                        update_rate, scan_rate, cell_write_rate, cell_read_rate);
+                        compression_ratio, disk_byte_read_rate, byte_write_rate,
+                        byte_read_rate, update_rate, scan_rate, cell_write_rate,
+                        cell_read_rate);
 
   KeySpec key;
   String row = Global::location_initializer->get() + ":" + m_table_id;

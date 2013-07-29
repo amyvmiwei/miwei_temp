@@ -200,7 +200,8 @@ void Monitoring::add(std::vector<RangeServerStatistics> &stats) {
 
     numerator = denominator = 0.0;
     for (size_t j=0; j<stats[i].stats->system.fs_stat.size(); j++) {
-      numerator += stats[i].stats->system.fs_stat[j].used;
+      numerator += stats[i].stats->system.fs_stat[j].total 
+        - stats[i].stats->system.fs_stat[j].avail;
       denominator += stats[i].stats->system.fs_stat[j].total;
     }
     if (denominator != 0.0)
@@ -654,7 +655,8 @@ void Monitoring::dump_rangeserver_summary_json(std::vector<RangeServerStatistics
       disk = 0.0;
       disk_use_pct = 0;
       for (size_t j=0; j<stats[i].stats->system.fs_stat.size(); j++) {
-        numerator += stats[i].stats->system.fs_stat[j].used;
+        numerator += stats[i].stats->system.fs_stat[j].total -
+          stats[i].stats->system.fs_stat[j].avail;
         denominator += stats[i].stats->system.fs_stat[j].total;
         disk += stats[i].stats->system.fs_stat[j].total;
       }

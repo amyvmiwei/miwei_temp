@@ -50,6 +50,8 @@ namespace Hypertable {
     double cells_scanned_rate;
     double page_in;
     double page_out;
+    int64_t disk_total;
+    int64_t disk_avail;
   }; // ServerMeasurement
 
   class ServerMetrics {
