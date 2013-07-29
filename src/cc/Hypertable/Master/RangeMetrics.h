@@ -41,6 +41,7 @@ namespace Hypertable {
     int64_t timestamp;
     int64_t disk_used;
     int64_t memory_used;
+    double compression_ratio;
     double disk_byte_read_rate;
     double byte_write_rate;
     double byte_read_rate;

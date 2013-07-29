@@ -414,8 +414,6 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 void AccessGroup::load_cellstore(CellStorePtr &cellstore) {
   ScopedLock lock(m_mutex);
 
-  m_disk_usage += cellstore->disk_usage();
-
   // Record the latest stored revision
   int64_t revision = boost::any_cast<int64_t>
     (cellstore->get_trailer()->get("revision"));

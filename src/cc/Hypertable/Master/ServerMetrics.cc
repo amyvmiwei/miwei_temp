@@ -42,14 +42,22 @@ void ServerMeasurement::parse_measurement(const char *measurement, size_t len) {
   boost::split(splits, str, boost::is_any_of(":,"));
 
   version = atoi(splits[0].c_str());
-  if (version != 2)
+  if (version == 2) {
+    if (splits.size() != 12)
+      HT_THROW(Error::PROTOCOL_ERROR,
+               format("Measurement string '%s' has %d components, expected 12.",
+                      str.c_str(), (int)splits.size()));
+  }
+  else if (version == 3) {
+    if (splits.size() != 14)
+      HT_THROW(Error::PROTOCOL_ERROR,
+               format("Measurement string '%s' has %d components, expected 14.",
+                      str.c_str(), (int)splits.size()));
+  }
+  else
     HT_THROW(Error::NOT_IMPLEMENTED,
              format("ServerMetrics version=%d expected 2", (int)version));
 
-  if (splits.size() != 12)
-    HT_THROW(Error::PROTOCOL_ERROR,
-             format("Measurement string '%s' has %d components, expected 12.",
-                    str.c_str(), (int)splits.size()));
 
   timestamp             = strtoll(splits[1].c_str(), 0, 0);
   loadavg               = strtod(splits[2].c_str(), 0);
@@ -62,6 +70,10 @@ void ServerMeasurement::parse_measurement(const char *measurement, size_t len) {
   cells_scanned_rate    = strtod(splits[9].c_str(), 0);
   page_in               = strtod(splits[10].c_str(), 0);
   page_out              = strtod(splits[11].c_str(), 0);
+  if (version == 3) {
+    disk_total          = strtoll(splits[12].c_str(), 0, 0);
+    disk_avail          = strtoll(splits[13].c_str(), 0, 0);
+  }
 }
 
 void ServerMetrics::add_measurement(const char *measurement, size_t len) {

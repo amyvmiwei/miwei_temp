@@ -45,7 +45,8 @@ namespace Hypertable {
 
     void compute_and_store(TableMutator *mutator, time_t now,
                            LoadFactors &load_factors,
-                           uint64_t disk_used, uint64_t memory_used);
+                           uint64_t disk_used, uint64_t memory_used,
+                           double compression_ratio);
 
   private:
 
