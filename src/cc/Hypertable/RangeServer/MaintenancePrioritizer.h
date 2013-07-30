@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -27,7 +27,6 @@
 #include "Common/Time.h"
 
 #include "Global.h"
-#include "RSStats.h"
 
 namespace Hypertable {
 
@@ -49,9 +48,9 @@ namespace Hypertable {
       int64_t needed;
     };
 
-    MaintenancePrioritizer(RSStatsPtr &server_stats)
-      : m_cellstore_minimum_size(0), m_server_stats(server_stats),
-        m_initialization_complete(false), m_uninitialized_ranges_seen(false) { }
+    MaintenancePrioritizer() : m_cellstore_minimum_size(0),
+                               m_initialization_complete(false),
+                               m_uninitialized_ranges_seen(false) { }
 
     virtual void prioritize(RangeDataVector &range_data, MemoryState &memory_state,
                             int32_t priority, String *trace) = 0;
@@ -59,7 +58,6 @@ namespace Hypertable {
   protected:
 
     int64_t m_cellstore_minimum_size;
-    RSStatsPtr m_server_stats;
     bool m_initialization_complete;
     bool m_uninitialized_ranges_seen;
 

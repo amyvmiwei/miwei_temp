@@ -158,12 +158,10 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::merge_cellstore_run_length_threshold = cfg.get_i32("CellStore.Merge.RunLengthThreshold");
   Global::ignore_clock_skew_errors = cfg.get_bool("IgnoreClockSkewErrors");
 
-  std::vector<int64_t> collector_periods(2);
   int64_t interval = (int64_t)cfg.get_i32("Maintenance.Interval");
-  collector_periods[RSStats::STATS_COLLECTOR_MAINTENANCE] = interval;
-  collector_periods[RSStats::STATS_COLLECTOR_MONITORING] = interval;
 
-  m_server_stats = new RSStats(collector_periods);
+  Global::load_statistics = new LoadStatistics(interval);
+
   m_stats = new StatsRangeServer(m_props);
 
   m_namemap = new NameIdMapper(m_hyperspace, Global::toplevel_dir);
@@ -343,7 +341,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   /**
    * Create maintenance scheduler
    */
-  m_maintenance_scheduler = new MaintenanceScheduler(Global::maintenance_queue, m_server_stats, m_live_map);
+  m_maintenance_scheduler = new MaintenanceScheduler(Global::maintenance_queue, m_live_map);
 
   // Install maintenance timer
   m_timer_handler = new TimerHandler(m_comm, this);
@@ -1466,8 +1464,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
                                      &cells_scanned, &cells_returned);
 
     {
-      Locker<RSStats> lock(*m_server_stats);
-      m_server_stats->add_scan_data(1, cells_scanned, bytes_scanned);
+      Locker<LoadStatistics> lock(*Global::load_statistics);
+      Global::load_statistics->add_scan_data(1, cells_scanned, bytes_scanned);
       range->add_read_data(cells_scanned, cells_returned, bytes_scanned, bytes_returned,
                            more ? 0 : mscanner->get_disk_read());
     }
@@ -1585,8 +1583,8 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
                                      &cells_scanned, &cells_returned);
 
     {
-      Locker<RSStats> lock(*m_server_stats);
-      m_server_stats->add_scan_data(0, cells_scanned, bytes_scanned);
+      Locker<LoadStatistics> lock(*Global::load_statistics);
+      Global::load_statistics->add_scan_data(0, cells_scanned, bytes_scanned);
       range->add_read_data(cells_scanned, cells_returned, bytes_scanned, bytes_returned,
                            more ? 0 : mscanner->get_disk_read());
     }
@@ -2886,8 +2884,8 @@ void RangeServer::update_add_and_respond() {
     }
 
     {
-      Locker<RSStats> lock(*m_server_stats);
-      m_server_stats->add_update_data(uc->total_updates, uc->total_added, uc->total_bytes_added, uc->total_syncs);
+      Locker<LoadStatistics> lock(*Global::load_statistics);
+      Global::load_statistics->add_update_data(uc->total_updates, uc->total_added, uc->total_bytes_added, uc->total_syncs);
     }
 
     if (m_profile_query) {
@@ -3154,7 +3152,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   RangeDataVector range_data;
   int64_t timestamp = Hypertable::get_ts64();
   time_t now = (time_t)(timestamp/1000000000LL);
-  int collector_id = RSStats::STATS_COLLECTOR_MONITORING;
+  LoadStatistics::Bundle load_stats;
 
   HT_INFO("Entering get_statistics()");
 
@@ -3163,7 +3161,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     return;
   }
 
-  m_server_stats->recompute(collector_id);
+  Global::load_statistics->recompute(&load_stats);
   m_stats->system.refresh();
 
   uint64_t disk_total = 0;
@@ -3176,20 +3174,20 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   m_loadavg_accum += m_stats->system.loadavg_stat.loadavg[0];
   m_page_in_accum += m_stats->system.swap_stat.page_in;
   m_page_out_accum += m_stats->system.swap_stat.page_out;
-  m_load_factors.bytes_scanned += m_server_stats->get_scan_bytes(collector_id);
-  m_load_factors.bytes_written += m_server_stats->get_update_bytes(collector_id);
+  m_load_factors.bytes_scanned += load_stats.scan_bytes;
+  m_load_factors.bytes_written += load_stats.update_bytes;
   m_metric_samples++;
 
   m_stats->set_location(Global::location_initializer->get());
   m_stats->set_version(version_string());
   m_stats->timestamp = timestamp;
-  m_stats->scan_count = m_server_stats->get_scan_count(collector_id);
-  m_stats->scanned_cells = m_server_stats->get_scan_cells(collector_id);
-  m_stats->scanned_bytes = m_server_stats->get_scan_bytes(collector_id);
-  m_stats->update_count = m_server_stats->get_update_count(collector_id);
-  m_stats->updated_cells = m_server_stats->get_update_cells(collector_id);
-  m_stats->updated_bytes = m_server_stats->get_update_bytes(collector_id);
-  m_stats->sync_count = m_server_stats->get_sync_count(collector_id);
+  m_stats->scan_count = load_stats.scan_count;
+  m_stats->scanned_cells = load_stats.scan_cells;
+  m_stats->scanned_bytes = load_stats.scan_bytes;
+  m_stats->update_count = load_stats.update_count;
+  m_stats->updated_cells = load_stats.update_cells;
+  m_stats->updated_bytes = load_stats.update_bytes;
+  m_stats->sync_count = load_stats.sync_count;
   m_stats->tracked_memory = Global::memory_tracker->balance();
   m_stats->cpu_user = m_stats->system.cpu_stat.user;
   m_stats->cpu_sys = m_stats->system.cpu_stat.sys;
@@ -4424,9 +4422,6 @@ void RangeServer::do_maintenance() {
 
     // Set Low Memory mode
     m_maintenance_scheduler->set_low_memory_mode(m_timer_handler->low_memory_mode());
-
-    // Recompute stats
-    m_server_stats->recompute(RSStats::STATS_COLLECTOR_MAINTENANCE);
 
     // Schedule maintenance
     m_maintenance_scheduler->schedule();

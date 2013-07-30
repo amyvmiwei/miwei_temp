@@ -41,6 +41,7 @@ namespace Hypertable {
   RangeLocatorPtr        Global::range_locator = 0;
   PseudoTables          *Global::pseudo_tables = 0;
   MetaLogEntityRemoveOkLogsPtr Global::remove_ok_logs;
+  LoadStatisticsPtr      Global::load_statistics;
   bool                   Global::verbose = false;
   bool                   Global::row_size_unlimited = false;
   CommitLog             *Global::user_log = 0;

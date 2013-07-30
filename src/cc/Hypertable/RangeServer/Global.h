@@ -44,6 +44,7 @@
 
 #include "FileBlockCache.h"
 #include "LocationInitializer.h"
+#include "LoadStatistics.h"
 #include "MaintenanceQueue.h"
 #include "MemoryTracker.h"
 #include "MetaLogEntityTask.h"
@@ -67,6 +68,7 @@ namespace Hypertable {
     static Hypertable::RangeLocatorPtr range_locator;
     static Hypertable::PseudoTables *pseudo_tables;
     static MetaLogEntityRemoveOkLogsPtr remove_ok_logs;
+    static LoadStatisticsPtr load_statistics;
     static bool           verbose;
     static bool           row_size_unlimited;
     static CommitLog     *user_log;
