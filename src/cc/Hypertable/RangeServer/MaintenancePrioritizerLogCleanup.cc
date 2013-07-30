@@ -34,11 +34,11 @@ void
 MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
                                              MemoryState &memory_state,
                                              int32_t priority, String *trace) {
+  LoadStatistics::Bundle load_stats;
   RangeDataVector range_data_root;
   RangeDataVector range_data_metadata;
   RangeDataVector range_data_system;
   RangeDataVector range_data_user;
-  int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
 
   for (size_t i=0; i<range_data.size(); i++) {
     if (range_data[i].range->is_root())
@@ -73,7 +73,8 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
   /**
    *  Compute prune threshold based on load activity
    */
-  int64_t prune_threshold = (int64_t)(m_server_stats->get_update_mbps(collector_id) * (double)Global::log_prune_threshold_max);
+  Global::load_statistics->get(&load_stats);
+  int64_t prune_threshold = (int64_t)(load_stats.update_mbps * (double)Global::log_prune_threshold_max);
   if (prune_threshold < Global::log_prune_threshold_min)
     prune_threshold = Global::log_prune_threshold_min;
   else if (prune_threshold > Global::log_prune_threshold_max)
@@ -103,9 +104,8 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
    *  If there is no update activity, or there is little update activity and
    *  scan activity, then increase the block cache size
    */
-  if (m_server_stats->get_update_bytes(collector_id) == 0 ||
-      (m_server_stats->get_update_bytes(collector_id) < 1000000 &&
-       m_server_stats->get_scan_count(collector_id) > 20)) {
+  if (load_stats.update_bytes == 0 ||
+      (load_stats.update_bytes < 1000000 && load_stats.scan_count > 20)) {
     if (memory_state.balance < memory_state.limit) {
       int64_t available = memory_state.limit - memory_state.balance;
       if (Global::block_cache) {

@@ -55,7 +55,7 @@
 #include "MaintenanceScheduler.h"
 #include "MetaLogEntityRange.h"
 #include "QueryCache.h"
-#include "RSStats.h"
+#include "LoadStatistics.h"
 #include "ResponseCallbackCreateScanner.h"
 #include "ResponseCallbackFetchScanblock.h"
 #include "ResponseCallbackGetStatistics.h"
@@ -291,7 +291,7 @@ namespace Hypertable {
     TableIdCachePtr        m_dropped_table_id_cache;
 
     StatsRangeServerPtr    m_stats;
-    RSStatsPtr             m_server_stats;
+    LoadStatisticsPtr      m_load_statistics;
     int64_t                m_server_stats_timestamp;
 
     NameIdMapperPtr        m_namemap;

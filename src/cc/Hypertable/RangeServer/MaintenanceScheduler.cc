@@ -53,11 +53,8 @@ namespace {
 
 
 MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
-                                           RSStatsPtr &server_stats,
                                            TableInfoMapPtr &live_map)
-  : m_queue(queue), m_server_stats(server_stats), m_live_map(live_map),
-    m_prioritizer_log_cleanup(server_stats),
-    m_prioritizer_low_memory(server_stats), m_start_offset(0),
+  : m_queue(queue), m_live_map(live_map), m_start_offset(0),
     m_initialized(false), m_low_memory_mode(false) {
   m_prioritizer = &m_prioritizer_log_cleanup;
   m_maintenance_interval = get_i32("Hypertable.RangeServer.Maintenance.Interval");
@@ -95,6 +92,8 @@ void MaintenanceScheduler::schedule() {
   boost::xtime now;
 
   boost::xtime_get(&now, TIME_UTC_);
+
+  Global::load_statistics->recompute();
 
   debug = debug_signal_file_exists(now);
 

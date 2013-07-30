@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -37,11 +37,11 @@ void
 MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
                                             MemoryState &memory_state,
                                             int32_t priority, String *trace) {
+  LoadStatistics::Bundle load_stats;
   RangeDataVector range_data_root;
   RangeDataVector range_data_metadata;
   RangeDataVector range_data_system;
   RangeDataVector range_data_user;
-  int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
 
   for (size_t i=0; i<range_data.size(); i++) {
     if (range_data[i].range->is_root())
@@ -82,7 +82,8 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
   /**
    *  Compute prune threshold based on load activity
    */
-  int64_t prune_threshold = (int64_t)(m_server_stats->get_update_mbps(collector_id) * (double)Global::log_prune_threshold_max);
+  Global::load_statistics->get(&load_stats);
+  int64_t prune_threshold = (int64_t)(load_stats.update_mbps * (double)Global::log_prune_threshold_max);
   if (prune_threshold < Global::log_prune_threshold_min)
     prune_threshold = Global::log_prune_threshold_min;
   else if (prune_threshold > Global::log_prune_threshold_max)
@@ -107,10 +108,12 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
     if (schedule_inprogress_operations(range_data_user, memory_state, priority, trace))
       schedule_splits_and_relinquishes(range_data, memory_state, priority, trace);
 
-    assign_priorities_user(range_data_user, memory_state, priority, trace);
+    assign_priorities_user(range_data_user, load_stats, memory_state,
+                           priority, trace);
 
-    schedule_necessary_compactions(range_data_user, Global::user_log, prune_threshold,
-                                   memory_state, priority, trace);
+    schedule_necessary_compactions(range_data_user, Global::user_log,
+                                   prune_threshold, memory_state, priority,
+                                   trace);
 
     schedule_initialization_operations(range_data_user, priority);
   }
@@ -166,20 +169,17 @@ MaintenancePrioritizerLowMemory::assign_priorities_all(RangeDataVector &range_da
  *
  */
 
-void
-MaintenancePrioritizerLowMemory::assign_priorities_user(RangeDataVector &range_data,
-                  MemoryState &memory_state, int32_t &priority, String *trace) {
-  int collector_id = RSStats::STATS_COLLECTOR_MAINTENANCE;
-  uint64_t update_bytes = m_server_stats->get_update_bytes(collector_id);
-  uint32_t scan_count = m_server_stats->get_scan_count(collector_id);
+void MaintenancePrioritizerLowMemory::assign_priorities_user(
+       RangeDataVector &range_data, LoadStatistics::Bundle &load_stats,
+       MemoryState &memory_state, int32_t &priority, String *trace) {
 
   if (!purge_shadow_caches(range_data, memory_state, priority, trace))
     return;
 
-  if (update_bytes < 500000 && scan_count > 10) {
+  if (load_stats.update_bytes < 500000 && load_stats.scan_count > 10) {
 
     HT_INFOF("READ workload prioritization (update_bytes=%llu, scan_count=%u)",
-	     (Llu)update_bytes, (unsigned)scan_count);
+	     (Llu)load_stats.update_bytes, (unsigned)load_stats.scan_count);
 
     if (!compact_cellcaches(range_data, memory_state, priority, trace))
       return;
@@ -198,7 +198,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_user(RangeDataVector &range_d
   else {
 
     HT_INFOF("WRITE workload prioritization (update_bytes=%llu, scan_count=%u)",
-	     (Llu)update_bytes, (unsigned)scan_count);
+	     (Llu)load_stats.update_bytes, (unsigned)load_stats.scan_count);
 
     if (Global::block_cache) {
       Global::block_cache->cap_memory_use();
