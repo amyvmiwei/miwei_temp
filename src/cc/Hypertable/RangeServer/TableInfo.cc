@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -293,12 +293,12 @@ bool TableInfo::includes_row(const String &row) const {
   return false;
 }
 
-void TableInfo::get_range_data(RangeDataVector &range_data) {
+void TableInfo::get_ranges(Ranges &ranges) {
   ScopedLock lock(m_mutex);
   for (RangeInfoSet::iterator iter = m_range_set.begin();
        iter != m_range_set.end(); ++iter) {
     if (iter->get_range())
-      range_data.push_back( RangeData(iter->get_range()) );
+      ranges.array.push_back( RangeData(iter->get_range()) );
   }
 }
 

@@ -180,17 +180,17 @@ void TableInfoMap::get_all(std::vector<TableInfoPtr> &tv) {
 }
 
 
-void TableInfoMap::get_range_data(RangeDataVector &range_data, StringSet *remove_ok_logs) {
+void TableInfoMap::get_ranges(Ranges &ranges, StringSet *remove_ok_logs) {
   ScopedLock lock(m_mutex);
   int32_t count = 0;
 
   // reserve space in vector
   for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
     count += (*iter).second->get_range_count();
-  range_data.reserve(count+10);
+  ranges.array.reserve(count+10);
 
   for (InfoMap::iterator iter = m_map.begin(); iter != m_map.end(); iter++)
-    (*iter).second->get_range_data(range_data);
+    (*iter).second->get_ranges(ranges);
 
   {
     ScopedLock lock2(Global::mutex);
@@ -233,7 +233,7 @@ void TableInfoMap::merge(TableInfoMap *other,
 
 void TableInfoMap::merge_unlocked(TableInfoMap *other) {
   InfoMap::iterator other_iter, iter;
-  RangeDataVector range_data;
+  Ranges ranges;
 
   for (other_iter = other->m_map.begin();
        other_iter != other->m_map.end(); ++other_iter) {
@@ -244,9 +244,9 @@ void TableInfoMap::merge_unlocked(TableInfoMap *other) {
       m_map[ (*other_iter).first ] = (*other_iter).second;
     }
     else {
-      range_data.clear();
-      (*other_iter).second->get_range_data(range_data);
-      foreach_ht (RangeData &rd, range_data)
+      ranges.array.clear();
+      (*other_iter).second->get_ranges(ranges);
+      foreach_ht (RangeData &rd, ranges.array)
         (*iter).second->add_range(rd.range);
     }
 

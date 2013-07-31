@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -67,7 +67,7 @@ namespace Hypertable {
 
     /** Writes debugging output and removes signal file.
      */
-    void write_debug_output(boost::xtime now, RangeDataVector &range_data,
+    void write_debug_output(boost::xtime now, Ranges &ranges,
                             const String &header_str);
 
     MaintenanceQueuePtr m_queue;

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -47,25 +47,12 @@ namespace Hypertable {
     Range::MaintenanceData *data;
   };
 
-  class RangeDataVector : public std::vector<RangeData>
-  {
+  class Ranges : public ReferenceCount {
   public:
-    RangeDataVector() : std::vector<RangeData>() {}
-    ByteArena& arena() { return m_arena; }
-    void rotate(int32_t starting_point) {
-      if (starting_point != 0) {
-        std::vector<RangeData> rotated;
-        rotated.reserve(size());
-        starting_point %= size();
-        std::vector<RangeData>::iterator iter = begin() + starting_point;
-        rotated.insert(rotated.end(), iter, end());
-        rotated.insert(rotated.end(), begin(), iter);
-        swap(rotated);
-      }
-    }
-  private:
-    ByteArena m_arena;
+    std::vector<RangeData> array;
+    ByteArena arena;
   };
+  typedef intrusive_ptr<Ranges> RangesPtr;
 
   class RangeInfo {
   public:
@@ -224,9 +211,9 @@ namespace Hypertable {
     /**
      * Fills a vector of RangeData objects
      *
-     * @param range_data smart pointer to range data vector
+     * @param ranges Address of range statistics vector
      */
-    void get_range_data(RangeDataVector &range_data);
+    void get_ranges(Ranges &ranges);
 
     /**
      * Returns the number of ranges open for this table
