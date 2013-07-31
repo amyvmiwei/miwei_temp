@@ -34,14 +34,14 @@ using namespace Hypertable::Config;
 using namespace std;
 
 void
-MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
+MaintenancePrioritizerLowMemory::prioritize(std::vector<RangeData> &range_data,
                                             MemoryState &memory_state,
                                             int32_t priority, String *trace) {
   LoadStatistics::Bundle load_stats;
-  RangeDataVector range_data_root;
-  RangeDataVector range_data_metadata;
-  RangeDataVector range_data_system;
-  RangeDataVector range_data_user;
+  std::vector<RangeData> range_data_root;
+  std::vector<RangeData> range_data_metadata;
+  std::vector<RangeData> range_data_system;
+  std::vector<RangeData> range_data_user;
 
   for (size_t i=0; i<range_data.size(); i++) {
     if (range_data[i].range->is_root())
@@ -132,7 +132,7 @@ MaintenancePrioritizerLowMemory::prioritize(RangeDataVector &range_data,
  * 3. schedule needed compactions
  */
 void
-MaintenancePrioritizerLowMemory::assign_priorities_all(RangeDataVector &range_data,
+MaintenancePrioritizerLowMemory::assign_priorities_all(std::vector<RangeData> &range_data,
             CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
 	    int32_t &priority, String *trace) {
 
@@ -170,7 +170,7 @@ MaintenancePrioritizerLowMemory::assign_priorities_all(RangeDataVector &range_da
  */
 
 void MaintenancePrioritizerLowMemory::assign_priorities_user(
-       RangeDataVector &range_data, LoadStatistics::Bundle &load_stats,
+       std::vector<RangeData> &range_data, LoadStatistics::Bundle &load_stats,
        MemoryState &memory_state, int32_t &priority, String *trace) {
 
   if (!purge_shadow_caches(range_data, memory_state, priority, trace))

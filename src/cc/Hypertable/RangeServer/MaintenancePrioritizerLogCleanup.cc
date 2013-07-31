@@ -31,14 +31,14 @@ using namespace Hypertable;
 using namespace std;
 
 void
-MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
+MaintenancePrioritizerLogCleanup::prioritize(std::vector<RangeData> &range_data,
                                              MemoryState &memory_state,
                                              int32_t priority, String *trace) {
   LoadStatistics::Bundle load_stats;
-  RangeDataVector range_data_root;
-  RangeDataVector range_data_metadata;
-  RangeDataVector range_data_system;
-  RangeDataVector range_data_user;
+  std::vector<RangeData> range_data_root;
+  std::vector<RangeData> range_data_metadata;
+  std::vector<RangeData> range_data_system;
+  std::vector<RangeData> range_data_user;
 
   for (size_t i=0; i<range_data.size(); i++) {
     if (range_data[i].range->is_root())
@@ -128,7 +128,7 @@ MaintenancePrioritizerLogCleanup::prioritize(RangeDataVector &range_data,
  * 3. schedule compactions for log cleanup purposes
  */
 void
-MaintenancePrioritizerLogCleanup::assign_priorities(RangeDataVector &range_data,
+MaintenancePrioritizerLogCleanup::assign_priorities(std::vector<RangeData> &range_data,
               CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
               int32_t &priority, String *trace) {
 

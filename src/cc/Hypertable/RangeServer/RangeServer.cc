@@ -590,7 +590,7 @@ void RangeServer::local_recover() {
   CommitLogReaderPtr system_log_reader;
   CommitLogReaderPtr metadata_log_reader;
   CommitLogReaderPtr user_log_reader;
-  RangeDataVector range_data;
+  Ranges ranges;
   std::vector<MetaLog::EntityPtr> entities, stripped_entities;
   MetaLogEntityRange *range_entity;
   StringSet transfer_logs;
@@ -674,9 +674,9 @@ void RangeServer::local_recover() {
         root_log_reader->get_linked_logs(transfer_logs);
 
         // Perform any range specific post-replay tasks
-        range_data.clear();
-        replay_map.get_range_data(range_data);
-        foreach_ht(RangeData &rd, range_data) {
+        ranges.array.clear();
+        replay_map.get_ranges(ranges);
+        foreach_ht(RangeData &rd, ranges.array) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -727,9 +727,9 @@ void RangeServer::local_recover() {
         metadata_log_reader->get_linked_logs(transfer_logs);
 
         // Perform any range specific post-replay tasks
-        range_data.clear();
-        replay_map.get_range_data(range_data);
-        foreach_ht(RangeData &rd, range_data) {
+        ranges.array.clear();
+        replay_map.get_ranges(ranges);
+        foreach_ht(RangeData &rd, ranges.array) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -779,9 +779,9 @@ void RangeServer::local_recover() {
         system_log_reader->get_linked_logs(transfer_logs);
 
         // Perform any range specific post-replay tasks
-        range_data.clear();
-        replay_map.get_range_data(range_data);
-        foreach_ht (RangeData &rd, range_data) {
+        ranges.array.clear();
+        replay_map.get_ranges(ranges);
+        foreach_ht (RangeData &rd, ranges.array) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -837,9 +837,9 @@ void RangeServer::local_recover() {
         user_log_reader->get_linked_logs(transfer_logs);
 
         // Perform any range specific post-replay tasks
-        range_data.clear();
-        replay_map.get_range_data(range_data);
-        foreach_ht(RangeData &rd, range_data) {
+        ranges.array.clear();
+        replay_map.get_ranges(ranges);
+        foreach_ht(RangeData &rd, ranges.array) {
           rd.range->recovery_finalize();
           if (rd.range->get_state() == RangeState::SPLIT_LOG_INSTALLED ||
               rd.range->get_state() == RangeState::SPLIT_SHRUNK)
@@ -1074,7 +1074,7 @@ void RangeServer::replay_log(TableInfoMap &replay_map,
 void
 RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
                      const char *row, uint32_t flags) {
-  RangeDataVector range_data;
+  Ranges ranges;
   TableInfoPtr table_info;
   String start_row, end_row;
   RangePtr range;
@@ -1109,11 +1109,11 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
         range_count = 1;
       }
       else {
-        range_data.clear();
-        table_info->get_range_data(range_data);
-        foreach_ht(RangeData &rd, range_data)
+        ranges.array.clear();
+        table_info->get_ranges(ranges);
+        foreach_ht(RangeData &rd, ranges.array)
           rd.range->set_needs_compaction(true);
-        range_count = range_data.size();
+        range_count = ranges.array.size();
       }
     }
     else {
@@ -1127,17 +1127,17 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
 
           if ((flags & RangeServerProtocol::COMPACT_FLAG_METADATA) ==
               RangeServerProtocol::COMPACT_FLAG_METADATA) {
-            range_data.clear();
-            tables[i]->get_range_data(range_data);
-            foreach_ht(RangeData &rd, range_data)
+            ranges.array.clear();
+            tables[i]->get_ranges(ranges);
+            foreach_ht(RangeData &rd, ranges.array)
               rd.range->set_needs_compaction(true);
-            range_count += range_data.size();
+            range_count += ranges.array.size();
           }
           else if ((flags & RangeServerProtocol::COMPACT_FLAG_ROOT) ==
                    RangeServerProtocol::COMPACT_FLAG_ROOT) {
-            range_data.clear();
-            tables[i]->get_range_data(range_data);
-            foreach_ht(RangeData &rd, range_data) {
+            ranges.array.clear();
+            tables[i]->get_ranges(ranges);
+            foreach_ht(RangeData &rd, ranges.array) {
               if (rd.range->is_root()) {
                 rd.range->set_needs_compaction(true);
                 range_count++;
@@ -1148,20 +1148,20 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
         }
         else if (tables[i]->identifier().is_system()) {
           if ((flags & RangeServerProtocol::COMPACT_FLAG_SYSTEM) == RangeServerProtocol::COMPACT_FLAG_SYSTEM) {
-            range_data.clear();
-            tables[i]->get_range_data(range_data);
-            foreach_ht(RangeData &rd, range_data)
+            ranges.array.clear();
+            tables[i]->get_ranges(ranges);
+            foreach_ht(RangeData &rd, ranges.array)
               rd.range->set_needs_compaction(true);
-            range_count += range_data.size();
+            range_count += ranges.array.size();
           }
         }
         else {
           if ((flags & RangeServerProtocol::COMPACT_FLAG_USER) == RangeServerProtocol::COMPACT_FLAG_USER) {
-            range_data.clear();
-            tables[i]->get_range_data(range_data);
-            foreach_ht(RangeData &rd, range_data)
+            ranges.array.clear();
+            tables[i]->get_ranges(ranges);
+            foreach_ht(RangeData &rd, ranges.array)
               rd.range->set_needs_compaction(true);
-            range_count += range_data.size();
+            range_count += ranges.array.size();
           }
         }
       }
@@ -1208,9 +1208,9 @@ namespace {
 
   }
 
-  void do_metadata_sync(RangeDataVector &range_data, TableMutatorPtr &mutator,
+  void do_metadata_sync(Ranges &ranges, TableMutatorPtr &mutator,
                         const char *table_id, bool do_start_row, bool do_location) {
-    foreach_ht(RangeData &rd, range_data)
+    foreach_ht(RangeData &rd, ranges.array)
       do_metadata_sync(rd, mutator, table_id, do_start_row, do_location);
   }
 
@@ -1219,7 +1219,7 @@ namespace {
 void
 RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id,
         uint32_t flags, std::vector<const char *> columns) {
-  RangeDataVector range_data;
+  Ranges ranges;
   TableInfoPtr table_info;
   size_t range_count = 0;
   TableMutatorPtr mutator;
@@ -1278,11 +1278,11 @@ RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id,
 
       mutator = Global::metadata_table->create_mutator();
 
-      range_data.clear();
-      table_info->get_range_data(range_data);
+      ranges.array.clear();
+      table_info->get_ranges(ranges);
 
-      do_metadata_sync(range_data, mutator, table_id, do_start_row, do_location);
-      range_count = range_data.size();
+      do_metadata_sync(ranges, mutator, table_id, do_start_row, do_location);
+      range_count = ranges.array.size();
 
     }
     else {
@@ -1296,38 +1296,38 @@ RangeServer::metadata_sync(ResponseCallback *cb, const char *table_id,
 
         if (tables[i]->identifier().is_metadata()) {
 
-          range_data.clear();
-          tables[i]->get_range_data(range_data);
+          ranges.array.clear();
+          tables[i]->get_ranges(ranges);
 
-          if (!range_data.empty()) {
-            if (range_data[0].range->is_root() &&
+          if (!ranges.array.empty()) {
+            if (ranges.array[0].range->is_root() &&
                 (flags & RangeServerProtocol::COMPACT_FLAG_ROOT) == RangeServerProtocol::COMPACT_FLAG_ROOT) {
-              do_metadata_sync(range_data[0], mutator, table_id, do_start_row, do_location);
+              do_metadata_sync(ranges.array[0], mutator, table_id, do_start_row, do_location);
               range_count++;
             }
             if ((flags & RangeServerProtocol::COMPACT_FLAG_METADATA) ==
                 RangeServerProtocol::COMPACT_FLAG_METADATA) {
-              do_metadata_sync(range_data, mutator, table_id, do_start_row, do_location);
-              range_count += range_data.size();
+              do_metadata_sync(ranges, mutator, table_id, do_start_row, do_location);
+              range_count += ranges.array.size();
             }
           }
         }
         else if (tables[i]->identifier().is_system()) {
           if ((flags & RangeServerProtocol::COMPACT_FLAG_SYSTEM) ==
               RangeServerProtocol::COMPACT_FLAG_SYSTEM) {
-            range_data.clear();
-            tables[i]->get_range_data(range_data);
-            do_metadata_sync(range_data, mutator, table_id, do_start_row, do_location);
-            range_count += range_data.size();
+            ranges.array.clear();
+            tables[i]->get_ranges(ranges);
+            do_metadata_sync(ranges, mutator, table_id, do_start_row, do_location);
+            range_count += ranges.array.size();
           }
         }
         else if (tables[i]->identifier().is_user()) {
           if ((flags & RangeServerProtocol::COMPACT_FLAG_USER) ==
               RangeServerProtocol::COMPACT_FLAG_USER) {
-            range_data.clear();
-            tables[i]->get_range_data(range_data);
-            do_metadata_sync(range_data, mutator, table_id, do_start_row, do_location);
-            range_count += range_data.size();
+            ranges.array.clear();
+            tables[i]->get_ranges(ranges);
+            do_metadata_sync(ranges, mutator, table_id, do_start_row, do_location);
+            range_count += ranges.array.size();
           }
         }
       }
@@ -2909,7 +2909,7 @@ void RangeServer::update_add_and_respond() {
 void
 RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   TableInfoPtr table_info;
-  RangeDataVector range_data;
+  Ranges ranges;
   String metadata_prefix;
   String metadata_key;
   TableMutatorPtr mutator;
@@ -2939,14 +2939,14 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   }
 
   // Set "drop" bit on all ranges
-  range_data.clear();
-  table_info->get_range_data(range_data);
-  foreach_ht(RangeData &rd, range_data)
+  ranges.array.clear();
+  table_info->get_ranges(ranges);
+  foreach_ht(RangeData &rd, ranges.array)
     rd.range->drop();
 
   // Disable maintenance for range, remove the range's original transfer
   // log, and remove the range from the RSML
-  foreach_ht(RangeData &rd, range_data) {
+  foreach_ht(RangeData &rd, ranges.array) {
     rd.range->disable_maintenance();
     try {
       rd.range->remove_original_transfer_log();
@@ -2970,7 +2970,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
     // For each range in dropped table, Set the 'drop' bit and clear
     // the 'Location' column of the corresponding METADATA entry
     metadata_prefix = String("") + table->id + ":";
-    foreach_ht (RangeData &rd, range_data) {
+    foreach_ht (RangeData &rd, ranges.array) {
       // Mark Location column
       metadata_key = metadata_prefix + rd.range->end_row();
       key.row = metadata_key.c_str();
@@ -2999,7 +2999,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
 
 void RangeServer::dump(ResponseCallback *cb, const char *outfile,
                        bool nokeys) {
-  RangeDataVector range_data;
+  Ranges ranges;
   AccessGroup::MaintenanceData *ag_data;
   String str;
 
@@ -3008,10 +3008,10 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
   try {
     std::ofstream out(outfile);
 
-    m_live_map->get_range_data(range_data);
+    m_live_map->get_ranges(ranges);
     time_t now = time(0);
-    foreach_ht (RangeData &rd, range_data) {
-      rd.data = rd.range->get_maintenance_data(range_data.arena(), now);
+    foreach_ht (RangeData &rd, ranges.array) {
+      rd.data = rd.range->get_maintenance_data(ranges.arena, now);
       out << "RANGE " << rd.range->get_name() << "\n";
       out << *rd.data << "\n";
       for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)
@@ -3020,8 +3020,8 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
 
     // dump keys
     if (!nokeys) {
-      for (size_t i=0; i<range_data.size(); i++)
-        for (ag_data = range_data[i].data->agdata; ag_data; ag_data = ag_data->next)
+      foreach_ht (RangeData &rd, ranges.array)
+        for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)
           ag_data->ag->dump_keys(out);
     }
 
@@ -3069,7 +3069,7 @@ RangeServer::dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *tabl
   }
 
   try {
-    RangeDataVector range_data;
+    Ranges ranges;
     TableInfoPtr table_info;
     CellListScanner *scanner;
     ScanContextPtr scan_ctx = new ScanContext();
@@ -3088,8 +3088,8 @@ RangeServer::dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *tabl
 
     scan_ctx->timeout_ms = cb->get_event()->header.timeout_ms;
 
-    table_info->get_range_data(range_data);
-    foreach_ht(RangeData &rd, range_data) {
+    table_info->get_ranges(ranges);
+    foreach_ht(RangeData &rd, ranges.array) {
       scanner = rd.range->create_scanner_pseudo_table(scan_ctx, pseudo_table);
       while (scanner->get(key, value)) {
         cf = Global::pseudo_tables->cellstore_index->get_column_family(key.column_family_code);
@@ -3149,7 +3149,7 @@ void RangeServer::heapcheck(ResponseCallback *cb, const char *outfile) {
 
 void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   ScopedLock lock(m_stats_mutex);
-  RangeDataVector range_data;
+  RangesPtr ranges = Global::get_ranges();
   int64_t timestamp = Hypertable::get_ts64();
   time_t now = (time_t)(timestamp/1000000000LL);
   LoadStatistics::Bundle load_stats;
@@ -3264,11 +3264,17 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
   CstrToInt32Map table_scanner_count_map;
   StatsTable table_stat;
   StatsTableMap::iterator iter;
+
   m_stats->tables.clear();
 
-  m_live_map->get_range_data(range_data);
-  foreach_ht (RangeData &rd, range_data) {
-    rd.data = rd.range->get_maintenance_data(range_data.arena(), now, mutator.get());
+  if (mutator || !ranges) {
+    ranges = new Ranges();
+    m_live_map->get_ranges(*ranges);
+  }
+  foreach_ht (RangeData &rd, ranges->array) {
+
+    if (rd.data == 0)
+      rd.data = rd.range->get_maintenance_data(ranges->arena, now, mutator.get());
 
     if (rd.data->table_id == 0) {
       HT_ERROR_OUT << "Range statistics object found without table ID" << HT_END;
@@ -3319,7 +3325,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     table_stat.range_count++;
   }
 
-  m_stats->range_count = range_data.size();
+  m_stats->range_count = ranges->array.size();
   if (table_stat.table_id != "") {
     if (table_stat.disk_used > 0)
       table_stat.compression_ratio = (double)table_stat.disk_used / table_stat.compression_ratio;

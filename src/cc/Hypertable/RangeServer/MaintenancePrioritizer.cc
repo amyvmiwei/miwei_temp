@@ -87,7 +87,7 @@ namespace {
 
 void
 MaintenancePrioritizer::schedule_initialization_operations(
-                           RangeDataVector &range_data, int32_t &priority) {
+                           std::vector<RangeData> &range_data, int32_t &priority) {
   if (m_initialization_complete)
     return;
 
@@ -104,7 +104,7 @@ MaintenancePrioritizer::schedule_initialization_operations(
 
 
 bool
-MaintenancePrioritizer::schedule_inprogress_operations(RangeDataVector &range_data,
+MaintenancePrioritizer::schedule_inprogress_operations(std::vector<RangeData> &range_data,
             MemoryState &memory_state, int32_t &priority, String *trace) {
   AccessGroup::MaintenanceData *ag_data;
   AccessGroup::CellStoreMaintenanceData *cs_data;
@@ -165,7 +165,7 @@ MaintenancePrioritizer::schedule_inprogress_operations(RangeDataVector &range_da
 }
 
 bool
-MaintenancePrioritizer::schedule_splits_and_relinquishes(RangeDataVector &range_data,
+MaintenancePrioritizer::schedule_splits_and_relinquishes(std::vector<RangeData> &range_data,
             MemoryState &memory_state, int32_t &priority, String *trace) {
   AccessGroup::MaintenanceData *ag_data;
   AccessGroup::CellStoreMaintenanceData *cs_data;
@@ -225,7 +225,7 @@ MaintenancePrioritizer::schedule_splits_and_relinquishes(RangeDataVector &range_
 }
 
 bool
-MaintenancePrioritizer::schedule_necessary_compactions(RangeDataVector &range_data,
+MaintenancePrioritizer::schedule_necessary_compactions(std::vector<RangeData> &range_data,
                  CommitLog *log, int64_t prune_threshold, MemoryState &memory_state,
                  int32_t &priority, String *trace) {
   CommitLog::CumulativeSizeMap cumulative_size_map;
@@ -364,7 +364,7 @@ MaintenancePrioritizer::schedule_necessary_compactions(RangeDataVector &range_da
 
 
 bool
-MaintenancePrioritizer::purge_shadow_caches(RangeDataVector &range_data,
+MaintenancePrioritizer::purge_shadow_caches(std::vector<RangeData> &range_data,
             MemoryState &memory_state, int32_t &priority, String *trace) {
   Range::MaintenanceData *range_maintenance_data;
   AccessGroup::MaintenanceData *ag_data;
@@ -414,7 +414,7 @@ MaintenancePrioritizer::purge_shadow_caches(RangeDataVector &range_data,
 
 
 bool
-MaintenancePrioritizer::purge_cellstore_indexes(RangeDataVector &range_data,
+MaintenancePrioritizer::purge_cellstore_indexes(std::vector<RangeData> &range_data,
           MemoryState &memory_state, int32_t &priority, String *trace) {
   Range::MaintenanceData *range_maintenance_data;
   AccessGroup::MaintenanceData *ag_data;
@@ -479,7 +479,7 @@ namespace {
 }
 
 bool
-MaintenancePrioritizer::compact_cellcaches(RangeDataVector &range_data,
+MaintenancePrioritizer::compact_cellcaches(std::vector<RangeData> &range_data,
                                            MemoryState &memory_state, int32_t &priority,
                                            String *trace) {
   AccessGroup::MaintenanceData *ag_data;

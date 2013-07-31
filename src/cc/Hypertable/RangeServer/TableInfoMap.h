@@ -63,7 +63,7 @@ namespace Hypertable {
    * set of transfer logs that have been linked in and which may be safely
    * removed.  The MetaLogEntityRemoveOkLogs entity is modified and persisted
    * atomically to the RSML with new Range entities by the add_staged_range()
-   * method.  The get_range_data() method returns a consistent snapshot of the
+   * method.  The get_ranges() method returns a consistent snapshot of the
    * current set of live ranges and the set of transfer logs in
    * MetaLogEntityRemoveOkLogs.
    */
@@ -181,12 +181,12 @@ namespace Hypertable {
      * atomically to the RSML with new Range entities by the add_staged_range()
      * method.  This method returns a consistent snapshot of the current set of
      * live ranges and the set of transfer logs in MetaLogEntityRemoveOkLogs.
-     * @param range_data Output parameter to hold RangeData objects
+     * @param ranges Output parameter to hold RangeData objects
      * @param remove_ok_logs Pointer to string set to hold logs that can be
      * removed
      * @see add_staged_range
      */
-    void get_range_data(RangeDataVector &range_data, StringSet *remove_ok_logs=0);
+    void get_ranges(Ranges &ranges, StringSet *remove_ok_logs=0);
 
     /** Clears the map. */
     void clear();
@@ -212,11 +212,11 @@ namespace Hypertable {
      * <code>entities</code> and <code>transfer_logs</code> should correspond
      * to the ranges in <code>other</code> that are to be merged in.
      * This method performs these steps atomically (with #m_mutex locked)
-     * to avoid the race condition described in get_range_data()
+     * to avoid the race condition described in get_ranges()
      * @param other Map to merge in
      * @param entities Vector of range entities
      * @param transfer_logs Set of transfer logs
-     * @see get_range_data
+     * @see get_ranges
      */
     void merge(TableInfoMap *other, vector<MetaLog::Entity *> &entities,
                StringSet &transfer_logs);

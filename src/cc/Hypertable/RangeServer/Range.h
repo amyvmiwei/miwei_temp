@@ -77,7 +77,7 @@ namespace Hypertable {
           total += ag->mem_used;
         return total;
       }
-       AccessGroup::MaintenanceData *agdata;
+      AccessGroup::MaintenanceData *agdata;
       const char *table_id;
       LoadFactors load_factors;
       uint64_t cells_returned;

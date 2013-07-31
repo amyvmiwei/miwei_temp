@@ -69,6 +69,7 @@ namespace Hypertable {
     static Hypertable::PseudoTables *pseudo_tables;
     static MetaLogEntityRemoveOkLogsPtr remove_ok_logs;
     static LoadStatisticsPtr load_statistics;
+    static RangesPtr      ranges;
     static bool           verbose;
     static bool           row_size_unlimited;
     static CommitLog     *user_log;
@@ -115,6 +116,8 @@ namespace Hypertable {
     static void immovable_range_set_add(const TableIdentifier &table, const RangeSpec &spec);
     static void immovable_range_set_remove(const TableIdentifier &table, const RangeSpec &spec);
     static bool immovable_range_set_contains(const TableIdentifier &table, const RangeSpec &spec);
+    static void set_ranges(RangesPtr &r);
+    static RangesPtr get_ranges();
   };
 
 } // namespace Hypertable

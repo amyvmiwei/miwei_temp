@@ -52,7 +52,7 @@ namespace Hypertable {
                                m_initialization_complete(false),
                                m_uninitialized_ranges_seen(false) { }
 
-    virtual void prioritize(RangeDataVector &range_data, MemoryState &memory_state,
+    virtual void prioritize(std::vector<RangeData> &range_data, MemoryState &memory_state,
                             int32_t priority, String *trace) = 0;
 
   protected:
@@ -61,31 +61,31 @@ namespace Hypertable {
     bool m_initialization_complete;
     bool m_uninitialized_ranges_seen;
 
-    void schedule_initialization_operations(RangeDataVector &range_data,
+    void schedule_initialization_operations(std::vector<RangeData> &range_data,
                                             int32_t &priority);
 
-    bool schedule_inprogress_operations(RangeDataVector &range_data,
+    bool schedule_inprogress_operations(std::vector<RangeData> &range_data,
                                         MemoryState &memory_state,
                                         int32_t &priority, String *trace);
 
-    bool schedule_splits_and_relinquishes(RangeDataVector &range_data,
+    bool schedule_splits_and_relinquishes(std::vector<RangeData> &range_data,
                                           MemoryState &memory_state,
                                           int32_t &priority, String *trace);
 
-    bool schedule_necessary_compactions(RangeDataVector &range_data,
+    bool schedule_necessary_compactions(std::vector<RangeData> &range_data,
                             CommitLog *log, int64_t prune_threshold,
                             MemoryState &memory_state,
                             int32_t &priority, String *trace);
 
-    bool purge_shadow_caches(RangeDataVector &range_data,
+    bool purge_shadow_caches(std::vector<RangeData> &range_data,
                              MemoryState &memory_state,
                              int32_t &priority, String *trace);
 
-    bool purge_cellstore_indexes(RangeDataVector &range_data,
+    bool purge_cellstore_indexes(std::vector<RangeData> &range_data,
                                  MemoryState &memory_state,
                                  int32_t &priority, String *trace);
 
-    bool compact_cellcaches(RangeDataVector &range_data,
+    bool compact_cellcaches(std::vector<RangeData> &range_data,
                             MemoryState &memory_state,
                             int32_t &priority, String *trace);
 

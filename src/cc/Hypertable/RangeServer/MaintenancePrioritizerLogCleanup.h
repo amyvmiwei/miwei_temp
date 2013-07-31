@@ -29,11 +29,11 @@ namespace Hypertable {
   class MaintenancePrioritizerLogCleanup : public MaintenancePrioritizer {
   public:
 
-    virtual void prioritize(RangeDataVector &range_data, MemoryState &memory_state,
+    virtual void prioritize(std::vector<RangeData> &range_data, MemoryState &memory_state,
                             int32_t prioritize, String *trace);
 
   private:
-    void assign_priorities(RangeDataVector &range_data, CommitLog *log,
+    void assign_priorities(std::vector<RangeData> &range_data, CommitLog *log,
                            int64_t prune_threshold, MemoryState &memory_state,
                            int32_t &priority, String *trace);
   };
