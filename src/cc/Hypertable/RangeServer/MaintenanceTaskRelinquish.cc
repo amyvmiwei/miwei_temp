@@ -28,7 +28,7 @@ using namespace Hypertable;
 /**
  *
  */
-MaintenanceTaskRelinquish::MaintenanceTaskRelinquish(int level, int priority,
+MaintenanceTaskRelinquish::MaintenanceTaskRelinquish(uint32_t level, int priority,
 						     boost::xtime &stime, RangePtr &range)
   : MaintenanceTask(level, priority, stime, range, String("RELINQUISH ") + range->get_name()) {
   set_retry_delay(5000);

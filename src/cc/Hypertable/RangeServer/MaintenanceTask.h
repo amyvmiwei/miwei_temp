@@ -32,11 +32,11 @@ namespace Hypertable {
   class MaintenanceTask {
   public:
 
-    MaintenanceTask(int _level, int _priority, boost::xtime &stime, RangePtr &range, const String &desc)
+    MaintenanceTask(uint32_t _level, int _priority, boost::xtime &stime, RangePtr &range, const String &desc)
       : start_time(stime), level(_level), priority(_priority), m_range(range), m_retry(false),
         m_description(desc) { }
 
-    MaintenanceTask(int _level, int _priority, const String &desc) :
+    MaintenanceTask(uint32_t _level, int _priority, const String &desc) :
       level(_level), priority(_priority), m_retry(false), m_description(desc) {
       boost::xtime_get(&start_time, boost::TIME_UTC_);
     }
@@ -63,7 +63,7 @@ namespace Hypertable {
     }
 
     boost::xtime start_time;
-    int level;
+    uint32_t level;
     int priority;
 
   protected:

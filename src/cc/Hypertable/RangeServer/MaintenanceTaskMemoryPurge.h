@@ -28,7 +28,7 @@ namespace Hypertable {
 
   class MaintenanceTaskMemoryPurge : public MaintenanceTask {
   public:
-    MaintenanceTaskMemoryPurge(int level, int priority, boost::xtime &stime, RangePtr &range);
+    MaintenanceTaskMemoryPurge(uint32_t level, int priority, boost::xtime &stime, RangePtr &range);
     virtual void execute();
   };
 

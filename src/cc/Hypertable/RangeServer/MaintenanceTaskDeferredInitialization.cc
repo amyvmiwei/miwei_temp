@@ -28,7 +28,7 @@ using namespace Hypertable;
  *
  */
 MaintenanceTaskDeferredInitialization::MaintenanceTaskDeferredInitialization(
-               int level, int priority, boost::xtime &stime, RangePtr &range)
+               uint32_t level, int priority, boost::xtime &stime, RangePtr &range)
   : MaintenanceTask(level, priority, stime, range,
                     String("DEFERRED INITIALIZATION ") + range->get_name()) {
 }

@@ -28,7 +28,7 @@ namespace Hypertable {
 
   class MaintenanceTaskRelinquish : public MaintenanceTask {
   public:
-    MaintenanceTaskRelinquish(int level, int priority, boost::xtime &start_time, RangePtr &range);
+    MaintenanceTaskRelinquish(uint32_t level, int priority, boost::xtime &start_time, RangePtr &range);
     virtual void execute();
   };
 

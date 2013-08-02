@@ -28,7 +28,7 @@ namespace Hypertable {
 
   class MaintenanceTaskDeferredInitialization : public MaintenanceTask {
   public:
-    MaintenanceTaskDeferredInitialization(int level, int priority, boost::xtime &stime, RangePtr &range);
+    MaintenanceTaskDeferredInitialization(uint32_t level, int priority, boost::xtime &stime, RangePtr &range);
     virtual void execute();
   };
 
