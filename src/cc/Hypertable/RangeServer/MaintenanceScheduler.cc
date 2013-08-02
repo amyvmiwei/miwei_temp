@@ -319,7 +319,7 @@ void MaintenanceScheduler::schedule() {
   // if this is the first time around, just enqueue work that
   // was in progress
   if (!m_initialized) {
-    int level = 0, priority = 0;
+    uint32_t level = 0, priority = 0;
     foreach_ht (RangeData &rd, ranges.array) {
       if (rd.data->state == RangeState::SPLIT_LOG_INSTALLED ||
           rd.data->state == RangeState::SPLIT_SHRUNK) {
@@ -345,7 +345,7 @@ void MaintenanceScheduler::schedule() {
     sort(ranges_prioritized.array.begin(), ranges_prioritized.array.end(), ordering);
 
     int32_t merges_created = 0;
-    int level = 0;
+    uint32_t level = 0;
 
     foreach_ht (RangeData &rd, ranges_prioritized.array) {
       if (!rd.data->initialized) {

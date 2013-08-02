@@ -29,7 +29,7 @@ namespace Hypertable {
 
   class MaintenanceTaskWorkQueue : public MaintenanceTask {
   public:
-    MaintenanceTaskWorkQueue(int level, int priority, std::vector<MetaLog::EntityTaskPtr> &work);
+    MaintenanceTaskWorkQueue(uint32_t level, int priority, std::vector<MetaLog::EntityTaskPtr> &work);
     virtual ~MaintenanceTaskWorkQueue();
     virtual void execute();
 

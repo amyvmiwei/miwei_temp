@@ -29,7 +29,7 @@ using namespace Hypertable;
 /**
  *
  */
-MaintenanceTaskWorkQueue::MaintenanceTaskWorkQueue(int level, int priority,
+MaintenanceTaskWorkQueue::MaintenanceTaskWorkQueue(uint32_t level, int priority,
 						   std::vector<MetaLog::EntityTaskPtr> &work)
   : MaintenanceTask(level, priority, String("WORK QUEUE")) {
   m_work.swap(work);

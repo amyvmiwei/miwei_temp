@@ -42,6 +42,8 @@
 #include "MaintenanceTask.h"
 #include "MaintenanceTaskMemoryPurge.h"
 
+#define MAX_LEVELS 4
+
 namespace Hypertable {
 
   /** @addtogroup RangeServer
@@ -71,16 +73,18 @@ namespace Hypertable {
 
     class MaintenanceQueueState {
     public:
-      MaintenanceQueueState() : shutdown(false), inflight(0),
-                                inflight_level(10000), generation(0) { return; }
+      MaintenanceQueueState() : shutdown(false), inflight(0), generation(0) {
+        memset(inflight_levels, 0, MAX_LEVELS*sizeof(int));
+        return;
+      }
       TaskQueue          queue;
       Mutex              mutex;
       boost::condition   cond;
       boost::condition   empty_cond;
       bool               shutdown;
       std::set<Range *>  ranges;
-      int                inflight;
-      int                inflight_level;
+      uint32_t           inflight_levels[MAX_LEVELS];
+      uint32_t           inflight;
       int64_t            generation;
     };
 
@@ -98,6 +102,7 @@ namespace Hypertable {
 
           {
             ScopedLock lock(m_state.mutex);
+            uint32_t inflight_level = lowest_inflight_level();
 
             boost::xtime_get(&now, boost::TIME_UTC_);
 
@@ -108,29 +113,30 @@ namespace Hypertable {
 	    // 3. Start time of task on front of queue is in the future
 
             while (m_state.queue.empty() || 
-		   (m_state.inflight && ((m_state.queue.top())->level > m_state.inflight_level)) ||
+		   (m_state.inflight && ((m_state.queue.top())->level > inflight_level)) ||
 		   xtime_cmp((m_state.queue.top())->start_time, now) > 0) {
 
               if (m_state.shutdown)
                 return;
 
               if (m_state.queue.empty() || 
-		  (m_state.inflight && (m_state.queue.top())->level > m_state.inflight_level))
+		  (m_state.inflight && (m_state.queue.top())->level > inflight_level))
                 m_state.cond.wait(lock);
               else {
                 next_work = (m_state.queue.top())->start_time;
                 m_state.cond.timed_wait(lock, next_work);
               }
+              inflight_level = lowest_inflight_level();
               boost::xtime_get(&now, boost::TIME_UTC_);
             }
 
             task = m_state.queue.top();
 	    m_state.queue.pop();
 
-	    if (m_state.inflight == 0 || task->level < m_state.inflight_level)
-	      m_state.inflight_level = task->level;
+            HT_ASSERT(task->level < MAX_LEVELS);
 
 	    m_state.inflight++;
+            m_state.inflight_levels[task->level]++;
           }
 
           try {
@@ -161,8 +167,10 @@ namespace Hypertable {
                 boost::xtime_get(&task->start_time, boost::TIME_UTC_);
                 task->start_time.sec += task->get_retry_delay() / 1000;
                 m_state.queue.push(task);
-                m_state.cond.notify_one();
+                HT_ASSERT(m_state.inflight_levels[task->level] > 0);
+                m_state.inflight_levels[task->level]--;
 		m_state.inflight--;
+                m_state.cond.notify_one();
                 continue;
               }
               HT_WARNF("Maintenance Task '%s' failed, dropping task ...",
@@ -172,12 +180,18 @@ namespace Hypertable {
 
           {
             ScopedLock lock(m_state.mutex);
-	    m_state.inflight--;
+            HT_ASSERT(m_state.inflight_levels[task->level] > 0);
+            m_state.inflight_levels[task->level]--;
+            m_state.inflight--;
 	    m_state.generation++;
 	    if (task->get_range())
 	      m_state.ranges.erase(task->get_range());
-	    if (m_state.queue.empty() && m_state.inflight == 0)
-	      m_state.empty_cond.notify_all();
+	    if (m_state.queue.empty()) {
+              if (m_state.inflight == 0)
+                m_state.empty_cond.notify_all();
+            }
+            else if ((m_state.queue.top())->level > task->level)
+              m_state.cond.notify_all();              
           }
 
           delete task;
@@ -185,6 +199,21 @@ namespace Hypertable {
       }
 
     private:
+
+      /** Determine the lowest level of the tasks currently being executed.
+       * This method iterates through the MaintenanceQueueState#inflight_levels
+       * array and stops at the first non-zero count and returns the
+       * corresponding level.
+       * @return Lowest level of tasks currently being executed.
+       */
+      uint32_t lowest_inflight_level() {
+        for (uint32_t i=0; i<MAX_LEVELS; i++) {
+          if (m_state.inflight_levels[i] > 0)
+            return i;
+        }
+        return MAX_LEVELS;
+      }
+
       MaintenanceQueueState &m_state;
     };
 
