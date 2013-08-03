@@ -35,8 +35,8 @@ MergeScannerRange::MergeScannerRange(ScanContextPtr &scan_ctx)
   : MergeScanner(scan_ctx), m_cell_offset(0), m_cell_skipped(0), 
     m_cell_count(0), m_cell_limit(0), m_row_offset(0), m_row_skipped(0),
     m_row_count(0), m_row_limit(0), m_cell_count_per_family(0), 
-    m_cell_limit_per_family(0), m_prev_key(0), m_prev_cf(-1),
-    m_skip_this_row(false) {
+    m_cell_limit_per_family(0), m_prev_key(0), m_prev_timestamp(TIMESTAMP_NULL),
+    m_prev_cf(-1), m_skip_this_row(false) {
   if (scan_ctx->spec != 0) {
     m_cell_limit = scan_ctx->spec->cell_limit;
     m_row_limit = scan_ctx->spec->row_limit;
@@ -81,9 +81,10 @@ MergeScannerRange::do_initialize()
     assert(m_prev_key.fill()==0);
 
     m_cell_count_per_family = 1;
-    m_prev_key.set(sstate.key.row, sstate.key.flag_ptr
-                   - (const uint8_t *)sstate.key.row + 1);
+    m_prev_key.set(sstate.key.row, (sstate.key.flag_ptr+1)
+                   - (const uint8_t *)sstate.key.row);
     m_prev_cf = sstate.key.column_family_code;
+    m_prev_timestamp = sstate.key.timestamp;
 
     if (m_row_offset) {
       m_skip_this_row = true;
@@ -150,8 +151,8 @@ forward:
     // be processed below.
     if (sstate.key.flag == FLAG_INSERT) {
       const uint8_t *latest_key = (const uint8_t *)sstate.key.row;
-      size_t latest_key_len = sstate.key.flag_ptr - 
-                  (const uint8_t *)sstate.key.row + 1;
+      size_t latest_key_len = (sstate.key.flag_ptr+1) - 
+        (const uint8_t *)sstate.key.row;
 
       if (m_prev_key.fill()==0) {
         new_row = new_cf = new_cq = true;
@@ -164,9 +165,10 @@ forward:
           m_skip_this_row = false;
         m_prev_key.set(latest_key, latest_key_len);
         m_prev_cf = sstate.key.column_family_code;
+        m_prev_timestamp = sstate.key.timestamp;
       }
       else if (m_prev_key.fill() != latest_key_len ||
-          memcmp(latest_key, m_prev_key.base, latest_key_len)) {
+               memcmp(latest_key, m_prev_key.base, latest_key_len)) {
         new_cq = true;
 
         if (strcmp(sstate.key.row, (const char *)m_prev_key.base)) {
@@ -187,7 +189,12 @@ forward:
 
         m_prev_key.set(latest_key, latest_key_len);
         m_prev_cf = sstate.key.column_family_code;
+        m_prev_timestamp = sstate.key.timestamp;
       }
+      else if (m_prev_timestamp != sstate.key.timestamp)
+        m_prev_timestamp = sstate.key.timestamp;
+      else
+        continue;
     }
 
     bool incr_cf_count = false;
