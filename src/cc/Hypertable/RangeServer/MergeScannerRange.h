@@ -64,6 +64,7 @@ namespace Hypertable {
     int32_t       m_cell_count_per_family;
     int32_t       m_cell_limit_per_family;
     DynamicBuffer m_prev_key;
+    int64_t       m_prev_timestamp;
     int32_t       m_prev_cf;
     bool          m_skip_this_row;
   };

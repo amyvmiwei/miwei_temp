@@ -2757,4 +2757,15 @@ CREATE TABLE t (
   ACCESS GROUP default (c)
 ) GROUP_COMMIT_INTERVAL 601
 
+create table applebees (a);
+INSERT INTO applebees VALUES('2013-08-02 08:00:00', 'test', 'a', '0');
+INSERT INTO applebees VALUES('2013-08-02 08:00:00', 'test', 'a', '0');
+INSERT INTO applebees VALUES('2013-08-02 09:00:00', 'test', 'a', '1');
+INSERT INTO applebees VALUES('2013-08-02 09:00:00', 'test', 'a', '1');
+INSERT INTO applebees VALUES('2013-08-02 10:00:00', 'test', 'a', '2');
+INSERT INTO applebees VALUES('2013-08-02 10:00:00', 'test', 'a', '2');
+select * from applebees display_timestamps cell_limit 3;
+2013-08-02 10:00:00.000000000	test	a	2
+2013-08-02 09:00:00.000000000	test	a	1
+2013-08-02 08:00:00.000000000	test	a	0
 
