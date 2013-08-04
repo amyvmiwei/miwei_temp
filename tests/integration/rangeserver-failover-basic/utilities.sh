@@ -3,6 +3,22 @@ MASTER_LOG=$HT_HOME/log/Hypertable.Master.log
 MASTER_PIDFILE=$HT_HOME/run/Hypertable.Master.pid
 ROW_SEED=1
 
+save_failure_state() {
+  ARCHIVE_DIR="archive-"`date | sed 's/ /-/g'`
+  mkdir $ARCHIVE_DIR
+  \rm -f $HT_HOME/run/op.output
+  touch $HT_HOME/run/debug-op
+  ps auxww | fgrep -i hyper | fgrep -v java > $ARCHIVE_DIR/ps-output.txt
+  cp $HT_HOME/log/* $ARCHIVE_DIR
+  pstack `cat $HT_HOME/run/Hypertable.Master.pid` > $ARCHIVE_DIR/master-stack.txt
+  sleep 60
+  cp $HT_HOME/run/op.output $ARCHIVE_DIR
+  cp rangeserver.* $ARCHIVE_DIR
+  cp rangeserver.*.output $ARCHIVE_DIR
+  cp master.* $ARCHIVE_DIR
+}
+
+
 start_master() {
   set_start_vars Hypertable.Master
   check_pidfile $pidfile && return 0
@@ -35,6 +51,7 @@ wait_for_recovery() {
     (( n += 1 ))
     if [ "$n" -gt "300" ]; then
       echo "wait_for_recovery: time exceeded"
+      save_failure_state
       exit 1
     fi
     sleep 2
@@ -57,6 +74,7 @@ dump_keys() {
         | grep -v "Waiting for connection to Hyperspace" > $1.txt
     if [ $? != 0 ] ; then
         echo "Problem dumping table 'LoadTest', exiting ..."
+        save_failure_state
         exit 1
     fi
     $DIGEST < $1.txt > $1.md5
@@ -91,20 +109,4 @@ kill_all_rs() {
     \rm -f $HT_HOME/run/Hypertable.RangeServer.rs*.pid
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.pid`
     \rm -f $HT_HOME/run/Hypertable.RangeServer.pid
-}
-
-save_failure_state() {
-    local label=$1
-    shift
-    mkdir -p failed-run-$label
-    \rm -f $HT_HOME/run/op.output
-    touch $HT_HOME/run/debug-op
-    ps auxww | fgrep -i hyper | fgrep -v java > failed-run-$label/ps-output.txt
-    cp $HT_HOME/log/* failed-run-$label
-    pstack `cat $HT_HOME/run/Hypertable.Master.pid` > failed-run-$label/master-stack.txt
-    sleep 60
-    cp $HT_HOME/run/op.output failed-run-$label
-    cp rangeserver.* failed-run-$label
-    cp rangeserver.*.output failed-run-$label
-    cp master.* failed-run-$label
 }
