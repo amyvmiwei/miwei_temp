@@ -62,7 +62,7 @@ $HT_HOME/bin/ht load_generator --spec-file=$SCRIPT_DIR/data.spec \
     --Hypertable.Mutator.FlushDelay=250 update
 if [ $? != 0 ] ; then
     echo "Problem loading table 'LoadTest', exiting ..."
-    save_failure_state "3"
+    save_failure_state
     kill_rs 1 2 3 4 5
     $HT_HOME/bin/stop-servers.sh
     exit 1
