@@ -352,9 +352,9 @@ MergeScannerAccessGroup::do_forward()
           purge_from_index(sstate.key, sstate.value);
         continue;
       }
-      else if (sstate.key.revision > m_revision
-          || (sstate.key.timestamp >= m_end_timestamp 
-            && (!m_return_deletes || sstate.key.flag == FLAG_INSERT))) {
+      else if (sstate.key.revision > m_revision ||
+               (sstate.key.timestamp >= m_end_timestamp &&
+                sstate.key.flag == FLAG_INSERT)) {
         if (m_index_updater && sstate.key.flag == FLAG_INSERT)
           purge_from_index(sstate.key, sstate.value);
         continue;
