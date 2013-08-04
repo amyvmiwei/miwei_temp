@@ -601,4 +601,10 @@ INSERT INTO applebees VALUES('2013-08-02 09:00:00', 'test', 'a', '1');
 INSERT INTO applebees VALUES('2013-08-02 10:00:00', 'test', 'a', '2');
 INSERT INTO applebees VALUES('2013-08-02 10:00:00', 'test', 'a', '2');
 select * from applebees display_timestamps cell_limit 3;
-
+create table dennys (a);
+DELETE * FROM dennys WHERE row="test" TIMESTAMP "2013-07-02 11:00:00";
+INSERT INTO dennys VALUES('2013-08-02 08:00:00', 'test', 'a:foo', '/n2home2/363/zaby007/email/Junk/1365836911.S.2550.11223');
+INSERT INTO dennys VALUES('2013-08-02 09:00:00', 'test', 'a:foo', '/n2home2/363/zaby007/email/Junk/1365836911.S.2550.11223');
+INSERT INTO dennys VALUES('2013-08-02 10:00:00', 'test', 'a:foo', '/n2home2/363/zaby007/email/Junk/1365836911.S.2550.11223');
+DELETE "a:foo" FROM dennys WHERE row="test" TIMESTAMP "2013-08-02 11:00:00";
+select a:"foo" from dennys where row="test" and value regexp "/Junk/" and "2011-01-01 00:00:00" < TIMESTAMP < "2013-08-02 09:30:00";
