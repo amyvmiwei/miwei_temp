@@ -67,13 +67,13 @@ namespace Hypertable {
 
     void purge_incomplete_fragments();
     void create_range(MasterClientPtr &master_client, TableInfoPtr &table_info,
-                      FilesystemPtr &log_dfs, String &log_dir);
+                      FilesystemPtr &log_dfs);
     RangePtr& get_range() {
       ScopedLock lock(m_mutex);
       return m_range;
     }
 
-    void populate_range_and_log(FilesystemPtr &log_dfs, const String &log_dir, bool *is_empty);
+    void populate_range_and_log(FilesystemPtr &log_dfs, bool *is_empty);
     CommitLogReaderPtr get_phantom_log();
     const String &get_phantom_logname();
     void get_linked_logs(StringSet &linked_logs);
@@ -89,7 +89,7 @@ namespace Hypertable {
 
   private:
 
-    String create_log(FilesystemPtr &log_dfs, const String &log_dir,
+    String create_log(FilesystemPtr &log_dfs,
                       MetaLogEntityRange *range_entity);
 
     typedef std::map<uint32_t, FragmentDataPtr> FragmentMap;

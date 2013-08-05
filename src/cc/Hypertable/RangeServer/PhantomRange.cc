@@ -22,6 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/md5.h"
 
+#include "Global.h"
 #include "PhantomRange.h"
 
 #include <sstream>
@@ -73,7 +74,7 @@ void PhantomRange::purge_incomplete_fragments() {
 }
 
 void PhantomRange::create_range(MasterClientPtr &master_client, 
-        TableInfoPtr &table_info, FilesystemPtr &log_dfs, String &log_dir) { 
+        TableInfoPtr &table_info, FilesystemPtr &log_dfs) { 
   ScopedLock lock(m_mutex);
 
   m_range = new Range(master_client, &m_range_spec.table, m_schema,
@@ -84,7 +85,7 @@ void PhantomRange::create_range(MasterClientPtr &master_client,
 }
 
 void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs, 
-        const String &log_dir, bool *is_empty) {
+                                          bool *is_empty) {
   ScopedLock lock(m_mutex);
   size_t table_id_len = m_range_spec.table.encoded_length();
   DynamicBuffer dbuf(table_id_len);
@@ -105,7 +106,7 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
     if (!original_transfer_log.empty())
       m_phantom_logname = original_transfer_log;
     else {
-      m_phantom_logname = create_log(log_dfs, log_dir, metalog_entity);
+      m_phantom_logname = create_log(log_dfs, metalog_entity);
       metalog_entity->set_original_transfer_log(m_phantom_logname);
     }
   }  
@@ -116,7 +117,7 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
         log_dfs->exists(transfer_log))
       m_phantom_logname = transfer_log;
     else {
-      m_phantom_logname = create_log(log_dfs, log_dir, metalog_entity);
+      m_phantom_logname = create_log(log_dfs, metalog_entity);
       metalog_entity->set_transfer_log(m_phantom_logname);
     }
   }
@@ -217,7 +218,7 @@ bool PhantomRange::committed() {
   return (m_state & COMMITTED) == COMMITTED;
 }
 
-String PhantomRange::create_log(FilesystemPtr &log_dfs, const String &log_dir,
+String PhantomRange::create_log(FilesystemPtr &log_dfs,
                                 MetaLogEntityRange *range_entity) {
   TableIdentifier table;
   String start_row, end_row;
@@ -235,7 +236,8 @@ String PhantomRange::create_log(FilesystemPtr &log_dfs, const String &log_dir,
     if (now != 0)
       poll(0, 0, 1200);
     now = time(0);
-    logname = format("%s/%s/phantom-%s-%d", log_dir.c_str(),
+    logname = format("%s/tables/%s/_xfer_/%s/phantom-%d",
+                     Global::toplevel_dir.c_str(),
                      table.id, md5DigestStr, (int)now);
   } while (log_dfs->exists(logname));
 

@@ -3999,7 +3999,7 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
       }
 
       phantom_range->create_range(m_master_client, table_info,
-                                  Global::log_dfs, Global::log_dir);
+                                  Global::log_dfs);
       HT_DEBUG_OUT << "Range object created for range " << rr << HT_END;
     }
 
@@ -4013,8 +4013,7 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
       if (!phantom_range || phantom_range->prepared())
         continue;
 
-      phantom_range->populate_range_and_log(Global::log_dfs,
-                                            Global::log_dir, &is_empty);
+      phantom_range->populate_range_and_log(Global::log_dfs, &is_empty);
 
       HT_DEBUG_OUT << "populated range and log for range " << rr << HT_END;
 

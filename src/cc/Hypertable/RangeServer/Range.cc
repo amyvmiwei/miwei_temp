@@ -727,8 +727,9 @@ void Range::relinquish_install_log() {
       if (now != 0)
         poll(0, 0, 1200);
       now = time(0);
-      transfer_log = format("%s/%s/%s-%d", Global::log_dir.c_str(),
-                            m_table.id, md5DigestStr, (int)now);
+      transfer_log = format("%s/tables/%s/_xfer/%s/%d", 
+                            Global::toplevel_dir.c_str(), m_table.id,
+                            md5DigestStr, (int)now);
     }
     while (Global::log_dfs->exists(transfer_log));
 
@@ -1036,8 +1037,9 @@ void Range::split_install_log() {
       if (now != 0)
         poll(0, 0, 1200);
       now = time(0);
-      transfer_log = format("%s/%s/%s-%d", Global::log_dir.c_str(),
-                            m_table.id, md5DigestStr, (int)now);
+      transfer_log = format("%s/tables/%s/_xfer/%s/%d",
+                            Global::toplevel_dir.c_str(), m_table.id,
+                            md5DigestStr, (int)now);
     }
     while (Global::log_dfs->exists(transfer_log));
 
@@ -1713,7 +1715,7 @@ void Range::acknowledge_load(uint32_t timeout_ms) {
 void Range::remove_original_transfer_log() {
   String transfer_log = m_metalog_entity->get_original_transfer_log();
   if (!transfer_log.empty()) {
-    RE2 regex("\\/servers\\/[[:alnum:]]+\\/log\\/[[:digit:]]+\\/");
+    RE2 regex("\\/_xfer_\\/");
     if (RE2::PartialMatch(transfer_log.c_str(), regex)) {
       try {
         HT_INFOF("Removing transfer log %s", transfer_log.c_str());
