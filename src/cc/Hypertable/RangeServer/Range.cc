@@ -71,8 +71,8 @@ Range::Range(MasterClientPtr &master_client,
   : m_scans(0), m_cells_scanned(0), m_cells_returned(0), m_cells_written(0),
     m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
     m_disk_bytes_read(0), m_master_client(master_client),
-    m_hints_file(identifier->id, range->end_row), m_schema(schema),
-    m_revision(TIMESTAMP_MIN), m_latest_revision(TIMESTAMP_MIN),
+    m_hints_file(identifier->id, range->start_row, range->end_row),
+    m_schema(schema),m_revision(TIMESTAMP_MIN),m_latest_revision(TIMESTAMP_MIN),
     m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
     m_range_set(range_set), m_error(Error::OK), m_dropped(false),
     m_capacity_exceeded_throttle(false), m_relinquish(false),
@@ -89,7 +89,8 @@ Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
     m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
     m_disk_bytes_read(0), m_master_client(master_client),
     m_metalog_entity(range_entity), 
-    m_hints_file(range_entity->get_table_id(), range_entity->get_end_row()),
+    m_hints_file(range_entity->get_table_id(), range_entity->get_start_row(),
+                 range_entity->get_end_row()),
     m_schema(schema), m_revision(TIMESTAMP_MIN),
     m_latest_revision(TIMESTAMP_MIN), m_split_threshold(0),
     m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
@@ -159,10 +160,9 @@ void Range::initialize() {
   m_column_family_vector.resize(m_schema->get_max_column_family_id() + 1);
 
   // Read hints file and load AGname-to-hints map
-  std::vector<AccessGroup::Hints> hints;
   std::map<String, const AccessGroup::Hints *> hints_map;
-  m_hints_file.read(hints);
-  foreach_ht (const AccessGroup::Hints &h, hints)
+  m_hints_file.read();
+  foreach_ht (const AccessGroup::Hints &h, m_hints_file.get())
     hints_map[h.ag_name] = &h;
 
   RangeSpecManaged range_spec;
@@ -802,7 +802,8 @@ void Range::relinquish_compact_and_finish() {
     std::vector<AccessGroup::Hints> hints(ag_vector.size());
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR, &hints[i]);
-    m_hints_file.write(hints);
+    m_hints_file.set(hints);
+    m_hints_file.write();
 
     {
       ScopedLock lock(m_schema_mutex);
@@ -1157,14 +1158,18 @@ void Range::split_compact_and_shrink() {
   if (cancel_maintenance())
     HT_THROW(Error::CANCELLED, "");
 
+  AccessGroupHintsFile new_hints_file(m_table.id, start_row, end_row);
+  std::vector<AccessGroup::Hints> hints(ag_vector.size());
+
   /**
    * Perform major compactions
    */
-  std::vector<AccessGroup::Hints> hints(ag_vector.size());
   for (size_t i=0; i<ag_vector.size(); i++)
     ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MAJOR|MaintenanceFlag::SPLIT,
                                  &hints[i]);
-  m_hints_file.write(hints);
+
+  m_hints_file.set(hints);
+  new_hints_file.set(hints);
 
   String files;
   String metadata_row_low, metadata_row_high;
@@ -1249,10 +1254,13 @@ void Range::split_compact_and_shrink() {
     if (m_split_off_high) {
       m_metalog_entity->set_end_row(split_row);
       m_hints_file.change_end_row(split_row);
+      new_hints_file.change_start_row(split_row);
       end_row = split_row;
     }
     else {
       m_metalog_entity->set_start_row(split_row);
+      m_hints_file.change_start_row(split_row);
+      new_hints_file.change_end_row(split_row);
       start_row = split_row;
     }
 
@@ -1260,7 +1268,7 @@ void Range::split_compact_and_shrink() {
 
     m_name = String(m_table.id)+"["+start_row+".."+end_row+"]";
     for (size_t i=0; i<ag_vector.size(); i++)
-      ag_vector[i]->shrink(split_row, m_split_off_high);
+      ag_vector[i]->shrink(split_row, m_split_off_high, &hints[i]);
 
     // Close and uninstall split log
     m_split_row = "";
@@ -1269,6 +1277,21 @@ void Range::split_compact_and_shrink() {
                 m_transfer_log->get_log_dir().c_str(), Error::get_text(error));
     }
     m_transfer_log = 0;
+
+    /**
+     * Write existing hints file and new hints file.
+     * The hints array will have been setup by the call to shrink() for the
+     * existing range.  The new_hints_file will get it's disk usage updated
+     * by subtracting the disk usage of the existing hints file from the
+     * original disk usage.
+     */
+    m_hints_file.set(hints);
+    m_hints_file.write();
+    for (size_t i=0; i<new_hints_file.get().size(); i++) {
+      HT_ASSERT(hints[i].disk_usage <= new_hints_file.get()[i].disk_usage);
+      new_hints_file.get()[i].disk_usage -= hints[i].disk_usage;
+    }
+    new_hints_file.write();
   }
 
   if (m_split_off_high) {
@@ -1476,7 +1499,8 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
       else
         ag_vector[i]->load_hints(&hints[i]);
     }
-    m_hints_file.write(hints);
+    m_hints_file.set(hints);
+    m_hints_file.write();
 
   }
   catch (Exception &e) {
