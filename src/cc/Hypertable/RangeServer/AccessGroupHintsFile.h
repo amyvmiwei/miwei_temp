@@ -53,13 +53,19 @@ namespace Hypertable {
    * <pre>
    * /hypertable/tables/<table-id>/default/<md5-end-row>/hints
    * </pre>
-   * This file is in YAML format and contains one mapping for each access group
-   * with the following format:
+   * This file is in YAML format and contains a version number, start row, end
+   * row, and one mapping for each access group with the following format:
    * <pre>
-   * ag_name: {
-   *   LatestStoredRevision: <revision>,
-   *   DiskUsage: $bytes,
-   *   Files: $file_list
+   * Version: 2
+   * Start Row: <start-row>
+   * End Row: <start-row>
+   * Access Groups: {
+   *   ag_name: {
+   *     LatestStoredRevision: <revision>,
+   *     DiskUsage: $bytes,
+   *     Files: $file_list
+   *   }
+   *   ...
    * }
    * </pre>
    * The fields in the mapping for each access group are described below.
@@ -88,9 +94,18 @@ namespace Hypertable {
 
     /** Constructor.
      * @param table %Table ID string
+     * @param start_row Start row of range
      * @param end_row End row of range
      */
-    AccessGroupHintsFile(const String &table, const String &end_row);
+    AccessGroupHintsFile(const String &table, const String &start_row,
+                         const String &end_row);
+
+    /** Changes the start row.
+     * This method is called after a range split to change the start row
+     * that is written to the hints file.
+     * @param start_row Start row of range
+     */
+    void change_start_row(const String &start_row);
 
     /** Changes the end row.
      * This method is called after a range split to change the end row
@@ -99,24 +114,50 @@ namespace Hypertable {
      */
     void change_end_row(const String &end_row);
 
-    /** Write hints file.
-     * @param hints Vector of hints to be written, one for each access group
+    /** Returns reference to internal hints vector.
+     * @return reference to internal hints vector
      */
-    void write(const std::vector<AccessGroup::Hints> &hints);
+    std::vector<AccessGroup::Hints> &get() {
+      return m_hints;
+    }
+
+    /** Replaces contents of internal hints vector.
+     * @param hints Reference to vector of hints
+     */
+    void set(const std::vector<AccessGroup::Hints> &hints) {
+      m_hints = hints;
+    }
+
+    /** Write hints file.
+     */
+    void write();
 
     /** Reads hints file.
-     * @param hints Vector of hints records to be populated, one for each access
-     * group
      */
-    void read(std::vector<AccessGroup::Hints> &hints);
+    void read();
 
   private:
+
+    /** Parses header portion of hints file.
+     * @param input Pointer to beginning of hints file content
+     * @param ag_base Address of return pointer to Access Group section
+     */
+    void parse_header(const char *input, const char **ag_base);
 
     /// %Table ID string
     String m_table_id;
 
+    /// Start row
+    String m_start_row;
+
+    /// End row
+    String m_end_row;
+
     /// %Range subdirectory (md5 of end row)
     String m_range_dir;
+
+    /// Vector of access group hints
+    std::vector<AccessGroup::Hints> m_hints;
   };
 
   /* @} */

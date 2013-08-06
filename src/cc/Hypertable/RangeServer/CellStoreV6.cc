@@ -720,6 +720,7 @@ void CellStoreV6::finalize(TableIdentifier *table_identifier) {
   m_64bit_index = m_index_builder.big_int();
 
   /** Set up index **/
+  double fraction_covered;
   if (m_64bit_index) {
     m_index_map64.load(m_index_builder.fixed_buf(),
                        m_index_builder.variable_buf(),
@@ -727,9 +728,8 @@ void CellStoreV6::finalize(TableIdentifier *table_identifier) {
     m_trailer.index_entries = m_index_map64.index_entries();
     index_memory = m_index_map64.memory_used();
     m_trailer.flags |= CellStoreTrailerV6::INDEX_64BIT;
-    m_disk_usage = m_index_map64.disk_used() +
-      (int64_t)((double)(m_offset-m_trailer.fix_index_offset) *
-		m_index_map64.fraction_covered());
+    m_disk_usage = m_index_map64.disk_used();
+    fraction_covered = m_index_map64.fraction_covered();
     m_block_count = m_index_map64.index_entries();
   }
   else {
@@ -738,9 +738,8 @@ void CellStoreV6::finalize(TableIdentifier *table_identifier) {
                        m_trailer.fix_index_offset);
     m_trailer.index_entries = m_index_map32.index_entries();
     index_memory = m_index_map32.memory_used();
-    m_disk_usage = m_index_map32.disk_used() +
-      (int64_t)((double)(m_offset-m_trailer.fix_index_offset)
-		* m_index_map32.fraction_covered());
+    m_disk_usage = m_index_map32.disk_used();
+    fraction_covered = m_index_map32.fraction_covered();
     m_block_count = m_index_map32.index_entries();
   }
 
@@ -785,6 +784,9 @@ void CellStoreV6::finalize(TableIdentifier *table_identifier) {
 
   /** Set file length **/
   m_file_length = m_offset;
+
+  m_disk_usage +=
+    (int64_t)((double)(m_offset-m_trailer.fix_index_offset) * fraction_covered);
 
   /** Re-open file for reading **/
   m_fd = m_filesys->open(m_filename, Filesystem::OPEN_FLAG_DIRECTIO);

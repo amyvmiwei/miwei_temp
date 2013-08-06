@@ -23,6 +23,7 @@
 #define HYPERTABLE_LOADDATAESCAPE_H
 
 #include "Common/DynamicBuffer.h"
+#include "Common/String.h"
 
 namespace Hypertable {
 
@@ -32,6 +33,13 @@ namespace Hypertable {
     LoadDataEscape() : m_field_separator('\t') { }
     bool escape(const char *in_buf, size_t in_len, const char **out_bufp,
                 size_t *out_lenp);
+    bool escape(const char *in_buf, size_t in_len, String &out) {
+      const char *out_buf;
+      size_t out_len;
+      bool rval = escape(in_buf, in_len, &out_buf, &out_len);
+      out = String(out_buf, out_len);
+      return rval;
+    }
     bool unescape(const char *in_buf, size_t in_len, const char **out_bufp,
                   size_t *out_lenp);
     void set_field_separator(char fs) { m_field_separator=fs; }

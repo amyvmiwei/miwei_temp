@@ -682,6 +682,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
 
         m_latest_stored_revision = boost::any_cast<int64_t>
           (cellstore->get_trailer()->get("revision"));
+
         if (m_latest_stored_revision >= m_earliest_cached_revision)
           HT_ERROR("Revision (clock) skew detected! May result in data loss.");
 
@@ -797,7 +798,8 @@ void AccessGroup::purge_stored_cells_from_cache() {
 /**
  *
  */
-void AccessGroup::shrink(String &split_row, bool drop_high) {
+void
+AccessGroup::shrink(String &split_row, bool drop_high, Hints *hints) {
   ScopedLock lock(m_mutex);
   ScanContextPtr scan_context = new ScanContext(m_schema);
   CellCachePtr old_cell_cache;
@@ -806,6 +808,9 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
   Key key_comps;
   CellStore *new_cell_store;
   int cmp;
+
+  hints->ag_name = m_name;
+  m_file_tracker.get_file_list(hints->files);
 
   m_cell_cache_manager->get_read_cache(old_cell_cache);
 
@@ -885,6 +890,9 @@ void AccessGroup::shrink(String &split_row, bool drop_high) {
 
     // This recomputes m_disk_usage as well
     recompute_compression_ratio();
+
+    hints->latest_stored_revision = m_latest_stored_revision;
+    hints->disk_usage = m_disk_usage;
 
     m_needs_merging = find_merge_run();
 
