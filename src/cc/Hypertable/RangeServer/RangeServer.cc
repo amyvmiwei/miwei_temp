@@ -302,7 +302,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     _exit(0);
   }
 
-  Global::location_initializer = new LocationInitializer(m_props);
+  m_server_state = new ServerState();
+
+  Global::location_initializer = new LocationInitializer(m_props, m_server_state);
 
   if(Global::location_initializer->is_removed(Global::toplevel_dir+"/servers", m_hyperspace)) {
     HT_ERROR_OUT << "location " << Global::location_initializer->get()
@@ -2224,6 +2226,11 @@ void RangeServer::update_qualify_and_transform() {
 
       HT_DEBUG_OUT <<"Update: "<< table_update->id << HT_END;
 
+      if (!table_update->id.is_system() && m_server_state->readonly()) {
+        table_update->error = Error::RANGESERVER_SERVER_IN_READONLY_MODE;
+        continue;
+      }
+
       try {
         if (!m_live_map->lookup(table_update->id.id, table_update->table_info)) {
           table_update->error = Error::TABLE_NOT_FOUND;
@@ -3157,7 +3164,20 @@ void RangeServer::heapcheck(ResponseCallback *cb, const char *outfile) {
   cb->response_ok();
 }
 
-void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
+void RangeServer::set_state(ResponseCallback *cb,
+                            std::vector<SystemVariable::Spec> &specs,
+                            uint64_t generation) {
+  HT_INFOF("generation=%llu %s", (Llu)generation,
+           SystemVariable::specs_to_string(specs).c_str());
+  // Update server state
+  m_server_state->set(generation, specs);
+  cb->response_ok();
+}
+
+
+void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
+                                 std::vector<SystemVariable::Spec> &specs,
+                                 uint64_t generation) {
   ScopedLock lock(m_stats_mutex);
   RangesPtr ranges = Global::get_ranges();
   int64_t timestamp = Hypertable::get_ts64();
@@ -3170,6 +3190,9 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb) {
     cb->error(Error::SERVER_SHUTTING_DOWN, "");
     return;
   }
+
+  // Update server state
+  m_server_state->set(generation, specs);
 
   Global::load_statistics->recompute(&load_stats);
   m_stats->system.refresh();

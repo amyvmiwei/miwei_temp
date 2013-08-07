@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,6 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for DispatchHandlerOperation.
+ * This file contains definitions for DispatchHandlerOperation, a base class
+ * for dispatch handlers used by operations that issue a request to a set of
+ * range servers.
+ */
+
 
 #include "Common/Compat.h"
 #include "AsyncComm/Protocol.h"

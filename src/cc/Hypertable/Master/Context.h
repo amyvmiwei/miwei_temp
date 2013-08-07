@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for Context.
+ * This file contains declarations for Context, a class that provides execution
+ * context for the Master.
  */
 
 #ifndef HYPERTABLE_CONTEXT_H
@@ -50,8 +56,13 @@
 #include "RangeServerConnection.h"
 #include "RangeServerConnectionManager.h"
 #include "RecoveryStepFuture.h"
+#include "SystemState.h"
 
 namespace Hypertable {
+
+  /** @addtogroup Master
+   *  @{
+   */
 
   class LoadBalancer;
   class Operation;
@@ -61,6 +72,8 @@ namespace Hypertable {
   class ReferenceManager;
   class BalancePlanAuthority;
 
+  /** Represents execution context for the Master.
+   */
   class Context : public ReferenceCount {
 
     class RecoveryState {
@@ -106,6 +119,7 @@ namespace Hypertable {
     Mutex mutex;
     boost::condition cond;
     Comm *comm;
+    SystemStatePtr system_state;       //!< System state entity
     RangeServerConnectionManagerPtr rsc_manager;
     StringSet available_servers;
     PropertiesPtr props;
@@ -164,7 +178,11 @@ namespace Hypertable {
     RecoveryState m_recovery_state;
     BalancePlanAuthority *m_balance_plan_authority;
   };
+
+  /// Smart pointer to Context
   typedef intrusive_ptr<Context> ContextPtr;
+
+  /** @{*/
 
 } // namespace Hypertable
 

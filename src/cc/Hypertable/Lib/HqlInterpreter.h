@@ -89,9 +89,8 @@ namespace Hypertable {
           mutator->flush();
         }
         catch (Exception &e) {
-          do {
-            mutator->show_failed(e);
-          } while (!mutator->retry());
+          mutator->show_failed(e);
+          throw;
         }
       }
 

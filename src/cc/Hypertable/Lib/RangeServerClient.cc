@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for RangeServerClient
+ * This file contains definitions for RangeServerClient, a client interface class
+ * to the RangeServer.
  */
 
 #include "Common/Compat.h"
@@ -521,21 +527,24 @@ void RangeServerClient::dump_pseudo_table(const CommAddress &addr,
 }
 
 void
-RangeServerClient::get_statistics(const CommAddress &addr, StatsRangeServer &stats) {
-  do_get_statistics(addr, stats, m_default_timeout_ms);
+RangeServerClient::get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                                  uint64_t generation, StatsRangeServer &stats) {
+  do_get_statistics(addr, specs, generation, stats, m_default_timeout_ms);
 }
 
 void
-RangeServerClient::get_statistics(const CommAddress &addr, StatsRangeServer &stats, Timer &timer) {
-  do_get_statistics(addr, stats, timer.remaining());
+RangeServerClient::get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                                  uint64_t generation, StatsRangeServer &stats, Timer &timer) {
+  do_get_statistics(addr, specs, generation, stats, timer.remaining());
 }
 
 void
-RangeServerClient::do_get_statistics(const CommAddress &addr, StatsRangeServer &stats,
+RangeServerClient::do_get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                                     uint64_t generation, StatsRangeServer &stats,
                                      uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics());
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(specs, generation));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
   if (!sync_handler.wait_for_reply(event))
@@ -550,15 +559,17 @@ RangeServerClient::do_get_statistics(const CommAddress &addr, StatsRangeServer &
 }
 
 void
-RangeServerClient::get_statistics(const CommAddress &addr, DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics());
+RangeServerClient::get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                                  uint64_t generation, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(specs, generation));
   send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
 void
-RangeServerClient::get_statistics(const CommAddress &addr, DispatchHandler *handler,
+RangeServerClient::get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                                  uint64_t generation, DispatchHandler *handler,
                                   Timer &timer) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics());
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(specs, generation));
   send_message(addr, cbp, handler, timer.remaining());
 }
 
@@ -574,25 +585,6 @@ RangeServerClient::decode_response_get_statistics(const EventPtr &event, StatsRa
   const uint8_t *ptr = event->payload + 4;
 
   stats.decode(&ptr, &remaining);
-}
-
-void
-RangeServerClient::replay_load_range(const CommAddress &addr,
-    const TableIdentifier &table, const RangeSpec &range,
-    const RangeState &range_state, DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_replay_load_range(table,
-                 range, range_state));
-  send_message(addr, cbp, handler, m_default_timeout_ms);
-}
-
-void
-RangeServerClient::replay_load_range(const CommAddress &addr,
-    const TableIdentifier &table, const RangeSpec &range,
-    const RangeState &range_state, DispatchHandler *handler,
-    Timer &timer) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_replay_load_range(table,
-                 range, range_state));
-  send_message(addr, cbp, handler, timer.remaining());
 }
 
 void
@@ -721,6 +713,15 @@ void RangeServerClient::phantom_commit_ranges(const CommAddress &addr, int64_t o
              String("RangeServer phantom_commit_ranges() failure : ")
              + Protocol::string_format_message(event));
 }
+
+void
+RangeServerClient::set_state(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                                  uint64_t generation, DispatchHandler *handler,
+                                  Timer &timer) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_set_state(specs, generation));
+  send_message(addr, cbp, handler, timer.remaining());
+}
+
 
 void
 RangeServerClient::send_message(const CommAddress &addr, CommBufPtr &cbp,

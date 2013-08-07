@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for MasterClient
+ * This file contains declarations for MasterClient, a client interface class
+ * to the Master.
  */
 
 #ifndef HYPERTABLE_MASTERCLIENT_H
@@ -37,14 +43,19 @@
 #include "Hyperspace/HandleCallback.h"
 #include "Hyperspace/Session.h"
 
-#include "Hypertable/Lib/BalancePlan.h"
-#include "Hypertable/Lib/Types.h"
-
+#include "BalancePlan.h"
+#include "MasterProtocol.h"
+#include "Types.h"
 
 namespace Hypertable {
 
+  /** @addtogroup libHypertable
+   * @{
+   */
+
   class Comm;
   class MasterClient;
+
   class MasterClientHyperspaceSessionCallback: public Hyperspace::SessionCallback {
   public:
     MasterClientHyperspaceSessionCallback() {}
@@ -60,6 +71,10 @@ namespace Hypertable {
     MasterClient *m_masterclient;
   };
 
+  /** Client interface to Master.
+   * This class provides a client interface to the Master.  It has methods,
+   * both synchronous and asynchronous, that carry out %Master operations.
+   */
   class MasterClient : public ReferenceCount {
   public:
 
@@ -136,6 +151,21 @@ namespace Hypertable {
 
     void balance(BalancePlan &plan, Timer *timer = 0);
 
+    /** Set system state variables asynchronously.
+     * @param specs Vector of system variable specs
+     * @param handler Dispatch handler for asynchronous rendezvous
+     * @param timer Deadline timer
+     */
+    void set(const std::vector<SystemVariable::Spec> &specs,
+             DispatchHandler *handler, Timer *timer = 0);
+
+    /** Set system state variables synchronously.
+     * @param specs Vector of system variable specs
+     * @param timer Deadline timer
+     */
+    void set(const std::vector<SystemVariable::Spec> &specs,
+             Timer *timer = 0);
+
     void stop(const String &rsname, bool recover, Timer *timer = 0);
 
     void reload_master();
@@ -189,9 +219,10 @@ namespace Hypertable {
     uint32_t               m_retry_interval;
   };
 
+  /// Smart pointer to MasterClient
   typedef intrusive_ptr<MasterClient> MasterClientPtr;
 
-
+  /** @}*/
 }
 
 #endif // HYPERTABLE_MASTERCLIENT_H

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,13 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for HqlHelpText.
+ * This file contains definitions for HqlHelpText, a class that holds and
+ * provides access to help text for either the rsclient command interpreter
+ * or the hypertable (HQL) command interpreter.
  */
 
 #include "Common/Compat.h"
@@ -51,6 +58,7 @@ namespace {
     "SHOW CREATE TABLE .. Displays CREATE TABLE command used to create table",
     "SHOW TABLES ........ Displays only the list of tables in the current namespace",
     "GET LISTING ........ Displays the list of tables and namespace in the current namespace",
+    "SET ................ Set system state variables",
     "",
     "Statements must be terminated with ';'.  For more information on",
     "a specific statement, type 'help <statement>', where <statement> is from",
@@ -1902,6 +1910,40 @@ namespace {
     0
   };
 
+  const char *help_text_set[] = {
+    "",
+    "SET",
+    "===",
+    "",
+    "    SET set_variable_spec (',' set_variable_spec)*",
+    "",
+    "    set_variable_spec:",
+    "      system_variable '=' (TRUE|FALSE)",
+    "",
+    "    system_variable:",
+    "      READONLY",
+    "",
+    "Description",
+    "-----------",
+    "",
+    "The SET command provides a way to administratively set system state",
+    "variables.",
+    "",
+    "Variables",
+    "---------",
+    "",
+    "READONLY",
+    "",
+    "Puts all of the RangeServers in readonly mode which will cause inserts into",
+    "non-system tables to fail with the Error::RANGESERVER_SERVER_IN_READONLY_MODE.",
+    "",
+    "Examples",
+    "--------",
+    "",
+    "  SET READONLY=true;"
+    "",
+    0
+  };
 
   typedef hash_map<std::string, const char **>  HelpTextMap;
 
@@ -1938,6 +1980,7 @@ namespace {
     (*map)["shutdown"] = help_text_shutdown;
     (*map)["dump"] = help_text_dump_table;
     (*map)["dump table"] = help_text_dump_table;
+    (*map)["set"] = help_text_set;
     return *map;
   }
 

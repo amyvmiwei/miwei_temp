@@ -80,6 +80,7 @@ ScanCells.cc
 Schema.cc
 StatsRangeServer.cc
 StatsTable.cc
+SystemVariable.cc
 Table.cc
 TableCache.cc
 TableDumper.cc

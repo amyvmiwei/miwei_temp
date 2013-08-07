@@ -51,7 +51,7 @@ namespace Hypertable {
   CommitLog             *Global::root_log = 0;
   MetaLog::WriterPtr     Global::rsml_writer;
   std::string            Global::log_dir = "";
-  LocationInitializerPtr Global::location_initializer;
+  LocationInitializer   *Global::location_initializer = 0;
   int64_t                Global::range_split_size = 0;
   int64_t                Global::range_maximum_size = 0;
   int32_t                Global::failover_timeout = 0;

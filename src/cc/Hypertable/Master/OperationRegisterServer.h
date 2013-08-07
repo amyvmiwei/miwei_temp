@@ -22,6 +22,8 @@
 #ifndef HYPERTABLE_OPERATIONREGISTERSERVER_H
 #define HYPERTABLE_OPERATIONREGISTERSERVER_H
 
+#include "Hypertable/Lib/SystemVariable.h"
+
 #include "Operation.h"
 #include "RangeServerConnection.h"
 
@@ -48,8 +50,11 @@ namespace Hypertable {
 
   private:
 
-    virtual size_t encoded_response_length() const;
-    virtual void encode_response(uint8_t **bufp) const;
+    virtual size_t encoded_response_length(uint64_t generation,
+                                           std::vector<SystemVariable::Spec> &specs) const;
+    virtual void encode_response(uint64_t generation,
+                                 std::vector<SystemVariable::Spec> &specs,
+                                 uint8_t **bufp) const;
 
     String m_location;
     uint16_t m_listen_port;

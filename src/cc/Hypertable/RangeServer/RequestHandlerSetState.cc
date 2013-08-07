@@ -20,28 +20,31 @@
  */
 
 /** @file
- * Definitions for RequestHandlerGetStatistics.
- * This file contains the definition for RequestHandlerGetStatistics, a
+ * Definitions for RequestHandlerSetState.
+ * This file contains the definition for RequestHandlerSetState, a
  * class for de-marshalling request parameters and issuing a
- * RangeServer::get_statistics() request.
+ * RangeServer::set_state() request.
  */
 
 #include "Common/Compat.h"
-#include "AsyncComm/ResponseCallback.h"
+#include "Common/Error.h"
+#include "Common/Logger.h"
 
-#include "RequestHandlerGetStatistics.h"
-#include "ResponseCallbackGetStatistics.h"
+#include "AsyncComm/ResponseCallback.h"
+#include "Common/Serialization.h"
+
+#include "Hypertable/Lib/Types.h"
 
 #include "RangeServer.h"
+#include "RequestHandlerSetState.h"
 
 using namespace Hypertable;
 
 /**
  *
  */
-void RequestHandlerGetStatistics::run() {
-  ResponseCallbackGetStatistics cb(m_comm, m_event);
-
+void RequestHandlerSetState::run() {
+  ResponseCallback cb(m_comm, m_event);
   const uint8_t *decode_ptr = m_event->payload;
   size_t decode_remain = m_event->payload_len;
 
@@ -49,10 +52,10 @@ void RequestHandlerGetStatistics::run() {
     std::vector<SystemVariable::Spec> specs;
     uint64_t generation = decode_i64(&decode_ptr, &decode_remain);
     SystemVariable::decode_specs(specs, &decode_ptr, &decode_remain);
-    m_range_server->get_statistics(&cb, specs, generation);
+    m_range_server->set_state(&cb, specs, generation);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
-    cb.error(e.code(), "Error handling GetStatistics message");
+    cb.error(e.code(), e.what());
   }
 }

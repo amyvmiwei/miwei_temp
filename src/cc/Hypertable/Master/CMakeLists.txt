@@ -27,6 +27,7 @@ Context.cc
 GcWorker.cc
 DispatchHandlerOperation.cc
 DispatchHandlerOperationGetStatistics.cc
+DispatchHandlerOperationSetState.cc
 LoadBalancer.cc
 MetaLogDefinitionMaster.cc
 Monitoring.cc
@@ -49,6 +50,7 @@ OperationRecoverRanges.cc
 OperationRegisterServer.cc
 OperationRelinquishAcknowledge.cc
 OperationRenameTable.cc
+OperationSetState.cc
 OperationStatus.cc
 OperationSystemUpgrade.cc
 OperationTimedBarrier.cc
@@ -60,6 +62,7 @@ ReferenceManager.cc
 ResponseManager.cc
 Utility.cc
 ServerMetrics.cc
+SystemState.cc
 RangeMetrics.cc
 RSMetrics.cc
 )

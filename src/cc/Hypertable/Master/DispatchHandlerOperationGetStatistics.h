@@ -42,6 +42,8 @@ namespace Hypertable {
   private:
     Timer m_timer;
     SockAddrMap<RangeServerStatistics *> m_index;
+    std::vector<SystemVariable::Spec> m_specs;
+    uint64_t m_generation;
   };
   typedef intrusive_ptr<DispatchHandlerOperationGetStatistics> DispatchHandlerOperationGetStatisticsPtr;
 

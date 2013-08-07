@@ -35,6 +35,7 @@
 #include "OperationRecover.h"
 #include "OperationRecoverRanges.h"
 #include "OperationRecoveryBlocker.h"
+#include "OperationSetState.h"
 #include "RangeServerConnection.h"
 #include "BalancePlanAuthority.h"
 
@@ -140,6 +141,8 @@ Entity *DefinitionMaster::create(uint16_t log_version, const EntityHeader &heade
       operation = new OperationBalance(m_context, header);
     else if (header.type == EntityType::OPERATION_COMPACT)
       operation = new OperationCompact(m_context, header);
+    else if (header.type == EntityType::OPERATION_SET)
+      operation = new OperationSetState(m_context, header);
   }
 
   if (operation)

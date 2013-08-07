@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for ConnectionHandler.
+ * This file contains definitions for ConnectionHandler, a class for handling
+ * incoming Master requests.
  */
 
 #include "Common/Compat.h"
@@ -49,6 +55,7 @@
 #include "OperationRegisterServer.h"
 #include "OperationRelinquishAcknowledge.h"
 #include "OperationRenameTable.h"
+#include "OperationSetState.h"
 #include "OperationStatus.h"
 #include "OperationStop.h"
 #include "OperationTimedBarrier.h"
@@ -137,6 +144,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case MasterProtocol::COMMAND_BALANCE:
         operation = new OperationBalance(m_context, event);
+        break;
+      case MasterProtocol::COMMAND_SET:
+        operation = new OperationSetState(m_context, event);
         break;
       case MasterProtocol::COMMAND_STOP:
         operation = new OperationStop(m_context, event);

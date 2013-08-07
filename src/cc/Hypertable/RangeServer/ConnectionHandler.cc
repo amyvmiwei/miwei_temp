@@ -60,6 +60,7 @@ extern "C" {
 #include "RequestHandlerPhantomUpdate.h"
 #include "RequestHandlerPhantomPrepareRanges.h"
 #include "RequestHandlerPhantomCommitRanges.h"
+#include "RequestHandlerSetState.h"
 
 #include "ConnectionHandler.h"
 #include "RangeServer.h"
@@ -208,6 +209,11 @@ void ConnectionHandler::handle(EventPtr &event) {
       case RangeServerProtocol::COMMAND_PHANTOM_COMMIT_RANGES:
         handler = new RequestHandlerPhantomCommitRanges(m_comm, m_range_server_ptr.get(),
                                                         event);
+        break;
+
+      case RangeServerProtocol::COMMAND_SET_STATE:
+        handler = new RequestHandlerSetState(m_comm, m_range_server_ptr.get(),
+                                             event);
         break;
 
       default:

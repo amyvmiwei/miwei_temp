@@ -119,6 +119,7 @@ RequestHandlerPhantomLoad.cc
 RequestHandlerPhantomUpdate.cc
 RequestHandlerPhantomCommitRanges.cc
 RequestHandlerPhantomPrepareRanges.cc
+RequestHandlerSetState.cc
 ResponseCallbackCreateScanner.cc
 ResponseCallbackFetchScanblock.cc
 ResponseCallbackGetStatistics.cc
@@ -130,6 +131,7 @@ ReplayBuffer.cc
 ReplayDispatchHandler.cc
 ScanContext.cc
 ScannerMap.cc
+ServerState.cc
 TableIdCache.cc
 TableInfo.cc
 TableInfoMap.cc
