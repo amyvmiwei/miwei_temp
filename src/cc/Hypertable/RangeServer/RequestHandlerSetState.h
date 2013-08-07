@@ -20,19 +20,18 @@
  */
 
 /** @file
- * Declarations for RequestHandlerGetStatistics.
- * This file contains the declaration for RequestHandlerGetStatistics, a
+ * Declarations for RequestHandlerSetState.
+ * This file contains the declaration for RequestHandlerSetState, a
  * class for de-marshalling request parameters and issuing a
- * RangeServer::get_statistics() request.
+ * RangeServer::set_state() request.
  */
 
-#ifndef HYPERTABLE_REQUESTHANDLERGETSTATISTICS_H
-#define HYPERTABLE_REQUESTHANDLERGETSTATISTICS_H
+#ifndef HYPERTABLE_REQUESTHANDLERSETSTATE_H
+#define HYPERTABLE_REQUESTHANDLERSETSTATE_H
 
 #include "AsyncComm/ApplicationHandler.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Event.h"
-
 
 namespace Hypertable {
 
@@ -42,9 +41,9 @@ namespace Hypertable {
 
   class RangeServer;
 
-  /** Decodes "get statistics" request and calls RangeServer::get_statistics().
+  /** Decodes "set state" request and calls RangeServer::set_state().
    */
-  class RequestHandlerGetStatistics : public ApplicationHandler {
+  class RequestHandlerSetState : public ApplicationHandler {
   public:
 
     /** Constructor.
@@ -52,10 +51,10 @@ namespace Hypertable {
      * @param rs Pointer to RangeServer object
      * @param event Request event object
      */
-    RequestHandlerGetStatistics(Comm *comm, RangeServer *rs, EventPtr &event)
+    RequestHandlerSetState(Comm *comm, RangeServer *rs, EventPtr &event)
       : ApplicationHandler(event), m_comm(comm), m_range_server(rs) { }
 
-    /** Decodes request and calls RangeServer::get_statistics().
+    /** Decodes request and calls RangeServer::set_state().
      * This method decodes the request in the format:
      * <pre>
      * Generation number of state variables (i64)
@@ -73,8 +72,8 @@ namespace Hypertable {
     RangeServer *m_range_server;
   };
 
-  /** @} */
+  /** @}*/
 
 }
 
-#endif // HYPERTABLE_REQUESTHANDLERGETSTATISTICS_H
+#endif // HYPERTABLE_REQUESTHANDLERSETSTATE_H

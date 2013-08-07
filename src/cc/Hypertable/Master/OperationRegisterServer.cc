@@ -57,6 +57,8 @@ OperationRegisterServer::OperationRegisterServer(ContextPtr &context, EventPtr &
 
 void OperationRegisterServer::execute() {
   bool newly_created = false;
+  std::vector<SystemVariable::Spec> specs;
+  uint64_t generation;
 
   if (m_location == "") {
     if (!m_context->rsc_manager->find_server_by_hostname(m_system_stats.net_info.host_name, m_rsc))
@@ -151,8 +153,9 @@ void OperationRegisterServer::execute() {
     CommHeader header;
     header.initialize_from_request_header(m_event->header);
     header.command = RangeServerProtocol::COMMAND_INITIALIZE;
-    CommBufPtr cbp(new CommBuf(header, encoded_response_length()));
-    encode_response(cbp->get_data_ptr_address());
+    m_context->system_state->get(specs, &generation);
+    CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation, specs)));
+    encode_response(generation, specs, cbp->get_data_ptr_address());
     int error = m_context->comm->send_response(m_event->addr, cbp);
     if (error != Error::OK)
       HT_ERRORF("Problem sending response (location=%s) back to %s",
@@ -176,9 +179,10 @@ void OperationRegisterServer::execute() {
     CommHeader header;
     header.initialize_from_request_header(m_event->header);
     header.command = RangeServerProtocol::COMMAND_INITIALIZE;
-    CommBufPtr cbp(new CommBuf(header, encoded_response_length()));
+    m_context->system_state->get(specs, &generation);
+    CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation, specs)));
 
-    encode_response(cbp->get_data_ptr_address());
+    encode_response(generation, specs, cbp->get_data_ptr_address());
     int error = m_context->comm->send_response(m_event->addr, cbp);
     if (error != Error::OK)
       HT_ERRORF("Problem sending response (location=%s) back to %s",
@@ -204,8 +208,9 @@ void OperationRegisterServer::execute() {
       CommHeader header;
       header.initialize_from_request_header(m_event->header);
       header.command = RangeServerProtocol::COMMAND_INITIALIZE;
-      CommBufPtr cbp(new CommBuf(header, encoded_response_length()));
-      encode_response(cbp->get_data_ptr_address());
+      m_context->system_state->get(specs, &generation);
+      CommBufPtr cbp(new CommBuf(header, encoded_response_length(generation, specs)));
+      encode_response(generation, specs, cbp->get_data_ptr_address());
       int error = m_context->comm->send_response(m_event->addr, cbp);
       if (error != Error::OK)
         HT_ERRORF("Problem sending response (location=%s) back to %s",
@@ -270,19 +275,27 @@ const String OperationRegisterServer::label() {
   return String("RegisterServer ") + m_location;
 }
 
-size_t OperationRegisterServer::encoded_response_length() const {
+size_t OperationRegisterServer::encoded_response_length(uint64_t generation,
+                             std::vector<SystemVariable::Spec> &specs) const {
   size_t length = 4;
-  if (m_error == Error::OK)
+  if (m_error == Error::OK) {
     length += Serialization::encoded_length_vstr(m_location);
+    length += 8 + SystemVariable::encoded_length_specs(specs);
+  }
   else
     length += Serialization::encoded_length_str16(m_error_msg);
   return length;
 }
 
-void OperationRegisterServer::encode_response(uint8_t **bufp) const {
+void OperationRegisterServer::encode_response(uint64_t generation,
+                             std::vector<SystemVariable::Spec> &specs,
+                                              uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_error);
-  if (m_error == Error::OK)
+  if (m_error == Error::OK) {
     Serialization::encode_vstr(bufp, m_location);
+    Serialization::encode_i64(bufp, generation);
+    SystemVariable::encode_specs(specs, bufp);
+  }
   else
     Serialization::encode_str16(bufp, m_error_msg);
 }

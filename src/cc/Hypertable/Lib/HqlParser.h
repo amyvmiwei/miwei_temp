@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -59,6 +59,7 @@
 #include "LoadDataFlags.h"
 #include "LoadDataSource.h"
 #include "RangeServerProtocol.h"
+#include "SystemVariable.h"
 
 namespace Hypertable {
   namespace Hql {
@@ -105,6 +106,7 @@ namespace Hypertable {
       COMMAND_METADATA_SYNC,
       COMMAND_STOP,
       COMMAND_DUMP_PSEUDO_TABLE,
+      COMMAND_SET,
       COMMAND_MAX
     };
 
@@ -324,6 +326,8 @@ namespace Hypertable {
       String delete_row;
       ::int64_t delete_time;
       ::int64_t delete_version_time;
+      SystemVariable::Spec current_variable_spec;
+      std::vector<SystemVariable::Spec> variable_specs;
       bool if_exists;
       bool tables_only;
       bool with_ids;
@@ -1785,7 +1789,6 @@ namespace Hypertable {
       ParserState &state;
     };
 
-
     struct set_scanner_id {
       set_scanner_id(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1825,6 +1828,34 @@ namespace Hypertable {
       }
       ParserState &state;
     };
+
+    struct set_variable_name {
+      set_variable_name(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String name = String(str, end-str);
+        to_upper(name);
+        state.current_variable_spec.code = SystemVariable::string_to_code(name);
+        if (state.current_variable_spec.code == -1)
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   format("Unrecognized variable name: %s", name.c_str()));
+      }
+      ParserState &state;
+    };
+
+    struct set_variable_value {
+      set_variable_value(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String value = String(str, end-str);
+        to_lower(value);
+        if (value == "true")
+          state.current_variable_spec.value = true;
+        else
+          state.current_variable_spec.value = false;
+        state.variable_specs.push_back(state.current_variable_spec);
+      }
+      ParserState &state;
+    };
+
 
     struct Parser : grammar<Parser> {
       Parser(ParserState &state) : state(state) { }
@@ -2023,6 +2054,7 @@ namespace Hypertable {
           Token RANGES       = as_lower_d["ranges"];
           Token SYNC         = as_lower_d["sync"];
           Token FS           = as_lower_d["fs"];
+          Token SET          = as_lower_d["set"];
 
           /**
            * Start grammar definition
@@ -2114,6 +2146,16 @@ namespace Hypertable {
             | compact_statement[set_command(self.state, COMMAND_COMPACT)]
             | metadata_sync_statement[set_command(self.state, COMMAND_METADATA_SYNC)]
             | stop_statement[set_command(self.state, COMMAND_STOP)]
+            | set_statement[set_command(self.state, COMMAND_SET)]
+            ;
+
+          set_statement
+            = SET >> set_variable_spec >> *(COMMA >> set_variable_spec )
+            ;
+
+          set_variable_spec
+            = identifier[set_variable_name(self.state)] 
+            >> '=' >> (TRUE | FALSE)[set_variable_value(self.state)]
             ;
 
           stop_statement
@@ -2891,7 +2933,7 @@ namespace Hypertable {
           balance_option_spec, heapcheck_statement, compact_statement,
           metadata_sync_statement, metadata_sync_option_spec, stop_statement,
           range_type, table_identifier, pseudo_table_reference,
-          dump_pseudo_table_statement;
+          dump_pseudo_table_statement, set_statement, set_variable_spec;
       };
 
       ParserState &state;

@@ -43,8 +43,8 @@
 #include "Hypertable/Lib/Types.h"
 
 #include "FileBlockCache.h"
-#include "LocationInitializer.h"
 #include "LoadStatistics.h"
+#include "LocationInitializer.h"
 #include "MaintenanceQueue.h"
 #include "MemoryTracker.h"
 #include "MetaLogEntityTask.h"
@@ -78,7 +78,7 @@ namespace Hypertable {
     static CommitLog     *root_log;
     static MetaLog::WriterPtr rsml_writer;
     static std::string    log_dir;
-    static LocationInitializerPtr location_initializer;
+    static LocationInitializer *location_initializer;
     static int64_t        range_split_size;
     static int64_t        range_maximum_size;
     static int32_t        failover_timeout;

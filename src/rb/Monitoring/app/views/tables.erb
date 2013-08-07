@@ -1,4 +1,19 @@
 <div id="rangeservers">
+<% if !@master_record['MasterSummary']['state'].empty?  %>
+<div>
+<table border="0">
+<tbody>
+<% @master_record['MasterSummary']['state'].each do |variable|  %>
+<tr  bgcolor="#FF6666">
+<td style="padding: 5;">
+<%= variable['name'] %>=<%= variable['value'] %>
+</td>
+</tr>
+<% end %>
+</tbody>
+</table>
+</div>
+<% end %>
 <h3>Tables </h3>
 <h4>Number of Tables: <%= @table_records['TableSummary']['tables'].length %></h4>
 <h4>Master Version: <%= @master_record['MasterSummary']['version'] %></h4>

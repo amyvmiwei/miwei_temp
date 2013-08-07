@@ -31,15 +31,19 @@
 #include <boost/algorithm/string.hpp>
 
 #include "Hypertable/Lib/MasterProtocol.h"
+#include "Hypertable/Lib/SystemVariable.h"
 
-#include "LocationInitializer.h"
 #include "Hyperspace/Session.h"
+
+#include "Global.h"
+#include "LocationInitializer.h"
 
 using namespace Hypertable;
 using namespace Serialization;
 
-LocationInitializer::LocationInitializer(PropertiesPtr &props)
-  : m_props(props), m_location_persisted(false), m_handshake_complete(false) {
+LocationInitializer::LocationInitializer(PropertiesPtr &props, ServerStatePtr server_state)
+  : m_props(props), m_server_state(server_state), 
+    m_location_persisted(false), m_handshake_complete(false) {
 
   Path data_dir = m_props->get_str("Hypertable.DataDirectory");
   data_dir /= "/run";
@@ -128,10 +132,20 @@ bool LocationInitializer::process_initialization_response(Event *event) {
     return false;
   }
 
+  bool location_persisted = false;
   const uint8_t *ptr = event->payload + 4;
   size_t remain = event->payload_len - 4;
-  String location = decode_vstr(&ptr, &remain);
-  bool location_persisted = false;
+  String location;
+  uint64_t generation;
+  std::vector<SystemVariable::Spec> specs;
+
+  // Decode response
+  location = decode_vstr(&ptr, &remain);
+  generation = decode_i64(&ptr, &remain);
+  SystemVariable::decode_specs(specs, &ptr, &remain);
+
+  // Update server state
+  m_server_state->set(generation, specs);
 
   {
     ScopedLock lock(m_mutex);

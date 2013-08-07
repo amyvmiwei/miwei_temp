@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for RangeServerClient
+ * This file contains declarations for RangeServerClient, a client interface class
+ * to the RangeServer.
  */
 
 #ifndef HYPERTABLE_RANGESERVERCLIENT_H
@@ -42,17 +48,23 @@
 
 namespace Hypertable {
 
+  /** @addtogroup libHypertable
+   * @{
+   */
+
   class ScanBlock;
 
-  /** Client proxy interface to RangeServer. */
+  /** Client proxy interface to RangeServer.
+   * This class provides a client interface to the RangeServer.  It has methods,
+   * both synchronous and asynchronous, that carry out %RangeServer operations.
+   */
   class RangeServerClient : public ReferenceCount {
   public:
 
     RangeServerClient(Comm *comm, uint32_t timeout_ms=0);
     ~RangeServerClient();
 
-    /** Sets the default client connection timeout
-     *
+    /** Sets the default client connection timeout.
      * @param timeout_ms timeout value in milliseconds
      */
     void set_default_timeout(uint32_t timeout_ms) {
@@ -61,7 +73,6 @@ namespace Hypertable {
     uint32_t default_timeout() const { return m_default_timeout_ms; }
 
     /** Issues a "compact" request synchronously.
-     *
      * @param addr address of RangeServer
      * @param table %Table identifier of table to compact
      * @param row Row containing range to compact
@@ -72,7 +83,6 @@ namespace Hypertable {
                  const String &row, uint32_t flags);
 
     /** Issues a "compact" request asynchronously.
-     *
      * @param addr address of RangeServer
      * @param table %Table identifier of table to compact
      * @param row Row containing range to compact
@@ -83,8 +93,7 @@ namespace Hypertable {
     void compact(const CommAddress &addr, const TableIdentifier &table,
                  const String &row, uint32_t flags, DispatchHandler *handler);
 
-    /** Issues a "compact" request asynchronously with a timer
-     *
+    /** Issues a "compact" request asynchronously with a timer.
      * @param addr address of RangeServer
      * @param table %Table identifier of table to compact
      * @param row Row containing range to compact
@@ -98,7 +107,6 @@ namespace Hypertable {
                  DispatchHandler *handler, Timer &timer);
 
     /** Issues a "metadata_sync" request synchronously.
-     *
      * @param addr address of RangeServer
      * @param table_id table identifier
      * @param flags metadata_sync flags
@@ -108,7 +116,6 @@ namespace Hypertable {
                        std::vector<String> &columns);
 
     /** Issues a synchronous "load range" request.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -120,7 +127,6 @@ namespace Hypertable {
                     bool needs_compaction);
 
     /** Issues a synchronous "load range" request with timer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -133,7 +139,6 @@ namespace Hypertable {
                     bool needs_compaction, Timer &timer);
 
     /** Issues a synchronous "acknowledge load" request for multiple ranges.
-     *
      * @param addr address of RangeServer
      * @param ranges qualified range spec
      * @param response_map per range responses to acknowledge_load
@@ -146,7 +151,6 @@ namespace Hypertable {
      * sequence of key/value pairs.  Each key/value pair is encoded as two
      * variable lenght ByteString records back-to-back.  This method takes
      * ownership of the data buffer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param count number of key/value pairs in buffer
@@ -162,7 +166,6 @@ namespace Hypertable {
      * argument holds a sequence of key/value pairs.  Each key/value pair
      * is encoded as two variable lenght ByteString records back-to-back.
      * This method takes ownership of the data buffer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param count number of key/value pairs in buffer
@@ -179,7 +182,6 @@ namespace Hypertable {
      * key/value pairs.  Each key/value pair is encoded as two variable lenght
      * ByteString records back-to-back.  This method takes ownership of the
      * data buffer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param count number of key/value pairs in buffer
@@ -193,7 +195,6 @@ namespace Hypertable {
      * holds a sequence of key/value pairs.  Each key/value pair is encoded
      * as two variable lenght ByteString records back-to-back.  This method
      * takes ownership of the data buffer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param count number of key/value pairs in buffer
@@ -206,7 +207,6 @@ namespace Hypertable {
                 Timer &timer);
 
     /** Issues a "create scanner" request asynchronously.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -218,7 +218,6 @@ namespace Hypertable {
                         DispatchHandler *handler);
 
     /** Issues a "create scanner" request asynchronously with timer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -231,7 +230,6 @@ namespace Hypertable {
                         DispatchHandler *handler, Timer &timer);
 
     /** Issues a "create scanner" request.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -243,7 +241,6 @@ namespace Hypertable {
                         ScanBlock &scan_block);
 
     /** Issues a synchronous "create scanner" request with timer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -256,7 +253,6 @@ namespace Hypertable {
                         ScanBlock &scan_block, Timer &timer);
 
     /** Issues a "destroy scanner" request asynchronously.
-     *
      * @param addr address of RangeServer
      * @param scanner_id Scanner ID returned from a call to create_scanner.
      * @param handler response handler
@@ -265,7 +261,6 @@ namespace Hypertable {
                          DispatchHandler *handler);
 
     /** Issues a "destroy scanner" request asynchronously with timer.
-     *
      * @param addr address of RangeServer
      * @param scanner_id Scanner ID returned from a call to create_scanner.
      * @param handler response handler
@@ -275,14 +270,12 @@ namespace Hypertable {
                          DispatchHandler *handler, Timer &timer);
 
     /** Issues a synchronous "destroy scanner" request.
-     *
      * @param addr address of RangeServer
      * @param scanner_id scanner ID returned from a call to create_scanner.
      */
     void destroy_scanner(const CommAddress &addr, int scanner_id);
 
     /** Issues a synchronous "destroy scanner" request with timer.
-     *
      * @param addr address of RangeServer
      * @param scanner_id scanner ID returned from a call to create_scanner.
      * @param timer timer
@@ -290,7 +283,6 @@ namespace Hypertable {
     void destroy_scanner(const CommAddress &addr, int scanner_id, Timer &timer);
 
     /** Issues a "fetch scanblock" request asynchronously.
-     *
      * @param addr address of RangeServer
      * @param scanner_id Scanner ID returned from a call to create_scanner.
      * @param handler response handler
@@ -299,7 +291,6 @@ namespace Hypertable {
                          DispatchHandler *handler);
 
     /** Issues a "fetch scanblock" request asynchronously.
-     *
      * @param addr address of RangeServer
      * @param scanner_id Scanner ID returned from a call to create_scanner.
      * @param handler response handler
@@ -309,7 +300,6 @@ namespace Hypertable {
                          DispatchHandler *handler, Timer &timer);
 
     /** Issues a synchronous "fetch scanblock" request.
-     *
      * @param addr address of RangeServer
      * @param scanner_id scanner ID returned from a call to create_scanner.
      * @param scan_block block of return key/value pairs
@@ -318,7 +308,6 @@ namespace Hypertable {
                          ScanBlock &scan_block);
 
     /** Issues a synchronous "fetch scanblock" request with timer.
-     *
      * @param addr address of RangeServer
      * @param scanner_id scanner ID returned from a call to create_scanner.
      * @param scan_block block of return key/value pairs
@@ -328,7 +317,6 @@ namespace Hypertable {
                          ScanBlock &scan_block, Timer &timer);
 
     /** Issues a "drop table" request asynchronously.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param handler response handler
@@ -337,7 +325,6 @@ namespace Hypertable {
                     DispatchHandler *handler);
 
     /** Issues a "drop table" request asynchronously with timer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param handler response handler
@@ -347,14 +334,12 @@ namespace Hypertable {
                     DispatchHandler *handler, Timer &timer);
 
     /** Issues a synchronous "drop table" request.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      */
     void drop_table(const CommAddress &addr, const TableIdentifier &table);
 
     /** Issues a synchronous "drop table" request with timer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param timer timer
@@ -364,7 +349,6 @@ namespace Hypertable {
                     Timer &timer);
 
     /** Issues a "update schema" request asynchronously.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param schema the new schema for this table
@@ -375,7 +359,6 @@ namespace Hypertable {
         DispatchHandler *handler);
 
     /** Issues a "update schema" request asynchronously with timer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param schema the new schema for this table
@@ -387,7 +370,6 @@ namespace Hypertable {
                        DispatchHandler *handler, Timer &timer);
 
     /** Issues a "commit_log_sync" request asynchronously.
-     *
      * @param addr address of RangeServer
      * @param table_id table for which commit log sync is needed
      * @param handler response handler
@@ -396,7 +378,6 @@ namespace Hypertable {
                          DispatchHandler *handler);
 
     /** Issues a "commit_log_sync" request asynchronously with timer.
-     *
      * @param addr address of RangeServer
      * @param table_id table for which commit log sync is needed
      * @param handler response handler
@@ -407,14 +388,12 @@ namespace Hypertable {
 
     /** Issues a "status" request.  This call blocks until it receives a
      * response from the server.
-     *
      * @param addr address of RangeServer
      */
     void status(const CommAddress &addr);
 
     /** Issues a "status" request with timer.  This call blocks until it
      * receives a response from the server.
-     *
      * @param addr address of RangeServer
      * @param timer timer
      */
@@ -422,21 +401,18 @@ namespace Hypertable {
 
     /** Issues a "close" request.  This call blocks until it receives a
      * response from the server or times out.
-     *
      * @param addr address of RangeServer
      */
     void close(const CommAddress &addr);
 
     /** Issues a "wait_for_maintenance" request.  This call blocks until it receives a
      * response from the server or times out.
-     *
      * @param addr address of RangeServer
      */
     void wait_for_maintenance(const CommAddress &addr);
 
     /** Issues a "shutdown" request.  This call blocks until it receives a
      * response from the server or times out.
-     *
      * @param addr address of RangeServer
      */
     void shutdown(const CommAddress &addr);
@@ -449,75 +425,52 @@ namespace Hypertable {
                            const String &pseudo_table_name, const String &outfile);
 
     /** Issues an synchronous "get_statistics" request.
-     *
      * @param addr address of RangeServer
+     * @param specs Vector of system state variable specs
+     * @param generation System state generation
      * @param stats reference to RangeServer stats object
      */
-    void get_statistics(const CommAddress &addr, StatsRangeServer &stats);
+    void get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                        uint64_t generation, StatsRangeServer &stats);
 
     /** Issues an synchronous "get_statistics" request with timer.
-     *
      * @param addr address of RangeServer
+     * @param specs Vector of system state variable specs
+     * @param generation System state generation
      * @param stats reference to RangeServer stats object
      * @param timer timer
      */
-    void get_statistics(const CommAddress &addr, StatsRangeServer &stats,
-                        Timer &timer);
+    void get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                        uint64_t generation, StatsRangeServer &stats, Timer &timer);
 
     /** Issues an asynchronous "get_statistics" request.
-     *
      * @param addr address of RangeServer
+     * @param specs Vector of system state variable specs
+     * @param generation System state generation
      * @param handler Dispatch handler for asynchronous callback
      */
-    void get_statistics(const CommAddress &addr, DispatchHandler *handler);
+    void get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                        uint64_t generation, DispatchHandler *handler);
 
 
     /** Issues an asynchronous "get_statistics" request with timer.
-     *
      * @param addr Address of RangeServer
+     * @param specs Vector of system state variable specs
+     * @param generation System state generation
      * @param handler Dispatch handler for asynchronous callback
      * @param timer Maximum wait timer
      */
-    void get_statistics(const CommAddress &addr, DispatchHandler *handler,
-                        Timer &timer);
+    void get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                        uint64_t generation, DispatchHandler *handler, Timer &timer);
 
-    /** Decodes the result of an asynchronous get_statistics call
-     *
+    /** Decodes the result of an asynchronous get_statistics call.
      * @param event reference to event object
      * @param stats reference to stats object to be filled in
      */
     static void decode_response_get_statistics(const EventPtr &event,
                                                StatsRangeServer &stats);
 
-    /** Issues an asynchronous "replay load range" request.
-     *
-     * @param addr address of RangeServer
-     * @param table table identifier
-     * @param range range specification
-     * @param state range state object
-     * @param handler response handler
-     */
-    void replay_load_range(const CommAddress &addr,
-                           const TableIdentifier &table,
-                           const RangeSpec &range, const RangeState &state,
-                           DispatchHandler *handler);
-
-    /** Issues an asynchronous "replay load range" request with timer.
-     *
-     * @param addr address of RangeServer
-     * @param table table identifier
-     * @param range range specification
-     * @param state range state object
-     * @param handler response handler
-     * @param timer timer
-     */
-    void replay_load_range(const CommAddress &addr,
-                           const TableIdentifier &table,
-                           const RangeSpec &range, const RangeState &state,
-                           DispatchHandler *handler, Timer &timer);
-
     /** Issues an asynchronous "drop range" request asynchronously.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -527,7 +480,6 @@ namespace Hypertable {
                     const RangeSpec &range, DispatchHandler *handler);
 
     /** Issues an asynchronous "drop range" request asynchronously with timer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -538,8 +490,7 @@ namespace Hypertable {
                     const RangeSpec &range, DispatchHandler *handler,
                     Timer &timer);
 
-    /** Issues a "relinquish range" request synchronously
-     *
+    /** Issues a "relinquish range" request synchronously.
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -548,7 +499,6 @@ namespace Hypertable {
                           const RangeSpec &range);
 
     /** Issues a "relinquish range" request synchronously, with timer.
-     *
      * @param addr address of RangeServer
      * @param table table identifier
      * @param range range specification
@@ -559,7 +509,6 @@ namespace Hypertable {
 
     /** Issues a "heapcheck" request.  This call blocks until it receives a
      * response from the server.
-     *
      * @param addr address of RangeServer
      * @param outfile output file to dump heap stats to
      */
@@ -582,7 +531,6 @@ namespace Hypertable {
                           uint32_t replay_timeout);
 
     /** Issues a "phantom_load" synchronous request.
-     *
      * @param addr address of RangeServer
      * @param location location of server being recovered
      * @param plan_generation recovery plan generation
@@ -597,7 +545,6 @@ namespace Hypertable {
                       const vector<RangeState> &states);
 
     /** Issues a "phantom_update" asynchronous request.
-     *
      * @param addr address of RangeServer
      * @param location location being recovered
      * @param plan_generation recovery plan generation
@@ -612,7 +559,6 @@ namespace Hypertable {
                         DispatchHandler *handler);
 
     /** Issues a "phantom_prepare_ranges" synchronous request.
-     *
      * @param addr address of RangeServer
      * @param op_id ID of Master recovery operation 
      * @param location location of server being recovered
@@ -626,7 +572,6 @@ namespace Hypertable {
                                 uint32_t timeout);
 
     /** Issues a "phantom_commit_ranges" synchronous request.
-     *
      * @param addr address of RangeServer
      * @param op_id ID of Master recovery operation 
      * @param location location of server being recovered
@@ -639,6 +584,15 @@ namespace Hypertable {
                                const vector<QualifiedRangeSpec> &ranges,
                                uint32_t timeout);
 
+    /** Issues an asynchronous "set_state" request with timer.
+     * @param addr Address of RangeServer
+     * @param specs Vector of system state variable specs
+     * @param generation System state generation
+     * @param handler Dispatch handler for asynchronous callback
+     * @param timer Maximum wait timer
+     */
+    void set_state(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                   uint64_t generation, DispatchHandler *handler, Timer &timer);
 
   private:
     void do_load_range(const CommAddress &addr, const TableIdentifier &table,
@@ -659,7 +613,8 @@ namespace Hypertable {
                        const TableIdentifier &table,
                        uint32_t timeout_ms);
     void do_status(const CommAddress &addr, uint32_t timeout_ms);
-    void do_get_statistics(const CommAddress &addr, StatsRangeServer &stats,
+    void do_get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+                           uint64_t generation, StatsRangeServer &stats,
                            uint32_t timeout_ms);
     void do_relinquish_range(const CommAddress &addr, const TableIdentifier &table,
                              const RangeSpec &range, uint32_t timeout_ms);
@@ -671,7 +626,10 @@ namespace Hypertable {
     uint32_t m_default_timeout_ms;
   };
 
+  /// Smart pointer to RangeServerClient
   typedef boost::intrusive_ptr<RangeServerClient> RangeServerClientPtr;
+
+  /** @}*/
 
 } // namespace Hypertable
 

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for MasterProtocol
+ * This file contains declarations for MasterProtocol, a class for generating
+ * Master protocol messages.
+ */
+
 #ifndef MASTER_PROTOCOL_H
 #define MASTER_PROTOCOL_H
 
@@ -29,12 +35,19 @@
 #include "AsyncComm/Event.h"
 #include "AsyncComm/Protocol.h"
 
-#include "Hypertable/Lib/BalancePlan.h"
-#include "Hypertable/Lib/Types.h"
+#include "BalancePlan.h"
+#include "SystemVariable.h"
+#include "Types.h"
 
 
 namespace Hypertable {
 
+  /** @addtogroup libHypertable
+   * @{
+   */
+
+  /** Generates Master protocol request messages.
+   */
   class MasterProtocol : public Protocol {
 
   public:
@@ -60,7 +73,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_STOP                        = 18;
     static const uint64_t COMMAND_REPLAY_STATUS               = 19;
     static const uint64_t COMMAND_COMPACT                     = 20;
-    static const uint64_t COMMAND_MAX                         = 21;
+    static const uint64_t COMMAND_SET                         = 21;
+    static const uint64_t COMMAND_MAX                         = 22;
 
     static const char *m_command_strings[];
 
@@ -75,6 +89,13 @@ namespace Hypertable {
     static CommBuf *
     create_compact_request(const String &tablename, const String &row,
                            uint32_t range_types);
+
+    /** Creates protocol message for SetState operation.
+     * @param specs Vector of variable specifications
+     * @return Pointer to protocol message
+     */
+    static CommBuf *
+    create_set_request(const std::vector<SystemVariable::Spec> &specs);
 
     static CommBuf *create_get_schema_request(const String &tablename);
 
@@ -121,7 +142,7 @@ namespace Hypertable {
     virtual const char *command_text(uint64_t command);
 
   };
-
+  /** @}*/
 }
 
 #endif // MASTER_PROTOCOL_H

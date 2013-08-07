@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for RangeServerProtocol
+ * This file contains declarations for RangeServerProtocol, a class for
+ * generating RangeServer protocol messages.
+ */
+
 #ifndef HYPERTABLE_RANGESERVERPROTOCOL_H
 #define HYPERTABLE_RANGESERVERPROTOCOL_H
 
@@ -30,10 +36,16 @@
 #include "ScanSpec.h"
 #include "Types.h"
 #include "RangeRecoveryPlan.h"
+#include "SystemVariable.h"
 
 namespace Hypertable {
 
-  /** Generates RangeServer protocol request messages */
+  /** @addtogroup libHypertable
+   * @{
+   */
+
+  /** Generates RangeServer protocol request messages.
+   */
   class RangeServerProtocol : public Protocol {
 
   public:
@@ -68,7 +80,8 @@ namespace Hypertable {
     static const uint64_t COMMAND_PHANTOM_PREPARE_RANGES   = 28;
     static const uint64_t COMMAND_PHANTOM_COMMIT_RANGES    = 29;
     static const uint64_t COMMAND_DUMP_PSEUDO_TABLE        = 30;
-    static const uint64_t COMMAND_MAX                      = 31;
+    static const uint64_t COMMAND_SET_STATE                = 31;
+    static const uint64_t COMMAND_MAX                      = 32;
 
     static const char *m_command_strings[];
 
@@ -97,7 +110,6 @@ namespace Hypertable {
     static String compact_flags_to_string(uint32_t flags);
 
     /** Creates a "compact" request message
-     *
      * @param table &Table identifier of table to compact
      * @param row Row of range to compact
      * @param flags &Range type specifier (see RangeType)
@@ -107,7 +119,6 @@ namespace Hypertable {
                                            const String &row, uint32_t flags);
 
     /** Creates a "metadata_sync" request message
-     *
      * @param table_id table identifier
      * @param flags metadata_sync flags
      * @param columns names of columns to sync
@@ -117,7 +128,6 @@ namespace Hypertable {
                                                  std::vector<String> &columns);
 
     /** Creates a "load range" request message
-     *
      * @param table table identifier
      * @param range range specification
      * @param range_state range state
@@ -132,7 +142,6 @@ namespace Hypertable {
      * sequence of key/value pairs.  Each key/value pair is encoded as two
      * variable lenght ByteStringrecords back-to-back.  This method transfers
      * ownership of the data buffer to the CommBuf that gets returned.
-     *
      * @param table table identifier
      * @param count number of key/value pairs in buffer
      * @param buffer buffer holding key/value pairs
@@ -144,7 +153,6 @@ namespace Hypertable {
 
     /** Creates an "update schema" message. Used to update schema for a
      * table
-     *
      * @param table table identifier
      * @param schema the new schema
      * @return protocol message
@@ -160,7 +168,6 @@ namespace Hypertable {
     static CommBuf *create_request_commit_log_sync(const TableIdentifier &table);
 
     /** Creates a "create scanner" request message.
-     *
      * @param table table identifier
      * @param range range specification
      * @param scan_spec scan specification
@@ -170,45 +177,38 @@ namespace Hypertable {
         const RangeSpec &range, const ScanSpec &scan_spec);
 
     /** Creates a "destroy scanner" request message.
-     *
      * @param scanner_id scanner ID returned from a "create scanner" request
      * @return protocol message
      */
     static CommBuf *create_request_destroy_scanner(int scanner_id);
 
     /** Creates a "fetch scanblock" request message.
-     *
      * @param scanner_id scanner ID returned from a "create scanner" request
      * @return protocol message
      */
     static CommBuf *create_request_fetch_scanblock(int scanner_id);
 
     /** Creates a "status" request message.
-     *
      * @return protocol message
      */
     static CommBuf *create_request_status();
 
     /** Creates a "close" request message.
-     *
      * @return protocol message
      */
     static CommBuf *create_request_close();
 
     /** Creates a "wait_for_maintenance" request message.
-     *
      * @return protocol message
      */
     static CommBuf *create_request_wait_for_maintenance();
 
     /** Creates a "shutdown" request message.
-     *
      * @return protocol message
      */
     static CommBuf *create_request_shutdown();
 
     /** Creates a "dump" command (for testing)
-     *
      * @param outfile Name of file to dump to
      * @param nokeys Don't include in-memory key data
      * @return protocol message
@@ -217,7 +217,6 @@ namespace Hypertable {
 					bool nokeys);
 
     /** Creates a "dump_pseudo_table" command.
-     *
      * @param table Table identifier
      * @param pseudo_table_name Name of pseudo table to dump
      * @param outfile Name of file to dump to
@@ -229,42 +228,20 @@ namespace Hypertable {
                                         const String &outfile);
 
     /** Creates a "drop table" request message.
-     *
      * @param table table identifier
      * @return protocol message
      */
     static CommBuf *create_request_drop_table(const TableIdentifier &table);
 
-    /** Creates a "replay begin" request message.
-     *
-     * @param group replay group to begin (METADATA_ROOT, METADATA, USER)
+    /** Creates a "set state" request message.
+     * @param specs Vector of system state variable specs
+     * @param generation System state generation
      * @return protocol message
      */
-    static CommBuf *create_request_replay_begin(uint16_t group);
-
-    /** Creates a "replay load range" request message.
-     *
-     * @return protocol message
-     */
-    static CommBuf *create_request_replay_load_range(const TableIdentifier &,
-        const RangeSpec &range, const RangeState &range_state);
-
-    /** Creates a "replay update" request message.  The data argument holds a
-     * sequence of blocks.  Each block consists of ...
-     *
-     * @param buffer buffer holding updates to replay
-     * @return protocol message
-     */
-    static CommBuf *create_request_replay_update(StaticBuffer &buffer);
-
-    /** Creates a "replay commit" request message.
-     *
-     * @return protocol message
-     */
-    static CommBuf *create_request_replay_commit();
+    static CommBuf *create_request_set_state(std::vector<SystemVariable::Spec> &specs,
+                                             uint64_t generation);
 
     /** Creates a "drop range" request message.
-     *
      * @param table table identifier
      * @param range range specification
      * @return protocol message
@@ -273,7 +250,6 @@ namespace Hypertable {
                                               const RangeSpec &range);
 
     /** Creates a "acknowledge load" request message
-     *
      * @param ranges range specification vector
      * @return protocol message
      */
@@ -289,13 +265,14 @@ namespace Hypertable {
                                                     const RangeSpec &range);
 
     /** Creates a "get statistics" request message.
-     *
+     * @param specs Vector of system state variable specs
+     * @param generation System state generation
      * @return protocol message
      */
-    static CommBuf *create_request_get_statistics();
+    static CommBuf *create_request_get_statistics(std::vector<SystemVariable::Spec> &specs,
+                                                  uint64_t generation);
 
     /** Creates a "relinquish range" request message.
-     *
      * @param table table identifier
      * @param range range specification
      * @return protocol message
@@ -304,14 +281,12 @@ namespace Hypertable {
                                                     const RangeSpec &range);
 
     /** Creates a "heapcheck" request message.
-     *
      * @param outfile name of file to dump heap stats to
      * @return protocol message
      */
     static CommBuf *create_request_heapcheck(const String &outfile);
 
     /** Creates a "replay_fragments" request message.
-     *
      * @param op_id id of the calling recovery operation
      * @param location location of the server being recovered
      * @param plan_generation recovery plan generation
@@ -341,7 +316,6 @@ namespace Hypertable {
         const std::vector<RangeState> &states);
 
     /** Creates a "phantom_update" request message.
-     *
      * @param location server being recovered
      * @param plan_generation recovery plan generation
      * @param range range being updated
@@ -353,7 +327,6 @@ namespace Hypertable {
         uint32_t fragment, StaticBuffer &buffer);
 
     /** Creates a "phantom_prepare_ranges" request message.
-     *
      * @param op_id id of the calling recovery operation
      * @param location location of the server being recovered
      * @param plan_generation recovery plan generation
@@ -364,7 +337,6 @@ namespace Hypertable {
             const std::vector<QualifiedRangeSpec> &ranges);
 
     /** Creates a "phantom_commit_ranges" request message.
-     *
      * @param op_id id of the calling recovery operation
      * @param location location of the server being recovered
      * @param plan_generation recovery plan generation
@@ -381,6 +353,8 @@ namespace Hypertable {
           int64_t op_id, const String &location, int plan_generation,
           const vector<QualifiedRangeSpec> &ranges);
   };
+
+  /** @}*/
 }
 
 #endif // HYPERTABLE_RANGESERVERPROTOCOL_H

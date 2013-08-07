@@ -68,6 +68,7 @@
 #include "TableInfoMap.h"
 #include "TimerHandler.h"
 #include "PhantomRangeMap.h"
+#include "ServerState.h"
 
 namespace Hypertable {
   using namespace Hyperspace;
@@ -122,7 +123,9 @@ namespace Hypertable {
     /** @deprecated */
     void dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *table,
                            const char *pseudo_table, const char *outfile);
-    void get_statistics(ResponseCallbackGetStatistics *);
+    void get_statistics(ResponseCallbackGetStatistics *cb,
+                        std::vector<SystemVariable::Spec> &specs,
+                        uint64_t generation);
 
     void drop_range(ResponseCallback *, const TableIdentifier *,
                     const RangeSpec *);
@@ -155,6 +158,11 @@ namespace Hypertable {
     void phantom_commit_ranges(ResponseCallback *, int64_t op_id,
         const String &location, int plan_generation, 
         const vector<QualifiedRangeSpec> &ranges);
+
+    void set_state(ResponseCallback *cb,
+                   std::vector<SystemVariable::Spec> &specs,
+                   uint64_t generation);
+
 
     /**
      * Blocks while the maintenance queue is non-empty
@@ -276,6 +284,8 @@ namespace Hypertable {
     FailoverPhantomRangeMap m_failover_map;
     Mutex                  m_failover_mutex;
 
+    /// Pointer to ServerState object
+    ServerStatePtr         m_server_state;
     ConnectionManagerPtr   m_conn_manager;
     ApplicationQueuePtr    m_app_queue;
     uint64_t               m_existence_file_handle;

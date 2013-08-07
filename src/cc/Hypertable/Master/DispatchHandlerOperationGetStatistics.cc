@@ -41,6 +41,7 @@ void DispatchHandlerOperationGetStatistics::initialize(std::vector<RangeServerSt
     results[i].fetch_timestamp = now;
     results[i].stats = new StatsRangeServer();
   }
+  m_context->system_state->get(m_specs, &m_generation);
   m_timer.start();
 }
 
@@ -48,7 +49,7 @@ void DispatchHandlerOperationGetStatistics::initialize(std::vector<RangeServerSt
 void DispatchHandlerOperationGetStatistics::start(const String &location) {
   CommAddress addr;
   addr.set_proxy(location);
-  m_rsclient.get_statistics(addr, this, m_timer);
+  m_rsclient.get_statistics(addr, m_specs, m_generation, this, m_timer);
 }
 
 

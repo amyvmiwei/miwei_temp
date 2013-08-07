@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for RangeServerProtocol
+ * This file contains definitions for RangeServerProtocol, a class for
+ * generating RangeServer protocol messages.
  */
 
 #include "Common/Compat.h"
@@ -59,6 +65,8 @@ namespace Hypertable {
     "phantom update",
     "phantom prepare ranges",
     "phantom commit ranges",
+    "dump pseudo table",
+    "set state",
     (const char *)0
   };
 
@@ -275,38 +283,6 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_replay_begin(uint16_t group) {
-    CommHeader header(COMMAND_REPLAY_BEGIN);
-    CommBuf *cbuf = new CommBuf(header, 2);
-    cbuf->append_i16(group);
-    return cbuf;
-  }
-
-  CommBuf *RangeServerProtocol::
-  create_request_replay_load_range(const TableIdentifier &table,
-      const RangeSpec &range, const RangeState &range_state) {
-    CommHeader header(COMMAND_REPLAY_LOAD_RANGE);
-    CommBuf *cbuf = new CommBuf(header, table.encoded_length()
-        + range.encoded_length() + range_state.encoded_length());
-    table.encode(cbuf->get_data_ptr_address());
-    range.encode(cbuf->get_data_ptr_address());
-    range_state.encode(cbuf->get_data_ptr_address());
-    return cbuf;
-  }
-
-  CommBuf *
-  RangeServerProtocol::create_request_replay_update(StaticBuffer &buffer) {
-    CommHeader header(COMMAND_REPLAY_UPDATE);
-    CommBuf *cbuf = new CommBuf(header, 0, buffer);
-    return cbuf;
-  }
-
-  CommBuf *RangeServerProtocol::create_request_replay_commit() {
-    CommHeader header(COMMAND_REPLAY_COMMIT);
-    CommBuf *cbuf = new CommBuf(header);
-    return cbuf;
-  }
-
   CommBuf *
   RangeServerProtocol::create_request_drop_range(const TableIdentifier &table,
                                                  const RangeSpec &range) {
@@ -348,10 +324,14 @@ namespace Hypertable {
     return cbuf;
   }
 
-  CommBuf *RangeServerProtocol::create_request_get_statistics() {
+  CommBuf *RangeServerProtocol::create_request_get_statistics(std::vector<SystemVariable::Spec> &specs,
+                                                              uint64_t generation) {
     CommHeader header(COMMAND_GET_STATISTICS);
     header.flags |= CommHeader::FLAGS_BIT_URGENT;
-    CommBuf *cbuf = new CommBuf(header);
+    CommBuf *cbuf = new CommBuf(header, 8 +
+                                SystemVariable::encoded_length_specs(specs));
+    cbuf->append_i64(generation);
+    SystemVariable::encode_specs(specs, cbuf->get_data_ptr_address());
     return cbuf;
   }
 
@@ -373,6 +353,18 @@ namespace Hypertable {
     Serialization::encode_vstr(cbuf->get_data_ptr_address(), outfile.c_str());
     return cbuf;
   }
+
+  CommBuf *RangeServerProtocol::create_request_set_state(std::vector<SystemVariable::Spec> &specs,
+                                                         uint64_t generation) {
+    CommHeader header(COMMAND_SET_STATE);
+    header.flags |= CommHeader::FLAGS_BIT_URGENT;
+    CommBuf *cbuf = new CommBuf(header, 8 +
+                                SystemVariable::encoded_length_specs(specs));
+    cbuf->append_i64(generation);
+    SystemVariable::encode_specs(specs, cbuf->get_data_ptr_address());
+    return cbuf;
+  }
+
 
   CommBuf *RangeServerProtocol::create_request_replay_fragments(int64_t op_id,
           const String &recover_location, int plan_generation,
