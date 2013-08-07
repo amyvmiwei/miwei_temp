@@ -45,6 +45,10 @@ MetaLogEntityRemoveOkLogs::MetaLogEntityRemoveOkLogs(StringSet &logs)
   m_log_set = logs;
 }
 
+MetaLogEntityRemoveOkLogs::MetaLogEntityRemoveOkLogs()
+  : Entity(EntityType::REMOVE_OK_LOGS) {
+}
+
 void MetaLogEntityRemoveOkLogs::insert(const String &pathname) {
   ScopedLock lock(m_mutex);
   HT_ASSERT(!boost::ends_with(pathname, "/"));

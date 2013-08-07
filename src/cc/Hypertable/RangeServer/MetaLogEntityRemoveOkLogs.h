@@ -58,6 +58,9 @@ namespace Hypertable {
      */
     MetaLogEntityRemoveOkLogs(StringSet &logs);
 
+    /** Constructor. */
+    MetaLogEntityRemoveOkLogs();
+
     /** Destructor */
     virtual ~MetaLogEntityRemoveOkLogs() { }
 

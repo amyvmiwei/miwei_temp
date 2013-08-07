@@ -596,6 +596,7 @@ void RangeServer::local_recover() {
   StringSet transfer_logs;
   TableInfoMap replay_map(new TableSchemaCache(m_hyperspace, Global::toplevel_dir));
   int priority = 0;
+  bool found_remove_ok_logs = false;
 
   try {
     std::vector<MaintenanceTask*> maintenance_tasks;
@@ -644,9 +645,15 @@ void RangeServer::local_recover() {
           else if (dynamic_cast<MetaLogEntityRemoveOkLogs *>(entity.get())) {
             ScopedLock glock(Global::mutex);
             Global::remove_ok_logs = (MetaLogEntityRemoveOkLogs *)entity.get();
+	    found_remove_ok_logs = true;
           }
           stripped_entities.push_back(entity);
         }
+      }
+
+      if (!found_remove_ok_logs) {
+	ScopedLock glock(Global::mutex);
+	Global::remove_ok_logs = new MetaLogEntityRemoveOkLogs();
       }
 
       entities.swap(stripped_entities);
@@ -876,6 +883,12 @@ void RangeServer::local_recover() {
     else {
       ScopedLock lock(m_mutex);
 
+      // Create RemoveOkLogs entity
+      {
+	ScopedLock glock(Global::mutex);
+	Global::remove_ok_logs = new MetaLogEntityRemoveOkLogs();
+      }
+
       /**
        *  Create the logs
        */
@@ -911,11 +924,8 @@ void RangeServer::local_recover() {
 
     }
 
-    if (!Global::remove_ok_logs) {
-      {
-        ScopedLock glock(Global::mutex);
-        Global::remove_ok_logs = new MetaLogEntityRemoveOkLogs(transfer_logs);
-      }
+    if (!found_remove_ok_logs) {
+      Global::remove_ok_logs->insert(transfer_logs);
       Global::rsml_writer->record_state(Global::remove_ok_logs.get());
     }
 
