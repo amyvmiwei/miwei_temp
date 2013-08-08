@@ -132,7 +132,7 @@ int main(int argc, char **argv) {
     tracker.clear();
     tracker.accumulate_data(amount);
     tracker.set_garbage_stats(1000000LL, 950000LL);
-    HT_ASSERT(tracker.current_target() == 53687090);
+    HT_ASSERT(tracker.current_target() == 107374182);
     HT_ASSERT(!tracker.need_collection());
 
     tracker.clear();
@@ -144,8 +144,7 @@ int main(int argc, char **argv) {
     tracker.clear();
     tracker.accumulate_data(amount);
     tracker.set_garbage_stats(1000000LL, 700000LL);
-    // serious hack
-    HT_ASSERT(tracker.current_target() == 35791394 || tracker.current_target() == 35791393);
+    HT_ASSERT(tracker.current_target() == 71582788);
     HT_ASSERT(tracker.need_collection());
 
     tracker.clear();
@@ -158,13 +157,13 @@ int main(int argc, char **argv) {
     tracker.accumulate_data(amount);
     tracker.accumulate_data(amount);
     tracker.set_garbage_stats(1000000LL, 500000LL);
-    HT_ASSERT(tracker.current_target() == 42949672);
+    HT_ASSERT(tracker.current_target() == 85899345);
     HT_ASSERT(tracker.need_collection());
 
     tracker.clear();
     tracker.accumulate_data(amount);
     tracker.set_garbage_stats(1000000LL, 900000LL);
-    HT_ASSERT(tracker.current_target() == 85899344);
+    HT_ASSERT(tracker.current_target() == 171798690);
     HT_ASSERT(!tracker.need_collection());
 
     tracker.clear();
