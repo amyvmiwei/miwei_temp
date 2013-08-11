@@ -83,6 +83,10 @@ target_link_libraries(op_test_driver HyperMaster HyperRanger Hyperspace Hypertab
 add_executable(op_dependency_test tests/op_dependency_test.cc tests/OperationTest.cc)
 target_link_libraries(op_dependency_test HyperMaster HyperRanger Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
 
+# system_state_test
+add_executable(system_state_test tests/system_state_test.cc)
+target_link_libraries(system_state_test HyperCommon HyperMaster Hypertable ${MALLOC_LIBRARY})
+
 #
 # Copy test files
 #
@@ -95,6 +99,8 @@ target_link_libraries(htgc HyperMaster HyperDfsBroker Hypertable ${RRD_LIBRARIES
 set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hypertable/Master/tests")
 configure_file(${SRC_DIR}/balance_plan_authority_test.golden
     ${DST_DIR}/balance_plan_authority_test.golden COPYONLY)
+configure_file(${SRC_DIR}/system_state_test.golden
+    ${DST_DIR}/system_state_test.golden COPYONLY)
 
 add_test(MasterOperation-TestSetup env INSTALL_DIR=${INSTALL_DIR} 
          ${CMAKE_CURRENT_SOURCE_DIR}/tests/op_test_setup.sh)
@@ -112,6 +118,7 @@ add_test(MasterOperation-RenameTable op_test_driver rename_table)
 add_test(MasterOperation-MoveRange op_test_driver move_range)
 #add_test(Master-Context context_test)
 add_test(MasterOperation-BalancePlanAuthority op_test_driver balance_plan_authority)
+add_test(SystemState system_state_test)
 
 if (NOT HT_COMPONENT_INSTALL)
   file(GLOB HEADERS *.h)

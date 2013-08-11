@@ -151,10 +151,12 @@ namespace Hypertable {
      * a new range and sets <code>location</code> to the server name if found.
      * @param context %Master context
      * @param context Reference to string to hold next available server name
+     * @param urgent Use servers that exceed disk threshold, if necessary
      * @return <i>true</i> if next available server found, <i>false</i>
      * otherwise
      */
-    extern bool next_available_server(ContextPtr &context, String &location);
+    extern bool next_available_server(ContextPtr &context, String &location,
+                                      bool urgent=false);
 
     /** Loads a table's initial range.
      * Load's a table's initial range in the server specified by

@@ -544,7 +544,7 @@ BalancePlanAuthority::get_balance_destination(const TableIdentifier &table,
     if ((iter = m_current_set.find(move_spec)) != m_current_set.end())
       location = (*iter)->dest_location;
     else {
-      if (!Utility::next_available_server(m_context, location))
+      if (!Utility::next_available_server(m_context, location, true))
         return false;
       move_spec->dest_location = location;
       m_current_set.insert(move_spec);

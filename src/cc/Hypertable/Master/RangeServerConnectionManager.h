@@ -45,6 +45,11 @@ namespace Hypertable {
 
   using namespace boost::multi_index;
 
+  struct RangeServerState {
+    String location;
+    double disk_usage;
+  };
+
   class RangeServerConnectionManager : public ReferenceCount {
   public:
     RangeServerConnectionManager();
@@ -57,7 +62,7 @@ namespace Hypertable {
     bool find_server_by_hostname(const String &hostname, RangeServerConnectionPtr &rsc);
     bool find_server_by_public_addr(InetAddr addr, RangeServerConnectionPtr &rsc);
     bool find_server_by_local_addr(InetAddr addr, RangeServerConnectionPtr &rsc);
-    bool next_available_server(RangeServerConnectionPtr &rsc);
+    bool next_available_server(RangeServerConnectionPtr &rsc, bool urgent=false);
     void get_unbalanced_servers(StringSet &locations,
                                 std::vector<RangeServerConnectionPtr> &unbalanced);
     void set_servers_balanced(const std::vector<RangeServerConnectionPtr> &servers);
@@ -69,6 +74,7 @@ namespace Hypertable {
                                std::vector<RangeServerConnectionPtr> &connections);
     void get_connected_servers(StringSet &locations);
     size_t connection_count() { ScopedLock lock(mutex); return m_conn_count; }
+    void set_range_server_state(std::vector<RangeServerState> &states);
 
   private:
 
@@ -121,6 +127,7 @@ namespace Hypertable {
     ServerList m_server_list;
     ServerList::iterator m_server_list_iter;
     size_t m_conn_count;
+    int32_t m_disk_threshold;
   };
   typedef intrusive_ptr<RangeServerConnectionManager> RangeServerConnectionManagerPtr;
 

@@ -121,7 +121,7 @@ int main(int argc, char **argv) {
     init_with_policies<Policies>(argc, argv);
     DependencySet dependencies, exclusivities, obstructions;
     std::vector<OperationPtr> operations;
-    ContextPtr context = new Context();
+    ContextPtr context = new Context(properties);
     OperationPtr operation;
     std::vector<String> results;
     std::set<String> seen;
@@ -130,7 +130,6 @@ int main(int argc, char **argv) {
 
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
-    context->props = properties;
     context->dfs = new DfsBroker::Client(context->conn_manager, context->props);
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     String log_dir = context->toplevel_dir + "/servers/master/log";

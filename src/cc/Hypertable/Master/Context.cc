@@ -38,6 +38,20 @@
 using namespace Hypertable;
 using namespace std;
 
+Context::Context(PropertiesPtr &p) 
+  : props(p), timer_interval(0), monitoring_interval(0), gc_interval(0),
+    next_monitoring_time(0), next_gc_time(0), test_mode(false),
+    quorum_reached(false), m_balance_plan_authority(0) {
+  master_file_handle = 0;
+  balancer = 0;
+  response_manager = 0;
+  reference_manager = 0;
+  op = 0;
+  recovery_barrier_op = 0;
+  disk_threshold = props->get_i32("Hypertable.Master.DiskThreshold.Percentage");
+}
+
+
 Context::~Context() {
   if (hyperspace && master_file_handle > 0) {
     hyperspace->close(master_file_handle);
@@ -202,9 +216,6 @@ void Context::get_available_servers(StringSet &servers) {
 
 bool Context::can_accept_ranges(const RangeServerStatistics &stats)
 {
-  static int threshold = 0;
-  if (!threshold)
-    threshold = props->get_i32("Hypertable.Master.DiskThreshold.Percentage");
 
   // system info was not yet initialized; assume that the disks are available
   if (!stats.stats) {
@@ -214,20 +225,27 @@ bool Context::can_accept_ranges(const RangeServerStatistics &stats)
   }
 
   // accept new ranges if there's at least one disk below the threshold
+  double numerator=0.0, denominator=0.0;
   foreach_ht (const FsStat &fs, stats.stats->system.fs_stat) {
-    if (fs.use_pct < threshold)
-      return true;
+    numerator += fs.total - fs.avail;
+    denominator += fs.total;
   }
-  HT_WARNF("RangeServer %s: all disks are above threshold of %d %% "
-          "(Hypertable.Master.DiskThresholdPct); will not assign ranges",
-          stats.location.c_str(), threshold);
+
+  if (denominator == 0.0 ||
+      (int32_t)((numerator/denominator)*100.00) < disk_threshold)
+    return true;
+
+  HT_WARNF("RangeServer %s: disk use %d%% exceeds threshold; will not assign "
+           "ranges", stats.location.c_str(),
+           (int32_t)((numerator/denominator)*100.00));
+
   return false;
 }
 
 
 void
 Context::RecoveryState::install_replay_future(int64_t id,
-                                               RecoveryStepFuturePtr &future) {
+                                              RecoveryStepFuturePtr &future) {
   ScopedLock lock(m_mutex);
   m_replay_map[id] = future;
 }

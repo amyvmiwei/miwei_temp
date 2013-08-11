@@ -20,6 +20,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/Config.h"
 
 #include "RangeServerConnectionManager.h"
 
@@ -30,6 +31,7 @@ RangeServerConnectionManager::RangeServerConnectionManager()
   : m_conn_count(0) {
   comm = Comm::instance();
   m_server_list_iter = m_server_list.end();
+  m_disk_threshold = Config::properties->get_i32("Hypertable.Master.DiskThreshold.Percentage");
 }
 
 void RangeServerConnectionManager::add_server(RangeServerConnectionPtr &rsc) {
@@ -228,8 +230,11 @@ void RangeServerConnectionManager::erase_server(RangeServerConnectionPtr &rsc) {
   
 }
 
-bool RangeServerConnectionManager::next_available_server(RangeServerConnectionPtr &rsc) {
+bool RangeServerConnectionManager::next_available_server(RangeServerConnectionPtr &rsc,
+                                                         bool urgent) {
   ScopedLock lock(mutex);
+  double minimum_disk_use = 100;
+  RangeServerConnectionPtr urgent_server;
 
   if (m_server_list.empty())
     return false;
@@ -243,12 +248,24 @@ bool RangeServerConnectionManager::next_available_server(RangeServerConnectionPt
     ++m_server_list_iter;
     if (m_server_list_iter == m_server_list.end())
       m_server_list_iter = m_server_list.begin();
-    if (m_server_list_iter->rsc->connected()
-            && !m_server_list_iter->rsc->is_recovering()) {
-      rsc = m_server_list_iter->rsc;
-      return true;
+    if (m_server_list_iter->rsc->connected() &&
+        !m_server_list_iter->rsc->is_recovering()) {
+      if (m_server_list_iter->rsc->get_disk_fill_percentage() <
+          (double)m_disk_threshold) {
+        rsc = m_server_list_iter->rsc;
+        return true;
+      }
+      if (m_server_list_iter->rsc->get_disk_fill_percentage() < minimum_disk_use) {
+        minimum_disk_use = m_server_list_iter->rsc->get_disk_fill_percentage();
+        urgent_server = m_server_list_iter->rsc;
+      }
     }
   } while (m_server_list_iter != saved_iter);
+
+  if (urgent && urgent_server) {
+    rsc = urgent_server;
+    return true;
+  }
 
   return false;
 }
@@ -334,4 +351,16 @@ bool RangeServerConnectionManager::exist_unbalanced_servers() {
       return true;
   }
   return false;
+}
+
+void RangeServerConnectionManager::set_range_server_state(std::vector<RangeServerState> &states) {
+  ScopedLock lock(mutex);
+  LocationIndex &hash_index = m_server_list.get<1>();
+  LocationIndex::iterator lookup_iter;
+
+  foreach_ht (RangeServerState &state, states) {
+    if ((lookup_iter = hash_index.find(state.location)) == hash_index.end())
+      continue;
+    lookup_iter->rsc->set_disk_fill_percentage(state.disk_usage);
+  }
 }

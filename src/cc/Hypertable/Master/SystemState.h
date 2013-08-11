@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -33,6 +33,8 @@
 #include "Hypertable/Lib/MetaLogEntity.h"
 #include "Hypertable/Lib/SystemVariable.h"
 
+#include "NotificationMessage.h"
+
 namespace Hypertable {
 
   /** @addtogroup Master
@@ -46,7 +48,10 @@ namespace Hypertable {
     /** Constructor.
      * This constructor intializes the #m_admin_specified and
      * #m_auto_specified arrays with system variables and their
-     * default values.
+     * default values.  It also initializes #m_admin_last_notification
+     * and #m_auto_last_notification to the same size as the spec arrays, with
+     * all zeros.  It also sets #m_notification_interval to the value of the
+     * <code>Hypertable.Master.NotificationInterval</code> property.
      */
     SystemState();
 
@@ -59,6 +64,11 @@ namespace Hypertable {
     virtual ~SystemState() { }
 
     /** Set a vector of variables by administrator.
+     * For each variable spec in <code>specs</code>, this method updates
+     * the values in the #m_admin_specified vector.  If the variable state
+     * changes, or the variable is in the non-default state and the time
+     * since the last notification has exceeded #m_notification_interval,
+     * it creates a notification and adds it to #m_notifications.
      * @param specs Vector of variable specifications
      * @return <i>true</i> if variable state changed and generation
      * number incremented, <i>false</i> otherwise.
@@ -66,6 +76,11 @@ namespace Hypertable {
     bool admin_set(std::vector<SystemVariable::Spec> &specs);
 
     /** Set a variable by administrator.
+     * This method updates the values in the #m_admin_specified vector.  If the
+     * variable state changes, or the variable is in the non-default state and
+     * the time since the last notification has exceeded
+     * #m_notification_interval, it creates a notification and adds it to
+     * #m_notifications.
      * @param code Variable code to set
      * @param value Value of variable to set
      * @return <i>true</i> if variable state changed and generation
@@ -73,20 +88,22 @@ namespace Hypertable {
      */
     bool admin_set(int code, bool value);
 
-    /** Set a vector of variables by automated condition.
-     * @param specs Vector of variable specifications
-     * @return <i>true</i> if variable state changed and generation
-     * number incremented, <i>false</i> otherwise.
-     */
-    bool auto_set(std::vector<SystemVariable::Spec> &specs);
-
-    /** Set a variable by administrator.
+    /** Set a variable by automated condition.
+     * This method updates the values in the #m_auto_specified vector.  If the
+     * variable state changes, or the variable is in the non-default state and
+     * the time since the last notification has exceeded
+     * #m_notification_interval, it creates a notification and adds it to
+     * #m_notifications.  The notification message body is constructed as:
+     * 
+     *   - System state VARIABLE=<code>value</code> <code>reason</code>.
+     *
      * @param code Variable code to set
      * @param value Value of variable to set
+     * @param reason String describing reason for state change
      * @return <i>true</i> if variable state changed and generation
      * number incremented, <i>false</i> otherwise.
      */
-    bool auto_set(int code, bool value);
+    bool auto_set(int code, bool value, const String &reason);
 
     /** Get system variables and generation number.
      * This method returns a vector of system variables and their current values
@@ -98,6 +115,13 @@ namespace Hypertable {
      * @param generation Address of variable to hold generation number
      */
     void get(std::vector<SystemVariable::Spec> &specs, uint64_t *generation);
+
+    /** Get pending notifications.
+     * This method copies #m_notifications to <code>notifications</code> and
+     * then clears #m_notifications.
+     * @return <i>true</i> if no pending notifications, <i>false</i> otherwise.
+     */
+    bool get_notifications(std::vector<NotificationMessage> &notifications);
 
     /** Get system state variables that are not set to their default value.
      * This method returns a vector of system variable specs for the variables
@@ -128,13 +152,15 @@ namespace Hypertable {
      * System state generation number
      * Number of administratively set variable specs
      * foreach administratively set variable spec {
-     *   variable code
-     *   variable value
+     *   variable code (i32)
+     *   variable value (bool)
+     *   time (seconds since epoch) of last notification (i32)
      * }
      * Number of automatically set variable specs
      * foreach automatically set variable spec {
-     *   variable code
-     *   variable value
+     *   variable code (i32)
+     *   variable value (bool)
+     *   time (seconds since epoch) of last notification (i32)
      * }
      * </pre>
      * @param bufp Address of destination buffer pointer (advanced by call)
@@ -156,14 +182,26 @@ namespace Hypertable {
     /// Administratively set state variables
     std::vector<SystemVariable::Spec> m_admin_specified;
 
+    /// Last notification times for admin set variables
+    std::vector<int32_t> m_admin_last_notification;
+
     /// Automatically set state variables
     std::vector<SystemVariable::Spec> m_auto_specified;
+
+    /// Last notification times for auto set variables
+    std::vector<int32_t> m_auto_last_notification;
+
+    /// Pending notification messages
+    std::vector<NotificationMessage> m_notifications;
+
+    /// Notification interval in seconds
+    int32_t m_notification_interval;
   };
 
   /// Smart pointer to SystemState
   typedef intrusive_ptr<SystemState> SystemStatePtr;
 
-  /* @}*/
+  /** @}*/
 
 } // namespace Hypertable
 

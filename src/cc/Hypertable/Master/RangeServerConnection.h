@@ -54,6 +54,11 @@ namespace Hypertable {
     bool set_balanced();
     bool get_balanced();
 
+    void set_disk_fill_percentage(double percentage) {
+      m_disk_fill_percentage = percentage;
+    }
+    double get_disk_fill_percentage() { return m_disk_fill_percentage; }
+
     void set_recovering(bool b);
     bool is_recovering();
 
@@ -81,6 +86,7 @@ namespace Hypertable {
     CommAddress m_comm_addr;
     InetAddr m_local_addr;
     InetAddr m_public_addr;
+    double m_disk_fill_percentage;
     bool m_connected;
     bool m_recovering;
   };

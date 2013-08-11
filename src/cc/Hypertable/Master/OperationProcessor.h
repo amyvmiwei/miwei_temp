@@ -59,6 +59,10 @@ namespace Hypertable {
   public:
     OperationProcessor(ContextPtr &context, size_t thread_count);
     void add_operation(OperationPtr &operation);
+    void add_operation(Operation *operation) {
+      OperationPtr op(operation);
+      add_operation(op);
+    }
     void add_operations(std::vector<OperationPtr> &operations);
     OperationPtr remove_operation(int64_t hash_code);
     void shutdown();

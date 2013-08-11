@@ -1,0 +1,24 @@
+System State Change
+System state READONLY=true set administratively.
+System State Alert
+System state READONLY=true set administratively.
+System State Alert
+System state READONLY=true set administratively.
+System State Change
+System state READONLY=false set administratively.
+System State Change
+System state READONLY=true set administratively.
+System State Alert
+System state READONLY=true set administratively.
+System State Alert
+System state READONLY=true set administratively.
+System State Change
+System state READONLY=false set administratively.
+System State Change
+System state READONLY=true because of test (1).
+System State Alert
+System state READONLY=true because of test (2).
+System State Alert
+System state READONLY=true because of test (3).
+System State Change
+System state READONLY=false because of test (4).

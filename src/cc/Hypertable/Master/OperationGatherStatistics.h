@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for OperationGatherStatistics.
+ * This file contains declarations for OperationGatherStatistics, an operation
+ * for fetching statistics from all RangeServers and processing.
+ */
+
 #ifndef HYPERTABLE_OPERATIONGATHERSTATISTICS_H
 #define HYPERTABLE_OPERATIONGATHERSTATISTICS_H
 
@@ -28,11 +34,27 @@
 
 namespace Hypertable {
 
+  /** @addtogroup Master
+   *  @{
+   */
+
+  /** Gathers and processes RangeServer statistics */
   class OperationGatherStatistics : public Operation {
   public:
+
+    /** Constructor. */
     OperationGatherStatistics(ContextPtr &context);
+
+    /** Destructor. */
     virtual ~OperationGatherStatistics() { }
 
+    /** Carries out "gather statistics operation.
+     * This method fetches statistics from all connected range servers
+     * by calling RangeServer::getStatistics().  The gathered statistics are
+     * used for disk threshold processing, putting the system into READONLY mode
+     * if aggreggate disk use exceeds the threshold.  It also passes the
+     * gathered statistics to the monitoring system and the balancer.
+     */
     virtual void execute();
     virtual const String name();
     virtual const String label();
@@ -43,12 +65,12 @@ namespace Hypertable {
     virtual void encode_state(uint8_t **bufp) const { }
     virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }
     virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
-
-  private:
-    StringSet m_completed;
   };
 
+  /// Smart pointer to OperationGatherStatistics
   typedef intrusive_ptr<OperationGatherStatistics> OperationGatherStatisticsPtr;
+
+  /** @}*/
 
 } // namespace Hypertable
 

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Definitions for OperationGatherStatistics.
+ * This file contains definitions for OperationGatherStatistics, an operation
+ * for fetching statistics from all RangeServers and processing.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Path.h"
 #include "Common/StringExt.h"
@@ -29,6 +35,7 @@ extern "C" {
 
 #include "DispatchHandlerOperationGetStatistics.h"
 #include "OperationGatherStatistics.h"
+#include "OperationSetState.h"
 #include "OperationProcessor.h"
 #include "RangeServerStatistics.h"
 #include "LoadBalancer.h"
@@ -90,6 +97,58 @@ void OperationGatherStatistics::execute() {
     }
 
     dispatch_handler.wait_for_completion();
+
+    {
+      double numerator, denominator;
+      double numerator_total = 0.0, denominator_total = 0.0;
+      std::vector<RangeServerState> rs_states;
+      RangeServerState rs_state;
+      foreach_ht (RangeServerStatistics &rs_stats, results) {
+        if (rs_stats.fetch_error == Error::OK) {
+          numerator = denominator = 0.0;
+          for (size_t i=0; i<rs_stats.stats->system.fs_stat.size(); i++) {
+            numerator += rs_stats.stats->system.fs_stat[i].total 
+              - rs_stats.stats->system.fs_stat[i].avail;
+            denominator += rs_stats.stats->system.fs_stat[i].total;
+          }
+          rs_state.location = rs_stats.location;
+          if (denominator > 0.0)
+            rs_state.disk_usage = (numerator / denominator) * 100.0;
+          else
+            rs_state.disk_usage = 0.0;
+          /*
+          HT_INFOF("%s disk_usage (%f/%f) = %0.2f", rs_state.location.c_str(),
+                   numerator, denominator, rs_state.disk_usage);
+          */
+          rs_states.push_back(rs_state);
+          numerator_total += numerator;
+          denominator_total += denominator;
+        }
+      }
+      m_context->rsc_manager->set_range_server_state(rs_states);
+
+      HT_INFOF("Aggregate disk usage = %0.2f",
+               denominator_total == 0.0 ? 0.0 : ((numerator_total / denominator_total)*100.0));
+
+      int32_t aggregate_disk_usage = 0;
+      if (denominator_total >= 0.0)
+        aggregate_disk_usage = (int32_t)((numerator_total / denominator_total)*100.0);
+      String message = format("because aggreggate disk usage is %d%%",
+                              aggregate_disk_usage);
+      bool readonly_mode = aggregate_disk_usage >= m_context->disk_threshold;
+
+      if (m_context->system_state->auto_set(SystemVariable::READONLY,
+                                            readonly_mode, message))
+        m_context->op->add_operation(new OperationSetState(m_context));
+      else {
+        // This isn't necessary in above block because OperationSetState does it
+        std::vector<NotificationMessage> notifications;
+        if (m_context->system_state->get_notifications(notifications)) {
+          foreach_ht (NotificationMessage &msg, notifications)
+            m_context->notification_hook(msg.subject, msg.body);
+        }
+      }
+    }
 
     m_context->monitoring->add(results);
     m_context->balancer->transfer_monitoring_data(results);
