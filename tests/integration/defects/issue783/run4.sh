@@ -94,9 +94,9 @@ sleep 15
 # make sure that no range was moved to rs2
 grep_or_exit_if_found "dest_location=rs2" $HT_HOME/log/Hypertable.Master.log
 grep_or_exit_if_found "dest_location=rs3" $HT_HOME/log/Hypertable.Master.log
-grep_or_exit_if_not_found "RangeServer rs2: all disks are above threshold" \
+grep_or_exit_if_not_found "RangeServer rs2: disk use 100% exceeds threshold" \
     $HT_HOME/log/Hypertable.Master.log
-grep_or_exit_if_not_found "RangeServer rs3: all disks are above threshold" \
+grep_or_exit_if_not_found "RangeServer rs3: disk use 100% exceeds threshold" \
     $HT_HOME/log/Hypertable.Master.log
 
 # once more dump all keys

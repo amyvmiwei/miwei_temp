@@ -24,6 +24,7 @@
  */
 
 #include "Common/Compat.h"
+#include "Common/FailureInducer.h"
 #include "Common/Logger.h"
 #include "Common/Serialization.h"
 
@@ -155,8 +156,12 @@ void StatsSystem::refresh() {
       disk_stat[i].refresh(disk_stat[i].prefix.c_str());
   }
   if (m_categories & FS) {
-    for (size_t i = 0; i < fs_stat.size(); i++)
+    bool simulate_disk_full = HT_FAILURE_SIGNALLED("fsstat-disk-full");
+    for (size_t i = 0; i < fs_stat.size(); i++) {
       fs_stat[i].refresh(fs_stat[i].prefix.c_str());
+      if (simulate_disk_full)
+        fs_stat[i].avail = 0;
+    }
   }
 }
 

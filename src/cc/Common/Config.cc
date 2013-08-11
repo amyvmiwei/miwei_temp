@@ -333,6 +333,8 @@ void DefaultPolicy::init_options() {
     ("Hypertable.Master.FailedRangeServerLimit.Percentage", i32()->default_value(80),
         "Fail hard if less than this percentage of the RangeServers are unavailable "
         "at a given time")
+    ("Hypertable.Master.NotificationInterval", i32()->default_value(3600),
+        "Notification interval (in seconds) of abnormal state")
     ("Hypertable.Failover.GracePeriod", i32()->default_value(30000),
         "Master wait this long before trying to recover a RangeServer")
     ("Hypertable.Failover.Timeout", i32()->default_value(300000),

@@ -46,12 +46,12 @@
 using namespace Hypertable;
 
 OperationSetState::OperationSetState(ContextPtr &context)
-  : Operation(context, MetaLog::EntityType::OPERATION_SET), m_client_originated(false) {
+  : Operation(context, MetaLog::EntityType::OPERATION_SET) {
   initialize_dependencies();
 }
 
 OperationSetState::OperationSetState(ContextPtr &context,
-                                             const MetaLog::EntityHeader &header_)
+                                     const MetaLog::EntityHeader &header_)
   : Operation(context, header_) {
 }
 
@@ -61,60 +61,34 @@ OperationSetState::OperationSetState(ContextPtr &context, EventPtr &event)
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
   initialize_dependencies();
-  m_client_originated = true;
+  m_context->system_state->admin_set(m_specs);
 }
 
 void OperationSetState::initialize_dependencies() {
   m_exclusivities.insert("SET VARIABLES");
 }
 
-void OperationSetState::send_notification_message() {
-  String body;
-  bool got_something = false;
-
-  body = format("System State Generation: %llu\n\n", (Llu)m_generation);
-
-  foreach_ht (SystemVariable::Spec &spec, m_specs) {
-    if (spec.code >= SystemVariable::COUNT) {
-      body += format("Unknown variable code %d = %s\n", spec.code,
-                     spec.value ? "true" : "false");
-      got_something = true;
-    }
-    else if (spec.value != SystemVariable::default_value(spec.code)) {
-      body += format("%s = %s\n", SystemVariable::code_to_string(spec.code),
-                     spec.value ? "true" : "false");
-      got_something = true;
-    }
-  }
-
-  if (!got_something)
-    body += "All state variables at their default values.\n";
-
-  m_context->notification_hook("WARNING: System State Change", body);
-}
-
 void OperationSetState::execute() {
   int32_t state = get_state();
   DispatchHandlerOperationSetState dispatch_handler(m_context);
-  bool notify = false;
 
-  HT_INFOF("Entering SetState-%lld(client_originated=%s) state=%s",
-           (Lld)header.id, (m_client_originated ? "true" : "false"),
-           OperationState::get_text(state));
+  HT_INFOF("Entering SetState-%lld() state=%s",
+           (Lld)header.id, OperationState::get_text(state));
 
   switch (state) {
 
   case OperationState::INITIAL:
 
-    if (m_client_originated) {
-      notify = m_context->system_state->admin_set(m_specs);
-      m_specs.clear();
+    // Check for and send notifications
+    {
+      std::vector<NotificationMessage> notifications;
+      if (m_context->system_state->get_notifications(notifications)) {
+        foreach_ht (NotificationMessage &msg, notifications)
+          m_context->notification_hook(msg.subject, msg.body);
+      }
     }
 
     m_context->system_state->get(m_specs, &m_generation);
-
-    if (notify)
-      send_notification_message();
 
     HT_INFOF("specs = %s", SystemVariable::specs_to_string(m_specs).c_str());
 
@@ -122,8 +96,7 @@ void OperationSetState::execute() {
     {
       std::vector<Entity *> entities;
       entities.push_back(this);
-      if (m_client_originated)
-        entities.push_back(m_context->system_state.get());
+      entities.push_back(m_context->system_state.get());
       m_context->mml_writer->record_state(entities);
     }
 
@@ -176,7 +149,7 @@ void OperationSetState::display_state(std::ostream &os) {
 }
 
 size_t OperationSetState::encoded_state_length() const {
-  return 16 + (5 * m_specs.size()) + 1;
+  return 16 + (5 * m_specs.size());
 }
 
 void OperationSetState::encode_state(uint8_t **bufp) const {
@@ -187,7 +160,6 @@ void OperationSetState::encode_state(uint8_t **bufp) const {
     Serialization::encode_i32(bufp, spec.code);
     Serialization::encode_bool(bufp, spec.value);
   }
-  Serialization::encode_bool(bufp, m_client_originated);
 }
 
 void OperationSetState::decode_state(const uint8_t **bufp, size_t *remainp) {
@@ -202,7 +174,6 @@ void OperationSetState::decode_state(const uint8_t **bufp, size_t *remainp) {
     spec.value = Serialization::decode_bool(bufp, remainp);
     m_specs.push_back(spec);
   }
-  m_client_originated = Serialization::decode_bool(bufp, remainp);
 }
 
 void OperationSetState::decode_request(const uint8_t **bufp, size_t *remainp) {
@@ -220,16 +191,6 @@ const String OperationSetState::name() {
 }
 
 const String OperationSetState::label() {
-  String label = String("SetState ");
-  bool first=true;
-  foreach_ht (const SystemVariable::Spec &spec, m_specs) {
-    if (!first)
-      label += ",";
-    label += SystemVariable::code_to_string(spec.code);
-    label += "=";
-    label += spec.value ? "true" : "false";
-    first = false;
-  }
-  return label;
+  return String("SetState ") + SystemVariable::specs_to_string(m_specs);
 }
 

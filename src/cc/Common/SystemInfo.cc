@@ -29,7 +29,6 @@
 #include "Common/Serialization.h"
 #include "Common/SystemInfo.h"
 #include "Common/Mutex.h"
-#include "Common/FailureInducer.h"
 
 extern "C" {
 #include <poll.h>
@@ -744,9 +743,6 @@ FsStat &FsStat::refresh(const char *dir_prefix) {
     avail = u.avail;
     files = u.files;
     free_files = u.free_files;
-    if (HT_FAILURE_SIGNALLED("fsstat-disk-full")) {
-      use_pct = 99.999;
-    }
   }
   return *this;
 }

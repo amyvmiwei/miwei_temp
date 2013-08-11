@@ -261,21 +261,21 @@ void balance_plan_authority_test(ContextPtr &context);
 
 
 int main(int argc, char **argv) {
-  ContextPtr context = new Context();
+  ContextPtr context;
   BalancePlanAuthorityPtr bpa;
   std::vector<MetaLog::EntityPtr> entities;
 
   // Register ourselves as the Comm-layer proxy master
   ReactorFactory::proxy_master = true;
 
-  context->test_mode = true;
-
   try {
     init_with_policies<Policies>(argc, argv);
 
+    context = new Context(properties);
+    context->test_mode = true;
+
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
-    context->props = properties;
     context->hyperspace = new Hyperspace::Session(context->comm, context->props);
     context->dfs = new DfsBroker::Client(context->conn_manager, context->props);
     context->rsc_manager = new RangeServerConnectionManager();

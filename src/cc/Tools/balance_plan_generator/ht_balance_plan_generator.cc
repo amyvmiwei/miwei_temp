@@ -120,9 +120,8 @@ int main(int argc, char **argv) {
     NamespacePtr ns = client->open_namespace(ns_str);
     TablePtr rs_metrics = ns->open_table(table_str);
     BalancePlanPtr plan = new BalancePlan;
-    ContextPtr context = new Context;
+    ContextPtr context = new Context(properties);
     context->rs_metrics_table = rs_metrics;
-    context->props = properties;
     generate_balance_plan(context->props, load_balancer, context, plan);
     ostream *oo;
 

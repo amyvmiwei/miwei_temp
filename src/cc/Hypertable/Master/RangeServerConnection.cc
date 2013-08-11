@@ -32,13 +32,13 @@ RangeServerConnection::RangeServerConnection(const String &location,
   : MetaLog::Entity(MetaLog::EntityType::RANGE_SERVER_CONNECTION), 
     m_handle(0), m_location(location), m_hostname(hostname), 
     m_state(RangeServerConnectionFlags::INIT), m_public_addr(public_addr),
-    m_connected(false), m_recovering(false) {
+    m_disk_fill_percentage(0.0), m_connected(false), m_recovering(false) {
   m_comm_addr.set_proxy(m_location);
 }
 
 RangeServerConnection::RangeServerConnection(const MetaLog::EntityHeader &header_)
   : MetaLog::Entity(header_), m_handle(0),
-    m_connected(false), m_recovering(false) {
+    m_disk_fill_percentage(0.0), m_connected(false), m_recovering(false) {
   m_comm_addr.set_proxy(m_location);
 }
 

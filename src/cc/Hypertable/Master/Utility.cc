@@ -284,9 +284,9 @@ void create_table_write_metadata(ContextPtr &context, TableIdentifier *table) {
 /**
  */
 
-bool next_available_server(ContextPtr &context, String &location) {
+bool next_available_server(ContextPtr &context, String &location, bool urgent) {
   RangeServerConnectionPtr rsc;
-  if (!context->rsc_manager->next_available_server(rsc))
+  if (!context->rsc_manager->next_available_server(rsc, urgent))
     return false;
   location = rsc->location();
   return true;
