@@ -54,9 +54,8 @@ fi
 sleep 2
 
 # now restart the cluster, but do not start rs2
-stop_rs 1
-kill_rs 2
 $HT_HOME/bin/stop-servers.sh
+kill_rs 1 2
 $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --Hypertable.Failover.GracePeriod=20000 \
     --config=${SCRIPT_DIR}/test.cfg
