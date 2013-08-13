@@ -157,8 +157,11 @@ namespace Hypertable {
           catch(Hypertable::Exception &e) {
             if (e.code() != Error::RANGESERVER_RANGE_NOT_ACTIVE &&
                 dynamic_cast<MaintenanceTaskMemoryPurge *>(task) == 0) {
-              if (e.code() != Error::RANGESERVER_RANGE_BUSY)
+              bool message_logged = false;
+              if (e.code() != Error::RANGESERVER_RANGE_BUSY) {
                 HT_ERROR_OUT << e << HT_END;
+                message_logged = true;
+              }
               if (task->retry()) {
                 ScopedLock lock(m_state.mutex);
                 HT_INFOF("Maintenance Task '%s' aborted, will retry in %u "
@@ -173,8 +176,9 @@ namespace Hypertable {
                 m_state.cond.notify_one();
                 continue;
               }
-              HT_WARNF("Maintenance Task '%s' failed, dropping task ...",
-                       task->description().c_str());
+              if (!message_logged)
+                HT_INFOF("Maintenance Task '%s' failed because range is busy, dropping task ...",
+                         task->description().c_str());
             }
           }
 
