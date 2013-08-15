@@ -1,3 +1,25 @@
+Version 0.9.7.9:
+(2013-08-15)
+
+   QFS Broker
+   Improved disk usage monitoring and handling
+   Added system state with READONLY variable and HQL SET command
+   Changed Hypertable.RangeServer.Range.SplitSize default to 512MB
+   Fixed bug in delete processing in MergeScannerAccessGroup
+   Fixed CELL_LIMIT processing
+   Fixed level calculation in MaintenanceQueue
+   Reduced calls to Range::get_maintenance_data() in get_statistics()
+   Added version, start_row, and end_row to hints file
+   Moved tranfer log to corresponding /tables/ directory
+   Fixed race condition in creation of RemoveOkLogs entity
+   Changed "dropping task" log message from WARN to INFO
+   Fixed race condition in RangeServer-failover-restart test
+   Better error state capture for group commit and rs failover basic tests
+   Replaced RSStats with LoadStatistics class
+   Added server disk usage statistics to RS_METRICS
+   Fix tests
+   Added PosixReaddir to DfsBroker interface
+
 Version 0.9.7.8:
 (2013-07-02)
 
@@ -15,7 +37,6 @@ Version 0.9.7.8:
    Added TableSchema.xsd
    Fix a typo: determinte -> determine
    Capture error state in master-failover tests
-
 
 Version 0.9.7.7:
 (2013-06-03)
