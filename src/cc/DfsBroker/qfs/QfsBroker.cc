@@ -242,6 +242,12 @@ void QfsBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
     report_error(cb,err);
 }
 
+void QfsBroker::posix_readdir(ResponseCallbackPosixReaddir *cb,
+			      const char *dname) {
+  HT_ASSERT(!"posix_readdir() not yet implemented.");
+}
+
+
 void QfsBroker::exists(ResponseCallbackExists *cb, const char *fname) {
   cb->response(m_client->Exists(fname));
 }
