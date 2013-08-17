@@ -631,7 +631,7 @@ namespace {
 }
 
 void Monitoring::dump_master_summary_json() {
-  String contents = String(master_json_header);
+  String contents = format(master_json_header, version_string());
   String entry;
   String tmp_filename = m_monitoring_dir + "/master_summary.tmp";
   String json_filename = m_monitoring_dir + "/master_summary.json";
