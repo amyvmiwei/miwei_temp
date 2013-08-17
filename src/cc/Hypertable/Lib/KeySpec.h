@@ -110,8 +110,6 @@ namespace Hypertable {
         if (column_family == 0)
           HT_THROWF(Error::BAD_KEY, "Flag is set to %d but column family is null", flag);
         if (flag > FLAG_DELETE_COLUMN_FAMILY && flag < FLAG_INSERT) {
-          if (column_qualifier == 0)
-            HT_THROWF(Error::BAD_KEY, "Flag is set to %d but column qualifier is null", flag);
           if (flag == FLAG_DELETE_CELL_VERSION && timestamp == AUTO_ASSIGN)
             HT_THROWF(Error::BAD_KEY, "Flag is set to %d but timestamp is AUTO_ASSIGN", flag);
         }

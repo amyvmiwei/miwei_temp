@@ -420,7 +420,7 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
       else {
         *value_lenp = ptr-base;
         *ptr++ = 0;
-        if (!strncmp(ptr, "DELETE", 6)) {
+        if (!strcmp(ptr, "DELETE")) {
           if (keyp->column_family == 0)
             keyp->flag = FLAG_DELETE_ROW;
           else {
@@ -431,8 +431,23 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
           }
           *is_deletep = true;
         }
-        else if (!strncmp(ptr, "DELETE_VERSION", 6) && keyp->column_family) {
-          keyp->flag = FLAG_DELETE_CELL_VERSION;
+        else if (!strcmp(ptr, "DELETE_ROW")) {
+          if (keyp->column_family != 0)
+            cerr << "warning: column family specified with DELETE_ROW on line "
+                 << m_cur_line << endl;
+          keyp->flag = FLAG_DELETE_ROW;
+          *is_deletep = true;
+        }
+        else if (!strcmp(ptr, "DELETE_COLUMN_FAMILY")) {
+          keyp->flag = FLAG_DELETE_COLUMN_FAMILY;
+          *is_deletep = true;
+        }
+        else if (!strcmp(ptr, "DELETE_CELL")) {
+          keyp->flag = FLAG_DELETE_CELL;
+          *is_deletep = true;
+        }
+        else if (!strcmp(ptr, "DELETE_CELL_VERSION")) {
+              keyp->flag = FLAG_DELETE_CELL_VERSION;
           *is_deletep = true;
         }
         else {
