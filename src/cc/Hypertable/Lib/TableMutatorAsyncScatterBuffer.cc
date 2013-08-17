@@ -163,8 +163,6 @@ void TableMutatorAsyncScatterBuffer::set_delete(const Key &key, size_t incr_mem)
     if (key.column_family_code == 0)
       HT_THROWF(Error::BAD_KEY, "key.flag set to %d but column family=0", key.flag);
     if (key.flag == FLAG_DELETE_CELL || key.flag == FLAG_DELETE_CELL_VERSION) {
-      if (!key.column_qualifier)
-        HT_THROWF(Error::BAD_KEY, "key.flag set to %d but column qualifier=0", key.flag);
       if (key.flag == FLAG_DELETE_CELL_VERSION && key.timestamp == AUTO_ASSIGN) {
         HT_THROWF(Error::BAD_KEY, "key.flag set to %d but timestamp == AUTO_ASSIGN", key.flag);
       }

@@ -85,12 +85,17 @@ configure_file(${SRC_DIR}/test/hypertable_escape_test.golden
                ${DST_DIR}/hypertable_escape_test.golden COPYONLY)
 add_test(Hypertable-shell-ldi-select hypertable_ldi_select_test ${INSTALL_DIR})
 
-
+# field_separator_test
 configure_file(${SRC_DIR}/test/field_separator_test.tsv
-               ${DST_DIR}/field_separator_test.tsv)
+               ${DST_DIR}/field_separator_test.tsv COPYONLY)
 add_test(Alternate-field-separator env INSTALL_DIR=${INSTALL_DIR}
     ${CMAKE_CURRENT_SOURCE_DIR}/test/field_separator_test.sh)
 
+# delete_test
+configure_file(${SRC_DIR}/test/delete_test.tsv
+               ${DST_DIR}/delete_test.tsv COPYONLY)
+add_test(Delete-tsv-test env INSTALL_DIR=${INSTALL_DIR}
+    ${CMAKE_CURRENT_SOURCE_DIR}/test/delete_test.sh)
 
 if (NOT HT_COMPONENT_INSTALL)
   install(TARGETS hypertable RUNTIME DESTINATION bin)
