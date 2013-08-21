@@ -941,6 +941,10 @@ public:
           const String &table, const String &row, const String &column) {
     LOG_API_START("namespace=" << ns << " table=" << table << " row="
             << row << " column=" << column);
+
+    if (row.empty())
+      HT_THROW(Error::BAD_KEY, "Empty row key");
+      
     try {
       NamespacePtr namespace_ptr = get_namespace(ns);
       TablePtr t = namespace_ptr->open_table(table);
