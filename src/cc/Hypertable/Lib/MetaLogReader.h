@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Declarations for MetaLog::Reader.
+ * This file contains declarations for MetaLog::Reader, a class for loading
+ * (reading) a meta log.
+ */
+
 #ifndef HYPERTABLE_METALOGREADER_H
 #define HYPERTABLE_METALOGREADER_H
 
@@ -30,11 +36,22 @@
 
 #include "MetaLogDefinition.h"
 
-
 namespace Hypertable {
 
   namespace MetaLog {
 
+  /** @addtogroup libHypertable
+   * @{
+   */
+
+  /** Loads a meta log.  This class is part of a group of generic meta log
+   * manipulation classes.  A meta log is a server state log and is currently
+   * used by both the RangeServer and the Master servers.  The set of valid
+   * MetaLog::Entity classes are defined by a MetaLog::Definition object that
+   * is unique to each server.  This class reads a meta log and provides access
+   * to the latest versions of live MetaLog entities that have been persisted in
+   * the log.
+   */
     class Reader : public ReferenceCount {
 
     public:
@@ -44,12 +61,12 @@ namespace Hypertable {
       void get_all_entities(std::vector<EntityPtr> &entities);
       void reload();
       int32_t next_file_number() { return m_next_filenum; }
-      bool load_file(const String &fname);
+      void load_file(const String &fname);
       uint16_t version() { return m_version; }
 
     private:
 
-      bool verify_backup(int32_t file_num);
+      void verify_backup(int32_t file_num);
       void read_header(int fd);
 
       FilesystemPtr m_fs;
@@ -63,7 +80,11 @@ namespace Hypertable {
       String m_backup_path;
       uint16_t m_version;
     };
+
+    /// Smart pointer to Reader
     typedef intrusive_ptr<Reader> ReaderPtr;
+
+    /** @}*/
   }
 }
 

@@ -598,15 +598,25 @@ void RangeServer::local_recover() {
   StringSet transfer_logs;
   TableInfoMap replay_map(new TableSchemaCache(m_hyperspace, Global::toplevel_dir));
   int priority = 0;
+  String rsml_dir = Global::log_dir + "/" + rsml_definition->name();
   bool found_remove_ok_logs = false;
+
+  try {
+    rsml_reader = 
+      new MetaLog::Reader(Global::log_dfs, rsml_definition, rsml_dir);
+  }
+  catch (Exception &e) {
+    while (true) {
+      HT_ERRORF("Problem reading RSML %s:  %s - %s", rsml_dir.c_str(),
+                Error::get_text(e.code()), e.what());
+      poll(0, 0, 30000);
+    }
+  }
 
   try {
     std::vector<MaintenanceTask*> maintenance_tasks;
     boost::xtime now;
     boost::xtime_get(&now, boost::TIME_UTC_);
-
-    rsml_reader = new MetaLog::Reader(Global::log_dfs, rsml_definition,
-            Global::log_dir + "/" + rsml_definition->name());
 
     rsml_reader->get_entities(entities);
 

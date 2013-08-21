@@ -211,18 +211,15 @@ main(int ac, char *av[]) {
     writer = new MetaLog::Writer(fs, g_test_definition,
                                  testdir + "/" + g_test_definition->name(),
                                  g_entities);
+    writer = 0;
 
-    {
-      ofstream out("metalog_test3.out");
-      randomly_change_states(writer);
-      writer = 0;
+    try {
       reader = new MetaLog::Reader(fs, g_test_definition,
                                    testdir + "/" + g_test_definition->name());
-      g_entities.clear();
-      reader->get_entities(g_entities);
-      display_entities(out);
-      reader = 0;
-      HT_ASSERT(FileUtils::size("metalog_test3.out") == FileUtils::size("metalog_test2.golden"));
+      HT_ASSERT(!"METALOG missing RECOVER entity exception not thrown");
+    }
+    catch (Exception &e) {
+      HT_ERROR_OUT << e << HT_END;
     }
 
     if (!has("save"))

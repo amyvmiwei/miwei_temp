@@ -22,6 +22,7 @@
 #include "Common/Checksum.h"
 #include "Common/Config.h"
 #include "Common/Error.h"
+#include "Common/FailureInducer.h"
 #include "Common/ScopeGuard.h"
 #include "Common/Serialization.h"
 #include "Common/FileUtils.h"
@@ -73,29 +74,18 @@ void Reader::get_all_entities(std::vector<EntityPtr> &entities) {
 
 
 void Reader::reload() {
-
-  scan_log_directory(m_fs, m_path, m_file_nums, &m_next_filenum);
-
-  std::sort(m_file_nums.begin(), m_file_nums.end());
-
-  while (!m_file_nums.empty()) {
-    HT_ASSERT(verify_backup(m_file_nums.back()));
-    String fname = m_path + "/" + m_file_nums.back();
-
-    if (!load_file(fname)) {
-      String badname = m_path + "/" + m_file_nums.back() + ".bad";
-      HT_INFOF("Moving problematic %s log file %s to %s",
-               m_definition->name(), fname.c_str(), badname.c_str());
-      try {
-        m_fs->rename(fname, badname);
-      }
-      catch (Exception &e) {
-        HT_ERROR_OUT << e << HT_END;
-      }
-      m_file_nums.resize( m_file_nums.size() - 1 );
-      continue;
+  try {
+    scan_log_directory(m_fs, m_path, m_file_nums, &m_next_filenum);
+    std::sort(m_file_nums.begin(), m_file_nums.end());
+    if (!m_file_nums.empty()) {
+      verify_backup(m_file_nums.back());
+      load_file(m_path + "/" + m_file_nums.back());
     }
-    break;
+  }
+  catch (Exception &e) {
+    if (e.code() & Error::METALOG_ERROR)
+      throw;
+    HT_THROW2_(Error::METALOG_READ_ERROR, e);
   }
 }
 
@@ -114,37 +104,31 @@ namespace {
   }
 }
 
-bool Reader::verify_backup(int32_t file_num) {
-
+void Reader::verify_backup(int32_t file_num) {
 
   String fname = m_path + "/" + file_num;
   String backup_filename = m_backup_path + "/" + file_num;
 
-  if (!FileUtils::exists(backup_filename)) {
-    HT_WARN_OUT << "MetaLog backup file '" << backup_filename << "' doesnt exist" << HT_END;
-    return true;
-  }
+  if (!FileUtils::exists(backup_filename))
+    return;
 
   size_t file_length = m_fs->length(fname);
   size_t backup_file_length = FileUtils::size(backup_filename);
-  if (backup_file_length > file_length) {
-    HT_ERROR_OUT << "MetaLog file '" << fname << "' has length " << file_length
-        << " < backup file '" << backup_filename << "' length " << backup_file_length
-        << HT_END;
-    return false;
-  }
-  else if (backup_file_length < file_length) {
-     HT_WARN_OUT << "MetaLog file '" << fname << "' has length " << file_length
-        << " > backup file '" << backup_filename << "' length " << backup_file_length
-        << HT_END;
-  }
-  return true;
+
+  if (backup_file_length < file_length)
+    HT_THROWF(Error::METALOG_BACKUP_FILE_MISMATCH,
+          "MetaLog file '%s' has length %lld backup file '%s' length is %lld",
+              fname.c_str(), (Lld)file_length, backup_filename.c_str(),
+              (Lld)backup_file_length);
 }
 
-bool Reader::load_file(const String &fname) {
+
+void Reader::load_file(const String &fname) {
   size_t file_length = m_fs->length(fname);
   int fd = m_fs->open_buffered(fname, 0, READAHEAD_BUFSZ, OUTSTANDING_READS);
   bool found_recover_entry = false;
+
+  HT_MAYBE_FAIL("bad-rsml");
 
   m_entity_map.clear();
 
@@ -223,7 +207,9 @@ bool Reader::load_file(const String &fname) {
                fname.c_str(), (Llu)m_cur_offset, (Llu)file_length);
   }
 
-  return found_recover_entry;
+  if (!found_recover_entry)
+    HT_THROW(Error::METALOG_MISSING_RECOVER_ENTITY, fname.c_str());
+
 }
 
 
