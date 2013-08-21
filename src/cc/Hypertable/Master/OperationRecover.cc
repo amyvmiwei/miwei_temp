@@ -283,15 +283,6 @@ bool OperationRecover::acquire_server_lock() {
   catch (Exception &e) {
     HT_ERROR_OUT << "Problem obtaining " << m_location 
                  << " hyperspace lock (" << e << "), aborting..." << HT_END;
-    // Send notification
-    subject = format("ERROR: Recovery of %s (%s) failed",
-                     m_location.c_str(), m_hostname.c_str());
-    message 
-      = format("Attempt to aquire lock on range server %s (%s) failed.\\n\\n"
-               "  %s - %s\\n", m_location.c_str(), m_hostname.c_str(),
-               Error::get_text(e.code()), e.what());
-    HT_ERROR_OUT << subject << ": " << e << HT_END;
-    m_context->notification_hook(subject, message);
     return false;
   }
   return true;
