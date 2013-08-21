@@ -619,7 +619,7 @@ namespace {
     " \"disk\": \"%.2f\", \"diskUsePct\": \"%u\", \"rangeCount\": \"%llu\","
     " \"lastContact\": \"%s\", \"lastError\": \"%s\"}";
 
-  const char *master_json_header = "{\"MasterSummary\": {\"version\": \"%s\", \"state\": [\n";
+  const char *master_json_header = "{\"MasterSummary\": {\"version\": \"%s\", \"name\": \"%s\", \"state\": [\n";
   const char *master_json_footer = "\n]}}\n";
   const char *state_variable_format = "{\"name\": \"%s\", \"value\": \"%s\"}";
 
@@ -631,7 +631,8 @@ namespace {
 }
 
 void Monitoring::dump_master_summary_json() {
-  String contents = format(master_json_header, version_string());
+  String contents = format(master_json_header, version_string(),
+                           m_context->cluster_name.c_str());
   String entry;
   String tmp_filename = m_monitoring_dir + "/master_summary.tmp";
   String json_filename = m_monitoring_dir + "/master_summary.json";

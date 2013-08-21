@@ -140,6 +140,7 @@ namespace Hypertable {
     time_t next_gc_time;
     OperationProcessor *op;
     OperationTimedBarrier *recovery_barrier_op;
+    String cluster_name;               //!< Name of cluster
     String location_hash;
     int32_t disk_threshold;            //!< Disk use threshold percentage
     int32_t max_allowable_skew;

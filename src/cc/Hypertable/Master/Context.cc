@@ -65,9 +65,16 @@ Context::~Context() {
 
 void Context::notification_hook(const String &subject, const String &message) {
 
-  String cmd = format("%s/conf/notification-hook.sh '%s' '%s'", 
-                      System::install_dir.c_str(), subject.c_str(),
-                      message.c_str());
+  String cmd;
+
+  if (!cluster_name.empty())
+    cmd = format("%s/conf/notification-hook.sh '[Hypertable %s] %s' '%s'", 
+                 System::install_dir.c_str(), cluster_name.c_str(),
+                 subject.c_str(), message.c_str());
+  else
+    cmd = format("%s/conf/notification-hook.sh '[Hypertable] %s' '%s'", 
+                 System::install_dir.c_str(), subject.c_str(),
+                 message.c_str());
 
   int ret = ::system(cmd.c_str());
   HT_INFOF("notification-hook returned: %d", ret);
