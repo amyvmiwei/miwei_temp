@@ -38,6 +38,11 @@
 
 #include <sstream>
 
+extern "C" {
+#include <poll.h>
+#include <time.h>
+}
+
 #define OPERATION_RECOVER_VERSION 1
 
 using namespace Hypertable;
@@ -48,7 +53,8 @@ OperationRecover::OperationRecover(ContextPtr &context,
                                    RangeServerConnectionPtr &rsc, int flags)
   : Operation(context, MetaLog::EntityType::OPERATION_RECOVER_SERVER),
     m_location(rsc->location()), m_rsc(rsc), m_hyperspace_handle(0), 
-    m_restart(flags==RESTART), m_lock_acquired(false) {
+    m_restart(flags==RESTART),
+    m_lock_acquired(false) {
   m_subop_dependency = format("operation-id-%lld", (Lld)id());
   m_dependencies.insert(m_subop_dependency);
   m_dependencies.insert(Dependency::RECOVERY_BLOCKER);
@@ -128,7 +134,27 @@ void OperationRecover::execute() {
 
     // read rsml figure out what types of ranges lived on this server
     // and populate the various vectors of ranges
-    read_rsml();
+    try {
+      read_rsml();
+    }
+    catch (Exception &e) {
+      subject = format("ERROR: Recovery of %s (%s)",
+                       m_location.c_str(), m_hostname.c_str());
+      message = format("Problem reading RSML - %s - %s",
+                       Error::get_text(e.code()), e.what());
+      time_t last_notification = 0;
+      while (true) {
+        time_t now = time(0);
+        int32_t notify_interval = 
+          m_context->props->get_i32("Hypertable.Master.NotificationInterval");
+        if (last_notification + notify_interval <= now) {
+          m_context->notification_hook(subject, message);
+          last_notification = time(0);
+        }
+        HT_ERRORF("%s", message.c_str());
+        poll(0, 0, 30000);
+      }
+    }
 
     // now create a new recovery plan
     create_recovery_plan();
@@ -314,20 +340,20 @@ void OperationRecover::create_recovery_plan() {
 void OperationRecover::read_rsml() {
   // move rsml and commit log to some recovered dir
   MetaLog::DefinitionPtr rsml_definition
-      = new MetaLog::DefinitionRangeServer(m_location.c_str());
-  MetaLog::ReaderPtr rsml_reader;
+      = new MetaLog::DefinitionRangeServer(m_location.c_str());  
   MetaLogEntityRange *range;
   MetaLog::EntityTaskAcknowledgeRelinquish *ack_task;
   vector<MetaLog::EntityPtr> entities;
-  String logfile;
   StringSet missing_tables, valid_tables;
   String tablename;
+  String logfile = m_context->toplevel_dir + "/servers/" + m_location + "/log/"
+    + rsml_definition->name();
+  MetaLog::ReaderPtr rsml_reader = 
+    new MetaLog::Reader(m_context->dfs, rsml_definition, logfile);
+
+  rsml_reader->get_entities(entities);
 
   try {
-    logfile = m_context->toplevel_dir + "/servers/" + m_location + "/log/"
-        + rsml_definition->name();
-    rsml_reader = new MetaLog::Reader(m_context->dfs, rsml_definition, logfile);
-    rsml_reader->get_entities(entities);
     foreach_ht (MetaLog::EntityPtr &entity, entities) {
       if ((range = dynamic_cast<MetaLogEntityRange *>(entity.get())) != 0) {
         QualifiedRangeSpec spec;

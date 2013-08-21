@@ -229,6 +229,7 @@ namespace Hypertable {
     
       HQL_BAD_LOAD_FILE_FORMAT                     = 0x00060001,
 
+      METALOG_ERROR                                = 0x00070000,
       METALOG_VERSION_MISMATCH                     = 0x00070001,
       METALOG_BAD_RS_HEADER                        = 0x00070002,
       METALOG_BAD_HEADER                           = 0x00070003,
@@ -236,6 +237,9 @@ namespace Hypertable {
       METALOG_CHECKSUM_MISMATCH                    = 0x00070005,
       METALOG_ENTRY_BAD_TYPE                       = 0x00070006,
       METALOG_ENTRY_BAD_ORDER                      = 0x00070007,
+      METALOG_MISSING_RECOVER_ENTITY               = 0x00070008,
+      METALOG_BACKUP_FILE_MISMATCH                 = 0x00070009,
+      METALOG_READ_ERROR                           = 0x0007000A,
 
       SERIALIZATION_INPUT_OVERRUN                  = 0x00080001,
       SERIALIZATION_BAD_VINT                       = 0x00080002,
