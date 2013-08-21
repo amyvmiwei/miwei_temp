@@ -167,6 +167,8 @@ void DefaultPolicy::init_options() {
     ("Comm.DispatchDelay", i32()->default_value(0), "[TESTING ONLY] "
         "Delay dispatching of read requests by this number of milliseconds")
     ("Comm.UsePoll", boo()->default_value(false), "Use POSIX poll() interface")
+    ("Hypertable.Cluster.Name", str(),
+     "Name of cluster used in Monitoring UI and admin notification messages")
     ("Hypertable.Verbose", boo()->default_value(false),
         "Enable verbose output (system wide)")
     ("Hypertable.Silent", boo()->default_value(false),

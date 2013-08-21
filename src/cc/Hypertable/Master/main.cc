@@ -161,6 +161,11 @@ int main(int argc, char **argv) {
 
     context = new Context(properties);
 
+    if (properties->has("Hypertable.Cluster.Name")) {
+      context->cluster_name = properties->get_str("Hypertable.Cluster.Name");
+      boost::trim_if(context->cluster_name, boost::is_any_of(" '\""));
+    }
+
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
     context->hyperspace = new Hyperspace::Session(context->comm, context->props);

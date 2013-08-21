@@ -90,6 +90,8 @@ module HTMonitoring
     end
 
     get '/graphs' do
+      @master = StatsJson.new(:file => 'master_summary.json')
+      @master_record = @master.parse_stats_file
       @server = params[:server]
       @stype = params[:type]
       @start_time = params[:start_time]
