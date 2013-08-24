@@ -215,27 +215,30 @@ public class HadoopBroker {
         int fd;
         OpenFileData ofd;
         int error = Error.OK;
+        FSHDFSUtils hdfsUtils = null;
 
-        try {
+        while (true) {
+
+          try {
 
             if (fileName.endsWith("/")) {
-                log.severe("Unable to open file, bad filename: " + fileName);
-                error = cb.error(Error.DFSBROKER_BAD_FILENAME, fileName);
-                return;
+              log.severe("Unable to open file, bad filename: " + fileName);
+              error = cb.error(Error.DFSBROKER_BAD_FILENAME, fileName);
+              return;
             }
 
             fd = msUniqueId.incrementAndGet();
 
             if (mVerbose)
               log.info("Opening file '" + fileName + "' flags=" + flags + " bs=" + bufferSize
-                         + " handle = " + fd);
+                       + " handle = " + fd);
 
             ofd = mOpenFileMap.Create(fd, cb.GetAddress());
 
 	    if ((flags & OPEN_FLAG_VERIFY_CHECKSUM) == 0)
-		ofd.is_noverify = mFilesystem_noverify.open(new Path(fileName));
+              ofd.is_noverify = mFilesystem_noverify.open(new Path(fileName));
 	    else
-		ofd.is = mFilesystem.open(new Path(fileName));
+              ofd.is = mFilesystem.open(new Path(fileName));
 
             ofd.pathname = fileName;
 
@@ -243,15 +246,23 @@ public class HadoopBroker {
 
             error = cb.response(fd);
 
-        }
-        catch (FileNotFoundException e) {
+          }
+          catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
-        }
-        catch (IOException e) {
+          }
+          catch (IOException e) {
+            if (hdfsUtils == null) {
+              hdfsUtils = new FSHDFSUtils();
+              hdfsUtils.recoverFileLease(mFilesystem, new Path(fileName), mConf);
+              continue;
+            }
             log.severe("I/O exception while opening file '" + fileName + "' - "
                        + e.toString());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
+          }
+
+          break;
         }
 
         if (error != Error.OK)
@@ -392,33 +403,43 @@ public class HadoopBroker {
             boolean accurate) {
         int error = Error.OK;
         long length;
+        FSHDFSUtils hdfsUtils = null;
 
-        try {
+        while (true) {
+
+          try {
             if (mVerbose)
-                log.info("Getting length of file '" + fileName +
-                        "' (accurate: " + accurate + ")");
+              log.info("Getting length of file '" + fileName +
+                       "' (accurate: " + accurate + ")");
 
             Path path = new Path(fileName);
             if (accurate) {
-                DFSClient.DFSDataInputStream in =
-                    (DFSClient.DFSDataInputStream)mFilesystem.open(path);
-                length = in.getVisibleLength();
-                in.close();
+              DFSClient.DFSDataInputStream in =
+                (DFSClient.DFSDataInputStream)mFilesystem.open(path);
+              length = in.getVisibleLength();
+              in.close();
             }
             else {
-                length = mFilesystem.getFileStatus(path).getLen();
+              length = mFilesystem.getFileStatus(path).getLen();
             }
 
             error = cb.response(length);
-        }
-        catch (FileNotFoundException e) {
+          }
+          catch (FileNotFoundException e) {
             log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
-        }
-        catch (IOException e) {
+          }
+          catch (IOException e) {
+            if (hdfsUtils == null) {
+              hdfsUtils = new FSHDFSUtils();
+              hdfsUtils.recoverFileLease(mFilesystem, new Path(fileName), mConf);
+              continue;
+            }
             log.severe("I/O exception while getting length of file '" + fileName
                        + "' - " + e.toString());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
+          }
+          break;
         }
 
         if (error != Error.OK)
@@ -560,10 +581,11 @@ public class HadoopBroker {
     public void PositionRead(ResponseCallbackPositionRead cb, int fd,
                              long offset, int amount, boolean verify_checksum) {
         int error = Error.OK;
-        OpenFileData ofd;
+        OpenFileData ofd = null;
         int retries = 10;
         byte [] data = null;
         FSDataInputStream is;
+        FSHDFSUtils hdfsUtils = null;
 
         while (true) {
           try {
@@ -614,6 +636,10 @@ public class HadoopBroker {
             break;
           }
           catch (IOException e) {
+            if (hdfsUtils == null) {
+              hdfsUtils = new FSHDFSUtils();
+              hdfsUtils.recoverFileLease(mFilesystem, new Path(ofd.pathname), mConf);
+            }
             retries--;
             if (retries == 0) {
               log.severe(e.toString());
