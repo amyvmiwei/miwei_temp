@@ -81,17 +81,17 @@ public class HadoopBroker {
 
         str = props.getProperty("HdfsBroker.Hadoop.ConfDir");
         if (str != null) {
-            if (mVerbose)
-                System.out.println("HdfsBroker.Hadoop.ConfDir=" + str);
-            try {
-                readHadoopConfig(str);
-            }
-            catch (Exception e) {
-               log.severe("Failed to parse HdfsBroker.HdfsSite.xml(" 
-                                   + str + ")");
-               e.printStackTrace();
-               System.exit(1);
-            }
+          if (mVerbose)
+            System.out.println("HdfsBroker.Hadoop.ConfDir=" + str);
+          try {
+            readHadoopConfig(str);
+          }
+          catch (Exception e) {
+            log.severe("Failed to parse HdfsBroker.HdfsSite.xml(" 
+                       + str + ")");
+            e.printStackTrace();
+            System.exit(1);
+          }
         }
 
         // settings from the hadoop configuration are overwritten by values
@@ -100,32 +100,23 @@ public class HadoopBroker {
         if (str != null)
             mConf.setInt("dfs.replication", Integer.parseInt(str));
 
-        str = props.getProperty("HdfsBroker.dfs.client.read.shortcircuit");
-        if (str != null) {
-            if (str.equalsIgnoreCase("true"))
-                mConf.setBoolean("dfs.client.read.shortcircuit", true);
-            else
-                mConf.setBoolean("dfs.client.read.shortcircuit", false);
-        }
-
         str = props.getProperty("HdfsBroker.fs.default.name");
         if (str != null) {
-            mConf.set("fs.default.name", str);
+          mConf.set("fs.defaultFS", str);
+          mConf.set("fs.default.name", str);
         }
         else {
             // make sure that we have the fs.default.name property
-            if (mConf.get("fs.default.name") == null
-                    || mConf.get("fs.default.name").equals("file:///")) {
-                log.severe("Neither HdfsBroker.fs.default.name nor " +
-                        "HdfsBroker.Hadoop.ConfDir was specified.");
-                System.exit(1);
-            }
+          if (mConf.get("fs.defaultFS") == null ||
+              mConf.get("fs.default.name") == null
+              || mConf.get("fs.default.name").equals("file:///")) {
+            log.severe("Neither HdfsBroker.fs.default.name nor " +
+                       "HdfsBroker.Hadoop.ConfDir was specified.");
+            System.exit(1);
+          }
         }
 
         if (mVerbose) {
-            System.out.println("HdfsBroker.dfs.client.read.shortcircuit="
-                            + mConf.getBoolean("dfs.client.read.shortcircuit", 
-                                            false));
             System.out.println("HdfsBroker.dfs.replication="
                             + mConf.getInt("dfs.replication", -1));
             System.out.println("HdfsBroker.Server.fs.default.name="
@@ -169,17 +160,13 @@ public class HadoopBroker {
         int replication = mConf.getInt("dfs.replication", 0);
         if (replication == 0)
             System.out.println("Unable to get dfs.replication value; using default");
-        else
-            mConf.setInt("dfs.replication", replication);
 
-        String name = mConf.get("fs.default.name");
-        if (name == null)
-            System.out.println("Unable to get fs.default.name value");
-        else
-            mConf.set("fs.default.name", name);
-
-        boolean b = mConf.getBoolean("dfs.client.read.shortcircuit", false);
-        mConf.setBoolean("dfs.client.read.shortcircuit", b);
+        String name = mConf.get("fs.defaultFS");
+        if (name == null) {
+          name = mConf.get("fs.default.name");
+          if (name == null)
+            System.out.println("Unable to get fs.defaultFS or fs.default.name value");
+        }
     }
 
     /**
@@ -559,7 +546,7 @@ public class HadoopBroker {
             ofd.os.write(data, 0, amount);
 
             if (sync)
-                ofd.os.sync();
+                ofd.os.hflush();
 
             error = cb.response(offset, amount);
         }
@@ -754,7 +741,7 @@ public class HadoopBroker {
             if (mVerbose)
                 log.info("Flush request handle=" + fd);
 
-            ofd.os.sync();
+            ofd.os.hflush();
 
             error = cb.response_ok();
 
