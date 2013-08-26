@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
 
       hints.push_back(h);
       hints_file.set(hints);
-      hints_file.write();
+      hints_file.write("rs1");
 
       hints_file.read();
       HT_ASSERT(hints_file.get().size() == 1);
@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
       hints.push_back(h2);
 
       hints_file.set(hints);
-      hints_file.write();
+      hints_file.write("rs1");
 
       hints.clear();
       hints_file.read();

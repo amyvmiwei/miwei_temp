@@ -144,7 +144,7 @@ template <typename IndexT>
 CellStoreScannerIntervalReadahead<IndexT>::~CellStoreScannerIntervalReadahead() {
   try {
     if (m_fd != -1)
-      Global::dfs->close(m_fd, 0);
+      Global::dfs->close(m_fd);
     delete [] m_block.base;
     delete m_zcodec;
     delete m_key_decompressor;

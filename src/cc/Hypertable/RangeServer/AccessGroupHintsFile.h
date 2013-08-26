@@ -129,8 +129,9 @@ namespace Hypertable {
     }
 
     /** Write hints file.
+     * @param location Proxy name of server who owns the range (empty if unknown)
      */
-    void write();
+    void write(String location);
 
     /** Reads hints file.
      */
