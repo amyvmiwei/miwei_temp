@@ -95,7 +95,7 @@ namespace {
   const uint32_t OUTSTANDING_READS = 1;
   void close_descriptor(FilesystemPtr fs, int *fdp) {
     try {
-      fs->close(*fdp, (DispatchHandler *)0);
+      fs->close(*fdp);
     }
     catch (Exception &e) {
       HT_ERRORF("Problem closing MetaLog: %s - %s",

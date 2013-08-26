@@ -784,6 +784,7 @@ void Range::relinquish_install_log() {
 
 void Range::relinquish_compact_and_finish() {
   TableIdentifierManaged table_frozen;
+  String location = Global::location_initializer->get();
 
   if (!m_removed_from_working_set) {
     AccessGroupVector ag_vector(0);
@@ -803,7 +804,7 @@ void Range::relinquish_compact_and_finish() {
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR, &hints[i]);
     m_hints_file.set(hints);
-    m_hints_file.write();
+    m_hints_file.write(location);
 
     {
       ScopedLock lock(m_schema_mutex);
@@ -819,7 +820,7 @@ void Range::relinquish_compact_and_finish() {
     if (Global::rs_metrics_table) {
       TableMutatorPtr mutator = Global::rs_metrics_table->create_mutator();
       KeySpec key;
-      String row = Global::location_initializer->get() + ":" + m_table.id;
+      String row = location + ":" + m_table.id;
       key.row = row.c_str();
       key.row_len = row.length();
       key.column_family = "range_move";
@@ -1145,7 +1146,8 @@ bool Range::estimate_split_row(SplitRowDataMapT &split_row_data, String &row) {
 void Range::split_compact_and_shrink() {
   int error;
   String start_row, end_row, split_row;
-  AccessGroupVector  ag_vector(0);
+  AccessGroupVector ag_vector(0);
+  String location = Global::location_initializer->get();
 
   m_metalog_entity->get_boundary_rows(start_row, end_row);
   split_row = m_metalog_entity->get_split_row();
@@ -1230,7 +1232,6 @@ void Range::split_compact_and_shrink() {
     key_low.column_qualifier = 0;
     key_low.column_qualifier_len = 0;
     key_low.column_family = "Location";
-    String location = Global::location_initializer->get();
     mutator->set(key_low, location.c_str(), location.length());
   }
 
@@ -1286,12 +1287,12 @@ void Range::split_compact_and_shrink() {
      * original disk usage.
      */
     m_hints_file.set(hints);
-    m_hints_file.write();
+    m_hints_file.write(location);
     for (size_t i=0; i<new_hints_file.get().size(); i++) {
       HT_ASSERT(hints[i].disk_usage <= new_hints_file.get()[i].disk_usage);
       new_hints_file.get()[i].disk_usage -= hints[i].disk_usage;
     }
-    new_hints_file.write();
+    new_hints_file.write("");
   }
 
   if (m_split_off_high) {
@@ -1321,8 +1322,7 @@ void Range::split_compact_and_shrink() {
    */
   {
     ScopedLock lock(m_mutex);
-    m_metalog_entity->set_state(RangeState::SPLIT_SHRUNK,
-                                Global::location_initializer->get());
+    m_metalog_entity->set_state(RangeState::SPLIT_SHRUNK, location);
     for (int i=0; true; i++) {
       try {
         Global::rsml_writer->record_state(m_metalog_entity.get());
@@ -1500,7 +1500,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
         ag_vector[i]->load_hints(&hints[i]);
     }
     m_hints_file.set(hints);
-    m_hints_file.write();
+    m_hints_file.write(Global::location_initializer->get());
 
   }
   catch (Exception &e) {

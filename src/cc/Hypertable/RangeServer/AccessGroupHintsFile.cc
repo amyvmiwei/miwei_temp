@@ -41,7 +41,7 @@
 
 #include <boost/tokenizer.hpp>
 
-#define HINTS_FILE_VERSION 2
+#define HINTS_FILE_VERSION 3
 
 using namespace Hypertable;
 
@@ -74,7 +74,7 @@ namespace {
     "    Files: %s\n  }\n";
 }
 
-void AccessGroupHintsFile::write() {
+void AccessGroupHintsFile::write(String location) {
   int32_t fd = -1;
   bool first_try = true;
 
@@ -82,9 +82,13 @@ void AccessGroupHintsFile::write() {
                              Global::toplevel_dir.c_str(),
                              m_table_id.c_str(), m_range_dir.c_str());
 
+  if (location.empty())
+    location = "?";
+
   String contents =
-    format("Version: %d\nStart Row: %s\nEnd Row: %s\nAccess Groups: {\n",
-           HINTS_FILE_VERSION, m_start_row.c_str(), m_end_row.c_str());
+    format("Version: %d\nStart Row: %s\nEnd Row: %s\nLocation: %s\n"
+           "Access Groups: {\n", HINTS_FILE_VERSION, m_start_row.c_str(),
+           m_end_row.c_str(), location.c_str());
   foreach_ht (const AccessGroup::Hints &h, m_hints)
     contents += format(ag_hint_format, h.ag_name.c_str(),
                        (Llu)h.latest_stored_revision,
@@ -96,7 +100,7 @@ void AccessGroupHintsFile::write() {
   try {
     if (!first_try) {
       if (fd != -1)
-        Global::dfs->close(fd, (DispatchHandler *)0);
+        Global::dfs->close(fd);
       if (!Global::dfs->exists(parent_dir))
         Global::dfs->mkdirs(parent_dir);
     }
@@ -105,7 +109,7 @@ void AccessGroupHintsFile::write() {
     StaticBuffer sbuf(contents.length());
     memcpy(sbuf.base, contents.c_str(), contents.length());
     Global::dfs->append(fd, sbuf, Filesystem::O_FLUSH);
-    Global::dfs->close(fd, (DispatchHandler *)0);
+    Global::dfs->close(fd);
   }
   catch (Exception &e) {
     HT_INFOF("Exception caught writing hints file %s/hints - %s",
@@ -137,7 +141,7 @@ void AccessGroupHintsFile::read() {
 
     dbuf.grow(length+1);
 
-    fd = Global::dfs->open(filename, 0);
+    fd = Global::dfs->open(filename, Filesystem::OPEN_FLAG_VERIFY_CHECKSUM);
     nread = Global::dfs->read(fd, dbuf.base, length);
     dbuf.base[nread] = 0;
 
@@ -248,7 +252,7 @@ void AccessGroupHintsFile::parse_header(const char *input, const char **ag_base)
   }
 
   int version = atoi(value);
-  if (version != 2)
+  if (version > 3)
     HT_THROWF(Error::BAD_FORMAT,
               "Unrecognized hints file version (%d)", version);
 
@@ -261,6 +265,13 @@ void AccessGroupHintsFile::parse_header(const char *input, const char **ag_base)
   if (key != "End Row")
     HT_THROWF(Error::BAD_FORMAT,
               "Unexpected key in hints file (%s)", key.c_str());
+
+  if (version >= 3) {
+    base = parse_key_value(base, key, &value, &value_len);
+    if (key != "Location")
+      HT_THROWF(Error::BAD_FORMAT,
+                "Unexpected key in hints file (%s)", key.c_str());
+  }
 
   base = parse_key_value(base, key, &value, &value_len);
   if (key != "Access Groups")
