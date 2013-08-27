@@ -1,3 +1,18 @@
+Version 0.9.7.10:
+(2013-08-27)
+
+    Better support for Hadoop 2 (CDH4)
+    Fixed bug in Master Version rendering in monitoring UI
+    Fixed problem with hints file reading
+    issue1034: Hadoop 2 - Recover file lease and retry if open throws IOException
+    Added Hypertable.Cluster.Name property
+    issue 1126: Better handling of bad RSML
+    Fixed ambiguity in .tsv DELETE specification
+    issue 1128: Fixed RangeServer create scanner crash on bad cell_interval spec
+    Minor fix to LocalBroker::posix_readdir
+    Removed spurious notification message
+    issue1125: Fixed AccessGroup-garbage-tracker test
+
 Version 0.9.7.9:
 (2013-08-15)
 
