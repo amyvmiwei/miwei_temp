@@ -133,7 +133,7 @@ CommAddress RangeServerConnection::get_comm_address() {
 }
 
 void RangeServerConnection::display(std::ostream &os) {
-  os << " " << m_location << " state=";
+  os << " " << m_location << " (" << m_hostname << ") state=";
   if (m_state) {
     bool continuation = false;
     if (m_state & RangeServerConnectionFlags::REMOVED) {
