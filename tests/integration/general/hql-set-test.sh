@@ -17,6 +17,22 @@ if [ $? != 0 ]; then
     exit 1
 fi
 
+# Restart and make sure it's still in readonly mode
+$HT_HOME/bin/stop-servers.sh
+$HT_HOME/bin/start-test-servers.sh --no-thriftbroker
+
+echo "INSERT INTO SystemState VALUES (\"row\", \"col\", \"value\");" \
+    | $HT_HOME/bin/ht shell --batch >& hql-set-test-c.output
+
+grep -i readonly hql-set-test-c.output
+
+if [ $? != 0 ]; then
+    echo "error: System didn't remain in READONLY mode as it should have"
+    exit 1
+fi
+
+# Turn off readonly mode
+
 echo "SET READONLY=false;" | $HT_HOME/bin/ht shell --batch
 echo "INSERT INTO SystemState VALUES (\"row\", \"col\", \"value\");" \
     | $HT_HOME/bin/ht shell --batch
