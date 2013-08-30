@@ -107,9 +107,11 @@ CellStore *CellStoreFactory::open(const String &name,
     catch (Exception &e) {
       Global::dfs->close(fd);
       if (!second_try && e.code() == Error::CHECKSUM_MISMATCH) {
+	fd = Global::dfs->open(name, oflags|Filesystem::OPEN_FLAG_VERIFY_CHECKSUM);
         second_try = true;
         goto try_again;
       }
+      HT_ERRORF("Problem deserializing trailer of %s", name.c_str());
       throw;
     }
 
@@ -227,6 +229,16 @@ CellStore *CellStoreFactory::open(const String &name,
       HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
               name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
     return cellstore_v0;
+  }
+  else {
+    Global::dfs->close(fd);
+    if (!second_try) {
+      fd = Global::dfs->open(name, oflags|Filesystem::OPEN_FLAG_VERIFY_CHECKSUM);
+      second_try = true;
+      goto try_again;
+    }
+    HT_ERRORF("Unrecognized cell store version %d found in %s",
+	      (int)version, name.c_str());
   }
   return 0;
 }
