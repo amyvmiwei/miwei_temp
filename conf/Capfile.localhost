@@ -21,11 +21,11 @@ set :prompt_clean, 1
 #ssh_options[:forward_agent] = true
 
 def supported_pkgs
-  {"bz2"=>1, "deb"=>1, "rpm"=>1}
+  {"bz2"=>1, "deb"=>1, "rpm"=>1, "gz"=>1}
 end
 
 def pkg_regex
-  '.*\.(bz2|deb|rpm)$'
+  '.*\.(bz2|deb|rpm|gz)$'
 end
 
 set(:pkg) do
@@ -160,7 +160,7 @@ task :install_package, :roles => [:master, :hyperspace, :slave, :thriftbroker_ad
     run("dpkg -i #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}") 
   elsif (pkg_type == "rpm")
     run("rpm -ivh --replacepkgs --nomd5 #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}")
-  else
+  elsif (pkg_type == "bz2")
     ext_index = pkg_basename.index(".tar.bz2")
     if ext_index.nil?
       raise "Package #{pkg} is not a .tar.bz2 archive"
@@ -169,6 +169,17 @@ task :install_package, :roles => [:master, :hyperspace, :slave, :thriftbroker_ad
     run("tar xjv -f #{install_dir}/#{pkg_basename} -C #{install_dir}")
     run("mv #{install_dir}/#{dir_basename}/opt/hypertable/#{hypertable_version} #{install_dir}");
     run("/bin/rm -rf #{install_dir}/#{dir_basename}");
+  elsif (pkg_type == "gz")
+    ext_index = pkg_basename.index(".tar.gz")
+    if ext_index.nil?
+      raise "Package #{pkg} is not a .tar.gz archive"
+    end
+    dir_basename = pkg_basename[0..ext_index-1]
+    run("tar xzv -f #{install_dir}/#{pkg_basename} -C #{install_dir}")
+    run("mv #{install_dir}/#{dir_basename}/opt/hypertable/#{hypertable_version} #{install_dir}");
+    run("/bin/rm -rf #{install_dir}/#{dir_basename}");
+  else
+    raise "Unrecognized package type - #{pkg}"
   end
   run "echo #{distro} > #{install_dir}/#{hypertable_version}/conf/hadoop-distro"
 end
