@@ -87,8 +87,6 @@ void PhantomRange::create_range(MasterClientPtr &master_client,
 void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs, 
                                           bool *is_empty) {
   ScopedLock lock(m_mutex);
-  size_t table_id_len = m_range_spec.table.encoded_length();
-  DynamicBuffer dbuf(table_id_len);
 
   m_range->recovery_initialize();
 
@@ -127,19 +125,8 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
 
   {
     Locker<Range> range_lock(*(m_range.get()));
-    int64_t latest_revision;
-
-    foreach_ht (FragmentMap::value_type &vv, m_fragments) {
-
-      // setup "phantom" buffer
-      dbuf.clear();
-      m_range_spec.table.encode(&dbuf.ptr);
-
-      vv.second->merge(m_range, "", dbuf, &latest_revision);
-
-      if (dbuf.fill() > table_id_len)
-        phantom_log->write(dbuf, latest_revision, false);
-    }
+    foreach_ht (FragmentMap::value_type &vv, m_fragments)
+      vv.second->merge(m_range_spec.table, m_range, phantom_log);
   }
 
   phantom_log->sync();

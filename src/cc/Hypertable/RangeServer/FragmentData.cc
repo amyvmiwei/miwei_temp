@@ -47,17 +47,19 @@ void FragmentData::clear() {
 }
 
 
-void FragmentData::merge(RangePtr &range, const char *split_point,
-                         DynamicBuffer &dbuf, int64_t *latest_revision) {
+void FragmentData::merge(TableIdentifier &table, RangePtr &range,
+                         CommitLogPtr &log) {
+
   String location;
   QualifiedRangeSpec range_spec;
-  DeserializedFragments fragments;
   Key key;
   SerializedKey serkey;
   ByteString value;
-  size_t total_size = 0;
-
-  *latest_revision = TIMESTAMP_MIN;
+  const uint8_t *mod, *mod_end;
+  DynamicBuffer dbuf;
+  int64_t latest_revision;
+  int64_t total_bytes = 0;
+  size_t kv_pairs = 0;
 
   // de-serialize all objects
   foreach_ht(EventPtr &event, m_data) {
@@ -69,21 +71,16 @@ void FragmentData::merge(RangePtr &range, const char *split_point,
     // skip "fragment"
     (void)Serialization::decode_i32(&decode_ptr, &decode_remain);
 
-    total_size += decode_remain;
-    uint8_t *base = (uint8_t *)decode_ptr;
-    size_t size = decode_remain;
-    fragments.push_back(Fragment(base, size));
-  }
+    dbuf.clear();
+    dbuf.ensure(table.encoded_length() + decode_remain);
+    table.encode(&dbuf.ptr);
 
-  // resize the buffer
-  dbuf.ensure(total_size);
+    latest_revision = TIMESTAMP_MIN;
 
-  foreach_ht(Fragment &fragment, fragments) {
-    const uint8_t *mod, *mod_end;
-    size_t kv_pairs = 0;
+    mod = (const uint8_t *)decode_ptr;
+    mod_end = mod + decode_remain;
 
-    mod_end = fragment.first + fragment.second;
-    mod = fragment.first;
+    total_bytes += decode_remain;
 
     while (mod < mod_end) {
       serkey.ptr = mod;
@@ -91,8 +88,8 @@ void FragmentData::merge(RangePtr &range, const char *split_point,
       HT_ASSERT(serkey.ptr <= mod_end && value.ptr <= mod_end);
       HT_ASSERT(key.load(serkey));
 
-      if (key.revision > *latest_revision)
-        *latest_revision = key.revision;
+      if (key.revision > latest_revision)
+        latest_revision = key.revision;
 
       range->add(key, value);
 
@@ -102,7 +99,13 @@ void FragmentData::merge(RangePtr &range, const char *split_point,
       kv_pairs++;
       mod = value.ptr;
     }
-    if (range->is_metadata())
-      HT_INFOF("Just added %d key/value pairs from fragment", (int)kv_pairs);
+    
+    HT_ASSERT(dbuf.ptr-dbuf.base <= (long)dbuf.size);
+
+    if (decode_remain)
+      log->write(dbuf, latest_revision, false);
   }
+
+  HT_INFOF("Just added %d key/value pairs (%lld bytes) from fragment %d",
+           (int)kv_pairs, (Lld)total_bytes, (int)m_id);
 }

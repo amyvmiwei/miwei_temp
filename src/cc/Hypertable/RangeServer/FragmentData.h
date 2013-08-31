@@ -32,7 +32,9 @@
 
 #include "AsyncComm/Event.h"
 
+#include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/Key.h"
+#include "Hypertable/Lib/Types.h"
 
 #include "ScanContext.h"
 #include "Range.h"
@@ -61,8 +63,7 @@ namespace Hypertable {
     /**
      * write the contents of this fragment into the Range and the dynamic buffer
      */
-    void merge(RangePtr &range, const char *split_point,
-               DynamicBuffer &dbuf, int64_t *latest_revision);
+    void merge(TableIdentifier &table, RangePtr &range, CommitLogPtr &log);
 
   protected:
     vector<EventPtr> m_data;
@@ -70,8 +71,6 @@ namespace Hypertable {
     uint32_t m_id;
     bool m_done;
 
-    typedef std::pair<uint8_t *, size_t> Fragment;
-    typedef std::vector<Fragment> DeserializedFragments;
   };
 
   typedef boost::intrusive_ptr<FragmentData> FragmentDataPtr;
