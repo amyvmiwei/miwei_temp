@@ -62,6 +62,9 @@ BlockCompressionCodecQuicklz::deflate(const DynamicBuffer &input,
   len = qlz_compress((char *)input.base, (char *)output.base+header.length(),
                      input.fill(), &m_compress);
 
+  if (len == 0)
+    HT_FATALF("Problem deflating block of size %lld", (Lld)input.fill());
+
   /* check for an incompressible block */
   if (len >= input.fill()) {
     header.set_compression_type(NONE);
