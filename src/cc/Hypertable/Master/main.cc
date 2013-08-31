@@ -307,7 +307,8 @@ int main(int argc, char **argv) {
           HT_INFO("Recovery was interrupted; continuing");
           OperationRecover *op =
               dynamic_cast<OperationRecover *>(operation.get());
-          recovery_operations[op->location()] = operation;
+          if (!op->location().empty())
+            recovery_operations[op->location()] = operation;
         }
         else
           operations.push_back(operation);

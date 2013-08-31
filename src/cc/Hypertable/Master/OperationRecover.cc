@@ -96,6 +96,7 @@ void OperationRecover::execute() {
     if (m_rsc)
       m_rsc->set_recovering(false);
     m_context->add_available_server(m_location);
+    m_expiration_time.reset();  // force it to get removed immediately
     complete_ok();
     return;
   }
@@ -211,6 +212,7 @@ void OperationRecover::execute() {
     // server being recovered then it unlocks the hyperspace file
     clear_server_state();
     HT_MAYBE_FAIL("recover-server-4");
+    m_expiration_time.reset();  // force it to get removed immediately
     complete_ok();
     // Send notification
     subject = format("NOTICE: Recovery of %s (%s) succeeded",
