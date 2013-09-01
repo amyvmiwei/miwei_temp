@@ -74,7 +74,7 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
 
   scan_log_directory(m_fs, m_path, file_ids, &next_id);
 
-  purge_old_log_files(file_ids, 10);
+  purge_old_log_files(file_ids, 30);
 
   // get replication
   int replication = Config::properties->get_i32("Hypertable.Metadata.Replication");
