@@ -794,6 +794,7 @@ void Monitoring::dump_table_summary_json() {
 void Monitoring::change_id_mapping(const String &table_id, const String &table_name) {
   String s_table_id(table_id);
   String s_table_name(table_name);
+  boost::trim_if(s_table_name, boost::is_any_of("/"));
   m_table_name_map[s_table_id] = s_table_name;
 }
 
