@@ -32,7 +32,12 @@ start_monitoring() {
 
 stop_monitoring() {
   cd ${monitoring_script_dir}
-  command="thin -p ${port} -e production -P ${pidfile} -l ${log} -R ${rack_file} -d stop"
-  $command
+  if [ -e ${pidfile} ]; then
+    ps -fp `cat ${pidfile}` > /dev/null
+    if [ $? -eq 0 ]; then
+      command="thin -p ${port} -e production -P ${pidfile} -l ${log} -R ${rack_file} -d stop"
+      $command
+    fi
+  fi
 }
 
