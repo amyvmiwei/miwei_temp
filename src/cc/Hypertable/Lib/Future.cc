@@ -88,7 +88,7 @@ bool Future::get(ResultPtr &result, uint32_t timeout_ms, bool &timed_out) {
     while (true) {
       // wait till we have results to serve
       while(_is_empty() && !_is_done() && !_is_cancelled()) {
-	timed_out = m_outstanding_cond.timed_wait(lock, wait_time);
+	timed_out = m_outstanding_cond.timed_wait(lock, wait_time) == 0;
 	if (timed_out)
 	  return _is_done();
       }
