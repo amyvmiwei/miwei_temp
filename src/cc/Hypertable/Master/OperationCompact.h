@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -60,19 +60,46 @@ namespace Hypertable {
     /** Carries out the manual compaction operation.
      * This method carries out the operation via the following states:
      *
-     *   - OperationState::INITIAL - If a table name was supplied, it maps it
-     *     to a table identifier and then drops through to the next state.
-     *   - OperationState::SCAN_METADATA - Scans the METADATA table to build
-     *     the list of servers that hold the table to be altered.  If no table
-     *     name was supplied, then all available servers are chosen.  The
-     *     dependencies are reset to be Dependency::INIT, Dependency::METADATA,
-     *     Dependency::SYSTEM, and the list of server proxy names.  The state
-     *     is advanced to OperationState::ISSUE_REQUESTS and the method returns
-     *     to allow the operation processor to update the dependency graph.
-     *   - OperationState::ISSUE_REQUESTS - Issues a compact request to
-     *     all participating servers and waits for their completion.  If there
-     *     are any errors, state is reset back to OperationState::SCAN_METADATA,
-     *     otherwise it completes.
+     * <table>
+     * <tr>
+     * <th>State</th>
+     * <th>Description</th>
+     * </tr>
+     * <tr>
+     * <td>INITIAL</td>
+     * <td><ul>
+     * <li>If a table name was supplied, it maps it to a table identifier (#m_id)</li>
+     * <li>If supplied table name not found in name map, completes with
+     * Error::TABLE_NOT_FOUND</li>
+     * <li>Otherwise, sets dependencies to Dependency::METADATA and transitions
+     * to SCAN_METADATA</li>
+     * </ul></td>
+     * </tr>
+     * <tr>
+     * <td>SCAN_METADATA</td>
+     * <td><ul>
+     * <li>Scans the METADATA table and populates #m_servers to hold the set
+     * of servers that hold the table to be altered which are not in the
+     * #m_completed set.  If no table name was supplied, then #m_servers is
+     * set to all available servers which are not in the #m_completed set</li>
+     * <li>Dependencies are set to server names in #m_servers</li>
+     * <li>Transitions to the ISSUE_REQUESTS state</li>
+     * <li>Persists operation to MML and returns</li>
+     * </ul></td>
+     * </tr>
+     * <tr>
+     * <td>ISSUE_REQUESTS</td>
+     * <td><ul>
+     * <li>Issues a compact request to all servers in #m_servers and waits
+     * for their completion</li>
+     * <li>If there are any errors, for each server that was successful or
+     * returned with Error::TABLE_NOT_FOUND or Error::RANGESERVER_TABLE_DROPPED,
+     * the server name is added to #m_completed.  Dependencies are then set back
+     * to just Dependency::METADATA, the state is reset back to SCAN_METADATA,
+     * the operation is persisted to the MML, and the method returns</li>
+     * <li>Otherwise state is transitioned to COMPLETED</li>
+     * </ul></td>
+     * </tr>
      */
     virtual void execute();
 
@@ -104,30 +131,33 @@ namespace Hypertable {
      * This method writes a serialized encoding of object state to the memory
      * location pointed to by <code>*bufp</code>.  The encoding has the
      * following format:
-     * <table style="font-family:monospace; ">
+     * <table>
      *   <tr>
-     *   <td>[vstring]</td>
-     *   <td>- Pathname of table to compact</td>
+     *   <th>Encoding</th><th>Description</th>
      *   </tr>
      *   <tr>
-     *   <td>[vstring]</td>
-     *   <td>- Row key of range to compact</td>
+     *   <td>vstr</td><td>Pathname of table to compact</td>
      *   </tr>
      *   <tr>
-     *   <td>[4-byte integer]</td>
-     *   <td>- %Range types (see RangeServerProtocol::RangeType)</td>
+     *   <td>vstr</td><td>Row key of range to compact</td>
      *   </tr>
      *   <tr>
-     *   <td>[vstring]</td>
-     *   <td>- %Table identifier</td>
+     *   <td>i32</td><td>%Range types (see RangeServerProtocol::RangeType)</td>
      *   </tr>
      *   <tr>
-     *   <td>[4-byte integer]</td>
-     *   <td>- Size of completed set</td>
+     *   <td>vstr</td><td>%Table identifier</td>
      *   </tr>
      *   <tr>
-     *   <td>[variable]</td>
-     *   <td>- Set of completed server names</td>
+     *   <td>i32</td><td>Size of #m_completed</td>
+     *   </tr>
+     *   <tr>
+     *   <td>vstr</td><td><b>Foreach server</b> in #m_completed, server name</td>
+     *   </tr>
+     *   <tr>
+     *   <td>i32</td><td>[VERSION 2] Size of #m_servers</td>
+     *   </tr>
+     *   <tr>
+     *   <td>vstr</td><td>[VERSION 2] <b>Foreach server</b> in #m_servers, server name</td>
      *   </tr>
      * </table>
      * @param bufp Address of destination buffer pointer (advanced by call)
@@ -148,18 +178,18 @@ namespace Hypertable {
     /** Decodes a request that triggered the operation.
      * This method decodes a request sent from a client that caused this
      * object to get created.  The encoding has the following format:
-     * <table style="font-family:monospace; ">
+     * <table>
      *   <tr>
-     *   <td>[vstring]</td>
-     *   <td>- Pathname of table to compact</td>
+     *   <th>Encoding</th><th>Description</th>
      *   </tr>
      *   <tr>
-     *   <td>[vstring]</td>
-     *   <td>- Row key of range to compact</td>
+     *   <td>vstr</td><td> Pathname of table to compact</td>
      *   </tr>
      *   <tr>
-     *   <td>[4-byte integer]</td>
-     *   <td>- %Range types (see RangeServerProtocol::RangeType)</td>
+     *   <td>vstr</td><td> Row key of range to compact</td>
+     *   </tr>
+     *   <tr>
+     *   <td>i32</td><td> %Range types (see RangeServerProtocol::RangeType)</td>
      *   </tr>
      * </table>
      * @param bufp Address of source buffer pointer (advanced by call)
@@ -173,8 +203,7 @@ namespace Hypertable {
     /** Initializes dependency graph state.
      * This method initializes the dependency graph state as follows:
      *
-     *   - <b>dependencies</b> - Dependency::INIT, Dependency::METADATA,
-     *     Dependency::SYSTEM, and Dependency::RECOVER_SERVER
+     *   - <b>dependencies</b> - Dependency::INIT
      *   - <b>exclusivities</b> - %Table pathname
      */
     void initialize_dependencies();
@@ -190,6 +219,9 @@ namespace Hypertable {
 
     /// %Table identifier
     String m_id;
+
+    /// Set of participating range servers
+    StringSet m_servers;
 
     /// Set of range servers that have completed operation
     StringSet m_completed;
