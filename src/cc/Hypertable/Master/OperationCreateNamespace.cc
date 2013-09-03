@@ -30,9 +30,11 @@
 
 using namespace Hypertable;
 
-
-OperationCreateNamespace::OperationCreateNamespace(ContextPtr &context, const String &name, int flags) 
-  : Operation(context, MetaLog::EntityType::OPERATION_CREATE_NAMESPACE), m_name(name), m_flags(flags) {
+OperationCreateNamespace::OperationCreateNamespace(ContextPtr &context,
+                                                   const String &name,
+                                                   int flags)
+  : Operation(context, MetaLog::EntityType::OPERATION_CREATE_NAMESPACE),
+    m_name(name), m_flags(flags) {
   initialize_dependencies();
 }
 
@@ -124,11 +126,16 @@ void OperationCreateNamespace::execute() {
 
 }
 
-
 void OperationCreateNamespace::display_state(std::ostream &os) {
   os << " name=" << m_name << " flags=" << m_flags;
   if (m_id != "")
     os << " (id=" << m_id << ")";
+}
+
+#define OPERATION_CREATE_NAMESPACE_VERSION 1
+
+uint16_t OperationCreateNamespace::encoding_version() const {
+  return OPERATION_CREATE_NAMESPACE_VERSION;
 }
 
 size_t OperationCreateNamespace::encoded_state_length() const {

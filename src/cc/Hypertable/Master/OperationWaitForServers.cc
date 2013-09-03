@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -45,6 +45,12 @@ void OperationWaitForServers::execute() {
 
   HT_INFOF("Leaving WaitForServers-%lld (state=%s)",
            (Lld)header.id, OperationState::get_text(get_state()));
+}
+
+#define OPERATION_WAIT_FOR_SERVERS_VERSION 1
+
+uint16_t OperationWaitForServers::encoding_version() const {
+  return OPERATION_WAIT_FOR_SERVERS_VERSION;
 }
 
 const String OperationWaitForServers::name() {

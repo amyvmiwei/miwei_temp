@@ -91,6 +91,8 @@ namespace Hypertable {
      */
     virtual void display_state(std::ostream &os);
 
+    virtual uint16_t encoding_version() const;
+
     /** Returns serialized state length.
      * This method returns the length of the serialized representation of the
      * object state.  See encode() for a description of the serialized format.

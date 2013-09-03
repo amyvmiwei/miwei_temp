@@ -31,19 +31,21 @@
 
 using namespace Hypertable;
 
-
-OperationDropNamespace::OperationDropNamespace(ContextPtr &context, const String &name, bool if_exists)
+OperationDropNamespace::OperationDropNamespace(ContextPtr &context,
+                                               const String &name,
+                                               bool if_exists)
   : Operation(context, MetaLog::EntityType::OPERATION_DROP_NAMESPACE), m_name(name) {
   m_flags = (if_exists) ? NamespaceFlag::IF_EXISTS : 0;
   initialize_dependencies();
 }
 
 OperationDropNamespace::OperationDropNamespace(ContextPtr &context,
-                                               const MetaLog::EntityHeader &header_)
+                                          const MetaLog::EntityHeader &header_)
   : Operation(context, header_) {
 }
 
-OperationDropNamespace::OperationDropNamespace(ContextPtr &context, EventPtr &event) 
+OperationDropNamespace::OperationDropNamespace(ContextPtr &context,
+                                               EventPtr &event) 
   : Operation(context, event, MetaLog::EntityType::OPERATION_DROP_NAMESPACE), m_flags(0) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
@@ -121,6 +123,12 @@ void OperationDropNamespace::execute() {
 
 void OperationDropNamespace::display_state(std::ostream &os) {
   os << " name=" << m_name << " flags=" << m_flags << " id=" << m_id << " ";
+}
+
+#define OPERATION_DROP_NAMESPACE_VERSION 1
+
+uint16_t OperationDropNamespace::encoding_version() const {
+  return OPERATION_DROP_NAMESPACE_VERSION;
 }
 
 size_t OperationDropNamespace::encoded_state_length() const {

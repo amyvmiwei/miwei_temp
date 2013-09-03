@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -94,6 +94,8 @@ namespace Hypertable {
      * @param os Output stream
      */
     virtual void display_state(std::ostream &os);
+
+    virtual uint16_t encoding_version() const;
 
     /** Returns serialized state length.
      * This method returns the length of the serialized representation of the

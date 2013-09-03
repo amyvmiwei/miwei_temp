@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -37,8 +37,6 @@
 #include <algorithm>
 #include <iostream>
 #include <set>
-
-#define OPERATION_RECOVER_RANGES_VERSION 1
 
 using namespace Hypertable;
 
@@ -280,14 +278,19 @@ void OperationRecoverRanges::initialize_obstructions_dependencies() {
                                  spec.range.end_row));
 }
 
+#define OPERATION_RECOVER_RANGES_VERSION 1
+
+uint16_t OperationRecoverRanges::encoding_version() const {
+  return OPERATION_RECOVER_RANGES_VERSION;
+}
+
 size_t OperationRecoverRanges::encoded_state_length() const {
-  return 2 + Serialization::encoded_length_vstr(m_location) + 
+  return Serialization::encoded_length_vstr(m_location) + 
     Serialization::encoded_length_vstr(m_parent_dependency) + 4 + 4 +
     m_plan.encoded_length();
 }
 
 void OperationRecoverRanges::encode_state(uint8_t **bufp) const {
-  Serialization::encode_i16(bufp, OPERATION_RECOVER_RANGES_VERSION);
   Serialization::encode_vstr(bufp, m_location);
   Serialization::encode_vstr(bufp, m_parent_dependency);
   Serialization::encode_i32(bufp, m_type);
@@ -302,8 +305,8 @@ void OperationRecoverRanges::decode_state(const uint8_t **bufp,
 
 void OperationRecoverRanges::decode_request(const uint8_t **bufp,
         size_t *remainp) {
-  // skip version for now
-  Serialization::decode_i16(bufp, remainp);
+  if (m_decode_version == 0)
+    Serialization::decode_i16(bufp, remainp); // skip old version
   m_location = Serialization::decode_vstr(bufp, remainp);
   m_parent_dependency = Serialization::decode_vstr(bufp, remainp);
   m_type = Serialization::decode_i32(bufp, remainp);

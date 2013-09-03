@@ -162,6 +162,12 @@ void OperationGatherStatistics::execute() {
   HT_INFOF("Leaving GatherStatistics-%lld", (Lld)header.id);
 }
 
+#define OPERATION_GATHER_STATISTICS_VERSION 1
+
+uint16_t OperationGatherStatistics::encoding_version() const {
+  return OPERATION_GATHER_STATISTICS_VERSION;
+}
+
 const String OperationGatherStatistics::name() {
   return "OperationGatherStatistics";
 }

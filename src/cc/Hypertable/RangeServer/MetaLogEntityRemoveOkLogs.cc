@@ -85,7 +85,9 @@ void MetaLogEntityRemoveOkLogs::encode(uint8_t **bufp) const {
     Serialization::encode_vstr(bufp, pathname);
 }
 
-void MetaLogEntityRemoveOkLogs::decode(const uint8_t **bufp, size_t *remainp) {
+void
+MetaLogEntityRemoveOkLogs::decode(const uint8_t **bufp, size_t *remainp,
+                                  uint16_t definition_version) {
   size_t count = Serialization::decode_i32(bufp, remainp);
   for (size_t i=0; i<count; i++)
     m_log_set.insert(Serialization::decode_vstr(bufp, remainp));

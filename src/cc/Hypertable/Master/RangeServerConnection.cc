@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -153,12 +153,15 @@ void RangeServerConnection::display(std::ostream &os) {
 }
 
 size_t RangeServerConnection::encoded_length() const {
-  return 8 + m_public_addr.encoded_length() +
+  return 10 + m_public_addr.encoded_length() +
     Serialization::encoded_length_vstr(m_location) +
     Serialization::encoded_length_vstr(m_hostname);
 }
 
+#define RANGESERVER_CONNECTION_VERSION 1
+
 void RangeServerConnection::encode(uint8_t **bufp) const {
+  Serialization::encode_i16(bufp, RANGESERVER_CONNECTION_VERSION);
   Serialization::encode_i32(bufp, m_state);
   // was removal_time but not used ...
   Serialization::encode_i32(bufp, 0);  
@@ -167,7 +170,10 @@ void RangeServerConnection::encode(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_hostname);
 }
 
-void RangeServerConnection::decode(const uint8_t **bufp, size_t *remainp) {
+void RangeServerConnection::decode(const uint8_t **bufp, size_t *remainp,
+                                   uint16_t definition_version) {
+  if (definition_version >= 2)
+    Serialization::decode_i16(bufp, remainp);  // currently not used
   m_state = Serialization::decode_i32(bufp, remainp);
   // was removal_time but not used ...
   Serialization::decode_i32(bufp, remainp);

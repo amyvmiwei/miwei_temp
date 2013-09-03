@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -39,7 +39,10 @@
 
 #include "FixedStream.h"
 
-namespace Hypertable { namespace Logger {
+namespace Hypertable { 
+
+/** Logging framework. */
+namespace Logger {
 
   /** @addtogroup Common
    *  @{

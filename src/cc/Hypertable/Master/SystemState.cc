@@ -206,10 +206,12 @@ void SystemState::encode(uint8_t **bufp) const {
   }
 }
 
-void SystemState::decode(const uint8_t **bufp, size_t *remainp) {
+void SystemState::decode(const uint8_t **bufp, size_t *remainp,
+                         uint16_t definition_version) {
   int version, count;
   int32_t timestamp;
   SystemVariable::Spec spec;
+  (void)definition_version;
   version = Serialization::decode_i32(bufp, remainp);
   HT_ASSERT(version == SYSTEM_STATE_VERSION);
   m_generation = Serialization::decode_i64(bufp, remainp);

@@ -65,6 +65,13 @@ void OperationTimedBarrier::execute() {
            OperationState::get_text(m_state));
 }
 
+#define OPERATION_TIMED_BARRIER_VERSION 1
+
+uint16_t OperationTimedBarrier::encoding_version() const {
+  return OPERATION_TIMED_BARRIER_VERSION;
+}
+
+
 const String OperationTimedBarrier::name() {
   return "OperationTimedBarrier";
 }

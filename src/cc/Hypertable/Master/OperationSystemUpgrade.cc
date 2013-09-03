@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -105,6 +105,12 @@ void OperationSystemUpgrade::execute() {
   }
 
   HT_INFOF("Leaving SystemUpgrade-%lld", (Lld)header.id);
+}
+
+#define OPERATION_SYSTEM_UPGRADE_VERSION 1
+
+uint16_t OperationSystemUpgrade::encoding_version() const {
+  return OPERATION_SYSTEM_UPGRADE_VERSION;
 }
 
 const String OperationSystemUpgrade::name() {

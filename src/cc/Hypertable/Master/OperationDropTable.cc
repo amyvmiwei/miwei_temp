@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -38,8 +38,10 @@
 using namespace Hypertable;
 using namespace Hyperspace;
 
-OperationDropTable::OperationDropTable(ContextPtr &context, const String &name, bool if_exists)
-  : Operation(context, MetaLog::EntityType::OPERATION_DROP_TABLE), m_name(name), m_if_exists(if_exists) {
+OperationDropTable::OperationDropTable(ContextPtr &context, const String &name,
+                                       bool if_exists)
+  : Operation(context, MetaLog::EntityType::OPERATION_DROP_TABLE), m_name(name),
+    m_if_exists(if_exists) {
   initialize_dependencies();
 }
 
@@ -220,6 +222,12 @@ void OperationDropTable::execute() {
 
 void OperationDropTable::display_state(std::ostream &os) {
   os << " name=" << m_name << " id=" << m_id << " ";
+}
+
+#define OPERATION_DROP_TABLE_VERSION 1
+
+uint16_t OperationDropTable::encoding_version() const {
+  return OPERATION_DROP_TABLE_VERSION;
 }
 
 size_t OperationDropTable::encoded_state_length() const {

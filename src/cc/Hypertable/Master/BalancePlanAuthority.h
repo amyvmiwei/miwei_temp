@@ -312,10 +312,12 @@ namespace Hypertable {
      * <code>*bufp</code>.  See encode() for a description of the
      * serialized format.
      * @param bufp Address of source buffer pointer (advanced by call)
-     * @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
-     * (decremented by call)
+     * @param remainp Amount of remaining buffer pointed to by
+     * <code>*bufp</code> (decremented by call).
+     * @param definition_version Version of DefinitionMaster
      */
-    virtual void decode(const uint8_t **bufp, size_t *remainp);
+    virtual void decode(const uint8_t **bufp, size_t *remainp,
+                        uint16_t definition_version);
 
   private:
 

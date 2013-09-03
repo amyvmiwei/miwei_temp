@@ -36,9 +36,8 @@ namespace Hypertable {
       DefinitionMaster(ContextPtr &context, const char *backup_label) : Definition(backup_label)
           , m_context(context) { }
       virtual uint16_t version();
-      virtual bool supported_version(uint16_t ver);
       virtual const char *name();
-      virtual Entity *create(uint16_t log_version, const EntityHeader &header);
+      virtual Entity *create(const EntityHeader &header);
     private:
       ContextPtr m_context;
     };

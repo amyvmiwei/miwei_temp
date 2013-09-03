@@ -33,15 +33,11 @@ uint16_t DefinitionRangeServer::version() {
   return 2;
 }
 
-bool DefinitionRangeServer::supported_version(uint16_t ver) {
-  return ver <= 2;
-}
-
 const char *DefinitionRangeServer::name() {
   return "rsml";
 }
 
-Entity *DefinitionRangeServer::create(uint16_t log_version, const EntityHeader &header) {
+Entity *DefinitionRangeServer::create(const EntityHeader &header) {
 
   if (header.type == EntityType::RANGE)
     return new MetaLogEntityRange(header);

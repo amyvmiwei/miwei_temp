@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -76,6 +76,12 @@ void OperationStop::execute() {
 
 void OperationStop::display_state(std::ostream &os) {
   os << " " << m_server << " recover=" << m_recover;
+}
+
+#define OPERATION_STOP_VERSION 1
+
+uint16_t OperationStop::encoding_version() const {
+  return OPERATION_STOP_VERSION;
 }
 
 size_t OperationStop::encoded_state_length() const {

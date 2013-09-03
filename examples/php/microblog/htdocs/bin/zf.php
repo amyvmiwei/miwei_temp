@@ -1,5 +1,5 @@
 <?php
-/**
+/*
  * Zend Framework
  *
  * LICENSE
@@ -20,7 +20,7 @@
  * @version    $Id$
  */
 
-/**
+/*
  * ZF
  *
  * @category   Zend

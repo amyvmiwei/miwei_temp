@@ -65,7 +65,10 @@ void EntityTaskAcknowledgeRelinquish::encode(uint8_t **bufp) const {
   range_spec.encode(bufp);
 }
 
-void EntityTaskAcknowledgeRelinquish::decode(const uint8_t **bufp, size_t *remainp) {
+void
+EntityTaskAcknowledgeRelinquish::decode(const uint8_t **bufp, size_t *remainp,
+                                        uint16_t definition_version) {
+  (void)definition_version;
   location = Serialization::decode_vstr(bufp, remainp);
   table.decode(bufp, remainp);
   range_spec.decode(bufp, remainp);
