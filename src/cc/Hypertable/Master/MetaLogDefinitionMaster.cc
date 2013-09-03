@@ -44,18 +44,14 @@ using namespace Hypertable;
 using namespace Hypertable::MetaLog;
 
 uint16_t DefinitionMaster::version() {
-  return 1;
-}
-
-bool DefinitionMaster::supported_version(uint16_t ver) {
-  return ver == 1;
+  return 2;
 }
 
 const char *DefinitionMaster::name() {
   return "mml";
 }
 
-Entity *DefinitionMaster::create(uint16_t log_version, const EntityHeader &header) {
+Entity *DefinitionMaster::create(const EntityHeader &header) {
   Operation *operation = 0;
 
   if (header.type == EntityType::RANGE_SERVER_CONNECTION)

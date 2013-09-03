@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -32,9 +32,8 @@ namespace Hypertable {
     public:
       DefinitionRangeServer(const char *backup_label) : Definition(backup_label) { }
       virtual uint16_t version();
-      virtual bool supported_version(uint16_t ver);
       virtual const char *name();
-      virtual Entity *create(uint16_t log_version, const EntityHeader &header);
+      virtual Entity *create(const EntityHeader &header);
     };
     typedef intrusive_ptr<DefinitionRangeServer> DefinitionRangeServerPtr;
   }

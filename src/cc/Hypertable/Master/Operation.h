@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -49,7 +49,7 @@ namespace Hypertable {
    *  @{
    */
 
-  /** %Operation states */
+  /** %Master operation states. */
   namespace OperationState {
 
     /** Enumeration for operation states */
@@ -276,6 +276,12 @@ namespace Hypertable {
      */
     virtual void display_state(std::ostream &os) = 0;
 
+    /** Returns version of encoding format.
+     * This is method returns the version of the encoding format.
+     * @return Version of encoding format.
+     */
+    virtual uint16_t encoding_version() const = 0;
+
     /** Length of encoded operation result.
      * This method returns the length of the encoded result, which is
      * encoded as follows:
@@ -344,10 +350,13 @@ namespace Hypertable {
      * Upon successful decode, this method will modify <code>*bufp</code>
      * to point to the first byte past the encoded result and will decrement
      * <code>*remainp</code> by the length of the encoded result.
-     * @param bufp Address of pointer to encoded operation
-     * @param remainp Address of integer holding amount of remaining buffer
+     * @param bufp Address of source buffer pointer (advanced by call)
+     * @param remainp Amount of remaining buffer pointed to by
+     * <code>*bufp</code> (decremented by call).
+     * @param definition_version Version of DefinitionMaster
      */
-    virtual void decode(const uint8_t **bufp, size_t *remainp);
+    virtual void decode(const uint8_t **bufp, size_t *remainp,
+                        uint16_t definition_version);
 
     /** Write human readable string represenation of operation to output stream.
      * @param os Output stream to which string is written
@@ -460,9 +469,13 @@ namespace Hypertable {
     int32_t m_error;
     int32_t m_remove_approvals;
     int32_t m_original_type;
+    String m_error_msg;
+
+    /// Version of serialized operation
+    uint16_t m_decode_version;
+
     bool m_unblock_on_exit;
     bool m_blocked;
-    String m_error_msg;
 
     // Expiration time (used by ResponseManager)
     HiResTime m_expiration_time;

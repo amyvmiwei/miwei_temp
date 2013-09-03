@@ -104,6 +104,8 @@ namespace Hypertable {
      */
     virtual void display_state(std::ostream &os);
 
+    virtual uint16_t encoding_version() const;
+
     /** Returns length of encoded state. */
     virtual size_t encoded_state_length() const;
 

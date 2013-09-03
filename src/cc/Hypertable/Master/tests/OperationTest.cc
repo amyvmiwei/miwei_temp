@@ -87,6 +87,10 @@ void OperationTest::display_state(std::ostream &os) {
   os << " name=" << m_name <<  " ";
 }
 
+uint16_t OperationTest::encoding_version() const {
+  return 1;
+}
+
 size_t OperationTest::encoded_state_length() const {
   return Serialization::encoded_length_vstr(m_name);
 }

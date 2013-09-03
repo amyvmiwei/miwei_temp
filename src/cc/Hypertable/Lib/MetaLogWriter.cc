@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for MetaLog::Writer.
+ * This file contains definitions for MetaLog::Writer, a class for writing
+ * a %MetaLog.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Config.h"
 #include "Common/FileUtils.h"
@@ -92,19 +99,10 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
   // Write existing entries
   std::vector<Entity *> entities;
   entities.reserve(initial_entities.size());
-  size_t total_length = 0;
-  foreach_ht (EntityPtr &entity, initial_entities) {
+  foreach_ht (EntityPtr &entity, initial_entities)
     entities.push_back(entity.get());
-    total_length += EntityHeader::LENGTH + (entity->marked_for_removal() ? 0 : entity->encoded_length());
-    if (total_length > 10*Property::MiB) {
-      record_state(entities);
-      entities.clear();
-      total_length = 0;
-    }
-  }
-  if (total_length) {
+  if (!entities.empty())
     record_state(entities);
-  }
 
   // Write "Recover" entity
   if (!skip_recover_entry) {

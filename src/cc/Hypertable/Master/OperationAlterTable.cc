@@ -206,6 +206,12 @@ void OperationAlterTable::display_state(std::ostream &os) {
   os << " name=" << m_name << " id=" << m_id << " ";
 }
 
+#define OPERATION_ALTER_TABLE_VERSION 1
+
+uint16_t OperationAlterTable::encoding_version() const {
+  return OPERATION_ALTER_TABLE_VERSION;
+}
+
 size_t OperationAlterTable::encoded_state_length() const {
   size_t length = Serialization::encoded_length_vstr(m_name) +
     Serialization::encoded_length_vstr(m_schema) +

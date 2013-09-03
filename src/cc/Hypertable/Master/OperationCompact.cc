@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -165,6 +165,12 @@ void OperationCompact::display_state(std::ostream &os) {
   os << " name=" << m_name << " id=" << m_id << " " 
      << " row=" << m_row << " range_types=" 
      << RangeServerProtocol::compact_flags_to_string(m_range_types);
+}
+
+#define OPERATION_COMPACT_VERSION 1
+
+uint16_t OperationCompact::encoding_version() const {
+  return OPERATION_COMPACT_VERSION;
 }
 
 size_t OperationCompact::encoded_state_length() const {

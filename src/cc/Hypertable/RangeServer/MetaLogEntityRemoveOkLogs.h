@@ -113,11 +113,13 @@ namespace Hypertable {
      * representation of the state from the memory location pointed to by
      * <code>*bufp</code>.
      * @param bufp Address of source buffer pointer (advanced by call)
-     * @param remainp Amount of remaining buffer pointed to by <code>*bufp</code>
-     * (decremented by call)
+     * @param remainp Amount of remaining buffer pointed to by
+     * <code>*bufp</code> (decremented by call).
+     * @param definition_version Version of DefinitionMaster
      * @see encode() for serialization format
      */    
-    virtual void decode(const uint8_t **bufp, size_t *remainp);
+    virtual void decode(const uint8_t **bufp, size_t *remainp,
+                        uint16_t definition_version);
 
     /** Returns the entity name ("Range")
      * @return %Entity name

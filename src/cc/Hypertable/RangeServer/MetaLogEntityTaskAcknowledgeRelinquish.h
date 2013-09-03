@@ -38,7 +38,15 @@ namespace Hypertable {
       virtual void work_queue_add_hook();
       virtual size_t encoded_length() const;
       virtual void encode(uint8_t **bufp) const;
-      virtual void decode(const uint8_t **bufp, size_t *remainp);
+
+      /** Decodes serlialized EntityTaskAcknowledgeRelinquish object.
+       * @param bufp Address of source buffer pointer (advanced by call)
+       * @param remainp Amount of remaining buffer pointed to by
+       * <code>*bufp</code> (decremented by call).
+       * @param definition_version Version of DefinitionMaster
+       */
+      virtual void decode(const uint8_t **bufp, size_t *remainp,
+                          uint16_t definition_version);
       virtual const String name();
       virtual void display(std::ostream &os);
 

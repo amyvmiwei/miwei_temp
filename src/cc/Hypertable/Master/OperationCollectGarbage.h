@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -37,6 +37,7 @@ namespace Hypertable {
     virtual bool exclusive() { return true; }
 
     virtual void display_state(std::ostream &os) { }
+    virtual uint16_t encoding_version() const;
     virtual size_t encoded_state_length() const { return 0; }
     virtual void encode_state(uint8_t **bufp) const { }
     virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }

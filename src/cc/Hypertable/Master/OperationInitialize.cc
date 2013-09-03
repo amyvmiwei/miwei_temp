@@ -239,6 +239,12 @@ void OperationInitialize::display_state(std::ostream &os) {
   os << m_table << " ";
 }
 
+#define OPERATION_INITIALIZE_VERSION 1
+
+uint16_t OperationInitialize::encoding_version() const {
+  return OPERATION_INITIALIZE_VERSION;
+}
+
 size_t OperationInitialize::encoded_state_length() const {
   return Serialization::encoded_length_vstr(m_metadata_root_location) +
     Serialization::encoded_length_vstr(m_metadata_secondlevel_location) +

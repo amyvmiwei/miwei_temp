@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for MetaLog::EntityHeader.
+ * This file contains definitions for MetaLog::EntityHeader, a class used to
+ * encode and decode a %MetaLog entity header.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Serialization.h"
 #include "Common/Time.h"

@@ -169,6 +169,12 @@ void OperationBalance::display_state(std::ostream &os) {
   os << *(m_plan.get());
 }
 
+#define OPERATION_BALANCE_VERSION 1
+
+uint16_t OperationBalance::encoding_version() const {
+  return OPERATION_BALANCE_VERSION;
+}
+
 size_t OperationBalance::encoded_state_length() const {
   return m_plan->encoded_length();
 }

@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for MetaLog.
+ * This file contains definitions that are part of the MetaLog system.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Filesystem.h"
 #include "Common/Serialization.h"

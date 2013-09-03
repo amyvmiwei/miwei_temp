@@ -38,6 +38,7 @@ namespace Hypertable {
     virtual const String name();
     virtual const String label();
     virtual void display_state(std::ostream &os) { }
+    virtual uint16_t encoding_version() const;
     virtual size_t encoded_state_length() const { return 0; }
     virtual void encode_state(uint8_t **bufp) const { }
     virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }

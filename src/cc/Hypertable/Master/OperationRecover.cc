@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -43,11 +43,8 @@ extern "C" {
 #include <time.h>
 }
 
-#define OPERATION_RECOVER_VERSION 1
-
 using namespace Hypertable;
 using namespace Hyperspace;
-
 
 OperationRecover::OperationRecover(ContextPtr &context, 
                                    RangeServerConnectionPtr &rsc, int flags)
@@ -464,9 +461,14 @@ void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity) {
   
 }
 
+#define OPERATION_RECOVER_VERSION 1
+
+uint16_t OperationRecover::encoding_version() const {
+  return OPERATION_RECOVER_VERSION;
+}
 
 size_t OperationRecover::encoded_state_length() const {
-  size_t len = 2 + Serialization::encoded_length_vstr(m_location) + 16;
+  size_t len = Serialization::encoded_length_vstr(m_location) + 16;
   for (size_t i=0; i<m_root_specs.size(); i++)
     len += m_root_specs[i].encoded_length() + m_root_states[i].encoded_length();
   for (size_t i=0; i<m_metadata_specs.size(); i++)
@@ -479,7 +481,6 @@ size_t OperationRecover::encoded_state_length() const {
 }
 
 void OperationRecover::encode_state(uint8_t **bufp) const {
-  Serialization::encode_i16(bufp, (int16_t)OPERATION_RECOVER_VERSION);
   Serialization::encode_vstr(bufp, m_location);
   // root
   Serialization::encode_i32(bufp, m_root_specs.size());
@@ -514,8 +515,8 @@ void OperationRecover::decode_state(const uint8_t **bufp, size_t *remainp) {
 }
 
 void OperationRecover::decode_request(const uint8_t **bufp, size_t *remainp) {
-  // skip version for now
-  Serialization::decode_i16(bufp, remainp);
+  if (m_decode_version == 0)
+    Serialization::decode_i16(bufp, remainp);  // skip old version
   m_location = Serialization::decode_vstr(bufp, remainp);
   int nn;
   QualifiedRangeSpec spec;

@@ -20,7 +20,7 @@
  */
 
 /** @file
- * Definitions for MasterProtocol
+ * Definitions for MasterProtocol.
  * This file contains definitions for MasterProtocol, a class for generating
  * Master protocol messages.
  */

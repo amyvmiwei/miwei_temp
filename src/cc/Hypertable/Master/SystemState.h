@@ -169,10 +169,13 @@ namespace Hypertable {
 
     /** Decodes system state.
      * See encode_state() for format description.
-     * @param bufp Address of destination buffer pointer (advanced by call)
-     * @param remainp Address of integer holding amount of remaining buffer
+     * @param bufp Address of source buffer pointer (advanced by call)
+     * @param remainp Amount of remaining buffer pointed to by
+     * <code>*bufp</code> (decremented by call).
+     * @param definition_version Version of DefinitionMaster
      */
-    virtual void decode(const uint8_t **bufp, size_t *remainp);
+    virtual void decode(const uint8_t **bufp, size_t *remainp,
+                        uint16_t definition_version);
 
   private:
 

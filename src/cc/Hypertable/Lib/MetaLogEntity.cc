@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for MetaLog::Entity.
+ * This file contains definitions for MetaLog::Entity, an abstract base class
+ * for persisting an object's state in a %MetaLog
+ */
+
 #include "Common/Compat.h"
 #include "Common/Checksum.h"
 #include "Common/Error.h"
@@ -43,15 +50,4 @@ void Entity::encode_entry(uint8_t **bufp) {
   header.checksum = fletcher32(payload_encode_position, *bufp-payload_encode_position);
   header.encode(&header_encode_position);
   HT_ASSERT(header_encode_position == payload_encode_position);
-}
-
-void Entity::decode_entry(const uint8_t **bufp, size_t *remainp) {
-  header.decode(bufp, remainp);
-  const uint8_t *base = *bufp;
-  decode(bufp, remainp);
-  int32_t checksum = (int32_t)fletcher32(base, *bufp-base);
-  if (checksum != header.checksum)
-    HT_THROWF(Error::METALOG_CHECKSUM_MISMATCH,
-              "MetaLog checksum mismatch header=%lx, computed=%lx",
-              (Lu)header.checksum, (Lu)checksum);
 }

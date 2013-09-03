@@ -225,7 +225,9 @@ void MetaLogEntityRange::encode(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_original_transfer_log);
 }
 
-void MetaLogEntityRange::decode(const uint8_t **bufp, size_t *remainp) {
+void MetaLogEntityRange::decode(const uint8_t **bufp, size_t *remainp,
+                                uint16_t definition_version) {
+  (void)definition_version;
   m_table.decode(bufp, remainp);
   m_spec.decode(bufp, remainp);
   m_state.decode(bufp, remainp);

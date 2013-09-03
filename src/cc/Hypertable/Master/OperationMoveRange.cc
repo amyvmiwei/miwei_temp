@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -238,6 +238,12 @@ void OperationMoveRange::display_state(std::ostream &os) {
   os << "' soft-limit=" << m_soft_limit << " is_split="
      << ((m_is_split) ? "true" : "false");
   os << "source='" << m_source << "' location='" << m_destination << "' ";
+}
+
+#define OPERATION_MOVE_RANGE_VERSION 1
+
+uint16_t OperationMoveRange::encoding_version() const {
+  return OPERATION_MOVE_RANGE_VERSION;
 }
 
 size_t OperationMoveRange::encoded_state_length() const {

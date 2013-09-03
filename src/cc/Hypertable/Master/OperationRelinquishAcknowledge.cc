@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -44,7 +44,8 @@ OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &ctx,
 
 
 OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &context, EventPtr &event) 
-  : Operation(context, event, MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE) {
+  : Operation(context, event,
+              MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
@@ -81,9 +82,14 @@ void OperationRelinquishAcknowledge::execute() {
 	   m_source.c_str());
 }
 
-
 void OperationRelinquishAcknowledge::display_state(std::ostream &os) {
   os << " " << m_table << " " << m_range << " source=" << m_source;
+}
+
+#define OPERATION_RELINQUISH_ACKNOWLEDGE_VERSION 1
+
+uint16_t OperationRelinquishAcknowledge::encoding_version() const {
+  return OPERATION_RELINQUISH_ACKNOWLEDGE_VERSION;
 }
 
 size_t OperationRelinquishAcknowledge::encoded_state_length() const {

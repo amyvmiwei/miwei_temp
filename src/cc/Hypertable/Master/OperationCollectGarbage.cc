@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -45,6 +45,12 @@ void OperationCollectGarbage::execute() {
   }
   set_state(OperationState::COMPLETE);
   HT_INFOF("Leaving CollectGarbage-%lld", (Lld)header.id);
+}
+
+#define OPERATION_COLLECT_GARBAGE_VERSION 1
+
+uint16_t OperationCollectGarbage::encoding_version() const {
+  return OPERATION_COLLECT_GARBAGE_VERSION;
 }
 
 const String OperationCollectGarbage::name() {

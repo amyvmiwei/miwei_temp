@@ -20,7 +20,7 @@
  */
 
 /** @file
- * Declarations for MasterProtocol
+ * Declarations for MasterProtocol.
  * This file contains declarations for MasterProtocol, a class for generating
  * Master protocol messages.
  */

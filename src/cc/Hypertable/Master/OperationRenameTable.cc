@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -31,9 +31,11 @@
 
 using namespace Hypertable;
 
-
-OperationRenameTable::OperationRenameTable(ContextPtr &context, const String &old_name, const String &new_name)
-  : Operation(context, MetaLog::EntityType::OPERATION_RENAME_TABLE), m_old_name(old_name), m_new_name(new_name) {
+OperationRenameTable::OperationRenameTable(ContextPtr &context,
+                                           const String &old_name,
+                                           const String &new_name)
+  : Operation(context, MetaLog::EntityType::OPERATION_RENAME_TABLE),
+    m_old_name(old_name), m_new_name(new_name) {
   initialize_dependencies();
 }
 
@@ -136,6 +138,12 @@ void OperationRenameTable::execute() {
 void OperationRenameTable::display_state(std::ostream &os) {
   os << " old_name=" << m_old_name << " new_name=" << m_new_name 
      << " id=" << m_id << " ";
+}
+
+#define OPERATION_RENAME_TABLE_VERSION 1
+
+uint16_t OperationRenameTable::encoding_version() const {
+  return OPERATION_RENAME_TABLE_VERSION;
 }
 
 size_t OperationRenameTable::encoded_state_length() const {

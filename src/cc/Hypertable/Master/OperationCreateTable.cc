@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -38,7 +38,9 @@
 using namespace Hypertable;
 using namespace Hyperspace;
 
-OperationCreateTable::OperationCreateTable(ContextPtr &context, const String &name, const String &schema)
+OperationCreateTable::OperationCreateTable(ContextPtr &context,
+                                           const String &name,
+                                           const String &schema)
   : Operation(context, MetaLog::EntityType::OPERATION_CREATE_TABLE), m_name(name), m_schema(schema) {
   initialize_dependencies();
 }
@@ -318,6 +320,12 @@ void OperationCreateTable::display_state(std::ostream &os) {
   if (m_table.id)
     os << m_table << " ";
   os << " location=" << m_location << " ";
+}
+
+#define OPERATION_CREATE_TABLE_VERSION 1
+
+uint16_t OperationCreateTable::encoding_version() const {
+  return OPERATION_CREATE_TABLE_VERSION;
 }
 
 size_t OperationCreateTable::encoded_state_length() const {

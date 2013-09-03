@@ -34,7 +34,12 @@
 
 // Required declarations for custom validators *before* including the header,
 // otherwise no overloading would happen in standard conforming compilers.
-namespace boost { namespace program_options {
+
+/** Boost library. */
+namespace boost {
+
+/** Program options. */
+namespace program_options {
 
 typedef std::vector<std::string> Strings;
 typedef std::vector<int64_t> Int64s;

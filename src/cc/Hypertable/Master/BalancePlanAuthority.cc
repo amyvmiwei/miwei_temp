@@ -122,9 +122,11 @@ BalancePlanAuthority::encode(uint8_t **bufp) const
 }
 
 void 
-BalancePlanAuthority::decode(const uint8_t **bufp, size_t *remainp)
-{
+BalancePlanAuthority::decode(const uint8_t **bufp, size_t *remainp,
+                             uint16_t definition_version) {
   ScopedLock lock(m_mutex);
+  
+  (void)definition_version;
 
   uint16_t version = Serialization::decode_i16(bufp, remainp);
   m_generation = Serialization::decode_i32(bufp, remainp);

@@ -36,6 +36,7 @@
 #include "Range.h"
 #include "TableInfo.h"
 
+/** GNU C++ extensions. */
 namespace __gnu_cxx {
   template<> struct hash<Hypertable::Range *>  {
     size_t operator()(const Hypertable::Range *x) const {

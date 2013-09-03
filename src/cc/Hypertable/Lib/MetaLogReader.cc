@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Definitions for MetaLog::Reader.
+ * This file contains definitions for MetaLog::Reader, a class for reading
+ * a %MetaLog.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Checksum.h"
 #include "Common/Config.h"
@@ -124,19 +131,18 @@ void Reader::verify_backup(int32_t file_num) {
 
 
 void Reader::load_file(const String &fname) {
-  size_t file_length = m_fs->length(fname);
+  int64_t file_length = m_fs->length(fname);
   int fd = m_fs->open_buffered(fname, 0, READAHEAD_BUFSZ, OUTSTANDING_READS);
   bool found_recover_entry = false;
+  int64_t cur_offset = 0;
 
   HT_MAYBE_FAIL("bad-rsml");
 
   m_entity_map.clear();
 
-  m_cur_offset = 0;
-
   HT_ON_SCOPE_EXIT(&close_descriptor, m_fs, &fd);
 
-  read_header(fd);
+  read_header(fd, &cur_offset);
 
   try {
     size_t remaining;
@@ -145,7 +151,7 @@ void Reader::load_file(const String &fname) {
 
     buf.reserve(EntityHeader::LENGTH);
 
-    while (m_cur_offset < file_length) {
+    while (cur_offset < file_length) {
 
       buf.clear();
 
@@ -158,7 +164,7 @@ void Reader::load_file(const String &fname) {
       const uint8_t *ptr = buf.base;
       header.decode(&ptr, &remaining);
 
-      m_cur_offset += nread;
+      cur_offset += nread;
 
       if (header.type == EntityType::RECOVER) {
         found_recover_entry = true;
@@ -171,7 +177,7 @@ void Reader::load_file(const String &fname) {
         continue;
       }
 
-      EntityPtr entity = m_definition->create(m_version, header);
+      EntityPtr entity = m_definition->create(header);
 
       buf.clear();
       buf.ensure(header.length);
@@ -181,12 +187,12 @@ void Reader::load_file(const String &fname) {
       if (nread != (size_t)header.length)
         HT_THROW(Error::METALOG_ENTRY_TRUNCATED, "reading entity payload");
 
-      m_cur_offset += nread;
+      cur_offset += nread;
 
       if (entity) {
         remaining = header.length;
         ptr = buf.base;
-        entity->decode(&ptr, &remaining);
+        entity->decode(&ptr, &remaining, m_version);
 
         // verify checksum
         int32_t computed_checksum = fletcher32(buf.base, header.length);
@@ -204,7 +210,7 @@ void Reader::load_file(const String &fname) {
   }
   catch (Exception &e) {
     HT_THROW2F(e.code(), e, "Error reading metalog file: %s: read %llu/%llu",
-               fname.c_str(), (Llu)m_cur_offset, (Llu)file_length);
+               fname.c_str(), (Llu)cur_offset, (Llu)file_length);
   }
 
   if (!found_recover_entry)
@@ -213,7 +219,7 @@ void Reader::load_file(const String &fname) {
 }
 
 
-void Reader::read_header(int fd) {
+void Reader::read_header(int fd, int64_t *offsetp) {
   MetaLog::Header header;
   uint8_t buf[Header::LENGTH];
   const uint8_t *ptr = buf;
@@ -226,7 +232,7 @@ void Reader::read_header(int fd) {
               "Short read of %s header (expected %d, got %d)",
               m_definition->name(), (int)Header::LENGTH, (int)nread);
 
-  m_cur_offset += nread;
+  *offsetp += nread;
 
   header.decode(&ptr, &remaining);
 
@@ -236,8 +242,8 @@ void Reader::read_header(int fd) {
 
   m_version = header.version;
 
-  if (!m_definition->supported_version(m_version))
+  if (m_definition->version() < m_version)
     HT_THROWF(Error::METALOG_VERSION_MISMATCH,
-              "Unsuported %s version (definition: %d, header: %d)",
-              m_definition->name(), m_definition->version(), m_version);
+              "Unsuported %s version %d (definition version is %d)",
+              m_definition->name(), m_version, m_definition->version());
 }

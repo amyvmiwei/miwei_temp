@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -41,10 +41,9 @@
 
 using namespace Hypertable;
 
-
-OperationRegisterServer::OperationRegisterServer(ContextPtr &context, EventPtr &event)
+OperationRegisterServer::OperationRegisterServer(ContextPtr &context,
+                                                 EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_REGISTER_SERVER) {
-
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
@@ -232,6 +231,12 @@ void OperationRegisterServer::execute() {
   m_context->op->unblock(Dependency::RECOVERY_BLOCKER);
   HT_INFOF("%lld Leaving RegisterServer %s", 
           (Lld)header.id, m_rsc->location().c_str());
+}
+
+#define OPERATION_REGISTER_SERVER_VERSION 1
+
+uint16_t OperationRegisterServer::encoding_version() const {
+  return OPERATION_REGISTER_SERVER_VERSION;
 }
 
 size_t OperationRegisterServer::encoded_result_length() const {
