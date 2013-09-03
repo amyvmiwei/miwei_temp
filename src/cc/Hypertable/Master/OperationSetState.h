@@ -76,15 +76,28 @@ namespace Hypertable {
     /** Executes "set state" operation.
      * This method transitions through the following states:
      *
-     *   - INITIAL
-     *   - STARTED
-     *
-     * In the INITIAL state it fetches notifications from the SystemState
-     * object and delivers them.  It then fetches the variables specs with
-     * a call to SystemState::get(), transitions to the STARTED state, and
-     * persists this object and the SystemState object in the MML.  In the
-     * STARTED state, the variable specs obtained in the INITIAL state are
-     * passed to all range servers via a call to RangeServer::set_state().
+     * <table>
+     * <tr>
+     * <th>State</th>
+     * <th>Description</th>
+     * </tr>
+     * <tr>
+     * <td>INITIAL</td>
+     * <td><ul>
+     * <li>Fetches and delivers admin notifications from the SystemState object</li>
+     * <li>Fetches the variables specs with a call to SystemState::get()</li>
+     * <li>Transitions to the STARTED state</li>
+     * <li>Persists operation and the SystemState object in the MML</li>
+     * </ul></td>
+     * </tr>
+     * <tr>
+     * <td>STARTED</td>
+     * <td><ul>
+     * <li>Variable specs obtained in the INITIAL state are passed to all range
+     * servers via a call to RangeServer::set_state().</li>
+     * <li>Transitions to the COMPLETED state</li>
+     * </ul></td>
+     * </tr>
      */
     virtual void execute();
     

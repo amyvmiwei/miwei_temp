@@ -59,14 +59,9 @@ OperationCompact::OperationCompact(ContextPtr &context, EventPtr &event)
 
 void OperationCompact::initialize_dependencies() {
   boost::trim_if(m_name, boost::is_any_of("/ "));
-  if (!m_name.empty()) {
-    m_name = String("/") + m_name;
-    m_exclusivities.insert(m_name);
-  }
+  m_name = String("/") + m_name;
+  m_exclusivities.insert(m_name);
   add_dependency(Dependency::INIT);
-  add_dependency(Dependency::METADATA);
-  add_dependency(Dependency::SYSTEM);
-  add_dependency(Dependency::RECOVER_SERVER);
 }
 
 void OperationCompact::execute() {
@@ -75,7 +70,6 @@ void OperationCompact::execute() {
   DispatchHandlerOperationPtr op_handler;
   TableIdentifier table;
   int32_t state = get_state();
-  DependencySet dependencies;
 
   HT_INFOF("Entering Compact-%lld (table=%s, row=%s) state=%s",
            (Lld)header.id, m_name.c_str(), m_row.c_str(),
@@ -97,6 +91,11 @@ void OperationCompact::execute() {
         return;
       }
     }
+    {
+      ScopedLock lock(m_mutex);
+      m_dependencies.clear();
+      m_dependencies.insert(Dependency::METADATA);
+    }
     HT_MAYBE_FAIL("compact-INITIAL");
 
   case OperationState::SCAN_METADATA:
@@ -107,13 +106,13 @@ void OperationCompact::execute() {
       m_context->get_available_servers(servers);
     {
       ScopedLock lock(m_mutex);
+      m_servers.clear();
       m_dependencies.clear();
-      m_dependencies.insert(Dependency::INIT);
-      m_dependencies.insert(Dependency::METADATA);
-      m_dependencies.insert(Dependency::SYSTEM);
       for (StringSet::iterator iter=servers.begin(); iter!=servers.end(); ++iter) {
-        if (m_completed.count(*iter) == 0)
+        if (m_completed.count(*iter) == 0) {
           m_dependencies.insert(*iter);
+          m_servers.insert(*iter);
+        }
       }
       m_state = OperationState::ISSUE_REQUESTS;
     }
@@ -123,12 +122,8 @@ void OperationCompact::execute() {
   case OperationState::ISSUE_REQUESTS:
     table.id = m_id.c_str();
     table.generation = 0;
-    Operation::dependencies(dependencies);
-    dependencies.erase(Dependency::INIT);
-    dependencies.erase(Dependency::METADATA);
-    dependencies.erase(Dependency::SYSTEM);
     op_handler = new DispatchHandlerOperationCompact(m_context, table, m_row, m_range_types);
-    op_handler->start(dependencies);
+    op_handler->start(m_servers);
     if (!op_handler->wait_for_completion()) {
       std::set<DispatchHandlerOperation::Result> results;
       op_handler->get_results(results);
@@ -138,13 +133,19 @@ void OperationCompact::execute() {
             result.error == Error::RANGESERVER_TABLE_DROPPED) {
           ScopedLock lock(m_mutex);
           m_completed.insert(result.location);
-          m_dependencies.erase(result.location);
         }
         else
           HT_WARNF("Compact error at %s - %s (%s)", result.location.c_str(),
                    Error::get_text(result.error), result.msg.c_str());
       }
-      set_state(OperationState::SCAN_METADATA);
+
+      {
+        ScopedLock lock(m_mutex);
+        m_servers.clear();
+        m_dependencies.clear();
+        m_dependencies.insert(Dependency::METADATA);
+        m_state = OperationState::SCAN_METADATA;
+      }
       m_context->mml_writer->record_state(this);
       return;
     }
@@ -167,7 +168,7 @@ void OperationCompact::display_state(std::ostream &os) {
      << RangeServerProtocol::compact_flags_to_string(m_range_types);
 }
 
-#define OPERATION_COMPACT_VERSION 1
+#define OPERATION_COMPACT_VERSION 2
 
 uint16_t OperationCompact::encoding_version() const {
   return OPERATION_COMPACT_VERSION;
@@ -176,9 +177,13 @@ uint16_t OperationCompact::encoding_version() const {
 size_t OperationCompact::encoded_state_length() const {
   size_t length = Serialization::encoded_length_vstr(m_name) +
     Serialization::encoded_length_vstr(m_row) + 4 +
-    Serialization::encoded_length_vstr(m_id) + 4;
-  for (StringSet::iterator iter = m_completed.begin(); iter != m_completed.end(); ++iter)
-    length += Serialization::encoded_length_vstr(*iter);
+    Serialization::encoded_length_vstr(m_id);
+  length += 4;
+  foreach_ht (const String &location, m_completed)
+    length += Serialization::encoded_length_vstr(location);
+  length += 4;
+  foreach_ht (const String &location, m_servers)
+    length += Serialization::encoded_length_vstr(location);
   return length;
 }
 
@@ -188,8 +193,11 @@ void OperationCompact::encode_state(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_range_types);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());
-  for (StringSet::iterator iter = m_completed.begin(); iter != m_completed.end(); ++iter)
-    Serialization::encode_vstr(bufp, *iter);
+  foreach_ht (const String &location, m_completed)
+    Serialization::encode_vstr(bufp, location);
+  Serialization::encode_i32(bufp, m_servers.size());
+  foreach_ht (const String &location, m_servers)
+    Serialization::encode_vstr(bufp, location);
 }
 
 void OperationCompact::decode_state(const uint8_t **bufp, size_t *remainp) {
@@ -198,6 +206,11 @@ void OperationCompact::decode_state(const uint8_t **bufp, size_t *remainp) {
   size_t length = Serialization::decode_i32(bufp, remainp);
   for (size_t i=0; i<length; i++)
     m_completed.insert( Serialization::decode_vstr(bufp, remainp) );
+  if (m_decode_version >= 2) {
+    length = Serialization::decode_i32(bufp, remainp);
+    for (size_t i=0; i<length; i++)
+      m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
+  }
 }
 
 void OperationCompact::decode_request(const uint8_t **bufp, size_t *remainp) {
