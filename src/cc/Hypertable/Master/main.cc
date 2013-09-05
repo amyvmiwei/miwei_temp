@@ -250,8 +250,10 @@ int main(int argc, char **argv) {
             rsc_set.erase(rsc.get());
           rsc_set.insert(rsc.get());
         }
-        else if (dynamic_cast<BalancePlanAuthority *>(entity.get()))
+        else if (dynamic_cast<BalancePlanAuthority *>(entity.get())) {
           bpa_entity = entity;
+          entities2.push_back(entity);
+        }
         else if (dynamic_cast<SystemState *>(entity.get())) {
           context->system_state = dynamic_cast<SystemState *>(entity.get());
           entities2.push_back(entity);
