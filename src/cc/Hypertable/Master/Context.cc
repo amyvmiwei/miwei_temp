@@ -104,15 +104,24 @@ void Context::replay_status(EventPtr &event) {
   String location  = Serialization::decode_vstr(&decode_ptr, &decode_remain);
   int plan_generation = Serialization::decode_i32(&decode_ptr, &decode_remain);
 
-  HT_ASSERT(event->proxy);
+  String proxy;
+  if (event->proxy == 0) {
+    RangeServerConnectionPtr rsc;
+    HT_WARNF("Proxy returned by AsyncComm is empty, looking up by address %s",
+             event->addr.format().c_str());
+    HT_ASSERT(rsc_manager->find_server_by_local_addr(event->addr, rsc));
+    proxy = rsc->location();
+  }
+  else
+    proxy = event->proxy;
 
   HT_INFOF("replay_status(id=%lld, %s, plan_generation=%d) from %s",
-           (Lld)id, location.c_str(), plan_generation, event->proxy);
+           (Lld)id, location.c_str(), plan_generation, proxy.c_str());
 
   RecoveryStepFuturePtr future = m_recovery_state.get_replay_future(id);
 
   if (future)
-    future->status(event->proxy, plan_generation);
+    future->status(proxy, plan_generation);
   else
     HT_WARN_OUT << "No Recovery replay step future found for operation=" << id << HT_END;
 
@@ -128,7 +137,16 @@ void Context::replay_complete(EventPtr &event) {
   int32_t error    = Serialization::decode_i32(&decode_ptr, &decode_remain);
   String error_msg = Serialization::decode_vstr(&decode_ptr, &decode_remain);
 
-  String proxy = event->proxy ? event->proxy : "?";
+  String proxy;
+  if (event->proxy == 0) {
+    RangeServerConnectionPtr rsc;
+    HT_WARNF("Proxy returned by AsyncComm is empty, looking up by address %s",
+             event->addr.format().c_str());
+    HT_ASSERT(rsc_manager->find_server_by_local_addr(event->addr, rsc));
+    proxy = rsc->location();
+  }
+  else
+    proxy = event->proxy;
 
   HT_INFOF("from %s replay_complete(id=%lld, %s, plan_generation=%d) = %s",
            proxy.c_str(), (Lld)id, location.c_str(), plan_generation,
@@ -137,11 +155,10 @@ void Context::replay_complete(EventPtr &event) {
   RecoveryStepFuturePtr future = m_recovery_state.get_replay_future(id);
 
   if (future) {
-    HT_ASSERT(event->proxy);
     if (error == Error::OK)
-      future->success(event->proxy, plan_generation);
+      future->success(proxy, plan_generation);
     else
-      future->failure(event->proxy, plan_generation, error, error_msg);
+      future->failure(proxy, plan_generation, error, error_msg);
   }
   else
     HT_WARN_OUT << "No Recovery replay step future found for operation=" << id << HT_END;
@@ -163,12 +180,22 @@ void Context::prepare_complete(EventPtr &event) {
 
   RecoveryStepFuturePtr future = m_recovery_state.get_prepare_future(id);
 
+  String proxy;
+  if (event->proxy == 0) {
+    RangeServerConnectionPtr rsc;
+    HT_WARNF("Proxy returned by AsyncComm is empty, looking up by address %s",
+             event->addr.format().c_str());
+    HT_ASSERT(rsc_manager->find_server_by_local_addr(event->addr, rsc));
+    proxy = rsc->location();
+  }
+  else
+    proxy = event->proxy;
+
   if (future) {
-    HT_ASSERT(event->proxy);
     if (error == Error::OK)
-      future->success(event->proxy, plan_generation);
+      future->success(proxy, plan_generation);
     else
-      future->failure(event->proxy, plan_generation, error, error_msg);
+      future->failure(proxy, plan_generation, error, error_msg);
   }
   else
     HT_WARN_OUT << "No Recovery prepare step future found for operation=" << id << HT_END;
@@ -189,12 +216,22 @@ void Context::commit_complete(EventPtr &event) {
 
   RecoveryStepFuturePtr future = m_recovery_state.get_commit_future(id);
 
+  String proxy;
+  if (event->proxy == 0) {
+    RangeServerConnectionPtr rsc;
+    HT_WARNF("Proxy returned by AsyncComm is empty, looking up by address %s",
+             event->addr.format().c_str());
+    HT_ASSERT(rsc_manager->find_server_by_local_addr(event->addr, rsc));
+    proxy = rsc->location();
+  }
+  else
+    proxy = event->proxy;
+
   if (future) {
-    HT_ASSERT(event->proxy);
     if (error == Error::OK)
-      future->success(event->proxy, plan_generation);
+      future->success(proxy, plan_generation);
     else
-      future->failure(event->proxy, plan_generation, error, error_msg);
+      future->failure(proxy, plan_generation, error, error_msg);
   }
   else
     HT_WARN_OUT << "No Recovery commit step future found for operation=" << id << HT_END;
