@@ -85,6 +85,7 @@ void OperationRegisterServer::execute() {
     else
       m_location = format("rs-%s-%llu", m_context->location_hash.c_str(),
                           (Llu)id);
+    newly_created = true;
 
     String fname = m_context->toplevel_dir + "/servers/";
     // !!! wrap in try/catch
@@ -104,12 +105,10 @@ void OperationRegisterServer::execute() {
       operation->complete_ok();
   }
 
-  if (!m_rsc) {
+  if (!m_rsc)
     m_rsc = new RangeServerConnection(m_location,
                                       m_system_stats.net_info.host_name,
                                       m_public_addr);
-    newly_created = true;
-  }
 
   // this connection has been marked for removal
   if (m_rsc->get_removed()) {
@@ -166,12 +165,16 @@ void OperationRegisterServer::execute() {
   int32_t difference = (int32_t)abs((m_received_ts - m_register_ts) / 1000LL);
   if (difference > (3000000 + m_context->max_allowable_skew)) {
     String errstr = format("Detected clock skew while registering server "
-            "%s(%s), as location %s register_ts=%llu, received_ts=%llu, "
+            "%s (%s), as location %s register_ts=%llu, received_ts=%llu, "
             "difference=%d > allowable skew %d", 
             m_system_stats.net_info.host_name.c_str(), 
             m_public_addr.format().c_str(), m_location.c_str(), 
             (Llu)m_register_ts, (Llu)m_received_ts, difference, 
             m_context->max_allowable_skew);
+    String subject = format("Clock skew detected while registering %s (%s)",
+                            m_system_stats.net_info.host_name.c_str(),
+                            m_location.c_str());
+    m_context->notification_hook(subject, errstr);
     complete_error_no_log(Error::RANGESERVER_CLOCK_SKEW, errstr);
     HT_ERROR_OUT << errstr << HT_END;
     // clock skew detected by master
@@ -197,10 +200,22 @@ void OperationRegisterServer::execute() {
   }
   else {
     m_context->monitoring->add_server(m_location, m_system_stats);
-    HT_INFOF("%lld Registering server %s (host=%s, local_addr=%s, "
-            "public_addr=%s)", (Lld)header.id, m_rsc->location().c_str(),
-            m_system_stats.net_info.host_name.c_str(),
-            m_local_addr.format().c_str(), m_public_addr.format().c_str());
+    String message = format("Registering server %s\nhost = %s\n"
+                            "public addr = %s\nlocal addr = %s\n",
+                            m_rsc->location().c_str(),
+                            m_system_stats.net_info.host_name.c_str(),
+                            m_public_addr.format().c_str(),
+                            m_local_addr.format().c_str());
+
+    if (newly_created) {
+      String subject = format("Registering server %s - %s (%s)",
+                              m_location.c_str(),
+                              m_system_stats.net_info.host_name.c_str(),
+                              m_public_addr.format().c_str());
+      m_context->notification_hook(subject, message);
+    }
+    boost::replace_all(message, "\n", " ");
+    HT_INFOF("%lld %s", (Lld)header.id, message.c_str());
 
     /** Send back Response **/
     {
