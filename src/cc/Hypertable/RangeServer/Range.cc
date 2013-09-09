@@ -1739,7 +1739,7 @@ void Range::acknowledge_load(uint32_t timeout_ms) {
 void Range::remove_original_transfer_log() {
   String transfer_log = m_metalog_entity->get_original_transfer_log();
   if (!transfer_log.empty()) {
-    RE2 regex("\\/_xfer_\\/");
+    RE2 regex("\\/_xfer\\/");
     if (RE2::PartialMatch(transfer_log.c_str(), regex)) {
       try {
         HT_INFOF("Removing transfer log %s", transfer_log.c_str());
