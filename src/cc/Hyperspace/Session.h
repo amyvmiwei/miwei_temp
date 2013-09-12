@@ -51,7 +51,7 @@
 namespace Hyperspace {
 
   /** @defgroup Hyperspace Hyperspace
-   * %Hyperspace highly available lock manager
+   * Highly available lock service
    * @{
    */
 

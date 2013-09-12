@@ -2389,7 +2389,7 @@ void RangeServer::update_qualify_and_transform() {
            */
           if (!rulist->range_blocked) {
             if (!rulist->range->increment_update_counter()) {
-              uc->send_back.error = error;
+              uc->send_back.error = Error::RANGESERVER_RANGE_NOT_FOUND;
               uc->send_back.offset = mod - request->buffer.base;
               uc->send_back.count++;
               key.next(); // skip key

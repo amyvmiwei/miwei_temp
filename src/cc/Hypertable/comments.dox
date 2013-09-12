@@ -1,5 +1,5 @@
 /** @defgroup Hypertable Hypertable
- * %Hypertable proper.
+ * %Hypertable servers and interface library.
  * The %Hypertable module contains the core %Hypertable packages, including
- * the Master, RangeServer, and client access library.
+ * the Master, RangeServer, and client interface library.
  */

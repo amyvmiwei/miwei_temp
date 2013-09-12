@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -40,7 +40,7 @@ namespace Hypertable {
 
   /** @defgroup libHypertable Lib
    * @ingroup Hypertable
-   * %Client access library.
+   * %Client interface library.
    * The Lib module contains the Hypertable client library which contains
    * %Hypertable specific code that is shared by clients, the RangeServer and
    * the Master.
