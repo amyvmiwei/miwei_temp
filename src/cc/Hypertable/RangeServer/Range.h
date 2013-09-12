@@ -339,7 +339,8 @@ namespace Hypertable {
     bool cancel_maintenance();
 
     void relinquish_install_log();
-    void relinquish_compact_and_finish();
+    void relinquish_compact();
+    void relinquish_finalize();
 
     bool estimate_split_row(SplitRowDataMapT &split_row_data, String &row);
 
@@ -388,7 +389,6 @@ namespace Hypertable {
     bool             m_dropped;
     bool             m_capacity_exceeded_throttle;
     bool             m_relinquish;
-    bool             m_removed_from_working_set;
     int64_t          m_maintenance_generation;
     LoadMetricsRange m_load_metrics;
     bool             m_initialized;

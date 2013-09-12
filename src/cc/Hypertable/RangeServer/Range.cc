@@ -76,7 +76,7 @@ Range::Range(MasterClientPtr &master_client,
     m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
     m_range_set(range_set), m_error(Error::OK), m_dropped(false),
     m_capacity_exceeded_throttle(false), m_relinquish(false),
-    m_removed_from_working_set(false), m_maintenance_generation(0),
+    m_maintenance_generation(0),
     m_load_metrics(identifier->id, range->start_row, range->end_row),
     m_initialized(false) {
   m_metalog_entity = new MetaLogEntityRange(*identifier, *range, *state, needs_compaction);
@@ -96,7 +96,7 @@ Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
     m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
     m_range_set(range_set), m_error(Error::OK), m_dropped(false),
     m_capacity_exceeded_throttle(false), m_relinquish(false),
-    m_removed_from_working_set(false), m_maintenance_generation(0),
+    m_maintenance_generation(0),
     m_load_metrics(range_entity->get_table_id(), range_entity->get_start_row(),
                    range_entity->get_end_row()),
     m_initialized(false) {
@@ -659,7 +659,8 @@ void Range::relinquish() {
 
   // Make sure range is in a relinquishable state
   if (state != RangeState::STEADY &&
-      state != RangeState::RELINQUISH_LOG_INSTALLED) {
+      state != RangeState::RELINQUISH_LOG_INSTALLED &&
+      state != RangeState::RELINQUISH_COMPACTED) {
     HT_INFOF("Cancelling relinquish because range is not in relinquishable state (%s)",
              RangeState::get_text(state).c_str());
     return;
@@ -678,7 +679,9 @@ void Range::relinquish() {
       }
       relinquish_install_log();
     case (RangeState::RELINQUISH_LOG_INSTALLED):
-      relinquish_compact_and_finish();
+      relinquish_compact();
+    case (RangeState::RELINQUISH_COMPACTED):
+      relinquish_finalize();
     }
   }
   catch (Exception &e) {
@@ -781,94 +784,95 @@ void Range::relinquish_install_log() {
 
 }
 
-
-void Range::relinquish_compact_and_finish() {
-  TableIdentifierManaged table_frozen;
+void Range::relinquish_compact() {
   String location = Global::location_initializer->get();
+  AccessGroupVector ag_vector(0);
 
-  if (!m_removed_from_working_set) {
-    AccessGroupVector ag_vector(0);
+  {
+    ScopedLock lock(m_schema_mutex);
+    ag_vector = m_access_group_vector;
+  }
 
-    {
-      ScopedLock lock(m_schema_mutex);
-      ag_vector = m_access_group_vector;
+  if (cancel_maintenance())
+    HT_THROW(Error::CANCELLED, "");
+
+  /**
+   * Perform minor compactions
+   */
+  std::vector<AccessGroup::Hints> hints(ag_vector.size());
+  for (size_t i=0; i<ag_vector.size(); i++)
+    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR, &hints[i]);
+  m_hints_file.set(hints);
+  m_hints_file.write(location);
+
+  String end_row = m_metalog_entity->get_end_row();
+
+  // Record "move" in sys/RS_METRICS
+  if (Global::rs_metrics_table) {
+    TableMutatorPtr mutator = Global::rs_metrics_table->create_mutator();
+    KeySpec key;
+    String row = location + ":" + m_table.id;
+    key.row = row.c_str();
+    key.row_len = row.length();
+    key.column_family = "range_move";
+    key.column_qualifier = end_row.c_str();
+    key.column_qualifier_len = end_row.length();
+    try {
+      mutator->set(key, 0, 0);
+      mutator->flush();
     }
-
-    if (cancel_maintenance())
-      HT_THROW(Error::CANCELLED, "");
-
-    /**
-     * Perform minor compactions
-     */
-    std::vector<AccessGroup::Hints> hints(ag_vector.size());
-    for (size_t i=0; i<ag_vector.size(); i++)
-      ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR, &hints[i]);
-    m_hints_file.set(hints);
-    m_hints_file.write(location);
-
-    {
-      ScopedLock lock(m_schema_mutex);
-      ScopedLock lock2(m_mutex);
-      table_frozen = m_table;
-    }
-
-    String start_row, end_row;
-
-    m_metalog_entity->get_boundary_rows(start_row, end_row);
-
-    // Record "move" in sys/RS_METRICS
-    if (Global::rs_metrics_table) {
-      TableMutatorPtr mutator = Global::rs_metrics_table->create_mutator();
-      KeySpec key;
-      String row = location + ":" + m_table.id;
-      key.row = row.c_str();
-      key.row_len = row.length();
-      key.column_family = "range_move";
-      key.column_qualifier = end_row.c_str();
-      key.column_qualifier_len = end_row.length();
-      try {
-        mutator->set(key, 0, 0);
-        mutator->flush();
-      }
-      catch (Exception &e) {
-        HT_ERROR_OUT << "Problem updating sys/RS_METRICS - " << e << HT_END;
-      }
-    }
-
-    // Remove range from the system
-    {
-      Barrier::ScopedActivator block_updates(m_update_barrier);
-      Barrier::ScopedActivator block_scans(m_scan_barrier);
-
-      if (!m_range_set->remove(start_row, end_row)) {
-        HT_ERROR_OUT << "Problem removing range " << m_name << HT_END;
-        HT_ABORT;
-      }
-      m_removed_from_working_set = true;
+    catch (Exception &e) {
+      HT_ERROR_OUT << "Problem updating sys/RS_METRICS - " << e << HT_END;
     }
   }
+
+  // Mark range as "dropped" preventing further scans and updates
+  drop();
+
+  m_metalog_entity->set_state(RangeState::RELINQUISH_COMPACTED,
+                              Global::location_initializer->get());
+
+}
+
+void Range::relinquish_finalize() {
+  TableIdentifierManaged table_frozen;
+  String start_row, end_row;
+
+  {
+    ScopedLock lock(m_schema_mutex);
+    ScopedLock lock2(m_mutex);
+    table_frozen = m_table;
+  }
+
+  m_metalog_entity->get_boundary_rows(start_row, end_row);
 
   HT_INFOF("Reporting relinquished range %s to Master", m_name.c_str());
 
   RangeSpecManaged range_spec;
   m_metalog_entity->get_range_spec(range_spec);
 
+  HT_MAYBE_FAIL("relinquish-move-range");
+
   m_master_client->move_range(m_metalog_entity->get_source(),
 			      &table_frozen, range_spec,
                               m_metalog_entity->get_transfer_log(),
                               m_metalog_entity->get_soft_limit(), false);
 
-  MetaLog::EntityTaskPtr acknowledge_relinquish_task;
-  std::vector<MetaLog::Entity *> entities;
-
   remove_original_transfer_log();
 
+  // Remove range from TableInfo
+  if (!m_range_set->remove(start_row, end_row)) {
+    HT_ERROR_OUT << "Problem removing range " << m_name << HT_END;
+    HT_ABORT;
+  }
+
   // Mark the Range entity for removal
+  std::vector<MetaLog::Entity *> entities;
   m_metalog_entity->mark_for_removal();
   entities.push_back(m_metalog_entity.get());
 
   // Add acknowledge relinquish task
-  acknowledge_relinquish_task = 
+  MetaLog::EntityTaskPtr acknowledge_relinquish_task =
     new MetaLog::EntityTaskAcknowledgeRelinquish(m_metalog_entity->get_source(),
                                                  table_frozen, range_spec);
   entities.push_back(acknowledge_relinquish_task.get());
@@ -898,6 +902,8 @@ void Range::relinquish_compact_and_finish() {
   // disables any further maintenance
   m_maintenance_guard.disable();
 }
+
+
 
 
 

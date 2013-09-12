@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for RangeState.
+ * This file contains type definitions for RangeState, a class to hold
+ * range state.
  */
 
 #include "Common/Compat.h"
@@ -90,9 +96,21 @@ void RangeStateManaged::decode(const uint8_t **bufp, size_t *remainp) {
 String RangeState::get_text(uint8_t state) {
   String str;
   switch (state & ~RangeState::PHANTOM) {
-  case RangeState::STEADY: str = "STEADY";              break;
-  case RangeState::SPLIT_LOG_INSTALLED: str = "SPLIT_LOG_INSTALLED";    break;
-  case RangeState::SPLIT_SHRUNK: str = "SPLIT_SHRUNK";  break;
+  case RangeState::STEADY:
+    str = "STEADY";
+    break;
+  case RangeState::SPLIT_LOG_INSTALLED:
+    str = "SPLIT_LOG_INSTALLED";
+    break;
+  case RangeState::SPLIT_SHRUNK:
+    str = "SPLIT_SHRUNK";
+    break;
+  case RangeState::RELINQUISH_LOG_INSTALLED:
+    str = "RELINQUISH_LOG_INSTALLED";
+    break;
+  case RangeState::RELINQUISH_COMPACTED:
+    str = "RELINQUISH_COMPACTED";
+    break;
   default:
     str = format("UNKNOWN(%d)", (int)state);
   }
