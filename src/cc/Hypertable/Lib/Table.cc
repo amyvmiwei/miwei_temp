@@ -129,6 +129,11 @@ void Table::initialize() {
   m_stale = false;
 }
 
+void Table::refresh_if_required() {
+  HT_ASSERT(m_name != "");
+  if (m_stale)
+    initialize();
+}
 
 void Table::refresh() {
   ScopedLock lock(m_mutex);
@@ -140,6 +145,7 @@ void Table::refresh() {
 
 void Table::get(TableIdentifierManaged &ident_copy, SchemaPtr &schema_copy) {
   ScopedLock lock(m_mutex);
+  refresh_if_required();
   ident_copy = m_table;
   schema_copy = m_schema;
 }
@@ -168,6 +174,11 @@ Table::create_mutator(uint32_t timeout_ms, uint32_t flags,
   HT_ASSERT(needs_index_table() ? has_index_table() : true);
   HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
 
+  {
+    ScopedLock lock(m_mutex);
+    refresh_if_required();
+  }
+
   if (flush_interval_ms) {
     return new TableMutatorShared(m_props, m_comm, this, m_range_locator,
                                   m_app_queue, timeout, flush_interval_ms, flags);
@@ -182,6 +193,11 @@ Table::create_mutator_async(ResultCallback *cb, uint32_t timeout_ms, uint32_t fl
   HT_ASSERT(needs_index_table() ? has_index_table() : true);
   HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
 
+  {
+    ScopedLock lock(m_mutex);
+    refresh_if_required();
+  }
+
   return new TableMutatorAsync(m_props, m_comm, m_app_queue, this, m_range_locator, timeout,
       cb, flags);
 }
@@ -190,6 +206,11 @@ TableScanner *
 Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms,
                       int32_t flags) {
   scan_spec.throw_if_invalid();
+
+  {
+    ScopedLock lock(m_mutex);
+    refresh_if_required();
+  }
 
   return new TableScanner(m_comm, this, m_range_locator, scan_spec,
                           timeout_ms ? timeout_ms : m_timeout_ms);
@@ -202,6 +223,11 @@ Table::create_scanner_async(ResultCallback *cb, const ScanSpec &scan_spec, uint3
   HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
 
   scan_spec.throw_if_invalid();
+
+  {
+    ScopedLock lock(m_mutex);
+    refresh_if_required();
+  }
 
   return new TableScannerAsync(m_comm, m_app_queue, this, m_range_locator, scan_spec,
                                 timeout_ms ? timeout_ms : m_timeout_ms, cb,

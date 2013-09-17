@@ -129,6 +129,8 @@ namespace Hypertable {
                                             int32_t flags = 0);
 
     void get_identifier(TableIdentifier *table_id_p) {
+      ScopedLock lock(m_mutex);
+      refresh_if_required();
       *table_id_p = m_table;
     }
 
@@ -139,6 +141,7 @@ namespace Hypertable {
 
     SchemaPtr schema() {
       ScopedLock lock(m_mutex);
+      refresh_if_required();
       return m_schema;
     }
 
@@ -163,6 +166,11 @@ namespace Hypertable {
     bool need_refresh() {
       ScopedLock lock(m_mutex);
       return m_stale;
+    }
+
+    void invalidate() {
+      ScopedLock lock(m_mutex);
+      m_stale = true;
     }
 
     bool auto_refresh() {
@@ -242,6 +250,7 @@ namespace Hypertable {
 
   private:
     void initialize();
+    void refresh_if_required();
 
     Mutex                  m_mutex;
     PropertiesPtr          m_props;

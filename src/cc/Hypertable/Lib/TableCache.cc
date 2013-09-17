@@ -36,6 +36,11 @@ TableCache::TableCache(PropertiesPtr &props, RangeLocatorPtr &range_locator,
     m_namemap(namemap), m_timeout_ms(default_timeout_ms) {
   HT_ASSERT(m_props && m_range_locator && conn_manager && m_hyperspace &&
             m_app_queue && m_namemap);
+  m_hyperspace->add_callback(this);
+}
+
+TableCache::~TableCache() {
+  m_hyperspace->remove_callback(this);
 }
 
 TablePtr TableCache::get(const String &table_name, int32_t flags) {
@@ -93,4 +98,10 @@ bool TableCache::remove(const String &table_name) {
     m_table_map.erase(it);
   }
   return found;
+}
+
+void TableCache::reconnected() {
+  ScopedLock lock(m_mutex);
+  for( TableMap::iterator it = m_table_map.begin(); it != m_table_map.end(); ++it)
+    (*it).second->invalidate();
 }

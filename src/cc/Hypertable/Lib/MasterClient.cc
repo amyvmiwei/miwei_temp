@@ -41,6 +41,7 @@
 #include "MasterFileHandler.h"
 #include "MasterClient.h"
 #include "MasterProtocol.h"
+#include "EventHandlerMasterChange.h"
 
 using namespace Hypertable;
 using namespace Serialization;
@@ -120,10 +121,15 @@ void MasterClient::hyperspace_disconnected()
 
 void MasterClient::hyperspace_reconnected()
 {
-  ScopedLock lock(m_hyperspace_mutex);
-  HT_DEBUG_OUT << "Hyperspace reconnected" << HT_END;
-  HT_ASSERT(!m_hyperspace_init);
-  m_hyperspace_connected = true;
+  {
+    ScopedLock lock(m_hyperspace_mutex);
+    HT_DEBUG_OUT << "Hyperspace reconnected" << HT_END;
+    HT_ASSERT(!m_hyperspace_init);
+    m_hyperspace_connected = true;
+  }
+
+  EventPtr nullevent;
+  m_app_queue->add(new EventHandlerMasterChange(this, nullevent));
 }
 
 /**
