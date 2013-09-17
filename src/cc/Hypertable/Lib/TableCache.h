@@ -33,12 +33,15 @@
 
 namespace Hypertable {
 
-  class TableCache : public ReferenceCount {
+  class TableCache : public ReferenceCount
+                   , private Hyperspace::SessionCallback {
   public:
 
     TableCache(PropertiesPtr &, RangeLocatorPtr &, ConnectionManagerPtr &,
                Hyperspace::SessionPtr &, ApplicationQueueInterfacePtr &, 
                NameIdMapperPtr &namemap, uint32_t default_timeout_ms);
+
+    virtual ~TableCache();
 
     /**
      *
@@ -73,6 +76,13 @@ namespace Hypertable {
     void unlock() { m_mutex.unlock(); }
 
   private:
+
+    virtual void safe() { }
+    virtual void expired() { }
+    virtual void jeopardy() { }
+    virtual void disconnected() { }
+    virtual void reconnected();
+
     typedef hash_map<String, TablePtr> TableMap;
 
     Mutex                   m_mutex;
