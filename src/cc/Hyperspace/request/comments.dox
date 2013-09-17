@@ -1,0 +1,5 @@
+/** @defgroup hyperspaceRequest request
+ * @ingroup Hyperspace
+ * Server request handlers.
+ * The handler module contains request handlers for %Hyperspace server.
+ */

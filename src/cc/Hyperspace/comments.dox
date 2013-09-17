@@ -1,0 +1,6 @@
+/** @defgroup Hyperspace Hyperspace
+ * Highly available lock service.
+ * The %Hyperspace module contains an implementation of a highly available
+ * lock service modelled after the
+ *  <a href="http://research.google.com/archive/chubby.html">Chubby</a> system.
+ */

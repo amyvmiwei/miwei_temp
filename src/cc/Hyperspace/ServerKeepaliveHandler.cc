@@ -25,8 +25,8 @@
 #include "Common/StringExt.h"
 #include "Common/System.h"
 
-#include "RequestHandlerRenewSession.h"
-#include "RequestHandlerExpireSessions.h"
+#include "request/RequestHandlerRenewSession.h"
+#include "request/RequestHandlerExpireSessions.h"
 #include "ServerKeepaliveHandler.h"
 #include "Master.h"
 #include "Protocol.h"

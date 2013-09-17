@@ -660,7 +660,7 @@ Session::attr_exists(uint64_t handle, const std::string& attr, Timer *timer)
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
 
-  CommBufPtr cbuf_ptr(Protocol::create_attr_exists_request(handle, 0, attr));
+  CommBufPtr cbuf_ptr(Protocol::create_attr_exists_request(handle, attr));
 
  try_again:
   if (!wait_for_safe())
@@ -690,7 +690,7 @@ Session::attr_exists(const std::string& name, const std::string& attr, Timer *ti
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
 
-  CommBufPtr cbuf_ptr(Protocol::create_attr_exists_request(0, &name, attr));
+  CommBufPtr cbuf_ptr(Protocol::create_attr_exists_request(name, attr));
 
  try_again:
   if (!wait_for_safe())

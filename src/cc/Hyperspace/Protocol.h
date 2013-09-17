@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/** @file
+ * Declarations for Protocol.
+ * This file contains declarations for Protocol, a protocol driver class
+ * for encoding request messages.
+ */
+
 #ifndef HYPERSPACE_PROTOCOL_H
 #define HYPERSPACE_PROTOCOL_H
 
@@ -30,23 +37,34 @@
 #include "Notification.h"
 #include "SessionData.h"
 
-
 namespace Hyperspace {
 
-  /*
-   * Structure to hold extended attribute and value
+  /** @addtogroup Hyperspace
+   * @{
    */
+
+  /** Holds extended attribute and value. */
   struct Attribute {
     Attribute() { }
-  Attribute(const char *n, const void *v, uint32_t vl) : name(n), value(v), value_len(vl) { }
-    /** name of extended attribute */
+    /** Constructor.
+     * @param n %Attribute name
+     * @param v %Attribute value
+     * @param vl %Attribute value length
+     */
+     Attribute(const char *n, const void *v, uint32_t vl) 
+     : name(n), value(v), value_len(vl) { }
+
+    /// Name of extended attribute
     const char *name;
-    /** pointer to attribute value */
+
+    /// Pointer to attribute value
     const void *value;
-    /** length of attribute value */
+
+    /// Length of attribute value
     uint32_t value_len;
   };
 
+  /** %Protocol driver for encoding request messages. */
   class Protocol : public Hypertable::Protocol {
 
   public:
@@ -84,10 +102,61 @@ namespace Hyperspace {
     create_attr_get_request(uint64_t handle, const std::string *name, const std::string &attr);
     static CommBuf *
     create_attrs_get_request(uint64_t handle, const std::string *name, const std::vector<std::string> &attrs);
+
+    /** Creates <i>attr_del</i> request message.
+     * This method creates a CommBuf object holding an <i>attr_del</i> request
+     * message.  The message is encoded as follows:
+     * <table>
+     *   <tr><th>Encoding</th><th>Description</th></tr>
+     *   <tr><td>i64</td><td>File handle</td></tr>
+     *   <tr><td>vstr</td><td>%Attribute name</td></tr>
+     * </table>
+     * The <i>gid</i> field of the header is set to the XOR of the upper and
+     * lower dwords of <code>handle</code>.
+     * @param handle File handle
+     * @param name %Attribute name
+     * @return Heap allocated comm buffer holding request
+     */
     static CommBuf *
     create_attr_del_request(uint64_t handle, const std::string &name);
-    static CommBuf *create_attr_exists_request(uint64_t handle, const std::string *name,
+
+    /** Creates <i>attr_exists</i> request message.
+     * This method creates a CommBuf object holding an <i>attr_exists</i> request
+     * message.  The message is encoded as follows:
+     * <table>
+     *   <tr><th>Encoding</th><th>Description</th></tr>
+     *   <tr><td>bool</td><td>false</td></tr>
+     *   <tr><td>i64</td><td>File handle</td></tr>
+     *   <tr><td>vstr</td><td>%Attribute name</td></tr>
+     * </table>
+     * The <i>gid</i> field of the header is set to the XOR of the upper and
+     * lower dwords of <code>handle</code>.
+     * @param handle File handle
+     * @param attr %Attribute name
+     * @return Heap allocated comm buffer holding request
+     */
+    static CommBuf *create_attr_exists_request(uint64_t handle,
                                                const std::string &attr);
+
+    /** Creates <i>attr_exists</i> request message.
+     * This method creates a CommBuf object holding an <i>attr_exists</i> request
+     * message.  The message is encoded as follows:
+     * <table>
+     *   <tr><th>Encoding</th><th>Description</th></tr>
+     *   <tr><td>bool</td><td>true</td></tr>
+     *   <tr><td>vstr</td><td>File name</td></tr>
+     *   <tr><td>vstr</td><td>%Attribute name</td></tr>
+     * </table>
+     * The <i>gid</i> field of the header is set to the return value of
+     * filename_to_group() called with <code>name</code>.
+     * lower dwords of <code>handle</code>.
+     * @param name File name
+     * @param attr %Attribute name
+     * @return Heap allocated comm buffer holding request
+     */
+    static CommBuf *create_attr_exists_request(const std::string &name,
+                                               const std::string &attr);
+
     static CommBuf *create_attr_list_request(uint64_t handle);
     static CommBuf *create_readdir_request(uint64_t handle);
     static CommBuf *create_readdir_attr_request(uint64_t handle, const std::string *name,
@@ -138,13 +207,21 @@ namespace Hyperspace {
 
   private:
 
-    static uint32_t filename_to_group(const char *fname) {
+    /** Generates %Comm header gid for pathname.
+     * Generates a gid for <code>path</code> by summing the character codes in
+     * the pathname.  It first normalizes the pathname by adding a leading '/'
+     * character if it does not already exist and stripping any trailing '/'
+     * character.
+     * @param name Pathname
+     * @return %Comm header gid for <code>path</code>
+     */
+    static uint32_t filename_to_group(const std::string &path) {
       const char *ptr;
       uint32_t gid = 0;
       // add initial '/' if it's not there
-      if (fname[0] != '/')
+      if (path[0] != '/')
         gid += (uint32_t)'/';
-      for (ptr=fname; *ptr; ++ptr)
+      for (ptr=path.c_str(); *ptr; ++ptr)
         gid += (uint32_t)*ptr;
       // remove trailing slash
       if (*(ptr-1) == '/')
@@ -152,12 +229,9 @@ namespace Hyperspace {
       return gid;
     }
 
-    static uint32_t filename_to_group(const std::string &name) {
-      return filename_to_group(name.c_str());
-    }
-
   };
 
+  /** @} */
 }
 
 #endif // HYPERSPACE_PROTOCOL_H

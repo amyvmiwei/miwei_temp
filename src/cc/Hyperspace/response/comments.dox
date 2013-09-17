@@ -1,0 +1,5 @@
+/** @defgroup hyperspaceResponse response
+ * @ingroup Hyperspace
+ * Server response callbacks.
+ * The handler module contains response callbacks for the %Hyperspace server.
+ */
