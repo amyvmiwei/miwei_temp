@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Definitions for OperationDropTable.
+ * This file contains definitions for OperationDropTable, an Operation class
+ * for dropping (removing) a table from the system.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Error.h"
 #include "Common/FailureInducer.h"
@@ -63,9 +69,6 @@ void OperationDropTable::initialize_dependencies() {
   m_name = String("/") + m_name;
   m_exclusivities.insert(m_name);
   m_dependencies.insert(Dependency::INIT);
-  m_dependencies.insert(Dependency::METADATA);
-  m_dependencies.insert(Dependency::SYSTEM);
-  m_dependencies.insert(Dependency::RECOVER_SERVER);
 }
 
 void OperationDropTable::execute() {
@@ -83,10 +86,8 @@ void OperationDropTable::execute() {
   else
     qualifier_index_name += String("/^^") + Filesystem::basename(m_name);
   bool is_namespace;
-  StringSet servers;
   DispatchHandlerOperationPtr op_handler;
   TableIdentifier table;
-  DependencySet dependencies;
   int32_t state = get_state();
 
   HT_INFOF("Entering DropTable-%lld(%s) state=%s",
@@ -136,65 +137,13 @@ void OperationDropTable::execute() {
       m_sub_ops.push_back(op);
     }
 
-    set_state(OperationState::SCAN_METADATA);
+    set_state(OperationState::UPDATE_HYPERSPACE);
     m_context->mml_writer->record_state(this);
 
     HT_MAYBE_FAIL("drop-table-INITIAL");
     break;
 
-    // fall through
-
-  case OperationState::SCAN_METADATA:
-    servers.clear();
-    Utility::get_table_server_set(m_context, m_id, "", servers);
-    {
-      ScopedLock lock(m_mutex);
-      m_dependencies.clear();
-      m_dependencies.insert(Dependency::INIT);
-      m_dependencies.insert(Dependency::METADATA);
-      m_dependencies.insert(Dependency::SYSTEM);
-      for (StringSet::iterator iter=servers.begin(); iter!=servers.end(); ++iter) {
-        if (m_completed.count(*iter) == 0)
-          m_dependencies.insert(*iter);
-      }
-      m_state = OperationState::ISSUE_REQUESTS;
-    }
-    m_context->mml_writer->record_state(this);
-    return;
-
-  case OperationState::ISSUE_REQUESTS: {
-    table.id = m_id.c_str();
-    table.generation = 0;
-    {
-      ScopedLock lock(m_mutex);
-      dependencies = m_dependencies;
-    }
-    dependencies.erase(Dependency::INIT);
-    dependencies.erase(Dependency::METADATA);
-    dependencies.erase(Dependency::SYSTEM);
-    op_handler = new DispatchHandlerOperationDropTable(m_context, table);
-    op_handler->start(dependencies);
-    if (!op_handler->wait_for_completion()) {
-      std::set<DispatchHandlerOperation::Result> results;
-      op_handler->get_results(results);
-      foreach_ht (const DispatchHandlerOperation::Result &result, results) {
-        if (result.error == Error::OK ||
-            result.error == Error::TABLE_NOT_FOUND ||
-            result.error == Error::RANGESERVER_TABLE_DROPPED) {
-          ScopedLock lock(m_mutex);
-          m_completed.insert(result.location);
-          m_dependencies.erase(result.location);
-        }
-        else
-          HT_WARNF("Drop table error at %s - %s (%s)", result.location.c_str(),
-                   Error::get_text(result.error), result.msg.c_str());
-      }
-      set_state(OperationState::SCAN_METADATA);
-      m_context->mml_writer->record_state(this);
-      return;
-    }
-
-    // now drop the "primary" table
+  case OperationState::UPDATE_HYPERSPACE:
     try {
       m_context->namemap->drop_mapping(m_name);
       filename = m_context->toplevel_dir + "/tables/" + m_id;
@@ -206,6 +155,64 @@ void OperationDropTable::execute() {
         HT_THROW2F(e.code(), e, "Error executing DropTable %s", 
                 m_name.c_str());
     }
+    {
+      ScopedLock lock(m_mutex);
+      m_dependencies.clear();
+      m_dependencies.insert(Dependency::METADATA);
+      m_dependencies.insert(m_id + " move range");
+      m_state = OperationState::SCAN_METADATA;
+    }
+    m_context->mml_writer->record_state(this);
+    break;
+
+  case OperationState::SCAN_METADATA:
+    {
+      StringSet servers;
+      Utility::get_table_server_set(m_context, m_id, "", servers);
+      {
+        ScopedLock lock(m_mutex);
+        for (StringSet::iterator iter=servers.begin(); iter!=servers.end(); ++iter) {
+          if (m_completed.count(*iter) == 0) {
+            m_dependencies.insert(*iter);
+            m_servers.insert(*iter);
+          }
+        }
+        m_state = OperationState::ISSUE_REQUESTS;
+      }
+    }
+    m_context->mml_writer->record_state(this);
+    break;
+
+  case OperationState::ISSUE_REQUESTS: {
+    table.id = m_id.c_str();
+    table.generation = 0;
+    op_handler = new DispatchHandlerOperationDropTable(m_context, table);
+    op_handler->start(m_servers);
+    if (!op_handler->wait_for_completion()) {
+      std::set<DispatchHandlerOperation::Result> results;
+      op_handler->get_results(results);
+      foreach_ht (const DispatchHandlerOperation::Result &result, results) {
+        if (result.error == Error::OK ||
+            result.error == Error::TABLE_NOT_FOUND) {
+          ScopedLock lock(m_mutex);
+          m_completed.insert(result.location);
+        }
+        else
+          HT_WARNF("Drop table error at %s - %s (%s)", result.location.c_str(),
+                   Error::get_text(result.error), result.msg.c_str());
+      }
+      {
+        ScopedLock lock(m_mutex);
+        m_servers.clear();
+        m_dependencies.clear();
+        m_dependencies.insert(Dependency::METADATA);
+        m_dependencies.insert(m_id + " move range");
+        m_state = OperationState::SCAN_METADATA;
+      }
+      m_context->mml_writer->record_state(this);
+      break;
+    }
+
     m_context->monitoring->invalidate_id_mapping(m_id);
     complete_ok();
     break;
@@ -215,8 +222,8 @@ void OperationDropTable::execute() {
     HT_FATALF("Unrecognized state %d", state);
   }
 
-  HT_INFOF("Leaving DropTable-%lld(%s)", (Lld)header.id, m_name.c_str());
-
+  HT_INFOF("Leaving DropTable-%lld(%s) state=%s",
+           (Lld)header.id, m_name.c_str(), OperationState::get_text(m_state));
 }
 
 
@@ -224,17 +231,21 @@ void OperationDropTable::display_state(std::ostream &os) {
   os << " name=" << m_name << " id=" << m_id << " ";
 }
 
-#define OPERATION_DROP_TABLE_VERSION 1
+#define OPERATION_DROP_TABLE_VERSION 2
 
 uint16_t OperationDropTable::encoding_version() const {
   return OPERATION_DROP_TABLE_VERSION;
 }
 
 size_t OperationDropTable::encoded_state_length() const {
-  size_t length = Serialization::encoded_length_vstr(m_name) +
-    Serialization::encoded_length_vstr(m_id) + 5;
-  for (StringSet::iterator iter = m_completed.begin(); iter != m_completed.end(); ++iter)
-    length += Serialization::encoded_length_vstr(*iter);
+  size_t length = 1 + Serialization::encoded_length_vstr(m_name) +
+    Serialization::encoded_length_vstr(m_id);
+  length += 4;
+  foreach_ht (const String &location, m_completed)
+    length += Serialization::encoded_length_vstr(location);
+  length += 4;
+  foreach_ht (const String &location, m_servers)
+    length += Serialization::encoded_length_vstr(location);
   return length;
 }
 
@@ -243,8 +254,11 @@ void OperationDropTable::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_name);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());
-  for (StringSet::iterator iter = m_completed.begin(); iter != m_completed.end(); ++iter)
-    Serialization::encode_vstr(bufp, *iter);
+  foreach_ht (const String &location, m_completed)
+    Serialization::encode_vstr(bufp, location);
+  Serialization::encode_i32(bufp, m_servers.size());
+  foreach_ht (const String &location, m_servers)
+    Serialization::encode_vstr(bufp, location);
 }
 
 void OperationDropTable::decode_state(const uint8_t **bufp, size_t *remainp) {
@@ -253,6 +267,11 @@ void OperationDropTable::decode_state(const uint8_t **bufp, size_t *remainp) {
   size_t length = Serialization::decode_i32(bufp, remainp);
   for (size_t i=0; i<length; i++)
     m_completed.insert( Serialization::decode_vstr(bufp, remainp) );
+  if (m_decode_version >= 2) {
+    length = Serialization::decode_i32(bufp, remainp);
+    for (size_t i=0; i<length; i++)
+      m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
+  }
 }
 
 void OperationDropTable::decode_request(const uint8_t **bufp, size_t *remainp) {

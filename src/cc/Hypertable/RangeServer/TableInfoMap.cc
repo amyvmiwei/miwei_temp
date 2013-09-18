@@ -72,7 +72,17 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
     DynamicBuffer valbuf;
     String tablefile = Global::toplevel_dir + "/tables/" + table_id;
 
-    Global::hyperspace->attr_get(tablefile, "schema", valbuf);
+    try {
+      Global::hyperspace->attr_get(tablefile, "schema", valbuf);
+    }
+    catch (Exception &e) {
+      if (e.code() == Error::HYPERSPACE_FILE_NOT_FOUND ||
+          e.code() == Error::HYPERSPACE_BAD_PATHNAME)
+        HT_THROWF(Error::RANGESERVER_TABLE_NOT_FOUND,
+                  "Table %s does not exist in hyperspace", table_id.c_str());
+      throw;
+    }
+
     schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
 
     if (!schema->is_valid())
@@ -86,29 +96,11 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
   table.id = table_id.c_str();
   table.generation = schema->get_generation();
 
-  info = new TableInfo(Global::master_client, &table, schema);
+  info = new TableInfo(&table, schema);
 
   m_map[table_id] = info;
 }
 
-
-void TableInfoMap::stage_range(const TableIdentifier *table, const RangeSpec *range_spec) {
-  ScopedLock lock(m_mutex);
-  InfoMap::iterator iter = m_map.find(table->id);
-  HT_ASSERT(iter != m_map.end());
-  (*iter).second->stage_range(range_spec);
-}
-
-
-void TableInfoMap::unstage_range(const TableIdentifier *table, const RangeSpec *range_spec) {
-  ScopedLock lock(m_mutex);
-  InfoMap::iterator iter = m_map.find(table->id);
-  if (iter == m_map.end())
-    HT_INFOF("Attempt to unstange non-present range %s[%s..%s]", table->id,
-             (range_spec->start_row ? range_spec->start_row : ""), range_spec->end_row);
-  else
-    (*iter).second->unstage_range(range_spec);
-}
 
 
 void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log) {
@@ -117,8 +109,7 @@ void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &rang
   int error;
 
   InfoMap::iterator iter = m_map.find(table->id);
-  if (iter == m_map.end())
-    HT_THROW(Error::RANGESERVER_TABLE_DROPPED, "");
+  HT_ASSERT(iter != m_map.end());
 
   if (transfer_log && *transfer_log) {
     CommitLogReaderPtr commit_log_reader =
@@ -252,13 +243,4 @@ void TableInfoMap::merge_unlocked(TableInfoMap *other) {
 
   }
   other->clear();
-}
-
-
-
-void TableInfoMap::dump() {
-  ScopedLock lock(m_mutex);
-  InfoMap::iterator table_iter;
-  for (table_iter = m_map.begin(); table_iter != m_map.end(); ++table_iter)
-    (*table_iter).second->dump_range_table();
 }

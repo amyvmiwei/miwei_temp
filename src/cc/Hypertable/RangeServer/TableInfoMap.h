@@ -99,32 +99,6 @@ namespace Hypertable {
      */
     void get(const String &table_id, TableInfoPtr &info);
 
-    /** Stages a range.
-     * When a range is loaded by the RangeServer, it first gets <i>staged</i>
-     * which creates an entry in the map for the range in the corresponding
-     * TableInfo object.  After a range has been staged, calls to
-     * TableInfo::has_range() will return <i>true</i>.  This prevents subsequent
-     * concurrent calls to RangeServer::load_range() from attempting to load the
-     * range, but will instead return the error code
-     * Error::RANGESERVER_RANGE_ALREADY_LOADED.  Once the range has been
-     * fully constructed, staging is complete and the range can be made
-     * live with a call to add_staged_range().  If problems are encountered
-     * while constructing the range, it can be unstaged with a call to
-     * unstage_range().
-     * @param table %Table identifier
-     * @param range_spec %Range specification
-     * @see add_staged_range, unstage_range
-     */
-    void stage_range(const TableIdentifier *table, const RangeSpec *range_spec);
-
-    /** Unstages a range.
-     * This method reverts the effects of a call to stage_range().
-     * @param table %Table identifier
-     * @param range_spec %Range specification
-     * @see stage_range, add_staged_range
-     */
-    void unstage_range(const TableIdentifier *table, const RangeSpec *range_spec);
-
     /** Adds a staged range.
      * When staging is complete for a range, the Range object is added
      * with a call to this method.  Since a range's transfer log cannot
@@ -220,8 +194,6 @@ namespace Hypertable {
      */
     void merge(TableInfoMap *other, vector<MetaLog::Entity *> &entities,
                StringSet &transfer_logs);
-
-    void dump();
 
   private:
 

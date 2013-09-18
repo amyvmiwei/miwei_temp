@@ -19,6 +19,12 @@
  * 02110-1301, USA.
  */
 
+/** @file
+ * Definitions for TableInfo.
+ * This file contains type definitions for TableInfo, a class to hold pointers
+ * to Range objects.
+ */
+
 #include "Common/Compat.h"
 #include "Common/Logger.h"
 
@@ -28,10 +34,8 @@ using namespace std;
 using namespace Hypertable;
 
 
-TableInfo::TableInfo(MasterClientPtr &master_client,
-                     const TableIdentifier *identifier, SchemaPtr &schema)
-    : m_master_client(master_client),
-      m_identifier(*identifier), m_schema(schema) {
+TableInfo::TableInfo(const TableIdentifier *identifier, SchemaPtr &schema)
+    : m_identifier(*identifier), m_schema(schema) {
 }
 
 
@@ -114,19 +118,6 @@ TableInfo::change_start_row(const String &old_start_row, const String &new_start
 
 }
 
-void TableInfo::dump_range_table() {
-  ScopedLock lock(m_mutex);
-  for (RangeInfoSet::iterator iter = m_range_set.begin();
-       iter != m_range_set.end(); ++iter) {
-    if (iter->get_range())
-      HT_INFOF("%p: [%s..%s] -> %s[%s..%s]", (void *)this,
-               iter->get_start_row().c_str(),
-               iter->get_end_row().c_str(),
-               m_identifier.id,
-               iter->get_start_row().c_str(),
-               iter->get_end_row().c_str());
-  }
-}
 
 bool TableInfo::get_range(const RangeSpec *range_spec, RangePtr &range) {
   ScopedLock lock(m_mutex);
@@ -182,29 +173,38 @@ bool TableInfo::remove_range(const RangeSpec *range_spec, RangePtr &range) {
 }
 
 
-void TableInfo::stage_range(const RangeSpec *range_spec) {
+void TableInfo::stage_range(const RangeSpec *range_spec,
+                            boost::xtime deadline) {
   ScopedLock lock(m_mutex);
   RangeInfo range_info(range_spec->start_row, range_spec->end_row);
-  RangeInfoSet::iterator iter = m_range_set.find(range_info);
-  HT_ASSERT(iter == m_range_set.end());
-  HT_INFOF("%p: Staging range %s[%s..%s] to TableInfo",
-           (void *) this, m_identifier.id, range_spec->start_row,
-           range_spec->end_row);
-  RangeInfoSetInsRec ins = m_range_set.insert(range_info);
+
+  /// If already staged, wait for staging to complete
+  while (m_staged_set.find(range_info) != m_staged_set.end()) {
+    if (!m_cond.timed_wait(lock, deadline))
+      HT_THROWF(Error::REQUEST_TIMEOUT, "Waiting for staging of %s[%s..%s]",
+                m_identifier.id, range_spec->start_row, range_spec->end_row);
+  }
+
+  /// Throw exception if already loaded
+  if (m_range_set.find(range_info) != m_range_set.end())
+    HT_THROWF(Error::RANGESERVER_RANGE_ALREADY_LOADED, "%s[%s..%s]",
+              m_identifier.id, range_spec->start_row, range_spec->end_row);
+    
+  RangeInfoSetInsRec ins = m_staged_set.insert(range_info);
   HT_ASSERT(ins.second);
+
+  // Notify of change to m_staged_set
+  m_cond.notify_all();
 }
 
 void TableInfo::unstage_range(const RangeSpec *range_spec) {
   ScopedLock lock(m_mutex);
   RangeInfo range_info(range_spec->start_row, range_spec->end_row);
-  RangeInfoSet::iterator iter = m_range_set.find(range_info);
-
-  HT_ASSERT(iter != m_range_set.end());
-  HT_ASSERT(!iter->get_range());
-  HT_INFOF("%p: Unstaging range %s[%s..%s] to TableInfo",
-           (void *)this, m_identifier.id, range_spec->start_row,
-           range_spec->end_row);
-  m_range_set.erase(iter);
+  RangeInfoSet::iterator iter = m_staged_set.find(range_info);
+  HT_ASSERT(iter != m_staged_set.end());
+  m_staged_set.erase(iter);
+  // Notify of change to m_staged_set
+  m_cond.notify_all();
 }
 
 void TableInfo::add_staged_range(RangePtr &range) {
@@ -212,16 +212,14 @@ void TableInfo::add_staged_range(RangePtr &range) {
   String start_row, end_row;
   range->get_boundary_rows(start_row, end_row);
   RangeInfo range_info(start_row, end_row);
-  RangeInfoSet::iterator iter = m_range_set.find(range_info);
-
-  HT_ASSERT(iter != m_range_set.end());
-  HT_ASSERT(!iter->get_range());
-  HT_INFOF("%p: Adding range %s to TableInfo",
-           (void *)this, range->get_name().c_str());
+  RangeInfoSet::iterator iter = m_staged_set.find(range_info);
+  HT_ASSERT(iter != m_staged_set.end());
   range_info.set_range(range);
-  m_range_set.erase(iter);
+  m_staged_set.erase(iter);
   RangeInfoSetInsRec ins = m_range_set.insert(range_info);
   HT_ASSERT(ins.second);
+  // Notify of change to m_staged_set
+  m_cond.notify_all();
 }
 
 void TableInfo::add_range(RangePtr &range, bool remove_if_exists) {

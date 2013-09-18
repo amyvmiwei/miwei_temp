@@ -93,7 +93,7 @@ namespace Hypertable {
      * <li>Issues a compact request to all servers in #m_servers and waits
      * for their completion</li>
      * <li>If there are any errors, for each server that was successful or
-     * returned with Error::TABLE_NOT_FOUND or Error::RANGESERVER_TABLE_DROPPED,
+     * returned with Error::TABLE_NOT_FOUND,
      * the server name is added to #m_completed.  Dependencies are then set back
      * to just Dependency::METADATA, the state is reset back to SCAN_METADATA,
      * the operation is persisted to the MML, and the method returns</li>

@@ -249,10 +249,6 @@ void OperationCreateTable::execute() {
                                        range, false);
     }
     catch (Exception &e) {
-      if (e.code() == Error::RANGESERVER_TABLE_DROPPED) {
-        complete_error(e);
-        return;
-      }
       HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
       poll(0, 0, 5000);
       set_state(OperationState::ASSIGN_LOCATION);

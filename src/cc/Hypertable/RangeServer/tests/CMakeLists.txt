@@ -34,10 +34,6 @@ target_link_libraries(FileBlockCache_test HyperRanger)
 add_executable(QueryCache_test QueryCache_test.cc)
 target_link_libraries(QueryCache_test HyperRanger)
 
-# TableIdCache test
-add_executable(TableIdCache_test TableIdCache_test.cc)
-target_link_libraries(TableIdCache_test HyperRanger)
-
 # CellStoreScanner test
 add_executable(CellStoreScanner_test CellStoreScanner_test.cc
                ${TEST_DEPENDENCIES})
@@ -63,7 +59,6 @@ configure_file(${SRC_DIR}/CellStoreScanner_delete_test.golden
 
 add_test(FileBlockCache FileBlockCache_test)
 add_test(QueryCache QueryCache_test)
-add_test(TableIdCache TableIdCache_test)
 add_test(CellStoreScanner CellStoreScanner_test)
 add_test(CellStoreScanner-delete CellStoreScanner_delete_test)
 add_test(AccessGroup-garbage-tracker AccessGroupGarbageTracker_test)
