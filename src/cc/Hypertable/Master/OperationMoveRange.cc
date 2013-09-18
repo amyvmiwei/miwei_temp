@@ -36,6 +36,10 @@
 #include "Utility.h"
 #include "BalancePlanAuthority.h"
 
+extern "C" {
+#include <poll.h>
+}
+
 using namespace Hypertable;
 using namespace Hyperspace;
 
@@ -150,6 +154,14 @@ void OperationMoveRange::execute() {
     }
     catch (Exception &e) {
       if (e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED) {
+
+        // If not yet relinquished, wait a couple of seconds and try again
+        if (e.code() == Error::RANGESERVER_RANGE_NOT_YET_RELINQUISHED) {
+          HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
+          poll(0, 0, 2000);
+          return;
+        }
+
         if (!Utility::table_exists(m_context, m_table.id)) {
           HT_WARNF("Aborting MoveRange %s because table no longer exists",
                    m_range_name.c_str());
@@ -158,6 +170,7 @@ void OperationMoveRange::execute() {
           complete_ok(bpa);
           return;
         }
+
         // server might be down - go back to the initial state and pick a
         // new destination
         HT_WARNF("Problem moving range %s to %s: %s - %s",
