@@ -167,8 +167,7 @@ void OperationAlterTable::execute() {
       op_handler->get_results(results);
       foreach_ht (const DispatchHandlerOperation::Result &result, results) {
         if (result.error == Error::OK ||
-            result.error == Error::TABLE_NOT_FOUND ||
-            result.error == Error::RANGESERVER_TABLE_DROPPED) {
+            result.error == Error::TABLE_NOT_FOUND) {
           ScopedLock lock(m_mutex);
           m_completed.insert(result.location);
           m_dependencies.erase(result.location);

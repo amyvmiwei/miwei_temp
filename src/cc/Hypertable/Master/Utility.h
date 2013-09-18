@@ -194,8 +194,7 @@ namespace Hypertable {
      * @param table %Table identifier
      * @param range %Range spec
      * @throws Exception holding error code if not Error::OK,
-     * Error::RANGESERVER_TABLE_DROPPED, Error::TABLE_NOT_FOUND, or
-     * Error::RANGESERVER_RANGE_NOT_FOUND
+     * Error::TABLE_NOT_FOUND, or Error::RANGESERVER_RANGE_NOT_FOUND
      */
     extern void
     create_table_acknowledge_range(ContextPtr &context, const String &location,

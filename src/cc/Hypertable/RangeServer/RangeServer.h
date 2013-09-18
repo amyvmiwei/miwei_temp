@@ -63,7 +63,6 @@
 #include "ResponseCallbackPhantomUpdate.h"
 #include "ResponseCallbackAcknowledgeLoad.h"
 
-#include "TableIdCache.h"
 #include "TableInfo.h"
 #include "TableInfoMap.h"
 #include "TimerHandler.h"
@@ -265,7 +264,6 @@ namespace Hypertable {
     std::vector<Thread *>      m_update_threads;
 
     Mutex                  m_mutex;
-    Mutex                  m_drop_table_mutex;
     boost::condition       m_root_replay_finished_cond;
     boost::condition       m_metadata_replay_finished_cond;
     boost::condition       m_system_replay_finished_cond;
@@ -298,7 +296,6 @@ namespace Hypertable {
     uint64_t               m_bytes_loaded;
     uint64_t               m_log_roll_limit;
     uint64_t               m_update_coalesce_limit;
-    TableIdCachePtr        m_dropped_table_id_cache;
 
     StatsRangeServerPtr    m_stats;
     LoadStatisticsPtr      m_load_statistics;

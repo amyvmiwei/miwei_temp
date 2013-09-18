@@ -353,7 +353,6 @@ void create_table_acknowledge_range(ContextPtr &context, const String &location,
   rsc.acknowledge_load(addr, range_vec, response_map);
   map<QualifiedRangeSpec, int>::iterator it = response_map.begin();
   if (it->second != Error::OK &&
-      it->second != Error::RANGESERVER_TABLE_DROPPED &&
       it->second != Error::TABLE_NOT_FOUND &&
       it->second != Error::RANGESERVER_RANGE_NOT_FOUND)
     HT_THROW(it->second, "Problem acknowledging load range");

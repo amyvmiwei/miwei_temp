@@ -261,8 +261,6 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_log_roll_limit = cfg.get_i64("CommitLog.RollLimit");
 
-  m_dropped_table_id_cache = new TableIdCache(50);
-
   /**
    * Check for and connect to commit log DFS broker
    */
@@ -1644,7 +1642,6 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
   TableMutatorPtr mutator;
   KeySpec key;
   String metadata_key_str;
-  bool is_root;
   String errmsg;
   SchemaPtr schema;
   TableInfoPtr table_info;
@@ -1653,14 +1650,10 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
   String range_dfsdir;
   char md5DigestStr[33];
   String location;
+  bool is_root;
+  bool is_staged = false;
 
   try {
-    // this needs to be here to avoid a race condition with drop_table
-    if (m_dropped_table_id_cache->contains(table->id)) {
-      HT_WARNF("Table %s has been dropped", table->id);
-      cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
-      return;
-    }
 
     if (!m_replay_finished) {
       if (!wait_for_recovery_finish(table, range_spec,
@@ -1668,93 +1661,76 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
         return;
     }
 
+    is_root = table->is_metadata() && (*range_spec->start_row == 0)
+      && !strcmp(range_spec->end_row, Key::END_ROOT_ROW);
+
+    std::stringstream sout;
+    sout << "Loading range: "<< *table <<" "<< *range_spec << " " << *range_state
+         << " needs_compaction=" << needs_compaction;
+    HT_INFOF("%s", sout.str().c_str());
+
+    HT_MAYBE_FAIL_X("load-range-1", !table->is_system());
+
+    m_live_map->get(table->id, table_info);
+
+    uint32_t generation = table_info->get_schema()->get_generation();
+    if (generation > table->generation) {
+      HT_WARNF("Table generation mismatch in load range request (%d < %d),"
+               " automatically upgrading", (int)table->generation, (int)generation);
+      ((TableIdentifier *)table)->generation = generation;
+    }
+
+    table_info->stage_range(range_spec, cb->get_event()->expiration_time());
+
+    is_staged = true;
+
+    // Lazily create sys/METADATA table pointer
+    if (!Global::metadata_table) {
+      ScopedLock lock(Global::mutex);
+      // double-check locking (works fine on x86 and amd64 but may fail
+      // on other archs without using a memory barrier
+      if (!Global::metadata_table)
+        Global::metadata_table = new Table(m_props, m_conn_manager,
+                                           Global::hyperspace, m_namemap,
+                                           TableIdentifier::METADATA_NAME);
+    }
+
+    /**
+     * Queue "range_start_row" update for sys/RS_METRICS table
+     */
     {
-      ScopedLock lock(m_drop_table_mutex);
+      ScopedLock lock(m_pending_metrics_mutex);
+      Cell cell;
 
-      is_root = table->is_metadata() && (*range_spec->start_row == 0)
-          && !strcmp(range_spec->end_row, Key::END_ROOT_ROW);
+      if (m_pending_metrics_updates == 0)
+        m_pending_metrics_updates = new CellsBuilder();
 
-      std::stringstream sout;
-      sout << "Loading range: "<< *table <<" "<< *range_spec << " " << *range_state
-           << " needs_compaction=" << needs_compaction;
-      HT_INFOF("%s", sout.str().c_str());
+      String row = Global::location_initializer->get() + ":" + table->id;
+      cell.row_key = row.c_str();
+      cell.column_family = "range_start_row";
+      cell.column_qualifier = range_spec->end_row;
+      cell.value = (const uint8_t *)range_spec->start_row;
+      cell.value_len = strlen(range_spec->start_row);
 
-      if (m_dropped_table_id_cache->contains(table->id)) {
-        HT_WARNF("Table %s has been dropped", table->id);
-        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
-        return;
-      }
+      m_pending_metrics_updates->add(cell);
+    }
 
-      HT_MAYBE_FAIL_X("load-range-1", !table->is_system());
+    schema = table_info->get_schema();
 
-      m_live_map->get(table->id, table_info);
+    /**
+     * Check for existence of and create, if necessary, range directory (md5
+     * of endrow) under all locality group directories for this table
+     */
+    {
+      assert(*range_spec->end_row != 0);
+      md5_trunc_modified_base64(range_spec->end_row, md5DigestStr);
+      md5DigestStr[16] = 0;
+      table_dfsdir = Global::toplevel_dir + "/tables/" + table->id;
 
-      uint32_t generation = table_info->get_schema()->get_generation();
-      if (generation > table->generation) {
-        HT_WARNF("Table generation mismatch in load range request (%d < %d),"
-                 " automatically upgrading", (int)table->generation, (int)generation);
-        ((TableIdentifier *)table)->generation = generation;
-      }
-
-      // Make sure this range is not already loaded
-      if (table_info->has_range(range_spec)) {
-        HT_INFOF("Range %s[%s..%s] already loaded",
-                 table->id, range_spec->start_row,
-                 range_spec->end_row);
-        cb->error(Error::RANGESERVER_RANGE_ALREADY_LOADED, "");
-        return;
-      }
-
-      m_live_map->stage_range(table, range_spec);
-
-      // Lazily create sys/METADATA table pointer
-      if (!Global::metadata_table) {
-        ScopedLock lock(Global::mutex);
-        // double-check locking (works fine on x86 and amd64 but may fail
-        // on other archs without using a memory barrier
-        if (!Global::metadata_table)
-          Global::metadata_table = new Table(m_props, m_conn_manager,
-                  Global::hyperspace, m_namemap,
-                  TableIdentifier::METADATA_NAME);
-      }
-
-      /**
-       * Queue "range_start_row" update for sys/RS_METRICS table
-       */
-      {
-        ScopedLock lock(m_pending_metrics_mutex);
-        Cell cell;
-
-        if (m_pending_metrics_updates == 0)
-          m_pending_metrics_updates = new CellsBuilder();
-
-        String row = Global::location_initializer->get() + ":" + table->id;
-        cell.row_key = row.c_str();
-        cell.column_family = "range_start_row";
-        cell.column_qualifier = range_spec->end_row;
-        cell.value = (const uint8_t *)range_spec->start_row;
-        cell.value_len = strlen(range_spec->start_row);
-
-        m_pending_metrics_updates->add(cell);
-      }
-
-      schema = table_info->get_schema();
-
-      /**
-       * Check for existence of and create, if necessary, range directory (md5
-       * of endrow) under all locality group directories for this table
-       */
-      {
-        assert(*range_spec->end_row != 0);
-        md5_trunc_modified_base64(range_spec->end_row, md5DigestStr);
-        md5DigestStr[16] = 0;
-        table_dfsdir = Global::toplevel_dir + "/tables/" + table->id;
-
-        foreach_ht(Schema::AccessGroup *ag, schema->get_access_groups()) {
-          // notice the below variables are different "range" vs. "table"
-          range_dfsdir = table_dfsdir + "/" + ag->name + "/" + md5DigestStr;
-          Global::dfs->mkdirs(range_dfsdir);
-        }
+      foreach_ht(Schema::AccessGroup *ag, schema->get_access_groups()) {
+        // notice the below variables are different "range" vs. "table"
+        range_dfsdir = table_dfsdir + "/" + ag->name + "/" + md5DigestStr;
+        Global::dfs->mkdirs(range_dfsdir);
       }
     }
 
@@ -1843,18 +1819,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       poll(0, 0, diff);
     }
 
-    {
-      ScopedLock lock(m_drop_table_mutex);
-
-      if (m_dropped_table_id_cache->contains(table->id)) {
-        HT_WARNF("Table %s has been dropped", table->id);
-        cb->error(Error::RANGESERVER_TABLE_DROPPED, table->id);
-        m_live_map->unstage_range(table, range_spec);
-        return;
-      }
-      
-      m_live_map->add_staged_range(table, range, range_state->transfer_log);
-    }
+    m_live_map->add_staged_range(table, range, range_state->transfer_log);
 
     HT_MAYBE_FAIL_X("user-load-range-4", !table->is_system());
     HT_MAYBE_FAIL_X("metadata-load-range-4", table->is_metadata());
@@ -1866,10 +1831,11 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
                range_spec->start_row, range_spec->end_row);
   }
   catch (Hypertable::Exception &e) {
-    if (e.code() != Error::RANGESERVER_TABLE_DROPPED) {
+    if (e.code() != Error::RANGESERVER_TABLE_NOT_FOUND &&
+        e.code() != Error::RANGESERVER_RANGE_ALREADY_LOADED) {
       HT_ERROR_OUT << e << HT_END;
-      if (table_info)
-        m_live_map->unstage_range(table, range_spec);
+      if (is_staged)
+        table_info->unstage_range(range_spec);
     }
     if (cb && (error = cb->error(e.code(), e.what())) != Error::OK)
       HT_ERRORF("Problem sending error response - %s", Error::get_text(error));
@@ -1890,52 +1856,42 @@ RangeServer::acknowledge_load(ResponseCallbackAcknowledgeLoad *cb,
         return;
     }
 
-    {
-      ScopedLock lock(m_drop_table_mutex);
+    HT_INFOF("Acknowledging range: %s[%s..%s]", rr.table.id,
+             rr.range.start_row, rr.range.end_row);
 
-      HT_INFOF("Acknowledging range: %s[%s..%s]", rr.table.id,
-               rr.range.start_row, rr.range.end_row);
-
-      if (m_dropped_table_id_cache->contains(rr.table.id)) {
-        HT_WARNF("Table %s has been dropped", rr.table.id);
-        error_map[rr] = Error::RANGESERVER_TABLE_DROPPED;
-        continue;
-      }
-
-      if (!m_live_map->lookup(rr.table.id, table_info)) {
-        error_map[rr] = Error::TABLE_NOT_FOUND;
-        HT_WARN_OUT << "Table " << rr.table.id << " not found" << HT_END;
-        continue;
-      }
-
-      if (!table_info->get_range(&rr.range, range)) {
-        error_map[rr] = Error::RANGESERVER_RANGE_NOT_FOUND;
-        HT_WARN_OUT << "Range  " << rr << " not found" << HT_END;
-        continue;
-      }
-
-      if (range->load_acknowledged()) {
-        error_map[rr] = Error::OK;
-        HT_WARN_OUT << "Range: " << rr << " already acknowledged" << HT_END;
-        continue;
-      }
-
-      try {
-        range->acknowledge_load(cb->get_event()->header.timeout_ms);
-      }
-      catch(Exception &e) {
-        error_map[rr] = e.code();
-        HT_ERROR_OUT << e << HT_END;
-        continue;
-      }
-
-      HT_MAYBE_FAIL_X("metadata-acknowledge-load", rr.table.is_metadata());
-
-      error_map[rr] = Error::OK;
-      std::stringstream sout;
-      sout << "Range: " << rr <<" acknowledged";
-      HT_INFOF("%s", sout.str().c_str());
+    if (!m_live_map->lookup(rr.table.id, table_info)) {
+      error_map[rr] = Error::TABLE_NOT_FOUND;
+      HT_WARN_OUT << "Table " << rr.table.id << " not found" << HT_END;
+      continue;
     }
+
+    if (!table_info->get_range(&rr.range, range)) {
+      error_map[rr] = Error::RANGESERVER_RANGE_NOT_FOUND;
+      HT_WARN_OUT << "Range  " << rr << " not found" << HT_END;
+      continue;
+    }
+
+    if (range->load_acknowledged()) {
+      error_map[rr] = Error::OK;
+      HT_WARN_OUT << "Range: " << rr << " already acknowledged" << HT_END;
+      continue;
+    }
+
+    try {
+      range->acknowledge_load(cb->get_event()->header.timeout_ms);
+    }
+    catch(Exception &e) {
+      error_map[rr] = e.code();
+      HT_ERROR_OUT << e << HT_END;
+      continue;
+    }
+
+    HT_MAYBE_FAIL_X("metadata-acknowledge-load", rr.table.is_metadata());
+
+    error_map[rr] = Error::OK;
+    std::stringstream sout;
+    sout << "Range: " << rr <<" acknowledged";
+    HT_INFOF("%s", sout.str().c_str());
   }
 
   cb->response(error_map);
@@ -1944,7 +1900,6 @@ RangeServer::acknowledge_load(ResponseCallbackAcknowledgeLoad *cb,
 void
 RangeServer::update_schema(ResponseCallback *cb, 
         const TableIdentifier *table, const char *schema_str) {
-  ScopedLock lock(m_drop_table_mutex);
   TableInfoPtr table_info;
   SchemaPtr schema;
 
@@ -2953,16 +2908,10 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
       return;
   }
 
-  {
-    ScopedLock lock(m_drop_table_mutex);
-
-    m_dropped_table_id_cache->insert(table->id);
-
-    if (!m_live_map->remove(table->id, table_info)) {
-      HT_WARNF("drop_table '%s' - table not found", table->id);
-      cb->error(Error::TABLE_NOT_FOUND, table->id);
-      return;
-    }
+  if (!m_live_map->remove(table->id, table_info)) {
+    HT_WARNF("drop_table '%s' - table not found", table->id);
+    cb->error(Error::TABLE_NOT_FOUND, table->id);
+    return;
   }
 
   // Set "drop" bit on all ranges
@@ -3055,20 +3004,18 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
     out << "\nCommit Log Info\n";
     str = "";
 
-    {
-      ScopedLock lock(m_drop_table_mutex);
-      if (Global::root_log)
-        Global::root_log->get_stats("ROOT", str);
+    if (Global::root_log)
+      Global::root_log->get_stats("ROOT", str);
 
-      if (Global::metadata_log)
-        Global::metadata_log->get_stats("METADATA", str);
+    if (Global::metadata_log)
+      Global::metadata_log->get_stats("METADATA", str);
 
-      if (Global::system_log)
-        Global::system_log->get_stats("SYSTEM", str);
+    if (Global::system_log)
+      Global::system_log->get_stats("SYSTEM", str);
 
-      if (Global::user_log)
-        Global::user_log->get_stats("USER", str);
-    }
+    if (Global::user_log)
+      Global::user_log->get_stats("USER", str);
+
     out << str;
 
   }
@@ -3858,11 +3805,7 @@ void RangeServer::phantom_load(ResponseCallback *cb, const String &location,
         const RangeState &state = states[i];
 
         // XXX: TODO: deal with dropped tables
-        //if (m_dropped_table_id_cache->contains(range.qualified_range.table.id)) {
-        //  HT_WARNF("Table %s has been dropped", range.qualified_range.table.id);
-        //  cb->error(Error::RANGESERVER_TABLE_DROPPED, range.qualified_range.table.id);
-        //  return;
-        //}
+
         phantom_tableinfo_map->get(spec.table.id, table_info);
 
         uint32_t generation = table_info->get_schema()->get_generation();

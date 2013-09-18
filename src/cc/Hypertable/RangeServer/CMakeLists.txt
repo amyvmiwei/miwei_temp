@@ -132,7 +132,6 @@ ReplayDispatchHandler.cc
 ScanContext.cc
 ScannerMap.cc
 ServerState.cc
-TableIdCache.cc
 TableInfo.cc
 TableInfoMap.cc
 TableSchemaCache.cc

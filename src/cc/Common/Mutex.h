@@ -27,6 +27,7 @@
 #define HYPERTABLE_MUTEX_H
 
 #include <boost/version.hpp>
+#include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/recursive_mutex.hpp>
 
