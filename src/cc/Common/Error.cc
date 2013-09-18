@@ -278,6 +278,8 @@ namespace {
       "RANGE SERVER range not yet acknowledged"},
     { Error::RANGESERVER_SERVER_IN_READONLY_MODE,
       "RANGE SERVER server in readonly mode"},
+    { Error::RANGESERVER_RANGE_NOT_YET_RELINQUISHED,
+      "RANGE SERVER range not yet relinquished"},
     { Error::HQL_BAD_LOAD_FILE_FORMAT,         "HQL bad load file format" },
     { Error::METALOG_VERSION_MISMATCH, "METALOG version mismatch" },
     { Error::METALOG_BAD_RS_HEADER, "METALOG bad range server metalog header" },

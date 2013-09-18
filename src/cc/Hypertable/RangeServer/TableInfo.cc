@@ -185,10 +185,19 @@ void TableInfo::stage_range(const RangeSpec *range_spec,
                 m_identifier.id, range_spec->start_row, range_spec->end_row);
   }
 
-  /// Throw exception if already loaded
-  if (m_range_set.find(range_info) != m_range_set.end())
-    HT_THROWF(Error::RANGESERVER_RANGE_ALREADY_LOADED, "%s[%s..%s]",
-              m_identifier.id, range_spec->start_row, range_spec->end_row);
+  /// Throw exception if already or still loaded
+  RangeInfoSet::iterator iter = m_range_set.find(range_info);
+
+  if (iter != m_range_set.end()) {
+    String name = format("%s[%s..%s]", m_identifier.id, range_spec->start_row,
+                         range_spec->end_row);
+    int state = iter->get_range()->get_state();
+    if (state != RangeState::STEADY)
+      HT_THROWF(Error::RANGESERVER_RANGE_NOT_YET_RELINQUISHED,
+                "Unable to stage range %s because is in state %s",
+                name.c_str(), RangeState::get_text(state).c_str());
+    HT_THROWF(Error::RANGESERVER_RANGE_ALREADY_LOADED, "%s", name.c_str());
+  }
     
   RangeInfoSetInsRec ins = m_staged_set.insert(range_info);
   HT_ASSERT(ins.second);
