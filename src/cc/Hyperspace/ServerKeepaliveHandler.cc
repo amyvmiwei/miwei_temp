@@ -79,11 +79,15 @@ void ServerKeepaliveHandler::handle(Hypertable::EventPtr &event) {
       switch (event->header.command) {
       case Protocol::COMMAND_KEEPALIVE: {
           uint64_t session_id = decode_i64(&decode_ptr, &decode_remain);
-          uint64_t last_known_event = decode_i64(&decode_ptr, &decode_remain);
+          uint32_t delivered_event_count;
+          std::set<uint64_t> delivered_events;
+          delivered_event_count = decode_i32(&decode_ptr, &decode_remain);
+          for (uint32_t i=0; i<delivered_event_count; i++)
+            delivered_events.insert( decode_i64(&decode_ptr, &decode_remain) );
           bool shutdown = decode_bool(&decode_ptr, &decode_remain);
 
           m_app_queue_ptr->add( new RequestHandlerRenewSession(m_comm,
-              m_master, session_id, last_known_event, shutdown, event,
+              m_master, session_id, delivered_events, shutdown, event,
               &m_send_addr ) );
         }
         break;

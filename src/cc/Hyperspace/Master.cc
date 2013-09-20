@@ -1344,7 +1344,8 @@ Master::lock(ResponseCallbackLock *cb, uint64_t session_id, uint64_t handle,
         std::stringstream sout;
         sout << "lock txn=" << txn << " commited " << " handle=" << handle << " node="
              << node << " mode=" << mode << " status=" << lock_status
-             << " lock_generation=" << lock_generation;
+             << " lock_generation=" << lock_generation << " notification_count="
+             << lock_acquired_notifications.size();
         HT_INFOF("%s", sout.str().c_str());
       }
   }
@@ -1672,16 +1673,19 @@ Master::deliver_event_notifications(HyperspaceEventPtr &event_ptr,
   }
 
   if (has_notifications) {
+    String sessions_str;
 
     foreach_ht (session_id, sessions) {
       m_keepalive_handler_ptr->deliver_event_notifications(session_id);
+      sessions_str += String(" ") + session_id;
     }
 
     if (wait_for_notify)
       event_ptr->wait_for_notifications();
 
     if (m_verbose)
-      HT_INFOF("exitting deliver_event_notifications for event_id=%llu", (Llu)event_ptr->get_id());
+      HT_INFOF("exitting deliver_event_notifications for event_id=%llu mask=0x%x sessions=(%s )",
+               (Llu)event_ptr->get_id(), (int)(Llu)event_ptr->get_mask(), sessions_str.c_str());
   }
   else {
     HT_DEBUG_OUT << "exitting deliver_event_notifications nothing to do"<< HT_END;

@@ -57,11 +57,11 @@ namespace Hyperspace {
         notifications.push_back(notification);
     }
 
-    void purge_notifications(uint64_t event_id) {
+    void purge_notifications(std::set<uint64_t> &delivered_events) {
       ScopedLock lock(mutex);
       std::list<Notification *>::iterator iter = notifications.begin();
       while (iter != notifications.end()) {
-        if ((*iter)->event_ptr->get_id() <= event_id) {
+        if (delivered_events.count((*iter)->event_ptr->get_id()) > 0) {
           (*iter)->event_ptr->decrement_notification_count();
           delete *iter;
           iter = notifications.erase(iter);

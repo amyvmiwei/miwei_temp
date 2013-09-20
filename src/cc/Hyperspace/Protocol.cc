@@ -87,12 +87,14 @@ const char *Hyperspace::Protocol::command_text(uint64_t command) {
  */
 CommBuf *
 Hyperspace::Protocol::create_client_keepalive_request(uint64_t session_id,
-    uint64_t last_known_event, bool destroy_session) {
+    std::set<uint64_t> &delivered_events, bool destroy_session) {
   CommHeader header(COMMAND_KEEPALIVE);
   header.flags |= CommHeader::FLAGS_BIT_URGENT;
-  CommBuf *cbuf = new CommBuf(header, 17);
+  CommBuf *cbuf = new CommBuf(header, 8 + 4 + (8*delivered_events.size()) + 1);
   cbuf->append_i64(session_id);
-  cbuf->append_i64(last_known_event);
+  cbuf->append_i32(delivered_events.size());
+  foreach_ht (uint64_t event_id, delivered_events)
+    cbuf->append_i64(event_id);
   cbuf->append_bool(destroy_session);
   return cbuf;
 }
