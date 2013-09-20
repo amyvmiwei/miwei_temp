@@ -94,7 +94,7 @@ void RequestHandlerRenewSession::run() {
       return;
     }
 
-    session_ptr->purge_notifications(m_last_known_event);
+    session_ptr->purge_notifications(m_delivered_events);
 
     /*
     HT_INFOF("Sending Keepalive request to %s (m_last_known_event=%lld)",

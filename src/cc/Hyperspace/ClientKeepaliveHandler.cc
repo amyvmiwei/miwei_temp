@@ -42,7 +42,7 @@ using namespace Serialization;
 ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
                                                Session *session)
   : m_dead(false), m_destroying(false), m_comm(comm),
-    m_session(session), m_session_id(0), m_last_known_event(0) {
+    m_session(session), m_session_id(0) {
   int error;
 
   HT_TRY("getting config values",
@@ -73,7 +73,7 @@ ClientKeepaliveHandler::ClientKeepaliveHandler(Comm *comm, PropertiesPtr &cfg,
 
   m_session->update_master_addr(m_hyperspace_replicas[0]);
   CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id,
-                                                                       m_last_known_event));
+                                                                       m_delivered_events));
 
   if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
       != Error::OK)) {
@@ -135,7 +135,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           }
 
           CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(m_session_id,
-              m_last_known_event));
+              m_delivered_events));
 
           if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp) != Error::OK)) {
             HT_ERRORF("Unable to send datagram - %s", Error::get_text(error));
@@ -191,10 +191,15 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
           post_notification_buf = decode_ptr;
           post_notification_size = decode_remain;
 
+          std::set<uint64_t> delivered_events;
+
           for (uint32_t i=0; i<notifications; i++) {
             handle = decode_i64(&decode_ptr, &decode_remain);
             event_id = decode_i64(&decode_ptr, &decode_remain);
             event_mask = decode_i32(&decode_ptr, &decode_remain);
+
+            if (m_delivered_events.count(event_id) > 0)
+              delivered_events.insert(event_id);
 
             HandleMap::iterator iter = m_handle_map.find(handle);
             if (iter == m_handle_map.end()) {
@@ -255,6 +260,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
             }
           }
 
+          m_delivered_events.swap(delivered_events);
+
           decode_ptr = post_notification_buf;
           decode_remain = post_notification_size;
           // End Issue 313 instrumentation
@@ -280,7 +287,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
                 event_mask == EVENT_MASK_CHILD_NODE_REMOVED) {
               name = decode_vstr(&decode_ptr, &decode_remain);
 
-              if (event_id <= m_last_known_event)
+              if (!m_delivered_events.insert(event_id).second)
                 continue;
 
               if (handle_state->callback) {
@@ -296,14 +303,13 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
             }
             else if (event_mask == EVENT_MASK_LOCK_ACQUIRED) {
               uint32_t mode = decode_i32(&decode_ptr, &decode_remain);
-
-              if (event_id <= m_last_known_event)
+              if (!m_delivered_events.insert(event_id).second)
                 continue;
               if (handle_state->callback)
                 handle_state->callback->lock_acquired(mode);
             }
             else if (event_mask == EVENT_MASK_LOCK_RELEASED) {
-              if (event_id <= m_last_known_event)
+              if (!m_delivered_events.insert(event_id).second)
                 continue;
               if (handle_state->callback)
                 handle_state->callback->lock_released();
@@ -312,9 +318,8 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
               uint32_t mode = decode_i32(&decode_ptr, &decode_remain);
               handle_state->lock_generation = decode_i64(&decode_ptr,
                                                          &decode_remain);
-              if (event_id <= m_last_known_event)
+              if (!m_delivered_events.insert(event_id).second)
                 continue;
-
               handle_state->lock_status = LOCK_STATUS_GRANTED;
               handle_state->sequencer->generation =
                   handle_state->lock_generation;
@@ -322,7 +327,6 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
               handle_state->cond.notify_all();
             }
 
-            m_last_known_event = event_id;
           }
           /*
           if (m_verbose) {
@@ -335,7 +339,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
 
           if (notifications > 0) {
             CommBufPtr cbp(Protocol::create_client_keepalive_request(
-                m_session_id, m_last_known_event));
+                m_session_id, m_delivered_events));
             boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC_);
             if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
                 != Error::OK)) {
@@ -362,8 +366,6 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
     boost::xtime now;
     int state;
 
-    // !!! fix - what about re-ordered packets?
-
     if ((state = m_session->get_state()) == Session::STATE_EXPIRED)
       return;
 
@@ -380,7 +382,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
     }
 
     CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
-        m_session_id, m_last_known_event));
+        m_session_id, m_delivered_events));
 
     boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC_);
 
@@ -412,7 +414,6 @@ void ClientKeepaliveHandler::expire_session() {
   m_handle_map.clear();
   m_bad_handle_map.clear();
   m_session_id = 0;
-  m_last_known_event = 0;
 
   if (m_reconnect) {
     boost::xtime_get(&m_last_keep_alive_send_time, boost::TIME_UTC_);
@@ -425,7 +426,7 @@ void ClientKeepaliveHandler::expire_session() {
     m_comm->create_datagram_receive_socket(m_local_addr, 0x10, dhp);
 
     CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
-        m_session_id, m_last_known_event));
+        m_session_id, m_delivered_events));
 
     int error;
     if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
@@ -456,7 +457,7 @@ void ClientKeepaliveHandler::destroy_session() {
   }
 
   CommBufPtr cbp(Hyperspace::Protocol::create_client_keepalive_request(
-                 m_session_id, m_last_known_event, true));
+                 m_session_id, m_delivered_events, true));
 
   if ((error = m_comm->send_datagram(m_master_addr, m_local_addr, cbp)
       != Error::OK))
@@ -487,7 +488,6 @@ void ClientKeepaliveHandler::destroy() {
   m_handle_map.clear();
   m_bad_handle_map.clear();
   m_session_id = 0;
-  m_last_known_event = 0;
   m_comm->close_socket(m_local_addr);
 }
 

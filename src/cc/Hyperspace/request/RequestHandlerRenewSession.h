@@ -22,6 +22,8 @@
 #ifndef HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
 #define HYPERSPACE_REQUESTHANDLERRENEWSESSION_H
 
+#include <set>
+
 #include "Common/Mutex.h"
 
 #include "AsyncComm/ApplicationHandler.h"
@@ -34,10 +36,10 @@ namespace Hyperspace {
   class RequestHandlerRenewSession : public ApplicationHandler {
   public:
     RequestHandlerRenewSession(Comm *comm, Master *master,
-        uint64_t session_id, uint64_t last_known_event, bool destroy_session,
-        EventPtr &event, struct sockaddr_in *send_addr)
+           uint64_t session_id, std::set<uint64_t> &delivered_events,
+           bool destroy_session, EventPtr &event, struct sockaddr_in *send_addr)
       : m_comm(comm), m_master(master), m_session_id(session_id),
-        m_last_known_event(last_known_event), m_destroy_session(destroy_session),
+        m_delivered_events(delivered_events),m_destroy_session(destroy_session),
         m_event(event), m_send_addr(send_addr)  { }
     virtual ~RequestHandlerRenewSession() { }
 
@@ -47,7 +49,7 @@ namespace Hyperspace {
     Comm        *m_comm;
     Master      *m_master;
     uint64_t     m_session_id;
-    uint64_t     m_last_known_event;
+    std::set<uint64_t> m_delivered_events;
     bool         m_destroy_session;
     EventPtr     m_event;
     struct sockaddr_in *m_send_addr;

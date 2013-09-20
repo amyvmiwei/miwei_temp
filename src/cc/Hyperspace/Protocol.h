@@ -28,6 +28,7 @@
 #ifndef HYPERSPACE_PROTOCOL_H
 #define HYPERSPACE_PROTOCOL_H
 
+#include <set>
 #include <vector>
 
 #include "AsyncComm/CommBuf.h"
@@ -71,12 +72,12 @@ namespace Hyperspace {
 
     // client/server protocol version; using msb to avoid overlaps with
     // Session::OpenFlags
-    static const int VERSION = 0xf0000001;
+    static const int VERSION = 0xf0000002;
 
     virtual const char *command_text(uint64_t command);
 
     static CommBuf *create_client_keepalive_request(uint64_t session_id,
-        uint64_t last_known_event, bool destroy_session=false);
+              std::set<uint64_t> &delivered_events, bool destroy_session=false);
     static CommBuf *
     create_server_keepalive_request(uint64_t session_id, int error);
     static CommBuf *

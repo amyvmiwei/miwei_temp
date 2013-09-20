@@ -23,6 +23,7 @@
 #define HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
 
 #include <cassert>
+#include <set>
 #include <vector>
 
 #include <boost/thread/mutex.hpp>
@@ -100,7 +101,7 @@ namespace Hyperspace {
     Session *m_session;
     uint64_t m_session_id;
     ClientConnectionHandlerPtr m_conn_handler;
-    uint64_t m_last_known_event;
+    std::set<uint64_t> m_delivered_events;
     typedef hash_map<uint64_t, ClientHandleStatePtr> HandleMap;
     HandleMap  m_handle_map;
     typedef hash_map<uint64_t, boost::xtime> BadNotificationHandleMap;
