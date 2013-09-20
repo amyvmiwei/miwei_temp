@@ -100,6 +100,7 @@ namespace Hypertable {
      * <li>Otherwise state is transitioned to COMPLETED</li>
      * </ul></td>
      * </tr>
+     * </table>
      */
     virtual void execute();
 
@@ -226,9 +227,6 @@ namespace Hypertable {
     /// Set of range servers that have completed operation
     StringSet m_completed;
   };
-
-  /// Smart pointer to OperationCompact
-  typedef intrusive_ptr<OperationCompact> OperationCompactPtr;
 
   /* @}*/
 

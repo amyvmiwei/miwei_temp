@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -54,8 +54,6 @@ namespace Hypertable {
     String m_location;
     String m_range_name;
   };
-
-  typedef intrusive_ptr<OperationCreateTable> OperationCreateTablePtr;
 
 } // namespace Hypertable
 

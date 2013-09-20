@@ -30,21 +30,12 @@
 using namespace Hypertable;
 
 OperationStatus::OperationStatus(ContextPtr &context, EventPtr &event) 
-  : Operation(context, event, MetaLog::EntityType::OPERATION_STATUS) {
+  : OperationEphemeral(context, event, MetaLog::EntityType::OPERATION_STATUS) {
   HT_INFOF("Status-%lld", (Lld)header.id);
-  set_state(OperationState::STARTED);
 }
 
 void OperationStatus::execute() {
-  ScopedLock lock(m_mutex);
-  m_expiration_time.reset();
-  m_state = OperationState::COMPLETE;
-}
-
-#define OPERATION_STATUS_VERSION 1
-
-uint16_t OperationStatus::encoding_version() const {
-  return OPERATION_STATUS_VERSION;
+  complete_ok();
 }
 
 const String OperationStatus::name() {

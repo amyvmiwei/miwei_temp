@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -76,8 +76,6 @@ namespace Hypertable {
     int m_plan_generation;
     time_t m_last_notification;
   };
-
-  typedef intrusive_ptr<OperationRecoverRanges> OperationRecoverRangesPtr;
 
 } // namespace Hypertable
 

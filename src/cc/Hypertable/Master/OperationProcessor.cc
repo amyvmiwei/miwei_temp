@@ -130,19 +130,9 @@ OperationPtr OperationProcessor::remove_operation(int64_t hash_code) {
   hash_map<int64_t, OperationVertex>::iterator iter =
     m_context.operation_hash.find(hash_code);
 
-  // If not found, busy, or not in INITIAL state, return NULL
   if (iter == m_context.operation_hash.end() ||
-      m_context.busy[iter->second.vertex] ||
-      iter->second.operation->get_state() != OperationState::INITIAL) {
-    if (iter == m_context.operation_hash.end())
-      HT_INFO("Unable to remove operation because NOT FOUND.");
-    else if (m_context.busy[iter->second.vertex])
-      HT_INFO("Unable to remove operation because BUSY.");
-    else
-      HT_INFOF("Unable to remove operation because state = %s.",
-               OperationState::get_text(iter->second.operation->get_state()));
+      m_context.busy[iter->second.vertex])
     return 0;
-  }
 
   operation = iter->second.operation;
   vertex = iter->second.vertex;

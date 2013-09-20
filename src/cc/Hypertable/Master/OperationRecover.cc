@@ -56,9 +56,10 @@ OperationRecover::OperationRecover(ContextPtr &context,
   m_dependencies.insert(m_subop_dependency);
   m_dependencies.insert(Dependency::RECOVERY_BLOCKER);
   m_dependencies.insert(Dependency::RECOVERY);
+  m_dependencies.insert(String("RegisterServer ") + m_location);
   m_exclusivities.insert(m_rsc->location());
   m_obstructions.insert(Dependency::RECOVER_SERVER);
-  m_hash_code = md5_hash("RecoverServer") ^ md5_hash(m_rsc->location().c_str());
+  m_hash_code = md5_hash("OperationRecover") ^ md5_hash(m_rsc->location().c_str());
   HT_ASSERT(m_rsc != 0);
   HT_INFOF("OperationRecover %s state=%s restart=%s",
            m_location.c_str(), OperationState::get_text(get_state()),
@@ -89,21 +90,33 @@ void OperationRecover::execute() {
   if (m_hostname.empty() && m_rsc)
     m_hostname = m_rsc->hostname();
 
-  if (!acquire_server_lock()) {
-    if (m_rsc)
-      m_rsc->set_recovering(false);
-    m_context->add_available_server(m_location);
-    m_expiration_time.reset();  // force it to get removed immediately
-    complete_ok();
-    return;
-  }
-
   switch (state) {
-  case OperationState::INITIAL:
 
-    m_rsc->set_recovering(true);
+  case OperationState::INITIAL:
+    // Prevent any RegisterServer operations for this server from running while
+    // recovery is in progress
+    {
+      ScopedLock lock(m_mutex);
+      String register_server_label = String("RegisterServer ") + m_location;
+      m_dependencies.erase(register_server_label);
+      m_exclusivities.insert(register_server_label);
+      m_state = OperationState::STARTED;
+    }
+    break;
+
+  case OperationState::STARTED:
+
+    if (!acquire_server_lock()) {
+      if (m_rsc)
+        m_rsc->set_recovering(false);
+      m_expiration_time.reset();  // force it to get removed immediately
+      complete_ok();
+      return;
+    }
 
     if (m_rsc) {
+
+      m_rsc->set_recovering(true);
 
       m_context->remove_available_server(m_location);
 

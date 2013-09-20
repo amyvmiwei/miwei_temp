@@ -27,7 +27,7 @@
 using namespace Hypertable;
 
 OperationWaitForServers::OperationWaitForServers(ContextPtr &context)
-  : Operation(context, MetaLog::EntityType::OPERATION_WAIT_FOR_SERVERS) {
+  : OperationEphemeral(context, MetaLog::EntityType::OPERATION_WAIT_FOR_SERVERS) {
   m_obstructions.insert(Dependency::SERVERS);
 }
 
@@ -41,16 +41,10 @@ void OperationWaitForServers::execute() {
     return;
   }
 
-  set_state(OperationState::COMPLETE);
+  complete_ok();
 
   HT_INFOF("Leaving WaitForServers-%lld (state=%s)",
            (Lld)header.id, OperationState::get_text(get_state()));
-}
-
-#define OPERATION_WAIT_FOR_SERVERS_VERSION 1
-
-uint16_t OperationWaitForServers::encoding_version() const {
-  return OPERATION_WAIT_FOR_SERVERS_VERSION;
 }
 
 const String OperationWaitForServers::name() {

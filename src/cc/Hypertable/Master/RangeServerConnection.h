@@ -38,6 +38,8 @@ namespace Hypertable {
     };
   }
 
+  class RangeServerHyperspaceCallback;
+
   class RangeServerConnection : public MetaLog::Entity {
   public:
     RangeServerConnection(const String &location, const String &hostname,
@@ -62,8 +64,8 @@ namespace Hypertable {
     void set_recovering(bool b);
     bool is_recovering();
 
-    void set_handle(uint64_t handle);
-    uint64_t get_handle();
+    void set_hyperspace_handle(uint64_t handle, RangeServerHyperspaceCallback *cb);
+    bool get_hyperspace_handle(uint64_t *handle, RangeServerHyperspaceCallback **cb);
 
     CommAddress get_comm_address();
 
@@ -88,6 +90,7 @@ namespace Hypertable {
 
   private:
     uint64_t m_handle;
+    RangeServerHyperspaceCallback *m_hyperspace_callback;
     String m_location;
     String m_hostname;
     int32_t m_state;

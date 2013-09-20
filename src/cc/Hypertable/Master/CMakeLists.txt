@@ -48,6 +48,7 @@ OperationProcessor.cc
 OperationRecover.cc
 OperationRecoverRanges.cc
 OperationRegisterServer.cc
+OperationRegisterServerBlocker.cc
 OperationRelinquishAcknowledge.cc
 OperationRenameTable.cc
 OperationSetState.cc

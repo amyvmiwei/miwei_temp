@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,11 +22,11 @@
 #ifndef HYPERTABLE_OPERATIONSYSTEMUPGRADE_H
 #define HYPERTABLE_OPERATIONSYSTEMUPGRADE_H
 
-#include "Operation.h"
+#include "OperationEphemeral.h"
 
 namespace Hypertable {
 
-  class OperationSystemUpgrade : public Operation {
+  class OperationSystemUpgrade : public OperationEphemeral {
   public:
     OperationSystemUpgrade(ContextPtr &context);
     OperationSystemUpgrade(ContextPtr &context, const MetaLog::EntityHeader &header_);
@@ -38,15 +38,8 @@ namespace Hypertable {
     virtual const String name();
     virtual const String label();
     virtual void display_state(std::ostream &os) { }
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const { return 0; }
-    virtual void encode_state(uint8_t **bufp) const { }
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
 
   };
-
-  typedef intrusive_ptr<OperationSystemUpgrade> OperationSystemUpgradePtr;
 
 } // namespace Hypertable
 

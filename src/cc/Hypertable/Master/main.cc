@@ -223,14 +223,12 @@ int main(int argc, char **argv) {
      */
     std::vector<MetaLog::EntityPtr> entities;
     std::vector<OperationPtr> operations;
-    std::map<String, OperationPtr> recovery_operations;
+    std::map<String, OperationPtr> recovery_ops;
     MetaLog::ReaderPtr mml_reader;
     OperationPtr operation;
     RangeServerConnectionPtr rsc;
-    StringSet locations;
     String log_dir = context->toplevel_dir + "/servers/master/log/"
         + context->mml_definition->name();
-    size_t added_servers = 0;
     MetaLog::EntityPtr bpa_entity;
 
     mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition,
@@ -299,8 +297,8 @@ int main(int argc, char **argv) {
     context->op->wait_for_empty();
 
     // Then reconstruct state and start execution
-    for (size_t i = 0; i < entities.size(); i++) {
-      operation = dynamic_cast<Operation *>(entities[i].get());
+    foreach_ht (MetaLog::EntityPtr &entity, entities) {
+      operation = dynamic_cast<Operation *>(entity.get());
       if (operation) {
         if (operation->remove_explicitly())
           context->reference_manager->add(operation);
@@ -308,33 +306,33 @@ int main(int argc, char **argv) {
         if (dynamic_cast<OperationRecover *>(operation.get())) {
           HT_INFO("Recovery was interrupted; continuing");
           OperationRecover *op =
-              dynamic_cast<OperationRecover *>(operation.get());
-          if (!op->location().empty())
-            recovery_operations[op->location()] = operation;
+            dynamic_cast<OperationRecover *>(operation.get());
+          if (!op->location().empty()) {
+            operations.push_back(operation);
+            recovery_ops[op->location()] = operation;
+          }
         }
         else
           operations.push_back(operation);
       }
-      else if (dynamic_cast<RangeServerConnection *>(entities[i].get())) {
-        rsc = dynamic_cast<RangeServerConnection *>(entities[i].get());
-        HT_ASSERT(rsc);
+      else if (dynamic_cast<RangeServerConnection *>(entity.get())) {
+        rsc = dynamic_cast<RangeServerConnection *>(entity.get());
         context->rsc_manager->add_server(rsc);
-        locations.insert(rsc->location());
-        if (recovery_operations.find(rsc->location())
-                == recovery_operations.end())
-          recovery_operations[rsc->location()] =
-            new OperationRecover(context, rsc, OperationRecover::RESTART);
-        added_servers++;
       }
     }
     context->balancer = new LoadBalancer(context);
 
-    std::map<String, OperationPtr>::iterator recovery_it = recovery_operations.begin();
-    while (recovery_it != recovery_operations.end()) {
-      operations.push_back(recovery_it->second);
-      ++recovery_it;
+    // For each RangeServerConnection that doesn't already have an
+    // outstanding OperationRecover, create and add one
+    foreach_ht (MetaLog::EntityPtr &entity, entities) {
+      rsc = dynamic_cast<RangeServerConnection *>(entity.get());
+      if (rsc) {
+        if (recovery_ops.find(rsc->location()) == recovery_ops.end())
+          operations.push_back(new OperationRecover(context, rsc,
+                                                    OperationRecover::RESTART));
+      }
     }
-    recovery_operations.clear();
+    recovery_ops.clear();
 
     if (operations.empty()) {
       OperationInitializePtr init_op = new OperationInitialize(context);

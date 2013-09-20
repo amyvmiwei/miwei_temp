@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -30,17 +30,11 @@ using namespace Hypertable;
 OperationTimedBarrier::OperationTimedBarrier(ContextPtr &context,
                                              const String &block_dependency,
                                              const String &wakeup_dependency)
-  : Operation(context, MetaLog::EntityType::OPERATION_TIMED_BARRIER),
+  : OperationEphemeral(context, MetaLog::EntityType::OPERATION_TIMED_BARRIER),
     m_block_dependency(block_dependency), m_wakeup_dependency(wakeup_dependency),
     m_shutdown(false) {
   m_obstructions.insert(block_dependency);
   boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
-}
-
-OperationTimedBarrier::OperationTimedBarrier(ContextPtr &context,
-        const MetaLog::EntityHeader &header_)
-    : Operation(context, header_), m_shutdown(false) {
-  HT_ASSERT(!"Invalid OperationTimedBarrier constructor called");
 }
 
 void OperationTimedBarrier::execute() {
@@ -64,13 +58,6 @@ void OperationTimedBarrier::execute() {
   HT_INFOF("Leaving TimedBarrier-%lld state=%s", (Lld)header.id,
            OperationState::get_text(m_state));
 }
-
-#define OPERATION_TIMED_BARRIER_VERSION 1
-
-uint16_t OperationTimedBarrier::encoding_version() const {
-  return OPERATION_TIMED_BARRIER_VERSION;
-}
-
 
 const String OperationTimedBarrier::name() {
   return "OperationTimedBarrier";

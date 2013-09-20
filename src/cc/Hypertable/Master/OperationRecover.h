@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -38,6 +38,8 @@ namespace Hypertable {
    *  @{
    */
 
+  /** Carries out recovery operaton for a range server.
+   */
   class OperationRecover : public Operation {
   public:
 
@@ -45,17 +47,17 @@ namespace Hypertable {
       RESTART = 1
     };
 
-    /** Constructor for new object.
-     * @param context Master context object
-     * @param rsc RangeServerConnection object referring to server to be
-     * recovered
-     * @param flags Set to #RESTART if this object is being created due to a
-     * server restart
+    /** Constructor.
      * This method constructs a new OperationRecover object.  If #RESTART is
      * passed in for the <code>flags</code> argument then it will prevent
      * notifiction if unable to acquire lock on range server's lock file.
      * This is expected behavior on service restart, so no notification
      * should be deliverd.
+     * @param context Master context object
+     * @param rsc RangeServerConnection object referring to server to be
+     * recovered
+     * @param flags Set to #RESTART if this object is being created due to a
+     * server restart
      */
     OperationRecover(ContextPtr &context, RangeServerConnectionPtr &rsc,
                      int flags=0);
@@ -114,9 +116,6 @@ namespace Hypertable {
     bool m_restart;
     bool m_lock_acquired;
   };
-
-  /// Smart pointer to OperationRecover
-  typedef intrusive_ptr<OperationRecover> OperationRecoverPtr;
 
   /** @}*/
 

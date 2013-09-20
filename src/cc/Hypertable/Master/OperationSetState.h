@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -174,9 +174,6 @@ namespace Hypertable {
     /// System state variables
     std::vector<SystemVariable::Spec> m_specs;
   };
-
-  /// Smart pointer to OperationSetState
-  typedef intrusive_ptr<OperationSetState> OperationSetStatePtr;
 
   /* @}*/
 

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -49,9 +49,6 @@ namespace Hypertable {
     int m_flags;
     String m_id;
   };
-
-
-  typedef intrusive_ptr<OperationDropNamespace> OperationDropNamespacePtr;
 
 } // namespace Hypertable
 

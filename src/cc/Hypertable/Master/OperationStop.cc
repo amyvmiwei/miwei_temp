@@ -34,7 +34,7 @@
 using namespace Hypertable;
 
 OperationStop::OperationStop(ContextPtr &context, EventPtr &event) 
-  : Operation(context, event, MetaLog::EntityType::OPERATION_STOP) {
+  : OperationEphemeral(context, event, MetaLog::EntityType::OPERATION_STOP) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
@@ -63,11 +63,6 @@ void OperationStop::execute() {
   }
 
   complete_ok();
-  {
-    ScopedLock lock(m_mutex);
-    m_expiration_time.reset();
-    m_state = OperationState::COMPLETE;
-  }
 
   HT_INFOF("Leaving OperationStop-%s recover=%s state=%s",
           m_server.c_str(), m_recover ? "true" : "false",
@@ -76,25 +71,6 @@ void OperationStop::execute() {
 
 void OperationStop::display_state(std::ostream &os) {
   os << " " << m_server << " recover=" << m_recover;
-}
-
-#define OPERATION_STOP_VERSION 1
-
-uint16_t OperationStop::encoding_version() const {
-  return OPERATION_STOP_VERSION;
-}
-
-size_t OperationStop::encoded_state_length() const {
-  return Serialization::encoded_length_vstr(m_server) + 1;
-}
-
-void OperationStop::encode_state(uint8_t **bufp) const {
-  Serialization::encode_vstr(bufp, m_server);
-  Serialization::encode_bool(bufp, m_recover);
-}
-
-void OperationStop::decode_state(const uint8_t **bufp, size_t *remainp) {
-  decode_request(bufp, remainp);
 }
 
 void OperationStop::decode_request(const uint8_t **bufp, size_t *remainp) {
@@ -107,9 +83,5 @@ const String OperationStop::name() {
 }
 
 const String OperationStop::label() {
-  return format("OperationStop %s", m_server.c_str());
-}
-
-const String OperationStop::graphviz_label() {
   return format("OperationStop %s", m_server.c_str());
 }
