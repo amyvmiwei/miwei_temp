@@ -143,6 +143,7 @@ void AccessGroupHintsFile::read() {
 
     fd = Global::dfs->open(filename, Filesystem::OPEN_FLAG_VERIFY_CHECKSUM);
     nread = Global::dfs->read(fd, dbuf.base, length);
+    Global::dfs->close(fd);
     dbuf.base[nread] = 0;
 
     parse_header((const char *)dbuf.base, &base);
