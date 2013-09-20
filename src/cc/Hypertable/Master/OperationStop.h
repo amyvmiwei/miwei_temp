@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,11 +22,11 @@
 #ifndef HYPERTABLE_OPERATIONSTOP_H
 #define HYPERTABLE_OPERATIONSTOP_H
 
-#include "Operation.h"
+#include "OperationEphemeral.h"
 
 namespace Hypertable {
 
-  class OperationStop : public Operation {
+  class OperationStop : public OperationEphemeral {
   public:
     OperationStop(ContextPtr &context, EventPtr &event);
     virtual ~OperationStop() { }
@@ -34,21 +34,14 @@ namespace Hypertable {
     virtual void execute();
     virtual const String name();
     virtual const String label();
-    virtual const String graphviz_label();
 
     virtual void display_state(std::ostream &os);
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const;
-    virtual void encode_state(uint8_t **bufp) const;
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp);
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
 
   private:
     String m_server;
     bool m_recover;
   };
-
-  typedef intrusive_ptr<OperationStop> OperationStopPtr;
 
 } // namespace Hypertable
 

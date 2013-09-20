@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,12 +22,12 @@
 #ifndef HYPERTABLE_OPERATIONSTATUS_H
 #define HYPERTABLE_OPERATIONSTATUS_H
 
-#include "Operation.h"
+#include "OperationEphemeral.h"
 #include "RangeServerConnection.h"
 
 namespace Hypertable {
 
-  class OperationStatus : public Operation {
+  class OperationStatus : public OperationEphemeral {
   public:
     OperationStatus(ContextPtr &context, EventPtr &event);
     virtual ~OperationStatus() { }
@@ -36,15 +36,7 @@ namespace Hypertable {
     virtual const String name();
     virtual const String label();
     virtual void display_state(std::ostream &os) { }
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const { return 0; }
-    virtual void encode_state(uint8_t **bufp) const { }
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
   };
-
-
-  typedef intrusive_ptr<OperationStatus> OperationStatusPtr;
 
 } // namespace Hypertable
 

@@ -42,9 +42,13 @@ wait_for_server_connect() {
 }
 
 wait_for_recovery() {
-  local id=$1
   local n=0
-  local s="Leaving RecoverServer $id state=COMPLETE"
+  local s
+  if [ $# -gt 0 ]; then
+      s="Leaving RecoverServer $1 state=COMPLETE"
+  else
+      s="Leaving RecoverServer [a-zA-Z0-9]+ state=COMPLETE"
+  fi
   egrep "$s" $HT_HOME/log/Hypertable.Master.log
   while [ $? -ne "0" ]
   do

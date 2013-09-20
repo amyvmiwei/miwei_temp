@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,11 +22,11 @@
 #ifndef HYPERTABLE_OPERATIONWAITFORSERVERS_H
 #define HYPERTABLE_OPERATIONWAITFORSERVERS_H
 
-#include "Operation.h"
+#include "OperationEphemeral.h"
 
 namespace Hypertable {
 
-  class OperationWaitForServers : public Operation {
+  class OperationWaitForServers : public OperationEphemeral {
   public:
     OperationWaitForServers(ContextPtr &context);
     virtual ~OperationWaitForServers() { }
@@ -35,16 +35,9 @@ namespace Hypertable {
     virtual const String name();
     virtual const String label();
     virtual void display_state(std::ostream &os) { }
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const { return 0; }
-    virtual void encode_state(uint8_t **bufp) const { }
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
 
     virtual bool is_perpetual() { return true; }
   };
-
-  typedef intrusive_ptr<OperationWaitForServers> OperationWaitForServersPtr;
 
 } // namespace Hypertable
 

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -24,12 +24,12 @@
 
 #include "Hypertable/Lib/SystemVariable.h"
 
-#include "Operation.h"
+#include "OperationEphemeral.h"
 #include "RangeServerConnection.h"
 
 namespace Hypertable {
 
-  class OperationRegisterServer : public Operation {
+  class OperationRegisterServer : public OperationEphemeral {
   public:
     OperationRegisterServer(ContextPtr &context, EventPtr &event);
     virtual ~OperationRegisterServer() { }
@@ -39,15 +39,7 @@ namespace Hypertable {
     virtual const String label();
 
     virtual void display_state(std::ostream &os);
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const { return 0; }
-    virtual void encode_state(uint8_t **bufp) const { return; }
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp) { return; }
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
-
-    virtual size_t encoded_result_length() const;
-    virtual void encode_result(uint8_t **bufp) const;
-    virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
   private:
 
@@ -65,10 +57,8 @@ namespace Hypertable {
     InetAddr m_public_addr;
     int64_t m_register_ts;
     int64_t m_received_ts;
+    bool m_lock_held;
   };
-
-
-  typedef intrusive_ptr<OperationRegisterServer> OperationRegisterServerPtr;
 
 } // namespace Hypertable
 

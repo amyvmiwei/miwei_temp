@@ -56,6 +56,7 @@ namespace Hypertable {
     void add_server(RangeServerConnectionPtr &rsc);
     bool connect_server(RangeServerConnectionPtr &rsc, const String &hostname, InetAddr local_addr, InetAddr public_addr);
     bool disconnect_server(RangeServerConnectionPtr &rsc);
+    bool is_connected(const String &location);
     void wait_for_server();
     void erase_server(RangeServerConnectionPtr &rsc);
     bool find_server_by_location(const String &location, RangeServerConnectionPtr &rsc);

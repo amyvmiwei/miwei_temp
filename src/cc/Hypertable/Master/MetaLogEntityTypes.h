@@ -93,7 +93,8 @@ namespace Hypertable {
         OPERATION_TIMED_BARRIER              = 0x00030019,
         OPERATION_COMPACT                    = 0x0003001A,
         OPERATION_SET                        = 0x0003001B,
-        SYSTEM_STATE                         = 0x0003001C
+        SYSTEM_STATE                         = 0x0003001C,
+        OPERATION_REGISTER_SERVER_BLOCKER    = 0x0003001D
       };
     }
   }

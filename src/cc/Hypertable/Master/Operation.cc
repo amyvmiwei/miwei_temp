@@ -57,7 +57,7 @@ namespace Hypertable {
 Operation::Operation(ContextPtr &context, int32_t type)
   : MetaLog::Entity(type), m_context(context), m_state(OperationState::INITIAL),
     m_error(0), m_remove_approvals(0), m_original_type(0), m_decode_version(0),
-    m_unblock_on_exit(false), m_blocked(false) {
+    m_unblock_on_exit(false), m_blocked(false), m_ephemeral(false) {
   int32_t timeout = m_context->props->get_i32("Hypertable.Request.Timeout");
   m_expiration_time.sec = time(0) + timeout/1000;
   m_expiration_time.nsec = (timeout%1000) * 1000000LL;
@@ -68,16 +68,17 @@ Operation::Operation(ContextPtr &context, EventPtr &event, int32_t type)
   : MetaLog::Entity(type), m_context(context), m_event(event),
     m_state(OperationState::INITIAL), m_error(0), m_remove_approvals(0),
     m_original_type(0),  m_decode_version(0), m_unblock_on_exit(false),
-    m_blocked(false) {
+    m_blocked(false), m_ephemeral(false) {
   m_expiration_time.sec = time(0) + m_event->header.timeout_ms/1000;
   m_expiration_time.nsec = (m_event->header.timeout_ms%1000) * 1000000LL;
   m_hash_code = (int64_t)header.id;
 }
 
 Operation::Operation(ContextPtr &context, const MetaLog::EntityHeader &header_)
-  : MetaLog::Entity(header_), m_context(context), m_state(OperationState::INITIAL),
-    m_error(0), m_remove_approvals(0), m_original_type(0),
-    m_decode_version(0), m_unblock_on_exit(false), m_blocked(false) {
+  : MetaLog::Entity(header_), m_context(context),
+    m_state(OperationState::INITIAL), m_error(0), m_remove_approvals(0),
+    m_original_type(0), m_decode_version(0), m_unblock_on_exit(false),
+    m_blocked(false), m_ephemeral(false) {
   m_hash_code = (int64_t)header.id;
 }
 
@@ -263,17 +264,10 @@ void Operation::complete_error(int error, const String &msg) {
   sout << "Operation failed (" << *this << ") " << Error::get_text(error) << " - " << msg;
   HT_INFOF("%s", sout.str().c_str());
 
-  m_context->mml_writer->record_state(this);
-}
+  if (m_ephemeral)
+    return;
 
-void Operation::complete_error_no_log(int error, const String &msg) {
-  ScopedLock lock(m_mutex);
-  m_state = OperationState::COMPLETE;
-  m_error = error;
-  m_error_msg = msg;
-  m_dependencies.clear();
-  m_obstructions.clear();
-  m_exclusivities.clear();
+  m_context->mml_writer->record_state(this);
 }
 
 void Operation::complete_error(Exception &e) {
@@ -281,28 +275,30 @@ void Operation::complete_error(Exception &e) {
 }
 
 void Operation::complete_ok(MetaLog::Entity *additional) {
-  complete_ok_no_log();
+  {
+    ScopedLock lock(m_mutex);
+    m_state = OperationState::COMPLETE;
+    m_error = Error::OK;
+    m_dependencies.clear();
+    m_obstructions.clear();
+    m_exclusivities.clear();
+  }
   {
     ScopedLock lock(m_remove_approval_mutex);
-    std::vector<MetaLog::Entity *> entities;
     if (remove_explicitly() && m_remove_approvals == remove_approval_mask()) {
       m_context->reference_manager->remove(this);
       mark_for_removal();
     }
-    entities.push_back(this);
-    if (additional)
-      entities.push_back(additional);
-    m_context->mml_writer->record_state(entities);
   }
-}
-
-void Operation::complete_ok_no_log() {
-  ScopedLock lock(m_mutex);
-  m_state = OperationState::COMPLETE;
-  m_error = Error::OK;
-  m_dependencies.clear();
-  m_obstructions.clear();
-  m_exclusivities.clear();
+  if (m_ephemeral) {
+    HT_ASSERT(additional == 0);
+    return;
+  }
+  std::vector<MetaLog::Entity *> entities;
+  entities.push_back(this);
+  if (additional)
+    entities.push_back(additional);
+  m_context->mml_writer->record_state(entities);
 }
 
 void Operation::exclusivities(DependencySet &exclusivities) {

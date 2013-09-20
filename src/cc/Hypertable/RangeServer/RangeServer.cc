@@ -487,8 +487,10 @@ void RangeServer::initialize(PropertiesPtr &props) {
     m_hyperspace->try_lock(m_existence_file_handle, LOCK_MODE_EXCLUSIVE,
                            &lock_status, &m_existence_file_sequencer);
 
-    if (lock_status == LOCK_STATUS_GRANTED)
+    if (lock_status == LOCK_STATUS_GRANTED) {
+      Global::location_initializer->set_lock_held();      
       break;
+    }
 
     HT_INFOF("Waiting for exclusive lock on hyperspace:/%s ...",
              top_dir.c_str());

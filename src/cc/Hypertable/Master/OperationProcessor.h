@@ -242,9 +242,6 @@ namespace Hypertable {
     ThreadGroup m_threads;
   };
 
-  /// Smart pointer to OperationProcessor
-  typedef intrusive_ptr<OperationProcessor> OperationProcessorPtr;
-
   /** @} */
 
 } // namespace Hypertable

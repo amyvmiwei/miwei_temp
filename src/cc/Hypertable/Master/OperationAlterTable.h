@@ -188,9 +188,6 @@ namespace Hypertable {
     StringSet m_completed;
   };
 
-  /// Smart pointer to OperationAlterTable
-  typedef intrusive_ptr<OperationAlterTable> OperationAlterTablePtr;
-
   /* @}*/
 
 } // namespace Hypertable

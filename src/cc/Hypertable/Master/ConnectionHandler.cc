@@ -212,7 +212,8 @@ void ConnectionHandler::handle(EventPtr &event) {
       else
         HT_ERROR_OUT << e << HT_END;
       if (operation) {
-        operation->complete_error_no_log(e.code(), e.what());
+        operation->set_ephemeral();
+        operation->complete_error(e.code(), e.what());
         m_context->response_manager->add_operation(operation);
       }
     }

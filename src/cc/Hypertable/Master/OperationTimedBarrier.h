@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -26,17 +26,15 @@
 
 #include "Common/Time.h"
 
-#include "Operation.h"
+#include "OperationEphemeral.h"
 
 namespace Hypertable {
 
-  class OperationTimedBarrier : public Operation {
+  class OperationTimedBarrier : public OperationEphemeral {
   public:
     OperationTimedBarrier(ContextPtr &context,
                           const String &block_dependency,
                           const String &wakeup_dependency);
-    OperationTimedBarrier(ContextPtr &context, 
-            const MetaLog::EntityHeader &header_);
     virtual ~OperationTimedBarrier() { }
 
     virtual void execute();
@@ -45,11 +43,6 @@ namespace Hypertable {
     virtual bool is_perpetual() { return true; }
 
     virtual void display_state(std::ostream &os) { }
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const { return 0; }
-    virtual void encode_state(uint8_t **bufp) const { }
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
 
     void advance_into_future(uint32_t millis);
     void shutdown();
@@ -61,7 +54,6 @@ namespace Hypertable {
     String m_wakeup_dependency;
     bool m_shutdown;
   };
-  typedef intrusive_ptr<OperationTimedBarrier> OperationTimedBarrierPtr;
 
 } // namespace Hypertable
 

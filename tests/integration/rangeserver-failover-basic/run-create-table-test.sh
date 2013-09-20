@@ -48,7 +48,7 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.Port=38061 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs2.output&
 sleep 3
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS3_PIDFILE \
-   --Hypertable.RangeServer.ProxyName=rs3 \
+   --Hypertable.RangeServer.ProxyName=rs3 $INDUCER_ARG \
    --Hypertable.RangeServer.Port=38062 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs3.output&
 sleep 10
 
@@ -56,7 +56,7 @@ sleep 10
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 
 # verify recovery ocurred
-wait_for_recovery rs2
+wait_for_recovery
 
 # write data 
 $HT_HOME/bin/ht load_generator --spec-file=$SCRIPT_DIR/data.spec \

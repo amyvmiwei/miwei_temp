@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -45,6 +45,7 @@ namespace Hypertable {
     virtual uint64_t initialization_command() { return RangeServerProtocol::COMMAND_INITIALIZE; }
     String get();
     void wait_for_handshake();
+    void set_lock_held() { m_lock_held=true; }
 
   private:
     Mutex m_mutex;
@@ -55,6 +56,7 @@ namespace Hypertable {
     String m_location_file;
     bool m_location_persisted;
     bool m_handshake_complete;
+    bool m_lock_held;
   };
   typedef boost::intrusive_ptr<LocationInitializer> LocationInitializerPtr;
 

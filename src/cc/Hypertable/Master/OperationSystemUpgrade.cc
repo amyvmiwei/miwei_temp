@@ -32,12 +32,12 @@ using namespace Hypertable;
 using namespace Hyperspace;
 
 OperationSystemUpgrade::OperationSystemUpgrade(ContextPtr &context)
-  : Operation(context, MetaLog::EntityType::OPERATION_SYSTEM_UPGRADE) {
+  : OperationEphemeral(context, MetaLog::EntityType::OPERATION_SYSTEM_UPGRADE) {
 }
 
 OperationSystemUpgrade::OperationSystemUpgrade(ContextPtr &context,
                                                const MetaLog::EntityHeader &header_)
-  : Operation(context, header_) {
+  : OperationEphemeral(context, header_) {
 }
 
 
@@ -96,8 +96,8 @@ void OperationSystemUpgrade::execute() {
       m_context->rs_metrics_table = new Table(m_context->props, m_context->conn_manager,
                                               m_context->hyperspace, m_context->namemap,
                                               "sys/RS_METRICS");
-    
-    set_state(OperationState::COMPLETE);
+
+    complete_ok();
     break;
 
   default:
@@ -105,12 +105,6 @@ void OperationSystemUpgrade::execute() {
   }
 
   HT_INFOF("Leaving SystemUpgrade-%lld", (Lld)header.id);
-}
-
-#define OPERATION_SYSTEM_UPGRADE_VERSION 1
-
-uint16_t OperationSystemUpgrade::encoding_version() const {
-  return OPERATION_SYSTEM_UPGRADE_VERSION;
 }
 
 const String OperationSystemUpgrade::name() {

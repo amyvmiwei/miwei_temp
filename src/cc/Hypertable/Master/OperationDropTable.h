@@ -249,9 +249,6 @@ namespace Hypertable {
     StringSet m_completed;
   };
 
-  /// Smart pointer to OperationDropTable
-  typedef intrusive_ptr<OperationDropTable> OperationDropTablePtr;
-
   /**  @} */
 
 } // namespace Hypertable

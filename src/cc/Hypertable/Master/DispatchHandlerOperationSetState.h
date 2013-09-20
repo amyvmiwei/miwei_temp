@@ -83,7 +83,7 @@ namespace Hypertable {
   /// Smart pointer to DispatchHandlerOperationSetState
   typedef intrusive_ptr<DispatchHandlerOperationSetState> DispatchHandlerOperationSetStatePtr;
 
-  /** @{*/
+  /** @}*/
 }
 
 #endif // HYPERTABLE_DISPATCHHANDLEROPERATIONSETSTATE_H

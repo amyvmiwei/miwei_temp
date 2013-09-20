@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -40,8 +40,6 @@ namespace Hypertable {
     virtual size_t encoded_state_length() const;
     virtual void encode_state(uint8_t **bufp) const;
     virtual void decode_state(const uint8_t **bufp, size_t *remainp);
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
-
     virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
     virtual bool remove_explicitly() { return true; }

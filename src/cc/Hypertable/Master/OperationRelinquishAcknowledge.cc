@@ -38,14 +38,14 @@ using namespace Hypertable;
 
 OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &ctx,
               const String &source, TableIdentifier *table, RangeSpec *range)
-  : Operation(ctx, MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE),
+  : OperationEphemeral(ctx, MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE),
     m_source(source), m_table(*table), m_range(*range) {
 }
 
 
 OperationRelinquishAcknowledge::OperationRelinquishAcknowledge(ContextPtr &context, EventPtr &event) 
-  : Operation(context, event,
-              MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE) {
+  : OperationEphemeral(context, event,
+                       MetaLog::EntityType::OPERATION_RELINQUISH_ACKNOWLEDGE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
@@ -75,7 +75,7 @@ void OperationRelinquishAcknowledge::execute() {
     HT_WARNF("Skipping relinquish_acknowledge(%s %s[%s..%s] because correspoing MoveRange does not exist",
              m_source.c_str(), m_table.id, m_range.start_row, m_range.end_row);
 
-  complete_ok_no_log();
+  complete_ok();
 
   HT_INFOF("Leaving RelinquishAcknowledge-%lld %s[%s..%s] from %s",
            (Lld)header.id, m_table.id, m_range.start_row, m_range.end_row,
@@ -84,27 +84,6 @@ void OperationRelinquishAcknowledge::execute() {
 
 void OperationRelinquishAcknowledge::display_state(std::ostream &os) {
   os << " " << m_table << " " << m_range << " source=" << m_source;
-}
-
-#define OPERATION_RELINQUISH_ACKNOWLEDGE_VERSION 1
-
-uint16_t OperationRelinquishAcknowledge::encoding_version() const {
-  return OPERATION_RELINQUISH_ACKNOWLEDGE_VERSION;
-}
-
-size_t OperationRelinquishAcknowledge::encoded_state_length() const {
-  return Serialization::encoded_length_vstr(m_source) + 
-    m_table.encoded_length() + m_range.encoded_length();
-}
-
-void OperationRelinquishAcknowledge::encode_state(uint8_t **bufp) const {
-  Serialization::encode_vstr(bufp, m_source);
-  m_table.encode(bufp);
-  m_range.encode(bufp);
-}
-
-void OperationRelinquishAcknowledge::decode_state(const uint8_t **bufp, size_t *remainp) {
-  decode_request(bufp, remainp);
 }
 
 void OperationRelinquishAcknowledge::decode_request(const uint8_t **bufp, size_t *remainp) {

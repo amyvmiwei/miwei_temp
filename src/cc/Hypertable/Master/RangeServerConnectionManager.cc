@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -126,11 +126,21 @@ bool RangeServerConnectionManager::connect_server(RangeServerConnectionPtr &rsc,
 }
 
 bool RangeServerConnectionManager::disconnect_server(RangeServerConnectionPtr &rsc) {
+  ScopedLock lock(mutex);
   if (rsc->disconnect()) {
     HT_ASSERT(m_conn_count > 0);
     m_conn_count--;
     return true;
   }
+  return false;
+}
+
+bool RangeServerConnectionManager::is_connected(const String &location) {
+  ScopedLock lock(mutex);
+  LocationIndex &location_index = m_server_list.get<1>();
+  LocationIndex::iterator iter = location_index.find(location);
+  if (iter != location_index.end() && iter->rsc->connected())
+    return true;
   return false;
 }
 

@@ -30,7 +30,7 @@
 
 #include "Common/StringExt.h"
 
-#include "Operation.h"
+#include "OperationEphemeral.h"
 
 namespace Hypertable {
 
@@ -39,7 +39,7 @@ namespace Hypertable {
    */
 
   /** Gathers and processes RangeServer statistics */
-  class OperationGatherStatistics : public Operation {
+  class OperationGatherStatistics : public OperationEphemeral {
   public:
 
     /** Constructor. */
@@ -59,17 +59,8 @@ namespace Hypertable {
     virtual const String name();
     virtual const String label();
     virtual bool exclusive() { return true; }
-
     virtual void display_state(std::ostream &os) { }
-    virtual uint16_t encoding_version() const;
-    virtual size_t encoded_state_length() const { return 0; }
-    virtual void encode_state(uint8_t **bufp) const { }
-    virtual void decode_state(const uint8_t **bufp, size_t *remainp) { }
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
   };
-
-  /// Smart pointer to OperationGatherStatistics
-  typedef intrusive_ptr<OperationGatherStatistics> OperationGatherStatisticsPtr;
 
   /** @}*/
 

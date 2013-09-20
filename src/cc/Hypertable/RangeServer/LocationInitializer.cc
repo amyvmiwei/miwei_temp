@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -41,9 +41,11 @@
 using namespace Hypertable;
 using namespace Serialization;
 
-LocationInitializer::LocationInitializer(PropertiesPtr &props, ServerStatePtr server_state)
+LocationInitializer::LocationInitializer(PropertiesPtr &props,
+                                         ServerStatePtr server_state)
   : m_props(props), m_server_state(server_state), 
-    m_location_persisted(false), m_handshake_complete(false) {
+    m_location_persisted(false), m_handshake_complete(false),
+    m_lock_held(false) {
 
   Path data_dir = m_props->get_str("Hypertable.DataDirectory");
   data_dir /= "/run";
@@ -118,7 +120,9 @@ CommBuf *LocationInitializer::create_initialization_request() {
   stats.add_categories(StatsSystem::CPUINFO|StatsSystem::NETINFO|
                        StatsSystem::OSINFO|StatsSystem::PROCINFO, dirs);
 
-  CommBuf *cbuf = MasterProtocol::create_register_server_request(m_location, port, stats);
+  CommBuf *cbuf = 
+    MasterProtocol::create_register_server_request(m_location, port,
+                                                   m_lock_held, stats);
 
   return cbuf;
 }

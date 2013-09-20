@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -229,17 +229,18 @@ namespace Hypertable {
     virtual bool exclusive() { return false; }
 
     /** Decodes initial operation state from Event payload.
-     * Operations can be created in response to request events sent to the
-     * master by clients.  This method is used to decode the initial operation
-     * state from an Event object created in response to a client request.
-     * This method should be called with <code>bufp</code> initialized to
-     * Event::payload and <code>remainp</code> initialized from
-     * Event::payload_len.  The payload contains initial operation state
-     * (request parameters) to be used to initialize the operation.
+     * Some operations can be created in response to request events sent to the
+     * master by clients.  For these types of operations, this method should be
+     * overridden to decode the initial operation state from the Event object
+     * created in response to a client request.  This method should be called
+     * with <code>bufp</code> initialized to Event::payload and
+     * <code>remainp</code> initialized from Event::payload_len.  The payload
+     * contains initial operation state (request parameters) to be used to
+     * initialize the operation.
      * @param bufp Address of buffer pointer (initialized to Event payload)
      * @param remainp Address of integer indicating how much buffer remains
      */
-    virtual void decode_request(const uint8_t **bufp, size_t *remainp) = 0;
+    virtual void decode_request(const uint8_t **bufp, size_t *remainp) { }
 
     /** Encoded length of operation state.
      * @return Length of encoded operation state.
@@ -431,10 +432,8 @@ namespace Hypertable {
     bool remove_if_ready();
 
     void complete_error(int error, const String &msg);
-    void complete_error_no_log(int error, const String &msg);
     void complete_error(Exception &e);
     void complete_ok(MetaLog::Entity *additional=0);
-    void complete_ok_no_log();
 
     virtual int64_t hash_code() const { return m_hash_code; }
 
@@ -461,6 +460,11 @@ namespace Hypertable {
     int32_t get_original_type() { return m_original_type; }
     void set_original_type(int32_t original_type) { m_original_type = original_type; }
 
+    /** Sets the #m_ephemeral flag to <i>true</i>. */
+    void set_ephemeral() {
+      m_ephemeral = true;
+    }
+
   protected:
     Mutex m_remove_approval_mutex;
     ContextPtr m_context;
@@ -476,6 +480,9 @@ namespace Hypertable {
 
     bool m_unblock_on_exit;
     bool m_blocked;
+
+    /// Indicates if operation is ephemeral and does not get persisted to MML
+    bool m_ephemeral;
 
     // Expiration time (used by ResponseManager)
     HiResTime m_expiration_time;

@@ -53,8 +53,6 @@ namespace Hypertable {
     BalancePlanPtr m_plan;
   };
 
-  typedef intrusive_ptr<OperationBalance> OperationBalancePtr;
-
 } // namespace Hypertable
 
 #endif // HYPERTABLE_OPERATIONBALANCE_H

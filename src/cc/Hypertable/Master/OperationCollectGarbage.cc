@@ -28,7 +28,7 @@
 using namespace Hypertable;
 
 OperationCollectGarbage::OperationCollectGarbage(ContextPtr &context)
-  : Operation(context, MetaLog::EntityType::OPERATION_COLLECT_GARBAGE) {
+  : OperationEphemeral(context, MetaLog::EntityType::OPERATION_COLLECT_GARBAGE) {
   m_dependencies.insert(Dependency::INIT);
   m_dependencies.insert(Dependency::METADATA);
 }
@@ -43,14 +43,8 @@ void OperationCollectGarbage::execute() {
   catch (Exception &e) {
     HT_THROW2(e.code(), e, "Garbage Collection");
   }
-  set_state(OperationState::COMPLETE);
+  complete_ok();
   HT_INFOF("Leaving CollectGarbage-%lld", (Lld)header.id);
-}
-
-#define OPERATION_COLLECT_GARBAGE_VERSION 1
-
-uint16_t OperationCollectGarbage::encoding_version() const {
-  return OPERATION_COLLECT_GARBAGE_VERSION;
 }
 
 const String OperationCollectGarbage::name() {
