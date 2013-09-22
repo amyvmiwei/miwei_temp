@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -27,6 +27,7 @@
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 
 #include "Cells.h"
+#include "ClientObject.h"
 #include "RangeLocator.h"
 #include "RangeServerClient.h"
 #include "IntervalScannerAsync.h"
@@ -40,7 +41,7 @@ namespace Hypertable {
 
   class Table;
 
-  class TableScannerAsync : public ReferenceCount {
+  class TableScannerAsync : public ClientObject {
 
   public:
     /**
@@ -61,7 +62,7 @@ namespace Hypertable {
                       const ScanSpec &scan_spec, uint32_t timeout_ms,
                       ResultCallback *cb, int flags = 0);
 
-    ~TableScannerAsync();
+    virtual ~TableScannerAsync();
 
     /**
      * Cancels the scanner

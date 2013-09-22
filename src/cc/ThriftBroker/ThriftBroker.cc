@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -72,35 +72,35 @@
 #define LOG_API_START(_expr_) \
   boost::xtime start_time, end_time; \
   std::ostringstream logging_stream;\
-  if (m_log_api) {\
+  if (m_context.log_api) {\
     boost::xtime_get(&start_time, TIME_UTC_);\
     logging_stream << "API " << __func__ << ": " << _expr_;\
   }
 
 #define LOG_API_FINISH \
-  if (m_log_api) { \
+  if (m_context.log_api) { \
     boost::xtime_get(&end_time, TIME_UTC_); \
     std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
   }
 
 #define LOG_API_FINISH_E(_expr_) \
-  if (m_log_api) { \
+  if (m_context.log_api) { \
     boost::xtime_get(&end_time, TIME_UTC_); \
     std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << _expr_ << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
   }
 
 
 #define LOG_API(_expr_) do { \
-  if (m_log_api) \
+  if (m_context.log_api) \
     std::cout << hires_ts <<" API "<< __func__ <<": "<< _expr_ << std::endl; \
 } while (0)
 
 #define LOG_HQL_RESULT(_res_) do { \
-  if (m_log_api) \
+  if (m_context.log_api) \
     cout << hires_ts <<" API "<< __func__ <<": result: "; \
   if (Logger::logger->isDebugEnabled()) \
     cout << _res_; \
-  else if (m_log_api) { \
+  else if (m_context.log_api) { \
     if (_res_.__isset.results) \
       cout <<"results.size=" << _res_.results.size(); \
     if (_res_.__isset.cells) \
@@ -125,6 +125,7 @@ using namespace Config;
 using namespace ThriftGen;
 using namespace boost;
 using namespace std;
+
 
 class SharedMutatorMapKey {
 public:
@@ -161,19 +162,28 @@ inline bool operator < (const SharedMutatorMapKey &skey1,
   return skey1.compare(skey2) < 0;
 }
 
-
 typedef Meta::list<ThriftBrokerPolicy, DefaultCommPolicy> Policies;
 
-typedef std::map<SharedMutatorMapKey, TableMutatorPtr> SharedMutatorMap;
-typedef hash_map< ::int64_t, TableScannerPtr> ScannerMap;
-typedef hash_map< ::int64_t, TableScannerAsyncPtr> ScannerAsyncMap;
-typedef hash_map< ::int64_t, ::int64_t> ReverseScannerAsyncMap;
-typedef hash_map< ::int64_t, TableMutatorPtr> MutatorMap;
-typedef hash_map< ::int64_t, TableMutatorAsyncPtr> MutatorAsyncMap;
-typedef hash_map< ::int64_t, NamespacePtr> NamespaceMap;
-typedef hash_map< ::int64_t, FuturePtr> FutureMap;
+typedef std::map<SharedMutatorMapKey, TableMutator * > SharedMutatorMap;
+typedef hash_map< ::int64_t, ClientObjectPtr> ObjectMap;
 typedef std::vector<ThriftGen::Cell> ThriftCells;
 typedef std::vector<CellAsArray> ThriftCellsAsArrays;
+
+class Context {
+public:
+  Context() {
+    client = new Hypertable::Client();
+    log_api = Config::get_bool("ThriftBroker.API.Logging");
+    next_threshold = Config::get_i32("ThriftBroker.NextThreshold");
+    future_capacity = Config::get_i32("ThriftBroker.Future.Capacity");
+  }
+  Hypertable::Client *client;
+  Mutex shared_mutator_mutex;
+  SharedMutatorMap shared_mutator_map;
+  bool log_api;
+  ::uint32_t next_threshold;
+  ::uint32_t future_capacity;
+};
 
 int64_t
 cell_str_to_num(const std::string &from, const char *label,
@@ -501,6 +511,7 @@ struct HqlCallback : HqlInterpreter::Callback {
   virtual void on_finish(TableMutator *);
 };
 
+
 class ServerHandler : public HqlServiceIf {
   struct Statistics {
     Statistics()
@@ -538,13 +549,14 @@ class ServerHandler : public HqlServiceIf {
   };
 
 public:
-  ServerHandler() {
-    m_log_api = Config::get_bool("ThriftBroker.API.Logging");
-    m_next_threshold = Config::get_i32("ThriftBroker.NextThreshold");
-    m_client = new Hypertable::Client();
-    m_next_namespace_id = 1;
-    m_next_future_id = 1;
-    m_future_capacity = Config::get_i32("ThriftBroker.Future.Capacity");
+
+  ServerHandler(Context &c) : m_context(c) { }
+
+  virtual ~ServerHandler() {
+    ScopedLock lock(m_mutex);
+    if (!m_object_map.empty())
+      HT_WARNF("Destroying ServerHandler with %d objects in map",
+               (int)m_object_map.size());
   }
 
   virtual void
@@ -614,7 +626,7 @@ public:
   virtual void namespace_create(const String &ns) {
     LOG_API_START("namespace=" << ns);
     try {
-      m_client->create_namespace(ns, NULL);
+      m_context.client->create_namespace(ns, NULL);
     } RETHROW("namespace=" << ns)
     LOG_API_FINISH;
   }
@@ -629,7 +641,7 @@ public:
             << schema);
 
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       namespace_ptr->create_table(table, schema);
     } RETHROW("namespace=" << ns << " table="<< table <<" schema="<< schema)
 
@@ -647,7 +659,7 @@ public:
             << schema);
 
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       namespace_ptr->alter_table(table, schema);
     } RETHROW("namespace=" << ns << " table="<< table <<" schema="<< schema)
 
@@ -664,7 +676,7 @@ public:
     Scanner id;
     LOG_API_START("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
     try {
-      id = get_scanner_id(_open_scanner(ns, table, ss).get());
+      id = get_object_id(_open_scanner(ns, table, ss));
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" scanner="<<id);
     return id;
@@ -682,7 +694,7 @@ public:
     LOG_API_START("namespace=" << ns << " table=" << table << " future="
             << ff << " scan_spec=" << ss);
     try {
-      id = get_scanner_async_id(_open_scanner_async(ns, table, ff, ss).get());
+      id = get_object_id(_open_scanner_async(ns, table, ff, ss));
     } RETHROW("namespace=" << ns << " table=" << table << " future="
             << ff << " scan_spec="<< ss)
 
@@ -699,7 +711,7 @@ public:
   virtual void namespace_close(const ThriftGen::Namespace ns) {
     LOG_API_START("namespace="<< ns);
     try {
-      remove_namespace_from_map(ns);
+      remove_namespace(ns);
     } RETHROW("namespace="<< ns)
     LOG_API_FINISH;
   }
@@ -712,7 +724,7 @@ public:
           const String &table_name) {
     LOG_API_START("namespace=" << ns << " table=" << table_name);
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       namespace_ptr->refresh_table(table_name);
     } RETHROW("namespace=" << ns << " table=" << table_name);
     LOG_API_FINISH;
@@ -747,7 +759,7 @@ public:
   virtual void async_scanner_close(const ScannerAsync scanner_async) {
     LOG_API_START("scanner_async="<< scanner_async);
     try {
-      remove_scanner_async(scanner_async);
+      remove_scanner(scanner_async);
     } RETHROW("scanner_async="<< scanner_async)
     LOG_API_FINISH;
   }
@@ -760,8 +772,8 @@ public:
           const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
     try {
-      TableScannerPtr scanner = get_scanner(scanner_id);
-      _next(result, scanner, m_next_threshold);
+      TableScanner *scanner = get_scanner(scanner_id);
+      _next(result, scanner, m_context.next_threshold);
     } RETHROW("scanner="<< scanner_id)
     LOG_API_FINISH_E(" result.size=" << result.size());
   }
@@ -774,8 +786,8 @@ public:
           const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
     try {
-      TableScannerPtr scanner = get_scanner(scanner_id);
-      _next(result, scanner, m_next_threshold);
+      TableScanner *scanner = get_scanner(scanner_id);
+      _next(result, scanner, m_context.next_threshold);
     } RETHROW("scanner="<< scanner_id <<" result.size="<< result.size())
     LOG_API_FINISH_E("result.size="<< result.size());
   }
@@ -790,10 +802,10 @@ public:
     LOG_API_START("scanner="<< scanner_id);
 
     try {
-      SerializedCellsWriter writer(m_next_threshold);
+      SerializedCellsWriter writer(m_context.next_threshold);
       Hypertable::Cell cell;
 
-      TableScannerPtr scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id);
 
       while (1) {
         if (scanner->next(cell)) {
@@ -822,7 +834,7 @@ public:
   virtual void scanner_get_row(ThriftCells &result, const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id <<" result.size="<< result.size());
     try {
-      TableScannerPtr scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id);
       _next_row(result, scanner);
     } RETHROW("scanner=" << scanner_id)
 
@@ -837,7 +849,7 @@ public:
           const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
     try {
-      TableScannerPtr scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id);
       _next_row(result, scanner);
     } RETHROW(" result.size=" << result.size())
     LOG_API_FINISH_E(" result.size="<< result.size());
@@ -857,7 +869,7 @@ public:
       Hypertable::Cell cell;
       std::string prev_row;
 
-      TableScannerPtr scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id);
 
       while (1) {
         if (scanner->next(cell)) {
@@ -919,7 +931,7 @@ public:
 
     try {
       SerializedCellsWriter writer(0, true);
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       TablePtr t = namespace_ptr->open_table(table);
       Hypertable::ScanSpec ss;
       ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
@@ -946,7 +958,7 @@ public:
       HT_THROW(Error::BAD_KEY, "Empty row key");
       
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       TablePtr t = namespace_ptr->open_table(table);
       Hypertable::ScanSpec ss;
 
@@ -971,7 +983,7 @@ public:
             << ss << " result.size=" << result.size());
 
     try {
-      TableScannerPtr scanner = _open_scanner(ns, table, ss);
+      TableScanner *scanner = _open_scanner(ns, table, ss);
       _next(result, scanner, INT32_MAX);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" result.size="<< result.size());
@@ -983,7 +995,7 @@ public:
     LOG_API_START("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
-      TableScannerPtr scanner = _open_scanner(ns, table, ss);
+      TableScanner *scanner = _open_scanner(ns, table, ss);
       _next(result, scanner, INT32_MAX);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" result.size="<< result.size());
@@ -996,7 +1008,7 @@ public:
 
     try {
       SerializedCellsWriter writer(0, true);
-      TableScannerPtr scanner = _open_scanner(ns, table, ss);
+      TableScanner *scanner = _open_scanner(ns, table, ss);
       Hypertable::Cell cell;
 
       while (scanner->next(cell))
@@ -1089,9 +1101,8 @@ public:
     ThriftGen::Future id;
     LOG_API_START("capacity=" << capacity);
     try {
-      capacity = (capacity <= 0) ? m_future_capacity : capacity;
-      FuturePtr future_ptr = new Hypertable::Future(capacity);
-      id = get_future_id(&future_ptr);
+      capacity = (capacity <= 0) ? m_context.future_capacity : capacity;
+      id = get_object_id( new Hypertable::Future(capacity) );
     } RETHROW("capacity=" << capacity)
     LOG_API_FINISH_E(" future=" << id);
     return id;
@@ -1106,10 +1117,10 @@ public:
     LOG_API_START("future=" << ff);
 
     try {
-      FuturePtr future_ptr = get_future(ff);
+      Hypertable::Future *future = get_future(ff);
       ResultPtr hresult;
       bool timed_out = false;
-      bool done = !(future_ptr->get(hresult, (uint32_t)timeout_millis,
+      bool done = !(future->get(hresult, (uint32_t)timeout_millis,
                   timed_out));
       if (timed_out)
         THROW_TE(Error::REQUEST_TIMEOUT, "Failed to fetch Future result");
@@ -1137,10 +1148,10 @@ public:
           ThriftGen::Future ff, int timeout_millis) {
     LOG_API_START("future=" << ff);
     try {
-      FuturePtr future_ptr = get_future(ff);
+      Hypertable::Future *future = get_future(ff);
       ResultPtr hresult;
       bool timed_out = false;
-      bool done = !(future_ptr->get(hresult, (uint32_t)timeout_millis,
+      bool done = !(future->get(hresult, (uint32_t)timeout_millis,
                   timed_out));
       if (timed_out)
         THROW_TE(Error::REQUEST_TIMEOUT, "Failed to fetch Future result");
@@ -1169,10 +1180,10 @@ public:
     LOG_API_START("future=" << ff);
 
     try {
-      FuturePtr future_ptr = get_future(ff);
+      Hypertable::Future *future = get_future(ff);
       ResultPtr hresult;
       bool timed_out = false;
-      bool done = !(future_ptr->get(hresult, (uint32_t)timeout_millis,
+      bool done = !(future->get(hresult, (uint32_t)timeout_millis,
                   timed_out));
       if (timed_out)
         THROW_TE(Error::REQUEST_TIMEOUT, "Failed to fetch Future result");
@@ -1200,8 +1211,8 @@ public:
     LOG_API_START("future=" << ff);
 
     try {
-      FuturePtr future_ptr = get_future(ff);
-      future_ptr->cancel();
+      Hypertable::Future *future = get_future(ff);
+      future->cancel();
     } RETHROW("future=" << ff)
     LOG_API_FINISH;
   }
@@ -1214,8 +1225,8 @@ public:
     LOG_API_START("future=" << ff);
     bool is_empty;
     try {
-      FuturePtr future_ptr = get_future(ff);
-      is_empty = future_ptr->is_empty();
+      Hypertable::Future *future = get_future(ff);
+      is_empty = future->is_empty();
     } RETHROW("future=" << ff)
     LOG_API_FINISH_E(" is_empty=" << is_empty);
     return is_empty;
@@ -1225,8 +1236,8 @@ public:
     LOG_API_START("future=" << ff);
     bool full;
     try {
-      FuturePtr future_ptr = get_future(ff);
-      full = future_ptr->is_full();
+      Hypertable::Future *future = get_future(ff);
+      full = future->is_full();
     } RETHROW("future=" << ff)
     LOG_API_FINISH_E(" full=" << full);
     return full;
@@ -1236,8 +1247,8 @@ public:
     LOG_API_START("future=" << ff);
     bool cancelled;
     try {
-      FuturePtr future_ptr = get_future(ff);
-      cancelled = future_ptr->is_cancelled();
+      Hypertable::Future *future = get_future(ff);
+      cancelled = future->is_cancelled();
     } RETHROW("future=" << ff)
     LOG_API_FINISH_E(" cancelled=" << cancelled);
     return cancelled;
@@ -1247,8 +1258,8 @@ public:
     bool has_outstanding;
     LOG_API_START("future=" << ff);
     try {
-      FuturePtr future_ptr = get_future(ff);
-      has_outstanding = future_ptr->has_outstanding();
+      Hypertable::Future *future = get_future(ff);
+      has_outstanding = future->has_outstanding();
     } RETHROW("future=" << ff)
     LOG_API_FINISH_E(" has_outstanding=" << has_outstanding);
     return has_outstanding;
@@ -1257,7 +1268,7 @@ public:
   virtual void future_close(const ThriftGen::Future ff) {
     LOG_API_START("future="<< ff);
     try {
-      remove_future_from_map(ff);
+      remove_future(ff);
     } RETHROW(" future=" << ff)
     LOG_API_FINISH;
   }
@@ -1270,8 +1281,7 @@ public:
     ThriftGen::Namespace id;
     LOG_API_START("namespace name=" << ns);
     try {
-      NamespacePtr namespace_ptr = m_client->open_namespace(ns);
-      id = get_namespace_id(&namespace_ptr);
+      id = get_object_id( m_context.client->open_namespace(ns) );
     } RETHROW(" namespace name" << ns)
     LOG_API_FINISH_E(" id=" << id);
     return id;
@@ -1287,7 +1297,7 @@ public:
             << ff << " flags=" << flags);
     MutatorAsync id;
     try {
-      id = get_mutator_async_id(_open_mutator_async(ns, table, ff, flags).get());
+      id = get_object_id(_open_mutator_async(ns, table, ff, flags));
     } RETHROW(" namespace=" << ns << " table=" << table << " future="
             << ff << " flags=" << flags)
     LOG_API_FINISH_E(" mutator=" << id);
@@ -1305,9 +1315,9 @@ public:
             << flags << " flush_interval=" << flush_interval);
     Mutator id;
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       TablePtr t = namespace_ptr->open_table(table);
-      id =  get_mutator_id(t->create_mutator(0, flags, flush_interval));
+      id =  get_object_id(t->create_mutator(0, flags, flush_interval));
     } RETHROW(" namespace=" << ns << "table=" << table << " flags="
             << flags << " flush_interval=" << flush_interval)
     LOG_API_FINISH_E(" async_mutator=" << id);
@@ -1374,7 +1384,7 @@ public:
     LOG_API_START("mutator="<< mutator);
     try {
       flush_mutator_async(mutator);
-      remove_mutator_async(mutator);
+      remove_mutator(mutator);
     } RETHROW(" mutator" << mutator)
     LOG_API_FINISH;
   }
@@ -1433,7 +1443,7 @@ public:
         reader.get(hcell);
         cb.add(hcell, false);
       }
-	  get_mutator(mutator)->set_cells(cb.get());
+      get_mutator(mutator)->set_cells(cb.get());
       if (flush || reader.flush())
         get_mutator(mutator)->flush();
     } RETHROW(" mutator="<< mutator <<" cell.size="<< cells.size())
@@ -1593,7 +1603,7 @@ public:
         reader.get(hcell);
         cb.add(hcell, false);
       }
-      TableMutatorAsyncPtr mutator_ptr = get_mutator_async(mutator);
+      TableMutatorAsync *mutator_ptr = get_mutator_async(mutator);
 	    mutator_ptr->set_cells(cb.get());
       if (flush || reader.flush() || mutator_ptr->needs_flush())
         mutator_ptr->flush();
@@ -1612,7 +1622,7 @@ public:
     bool exists;
     LOG_API_START("namespace=" << ns);
     try {
-      exists = m_client->exists_namespace(ns);
+      exists = m_context.client->exists_namespace(ns);
     } RETHROW(" namespace=" << ns)
     LOG_API_FINISH_E(" exists=" << exists);
     return exists;
@@ -1627,7 +1637,7 @@ public:
     LOG_API_START("namespace=" << ns << " table=" << table);
     bool exists;
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       exists = namespace_ptr->exists_table(table);
     } RETHROW(" namespace=" << ns << " table="<< table)
     LOG_API_FINISH_E(" exists=" << exists);
@@ -1643,7 +1653,7 @@ public:
           const String &table) {
     LOG_API_START("namespace=" << ns << " table=" << table);
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       result = namespace_ptr->get_table_id(table);
     } RETHROW(" namespace=" << ns << " table="<< table)
     LOG_API_FINISH_E(" id=" << result);
@@ -1658,7 +1668,7 @@ public:
           const ThriftGen::Namespace ns, const String &table) {
     LOG_API_START("namespace=" << ns << " table=" << table);
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       result = namespace_ptr->get_schema_str(table);
     } RETHROW(" namespace=" << ns << " table=" << table)
     LOG_API_FINISH_E(" schema=" << result);
@@ -1673,7 +1683,7 @@ public:
           const ThriftGen::Namespace ns, const String &table) {
     LOG_API_START("namespace=" << ns << " table=" << table);
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       result = namespace_ptr->get_schema_str(table, true);
     } RETHROW(" namespace=" << ns << " table=" << table)
     LOG_API_FINISH_E(" schema=" << result);
@@ -1688,7 +1698,7 @@ public:
           const ThriftGen::Namespace ns, const String &table) {
     LOG_API_START("namespace=" << ns << " table=" << table);
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       Hypertable::SchemaPtr schema = namespace_ptr->get_schema(table);
       if (schema) {
         Hypertable::Schema::AccessGroups ags = schema->get_access_groups();
@@ -1742,7 +1752,7 @@ public:
           const ThriftGen::Namespace ns) {
     LOG_API_START("namespace=" << ns);
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       std::vector<Hypertable::NamespaceListing> listing;
       namespace_ptr->get_listing(false, listing);
 
@@ -1759,7 +1769,7 @@ public:
           const ThriftGen::Namespace ns) {
     LOG_API_START("namespace=" << ns);
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       std::vector<Hypertable::NamespaceListing> listing;
       namespace_ptr->get_listing(false, listing);
       ThriftGen::NamespaceListing entry;
@@ -1787,7 +1797,7 @@ public:
             << " splits.size=" << _return.size());
     try {
       ThriftGen::TableSplit tsplit;
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       namespace_ptr->get_table_splits(table, splits);
       for (TableSplitsContainer::iterator iter = splits.begin();
               iter != splits.end(); ++iter) {
@@ -1808,7 +1818,7 @@ public:
   virtual void namespace_drop(const String &ns, const bool if_exists) {
     LOG_API_START("namespace=" << ns << " if_exists=" << if_exists);
     try {
-      m_client->drop_namespace(ns, NULL, if_exists);
+      m_context.client->drop_namespace(ns, NULL, if_exists);
     }
     RETHROW(" namespace=" << ns << " if_exists=" << if_exists)
     LOG_API_FINISH;
@@ -1823,7 +1833,7 @@ public:
     LOG_API_START("namespace=" << ns << " table=" << table
             << " new_table_name=" << new_table_name << " done");
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       namespace_ptr->rename_table(table, new_table_name);
     }
     RETHROW(" namespace=" << ns << " table=" << table << " new_table_name="
@@ -1841,7 +1851,7 @@ public:
     LOG_API_START("namespace=" << ns << " table=" << table << " if_exists="
             << if_exists);
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       namespace_ptr->drop_table(table, if_exists);
     }
     RETHROW("namespace=" << ns << " table=" << table << " if_exists="
@@ -1870,7 +1880,7 @@ public:
             << tkey << " value=" << value);
     std::string guid;
     try {
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       Hypertable::KeySpec hkey;
       convert_key(tkey, hkey);
       TablePtr t = namespace_ptr->open_table(table_name);
@@ -1896,7 +1906,7 @@ public:
 
     if (hresult->is_scan()) {
       tresult.is_scan = true;
-      tresult.id = get_scanner_async_id(hresult->get_scanner());
+      tresult.id = get_object_id(hresult->get_scanner());
       if (hresult->is_error()) {
         tresult.is_error = true;
         hresult->get_error(tresult.error, tresult.error_msg);
@@ -1912,7 +1922,7 @@ public:
     }
     else {
       tresult.is_scan = false;
-      tresult.id = get_mutator_async_id(hresult->get_mutator());
+      tresult.id = get_object_id(hresult->get_mutator());
       if (hresult->is_error()) {
         tresult.is_error = true;
         hresult->get_error(tresult.error, tresult.error_msg);
@@ -1930,7 +1940,7 @@ public:
 
     if (hresult->is_scan()) {
       tresult.is_scan = true;
-      tresult.id = get_scanner_async_id(hresult->get_scanner());
+      tresult.id = get_object_id(hresult->get_scanner());
       if (hresult->is_error()) {
         tresult.is_error = true;
         hresult->get_error(tresult.error, tresult.error_msg);
@@ -1956,7 +1966,7 @@ public:
 
     if (hresult->is_scan()) {
       tresult.is_scan = true;
-      tresult.id = get_scanner_async_id(hresult->get_scanner());
+      tresult.id = get_object_id(hresult->get_scanner());
       if (hresult->is_error()) {
         tresult.is_error = true;
         hresult->get_error(tresult.error, tresult.error_msg);
@@ -1976,45 +1986,45 @@ public:
     }
   }
 
-  TableMutatorAsyncPtr _open_mutator_async(const ThriftGen::Namespace ns,
+  TableMutatorAsync *_open_mutator_async(const ThriftGen::Namespace ns,
           const String &table, const ThriftGen::Future ff, ::int32_t flags) {
-    NamespacePtr namespace_ptr = get_namespace(ns);
+    Hypertable::Namespace *namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
-    FuturePtr future_ptr = get_future(ff);
+    Hypertable::Future *future = get_future(ff);
 
-    return t->create_mutator_async(future_ptr.get(), 0, flags);
+    return t->create_mutator_async(future, 0, flags);
   }
 
-  TableScannerAsyncPtr _open_scanner_async(const ThriftGen::Namespace ns,
+  TableScannerAsync *_open_scanner_async(const ThriftGen::Namespace ns,
           const String &table, const ThriftGen::Future ff,
           const ThriftGen::ScanSpec &ss) {
-    NamespacePtr namespace_ptr = get_namespace(ns);
+    Hypertable::Namespace *namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
-    FuturePtr future_ptr = get_future(ff);
+    Hypertable::Future *future = get_future(ff);
 
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
-    return t->create_scanner_async(future_ptr.get(), hss, 0);
+    return t->create_scanner_async(future, hss, 0);
   }
 
-  TableScannerPtr _open_scanner(const ThriftGen::Namespace ns,
+  TableScanner *_open_scanner(const ThriftGen::Namespace ns,
           const String &table, const ThriftGen::ScanSpec &ss) {
-    NamespacePtr namespace_ptr = get_namespace(ns);
+    Hypertable::Namespace *namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
     Hypertable::ScanSpec hss;
     convert_scan_spec(ss, hss);
     return t->create_scanner(hss, 0);
   }
 
-  TableMutatorPtr _open_mutator(const ThriftGen::Namespace ns,
+  TableMutator *_open_mutator(const ThriftGen::Namespace ns,
           const String &table) {
-    NamespacePtr namespace_ptr = get_namespace(ns);
+    Hypertable::Namespace *namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
     return t->create_mutator();
   }
 
   template <class CellT>
-  void _next(vector<CellT> &result, TableScannerPtr &scanner, int limit) {
+  void _next(vector<CellT> &result, TableScanner *scanner, int limit) {
     Hypertable::Cell cell;
     int32_t amount_read = 0;
 
@@ -2030,7 +2040,7 @@ public:
   }
 
   template <class CellT>
-  void _next_row(vector<CellT> &result, TableScannerPtr &scanner) {
+  void _next_row(vector<CellT> &result, TableScanner *scanner) {
     Hypertable::Cell cell;
     std::string prev_row;
 
@@ -2052,20 +2062,20 @@ public:
   template <class CellT>
   void _get_row(vector<CellT> &result, const ThriftGen::Namespace ns,
           const String &table, const String &row) {
-    NamespacePtr namespace_ptr = get_namespace(ns);
+    Hypertable::Namespace *namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
     Hypertable::ScanSpec ss;
     ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
                                                        row.c_str(), true));
     ss.max_versions = 1;
-    TableScannerPtr scanner = t->create_scanner(ss);
+    TableScanner *scanner = t->create_scanner(ss);
     _next(result, scanner, INT32_MAX);
   }
 
   void run_hql_interp(const ThriftGen::Namespace ns, const String &hql,
           HqlInterpreter::Callback &cb) {
-    NamespacePtr namespace_ptr = get_namespace(ns);
-    HqlInterpreterPtr interp = m_client->create_hql_interpreter(true);
+    Hypertable::Namespace *namespace_ptr = get_namespace(ns);
+    HqlInterpreterPtr interp = m_context.client->create_hql_interpreter(true);
     interp->set_namespace(namespace_ptr->get_name());
     interp->execute(hql, cb);
   }
@@ -2109,7 +2119,7 @@ public:
   void _set_cells_async(const MutatorAsync mutator, const vector<CellT> &cells) {
     Hypertable::Cells hcells;
     convert_cells(cells, hcells);
-    TableMutatorAsyncPtr mutator_ptr = get_mutator_async(mutator);
+    TableMutatorAsync *mutator_ptr = get_mutator_async(mutator);
     mutator_ptr->set_cells(hcells);
     if (mutator_ptr->needs_flush())
       mutator_ptr->flush();
@@ -2121,180 +2131,109 @@ public:
     Hypertable::Cell hcell;
     convert_cell(cell, hcell);
     cb.add(hcell, false);
-    TableMutatorAsyncPtr mutator_ptr = get_mutator_async(mutator);
+    TableMutatorAsync *mutator_ptr = get_mutator_async(mutator);
     mutator_ptr->set_cells(cb.get());
     if (mutator_ptr->needs_flush())
       mutator_ptr->flush();
   }
 
-  FuturePtr get_future(int64_t id) {
-    ScopedLock lock(m_future_mutex);
-    FutureMap::iterator it = m_future_map.find(id);
-
-    if (it != m_future_map.end())
-      return it->second;
-
-    HT_ERROR_OUT << "Bad future id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_FUTURE_ID,
-             format("Invalid future id: %lld", (Lld)id));
+  ClientObject *get_object(int64_t id) {
+    ScopedLock lock(m_mutex);
+    ObjectMap::iterator it = m_object_map.find(id);
+    return (it != m_object_map.end()) ? it->second.get() : 0;
   }
 
-
-  NamespacePtr get_namespace(int64_t id) {
-    ScopedLock lock(m_namespace_mutex);
-    NamespaceMap::iterator it = m_namespace_map.find(id);
-
-    if (it != m_namespace_map.end())
-      return it->second;
-
-    HT_ERROR_OUT << "Bad namespace id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_NAMESPACE_ID,
-             format("Invalid namespace id: %lld", (Lld)id));
-
-  }
-
-  // returned id is guaranteed to be unique and non-zero
-  int64_t get_future_id(FuturePtr *ff) {
-    ScopedLock lock(m_future_mutex);
-    int64_t id = m_next_future_id;
-    m_next_future_id++;
-    m_future_map.insert(make_pair(id, *ff)); // no overwrite
-    return id;
-  }
-
-
-  // returned id is guaranteed to be unique and non-zero
-  int64_t get_namespace_id(NamespacePtr *ns) {
-    ScopedLock lock(m_namespace_mutex);
-    // generate unique random 64 bit int id
-    // TODO make id random for security reasons
-    //::int64_t id = Random::number64();
-    int64_t id = m_next_namespace_id++;
-
-    // TODO make id random for security reasons
-    //while (m_namespace_map.find(id) != m_namespace_map.end() || id == 0) {
-    //  id = Random::number64();
-    //}
-    m_namespace_map.insert(make_pair(id, *ns)); // no overwrite
-    return id;
-  }
-
-  int64_t get_scanner_async_id(TableScannerAsync *scanner) {
-    ScopedLock lock(m_scanner_async_mutex);
-    int64_t id = (int64_t)scanner;
-
-    // if scanner is already in map then return id by reverse lookup
-    ReverseScannerAsyncMap::iterator it =
-        m_reverse_scanner_async_map.find((::int64_t)scanner);
-    if (it != m_reverse_scanner_async_map.end())
-      id = it->second;
-    else {
-      m_scanner_async_map.insert(make_pair(id, scanner)); // no overwrite
-      m_reverse_scanner_async_map.insert(make_pair((::int64_t)scanner, id));
+  Hypertable::Future *get_future(int64_t id) {
+    Hypertable::Future *future = static_cast<Hypertable::Future *>(get_object(id));
+    if (future == 0) {
+      HT_ERROR_OUT << "Bad future id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_FUTURE_ID,
+               format("Invalid future id: %lld", (Lld)id));
     }
+    return future;
+  }
+
+
+  Hypertable::Namespace *get_namespace(int64_t id) {
+    Hypertable::Namespace *ns = static_cast<Hypertable::Namespace *>(get_object(id));
+    if (ns == 0) {
+      HT_ERROR_OUT << "Bad namespace id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_NAMESPACE_ID,
+               format("Invalid namespace id: %lld", (Lld)id));
+    }
+    return ns;
+  }
+
+  int64_t get_object_id(ClientObjectPtr co) {
+    ScopedLock lock(m_mutex);
+    int64_t id = (uint64_t)co.get();
+    m_object_map.insert(make_pair(id, co)); // no overwrite
     return id;
   }
 
-  TableScannerAsyncPtr get_scanner_async(int64_t id) {
-    ScopedLock lock(m_scanner_async_mutex);
-    ScannerAsyncMap::iterator it = m_scanner_async_map.find(id);
-
-    if (it != m_scanner_async_map.end())
-      return it->second;
-
-    HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
-             format("Invalid scanner id: %lld", (Lld)id));
+  TableScannerAsync *get_scanner_async(int64_t id) {
+    TableScannerAsync *scanner = 
+      static_cast<TableScannerAsync *>(get_object(id));
+    if (scanner == 0) {
+      HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
+               format("Invalid scanner id: %lld", (Lld)id));
+    }
+    return scanner;
   }
 
-  int64_t get_scanner_id(TableScanner *scanner) {
-    ScopedLock lock(m_scanner_mutex);
-    int64_t id = (int64_t)scanner;
-    m_scanner_map.insert(make_pair(id, scanner)); // no overwrite
-    return id;
+  TableScanner *get_scanner(int64_t id) {
+    TableScanner *scanner = 
+      static_cast<TableScanner *>(get_object(id));
+    if (scanner == 0) {
+      HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
+               format("Invalid scanner id: %lld", (Lld)id));
+    }
+    return scanner;
   }
 
-  TableScannerPtr get_scanner(int64_t id) {
-    ScopedLock lock(m_scanner_mutex);
-    ScannerMap::iterator it = m_scanner_map.find(id);
-
-    if (it != m_scanner_map.end())
-      return it->second;
-
-    HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
-             format("Invalid scanner id: %lld", (Lld)id));
+  bool remove_object(int64_t id) {
+    ScopedLock lock(m_mutex);
+    ObjectMap::iterator it = m_object_map.find(id);
+    if (it != m_object_map.end()) {
+      m_object_map.erase(it);
+      return true;
+    }
+    return false;
   }
 
   void remove_scanner(int64_t id) {
-    ScopedLock lock(m_scanner_mutex);
-    ScannerMap::iterator it = m_scanner_map.find(id);
-
-    if (it != m_scanner_map.end()) {
-      m_scanner_map.erase(it);
-      return;
+    if (!remove_object(id)) {
+      HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
+               format("Invalid scanner id: %lld", (Lld)id));
     }
-
-    HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
-             format("Invalid scanner id: %lld", (Lld)id));
   }
-
-  void remove_scanner_async(int64_t id) {
-    ScopedLock lock(m_scanner_async_mutex);
-    ScannerAsyncMap::iterator it = m_scanner_async_map.find(id);
-    int64_t scanner_async = 0;
-
-    if (it != m_scanner_async_map.end()) {
-      scanner_async = (int64_t)(it->second.get());
-      m_scanner_async_map.erase(it);
-      m_reverse_scanner_async_map.erase(scanner_async);
-      return;
-    }
-
-    HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
-             format("Invalid scanner id: %lld", (Lld)id));
-  }
-
-  int64_t get_mutator_id(TableMutator *mutator) {
-    ScopedLock lock(m_mutator_mutex);
-    int64_t id = (int64_t)mutator;
-    m_mutator_map.insert(make_pair(id, mutator)); // no overwrite
-    return id;
-  }
-
-  int64_t get_mutator_async_id(TableMutatorAsync *mutator) {
-    ScopedLock lock(m_mutator_async_mutex);
-    int64_t id = (int64_t)mutator;
-    m_mutator_async_map.insert(make_pair(id, mutator)); // no overwrite
-    return id;
-  }
-
 
   virtual void shared_mutator_refresh(const ThriftGen::Namespace ns,
           const String &table, const ThriftGen::MutateSpec &mutate_spec) {
-    ScopedLock lock(m_shared_mutator_mutex);
+    ScopedLock lock(m_context.shared_mutator_mutex);
     SharedMutatorMapKey skey(ns, table, mutate_spec);
 
-    SharedMutatorMap::iterator it = m_shared_mutator_map.find(skey);
+    SharedMutatorMap::iterator it = m_context.shared_mutator_map.find(skey);
 
     // if mutator exists then delete it
-    if (it != m_shared_mutator_map.end()) {
+    if (it != m_context.shared_mutator_map.end()) {
       LOG_API("deleting shared mutator on namespace=" << ns << " table="
               << table << " with appname=" << mutate_spec.appname);
-      m_shared_mutator_map.erase(it);
+      m_context.shared_mutator_map.erase(it);
     }
 
     //re-create the shared mutator
     // else create it and insert it in the map
     LOG_API("creating shared mutator on namespace=" << ns << " table=" << table
             <<" with appname=" << mutate_spec.appname);
-    NamespacePtr namespace_ptr = get_namespace(ns);
+    Hypertable::Namespace *namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
-    TableMutatorPtr mutator = t->create_mutator(0, mutate_spec.flags,
+    TableMutator *mutator = t->create_mutator(0, mutate_spec.flags,
             mutate_spec.flush_interval);
-    m_shared_mutator_map[skey] = mutator;
+    m_context.shared_mutator_map[skey] = mutator;
     return;
   }
 
@@ -2303,132 +2242,78 @@ public:
     shared_mutator_refresh(ns, table, mutate_spec);
   }
 
-  TableMutatorPtr get_shared_mutator(const ThriftGen::Namespace ns,
+  TableMutator *get_shared_mutator(const ThriftGen::Namespace ns,
           const String &table, const ThriftGen::MutateSpec &mutate_spec) {
-    ScopedLock lock(m_shared_mutator_mutex);
+    ScopedLock lock(m_context.shared_mutator_mutex);
     SharedMutatorMapKey skey(ns, table, mutate_spec);
 
-    SharedMutatorMap::iterator it = m_shared_mutator_map.find(skey);
+    SharedMutatorMap::iterator it = m_context.shared_mutator_map.find(skey);
 
     // if mutator exists then return it
-    if (it != m_shared_mutator_map.end())
+    if (it != m_context.shared_mutator_map.end())
       return it->second;
     else {
       // else create it and insert it in the map
       LOG_API("creating shared mutator on namespace=" << ns << " table="
               << table << " with appname=" << mutate_spec.appname);
-      NamespacePtr namespace_ptr = get_namespace(ns);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       TablePtr t = namespace_ptr->open_table(table);
-      TableMutatorPtr mutator = t->create_mutator(0, mutate_spec.flags,
+      TableMutator *mutator = t->create_mutator(0, mutate_spec.flags,
               mutate_spec.flush_interval);
-      m_shared_mutator_map[skey] = mutator;
+      m_context.shared_mutator_map[skey] = mutator;
       return mutator;
     }
   }
 
-  TableMutatorPtr get_mutator(int64_t id) {
-    ScopedLock lock(m_mutator_mutex);
-    MutatorMap::iterator it = m_mutator_map.find(id);
-
-    if (it != m_mutator_map.end())
-      return it->second;
-
-    HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
-             format("Invalid mutator id: %lld", (Lld)id));
-  }
-
-  TableMutatorAsyncPtr get_mutator_async(int64_t id) {
-    ScopedLock lock(m_mutator_async_mutex);
-    MutatorAsyncMap::iterator it = m_mutator_async_map.find(id);
-
-    if (it != m_mutator_async_map.end())
-      return it->second;
-
-    HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
-             format("Invalid mutator id: %lld", (Lld)id));
-  }
-
-  void remove_future_from_map(int64_t id) {
-    ScopedLock lock(m_future_mutex);
-    FutureMap::iterator it = m_future_map.find(id);
-
-    if (it != m_future_map.end()) {
-      m_future_map.erase(it);
-      return;
+  TableMutator *get_mutator(int64_t id) {
+    TableMutator *mutator = static_cast<TableMutator *>(get_object(id));
+    if (mutator == 0) {
+      HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
+               format("Invalid mutator id: %lld", (Lld)id));
     }
-
-    HT_ERROR_OUT << "Bad future id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_FUTURE_ID,
-             format("Invalid future id: %lld", (Lld)id));
+    return mutator;
   }
 
-  void remove_namespace_from_map(int64_t id) {
-    ScopedLock lock(m_namespace_mutex);
-    NamespaceMap::iterator it = m_namespace_map.find(id);
-
-    if (it != m_namespace_map.end()) {
-      m_namespace_map.erase(it);
-      return;
+  TableMutatorAsync *get_mutator_async(int64_t id) {
+    TableMutatorAsync *mutator =
+      static_cast<TableMutatorAsync *>(get_object(id));
+    if (mutator == 0) {
+      HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
+               format("Invalid mutator id: %lld", (Lld)id));
     }
+    return mutator;
+  }
 
-    HT_ERROR_OUT << "Bad namespace id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_NAMESPACE_ID,
-             format("Invalid namespace id: %lld", (Lld)id));
+  void remove_future(int64_t id) {
+    if (!remove_object(id)) {
+      HT_ERROR_OUT << "Bad future id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_FUTURE_ID,
+               format("Invalid future id: %lld", (Lld)id));
+    }
+  }
+
+  void remove_namespace(int64_t id) {
+    if (!remove_object(id)) {
+      HT_ERROR_OUT << "Bad namespace id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_NAMESPACE_ID,
+               format("Invalid namespace id: %lld", (Lld)id));
+    }
   }
 
   void remove_mutator(int64_t id) {
-    ScopedLock lock(m_mutator_mutex);
-    MutatorMap::iterator it = m_mutator_map.find(id);
-
-    if (it != m_mutator_map.end()) {
-      m_mutator_map.erase(it);
-      return;
+    if (!remove_object(id)) {
+      HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
+      THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
+               format("Invalid mutator id: %lld", (Lld)id));
     }
-
-    HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
-             format("Invalid mutator id: %lld", (Lld)id));
-  }
-
-  void remove_mutator_async(int64_t id) {
-    ScopedLock lock(m_mutator_async_mutex);
-    MutatorAsyncMap::iterator it = m_mutator_async_map.find(id);
-
-    if (it != m_mutator_async_map.end()) {
-      m_mutator_async_map.erase(it);
-      return;
-    }
-
-    HT_ERROR_OUT << "Bad mutator id - " << id << HT_END;
-    THROW_TE(Error::THRIFTBROKER_BAD_MUTATOR_ID,
-             format("Invalid mutator id: %lld", (Lld)id));
   }
 
 private:
-  bool             m_log_api;
-  Mutex            m_scanner_mutex;
-  ScannerMap       m_scanner_map;
-  Mutex            m_mutator_mutex;
-  Mutex            m_mutator_async_mutex;
-  MutatorMap       m_mutator_map;
-  MutatorAsyncMap  m_mutator_async_map;
-  Mutex            m_shared_mutator_mutex;
-  ::int64_t        m_next_namespace_id;
-  NamespaceMap     m_namespace_map;
-  Mutex            m_namespace_mutex;
-  ScannerAsyncMap  m_scanner_async_map;
-  ReverseScannerAsyncMap m_reverse_scanner_async_map;
-  Mutex            m_scanner_async_mutex;
-  ::int64_t        m_next_future_id;
-  FutureMap        m_future_map;
-  Mutex            m_future_mutex;
-  ::int32_t        m_future_capacity;
-  SharedMutatorMap m_shared_mutator_map;
-  ::int32_t        m_next_threshold;
-  ClientPtr        m_client;
-  Statistics       m_stats;
+  Context &m_context;
+  Mutex m_mutex;
+  ObjectMap m_object_map;
 };
 
 template <class ResultT, class CellT>
@@ -2450,7 +2335,7 @@ void HqlCallback<ResultT, CellT>::on_scan(TableScanner &s) {
     result.__isset.cells = true;
   }
   else {
-    result.scanner = handler.get_scanner_id(&s);
+    result.scanner = handler.get_object_id(&s);
     result.__isset.scanner = true;
   }
 }
@@ -2461,10 +2346,29 @@ void HqlCallback<ResultT, CellT>::on_finish(TableMutator *m) {
     Parent::on_finish(m);
   }
   else if (m) {
-    result.mutator = handler.get_mutator_id(m);
+    result.mutator = handler.get_object_id(m);
     result.__isset.mutator = true;
   }
 }
+
+namespace {
+  Context *g_context = 0;
+}
+
+class ThriftBrokerIfFactory : public HqlServiceIfFactory {
+ public:
+
+  virtual ~ThriftBrokerIfFactory() {}
+
+  virtual HqlServiceIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) {
+    return new ServerHandler(*g_context);
+  }
+
+  virtual void releaseHandler( ::Hypertable::ThriftGen::ClientServiceIf *service) {
+    delete service;
+  }
+};
+
 
 }} // namespace Hypertable::ThriftBroker
 
@@ -2480,10 +2384,14 @@ int main(int argc, char **argv) {
     if (get_bool("ThriftBroker.Hyperspace.Session.Reconnect"))
       properties->set("Hyperspace.Session.Reconnect", true);
 
+    boost::shared_ptr<ThriftBroker::Context> context(new ThriftBroker::Context());
+
+    g_context = context.get();
+
     ::uint16_t port = get_i16("port");
     boost::shared_ptr<TProtocolFactory> protocolFactory(new TBinaryProtocolFactory());
-    boost::shared_ptr<ServerHandler> handler(new ServerHandler());
-    boost::shared_ptr<TProcessor> processor(new HqlServiceProcessor(handler));
+    boost::shared_ptr<HqlServiceIfFactory> hql_service_factory(new ThriftBrokerIfFactory());
+    boost::shared_ptr<TProcessorFactory> hql_service_processor_factory(new HqlServiceProcessorFactory(hql_service_factory));
 
     boost::shared_ptr<TServerTransport> serverTransport;
 
@@ -2496,7 +2404,8 @@ int main(int argc, char **argv) {
 
     boost::shared_ptr<TTransportFactory> transportFactory(new TFramedTransportFactory());
 
-    TThreadedServer server(processor, serverTransport, transportFactory, protocolFactory);
+    TThreadedServer server(hql_service_processor_factory, serverTransport,
+                           transportFactory, protocolFactory);
 
     HT_INFO("Starting the server...");
     server.serve();

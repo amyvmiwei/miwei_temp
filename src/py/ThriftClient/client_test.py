@@ -41,6 +41,8 @@ try:
       break
     print cells
 
+  client.scanner_close(scanner)
+
   print "asynchronous api examples\n";
   future = client.future_open(0);
   mutator_async_1 = client.async_mutator_open(namespace, "thrift_test", future, 0);
@@ -109,6 +111,7 @@ try:
       break
     print cells
 
+  client.scanner_close(scanner)
   client.async_scanner_close(color_scanner);
   client.async_scanner_close(location_scanner);
   client.async_scanner_close(energy_scanner);

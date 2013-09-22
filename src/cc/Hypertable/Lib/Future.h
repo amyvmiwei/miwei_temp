@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -41,7 +41,7 @@ namespace Hypertable {
      */
     Future(size_t capacity=0) : m_capacity(capacity), m_memory_used(0), m_cancelled(false)
         { }
-    ~Future() { cancel(); }
+    virtual ~Future() { cancel(); }
 
     /**
      * This call blocks till there is a result available unless async ops have completed

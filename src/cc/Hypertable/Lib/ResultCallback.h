@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -29,6 +29,7 @@
 #include "Common/Mutex.h"
 #include "Common/ReferenceCount.h"
 
+#include "ClientObject.h"
 #include "ScanCells.h"
 namespace Hypertable {
 
@@ -37,7 +38,7 @@ namespace Hypertable {
 
   /** Represents an open table.
    */
-  class ResultCallback: public ReferenceCount {
+  class ResultCallback : public ClientObject {
 
   public:
 

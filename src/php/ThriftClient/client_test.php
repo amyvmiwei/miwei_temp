@@ -65,4 +65,5 @@ while (!empty($cells)) {
   print_r($cells);
   $cells = $client->scanner_get_cells($scanner);
 }
+$client->scanner_close($scanner);
 $client->namespace_close($namespace);

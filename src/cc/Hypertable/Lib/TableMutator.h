@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -31,6 +31,7 @@
 #include "Common/Timer.h"
 
 #include "Cells.h"
+#include "ClientObject.h"
 #include "KeySpec.h"
 #include "Table.h"
 #include "TableMutatorAsync.h"
@@ -50,11 +51,11 @@ namespace Hypertable {
    * buffer of mutations for each range server.  When one of the buffers fills
    * up all the buffers are flushed to their respective range servers.
    */
-  class TableMutator : public ReferenceCount {
+  class TableMutator : public ClientObject {
 
   public:
     enum {
-      FLAG_NO_LOG_SYNC             = Table::MUTATOR_FLAG_NO_LOG_SYNC
+      FLAG_NO_LOG_SYNC = Table::MUTATOR_FLAG_NO_LOG_SYNC
     };
 
     /**

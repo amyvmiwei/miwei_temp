@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -32,6 +32,7 @@
 #include "AsyncComm/ConnectionManager.h"
 #include "Hyperspace/Session.h"
 
+#include "ClientObject.h"
 #include "MasterClient.h"
 #include "NameIdMapper.h"
 #include "TableCache.h"
@@ -48,7 +49,7 @@ namespace Hypertable {
   class HqlInterpreter;
   class Client;
 
-  class Namespace: public ReferenceCount {
+  class Namespace : public ClientObject {
   public:
 
     /**
@@ -61,7 +62,7 @@ namespace Hypertable {
               MasterClientPtr &master_client, RangeLocatorPtr &range_locator,
               TableCachePtr &table_cache, uint32_t timeout, Client *client);
 
-    ~Namespace() {}
+    virtual ~Namespace() {}
 
     /**
      * Get canonical format of name/id string. This means no leading or trailing '/' and

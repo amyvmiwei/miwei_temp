@@ -89,7 +89,7 @@ void test_writer(Thrift::Client *client) {
 void test_reader(Thrift::Client *client) {
   ScanSpec scanspec;
   Namespace ns = client->namespace_open("test");
-  Scanner scanner = client->open_scanner(ns, "thrift_test", scanspec);
+  Scanner scanner = client->scanner_open(ns, "thrift_test", scanspec);
 
   ResultSerialized results;
 
