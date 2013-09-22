@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -27,6 +27,7 @@
 
 #include "AsyncComm/ApplicationQueueInterface.h"
 
+#include "ClientObject.h"
 #include "NameIdMapper.h"
 #include "Schema.h"
 #include "RangeLocator.h"
@@ -52,7 +53,7 @@ namespace Hypertable {
 
   /** Represents an open table.
    */
-  class Table : public ReferenceCount {
+  class Table : public ClientObject {
 
   public:
 

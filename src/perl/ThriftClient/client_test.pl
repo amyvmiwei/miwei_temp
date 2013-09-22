@@ -70,6 +70,7 @@ while (scalar @$cells) {
   print Dumper($cells);
   $cells = $client->scanner_get_cells($scanner);
 }
+$client->scanner_close($scanner);
 
 print "asynchronous examples\n";
 my $future = $client->future_open();
@@ -116,5 +117,5 @@ while (scalar @$cells) {
   print Dumper($cells);
   $cells = $client->scanner_get_cells($scanner);
 }
-
+$client->scanner_close($scanner);
 $client->namespace_close($namespace);

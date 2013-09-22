@@ -1,5 +1,5 @@
-/** -*- C++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- C++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -203,7 +203,7 @@ void test_scan(Thrift::Client *client, std::ostream &out) {
   ScanSpec ss;
   Namespace ns = client->namespace_open("test");
 
-  Scanner s = client->open_scanner(ns, "thrift_test", ss);
+  Scanner s = client->scanner_open(ns, "thrift_test", ss);
   std::vector<Hypertable::ThriftGen::Cell> cells;
 
   do {
@@ -223,12 +223,13 @@ void test_scan(Thrift::Client *client, std::ostream &out) {
   ss.columns.push_back("col");
   ss.__isset.columns = true;
 
-  s = client->open_scanner(ns, "thrift_test", ss);
+  s = client->scanner_open(ns, "thrift_test", ss);
   do {
     client->scanner_get_cells(cells, s);
     foreach_ht(const Hypertable::ThriftGen::Cell &cell, cells)
       out << cell << std::endl;
   } while (cells.size());
+  client->scanner_close(s);
   client->namespace_close(ns);
 }
 
@@ -239,7 +240,7 @@ void test_scan_keysonly(Thrift::Client *client, std::ostream &out) {
   ss.__isset.keys_only = true;
   Namespace ns = client->namespace_open("test");
 
-  Scanner s = client->open_scanner(ns, "thrift_test", ss);
+  Scanner s = client->scanner_open(ns, "thrift_test", ss);
   std::vector<Hypertable::ThriftGen::Cell> cells;
 
   do {
@@ -249,6 +250,7 @@ void test_scan_keysonly(Thrift::Client *client, std::ostream &out) {
   } while (cells.size());
 
   client->scanner_close(s);
+  client->namespace_close(ns);
 }
 
 void test_set(Thrift::Client *client) {

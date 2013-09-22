@@ -289,6 +289,7 @@ namespace {
       Thrift::Client client(get_str("thrift-host"), get_i16("thrift-port"));
       ThriftGen::Namespace ns = client.open_namespace("sys");
       client.get_table_id(table_id, ns, "METADATA");
+      client.namespace_close(ns);
     }
     catch (ThriftGen::ClientException &e) {
       HT_THROW(e.code, e.message);

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -31,6 +31,7 @@
 #include "Common/Timer.h"
 
 #include "Cells.h"
+#include "ClientObject.h"
 #include "KeySpec.h"
 #include "Table.h"
 #include "TableMutatorAsyncScatterBuffer.h"
@@ -56,7 +57,7 @@ namespace Hypertable {
    * buffer of mutations for each range server.  When one of the buffers fills
    * up all the buffers are flushed to their respective range servers.
    */
-  class TableMutatorAsync : public ReferenceCount {
+  class TableMutatorAsync : public ClientObject {
 
   public:
 
@@ -90,7 +91,7 @@ namespace Hypertable {
      * Destructor for TableMutatorAsync object
      * Make sure buffers are flushed and unsynced rangeservers get synced.
      */
-    ~TableMutatorAsync();
+    virtual ~TableMutatorAsync();
 
     /**
      * Returns the amount of memory used by the collected mutations in the current buffer.

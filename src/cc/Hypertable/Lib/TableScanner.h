@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -23,7 +23,10 @@
 #define HYPERTABLE_TABLESCANNERSYNC_H
 
 #include <list>
+
 #include "Common/ReferenceCount.h"
+
+#include "ClientObject.h"
 #include "TableScannerQueue.h"
 #include "TableScannerAsync.h"
 #include "TableCallback.h"
@@ -33,7 +36,7 @@ namespace Hypertable {
 
   /**
    */
-  class TableScanner : public ReferenceCount {
+  class TableScanner : public ClientObject {
 
   public:
 
@@ -54,7 +57,7 @@ namespace Hypertable {
      * Cancel asynchronous scanner and keep dealing with RangeServer responses
      * till async scanner is done
      */
-    ~TableScanner() {
+    virtual ~TableScanner() {
       try {
         m_scanner->cancel();
         if (!m_scanner->is_complete()) {
