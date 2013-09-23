@@ -107,9 +107,12 @@ void Context::replay_status(EventPtr &event) {
   String proxy;
   if (event->proxy == 0) {
     RangeServerConnectionPtr rsc;
-    HT_WARNF("Proxy returned by AsyncComm is empty, looking up by address %s",
-             event->addr.format().c_str());
-    HT_ASSERT(rsc_manager->find_server_by_local_addr(event->addr, rsc));
+    if (!rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
+      HT_WARNF("Unable to determine proxy for replay_status(id=%lld, %s, "
+               "plan_generation=%d) from %s", (Lld)id, location.c_str(),
+               plan_generation, event->addr.format().c_str());
+      return;
+    }
     proxy = rsc->location();
   }
   else
@@ -140,9 +143,12 @@ void Context::replay_complete(EventPtr &event) {
   String proxy;
   if (event->proxy == 0) {
     RangeServerConnectionPtr rsc;
-    HT_WARNF("Proxy returned by AsyncComm is empty, looking up by address %s",
-             event->addr.format().c_str());
-    HT_ASSERT(rsc_manager->find_server_by_local_addr(event->addr, rsc));
+    if (!rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
+      HT_WARNF("Unable to determine proxy for replay_complete(id=%lld, %s, "
+               "plan_generation=%d) from %s", (Lld)id, location.c_str(),
+               plan_generation, event->addr.format().c_str());
+      return;
+    }
     proxy = rsc->location();
   }
   else
@@ -183,9 +189,12 @@ void Context::prepare_complete(EventPtr &event) {
   String proxy;
   if (event->proxy == 0) {
     RangeServerConnectionPtr rsc;
-    HT_WARNF("Proxy returned by AsyncComm is empty, looking up by address %s",
-             event->addr.format().c_str());
-    HT_ASSERT(rsc_manager->find_server_by_local_addr(event->addr, rsc));
+    if (!rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
+      HT_WARNF("Unable to determine proxy for prepare_complete(id=%lld, %s, "
+               "plan_generation=%d) from %s", (Lld)id, location.c_str(),
+               plan_generation, event->addr.format().c_str());
+      return;
+    }
     proxy = rsc->location();
   }
   else
@@ -219,9 +228,12 @@ void Context::commit_complete(EventPtr &event) {
   String proxy;
   if (event->proxy == 0) {
     RangeServerConnectionPtr rsc;
-    HT_WARNF("Proxy returned by AsyncComm is empty, looking up by address %s",
-             event->addr.format().c_str());
-    HT_ASSERT(rsc_manager->find_server_by_local_addr(event->addr, rsc));
+    if (!rsc_manager->find_server_by_local_addr(event->addr, rsc)) {
+      HT_WARNF("Unable to determine proxy for commit_complete(id=%lld, %s, "
+               "plan_generation=%d) from %s", (Lld)id, location.c_str(),
+               plan_generation, event->addr.format().c_str());
+      return;
+    }
     proxy = rsc->location();
   }
   else

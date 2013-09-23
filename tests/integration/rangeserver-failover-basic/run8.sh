@@ -65,7 +65,7 @@ wait_for_recovery rs1
 
 # restart servers
 $HT_HOME/bin/stop-servers.sh
-stop_rs2
+kill_rs 2
 
 $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --config=${SCRIPT_DIR}/test.cfg
