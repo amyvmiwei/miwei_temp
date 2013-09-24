@@ -1,3 +1,34 @@
+Version 0.9.7.11:
+(2013-09-24)
+
+    Fixed object leak in ThriftBroker
+    Close hints file after read (file descriptor leak)
+    Added missing SystemState entity construction in MetaLogDefinitionMaster
+    Fixed server registration/recover race condition in Master
+    issues 1069 & 1143: Fixed load_range() timeout bug and drop table races
+    Retry with verify_checksum if trailer is bad in CellStoreFactory
+    issue 1107: Fixed Future::get() API timeout bug
+    Fixed Master bug not passing BalancePlanAuthority to MetaLog::Writer constructor
+    issue 1147: Fixed consistency problem in relinqish on move_range() exception
+    Removed bogus assert in recovery callbacks; Fixed sigstop failover test
+    Fixed Hyperspace lost notification bug
+    Reorganized Hyperspace source directory layout
+    Fixed hyperspace reconnect issues
+    issue 1144: Fixed erroneous skipping of transfer log removal
+    Added comments to and cleaned up OperationCompact
+    Send notification on new server registration or clock skew error
+    In Master recovery callbacks, discover proxy via RSC manager if NULL in event
+    Added version number to Operation entity plus doxygen comments
+    issue 1083: Removed leading '/' in table name in monitoring UI after rename
+    issue 1085: Added --nodeps to rpm install in Capfile
+    issue 1135: Fixed problem with monitoring shutdown on certain thin versions
+    Increased MetaLog historical archive from 10 to 30
+    issue 1134: Fixed assert in RangeServer::phantom_prepare_ranges() on big recovery
+    Fixed problem of OperationRecover entities spamming the MML
+    Added support for .tar.gz package installation in Capfile
+    Added hostname to RangeServerConnection display string
+    issue 1133: Added HQL help text for .tsv DELETE support
+
 Version 0.9.7.10:
 (2013-08-27)
 
