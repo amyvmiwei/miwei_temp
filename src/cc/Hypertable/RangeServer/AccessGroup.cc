@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -112,7 +112,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
  */
 void AccessGroup::update_schema(SchemaPtr &schema,
                                 Schema::AccessGroup *ag) {
-  ScopedLock lock(m_mutex);
+  ScopedLock lock(m_schema_mutex);
   std::set<uint8_t>::iterator iter;
 
   m_garbage_tracker.set_schema(schema, ag);
@@ -136,6 +136,7 @@ void AccessGroup::update_schema(SchemaPtr &schema,
     }
 
     // Update schema ptr
+    ScopedLock lock(m_mutex);
     m_schema = schema;
   }
 }
@@ -252,7 +253,7 @@ CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
 }
 
 bool AccessGroup::include_in_scan(ScanContextPtr &scan_context) {
-  ScopedLock lock(m_mutex);
+  ScopedLock lock(m_schema_mutex);
   for (std::set<uint8_t>::iterator iter = m_column_families.begin();
        iter != m_column_families.end(); ++iter) {
     if (scan_context->family_mask[*iter])
