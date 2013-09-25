@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -235,6 +235,7 @@ namespace Hypertable {
     void sort_cellstores_by_timestamp();
 
     Mutex                m_mutex;
+    Mutex                m_schema_mutex;
     Mutex                m_outstanding_scanner_mutex;
     boost::condition     m_outstanding_scanner_cond;
     int32_t              m_outstanding_scanner_count;
