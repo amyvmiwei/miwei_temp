@@ -289,13 +289,6 @@ void OperationCreateTable::execute() {
     {
       String tablefile = m_context->toplevel_dir + "/tables/" + m_table.id;
       m_context->hyperspace->attr_set(tablefile, "x", "", 0);
-
-      uint64_t handle = 0;
-      HT_ON_SCOPE_EXIT(&Hyperspace::close_handle_ptr, m_context->hyperspace, 
-              &handle);
-      handle = m_context->hyperspace->open(tablefile, 
-              OPEN_FLAG_READ|OPEN_FLAG_WRITE);
-      m_context->hyperspace->attr_set(handle, "x", "", 0);
     }
     HT_MAYBE_FAIL("create-table-FINALIZE");
     complete_ok(m_context->get_balance_plan_authority());

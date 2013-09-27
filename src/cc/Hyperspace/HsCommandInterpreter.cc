@@ -146,9 +146,15 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String fname = state.node_name;
       const char *val = value.c_str();
 
-      handle = Util::get_handle(fname);
-
-      m_session->attr_set(handle, name, val, size);
+      try {
+        handle = Util::get_handle(fname);
+        m_session->attr_set(handle, name, val, size);
+      }
+      catch (Exception &e) {
+        String normalized_fname;
+        Util::normalize_pathname(fname, normalized_fname);
+        m_session->attr_set(normalized_fname, name, val, size);
+      }
     }
 
     else if (state.command == COMMAND_ATTRGET) {
@@ -157,13 +163,18 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String fname = state.node_name;
       DynamicBuffer value(0);
 
-      handle = Util::get_handle(fname);
-
-      m_session->attr_get(handle, name, value);
+      try {
+        handle = Util::get_handle(fname);
+        m_session->attr_get(handle, name, value);
+      }
+      catch (Exception &e) {
+        String normalized_fname;
+        Util::normalize_pathname(fname, normalized_fname);
+        m_session->attr_get(normalized_fname, name, value);
+      }
 
       String valstr = String((const char*)(value.base),value.fill());
       cout << valstr << endl;
-
     }
 
     else if (state.command == COMMAND_ATTRINCR) {
@@ -172,12 +183,17 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String fname = state.node_name;
       uint64_t attr_val;
 
-      handle = Util::get_handle(fname);
-
-      attr_val = m_session->attr_incr(handle, name);
+      try {
+        handle = Util::get_handle(fname);
+        attr_val = m_session->attr_incr(handle, name);
+      }
+      catch (Exception &e) {
+        String normalized_fname;
+        Util::normalize_pathname(fname, normalized_fname);
+        attr_val = m_session->attr_incr(normalized_fname, name);
+      }
 
       cout << attr_val << endl;
-
     }
 
     else if (state.command == COMMAND_ATTREXISTS) {
@@ -186,9 +202,15 @@ void HsCommandInterpreter::execute_line(const String &line) {
       String fname = state.node_name;
       bool exists;
 
-      handle = Util::get_handle(fname);
-
-      exists = m_session->attr_exists(handle, name);
+      try {
+        handle = Util::get_handle(fname);
+        exists = m_session->attr_exists(handle, name);
+      }
+      catch (Exception &e) {
+        String normalized_fname;
+        Util::normalize_pathname(fname, normalized_fname);
+        exists = m_session->attr_exists(normalized_fname, name);
+      }
 
       if (exists)
         cout << "true" << endl;

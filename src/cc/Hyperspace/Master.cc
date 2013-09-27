@@ -787,11 +787,15 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
   bool commited = false;
   uint64_t opened_handle = 0;
   CommandContext ctx("attrset", session_id);
+
+  HT_ASSERT((name && *name) || handle);
+
   HT_BDBTXN_BEGIN() {
     commited = false;
     opened_handle = 0;
     ctx.reset(&txn);
-    if (!(name && *name) || !(oflags & ~(OPEN_FLAG_READ|OPEN_FLAG_WRITE)))
+
+    if (handle != 0)
       attr_set(ctx, handle, name, attrs);
     else {
       bool created;
