@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Declarations for BerkeleyDbFilesystem.
+ * This file contains declarations for BerkeleyDbFilesystem, a class that
+ * implements the Hyperspace filesystem on top of BerkeleyDB.
  */
 
 #ifndef HT_BERKELEYDBFILESYSTEM_H
@@ -47,114 +53,211 @@
 #include "StateDbKeys.h"
 
 namespace Hyperspace {
-  using namespace Hypertable;
-  using namespace std;
 
-  // handle id --> session id
+  /** @addtogroup Hyperspace
+   * @{
+   */
+
+  /// Hash map from Node handle ID to Session ID
   typedef hash_map<uint64_t, uint64_t> NotificationMap;
 
+  /** Encapsulates a lock request for a file node. */
   class LockRequest {
   public:
+    /** Constructor.
+     * @param h Node handle ID
+     * @param m Lock mode
+     */
     LockRequest(uint64_t h=0, int m=0) : handle(h), mode(m) { return; }
+    /// Node handle ID
     uint64_t handle;
-    int mode;
+    /// Lock mode
+    uint32_t mode;
   };
 
-  enum {
-    SESSION_ID,
-    HANDLE_ID,
-    EVENT_ID
+  /** Enumeration for object identifier types */
+  enum IdentifierType {
+    SESSION = 0, /**< Session identifier */
+    HANDLE,      /**< Handle identifier */
+    EVENT        /**< Event identifier */
   };
 
+  /** Encapsulates replication state. */
   class ReplicationInfo {
   public:
-    ReplicationInfo(): initial_election_done(false), do_replication(true),
-                       is_master(false), master_eid(-1), num_replicas(0) {}
+    /** Constructor. */
+    ReplicationInfo(): do_replication(true), is_master(false), master_eid(-1),
+                       num_replicas(0), m_election_done(false) {}
 
-    void wait_for_initial_election() {
-      ScopedLock lock(initial_election_mutex);
-      if (!initial_election_done)
-        initial_election_cond.wait(lock);
+    /** Waits for master election to finish. */
+    void wait_for_election() {
+      ScopedLock lock(m_election_mutex);
+      while (!m_election_done)
+        m_election_cond.wait(lock);
     }
-    bool initial_election_done;
+
+    /** Finish master election. */
+    void finish_election() {
+      ScopedLock lock(m_election_mutex);
+      if (!m_election_done) {
+        m_election_done = true;
+        m_election_cond.notify_all();
+      }
+    }
+
+    /** Check if master election is finished.
+     * @return <i>true</i> if master election has finished, <i>false</i> otherwise
+     */
+    bool election_finished() {
+      ScopedLock lock(m_election_mutex);
+      return m_election_done;
+    }
+
     bool do_replication;
     bool is_master;
     int master_eid;
     uint32_t num_replicas;
     String localhost;
-    Mutex initial_election_mutex;
-    boost::condition initial_election_cond;
     hash_map<int, String> replica_map;
+
+  private:
+
+    /// %Mutex for serializing access to #m_election_done
+    Mutex m_election_mutex;
+
+    /// Condition variable for signaling change to #m_election_done
+    boost::condition m_election_cond;
+
+    /// Indicates if master election has finished
+    bool m_election_done;
   };
 
+  /** Manages <i>namespace</i> and transient <i>state</i> database handles */
   class BDbHandles: public ReferenceCount {
   public:
-    BDbHandles(): m_open(false), m_handle_namespace_db(0), m_handle_state_db(0) {}
+
+    /** Constructor. */
+    BDbHandles(): open(false), handle_namespace_db(0), handle_state_db(0) {}
+
+    /** Destructor. Calls close(). */
     ~BDbHandles() {
       close();
     }
 
+    /** Closes and destroys database handles
+     * Closes and destroys #handle_namespace_db and #handle_state_db and sets
+     * #open to <i>false</i>.
+     */
     void close() {
-      if (m_open) {
+      if (open) {
         try {
-          m_handle_namespace_db->close(0);
-          m_handle_state_db->close(0);
-          delete m_handle_namespace_db;
-          delete m_handle_state_db;
-          m_handle_namespace_db = 0;
-          m_handle_state_db = 0;
-          m_open = false;
+          handle_namespace_db->close(0);
+          handle_state_db->close(0);
+          delete handle_namespace_db;
+          delete handle_state_db;
+          handle_namespace_db = 0;
+          handle_state_db = 0;
+          open = false;
         }
         catch(DbException &e) {
           HT_ERROR_OUT << "Error closing Berkeley DB handles" << HT_END;
         }
       }
     }
-    bool m_open;
-    Db *m_handle_namespace_db;
-    Db *m_handle_state_db;
 
-  private:
+    /// Indicates if database handles have been opened
+    bool open;
 
+    /// Database handle for persistent filesystem namespace
+    Db *handle_namespace_db;
+
+    /// Database handle transient state
+    Db *handle_state_db;
   };
 
+  /// Smart pointer to BDbHandles
   typedef intrusive_ptr<BDbHandles> BDbHandlesPtr;
 
-  class BDbTxn{
+  /** Manages transaction state */
+  class BDbTxn {
   public:
-    BDbTxn(): m_handle_namespace_db(0), m_handle_state_db(0), m_db_txn(0) {}
-    ~BDbTxn() {}
+    /** Constructor. */
+    BDbTxn(): handle_namespace_db(0), handle_state_db(0), db_txn(0) {}
 
+    /** Commit transaction.
+     * @param flag BerkeleyDB commit flags
+     */
     void commit(int flag=0) {
-      m_db_txn->commit(flag);
+      db_txn->commit(flag);
+      db_txn = 0;
     }
 
+    /** Abort transaction. */
     void abort() {
-      m_db_txn->abort();
+      db_txn->abort();
+      db_txn = 0;
     }
 
-    Db *m_handle_namespace_db;
-    Db *m_handle_state_db;
-    DbTxn *m_db_txn;
+    /// Filesystem namespace database handle
+    Db *handle_namespace_db;
+
+    /// Transient state database handle
+    Db *handle_state_db;
+
+    /// BerkeleyDB transaction object
+    DbTxn *db_txn;
   };
 
-  ostream &operator<<(ostream &out, const BDbTxn &txn);
+  /** Writes human-readable version of <code>txn</code> to an ostream.
+   * @param out Output stream on which to write
+   * @param txn Transaction object to display
+   * @return <code>out</code>
+   */
+  std::ostream &operator<<(std::ostream &out, const BDbTxn &txn);
 
+  /** Hyperspace filesystem implementation on top of BerkeleyDB.
+   */
   class BerkeleyDbFilesystem {
   public:
+
+    /** Constructor.
+     * @param props Configruation properties
+     * @param basedir Directory of BerkeleyDB database files
+     * @param threads_ids Vector of application thread IDs
+     * @param force_recover Force catastrophic recovery logic
+     */
     BerkeleyDbFilesystem(PropertiesPtr &props,
                          const String &basedir,
-                         const vector<Thread::id> &thread_ids,
+                         const std::vector<Thread::id> &thread_ids,
                          bool force_recover=false);
+
+    /** Destructor.
+     * Iterates through #m_thread_handle_map closing handles and closes #m_env.
+     */
     ~BerkeleyDbFilesystem();
 
-    void open_db_handles();
+    /** Checkpoints the BerkeleyDB database.
+     * This method calls <code>m_env.txn_checkpoint</code> to checkpoint the
+     * database.  It passes in the value #m_checkpoing_size_kb.  Then if the
+     * time of the last checkpoint has exceeded #m_log_gc_interval, it will call
+     * <code>m_env.log_archive</code> to obtain a list of unused log files and
+     * it will remove them.
+     */
     void do_checkpoint();
+
+    /** Check if we're the current master.
+     * This method returns <i>true</i> if replication is disabled or if
+     * we're the current elected master.
+     * @return <i>true</i> if we're the master, <i>false</i> otherwise.
+     */
     bool is_master() {
       // its the master if we're not doing replication or this is the replication master
       return (!m_replication_info.do_replication || m_replication_info.is_master);
     }
 
+    /** Returns hostname of currently elected master.
+     * @return Hostname of the currently elected master.
+     */
     String get_current_master() {
       if (m_replication_info.is_master)
         return m_replication_info.localhost;
@@ -168,10 +271,8 @@ namespace Hyperspace {
       }
     }
 
-    /*
-     * Creates a new BerkeleyDB transaction within the context of a parent
-     * transaction.
-     *
+    /** Creates a new BerkeleyDB transaction.
+     * @param txn Return parameter to hold newly created transaction
      */
     void start_transaction(BDbTxn &txn);
 
@@ -290,7 +391,7 @@ namespace Hyperspace {
      * @param id Session id
      * @param handles vector into which open handle ids will be inserted
      */
-    void get_session_handles(BDbTxn &txn, uint64_t id, vector<uint64_t> &handles);
+    void get_session_handles(BDbTxn &txn, uint64_t id, std::vector<uint64_t> &handles);
 
 
     /*
@@ -589,28 +690,23 @@ namespace Hyperspace {
      */
     bool node_has_pending_lock_request(BDbTxn &txn, const String &name);
 
-    /*
-     * Check if a node has any pending lock requests from non-expired handles
-     *
+    /** Check if a node has any pending lock requests from non-expired handles.
      * @param txn BerkeleyDB txn for this DB update
      * @param name Node name
      * @param front_req will contain the first pending request if this method returns true
      * @return true if node has at least one pending lock request
      */
     bool get_node_pending_lock_request(BDbTxn &txn, const String &name,
-                                             LockRequest &front_req);
+                                       LockRequest &front_req);
 
 
-    /*
-     * Add a lock request to the node
-     *
+    /** Adds a lock request.
      * @param txn BerkeleyDB txn for this DB update
      * @param name Node name
-     * @param handle handle requesting lock
-     * @param mode requested lock mode
+     * @param request Lock request
      */
     void add_node_pending_lock_request(BDbTxn &txn, const String &name,
-                                       uint64_t handle, uint32_t mode );
+                                       LockRequest &request);
     /*
      * Remove a lock request to the node
      *
@@ -687,13 +783,7 @@ namespace Hyperspace {
      */
     bool node_has_shared_lock_handles(BDbTxn &txn, const String &name);
 
-    enum {
-      SESSION_ID = 0,
-      HANDLE_ID,
-      EVENT_ID
-    };
-
-    uint64_t get_next_id_i64(BDbTxn &txn, int id_type, bool increment = false);
+    uint64_t get_next_id_i64(BDbTxn &txn, IdentifierType id_type, bool increment = false);
 
     static const char NODE_ATTR_DELIM = 0x01;
 
@@ -702,7 +792,7 @@ namespace Hyperspace {
     /*
      * Initialize per worker thread DB handles
      */
-    void init_db_handles(const vector<Thread::id> &thread_ids);
+    void init_db_handles(const std::vector<Thread::id> &thread_ids);
     BDbHandlesPtr get_db_handles();
     void build_attr_key(BDbTxn &, String &keystr,
                         const String &aname, Dbt &key);
@@ -716,13 +806,17 @@ namespace Hyperspace {
     uint32_t m_db_flags;
     static const char *ms_name_namespace_db;
     static const char *ms_name_state_db;
-    typedef map<Thread::id, BDbHandlesPtr> ThreadHandleMap;
+    typedef std::map<Thread::id, BDbHandlesPtr> ThreadHandleMap;
     ThreadHandleMap m_thread_handle_map;
-    uint32_t m_checkpoint_size;
+
+    /// Checkpoint size threshold in kilobytes
+    uint32_t m_checkpoint_size_kb;
     uint32_t  m_log_gc_interval;
     uint32_t m_max_unused_logs;
     boost::xtime m_last_log_gc_time;
   };
+
+  /** @} */
 
 } // namespace Hyperspace
 

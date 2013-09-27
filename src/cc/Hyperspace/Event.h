@@ -117,7 +117,7 @@ namespace Hyperspace {
         // all notifications received, so delete event from BDB
         HT_BDBTXN_EVT_BEGIN() {
           ms_bdb_fs->delete_event(txn, m_id);
-          txn.commit(0);
+          txn.commit();
         }
         HT_BDBTXN_EVT_END(BOOST_PP_EMPTY());
         m_cond.notify_all();

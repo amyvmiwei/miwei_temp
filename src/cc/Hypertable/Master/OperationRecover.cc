@@ -255,7 +255,7 @@ bool OperationRecover::acquire_server_lock() {
   try {
     String fname = m_context->toplevel_dir + "/servers/" + m_location;
     uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
-    uint32_t lock_status = LOCK_STATUS_BUSY;
+    LockStatus lock_status = LOCK_STATUS_BUSY;
     LockSequencer sequencer;
     uint64_t handle = 0;
     

@@ -537,7 +537,7 @@ namespace Hyperspace {
 
     /** Locks a file.  The mode argument indicates the type of lock to be
      * acquired and takes a value of either LOCK_MODE_SHARED
-     * or LOCK_MODE_EXCLUSIVE (see \ref LockMode).  Upon success, the structure
+     * or LOCK_MODE_EXCLUSIVE (see LockMode).  Upon success, the structure
      * pointed to by sequencerp will get filled in with information about the
      * lock, including a generation number.  Some services operate on resources
      * on behalf of clients, but require that the client have the resource
@@ -547,16 +547,16 @@ namespace Hyperspace {
      * up-to-date lock.
      *
      * @param handle handle of file or directory to lock
-     * @param mode lock mode (see \ref LockMode)
+     * @param mode lock mode (see LockMode)
      * @param sequencerp address of LockSequencer return structure
      * @param timer maximum wait timer
      */
-    void lock(uint64_t handle, uint32_t mode,
+    void lock(uint64_t handle, LockMode mode,
               LockSequencer *sequencerp, Timer *timer=0);
 
     /** Attempts to lock a file.  The mode argument indicates the type of lock
      * to be acquired and takes a value of either LOCK_MODE_SHARED or
-     * LOCK_MODE_EXCLUSIVE (see \ref LockMode).  The result of the attempt will
+     * LOCK_MODE_EXCLUSIVE (see LockMode).  The result of the attempt will
      * get returned in the statusp argument and will contain either
      * LOCK_STATUS_BUSY or LOCK_STATUS_GRANTED.  Upon success, the structure
      * pointed to by sequencerp will get filled in with information about the
@@ -568,13 +568,13 @@ namespace Hyperspace {
      * up-to-date lock.
      *
      * @param handle handle of file or directory to lock
-     * @param mode lock mode (see \ref LockMode)
+     * @param mode lock mode (see LockMode)
      * @param statusp address of variable to hold the status of the attempt
-     *        (see \ref LockStatus)
+     *        (see LockStatus)
      * @param sequencerp address of LockSequencer return structure
      * @param timer maximum wait timer
      */
-    void try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
+    void try_lock(uint64_t handle, LockMode mode, LockStatus *statusp,
                   LockSequencer *sequencerp, Timer *timer=0);
 
     /** Releases any file handle locks.

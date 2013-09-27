@@ -938,7 +938,7 @@ Session::readpath_attr(const std::string &name, const std::string &attr,
 }
 
 void
-Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp,
+Session::lock(uint64_t handle, LockMode mode, LockSequencer *sequencerp,
               Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
@@ -1006,7 +1006,7 @@ Session::lock(uint64_t handle, uint32_t mode, LockSequencer *sequencerp,
 
 
 void
-Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
+Session::try_lock(uint64_t handle, LockMode mode, LockStatus *statusp,
                   LockSequencer *sequencerp, Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;
   Hypertable::EventPtr event_ptr;
@@ -1034,7 +1034,7 @@ Session::try_lock(uint64_t handle, uint32_t mode, uint32_t *statusp,
       const uint8_t *decode_ptr = event_ptr->payload + 4;
       size_t decode_remain = event_ptr->payload_len - 4;
       try {
-        *statusp = decode_i32(&decode_ptr, &decode_remain);
+        *statusp = (LockStatus)decode_i32(&decode_ptr, &decode_remain);
 
         if (*statusp == LOCK_STATUS_GRANTED) {
           sequencerp->generation = decode_i64(&decode_ptr, &decode_remain);

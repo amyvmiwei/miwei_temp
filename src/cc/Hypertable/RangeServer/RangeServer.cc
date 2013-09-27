@@ -476,13 +476,13 @@ RangeServer::~RangeServer() {
  */
 void RangeServer::initialize(PropertiesPtr &props) {
   String top_dir = Global::toplevel_dir + "/servers/" + Global::location_initializer->get();
-  uint32_t lock_status;
+  LockStatus lock_status;
   uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
 
   m_existence_file_handle = m_hyperspace->open(top_dir, oflags);
 
   while (true) {
-    lock_status = 0;
+    lock_status = (LockStatus)0;
 
     m_hyperspace->try_lock(m_existence_file_handle, LOCK_MODE_EXCLUSIVE,
                            &lock_status, &m_existence_file_sequencer);

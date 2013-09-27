@@ -408,7 +408,7 @@ void obtain_master_lock(ContextPtr &context) {
     }
 
     {
-      uint32_t lock_status = LOCK_STATUS_BUSY;
+      LockStatus lock_status = LOCK_STATUS_BUSY;
       uint32_t oflags = OPEN_FLAG_READ | OPEN_FLAG_WRITE | OPEN_FLAG_LOCK;
       LockSequencer sequencer;
       bool reported = false;
