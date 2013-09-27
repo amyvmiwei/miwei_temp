@@ -61,9 +61,6 @@ OperationRecover::OperationRecover(ContextPtr &context,
   m_obstructions.insert(Dependency::RECOVER_SERVER);
   m_hash_code = md5_hash("OperationRecover") ^ md5_hash(m_rsc->location().c_str());
   HT_ASSERT(m_rsc != 0);
-  HT_INFOF("OperationRecover %s state=%s restart=%s",
-           m_location.c_str(), OperationState::get_text(get_state()),
-           m_restart ? "true" : "false");
 }
 
 OperationRecover::OperationRecover(ContextPtr &context,
