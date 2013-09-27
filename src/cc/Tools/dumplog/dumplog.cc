@@ -227,28 +227,17 @@ namespace {
   void
   display_log_valid_links(DfsBroker::Client *dfs_client, const String &prefix,
                           CommitLogReader *log_reader) {
-    CommitLogBlockInfo binfo;
     BlockCompressionHeaderCommitLog header;
-    StringSet logs_seen;
-    String logname;
+    const uint8_t *base;
+    size_t len;
+    StringSet linked_logs;
 
-    while (log_reader->next_raw_block(&binfo, &header)) {
+    while (log_reader->next(&base, &len, &header))
+      ;
 
-      logname = binfo.log_dir;
-      boost::trim_right_if(logname, boost::is_any_of("/"));
+    log_reader->get_linked_logs(linked_logs);
 
-      if (logs_seen.count(logname) > 0)
-        continue;
-
-      if (logname.compare(prefix) == 0)
-        continue;
-
-      if (dfs_client->exists(logname))
-        logs_seen.insert(logname);
-
-    }
-
-    foreach_ht (const String &name, logs_seen)
+    foreach_ht (const String &name, linked_logs)
       std::cout << name << "\n";
     std::cout << std::flush;
 
