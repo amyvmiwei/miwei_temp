@@ -139,7 +139,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTRSET) {
-      ::uint64_t handle;
+      ::uint64_t handle = 0;
       int size = state.last_attr_size;
       String name = state.last_attr_name;
       String value = state.last_attr_value;
@@ -181,7 +181,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
     }
 
     else if (state.command == COMMAND_ATTREXISTS) {
-      ::uint64_t handle;
+      ::uint64_t handle = 0;
       String name = state.last_attr_name;
       String fname = state.node_name;
       bool exists;
@@ -419,7 +419,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
 
     else if (state.command == COMMAND_LOCK) {
       ::uint64_t handle;
-      ::uint32_t mode = state.lock_mode;
+      LockMode mode = (LockMode)state.lock_mode;
       String fname = state.node_name;
       struct LockSequencer lockseq;
 
@@ -433,10 +433,10 @@ void HsCommandInterpreter::execute_line(const String &line) {
 
     else if (state.command == COMMAND_TRYLOCK) {
       ::uint64_t handle;
-      ::uint32_t mode = state.lock_mode;
+      LockMode mode = (LockMode)state.lock_mode;
       String fname = state.node_name;
       struct LockSequencer lockseq;
-      ::uint32_t status;
+      LockStatus status;
 
       handle = Util::get_handle(fname);
       m_session->try_lock(handle, mode, &status, &lockseq);

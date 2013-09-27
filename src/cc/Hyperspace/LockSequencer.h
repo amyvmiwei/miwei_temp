@@ -43,9 +43,8 @@ namespace Hyperspace {
   };
 
   /** Lock mode.  Used to specify the type of lock to acquire.
-   * \anchor LockMode
    */
-  enum {
+  enum LockMode {
     /** Lock in shared mode */
     LOCK_MODE_SHARED    = 1,
     /** Lock exclusive mode */
@@ -53,9 +52,8 @@ namespace Hyperspace {
   };
 
   /** Lock status.  Used to report the result of a lock attempt
-   * \anchor LockStatus
    */
-  enum {
+  enum LockStatus {
     /** Lock successfully granted */
     LOCK_STATUS_GRANTED   = 1,
     /** Exclusive lock attempt failed because another has it locked */

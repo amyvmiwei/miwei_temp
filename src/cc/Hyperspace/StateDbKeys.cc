@@ -37,8 +37,6 @@ namespace StateDbKeys {
 
     String key = EVENTS_STR + id + PATH_DELIM_STR;
     switch(type) {
-      case(EVENT_ID):
-        break;
       case(EVENT_TYPE):
         key += EVENT_TYPE_STR;
         break;
@@ -67,8 +65,6 @@ namespace StateDbKeys {
 
     String key = SESSIONS_STR + id + PATH_DELIM_STR;
     switch(type) {
-      case(SESSION_ID):
-        break;
       case (SESSION_EXPIRED):
         key += SESSION_EXPIRED_STR;
         break;
@@ -91,8 +87,6 @@ namespace StateDbKeys {
 
     String key = HANDLES_STR + id + PATH_DELIM_STR;
     switch(type) {
-      case(HANDLE_ID):
-        break;
       case (HANDLE_OPEN_FLAGS):
         key += HANDLE_OPEN_FLAGS_STR;
         break;
