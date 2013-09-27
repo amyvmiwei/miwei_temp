@@ -39,9 +39,8 @@ close /;
 delete dir1;
 close foo;
 attrset foo testattr="Hello, World!";
-Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
 attrget foo testattr;
-Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
+Hello, World!
 attrdel foo testattr;
 Error: Unable to find '/foo' in open file map - HYPERSPACE CLI parse error
 attrlist foo;
