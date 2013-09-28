@@ -223,7 +223,7 @@ String PhantomRange::create_log(FilesystemPtr &log_dfs,
     if (now != 0)
       poll(0, 0, 1200);
     now = time(0);
-    logname = format("%s/tables/%s/_xfer_/%s/phantom-%d",
+    logname = format("%s/tables/%s/_xfer/%s/phantom-%d",
                      Global::toplevel_dir.c_str(),
                      table.id, md5DigestStr, (int)now);
   } while (log_dfs->exists(logname));
