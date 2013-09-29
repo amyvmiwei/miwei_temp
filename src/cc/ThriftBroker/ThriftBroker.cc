@@ -36,6 +36,7 @@
 #include <server/TThreadedServer.h>
 #include <transport/TBufferTransports.h>
 #include <transport/TServerSocket.h>
+#include <transport/TSocket.h>
 #include <transport/TTransportUtils.h>
 
 #include "Common/Time.h"
@@ -64,7 +65,7 @@
 } while (0)
 
 #define RETHROW(_expr_) catch (Hypertable::Exception &e) { \
-  std::ostringstream oss;  oss << HT_FUNC << _expr_ << ": "<< e; \
+  std::ostringstream oss;  oss << HT_FUNC << " " << _expr_ << ": "<< e; \
   HT_ERROR_OUT << oss.str() << HT_END; \
   THROW_TE(e.code(), oss.str()); \
 }
@@ -550,13 +551,19 @@ class ServerHandler : public HqlServiceIf {
 
 public:
 
-  ServerHandler(Context &c) : m_context(c) { }
+  ServerHandler(const String& remote_peer, Context &c)
+    : m_remote_peer(remote_peer), m_context(c) { }
 
   virtual ~ServerHandler() {
     ScopedLock lock(m_mutex);
     if (!m_object_map.empty())
-      HT_WARNF("Destroying ServerHandler with %d objects in map",
+      HT_WARNF("Destroying ServerHandler for remote peer %s with %d objects in map",
+               m_remote_peer.c_str(),
                (int)m_object_map.size());
+  }
+
+  const String& remote_peer() const {
+    return m_remote_peer;
   }
 
   virtual void
@@ -2166,7 +2173,7 @@ public:
 
   int64_t get_object_id(ClientObjectPtr co) {
     ScopedLock lock(m_mutex);
-    int64_t id = (uint64_t)co.get();
+    int64_t id = reinterpret_cast<int64_t>(co.get());
     m_object_map.insert(make_pair(id, co)); // no overwrite
     return id;
   }
@@ -2194,13 +2201,19 @@ public:
   }
 
   bool remove_object(int64_t id) {
-    ScopedLock lock(m_mutex);
-    ObjectMap::iterator it = m_object_map.find(id);
-    if (it != m_object_map.end()) {
-      m_object_map.erase(it);
-      return true;
+    // destroy client object unlocked
+    bool removed = false;
+    ClientObjectPtr item;
+    {
+      ScopedLock lock(m_mutex);
+      ObjectMap::iterator it = m_object_map.find(id);
+      if (it != m_object_map.end()) {
+        item = (*it).second;
+        m_object_map.erase(it);
+        removed = true;
+      }
     }
-    return false;
+    return removed;
   }
 
   void remove_scanner(int64_t id) {
@@ -2311,6 +2324,7 @@ public:
   }
 
 private:
+  String m_remote_peer;
   Context &m_context;
   Mutex m_mutex;
   ObjectMap m_object_map;
@@ -2355,17 +2369,75 @@ namespace {
   Context *g_context = 0;
 }
 
-class ThriftBrokerIfFactory : public HqlServiceIfFactory {
- public:
+class ServerHandlerFactory {
+public:
 
+  static ServerHandler* getHandler(const String& remotePeer) {
+    return instance.get_handler(remotePeer);
+  }
+
+  static void releaseHandler(ServerHandler* serverHandler) {
+    instance.release_handler(serverHandler);
+  }
+
+private:
+
+  ServerHandlerFactory() { }
+
+  ServerHandler* get_handler(const String& remotePeer) {
+    ScopedLock lock(m_mutex);
+    ServerHandlerMap::iterator it = m_server_handler_map.find(remotePeer);
+    if (it != m_server_handler_map.end()) {
+      ++it->second.first;
+      return it->second.second;
+    }
+
+    ServerHandler* serverHandler = new ServerHandler(remotePeer, *g_context);
+    m_server_handler_map.insert(
+      std::make_pair(remotePeer,
+      std::make_pair(1, serverHandler)));
+
+    return serverHandler;
+  }
+
+  void release_handler(ServerHandler* serverHandler) {
+    {
+      ScopedLock lock(m_mutex);
+      ServerHandlerMap::iterator it =
+        m_server_handler_map.find(serverHandler->remote_peer());
+      if (it != m_server_handler_map.end()) {
+        if (--it->second.first > 0) {
+          return;
+        }
+      }
+      m_server_handler_map.erase(it);
+    }
+    delete serverHandler;
+  }
+
+  Mutex m_mutex;
+  typedef std::map<String, std::pair<int, ServerHandler*> > ServerHandlerMap;
+  ServerHandlerMap m_server_handler_map;
+  static ServerHandlerFactory instance;
+};
+
+ServerHandlerFactory ServerHandlerFactory::instance;
+
+class ThriftBrokerIfFactory : public HqlServiceIfFactory {
+public:
   virtual ~ThriftBrokerIfFactory() {}
 
   virtual HqlServiceIf* getHandler(const ::apache::thrift::TConnectionInfo& connInfo) {
-    return new ServerHandler(*g_context);
+    typedef ::apache::thrift::transport::TSocket TTransport;
+    String remotePeer =
+      dynamic_cast<TTransport*>(connInfo.transport.get())->getPeerAddress();
+
+    return ServerHandlerFactory::getHandler(remotePeer);
   }
 
   virtual void releaseHandler( ::Hypertable::ThriftGen::ClientServiceIf *service) {
-    delete service;
+    ServerHandler* serverHandler = dynamic_cast<ServerHandler*>(service);
+    return ServerHandlerFactory::releaseHandler(serverHandler);
   }
 };
 
