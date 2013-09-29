@@ -47,6 +47,16 @@ namespace Hypertable {
     bool remove_ok(StringSet &remove_ok_logs) {
       return parent == 0 || remove_ok_logs.count(log_dir);
     }
+    String to_str(StringSet &remove_ok_logs) {
+      String msg = format("FileInfo=(logdir=%s,num=%d,revision=%lld,references=%d,rmOk=%d)",
+                          log_dir.c_str(), (int)num, (Lld)revision, (int)references,
+                          (int)remove_ok_logs.count(log_dir));
+      if (parent)
+        msg += format(" parent=(logdir=%s,num=%d,revision=%lld,references=%d,rmOk=%d)",
+                      parent->log_dir.c_str(), (int)parent->num, (Lld)parent->revision,
+                      (int)parent->references, (int)remove_ok_logs.count(parent->log_dir));
+      return msg;
+    }
     String     log_dir;
     uint32_t   num;
     uint64_t   size;

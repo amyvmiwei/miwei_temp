@@ -285,11 +285,18 @@ int CommitLog::close() {
 
 
 int CommitLog::purge(int64_t revision, StringSet &remove_ok_logs,
-                     StringSet &removed_logs) {
+                     StringSet &removed_logs, String *trace) {
   ScopedLock lock(m_mutex);
 
   if (m_fd == -1)
     return Error::CLOSED;
+
+  if (trace) {
+    *trace += format("--- Reap set begin (%s) ---\n", m_log_dir.c_str());
+    foreach_ht (CommitLogFileInfo *fi, m_reap_set)
+      *trace += fi->to_str(remove_ok_logs) + "\n";
+    *trace += format("--- Reap set end (%s) ---\n", m_log_dir.c_str());
+  }
 
   // Process "reap" set
   std::set<CommitLogFileInfo *>::iterator rm_iter, iter = m_reap_set.begin();
@@ -319,14 +326,12 @@ int CommitLog::purge(int64_t revision, StringSet &remove_ok_logs,
       m_fragment_queue.pop_front();
     }
     else {
-      if (fi->revision < revision)
-        HT_INFOF("purge(%s,rev=%llu) breaking on %s/%u: unremovable",
-                 m_log_dir.c_str(), (Llu)revision, fi->log_dir.c_str(),
-                 (unsigned)fi->num);
-      else
-        HT_INFOF("purge(%s,rev=%llu) breaking on %s/%u: fi->rev=%llu",
-                 m_log_dir.c_str(), (Llu)revision, fi->log_dir.c_str(),
-                 (unsigned)fi->num, (Llu)fi->revision);
+      String msg = format("purge(%s,rev=%llu) breaking on %s",
+                          m_log_dir.c_str(), (Llu)revision,
+                          fi->to_str(remove_ok_logs).c_str());
+      HT_INFOF("%s", msg.c_str());
+      if (trace)
+        *trace += msg + "\n";
       break;
     }
   }
