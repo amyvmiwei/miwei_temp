@@ -261,16 +261,16 @@ void MaintenanceScheduler::schedule() {
     }
 
     if (Global::root_log)
-      Global::root_log->purge(revision_root, remove_ok_logs, removed_logs);
+      Global::root_log->purge(revision_root, remove_ok_logs, removed_logs, &trace_str);
 
     if (Global::metadata_log)
-      Global::metadata_log->purge(revision_metadata, remove_ok_logs, removed_logs);
+      Global::metadata_log->purge(revision_metadata, remove_ok_logs, removed_logs, &trace_str);
 
     if (Global::system_log)
-      Global::system_log->purge(revision_system, remove_ok_logs, removed_logs);
+      Global::system_log->purge(revision_system, remove_ok_logs, removed_logs, &trace_str);
 
     if (Global::user_log)
-      Global::user_log->purge(revision_user, remove_ok_logs, removed_logs);
+      Global::user_log->purge(revision_user, remove_ok_logs, removed_logs, &trace_str);
 
     // Remove logs that were removed from the MetaLogEntityRemoveOkLogs entity
     if (!removed_logs.empty()) {
@@ -448,6 +448,11 @@ void MaintenanceScheduler::write_debug_output(boost::xtime now, Ranges &ranges,
     for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)
       out << *ag_data << "\n";
   }
+  StringSet logs;
+  Global::remove_ok_logs->get(logs);
+  out << "RemoveOkLogs:\n";
+  foreach_ht (const String &log, logs)
+    cout << log << "\n";
   out.close();
   FileUtils::unlink(System::install_dir + "/run/debug-scheduler");
 }

@@ -137,9 +137,10 @@ namespace Hypertable {
      * @param revision real cutoff revision
      * @param remove_ok_logs Set of log pathnames that can be safely removed
      * @param removed_logs Set of logs that were removed by this call
+     * @param trace Address of trace string to add trace info to if non-NULL
      */
     int purge(int64_t revision, StringSet &remove_ok_logs,
-              StringSet &removed_logs);
+              StringSet &removed_logs, String *trace);
 
     /**
      * Fills up a map of cumulative fragment size data.  One entry per log
