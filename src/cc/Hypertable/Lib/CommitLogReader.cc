@@ -272,9 +272,9 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
       fi->log_dir_hash = md5_hash(log_dir.c_str());
       fi->size = m_fs->length(log_dir + "/" + listing[i]);
       fi->parent = parent;
-      if (parent)
-        parent->references++;
       if (fi->size > 0) {
+        if (parent)
+          parent->references++;
         m_fragment_queue.push_back(fi);
       }
     }
