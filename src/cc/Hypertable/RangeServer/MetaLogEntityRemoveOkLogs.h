@@ -84,6 +84,13 @@ namespace Hypertable {
      */
     void get(StringSet &logs);
 
+    /** Returns format of decoded entity.
+     * @return Format of decoded entity.
+     */
+    uint32_t decode_version() {
+      return m_decode_version;
+    }
+
     /** Gets serialized length
      * @see encode() for serialization %format
      * @return Serialized length
@@ -136,6 +143,9 @@ namespace Hypertable {
 
     /// Set of log pathnames that can be safely removed
     StringSet m_log_set;
+
+    /// Version of serialized entity decoded
+    uint32_t m_decode_version;
 
   };
 
