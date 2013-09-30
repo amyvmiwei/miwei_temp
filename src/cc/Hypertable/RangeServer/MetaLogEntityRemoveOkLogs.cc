@@ -73,13 +73,17 @@ void MetaLogEntityRemoveOkLogs::get(StringSet &logs) {
 
 
 size_t MetaLogEntityRemoveOkLogs::encoded_length() const {
-  size_t length = 4;
+  size_t length = 12;
   foreach_ht (const String &pathname, m_log_set)
     length += Serialization::encoded_length_vstr(pathname);
   return length;
 }
 
+#define REMOVE_OK_LOGS_VERSION 2
+
 void MetaLogEntityRemoveOkLogs::encode(uint8_t **bufp) const {
+  Serialization::encode_i32(bufp, 123456789LL);
+  Serialization::encode_i32(bufp, REMOVE_OK_LOGS_VERSION);
   Serialization::encode_i32(bufp, m_log_set.size());
   foreach_ht (const String &pathname, m_log_set)
     Serialization::encode_vstr(bufp, pathname);
@@ -88,8 +92,17 @@ void MetaLogEntityRemoveOkLogs::encode(uint8_t **bufp) const {
 void
 MetaLogEntityRemoveOkLogs::decode(const uint8_t **bufp, size_t *remainp,
                                   uint16_t definition_version) {
-  size_t count = Serialization::decode_i32(bufp, remainp);
-  for (size_t i=0; i<count; i++)
+  uint32_t val = (uint32_t)Serialization::decode_i32(bufp, remainp);
+  uint32_t count;
+  if (val == 123456789LL) {
+    m_decode_version = (uint32_t)Serialization::decode_i32(bufp, remainp);
+    count = (uint32_t)Serialization::decode_i32(bufp, remainp);
+  }
+  else {
+    m_decode_version = 1;
+    count = val;
+  }
+  for (uint32_t i=0; i<count; i++)
     m_log_set.insert(Serialization::decode_vstr(bufp, remainp));
 }
 

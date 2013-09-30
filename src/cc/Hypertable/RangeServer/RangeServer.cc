@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -599,7 +599,6 @@ void RangeServer::local_recover() {
   TableInfoMap replay_map(new TableSchemaCache(m_hyperspace, Global::toplevel_dir));
   int priority = 0;
   String rsml_dir = Global::log_dir + "/" + rsml_definition->name();
-  bool found_remove_ok_logs = false;
 
   try {
     rsml_reader = 
@@ -655,17 +654,15 @@ void RangeServer::local_recover() {
             continue;
           }
           else if (dynamic_cast<MetaLogEntityRemoveOkLogs *>(entity.get())) {
-            ScopedLock glock(Global::mutex);
-            Global::remove_ok_logs = (MetaLogEntityRemoveOkLogs *)entity.get();
-	    found_remove_ok_logs = true;
+            MetaLogEntityRemoveOkLogs *remove_ok_logs = 
+              dynamic_cast<MetaLogEntityRemoveOkLogs *>(entity.get());
+            if (remove_ok_logs->decode_version() > 1)
+              Global::remove_ok_logs = remove_ok_logs;
+            else
+              continue;
           }
           stripped_entities.push_back(entity);
         }
-      }
-
-      if (!found_remove_ok_logs) {
-	ScopedLock glock(Global::mutex);
-	Global::remove_ok_logs = new MetaLogEntityRemoveOkLogs();
       }
 
       entities.swap(stripped_entities);
@@ -895,12 +892,6 @@ void RangeServer::local_recover() {
     else {
       ScopedLock lock(m_mutex);
 
-      // Create RemoveOkLogs entity
-      {
-	ScopedLock glock(Global::mutex);
-	Global::remove_ok_logs = new MetaLogEntityRemoveOkLogs();
-      }
-
       /**
        *  Create the logs
        */
@@ -936,7 +927,8 @@ void RangeServer::local_recover() {
 
     }
 
-    if (!found_remove_ok_logs) {
+    if (!Global::remove_ok_logs) {
+      Global::remove_ok_logs = new MetaLogEntityRemoveOkLogs();
       Global::remove_ok_logs->insert(transfer_logs);
       Global::rsml_writer->record_state(Global::remove_ok_logs.get());
     }
@@ -4001,7 +3993,7 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
       if (!phantom_range || phantom_range->prepared())
         continue;
 
-      phantom_range->populate_range_and_log(Global::log_dfs, &is_empty);
+      phantom_range->populate_range_and_log(Global::log_dfs, op_id, &is_empty);
 
       HT_DEBUG_OUT << "populated range and log for range " << rr << HT_END;
 

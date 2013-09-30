@@ -85,6 +85,7 @@ void PhantomRange::create_range(MasterClientPtr &master_client,
 }
 
 void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs, 
+                                          int64_t recovery_id,
                                           bool *is_empty) {
   ScopedLock lock(m_mutex);
 
@@ -104,7 +105,7 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
     if (!original_transfer_log.empty())
       m_phantom_logname = original_transfer_log;
     else {
-      m_phantom_logname = create_log(log_dfs, metalog_entity);
+      m_phantom_logname = create_log(log_dfs, recovery_id, metalog_entity);
       metalog_entity->set_original_transfer_log(m_phantom_logname);
     }
   }  
@@ -115,7 +116,7 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
         log_dfs->exists(transfer_log))
       m_phantom_logname = transfer_log;
     else {
-      m_phantom_logname = create_log(log_dfs, metalog_entity);
+      m_phantom_logname = create_log(log_dfs, recovery_id, metalog_entity);
       metalog_entity->set_transfer_log(m_phantom_logname);
     }
   }
@@ -206,6 +207,7 @@ bool PhantomRange::committed() {
 }
 
 String PhantomRange::create_log(FilesystemPtr &log_dfs,
+                                int64_t recovery_id,
                                 MetaLogEntityRange *range_entity) {
   TableIdentifier table;
   String start_row, end_row;
@@ -217,17 +219,15 @@ String PhantomRange::create_log(FilesystemPtr &log_dfs,
 
   md5_trunc_modified_base64(end_row.c_str(), md5DigestStr);
   md5DigestStr[16] = 0;
-  time_t now = 0;
 
-  do {
-    if (now != 0)
-      poll(0, 0, 1200);
-    now = time(0);
-    logname = format("%s/tables/%s/_xfer/%s/phantom-%d",
+  logname = format("%s/tables/%s/_xfer/%s/phantom-%lld",
                      Global::toplevel_dir.c_str(),
-                     table.id, md5DigestStr, (int)now);
-  } while (log_dfs->exists(logname));
+                   table.id, md5DigestStr, (Lld)recovery_id);
+
+  // Remove from prior attempt
+  log_dfs->rmdir(logname);
 
   log_dfs->mkdirs(logname);
+
   return logname;
 }

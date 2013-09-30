@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -73,7 +73,8 @@ namespace Hypertable {
       return m_range;
     }
 
-    void populate_range_and_log(FilesystemPtr &log_dfs, bool *is_empty);
+    void populate_range_and_log(FilesystemPtr &log_dfs, int64_t recovery_id,
+                                bool *is_empty);
     CommitLogReaderPtr get_phantom_log();
     const String &get_phantom_logname();
     void get_linked_logs(StringSet &linked_logs);
@@ -90,6 +91,7 @@ namespace Hypertable {
   private:
 
     String create_log(FilesystemPtr &log_dfs,
+                      int64_t recovery_id,
                       MetaLogEntityRange *range_entity);
 
     typedef std::map<uint32_t, FragmentDataPtr> FragmentMap;
