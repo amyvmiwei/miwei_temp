@@ -552,7 +552,8 @@ class ServerHandler : public HqlServiceIf {
 public:
 
   ServerHandler(const String& remote_peer, Context &c)
-    : m_remote_peer(remote_peer), m_context(c) { }
+    : m_remote_peer(remote_peer), m_context(c) {
+  }
 
   virtual ~ServerHandler() {
     ScopedLock lock(m_mutex);
@@ -1288,7 +1289,7 @@ public:
     ThriftGen::Namespace id;
     LOG_API_START("namespace name=" << ns);
     try {
-      id = get_object_id( m_context.client->open_namespace(ns) );
+      id = new_object_id( m_context.client->open_namespace(ns) );
     } RETHROW(" namespace name" << ns)
     LOG_API_FINISH_E(" id=" << id);
     return id;
@@ -2169,6 +2170,13 @@ public:
                format("Invalid namespace id: %lld", (Lld)id));
     }
     return ns;
+  }
+
+  int64_t new_object_id(ClientObjectPtr co) {
+    int64_t id;
+    ScopedLock lock(m_mutex);
+    while (!m_object_map.insert(make_pair(id = Random::number32(), co)).second || id == 0); // no overwrite
+    return id;
   }
 
   int64_t get_object_id(ClientObjectPtr co) {
