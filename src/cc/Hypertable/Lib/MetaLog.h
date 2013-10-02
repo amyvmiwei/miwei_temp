@@ -36,14 +36,14 @@
 
 namespace Hypertable {
 
+  /** @addtogroup libHypertable
+   * @{
+   */
+
   /** %MetaLog framework.
    * Contains a set of classes that define the MetaLog subsystem.
    */
   namespace MetaLog {
-
-    /** @addtogroup libHypertable
-     * @{
-     */
 
     /** %Metalog file header.
      * This class is used to facilitate encoding and decoding the header of a
@@ -106,8 +106,9 @@ namespace Hypertable {
     void scan_log_directory(FilesystemPtr &fs, const String &path,
                             std::vector<int32_t> &file_ids, int32_t *nextidp);
 
-    /** @}*/
-  }
+   }
+
+   /** @}*/
 }
 
 #endif // HYPERTABLE_METALOG_H

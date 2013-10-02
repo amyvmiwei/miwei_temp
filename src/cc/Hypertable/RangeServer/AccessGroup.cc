@@ -28,6 +28,7 @@
 
 #include "Common/DynamicBuffer.h"
 #include "Common/Error.h"
+#include "Common/FailureInducer.h"
 #include "Common/md5.h"
 
 #include "AccessGroup.h"
@@ -462,6 +463,7 @@ void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output
 }
 
 
+
 void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
   ByteString bskey;
   ByteString value;
@@ -477,6 +479,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
   bool major = false;
   bool gc = false;
   bool garbage_check_performed = false;
+  bool cellstore_created = false;
   size_t merge_offset=0, merge_length=0;
   String added_file;
 
@@ -488,8 +491,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
     if (m_in_memory) {
       if (m_cell_cache_manager->immutable_cache_empty())
         break;
-      HT_INFOF("Starting InMemory Compaction of %s(%s)",
-               m_range_name.c_str(), m_name.c_str());
+      HT_INFOF("Starting InMemory Compaction of %s", m_full_name.c_str());
     }
     else if (MaintenanceFlag::major_compaction(maintenance_flags) ||
              MaintenanceFlag::move_compaction(maintenance_flags)) {
@@ -499,8 +501,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
            !MaintenanceFlag::move_compaction(maintenance_flags)))
         break;
       major = true;
-      HT_INFOF("Starting Major Compaction of %s(%s)",
-               m_range_name.c_str(), m_name.c_str());
+      HT_INFOF("Starting Major Compaction of %s", m_full_name.c_str());
     }
     else {
       if (MaintenanceFlag::merging_compaction(maintenance_flags)) {
@@ -508,8 +509,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
           m_needs_merging = false;
           break;
         }
-        HT_INFOF("Starting Merging Compaction of %s(%s)",
-                 m_range_name.c_str(), m_name.c_str());
+        HT_INFOF("Starting Merging Compaction of %s", m_full_name.c_str());
         merging = true;
         merge_caches();
       }
@@ -521,8 +521,8 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
           gc = true;
         else
           minor = true;
-        HT_INFOF("Starting %s Compaction of %s(%s)", (gc ? "GC" : "Minor"),
-                 m_range_name.c_str(), m_name.c_str());
+        HT_INFOF("Starting %s Compaction of %s", (gc ? "GC" : "Minor"),
+                 m_full_name.c_str());
       }
     }
     abort_loop = false;
@@ -536,9 +536,9 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
     return;
   }
 
-  try {
+  String cs_file;
 
-    String cs_file;
+  try {
 
     int64_t max_num_entries = 0;
 
@@ -640,6 +640,18 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
 
     cellstore->finalize(&m_identifier);
 
+    if (FailureInducer::enabled()) {
+      if (MaintenanceFlag::split(maintenance_flags))
+        FailureInducer::instance->maybe_fail("compact-split-1");
+      if (MaintenanceFlag::relinquish(maintenance_flags))
+        FailureInducer::instance->maybe_fail("compact-relinquish-1");
+      if (!MaintenanceFlag::split(maintenance_flags) &&
+          !MaintenanceFlag::relinquish(maintenance_flags))
+        FailureInducer::instance->maybe_fail("compact-manual-1");
+    }
+
+    cellstore_created = true;
+
     /**
      * Install new CellCache and CellStore and update Live file tracker
      */
@@ -732,13 +744,23 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         Global::dfs->remove(fname);
       }
       catch (Hypertable::Exception &e) {
-        HT_ERROR_OUT << "Problem removing '" << fname << "' " << e << HT_END;
+        HT_WARN_OUT << "Problem removing empty CellStore '" << fname << "' " << e << HT_END;
       }
     }
 
     m_file_tracker.update_live(added_file, removed_files, m_next_cs_id, total_index_entries);
     m_file_tracker.update_files_column();
     m_file_tracker.get_file_list(hints->files);
+
+    if (FailureInducer::enabled()) {
+      if (MaintenanceFlag::split(maintenance_flags))
+        FailureInducer::instance->maybe_fail("compact-split-2");
+      if (MaintenanceFlag::relinquish(maintenance_flags))
+        FailureInducer::instance->maybe_fail("compact-relinquish-2");
+      if (!MaintenanceFlag::split(maintenance_flags) &&
+          !MaintenanceFlag::relinquish(maintenance_flags))
+        FailureInducer::instance->maybe_fail("compact-manual-2");
+    }
 
     if (merging)
       m_needs_merging = find_merge_run();
@@ -750,8 +772,20 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
 
   }
   catch (Exception &e) {
-    HT_ERROR_OUT << m_range_name << "(" << m_name << ") " << e << HT_END;
-    throw;
+    // Remove newly created file
+    if (!cellstore_created) {
+      if (!cs_file.empty()) {
+        try {
+          Global::dfs->remove(cs_file);
+        }
+        catch (Hypertable::Exception &e) {
+        }
+      }
+      HT_ERROR_OUT << m_full_name << " " << e << HT_END;
+      throw;
+    }
+    HT_FATALF("Problem compacting access group %s: %s - %s",
+              m_full_name.c_str(), Error::get_text(e.code()), e.what());
   }
 }
 
