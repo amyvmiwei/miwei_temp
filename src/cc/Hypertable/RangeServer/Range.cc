@@ -801,7 +801,8 @@ void Range::relinquish_compact() {
    */
   std::vector<AccessGroup::Hints> hints(ag_vector.size());
   for (size_t i=0; i<ag_vector.size(); i++)
-    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR, &hints[i]);
+    ag_vector[i]->run_compaction(MaintenanceFlag::COMPACT_MINOR |
+                                 MaintenanceFlag::RELINQUISH, &hints[i]);
   m_hints_file.set(hints);
   m_hints_file.write(location);
 
@@ -1485,6 +1486,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
     }
 
     // do compactions
+    bool successfully_compacted = false;
     std::vector<AccessGroup::Hints> hints(ag_vector.size());
     for (size_t i=0; i<ag_vector.size(); i++) {
 
@@ -1496,6 +1498,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
       if (flags & MaintenanceFlag::COMPACT) {
         try {
           ag_vector[i]->run_compaction(flags, &hints[i]);
+          successfully_compacted = true;
         }
         catch (Exception &e) {
           ag_vector[i]->unstage_compaction();
@@ -1505,9 +1508,10 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
       else
         ag_vector[i]->load_hints(&hints[i]);
     }
-    m_hints_file.set(hints);
-    m_hints_file.write(Global::location_initializer->get());
-
+    if (successfully_compacted) {
+      m_hints_file.set(hints);
+      m_hints_file.write(Global::location_initializer->get());
+    }
   }
   catch (Exception &e) {
     if (e.code() == Error::CANCELLED || cancel_maintenance())
