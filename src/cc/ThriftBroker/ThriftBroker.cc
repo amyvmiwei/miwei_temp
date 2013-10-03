@@ -991,8 +991,8 @@ public:
             << ss << " result.size=" << result.size());
 
     try {
-      TableScanner *scanner = _open_scanner(ns, table, ss);
-      _next(result, scanner, INT32_MAX);
+      TableScannerPtr scanner = _open_scanner(ns, table, ss);
+      _next(result, scanner.get(), INT32_MAX);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
@@ -1003,8 +1003,8 @@ public:
     LOG_API_START("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
-      TableScanner *scanner = _open_scanner(ns, table, ss);
-      _next(result, scanner, INT32_MAX);
+      TableScannerPtr scanner = _open_scanner(ns, table, ss);
+      _next(result, scanner.get(), INT32_MAX);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
@@ -1016,7 +1016,7 @@ public:
 
     try {
       SerializedCellsWriter writer(0, true);
-      TableScanner *scanner = _open_scanner(ns, table, ss);
+      TableScannerPtr scanner = _open_scanner(ns, table, ss);
       Hypertable::Cell cell;
 
       while (scanner->next(cell))
@@ -2076,8 +2076,8 @@ public:
     ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
                                                        row.c_str(), true));
     ss.max_versions = 1;
-    TableScanner *scanner = t->create_scanner(ss);
-    _next(result, scanner, INT32_MAX);
+    TableScannerPtr scanner = t->create_scanner(ss);
+    _next(result, scanner.get(), INT32_MAX);
   }
 
   void run_hql_interp(const ThriftGen::Namespace ns, const String &hql,
