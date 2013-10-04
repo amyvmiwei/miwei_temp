@@ -175,9 +175,11 @@ void AccessGroup::add(const Key &key, const ByteString value) {
 
 
 CellListScanner *AccessGroup::create_scanner(ScanContextPtr &scan_context) {
-  bool all = scan_context->spec ? scan_context->spec->return_deletes : false;
-  MergeScanner *scanner = new MergeScannerAccessGroup(m_table_name, 
-          scan_context, all);
+  uint32_t flags = (scan_context->spec && scan_context->spec->return_deletes) ?
+    MergeScanner::RETURN_DELETES : 0;
+  MergeScanner *scanner = 
+    new MergeScannerAccessGroup(m_table_name, scan_context,
+                                flags | MergeScanner::ACCUMULATE_COUNTERS);
 
   CellStoreReleaseCallback callback(this);
 
@@ -439,10 +441,11 @@ void AccessGroup::load_cellstore(CellStorePtr &cellstore) {
   m_file_tracker.add_live_noupdate(cellstore->get_filename(), total_index_entries);
 }
 
-void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp) {
+void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp,
+                                        uint64_t *output_bytesp) {
   ScanContextPtr scan_context = new ScanContext(m_schema);
-  MergeScannerPtr mscanner = new MergeScannerAccessGroup(m_table_name,
-                scan_context);
+  MergeScannerPtr mscanner 
+    = new MergeScannerAccessGroup(m_table_name, scan_context);
   ByteString value;
   Key key;
 
@@ -584,14 +587,16 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
       max_num_entries = m_cell_cache_manager->immutable_items();
 
       if (m_in_memory) {
-        mscanner = new MergeScannerAccessGroup(m_table_name, scan_context);
+        mscanner = new MergeScannerAccessGroup(m_table_name, scan_context,
+                                             MergeScanner::ACCUMULATE_COUNTERS);
         scanner = mscanner;
         m_cell_cache_manager->add_immutable_scanner(mscanner, scan_context);
         filtered_cache = new CellCache();
       }
       else if (merging) {
-        mscanner = new MergeScannerAccessGroup(m_table_name, 
-                        scan_context, true, true);
+        mscanner = new MergeScannerAccessGroup(m_table_name, scan_context,
+                                               MergeScanner::IS_COMPACTION |
+                                               MergeScanner::RETURN_DELETES);
         scanner = mscanner;
         max_num_entries = 0;
         for (size_t i=merge_offset; i<merge_offset+merge_length; i++) {
@@ -604,7 +609,8 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
       }
       else if (major || gc) {
         mscanner = new MergeScannerAccessGroup(m_table_name, scan_context, 
-                        false, true);
+                                               MergeScanner::IS_COMPACTION |
+                                             MergeScanner::ACCUMULATE_COUNTERS);
         scanner = mscanner;
         m_cell_cache_manager->add_immutable_scanner(mscanner, scan_context);
         for (size_t i=0; i<m_stores.size(); i++) {

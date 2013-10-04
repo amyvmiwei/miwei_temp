@@ -58,12 +58,13 @@ namespace Hypertable {
           const uint8_t *decode;
           uint64_t count;
           size_t remain = value.decode_length(&decode);
-          // value must be encoded 64 bit int
-          if (remain != 8)
+          // value must be encoded 64 bit int followed by '=' character
+          if (remain != 9)
             HT_FATAL_OUT << "Expected counter to be encoded 64 bit int but remain=" << remain
               << " ,key=" << key << " ,value="<< value.str() << HT_END;
 
           count = Serialization::decode_i64(&decode, &remain);
+          HT_ASSERT(*decode == '=');
           //convert counter to ascii
           sprintf(numbuf, "%llu", (Llu) count);
           value_len = strlen(numbuf);

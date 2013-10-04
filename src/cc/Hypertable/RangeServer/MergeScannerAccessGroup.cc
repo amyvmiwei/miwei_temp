@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -31,10 +31,12 @@ using namespace Hypertable;
 
 
 MergeScannerAccessGroup::MergeScannerAccessGroup(String &table_name,
-        ScanContextPtr &scan_ctx, bool return_deletes, bool is_compaction)
-  : MergeScanner(scan_ctx), m_return_deletes(return_deletes),
+                                                 ScanContextPtr &scan_ctx,
+                                                 uint32_t flags)
+  : MergeScanner(scan_ctx), m_return_deletes(flags & RETURN_DELETES),
+    m_accumulate_counters(flags & ACCUMULATE_COUNTERS),
     m_revs_count(0), m_revs_limit(0), m_prev_key(0), m_prev_cf(-1),
-    m_no_forward(false), m_count_present(false), 
+    m_no_forward(false), m_count_present(false),
     m_skip_remaining_counter(false), m_counted_value(12),
     m_delete_present(false), m_deleted_row(0),
     m_deleted_column_family(0), m_deleted_cell(0), m_deleted_cell_version(0),
@@ -47,7 +49,7 @@ MergeScannerAccessGroup::MergeScannerAccessGroup(String &table_name,
   bool has_index = false;
   bool has_qualifier_index = false;
 
-  if (is_compaction) {
+  if (flags & IS_COMPACTION) {
     // check if there are any indices in this schema
     foreach_ht (Schema::ColumnFamily *cf, scan_ctx->schema->get_column_families()){
       if (!cf || cf->deleted)
@@ -113,9 +115,8 @@ MergeScannerAccessGroup::do_initialize()
     // single access group since no counter will span multiple access grps
     cell_cutoff = m_scan_context_ptr->family_info[
                 sstate.key.column_family_code].cutoff_time;
-    counter = m_scan_context_ptr->family_info[
-                sstate.key.column_family_code].counter;
-
+    counter = m_accumulate_counters &&
+      m_scan_context_ptr->family_info[sstate.key.column_family_code].counter;
 
     if (sstate.key.timestamp < cell_cutoff
         || (sstate.key.timestamp < m_start_timestamp)) {
@@ -338,8 +339,8 @@ MergeScannerAccessGroup::do_forward()
       // multiple access groups
       cell_cutoff = m_scan_context_ptr->family_info[
                 sstate.key.column_family_code].cutoff_time;
-      counter = m_scan_context_ptr->family_info[
-                sstate.key.column_family_code].counter;
+      counter = m_accumulate_counters &&
+        m_scan_context_ptr->family_info[sstate.key.column_family_code].counter;
 
       // apply the various filters...
       if (sstate.key.timestamp < cell_cutoff) {

@@ -37,7 +37,15 @@
 namespace Hypertable {
 
   class MergeScanner : public CellListScanner {
+
   public:
+
+    enum Flags {
+      RETURN_DELETES = 0x00000001,
+      IS_COMPACTION = 0x00000002,
+      ACCUMULATE_COUNTERS = 0x00000004
+    };
+
     struct ScannerState {
       CellListScanner *scanner;
       Key key;
