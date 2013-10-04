@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -81,8 +81,7 @@ namespace Hypertable {
     };
 
   public:
-    MergeScannerAccessGroup(String &table_name, ScanContextPtr &scan_ctx, 
-        bool return_deletes = false, bool is_compaction = false);
+    MergeScannerAccessGroup(String &table_name, ScanContextPtr &scan_ctx, uint32_t flags=0);
 
   protected:
     virtual bool do_get(Key &key, ByteString &value);
@@ -210,8 +209,9 @@ namespace Hypertable {
     inline void finish_count() {
       uint8_t *ptr = m_counted_value.base;
 
-      *ptr++ = 8;  // length
+      *ptr++ = 9;  // length
       Serialization::encode_i64(&ptr, m_count);
+      *ptr++ = '=';
 
       m_prev_key.set(m_counted_key.row, m_counted_key.len_cell());
       m_prev_cf = m_counted_key.column_family_code;
@@ -246,6 +246,7 @@ namespace Hypertable {
     // if this is true, return a delete even if it doesn't satisfy
     // the ScanSpec timestamp/version requirement
     bool          m_return_deletes;
+    bool          m_accumulate_counters;
 
     // to avoid performance problems, the revision limit is checked in this 
     // class and not in MergeScannerRange. otherwise this class would send
