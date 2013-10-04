@@ -41,6 +41,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <poll.h>
+
 using namespace Hypertable;
 using namespace Hyperspace;
 
@@ -147,6 +149,8 @@ void OperationCompact::execute() {
         m_dependencies.insert(Dependency::METADATA);
         m_state = OperationState::SCAN_METADATA;
       }
+      // Sleep a little bit to prevent busy wait
+      poll(0, 0, 5000);
       m_context->mml_writer->record_state(this);
       return;
     }

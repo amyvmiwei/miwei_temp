@@ -100,6 +100,10 @@ namespace Hypertable {
       DUPLICATE_RANGE                              = 53,
       INVALID_PSEUDO_TABLE_NAME                    = 54,
       BAD_FORMAT                                   = 55,
+      INVALID_ARGUMENT                             = 56,
+      INVALID_OPERATION                            = 57,
+      UNSUPPORTED_OPERATION                        = 58,
+      COLUMN_FAMILY_NOT_FOUND                      = 59,
 
       CONFIG_BAD_ARGUMENT                          = 1001,
       CONFIG_BAD_CFG_FILE                          = 1002,

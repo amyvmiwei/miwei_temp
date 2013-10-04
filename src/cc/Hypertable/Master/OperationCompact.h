@@ -79,7 +79,7 @@ namespace Hypertable {
      * <td>SCAN_METADATA</td>
      * <td><ul>
      * <li>Scans the METADATA table and populates #m_servers to hold the set
-     * of servers that hold the table to be altered which are not in the
+     * of servers that hold the table to be compacted which are not in the
      * #m_completed set.  If no table name was supplied, then #m_servers is
      * set to all available servers which are not in the #m_completed set</li>
      * <li>Dependencies are set to server names in #m_servers</li>

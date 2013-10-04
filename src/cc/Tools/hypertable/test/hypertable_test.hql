@@ -326,14 +326,21 @@ CREATE TABLE Fruits (
 insert into Fruits values("www.google.com", "refer-url", "www.yahoo.com");
 insert into Fruits values("www.google.com", "http-code", "200");
 ALTER TABLE Fruits ADD(
-  'Red', 
+  'Red' MAX_VERSIONS 2,
   ACCESS GROUP ag3 ('Red')
 ) DROP ('http-code')
 ;
 insert into Fruits values("www.google.com", "Red", "Apple");
+insert into Fruits values("www.google.com", "Red", "Strawberry");
 insert into Fruits values("www.yahoo.com", "Red", "Grapefruit");
+insert into Fruits values("www.yahoo.com", "Red", "Plum");
 select * from Fruits;
 select * from Fruits where row="www.google.com";
+
+ALTER TABLE Fruits 
+  MODIFY ('Red' MAX_VERSIONS 1)
+;
+select Red from Fruits;
 
 ALTER TABLE Fruits ADD ('Orange') DROP('Red') 
     ADD('Green', 'Yellow', ACCESS GROUP ag4 ('Green', 'Yellow'));
