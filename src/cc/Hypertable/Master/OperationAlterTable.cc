@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -41,6 +41,8 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <poll.h>
+
 using namespace Hypertable;
 using namespace Hyperspace;
 
@@ -62,9 +64,6 @@ void OperationAlterTable::initialize_dependencies() {
   m_name = String("/") + m_name;
   m_exclusivities.insert(m_name);
   add_dependency(Dependency::INIT);
-  add_dependency(Dependency::METADATA);
-  add_dependency(Dependency::SYSTEM);
-  add_dependency(Dependency::RECOVER_SERVER);
 }
 
 void OperationAlterTable::execute() {
@@ -85,7 +84,7 @@ void OperationAlterTable::execute() {
     // Check to see if namespace exists
     if(m_context->namemap->name_to_id(m_name, m_id, &is_namespace)) {
       if (is_namespace) {
-        complete_error(Error::TABLE_NOT_FOUND, format("%s is a namespace", m_name.c_str()));
+        complete_error(Error::INVALID_ARGUMENT, format("%s is a namespace", m_name.c_str()));
         return;
       }
       set_state(OperationState::VALIDATE_SCHEMA);
@@ -130,20 +129,25 @@ void OperationAlterTable::execute() {
       complete_error(e);
       return;
     }
+    {
+      ScopedLock lock(m_mutex);
+      m_dependencies.clear();
+      m_dependencies.insert(Dependency::METADATA);
+    }
     set_state(OperationState::SCAN_METADATA);
 
-  case OperationState::SCAN_METADATA:  // Mabye ditch this state???
+  case OperationState::SCAN_METADATA:
     servers.clear();
     Utility::get_table_server_set(m_context, m_id, "", servers);
     {
       ScopedLock lock(m_mutex);
+      m_servers.clear();
       m_dependencies.clear();
-      m_dependencies.insert(Dependency::INIT);
-      m_dependencies.insert(Dependency::METADATA);
-      m_dependencies.insert(Dependency::SYSTEM);
       for (StringSet::iterator iter=servers.begin(); iter!=servers.end(); ++iter) {
-        if (m_completed.count(*iter) == 0)
+        if (m_completed.count(*iter) == 0) {
           m_dependencies.insert(*iter);
+          m_servers.insert(*iter);
+        }
       }
       m_state = OperationState::ISSUE_REQUESTS;
     }
@@ -153,15 +157,8 @@ void OperationAlterTable::execute() {
   case OperationState::ISSUE_REQUESTS:
     table.id = m_id.c_str();
     table.generation = 0;
-    {
-      ScopedLock lock(m_mutex);
-      dependencies = m_dependencies;
-    }
-    dependencies.erase(Dependency::INIT);
-    dependencies.erase(Dependency::METADATA);
-    dependencies.erase(Dependency::SYSTEM);
     op_handler = new DispatchHandlerOperationAlterTable(m_context, table, m_schema);
-    op_handler->start(dependencies);
+    op_handler->start(m_servers);
     if (!op_handler->wait_for_completion()) {
       std::set<DispatchHandlerOperation::Result> results;
       op_handler->get_results(results);
@@ -170,14 +167,21 @@ void OperationAlterTable::execute() {
             result.error == Error::TABLE_NOT_FOUND) {
           ScopedLock lock(m_mutex);
           m_completed.insert(result.location);
-          m_dependencies.erase(result.location);
         }
         else
           HT_WARNF("Alter table error at %s - %s (%s)", result.location.c_str(),
                    Error::get_text(result.error), result.msg.c_str());
       }
-      set_state(OperationState::SCAN_METADATA);
+      {
+        ScopedLock lock(m_mutex);
+        m_servers.clear();
+        m_dependencies.clear();
+        m_dependencies.insert(Dependency::METADATA);
+        m_state = OperationState::SCAN_METADATA;
+      }
       m_context->mml_writer->record_state(this);
+      // Sleep a little bit to prevent busy wait
+      poll(0, 0, 5000);
       return;
     }
     set_state(OperationState::UPDATE_HYPERSPACE);
@@ -205,7 +209,7 @@ void OperationAlterTable::display_state(std::ostream &os) {
   os << " name=" << m_name << " id=" << m_id << " ";
 }
 
-#define OPERATION_ALTER_TABLE_VERSION 1
+#define OPERATION_ALTER_TABLE_VERSION 2
 
 uint16_t OperationAlterTable::encoding_version() const {
   return OPERATION_ALTER_TABLE_VERSION;
@@ -214,9 +218,13 @@ uint16_t OperationAlterTable::encoding_version() const {
 size_t OperationAlterTable::encoded_state_length() const {
   size_t length = Serialization::encoded_length_vstr(m_name) +
     Serialization::encoded_length_vstr(m_schema) +
-    Serialization::encoded_length_vstr(m_id) + 4;
-  for (StringSet::iterator iter = m_completed.begin(); iter != m_completed.end(); ++iter)
-    length += Serialization::encoded_length_vstr(*iter);
+    Serialization::encoded_length_vstr(m_id);
+  length += 4;
+  foreach_ht (const String &location, m_completed)
+    length += Serialization::encoded_length_vstr(location);
+  length += 4;
+  foreach_ht (const String &location, m_servers)
+    length += Serialization::encoded_length_vstr(location);
   return length;
 }
 
@@ -225,8 +233,11 @@ void OperationAlterTable::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_schema);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());
-  for (StringSet::iterator iter = m_completed.begin(); iter != m_completed.end(); ++iter)
-    Serialization::encode_vstr(bufp, *iter);
+  foreach_ht (const String &location, m_completed)
+    Serialization::encode_vstr(bufp, location);
+  Serialization::encode_i32(bufp, m_servers.size());
+  foreach_ht (const String &location, m_servers)
+    Serialization::encode_vstr(bufp, location);
 }
 
 void OperationAlterTable::decode_state(const uint8_t **bufp, size_t *remainp) {
@@ -235,6 +246,11 @@ void OperationAlterTable::decode_state(const uint8_t **bufp, size_t *remainp) {
   size_t length = Serialization::decode_i32(bufp, remainp);
   for (size_t i=0; i<length; i++)
     m_completed.insert( Serialization::decode_vstr(bufp, remainp) );
+  if (m_decode_version >= 2) {
+    length = Serialization::decode_i32(bufp, remainp);
+    for (size_t i=0; i<length; i++)
+      m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
+  }
 }
 
 void OperationAlterTable::decode_request(const uint8_t **bufp, size_t *remainp) {

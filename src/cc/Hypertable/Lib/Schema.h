@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -44,42 +44,44 @@ namespace Hypertable {
   class Schema : public ReferenceCount {
   public:
     struct ColumnFamily {
-      ColumnFamily() : name(), ag(), has_index(false), has_qualifier_index(0), 
-        id(0), max_versions(0), time_order_desc(false), 
-        time_order_desc_set(false), ttl(0), generation(0), deleted(false), 
-        renamed(false), new_name(), counter(false) { return; }
+      ColumnFamily() : id(0), max_versions(0), ttl(0), generation(0),
+                       has_index(false), has_qualifier_index(false),
+                       time_order_desc(false), time_order_desc_set(false),
+                       deleted(false), renamed(false), counter(false),
+                       modification(false) { return; }
 
       String   name;
       String   ag;
-      bool has_index;
-      bool has_qualifier_index;
       uint32_t id;
       uint32_t max_versions;
-      bool time_order_desc;
-      bool time_order_desc_set;
       time_t   ttl;
       uint32_t generation;
+      String new_name;
+      bool has_index;
+      bool has_qualifier_index;
+      bool time_order_desc;
+      bool time_order_desc_set;
       bool deleted;
       bool renamed;
-      String new_name;
       bool counter;
+      bool modification;
     };
 
     typedef std::vector<ColumnFamily *> ColumnFamilies;
 
     struct AccessGroup {
-      AccessGroup() : name(), in_memory(false), counter(false), 
-        replication(-1), blocksize(0),
-        bloom_filter(), columns() { }
+      AccessGroup() : replication(-1), blocksize(0), in_memory(false),
+                      counter(false), modification(false) { }
 
       String   name;
-      bool     in_memory;
-      bool     counter;
       int16_t  replication;
       uint32_t blocksize;
       String compressor;
       String bloom_filter;
       ColumnFamilies columns;
+      bool in_memory;
+      bool counter;
+      bool modification;
     };
 
     typedef std::vector<AccessGroup *> AccessGroups;

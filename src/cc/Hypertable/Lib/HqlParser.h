@@ -557,6 +557,30 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct modify_column_family {
+      modify_column_family(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.cf = new Schema::ColumnFamily();
+        state.cf->name = String(str, end-str);
+        if (state.cf->name.find_first_of(':') != String::npos)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Invalid column family name %s, ':' character not allowed",
+                    state.cf->name.c_str());
+        state.cf->deleted = false;
+        state.cf->modification = true;
+        trim_if(state.cf->name, is_any_of("'\""));
+        Schema::ColumnFamilyMap::const_iterator iter =
+            state.cf_map.find(state.cf->name);
+        if (iter != state.cf_map.end())
+          HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
+                   state.cf->name + " multiply defined.");
+        state.cf_map[state.cf->name] = state.cf;
+        state.cf_list.push_back(state.cf);
+      }
+      ParserState &state;
+    };
+
+
     struct drop_column_family {
       drop_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -1915,6 +1939,7 @@ namespace Hypertable {
           Token BALANCE      = as_lower_d["balance"];
           Token DURATION     = as_lower_d["duration"];
           Token ADD          = as_lower_d["add"];
+          Token MODIFY       = as_lower_d["modify"];
           Token USE          = as_lower_d["use"];
           Token RENAME       = as_lower_d["rename"];
           Token COLUMN       = as_lower_d["column"];
@@ -2322,6 +2347,7 @@ namespace Hypertable {
           alter_table_statement
             = ALTER >> TABLE >> user_identifier[set_table_name(self.state)]
             >> +(ADD >> add_column_definitions
+                | MODIFY >> modify_column_definitions
                 | DROP >> drop_column_definitions
                 | RENAME >> COLUMN >> FAMILY >> rename_column_definition)
             ;
@@ -2489,11 +2515,21 @@ namespace Hypertable {
               >> RPAREN
             ;
 
+          modify_column_definitions
+            = LPAREN >> modify_column_definition
+                     >> *(COMMA >> modify_column_definition)
+                     >> RPAREN
+            ;
+
+          modify_column_definition
+            = column_name[modify_column_family(self.state)] >> *(column_option)
+            ;
+
           column_name
             = (identifier | string_literal)
             ;
 
-          column_definition
+           column_definition
             = column_name[create_column_family(self.state)] >> *(column_option)
             ;
 
@@ -2796,6 +2832,8 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(drop_column_definition);
           BOOST_SPIRIT_DEBUG_RULE(drop_column_definitions);
           BOOST_SPIRIT_DEBUG_RULE(rename_column_definition);
+          BOOST_SPIRIT_DEBUG_RULE(modify_column_definitions);
+          BOOST_SPIRIT_DEBUG_RULE(modify_column_definition);
           BOOST_SPIRIT_DEBUG_RULE(create_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(create_namespace_statement);
           BOOST_SPIRIT_DEBUG_RULE(use_namespace_statement);
@@ -2902,6 +2940,7 @@ namespace Hypertable {
           add_column_definition, add_column_definitions,
           drop_column_definition, drop_column_definitions,
           rename_column_definition, create_table_statement, duration,
+          modify_column_definitions, modify_column_definition,
           create_namespace_statement, use_namespace_statement, 
           drop_namespace_statement, identifier, user_identifier, 
           max_versions_option, time_order_option, statement,

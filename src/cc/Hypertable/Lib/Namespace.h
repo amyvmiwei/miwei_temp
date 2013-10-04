@@ -135,6 +135,12 @@ namespace Hypertable {
      */
     void create_table(const String &name, const String &schema);
 
+    /** Alter table schema.
+     * @param table_name Name of table to alter
+     * @param schema Schema object holding alterations
+     */
+    void alter_table(const String &table_name, SchemaPtr &schema);
+
     /**
      * Alters column families within a table.  The schema parameter
      * contains an XML-style schema difference and supports a
@@ -174,10 +180,10 @@ namespace Hypertable {
      * );
      * </pre>
      *
-     * @param name name of the table
+     * @param table_name Name of the table to alter
      * @param schema desired alterations represented as schema
      */
-    void alter_table(const String &name, const String &schema);
+    void alter_table(const String &table_name, const String &schema);
 
     /**
      * Opens a table

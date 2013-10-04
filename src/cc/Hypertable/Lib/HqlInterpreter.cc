@@ -248,7 +248,7 @@ cmd_alter_table(NamespacePtr &ns, ParserState &state,
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
   String schema_str;
-  Schema *schema = new Schema();
+  SchemaPtr schema = new Schema();
   bool need_default_ag = false;
 
   foreach_ht(Schema::AccessGroup *ag, state.ag_list)
@@ -274,8 +274,7 @@ cmd_alter_table(NamespacePtr &ns, ParserState &state,
   if (error_str)
     HT_THROW(Error::HQL_PARSE_ERROR, error_str);
 
-  schema->render(schema_str);
-  ns->alter_table(state.table_name, schema_str.c_str());
+  ns->alter_table(state.table_name, schema);
 
   /**
    * Refresh the cached table
