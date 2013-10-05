@@ -310,8 +310,17 @@ MaintenancePrioritizer::schedule_necessary_compactions(std::vector<RangeData> &r
       if (ag_data->maintenance_flags != 0)
         continue;
 
+      // Check for manually scheduled compactions
+      if (range_data[i].data->compaction_type_needed) {
+        range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
+        ag_data->maintenance_flags |= range_data[i].data->compaction_type_needed;
+        if (range_data[i].data->priority == 0)
+          range_data[i].data->priority = priority++;
+        if (memory_state.need_more())
+          memory_state.decrement_needed(ag_data->mem_allocated);
+      }
       // Schedule compaction for AGs that need garbage collection
-      if (ag_data->gc_needed) {
+      else if (ag_data->gc_needed) {
         range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
         ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_GC;
         if (range_data[i].data->priority == 0)

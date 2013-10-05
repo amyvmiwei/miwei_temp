@@ -101,12 +101,12 @@ void Namespace::canonicalize(String *original) {
   *original = output;
 }
 
-void Namespace::compact(const String &name, const String &row, uint32_t range_types) {
+void Namespace::compact(const String &name, const String &row, uint32_t flags) {
   if (name.empty())
-    m_master_client->compact("", "", range_types);
+    m_master_client->compact("", "", flags);
   else {
     String full_name = get_full_name(name);
-    m_master_client->compact(full_name, row, 0);
+    m_master_client->compact(full_name, row, flags);
   }
 }
 

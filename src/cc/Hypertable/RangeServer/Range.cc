@@ -74,10 +74,10 @@ Range::Range(MasterClientPtr &master_client,
     m_hints_file(identifier->id, range->start_row, range->end_row),
     m_schema(schema),m_revision(TIMESTAMP_MIN),m_latest_revision(TIMESTAMP_MIN),
     m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
-    m_range_set(range_set), m_error(Error::OK), m_dropped(false),
-    m_capacity_exceeded_throttle(false), m_relinquish(false),
-    m_maintenance_generation(0),
+    m_range_set(range_set), m_error(Error::OK),
+    m_compaction_type_needed(0), m_maintenance_generation(0),
     m_load_metrics(identifier->id, range->start_row, range->end_row),
+    m_dropped(false), m_capacity_exceeded_throttle(false), m_relinquish(false),
     m_initialized(false) {
   m_metalog_entity = new MetaLogEntityRange(*identifier, *range, *state, needs_compaction);
   initialize();
@@ -94,11 +94,11 @@ Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
     m_schema(schema), m_revision(TIMESTAMP_MIN),
     m_latest_revision(TIMESTAMP_MIN), m_split_threshold(0),
     m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
-    m_range_set(range_set), m_error(Error::OK), m_dropped(false),
-    m_capacity_exceeded_throttle(false), m_relinquish(false),
-    m_maintenance_generation(0),
+    m_range_set(range_set), m_error(Error::OK), 
+    m_compaction_type_needed(0), m_maintenance_generation(0),
     m_load_metrics(range_entity->get_table_id(), range_entity->get_start_row(),
                    range_entity->get_end_row()),
+    m_dropped(false), m_capacity_exceeded_throttle(false), m_relinquish(false),
     m_initialized(false) {
   initialize();
 }
@@ -591,6 +591,7 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
     mdata->busy = m_maintenance_guard.in_progress() || !m_metalog_entity->get_load_acknowledged();
     mdata->needs_major_compaction = m_metalog_entity->get_needs_compaction();
     mdata->initialized = m_initialized;
+    mdata->compaction_type_needed = m_compaction_type_needed;
   }
 
   for (size_t i=0; i<ag_vector.size(); i++) {
@@ -1532,6 +1533,7 @@ void Range::compact(MaintenanceFlag::Map &subtask_map) {
 
   {
     ScopedLock lock(m_mutex);
+    m_compaction_type_needed = 0;
     m_capacity_exceeded_throttle = false;
     m_maintenance_generation++;
   }

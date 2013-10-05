@@ -1095,14 +1095,30 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
   size_t range_count = 0;
 
   if (table)
-    HT_INFOF("compacting table ID=%s ROW=%s", table->id, row ? row : "");
+    HT_INFOF("compacting table ID=%s ROW=%s FLAGS=%s",
+             table->id, row ? row : "",
+             RangeServerProtocol::compact_flags_to_string(flags).c_str());
   else
-    HT_INFOF("compacting ranges FLAGS=%s", RangeServerProtocol::compact_flags_to_string(flags).c_str());
+    HT_INFOF("compacting ranges FLAGS=%s",
+             RangeServerProtocol::compact_flags_to_string(flags).c_str());
 
   if (!m_replay_finished) {
     if (!RangeServer::wait_for_recovery_finish(cb->get_event()->expiration_time()))
       return;
   }
+
+  int compaction_type = MaintenanceFlag::COMPACT_MAJOR;
+  if ((flags & RangeServerProtocol::COMPACT_FLAG_MINOR) ==
+      RangeServerProtocol::COMPACT_FLAG_MINOR)
+    compaction_type = MaintenanceFlag::COMPACT_MINOR;
+  else if ((flags & RangeServerProtocol::COMPACT_FLAG_MERGING) ==
+      RangeServerProtocol::COMPACT_FLAG_MERGING)
+    compaction_type = MaintenanceFlag::COMPACT_MERGING;
+  else if ((flags & RangeServerProtocol::COMPACT_FLAG_GC) ==
+      RangeServerProtocol::COMPACT_FLAG_GC)
+    compaction_type = MaintenanceFlag::COMPACT_GC;
+
+  HT_INFOF("compaction type = 0x%x", compaction_type);
 
   try {
 
@@ -1119,14 +1135,14 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
                     format("Unable to find range for row '%s'", row));
           return;
         }
-        range->set_needs_compaction(true);
+        range->set_compaction_type_needed(compaction_type);
         range_count = 1;
       }
       else {
         ranges.array.clear();
         table_info->get_ranges(ranges);
         foreach_ht(RangeData &rd, ranges.array)
-          rd.range->set_needs_compaction(true);
+          rd.range->set_compaction_type_needed(compaction_type);
         range_count = ranges.array.size();
       }
     }
@@ -1144,7 +1160,7 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
             ranges.array.clear();
             tables[i]->get_ranges(ranges);
             foreach_ht(RangeData &rd, ranges.array)
-              rd.range->set_needs_compaction(true);
+              rd.range->set_compaction_type_needed(compaction_type);
             range_count += ranges.array.size();
           }
           else if ((flags & RangeServerProtocol::COMPACT_FLAG_ROOT) ==
@@ -1153,7 +1169,7 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
             tables[i]->get_ranges(ranges);
             foreach_ht(RangeData &rd, ranges.array) {
               if (rd.range->is_root()) {
-                rd.range->set_needs_compaction(true);
+                rd.range->set_compaction_type_needed(compaction_type);
                 range_count++;
                 break;
               }
@@ -1165,7 +1181,7 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
             ranges.array.clear();
             tables[i]->get_ranges(ranges);
             foreach_ht(RangeData &rd, ranges.array)
-              rd.range->set_needs_compaction(true);
+              rd.range->set_compaction_type_needed(compaction_type);
             range_count += ranges.array.size();
           }
         }
@@ -1174,7 +1190,7 @@ RangeServer::compact(ResponseCallback *cb, const TableIdentifier *table,
             ranges.array.clear();
             tables[i]->get_ranges(ranges);
             foreach_ht(RangeData &rd, ranges.array)
-              rd.range->set_needs_compaction(true);
+              rd.range->set_compaction_type_needed(compaction_type);
             range_count += ranges.array.size();
           }
         }

@@ -83,10 +83,10 @@ namespace Hypertable {
     /** Performs a manual compaction.
      * @param name Name of table to compact
      * @param row Optional row identifying range withing table to compact
-     * @param range_types Range type specification
-     *        (see RangeServerProtocol::RangeType)
+     * @param flags Compaction flags
+     *        (see RangeServerProtocol::CompactionFlags)
      */
-    void compact(const String &name, const String &row, uint32_t range_types);
+    void compact(const String &name, const String &row, uint32_t flags);
 
     /** Creates a table.
      *
