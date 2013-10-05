@@ -143,7 +143,7 @@ namespace Hypertable {
      *   <td>vstr</td><td>Row key of range to compact</td>
      *   </tr>
      *   <tr>
-     *   <td>i32</td><td>%Range types (see RangeServerProtocol::RangeType)</td>
+     *   <td>i32</td><td>Compaction flags (see RangeServerProtocol::CompactionFlags)</td>
      *   </tr>
      *   <tr>
      *   <td>vstr</td><td>%Table identifier</td>
@@ -190,7 +190,7 @@ namespace Hypertable {
      *   <td>vstr</td><td> Row key of range to compact</td>
      *   </tr>
      *   <tr>
-     *   <td>i32</td><td> %Range types (see RangeServerProtocol::RangeType)</td>
+     *   <td>i32</td><td> Compaction flags (see RangeServerProtocol::CompactionFlags)</td>
      *   </tr>
      * </table>
      * @param bufp Address of source buffer pointer (advanced by call)
@@ -215,8 +215,8 @@ namespace Hypertable {
     /// Row key of range to compact
     String m_row;
 
-    /// %Range type specification (see RangeServerProtocol::RangeType)
-    uint32_t m_range_types;
+    /// Compaction flags (see RangeServerProtocol::CompactionFlags)
+    uint32_t m_flags;
 
     /// %Table identifier
     String m_id;

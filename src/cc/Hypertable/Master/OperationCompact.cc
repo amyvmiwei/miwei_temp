@@ -126,7 +126,7 @@ void OperationCompact::execute() {
   case OperationState::ISSUE_REQUESTS:
     table.id = m_id.c_str();
     table.generation = 0;
-    op_handler = new DispatchHandlerOperationCompact(m_context, table, m_row, m_range_types);
+    op_handler = new DispatchHandlerOperationCompact(m_context, table, m_row, m_flags);
     op_handler->start(m_servers);
     if (!op_handler->wait_for_completion()) {
       std::set<DispatchHandlerOperation::Result> results;
@@ -169,8 +169,8 @@ void OperationCompact::execute() {
 
 void OperationCompact::display_state(std::ostream &os) {
   os << " name=" << m_name << " id=" << m_id << " " 
-     << " row=" << m_row << " range_types=" 
-     << RangeServerProtocol::compact_flags_to_string(m_range_types);
+     << " row=" << m_row << " flags=" 
+     << RangeServerProtocol::compact_flags_to_string(m_flags);
 }
 
 #define OPERATION_COMPACT_VERSION 2
@@ -195,7 +195,7 @@ size_t OperationCompact::encoded_state_length() const {
 void OperationCompact::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_name);
   Serialization::encode_vstr(bufp, m_row);
-  Serialization::encode_i32(bufp, m_range_types);
+  Serialization::encode_i32(bufp, m_flags);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());
   foreach_ht (const String &location, m_completed)
@@ -221,7 +221,7 @@ void OperationCompact::decode_state(const uint8_t **bufp, size_t *remainp) {
 void OperationCompact::decode_request(const uint8_t **bufp, size_t *remainp) {
   m_name = Serialization::decode_vstr(bufp, remainp);
   m_row  = Serialization::decode_vstr(bufp, remainp);
-  m_range_types = Serialization::decode_i32(bufp, remainp);
+  m_flags = Serialization::decode_i32(bufp, remainp);
 }
 
 const String OperationCompact::name() {

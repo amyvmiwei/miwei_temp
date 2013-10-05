@@ -79,35 +79,58 @@ namespace Hypertable {
   String
   RangeServerProtocol::compact_flags_to_string(uint32_t flags) {
     String str;
-    if ((flags & COMPACT_FLAG_ALL) == COMPACT_FLAG_ALL)
+    bool first=true;
+    if ((flags & COMPACT_FLAG_ALL) == COMPACT_FLAG_ALL) {
       str += "ALL";
+      first=false;
+    }
     else {
-      bool first=true;
       if ((flags & COMPACT_FLAG_ROOT) == COMPACT_FLAG_ROOT) {
         str += "ROOT";
         first=false;
       }
       if ((flags & COMPACT_FLAG_METADATA) == COMPACT_FLAG_METADATA) {
-        if (!first) {
+        if (!first)
           str += "|";
-          first=false;
-        }
         str += "METADATA";
+        first=false;
       }
       if ((flags & COMPACT_FLAG_SYSTEM) == COMPACT_FLAG_SYSTEM) {
-        if (!first) {
+        if (!first)
           str += "|";
-          first=false;
-        }
         str += "SYSTEM";
+        first=false;
       }
       if ((flags & COMPACT_FLAG_USER) == COMPACT_FLAG_USER) {
-        if (!first) {
+        if (!first)
           str += "|";
-          first=false;
-        }
         str += "USER";
+        first=false;
       }
+    }
+    if ((flags & COMPACT_FLAG_MINOR) == COMPACT_FLAG_MINOR) {
+        if (!first)
+          str += "|";
+        str += "MINOR";
+        first=false;
+    }
+    if ((flags & COMPACT_FLAG_MAJOR) == COMPACT_FLAG_MAJOR) {
+        if (!first)
+          str += "|";
+        str += "MAJOR";
+        first=false;
+    }
+    if ((flags & COMPACT_FLAG_MERGING) == COMPACT_FLAG_MERGING) {
+        if (!first)
+          str += "|";
+        str += "MERGING";
+        first=false;
+    }
+    if ((flags & COMPACT_FLAG_GC) == COMPACT_FLAG_GC) {
+        if (!first)
+          str += "|";
+        str += "GC";
+        first=false;
     }
     return str;
   }

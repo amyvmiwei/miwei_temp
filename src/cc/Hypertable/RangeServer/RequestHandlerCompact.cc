@@ -54,7 +54,7 @@ void RequestHandlerCompact::run() {
       row = 0;
 
     if (*table.id)
-      m_range_server->compact(&cb, &table, row, 0);
+      m_range_server->compact(&cb, &table, row, flags);
     else
       m_range_server->compact(&cb, 0, 0, flags);
   }

@@ -104,6 +104,7 @@ namespace Hypertable {
       uint32_t bloom_filter_accesses;
       uint32_t bloom_filter_maybes;
       uint32_t bloom_filter_fps;
+      int compaction_type_needed;
       bool     busy;
       bool     is_metadata;
       bool     is_system;
@@ -316,8 +317,13 @@ namespace Hypertable {
       m_metalog_entity->set_needs_compaction(needs_compaction);
     }
 
-    bool get_needs_compaction() {
-      return m_metalog_entity->get_needs_compaction();
+    /** Sets type of compaction needed.
+     * This method is different than set_needs_compaction() in that a
+     * type of cm
+     */
+    void set_compaction_type_needed(int compaction_type_needed) {
+      ScopedLock lock(m_mutex);
+      m_compaction_type_needed = compaction_type_needed;
     }
 
     void acknowledge_load(uint32_t timeout_ms);
@@ -386,11 +392,12 @@ namespace Hypertable {
     uint64_t         m_added_inserts;
     RangeSet        *m_range_set;
     int32_t          m_error;
+    int              m_compaction_type_needed;
+    int64_t          m_maintenance_generation;
+    LoadMetricsRange m_load_metrics;
     bool             m_dropped;
     bool             m_capacity_exceeded_throttle;
     bool             m_relinquish;
-    int64_t          m_maintenance_generation;
-    LoadMetricsRange m_load_metrics;
     bool             m_initialized;
   };
 

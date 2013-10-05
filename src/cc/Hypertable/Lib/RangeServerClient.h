@@ -76,8 +76,8 @@ namespace Hypertable {
      * @param addr address of RangeServer
      * @param table %Table identifier of table to compact
      * @param row Row containing range to compact
-     * @param flags Range type specification
-     *        (see RangeServerProtocol::RangeType)
+     * @param flags Compaction flags
+     *        (see RangeServerProtocol::CompactionFlags)
      */
     void compact(const CommAddress &addr, const TableIdentifier &table,
                  const String &row, uint32_t flags);
@@ -86,8 +86,8 @@ namespace Hypertable {
      * @param addr address of RangeServer
      * @param table %Table identifier of table to compact
      * @param row Row containing range to compact
-     * @param flags Range type specification
-     *        (see RangeServerProtocol::RangeType)
+     * @param flags Compaction flags
+     *        (see RangeServerProtocol::CompactionFlags)
      * @param handler Dispatch handler
      */
     void compact(const CommAddress &addr, const TableIdentifier &table,
@@ -97,8 +97,8 @@ namespace Hypertable {
      * @param addr address of RangeServer
      * @param table %Table identifier of table to compact
      * @param row Row containing range to compact
-     * @param flags Range type specification
-     *        (see RangeServerProtocol::RangeType)
+     * @param flags Compaction flags
+     *        (see RangeServerProtocol::CompactionFlags)
      * @param handler dispatch handler
      * @param timer Deadline timer
      */
