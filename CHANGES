@@ -1,3 +1,23 @@
+Version 0.9.7.12:
+(2013-10-06)
+
+    issue 1151: Fixed phantom range log problem causing commit log from getting reaped
+    Fixed scanner leak in ThriftBroker::get_cells* methods
+    Fixed recently intro'd bug in ThriftBroker when opening namespace multiple times
+    issue 1124: Fixed bug in counter logic causing resets to become increments
+    Added compaction TYPE option to COMPACT HQL command
+    issue 845: Added ability to change MAX_VERSIONS and TTL with ALTER TABLE
+    issue 1152: Eliminated consistency problems on exception during compaction
+    Improved maintenance scheduler debug trace
+    Fix to recent ThriftBroker change to allow connection pooling
+    Increment parent reference count only if fragment is added in CommitLogReader
+    Create phantom log in directory _xfer
+    Fixed a problem with dumplog --linked-logs
+    Got rid of log message in OperationRecover constructor
+    issue 1150: fixed bad Hyperspace attr_set assert
+    Hyperspace cleanup and doxygen comments
+    issue 1149: Got rid of lock contention in AccessGroup::include_in_scan()
+
 Version 0.9.7.11:
 (2013-09-24)
 
