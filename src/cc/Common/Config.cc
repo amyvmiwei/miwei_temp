@@ -402,6 +402,9 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.Range.RowSize.Unlimited", boo()->default_value(false),
      "Marks range active and unsplittable upon encountering row overflow condition. "
      "Can cause ranges to grow extremely large.  Use with caution!")
+    ("Hypertable.RangeServer.Range.IgnoreCellsWithClockSkew", boo()->default_value(false),
+     "Forces Ranges to ingore inserted cells whose revision number is older than latest"
+     "revision found in CellStores.")
     ("Hypertable.RangeServer.Range.SplitSize", i64()->default_value(512*MiB),
         "Size of range in bytes before splitting")
     ("Hypertable.RangeServer.Range.MaximumSize", i64()->default_value(3*G),
