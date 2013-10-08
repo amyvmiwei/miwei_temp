@@ -227,6 +227,9 @@ namespace Hypertable {
     bool live(const vector<QualifiedRangeSpec> &ranges);
     bool live(const QualifiedRangeSpec &spec);
 
+    void group_commit_add(EventPtr &event, SchemaPtr &schema, const TableIdentifier *table,
+                     uint32_t count, StaticBuffer &buffer, uint32_t flags);
+
     class UpdateContext {
     public:
       UpdateContext(std::vector<TableUpdate *> &tu, boost::xtime xt) : updates(tu), expire_time(xt),
