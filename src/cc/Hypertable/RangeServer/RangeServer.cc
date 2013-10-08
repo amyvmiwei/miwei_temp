@@ -117,6 +117,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_verbose = props->get_bool("verbose");
   Global::row_size_unlimited = cfg.get_bool("Range.RowSize.Unlimited", false);
+  Global::ignore_cells_with_clock_skew 
+    = cfg.get_bool("Range.IgnoreCellsWithClockSkew");
   Global::failover_timeout = props->get_i32("Hypertable.Failover.Timeout");
   Global::range_split_size = cfg.get_i64("Range.SplitSize");
   Global::range_maximum_size = cfg.get_i64("Range.MaximumSize");
