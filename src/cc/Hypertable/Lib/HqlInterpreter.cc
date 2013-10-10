@@ -222,10 +222,16 @@ cmd_create_table(NamespacePtr &ns, ParserState &state,
         cf->ttl = state.ttl;
       if (cf->max_versions == 0 && state.max_versions != 0)
         cf->max_versions = state.max_versions;
-      if (cf->max_versions != 0 && cf->counter)
-        HT_THROWF(Error::HQL_PARSE_ERROR,
-                  "Incompatible options (COUNTER & MAX_VERSIONS) specified for column '%s'",
-                  cf->name.c_str());
+      if (cf->counter) {
+        if (cf->max_versions)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Incompatible options (COUNTER & MAX_VERSIONS) specified for column '%s'",
+                    cf->name.c_str());
+        if (cf->time_order_desc_set && cf->time_order_desc)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Incompatible options (COUNTER & TIME_ORDER DESC) specified for column '%s'",
+                    cf->name.c_str());
+      }
       if (!cf->time_order_desc_set) {
         cf->time_order_desc = state.time_order_desc;
         cf->time_order_desc_set = true;
