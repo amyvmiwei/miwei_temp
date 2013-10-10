@@ -1289,7 +1289,7 @@ public:
     ThriftGen::Namespace id;
     LOG_API_START("namespace name=" << ns);
     try {
-      id = new_object_id( m_context.client->open_namespace(ns) );
+      id = get_cached_object_id( m_context.client->open_namespace(ns) );
     } RETHROW(" namespace name" << ns)
     LOG_API_FINISH_E(" id=" << id);
     return id;
@@ -2151,6 +2151,12 @@ public:
     return (it != m_object_map.end()) ? it->second.get() : 0;
   }
 
+  ClientObject *get_cached_object(int64_t id) {
+    ScopedLock lock(m_mutex);
+    ObjectMap::iterator it = m_cached_object_map.find(id);
+    return (it != m_cached_object_map.end()) ? it->second.get() : 0;
+  }
+
   Hypertable::Future *get_future(int64_t id) {
     Hypertable::Future *future = static_cast<Hypertable::Future *>(get_object(id));
     if (future == 0) {
@@ -2163,7 +2169,7 @@ public:
 
 
   Hypertable::Namespace *get_namespace(int64_t id) {
-    Hypertable::Namespace *ns = static_cast<Hypertable::Namespace *>(get_object(id));
+    Hypertable::Namespace *ns = static_cast<Hypertable::Namespace *>(get_cached_object(id));
     if (ns == 0) {
       HT_ERROR_OUT << "Bad namespace id - " << id << HT_END;
       THROW_TE(Error::THRIFTBROKER_BAD_NAMESPACE_ID,
@@ -2172,10 +2178,10 @@ public:
     return ns;
   }
 
-  int64_t new_object_id(ClientObjectPtr co) {
+  int64_t get_cached_object_id(ClientObjectPtr co) {
     int64_t id;
     ScopedLock lock(m_mutex);
-    while (!m_object_map.insert(make_pair(id = Random::number32(), co)).second || id == 0); // no overwrite
+    while (!m_cached_object_map.insert(make_pair(id = Random::number32(), co)).second || id == 0); // no overwrite
     return id;
   }
 
@@ -2218,6 +2224,22 @@ public:
       if (it != m_object_map.end()) {
         item = (*it).second;
         m_object_map.erase(it);
+        removed = true;
+      }
+    }
+    return removed;
+  }
+
+  bool remove_cached_object(int64_t id) {
+    // destroy client object unlocked
+    bool removed = false;
+    ClientObjectPtr item;
+    {
+      ScopedLock lock(m_mutex);
+      ObjectMap::iterator it = m_cached_object_map.find(id);
+      if (it != m_cached_object_map.end()) {
+        item = (*it).second;
+        m_cached_object_map.erase(it);
         removed = true;
       }
     }
@@ -2316,7 +2338,7 @@ public:
   }
 
   void remove_namespace(int64_t id) {
-    if (!remove_object(id)) {
+    if (!remove_cached_object(id)) {
       HT_ERROR_OUT << "Bad namespace id - " << id << HT_END;
       THROW_TE(Error::THRIFTBROKER_BAD_NAMESPACE_ID,
                format("Invalid namespace id: %lld", (Lld)id));
@@ -2336,6 +2358,7 @@ private:
   Context &m_context;
   Mutex m_mutex;
   ObjectMap m_object_map;
+  ObjectMap m_cached_object_map;
 };
 
 template <class ResultT, class CellT>
