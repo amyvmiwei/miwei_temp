@@ -451,7 +451,11 @@ void AccessGroup::compute_garbage_stats(uint64_t *input_bytesp,
   ByteString value;
   Key key;
 
-  mscanner->add_scanner(m_cell_cache_manager->create_immutable_scanner(scan_context));
+  CellListScanner *immutable_scanner =
+    m_cell_cache_manager->create_immutable_scanner(scan_context);
+
+  if (immutable_scanner)
+    mscanner->add_scanner(immutable_scanner);
 
   if (!m_in_memory) {
     for (size_t i=0; i<m_stores.size(); i++) {
@@ -518,16 +522,15 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         merging = true;
         merge_caches();
       }
+      else if (MaintenanceFlag::gc_compaction(maintenance_flags)) {
+        gc = true;
+        HT_INFOF("Starting GC Compaction of %s", m_full_name.c_str());
+      }
       else {
-        if (!MaintenanceFlag::gc_compaction(maintenance_flags) &&
-            (m_cell_cache_manager->immutable_cache_empty()))
+        if (m_cell_cache_manager->immutable_cache_empty())
           break;
-        if (MaintenanceFlag::gc_compaction(maintenance_flags))
-          gc = true;
-        else
-          minor = true;
-        HT_INFOF("Starting %s Compaction of %s", (gc ? "GC" : "Minor"),
-                 m_full_name.c_str());
+        minor = true;
+        HT_INFOF("Starting Minor Compaction of %s", m_full_name.c_str());
       }
     }
     abort_loop = false;
@@ -559,24 +562,24 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
 
       /**
        * Check for garbage and if threshold reached, change minor to major
-       * compaction
+       * compaction.  If GC compaction was requested and garbage threshold
+       * is not reached, skip compaction.
        */
-      if (minor) {
-        if (!m_cell_cache_manager->immutable_cache_empty()) {
-          if (m_garbage_tracker.check_needed( m_cell_cache_manager->immutable_memory_used() )) {
-            uint64_t total_bytes, valid_bytes;
-            compute_garbage_stats(&total_bytes, &valid_bytes);
-            garbage_check_performed = true;
-            m_garbage_tracker.set_garbage_stats(total_bytes, valid_bytes);
-            if (m_garbage_tracker.need_collection()) {
-              HT_INFOF("Switching from minor to major compaction to collect %.2f%% garbage",
-                       ((double)(total_bytes-valid_bytes)/(double)total_bytes)*100.00);
-              gc = true;
-              minor = false;
-            }
-          }
+      if (gc || (minor && m_garbage_tracker.check_needed(m_cell_cache_manager->immutable_memory_used()))) {
+        uint64_t total_bytes, valid_bytes;
+        compute_garbage_stats(&total_bytes, &valid_bytes);
+        garbage_check_performed = true;
+        m_garbage_tracker.set_garbage_stats(total_bytes, valid_bytes);
+        if (m_garbage_tracker.need_collection()) {
+          if (minor)
+            HT_INFOF("Switching from minor to major compaction to collect %.2f%% garbage",
+                     ((double)(total_bytes-valid_bytes)/(double)total_bytes)*100.00);
+          major = true;
+          minor = false;
         }
-        else {
+        else if (gc) {
+          HT_INFOF("Aborting GC compaction because measured garbage of %.2f%% is below threshold",
+                   ((double)(total_bytes-valid_bytes)/(double)total_bytes)*100.00);
           merge_caches();
           hints->latest_stored_revision = m_latest_stored_revision;
           hints->disk_usage = m_disk_usage;
@@ -609,7 +612,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
               (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
       }
-      else if (major || gc) {
+      else if (major) {
         mscanner = new MergeScannerAccessGroup(m_table_name, scan_context, 
                                                MergeScanner::IS_COMPACTION |
                                              MergeScanner::ACCUMULATE_COUNTERS);
@@ -690,7 +693,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
          * check, then update the garbage tracker with statistics from
          * the MergeScanner.  Also clear the garbage tracker.
          */
-        if ((major || gc) && mscanner) {
+        if (major && mscanner) {
           if (!garbage_check_performed) {
             uint64_t input_bytes, output_bytes;
             mscanner->get_io_accounting_data(&input_bytes, &output_bytes);
@@ -722,7 +725,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
           m_cell_cache_manager->drop_immutable_cache();
 
           /** Drop the compacted CellStores from the stores vector **/
-          if (major || gc) {
+          if (major) {
             for (size_t i=0; i<m_stores.size(); i++)
               removed_files.push_back(m_stores[i].cs->get_filename());
             m_stores.clear();
