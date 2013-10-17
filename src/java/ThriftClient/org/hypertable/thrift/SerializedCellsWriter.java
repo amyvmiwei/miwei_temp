@@ -188,8 +188,12 @@ public class SerializedCellsWriter {
       mBuffer.put(column_qualifier, column_qualifier_offset, column_qualifier_length);
     mBuffer.put((byte)0);
 
-    mBuffer.putInt(value_length);  // fix me: should be zero-compressed
-    mBuffer.put(value, value_offset, value_length);
+    if (value == null)
+      mBuffer.putInt(0);
+    else {
+      mBuffer.putInt(value_length);  // fix me: should be zero-compressed
+      mBuffer.put(value, value_offset, value_length);
+    }
 
     mBuffer.put(flag);
 
