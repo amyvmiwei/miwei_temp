@@ -74,7 +74,7 @@ class RRDStat
   end
 
   def get_table_rrd_file(table)
-    @table_rrd_dir+"/"+table.to_s.sub("_","/")+"_table_stats_v0.rrd"
+    @table_rrd_dir+"/"+table.to_s.gsub("_","/")+"_table_stats_v0.rrd"
   end
 
   def get_server_list
