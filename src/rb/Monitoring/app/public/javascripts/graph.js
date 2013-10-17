@@ -57,7 +57,7 @@ var HTMonitoring = new Class({
     dataURL: function() {
        url = ['data', this.options.type]
         if (this.options.stat) {
-            url.push(this.options.stat.replace("/","_"))
+          url.push(this.options.stat.replace(/\//g,"_"))
 	}
         if(this.options.time_interval && this.options.stat != 'servers')
             url.push(this.options.time_interval)
@@ -232,7 +232,7 @@ var RSGraph = new Class({
     buildGraphImageUrl: function(key) {
         url = ['/graph'];
 	url.push(this.options.type);
-	url.push(this.options.stat.replace("/","_"))
+	url.push(this.options.stat.replace(/\//g,"_"))
         url.push(key);
         url.push(this.parseGraphDateSecs(this.options.start_time));
         url.push(this.parseGraphDateSecs(this.options.end_time));
