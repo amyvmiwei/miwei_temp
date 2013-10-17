@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -38,7 +38,7 @@ PhantomRange::PhantomRange(const QualifiedRangeSpec &spec,
     m_outstanding(fragments.size()), m_state(LOADED) {
   foreach_ht(uint32_t fragment, fragments) {
     HT_ASSERT(m_fragments.count(fragment) == 0);
-    FragmentDataPtr data = new FragmentData(fragment);
+    FragmentDataPtr data = new FragmentData();
     m_fragments[fragment] = data;
   }
 }
@@ -53,15 +53,10 @@ bool PhantomRange::add(uint32_t fragment, EventPtr &event) {
   FragmentMap::iterator it = m_fragments.find(fragment);
 
   HT_ASSERT(it != m_fragments.end());
+  HT_ASSERT(m_outstanding);
 
-  if (it->second->complete()) {
-    // fragment is already complete
-    return false;
-  }
-  else {
-    HT_ASSERT(m_outstanding);
-    it->second->add(event);
-  }
+  it->second->add(event);
+
   return true;
 }
 
@@ -69,8 +64,7 @@ void PhantomRange::purge_incomplete_fragments() {
   ScopedLock lock(m_mutex);
   FragmentMap::iterator it = m_fragments.begin();
   for(; it != m_fragments.end(); ++it)
-    if (!it->second->complete())
-      it->second->clear();
+    it->second->clear();
 }
 
 void PhantomRange::create_range(MasterClientPtr &master_client, 

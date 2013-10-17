@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,6 +17,12 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
+ */
+
+/** @file
+ * Definitions for FragmentData.
+ * This file contains the type definitions for FragmentData, a class for
+ * accumulating phantom update data for a phantom range.
  */
 
 #include "Common/Compat.h"
@@ -40,7 +46,6 @@ void FragmentData::add(EventPtr &event) {
 }
 
 void FragmentData::clear() {
-  HT_ASSERT(!m_done);
   m_data.clear();
   Global::memory_tracker->subtract(m_memory_consumption);
   m_memory_consumption = 0;
@@ -106,6 +111,6 @@ void FragmentData::merge(TableIdentifier &table, RangePtr &range,
       log->write(dbuf, latest_revision, false);
   }
 
-  HT_INFOF("Just added %d key/value pairs (%lld bytes) from fragment %d",
-           (int)kv_pairs, (Lld)total_bytes, (int)m_id);
+  HT_INFOF("Just added %d key/value pairs (%lld bytes)",
+           (int)kv_pairs, (Lld)total_bytes);
 }
