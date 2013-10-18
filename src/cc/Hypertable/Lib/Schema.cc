@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -186,12 +186,20 @@ Schema *Schema::new_instance(const String &buf, int len) {
 
   ms_schema = new Schema();
 
-  if (XML_Parse(parser, buf.c_str(), len, 1) == 0) {
-    String errstr = (String)"Schema Parse Error: "
+  try {
+    if (XML_Parse(parser, buf.c_str(), len, 1) == 0) {
+      String errstr = (String)"Schema Parse Error: "
         + (const char *)XML_ErrorString(XML_GetErrorCode(parser))
         + " line " + (int)XML_GetCurrentLineNumber(parser) + ", offset "
         + (int)XML_GetCurrentByteIndex(parser);
-    ms_schema->set_error_string(errstr);
+      ms_schema->set_error_string(errstr);
+    }
+  }
+  catch (Exception &e) {
+    delete ms_schema;
+    ms_schema = 0;
+    XML_ParserFree(parser);
+    throw;
   }
 
   XML_ParserFree(parser);
@@ -423,6 +431,17 @@ void Schema::close_column_family() {
         set_error_string((string)"Multiply defined column families '"
                           + m_open_column_family->name + "'");
       else {
+        // Validate option combinations
+        if (m_open_column_family->counter) {
+          if (m_open_column_family->max_versions)
+            HT_THROWF(Error::SCHEMA_PARSE_ERROR,
+                      "Incompatible options (COUNTER & MAX_VERSIONS) specified for column '%s'",
+                      m_open_column_family->name.c_str());
+          if (m_open_column_family->time_order_desc)
+            HT_THROWF(Error::SCHEMA_PARSE_ERROR,
+                      "Incompatible options (COUNTER & TIME_ORDER DESC) specified for column '%s'",
+                      m_open_column_family->name.c_str());
+        }
         m_column_family_map[m_open_column_family->name] = m_open_column_family;
         if (m_open_column_family->id != 0) {
           m_column_family_id_map[m_open_column_family->id] =

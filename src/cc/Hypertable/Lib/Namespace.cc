@@ -115,6 +115,13 @@ void Namespace::create_table(const String &table_name, const String &schema) {
   if (name.size() && name[0]=='^')
     HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
 
+  // Parse and validate schema
+  {
+    SchemaPtr schema_ptr = Schema::new_instance(schema.c_str(), schema.length());
+    if (!schema_ptr->is_valid())
+      HT_THROW(Error::BAD_SCHEMA, schema_ptr->get_error_string());
+  }
+
   String full_name = get_full_name(table_name);
   m_master_client->create_table(full_name, schema);
 }
