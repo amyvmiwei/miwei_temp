@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     tracker.clear();
     tracker.accumulate_data(amount);
     tracker.set_garbage_stats(1000000LL, 700000LL);
-    HT_ASSERT(tracker.current_target() == 71582788 || tracker.current_target() == 71582787);
+    HT_ASSERT(tracker.current_target() == split_size/10);
     HT_ASSERT(tracker.need_collection());
 
     tracker.clear();
@@ -157,13 +157,11 @@ int main(int argc, char **argv) {
     tracker.accumulate_data(amount);
     tracker.accumulate_data(amount);
     tracker.set_garbage_stats(1000000LL, 500000LL);
-    HT_ASSERT(tracker.current_target() == 85899345);
     HT_ASSERT(tracker.need_collection());
 
     tracker.clear();
     tracker.accumulate_data(amount);
     tracker.set_garbage_stats(1000000LL, 900000LL);
-    HT_ASSERT(tracker.current_target() == 171798690);
     HT_ASSERT(!tracker.need_collection());
 
     tracker.clear();
