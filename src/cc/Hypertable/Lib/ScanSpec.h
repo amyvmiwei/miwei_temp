@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -148,7 +148,8 @@ public:
       row_offset(0), cell_offset(0), max_versions(0),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
       return_deletes(false), keys_only(false),
-      row_regexp(0), value_regexp(0), scan_and_filter_rows(false) { }
+      row_regexp(0), value_regexp(0), scan_and_filter_rows(false),
+      do_not_cache(false) { }
   ScanSpec(CharArena &arena)
     : row_limit(0), cell_limit(0), cell_limit_per_family(0), 
       row_offset(0), cell_offset(0), max_versions(0), columns(CstrAlloc(arena)),
@@ -157,7 +158,8 @@ public:
       column_predicates(ColumnPredicateAlloc(arena)),
       time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
       return_deletes(false), keys_only(false),
-      row_regexp(0), value_regexp(0), scan_and_filter_rows(false) { }
+      row_regexp(0), value_regexp(0), scan_and_filter_rows(false),
+      do_not_cache(false) { }
   ScanSpec(CharArena &arena, const ScanSpec &);
   ScanSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
 
@@ -183,6 +185,7 @@ public:
     row_regexp = 0;
     value_regexp = 0;
     scan_and_filter_rows = false;
+    do_not_cache = false;
   }
 
   /** 
@@ -210,11 +213,14 @@ public:
     other.row_regexp = row_regexp;
     other.value_regexp = value_regexp;
     other.scan_and_filter_rows = scan_and_filter_rows;
+    other.do_not_cache = do_not_cache;
     other.column_predicates = column_predicates;
   }
 
   bool cacheable() {
-    if (row_intervals.size() == 1) {
+    if (do_not_cache)
+      return false;
+    else if (row_intervals.size() == 1) {
       HT_ASSERT(row_intervals[0].start && row_intervals[0].end);
       if (!strcmp(row_intervals[0].start, row_intervals[0].end))
         return true;
@@ -364,6 +370,7 @@ public:
   const char *row_regexp;
   const char *value_regexp;
   bool scan_and_filter_rows;
+  bool do_not_cache;
 };
 
 /**
@@ -568,6 +575,13 @@ public:
    */
   void set_scan_and_filter_rows(bool val) {
     m_scan_spec.scan_and_filter_rows = val;
+  }
+
+  /**
+   * Don't cache
+   */
+  void set_do_not_cache(bool val) {
+    m_scan_spec.do_not_cache = val;
   }
 
   /**

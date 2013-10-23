@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -118,7 +118,7 @@ size_t ScanSpec::encoded_length() const {
   foreach_ht(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
   foreach_ht(const ColumnPredicate &cp, column_predicates) len += cp.encoded_length();
 
-  return len + 8 + 8 + 3;
+  return len + 8 + 8 + 4;
 }
 
 void ScanSpec::encode(uint8_t **bufp) const {
@@ -141,6 +141,7 @@ void ScanSpec::encode(uint8_t **bufp) const {
   encode_vstr(bufp, row_regexp);
   encode_vstr(bufp, value_regexp);
   encode_bool(bufp, scan_and_filter_rows);
+  encode_bool(bufp, do_not_cache);
   encode_vi32(bufp, row_offset);
   encode_vi32(bufp, cell_offset);
 }
@@ -175,6 +176,7 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     row_regexp = decode_vstr(bufp, remainp);
     value_regexp = decode_vstr(bufp, remainp);
     scan_and_filter_rows = decode_bool(bufp, remainp);
+    do_not_cache = decode_bool(bufp, remainp);
     row_offset = decode_vi32(bufp, remainp);
     cell_offset = decode_vi32(bufp, remainp));
 }
@@ -238,6 +240,7 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<" row_regexp=" << (scan_spec.row_regexp ? scan_spec.row_regexp : "");
   os <<" value_regexp=" << (scan_spec.value_regexp ? scan_spec.value_regexp : "");
   os <<" scan_and_filter_rows=" << scan_spec.scan_and_filter_rows;
+  os <<" do_not_cache=" << scan_spec.do_not_cache;
   os <<" row_offset=" << scan_spec.row_offset;
   os <<" cell_offset=" << scan_spec.cell_offset;
 

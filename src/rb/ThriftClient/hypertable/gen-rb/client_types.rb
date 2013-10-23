@@ -228,6 +228,7 @@ module Hypertable
           ROW_OFFSET = 15
           CELL_OFFSET = 16
           COLUMN_PREDICATES = 17
+          DO_NOT_CACHE = 18
 
           FIELDS = {
             ROW_INTERVALS => {:type => ::Thrift::Types::LIST, :name => 'row_intervals', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::RowInterval}, :optional => true},
@@ -246,7 +247,8 @@ module Hypertable
             SCAN_AND_FILTER_ROWS => {:type => ::Thrift::Types::BOOL, :name => 'scan_and_filter_rows', :default => false, :optional => true},
             ROW_OFFSET => {:type => ::Thrift::Types::I32, :name => 'row_offset', :default => 0, :optional => true},
             CELL_OFFSET => {:type => ::Thrift::Types::I32, :name => 'cell_offset', :default => 0, :optional => true},
-            COLUMN_PREDICATES => {:type => ::Thrift::Types::LIST, :name => 'column_predicates', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnPredicate}, :optional => true}
+            COLUMN_PREDICATES => {:type => ::Thrift::Types::LIST, :name => 'column_predicates', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnPredicate}, :optional => true},
+            DO_NOT_CACHE => {:type => ::Thrift::Types::BOOL, :name => 'do_not_cache', :default => false, :optional => true}
           }
 
           def struct_fields; FIELDS; end

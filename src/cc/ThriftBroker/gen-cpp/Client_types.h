@@ -304,7 +304,7 @@ class ColumnPredicate {
 };
 
 typedef struct _ScanSpec__isset {
-  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), versions(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), cell_limit_per_family(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false), row_offset(false), cell_offset(false), column_predicates(false) {}
+  _ScanSpec__isset() : row_intervals(false), cell_intervals(false), return_deletes(false), versions(false), row_limit(false), start_time(false), end_time(false), columns(false), keys_only(false), cell_limit(false), cell_limit_per_family(false), row_regexp(false), value_regexp(false), scan_and_filter_rows(false), row_offset(false), cell_offset(false), column_predicates(false), do_not_cache(false) {}
   bool row_intervals;
   bool cell_intervals;
   bool return_deletes;
@@ -322,15 +322,16 @@ typedef struct _ScanSpec__isset {
   bool row_offset;
   bool cell_offset;
   bool column_predicates;
+  bool do_not_cache;
 } _ScanSpec__isset;
 
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "92CF20B9610E41C0EA89E9A70DB156E0";
-  static const uint8_t binary_fingerprint[16]; // = {0x92,0xCF,0x20,0xB9,0x61,0x0E,0x41,0xC0,0xEA,0x89,0xE9,0xA7,0x0D,0xB1,0x56,0xE0};
+  static const char* ascii_fingerprint; // = "8644886D3380F7FE3CE1EAC6657BD6F2";
+  static const uint8_t binary_fingerprint[16]; // = {0x86,0x44,0x88,0x6D,0x33,0x80,0xF7,0xFE,0x3C,0xE1,0xEA,0xC6,0x65,0x7B,0xD6,0xF2};
 
-  ScanSpec() : return_deletes(false), versions(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), cell_limit_per_family(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false), row_offset(0), cell_offset(0) {
+  ScanSpec() : return_deletes(false), versions(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), cell_limit_per_family(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false), row_offset(0), cell_offset(0), do_not_cache(false) {
   }
 
   virtual ~ScanSpec() throw() {}
@@ -352,6 +353,7 @@ class ScanSpec {
   int32_t row_offset;
   int32_t cell_offset;
   std::vector<ColumnPredicate>  column_predicates;
+  bool do_not_cache;
 
   _ScanSpec__isset __isset;
 
@@ -440,6 +442,11 @@ class ScanSpec {
     __isset.column_predicates = true;
   }
 
+  void __set_do_not_cache(const bool val) {
+    do_not_cache = val;
+    __isset.do_not_cache = true;
+  }
+
   bool operator == (const ScanSpec & rhs) const
   {
     if (__isset.row_intervals != rhs.__isset.row_intervals)
@@ -509,6 +516,10 @@ class ScanSpec {
     if (__isset.column_predicates != rhs.__isset.column_predicates)
       return false;
     else if (__isset.column_predicates && !(column_predicates == rhs.column_predicates))
+      return false;
+    if (__isset.do_not_cache != rhs.__isset.do_not_cache)
+      return false;
+    else if (__isset.do_not_cache && !(do_not_cache == rhs.do_not_cache))
       return false;
     return true;
   }
