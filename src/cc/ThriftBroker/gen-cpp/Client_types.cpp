@@ -342,8 +342,8 @@ uint32_t ColumnPredicate::write(::apache::thrift::protocol::TProtocol* oprot) co
   return xfer;
 }
 
-const char* ScanSpec::ascii_fingerprint = "92CF20B9610E41C0EA89E9A70DB156E0";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0x92,0xCF,0x20,0xB9,0x61,0x0E,0x41,0xC0,0xEA,0x89,0xE9,0xA7,0x0D,0xB1,0x56,0xE0};
+const char* ScanSpec::ascii_fingerprint = "8644886D3380F7FE3CE1EAC6657BD6F2";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0x86,0x44,0x88,0x6D,0x33,0x80,0xF7,0xFE,0x3C,0xE1,0xEA,0xC6,0x65,0x7B,0xD6,0xF2};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -549,6 +549,14 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 18:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->do_not_cache);
+          this->__isset.do_not_cache = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -679,6 +687,11 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
       }
       xfer += oprot->writeListEnd();
     }
+    xfer += oprot->writeFieldEnd();
+  }
+  if (this->__isset.do_not_cache) {
+    xfer += oprot->writeFieldBegin("do_not_cache", ::apache::thrift::protocol::T_BOOL, 18);
+    xfer += oprot->writeBool(this->do_not_cache);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();

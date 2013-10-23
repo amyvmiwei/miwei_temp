@@ -236,6 +236,7 @@ struct ScanSpec {
   15:optional i32 row_offset = 0
   16:optional i32 cell_offset = 0 
   17:optional list<ColumnPredicate> column_predicates
+  18:optional bool do_not_cache = 0
 }
 
 

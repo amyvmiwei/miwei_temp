@@ -495,6 +495,7 @@ class Hypertable_ThriftGen_ScanSpec {
   public $row_offset = 0;
   public $cell_offset = 0;
   public $column_predicates = null;
+  public $do_not_cache = false;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -586,6 +587,10 @@ class Hypertable_ThriftGen_ScanSpec {
             'class' => 'Hypertable_ThriftGen_ColumnPredicate',
             ),
           ),
+        18 => array(
+          'var' => 'do_not_cache',
+          'type' => TType::BOOL,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -639,6 +644,9 @@ class Hypertable_ThriftGen_ScanSpec {
       }
       if (isset($vals['column_predicates'])) {
         $this->column_predicates = $vals['column_predicates'];
+      }
+      if (isset($vals['do_not_cache'])) {
+        $this->do_not_cache = $vals['do_not_cache'];
       }
     }
   }
@@ -824,6 +832,13 @@ class Hypertable_ThriftGen_ScanSpec {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 18:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->do_not_cache);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -968,6 +983,11 @@ class Hypertable_ThriftGen_ScanSpec {
         }
         $output->writeListEnd();
       }
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->do_not_cache !== null) {
+      $xfer += $output->writeFieldBegin('do_not_cache', TType::BOOL, 18);
+      $xfer += $output->writeBool($this->do_not_cache);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

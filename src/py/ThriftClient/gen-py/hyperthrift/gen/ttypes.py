@@ -529,6 +529,7 @@ class ScanSpec(object):
    - row_offset
    - cell_offset
    - column_predicates
+   - do_not_cache
   """
 
   thrift_spec = (
@@ -550,9 +551,10 @@ class ScanSpec(object):
     (15, TType.I32, 'row_offset', None, 0, ), # 15
     (16, TType.I32, 'cell_offset', None, 0, ), # 16
     (17, TType.LIST, 'column_predicates', (TType.STRUCT,(ColumnPredicate, ColumnPredicate.thrift_spec)), None, ), # 17
+    (18, TType.BOOL, 'do_not_cache', None, False, ), # 18
   )
 
-  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], versions=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[14][4], cell_limit_per_family=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4], row_offset=thrift_spec[15][4], cell_offset=thrift_spec[16][4], column_predicates=None,):
+  def __init__(self, row_intervals=None, cell_intervals=None, return_deletes=thrift_spec[3][4], versions=thrift_spec[4][4], row_limit=thrift_spec[5][4], start_time=None, end_time=None, columns=None, keys_only=thrift_spec[9][4], cell_limit=thrift_spec[14][4], cell_limit_per_family=thrift_spec[10][4], row_regexp=None, value_regexp=None, scan_and_filter_rows=thrift_spec[13][4], row_offset=thrift_spec[15][4], cell_offset=thrift_spec[16][4], column_predicates=None, do_not_cache=thrift_spec[18][4],):
     self.row_intervals = row_intervals
     self.cell_intervals = cell_intervals
     self.return_deletes = return_deletes
@@ -570,6 +572,7 @@ class ScanSpec(object):
     self.row_offset = row_offset
     self.cell_offset = cell_offset
     self.column_predicates = column_predicates
+    self.do_not_cache = do_not_cache
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -688,6 +691,11 @@ class ScanSpec(object):
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
+      elif fid == 18:
+        if ftype == TType.BOOL:
+          self.do_not_cache = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -777,6 +785,10 @@ class ScanSpec(object):
       for iter27 in self.column_predicates:
         iter27.write(oprot)
       oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    if self.do_not_cache is not None:
+      oprot.writeFieldBegin('do_not_cache', TType.BOOL, 18)
+      oprot.writeBool(self.do_not_cache)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

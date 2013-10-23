@@ -235,6 +235,9 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
   if (tss.__isset.scan_and_filter_rows)
     hss.scan_and_filter_rows = tss.scan_and_filter_rows;
 
+  if (tss.__isset.do_not_cache)
+    hss.do_not_cache = tss.do_not_cache;
+
   if (tss.__isset.row_offset)
     hss.row_offset = tss.row_offset;
 
