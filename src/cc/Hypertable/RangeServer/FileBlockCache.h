@@ -107,7 +107,9 @@ namespace Hypertable {
     int64_t make_room(int64_t amount);
 
     inline static int64_t make_key(int file_id, uint64_t file_offset) {
-      return ((int64_t)file_id << 32) | (int64_t)file_offset;
+      HT_ASSERT(file_id < 268435456LL);        // Can't be larger than 2^28
+      HT_ASSERT(file_offset < 68719476736LL);  // Can't be larger than 2^36
+      return ((int64_t)file_id << 36) | (int64_t)file_offset;
     }
 
     class BlockCacheEntry {
