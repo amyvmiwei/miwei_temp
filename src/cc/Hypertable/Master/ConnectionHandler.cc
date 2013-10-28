@@ -227,21 +227,23 @@ void ConnectionHandler::handle(EventPtr &event) {
 
       maybe_dump_op_statistics();
 
-      if (m_context->next_monitoring_time <= now) {
-        operation = new OperationGatherStatistics(m_context);
-        m_context->op->add_operation(operation);
-        m_context->next_monitoring_time = now + (m_context->monitoring_interval/1000) - 1;
-      }
+      if (m_context->hyperspace->get_state() == Hyperspace::Session::STATE_SAFE) {
+        if (m_context->next_monitoring_time <= now) {
+          operation = new OperationGatherStatistics(m_context);
+          m_context->op->add_operation(operation);
+          m_context->next_monitoring_time = now + (m_context->monitoring_interval/1000) - 1;
+        }
 
-      if (m_context->next_gc_time <= now) {
-        operation = new OperationCollectGarbage(m_context);
-        m_context->op->add_operation(operation);
-        m_context->next_gc_time = now + (m_context->gc_interval/1000) - 1;
-      }
+        if (m_context->next_gc_time <= now) {
+          operation = new OperationCollectGarbage(m_context);
+          m_context->op->add_operation(operation);
+          m_context->next_gc_time = now + (m_context->gc_interval/1000) - 1;
+        }
 
-      if (m_context->balancer->balance_needed()) {
-        operation = new OperationBalance(m_context);
-        m_context->op->add_operation(operation);
+        if (m_context->balancer->balance_needed()) {
+          operation = new OperationBalance(m_context);
+          m_context->op->add_operation(operation);
+        }
       }
     }
     catch (Exception &e) {
