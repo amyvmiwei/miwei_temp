@@ -372,7 +372,7 @@ void ClientKeepaliveHandler::handle(Hypertable::EventPtr &event) {
     boost::xtime_get(&now, boost::TIME_UTC_);
 
     if (state == Session::STATE_SAFE) {
-      if (xtime_cmp(m_jeopardy_time, now) < 0) {
+      if (xtime_cmp(m_jeopardy_time, now) < 0 && !m_reconnect) {
         m_session->state_transition(Session::STATE_JEOPARDY);
       }
     }
