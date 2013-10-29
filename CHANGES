@@ -1,3 +1,23 @@
+Version 0.9.7.13:
+(2013-10-29)
+
+    Fixed crash in ThriftBroker when passing in bad object ID
+    Fixed monitoring UI table detail graph rendering for nested namespaces
+    Fixed bug in FileBlockCache key computation for offsets >= 2^32
+    Fix Hyperspace reconnect if machine suspended; Only perform Master timer ops if Hyperspace session state is SAFE
+    Added do_not_cache member to ScanSpec
+    Fixed AccessGroupGarbageTracker to avoid repeated unnecessary garbage checks
+    Added java counter test
+    issue 1160: Throw exception on bad counter column option combinations in schema parse
+    issue 1161: Fixed bug in Java SerializedCellWriter.add_delete()
+    Cleaned up FragmentData class and added doxygen comments
+    issue 1156: When performing GC compaction, measure actual garbage before proceeding
+    issue 1155: Throw exception during CREATE TABLE on bad column option combinations
+    Fixed potential object ID collision in ThriftBroker
+    Added Hypertable.RangeServer.Range.IgnoreCellsWithClockSkew property
+    Lazily initialize group commit
+    issue 1154: Fixed HQL help text for ALTER TABLE MODIFY
+
 Version 0.9.7.12:
 (2013-10-06)
 
