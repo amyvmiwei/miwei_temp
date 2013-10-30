@@ -844,13 +844,14 @@ cmd_delete(NamespacePtr &ns, ParserState &state, HqlInterpreter::Callback &cb) {
         *column_qualifier++ = 0;
         key.column_qualifier = column_qualifier;
         key.column_qualifier_len = strlen(column_qualifier);
-        if (key.flag != FLAG_DELETE_CELL_VERSION)
+        if (key.flag == FLAG_INSERT)
           key.flag = FLAG_DELETE_CELL;
       }
       else {
         key.column_qualifier = 0;
         key.column_qualifier_len = 0;
-        key.flag = FLAG_DELETE_COLUMN_FAMILY;
+        if (key.flag == FLAG_INSERT)
+          key.flag = FLAG_DELETE_COLUMN_FAMILY;
       }
       try {
         mutator->set_delete(key);
