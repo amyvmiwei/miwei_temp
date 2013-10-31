@@ -794,6 +794,18 @@ void AccessGroup::load_hints(Hints *hints) {
   hints->disk_usage = m_disk_usage;
 }
 
+String AccessGroup::describe() {
+  String str = format("%s cellstores={", m_full_name.c_str());
+  ScopedLock lock(m_mutex);
+  for (size_t i=0; i<m_stores.size(); i++) {
+    if (i>0)
+      str += ";";
+    str += m_stores[i].cs->get_filename();
+  }
+  str += "}";
+  return str;
+}
+
 
 void AccessGroup::purge_stored_cells_from_cache() {
   ScopedLock lock(m_mutex);
