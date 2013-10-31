@@ -225,6 +225,8 @@ namespace Hypertable {
 
     void load_hints(Hints *hints);
 
+    String describe();
+
   private:
 
     void purge_stored_cells_from_cache();

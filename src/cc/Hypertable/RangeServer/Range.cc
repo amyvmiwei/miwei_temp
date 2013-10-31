@@ -1297,7 +1297,13 @@ void Range::split_compact_and_shrink() {
     m_hints_file.set(hints);
     m_hints_file.write(location);
     for (size_t i=0; i<new_hints_file.get().size(); i++) {
-      HT_ASSERT(hints[i].disk_usage <= new_hints_file.get()[i].disk_usage);
+      if (hints[i].disk_usage > new_hints_file.get()[i].disk_usage) {
+        // issue 1159
+        HT_ERRORF("hints[%d].disk_usage (%llu) > new_hints_file.get()[%d].disk_usage (%llu)",
+                  (int)i, (Llu)hints[i].disk_usage, (int)i, (Llu)new_hints_file.get()[i].disk_usage);
+        HT_ERRORF("%s", ag_vector[i]->describe().c_str());
+        HT_ASSERT(hints[i].disk_usage <= new_hints_file.get()[i].disk_usage);
+      }
       new_hints_file.get()[i].disk_usage -= hints[i].disk_usage;
     }
     new_hints_file.write("");
