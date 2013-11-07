@@ -1525,11 +1525,11 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       tablename_ptr = row_key_ptr + strlen(row_key_ptr) + 1;
       strcpy(tablename_ptr, table->id);
       boost::shared_array<uint8_t> ext_buffer(buffer);
+      m_query_cache->insert(cache_key, tablename_ptr, row_key_ptr, ext_buffer, rbuf.fill());
       if ((error = cb->response(1, id, ext_buffer, rbuf.fill(),
              skipped_rows, skipped_cells)) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
-      m_query_cache->insert(cache_key, tablename_ptr, row_key_ptr, ext_buffer, rbuf.fill());
     }
     else {
       short moreflag = more ? 0 : 1;
