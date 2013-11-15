@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -230,6 +230,17 @@ namespace Hypertable {
     void group_commit_add(EventPtr &event, SchemaPtr &schema, const TableIdentifier *table,
                      uint32_t count, StaticBuffer &buffer, uint32_t flags);
 
+    /** Performs a "test and set" operation on #m_get_statistics_outstanding
+     * @param value New value for #m_get_statistics_outstanding
+     * @param Previous value of #m_get_statistics_outstanding
+     */
+    bool test_and_set_get_statistics_outstanding(bool value) {
+      ScopedLock lock(m_mutex);
+      bool old_value = m_get_statistics_outstanding;
+      m_get_statistics_outstanding = value;
+      return old_value;
+    }
+
     class UpdateContext {
     public:
       UpdateContext(std::vector<TableUpdate *> &tu, boost::xtime xt) : updates(tu), expire_time(xt),
@@ -303,6 +314,9 @@ namespace Hypertable {
     StatsRangeServerPtr    m_stats;
     LoadStatisticsPtr      m_load_statistics;
     int64_t                m_server_stats_timestamp;
+
+    /// Indicates if a get_statistics() call is outstanding
+    bool m_get_statistics_outstanding;
 
     NameIdMapperPtr        m_namemap;
 

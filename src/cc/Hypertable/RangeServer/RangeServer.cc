@@ -103,7 +103,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
     m_metadata_replay_finished(false), m_system_replay_finished(false),
     m_replay_finished(false), m_props(props), m_verbose(false),
     m_shutdown(false), m_comm(conn_mgr->get_comm()), m_conn_manager(conn_mgr),
-    m_app_queue(app_queue), m_hyperspace(hyperspace), m_timer_handler(0),
+    m_app_queue(app_queue), m_hyperspace(hyperspace), 
+    m_get_statistics_outstanding(false), m_timer_handler(0),
     m_query_cache(0), m_last_revision(TIMESTAMP_MIN), m_last_metrics_update(0),
     m_loadavg_accum(0.0), m_page_in_accum(0), m_page_out_accum(0),
     m_metric_samples(0), m_maintenance_pause_interval(0),
@@ -3142,7 +3143,13 @@ void RangeServer::set_state(ResponseCallback *cb,
 void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
                                  std::vector<SystemVariable::Spec> &specs,
                                  uint64_t generation) {
-  ScopedLock lock(m_stats_mutex);
+
+  if (test_and_set_get_statistics_outstanding(true))
+    return;
+
+  HT_ON_OBJ_SCOPE_EXIT(*this, &RangeServer::test_and_set_get_statistics_outstanding, false);
+
+    ScopedLock lock(m_stats_mutex);
   RangesPtr ranges = Global::get_ranges();
   int64_t timestamp = Hypertable::get_ts64();
   time_t now = (time_t)(timestamp/1000000000LL);
