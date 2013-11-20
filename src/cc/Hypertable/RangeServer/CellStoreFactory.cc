@@ -237,8 +237,8 @@ CellStore *CellStoreFactory::open(const String &name,
       second_try = true;
       goto try_again;
     }
-    HT_ERRORF("Unrecognized cell store version %d found in %s",
-	      (int)version, name.c_str());
+    HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
+	      "Unrecognized cell store version %d", (int)version);
   }
   return 0;
 }

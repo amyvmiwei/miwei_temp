@@ -385,6 +385,8 @@ void DefaultPolicy::init_options() {
         str()->default_value("snappy"), "Default compressor for cell stores")
     ("Hypertable.RangeServer.CellStore.DefaultBloomFilter",
         str()->default_value("rows"), "Default bloom filter for cell stores")
+    ("Hypertable.RangeServer.CellStore.SkipBad",
+        boo()->default_value(false), "Skip over cell stores that are corrupt")
     ("Hypertable.RangeServer.CellStore.SkipNotFound",
         boo()->default_value(false), "Skip over cell stores that are non-existent")
     ("Hypertable.RangeServer.IgnoreClockSkewErrors",
