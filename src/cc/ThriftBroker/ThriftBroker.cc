@@ -130,14 +130,14 @@ using namespace std;
 
 class SharedMutatorMapKey {
 public:
-  SharedMutatorMapKey(int64_t ns, const String &tablename,
+  SharedMutatorMapKey(Hypertable::Namespace *ns, const String &tablename,
       const ThriftGen::MutateSpec &mutate_spec)
     : m_namespace(ns), m_tablename(tablename), m_mutate_spec(mutate_spec) {}
 
   int compare(const SharedMutatorMapKey &skey) const {
     int64_t  cmp;
 
-    cmp = m_namespace - skey.m_namespace;
+    cmp = (int64_t)m_namespace - (int64_t)skey.m_namespace;
     if (cmp != 0)
       return cmp;
     cmp = m_tablename.compare(skey.m_tablename);
@@ -153,7 +153,7 @@ public:
     return cmp;
   }
 
-  int64_t m_namespace;
+  Hypertable::Namespace *m_namespace;
   String m_tablename;
   ThriftGen::MutateSpec m_mutate_spec;
 };
@@ -2260,7 +2260,7 @@ public:
   virtual void shared_mutator_refresh(const ThriftGen::Namespace ns,
           const String &table, const ThriftGen::MutateSpec &mutate_spec) {
     ScopedLock lock(m_context.shared_mutator_mutex);
-    SharedMutatorMapKey skey(ns, table, mutate_spec);
+    SharedMutatorMapKey skey(get_namespace(ns), table, mutate_spec);
 
     SharedMutatorMap::iterator it = m_context.shared_mutator_map.find(skey);
 
@@ -2291,7 +2291,7 @@ public:
   TableMutator *get_shared_mutator(const ThriftGen::Namespace ns,
           const String &table, const ThriftGen::MutateSpec &mutate_spec) {
     ScopedLock lock(m_context.shared_mutator_mutex);
-    SharedMutatorMapKey skey(ns, table, mutate_spec);
+    SharedMutatorMapKey skey(get_namespace(ns), table, mutate_spec);
 
     SharedMutatorMap::iterator it = m_context.shared_mutator_map.find(skey);
 
