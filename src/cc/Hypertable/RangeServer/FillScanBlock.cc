@@ -35,7 +35,7 @@ namespace Hypertable {
     uint8_t *ptr;
     ScanContext *scan_context = scanner->scan_context();
     bool keys_only = scan_context->spec->keys_only;
-    char numbuf[17];
+    char numbuf[24];
     DynamicBuffer counter_value;
     bool counter;
     String empty_value("");
