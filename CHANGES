@@ -1,3 +1,16 @@
+Version 0.9.7.14:
+(2013-12-05)
+
+    Fixed buffer overflow in RangeServer when returning large counter values
+    Fixed bug in ThriftBroker shared mutator key that prevented sharing
+    Use random start time for periodic flushing of shared mutators
+    Upgraded to CDH4 version 4.4.0
+    Added Hypertable.RangeServer.CellStore.SkipBad property
+    issue 1171: Fixed RangeServer::get_statistics() request pile-up
+    Fixed QueryCache insert race condition
+    Added state logging for issue 1159
+    issue 1138: Fixed DELETE bug on specific cell version w/o qualifier
+
 Version 0.9.7.13:
 (2013-10-29)
 
