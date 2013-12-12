@@ -225,9 +225,6 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   if (spec) {
     const char *ptr = 0;
 
-    if (spec->row_limit == 1)
-      single_row = true;
-
     if (!spec->row_intervals.empty()) {
       // start row
       start_row = spec->row_intervals.front().start;

@@ -615,3 +615,9 @@ INSERT INTO dennys VALUES('2013-08-02 09:00:00', 'test', 'a:foo', '/n2home2/363/
 INSERT INTO dennys VALUES('2013-08-02 10:00:00', 'test', 'a:foo', '/n2home2/363/zaby007/email/Junk/1365836911.S.2550.11223');
 DELETE "a:foo" FROM dennys WHERE row="test" TIMESTAMP "2013-08-02 11:00:00";
 select a:"foo" from dennys where row="test" and value regexp "/Junk/" and "2011-01-01 00:00:00" < TIMESTAMP < "2013-08-02 09:30:00";
+# issue 1175
+create table issue1175 (a);
+insert into issue1175 values ("banana", "a", "yellow"),("cherry", "a", "red");
+compact table issue1175;
+pause 5;
+select * from issue1175 where 'apple' < ROW <= 'cherry' limit 1;
