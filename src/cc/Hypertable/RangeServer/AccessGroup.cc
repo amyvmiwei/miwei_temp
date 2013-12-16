@@ -57,7 +57,7 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_latest_stored_revision(TIMESTAMP_MIN),
     m_latest_stored_revision_hint(TIMESTAMP_MIN),
     m_file_tracker(identifier, schema, range, ag->name), m_is_root(false),
-    m_recovering(false), m_needs_merging(false) {
+    m_recovering(false), m_needs_merging(false), m_end_merge(false) {
 
   m_table_name = m_identifier.id;
   m_start_row = range->start_row;
@@ -410,6 +410,7 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
   mdata->gc_needed = m_garbage_tracker.check_needed(mdata->deletes, mdata->mem_used, now);
   mdata->needs_merging = m_needs_merging;
+  mdata->end_merge = m_end_merge;
 
   mdata->maintenance_flags = 0;
 
@@ -513,10 +514,10 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
     }
     else {
       if (MaintenanceFlag::merging_compaction(maintenance_flags)) {
-        if (!find_merge_run(&merge_offset, &merge_length)) {
-          m_needs_merging = false;
+        m_needs_merging = find_merge_run(&merge_offset, &merge_length);
+        if (!m_needs_merging)
           break;
-        }
+        m_end_merge = (merge_offset + merge_length) == m_stores.size();
         HT_INFOF("Starting Merging Compaction of %s", m_full_name.c_str());
         merging = true;
         merge_caches();
@@ -602,7 +603,13 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
                                                MergeScanner::IS_COMPACTION |
                                                MergeScanner::RETURN_DELETES);
         scanner = mscanner;
-        max_num_entries = 0;
+        // If we're merging up to the end of the vector of stores, add in the cell cache
+        if (m_end_merge) {
+          HT_ASSERT((merge_offset + merge_length) == m_stores.size());
+          m_cell_cache_manager->add_immutable_scanner(mscanner, scan_context);
+        }
+        else
+          max_num_entries = 0;
         for (size_t i=merge_offset; i<merge_offset+merge_length; i++) {
           HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
@@ -684,6 +691,10 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         for (size_t i=merge_offset+merge_length; i<m_stores.size(); i++)
           new_stores.push_back(m_stores[i]);
         m_stores.swap(new_stores);
+
+        // If cell cache was included in the merge, drop it
+        if (m_end_merge)
+          m_cell_cache_manager->drop_immutable_cache();
       }
       else {
 
@@ -708,6 +719,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
           if (minor && Global::enable_shadow_cache &&
               !MaintenanceFlag::purge_shadow_cache(maintenance_flags))
             shadow_cache = m_cell_cache_manager->immutable_cache();
+
           m_cell_cache_manager->drop_immutable_cache();
 
           /** Drop the compacted CellStores from the stores vector **/
@@ -723,7 +735,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
          */
         if (cellstore->get_total_entries() > 0) {
           m_stores.push_back( CellStoreInfo(cellstore, shadow_cache, m_earliest_cached_revision_saved) );
-          m_needs_merging = find_merge_run();
+          get_merge_info(m_needs_merging, m_end_merge);
           m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
           added_file = cellstore->get_filename();
         }
@@ -760,7 +772,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
     }
 
     if (merging)
-      m_needs_merging = find_merge_run();
+      get_merge_info(m_needs_merging, m_end_merge);
     else
       m_earliest_cached_revision_saved = TIMESTAMP_MAX;
 
@@ -937,8 +949,6 @@ AccessGroup::shrink(String &split_row, bool drop_high, Hints *hints) {
 
     hints->latest_stored_revision = m_latest_stored_revision;
     hints->disk_usage = m_disk_usage;
-
-    m_needs_merging = find_merge_run();
 
     m_earliest_cached_revision_saved = TIMESTAMP_MAX;
 
