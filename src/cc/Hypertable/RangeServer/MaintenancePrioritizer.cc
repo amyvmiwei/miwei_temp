@@ -332,6 +332,23 @@ MaintenancePrioritizer::schedule_necessary_compactions(std::vector<RangeData> &r
                           (Lld)memory_state.needed);
 
       }
+      // Merging compactions
+      else if (ag_data->needs_merging) {
+        if (range_data[i].data->priority == 0)
+          range_data[i].data->priority = priority++;
+        range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
+        ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MERGING;
+        // If it's an "end merge" then the cell cache will be included so
+        // decrement the memory occupied by the cell cache
+        if (ag_data->end_merge && memory_state.need_more())
+          memory_state.decrement_needed(ag_data->mem_allocated);
+        if (trace)
+          *trace += format("%d needs merging %s (priority=%d, "
+                           "mem_needed=%lld)\n", __LINE__,
+                           ag_data->ag->get_full_name(),
+                           range_data[i].data->priority,
+                           (Lld)memory_state.needed);
+      }
       // Compact LARGE CellCaches
       else if (!ag_data->in_memory && ag_data->mem_used > Global::access_group_max_mem) {
         if (memory_state.need_more()) {
@@ -350,19 +367,6 @@ MaintenancePrioritizer::schedule_necessary_compactions(std::vector<RangeData> &r
                            "priority=%d, mem_needed=%lld)\n", __LINE__,
                            ag_data->ag->get_full_name(),
                            (Lld)ag_data->mem_used, range_data[i].data->priority,
-                           (Lld)memory_state.needed);
-      }
-      // Merging compactions
-      else if (ag_data->needs_merging) {
-        if (range_data[i].data->priority == 0)
-          range_data[i].data->priority = priority++;
-        range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
-        ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MERGING;
-        if (trace)
-          *trace += format("%d needs merging %s (priority=%d, "
-                           "mem_needed=%lld)\n", __LINE__,
-                           ag_data->ag->get_full_name(),
-                           range_data[i].data->priority,
                            (Lld)memory_state.needed);
       }
     }
