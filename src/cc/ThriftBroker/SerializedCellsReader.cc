@@ -52,7 +52,9 @@ bool SerializedCellsReader::next() {
   // row; if empty then use the previous row
   m_row = (const char *)m_ptr;
   if (!*m_row) {
-    HT_ASSERT(m_previous_row);
+    if (m_previous_row == 0)
+      HT_THROW(Error::BAD_FORMAT,
+               "Empty row key found in serialized cells buffer");
     m_row = m_previous_row;
     m_ptr++;
   }
