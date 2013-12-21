@@ -38,6 +38,10 @@ bool SerializedCellsWriter::add(const char *row, const char *column_family,
   int32_t column_qualifier_length = column_qualifier ? strlen(column_qualifier) : 0;
   uint8_t flag = 0;
 
+  if (row_length == 0)
+    HT_THROW(Error::INVALID_ARGUMENT,
+             "Attempt to add empty row key to serialized cells buffer");
+
   bool need_row = false;
   if (row_length != m_previous_row_length
       || (m_previous_row_offset >= 0 && memcmp(row, m_buf.base + m_previous_row_offset, row_length)))
