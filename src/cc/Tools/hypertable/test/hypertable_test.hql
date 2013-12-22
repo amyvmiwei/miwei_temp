@@ -621,3 +621,5 @@ insert into issue1175 values ("banana", "a", "yellow"),("cherry", "a", "red");
 compact table issue1175;
 pause 5;
 select * from issue1175 where 'apple' < ROW <= 'cherry' limit 1;
+insert into issue1175 values ("foo'", "a", "test");
+select * from issue1175 where ROW = "foo'";
