@@ -372,6 +372,16 @@ namespace Hypertable {
       }
     };
 
+    /// Creates string with outer quotes stripped off.
+    /// @param str Pointer to c-style string
+    /// @param len Length of string
+    /// @return String with outer quotes stripped off
+    inline String create_string_without_quotes(const char *str, size_t len) {
+      if (len > 1 && (*str == '\'' || *str == '"') && *str == *(str+len-1))
+        return String(str+1, len-2);
+      return String(str, len);
+    }
+
     struct set_command {
       set_command(ParserState &state, int cmd) : state(state), command(cmd) { }
       void operator()(char const *, char const *) const {
@@ -439,8 +449,7 @@ namespace Hypertable {
     struct set_range_start_row {
       set_range_start_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.range_start_row = String(str, end-str);
-        trim_if(state.range_start_row, is_any_of("'\""));
+        state.range_start_row = create_string_without_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -448,8 +457,7 @@ namespace Hypertable {
     struct set_range_end_row {
       set_range_end_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.range_end_row = String(str, end-str);
-        trim_if(state.range_end_row, is_any_of("'\""));
+        state.range_end_row = create_string_without_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -1163,8 +1171,7 @@ namespace Hypertable {
     struct scan_set_cell_row {
       scan_set_cell_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.scan.current_cell_row = String(str, end-str);
-        trim_if(state.scan.current_cell_row, is_any_of("'\""));
+        state.scan.current_cell_row = create_string_without_quotes(str,end-str);
       }
       ParserState &state;
     };
@@ -1233,8 +1240,7 @@ namespace Hypertable {
     struct scan_set_row {
       scan_set_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.scan.current_rowkey = String(str, end-str);
-        trim_if(state.scan.current_rowkey, is_any_of("'\""));
+        state.scan.current_rowkey = create_string_without_quotes(str, end-str);
         if (state.scan.current_relop != 0) {
           switch (state.scan.current_relop) {
           case RELOP_EQ:
@@ -1690,8 +1696,8 @@ namespace Hypertable {
     struct set_insert_rowkey {
       set_insert_rowkey(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.current_insert_value.row_key = String(str, end-str);
-        trim_if(state.current_insert_value.row_key, is_any_of("'\""));
+        state.current_insert_value.row_key  =
+          create_string_without_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -1776,8 +1782,7 @@ namespace Hypertable {
     struct delete_set_row {
       delete_set_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.delete_row = String(str, end-str);
-        trim_if(state.delete_row, is_any_of("'\""));
+        state.delete_row = create_string_without_quotes(str, end-str);
       }
       ParserState &state;
     };
