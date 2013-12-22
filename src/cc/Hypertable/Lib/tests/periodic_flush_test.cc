@@ -47,7 +47,7 @@ void check_results(Table *table) {
 void default_test(Table *table)  {
   TableMutatorPtr mutator = table->create_mutator(0, 0, 500);
   mutator->set(KeySpec("rowkey", "col", "cq"), "value");
-  sleep(1);
+  sleep(2);
   check_results(table);
 }
 
@@ -55,7 +55,7 @@ void no_log_sync_test(Table *table) {
   TableMutatorPtr mutator = table->create_mutator(0, TableMutator::FLAG_NO_LOG_SYNC, 500);
   mutator->set_delete(KeySpec("rowkey", "col", AUTO_ASSIGN, FLAG_DELETE_COLUMN_FAMILY));
   mutator->set(KeySpec("rowkey", "col", "cq"), "value");
-  sleep(1);
+  sleep(2);
   check_results(table);
 }
 
