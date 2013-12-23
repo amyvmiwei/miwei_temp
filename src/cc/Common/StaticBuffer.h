@@ -28,6 +28,9 @@
 #define HYPERTABLE_STATICBUFFER_H
 
 #include "DynamicBuffer.h"
+#include "Logger.h"
+
+#include <cstdlib>
 
 namespace Hypertable {
 
@@ -41,18 +44,31 @@ namespace Hypertable {
    */
   class StaticBuffer {
   public:
-    /** Constructor; creates an empty buffer */
+    /** Constructor.  Creates an empty buffer */
     StaticBuffer()
-      : base(0), size(0), own(true) {
+      : base(0), alignment(0), size(0), own(true) {
     }
 
-    /** Constructor; allocates a new buffer of size %len. Memory will be
-     * released when going out of scope.
+    /** Constructor.
+     * Allocates a new buffer of size <code>len</code>. If
+     * <code>alignment</code> is non-zero, then the posix_memalign() function
+     * will be called to obtain memory and #alignment is set to
+     * <code>alignment</code>.  Memory will be released when going out of scope.
      *
      * @param len The size of the new buffer, in bytes
+     * @param alignment Buffer alignment
      */
-    explicit StaticBuffer(size_t len)
-      : base(new uint8_t[len]), size(len), own(true) {
+    explicit StaticBuffer(size_t len, size_t alignment=0)
+      : alignment(alignment), size(len), own(true) {
+      if (alignment > 0) {
+        void *vptr = 0;
+        size_t aligned_len = (len % alignment) == 0 ? len :
+          ((len / alignment)+1)*alignment;
+        HT_ASSERT(posix_memalign(&vptr, alignment, aligned_len) == 0);
+        base = (uint8_t *)vptr;
+      }
+      else
+        base = new uint8_t[len];
     }
 
     /** Constructor; assigns an existing buffer and can take ownership of
@@ -65,7 +81,7 @@ namespace Hypertable {
      *      buffer was allocated with new[]!
      */
     StaticBuffer(void *data, uint32_t len, bool take_ownership = true)
-      : base((uint8_t *)data), size(len), own(take_ownership) {
+      : base((uint8_t *)data), alignment(0), size(len), own(take_ownership) {
     }
 
     /** Constructor; takes ownership from a DynamicBuffer */
@@ -73,6 +89,7 @@ namespace Hypertable {
       base = dbuf.base;
       size = dbuf.fill();
       own = dbuf.own;
+      alignment = 0;
       if (own) {
         dbuf.base = dbuf.ptr = 0;
         dbuf.size = 0;
@@ -100,6 +117,7 @@ namespace Hypertable {
       base = other.base;
       size = other.size;
       own = other.own;
+      alignment = other.alignment;
       if (own) {
         other.own = false;
         other.base = 0;
@@ -122,6 +140,7 @@ namespace Hypertable {
       base = other.base;
       size = other.size;
       own = other.own;
+      alignment = other.alignment;
       if (own) {
         other.own = false;
         other.base = 0;
@@ -137,6 +156,7 @@ namespace Hypertable {
       base = dbuf.base;
       size = dbuf.fill();
       own = dbuf.own;
+      alignment = 0;
       if (own) {
         dbuf.base = dbuf.ptr = 0;
         dbuf.size = 0;
@@ -157,18 +177,30 @@ namespace Hypertable {
       base = data;
       size = len;
       own = take_ownership;
+      alignment = 0;
     }
 
     /** Clears the data; if this object is owner of the data then the allocated
      * buffer is delete[]d */
     void free() {
-      if (own && base)
-        delete [] base;
+      if (own && base) {
+        if (alignment > 0)
+          ::free(base);
+        else
+          delete [] base;
+      }
       base = 0;
       size = 0;
     }
 
+    size_t aligned_size() {
+      if (alignment == 0 || (size % alignment) == 0)
+        return size;
+      return ((size / alignment)+1) * alignment;
+    }
+
     uint8_t *base;
+    size_t alignment;
     uint32_t size;
     bool own;
   };

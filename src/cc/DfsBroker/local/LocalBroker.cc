@@ -225,18 +225,9 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataLocalPtr fdata;
   ssize_t nread;
   uint64_t offset;
-  uint8_t *readbuf;
   int error;
 
-#if defined(__linux__)
-  void *vptr = 0;
-  HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
-  readbuf = (uint8_t *)vptr;
-#else
-  readbuf = new uint8_t [amount];
-#endif
-
-  StaticBuffer buf(readbuf, amount);
+  StaticBuffer buf((size_t)amount, (size_t)HT_DIRECT_IO_ALIGNMENT);
 
   HT_DEBUGF("read fd=%d amount=%d", fd, amount);
 
@@ -407,20 +398,11 @@ LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
                    uint32_t amount, bool) {
   OpenFileDataLocalPtr fdata;
   ssize_t nread;
-  uint8_t *readbuf;
   int error;
 
   HT_DEBUGF("pread fd=%d offset=%llu amount=%d", fd, (Llu)offset, amount);
 
-#if defined(__linux__)
-  void *vptr = 0;
-  HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
-  readbuf = (uint8_t *)vptr;
-#else
-  readbuf = new uint8_t [amount];
-#endif
-
-  StaticBuffer buf(readbuf, amount);
+  StaticBuffer buf((size_t)amount, (size_t)HT_DIRECT_IO_ALIGNMENT);
 
   if (!m_open_file_map.get(fd, fdata)) {
     char errbuf[32];
@@ -429,19 +411,18 @@ LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
     return;
   }
 
-  if ((nread = FileUtils::pread(fdata->fd, buf.base, amount, (off_t)offset)) != (ssize_t)amount) {
+  nread = FileUtils::pread(fdata->fd, buf.base, buf.aligned_size(), (off_t)offset);
+  if (nread != (ssize_t)buf.aligned_size()) {
     report_error(cb);
-    HT_ERRORF("pread failed: fd=%d amount=%d offset=%llu - %s", fdata->fd,
-              amount, (Llu)offset, strerror(errno));
+    HT_ERRORF("pread failed: fd=%d amount=%d aligned_size=%d offset=%llu - %s",
+              fdata->fd, (int)amount, (int)buf.aligned_size(), (Llu)offset,
+              strerror(errno));
     return;
   }
-
-  buf.size = nread;
 
   if ((error = cb->response(offset, buf)) != Error::OK)
     HT_ERRORF("Problem sending response for pread(%u, %llu, %u) - %s",
               (unsigned)fd, (Llu)offset, (unsigned)amount, Error::get_text(error));
-
 }
 
 

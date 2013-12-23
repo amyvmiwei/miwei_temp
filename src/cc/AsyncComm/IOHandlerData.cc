@@ -558,12 +558,15 @@ void IOHandlerData::handle_message_header(time_t arrival_time) {
   m_event->load_message_header(m_message_header, header_len);
   m_event->arrival_time = arrival_time;
 
+  m_message_aligned = false;
+
 #if defined(__linux__)
   if (m_event->header.alignment > 0) {
     void *vptr = 0;
     posix_memalign(&vptr, m_event->header.alignment,
 		   m_event->header.total_len - header_len);
     m_message = (uint8_t *)vptr;
+    m_message_aligned = true;
   }
   else
     m_message = new uint8_t [m_event->header.total_len - header_len];
@@ -583,7 +586,7 @@ void IOHandlerData::handle_message_body() {
   if (m_event->header.flags & CommHeader::FLAGS_BIT_PROXY_MAP_UPDATE) {
     ReactorRunner::handler_map->update_proxy_map((const char *)m_message,
                   m_event->header.total_len - m_event->header.header_len);
-    delete [] m_message;
+    free_message_buffer();
     delete m_event;
     //HT_INFO("proxy map update");
   }
@@ -595,13 +598,14 @@ void IOHandlerData::handle_message_body() {
                "=%d,total_len=%d)", m_event->header.id, m_event->header.version,
                m_event->header.total_len);
     }
-    delete [] m_message;
+    free_message_buffer();
     delete m_event;
   }
   else {
     m_event->payload = m_message;
     m_event->payload_len = m_event->header.total_len
                            - m_event->header.header_len;
+    m_event->payload_aligned = m_message_aligned;
     {
       ScopedLock lock(m_mutex);
       m_event->set_proxy(m_proxy);
