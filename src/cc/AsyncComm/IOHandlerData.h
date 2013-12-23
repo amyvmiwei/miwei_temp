@@ -62,7 +62,8 @@ namespace Hypertable {
      */
     IOHandlerData(int sd, const InetAddr &addr,
                   DispatchHandlerPtr &dhp, bool connected=false)
-      : IOHandler(sd, dhp), m_event(0), m_send_queue() {
+      : IOHandler(sd, dhp), m_message_aligned(false), m_event(0),
+      m_send_queue() {
       memcpy(&m_addr, &addr, sizeof(InetAddr));
       m_connected = connected;
       reset_incoming_message_state();
@@ -90,6 +91,19 @@ namespace Hypertable {
       m_message = 0;
       m_message_ptr = 0;
       m_message_remaining = 0;
+      m_message_aligned = false;
+    }
+
+    /// Frees the message buffer (#m_message).
+    /// If #m_message was allocated with posix_memalign(), as indicated by
+    /// #m_message_aligned, the free() function is used to deallocate the
+    /// memory.  Otherwise, the buffer is deallocated with delete []
+    void free_message_buffer() {
+      if (m_message_aligned)
+        free(m_message);
+      else
+        delete [] m_message;
+      m_message = 0;
     }
 
     /** Sends message pointed to by <code>cbp</code> over socket associated
@@ -286,6 +300,9 @@ namespace Hypertable {
 
     /// Flag indicating if message header has been completely received
     bool m_got_header;
+
+    /// Flag indicating if message buffer was allocated with posix_memalign()
+    bool m_message_aligned;
 
     /// Pointer to Event object holding message to deliver to application
     Event *m_event;

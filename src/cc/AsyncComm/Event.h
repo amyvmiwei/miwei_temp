@@ -72,7 +72,7 @@ namespace Hypertable {
      */
     Event(Type type_, const InetAddr &addr_, int error_=Error::OK)
       : type(type_), addr(addr_), proxy_buf(0), error(error_), payload(0),
-        payload_len(0), group_id(0), arrival_time(0) {
+        payload_len(0), payload_aligned(false), group_id(0), arrival_time(0) {
       proxy = 0;
     }
 
@@ -86,7 +86,7 @@ namespace Hypertable {
     Event(Type type_, const sockaddr_in &addr_, const String &proxy_,
           int error_=Error::OK) 
       : type(type_), addr(addr_), proxy_buf(0), error(error_), payload(0),
-        payload_len(0), group_id(0), arrival_time(0) {
+        payload_len(0), payload_aligned(false), group_id(0), arrival_time(0) {
       set_proxy(proxy_);
     }
 
@@ -97,7 +97,7 @@ namespace Hypertable {
      */
     Event(Type type_, int error_=Error::OK) 
       : type(type_), proxy_buf(0), error(error_), payload(0), payload_len(0),
-        group_id(0), arrival_time(0) {
+        payload_aligned(false), group_id(0), arrival_time(0) {
       proxy = 0;
     }
 
@@ -109,14 +109,17 @@ namespace Hypertable {
      */
     Event(Type type_, const String &proxy_, int error_=0) 
       : type(type_), proxy_buf(0), error(error_), payload(0), payload_len(0),
-        group_id(0), arrival_time(0) {
+        payload_aligned(false), group_id(0), arrival_time(0) {
       set_proxy(proxy_);
     }
 
     /** Destructor.  Deallocates message payload buffer and proxy name buffer
      */
     ~Event() {
-      delete [] payload;
+      if (payload_aligned)
+        free((void *)payload);
+      else
+        delete [] payload;
       if (proxy_buf != proxy_buf_static)
         delete [] proxy_buf;
     }
@@ -195,6 +198,9 @@ namespace Hypertable {
 
     /// Length of the message
     size_t payload_len;
+
+    /// Flag indicating if payload was allocated with posix_memalign
+    bool payload_aligned;
 
     /** Thread group to which this message belongs.  Used to serialize
      * messages destined for the same object.  This value is created in
