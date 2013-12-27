@@ -1,0 +1,5 @@
+
+/// @namespace Hypertable::Lib
+/// %Hypertable library.
+/// %Hypertable client interface library as well as general, but
+/// %Hypertable-specific, facilities shared among %Hypertable servers.

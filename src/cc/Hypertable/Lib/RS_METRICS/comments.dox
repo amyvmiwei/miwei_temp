@@ -1,0 +1,7 @@
+
+/// @namespace Hypertable::Lib::RS_METRICS
+/// Facilities for reading and writing <code>sys/RS_METRICS</code> table.
+/// The <code>sys/RS_METRICS</code> table is continuously populated (i.e. once
+/// per hour) with load metrics for %RangeServers as well as individual ranges.
+/// This namespace contains facilities for reading and writing the
+/// <code>sys/RS_METRICS</code> table.

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,39 +19,49 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RSMETRICS_H
-#define HYPERTABLE_RSMETRICS_H
+/// @file
+/// Declarations for ReaderTable.
+/// This file contains declarations for ReaderTable, a derived
+/// Reader class for reading %RangeServer metrics from the
+/// <code>sys/RS_METRICS</code> table.
 
-#include <vector>
+#ifndef Hypertable_Lib_RS_METRICS_ReaderTable_H
+#define Hypertable_Lib_RS_METRICS_ReaderTable_H
 
-#include "Common/String.h"
-#include "Common/ReferenceCount.h"
+#include "Reader.h"
 
-#include "Hypertable/Lib/Client.h"
-
-#include "RangeMetrics.h"
-#include "ServerMetrics.h"
+#include <Hypertable/Lib/KeySpec.h>
+#include <Hypertable/Lib/Table.h>
 
 namespace Hypertable {
-
-  using namespace std;
+namespace Lib {
+namespace RS_METRICS {
 
   // This class reads in data from the sys/RS_METRICS table and makes it accessible.
   // It reads the data either from the sys/RS_METRICS table or from a text file dump if the same
 
-  class RSMetrics : public ReferenceCount {
+  /// @addtogroup libHypertable
+  /// @{
+
+  /// Reads metrics from the <code>sys/RS_METRICS</code> table.
+  class ReaderTable : public Reader {
   public:
-    RSMetrics(TablePtr &rs_metrics) : m_table(rs_metrics) { }
-    void get_range_metrics(const char *server_id, RangeMetricsMap &range_metrics);
-    void get_server_metrics(vector<ServerMetrics> &server_metrics);
+    ReaderTable(TablePtr &rs_metrics) : m_table(rs_metrics) { }
+    virtual ~ReaderTable() { }
+    virtual void get_range_metrics(const char *server_id,
+                                   RangeMetricsMap &range_metrics);
+    virtual void get_server_metrics(vector<ServerMetrics> &server_metrics);
 
   private:
 
     void parse_cell(const KeySpec &key, const char *value, size_t value_len);
     TablePtr m_table;
-  }; // RSMetrics
-  typedef intrusive_ptr<RSMetrics> RSMetricsPtr;
+  };
 
+  /// @}
+
+} // namespace RS_METRICS
+} // namespace Lib
 } // namespace Hypertable
 
-#endif // HYPERTABLE_RSMETRICS_H
+#endif // Hypertable_Lib_RS_METRICS_ReaderTable_H

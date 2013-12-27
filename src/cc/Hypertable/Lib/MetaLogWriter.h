@@ -45,7 +45,7 @@ namespace Hypertable {
      * @{
      */
 
-    /** Reads a %MetaLog.
+    /** Writes a %MetaLog.
      * This class is used to persist application entities to a %MetaLog.  It
      * is constructed with an initial set of entities to persist (obtained from
      * a prior read of the log) and is kept open during the duration of the

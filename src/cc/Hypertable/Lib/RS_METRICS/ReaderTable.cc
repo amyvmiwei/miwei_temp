@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,20 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+/// @file
+/// Definitions for ReaderTable.
+/// This file contains definitions for ReaderTable, a derived
+/// Reader class for reading %RangeServer metrics from the
+/// <code>sys/RS_METRICS</code> table.
 
-#include "Common/Logger.h"
+#include <Common/Compat.h>
+#include "ReaderTable.h"
+
+#include <Hypertable/Lib/Cell.h>
+#include <Hypertable/Lib/TableScanner.h>
+
+#include <Common/Logger.h>
 
 #include <map>
 #include <set>
 
-#include "RSMetrics.h"
-#include "Hypertable/Lib/LoadDataSourceFactory.h"
-
-using namespace std;
 using namespace Hypertable;
+using namespace Hypertable::Lib::RS_METRICS;
+using namespace std;
 
-void RSMetrics::get_range_metrics(const char *server, RangeMetricsMap &range_metrics) {
+void ReaderTable::get_range_metrics(const char *server, RangeMetricsMap &range_metrics) {
   ScanSpec scan_spec;
   RowInterval ri;
   Cell cell;
@@ -72,7 +80,7 @@ void RSMetrics::get_range_metrics(const char *server, RangeMetricsMap &range_met
   }
 }
 
-void RSMetrics::get_server_metrics(vector<ServerMetrics> &server_metrics) {
+void ReaderTable::get_server_metrics(vector<ServerMetrics> &server_metrics) {
   ScanSpec scan_spec;
   scan_spec.columns.push_back("server");
 

@@ -65,6 +65,9 @@ NameIdMapper.cc
 Namespace.cc
 NamespaceCache.cc
 PseudoTables.cc
+RS_METRICS/RangeMetrics.cc
+RS_METRICS/ReaderTable.cc
+RS_METRICS/ServerMetrics.cc
 RangeLocator.cc
 RangeMoveSpec.cc
 RangeServerClient.cc

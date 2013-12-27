@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,20 +19,25 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+/// @file
+/// Definitions for RangeMetrics.
+/// This file contains definitions for RangeMetrics, a class for
+/// aggregating metrics for an individual range.
+
+#include <Common/Compat.h>
+#include "RangeMetrics.h"
+
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/Types.h>
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/StringExt.h>
 
 #include <boost/algorithm/string.hpp>
 
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/StringExt.h"
-
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/Types.h"
-
-#include "RangeMetrics.h"
-
 using namespace Hypertable;
+using namespace Hypertable::Lib::RS_METRICS;
 using namespace std;
 
 RangeMeasurement::RangeMeasurement(const char *measurement, size_t len) {

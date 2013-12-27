@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,17 +19,27 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_SERVERMETRICS_H
-#define HYPERTABLE_SERVERMETRICS_H
+/// @file
+/// Declarations for ServerMetrics.
+/// This file contains declarations for ServerMetrics, a class for
+/// aggregating metrics for an individual %RangeServer.
+
+#ifndef Hypertable_Lib_RS_METRICS_ServerMetrics_h
+#define Hypertable_Lib_RS_METRICS_ServerMetrics_h
+
+#include <Common/StringExt.h>
 
 #include <vector>
 #include <set>
-#include "Common/StringExt.h"
 
 namespace Hypertable {
+namespace Lib {
+namespace RS_METRICS {
 
-  using namespace std;
+  /// @addtogroup libHypertable
+  /// @{
 
+  /// Single server metrics measurement.
   class ServerMeasurement {
 
   public:
@@ -52,8 +62,9 @@ namespace Hypertable {
     double page_out;
     int64_t disk_total;
     int64_t disk_avail;
-  }; // ServerMeasurement
+  };
 
+  /// Aggregates metrics for an individual %RangeServer.
   class ServerMetrics {
 
   public:
@@ -62,17 +73,21 @@ namespace Hypertable {
     ServerMetrics(const char *id) : m_id(id) { }
 
     void add_measurement(const char *measurement, size_t len);
-    const vector<ServerMeasurement> &get_measurements() const { return m_measurements; }
+    const std::vector<ServerMeasurement> &get_measurements() const { return m_measurements; }
 
     const String &get_id() const { return m_id; }
     String &get_id() { return m_id; }
 
   private:
-    vector<ServerMeasurement> m_measurements;
-    set<String> m_ranges;
+    std::vector<ServerMeasurement> m_measurements;
+    std::set<String> m_ranges;
     String m_id;
   }; // ServerMetrics
 
+  /// @}
+
+} // namespace RS_METRICS
+} // namespace Lib
 } // namespace Hypertable
 
-#endif // HYPERTABLE_SERVERMETRICS_H
+#endif // Hypertable_Lib_RS_METRICS_ServerMetrics_h

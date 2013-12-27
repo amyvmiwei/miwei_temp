@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,17 +19,27 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGEMETRICS_H
-#define HYPERTABLE_RANGEMETRICS_H
+/// @file
+/// Declarations for RangeMetrics.
+/// This file contains declarations for RangeMetrics, a class for
+/// aggregating metrics for an individual range.
 
+#ifndef Hypertable_Lib_RS_METRICS_RangeMetrics_h
+#define Hypertable_Lib_RS_METRICS_RangeMetrics_h
+
+#include <Common/String.h>
+
+#include <map>
 #include <vector>
-#include <set>
-#include "Common/String.h"
 
 namespace Hypertable {
+namespace Lib {
+namespace RS_METRICS {
 
-  using namespace std;
+  /// @addtogroup libHypertable
+  /// @{
 
+  /// Single range metrics measurement.
   class RangeMeasurement {
 
   public:
@@ -51,6 +61,8 @@ namespace Hypertable {
     double cell_read_rate;
   }; // RangeMeasurement
 
+
+  /// Aggregates metrics for an individual range.
   class RangeMetrics {
 
   public:
@@ -75,10 +87,11 @@ namespace Hypertable {
     }
     bool is_moveable() const;
 
-    const vector<RangeMeasurement> &get_measurements() const { return m_measurements; }
+    const std::vector<RangeMeasurement> &get_measurements() const { return m_measurements; }
     void get_avg_measurement(RangeMeasurement &measurement);
+
   private:
-    vector<RangeMeasurement> m_measurements;
+    std::vector<RangeMeasurement> m_measurements;
     String m_server_id;
     String m_table_id;
     String m_end_row;
@@ -90,6 +103,10 @@ namespace Hypertable {
 
   typedef std::map<String, RangeMetrics> RangeMetricsMap;
 
+  /// @}
+
+} // namespace RS_METRICS
+} // namespace Lib
 } // namespace Hypertable
 
-#endif // HYPERTABLE_RANGEMETRICS_H
+#endif // Hypertable_Lib_RS_METRICS_RangeMetrics_h

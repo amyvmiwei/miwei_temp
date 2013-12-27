@@ -22,13 +22,16 @@
 #ifndef HYPERTABLE_BALANCEALGORITHMLOAD_H
 #define HYPERTABLE_BALANCEALGORITHMLOAD_H
 
+
+#include <Hypertable/Lib/RS_METRICS/RangeMetrics.h>
+#include <Hypertable/Lib/RS_METRICS/ServerMetrics.h>
+
 #include <set>
 #include <map>
 #include <iostream>
 #include <vector>
 
 #include "BalanceAlgorithm.h"
-#include "RSMetrics.h"
 #include "RangeServerStatistics.h"
 #include "Context.h"
 
@@ -89,15 +92,20 @@ namespace Hypertable {
       typedef std::multiset<RangeMetricSummary, GtRangeMetricSummary> RangeSetDescLoad;
 
     private:
-      void calculate_server_summary(const ServerMetrics &metrics,
-                ServerMetricSummary &summary);
-      void calculate_range_summary(const RangeMetrics &metrics,
-                RangeMetricSummary &summary);
-      void populate_range_load_set(const RangeMetricsMap &range_metrics,
-                RangeSetDescLoad &ranges_desc_load);
+
+      void
+      calculate_server_summary(const Lib::RS_METRICS::ServerMetrics &metrics,
+                               ServerMetricSummary &summary);
+
+      void calculate_range_summary(const Lib::RS_METRICS::RangeMetrics &metrics,
+                                   RangeMetricSummary &summary);
+
+      void populate_range_load_set(const Lib::RS_METRICS::RangeMetricsMap &range_metrics,
+                                   RangeSetDescLoad &ranges_desc_load);
+
       bool check_move(const ServerMetricSummary &source,
-                const ServerMetricSummary &destination,
-                double range_loadestimate, double mean_loadavg);
+                      const ServerMetricSummary &destination,
+                      double range_loadestimate, double mean_loadavg);
 
       typedef std::map<String, RangeServerStatistics> StatisticsSet;
       StatisticsSet m_rsstats;
