@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,11 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-
+#include <Common/Compat.h>
 #include "BalanceAlgorithmLoad.h"
 
+#include <Hypertable/Lib/RS_METRICS/ReaderTable.h>
+
 using namespace Hypertable;
+using namespace Hypertable::Lib;
+using namespace Hypertable::Lib::RS_METRICS;
 using namespace std;
 
 
@@ -40,7 +43,7 @@ BalanceAlgorithmLoad::BalanceAlgorithmLoad(ContextPtr &context,
 void BalanceAlgorithmLoad::compute_plan(BalancePlanPtr &plan,
                                         std::vector<RangeServerConnectionPtr> &balanced) {
   vector<ServerMetrics> server_metrics;
-  RSMetrics rs_metrics(m_context->rs_metrics_table);
+  RS_METRICS::ReaderTable rs_metrics(m_context->rs_metrics_table);
   rs_metrics.get_server_metrics(server_metrics);
 
   ServerMetricSummary ss;
@@ -158,7 +161,8 @@ void BalanceAlgorithmLoad::compute_plan(BalancePlanPtr &plan,
   }
 }
 
-void BalanceAlgorithmLoad::calculate_server_summary(const ServerMetrics &metrics,
+void
+BalanceAlgorithmLoad::calculate_server_summary(const ServerMetrics &metrics,
     ServerMetricSummary &summary) {
   summary.server_id = metrics.get_id().c_str();
   double loadestimate = 0;

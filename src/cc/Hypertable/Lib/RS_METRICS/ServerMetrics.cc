@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,16 +19,21 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+/// @file
+/// Definitions for ServerMetrics.
+/// This file contains definitions for ServerMetrics, a class for
+/// aggregating metrics for an individual %RangeServer.
+
+#include <Common/Compat.h>
+#include "ServerMetrics.h"
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
 
 #include <boost/algorithm/string.hpp>
 
-#include "Common/Error.h"
-#include "Common/Logger.h"
-
-#include "ServerMetrics.h"
-
 using namespace Hypertable;
+using namespace Hypertable::Lib::RS_METRICS;
 using namespace std;
 
 ServerMeasurement::ServerMeasurement(const char *measurement, size_t len) {

@@ -62,10 +62,7 @@ RangeServerConnectionManager.cc
 ReferenceManager.cc
 ResponseManager.cc
 Utility.cc
-ServerMetrics.cc
 SystemState.cc
-RangeMetrics.cc
-RSMetrics.cc
 )
 
 # HyperMaster Lib
