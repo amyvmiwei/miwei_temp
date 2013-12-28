@@ -33,7 +33,7 @@ using namespace Hypertable;
 LoadBalancer::LoadBalancer(ContextPtr context)
   : m_context(context), m_new_server_added(false), m_paused(false) {
 
-  m_crontab = new Crontab( m_context->props->get_str("Hypertable.LoadBalancer.Crontab") );
+  m_crontab = Crontab( m_context->props->get_str("Hypertable.LoadBalancer.Crontab") );
 
   m_new_server_balance_delay =
     m_context->props->get_i32("Hypertable.LoadBalancer.BalanceDelay.NewServer");
@@ -46,7 +46,7 @@ LoadBalancer::LoadBalancer(ContextPtr context)
   time_t t = time(0) +
     m_context->props->get_i32("Hypertable.LoadBalancer.BalanceDelay.Initial");
 
-  m_next_balance_time_load = m_crontab->next_event(t);
+  m_next_balance_time_load = m_crontab.next_event(t);
 
   if (m_context->rsc_manager->exist_unbalanced_servers()) {
     m_new_server_added = true;
@@ -83,7 +83,7 @@ void LoadBalancer::unpause() {
     m_new_server_added = true;
     m_next_balance_time_new_server = now + m_new_server_balance_delay;
   }
-  m_next_balance_time_load = m_crontab->next_event(now);
+  m_next_balance_time_load = m_crontab.next_event(now);
   m_paused = false;
 }
 

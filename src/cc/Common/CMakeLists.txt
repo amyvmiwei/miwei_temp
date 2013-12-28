@@ -44,6 +44,7 @@ SystemInfo.cc
 StatsSerializable.cc
 StatsSystem.cc
 Time.cc
+TimeWindow.cc
 Usage.cc
 Version.cc
 WordStream.cc
@@ -115,6 +116,10 @@ target_link_libraries(config_test HyperCommon)
 add_executable(crontab_test tests/crontab_test.cc)
 target_link_libraries(crontab_test HyperCommon)
 
+# TimeWindow test
+add_executable(TimeWindowTest tests/TimeWindowTest.cc)
+target_link_libraries(TimeWindowTest HyperCommon)
+
 # init tests
 add_executable(init_test tests/init_test.cc)
 target_link_libraries(init_test HyperCommon)
@@ -180,6 +185,7 @@ add_test(MD5-Base64 md5_base64_test)
 add_test(Common-StatsSystem-serialize stats_serialize_test)
 add_test(Common-StringCompressor string_compressor_test)
 add_test(Common-TimeInline timeinline_test)
+add_test(Common-TimeWindow env bash -c "${CMAKE_CURRENT_BINARY_DIR}/TimeWindowTest > TimeWindowTest.output; diff TimeWindowTest.output ${CMAKE_CURRENT_SOURCE_DIR}/tests/TimeWindowTest.golden")
 add_test(Common-FailureInducer failure_inducer_test)
 
 set(VERSION_H ${HYPERTABLE_BINARY_DIR}/src/cc/Common/Version.h)
