@@ -352,6 +352,10 @@ void DefaultPolicy::init_options() {
      "Minimum time interval (milliseconds) to check for control files in run/ directory")
     ("Hypertable.RangeServer.LoadSystemTablesOnly", boo()->default_value(false),
         "Instructs the RangeServer to only load system tables (for debugging)")
+    ("Hypertable.RangeServer.LowActivityPeriod",
+     strs()->default_value(std::vector<std::string>(), ""),
+     "Periods of low activity during which RangeServer can perform heavy "
+     "maintenance (specified in crontab format)")
     ("Hypertable.RangeServer.MemoryLimit", i64(), "RangeServer memory limit")
     ("Hypertable.RangeServer.MemoryLimit.Percentage", i32()->default_value(60),
      "RangeServer memory limit specified as percentage of physical RAM")
@@ -371,11 +375,15 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.AccessGroup.MaxMemory", i64()->default_value(1*G),
         "Maximum bytes consumed by an Access Group")
     ("Hypertable.RangeServer.CellStore.TargetSize.Minimum",
-        i64()->default_value(10*MiB), "Target minimum size for CellStores")
+        i64()->default_value(10*MiB),
+     "Merging compaction target CellStore size during normal activity period")
+    ("Hypertable.RangeServer.CellStore.TargetSize.Maximum",
+        i64()->default_value(50*MiB),
+     "Merging compaction target CellStore size during low activity period")
     ("Hypertable.RangeServer.CellStore.TargetSize.Window",
         i64()->default_value(30*MiB), "Size window above target minimum for "
         "CellStores in which merges will be considered")
-    ("Hypertable.RangeServer.CellStore.Merge.RunLengthThreshold", i32()->default_value(10),
+    ("Hypertable.RangeServer.CellStore.Merge.RunLengthThreshold", i32()->default_value(5),
         "Trigger a merge if an adjacent run of merge candidate CellStores exceeds this length")
     ("Hypertable.RangeServer.CellStore.DefaultBlockSize",
         i32()->default_value(64*KiB), "Default block size for cell stores")

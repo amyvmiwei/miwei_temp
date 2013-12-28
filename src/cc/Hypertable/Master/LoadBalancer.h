@@ -56,7 +56,7 @@ namespace Hypertable {
     Mutex m_mutex;
     ContextPtr m_context;
     Mutex m_add_mutex;
-    CrontabPtr m_crontab;
+    Crontab m_crontab;
     time_t m_next_balance_time_load;
     time_t m_next_balance_time_new_server;
     double m_loadavg_threshold;

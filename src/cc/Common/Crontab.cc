@@ -19,22 +19,21 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Crontab class for periodic events.
- * The Crontab class is used to track the timing of a periodic event.
- * This is used i.e. in the Hypertable.Master to schedule LoadBalancer events.
- */
+/// @file
+/// Crontab class for periodic events.
+/// The Crontab class is used to track the timing of a periodic event.
+/// This is used i.e. in the Hypertable.Master to schedule LoadBalancer events.
 
-#include "Compat.h"
+#include <Common/Compat.h>
 #include "Crontab.h"
-#include "Logger.h"
-#include "StringExt.h"
-#include "Sweetener.h"
+
+#include <Common/Logger.h>
+#include <Common/StringExt.h>
+
+#include <boost/tokenizer.hpp>
 
 #include <cctype>
 #include <cstdlib>
-
-#include <boost/tokenizer.hpp>
 
 using namespace Hypertable;
 using namespace boost;
@@ -49,6 +48,9 @@ time_t Crontab::next_event(time_t now) {
   int i;
   int hour_increment = 0;
   int day_increment = 0;
+
+  // align to "next" minute boundary
+  now += 59;
 
   localtime_r(&now, &next_tm);
   next_tm.tm_sec = 0;

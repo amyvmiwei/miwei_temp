@@ -57,21 +57,21 @@ namespace {
     (const char *)0
   };
 
-  void display_next_event(CrontabPtr &crontab, struct tm *tmval) {
+  void display_next_event(Crontab &crontab, struct tm *tmval) {
     char output_buf[32];
     time_t t, next;
     t = mktime(tmval);
-    next = crontab->next_event(t);
+    next = crontab.next_event(t);
     ctime_r(&next, output_buf);
     String output(output_buf);
     boost::trim_if(output, boost::is_any_of("\n\t "));
     cout << output << "\n";
   }
 
-  void display_next_event(CrontabPtr &crontab, time_t t) {
+  void display_next_event(Crontab &crontab, time_t t) {
     char output_buf[32];
     time_t next;
-    next = crontab->next_event(t);
+    next = crontab.next_event(t);
     ctime_r(&next, output_buf);
     String output(output_buf);
     boost::trim_if(output, boost::is_any_of("\n\t "));
@@ -82,23 +82,22 @@ namespace {
 }
 
 int main(int argc, char *argv[]) {
-  CrontabPtr crontab;
+  Crontab crontab;
 
   for (size_t i=0; specs[i]; i++) {
     try {
-      crontab = new Crontab(specs[i]);
-      cout << crontab->entry() << "\n";
+      cout << Crontab(specs[i]).entry() << "\n";
     }
     catch (Exception &e) {
       cout << e.what() << " (" << specs[i] << ")\n";
     }
   }
 
-  crontab = new Crontab("0 0 * * *");
+  crontab = Crontab("0 0 * * *");
   display_next_event(crontab, (time_t)1352793827);
 
-  crontab = new Crontab("0 0 29 2 *");
-  cout << crontab->entry() << "\n";
+  crontab = Crontab("0 0 29 2 *");
+  cout << crontab.entry() << "\n";
 
   struct tm tmval;
 
@@ -119,8 +118,8 @@ int main(int argc, char *argv[]) {
   tmval.tm_year = 2000 - 1900;
   display_next_event(crontab, &tmval);
 
-  crontab = new Crontab("0 0 * * 0");
-  cout << crontab->entry() << "\n";
+  crontab = Crontab("0 0 * * 0");
+  cout << crontab.entry() << "\n";
 
   tmval.tm_mon = 8;
   tmval.tm_year = 2012 - 1900;
@@ -131,8 +130,8 @@ int main(int argc, char *argv[]) {
   tmval.tm_mday = 10;
   display_next_event(crontab, &tmval);
 
-  crontab = new Crontab("0 0 * * *");
-  cout << crontab->entry() << "\n";
+  crontab = Crontab("0 0 * * *");
+  cout << crontab.entry() << "\n";
 
   tmval.tm_mon = 8;
   tmval.tm_year = 2012 - 1900;
@@ -157,8 +156,8 @@ int main(int argc, char *argv[]) {
   tmval.tm_mday = 5;
   display_next_event(crontab, &tmval);
 
-  crontab = new Crontab("30 12 3,5 * *");
-  cout << crontab->entry() << "\n";
+  crontab = Crontab("30 12 3,5 * *");
+  cout << crontab.entry() << "\n";
 
   tmval.tm_mon = 8;
 
