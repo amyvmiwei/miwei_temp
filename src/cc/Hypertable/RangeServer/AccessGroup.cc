@@ -57,7 +57,8 @@ AccessGroup::AccessGroup(const TableIdentifier *identifier,
     m_latest_stored_revision(TIMESTAMP_MIN),
     m_latest_stored_revision_hint(TIMESTAMP_MIN),
     m_file_tracker(identifier, schema, range, ag->name), m_is_root(false),
-    m_recovering(false), m_needs_merging(false), m_end_merge(false) {
+    m_recovering(false), m_needs_merging(false), m_end_merge(false),
+    m_dirty(false) {
 
   m_table_name = m_identifier.id;
   m_start_row = range->start_row;
@@ -148,6 +149,9 @@ void AccessGroup::update_schema(SchemaPtr &schema,
  * CellCache should be locked as well.
  */
 void AccessGroup::add(const Key &key, const ByteString value) {
+
+  if (!m_dirty)
+    m_dirty = true;
 
   if (key.revision > m_latest_stored_revision || Global::ignore_clock_skew_errors) {
     if (key.revision < m_earliest_cached_revision)
@@ -502,7 +506,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
   while (abort_loop) {
     ScopedLock lock(m_mutex);
     if (m_in_memory) {
-      if (m_cell_cache_manager->immutable_cache_empty())
+      if (!m_dirty)
         break;
       HT_INFOF("Starting InMemory Compaction of %s", m_full_name.c_str());
     }

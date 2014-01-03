@@ -106,7 +106,7 @@ namespace Hypertable {
     typedef typename std::vector<ElementT> ArrayT;
     typedef typename std::vector<ElementT>::iterator ArrayIteratorT;
 
-    CellStoreBlockIndexArray() : m_disk_used(0) { }
+  CellStoreBlockIndexArray() : m_disk_used(0), m_maximum_entries((OffsetT)-1) { }
 
     void load(DynamicBuffer &fixed, DynamicBuffer &variable,int64_t end_of_data,
               const String &start_row="", const String &end_row="") {
@@ -189,10 +189,11 @@ namespace Hypertable {
       // Free variable buf here to maintain original semantics
       variable.free();
 
-      if (m_array.size() == total_entries)
-        m_fraction_covered = 1.0;
-      else
-        m_fraction_covered = (float)m_array.size() / (float)total_entries;
+      // The first time this method is called, it is called with the entire
+      // index, so save the size of the entire index for "fraction covered"
+      // calcuations
+      if (m_maximum_entries == (OffsetT)-1)
+        m_maximum_entries = (OffsetT)total_entries;
     }
 
     void rescope(const String &start_row="", const String &end_row="") {
@@ -377,7 +378,10 @@ namespace Hypertable {
 
     int64_t disk_used() { return m_disk_used; }
 
-    double fraction_covered() { return (double)m_fraction_covered; }
+    double fraction_covered() {
+      HT_ASSERT(m_maximum_entries != (OffsetT)-1);
+      return (double)m_array.size() / (double)m_maximum_entries;
+    }
 
     int64_t end_of_last_block() { return m_end_of_last_block; }
 
@@ -405,7 +409,7 @@ namespace Hypertable {
       m_array.clear();
       m_keydata.free();
       m_middle_key.ptr = 0;
-      m_fraction_covered = 0.0;
+      m_maximum_entries = (OffsetT)-1;
     }
 
   private:
@@ -414,7 +418,7 @@ namespace Hypertable {
     SerializedKey m_middle_key;
     OffsetT m_end_of_last_block;
     OffsetT m_disk_used;
-    float m_fraction_covered;
+    OffsetT m_maximum_entries;
   };
 
   /** @}*/

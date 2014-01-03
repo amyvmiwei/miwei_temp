@@ -288,7 +288,7 @@ namespace Hypertable {
     bool                 m_bloom_filter_disabled;
     bool                 m_needs_merging;
     bool                 m_end_merge;
-
+    bool                 m_dirty;
   };
   typedef boost::intrusive_ptr<AccessGroup> AccessGroupPtr;
 

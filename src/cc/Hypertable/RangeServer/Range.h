@@ -165,6 +165,8 @@ namespace Hypertable {
 
     void deferred_initialization(uint32_t timeout_millis);
 
+    void deferred_initialization(boost::xtime expire_time);
+
     void get_boundary_rows(String &start, String &end) {
       m_metalog_entity->get_boundary_rows(start, end);
     }
