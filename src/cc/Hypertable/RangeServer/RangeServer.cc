@@ -2107,6 +2107,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
   table_update->total_count = count;
   table_update->total_buffer_size = buffer.size;
   table_update->flags = flags;
+  table_update->expire_time = cb->get_event()->expiration_time();
 
   UpdateRequest *request = new UpdateRequest();
   request->buffer = buffer;
@@ -2117,7 +2118,7 @@ RangeServer::update(ResponseCallbackUpdate *cb, const TableIdentifier *table,
 
   table_update_vector.push_back(table_update);
 
-  batch_update(table_update_vector, cb->get_event()->expiration_time());
+  batch_update(table_update_vector, table_update->expire_time);
 
 }
 
