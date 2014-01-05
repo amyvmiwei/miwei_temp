@@ -29,6 +29,7 @@
 #include "Common/Mutex.h"
 #include "Common/Properties.h"
 #include "Common/Filesystem.h"
+#include "Common/TimeWindow.h"
 
 #include "AsyncComm/Comm.h"
 #include "Hyperspace/Session.h"
@@ -112,6 +113,7 @@ namespace Hypertable {
     static ConnectionManagerPtr conn_manager;
     static std::vector<MetaLog::EntityTaskPtr> work_queue;
     static StringSet      immovable_range_set;
+    static TimeWindow low_activity_time;
     static void add_to_work_queue(MetaLog::EntityTask *entity);
     static void add_to_work_queue(MetaLog::EntityTaskPtr &entity);
     static void immovable_range_set_add(const TableIdentifier &table, const RangeSpec &spec);

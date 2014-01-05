@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,26 +18,28 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-#include "Common/Config.h"
-#include "Common/md5.h"
-#include "Common/SystemInfo.h"
+#include <Common/Compat.h>
+#include "MaintenanceScheduler.h"
+
+#include <Hypertable/RangeServer/Global.h>
+#include <Hypertable/RangeServer/MaintenanceFlag.h>
+#include <Hypertable/RangeServer/MaintenancePrioritizerLogCleanup.h>
+#include <Hypertable/RangeServer/MaintenanceTaskCompaction.h>
+#include <Hypertable/RangeServer/MaintenanceTaskDeferredInitialization.h>
+#include <Hypertable/RangeServer/MaintenanceTaskMemoryPurge.h>
+#include <Hypertable/RangeServer/MaintenanceTaskRelinquish.h>
+#include <Hypertable/RangeServer/MaintenanceTaskSplit.h>
+#include <Hypertable/RangeServer/MaintenanceTaskWorkQueue.h>
+
+#include <Common/Config.h>
+#include <Common/SystemInfo.h>
+#include <Common/TimeWindow.h>
+#include <Common/md5.h>
 
 #include <algorithm>
-#include <limits>
-#include <iostream>
 #include <fstream>
-
-#include "Global.h"
-#include "MaintenanceFlag.h"
-#include "MaintenancePrioritizerLogCleanup.h"
-#include "MaintenanceScheduler.h"
-#include "MaintenanceTaskCompaction.h"
-#include "MaintenanceTaskDeferredInitialization.h"
-#include "MaintenanceTaskMemoryPurge.h"
-#include "MaintenanceTaskRelinquish.h"
-#include "MaintenanceTaskSplit.h"
-#include "MaintenanceTaskWorkQueue.h"
+#include <iostream>
+#include <limits>
 
 using namespace Hypertable;
 using namespace std;
@@ -153,8 +155,21 @@ void MaintenanceScheduler::schedule() {
   StringSet remove_ok_logs, removed_logs;
   m_live_map->get_ranges(ranges, &remove_ok_logs);
   time_t current_time = time(0);
+  int flags = 0;
+  /// Update current time to compute "low activity" window
+  if (Global::low_activity_time.update_current_time()) {
+    flags = MaintenanceFlag::RECOMPUTE_MERGE_RUN;
+    HT_INFOF("%s low activity window", Global::low_activity_time.within_window()
+             ? "Entering" : "Exiting");
+  }
+  if (debug)
+    trace_str += 
+      format("Within low activity window = %s\n",
+             Global::low_activity_time.within_window() ? "true" : "false");
+
+  // Fetch maintenance data for ranges and thier access groups
   foreach_ht (RangeData &rd, ranges.array)
-    rd.data = rd.range->get_maintenance_data(ranges.arena, current_time);
+    rd.data = rd.range->get_maintenance_data(ranges.arena, current_time, flags);
 
   if (ranges.array.empty())
     return;

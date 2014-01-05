@@ -560,8 +560,9 @@ bool Range::cancel_maintenance() {
 }
 
 
-Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now,
-                                                    TableMutator *mutator) {
+Range::MaintenanceData *
+Range::get_maintenance_data(ByteArena &arena, time_t now,
+                            int flags, TableMutator *mutator) {
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc( sizeof(MaintenanceData) );
   AccessGroup::MaintenanceData **tailp = 0;
   AccessGroupVector  ag_vector(0);
@@ -604,11 +605,11 @@ Range::MaintenanceData *Range::get_maintenance_data(ByteArena &arena, time_t now
 
   for (size_t i=0; i<ag_vector.size(); i++) {
     if (mdata->agdata == 0) {
-      mdata->agdata = ag_vector[i]->get_maintenance_data(arena, now);
+      mdata->agdata = ag_vector[i]->get_maintenance_data(arena, now, flags);
       tailp = &mdata->agdata;
     }
     else {
-      (*tailp)->next = ag_vector[i]->get_maintenance_data(arena, now);
+      (*tailp)->next = ag_vector[i]->get_maintenance_data(arena, now, flags);
       tailp = &(*tailp)->next;
     }
     size += (*tailp)->disk_estimate;

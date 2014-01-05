@@ -19,33 +19,33 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+#include "AccessGroup.h"
+
+#include <Hypertable/RangeServer/CellCache.h>
+#include <Hypertable/RangeServer/CellCacheScanner.h>
+#include <Hypertable/RangeServer/CellStoreFactory.h>
+#include <Hypertable/RangeServer/CellStoreReleaseCallback.h>
+#include <Hypertable/RangeServer/CellStoreV6.h>
+#include <Hypertable/RangeServer/Config.h>
+#include <Hypertable/RangeServer/Global.h>
+#include <Hypertable/RangeServer/MaintenanceFlag.h>
+#include <Hypertable/RangeServer/MergeScannerAccessGroup.h>
+#include <Hypertable/RangeServer/MetadataNormal.h>
+#include <Hypertable/RangeServer/MetadataRoot.h>
+
+#include <Common/DynamicBuffer.h>
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/md5.h>
+
+#include <algorithm>
 #include <cstdlib>
 #include <cstring>
-#include <algorithm>
 #include <iterator>
 #include <vector>
 
-#include "Common/DynamicBuffer.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/md5.h"
-
-#include "AccessGroup.h"
-#include "CellCache.h"
-#include "CellCacheScanner.h"
-#include "CellStoreFactory.h"
-#include "CellStoreReleaseCallback.h"
-#include "CellStoreV6.h"
-#include "Global.h"
-#include "MaintenanceFlag.h"
-#include "MergeScannerAccessGroup.h"
-#include "MetadataNormal.h"
-#include "MetadataRoot.h"
-#include "Config.h"
-
 using namespace Hypertable;
-
 
 AccessGroup::AccessGroup(const TableIdentifier *identifier,
                          SchemaPtr &schema, Schema::AccessGroup *ag,
@@ -332,7 +332,8 @@ uint64_t AccessGroup::purge_memory(MaintenanceFlag::Map &subtask_map) {
   return memory_purged;
 }
 
-AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena, time_t now) {
+AccessGroup::MaintenanceData *
+AccessGroup::get_maintenance_data(ByteArena &arena, time_t now, int flags) {
   ScopedLock lock(m_mutex);
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc(sizeof(MaintenanceData));
   int64_t key_bytes = 0, value_bytes = 0;
@@ -340,6 +341,9 @@ AccessGroup::MaintenanceData *AccessGroup::get_maintenance_data(ByteArena &arena
 
   memset(mdata, 0, sizeof(MaintenanceData));
   mdata->ag = this;
+
+  if (MaintenanceFlag::recompute_merge_run(flags))
+    get_merge_info(m_needs_merging, m_end_merge);
 
   if (m_earliest_cached_revision_saved != TIMESTAMP_MAX)
     mdata->earliest_cached_revision = m_earliest_cached_revision_saved;
@@ -695,6 +699,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         // If cell cache was included in the merge, drop it
         if (m_end_merge)
           m_cell_cache_manager->drop_immutable_cache();
+
       }
       else {
 
@@ -734,8 +739,10 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
          * it contains no entries
          */
         if (cellstore->get_total_entries() > 0) {
-          m_stores.push_back( CellStoreInfo(cellstore, shadow_cache, m_earliest_cached_revision_saved) );
-          get_merge_info(m_needs_merging, m_end_merge);
+          if (shadow_cache)
+            m_stores.push_back( CellStoreInfo(cellstore, shadow_cache, m_earliest_cached_revision_saved) );
+          else
+            m_stores.push_back(cellstore);
           m_garbage_tracker.accumulate_expirable( m_stores.back().expirable_data );
           added_file = cellstore->get_filename();
         }
@@ -771,10 +778,13 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         FailureInducer::instance->maybe_fail("compact-manual-2");
     }
 
-    if (merging)
+    // We do this down here so that they don't take place if the file tracker
+    // operations above throw an exception.
+    {
+      ScopedLock lock(m_mutex);
       get_merge_info(m_needs_merging, m_end_merge);
-    else
       m_earliest_cached_revision_saved = TIMESTAMP_MAX;
+    }
 
     HT_INFOF("Finished Compaction of %s(%s) to %s", m_range_name.c_str(),
              m_name.c_str(), added_file.c_str());
@@ -1093,19 +1103,57 @@ bool AccessGroup::find_merge_run(size_t *indexp, size_t *lenp) {
   size_t count;
   int64_t running_total = 0;
 
-  if (m_in_memory || m_stores.size() == 0)
+  if (m_in_memory || m_stores.size() <= 1)
     return false;
 
   std::vector<int64_t> disk_usage(m_stores.size());
 
+  // If in "low activity" window, first try to be more aggresive
+  if (Global::low_activity_time.within_window()) {
+    bool run_found = false;
+    for (int64_t target = Global::cellstore_target_size_min*2;
+         target <= Global::cellstore_target_size_max;
+         target += Global::cellstore_target_size_min) {
+      index = 0;
+      i = 0;
+      running_total = 0;
+
+      do {
+        disk_usage[i] = m_stores[i].cs->disk_usage();
+        running_total += disk_usage[i];
+
+        if (running_total >= target) {
+          count = (i - index) + 1;
+          if (count >= (size_t)2) {
+            if (indexp)
+              *indexp = index;
+            if (lenp)
+              *lenp = count;
+            run_found = true;
+            break;
+          }
+          // Otherwise, move the index forward by one and try again
+          running_total -= disk_usage[index];
+          index++;
+        }
+        i++;
+      } while (i < m_stores.size());
+      if (i == m_stores.size())
+        break;
+    }
+    if (run_found)
+      return true;
+  }
+
+  index = 0;
+  i = 0;
+  running_total = 0;
   do {
     disk_usage[i] = m_stores[i].cs->disk_usage();
     running_total += disk_usage[i];
 
     if (running_total >= Global::cellstore_target_size_min) {
-      count = i - index;
-      if (running_total < Global::cellstore_target_size_max)
-        count++;
+      count = (i - index) + 1;
       if (count >= (size_t)Global::merge_cellstore_run_length_threshold) {
         if (indexp)
           *indexp = index;
@@ -1120,7 +1168,7 @@ bool AccessGroup::find_merge_run(size_t *indexp, size_t *lenp) {
     i++;
   } while (i < m_stores.size());
 
-  if ((i-index) > (size_t)Global::merge_cellstore_run_length_threshold) {
+  if ((i-index) >= (size_t)Global::merge_cellstore_run_length_threshold) {
     if (indexp)
       *indexp = index;
     if (lenp)

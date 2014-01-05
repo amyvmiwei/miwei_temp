@@ -43,19 +43,21 @@ namespace Hypertable {
    */
   namespace MaintenanceFlag {
 
-    /** Enumeration for maintenance type masks */
+    /** Enumeration for maintenance masks */
     enum {
-      SPLIT                     = 0x0100, //!< Split mask
-      COMPACT                   = 0x0200, //!< Compaction mask
-      COMPACT_MINOR             = 0x0201, //!< Minor compaction mask
-      COMPACT_MAJOR             = 0x0202, //!< Major compaction mask
-      COMPACT_MERGING           = 0x0204, //!< Mergin compaction mask
-      COMPACT_GC                = 0x0208, //!< GC compaction mask
-      COMPACT_MOVE              = 0x0210, //!< Merging compaction mask
-      MEMORY_PURGE              = 0x0400, //!< Memory purge mask
-      MEMORY_PURGE_SHADOW_CACHE = 0x0401, //!< Memory shadow cache purge mask
-      MEMORY_PURGE_CELLSTORE    = 0x0402, //!< Memory cellstore index purge mask
-      RELINQUISH                = 0x0800  //!< Relinquish mask
+      SPLIT                     = 0x00000100, //!< Split mask
+      COMPACT                   = 0x00000200, //!< Compaction mask
+      COMPACT_MINOR             = 0x00000201, //!< Minor compaction mask
+      COMPACT_MAJOR             = 0x00000202, //!< Major compaction mask
+      COMPACT_MERGING           = 0x00000204, //!< Mergin compaction mask
+      COMPACT_GC                = 0x00000208, //!< GC compaction mask
+      COMPACT_MOVE              = 0x00000210, //!< Merging compaction mask
+      MEMORY_PURGE              = 0x00000400, //!< Memory purge mask
+      MEMORY_PURGE_SHADOW_CACHE = 0x00000401, //!< Memory shadow cache purge mask
+      MEMORY_PURGE_CELLSTORE    = 0x00000402, //!< Memory cellstore index purge mask
+      RELINQUISH                = 0x00000800,  //!< Relinquish mask
+      /// Recompute %CellStore merge run to test if merging compaction needed
+      RECOMPUTE_MERGE_RUN = 0x00010000
     };
 
     /** Tests the #RELINQUISH bit of <code>flags</code>
@@ -146,6 +148,15 @@ namespace Hypertable {
      */
     inline bool purge_cellstore(int flags) {
       return (flags & MEMORY_PURGE_CELLSTORE) == MEMORY_PURGE_CELLSTORE;
+    }
+
+    /** Tests the #RECOMPUTE_MERGE_RUN bit of <code>flags</code>
+     * @param flags Bit field of maintenance types
+     * @return <i>true</i> if #RECOMPUTE_MERGE_RUN bit is set, <i>false</i>
+     * otherwise.
+     */
+    inline bool recompute_merge_run(int flags) {
+      return (flags & RECOMPUTE_MERGE_RUN) == RECOMPUTE_MERGE_RUN;
     }
 
     /** Hash function class for pointers. */
