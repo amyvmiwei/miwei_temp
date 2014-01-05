@@ -48,8 +48,7 @@ namespace Hypertable {
       int64_t needed;
     };
 
-    MaintenancePrioritizer() : m_cellstore_minimum_size(0),
-                               m_initialization_complete(false),
+    MaintenancePrioritizer() : m_initialization_complete(false),
                                m_uninitialized_ranges_seen(false) { }
 
     virtual void prioritize(std::vector<RangeData> &range_data, MemoryState &memory_state,
@@ -57,7 +56,6 @@ namespace Hypertable {
 
   protected:
 
-    int64_t m_cellstore_minimum_size;
     bool m_initialization_complete;
     bool m_uninitialized_ranges_seen;
 

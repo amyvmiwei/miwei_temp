@@ -54,8 +54,6 @@ MaintenancePrioritizerLowMemory::prioritize(std::vector<RangeData> &range_data,
       range_data_user.push_back(range_data[i]);
   }
 
-  m_cellstore_minimum_size = get_i64("Hypertable.RangeServer.CellStore.TargetSize.Minimum");
-
   m_uninitialized_ranges_seen = false;
 
   /**

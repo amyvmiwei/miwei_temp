@@ -130,8 +130,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   Global::access_group_max_mem = cfg.get_i64("AccessGroup.MaxMemory");
   Global::enable_shadow_cache = cfg.get_bool("AccessGroup.ShadowCache");
   Global::cellstore_target_size_min = cfg.get_i64("CellStore.TargetSize.Minimum");
-  Global::cellstore_target_size_max = Global::cellstore_target_size_min
-      + cfg.get_i64("CellStore.TargetSize.Window");
+  Global::cellstore_target_size_max = cfg.get_i64("CellStore.TargetSize.Maximum");
   Global::pseudo_tables = PseudoTables::instance();
   m_scanner_buffer_size = cfg.get_i64("Scanner.BufferSize");
   port = cfg.get_i16("Port");
@@ -140,6 +139,12 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   m_control_file_check_interval = cfg.get_i32("ControlFile.CheckInterval");
   boost::xtime_get(&m_last_control_file_check, boost::TIME_UTC_);
+
+  // Initialize "low activity" window
+  vector<String> time_window_specs = cfg.get_strs("LowActivityPeriod");
+  if (time_window_specs.empty())
+    time_window_specs.push_back("* 2-4 * * *");
+  Global::low_activity_time = TimeWindow(time_window_specs);
 
   /** Compute maintenance threads **/
   uint32_t maintenance_threads;
@@ -2995,7 +3000,7 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
     m_live_map->get_ranges(ranges);
     time_t now = time(0);
     foreach_ht (RangeData &rd, ranges.array) {
-      rd.data = rd.range->get_maintenance_data(ranges.arena, now);
+      rd.data = rd.range->get_maintenance_data(ranges.arena, now, 0);
       out << "RANGE " << rd.range->get_name() << "\n";
       out << *rd.data << "\n";
       for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)
@@ -3278,7 +3283,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   foreach_ht (RangeData &rd, ranges->array) {
 
     if (rd.data == 0)
-      rd.data = rd.range->get_maintenance_data(ranges->arena, now, mutator.get());
+      rd.data = rd.range->get_maintenance_data(ranges->arena, now, 0, mutator.get());
 
     if (rd.data->table_id == 0) {
       HT_ERROR_OUT << "Range statistics object found without table ID" << HT_END;

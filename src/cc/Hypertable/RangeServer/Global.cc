@@ -81,6 +81,7 @@ namespace Hypertable {
   ConnectionManagerPtr   Global::conn_manager;
   std::vector<MetaLog::EntityTaskPtr>  Global::work_queue;
   StringSet              Global::immovable_range_set;
+  TimeWindow Global::low_activity_time;
 
   void Global::add_to_work_queue(MetaLog::EntityTask *entity) {
     if (entity) {

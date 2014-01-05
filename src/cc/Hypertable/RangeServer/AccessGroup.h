@@ -194,7 +194,8 @@ namespace Hypertable {
 
     uint64_t purge_memory(MaintenanceFlag::Map &subtask_map);
 
-    MaintenanceData *get_maintenance_data(ByteArena &arena, time_t now);
+    MaintenanceData *get_maintenance_data(ByteArena &arena, time_t now,
+                                          int flags);
 
     void stage_compaction();
 
@@ -235,7 +236,7 @@ namespace Hypertable {
     void range_dir_initialize();
     void recompute_compression_ratio(int64_t *total_index_entriesp=0);
 
-    bool find_merge_run(size_t *indexp, size_t *lenp);
+    bool find_merge_run(size_t *indexp=0, size_t *lenp=0);
 
     /** Gets merging compaction information.
      * Determines whether or not a merging compaction is needed, and if so,
