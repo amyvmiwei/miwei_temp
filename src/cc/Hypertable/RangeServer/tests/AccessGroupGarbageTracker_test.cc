@@ -94,7 +94,7 @@ int main(int argc, char **argv) {
     int64_t split_size = properties->get_i64("Hypertable.RangeServer.Range.SplitSize");
 
     int64_t amount = split_size / 5;
-    tracker.accumulate_data(amount);
+    tracker.add_data(amount);
     HT_ASSERT(!tracker.check_needed(0));
 
     tracker.add_delete_count(1);
@@ -102,9 +102,9 @@ int main(int argc, char **argv) {
 
     tracker.clear();
     tracker.add_delete_count(1);
-    tracker.accumulate_data(split_size/20);
+    tracker.add_data(split_size/20);
     HT_ASSERT(!tracker.check_needed(0));
-    tracker.accumulate_data(split_size/10);
+    tracker.add_data(split_size/10);
     HT_ASSERT(tracker.check_needed(0));
 
     tracker.clear();
@@ -119,48 +119,48 @@ int main(int argc, char **argv) {
     tracker.set_schema(schema, ag);
     HT_ASSERT(!tracker.check_needed(0));
 
-    tracker.accumulate_data(amount);
+    tracker.add_data(amount);
     HT_ASSERT(tracker.check_needed(0));
     HT_ASSERT(tracker.current_target() == split_size/10);
 
     tracker.clear();
-    tracker.accumulate_data(amount);
+    tracker.add_data(amount);
     tracker.set_garbage_stats(1000000LL, 100000LL);
     HT_ASSERT(tracker.current_target() == split_size/10);
     HT_ASSERT(tracker.need_collection());
     
     tracker.clear();
-    tracker.accumulate_data(amount);
+    tracker.add_data(amount);
     tracker.set_garbage_stats(1000000LL, 950000LL);
     HT_ASSERT(tracker.current_target() == 107374182);
     HT_ASSERT(!tracker.need_collection());
 
     tracker.clear();
-    tracker.accumulate_data(amount);
+    tracker.add_data(amount);
     tracker.set_garbage_stats(1000000LL, 600000LL);
     HT_ASSERT(tracker.current_target() == split_size/10);
     HT_ASSERT(tracker.need_collection());
 
     tracker.clear();
-    tracker.accumulate_data(amount);
+    tracker.add_data(amount);
     tracker.set_garbage_stats(1000000LL, 700000LL);
     HT_ASSERT(tracker.current_target() == split_size/10);
     HT_ASSERT(tracker.need_collection());
 
     tracker.clear();
-    tracker.accumulate_data(amount);
+    tracker.add_data(amount);
     tracker.set_garbage_stats(1000000LL, 500000LL);
     HT_ASSERT(tracker.current_target() == split_size/10);
     HT_ASSERT(tracker.need_collection());
 
     tracker.clear();
-    tracker.accumulate_data(amount);
-    tracker.accumulate_data(amount);
+    tracker.add_data(amount);
+    tracker.add_data(amount);
     tracker.set_garbage_stats(1000000LL, 500000LL);
     HT_ASSERT(tracker.need_collection());
 
     tracker.clear();
-    tracker.accumulate_data(amount);
+    tracker.add_data(amount);
     tracker.set_garbage_stats(1000000LL, 900000LL);
     HT_ASSERT(!tracker.need_collection());
 
