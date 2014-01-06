@@ -98,7 +98,7 @@ grep_or_exit_if_not_found "RangeServer rs2: disk use 100% exceeds threshold" \
     $HT_HOME/log/Hypertable.Master.log
 
 # once more dump all keys
-${HT_HOME}/bin/ht shell --no-prompt --Hypertable.Request.Timeout=30000 --exec "USE '/'; SELECT * FROM BalanceTest KEYS_ONLY INTO FILE 'dump.post';"
+${HT_HOME}/bin/ht shell --no-prompt --exec "USE '/'; SELECT * FROM BalanceTest KEYS_ONLY INTO FILE 'dump.post';"
 
 # clean up before leaving
 kill `cat rs1.pid`
