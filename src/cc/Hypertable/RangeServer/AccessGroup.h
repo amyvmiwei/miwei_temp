@@ -232,7 +232,7 @@ namespace Hypertable {
   private:
 
     void purge_stored_cells_from_cache();
-    void merge_caches(bool reset_earliest_cached_revision=true);
+    void merge_caches();
     void range_dir_initialize();
     void recompute_compression_ratio(int64_t *total_index_entriesp=0);
 
@@ -289,6 +289,7 @@ namespace Hypertable {
     bool                 m_needs_merging;
     bool                 m_end_merge;
     bool                 m_dirty;
+    bool m_cellcache_needs_compaction;
   };
   typedef boost::intrusive_ptr<AccessGroup> AccessGroupPtr;
 

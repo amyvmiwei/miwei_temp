@@ -35,8 +35,10 @@ namespace Hypertable {
     AccessGroupGarbageTracker();
     void set_schema(SchemaPtr &schema, Schema::AccessGroup *ag);
     void add_delete_count(int32_t count) { m_delete_count += count; }
+    void set_delete_count(int32_t count) { m_delete_count = count; }
     void clear(time_t now=0);
-    void accumulate_data(int64_t amount) { m_data_accumulated += amount; }
+    void add_data(int64_t amount) { m_data_accumulated += amount; }
+    void set_data(int64_t amount) { m_data_accumulated = amount; }
     void accumulate_expirable(int64_t amount) { m_expirable_accumulated += amount; }
 
     /**
