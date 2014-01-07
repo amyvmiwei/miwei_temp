@@ -25,7 +25,7 @@ HT_GLOB(ThriftGen_SRCS
         gen-cpp/HqlService.cpp 
         gen-cpp/Hql_types.cpp)
 
-set(CMAKE_CXX_FLAGS -DHAVE_NETINET_IN_H)
+set(CMAKE_CXX_FLAGS "-DHAVE_NETINET_IN_H ${CMAKE_CXX_FLAGS}")
 
 add_library(HyperThrift ThriftHelper.cc SerializedCellsReader.cc SerializedCellsWriter.cc ${ThriftGen_SRCS})
 target_link_libraries(HyperThrift ${Thrift_LIBS} ${LibEvent_LIBS})
