@@ -19,7 +19,7 @@
 # Python bindings for SerializedCellsReader/SerializedCellsWriter
 #
 
-set(CMAKE_CXX_FLAGS -DHAVE_NETINET_IN_H)
+set(CMAKE_CXX_FLAGS "-DHAVE_NETINET_IN_H ${CMAKE_CXX_FLAGS}")
 
 include_directories(${PYTHON_INCLUDE_DIR})
 

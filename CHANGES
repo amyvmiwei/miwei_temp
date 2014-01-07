@@ -1,3 +1,20 @@
+Version 0.9.7.15:
+(2014-01-10)
+
+    Fixed QFS Broker
+    issue1159: Fixed CellStoreBlockIndexArray::fraction_covered() bug
+    Made merging compaction algo more aggressive during low activity period
+    Added commons-lang-2.5.jar to fix missing symbol under CDH4.5
+    Added TimeWindow class for defining low activty window
+    Prioritize merging compactions ahead of minor compactions
+    Moved sys/RS_METRICS reading code to Hypertable/Lib/RS_METRICS
+    Fixed memory alignment issues with DfsBroker.Local.DirectIO=true
+    Fixed quote trimming problem in HqlParser
+    issue 1180: Fixed intermittent Client-periodic-flush failure
+    issue1063: Made Defects-issue783-offload1 test more robust
+    Throw exceptions in SerializedCellsReader/Writer on empty row key
+    issue1175: Fixed bug when supplying LIMIT with ROW interval
+
 Version 0.9.7.14:
 (2013-12-05)
 
