@@ -59,18 +59,20 @@ QfsBroker::~QfsBroker() {
 }
 
 void QfsBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t flags, uint32_t bufsz) {
-  int fd = m_client->Open(fname, O_RDWR);
-  if(fd < 0)
+  int fd = m_client->Open(fname, O_RDONLY);
+  if(fd < 0) {
+    HT_ERRORF("open(%s) failure (%d) - %s", fname, -fd, KFS::ErrorCodeToStr(fd).c_str());
     report_error(cb, fd);
+  }
   else {
     HT_INFOF("open(%s) = %d", fname, fd);
     struct sockaddr_in addr;
     cb->get_address(addr);
     OpenFileDataQfsPtr fdata(new OpenFileDataQfs(fname, fd, m_client));
     m_open_file_map.create(fd, addr, fdata);
-    cb->response(fd);
     if(bufsz)
       m_client->SetIoBufferSize(fd, bufsz);
+    cb->response(fd);
   }
 
 }
@@ -89,66 +91,60 @@ void QfsBroker::create(ResponseCallbackOpen *cb, const char *fname, uint32_t fla
   else
     fd = m_client->Open(fname, O_CREAT|O_WRONLY);
 
-  if(fd<0)
+  if(fd<0) {
+    HT_ERRORF("create(%s) failure (%d) - %s", fname, -fd, KFS::ErrorCodeToStr(fd).c_str());
     report_error(cb, fd);
+  }
   else {
-    HT_INFOF("open(%s) = %d", fname, fd);
+    HT_INFOF("create(%s) = %d", fname, fd);
     struct sockaddr_in addr;
     cb->get_address(addr);
     OpenFileDataQfsPtr fdata(new OpenFileDataQfs(fname, fd, m_client));
     m_open_file_map.create(fd, addr, fdata);
-    cb->response(fd);
     if(bufsz)
       m_client->SetIoBufferSize(fd, bufsz);
+    cb->response(fd);
   }
 }
 
 void QfsBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
   chunkOff_t status = m_client->Seek(fd, offset);
-  if(status == (chunkOff_t)-1)
+  if(status == (chunkOff_t)-1) {
+    HT_ERRORF("seek(%d,%lld) failure (%d) - %s", (int)fd, (Lld)offset, (int)-status, KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);
+  }
   else
     cb->response_ok();
 }
 
 void QfsBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   uint64_t offset = m_client->Tell(fd);
-  uint8_t *readbuf;
-#if defined(__linux__)
-  void *vptr = 0;
-  HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
-  readbuf = (uint8_t *)vptr;
-#else
-  readbuf = new uint8_t [amount];
-#endif
-
-  int len = m_client->Read(fd, reinterpret_cast<char*>(readbuf), amount);
-
-  if(len<0)
+  StaticBuffer buf((size_t)amount, (size_t)HT_DIRECT_IO_ALIGNMENT);
+  int len = m_client->Read(fd, reinterpret_cast<char*>(buf.base), amount);
+  if(len<0) {
+    HT_ERRORF("read(%d,%lld) failure (%d) - %s", (int)fd, (Lld)amount, -len, KFS::ErrorCodeToStr(len).c_str());
     report_error(cb, len);
-  else {
-    StaticBuffer buffer(readbuf, len, false);
-    cb->response(offset, buffer);
-
-    // It's bad to leak.
-#if defined(__linux__)
-    free(vptr);
-#else
-    delete[] readbuf;
-#endif
   }
+  else
+    cb->response(offset, buf);
 }
 
 void QfsBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount, const void *data, bool flush) {
   uint64_t offset = m_client->Tell(fd);
   ssize_t written = m_client->Write(fd, reinterpret_cast<const char*>(data), amount);
-  if(written < 0)
+  if(written < 0) {
+    HT_ERRORF("append(%d,%lld,%s) failure (%d) - %s", (int)fd, (Lld)amount,
+	     flush ? "true" : "false", (int)-written, KFS::ErrorCodeToStr(written).c_str());
     report_error(cb, written);
+  }
   else {
     if(flush) {
       int error = m_client->Sync(fd);
-      if(error)
+      if(error) {
+	HT_ERRORF("append(%d,%lld,%s) failure (%d) - %s", (int)fd, (Lld)amount,
+		 flush ? "true" : "false", -error, KFS::ErrorCodeToStr(error).c_str());
         return report_error(cb, error);
+      }
     }
     cb->response(offset, written);
   }
@@ -158,8 +154,10 @@ void QfsBroker::remove(ResponseCallback *cb, const char *fname) {
   int status = m_client->Remove(fname);
   if(status == 0)
     cb->response_ok();
-  else
+  else {
+    HT_ERRORF("remove(%s) failure (%d) - %s", fname, -status, KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);
+  }
 }
 
 void QfsBroker::length(ResponseCallbackLength *cb, const char *fname, bool accurate)
@@ -168,43 +166,30 @@ void QfsBroker::length(ResponseCallbackLength *cb, const char *fname, bool accur
   int err = m_client->Stat(fname, result);
   if(err == 0)
     cb->response(result.fileSize);
-  else
+  else {
+    HT_ERRORF("length(%s) failure (%d) - %s", fname, -err, KFS::ErrorCodeToStr(err).c_str());
     report_error(cb, err);
+  }
 }
 
 void QfsBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount, bool verify_checksum) {
-  uint8_t *readbuf;
-#if defined(__linux__)
-  void *vptr = 0;
-  HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
-  readbuf = (uint8_t *)vptr;
-#else
-  readbuf = new uint8_t [amount];
-#endif
-
-  uint64_t offset_last = m_client->Tell(fd);
-  ssize_t status = m_client->PRead(fd, offset, reinterpret_cast<char*>(readbuf), amount);
-  if(status < 0)
+  StaticBuffer buf((size_t)amount, (size_t)HT_DIRECT_IO_ALIGNMENT);
+  ssize_t status = m_client->PRead(fd, offset, reinterpret_cast<char*>(buf.base), amount);
+  if(status < 0) {
+    HT_ERRORF("pread(%d,%lld,%lld) failure (%d) - %s", (int)fd, (Lld)offset,
+	      (Lld)amount, (int)-status, KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);
-  else {
-    m_client->Seek(fd,offset_last);
-
-    StaticBuffer buffer(readbuf, status, false);
-    cb->response(offset, buffer);
-
-    // It's bad to leak.
-#if defined(__linux__)
-    free(vptr);
-#else
-    delete[] readbuf;
-#endif
   }
+  else
+    cb->response(offset, buf);
 }
 
 void QfsBroker::mkdirs(ResponseCallback *cb, const char *dname) {
   int status = m_client->Mkdirs(dname);
-  if(status < 0)
+  if(status < 0) {
+    HT_ERRORF("mkdirs(%s) failure (%d) - %s", dname, -status, KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);
+  }
   else
     cb->response_ok();
 }
@@ -212,6 +197,7 @@ void QfsBroker::mkdirs(ResponseCallback *cb, const char *dname) {
 void QfsBroker::rmdir(ResponseCallback *cb, const char *dname) {
   int status = m_client->Rmdirs(dname);
   if(status < 0 && status != -ENOENT) {
+    HT_ERRORF("rmdir(%s) failure (%d) - %s", dname, -status, KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);
   }
   else
@@ -220,8 +206,11 @@ void QfsBroker::rmdir(ResponseCallback *cb, const char *dname) {
 
 void QfsBroker::flush(ResponseCallback *cb, uint32_t fd) {
   int status = m_client->Sync(fd);
-  if(status < 0)
+  if(status < 0) {
+    HT_ERRORF("flush(%d) failure (%d) - %s", (int)fd, -status, KFS::ErrorCodeToStr(status).c_str());
+
     report_error(cb, status);
+  }
   else
     cb->response_ok();
 }
@@ -238,8 +227,10 @@ void QfsBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
 
   if(err == 0)
     cb->response(listing);
-  else
+  else {
+    HT_ERRORF("readdir(%s) failure (%d) - %s", dname, -err, KFS::ErrorCodeToStr(err).c_str());
     report_error(cb,err);
+  }
 }
 
 void QfsBroker::posix_readdir(ResponseCallbackPosixReaddir *cb,
@@ -256,8 +247,10 @@ void QfsBroker::rename(ResponseCallback *cb, const char *src, const char *dst) {
   int err = m_client->Rename(src, dst);
   if(err == 0)
     cb->response_ok();
-  else
+  else {
+    HT_ERRORF("rename(%s,%s) failure (%d) - %s", src, dst, -err, KFS::ErrorCodeToStr(err).c_str());
     report_error(cb, err);
+  }
 }
 
 void QfsBroker::debug(ResponseCallback *cb, int32_t command, StaticBuffer &serialized_parameters) {
