@@ -855,6 +855,14 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct scan_set_no_cache {
+      scan_set_no_cache(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.scan.builder.set_do_not_cache(true);
+      }
+      ParserState &state;
+    };
+
     struct scan_set_row_regexp {
       scan_set_row_regexp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -2086,6 +2094,7 @@ namespace Hypertable {
           Token AND          = as_lower_d["and"];
           Token OR           = as_lower_d["or"];
           Token LIKE         = as_lower_d["like"];
+          Token NO_CACHE     = as_lower_d["no_cache"];
           Token NOESCAPE     = as_lower_d["noescape"];
           Token NO_ESCAPE    = as_lower_d["no_escape"];
           Token IDS          = as_lower_d["ids"];
@@ -2771,6 +2780,7 @@ namespace Hypertable {
             | DISPLAY_TIMESTAMPS[scan_set_display_timestamps(self.state)]
             | RETURN_DELETES[scan_set_return_deletes(self.state)]
             | KEYS_ONLY[scan_set_keys_only(self.state)]
+            | NO_CACHE[scan_set_no_cache(self.state)]
             | NOESCAPE[set_noescape(self.state)]
             | NO_ESCAPE[set_noescape(self.state)]
             | SCAN_AND_FILTER_ROWS[scan_set_scan_and_filter_rows(self.state)]
