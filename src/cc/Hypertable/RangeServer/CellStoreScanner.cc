@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,20 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cassert>
+/// @file
+/// Declarations for CellStoreScanner.
+/// This file contains the type declarations for CellStoreScanner, a class used
+/// to scan over (query) some portion of a CellStore.
 
-#include "Common/Error.h"
-#include "Common/System.h"
-
-#include "Hypertable/Lib/BlockCompressionHeader.h"
-#include "Global.h"
-#include "CellStoreBlockIndexArray.h"
+#include <Common/Compat.h>
 #include "CellStoreScanner.h"
 
-#include "CellStoreScannerInterval.h"
-#include "CellStoreScannerIntervalBlockIndex.h"
-#include "CellStoreScannerIntervalReadahead.h"
+#include <Hypertable/RangeServer/CellStoreBlockIndexArray.h>
+#include <Hypertable/RangeServer/CellStoreScannerInterval.h>
+#include <Hypertable/RangeServer/CellStoreScannerIntervalBlockIndex.h>
+#include <Hypertable/RangeServer/CellStoreScannerIntervalReadahead.h>
+
+#include <Hypertable/Lib/BlockHeader.h>
+
+#include <Common/Error.h>
+#include <Common/System.h>
 
 using namespace Hypertable;
 

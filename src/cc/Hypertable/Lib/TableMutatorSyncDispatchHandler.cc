@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,16 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "AsyncComm/Protocol.h"
+/// @file
+/// Definitions for TableMutatorSyncDispatchHandler.
+/// This file contains definitions for TableMutatorSyncDispatchHandler, a class
+/// for issuing and responding to RangeServer::commit_log_sync() requests.
 
-#include "Common/Error.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
 
 #include "TableMutatorSyncDispatchHandler.h"
 
-using namespace Hypertable;
+#include <Common/Error.h>
+#include <Common/Logger.h>
 
+#include <AsyncComm/Protocol.h>
+
+#include <Hypertable/Lib/ClusterId.h>
+
+using namespace Hypertable;
 
 TableMutatorSyncDispatchHandler::TableMutatorSyncDispatchHandler(
     Comm *comm, TableIdentifierManaged &table_id, time_t timeout)
@@ -43,7 +50,7 @@ void TableMutatorSyncDispatchHandler::add(const CommAddress &addr) {
   try {
     pair<CommAddressSet::iterator, bool> res = m_pending.insert(addr);
     HT_ASSERT(res.second);
-    m_client.commit_log_sync(addr, m_table_identifier, this);
+    m_client.commit_log_sync(addr, ClusterId::get(), m_table_identifier, this);
     m_outstanding++;
   }
   catch (Exception &e) {
@@ -96,7 +103,7 @@ void TableMutatorSyncDispatchHandler::retry() {
   m_errors.clear();
   foreach_ht (CommAddress addr, m_pending) {
     try {
-      m_client.commit_log_sync(addr, m_table_identifier, this);
+      m_client.commit_log_sync(addr, ClusterId::get(), m_table_identifier, this);
     }
     catch (Exception &e) {
       ErrorResult result;

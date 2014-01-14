@@ -38,6 +38,8 @@
 #include "AsyncComm/ReactorFactory.h"
 #include "AsyncComm/ReactorRunner.h"
 
+#include <Hypertable/Lib/ClusterId.h>
+
 #include "Config.h"
 #include "ConnectionHandler.h"
 #include "Global.h"
@@ -96,6 +98,9 @@ int main(int argc, char **argv) {
       _exit(1);
     }
 
+    // Initialize cluster ID from Hyperspace, enabling ClusterId::get()
+    ClusterId cluster_id(Global::hyperspace);
+    
     RangeServerPtr range_server= new RangeServer(properties,
         conn_manager, app_queue, Global::hyperspace);
 

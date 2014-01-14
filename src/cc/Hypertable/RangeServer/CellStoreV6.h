@@ -152,6 +152,8 @@ namespace Hypertable {
 
     virtual CellStoreTrailer *get_trailer() { return &m_trailer; }
 
+    virtual uint16_t block_header_format();
+
   protected:
     void create_bloom_filter(bool is_approx = false);
     void load_bloom_filter();

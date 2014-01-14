@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for AccessGroup.
+/// This file contains declarations for AccessGroup, a class for providing data
+/// management and queries over an access group of a range.
+
 #ifndef HYPERTABLE_ACCESSGROUP_H
 #define HYPERTABLE_ACCESSGROUP_H
 
@@ -26,7 +31,6 @@
 #include <Hypertable/RangeServer/CellCacheManager.h>
 #include <Hypertable/RangeServer/CellStore.h>
 #include <Hypertable/RangeServer/CellStoreInfo.h>
-#include <Hypertable/RangeServer/CellStoreTrailerV6.h>
 #include <Hypertable/RangeServer/LiveFileTracker.h>
 #include <Hypertable/RangeServer/MaintenanceFlag.h>
 
@@ -49,9 +53,8 @@
 
 namespace Hypertable {
 
-  /** @addtogroup RangeServer
-   * @{
-   */
+  /// @addtogroup RangeServer
+  /// @{
 
   class AccessGroup : public CellList {
 
@@ -292,7 +295,7 @@ namespace Hypertable {
 
   std::ostream &operator<<(std::ostream &os, const AccessGroup::MaintenanceData &mdata);
 
-  /** @}*/
+  /// @}
 
 } // namespace Hypertable
 

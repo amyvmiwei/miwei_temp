@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,20 +19,31 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for CellStoreScannerIntervalBlockIndex.
+/// This file contains the type declarations for
+/// CellStoreScannerIntervalBlockIndex, a class used to scan over a portion of a
+/// CellStore using its block index.
+
 #ifndef HYPERTABLE_CELLSTORESCANNERINTERVALBLOCKINDEX_H
 #define HYPERTABLE_CELLSTORESCANNERINTERVALBLOCKINDEX_H
 
-#include "Common/DynamicBuffer.h"
+#include <Hypertable/RangeServer/CellStore.h>
+#include <Hypertable/RangeServer/CellStoreScannerInterval.h>
+#include <Hypertable/RangeServer/ScanContext.h>
 
-#include "CellStore.h"
-#include "CellStoreScannerInterval.h"
-#include "ScanContext.h"
+#include <Common/DynamicBuffer.h>
 
 namespace Hypertable {
 
   class BlockCompressionCodec;
   class CellStore;
 
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Provides the ability to scan over a portion of a cell store using its block index.
+  /// @tparam IndexT Type of block index
   template <typename IndexT>
   class CellStoreScannerIntervalBlockIndex : public CellStoreScannerInterval {
   public:
@@ -70,6 +81,7 @@ namespace Hypertable {
     ScanContext::CstrRowSet& m_rowset;
   };
 
+  /// @}
 }
 
 #endif // HYPERTABLE_CELLSTORESCANNERINTERVALBLOCKINDEX_H

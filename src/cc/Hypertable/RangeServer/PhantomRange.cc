@@ -19,11 +19,17 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/md5.h"
+/// @file
+/// Definitions for PhantomRange.
+/// This file contains definitions for PhantomRange, a class representing a
+/// "phantom" range (i.e. one that is being recovered by a RangeServer).
 
-#include "Global.h"
+#include <Common/Compat.h>
 #include "PhantomRange.h"
+
+#include <Hypertable/RangeServer/Global.h>
+
+#include <Common/md5.h>
 
 #include <sstream>
 
@@ -116,7 +122,7 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
 
   // Scan log to load blocks and determine if log is empty
   m_phantom_log = new CommitLogReader(log_dfs, m_phantom_logname);
-  BlockCompressionHeaderCommitLog header;
+  BlockHeaderCommitLog header;
   const uint8_t *base;
   size_t len;
   while (m_phantom_log->next(&base, &len, &header))

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,11 +19,16 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for CommitLogReader.
+/// This file contains declarations for CommitLogReader, a class for
+/// sequentially reading a commit log.
+
 #ifndef HYPERTABLE_COMMITLOGREADER_H
 #define HYPERTABLE_COMMITLOGREADER_H
 
 #include <Hypertable/Lib/BlockCompressionCodec.h>
-#include <Hypertable/Lib/BlockCompressionHeaderCommitLog.h>
+#include <Hypertable/Lib/BlockHeaderCommitLog.h>
 #include <Hypertable/Lib/CommitLogBase.h>
 #include <Hypertable/Lib/CommitLogBlockStream.h>
 #include <Hypertable/Lib/Key.h>
@@ -40,6 +45,10 @@
 
 namespace Hypertable {
 
+  /// @addtogroup libHypertable
+  /// @{
+
+  /// Provides sequential access to blocks in a commit log.
   class CommitLogReader : public CommitLogBase {
 
   public:
@@ -53,9 +62,9 @@ namespace Hypertable {
     void get_init_fragment_ids(std::vector<uint32_t> &ids);
 
     bool next_raw_block(CommitLogBlockInfo *,
-                        BlockCompressionHeaderCommitLog *);
+                        BlockHeaderCommitLog *);
     bool next(const uint8_t **blockp, size_t *lenp,
-              BlockCompressionHeaderCommitLog *);
+              BlockHeaderCommitLog *);
 
     void reset() {
       m_fragment_queue_offset = 0;
@@ -99,7 +108,10 @@ namespace Hypertable {
     bool                   m_verbose;
   };
 
+  /// Smart pointer to CommitLogReader
   typedef intrusive_ptr<CommitLogReader> CommitLogReaderPtr;
+
+  /// @}
 
 } // namespace Hypertable
 

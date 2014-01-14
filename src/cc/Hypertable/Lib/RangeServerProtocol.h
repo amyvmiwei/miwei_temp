@@ -20,7 +20,7 @@
  */
 
 /** @file
- * Declarations for RangeServerProtocol
+ * Declarations for RangeServerProtocol.
  * This file contains declarations for RangeServerProtocol, a class for
  * generating RangeServer protocol messages.
  */
@@ -28,15 +28,15 @@
 #ifndef HYPERTABLE_RANGESERVERPROTOCOL_H
 #define HYPERTABLE_RANGESERVERPROTOCOL_H
 
-#include "AsyncComm/Protocol.h"
+#include <AsyncComm/Protocol.h>
 
-#include "Common/StaticBuffer.h"
+#include <Common/StaticBuffer.h>
 
-#include "RangeState.h"
-#include "ScanSpec.h"
-#include "Types.h"
-#include "RangeRecoveryPlan.h"
-#include "SystemVariable.h"
+#include <Hypertable/Lib/RangeRecoveryPlan.h>
+#include <Hypertable/Lib/RangeState.h>
+#include <Hypertable/Lib/ScanSpec.h>
+#include <Hypertable/Lib/SystemVariable.h>
+#include <Hypertable/Lib/Types.h>
 
 namespace Hypertable {
 
@@ -128,14 +128,16 @@ namespace Hypertable {
      * @param columns names of columns to sync
      * @return protocol message
      */
-    static CommBuf *create_request_metadata_sync(const String &table_id, uint32_t flags,
-                                                 std::vector<String> &columns);
+    static CommBuf *
+      create_request_metadata_sync(const String &table_id, uint32_t flags,
+                                   std::vector<String> &columns);
 
     /** Creates a "load range" request message
      * @param table table identifier
      * @param range range specification
      * @param range_state range state
-     * @param needs_compaction if true the range needs to be compacted after load
+     * @param needs_compaction if <i>true</i> the range needs to be compacted
+     *                         after load
      * @return protocol message
      */
     static CommBuf *create_request_load_range(const TableIdentifier &table,
@@ -146,14 +148,17 @@ namespace Hypertable {
      * sequence of key/value pairs.  Each key/value pair is encoded as two
      * variable lenght ByteStringrecords back-to-back.  This method transfers
      * ownership of the data buffer to the CommBuf that gets returned.
-     * @param table table identifier
-     * @param count number of key/value pairs in buffer
-     * @param buffer buffer holding key/value pairs
-     * @param flags update flags
+     * @param cluster_id Originating cluster ID
+     * @param table Table identifier
+     * @param count Number of key/value pairs in buffer
+     * @param buffer Buffer holding key/value pairs
+     * @param flags Update flags
      * @return protocol message
      */
-    static CommBuf *create_request_update(const TableIdentifier &table,
-                                          uint32_t count, StaticBuffer &buffer, uint32_t flags);
+    static CommBuf *create_request_update(uint64_t cluster_id,
+                                          const TableIdentifier &table,
+                                          uint32_t count, StaticBuffer &buffer,
+                                          uint32_t flags);
 
     /** Creates an "update schema" message. Used to update schema for a
      * table
@@ -164,12 +169,15 @@ namespace Hypertable {
     static CommBuf *create_request_update_schema(
         const TableIdentifier &table, const String &schema);
 
-    /** Creates an "commit_log_sync" message. Used to make previous range server updates
-     * are syncd to the commit log
+    /** Creates an "commit_log_sync" message.
+     * Used to make sure previous range server updates are sync'd to the commit
+     * log
+     * @param cluster_id Originating cluster ID
      * @param table table identifier
      * @return protocol message
      */
-    static CommBuf *create_request_commit_log_sync(const TableIdentifier &table);
+    static CommBuf *create_request_commit_log_sync(uint64_t cluster_id,
+                                                   const TableIdentifier&table);
 
     /** Creates a "create scanner" request message.
      * @param table table identifier
@@ -227,9 +235,10 @@ namespace Hypertable {
      * @return protocol message
      * @deprecated This command will be soon be removed
      */
-    static CommBuf *create_request_dump_pseudo_table(const TableIdentifier &table,
-                                        const String &pseudo_table_name,
-                                        const String &outfile);
+    static CommBuf *
+      create_request_dump_pseudo_table(const TableIdentifier &table,
+                                       const String &pseudo_table_name,
+                                       const String &outfile);
 
     /** Creates a "drop table" request message.
      * @param table table identifier
@@ -242,8 +251,9 @@ namespace Hypertable {
      * @param generation System state generation
      * @return protocol message
      */
-    static CommBuf *create_request_set_state(std::vector<SystemVariable::Spec> &specs,
-                                             uint64_t generation);
+    static CommBuf *
+      create_request_set_state(std::vector<SystemVariable::Spec> &specs,
+                               uint64_t generation);
 
     /** Creates a "drop range" request message.
      * @param table table identifier
@@ -257,7 +267,8 @@ namespace Hypertable {
      * @param ranges range specification vector
      * @return protocol message
      */
-    static CommBuf *create_request_acknowledge_load(const vector<QualifiedRangeSpec *> &ranges);
+    static CommBuf *
+    create_request_acknowledge_load(const vector<QualifiedRangeSpec *> &ranges);
 
     /** Creates a "acknowledge load" request message.
      *
@@ -265,7 +276,7 @@ namespace Hypertable {
      * @param range range specification
      * @return protocol message
      */
-    static CommBuf *create_request_acknowledge_load(const TableIdentifier &table,
+    static CommBuf *create_request_acknowledge_load(const TableIdentifier&table,
                                                     const RangeSpec &range);
 
     /** Creates a "get statistics" request message.
@@ -273,16 +284,18 @@ namespace Hypertable {
      * @param generation System state generation
      * @return protocol message
      */
-    static CommBuf *create_request_get_statistics(std::vector<SystemVariable::Spec> &specs,
-                                                  uint64_t generation);
+    static CommBuf *
+      create_request_get_statistics(std::vector<SystemVariable::Spec> &specs,
+                                    uint64_t generation);
 
     /** Creates a "relinquish range" request message.
      * @param table table identifier
      * @param range range specification
      * @return protocol message
      */
-    static CommBuf *create_request_relinquish_range(const TableIdentifier &table,
-                                                    const RangeSpec &range);
+    static CommBuf *
+      create_request_relinquish_range(const TableIdentifier &table,
+                                      const RangeSpec &range);
 
     /** Creates a "heapcheck" request message.
      * @param outfile name of file to dump heap stats to
@@ -326,9 +339,10 @@ namespace Hypertable {
      * @param fragment fragment updates belong to
      * @param buffer update buffer
      */
-    static CommBuf *create_request_phantom_update(const QualifiedRangeSpec &range,
-        const String &location, int plan_generation, 
-        uint32_t fragment, StaticBuffer &buffer);
+    static CommBuf *
+      create_request_phantom_update(const QualifiedRangeSpec &range,
+                                    const String &location, int plan_generation,
+                                    uint32_t fragment, StaticBuffer &buffer);
 
     /** Creates a "phantom_prepare_ranges" request message.
      * @param op_id id of the calling recovery operation

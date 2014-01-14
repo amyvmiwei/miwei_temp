@@ -25,43 +25,45 @@
  * server
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Master/BalancePlanAuthority.h>
+#include <Hypertable/Master/ConnectionHandler.h>
+#include <Hypertable/Master/Context.h>
+#include <Hypertable/Master/LoadBalancer.h>
+#include <Hypertable/Master/MetaLogDefinitionMaster.h>
+#include <Hypertable/Master/OperationBalance.h>
+#include <Hypertable/Master/OperationInitialize.h>
+#include <Hypertable/Master/OperationProcessor.h>
+#include <Hypertable/Master/OperationRecover.h>
+#include <Hypertable/Master/OperationRecoveryBlocker.h>
+#include <Hypertable/Master/OperationSystemUpgrade.h>
+#include <Hypertable/Master/OperationTimedBarrier.h>
+#include <Hypertable/Master/OperationWaitForServers.h>
+#include <Hypertable/Master/ReferenceManager.h>
+#include <Hypertable/Master/ResponseManager.h>
+#include <Hypertable/Master/SystemState.h>
+
+#include <Hypertable/Lib/ClusterId.h>
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/MetaLogReader.h>
+
+#include <DfsBroker/Lib/Client.h>
+
+#include <AsyncComm/Comm.h>
+
+#include <Common/FailureInducer.h>
+#include <Common/Init.h>
+#include <Common/ScopeGuard.h>
+#include <Common/System.h>
+#include <Common/Thread.h>
+#include <Common/md5.h>
+
+#include <sstream>
 
 extern "C" {
 #include <poll.h>
 }
-
-#include <sstream>
-
-#include "Common/FailureInducer.h"
-#include "Common/Init.h"
-#include "Common/ScopeGuard.h"
-#include "Common/System.h"
-#include "Common/Thread.h"
-#include "Common/md5.h"
-
-#include "AsyncComm/Comm.h"
-
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/MetaLogReader.h"
-#include "DfsBroker/Lib/Client.h"
-
-#include "ConnectionHandler.h"
-#include "Context.h"
-#include "LoadBalancer.h"
-#include "MetaLogDefinitionMaster.h"
-#include "OperationBalance.h"
-#include "OperationInitialize.h"
-#include "OperationProcessor.h"
-#include "OperationRecover.h"
-#include "OperationRecoveryBlocker.h"
-#include "OperationSystemUpgrade.h"
-#include "OperationTimedBarrier.h"
-#include "OperationWaitForServers.h"
-#include "ReferenceManager.h"
-#include "ResponseManager.h"
-#include "SystemState.h"
-#include "BalancePlanAuthority.h"
 
 using namespace Hypertable;
 using namespace Config;
@@ -184,6 +186,10 @@ int main(int argc, char **argv) {
       HT_INFOF("Unable to write state file %s", state_file.c_str());
 
     obtain_master_lock(context);
+
+    // Load (and possibly generate) the cluster ID
+    ClusterId cluster_id(context->hyperspace, ClusterId::GENERATE_IF_NOT_FOUND);
+    HT_INFOF("Cluster id is %llu", (Llu)ClusterId::get());
 
     if (!FileUtils::unlink(state_file))
       HT_INFOF("Unable to delete state file %s", state_file.c_str());

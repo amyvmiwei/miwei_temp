@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,28 +19,36 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Filesystem.h"
-#include "Common/Serialization.h"
+/// @file
+/// Definitions for CellStoreFactory.
+/// This file contains the type definitions for CellStoreFactory, an class that
+/// provides an interface for creating CellStore objects from cell store files.
+
+#include <Common/Compat.h>
+#include "CellStoreFactory.h"
+
+#include <Hypertable/RangeServer/CellStoreTrailerV0.h>
+#include <Hypertable/RangeServer/CellStoreTrailerV1.h>
+#include <Hypertable/RangeServer/CellStoreTrailerV2.h>
+#include <Hypertable/RangeServer/CellStoreTrailerV3.h>
+#include <Hypertable/RangeServer/CellStoreTrailerV4.h>
+#include <Hypertable/RangeServer/CellStoreTrailerV5.h>
+#include <Hypertable/RangeServer/CellStoreTrailerV6.h>
+#include <Hypertable/RangeServer/CellStoreTrailerV7.h>
+#include <Hypertable/RangeServer/CellStoreV0.h>
+#include <Hypertable/RangeServer/CellStoreV1.h>
+#include <Hypertable/RangeServer/CellStoreV2.h>
+#include <Hypertable/RangeServer/CellStoreV3.h>
+#include <Hypertable/RangeServer/CellStoreV4.h>
+#include <Hypertable/RangeServer/CellStoreV5.h>
+#include <Hypertable/RangeServer/CellStoreV6.h>
+#include <Hypertable/RangeServer/CellStoreV7.h>
+#include <Hypertable/RangeServer/Global.h>
+
+#include <Common/Filesystem.h>
+#include <Common/Serialization.h>
 
 #include <boost/shared_array.hpp>
-
-#include "CellStoreFactory.h"
-#include "CellStoreV0.h"
-#include "CellStoreV1.h"
-#include "CellStoreV2.h"
-#include "CellStoreV3.h"
-#include "CellStoreV4.h"
-#include "CellStoreV5.h"
-#include "CellStoreV6.h"
-#include "CellStoreTrailerV0.h"
-#include "CellStoreTrailerV1.h"
-#include "CellStoreTrailerV2.h"
-#include "CellStoreTrailerV3.h"
-#include "CellStoreTrailerV4.h"
-#include "CellStoreTrailerV5.h"
-#include "CellStoreTrailerV6.h"
-#include "Global.h"
 
 using namespace Hypertable;
 
@@ -92,7 +100,37 @@ CellStore *CellStoreFactory::open(const String &name,
     fd = Global::dfs->open(name, 0);
   }
 
-  if (version == 6) {
+  if (version == 7) {
+    CellStoreTrailerV7 trailer_v7;
+    CellStoreV7 *cellstore_v7;
+
+    if (amount < trailer_v7.size())
+      HT_THROWF(Error::RANGESERVER_CORRUPT_CELLSTORE,
+                "Bad length of CellStoreV7 file '%s' - %llu",
+                name.c_str(), (Llu)file_length);
+
+    try {
+      trailer_v7.deserialize(trailer_buf.get() + (amount - trailer_v7.size()));
+    }
+    catch (Exception &e) {
+      Global::dfs->close(fd);
+      if (!second_try && e.code() == Error::CHECKSUM_MISMATCH) {
+	fd = Global::dfs->open(name, oflags|Filesystem::OPEN_FLAG_VERIFY_CHECKSUM);
+        second_try = true;
+        goto try_again;
+      }
+      HT_ERRORF("Problem deserializing trailer of %s", name.c_str());
+      throw;
+    }
+
+    cellstore_v7 = new CellStoreV7(Global::dfs.get());
+    cellstore_v7->open(name, start, end, fd, file_length, &trailer_v7);
+    if (!cellstore_v7)
+      HT_ERRORF("Failed to open CellStore %s [%s..%s], length=%llu",
+              name.c_str(), start.c_str(), end.c_str(), (Llu)file_length);
+    return cellstore_v7;
+  }
+  else if (version == 6) {
     CellStoreTrailerV6 trailer_v6;
     CellStoreV6 *cellstore_v6;
 

@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,19 +19,29 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for CellStoreScanner.
+/// This file contains the type declarations for CellStoreScanner, a class used
+/// to scan over (query) some portion of a CellStore.
+
 #ifndef HYPERTABLE_CELLSTORESCANNER_H
 #define HYPERTABLE_CELLSTORESCANNER_H
 
-#include "Common/DynamicBuffer.h"
+#include <Hypertable/RangeServer/CellStore.h>
+#include <Hypertable/RangeServer/CellListScanner.h>
+#include <Hypertable/RangeServer/CellStoreScannerInterval.h>
 
-#include "CellStore.h"
-#include "CellListScanner.h"
-#include "CellStoreScannerInterval.h"
+#include <Common/DynamicBuffer.h>
 
 namespace Hypertable {
 
   class CellStore;
 
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Provides the ability to scan over (query) a cell store.
+  /// @tparam IndexT Type of block index
   template <typename IndexT>
   class CellStoreScanner : public CellListScanner {
   public:
@@ -54,6 +64,8 @@ namespace Hypertable {
     bool                      m_eos;
     bool m_decrement_blockindex_refcount;
   };
+
+  /// @}
 
 }
 

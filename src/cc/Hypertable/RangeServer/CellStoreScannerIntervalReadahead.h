@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,20 +19,31 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for CellStoreScannerIntervalReadahead.
+/// This file contains the type declarations for
+/// CellStoreScannerIntervalReadahead, a class that provides the ability to
+/// efficiently scan over (query) a portion of a CellStore using readahead.
+
 #ifndef HYPERTABLE_CELLSTORESCANNERINTERVALREADAHEAD_H
 #define HYPERTABLE_CELLSTORESCANNERINTERVALREADAHEAD_H
 
-#include "Common/DynamicBuffer.h"
+#include <Hypertable/RangeServer/CellStore.h>
+#include <Hypertable/RangeServer/CellStoreScannerInterval.h>
+#include <Hypertable/RangeServer/ScanContext.h>
 
-#include "CellStore.h"
-#include "CellStoreScannerInterval.h"
-#include "ScanContext.h"
+#include <Common/DynamicBuffer.h>
 
 namespace Hypertable {
 
   class BlockCompressionCodec;
   class CellStore;
 
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Provides ability to efficiently scan over a portion of a cell store.
+  /// @tparam IndexT Type of block index
   template <typename IndexT>
   class CellStoreScannerIntervalReadahead : public CellStoreScannerInterval {
   public:
@@ -65,6 +76,8 @@ namespace Hypertable {
     uint32_t               m_oflags;
 
   };
+
+  /// @}
 
 }
 

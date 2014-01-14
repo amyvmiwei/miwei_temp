@@ -19,8 +19,21 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Init.h"
+#include <Common/Compat.h>
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+
+#include <AsyncComm/DispatchHandlerSynchronizer.h>
+
+#include <Hypertable/Lib/ClusterId.h>
+#include <Hypertable/Lib/HqlHelpText.h>
+#include <Hypertable/Lib/HqlParser.h>
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/RangeState.h>
+#include <Hypertable/Lib/ScanBlock.h>
+#include <Hypertable/Lib/ScanSpec.h>
+#include <Hypertable/Lib/TestSource.h>
 
 #include <cassert>
 #include <cstdio>
@@ -34,19 +47,6 @@
 extern "C" {
 #include <time.h>
 }
-
-#include "AsyncComm/DispatchHandlerSynchronizer.h"
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-
-#include "Hypertable/Lib/HqlHelpText.h"
-#include "Hypertable/Lib/HqlParser.h"
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/RangeState.h"
-#include "Hypertable/Lib/ScanBlock.h"
-#include "Hypertable/Lib/ScanSpec.h"
-#include "Hypertable/Lib/TestSource.h"
 
 #include "RangeServerCommandInterpreter.h"
 
@@ -246,8 +246,8 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
         if (send_buf_len > 0) {
           StaticBuffer mybuf(send_buf, send_buf_len);
-          m_range_server->update(m_addr, *table, send_count, mybuf, 0,
-                                     &sync_handler);
+          m_range_server->update(m_addr, ClusterId::get(), *table, send_count,
+                                 mybuf, 0, &sync_handler);
           outstanding = true;
         }
         else

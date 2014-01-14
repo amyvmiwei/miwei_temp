@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,7 +19,12 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+/// @file
+/// Definitions for BlockCompressionCodec.
+/// This file contains definitions for BlockCompressionCodec, an abstract base
+/// class for block compressors.
+
+#include <Common/Compat.h>
 
 #include "BlockCompressionCodec.h"
 
@@ -31,7 +36,8 @@ namespace {
     "bmz",
     "zlib",
     "lzo",
-    "quicklz"
+    "quicklz",
+    "snappy"
   };
 }
 

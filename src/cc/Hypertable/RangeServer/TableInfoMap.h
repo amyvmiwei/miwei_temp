@@ -19,31 +19,29 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Declarations for TableInfoMap.
- * This file contains the type declarations for TableInfoMap, a class used to
- * map table IDs to TableInfo objects and manage the set of "remove ok" logs.
- */
+/// @file
+/// Declarations for TableInfoMap.
+/// This file contains the type declarations for TableInfoMap, a class used to
+/// map table IDs to TableInfo objects and manage the set of "remove ok" logs.
 
 #ifndef HYPERTABLE_TABLEINFOMAP_H
 #define HYPERTABLE_TABLEINFOMAP_H
 
-#include <map>
-#include <string>
+#include <Hypertable/RangeServer/TableInfo.h>
+#include <Hypertable/RangeServer/TableSchemaCache.h>
+
+#include <Common/StringExt.h>
 
 #include <boost/intrusive_ptr.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "Common/StringExt.h"
-
-#include "TableInfo.h"
-#include "TableSchemaCache.h"
+#include <map>
+#include <string>
 
 namespace Hypertable {
 
-  /** @addtogroup RangeServer
-   * @{
-   */
+  /// @addtogroup RangeServer
+  /// @{
 
   /** Manages live range map and set of log names that can be safely removed.
    * This class is used to maintain an active set of ranges, organized by table
@@ -225,7 +223,7 @@ namespace Hypertable {
   /// Smart pointer to TableInfoMap
   typedef boost::intrusive_ptr<TableInfoMap> TableInfoMapPtr;
 
-  /* @} */
+  /// @}
 }
 
 #endif // HYPERTABLE_TABLEINFOMAP_H

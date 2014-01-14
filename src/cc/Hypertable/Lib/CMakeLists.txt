@@ -1,5 +1,5 @@
- #
-# Copyright (C) 2007-2012 Hypertable, Inc.
+#
+# Copyright (C) 2007-2013 Hypertable, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -27,10 +27,12 @@ BlockCompressionCodecNone.cc
 BlockCompressionCodecQuicklz.cc
 BlockCompressionCodecZlib.cc
 BlockCompressionCodecSnappy.cc
-BlockCompressionHeader.cc
-BlockCompressionHeaderCommitLog.cc
+BlockHeader.cc
+BlockHeaderCellStore.cc
+BlockHeaderCommitLog.cc
 Cell.cc
 Client.cc
+ClusterId.cc
 CommitLog.cc
 CommitLogBlockStream.cc
 CommitLogReader.cc
@@ -145,6 +147,10 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 else (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
    target_link_libraries(bmzip Hypertable m)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
+
+# block_header_test
+add_executable(block_header_test tests/block_header_test.cc)
+target_link_libraries(block_header_test Hypertable)
 
 # commit_log_test
 add_executable(commit_log_test tests/commit_log_test.cc)
@@ -272,6 +278,7 @@ add_test(BlockCompressor-NONE compressor_test none)
 add_test(BlockCompressor-QUICKLZ compressor_test quicklz)
 add_test(BlockCompressor-ZLIB compressor_test zlib)
 add_test(BlockCompressor-SNAPPY compressor_test snappy)
+add_test(BlockHeader block_header_test)
 add_test(CommitLog commit_log_test)
 add_test(MetaLog metalog_test)
 add_test(Client-large-block large_insert_test)

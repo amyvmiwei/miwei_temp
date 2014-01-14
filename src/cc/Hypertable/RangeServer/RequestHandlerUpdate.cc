@@ -19,16 +19,17 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
+#include <Common/Error.h>
+#include <Common/Logger.h>
 
-#include "AsyncComm/ResponseCallback.h"
-#include "Common/Serialization.h"
+#include <AsyncComm/ResponseCallback.h>
+#include <Common/Serialization.h>
 
-#include "Hypertable/Lib/Types.h"
+#include <Hypertable/Lib/Types.h>
 
-#include "RangeServer.h"
+#include <Hypertable/RangeServer/RangeServer.h>
+
 #include "RequestHandlerUpdate.h"
 
 using namespace Hypertable;
@@ -44,6 +45,7 @@ void RequestHandlerUpdate::run() {
   StaticBuffer mods;
 
   try {
+    uint64_t cluster_id = Serialization::decode_i64(&decode_ptr, &decode_remain);
     table.decode(&decode_ptr, &decode_remain);
     uint32_t count = Serialization::decode_i32(&decode_ptr, &decode_remain);
     uint32_t flags = Serialization::decode_i32(&decode_ptr, &decode_remain);
@@ -52,7 +54,7 @@ void RequestHandlerUpdate::run() {
     mods.size = decode_remain;
     mods.own = false;
 
-    m_range_server->update(&cb, &table, count, mods, flags);
+    m_range_server->update(&cb, cluster_id, &table, count, mods, flags);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

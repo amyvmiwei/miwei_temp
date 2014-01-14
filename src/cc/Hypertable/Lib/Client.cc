@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,6 +22,8 @@
 #include <Common/Compat.h>
 #include "Client.h"
 
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/ClusterId.h>
 #include <Hypertable/Lib/HqlCommandInterpreter.h>
 
 #include <Hypertable/Master/Operation.h>
@@ -221,6 +223,9 @@ void Client::initialize() {
     remaining = timer.remaining();
     wait_time = (remaining < interval) ? remaining : interval;
   }
+
+  // Initialize cluster ID from Hyperspace, enabling ClusterId::get()
+  ClusterId cluster_id(m_hyperspace);
 
   m_namemap = new NameIdMapper(m_hyperspace, m_toplevel_dir);
 

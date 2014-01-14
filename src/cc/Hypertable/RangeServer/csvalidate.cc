@@ -23,11 +23,12 @@
 
 #include <Hypertable/RangeServer/CellStore.h>
 #include <Hypertable/RangeServer/CellStoreFactory.h>
-#include <Hypertable/RangeServer/CellStoreTrailerV6.h>
+#include <Hypertable/RangeServer/CellStoreTrailerV7.h>
 #include <Hypertable/RangeServer/Config.h>
 #include <Hypertable/RangeServer/Global.h>
 #include <Hypertable/RangeServer/KeyDecompressorPrefix.h>
 
+#include "Hypertable/Lib/BlockHeaderCellStore.h"
 #include <Hypertable/Lib/CompressorFactory.h>
 #include <Hypertable/Lib/Key.h>
 #include <Hypertable/Lib/LoadDataEscape.h>
@@ -106,6 +107,7 @@ namespace {
     KeyDecompressor *key_decompressor;
     bool block_index_is_bad;
     bool bloom_filter_is_bad;
+    uint16_t block_header_format;
   };
 
   const char DATA_BLOCK_MAGIC[10]           =
@@ -139,8 +141,10 @@ namespace {
     remaining = 2;
     version = Serialization::decode_i16(&ptr, &remaining);
 
-    if (version == 6)
-      state.trailer = new CellStoreTrailerV6();
+    if (version == 6) {
+      state.trailer = new CellStoreTrailerV7();
+      state.block_header_format = 0;  // hack
+    }
     else {
       cout << "unsupported CellStore version (" << version << ")" << endl;
       _exit(1);
@@ -162,11 +166,11 @@ namespace {
     int64_t var_index_offset = boost::any_cast<int64_t>(state.trailer->get("var_index_offset"));
     int64_t filter_offset = boost::any_cast<int64_t>(state.trailer->get("filter_offset"));
 
-    BlockCompressionHeader header;
+    BlockHeaderCellStore header(state.block_header_format);
 
     DynamicBuffer input_buf(0, false);
     DynamicBuffer output_buf(0, false);
-    bool bits64 = (flags & CellStoreTrailerV6::INDEX_64BIT) == CellStoreTrailerV6::INDEX_64BIT;
+    bool bits64 = (flags & CellStoreTrailerV7::INDEX_64BIT) == CellStoreTrailerV7::INDEX_64BIT;
 
     // FIXED
     input_buf.base = state.base + fix_index_offset;
@@ -253,7 +257,7 @@ namespace {
 
   template < class Operator >
   bool process_blocks (State &state, Operator op) {
-    BlockCompressionHeader header;
+    BlockHeaderCellStore header(state.block_header_format);
     int64_t offset = 0;
     int64_t end_offset = boost::any_cast<int64_t>(state.trailer->get("fix_index_offset"));
     uint32_t alignment = boost::any_cast<uint32_t>(state.trailer->get("alignment"));
@@ -266,7 +270,7 @@ namespace {
 
     while (ptr < end) {
 
-      if ((end-ptr) < (ptrdiff_t)header.length())
+      if ((end-ptr) < (ptrdiff_t)header.encoded_length())
         return false;
 
       offset = ptr - state.base;
@@ -279,8 +283,8 @@ namespace {
 
       size_t extra = 0;
       if (alignment > 0) {
-        if ((header.length()+header.get_data_zlength())%alignment)
-          extra = alignment - ((header.length()+header.get_data_zlength())%alignment);
+        if ((header.encoded_length()+header.get_data_zlength())%alignment)
+          extra = alignment - ((header.encoded_length()+header.get_data_zlength())%alignment);
       }
 
       // make sure we don't run off the end

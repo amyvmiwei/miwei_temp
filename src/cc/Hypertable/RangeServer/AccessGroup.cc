@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Definitions for AccessGroup.
+/// This file contains definitions for AccessGroup, a class for providing data
+/// management and queries over an access group of a range.
+
 #include <Common/Compat.h>
 #include "AccessGroup.h"
 
@@ -26,7 +31,7 @@
 #include <Hypertable/RangeServer/CellCacheScanner.h>
 #include <Hypertable/RangeServer/CellStoreFactory.h>
 #include <Hypertable/RangeServer/CellStoreReleaseCallback.h>
-#include <Hypertable/RangeServer/CellStoreV6.h>
+#include <Hypertable/RangeServer/CellStoreV7.h>
 #include <Hypertable/RangeServer/Config.h>
 #include <Hypertable/RangeServer/Global.h>
 #include <Hypertable/RangeServer/MaintenanceFlag.h>
@@ -596,7 +601,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         }
       }
 
-      cellstore = new CellStoreV6(Global::dfs.get(), m_schema.get());
+      cellstore = new CellStoreV7(Global::dfs.get(), m_schema.get());
 
       max_num_entries = m_cell_cache_manager->immutable_items();
 
@@ -623,7 +628,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         for (size_t i=merge_offset; i<merge_offset+merge_length; i++) {
           HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
-          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV6::SPLIT) ? 2: 1;
+          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV7::SPLIT) ? 2: 1;
           max_num_entries += (boost::any_cast<int64_t>
               (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
@@ -637,7 +642,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         for (size_t i=0; i<m_stores.size(); i++) {
           HT_ASSERT(m_stores[i].cs);
           mscanner->add_scanner(m_stores[i].cs->create_scanner(scan_context));
-          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV6::SPLIT) ? 2: 1;
+          int divisor = (boost::any_cast<uint32_t>(m_stores[i].cs->get_trailer()->get("flags")) & CellStoreTrailerV7::SPLIT) ? 2: 1;
           max_num_entries += (boost::any_cast<int64_t>
               (m_stores[i].cs->get_trailer()->get("total_entries")))/divisor;
         }
@@ -659,7 +664,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
 
     m_garbage_tracker.adjust_targets(now, mscanner);
 
-    CellStoreTrailerV6 *trailer = dynamic_cast<CellStoreTrailerV6 *>(cellstore->get_trailer());
+    CellStoreTrailerV7 *trailer = dynamic_cast<CellStoreTrailerV7 *>(cellstore->get_trailer());
 
     if (major)
       HT_ASSERT(mscanner);
@@ -668,7 +673,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
       trailer->flags |= CellStoreTrailerV6::MAJOR_COMPACTION;
 
     if (maintenance_flags & MaintenanceFlag::SPLIT)
-      trailer->flags |= CellStoreTrailerV6::SPLIT;
+      trailer->flags |= CellStoreTrailerV7::SPLIT;
 
     cellstore->finalize(&m_identifier);
 

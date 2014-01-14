@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,35 +19,40 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for TableMutatorAsyncScatterBuffer.
+/// This file contains declarations for TableMutatorAsyncScatterBuffer, a class
+/// for sending updates to to a set of range servers in parallel.
+
 #ifndef HYPERTABLE_TABLEMUTATORASYNCSCATTERBUFFER_H
 #define HYPERTABLE_TABLEMUTATORASYNCSCATTERBUFFER_H
 
-#include <vector>
+#include <Hypertable/Lib/Cell.h>
+#include <Hypertable/Lib/Cells.h>
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/RangeLocator.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/TableMutatorAsyncSendBuffer.h>
+#include <Hypertable/Lib/TableMutatorAsyncCompletionCounter.h>
+
+#include <AsyncComm/CommAddress.h>
+#include <AsyncComm/ApplicationQueueInterface.h>
+#include <AsyncComm/Event.h>
+
+#include <Common/atomic.h>
+#include <Common/ByteString.h>
+#include <Common/FlyweightString.h>
+#include <Common/ReferenceCount.h>
+#include <Common/StringExt.h>
+#include <Common/Timer.h>
+#include <Common/InetAddr.h>
 
 #include <boost/random.hpp>
 #include <boost/random/uniform_01.hpp>
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "AsyncComm/CommAddress.h"
-#include "AsyncComm/ApplicationQueueInterface.h"
-#include "AsyncComm/Event.h"
-
-#include "Common/atomic.h"
-#include "Common/ByteString.h"
-#include "Common/FlyweightString.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StringExt.h"
-#include "Common/Timer.h"
-#include "Common/InetAddr.h"
-
-#include "Cell.h"
-#include "Cells.h"
-#include "Key.h"
-#include "RangeLocator.h"
-#include "Schema.h"
-#include "TableMutatorAsyncSendBuffer.h"
-#include "TableMutatorAsyncCompletionCounter.h"
+#include <vector>
 
 namespace Hypertable {
 

@@ -19,27 +19,35 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for PhantomRange.
+/// This file contains declarations for PhantomRange, a class representing a
+/// "phantom" range (i.e. one that is being recovered by a RangeServer).
+
 #ifndef HYPERTABLE_PHANTOMRANGE_H
 #define HYPERTABLE_PHANTOMRANGE_H
+
+#include <Hypertable/RangeServer/Range.h>
+#include <Hypertable/RangeServer/TableInfo.h>
+#include <Hypertable/RangeServer/FragmentData.h>
+
+#include <Hypertable/Lib/Types.h>
+
+#include <Common/String.h>
+#include <Common/Filesystem.h>
+#include <Common/ReferenceCount.h>
 
 #include <map>
 #include <vector>
 
-#include "Common/String.h"
-#include "Common/Filesystem.h"
-#include "Common/ReferenceCount.h"
-
-#include "Hypertable/Lib/Types.h"
-
-#include "Range.h"
-#include "TableInfo.h"
-#include "FragmentData.h"
-
 namespace Hypertable {
+
   using namespace std;
-  /**
-   * Represents a table row range.
-   */
+
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Represents a "phantom" range.
   class PhantomRange : public ReferenceCount {
 
   public:
@@ -106,7 +114,10 @@ namespace Hypertable {
     int              m_state;
   };
 
+  /// Smart pointer to PhantomRange
   typedef intrusive_ptr<PhantomRange> PhantomRangePtr;
+
+  /// @}
 
 } // namespace Hypertable
 

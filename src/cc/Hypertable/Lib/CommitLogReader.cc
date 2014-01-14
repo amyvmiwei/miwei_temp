@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,7 +19,29 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+/// @file
+/// Definitions for CommitLogReader.
+/// This file contains definitions for CommitLogReader, a class for
+/// sequentially reading a commit log.
+
+#include <Common/Compat.h>
+
+#include "CommitLogReader.h"
+
+#include <Common/Config.h>
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/StringExt.h>
+#include <Common/md5.h>
+
+#include <Hypertable/Lib/BlockCompressionCodec.h>
+#include <Hypertable/Lib/CommitLog.h>
+#include <Hypertable/Lib/CommitLogBlockStream.h>
+#include <Hypertable/Lib/CompressorFactory.h>
+
+#include <boost/algorithm/string/predicate.hpp>
+
 #include <cassert>
 #include <vector>
 
@@ -33,22 +55,6 @@ extern "C" {
 #include <sys/uio.h>
 #include <unistd.h>
 }
-
-#include <boost/algorithm/string/predicate.hpp>
-
-#include "Common/Config.h"
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/StringExt.h"
-#include "Common/md5.h"
-
-#include "Hypertable/Lib/CompressorFactory.h"
-
-#include "BlockCompressionCodec.h"
-#include "CommitLog.h"
-#include "CommitLogBlockStream.h"
-#include "CommitLogReader.h"
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -92,7 +98,7 @@ CommitLogReader::CommitLogReader(FilesystemPtr &fs, const String &log_dir,
 
 bool
 CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
-                                BlockCompressionHeaderCommitLog *header) {
+                                BlockHeaderCommitLog *header) {
   LogFragmentQueue::iterator fragment_queue_iter;
 
   try_again:
@@ -129,7 +135,7 @@ CommitLogReader::next_raw_block(CommitLogBlockInfo *infop,
 
   if (header->check_magic(CommitLog::MAGIC_LINK)) {
     assert(header->get_compression_type() == BlockCompressionCodec::NONE);
-    String log_dir = (const char *)(infop->block_ptr + header->length());
+    String log_dir = (const char *)(infop->block_ptr + header->encoded_length());
     boost::trim_right_if(log_dir, boost::is_any_of("/"));
     m_linked_log_hashes.insert(md5_hash(log_dir.c_str()));
     m_linked_logs.insert(log_dir);
@@ -156,7 +162,7 @@ void CommitLogReader::get_init_fragment_ids(vector<uint32_t> &ids) {
 
 bool
 CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
-                      BlockCompressionHeaderCommitLog *header) {
+                      BlockHeaderCommitLog *header) {
   CommitLogBlockInfo binfo;
 
   while (next_raw_block(&binfo, header)) {
@@ -272,10 +278,14 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
       fi->log_dir_hash = md5_hash(log_dir.c_str());
       fi->size = m_fs->length(log_dir + "/" + listing[i].name);
       fi->parent = parent;
-      if (fi->size > 0) {
+      if (fi->size > CommitLogBlockStream::header_size()) {
         if (parent)
           parent->references++;
         m_fragment_queue.push_back(fi);
+      }
+      else {
+        delete fi;
+        fi = 0;
       }
     }
   }

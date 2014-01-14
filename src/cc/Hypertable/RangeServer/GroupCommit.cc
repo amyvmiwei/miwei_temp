@@ -35,25 +35,27 @@ GroupCommit::GroupCommit(RangeServer *range_server) : m_range_server(range_serve
 }
 
 
-void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier *table,
-                      uint32_t count, StaticBuffer &buffer, uint32_t flags) {
+void
+GroupCommit::add(EventPtr &event, uint64_t cluster_id, SchemaPtr &schema,
+                 const TableIdentifier *table, uint32_t count,
+                 StaticBuffer &buffer, uint32_t flags) {
   ScopedLock lock(m_mutex);
   TableUpdateMap::iterator iter;
-  UpdateRequest *request = new UpdateRequest();
+  ClientUpdateRequest *request = new ClientUpdateRequest();
   boost::xtime expire_time = event->expiration_time();
+  ClusterTableIdPair key = std::make_pair(cluster_id, *table);
+
+  key.second.id = m_flyweight_strings.get(table->id);
 
   request->buffer = buffer;
   request->count = count;
   request->event = event;
 
-  if ((iter = m_table_map.find(*table)) == m_table_map.end()) {
-    TableIdentifier tid;
-
-    tid.generation = table->generation;
-    tid.id = m_flyweight_strings.get(table->id);
+  if ((iter = m_table_map.find(key)) == m_table_map.end()) {
 
     TableUpdate *tu = new TableUpdate();
-    tu->id = tid;
+    tu->cluster_id = cluster_id;
+    tu->id = key.second;
     tu->commit_interval = schema->get_group_commit_interval();
     tu->commit_iteration = (tu->commit_interval+(m_commit_interval-1)) / m_commit_interval;
     tu->total_count = count;
@@ -61,7 +63,7 @@ void GroupCommit::add(EventPtr &event, SchemaPtr &schema, const TableIdentifier 
     tu->expire_time = expire_time;
     tu->requests.push_back(request);
 
-    m_table_map[tid] = tu;
+    m_table_map[key] = tu;
     return;
   }
 

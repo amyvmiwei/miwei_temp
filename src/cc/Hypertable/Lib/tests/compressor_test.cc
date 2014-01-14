@@ -27,7 +27,7 @@
 #include "Common/Usage.h"
 
 #include "Hypertable/Lib/CompressorFactory.h"
-#include "Hypertable/Lib/BlockCompressionHeaderCommitLog.h"
+#include "Hypertable/Lib/BlockHeaderCommitLog.h"
 #include "Hypertable/Lib/Types.h"
 
 using namespace Hypertable;
@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
   DynamicBuffer output2(0);
   BlockCompressionCodec *compressor;
 
-  BlockCompressionHeaderCommitLog header(MAGIC, 0);
+  BlockHeaderCommitLog header(MAGIC, 0, 0);
 
   if (argc == 1 || !strcmp(argv[1], "--help"))
     Usage::dump_and_exit(usage);

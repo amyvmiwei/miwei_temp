@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,36 +19,34 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for CommitLog.
+/// This file contains declarations for CommitLog, a class for creating and
+/// appending entries to an edit log.
+
 #ifndef HYPERTABLE_COMMITLOG_H
 #define HYPERTABLE_COMMITLOG_H
+
+#include <Common/DynamicBuffer.h>
+#include <Common/ReferenceCount.h>
+#include <Common/String.h>
+#include <Common/Properties.h>
+#include <Common/Filesystem.h>
+
+#include <Hypertable/Lib/BlockCompressionCodec.h>
+#include <Hypertable/Lib/CommitLogBase.h>
+#include <Hypertable/Lib/CommitLogBlockStream.h>
+
+#include <boost/thread/xtime.hpp>
 
 #include <deque>
 #include <map>
 #include <stack>
 
-#include <boost/thread/xtime.hpp>
-
-#include "Common/DynamicBuffer.h"
-#include "Common/ReferenceCount.h"
-#include "Common/String.h"
-#include "Common/Properties.h"
-#include "Common/Filesystem.h"
-
-#include "BlockCompressionCodec.h"
-#include "Types.h"
-
-#include "CommitLogBase.h"
-#include "CommitLogBlockStream.h"
-
 namespace Hypertable {
 
-  typedef struct {
-    uint32_t distance;
-    int64_t  size;
-    int64_t  cumulative_size;
-    uint32_t fragno;
-  } CumulativeFragmentData;
-
+  /// @addtogroup libHypertable
+  /// @{
 
   /**
    * Commit log for persisting range updates.  The commit log is a directory
@@ -65,7 +63,15 @@ namespace Hypertable {
    */
 
   class CommitLog : public CommitLogBase {
+
   public:
+
+    struct CumulativeFragmentData {
+      uint32_t distance;
+      int64_t  size;
+      int64_t  cumulative_size;
+      uint32_t fragno;
+    };
 
     typedef std::map<int64_t, CumulativeFragmentData> CumulativeSizeMap;
 
@@ -105,12 +111,13 @@ namespace Hypertable {
 
     /** Writes a block of updates to the commit log.
      *
+     * @param cluster_id Originating cluster ID
      * @param buffer block of updates to commit
      * @param revision most recent revision in buffer
      * @param sync syncs the commit log updates to disk
      * @return Error::OK on success or error code on failure
      */
-    int write(DynamicBuffer &buffer, int64_t revision, bool sync=true);
+    int write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision, bool sync=true);
 
     /** Sync previous updates written to commit log.
      *
@@ -120,10 +127,11 @@ namespace Hypertable {
 
     /** Links an external log into this log.
      *
+     * @param cluster_id Originating cluster ID
      * @param log_base pointer to commit log object to link in
      * @return Error::OK on success or error code on failure
      */
-    int link_log(CommitLogBase *log_base);
+    int link_log(uint64_t cluster_id, CommitLogBase *log_base);
 
     /** Closes the log.  Writes the trailer and closes the file
      *
@@ -191,7 +199,7 @@ namespace Hypertable {
     void initialize(const String &log_dir,
                     PropertiesPtr &, CommitLogBase *init_log, bool is_meta);
     int roll(CommitLogFileInfo **clfip=0);
-    int compress_and_write(DynamicBuffer &input, BlockCompressionHeader *header,
+    int compress_and_write(DynamicBuffer &input, BlockHeader *header,
                            int64_t revision, bool sync);
     void remove_file_info(CommitLogFileInfo *fi, StringSet &removed_logs);
 
@@ -207,7 +215,10 @@ namespace Hypertable {
     bool                    m_needs_roll;
   };
 
+  /// Smart pointer to CommitLog
   typedef intrusive_ptr<CommitLog> CommitLogPtr;
+
+  /// @}
 
 } // namespace Hypertable
 

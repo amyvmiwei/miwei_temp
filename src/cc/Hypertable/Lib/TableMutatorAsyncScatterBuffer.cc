@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,22 +19,29 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
-#include "Common/Timer.h"
+/// @file
+/// Definitions for TableMutatorAsyncScatterBuffer.
+/// This file contains definitions for TableMutatorAsyncScatterBuffer, a class
+/// for sending updates to to a set of range servers in parallel.
 
-#include "Key.h"
-#include "KeySpec.h"
-#include "Table.h"
-#include "TableMutatorAsyncDispatchHandler.h"
-#include "TableMutatorAsyncHandler.h"
+#include <Common/Compat.h>
+
 #include "TableMutatorAsyncScatterBuffer.h"
-#include "RangeServerProtocol.h"
+
+#include <Common/Config.h>
+#include <Common/Timer.h>
+
+#include <Hypertable/Lib/ClusterId.h>
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/KeySpec.h>
+#include <Hypertable/Lib/RangeServerClient.h>
+#include <Hypertable/Lib/Table.h>
+#include <Hypertable/Lib/TableMutatorAsyncDispatchHandler.h>
+#include <Hypertable/Lib/TableMutatorAsyncHandler.h>
 
 #include <poll.h>
 
 using namespace Hypertable;
-
 
 TableMutatorAsyncScatterBuffer::TableMutatorAsyncScatterBuffer(Comm *comm,
     ApplicationQueueInterfacePtr &app_queue, TableMutatorAsync *mutator,
@@ -299,8 +306,9 @@ void TableMutatorAsyncScatterBuffer::send(uint32_t flags) {
     try {
       m_send_flags = flags;
       send_buffer->pending_updates.own = false;
-      m_range_server.update(send_buffer->addr, m_table_identifier,
-                            send_buffer->send_count, send_buffer->pending_updates, flags,
+      m_range_server.update(send_buffer->addr, ClusterId::get(),
+                            m_table_identifier, send_buffer->send_count,
+                            send_buffer->pending_updates, flags,
                             send_buffer->dispatch_handler.get());
 
       outstanding = true;

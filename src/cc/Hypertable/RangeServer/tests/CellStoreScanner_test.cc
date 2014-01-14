@@ -40,7 +40,7 @@
 #include "Hypertable/Lib/SerializedKey.h"
 
 #include "../CellStoreFactory.h"
-#include "../CellStoreV6.h"
+#include "../CellStoreV7.h"
 #include "../Global.h"
 
 #include <cstdlib>
@@ -631,7 +631,7 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    cs = new CellStoreV6(Global::dfs.get(), schema.get());
+    cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
     cs->set_replaced_files(replaced_files_write);
 
@@ -1437,7 +1437,7 @@ int main(int argc, char **argv) {
     cs_props = new Properties();
     cs_props->set("blocksize", (uint32_t)10000);
     cs_props->set("compressor", String("none"));
-    cs = new CellStoreV6(Global::dfs.get(), schema.get());
+    cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
     // should not coalesce and be in a separate block from trailer
     replaced_files_write.push_back("1/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0");
@@ -1550,7 +1550,7 @@ int main(int argc, char **argv) {
       exit(1);
     }
 
-    cs = new CellStoreV6(Global::dfs.get(), schema.get());
+    cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
     // should coalesce and be in 2 blocks, with the 2nd block also containing the trailer
     replaced_files_write.push_back("7/hypertable/tables/0/1/default/qyoNKN5rd__dbHKv/cs0");
@@ -1607,7 +1607,7 @@ int main(int argc, char **argv) {
       HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
       exit(1);
     }
-    cs = new CellStoreV6(Global::dfs.get(), schema.get());
+    cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 735, cs_props, &table_id));
     strcpy((char *)rowbuf, "the only row");
     value = "Dummy value";

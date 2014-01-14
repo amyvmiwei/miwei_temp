@@ -38,7 +38,7 @@
 #include "Hypertable/Lib/Schema.h"
 #include "Hypertable/Lib/SerializedKey.h"
 
-#include "../CellStoreV6.h"
+#include "../CellStoreV7.h"
 #include "../Global.h"
 
 #include <cstdlib>
@@ -539,7 +539,7 @@ int main(int argc, char **argv) {
     PropertiesPtr cs_props = new Properties();
     // make sure blocks are small so only one key value pair fits in a block
     cs_props->set("blocksize", uint32_t(32));
-    cs = new CellStoreV6(Global::dfs.get(), schema.get());
+    cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 24000, cs_props, &table_id));
 
     DynamicBuffer dbuf(512000);

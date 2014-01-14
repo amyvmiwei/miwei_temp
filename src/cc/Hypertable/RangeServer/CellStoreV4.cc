@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -32,7 +32,7 @@
 
 #include "AsyncComm/Protocol.h"
 
-#include "Hypertable/Lib/BlockCompressionHeader.h"
+#include "Hypertable/Lib/BlockHeaderCellStore.h"
 #include "Hypertable/Lib/CompressorFactory.h"
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
@@ -52,6 +52,7 @@ using namespace Hypertable;
 
 namespace {
   const uint32_t MAX_APPENDS_OUTSTANDING = 3;
+  const uint16_t BLOCK_HEADER_FORMAT = 0;
 }
 
 
@@ -341,7 +342,7 @@ void CellStoreV4::add(const Key &key, const ByteString value) {
   }
 
   if (m_buffer.fill() > (size_t)m_uncompressed_blocksize) {
-    BlockCompressionHeader header(DATA_BLOCK_MAGIC);
+    BlockHeaderCellStore header(BLOCK_HEADER_FORMAT, DATA_BLOCK_MAGIC);
 
     m_index_builder.add_entry(m_key_compressor, m_offset);
 
@@ -443,7 +444,7 @@ void CellStoreV4::finalize(TableIdentifier *table_identifier) {
   int64_t index_memory = 0;
 
   if (m_buffer.fill() > 0) {
-    BlockCompressionHeader header(DATA_BLOCK_MAGIC);
+    BlockHeaderCellStore header(BLOCK_HEADER_FORMAT, DATA_BLOCK_MAGIC);
 
     m_index_builder.add_entry(m_key_compressor, m_offset);
 
@@ -492,7 +493,7 @@ void CellStoreV4::finalize(TableIdentifier *table_identifier) {
    * Write fixed index
    */
   {
-    BlockCompressionHeader header(INDEX_FIXED_BLOCK_MAGIC);
+    BlockHeaderCellStore header(BLOCK_HEADER_FORMAT, INDEX_FIXED_BLOCK_MAGIC);
     m_compressor->deflate(m_index_builder.fixed_buf(), zbuf, header, HT_DIRECT_IO_ALIGNMENT);
   }
 
@@ -512,7 +513,7 @@ void CellStoreV4::finalize(TableIdentifier *table_identifier) {
    * Write variable index
    */
   {
-    BlockCompressionHeader header(INDEX_VARIABLE_BLOCK_MAGIC);
+    BlockHeaderCellStore header(BLOCK_HEADER_FORMAT, INDEX_VARIABLE_BLOCK_MAGIC);
     m_trailer.var_index_offset = m_offset;
     m_compressor->deflate(m_index_builder.variable_buf(), zbuf, header, HT_DIRECT_IO_ALIGNMENT);
   }
@@ -726,7 +727,7 @@ CellStoreV4::open(const String &fname, const String &start_row,
 void CellStoreV4::load_block_index() {
   int64_t amount, index_amount;
   int64_t len = 0;
-  BlockCompressionHeader header;
+  BlockHeaderCellStore header(BLOCK_HEADER_FORMAT);
   SerializedKey key;
   bool inflating_fixed=true;
   bool second_try = false;
@@ -874,4 +875,9 @@ void CellStoreV4::display_block_info() {
     m_index_map64.display();
   else
     m_index_map32.display();
+}
+
+
+uint16_t CellStoreV4::block_header_format() {
+  return BLOCK_HEADER_FORMAT;
 }

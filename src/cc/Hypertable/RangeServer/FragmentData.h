@@ -19,37 +19,35 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Declarations for FragmentData.
- * This file contains the type declarations for FragmentData, a class for
- * accumulating phantom update data for a phantom range.
- */
+/// @file
+/// Declarations for FragmentData.
+/// This file contains the type declarations for FragmentData, a class for
+/// accumulating phantom update data for a phantom range.
 
 #ifndef HYPERTABLE_FRAGMENTDATA_H
 #define HYPERTABLE_FRAGMENTDATA_H
 
+#include <Hypertable/RangeServer/Range.h>
+#include <Hypertable/RangeServer/ScanContext.h>
+
+#include <Hypertable/Lib/CommitLog.h>
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/Types.h>
+
+#include <AsyncComm/Event.h>
+
+#include <Common/ByteString.h>
+#include <Common/Mutex.h>
+#include <Common/ReferenceCount.h>
+#include <Common/ReferenceCount.h>
+#include <Common/atomic.h>
+
 #include <vector>
-
-#include "Common/Mutex.h"
-#include "Common/atomic.h"
-#include "Common/ReferenceCount.h"
-#include "Common/ByteString.h"
-#include "Common/ReferenceCount.h"
-
-#include "AsyncComm/Event.h"
-
-#include "Hypertable/Lib/CommitLog.h"
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/Types.h"
-
-#include "ScanContext.h"
-#include "Range.h"
 
 namespace Hypertable {
 
-  /** @addtogroup RangeServer
-   * @{
-   */
+  /// @addtogroup RangeServer
+  /// @{
 
   /** Accumulates phantom update data for a phantom range.
    * The recovery of a range server involves the <i>phantom</i> loading of its
@@ -124,7 +122,7 @@ namespace Hypertable {
   /// Smart pointer to FragmentData
   typedef boost::intrusive_ptr<FragmentData> FragmentDataPtr;
 
-  /** @} */
+  /// @}
 }
 
 #endif // HYPERTABLE_FRAGMENTDATA_H

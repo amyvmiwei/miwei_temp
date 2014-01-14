@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,19 +19,36 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for CellStoreFactory.
+/// This file contains the type declarations for CellStoreFactory, an class that
+/// provides an interface for creating CellStore objects from cell store files.
+
 #ifndef HYPERTABLE_CELLSTOREFACTORY_H
 #define HYPERTABLE_CELLSTOREFACTORY_H
 
-#include "CellStore.h"
-#include "CellStoreTrailer.h"
+#include <Hypertable/RangeServer/CellStore.h>
+#include <Hypertable/RangeServer/CellStoreTrailer.h>
 
 namespace Hypertable {
 
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Factory class for creating CellStore objects.
   class CellStoreFactory {
   public:
+
+    /// Creates a CellStore object from a given cell store file.
+    /// @param name Pathname of cell store file
+    /// @param start_row Starting scope
+    /// @param end_row Ending scope
+    /// @return Pointer to newly allocated CellStore object
     static CellStore *open(const String &name,
                            const char *start_row, const char *end_row);
   };
+
+  /// @}
 
 }
 

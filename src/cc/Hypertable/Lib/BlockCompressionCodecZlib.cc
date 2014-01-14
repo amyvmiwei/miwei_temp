@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,40 +19,30 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-
-#include "Common/DynamicBuffer.h"
-#include "Common/Logger.h"
-#include "Common/Checksum.h"
+#include <Common/Compat.h>
 
 #include "BlockCompressionCodecZlib.h"
+
+#include <Common/DynamicBuffer.h>
+#include <Common/Logger.h>
+#include <Common/Checksum.h>
 
 using namespace Hypertable;
 
 
-/**
- *
- */
 BlockCompressionCodecZlib::BlockCompressionCodecZlib(const Args &args)
   : m_inflate_initialized(false), m_deflate_initialized(false),
     m_level(Z_BEST_SPEED) {
-  if (!args.empty())
-    set_args(args);
+  set_args(args);
 }
 
 
-
-/**
- *
- */
 BlockCompressionCodecZlib::~BlockCompressionCodecZlib() {
   if (m_deflate_initialized)
     deflateEnd(&m_stream_deflate);
   if (m_inflate_initialized)
     inflateEnd(&m_stream_inflate);
 }
-
-
 
 void BlockCompressionCodecZlib::set_args(const Args &args) {
   Args::const_iterator it = args.begin(), arg_end = args.end();
@@ -79,14 +69,9 @@ void BlockCompressionCodecZlib::set_args(const Args &args) {
   }
 }
 
-
-
-/**
- *
- */
 void
 BlockCompressionCodecZlib::deflate(const DynamicBuffer &input,
-    DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
+    DynamicBuffer &output, BlockHeader &header, size_t reserve) {
   // see http://www.zlib.net/zlib_tech.html
   uint32_t avail_out = input.fill() + 6 + (((input.fill() / 16000) + 1) * 5);
 
@@ -102,13 +87,13 @@ BlockCompressionCodecZlib::deflate(const DynamicBuffer &input,
   }
 
   output.clear();
-  output.reserve(header.length() + avail_out + reserve);
+  output.reserve(header.encoded_length() + avail_out + reserve);
 
   m_stream_deflate.avail_in = input.fill();
   m_stream_deflate.next_in = input.base;
 
   m_stream_deflate.avail_out = avail_out;
-  m_stream_deflate.next_out = output.base + header.length();
+  m_stream_deflate.next_out = output.base + header.encoded_length();
 
   int ret = ::deflate(&m_stream_deflate, Z_FINISH);
   assert(ret == Z_STREAM_END);
@@ -119,7 +104,7 @@ BlockCompressionCodecZlib::deflate(const DynamicBuffer &input,
   /* check for an incompressible block */
   if (zlen >= input.fill()) {
     header.set_compression_type(NONE);
-    memcpy(output.base+header.length(), input.base, input.fill());
+    memcpy(output.base+header.encoded_length(), input.base, input.fill());
     header.set_data_length(input.fill());
     header.set_data_zlength(input.fill());
   }
@@ -129,7 +114,7 @@ BlockCompressionCodecZlib::deflate(const DynamicBuffer &input,
     header.set_data_zlength(zlen);
   }
 
-  header.set_data_checksum(fletcher32(output.base + header.length(),
+  header.set_data_checksum(fletcher32(output.base + header.encoded_length(),
                            header.get_data_zlength()));
 
   deflateReset(&m_stream_deflate);
@@ -145,7 +130,7 @@ BlockCompressionCodecZlib::deflate(const DynamicBuffer &input,
  */
 void
 BlockCompressionCodecZlib::inflate(const DynamicBuffer &input,
-    DynamicBuffer &output, BlockCompressionHeader &header) {
+    DynamicBuffer &output, BlockHeader &header) {
   int ret;
   const uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();

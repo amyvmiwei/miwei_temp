@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -119,6 +119,8 @@ namespace Hypertable {
     }
 
     virtual CellStoreTrailer *get_trailer() { return &m_trailer; }
+
+    virtual uint16_t block_header_format();
 
   protected:
     void create_bloom_filter(bool is_approx = false);

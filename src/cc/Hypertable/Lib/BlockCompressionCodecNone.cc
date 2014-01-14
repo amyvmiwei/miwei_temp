@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,39 +19,33 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+/// @file
+/// Definitions for BlockCompressionCodecNone.
+/// This file contains definitions for BlockCompressionCodecNone, a class for
+/// compressing blocks using the NONE compression algorithm.
 
-#include "Common/Checksum.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
+#include <Common/Compat.h>
 
 #include "BlockCompressionCodecNone.h"
 
+#include <Common/Checksum.h>
+#include <Common/DynamicBuffer.h>
+#include <Common/Error.h>
+#include <Common/Logger.h>
+
 using namespace Hypertable;
 
-
-/**
- *
- */
-BlockCompressionCodecNone::BlockCompressionCodecNone(const Args &) {
-}
-
-
-/**
- *
- */
 void
 BlockCompressionCodecNone::deflate(const DynamicBuffer &input,
-    DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
+    DynamicBuffer &output, BlockHeader &header, size_t reserve) {
   output.clear();
-  output.reserve(header.length() + input.fill() + reserve);
+  output.reserve(header.encoded_length() + input.fill() + reserve);
 
   header.set_compression_type(NONE);
-  memcpy(output.base+header.length(), input.base, input.fill());
+  memcpy(output.base+header.encoded_length(), input.base, input.fill());
   header.set_data_length(input.fill());
   header.set_data_zlength(input.fill());
-  header.set_data_checksum(fletcher32(output.base + header.length(),
+  header.set_data_checksum(fletcher32(output.base + header.encoded_length(),
                            header.get_data_zlength()));
 
   output.ptr = output.base;
@@ -60,12 +54,9 @@ BlockCompressionCodecNone::deflate(const DynamicBuffer &input,
 }
 
 
-/**
- *
- */
 void
 BlockCompressionCodecNone::inflate(const DynamicBuffer &input,
-    DynamicBuffer &output, BlockCompressionHeader &header) {
+    DynamicBuffer &output, BlockHeader &header) {
 
   const uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();

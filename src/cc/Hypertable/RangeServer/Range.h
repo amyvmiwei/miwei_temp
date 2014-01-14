@@ -19,52 +19,48 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Declarations for Range.
- * This file contains the type declarations for Range, a class used to
- * access and manage a range of table data.
- */
+/// @file
+/// Declarations for Range.
+/// This file contains the type declarations for Range, a class used to
+/// access and manage a range of table data.
 
 #ifndef HYPERTABLE_RANGE_H
 #define HYPERTABLE_RANGE_H
 
+#include <Hypertable/RangeServer/AccessGroup.h>
+#include <Hypertable/RangeServer/AccessGroupHintsFile.h>
+#include <Hypertable/RangeServer/CellStore.h>
+#include <Hypertable/RangeServer/LoadFactors.h>
+#include <Hypertable/RangeServer/LoadMetricsRange.h>
+#include <Hypertable/RangeServer/MaintenanceFlag.h>
+#include <Hypertable/RangeServer/MetaLogEntityRange.h>
+#include <Hypertable/RangeServer/MetaLogEntityTask.h>
+#include <Hypertable/RangeServer/Metadata.h>
+#include <Hypertable/RangeServer/RangeMaintenanceGuard.h>
+#include <Hypertable/RangeServer/RangeSet.h>
+#include <Hypertable/RangeServer/RangeTransferInfo.h>
+
+#include <Hypertable/Lib/CommitLog.h>
+#include <Hypertable/Lib/CommitLogReader.h>
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/MasterClient.h>
+#include <Hypertable/Lib/RangeState.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/Timestamp.h>
+#include <Hypertable/Lib/Types.h>
+
+#include <Common/Barrier.h>
+#include <Common/String.h>
+
 #include <map>
 #include <vector>
 
-#include "Common/Barrier.h"
-#include "Common/String.h"
-
-#include "Hypertable/Lib/CommitLog.h"
-#include "Hypertable/Lib/CommitLogReader.h"
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/MasterClient.h"
-#include "Hypertable/Lib/RangeState.h"
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Timestamp.h"
-#include "Hypertable/Lib/Types.h"
-
-#include "AccessGroup.h"
-#include "AccessGroupHintsFile.h"
-#include "CellStore.h"
-#include "LoadFactors.h"
-#include "LoadMetricsRange.h"
-#include "MaintenanceFlag.h"
-#include "MetaLogEntityRange.h"
-#include "MetaLogEntityTask.h"
-#include "Metadata.h"
-#include "RangeMaintenanceGuard.h"
-#include "RangeSet.h"
-#include "RangeTransferInfo.h"
-
 namespace Hypertable {
 
-  /** @addtogroup RangeServer
-   * @{
-   */
+  /// @addtogroup RangeServer
+  /// @{
 
-  /**
-   * Represents a table row range.
-   */
+  /// Represents a table row range.
   class Range : public CellList {
 
   public:
@@ -393,11 +389,12 @@ namespace Hypertable {
     bool             m_initialized;
   };
 
+  /// Smart pointer to Range
   typedef intrusive_ptr<Range> RangePtr;
 
   std::ostream &operator<<(std::ostream &os, const Range::MaintenanceData &mdata);
 
-  /** @}*/
+  /// @}
 
 } // namespace Hypertable
 

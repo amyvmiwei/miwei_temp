@@ -32,17 +32,21 @@
 
 namespace Hypertable {
 
-  struct lttid {
-    bool operator()(const Hypertable::TableIdentifier &tid1, const Hypertable::TableIdentifier &tid2) const {
-      if (tid1.id == 0 || tid2.id == 0) {
-        if (tid1.id == 0)
+  typedef std::pair<uint64_t, TableIdentifier> ClusterTableIdPair;
+
+  struct lt_ctip {
+    bool operator()(const ClusterTableIdPair &key1, const ClusterTableIdPair &key2) const {
+      if (key1.first != key2.first)
+        return false;
+      if (key1.second.id == 0 || key2.second.id == 0) {
+        if (key1.second.id == 0)
           return true;
         return false;
       }
-      int cmpval = strcmp(tid1.id, tid2.id);
+      int cmpval = strcmp(key1.second.id, key2.second.id);
       if (cmpval != 0)
         return cmpval < 0;
-      return tid1.generation < tid2.generation;
+      return key1.second.generation < key2.second.generation;
     }
   };
 
@@ -52,8 +56,9 @@ namespace Hypertable {
 
   public:
     GroupCommit(RangeServer *range_server);
-    virtual void add(EventPtr &event, SchemaPtr &schema, const TableIdentifier *table,
-                     uint32_t count, StaticBuffer &buffer, uint32_t flags);
+    virtual void add(EventPtr &event, uint64_t cluster_id, SchemaPtr &schema,
+                     const TableIdentifier *table, uint32_t count,
+                     StaticBuffer &buffer, uint32_t flags);
     virtual void trigger();
 
   private:
@@ -63,7 +68,7 @@ namespace Hypertable {
     int           m_counter;
     FlyweightString m_flyweight_strings;
 
-    typedef std::map<TableIdentifier, TableUpdate *, lttid> TableUpdateMap;
+    typedef std::map<ClusterTableIdPair, TableUpdate *, lt_ctip> TableUpdateMap;
     TableUpdateMap m_table_map;
   };
 }

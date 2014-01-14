@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,51 +19,35 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+/// @file
+/// Definitions for BlockCompressionCodecSnappy.
+/// This file contains definitions for BlockCompressionCodecSnappy, a class
+/// for compressing blocks using the SNAPPY compression algorithm.
 
-#include "Common/DynamicBuffer.h"
-#include "Common/Logger.h"
-#include "Common/Checksum.h"
+#include <Common/Compat.h>
 
 #include "BlockCompressionCodecSnappy.h"
 
+#include <Common/DynamicBuffer.h>
+#include <Common/Logger.h>
+#include <Common/Checksum.h>
+
 using namespace Hypertable;
-
-
-BlockCompressionCodecSnappy::BlockCompressionCodecSnappy(const Args &args) {
-  if (!args.empty())
-    set_args(args);
-}
-
-
-BlockCompressionCodecSnappy::~BlockCompressionCodecSnappy() {
-}
-
-
-void BlockCompressionCodecSnappy::set_args(const Args &args) {
-  Args::const_iterator it = args.begin(), arg_end = args.end();
-
-  for (; it != arg_end; ++it) {
-    HT_THROWF(Error::BLOCK_COMPRESSOR_INVALID_ARG, "Unrecognized argument "
-              "to Snappy codec: '%s'", (*it).c_str());
-  }
-}
-
 
 void
 BlockCompressionCodecSnappy::deflate(const DynamicBuffer &input,
-    DynamicBuffer &output, BlockCompressionHeader &header, size_t reserve) {
-  output.reserve(header.length()+snappy::MaxCompressedLength(input.fill())+reserve);
+    DynamicBuffer &output, BlockHeader &header, size_t reserve) {
+  output.reserve(header.encoded_length()+snappy::MaxCompressedLength(input.fill())+reserve);
   size_t outlen;
   snappy::RawCompress((const char *)input.base, input.fill(), 
-                (char *)output.base+header.length(), &outlen);
+                (char *)output.base+header.encoded_length(), &outlen);
 
   HT_ASSERT(outlen+reserve <= output.size);
 
   /* check for an incompressible block */
   if (outlen >= input.fill()) {
     header.set_compression_type(NONE);
-    memcpy(output.base+header.length(), input.base, input.fill());
+    memcpy(output.base+header.encoded_length(), input.base, input.fill());
     header.set_data_length(input.fill());
     header.set_data_zlength(input.fill());
   }
@@ -73,7 +57,7 @@ BlockCompressionCodecSnappy::deflate(const DynamicBuffer &input,
     header.set_data_zlength(outlen);
   }
 
-  header.set_data_checksum(fletcher32(output.base + header.length(),
+  header.set_data_checksum(fletcher32(output.base + header.encoded_length(),
                 header.get_data_zlength()));
 
   output.ptr = output.base;
@@ -84,7 +68,7 @@ BlockCompressionCodecSnappy::deflate(const DynamicBuffer &input,
 
 void
 BlockCompressionCodecSnappy::inflate(const DynamicBuffer &input,
-    DynamicBuffer &output, BlockCompressionHeader &header) {
+    DynamicBuffer &output, BlockHeader &header) {
   const uint8_t *msg_ptr = input.base;
   size_t remaining = input.fill();
 

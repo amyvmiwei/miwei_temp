@@ -19,13 +19,39 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Definitions for Range.
- * This file contains the variable and method definitions for Range, a class
- * used to access and manage a range of table data.
- */
+/// @file
+/// Definitions for Range.
+/// This file contains the variable and method definitions for Range, a class
+/// used to access and manage a range of table data.
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+#include "Range.h"
+
+#include <Hypertable/RangeServer/CellStoreFactory.h>
+#include <Hypertable/RangeServer/Global.h>
+#include <Hypertable/RangeServer/MergeScannerRange.h>
+#include <Hypertable/RangeServer/MetaLogEntityTaskAcknowledgeRelinquish.h>
+#include <Hypertable/RangeServer/MetadataNormal.h>
+#include <Hypertable/RangeServer/MetadataRoot.h>
+
+#include <Hypertable/Lib/CommitLog.h>
+#include <Hypertable/Lib/CommitLogReader.h>
+#include <Hypertable/Lib/LoadDataEscape.h>
+
+#include <Common/Config.h>
+#include <Common/Error.h>
+#include <Common/FailureInducer.h>
+#include <Common/FileUtils.h>
+#include <Common/Random.h>
+#include <Common/ScopeGuard.h>
+#include <Common/StringExt.h>
+#include <Common/md5.h>
+
+#include <boost/algorithm/string.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+
+#include <re2/re2.h>
+
 #include <cassert>
 #include <string>
 #include <vector>
@@ -35,31 +61,6 @@ extern "C" {
 #include <string.h>
 }
 
-#include<re2/re2.h>
-
-#include <boost/algorithm/string.hpp>
-#include <boost/algorithm/string/predicate.hpp>
-
-#include "Common/Config.h"
-#include "Common/Error.h"
-#include "Common/FailureInducer.h"
-#include "Common/FileUtils.h"
-#include "Common/md5.h"
-#include "Common/Random.h"
-#include "Common/ScopeGuard.h"
-#include "Common/StringExt.h"
-
-#include "Hypertable/Lib/CommitLog.h"
-#include "Hypertable/Lib/CommitLogReader.h"
-#include "Hypertable/Lib/LoadDataEscape.h"
-
-#include "CellStoreFactory.h"
-#include "Global.h"
-#include "MergeScannerRange.h"
-#include "MetadataNormal.h"
-#include "MetadataRoot.h"
-#include "MetaLogEntityTaskAcknowledgeRelinquish.h"
-#include "Range.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -1697,7 +1698,7 @@ void Range::unlock() {
  * Called before range has been flipped live so no locking needed
  */
 void Range::replay_transfer_log(CommitLogReader *commit_log_reader) {
-  BlockCompressionHeaderCommitLog header;
+  BlockHeaderCommitLog header;
   const uint8_t *base, *ptr, *end;
   size_t len;
   ByteString key, value;

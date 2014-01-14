@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,10 +22,9 @@
 #ifndef HYPERTABLE_REQUESTHANDLERCOMMITLOGSYNC_H
 #define HYPERTABLE_REQUESTHANDLERCOMMITLOGSYNC_H
 
-#include "AsyncComm/ApplicationHandler.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/Event.h"
-
+#include <AsyncComm/ApplicationHandler.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/Event.h>
 
 namespace Hypertable {
 

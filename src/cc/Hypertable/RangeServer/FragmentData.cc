@@ -19,16 +19,17 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Definitions for FragmentData.
- * This file contains the type definitions for FragmentData, a class for
- * accumulating phantom update data for a phantom range.
- */
+/// @file
+/// Definitions for FragmentData.
+/// This file contains the type definitions for FragmentData, a class for
+/// accumulating phantom update data for a phantom range.
 
-#include "Common/Compat.h"
-
-#include "Global.h"
+#include <Common/Compat.h>
 #include "FragmentData.h"
+
+#include <Hypertable/RangeServer/Global.h>
+
+#include <Hypertable/Lib/ClusterId.h>
 
 using namespace std;
 using namespace Hypertable;
@@ -108,7 +109,7 @@ void FragmentData::merge(TableIdentifier &table, RangePtr &range,
     HT_ASSERT(dbuf.ptr-dbuf.base <= (long)dbuf.size);
 
     if (decode_remain)
-      log->write(dbuf, latest_revision, false);
+      log->write(ClusterId::get(), dbuf, latest_revision, false);
   }
 
   HT_INFOF("Just added %d key/value pairs (%lld bytes)",

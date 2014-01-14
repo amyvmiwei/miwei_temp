@@ -19,15 +19,20 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <boost/algorithm/string.hpp>
+#include <Common/Compat.h>
+
 #include "CompressorFactory.h"
-#include "BlockCompressionCodecBmz.h"
-#include "BlockCompressionCodecNone.h"
-#include "BlockCompressionCodecZlib.h"
-#include "BlockCompressionCodecLzo.h"
-#include "BlockCompressionCodecQuicklz.h"
-#include "BlockCompressionCodecSnappy.h"
+
+#include <Common/Logger.h>
+
+#include <Hypertable/Lib/BlockCompressionCodecBmz.h>
+#include <Hypertable/Lib/BlockCompressionCodecNone.h>
+#include <Hypertable/Lib/BlockCompressionCodecZlib.h>
+#include <Hypertable/Lib/BlockCompressionCodecLzo.h>
+#include <Hypertable/Lib/BlockCompressionCodecQuicklz.h>
+#include <Hypertable/Lib/BlockCompressionCodecSnappy.h>
+
+#include <boost/algorithm/string.hpp>
 
 using namespace Hypertable;
 using namespace std;

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,48 +19,95 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Declarations for BlockCompressionCodec.
+/// This file contains declarations for BlockCompressionCodec, an abstract base
+/// class for block compressors.
+
 #ifndef HYPERTABLE_BLOCKCOMPRESSIONCODEC_H
 #define HYPERTABLE_BLOCKCOMPRESSIONCODEC_H
 
-#include <vector>
-#include "Common/Thread.h"
-#include "Common/Error.h"
-#include "Common/ReferenceCount.h"
+#include <Common/Error.h>
+#include <Common/ReferenceCount.h>
+#include <Common/String.h>
 
-#include "BlockCompressionHeader.h"
+#include <Hypertable/Lib/BlockHeader.h>
+
+#include <vector>
 
 namespace Hypertable {
 
   class DynamicBuffer;
 
-  /**
-   * Abstract base class for block compression codecs.
-   */
+  /// @addtogroup libHypertable
+  /// @{
+
+  /// Abstract base class for block compression codecs.
   class BlockCompressionCodec : public ReferenceCount {
   public:
-    enum Type { UNKNOWN=-1, NONE=0, BMZ=1, ZLIB=2, LZO=3, QUICKLZ=4,
-                SNAPPY=5, COMPRESSION_TYPE_LIMIT=6 };
+
+    /// Enumeration for compression type.
+    enum Type {
+      UNKNOWN=-1, ///< Unknown compression type
+      NONE=0,     ///< No compression
+      BMZ=1,      ///< Bentley-McIlroy large common substring compression
+      ZLIB=2,     ///< ZLIB compression
+      LZO=3,      ///< LZO compression
+      QUICKLZ=4,  ///< QuickLZ 1.5 compession
+      SNAPPY=5,   ///< Snappy compression
+      COMPRESSION_TYPE_LIMIT=6  ///< Limit of compression types
+    };
+
+    /// Compression codec argument vector.
     typedef std::vector<String> Args;
 
+    /// Returns string mnemonic for compression type.
+    /// @param algo Compression type (see BlockCompressionCodec::Type)
+    /// @return %String mnemonic representing name of compression algorithm
     static const char *get_compressor_name(uint16_t algo);
 
-    BlockCompressionCodec() { HT_THREAD_ID_SET(m_creator_thread); }
-    virtual ~BlockCompressionCodec() { return; }
+    /// Destructor.
+    virtual ~BlockCompressionCodec() { }
 
+    /// Compresses a buffer.
+    /// @param intput Input buffer
+    /// @param output Output buffer
+    /// @param header Block header populated by function
+    /// @param reserve Additional space to reserve at end of <code>output</code>
     virtual void deflate(const DynamicBuffer &input, DynamicBuffer &output,
-                         BlockCompressionHeader &header, size_t reserve=0) = 0;
+                         BlockHeader &header, size_t reserve=0) = 0;
 
+    /// Decompresses a buffer.
+    /// @param intput Input buffer
+    /// @param output Output buffer
+    /// @param header Block header
     virtual void inflate(const DynamicBuffer &input, DynamicBuffer &output,
-                         BlockCompressionHeader &header) = 0;
+                         BlockHeader &header) = 0;
 
-    virtual void set_args(const Args &args) {}
+    /// Sets arguments to control compression behavior.
+    /// This method provides a default implementation for derived classes and
+    /// simply throws an exception for each argument
+    /// @param args Compressor specific arguments
+    /// @throws Exception Code set to Error::BLOCK_COMPRESSOR_INVALID_ARG
+    virtual void set_args(const Args &args) {
+      foreach_ht (const String &arg, args)
+        HT_THROWF(Error::BLOCK_COMPRESSOR_INVALID_ARG, "Unrecognized argument "
+                  "to %s codec: '%s'", get_compressor_name(get_type()),
+                  arg.c_str());
+    }
 
+    /// Returns compression type enum.
+    /// Returns the enum value that represents the compressoion type
+    /// @see BlockCompressionCodec::Type
+    /// @return Compressor type
     virtual int get_type() = 0;
 
-    HT_THREAD_ID_DECL(m_creator_thread);
   };
+
+  /// Smart pointer to BlockCompressionCodec
   typedef boost::intrusive_ptr<BlockCompressionCodec> BlockCompressionCodecPtr;
 
+  /// @}
 
 } // namespace Hypertable
 

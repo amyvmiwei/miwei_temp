@@ -19,27 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cstdlib>
-#include <iostream>
+#include <Common/Compat.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/Init.h>
+#include <Common/Usage.h>
 
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/Init.h"
-#include "Common/Usage.h"
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionManager.h>
+#include <AsyncComm/ReactorFactory.h>
 
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/ReactorFactory.h"
+#include <DfsBroker/Lib/Config.h>
+#include <DfsBroker/Lib/Client.h>
 
-#include "DfsBroker/Lib/Config.h"
-#include "DfsBroker/Lib/Client.h"
-
-#include "Hypertable/Lib/CommitLog.h"
-#include "Hypertable/Lib/CommitLogReader.h"
+#include <Hypertable/Lib/CommitLog.h>
+#include <Hypertable/Lib/CommitLogReader.h>
+#include <Hypertable/Lib/Types.h>
 
 #include <boost/algorithm/string/predicate.hpp>
+
+#include <cstdlib>
+#include <iostream>
 
 using namespace Hypertable;
 using namespace Config;
@@ -140,7 +141,7 @@ namespace {
   void
   display_log(DfsBroker::Client *dfs_client, const String &prefix,
               CommitLogReader *log_reader, bool display_values) {
-    BlockCompressionHeaderCommitLog header;
+    BlockHeaderCommitLog header;
     const uint8_t *base;
     size_t len;
     const uint8_t *ptr, *end;
@@ -193,12 +194,14 @@ namespace {
   display_log_block_summary(DfsBroker::Client *dfs_client, const String &prefix,
       CommitLogReader *log_reader) {
     CommitLogBlockInfo binfo;
-    BlockCompressionHeaderCommitLog header;
+    BlockHeaderCommitLog header;
 
     while (log_reader->next_raw_block(&binfo, &header)) {
 
       HT_ASSERT(header.check_magic(CommitLog::MAGIC_DATA));
 
+      printf("%s/%s\tcluster_id\t%llu\n",
+             binfo.log_dir, binfo.file_fragment, (Llu)header.get_cluster_id());
       printf("%s/%s\trevision\t%llu\n",
              binfo.log_dir, binfo.file_fragment, (Llu)header.get_revision());
       printf("%s/%s\tstart-offset\t%llu\n",
@@ -227,7 +230,7 @@ namespace {
   void
   display_log_valid_links(DfsBroker::Client *dfs_client, const String &prefix,
                           CommitLogReader *log_reader) {
-    BlockCompressionHeaderCommitLog header;
+    BlockHeaderCommitLog header;
     const uint8_t *base;
     size_t len;
     StringSet linked_logs;

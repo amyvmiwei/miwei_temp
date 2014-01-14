@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -222,7 +222,7 @@ namespace {
       revision = log->get_timestamp();
 
       if (i == link_point) {
-        if ((error = log->link_log(link_log)) != Error::OK)
+        if ((error = log->link_log(0, link_log)) != Error::OK)
           HT_THROW(error, "Problem writing to log file");
       }
       else {
@@ -236,7 +236,7 @@ namespace {
         dbuf.ptr = dbuf.base + (4*limit);
         dbuf.own = false;
 
-        if ((error = log->write(dbuf, revision)) != Error::OK)
+        if ((error = log->write(0, dbuf, revision)) != Error::OK)
           HT_THROW(error, "Problem writing to log file");
       }
     }
@@ -249,7 +249,7 @@ namespace {
     size_t block_len;
     uint32_t *iptr;
     size_t icount;
-    BlockCompressionHeaderCommitLog header;
+    BlockHeaderCommitLog header;
 
     while (log_reader->next(&block, &block_len, &header)) {
       assert((block_len % 4) == 0);

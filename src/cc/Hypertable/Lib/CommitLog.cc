@@ -19,27 +19,33 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cassert>
+/// @file
+/// Definitions for CommitLog.
+/// This file contains definitions for CommitLog, a class for creating and
+/// appending entries to an edit log.
 
-#include "Common/Checksum.h"
-#include "Common/Config.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/StringExt.h"
-#include "Common/Time.h"
-#include "Common/md5.h"
-
-#include "AsyncComm/Protocol.h"
-
-#include "Hypertable/Lib/CompressorFactory.h"
-#include "Hypertable/Lib/BlockCompressionCodec.h"
-#include "Hypertable/Lib/BlockCompressionHeaderCommitLog.h"
+#include <Common/Compat.h>
 
 #include "CommitLog.h"
-#include "CommitLogReader.h"
+
+#include <Hypertable/Lib/BlockCompressionCodec.h>
+#include <Hypertable/Lib/BlockHeaderCommitLog.h>
+#include <Hypertable/Lib/CommitLogReader.h>
+#include <Hypertable/Lib/CompressorFactory.h>
+
+#include <AsyncComm/Protocol.h>
+
+#include <Common/Checksum.h>
+#include <Common/Config.h>
+#include <Common/DynamicBuffer.h>
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/StringExt.h>
+#include <Common/Time.h>
+#include <Common/md5.h>
+
+#include <cassert>
 
 using namespace Hypertable;
 
@@ -65,7 +71,6 @@ CommitLog::initialize(const String &log_dir, PropertiesPtr &props,
   String compressor;
 
   m_log_dir = log_dir;
-  m_cur_fragment_length = 0;
   m_cur_fragment_num = 0;
   m_needs_roll = false;
   m_replication = -1;
@@ -118,6 +123,8 @@ CommitLog::initialize(const String &log_dir, PropertiesPtr &props,
     m_fs->mkdirs(m_log_dir);
     m_fd = m_fs->create(m_cur_fragment_fname, Filesystem::OPEN_FLAG_OVERWRITE,
                         -1, m_replication, -1);
+    CommitLogBlockStream::write_header(m_fs, m_fd);
+    m_cur_fragment_length = CommitLogBlockStream::header_size();
   }
   catch (Hypertable::Exception &e) {
     HT_ERRORF("Problem initializing commit log '%s' - %s (%s)",
@@ -156,9 +163,11 @@ CommitLog::sync() {
   return error;
 }
 
-int CommitLog::write(DynamicBuffer &buffer, int64_t revision, bool sync) {
+int
+CommitLog::write(uint64_t cluster_id, DynamicBuffer &buffer, int64_t revision,
+                 bool sync) {
   int error;
-  BlockCompressionHeaderCommitLog header(MAGIC_DATA, revision);
+  BlockHeaderCommitLog header(MAGIC_DATA, revision, cluster_id);
 
   if (m_needs_roll) {
     ScopedLock lock(m_mutex);
@@ -185,11 +194,11 @@ int CommitLog::write(DynamicBuffer &buffer, int64_t revision, bool sync) {
 }
 
 
-int CommitLog::link_log(CommitLogBase *log_base) {
+int CommitLog::link_log(uint64_t cluster_id, CommitLogBase *log_base) {
   ScopedLock lock(m_mutex);
   int error;
   int64_t link_revision = log_base->get_latest_revision();
-  BlockCompressionHeaderCommitLog header(MAGIC_LINK, link_revision);
+  BlockHeaderCommitLog header(MAGIC_LINK, link_revision, cluster_id);
 
   DynamicBuffer input;
   String &log_dir = log_base->get_log_dir();
@@ -212,7 +221,7 @@ int CommitLog::link_log(CommitLogBase *log_base) {
   if (link_revision > m_latest_revision)
     m_latest_revision = link_revision;
 
-  input.ensure(header.length());
+  input.ensure(header.encoded_length());
 
   header.set_revision(link_revision);
   header.set_compression_type(BlockCompressionCodec::NONE);
@@ -379,7 +388,6 @@ void CommitLog::remove_file_info(CommitLogFileInfo *fi, StringSet &removed_logs)
 
 }
 
-
 int CommitLog::roll(CommitLogFileInfo **clfip) {
   CommitLogFileInfo *file_info;
 
@@ -426,7 +434,6 @@ int CommitLog::roll(CommitLogFileInfo **clfip) {
     }
 
     m_latest_revision = TIMESTAMP_MIN;
-    m_cur_fragment_length = 0;
 
     m_cur_fragment_num++;
     m_cur_fragment_fname = m_log_dir + "/" + m_cur_fragment_num;
@@ -436,6 +443,8 @@ int CommitLog::roll(CommitLogFileInfo **clfip) {
   try {
     m_fd = m_fs->create(m_cur_fragment_fname, Filesystem::OPEN_FLAG_OVERWRITE,
                         -1, m_replication, -1);
+    CommitLogBlockStream::write_header(m_fs, m_fd);
+    m_cur_fragment_length = CommitLogBlockStream::header_size();
   }
   catch (Exception &e) {
     HT_ERRORF("Problem rolling commit log: %s: %s",
@@ -451,7 +460,7 @@ int CommitLog::roll(CommitLogFileInfo **clfip) {
 
 int
 CommitLog::compress_and_write(DynamicBuffer &input,
-    BlockCompressionHeader *header, int64_t revision, bool sync) {
+    BlockHeader *header, int64_t revision, bool sync) {
   ScopedLock lock(m_mutex);
   int error = Error::OK;
   DynamicBuffer zblock;

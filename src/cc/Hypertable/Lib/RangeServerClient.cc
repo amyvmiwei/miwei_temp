@@ -20,21 +20,23 @@
  */
 
 /** @file
- * Definitions for RangeServerClient
- * This file contains definitions for RangeServerClient, a client interface class
- * to the RangeServer.
+ * Definitions for RangeServerClient.
+ * This file contains definitions for RangeServerClient, a client interface
+ * class to the RangeServer.
  */
 
-#include "Common/Compat.h"
-#include "Common/Config.h"
-#include "Common/Error.h"
-#include "Common/StringExt.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
+#include <Common/Config.h>
+#include <Common/Error.h>
+#include <Common/StringExt.h>
+#include <Common/Serialization.h>
 
-#include "AsyncComm/DispatchHandlerSynchronizer.h"
+#include <AsyncComm/DispatchHandlerSynchronizer.h>
+
+#include <Hypertable/Lib/ScanBlock.h>
 
 #include "RangeServerClient.h"
-#include "ScanBlock.h"
+
 
 using namespace Hypertable;
 using namespace Hypertable::Config;
@@ -183,50 +185,14 @@ RangeServerClient::acknowledge_load(const CommAddress &addr,
 }
 
 void
-RangeServerClient::update(const CommAddress &addr, const TableIdentifier &table,
-    uint32_t count, StaticBuffer &buffer, uint32_t flags, DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_update(table, count,
-                                                            buffer, flags));
+RangeServerClient::update(const CommAddress &addr, uint64_t cluster_id, 
+                          const TableIdentifier &table, uint32_t count,
+                          StaticBuffer &buffer, uint32_t flags,
+                          DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_update(cluster_id, table,
+                                                            count, buffer,
+                                                            flags));
   send_message(addr, cbp, handler, m_default_timeout_ms);
-}
-
-void
-RangeServerClient::update(const CommAddress &addr, const TableIdentifier &table,
-                          uint32_t count, StaticBuffer &buffer, uint32_t flags,
-                          DispatchHandler *handler, Timer &timer) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_update(table, count,
-                                                            buffer, flags));
-  send_message(addr, cbp, handler, timer.remaining());
-}
-
-
-void
-RangeServerClient::update(const CommAddress &addr, const TableIdentifier &table,
-                          uint32_t count, StaticBuffer &buffer, uint32_t flags) {
-  do_update(addr, table, count, buffer, flags, m_default_timeout_ms);
-}
-
-void
-RangeServerClient::update(const CommAddress &addr, const TableIdentifier &table,
-                          uint32_t count, StaticBuffer &buffer, uint32_t flags,
-                          Timer &timer) {
-  do_update(addr, table, count, buffer, flags, timer.remaining());
-}
-
-void
-RangeServerClient::do_update(const CommAddress &addr, const TableIdentifier &table,
-                             uint32_t count, StaticBuffer &buffer, uint32_t flags,
-                             uint32_t timeout_ms) {
-  DispatchHandlerSynchronizer sync_handler;
-  EventPtr event;
-  CommBufPtr cbp(RangeServerProtocol::create_request_update(table, count,
-                                                            buffer, flags));
-  send_message(addr, cbp, &sync_handler, timeout_ms);
-
-  if (!sync_handler.wait_for_reply(event))
-    HT_THROW((int)Protocol::response_code(event), 
-            String("RangeServer update() failure : ") 
-                + Protocol::string_format_message(event));
 }
 
 void
@@ -360,7 +326,8 @@ RangeServerClient::fetch_scanblock(const CommAddress &addr, int scanner_id,
 
 void
 RangeServerClient::do_fetch_scanblock(const CommAddress &addr, int scanner_id,
-                                      ScanBlock &scan_block, uint32_t timeout_ms) {
+                                      ScanBlock &scan_block,
+                                      uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::
@@ -433,17 +400,20 @@ RangeServerClient::update_schema(const CommAddress &addr,
   send_message(addr, cbp, handler, timer.remaining());
 }
 
-void
-RangeServerClient::commit_log_sync(const CommAddress &addr, const TableIdentifier &table_id,
-                                   DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_commit_log_sync(table_id));
+void RangeServerClient::
+commit_log_sync(const CommAddress &addr, uint64_t cluster_id,
+                const TableIdentifier &table_id, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_commit_log_sync(cluster_id,
+                                                                     table_id));
   send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
-void
-RangeServerClient::commit_log_sync(const CommAddress &addr, const TableIdentifier &table_id,
-                                   DispatchHandler *handler, Timer &timer) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_commit_log_sync(table_id));
+void RangeServerClient::
+commit_log_sync(const CommAddress &addr, uint64_t cluster_id,
+                const TableIdentifier &table_id,
+                DispatchHandler *handler, Timer &timer) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_commit_log_sync(cluster_id,
+                                                                     table_id));
   send_message(addr, cbp, handler, timer.remaining());
 }
 
@@ -455,7 +425,8 @@ void RangeServerClient::status(const CommAddress &addr, Timer &timer) {
   do_status(addr, timer.remaining());
 }
 
-void RangeServerClient::do_status(const CommAddress &addr, uint32_t timeout_ms) {
+void
+RangeServerClient::do_status(const CommAddress &addr, uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_status());
@@ -526,25 +497,27 @@ void RangeServerClient::dump_pseudo_table(const CommAddress &addr,
              + Protocol::string_format_message(event));
 }
 
-void
-RangeServerClient::get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
-                                  uint64_t generation, StatsRangeServer &stats) {
+void RangeServerClient::
+get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec>&specs,
+               uint64_t generation, StatsRangeServer &stats) {
   do_get_statistics(addr, specs, generation, stats, m_default_timeout_ms);
 }
 
-void
-RangeServerClient::get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
-                                  uint64_t generation, StatsRangeServer &stats, Timer &timer) {
+void RangeServerClient::
+get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec>&specs,
+               uint64_t generation, StatsRangeServer &stats, Timer &timer) {
   do_get_statistics(addr, specs, generation, stats, timer.remaining());
 }
 
-void
-RangeServerClient::do_get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
-                                     uint64_t generation, StatsRangeServer &stats,
-                                     uint32_t timeout_ms) {
+void RangeServerClient::
+do_get_statistics(const CommAddress &addr,
+                  std::vector<SystemVariable::Spec> &specs,
+                  uint64_t generation, StatsRangeServer &stats,
+                  uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(specs, generation));
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(specs,
+                                                                   generation));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
   if (!sync_handler.wait_for_reply(event))
@@ -558,23 +531,25 @@ RangeServerClient::do_get_statistics(const CommAddress &addr, std::vector<System
   stats.decode(&ptr, &remaining);
 }
 
-void
-RangeServerClient::get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
-                                  uint64_t generation, DispatchHandler *handler) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(specs, generation));
+void RangeServerClient::
+get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec>&specs,
+               uint64_t generation, DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(specs,
+                                                                   generation));
   send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
-void
-RangeServerClient::get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
-                                  uint64_t generation, DispatchHandler *handler,
-                                  Timer &timer) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(specs, generation));
+void RangeServerClient::
+get_statistics(const CommAddress &addr, std::vector<SystemVariable::Spec>&specs,
+               uint64_t generation, DispatchHandler *handler,
+               Timer &timer) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_get_statistics(specs,
+                                                                   generation));
   send_message(addr, cbp, handler, timer.remaining());
 }
 
-void
-RangeServerClient::decode_response_get_statistics(const EventPtr &event, StatsRangeServer &stats) {
+void RangeServerClient::
+decode_response_get_statistics(const EventPtr &event, StatsRangeServer &stats) {
   int32_t error = Protocol::response_code(event);
 
   if (error != 0)
@@ -614,12 +589,13 @@ void RangeServerClient::relinquish_range(const CommAddress &addr,
   do_relinquish_range(addr, table, range, timer.remaining());
 }
 
-void
-RangeServerClient::do_relinquish_range(const CommAddress &addr, const TableIdentifier &table,
-                                       const RangeSpec &range, uint32_t timeout_ms) {
+void RangeServerClient::
+do_relinquish_range(const CommAddress &addr, const TableIdentifier &table,
+                    const RangeSpec &range, uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
-  CommBufPtr cbp(RangeServerProtocol::create_request_relinquish_range(table, range));
+  CommBufPtr cbp(RangeServerProtocol::create_request_relinquish_range(table,
+                                                                      range));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
   if (!sync_handler.wait_for_reply(event))
@@ -675,21 +651,25 @@ void RangeServerClient::phantom_load(const CommAddress &addr,
              + Protocol::string_format_message(event));
 }
 
-void RangeServerClient::phantom_update(const CommAddress &addr, const String &location,
-    int plan_generation, const QualifiedRangeSpec &range, uint32_t fragment,
-    StaticBuffer &buffer, DispatchHandler *handler) {
+void RangeServerClient::
+phantom_update(const CommAddress &addr, const String &location,
+               int plan_generation, const QualifiedRangeSpec &range,
+               uint32_t fragment, StaticBuffer &buffer,
+               DispatchHandler *handler) {
   CommBufPtr cbp(RangeServerProtocol::create_request_phantom_update(range,
                      location, plan_generation, fragment, buffer));
   send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
-void RangeServerClient::phantom_prepare_ranges(const CommAddress &addr, int64_t op_id,
-    const String &location, int plan_generation, 
-    const vector<QualifiedRangeSpec> &ranges, uint32_t timeout_ms) {
+void RangeServerClient::
+phantom_prepare_ranges(const CommAddress &addr, int64_t op_id,
+                       const String &location, int plan_generation, 
+                       const vector<QualifiedRangeSpec> &ranges,
+                       uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
-  CommBufPtr cbp(RangeServerProtocol::create_request_phantom_prepare_ranges(op_id,
-                          location, plan_generation, ranges));
+  CommBufPtr cbp(RangeServerProtocol::create_request_phantom_prepare_ranges(
+                                    op_id, location, plan_generation, ranges));
 
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
@@ -700,12 +680,15 @@ void RangeServerClient::phantom_prepare_ranges(const CommAddress &addr, int64_t 
 
 }
 
-void RangeServerClient::phantom_commit_ranges(const CommAddress &addr, int64_t op_id,
-    const String &location, int plan_generation, 
-    const vector<QualifiedRangeSpec> &ranges, uint32_t timeout_ms) {
+void RangeServerClient::
+phantom_commit_ranges(const CommAddress &addr, int64_t op_id,
+                      const String &location, int plan_generation, 
+                      const vector<QualifiedRangeSpec> &ranges,
+                      uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
-  CommBufPtr cbp(RangeServerProtocol::create_request_phantom_commit_ranges(op_id, location, plan_generation, ranges));
+  CommBufPtr cbp(RangeServerProtocol::create_request_phantom_commit_ranges(
+                                   op_id, location, plan_generation, ranges));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
   if (!sync_handler.wait_for_reply(event))
@@ -714,11 +697,11 @@ void RangeServerClient::phantom_commit_ranges(const CommAddress &addr, int64_t o
              + Protocol::string_format_message(event));
 }
 
-void
-RangeServerClient::set_state(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
-                                  uint64_t generation, DispatchHandler *handler,
-                                  Timer &timer) {
-  CommBufPtr cbp(RangeServerProtocol::create_request_set_state(specs, generation));
+void RangeServerClient::
+set_state(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
+          uint64_t generation, DispatchHandler *handler, Timer &timer) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_set_state(specs,
+                                                               generation));
   send_message(addr, cbp, handler, timer.remaining());
 }
 
