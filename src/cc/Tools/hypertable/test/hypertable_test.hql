@@ -623,3 +623,10 @@ pause 5;
 select * from issue1175 where 'apple' < ROW <= 'cherry' limit 1;
 insert into issue1175 values ("foo'", "a", "test");
 select * from issue1175 where ROW = "foo'";
+# issue 1032
+CREATE TABLE CounterTest (f COUNTER);
+INSERT INTO CounterTest VALUES ("r", "f", "2");
+INSERT INTO CounterTest VALUES ("r", "f", "-1");
+INSERT INTO CounterTest VALUES ("r", "f", "-1");
+INSERT INTO CounterTest VALUES ("r", "f", "-1");
+SELECT * FROM CounterTest;
