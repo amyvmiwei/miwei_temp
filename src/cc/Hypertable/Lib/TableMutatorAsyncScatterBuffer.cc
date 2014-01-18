@@ -92,7 +92,7 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
       else
 	m_counter_value.add_unchecked(value, value_len);
       m_counter_value.add_unchecked((const void *)"\0",1);
-      uint64_t val = strtoull((const char *)m_counter_value.base, &endptr, 0);
+      int64_t val = strtoll((const char *)m_counter_value.base, &endptr, 0);
       if (*endptr)
 	HT_THROWF(Error::BAD_KEY, "Expected integer value, got %s, row=%s",
 		  (char*)m_counter_value.base, key.row);

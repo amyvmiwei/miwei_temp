@@ -56,7 +56,7 @@ namespace Hypertable {
 
         if (counter) {
           const uint8_t *decode;
-          uint64_t count;
+          int64_t count;
           size_t remain = value.decode_length(&decode);
           // value must be encoded 64 bit int followed by '=' character
           if (remain != 9)
@@ -66,7 +66,7 @@ namespace Hypertable {
           count = Serialization::decode_i64(&decode, &remain);
           HT_ASSERT(*decode == '=');
           //convert counter to ascii
-          sprintf(numbuf, "%llu", (Llu) count);
+          sprintf(numbuf, "%lld", (Lld) count);
           value_len = strlen(numbuf);
           counter_value.clear();
           append_as_byte_string(counter_value, numbuf, value_len);
