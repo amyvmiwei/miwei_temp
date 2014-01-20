@@ -194,24 +194,16 @@ TableMutatorAsync::update_with_index(Key &key, const void *value,
   //
   // if value has a 0 byte then we also have to escape it
   if (cf->has_index) {
-    size_t escaped_len;
-    const char *val_ptr = (const char *)value;
-    for (const char *v = val_ptr; v < val_ptr + value_len; v++) {
-      if (*v == '\0') {
-        const char *outp;
-        escaped_len = (size_t)value_len;
-        ldev.escape(val_ptr, (size_t)value_len, &outp, &escaped_len);
-        value_len = (uint32_t)escaped_len;
-        value = outp;
-        break;
-      }
-    }
-    StaticBuffer sb(4 + value_len + rowlen + 1 + 1);
+    size_t escaped_value_len;
+    const char *escaped_value;
+    ldev.escape((const char *)value, (size_t)value_len, &escaped_value, &escaped_value_len);
+    //std::cout << escaped_value << std::endl;
+    StaticBuffer sb(4 + escaped_value_len + rowlen + 1 + 1);
     char *p = (char *)sb.base;
     sprintf(p, "%d,", (int)key.column_family_code);
     p     += strlen(p);
-    memcpy(p, value, value_len);
-    p     += value_len;
+    memcpy(p, escaped_value, escaped_value_len);
+    p     += escaped_value_len;
     *p++  = '\t';
     memcpy(p, row, rowlen);
     p     += rowlen;

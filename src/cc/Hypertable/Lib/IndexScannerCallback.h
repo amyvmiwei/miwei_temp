@@ -376,10 +376,6 @@ static String last;
       ssb.set_return_deletes(primary_spec.return_deletes);
       ssb.set_keys_only(primary_spec.keys_only);
       ssb.set_row_regexp(primary_spec.row_regexp);
-      foreach_ht (const String &s, primary_spec.columns)
-        ssb.add_column(s.c_str());
-      ssb.set_time_interval(primary_spec.time_interval.first, 
-                            primary_spec.time_interval.second);
 
       ScopedLock lock(m_scanner_mutex);
       if (m_shutdown)
@@ -391,12 +387,17 @@ static String last;
                 m_timeout_ms, Table::SCANNER_FLAG_IGNORE_INDEX);
       }
       else {
+
+        // Fetch primary columns and restrict by time interval
+        foreach_ht (const String &s, primary_spec.columns)
+          ssb.add_column(s.c_str());
+        ssb.set_time_interval(primary_spec.time_interval.first, 
+                              primary_spec.time_interval.second);
+
+        // Add row interval for each entry returned from index
         for (CkeyMap::iterator it = m_tmp_keys.begin(); 
                 it != m_tmp_keys.end(); ++it) 
           ssb.add_row((const char *)it->first.row);
-        foreach_ht (const ColumnPredicate &cp, primary_spec.column_predicates)
-          ssb.add_column_predicate(cp.column_family, cp.operation,
-                  cp.value, cp.value_len);
 
         s = m_primary_table->create_scanner_async(this, ssb.get(), 
                 m_timeout_ms, Table::SCANNER_FLAG_IGNORE_INDEX);
@@ -503,9 +504,6 @@ static String last;
         ssb->add_column(s.c_str());
       ssb->set_max_versions(primary_spec.max_versions);
       ssb->set_return_deletes(primary_spec.return_deletes);
-      foreach_ht (const ColumnPredicate &cp, primary_spec.column_predicates)
-        ssb->add_column_predicate(cp.column_family, cp.operation,
-                cp.value, cp.value_len);
       if (primary_spec.value_regexp)
         ssb->set_value_regexp(primary_spec.value_regexp);
 

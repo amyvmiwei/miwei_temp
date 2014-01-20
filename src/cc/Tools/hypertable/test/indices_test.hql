@@ -258,7 +258,6 @@ SELECT a FROM t WHERE a =^ "cell" LIMIT 8;
 SELECT b FROM t WHERE b =^ "cell" LIMIT 8;
 SELECT a FROM t WHERE ROW < "row05" AND a =^ "cell";
 
-# the next lines must fail with a syntax error
 SELECT * FROM t WHERE a = "cella2";
 SELECT b FROM t WHERE a = "cella2";
 SELECT a FROM t WHERE b = "cellb2";
@@ -570,3 +569,22 @@ SELECT join:a1 FROM t WHERE VALUE REGEXP 'v';
 CREATE TABLE badidea (c COUNTER, INDEX c);
 CREATE TABLE badidea (c COUNTER, QUALIFIER INDEX c);
 
+# More Index testing
+DROP TABLE IF EXISTS User;
+CREATE TABLE User (name, address, age, index name, index age);
+INSERT INTO User VALUES ('2014-01-17 03:41:29', '123456789', 'name', 'Doug'),
+('2014-01-17 03:41:29', '123456789', 'address', '2999 Canyon Rd.'),
+('2014-01-17 03:41:29', '123456789', 'age', '45');
+INSERT INTO User VALUES ('2014-01-17 03:41:30', '234567890', 'name', 'Joe'),
+('2014-01-17 03:41:30', '234567890', 'address', '123 Main St.'),
+('2014-01-17 03:41:30', '234567890', 'age', '57');
+INSERT INTO User VALUES ('2014-01-17 03:41:31', '345678901', 'name', 'Doug'),
+('2014-01-17 03:41:31', '345678901', 'address', '234 Maple St.'),
+('2014-01-17 03:41:31', '345678901', 'age', '12');
+SELECT * FROM User WHERE address="2999 Canyon Rd.";
+SELECT * FROM User WHERE name=^"D";
+SELECT * FROM User WHERE name="Doug";
+SELECT age FROM User WHERE name="Doug";
+SELECT * FROM User WHERE name="Doug" AND age="45";
+SELECT address FROM User WHERE name="Doug" AND TIMESTAMP < "2014-01-17 03:41:30";
+SELECT address FROM User WHERE name="Doug" AND TIMESTAMP > "2014-01-17 03:41:30";

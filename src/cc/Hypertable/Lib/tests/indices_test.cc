@@ -197,10 +197,12 @@ test_escaped_regexps(void)
     ScanSpecBuilder ssb;
     ssb.add_column_predicate("a", q.second, q.first);
     String s=escape(q.first, strlen(q.first));
+    //String s(q.first);
     fprintf(fout, "query: '%s'\n", s.c_str());
     TableScanner *ts=table->create_scanner(ssb.get());
     int j = 0;
     while (ts->next(cell)) {
+      //String s((const char *)cell.value, (size_t)cell.value_len);
       s=escape((const char *)cell.value, (size_t)cell.value_len);
       fprintf(fout, "  %d: '%s'\n", j++, s.c_str());
     }
