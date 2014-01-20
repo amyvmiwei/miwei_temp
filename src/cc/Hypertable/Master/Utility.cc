@@ -228,7 +228,6 @@ void prepare_index(ContextPtr &context, const String &name,
 
   Schema::ColumnFamily *new_cf = new Schema::ColumnFamily;
   new_cf->name = "v1";
-  new_cf->max_versions = 1;
   new_cf->ag = "default";
   index_schema->add_column_family(new_cf);
 

@@ -124,10 +124,6 @@ namespace Hypertable {
      */
     Table *get_table() {return m_table; }
 
-    /**
-     * Returns scanspec for this scanner
-     */
-    const ScanSpec &get_scan_spec() { return m_scan_spec_builder.get(); }
   private:
     friend class IndexScannerCallback;
 
@@ -141,6 +137,7 @@ namespace Hypertable {
     void move_to_next_interval_scanner(int current_scanner);
     bool use_index(TablePtr table, const ScanSpec &primary_spec, 
             ScanSpecBuilder &index_spec, bool *use_qualifier);
+    void transform_primary_scan_spec(ScanSpecBuilder &primary_spec);
     void add_index_row(ScanSpecBuilder &ssb, const char *row);
 
     std::vector<IntervalScannerAsyncPtr>  m_interval_scanners;
@@ -157,7 +154,6 @@ namespace Hypertable {
     int                 m_error;
     String              m_error_msg;
     Table              *m_table;
-    ScanSpecBuilder     m_scan_spec_builder;
     bool                m_cancelled;
     bool                m_use_index;
   };

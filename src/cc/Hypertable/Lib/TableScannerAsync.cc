@@ -48,23 +48,25 @@ TableScannerAsync::TableScannerAsync(Comm *comm,
     m_error(Error::OK), m_cancelled(false), m_use_index(false)
 {
   ScopedLock lock(m_mutex);
+  ScanSpecBuilder primary_spec(scan_spec);
   ScanSpecBuilder index_spec;
+  const ScanSpec *first_pass_spec;
   bool use_qualifier = false;
-  const ScanSpec *pspec = &scan_spec;
 
   HT_ASSERT(timeout_ms);
 
   // can we optimize this query with an index?
-  if (!(flags&Table::SCANNER_FLAG_IGNORE_INDEX)
-      && (table->has_index_table() || table->has_qualifier_index_table())
+  if (!(flags & Table::SCANNER_FLAG_IGNORE_INDEX)
       && use_index(table, scan_spec, index_spec, &use_qualifier)) {
-    pspec = &index_spec.get();
+
+    first_pass_spec = &index_spec.get();
+
     m_use_index = true;
 
     // create a ResultCallback object which will load the keys from
     // the index, then sort and verify them
-    cb = new IndexScannerCallback(table, scan_spec, cb, timeout_ms, 
-                        use_qualifier);
+    cb = new IndexScannerCallback(table, primary_spec.get(), cb, timeout_ms, 
+                                  use_qualifier);
 
     // get the index table
     if (use_qualifier)
@@ -76,12 +78,15 @@ TableScannerAsync::TableScannerAsync(Comm *comm,
     // IndexScannerCallback object will then transform the results and forward 
     // them to the original callback
   }
+  else {
+    transform_primary_scan_spec(primary_spec);
+    first_pass_spec = &primary_spec.get();
+  }
 
   m_cb = cb;
   m_table = table;
-  m_scan_spec_builder = *pspec;
 
-  init(comm, app_queue, table, range_locator, *pspec, timeout_ms, cb);
+  init(comm, app_queue, table, range_locator, *first_pass_spec, timeout_ms, cb);
 }
 
 bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec, 
@@ -89,56 +94,55 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
 {
   HT_ASSERT(!table->schema()->need_id_assignment());
 
-  // never use an index if the row key is specified
-  if (primary_spec.row_intervals.size())
+  if (!table->has_index_table() && !table->has_qualifier_index_table())
     return false;
 
   index_spec.set_keys_only(true);
+  index_spec.set_start_time(primary_spec.time_interval.first);
+  index_spec.set_end_time(primary_spec.time_interval.second);
   index_spec.add_column("v1");
 
   // if a column qualifier is specified then make sure that all columns have
   // a qualifier index. only support prefix column qualifiers or exact
   // qualifiers, but not the regexp qualifier
-  if (primary_spec.columns.size()) {
-    for (size_t i = 0; i < primary_spec.columns.size(); i++) {
-      Schema::ColumnFamily *cf = 0;
-      const char *qualifier_start = strchr(primary_spec.columns[i], ':');
-      if (!qualifier_start) {
-        *use_qualifier = false;
-        break;
-      }
-
-      String column(primary_spec.columns[i], qualifier_start);
-      cf = table->schema()->get_column_family(column);
-      if (!cf || !cf->has_qualifier_index) {
-        *use_qualifier = false;
-        break;
-      }
-
-      qualifier_start++;
-      String qualifier(qualifier_start);
-      boost::algorithm::trim_if(qualifier, boost::algorithm::is_any_of("'\""));
-
-      if (qualifier[0] == '/') {
-        *use_qualifier = false;
-        break;
-      }
-
-      // prefix match: create row interval ["%d,qualifier", ..)
-      if (qualifier[0] == '^') {
-        String q(qualifier.c_str() + 1);
-        trim_if(q, boost::algorithm::is_any_of("'\""));
-        String s = format("%d,%s", (int)cf->id, q.c_str());
-        add_index_row(index_spec, s.c_str());
-      }
-      // exact match:  create row interval ["%d,qualifier\t", ..)
-      else {
-        String s = format("%d,%s\t", (int)cf->id, qualifier.c_str());
-        add_index_row(index_spec, s.c_str());
-      }
-
-      *use_qualifier = true;
+  for (size_t i = 0; i < primary_spec.columns.size(); i++) {
+    Schema::ColumnFamily *cf = 0;
+    const char *qualifier_start = strchr(primary_spec.columns[i], ':');
+    if (!qualifier_start) {
+      *use_qualifier = false;
+      break;
     }
+
+    String column(primary_spec.columns[i], qualifier_start);
+    cf = table->schema()->get_column_family(column);
+    if (!cf || !cf->has_qualifier_index) {
+      *use_qualifier = false;
+      break;
+    }
+
+    qualifier_start++;
+    String qualifier(qualifier_start);
+    boost::algorithm::trim_if(qualifier, boost::algorithm::is_any_of("'\""));
+
+    if (qualifier[0] == '/') {
+      *use_qualifier = false;
+      break;
+    }
+
+    // prefix match: create row interval ["%d,qualifier", ..)
+    if (qualifier[0] == '^') {
+      String q(qualifier.c_str() + 1);
+      trim_if(q, boost::algorithm::is_any_of("'\""));
+      String s = format("%d,%s", (int)cf->id, q.c_str());
+      add_index_row(index_spec, s.c_str());
+    }
+    // exact match:  create row interval ["%d,qualifier\t", ..)
+    else {
+      String s = format("%d,%s\t", (int)cf->id, qualifier.c_str());
+      add_index_row(index_spec, s.c_str());
+    }
+
+    *use_qualifier = true;
   }
 
   if (*use_qualifier)
@@ -148,7 +152,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
   index_spec.get().columns.resize(0);
 
   // for value prefix queries we require normal indicies for ALL scanned columns
-  if (primary_spec.column_predicates.size() == 1 && primary_spec.columns.size()) {
+  if (!primary_spec.column_predicates.empty()) {
 
     foreach_ht (const ColumnPredicate &cp, primary_spec.column_predicates) {
       Schema::ColumnFamily *cf=table->schema()->get_column_family(
@@ -186,6 +190,47 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
   }
 
   return false;
+}
+
+void TableScannerAsync::transform_primary_scan_spec(ScanSpecBuilder &primary_spec) {
+
+  if (m_use_index)
+    return;
+
+  if (!primary_spec.get().column_predicates.empty()) {
+
+    // Load predicate_columns set
+    CstrSet predicate_columns;
+    foreach_ht (const ColumnPredicate &predicate,
+                primary_spec.get().column_predicates)
+      predicate_columns.insert(predicate.column_family);
+
+    // If selected columns empty, add all columns referenced in predicates
+    if (primary_spec.get().columns.empty()) {
+      foreach_ht (const char *column, predicate_columns)
+        primary_spec.add_column(column);
+    }
+    else {
+      // If columns selected that are not referenced in predicate, throw error
+      foreach_ht (const char *column, primary_spec.get().columns) {
+        if (predicate_columns.count(column) == 0)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Selected column %s must be referenced in Column predicate",
+                    column);
+      }
+      // Load selected_columns set
+      CstrSet selected_columns;
+      foreach_ht (const char *column, primary_spec.get().columns)
+        selected_columns.insert(column);
+
+      // Add predicate columns that are missing from selection set
+      foreach_ht (const ColumnPredicate &predicate,
+                  primary_spec.get().column_predicates)
+        if (selected_columns.count(predicate.column_family) == 0)
+          primary_spec.add_column(predicate.column_family);
+    }
+  }
+
 }
 
 void TableScannerAsync::add_index_row(ScanSpecBuilder &ssb, const char *row)

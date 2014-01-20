@@ -53,7 +53,7 @@ namespace Hypertable {
     IndexMutatorCallback(TableMutatorAsync *primary_mutator,
             ResultCallback *original_cb, uint64_t max_memory)
       : ResultCallback(), m_primary_mutator(primary_mutator),
-      m_original_cb(original_cb), m_max_memory(max_memory) {
+        m_original_cb(original_cb), m_max_memory(max_memory), m_used_memory(0) {
     }
 
     virtual ~IndexMutatorCallback() {

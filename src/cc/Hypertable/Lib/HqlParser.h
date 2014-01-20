@@ -340,6 +340,7 @@ namespace Hypertable {
       bool nokeys;
       String current_rename_column_old_name;
       String current_column_family;
+      String current_column_predicate_name;
       char field_separator;
 
       void validate_function(const String &s) {
@@ -888,9 +889,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         String s(str, end-str);
         trim_if(s, boost::is_any_of("'\""));
-        if (state.current_column_family != s)
-          HT_THROW(Error::HQL_PARSE_ERROR, "Column predicate name not "
-                  "identical with selected column");
+        state.current_column_predicate_name = s;
        }
        ParserState &state;
     };
@@ -901,7 +900,7 @@ namespace Hypertable {
       void operator()(char const *str, char const *end) const {
         String s(str, end-str);
         trim_if(s, boost::is_any_of("'\""));
-        state.scan.builder.add_column_predicate(state.current_column_family.c_str(), 
+        state.scan.builder.add_column_predicate(state.current_column_predicate_name.c_str(),
                     operation, s.c_str());
        }
        ParserState &state;

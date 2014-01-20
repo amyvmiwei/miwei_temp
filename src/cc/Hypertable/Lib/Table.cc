@@ -205,7 +205,6 @@ Table::create_mutator_async(ResultCallback *cb, uint32_t timeout_ms, uint32_t fl
 TableScanner *
 Table::create_scanner(const ScanSpec &scan_spec, uint32_t timeout_ms,
                       int32_t flags) {
-  scan_spec.throw_if_invalid();
 
   {
     ScopedLock lock(m_mutex);
@@ -221,8 +220,6 @@ Table::create_scanner_async(ResultCallback *cb, const ScanSpec &scan_spec, uint3
                             int32_t flags) {
   HT_ASSERT(needs_index_table() ? has_index_table() : true);
   HT_ASSERT(needs_qualifier_index_table() ? has_qualifier_index_table() : true);
-
-  scan_spec.throw_if_invalid();
 
   {
     ScopedLock lock(m_mutex);

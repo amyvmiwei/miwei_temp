@@ -31,7 +31,6 @@ DESCRIBE TABLE "^IndexTest";
     <ColumnFamily>
       <Name>v1</Name>
       <Counter>false</Counter>
-      <MaxVersions>1</MaxVersions>
       <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>

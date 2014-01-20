@@ -344,23 +344,3 @@ void ScanSpec::parse_column(const char *column_str, String &family,
     }
   }
 }
-
-void ScanSpec::throw_if_invalid() const {
-  // check if the ColumnPredicate column is identical to the retrieved column
-  if (columns.empty() || column_predicates.empty())
-    return;
-  if (columns.size() != column_predicates.size())
-    HT_THROW(Error::HQL_PARSE_ERROR, "Column predicate name not "
-            "identical with selected column");
-
-  for (size_t i = 0; i < columns.size(); ++i) {
-    const char *colon;
-    if ((colon = strchr(columns[i], ':'))) {
-      String s(columns[i], colon);
-      if (s != column_predicates[i].column_family)
-        HT_THROW(Error::HQL_PARSE_ERROR, "Column predicate name not "
-                "identical with selected column");
-    }
-  }
-}
-

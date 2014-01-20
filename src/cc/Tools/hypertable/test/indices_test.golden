@@ -204,7 +204,7 @@ CREATE TABLE t (
 SHOW CREATE TABLE "^t";
 
 CREATE TABLE '^t' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
@@ -226,7 +226,7 @@ CREATE TABLE t (
 SHOW CREATE TABLE "^t";
 
 CREATE TABLE '^t' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
@@ -263,6 +263,8 @@ row4	d	cell4
 row4	d	cell4
 SELECT * FROM "^t";
 1,cell1\trow1	v1	
+1,cell1\trow1	v1	
+2,cell2\trow2	v1	
 2,cell2\trow2	v1	
 INSERT INTO t VALUES ("row11", "a", "cell11");
 INSERT INTO t VALUES ("row12", "b", "cell12");
@@ -283,8 +285,10 @@ row4	d	cell4
 row4	d	cell4
 SELECT * FROM "^t";
 1,cell1\trow1	v1	
+1,cell1\trow1	v1	
 1,cell11\trow11	v1	
 2,cell12\trow12	v1	
+2,cell2\trow2	v1	
 2,cell2\trow2	v1	
 INSERT INTO t VALUES ("row15", "a", "cell15");
 INSERT INTO t VALUES ("row16", "b", "cell16");
@@ -309,10 +313,12 @@ row4	d	cell4
 row4	d	cell4
 SELECT * FROM "^t";
 1,cell1\trow1	v1	
+1,cell1\trow1	v1	
 1,cell11\trow11	v1	
 1,cell15\trow15	v1	
 2,cell12\trow12	v1	
 2,cell16\trow16	v1	
+2,cell2\trow2	v1	
 2,cell2\trow2	v1	
 INSERT INTO t VALUES ("row\t25", "a", "cell\t25");
 INSERT INTO t VALUES ("row\t26", "b", "cell\t26");
@@ -341,13 +347,15 @@ row\\t27	c	cell\\t27
 row\\t28	d	cell\\t28
 SELECT * FROM "^t";
 1,cell1\trow1	v1	
+1,cell1\trow1	v1	
 1,cell11\trow11	v1	
 1,cell15\trow15	v1	
-1,cell\\t25\trow\\\\t25	v1	
+1,cell\\\\t25\trow\\\\t25	v1	
 2,cell12\trow12	v1	
 2,cell16\trow16	v1	
 2,cell2\trow2	v1	
-2,cell\\t26\trow\\\\t26	v1	
+2,cell2\trow2	v1	
+2,cell\\\\t26\trow\\\\t26	v1	
 
 DROP TABLE t;
 CREATE TABLE t(a, INDEX a);
@@ -477,6 +485,7 @@ rowa13	a	cella9xy
 INSERT INTO t VALUES ("rowa3", "a", "cella4");
 SELECT a FROM t WHERE a = "cella4";
 rowa3	a	cella4
+rowa3	a	cella3
 rowa4	a	cella4
 SELECT a FROM t WHERE a =^ "c" KEYS_ONLY;
 rowa0
@@ -709,7 +718,6 @@ DESCRIBE TABLE "^t";
     <ColumnFamily>
       <Name>v1</Name>
       <Counter>false</Counter>
-      <MaxVersions>1</MaxVersions>
       <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
@@ -734,7 +742,6 @@ DESCRIBE TABLE "^t";
     <ColumnFamily>
       <Name>v1</Name>
       <Counter>false</Counter>
-      <MaxVersions>1</MaxVersions>
       <deleted>false</deleted>
     </ColumnFamily>
   </AccessGroup>
@@ -806,13 +813,9 @@ row02	a	cella02
 row03	a	cella03
 row04	a	cella04
 
-# the next lines must fail with a syntax error
 SELECT * FROM t WHERE a = "cella2";
-Error: Column predicate name not identical with selected column - HYPERTABLE HQL parse error
 SELECT b FROM t WHERE a = "cella2";
-Error: Column predicate name not identical with selected column - HYPERTABLE HQL parse error
 SELECT a FROM t WHERE b = "cellb2";
-Error: Column predicate name not identical with selected column - HYPERTABLE HQL parse error
 
 SHOW CREATE TABLE t;
 
@@ -825,7 +828,7 @@ CREATE TABLE t (
 SHOW CREATE TABLE "^t";
 
 CREATE TABLE '^t' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
@@ -841,7 +844,7 @@ CREATE TABLE t (
 SHOW CREATE TABLE "^t";
 
 CREATE TABLE '^t' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
@@ -870,7 +873,7 @@ CREATE TABLE r (
 SHOW CREATE TABLE "^r";
 
 CREATE TABLE '^r' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
@@ -1086,7 +1089,7 @@ CREATE TABLE t (
 SHOW CREATE TABLE "^^t";
 
 CREATE TABLE '^^t' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
@@ -1107,7 +1110,7 @@ CREATE TABLE t (
 SHOW CREATE TABLE "^^t";
 
 CREATE TABLE '^^t' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
@@ -1183,14 +1186,14 @@ CREATE TABLE t (
 SHOW CREATE TABLE "^t";
 
 CREATE TABLE '^t' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
 SHOW CREATE TABLE "^^t";
 
 CREATE TABLE '^^t' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
@@ -1207,14 +1210,14 @@ CREATE TABLE r (
 SHOW CREATE TABLE "^r";
 
 CREATE TABLE '^r' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
 SHOW CREATE TABLE "^^r";
 
 CREATE TABLE '^^r' (
-  v1 MAX_VERSIONS 1,
+  v1,
   ACCESS GROUP default (v1)
 )
 
@@ -1853,9 +1856,9 @@ SELECT a:^"^" FROM t;
 rowa14	a:^q0123	cella14
 
 SELECT * FROM t WHERE a = "cella0";
-Error: Column predicate name not identical with selected column - HYPERTABLE HQL parse error
+rowa0	a:q0	cella0
 SELECT b FROM t WHERE a = "cella0";
-Error: Column predicate name not identical with selected column - HYPERTABLE HQL parse error
+Error: Selected column b must be referenced in Column predicate - HYPERTABLE HQL parse error
 SELECT a FROM t WHERE a = "cella0";
 rowa0	a:q0	cella0
 SELECT a FROM t WHERE a = "cella11";
@@ -1919,3 +1922,45 @@ Error: Column family 'c' is a COUNTER and therefore cannot have indices - HYPERT
 CREATE TABLE badidea (c COUNTER, QUALIFIER INDEX c);
 Error: Column family 'c' is a COUNTER and therefore cannot have indices - HYPERTABLE HQL parse error
 
+# More Index testing
+DROP TABLE IF EXISTS User;
+CREATE TABLE User (name, address, age, index name, index age);
+INSERT INTO User VALUES ('2014-01-17 03:41:29', '123456789', 'name', 'Doug'),
+('2014-01-17 03:41:29', '123456789', 'address', '2999 Canyon Rd.'),
+('2014-01-17 03:41:29', '123456789', 'age', '45');
+INSERT INTO User VALUES ('2014-01-17 03:41:30', '234567890', 'name', 'Joe'),
+('2014-01-17 03:41:30', '234567890', 'address', '123 Main St.'),
+('2014-01-17 03:41:30', '234567890', 'age', '57');
+INSERT INTO User VALUES ('2014-01-17 03:41:31', '345678901', 'name', 'Doug'),
+('2014-01-17 03:41:31', '345678901', 'address', '234 Maple St.'),
+('2014-01-17 03:41:31', '345678901', 'age', '12');
+SELECT * FROM User WHERE address="2999 Canyon Rd.";
+123456789	address	2999 Canyon Rd.
+SELECT * FROM User WHERE name=^"D";
+123456789	name	Doug
+123456789	address	2999 Canyon Rd.
+123456789	age	45
+345678901	name	Doug
+345678901	address	234 Maple St.
+345678901	age	12
+SELECT * FROM User WHERE name="Doug";
+123456789	name	Doug
+123456789	address	2999 Canyon Rd.
+123456789	age	45
+345678901	name	Doug
+345678901	address	234 Maple St.
+345678901	age	12
+SELECT age FROM User WHERE name="Doug";
+123456789	age	45
+345678901	age	12
+SELECT * FROM User WHERE name="Doug" AND age="45";
+123456789	name	Doug
+123456789	address	2999 Canyon Rd.
+123456789	age	45
+345678901	name	Doug
+345678901	address	234 Maple St.
+345678901	age	12
+SELECT address FROM User WHERE name="Doug" AND TIMESTAMP < "2014-01-17 03:41:30";
+123456789	address	2999 Canyon Rd.
+SELECT address FROM User WHERE name="Doug" AND TIMESTAMP > "2014-01-17 03:41:30";
+345678901	address	234 Maple St.
