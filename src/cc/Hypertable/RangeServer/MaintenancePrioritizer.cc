@@ -332,6 +332,27 @@ MaintenancePrioritizer::schedule_necessary_compactions(std::vector<RangeData> &r
                           (Lld)memory_state.needed);
 
       }
+      // Compact LARGE CellCaches
+      else if (!ag_data->in_memory && ag_data->mem_used > Global::access_group_max_mem) {
+        if (memory_state.need_more()) {
+          range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT|MaintenanceFlag::MEMORY_PURGE;
+          ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR|MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
+          memory_state.decrement_needed(ag_data->mem_allocated);
+        }
+        else {
+          range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
+          ag_data->maintenance_flags |=
+            ag_data->needs_merging ? MaintenanceFlag::COMPACT_MERGING : MaintenanceFlag::COMPACT_MINOR;
+        }
+        if (range_data[i].data->priority == 0)
+          range_data[i].data->priority = priority++;
+        if (trace)
+          *trace += format("%d large CellCache %s (mem_used=%lld, "
+                           "priority=%d, mem_needed=%lld)\n", __LINE__,
+                           ag_data->ag->get_full_name(),
+                           (Lld)ag_data->mem_used, range_data[i].data->priority,
+                           (Lld)memory_state.needed);
+      }
       // Merging compactions
       else if (ag_data->needs_merging) {
         if (range_data[i].data->priority == 0)
@@ -347,26 +368,6 @@ MaintenancePrioritizer::schedule_necessary_compactions(std::vector<RangeData> &r
                            "mem_needed=%lld)\n", __LINE__,
                            ag_data->ag->get_full_name(),
                            range_data[i].data->priority,
-                           (Lld)memory_state.needed);
-      }
-      // Compact LARGE CellCaches
-      else if (!ag_data->in_memory && ag_data->mem_used > Global::access_group_max_mem) {
-        if (memory_state.need_more()) {
-          range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT|MaintenanceFlag::MEMORY_PURGE;
-          ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR|MaintenanceFlag::MEMORY_PURGE_SHADOW_CACHE;
-          memory_state.decrement_needed(ag_data->mem_allocated);
-        }
-        else {
-          range_data[i].data->maintenance_flags |= MaintenanceFlag::COMPACT;
-          ag_data->maintenance_flags |= MaintenanceFlag::COMPACT_MINOR;
-        }
-        if (range_data[i].data->priority == 0)
-          range_data[i].data->priority = priority++;
-        if (trace)
-          *trace += format("%d large CellCache %s (mem_used=%lld, "
-                           "priority=%d, mem_needed=%lld)\n", __LINE__,
-                           ag_data->ag->get_full_name(),
-                           (Lld)ag_data->mem_used, range_data[i].data->priority,
                            (Lld)memory_state.needed);
       }
     }
