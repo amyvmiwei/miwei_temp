@@ -2273,7 +2273,7 @@ void RangeServer::update_qualify_and_transform() {
 
           // error inducer for tests/integration/fail-index-mutator
           if (HT_FAILURE_SIGNALLED("fail-index-mutator-0")) {
-            if (!strcmp(row, "1,+9RfmqoH62hPVvDTh6EC4zpTNfzNr8\t01918")) {
+            if (!strcmp(row, "1,+9RfmqoH62hPVvDTh6EC4zpTNfzNr8\t\t01918")) {
               uc->send_back.count++;
               uc->send_back.error = Error::INDUCED_FAILURE;
               uc->send_back.offset = mod - request->buffer.base;

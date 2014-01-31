@@ -38,6 +38,7 @@ Logger.cc
 MurmurHash.cc
 Properties.cc
 Random.cc
+Regex.cc
 String.cc
 System.cc
 SystemInfo.cc

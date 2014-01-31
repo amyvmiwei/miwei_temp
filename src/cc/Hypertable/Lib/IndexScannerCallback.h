@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,23 +22,45 @@
 #ifndef HYPERTABLE_INDEXSCANNERCALLBACK_H
 #define HYPERTABLE_INDEXSCANNERCALLBACK_H
 
-#include <vector>
-#include <deque>
-#include <map>
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/LoadDataEscape.h>
+#include <Hypertable/Lib/Namespace.h>
+#include <Hypertable/Lib/ResultCallback.h>
+#include <Hypertable/Lib/ScanSpec.h>
+#include <Hypertable/Lib/TableScannerAsync.h>
+
+#include <HyperAppHelper/Unique.h>
+
+#include <Common/Filesystem.h>
+#include <Common/FlyweightString.h>
+
 #include <boost/thread/condition.hpp>
 
-#include "Common/Filesystem.h"
-#include "HyperAppHelper/Unique.h"
-#include "ResultCallback.h"
-#include "TableScannerAsync.h"
-#include "ScanSpec.h"
-#include "Namespace.h"
-#include "Client.h"
+#include <algorithm>
+#include <deque>
+#include <map>
+#include <vector>
 
 // this macro enables the "ScanSpecBuilder queue" test code; it fills the queue
 // till it exceeds the limit, and makes sure that the queue is blocking
 // till it gets empty again
 #undef TEST_SSB_QUEUE
+
+namespace {
+  struct QualifierFilterMatch :
+    std::unary_function<std::pair<String, String>, bool> {
+    QualifierFilterMatch(const char *row) : row(row) { }
+    bool operator()(const std::pair<String, String> &filter) const {
+      if (!strncmp(filter.first.c_str(), row, filter.first.length())) {
+        if (filter.second.empty() ||
+            strstr(row+filter.first.length(), filter.second.c_str()))
+          return true;
+      }
+      return false;
+    }
+    const char *row;
+  };
+}
 
 namespace Hypertable {
 
@@ -54,7 +76,6 @@ static String last;
         "<ColumnFamily>"
           "<Name>%s</Name>"
           "<Counter>false</Counter>"
-          "<MaxVersions>1</MaxVersions> "
           "<deleted>false</deleted>"
         "</ColumnFamily>";
 
@@ -79,18 +100,21 @@ static String last;
   public:
 
     IndexScannerCallback(TablePtr primary_table, const ScanSpec &primary_spec, 
-            ResultCallback *original_cb, uint32_t timeout_ms, 
-            bool qualifier_scan)
+                         std::vector<CellPredicate> &cell_predicates,
+                         ResultCallback *original_cb, uint32_t timeout_ms, 
+                         bool qualifier_scan)
       : ResultCallback(), m_primary_table(primary_table), 
-        m_primary_spec(primary_spec), m_original_cb(original_cb), 
-        m_timeout_ms(timeout_ms), m_mutator(0), 
+        m_primary_spec(primary_spec),
+        m_original_cb(original_cb), m_timeout_ms(timeout_ms), m_mutator(0), 
         m_row_limit(0), m_cell_limit(0), m_cell_count(0), m_row_offset(0), 
         m_cell_offset(0), m_row_count(0), m_cell_limit_per_family(0), 
         m_eos(false), m_limits_reached(false), m_readahead_count(0), 
-        m_qualifier_scan(qualifier_scan), m_tmp_cutoff(0), 
-        m_final_decrement(false), m_shutdown(false) {
+        m_cur_matching(0), m_all_matching(0), m_qualifier_scan(qualifier_scan),
+        m_tmp_cutoff(0), m_final_decrement(false), m_shutdown(false) {
       atomic_set(&m_outstanding_scanners, 0);
       m_original_cb->increment_outstanding();
+
+      m_cell_predicates.swap(cell_predicates);
 
       if (primary_spec.row_limit != 0 ||
           primary_spec.cell_limit != 0 ||
@@ -107,6 +131,12 @@ static String last;
       }
       else
         m_track_limits = false;
+
+      // Setup bit pattern for all matching predicates
+      for (size_t i=0; i<primary_spec.column_predicates.size(); i++) {
+        m_all_matching <<= 1;
+        m_all_matching |= 1;
+      }
 
       Schema::ColumnFamilies &families =
                 primary_table->schema()->get_column_families();
@@ -262,53 +292,112 @@ static String last;
     void collect_indices(TableScannerAsync *scanner, ScanCellsPtr &scancells) {
       const ScanSpec &primary_spec = m_primary_spec.get();
       // split the index row into column id, cell value and cell row key
-      size_t old_inserted_keys = m_tmp_keys.size();
       Cells cells;
+      const char *unescaped_row;
+      const char *unescaped_qualifier;
+      const char *unescaped_value;
+      size_t unescaped_row_len;
+      size_t unescaped_qualifier_len;
+      size_t unescaped_value_len;
+      LoadDataEscape escaper_row;
+      LoadDataEscape escaper_qualifier;
+      LoadDataEscape escaper_value;
       scancells->get(cells);
       foreach_ht (Cell &cell, cells) {
-        char *r = (char *)cell.row_key;
-        char *p = r + strlen(r);
-        while (*p != '\t' && p > (char *)cell.row_key)
-          p--;
-        if (*p != '\t') {
+        char *qv = (char *)cell.row_key;
+
+        // get unescaped row
+        char *row = qv + strlen(qv);
+        while (*row != '\t' && row > (char *)cell.row_key)
+          row--;
+        if (*row != '\t') {
           HT_WARNF("Invalid index entry '%s' in index table '^%s'",
-                  r, m_primary_table->get_name().c_str());
+                   qv, m_primary_table->get_name().c_str());
           continue;
         }
+        *row++ = '\0';
+        escaper_row.unescape(row, strlen(row), &unescaped_row, &unescaped_row_len);
+
         // cut off the "%d," part at the beginning to get the column id
         // The max. column id is 255, therefore there must be a ',' after 3
         // positions
-        char *id = r;
-        while (*r != ',' && (r - id <= 4))
-          r++;
-        if (*r != ',') {
+        char *id = qv;
+        while (*qv != ',' && (qv - id <= 4))
+          qv++;
+        if (*qv != ',') {
           HT_WARNF("Invalid index entry '%s' in index table '^%s'",
                   id, m_primary_table->get_name().c_str());
           continue;
         }
-        *r++ = 0;
+        *qv++ = 0;
         uint32_t cfid = (uint32_t)atoi(id);
         if (!cfid || m_column_map.find(cfid) == m_column_map.end()) {
           HT_WARNF("Invalid index entry '%s' in index table '^%s'",
-                  r, m_primary_table->get_name().c_str());
+                   qv, m_primary_table->get_name().c_str());
           continue;
         }
 
-        // split strings; after the next line p will point to the row key
-        // and r will point to the value. id points to the column id
-        *p++ = 0;
+        uint32_t matching = 0;
+
+        if (m_qualifier_scan) {
+          escaper_qualifier.unescape(qv, strlen(qv),
+                                     &unescaped_qualifier, &unescaped_qualifier_len);
+
+          if (primary_spec.and_column_predicates) {
+            std::bitset<32> bits;
+            m_cell_predicates[cfid].all_matches(unescaped_qualifier,
+                                                unescaped_qualifier_len,
+                                                "", 0, bits);
+            if ((matching = (uint32_t)bits.to_ulong()) == 0L)
+              continue;
+            
+          }
+          else if (!m_cell_predicates[cfid].matches(unescaped_qualifier,
+                                                    unescaped_qualifier_len, "", 0))
+            continue;
+        }
+        else {
+          char *value = qv;
+          if ((qv = strchr(value, '\t')) == 0) {
+            HT_WARNF("Invalid index entry '%s' in index table '^%s'",
+                     value, m_primary_table->get_name().c_str());
+            continue;
+          }
+          size_t value_len = qv-value;
+          *qv++ = 0;
+          escaper_qualifier.unescape(qv, strlen(qv),
+                                     &unescaped_qualifier, &unescaped_qualifier_len);
+          escaper_value.unescape(value, value_len,
+                                 &unescaped_value, &unescaped_value_len);
+          if (primary_spec.and_column_predicates) {
+            std::bitset<32> bits;
+            m_cell_predicates[cfid].all_matches(unescaped_qualifier,
+                                                unescaped_qualifier_len,
+                                                unescaped_value,
+                                                unescaped_value_len,
+                                                bits);
+            if ((matching = (uint32_t)bits.to_ulong()) == 0L)
+              continue;
+
+          }
+          else if (!m_cell_predicates[cfid].matches(unescaped_qualifier,
+                                                    unescaped_qualifier_len,
+                                                    unescaped_value,
+                                                    unescaped_value_len))
+            continue;
+        }
 
         // if the original query specified row intervals then these have
         // to be filtered in the client
         if (primary_spec.row_intervals.size()) {
-          if (!row_intervals_match(primary_spec.row_intervals, p))
+          if (!row_intervals_match(primary_spec.row_intervals, unescaped_row))
             continue;
         }
 
         // same about cell intervals
         if (primary_spec.cell_intervals.size()) {
-          if (!cell_intervals_match(primary_spec.cell_intervals, p, 
-                                m_column_map[cfid].c_str()))
+          if (!cell_intervals_match(primary_spec.cell_intervals, unescaped_row,
+                                    m_column_map[cfid].c_str()))
             continue;
         }
 
@@ -316,26 +405,25 @@ static String last;
         // temporary table. otherwise buffer it in memory but make sure
         // that no duplicate rows are inserted
         KeySpec key;
-        key.row = p;
-        key.row_len = strlen(p);
+        key.row = m_strings.get(unescaped_row);
+        key.row_len = unescaped_row_len;
         key.column_family = m_column_map[cfid].c_str();
         key.timestamp = cell.timestamp;
         if (m_qualifier_scan) {
-          key.column_qualifier = r;
-          key.column_qualifier_len = strlen(r);
+          key.column_qualifier = m_strings.get(unescaped_qualifier);
+          key.column_qualifier_len = unescaped_qualifier_len;
         }
         if (m_mutator)
-          m_mutator->set(key, 0);
-        else if (m_tmp_keys.find(key) == m_tmp_keys.end()) {
-          m_tmp_keys.insert(CkeyMap::value_type(key, true));
+          m_mutator->set(key, &matching, sizeof(matching));
+        else {
+          CkeyMap::iterator it = m_tmp_keys.find(key);
+          if (it == m_tmp_keys.end())
+            m_tmp_keys.insert(CkeyMap::value_type(key, matching));
+          else
+            it->second |= matching;
         }
-        m_tmp_cutoff += key.row_len + sizeof(KeySpec);
+        m_tmp_cutoff += sizeof(KeySpec) + key.row_len + key.column_qualifier_len;
       }
-
-      // if the temporary table was not yet created: make sure that the keys
-      // don't point to invalid memory
-      if (!m_mutator && m_tmp_keys.size() > old_inserted_keys)
-        m_scancells_buffer.push_back(scancells);
 
       // reached EOS? then flush the mutator
       if (scancells->get_eos()) {
@@ -356,13 +444,13 @@ static String last;
           create_temp_table();
           for (CkeyMap::iterator it = m_tmp_keys.begin(); 
                   it != m_tmp_keys.end(); ++it) 
-            m_mutator->set(it->first, 0);
+            m_mutator->set(it->first, &it->second, sizeof(it->second));
         }
         // if a temp table existed (or was just created): clear the buffered
         // keys. they're no longer required
         if (m_tmp_table) {
           m_tmp_keys.clear();
-          m_scancells_buffer.clear();
+          m_strings.clear();
         }
 
         return;
@@ -372,10 +460,6 @@ static String last;
       // scanner for this table. Otherwise immediately send the temporary
       // results to the primary table for verification
       ScanSpecBuilder ssb;
-      ssb.set_max_versions(primary_spec.max_versions);
-      ssb.set_return_deletes(primary_spec.return_deletes);
-      ssb.set_keys_only(primary_spec.keys_only);
-      ssb.set_row_regexp(primary_spec.row_regexp);
 
       ScopedLock lock(m_scanner_mutex);
       if (m_shutdown)
@@ -388,23 +472,62 @@ static String last;
       }
       else {
 
+        ssb.set_max_versions(primary_spec.max_versions);
+        ssb.set_return_deletes(primary_spec.return_deletes);
+        ssb.set_keys_only(primary_spec.keys_only);
+        ssb.set_row_regexp(primary_spec.row_regexp);
+
         // Fetch primary columns and restrict by time interval
         foreach_ht (const String &s, primary_spec.columns)
           ssb.add_column(s.c_str());
         ssb.set_time_interval(primary_spec.time_interval.first, 
                               primary_spec.time_interval.second);
 
-        // Add row interval for each entry returned from index
-        for (CkeyMap::iterator it = m_tmp_keys.begin(); 
-                it != m_tmp_keys.end(); ++it) 
-          ssb.add_row((const char *)it->first.row);
+        const char *last_row = "";
+
+        if (primary_spec.and_column_predicates) {
+
+          // Add row interval for each entry returned from index
+          for (CkeyMap::iterator it = m_tmp_keys.begin(); 
+               it != m_tmp_keys.end(); ++it) {
+            if (strcmp((const char *)it->first.row, last_row)) {
+              if (m_cur_matching == m_all_matching)
+                ssb.add_row(last_row);
+              last_row = (const char *)it->first.row;
+              m_cur_matching = it->second;
+            }
+            else
+              m_cur_matching |= it->second;
+          }
+          if (m_cur_matching == m_all_matching)
+            ssb.add_row(last_row);
+          m_cur_matching = 0;
+
+          if (ssb.get().row_intervals.empty()) {
+            m_eos = true;
+            return;
+          }
+
+        }
+        else {
+          for (CkeyMap::iterator it = m_tmp_keys.begin(); 
+               it != m_tmp_keys.end(); ++it) {
+            if (strcmp((const char *)it->first.row, last_row)) {
+              if (*last_row)
+                ssb.add_row(last_row);
+              last_row = (const char *)it->first.row;
+            }
+          }
+          if (*last_row)
+            ssb.add_row(last_row);
+        }
 
         s = m_primary_table->create_scanner_async(this, ssb.get(), 
                 m_timeout_ms, Table::SCANNER_FLAG_IGNORE_INDEX);
 
         // clean up
         m_tmp_keys.clear();
-        m_scancells_buffer.clear();
+        m_strings.clear();
       }
 
       m_scanners.push_back(s);
@@ -441,7 +564,8 @@ static String last;
                         ScanCellsPtr &scancells) {
       // no results from the primary table, or LIMIT/CELL_LIMIT exceeded? 
       // then return immediately
-      if ((scancells->get_eos() && scancells->empty()) || m_limits_reached) {
+      if ((scancells->get_eos() && scancells->empty() &&
+           m_last_rowkey_verify.empty()) || m_limits_reached) {
         sspecs_clear();
         m_eos = true;
         return;
@@ -451,9 +575,7 @@ static String last;
 
       Cells cells;
       scancells->get(cells);
-      const char *last = m_last_rowkey_verify.size() 
-                       ? m_last_rowkey_verify.c_str() 
-                       : "";
+      const char *last = m_last_rowkey_verify.c_str();
 
       // this test code creates one ScanSpec for each single row that is 
       // received from the temporary table. As soon as the scan spec queue
@@ -504,20 +626,53 @@ static String last;
         ssb->add_column(s.c_str());
       ssb->set_max_versions(primary_spec.max_versions);
       ssb->set_return_deletes(primary_spec.return_deletes);
+      ssb->set_keys_only(primary_spec.keys_only);
       if (primary_spec.value_regexp)
         ssb->set_value_regexp(primary_spec.value_regexp);
+
+      uint32_t matching;
 
       // foreach_ht cell from the secondary index: verify that it exists in
       // the primary table, but make sure that each rowkey is only inserted
       // ONCE
-      foreach_ht (Cell &cell, cells) {
-        if (!strcmp(last, (const char *)cell.row_key))
-          continue;
-        last = (const char *)cell.row_key;
+      if (primary_spec.and_column_predicates) {
+        foreach_ht (Cell &cell, cells) {
 
-        // then add the key to the ScanSpec
-        ssb->add_row(cell.row_key);
-      } 
+          HT_ASSERT(cell.value_len == sizeof(matching));
+          memcpy(&matching, cell.value, sizeof(matching));
+
+          if (!strcmp(last, (const char *)cell.row_key)) {
+            m_cur_matching |= matching;
+            continue;
+          }
+
+          // then add the key to the ScanSpec
+          if (m_cur_matching == m_all_matching)
+            ssb->add_row(last);
+
+          last = (const char *)cell.row_key;
+
+          m_cur_matching = matching;
+        }
+        if (scancells->get_eos() && m_cur_matching == m_all_matching) {
+          m_cur_matching = 0;
+          ssb->add_row(last);
+          last = "";
+        }
+      }
+      else {
+        foreach_ht (Cell &cell, cells) {
+          if (!strcmp(last, (const char *)cell.row_key))
+            continue;
+          // then add the key to the ScanSpec
+          ssb->add_row(last);
+          last = (const char *)cell.row_key;
+        }
+        if (scancells->get_eos()) {
+          ssb->add_row(last);
+          last = "";
+        }
+      }
  
       // store the "last" pointer before it goes out of scope
       m_last_rowkey_verify = last;
@@ -527,7 +682,7 @@ static String last;
         m_sspecs_cond.wait(lock);
 
       // if, in the meantime, we reached any CELL_LIMIT/ROW_LIMIT then return
-      if (m_limits_reached) { 
+      if (m_limits_reached || ssb->get().row_intervals.empty()) { 
         delete ssb;
         return;
       }
@@ -711,7 +866,7 @@ static String last;
       return false;
     }
 
-    typedef std::map<KeySpec, bool> CkeyMap;
+    typedef std::map<KeySpec, uint32_t> CkeyMap;
     typedef std::map<String, String> CstrMap;
 
     // a pointer to the primary table
@@ -719,6 +874,9 @@ static String last;
 
     // the original scan spec for the primary table
     ScanSpecBuilder m_primary_spec;
+
+    // Vector of first-pass cell predicates
+    std::vector<CellPredicate> m_cell_predicates;
 
     // the original callback object specified by the user
     ResultCallback *m_original_cb;
@@ -773,9 +931,15 @@ static String last;
 
     // temporary storage to persist pointer data before it goes out of scope
     String m_last_rowkey_verify;
-
+    
     // temporary storage to persist pointer data before it goes out of scope
     String m_last_rowkey_tracking;
+
+    // Carry-over matching bits for last key
+    uint32_t m_cur_matching;
+
+    // Bit-pattern for all matching predicates
+    uint32_t m_all_matching;
 
     // true if this index is a qualifier index
     bool m_qualifier_scan;
@@ -783,13 +947,12 @@ static String last;
     // buffer for accumulating keys from the index
     CkeyMap m_tmp_keys;
 
+    // buffer for accumulating keys from the index
+    FlyweightString m_strings;
+
     // accumulator; if > TMP_CUTOFF then store all index results in a
     // temporary table
     size_t m_tmp_cutoff;
-
-    // stores the ScanCells; otherwise keys in m_tmp_keys can point to 
-    // invalid memory
-    std::vector<ScanCellsPtr> m_scancells_buffer;
 
     // keep track whether we called final_decrement() 
     bool m_final_decrement;

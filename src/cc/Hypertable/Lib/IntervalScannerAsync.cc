@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -67,8 +67,6 @@ IntervalScannerAsync::IntervalScannerAsync(Comm *comm, ApplicationQueueInterface
 
 void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
   const char *start_row, *end_row;
-  String family, qualifier;
-  bool has_qualifier, is_regexp, is_prefix;
   bool start_row_inclusive=true;
 
   if (!scan_spec.row_intervals.empty() && !scan_spec.cell_intervals.empty())
@@ -91,11 +89,14 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
 
   foreach_ht (const ColumnPredicate &cp, scan_spec.column_predicates)
     m_scan_spec_builder.add_column_predicate(cp.column_family,
-            cp.operation, cp.value, cp.value_len);
+            cp.column_qualifier, cp.operation, cp.value, cp.value_len);
 
+  String family;
+  const char *colon;
   for (size_t i=0; i<scan_spec.columns.size(); i++) {
-    ScanSpec::parse_column(scan_spec.columns[i], family, qualifier, 
-            &has_qualifier, &is_regexp, &is_prefix);
+    colon = strchr(scan_spec.columns[i], ':');
+    family = colon ? String(scan_spec.columns[i], colon-scan_spec.columns[i]) :
+      String(scan_spec.columns[i]);
     if (m_schema->get_column_family(family.c_str()) == 0)
       HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY,
       (String)"Table= " + m_table->get_name() + " , Column family=" + scan_spec.columns[i]);

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,10 +19,9 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Flyweight string set.
- * This string set stores duplicate strings efficiently. 
- */
+/// @file
+/// Flyweight string set.
+/// This string set stores duplicate strings efficiently. 
 
 #ifndef HYPERTABLE_FLYWEIGHTSTRING_H
 #define HYPERTABLE_FLYWEIGHTSTRING_H
@@ -33,9 +32,8 @@
 
 namespace Hypertable {
 
-  /** @addtogroup Common
-   *  @{
-   */
+  /// @addtogroup Common
+  /// @{
 
   /**
    * The Flyweight string set stores duplicate strings efficiently.
@@ -45,11 +43,7 @@ namespace Hypertable {
     /** The destructor deletes all internal pointers and clears the set;
      * pointers retrieved with @sa get() are invalidated.
      */
-    ~FlyweightString() {
-      for (CstrSet::iterator iter = m_strings.begin(); iter != m_strings.end();
-           ++iter)
-        delete [] *iter;
-    }
+    ~FlyweightString() { clear(); }
 
     /** Returns a copy of the string; this string is valid till the
      * FlyweightString set is destructed. Duplicate strings are not inserted
@@ -93,12 +87,22 @@ namespace Hypertable {
       return new_str;
     }
 
+    /// Clears and deallocates the set of strings.
+    /// This function walks through #m_strings, deallocating each string it
+    /// finds, and then clears #m_strings.
+    void clear() {
+      for (CstrSet::iterator it=m_strings.begin(); it!=m_strings.end(); ++it)
+        delete [] *it;
+      m_strings.clear();
+    }
+
   private:
-    /** The std::set holding the strings */
+
+    /// The std::set holding the strings
     CstrSet m_strings;
   };
 
-  /** @} */
+  /// @}
 
 }
 

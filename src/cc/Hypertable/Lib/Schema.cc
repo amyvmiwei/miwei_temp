@@ -122,7 +122,7 @@ void init_schema_options_desc() {
 
 Schema::Schema()
   : m_error_string(), m_next_column_id(0), m_access_group_map(),
-    m_column_family_map(), m_generation(0), m_access_groups(),
+    m_column_family_map(), m_generation(0), m_version(0), m_access_groups(),
     m_open_access_group(0), m_open_column_family(0), m_need_id_assignment(false),
     m_output_ids(false), m_max_column_family_id(0), m_counter_flags(0),
     m_group_commit_interval(0) {
@@ -137,6 +137,7 @@ Schema::Schema(const Schema &src_schema)
 
   // Set schema attributes
   m_generation = src_schema.m_generation;
+  m_version = src_schema.m_version;
   m_compressor = src_schema.m_compressor;
   m_group_commit_interval = src_schema.m_group_commit_interval;
   m_next_column_id = src_schema.m_next_column_id;
@@ -304,6 +305,8 @@ void Schema::start_element_handler(void *userdata,
         return;
       if (!strcasecmp(atts[i], "generation"))
         ms_schema->set_generation(atts[i+1]);
+      else if (!strcasecmp(atts[i], "version"))
+        ms_schema->set_version(atts[i+1]);
       else if (!strcasecmp(atts[i], "compressor"))
         ms_schema->set_compressor((String)atts[i+1]);
       else if (!strcasecmp(atts[i], "group_commit_interval"))
@@ -671,6 +674,9 @@ void Schema::render(String &output, bool with_ids) {
     output += format(" generation=\"%d\"", m_generation);
   }
 
+  if (m_version != 0)
+    output += format(" version=\"%d\"", (int)m_version);
+
   if (m_compressor != "")
     output += format(" compressor=\"%s\"", m_compressor.c_str());
 
@@ -885,6 +891,10 @@ void Schema::set_generation(const char *generation) {
     set_error_string((String)"Invalid Table 'generation' value (" + generation
                       + ")");
   m_generation = gen_num;
+}
+
+void Schema::set_version(const char *version_str) {
+  m_version = atoi(version_str);
 }
 
 /**

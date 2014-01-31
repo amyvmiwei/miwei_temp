@@ -237,9 +237,7 @@ namespace Hypertable {
 
     inline void purge_from_index(const Key &key, const ByteString &value) {
       HT_ASSERT(key.flag == FLAG_INSERT);
-      CellFilterInfo &cfi =
-                m_scan_context_ptr->family_info[key.column_family_code];
-      if (cfi.has_index || cfi.has_qualifier_index)
+      if (m_scan_context_ptr->cell_predicates[key.column_family_code].indexed)
         m_index_updater->purge(key, value);
     }
 

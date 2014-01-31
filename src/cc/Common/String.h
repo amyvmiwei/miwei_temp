@@ -112,6 +112,33 @@ namespace Hypertable {
     return out.str();
   }
 
+  /** Strips enclosing quotes.
+   * Inspects the first and last characters of the string defined by
+   * <code>input</code> and </code>input_len</code> and if they are either both
+   * single quotes or double quotes, it sets <code>output</code> and
+   * <code>output_len</code> to contained between them.  Otherwise,
+   * <code>*output</code> is set to <code>input</code> and
+   * <code>*output_len</code> is set to <code>input_len</code>.
+   * @param input Input char string
+   * @param input_len Input char string length
+   * @param output Address of output char string pointer
+   * @param output_len Address of output char string pointer
+   * @return <i>true</i> if quotes were stripped, <i>false</i> otherwise.
+   */
+  inline bool strip_enclosing_quotes(const char *input, size_t input_len,
+                                     const char **output, size_t *output_len) {
+    if (input_len < 2 ||
+        !((*input == '\'' && input[input_len-1] == '\'') ||
+          (*input == '"' && input[input_len-1] == '"'))) {
+      *output = input;
+      *output_len = input_len;
+      return false;
+    }
+    *output = input + 1;
+    *output_len = input_len - 2;
+    return true;
+  }
+
   /** @} */
 
 } // namespace Hypertable

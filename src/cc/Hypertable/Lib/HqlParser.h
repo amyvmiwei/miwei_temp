@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -34,10 +34,10 @@
 #endif
 
 #include <boost/algorithm/string.hpp>
-#include <boost/spirit/include/classic_core.hpp>
-#include <boost/spirit/include/classic_symbols.hpp>
 #include <boost/spirit/include/classic_confix.hpp>
+#include <boost/spirit/include/classic_core.hpp>
 #include <boost/spirit/include/classic_escape_char.hpp>
+#include <boost/spirit/include/classic_symbols.hpp>
 
 #include <cstdlib>
 #include <fstream>
@@ -119,6 +119,11 @@ namespace Hypertable {
       RELOP_GT,
       RELOP_GE,
       RELOP_SW
+    };
+
+    enum {
+      BOOLOP_AND=0,
+      BOOLOP_OR
     };
 
     enum {
@@ -232,7 +237,7 @@ namespace Hypertable {
       ScanState() : display_timestamps(false), keys_only(false),
           current_rowkey_set(false), start_time_set(false),
           end_time_set(false), current_timestamp_set(false),
-	  current_relop(0), buckets(0) { }
+          current_relop(0), last_boolean_op(BOOLOP_AND), buckets(0) { }
 
       void set_time_interval(::int64_t start, ::int64_t end) {
         HQL_DEBUG("("<< start <<", "<< end <<")");
@@ -267,6 +272,7 @@ namespace Hypertable {
       ::int64_t current_timestamp;
       bool    current_timestamp_set;
       int current_relop;
+      int last_boolean_op;
       int buckets;
     };
 
@@ -280,7 +286,8 @@ namespace Hypertable {
                       delete_time(0), delete_version_time(0),
                       if_exists(false), tables_only(false), with_ids(false),
                       replay(false), scanner_id(-1), row_uniquify_chars(0),
-                      escape(true), nokeys(false), field_separator(0) {
+                      escape(true), nokeys(false), 
+        current_column_predicate_operation(0), field_separator(0) {
         memset(&tmval, 0, sizeof(tmval));
       }
       int command;
@@ -343,6 +350,8 @@ namespace Hypertable {
       String current_rename_column_old_name;
       String current_column_family;
       String current_column_predicate_name;
+      String current_column_predicate_qualifier;
+      uint32_t current_column_predicate_operation;
       char field_separator;
 
       void validate_function(const String &s) {
@@ -379,10 +388,24 @@ namespace Hypertable {
     /// @param str Pointer to c-style string
     /// @param len Length of string
     /// @return String with outer quotes stripped off
-    inline String create_string_without_quotes(const char *str, size_t len) {
+    inline String strip_quotes(const char *str, size_t len) {
       if (len > 1 && (*str == '\'' || *str == '"') && *str == *(str+len-1))
         return String(str+1, len-2);
       return String(str, len);
+    }
+
+    inline String regex_from_literal(const char *str, size_t len) {
+      if (len > 0 && *str != '/')
+        return strip_quotes(str, len);
+      String regex = String(str+1, len-2);
+      String oldStr("\\/");
+      String newStr("/");
+      size_t pos = 0;
+      while((pos = regex.find(oldStr, pos)) != std::string::npos) {
+        regex.replace(pos, oldStr.length(), newStr);
+        pos += newStr.length();
+      }
+      return regex;
     }
 
     struct set_command {
@@ -452,7 +475,7 @@ namespace Hypertable {
     struct set_range_start_row {
       set_range_start_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.range_start_row = create_string_without_quotes(str, end-str);
+        state.range_start_row = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -460,7 +483,7 @@ namespace Hypertable {
     struct set_range_end_row {
       set_range_end_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.range_end_row = create_string_without_quotes(str, end-str);
+        state.range_end_row = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -891,21 +914,76 @@ namespace Hypertable {
     struct scan_set_column_predicate_name {
       scan_set_column_predicate_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String s(str, end-str);
-        trim_if(s, boost::is_any_of("'\""));
-        state.current_column_predicate_name = s;
+        state.current_column_predicate_name = String(str, end-str);
        }
        ParserState &state;
     };
 
-    struct scan_set_column_predicate_value {
-      scan_set_column_predicate_value(ParserState &state, uint32_t operation) 
-          : state(state), operation(operation) { }
+    struct scan_set_column_predicate_qualifier {
+      scan_set_column_predicate_qualifier(ParserState &state, uint32_t operation)
+        : state(state), operation(operation) { }
       void operator()(char const *str, char const *end) const {
-        String s(str, end-str);
-        trim_if(s, boost::is_any_of("'\""));
+        state.current_column_predicate_operation |= operation;
+        if (operation == ColumnPredicate::QUALIFIER_REGEX_MATCH)
+          state.current_column_predicate_qualifier =
+            regex_from_literal(str, end-str);
+        else
+          state.current_column_predicate_qualifier =
+            strip_quotes(str, end-str);
+        state.scan.builder.set_and_column_predicates(state.scan.last_boolean_op == BOOLOP_AND);
+      }
+      void operator()(char c) const {
+        HT_ASSERT(c == '*');
+        state.current_column_predicate_operation |= 
+          ColumnPredicate::QUALIFIER_PREFIX_MATCH;
+        state.current_column_predicate_qualifier.clear();
+        state.scan.builder.set_and_column_predicates(state.scan.last_boolean_op == BOOLOP_AND);
+      }
+      ParserState &state;
+      uint32_t operation;
+    };
+
+    struct scan_set_column_predicate_value {
+      scan_set_column_predicate_value(ParserState &state, uint32_t operation=0)
+        : state(state), operation(operation) { }
+      void operator()(char const *str, char const *end) const {
+        String s;
+        if (operation == ColumnPredicate::REGEX_MATCH)
+          s = regex_from_literal(str, end-str);
+        else
+          s = strip_quotes(str, end-str);
+        state.current_column_predicate_operation |= operation;
         state.scan.builder.add_column_predicate(state.current_column_predicate_name.c_str(),
-                    operation, s.c_str());
+                                                state.current_column_predicate_qualifier.c_str(),
+                                                state.current_column_predicate_operation,
+                                                s.c_str());
+        state.current_column_predicate_name.clear();
+        state.current_column_predicate_qualifier.clear();
+        state.current_column_predicate_operation = 0;
+        state.scan.builder.set_and_column_predicates(state.scan.last_boolean_op == BOOLOP_AND);
+      }
+      void operator()(char c) const {
+        HT_ASSERT(c == ')');
+        state.current_column_predicate_operation |= operation;
+        state.scan.builder.add_column_predicate(state.current_column_predicate_name.c_str(),
+                                                state.current_column_predicate_qualifier.c_str(),
+                                                state.current_column_predicate_operation, "");
+        state.current_column_predicate_name.clear();
+        state.current_column_predicate_qualifier.clear();
+        state.current_column_predicate_operation = 0;
+        state.scan.builder.set_and_column_predicates(state.scan.last_boolean_op == BOOLOP_AND);
+      }
+      ParserState &state;
+      uint32_t operation;
+    };
+
+    struct scan_set_column_predicate_operation {
+      scan_set_column_predicate_operation(ParserState &state, uint32_t operation) 
+          : state(state), operation(operation) { }
+      void operator()(char c) const {
+        state.scan.builder.add_column_predicate(state.current_column_predicate_name.c_str(),
+                                                state.current_column_predicate_qualifier.c_str(),
+                                                operation, "");
        }
        ParserState &state;
        uint32_t operation;
@@ -1122,7 +1200,7 @@ namespace Hypertable {
     };
 
     struct scan_add_column_family {
-      scan_add_column_family(ParserState &state, int qualifier_flag) : state(state),
+      scan_add_column_family(ParserState &state, int qualifier_flag=0) : state(state),
           qualifier_flag(qualifier_flag) { }
       void operator()(char const *str, char const *end) const {
         String column_name(str, end-str);
@@ -1137,7 +1215,7 @@ namespace Hypertable {
     };
 
     struct scan_add_column_qualifier {
-      scan_add_column_qualifier(ParserState &state, int _qualifier_flag) 
+      scan_add_column_qualifier(ParserState &state, int _qualifier_flag=0)
           : state(state), qualifier_flag(_qualifier_flag) { }
       void operator()(char const *str, char const *end) const {
         String qualifier(str, end-str);
@@ -1146,6 +1224,11 @@ namespace Hypertable {
                 ? ":^"
                 : ":")
             + qualifier;
+        state.scan.builder.add_column(qualified_column.c_str());
+      }
+      void operator()(const char c) const {
+        HT_ASSERT(c == '*');
+        String qualified_column = state.current_column_family + ":*";
         state.scan.builder.add_column(qualified_column.c_str());
       }
       ParserState &state;
@@ -1184,7 +1267,7 @@ namespace Hypertable {
     struct scan_set_cell_row {
       scan_set_cell_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.scan.current_cell_row = create_string_without_quotes(str,end-str);
+        state.scan.current_cell_row = strip_quotes(str,end-str);
       }
       ParserState &state;
     };
@@ -1253,7 +1336,7 @@ namespace Hypertable {
     struct scan_set_row {
       scan_set_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.scan.current_rowkey = create_string_without_quotes(str, end-str);
+        state.scan.current_rowkey = strip_quotes(str, end-str);
         if (state.scan.current_relop != 0) {
           switch (state.scan.current_relop) {
           case RELOP_EQ:
@@ -1595,6 +1678,16 @@ namespace Hypertable {
       int relop;
     };
 
+    struct scan_set_boolop {
+      scan_set_boolop(ParserState &state, int boolop)
+        : state(state), boolop(boolop) { }
+      void operator()(char const *str, char const *end) const {
+        state.scan.last_boolean_op = boolop;
+      }
+      ParserState &state;
+      int boolop;
+    };
+
     struct scan_set_time {
       scan_set_time(ParserState &state) : state(state){ }
       void operator()(char const *str, char const *end) const {
@@ -1715,7 +1808,7 @@ namespace Hypertable {
       set_insert_rowkey(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
         state.current_insert_value.row_key  =
-          create_string_without_quotes(str, end-str);
+          strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -1800,7 +1893,7 @@ namespace Hypertable {
     struct delete_set_row {
       delete_set_row(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.delete_row = create_string_without_quotes(str, end-str);
+        state.delete_row = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -1966,6 +2059,7 @@ namespace Hypertable {
           strlit<>    GE(">=");
           chlit<>     GT('>');
           strlit<>    SW("=^");
+          strlit<>    RE("=~");
           strlit<>    QUALPREFIX(":^");
           chlit<>     LPAREN('(');
           chlit<>     RPAREN(')');
@@ -2167,6 +2261,11 @@ namespace Hypertable {
           user_identifier
             = identifier
             | string_literal
+            ;
+
+          string_literal
+            = single_string_literal
+            | double_string_literal
             ;
 
           table_identifier
@@ -2683,28 +2782,31 @@ namespace Hypertable {
             ;
 
           column_selection
-            = (identifier[scan_add_column_family(self.state, 
-                        EXACT_QUALIFIER)] >> QUALPREFIX >>
+            = (identifier[scan_add_column_family(self.state)] >> QUALPREFIX >>
                         user_identifier[scan_add_column_qualifier(self.state, 
                             PREFIX_QUALIFIER)])
-            | (identifier[scan_add_column_family(self.state, 
-                        EXACT_QUALIFIER)] >> COLON >>
-                        user_identifier[scan_add_column_qualifier(self.state, 
-                            EXACT_QUALIFIER)])
-            | (identifier[scan_add_column_family(self.state, 
-                        REGEXP_QUALIFIER)] >> COLON >>
-                        regexp_literal[scan_add_column_qualifier(self.state, 
-                            REGEXP_QUALIFIER)])
-            | (identifier[scan_add_column_family(self.state, 
-                        NO_QUALIFIER)])
+            | (identifier[scan_add_column_family(self.state)]
+               >> COLON
+               >> user_identifier[scan_add_column_qualifier(self.state)])
+            | (identifier[scan_add_column_family(self.state)] 
+               >> COLON
+               >> STAR[scan_add_column_qualifier(self.state)])
+            | (identifier[scan_add_column_family(self.state)] 
+               >> COLON
+               >> regexp_literal[scan_add_column_qualifier(self.state)])
+            | (identifier[scan_add_column_family(self.state, NO_QUALIFIER)])
             ;
 
           where_clause
-            = WHERE >> where_predicate >> *(AND >> where_predicate)
+            = WHERE 
+            >> where_predicate
+            >> *(AND[scan_set_boolop(self.state, BOOLOP_AND)] >> where_predicate)
             ;
 
           dump_where_clause
-            = WHERE >> dump_where_predicate >> *(AND >> dump_where_predicate)
+            = WHERE
+            >> dump_where_predicate
+            >> *(AND[scan_set_boolop(self.state, BOOLOP_AND)] >> dump_where_predicate)
             ;
 
           relop
@@ -2751,15 +2853,40 @@ namespace Hypertable {
             = VALUE >> REGEXP >> string_literal[scan_set_value_regexp(self.state)]
             ;
 
-          column_predicate
-            = identifier[scan_set_column_predicate_name(self.state)] 
-                >> '=' 
-                >> string_literal[scan_set_column_predicate_value(self.state, 
-                        ColumnPredicate::EXACT_MATCH)]
+          column_match
+            = identifier[scan_set_column_predicate_name(self.state)]
+            >> !column_qualifier_spec
+            >> '='
+            >> string_literal[scan_set_column_predicate_value(self.state, ColumnPredicate::EXACT_MATCH)]
             | identifier[scan_set_column_predicate_name(self.state)] 
-                >> SW
-                >> string_literal[scan_set_column_predicate_value(self.state, 
-                        ColumnPredicate::PREFIX_MATCH)]
+            >> !column_qualifier_spec
+            >> SW
+            >> string_literal[scan_set_column_predicate_value(self.state, ColumnPredicate::PREFIX_MATCH)]
+            | identifier[scan_set_column_predicate_name(self.state)] 
+            >> !column_qualifier_spec
+            >> RE
+            >> regexp_literal[scan_set_column_predicate_value(self.state, ColumnPredicate::REGEX_MATCH)]
+            | REGEXP >> LPAREN
+            >> identifier[scan_set_column_predicate_name(self.state)]
+            >> !column_qualifier_spec
+            >> COMMA
+            >> string_literal[scan_set_column_predicate_value(self.state, ColumnPredicate::REGEX_MATCH)]
+            >> RPAREN
+            | EXISTS >> LPAREN
+            >> identifier[scan_set_column_predicate_name(self.state)]
+            >> column_qualifier_spec
+            >> RPAREN[scan_set_column_predicate_value(self.state)]
+            ;
+
+          column_qualifier_spec
+            = COLON
+            >> (user_identifier[scan_set_column_predicate_qualifier(self.state, ColumnPredicate::QUALIFIER_EXACT_MATCH)] |
+                regexp_literal[scan_set_column_predicate_qualifier(self.state, ColumnPredicate::QUALIFIER_REGEX_MATCH)] |
+                STAR[scan_set_column_predicate_qualifier(self.state, ColumnPredicate::QUALIFIER_PREFIX_MATCH)])
+            ;
+
+          column_predicate
+            = column_match >> *( OR[scan_set_boolop(self.state, BOOLOP_OR)] >> column_match )
             ;
 
           where_predicate
@@ -2885,7 +3012,9 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(column_definition);
           BOOST_SPIRIT_DEBUG_RULE(column_name);
           BOOST_SPIRIT_DEBUG_RULE(column_option);
+          BOOST_SPIRIT_DEBUG_RULE(column_match);
           BOOST_SPIRIT_DEBUG_RULE(column_predicate);
+          BOOST_SPIRIT_DEBUG_RULE(column_qualifier_spec);
           BOOST_SPIRIT_DEBUG_RULE(column_selection);
           BOOST_SPIRIT_DEBUG_RULE(create_definition);
           BOOST_SPIRIT_DEBUG_RULE(create_definitions);
@@ -3014,8 +3143,8 @@ namespace Hypertable {
           blocksize_option, replication_option, help_statement,
           describe_table_statement, show_statement, select_statement,
           where_clause, where_predicate,
-          time_predicate, relop, row_interval, row_predicate, column_predicate,
-          value_predicate, column_selection,
+          time_predicate, relop, row_interval, row_predicate, column_match,
+          column_predicate, column_qualifier_spec, value_predicate, column_selection,
           option_spec, unused_tokens, datetime, date, time, year,
           load_data_statement, load_data_input, load_data_option, insert_statement,
           insert_value_list, insert_value, delete_statement,

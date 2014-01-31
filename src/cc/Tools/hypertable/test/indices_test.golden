@@ -246,8 +246,8 @@ row2	b	cell2
 row3	c	cell3
 row4	d	cell4
 SELECT * FROM "^t";
-1,cell1\trow1	v1	
-2,cell2\trow2	v1	
+1,cell1\t\trow1	v1	
+2,cell2\t\trow2	v1	
 INSERT INTO t VALUES ("row1", "a", "cell1");
 INSERT INTO t VALUES ("row2", "b", "cell2");
 INSERT INTO t VALUES ("row3", "c", "cell3");
@@ -262,10 +262,10 @@ row3	c	cell3
 row4	d	cell4
 row4	d	cell4
 SELECT * FROM "^t";
-1,cell1\trow1	v1	
-1,cell1\trow1	v1	
-2,cell2\trow2	v1	
-2,cell2\trow2	v1	
+1,cell1\t\trow1	v1	
+1,cell1\t\trow1	v1	
+2,cell2\t\trow2	v1	
+2,cell2\t\trow2	v1	
 INSERT INTO t VALUES ("row11", "a", "cell11");
 INSERT INTO t VALUES ("row12", "b", "cell12");
 INSERT INTO t VALUES ("row13", "c", "cell13");
@@ -284,12 +284,12 @@ row3	c	cell3
 row4	d	cell4
 row4	d	cell4
 SELECT * FROM "^t";
-1,cell1\trow1	v1	
-1,cell1\trow1	v1	
-1,cell11\trow11	v1	
-2,cell12\trow12	v1	
-2,cell2\trow2	v1	
-2,cell2\trow2	v1	
+1,cell1\t\trow1	v1	
+1,cell1\t\trow1	v1	
+1,cell11\t\trow11	v1	
+2,cell12\t\trow12	v1	
+2,cell2\t\trow2	v1	
+2,cell2\t\trow2	v1	
 INSERT INTO t VALUES ("row15", "a", "cell15");
 INSERT INTO t VALUES ("row16", "b", "cell16");
 INSERT INTO t VALUES ("row17", "c", "cell17");
@@ -312,14 +312,14 @@ row3	c	cell3
 row4	d	cell4
 row4	d	cell4
 SELECT * FROM "^t";
-1,cell1\trow1	v1	
-1,cell1\trow1	v1	
-1,cell11\trow11	v1	
-1,cell15\trow15	v1	
-2,cell12\trow12	v1	
-2,cell16\trow16	v1	
-2,cell2\trow2	v1	
-2,cell2\trow2	v1	
+1,cell1\t\trow1	v1	
+1,cell1\t\trow1	v1	
+1,cell11\t\trow11	v1	
+1,cell15\t\trow15	v1	
+2,cell12\t\trow12	v1	
+2,cell16\t\trow16	v1	
+2,cell2\t\trow2	v1	
+2,cell2\t\trow2	v1	
 INSERT INTO t VALUES ("row\t25", "a", "cell\t25");
 INSERT INTO t VALUES ("row\t26", "b", "cell\t26");
 INSERT INTO t VALUES ("row\t27", "c", "cell\t27");
@@ -346,16 +346,16 @@ row\\t26	b	cell\\t26
 row\\t27	c	cell\\t27
 row\\t28	d	cell\\t28
 SELECT * FROM "^t";
-1,cell1\trow1	v1	
-1,cell1\trow1	v1	
-1,cell11\trow11	v1	
-1,cell15\trow15	v1	
-1,cell\\\\t25\trow\\\\t25	v1	
-2,cell12\trow12	v1	
-2,cell16\trow16	v1	
-2,cell2\trow2	v1	
-2,cell2\trow2	v1	
-2,cell\\\\t26\trow\\\\t26	v1	
+1,cell1\t\trow1	v1	
+1,cell1\t\trow1	v1	
+1,cell11\t\trow11	v1	
+1,cell15\t\trow15	v1	
+1,cell\\\\t25\t\trow\\\\t25	v1	
+2,cell12\t\trow12	v1	
+2,cell16\t\trow16	v1	
+2,cell2\t\trow2	v1	
+2,cell2\t\trow2	v1	
+2,cell\\\\t26\t\trow\\\\t26	v1	
 
 DROP TABLE t;
 CREATE TABLE t(a, INDEX a);
@@ -713,7 +713,7 @@ row2	a	cella2
 DROP TABLE IF EXISTS t;
 CREATE TABLE t (a TIME_ORDER DESC MAX_VERSIONS=1, INDEX a);
 DESCRIBE TABLE "^t";
-<Schema>
+<Schema version="1">
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>v1</Name>
@@ -737,7 +737,7 @@ row2	a	cellc0
 DROP TABLE IF EXISTS t;
 CREATE TABLE t (a, INDEX a, b, INDEX b);
 DESCRIBE TABLE "^t";
-<Schema>
+<Schema version="1">
   <AccessGroup name="default">
     <ColumnFamily>
       <Name>v1</Name>
@@ -898,11 +898,11 @@ INSERT INTO t VALUES ("row22", "b:foo", "cellb22foo");
 INSERT INTO t VALUES ("row20", "b:bar", "cellb20bar");
 INSERT INTO t VALUES ("row21", "b:bar", "cellb21bar");
 INSERT INTO t VALUES ("row22", "b:bar", "cellb22bar");
-SELECT b:foo FROM t WHERE b =^ "cell";
+SELECT b:foo FROM t WHERE b:* =^ "cell";
 row20	b:foo	cellb20foo
 row21	b:foo	cellb21foo
 row22	b:foo	cellb22foo
-SELECT b:bar FROM t WHERE b =^ "cell";
+SELECT b:bar FROM t WHERE b:* =^ "cell";
 row20	b:bar	cellb20bar
 row21	b:bar	cellb21bar
 row22	b:bar	cellb22bar
@@ -1242,12 +1242,12 @@ rowb0	b	cellb0:
 rowb1	b:foo	cellb0:foo
 rowb2	b:bar	cellb0:bar
 SELECT * FROM "^t";
-1,cella0:\trowa0	v1	
-1,cella0:bar\trowa2	v1	
-1,cella0:foo\trowa1	v1	
-2,cellb0:\trowb0	v1	
-2,cellb0:bar\trowb2	v1	
-2,cellb0:foo\trowb1	v1	
+1,cella0:\t\trowa0	v1	
+1,cella0:bar\tbar\trowa2	v1	
+1,cella0:foo\tfoo\trowa1	v1	
+2,cellb0:\t\trowb0	v1	
+2,cellb0:bar\tbar\trowb2	v1	
+2,cellb0:foo\tfoo\trowb1	v1	
 SELECT * FROM "^^t";
 1,\trowa0	v1	
 1,bar\trowa2	v1	
@@ -1607,9 +1607,9 @@ rowa9	a:q1	cella9
 
 INSERT INTO t VALUES ("2011-11-11 08:09:29", "rowa12", "a:q1", "cella9xx");
 INSERT INTO t VALUES ("2011-11-11 08:09:29", "rowa13", "a:q1", "cella9xy");
-SELECT a:q1 FROM t WHERE a = "cella9";
+SELECT a:q1 FROM t WHERE a:* = "cella9";
 rowa9	a:q1	cella9
-SELECT a:q1 FROM t WHERE a =^ "cella9";
+SELECT a:q1 FROM t WHERE a:* =^ "cella9";
 rowa12	a:q1	cella9xx
 rowa13	a:q1	cella9xy
 rowa9	a:q1	cella9
@@ -1717,14 +1717,14 @@ SELECT a:q0 FROM t CELL_OFFSET 5 CELL_LIMIT 1;
 rowa3	a:q0	cella4
 
 DELETE * FROM t WHERE ROW = "rowa2";
-SELECT a:q0 FROM t WHERE a =^ "c";
+SELECT a:q0 FROM t WHERE a:* =^ "c";
 rowa0	a:q0	cella0
 rowa1	a:q0	cella1
 rowa3	a:q0	cella5
 rowa3	a:q0	cella4
 rowa3	a:q0	cella3
 rowa4	a:q0	cella4
-SELECT a:q0 FROM t WHERE a =^ "c" RETURN_DELETES;
+SELECT a:q0 FROM t WHERE a:* =^ "c" RETURN_DELETES;
 rowa0	a:q0	cella0
 rowa1	a:q0	cella1
 rowa2		DELETE ROW
@@ -1732,7 +1732,7 @@ rowa3	a:q0	cella5
 rowa3	a:q0	cella4
 rowa3	a:q0	cella3
 rowa4	a:q0	cella4
-SELECT a:q0 FROM t WHERE a =^ "c" RETURN_DELETES KEYS_ONLY;
+SELECT a:q0 FROM t WHERE a:* =^ "c" RETURN_DELETES KEYS_ONLY;
 rowa0
 rowa1
 rowa2
@@ -1757,7 +1757,7 @@ SELECT a:q1 FROM t WHERE VALUE REGEXP "^cella9";
 rowa12	a:q1	cella9xx
 rowa13	a:q1	cella9xz
 rowa9	a:q1	cella9
-SELECT a:q1 FROM t WHERE a =^ "cella9";
+SELECT a:q1 FROM t WHERE a:* =^ "cella9";
 rowa12	a:q1	cella9xx
 rowa13	a:q1	cella9xz
 rowa9	a:q1	cella9
@@ -1855,25 +1855,16 @@ rowa13	a:q0123	cella13
 SELECT a:^"^" FROM t;
 rowa14	a:^q0123	cella14
 
-SELECT * FROM t WHERE a = "cella0";
+SELECT * FROM t WHERE a:* = "cella0";
 rowa0	a:q0	cella0
-SELECT b FROM t WHERE a = "cella0";
+SELECT b FROM t WHERE a:* = "cella0";
 Error: Selected column b must be referenced in Column predicate - HYPERTABLE HQL parse error
-SELECT a FROM t WHERE a = "cella0";
+SELECT a FROM t WHERE a:* = "cella0";
 rowa0	a:q0	cella0
-SELECT a FROM t WHERE a = "cella11";
+SELECT a FROM t WHERE a:* = "cella11";
 rowa11	a:q01	cella11
-SELECT a FROM t WHERE a = "cell";
-SELECT a FROM t WHERE a =^ "cell";
-rowa0	a:q0	cella0
-rowa1	a:q0	cella1
-rowa10	a:q0	cella10
-rowa11	a:q01	cella11
-rowa12	a:q012	cella12
-rowa13	a:q0123	cella13
-rowa14	a:^q0123	cella14
-rowa2	a:q0	cella2
-SELECT a FROM t WHERE a =^ "c";
+SELECT a FROM t WHERE a:* = "cell";
+SELECT a FROM t WHERE a:* =^ "cell";
 rowa0	a:q0	cella0
 rowa1	a:q0	cella1
 rowa10	a:q0	cella10
@@ -1882,7 +1873,7 @@ rowa12	a:q012	cella12
 rowa13	a:q0123	cella13
 rowa14	a:^q0123	cella14
 rowa2	a:q0	cella2
-SELECT a FROM t WHERE a =^ "";
+SELECT a FROM t WHERE a:* =^ "c";
 rowa0	a:q0	cella0
 rowa1	a:q0	cella1
 rowa10	a:q0	cella10
@@ -1891,7 +1882,16 @@ rowa12	a:q012	cella12
 rowa13	a:q0123	cella13
 rowa14	a:^q0123	cella14
 rowa2	a:q0	cella2
-SELECT a FROM t WHERE a =^ "xas";
+SELECT a FROM t WHERE a:* =^ "";
+rowa0	a:q0	cella0
+rowa1	a:q0	cella1
+rowa10	a:q0	cella10
+rowa11	a:q01	cella11
+rowa12	a:q012	cella12
+rowa13	a:q0123	cella13
+rowa14	a:^q0123	cella14
+rowa2	a:q0	cella2
+SELECT a FROM t WHERE a:* =^ "xas";
 
 # drop one index and make sure that the queries still work
 # TODO re-enable this when ALTER TABLE is implemented
@@ -1957,10 +1957,109 @@ SELECT * FROM User WHERE name="Doug" AND age="45";
 123456789	name	Doug
 123456789	address	2999 Canyon Rd.
 123456789	age	45
-345678901	name	Doug
-345678901	address	234 Maple St.
-345678901	age	12
 SELECT address FROM User WHERE name="Doug" AND TIMESTAMP < "2014-01-17 03:41:30";
 123456789	address	2999 Canyon Rd.
 SELECT address FROM User WHERE name="Doug" AND TIMESTAMP > "2014-01-17 03:41:30";
 345678901	address	234 Maple St.
+
+# Index tests with qualifier
+DROP TABLE IF EXISTS User;
+CREATE TABLE User (age, infoA, infoB, index infoA);
+INSERT INTO User VALUES
+('2014-01-17 03:41:29', '123456789', 'infoA:first', 'Bobby'),
+('2014-01-17 03:41:29', '123456789', 'infoA:last', 'Jones'),
+('2014-01-17 03:41:29', '123456789', 'age', '45'),
+('2014-01-17 03:41:30', '234567890', 'infoA:first', 'Ricky'),
+('2014-01-17 03:41:30', '234567890', 'infoA:last', 'Bobby'),
+('2014-01-17 03:41:30', '234567890', 'age', '57'),
+('2014-01-17 03:41:31', '345678901', 'infoB:first', 'Ricky'),
+('2014-01-17 03:41:31', '345678901', 'infoB:last', 'Bobby'),
+('2014-01-17 03:41:31', '345678901', 'infoB:child', 'Ronnie'),
+('2014-01-17 03:41:31', '345678901', 'age', '83'),
+('2014-01-17 03:41:29', '345678902', 'infoA:first', 'Boris'),
+('2014-01-17 03:41:29', '345678902', 'infoA:last', 'Yeltsin'),
+('2014-01-17 03:41:31', '345678902', 'infoB:child', 'Roland'),
+('2014-01-17 03:41:31', '345678902', 'infoB:brother', 'Roland'),
+('2014-01-17 03:41:29', '345678902', 'age', '78');
+SELECT age FROM User WHERE infoA:last="Bobby";
+234567890	age	57
+SELECT * FROM User WHERE infoA:first = 'Bobby';
+123456789	age	45
+123456789	infoA:first	Bobby
+123456789	infoA:last	Jones
+SELECT * FROM User WHERE infoA:first =^ 'Bo';
+123456789	age	45
+123456789	infoA:first	Bobby
+123456789	infoA:last	Jones
+345678902	age	78
+345678902	infoA:first	Boris
+345678902	infoA:last	Yeltsin
+345678902	infoB:brother	Roland
+345678902	infoB:child	Roland
+SELECT * FROM User WHERE infoB:child = 'Ronnie';
+345678901	infoB:child	Ronnie
+SELECT * FROM User WHERE infoB:child =^ 'Ro';
+345678901	infoB:child	Ronnie
+345678902	infoB:child	Roland
+
+# More Index tests
+DROP TABLE IF EXISTS products;
+CREATE TABLE products (
+title,
+section,
+info,
+category,
+INDEX section,
+INDEX info,
+QUALIFIER INDEX info,
+QUALIFIER INDEX category
+);
+LOAD DATA INFILE 'indices_test_products.tsv' INTO TABLE products;
+SELECT title FROM products WHERE section = "books";
+0307743659	title	The Shining Mass Market Paperback
+0321321928	title	C++ Common Knowledge: Essential Intermediate Programming [Paperback]
+0321776402	title	C++ Primer Plus (6th Edition) (Developer's Library)
+SELECT title FROM products WHERE info:actor = "Jack Nicholson";
+B00002VWE0	title	Five Easy Pieces (1970)
+B002VWNIDG	title	The Shining (1980)
+SELECT title,info:publisher FROM products WHERE info:publisher =^ 'Addison-Wesley';
+0321321928	title	C++ Common Knowledge: Essential Intermediate Programming [Paperback]
+0321321928	info:publisher	Addison-Wesley Professional; 1 edition (March 10, 2005)
+0321776402	title	C++ Primer Plus (6th Edition) (Developer's Library)
+0321776402	info:publisher	Addison-Wesley Professional; 6 edition (October 28, 2011)
+SELECT title,info:publisher FROM products WHERE info:publisher =~ /^Addison-Wesley/;
+0321321928	title	C++ Common Knowledge: Essential Intermediate Programming [Paperback]
+0321321928	info:publisher	Addison-Wesley Professional; 1 edition (March 10, 2005)
+0321776402	title	C++ Primer Plus (6th Edition) (Developer's Library)
+0321776402	info:publisher	Addison-Wesley Professional; 6 edition (October 28, 2011)
+SELECT title,info:author FROM products WHERE info:author =~ /^Stephen [PK]/;
+0307743659	title	The Shining Mass Market Paperback
+0307743659	info:author	Stephen King
+0321776402	title	C++ Primer Plus (6th Edition) (Developer's Library)
+0321776402	info:author	Stephen Prata
+SELECT title,info:author FROM products WHERE Regexp(info:author, '^Stephen [PK]');
+0307743659	title	The Shining Mass Market Paperback
+0307743659	info:author	Stephen King
+0321776402	title	C++ Primer Plus (6th Edition) (Developer's Library)
+0321776402	info:author	Stephen Prata
+SELECT title FROM products WHERE Exists(info:studio);
+B00002VWE0	title	Five Easy Pieces (1970)
+B000Q66J1M	title	2001: A Space Odyssey [Blu-ray]
+B002VWNIDG	title	The Shining (1980)
+SELECT title FROM products WHERE Exists(category:/^\/Movies/);
+B00002VWE0	title	Five Easy Pieces (1970)
+B000Q66J1M	title	2001: A Space Odyssey [Blu-ray]
+B002VWNIDG	title	The Shining (1980)
+SELECT title FROM products WHERE Exists(category:/^\/Books.*Programming/);
+0321321928	title	C++ Common Knowledge: Essential Intermediate Programming [Paperback]
+0321776402	title	C++ Primer Plus (6th Edition) (Developer's Library)
+SELECT title FROM products WHERE info:author =~ /^Stephen P/ OR info:publisher =^ "Anchor";
+0307743659	title	The Shining Mass Market Paperback
+0321776402	title	C++ Primer Plus (6th Edition) (Developer's Library)
+SELECT title FROM products WHERE info:author =~ /^Stephen P/ OR info:publisher =~ /^Anchor/;
+0307743659	title	The Shining Mass Market Paperback
+0321776402	title	C++ Primer Plus (6th Edition) (Developer's Library)
+SELECT title FROM products WHERE info:author =~ /^Stephen [PK]/ AND info:publisher =^ "Anchor";
+0307743659	title	The Shining Mass Market Paperback
+SELECT title FROM products WHERE info:author =~ /^Stephen [PK]/ AND info:publisher =~ /^Anchor/;
+0307743659	title	The Shining Mass Market Paperback

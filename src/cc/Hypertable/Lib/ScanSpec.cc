@@ -37,21 +37,27 @@ using namespace Serialization;
 
 size_t ColumnPredicate::encoded_length() const {
   return sizeof(uint32_t)
-          + encoded_length_vstr(column_family) 
-          + encoded_length_vstr(value_len);
+    + encoded_length_vstr(column_family)
+    + encoded_length_vstr(column_qualifier)
+    + encoded_length_vstr(value_len)
+    + encoded_length_vstr(column_qualifier_len);
 }
 
 void ColumnPredicate::encode(uint8_t **bufp) const {
   encode_vstr(bufp, column_family);
-  encode_i32(bufp, operation);
+  encode_vstr(bufp, column_qualifier);
   encode_vstr(bufp, value, value_len);
+  encode_vstr(bufp, column_qualifier, column_qualifier_len);
+  encode_i32(bufp, operation);
 }
 
 void ColumnPredicate::decode(const uint8_t **bufp, size_t *remainp) {
   HT_TRY("decoding column predicate",
-    column_family = decode_vstr(bufp, remainp);
-    operation = decode_i32(bufp, remainp);
-    value = decode_vstr(bufp, remainp, &value_len));
+         column_family = decode_vstr(bufp, remainp);
+         column_qualifier = decode_vstr(bufp, remainp);
+         value = decode_vstr(bufp, remainp, &value_len);
+         column_qualifier = decode_vstr(bufp, remainp, &column_qualifier_len);
+         operation = decode_i32(bufp, remainp));
 }
 
 size_t RowInterval::encoded_length() const {
@@ -118,7 +124,7 @@ size_t ScanSpec::encoded_length() const {
   foreach_ht(const CellInterval &ci, cell_intervals) len += ci.encoded_length();
   foreach_ht(const ColumnPredicate &cp, column_predicates) len += cp.encoded_length();
 
-  return len + 8 + 8 + 4;
+  return len + 8 + 8 + 5;
 }
 
 void ScanSpec::encode(uint8_t **bufp) const {
@@ -142,6 +148,7 @@ void ScanSpec::encode(uint8_t **bufp) const {
   encode_vstr(bufp, value_regexp);
   encode_bool(bufp, scan_and_filter_rows);
   encode_bool(bufp, do_not_cache);
+  encode_bool(bufp, and_column_predicates);
   encode_vi32(bufp, row_offset);
   encode_vi32(bufp, cell_offset);
 }
@@ -177,6 +184,7 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     value_regexp = decode_vstr(bufp, remainp);
     scan_and_filter_rows = decode_bool(bufp, remainp);
     do_not_cache = decode_bool(bufp, remainp);
+    and_column_predicates = decode_bool(bufp, remainp);
     row_offset = decode_vi32(bufp, remainp);
     cell_offset = decode_vi32(bufp, remainp));
 }
@@ -241,6 +249,7 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   os <<" value_regexp=" << (scan_spec.value_regexp ? scan_spec.value_regexp : "");
   os <<" scan_and_filter_rows=" << scan_spec.scan_and_filter_rows;
   os <<" do_not_cache=" << scan_spec.do_not_cache;
+  os <<" and_column_predicates=" << scan_spec.and_column_predicates;
   os <<" row_offset=" << scan_spec.row_offset;
   os <<" cell_offset=" << scan_spec.cell_offset;
 
@@ -282,10 +291,10 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
     cell_intervals(CellIntervalAlloc(arena)),
     column_predicates(ColumnPredicateAlloc(arena)),
     time_interval(ss.time_interval.first, ss.time_interval.second),
-    return_deletes(ss.return_deletes), keys_only(ss.keys_only),
     row_regexp(arena.dup(ss.row_regexp)), value_regexp(arena.dup(ss.value_regexp)),
+    return_deletes(ss.return_deletes), keys_only(ss.keys_only),
     scan_and_filter_rows(ss.scan_and_filter_rows),
-    do_not_cache(ss.do_not_cache) {
+    do_not_cache(ss.do_not_cache), and_column_predicates(ss.and_column_predicates) {
   columns.reserve(ss.columns.size());
   row_intervals.reserve(ss.row_intervals.size());
   cell_intervals.reserve(ss.cell_intervals.size());
@@ -303,44 +312,55 @@ ScanSpec::ScanSpec(CharArena &arena, const ScanSpec &ss)
                       ci.end_row, ci.end_column, ci.end_inclusive);
 
   foreach_ht(const ColumnPredicate &cp, ss.column_predicates)
-    add_column_predicate(arena, cp.column_family, cp.operation, cp.value);
+    add_column_predicate(arena, cp.column_family, cp.column_qualifier,
+                         cp.operation, cp.value);
 }
 
-void ScanSpec::parse_column(const char *column_str, String &family, 
-        String &qualifier, bool *has_qualifier, bool *is_regexp, 
-        bool *is_prefix)
+void
+ScanSpec::parse_column(const char *column_str, String &family, 
+                       const char **qualifier, size_t *qualifier_len,
+                       bool *has_qualifier, bool *is_regexp, bool *is_prefix)
 {
-  String column = column_str;
-  size_t pos = column.find_first_of(':');
-  qualifier.clear();
-  *has_qualifier = pos != String::npos;
+  const char *raw_qualifier;
+  size_t raw_qualifier_len;
+  const char *colon = strchr(column_str, ':');
   *is_regexp = false;
   *is_prefix = false;
+  *qualifier = "";
+  *qualifier_len = 0;
 
-  if (!*has_qualifier) {
-    family = column;
+  if (colon == 0) {
+    *has_qualifier = false;
+    family = column_str;
+    return;
+  }
+  *has_qualifier = true;
+
+  family = String(column_str, (size_t)(colon-column_str));
+
+  raw_qualifier = colon+1;
+  raw_qualifier_len = strlen(raw_qualifier);
+
+  if (raw_qualifier_len == 0)
+    return;
+
+  if (raw_qualifier_len > 2 &&
+      raw_qualifier[0] == '/' && raw_qualifier[raw_qualifier_len-1] == '/') {
+    *is_regexp = true;
+    *qualifier = raw_qualifier+1;
+    *qualifier_len = raw_qualifier_len - 2;
+  }
+  else if (*raw_qualifier == '*') {
+    *is_prefix = true;
   }
   else {
-    family = column.substr(0, pos);
-    if (column.length() > pos+1) {
-      // has qualifier
-      if (column[pos+1] == '/') {
-        *is_regexp = true;
-        qualifier = column.substr(pos+1);
-        boost::trim_if(qualifier, boost::is_any_of("/"));
-      }
-      else {
-        if (column[pos+1] == '^') {
-          *is_prefix = true;
-          qualifier = column.substr(pos+2);
-          boost::trim_if(qualifier, boost::is_any_of("\""));
-        }
-        else {
-          qualifier = column.substr(pos+1);
-          if (column[pos+1] == '\"' || column[pos+1] == '\'')
-            boost::trim_if(qualifier, boost::is_any_of("\"\'"));
-        }
-      }
+    if (*raw_qualifier == '^') {
+      *is_prefix = true;
+      strip_enclosing_quotes(raw_qualifier+1, raw_qualifier_len-1,
+                             qualifier, qualifier_len);
     }
+    else
+      strip_enclosing_quotes(raw_qualifier, raw_qualifier_len,
+                             qualifier, qualifier_len);
   }
 }

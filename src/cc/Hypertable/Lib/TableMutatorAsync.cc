@@ -184,29 +184,39 @@ TableMutatorAsync::update_with_index(Key &key, const void *value,
   k.column_family = "v1";
 
   // every \t in the original row key gets escaped
-  const char *row;
-  size_t rowlen;
-  LoadDataEscape lde, ldev;
-  lde.escape(key.row, key.row_len, &row, &rowlen);
+  const char *escaped_row;
+  const char *escaped_qualifier;
+  size_t escaped_row_len;
+  size_t escaped_qualifier_len;
+  LoadDataEscape escape_row;
+  LoadDataEscape escape_qualifier;
+  LoadDataEscape escape_value;
+
+  escape_row.escape(key.row, key.row_len, &escaped_row, &escaped_row_len);
+  escape_qualifier.escape(key.column_qualifier, key.column_qualifier_len,
+                          &escaped_qualifier, &escaped_qualifier_len);
 
   // in a normal (non-qualifier) index the format of the new row
-  // key is "value\trow"
+  // key is "<value>\t<qualifier>\t<row>"
   //
   // if value has a 0 byte then we also have to escape it
   if (cf->has_index) {
     size_t escaped_value_len;
     const char *escaped_value;
-    ldev.escape((const char *)value, (size_t)value_len, &escaped_value, &escaped_value_len);
+    escape_value.escape((const char *)value, (size_t)value_len, &escaped_value, &escaped_value_len);
     //std::cout << escaped_value << std::endl;
-    StaticBuffer sb(4 + escaped_value_len + rowlen + 1 + 1);
+    StaticBuffer sb(4 + escaped_value_len + escaped_qualifier_len + escaped_row_len + 3);
     char *p = (char *)sb.base;
     sprintf(p, "%d,", (int)key.column_family_code);
     p     += strlen(p);
     memcpy(p, escaped_value, escaped_value_len);
     p     += escaped_value_len;
     *p++  = '\t';
-    memcpy(p, row, rowlen);
-    p     += rowlen;
+    memcpy(p, escaped_qualifier, escaped_qualifier_len);
+    p     += escaped_qualifier_len;
+    *p++  = '\t';
+    memcpy(p, escaped_row, escaped_row_len);
+    p     += escaped_row_len;
     *p++  = '\0';
     k.row = sb.base;
     k.row_len = p - 1 - (const char *)sb.base; /* w/o the terminating zero */
@@ -217,18 +227,17 @@ TableMutatorAsync::update_with_index(Key &key, const void *value,
 
   // in a qualifier index the format of the new row key is "qualifier\trow"
   if (cf->has_qualifier_index) {
-    size_t qlen = key.column_qualifier ? strlen(key.column_qualifier) : 0;
-    StaticBuffer sb(4 + qlen + rowlen + 1 + 1);
+    StaticBuffer sb(4 + key.column_qualifier_len + escaped_row_len + 2);
     char *p = (char *)sb.base;
     sprintf(p, "%d,", (int)key.column_family_code);
-    p     += strlen(p);
-    if (qlen) {
-      memcpy(p, key.column_qualifier, qlen);
-      p   += qlen;
+    p += strlen(p);
+    if (key.column_qualifier_len) {
+      memcpy(p, key.column_qualifier, key.column_qualifier_len);
+      p += key.column_qualifier_len;
     }
     *p++  = '\t';
-    memcpy(p, row, rowlen);
-    p     += rowlen;
+    memcpy(p, escaped_row, escaped_row_len);
+    p += escaped_row_len;
     *p++  = '\0';
     k.row = sb.base;
     k.row_len = p - 1 - (const char *)sb.base; /* w/o the terminating zero */
@@ -475,7 +484,14 @@ TableMutatorAsync::to_full_key(const void *row, const char *column_family,
   }
 
   full_key.row = (const char *)row;
-  full_key.column_qualifier = (const char *)column_qualifier;
+  if (column_qualifier) {
+    full_key.column_qualifier = (const char *)column_qualifier;
+    full_key.column_qualifier_len = strlen((const char *)column_qualifier);
+  }
+  else {
+    full_key.column_qualifier = "";
+    full_key.column_qualifier_len = 0;
+  }
   full_key.timestamp = timestamp;
   full_key.revision = revision;
   full_key.flag = flag;

@@ -10,8 +10,14 @@ module Hypertable
         module ColumnPredicateOperation
           EXACT_MATCH = 1
           PREFIX_MATCH = 2
-          VALUE_MAP = {1 => "EXACT_MATCH", 2 => "PREFIX_MATCH"}
-          VALID_VALUES = Set.new([EXACT_MATCH, PREFIX_MATCH]).freeze
+          REGEX_MATCH = 4
+          VALUE_MATCH = 7
+          QUALIFIER_EXACT_MATCH = 256
+          QUALIFIER_PREFIX_MATCH = 512
+          QUALIFIER_REGEX_MATCH = 1024
+          QUALIFIER_MATCH = 1792
+          VALUE_MAP = {1 => "EXACT_MATCH", 2 => "PREFIX_MATCH", 4 => "REGEX_MATCH", 7 => "VALUE_MATCH", 256 => "QUALIFIER_EXACT_MATCH", 512 => "QUALIFIER_PREFIX_MATCH", 1024 => "QUALIFIER_REGEX_MATCH", 1792 => "QUALIFIER_MATCH"}
+          VALID_VALUES = Set.new([EXACT_MATCH, PREFIX_MATCH, REGEX_MATCH, VALUE_MATCH, QUALIFIER_EXACT_MATCH, QUALIFIER_PREFIX_MATCH, QUALIFIER_REGEX_MATCH, QUALIFIER_MATCH]).freeze
         end
 
         module KeyFlag
@@ -118,33 +124,38 @@ module Hypertable
         end
 
         # Specifies a column predicate
-        #     ... WHERE column = "value"
-        #   or
-        #     ... WHERE column =^ "prefix"
-        # 
-        # <dl>
-        #   <dt>column_family</dt>
-        #   <dd>The name of the column family</dd>
-        # 
-        #   <dt>operation</dt>
-        #   <dd>The predicate operation; either EXACT_MATCH or PREFIX_MATCH</dd>
-        # 
-        #   <dt>value</dt>
-        #   <dd>The cell value or cell prefix, depending on the operation</dd>
-        # 
-        #   <dt>value_len</dt>
-        #   <dd>The size of the value</dd>
-        # </dl>
+        #  *     ... WHERE column = "value"
+        #  *   or
+        #  *     ... WHERE column =^ "prefix"
+        #  *
+        #  * <dl>
+        #  *   <dt>column_family</dt>
+        #  *   <dd>The name of the column family</dd>
+        #  *
+        #  *   <dt>operation</dt>
+        #  *   <dd>The predicate operation; either EXACT_MATCH or PREFIX_MATCH</dd>
+        #  *
+        #  *   <dt>value</dt>
+        #  *   <dd>The cell value or cell prefix, depending on the operation</dd>
+        #  *
+        #  *   <dt>value_len</dt>
+        #  *   <dd>The size of the value</dd>
+        # *
+        #  *   <dt>column_qualifier</dt>
+        #  *   <dd>The column qualifier</dd>
+        #  * </dl>
         class ColumnPredicate
           include ::Thrift::Struct, ::Thrift::Struct_Union
           COLUMN_FAMILY = 1
           OPERATION = 2
           VALUE = 3
+          COLUMN_QUALIFIER = 4
 
           FIELDS = {
             COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family', :optional => true},
             OPERATION => {:type => ::Thrift::Types::I32, :name => 'operation', :enum_class => Hypertable::ThriftGen::ColumnPredicateOperation},
-            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true}
+            VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true},
+            COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier', :optional => true}
           }
 
           def struct_fields; FIELDS; end

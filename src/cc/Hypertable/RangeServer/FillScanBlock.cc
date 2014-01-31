@@ -51,7 +51,7 @@ namespace Hypertable {
         value_len = 0;
       }
       else {
-        counter = scan_context->family_info[key.column_family_code].counter &&
+        counter = scan_context->cell_predicates[key.column_family_code].counter &&
           (key.flag == FLAG_INSERT);
 
         if (counter) {

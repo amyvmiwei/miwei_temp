@@ -47,6 +47,8 @@ configure_file(${SRC_DIR}/test/indices_test.golden
                ${DST_DIR}/indices_test.golden)
 configure_file(${SRC_DIR}/test/indices_test.hql
                ${DST_DIR}/indices_test.hql)
+configure_file(${SRC_DIR}/test/indices_test_products.tsv
+               ${DST_DIR}/indices_test_products.tsv COPYONLY)
 configure_file(${SRC_DIR}/test/hypertable_test.golden
                ${DST_DIR}/hypertable_test.golden)
 configure_file(${SRC_DIR}/test/hypertable_select_gz_test.golden

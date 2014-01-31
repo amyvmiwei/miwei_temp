@@ -29,23 +29,26 @@ import org.slf4j.LoggerFactory;
 
 /**
  * Specifies a column predicate
- *     ... WHERE column = "value"
- *   or
- *     ... WHERE column =^ "prefix"
- * 
- * <dl>
- *   <dt>column_family</dt>
- *   <dd>The name of the column family</dd>
- * 
- *   <dt>operation</dt>
- *   <dd>The predicate operation; either EXACT_MATCH or PREFIX_MATCH</dd>
- * 
- *   <dt>value</dt>
- *   <dd>The cell value or cell prefix, depending on the operation</dd>
- * 
- *   <dt>value_len</dt>
- *   <dd>The size of the value</dd>
- * </dl>
+ *  *     ... WHERE column = "value"
+ *  *   or
+ *  *     ... WHERE column =^ "prefix"
+ *  *
+ *  * <dl>
+ *  *   <dt>column_family</dt>
+ *  *   <dd>The name of the column family</dd>
+ *  *
+ *  *   <dt>operation</dt>
+ *  *   <dd>The predicate operation; either EXACT_MATCH or PREFIX_MATCH</dd>
+ *  *
+ *  *   <dt>value</dt>
+ *  *   <dd>The cell value or cell prefix, depending on the operation</dd>
+ *  *
+ *  *   <dt>value_len</dt>
+ *  *   <dd>The size of the value</dd>
+ * *
+ *  *   <dt>column_qualifier</dt>
+ *  *   <dd>The column qualifier</dd>
+ *  * </dl>
  */
 public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate, ColumnPredicate._Fields>, java.io.Serializable, Cloneable {
   private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("ColumnPredicate");
@@ -53,6 +56,7 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
   private static final org.apache.thrift.protocol.TField COLUMN_FAMILY_FIELD_DESC = new org.apache.thrift.protocol.TField("column_family", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField OPERATION_FIELD_DESC = new org.apache.thrift.protocol.TField("operation", org.apache.thrift.protocol.TType.I32, (short)2);
   private static final org.apache.thrift.protocol.TField VALUE_FIELD_DESC = new org.apache.thrift.protocol.TField("value", org.apache.thrift.protocol.TType.STRING, (short)3);
+  private static final org.apache.thrift.protocol.TField COLUMN_QUALIFIER_FIELD_DESC = new org.apache.thrift.protocol.TField("column_qualifier", org.apache.thrift.protocol.TType.STRING, (short)4);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -67,6 +71,7 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
    */
   public ColumnPredicateOperation operation; // required
   public String value; // optional
+  public String column_qualifier; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -76,7 +81,8 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
      * @see ColumnPredicateOperation
      */
     OPERATION((short)2, "operation"),
-    VALUE((short)3, "value");
+    VALUE((short)3, "value"),
+    COLUMN_QUALIFIER((short)4, "column_qualifier");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -97,6 +103,8 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
           return OPERATION;
         case 3: // VALUE
           return VALUE;
+        case 4: // COLUMN_QUALIFIER
+          return COLUMN_QUALIFIER;
         default:
           return null;
       }
@@ -137,7 +145,7 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
   }
 
   // isset id assignments
-  private _Fields optionals[] = {_Fields.COLUMN_FAMILY,_Fields.VALUE};
+  private _Fields optionals[] = {_Fields.COLUMN_FAMILY,_Fields.VALUE,_Fields.COLUMN_QUALIFIER};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
@@ -146,6 +154,8 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
     tmpMap.put(_Fields.OPERATION, new org.apache.thrift.meta_data.FieldMetaData("operation", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.EnumMetaData(org.apache.thrift.protocol.TType.ENUM, ColumnPredicateOperation.class)));
     tmpMap.put(_Fields.VALUE, new org.apache.thrift.meta_data.FieldMetaData("value", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+    tmpMap.put(_Fields.COLUMN_QUALIFIER, new org.apache.thrift.meta_data.FieldMetaData("column_qualifier", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ColumnPredicate.class, metaDataMap);
@@ -174,6 +184,9 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
     if (other.isSetValue()) {
       this.value = other.value;
     }
+    if (other.isSetColumn_qualifier()) {
+      this.column_qualifier = other.column_qualifier;
+    }
   }
 
   public ColumnPredicate deepCopy() {
@@ -185,6 +198,7 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
     this.column_family = null;
     this.operation = null;
     this.value = null;
+    this.column_qualifier = null;
   }
 
   public String getColumn_family() {
@@ -267,6 +281,30 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
     }
   }
 
+  public String getColumn_qualifier() {
+    return this.column_qualifier;
+  }
+
+  public ColumnPredicate setColumn_qualifier(String column_qualifier) {
+    this.column_qualifier = column_qualifier;
+    return this;
+  }
+
+  public void unsetColumn_qualifier() {
+    this.column_qualifier = null;
+  }
+
+  /** Returns true if field column_qualifier is set (has been assigned a value) and false otherwise */
+  public boolean isSetColumn_qualifier() {
+    return this.column_qualifier != null;
+  }
+
+  public void setColumn_qualifierIsSet(boolean value) {
+    if (!value) {
+      this.column_qualifier = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case COLUMN_FAMILY:
@@ -293,6 +331,14 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
       }
       break;
 
+    case COLUMN_QUALIFIER:
+      if (value == null) {
+        unsetColumn_qualifier();
+      } else {
+        setColumn_qualifier((String)value);
+      }
+      break;
+
     }
   }
 
@@ -306,6 +352,9 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
 
     case VALUE:
       return getValue();
+
+    case COLUMN_QUALIFIER:
+      return getColumn_qualifier();
 
     }
     throw new IllegalStateException();
@@ -324,6 +373,8 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
       return isSetOperation();
     case VALUE:
       return isSetValue();
+    case COLUMN_QUALIFIER:
+      return isSetColumn_qualifier();
     }
     throw new IllegalStateException();
   }
@@ -365,6 +416,15 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
       if (!(this_present_value && that_present_value))
         return false;
       if (!this.value.equals(that.value))
+        return false;
+    }
+
+    boolean this_present_column_qualifier = true && this.isSetColumn_qualifier();
+    boolean that_present_column_qualifier = true && that.isSetColumn_qualifier();
+    if (this_present_column_qualifier || that_present_column_qualifier) {
+      if (!(this_present_column_qualifier && that_present_column_qualifier))
+        return false;
+      if (!this.column_qualifier.equals(that.column_qualifier))
         return false;
     }
 
@@ -414,6 +474,16 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetColumn_qualifier()).compareTo(typedOther.isSetColumn_qualifier());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetColumn_qualifier()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.column_qualifier, typedOther.column_qualifier);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -458,6 +528,16 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
         sb.append("null");
       } else {
         sb.append(this.value);
+      }
+      first = false;
+    }
+    if (isSetColumn_qualifier()) {
+      if (!first) sb.append(", ");
+      sb.append("column_qualifier:");
+      if (this.column_qualifier == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.column_qualifier);
       }
       first = false;
     }
@@ -527,6 +607,14 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
+          case 4: // COLUMN_QUALIFIER
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
+              struct.column_qualifier = iprot.readString();
+              struct.setColumn_qualifierIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
           default:
             org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
         }
@@ -561,6 +649,13 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
           oprot.writeFieldEnd();
         }
       }
+      if (struct.column_qualifier != null) {
+        if (struct.isSetColumn_qualifier()) {
+          oprot.writeFieldBegin(COLUMN_QUALIFIER_FIELD_DESC);
+          oprot.writeString(struct.column_qualifier);
+          oprot.writeFieldEnd();
+        }
+      }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
     }
@@ -588,7 +683,10 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
       if (struct.isSetValue()) {
         optionals.set(2);
       }
-      oprot.writeBitSet(optionals, 3);
+      if (struct.isSetColumn_qualifier()) {
+        optionals.set(3);
+      }
+      oprot.writeBitSet(optionals, 4);
       if (struct.isSetColumn_family()) {
         oprot.writeString(struct.column_family);
       }
@@ -598,12 +696,15 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
       if (struct.isSetValue()) {
         oprot.writeString(struct.value);
       }
+      if (struct.isSetColumn_qualifier()) {
+        oprot.writeString(struct.column_qualifier);
+      }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, ColumnPredicate struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(3);
+      BitSet incoming = iprot.readBitSet(4);
       if (incoming.get(0)) {
         struct.column_family = iprot.readString();
         struct.setColumn_familyIsSet(true);
@@ -615,6 +716,10 @@ public class ColumnPredicate implements org.apache.thrift.TBase<ColumnPredicate,
       if (incoming.get(2)) {
         struct.value = iprot.readString();
         struct.setValueIsSet(true);
+      }
+      if (incoming.get(3)) {
+        struct.column_qualifier = iprot.readString();
+        struct.setColumn_qualifierIsSet(true);
       }
     }
   }

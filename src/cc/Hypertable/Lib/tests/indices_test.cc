@@ -74,7 +74,7 @@ test_insert_timestamps(void)
   int i = 0;
   while (ts->next(cell)) {
     char buf[100];
-    sprintf(buf, "1,val%03d\trow%03d", i, i);
+    sprintf(buf, "1,val%03d\t\trow%03d", i, i);
     HT_ASSERT(strcmp(buf, cell.row_key)==0);
     HT_ASSERT(cell.value_len==0);
     HT_ASSERT(cell.timestamp==i);
@@ -115,7 +115,7 @@ test_insert_timestamps(void)
   i = 0;
   while (tsi->next(idx_cell) && tsp->next(cell)) {
     char buf[100];
-    sprintf(buf, "1,val%03d\trow%03d", i, i);
+    sprintf(buf, "1,val%03d\t\trow%03d", i, i);
     HT_ASSERT(strcmp(buf, idx_cell.row_key)==0);
     HT_ASSERT(idx_cell.value_len==0);
     HT_ASSERT(idx_cell.timestamp==cell.timestamp);
@@ -195,7 +195,7 @@ test_escaped_regexps(void)
   FILE *fout=fopen("indices_test.output", "wt");
   foreach_ht (Query &q, queries) {
     ScanSpecBuilder ssb;
-    ssb.add_column_predicate("a", q.second, q.first);
+    ssb.add_column_predicate("a", "", q.second, q.first);
     String s=escape(q.first, strlen(q.first));
     //String s(q.first);
     fprintf(fout, "query: '%s'\n", s.c_str());

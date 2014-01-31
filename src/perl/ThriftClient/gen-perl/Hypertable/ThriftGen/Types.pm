@@ -11,6 +11,12 @@ use Thrift;
 package Hypertable::ThriftGen::ColumnPredicateOperation;
 use constant EXACT_MATCH => 1;
 use constant PREFIX_MATCH => 2;
+use constant REGEX_MATCH => 4;
+use constant VALUE_MATCH => 7;
+use constant QUALIFIER_EXACT_MATCH => 256;
+use constant QUALIFIER_PREFIX_MATCH => 512;
+use constant QUALIFIER_REGEX_MATCH => 1024;
+use constant QUALIFIER_MATCH => 1792;
 package Hypertable::ThriftGen::KeyFlag;
 use constant DELETE_ROW => 0;
 use constant DELETE_CF => 1;
@@ -270,7 +276,7 @@ sub write {
 
 package Hypertable::ThriftGen::ColumnPredicate;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ColumnPredicate->mk_accessors( qw( column_family operation value ) );
+Hypertable::ThriftGen::ColumnPredicate->mk_accessors( qw( column_family operation value column_qualifier ) );
 
 sub new {
   my $classname = shift;
@@ -279,6 +285,7 @@ sub new {
   $self->{column_family} = undef;
   $self->{operation} = undef;
   $self->{value} = undef;
+  $self->{column_qualifier} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{column_family}) {
       $self->{column_family} = $vals->{column_family};
@@ -288,6 +295,9 @@ sub new {
     }
     if (defined $vals->{value}) {
       $self->{value} = $vals->{value};
+    }
+    if (defined $vals->{column_qualifier}) {
+      $self->{column_qualifier} = $vals->{column_qualifier};
     }
   }
   return bless ($self, $classname);
@@ -330,6 +340,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^4$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{column_qualifier});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -355,6 +371,11 @@ sub write {
   if (defined $self->{value}) {
     $xfer += $output->writeFieldBegin('value', TType::STRING, 3);
     $xfer += $output->writeString($self->{value});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{column_qualifier}) {
+    $xfer += $output->writeFieldBegin('column_qualifier', TType::STRING, 4);
+    $xfer += $output->writeString($self->{column_qualifier});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

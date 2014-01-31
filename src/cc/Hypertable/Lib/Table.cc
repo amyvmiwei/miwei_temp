@@ -80,6 +80,16 @@ void Table::initialize() {
   DynamicBuffer value_buf(0);
   String errmsg;
   String table_id;
+  bool is_index = false;
+
+  {
+    size_t pos = m_name.find_last_of('/');
+    if (pos == std::string::npos)
+      pos = 0;
+    else
+      pos++;
+    is_index = m_name[pos] == '^';
+  }
 
   m_toplevel_dir = m_props->get_str("Hypertable.Directory");
   boost::trim_if(m_toplevel_dir, boost::is_any_of("/"));
@@ -124,6 +134,10 @@ void Table::initialize() {
   }
   if (m_schema->need_id_assignment())
     HT_THROW(Error::SCHEMA_PARSE_ERROR, "Schema needs ID assignment");
+
+  if (is_index && m_schema->get_version() < 1)
+    HT_THROW(Error::BAD_FORMAT, "Unsupported index format.  Indexes must be "
+             "rebuilt (see REBUILD INDEX)");
 
   m_table.generation = m_schema->get_generation();
   m_stale = false;

@@ -736,7 +736,7 @@ void generate_query_load(PropertiesPtr &props, String &tablename,
       scan_spec.clear();
       if (query_mode == INDEX) {
         scan_spec.add_column((*iter).column_family);
-        scan_spec.add_column_predicate((*iter).column_family,
+        scan_spec.add_column_predicate((*iter).column_family, "",
                 ColumnPredicate::EXACT_MATCH, (const char *)(*iter).value);
       }
       else if (query_mode == QUALIFIER) {

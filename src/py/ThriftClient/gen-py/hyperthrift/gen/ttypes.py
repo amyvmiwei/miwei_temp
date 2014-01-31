@@ -27,15 +27,33 @@ class ColumnPredicateOperation(object):
   """
   EXACT_MATCH = 1
   PREFIX_MATCH = 2
+  REGEX_MATCH = 4
+  VALUE_MATCH = 7
+  QUALIFIER_EXACT_MATCH = 256
+  QUALIFIER_PREFIX_MATCH = 512
+  QUALIFIER_REGEX_MATCH = 1024
+  QUALIFIER_MATCH = 1792
 
   _VALUES_TO_NAMES = {
     1: "EXACT_MATCH",
     2: "PREFIX_MATCH",
+    4: "REGEX_MATCH",
+    7: "VALUE_MATCH",
+    256: "QUALIFIER_EXACT_MATCH",
+    512: "QUALIFIER_PREFIX_MATCH",
+    1024: "QUALIFIER_REGEX_MATCH",
+    1792: "QUALIFIER_MATCH",
   }
 
   _NAMES_TO_VALUES = {
     "EXACT_MATCH": 1,
     "PREFIX_MATCH": 2,
+    "REGEX_MATCH": 4,
+    "VALUE_MATCH": 7,
+    "QUALIFIER_EXACT_MATCH": 256,
+    "QUALIFIER_PREFIX_MATCH": 512,
+    "QUALIFIER_REGEX_MATCH": 1024,
+    "QUALIFIER_MATCH": 1792,
   }
 
 class KeyFlag(object):
@@ -357,28 +375,32 @@ class CellInterval(object):
 class ColumnPredicate(object):
   """
   Specifies a column predicate
-      ... WHERE column = "value"
-    or
-      ... WHERE column =^ "prefix"
-
-  <dl>
-    <dt>column_family</dt>
-    <dd>The name of the column family</dd>
-
-    <dt>operation</dt>
-    <dd>The predicate operation; either EXACT_MATCH or PREFIX_MATCH</dd>
-
-    <dt>value</dt>
-    <dd>The cell value or cell prefix, depending on the operation</dd>
-
-    <dt>value_len</dt>
-    <dd>The size of the value</dd>
-  </dl>
+   *     ... WHERE column = "value"
+   *   or
+   *     ... WHERE column =^ "prefix"
+   *
+   * <dl>
+   *   <dt>column_family</dt>
+   *   <dd>The name of the column family</dd>
+   *
+   *   <dt>operation</dt>
+   *   <dd>The predicate operation; either EXACT_MATCH or PREFIX_MATCH</dd>
+   *
+   *   <dt>value</dt>
+   *   <dd>The cell value or cell prefix, depending on the operation</dd>
+   *
+   *   <dt>value_len</dt>
+   *   <dd>The size of the value</dd>
+  *
+   *   <dt>column_qualifier</dt>
+   *   <dd>The column qualifier</dd>
+   * </dl>
 
   Attributes:
    - column_family
    - operation
    - value
+   - column_qualifier
   """
 
   thrift_spec = (
@@ -386,12 +408,14 @@ class ColumnPredicate(object):
     (1, TType.STRING, 'column_family', None, None, ), # 1
     (2, TType.I32, 'operation', None, None, ), # 2
     (3, TType.STRING, 'value', None, None, ), # 3
+    (4, TType.STRING, 'column_qualifier', None, None, ), # 4
   )
 
-  def __init__(self, column_family=None, operation=None, value=None,):
+  def __init__(self, column_family=None, operation=None, value=None, column_qualifier=None,):
     self.column_family = column_family
     self.operation = operation
     self.value = value
+    self.column_qualifier = column_qualifier
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -417,6 +441,11 @@ class ColumnPredicate(object):
           self.value = iprot.readString();
         else:
           iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRING:
+          self.column_qualifier = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -438,6 +467,10 @@ class ColumnPredicate(object):
     if self.value is not None:
       oprot.writeFieldBegin('value', TType.STRING, 3)
       oprot.writeString(self.value)
+      oprot.writeFieldEnd()
+    if self.column_qualifier is not None:
+      oprot.writeFieldBegin('column_qualifier', TType.STRING, 4)
+      oprot.writeString(self.column_qualifier)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

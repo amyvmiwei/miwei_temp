@@ -21,7 +21,13 @@ import org.apache.thrift.TEnum;
  */
 public enum ColumnPredicateOperation implements org.apache.thrift.TEnum {
   EXACT_MATCH(1),
-  PREFIX_MATCH(2);
+  PREFIX_MATCH(2),
+  REGEX_MATCH(4),
+  VALUE_MATCH(7),
+  QUALIFIER_EXACT_MATCH(256),
+  QUALIFIER_PREFIX_MATCH(512),
+  QUALIFIER_REGEX_MATCH(1024),
+  QUALIFIER_MATCH(1792);
 
   private final int value;
 
@@ -46,6 +52,18 @@ public enum ColumnPredicateOperation implements org.apache.thrift.TEnum {
         return EXACT_MATCH;
       case 2:
         return PREFIX_MATCH;
+      case 4:
+        return REGEX_MATCH;
+      case 7:
+        return VALUE_MATCH;
+      case 256:
+        return QUALIFIER_EXACT_MATCH;
+      case 512:
+        return QUALIFIER_PREFIX_MATCH;
+      case 1024:
+        return QUALIFIER_REGEX_MATCH;
+      case 1792:
+        return QUALIFIER_MATCH;
       default:
         return null;
     }

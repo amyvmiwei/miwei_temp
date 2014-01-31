@@ -10,13 +10,25 @@ namespace Hypertable { namespace ThriftGen {
 
 int _kColumnPredicateOperationValues[] = {
   ColumnPredicateOperation::EXACT_MATCH,
-  ColumnPredicateOperation::PREFIX_MATCH
+  ColumnPredicateOperation::PREFIX_MATCH,
+  ColumnPredicateOperation::REGEX_MATCH,
+  ColumnPredicateOperation::VALUE_MATCH,
+  ColumnPredicateOperation::QUALIFIER_EXACT_MATCH,
+  ColumnPredicateOperation::QUALIFIER_PREFIX_MATCH,
+  ColumnPredicateOperation::QUALIFIER_REGEX_MATCH,
+  ColumnPredicateOperation::QUALIFIER_MATCH
 };
 const char* _kColumnPredicateOperationNames[] = {
   "EXACT_MATCH",
-  "PREFIX_MATCH"
+  "PREFIX_MATCH",
+  "REGEX_MATCH",
+  "VALUE_MATCH",
+  "QUALIFIER_EXACT_MATCH",
+  "QUALIFIER_PREFIX_MATCH",
+  "QUALIFIER_REGEX_MATCH",
+  "QUALIFIER_MATCH"
 };
-const std::map<int, const char*> _ColumnPredicateOperation_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(2, _kColumnPredicateOperationValues, _kColumnPredicateOperationNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
+const std::map<int, const char*> _ColumnPredicateOperation_VALUES_TO_NAMES(::apache::thrift::TEnumIterator(8, _kColumnPredicateOperationValues, _kColumnPredicateOperationNames), ::apache::thrift::TEnumIterator(-1, NULL, NULL));
 
 int _kKeyFlagValues[] = {
   KeyFlag::DELETE_ROW,
@@ -260,8 +272,8 @@ uint32_t CellInterval::write(::apache::thrift::protocol::TProtocol* oprot) const
   return xfer;
 }
 
-const char* ColumnPredicate::ascii_fingerprint = "14018043915C33E523FDD5E9D2954D73";
-const uint8_t ColumnPredicate::binary_fingerprint[16] = {0x14,0x01,0x80,0x43,0x91,0x5C,0x33,0xE5,0x23,0xFD,0xD5,0xE9,0xD2,0x95,0x4D,0x73};
+const char* ColumnPredicate::ascii_fingerprint = "5E0D6E56B1DF2285E40B070B2E5E5E6E";
+const uint8_t ColumnPredicate::binary_fingerprint[16] = {0x5E,0x0D,0x6E,0x56,0xB1,0xDF,0x22,0x85,0xE4,0x0B,0x07,0x0B,0x2E,0x5E,0x5E,0x6E};
 
 uint32_t ColumnPredicate::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -309,6 +321,14 @@ uint32_t ColumnPredicate::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 4:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->column_qualifier);
+          this->__isset.column_qualifier = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -337,13 +357,18 @@ uint32_t ColumnPredicate::write(::apache::thrift::protocol::TProtocol* oprot) co
     xfer += oprot->writeString(this->value);
     xfer += oprot->writeFieldEnd();
   }
+  if (this->__isset.column_qualifier) {
+    xfer += oprot->writeFieldBegin("column_qualifier", ::apache::thrift::protocol::T_STRING, 4);
+    xfer += oprot->writeString(this->column_qualifier);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   return xfer;
 }
 
-const char* ScanSpec::ascii_fingerprint = "8644886D3380F7FE3CE1EAC6657BD6F2";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0x86,0x44,0x88,0x6D,0x33,0x80,0xF7,0xFE,0x3C,0xE1,0xEA,0xC6,0x65,0x7B,0xD6,0xF2};
+const char* ScanSpec::ascii_fingerprint = "CAB903AC8C5C4847373DE9F201D35C02";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0xCA,0xB9,0x03,0xAC,0x8C,0x5C,0x48,0x47,0x37,0x3D,0xE9,0xF2,0x01,0xD3,0x5C,0x02};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 

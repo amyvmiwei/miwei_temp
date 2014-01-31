@@ -230,6 +230,7 @@ void prepare_index(ContextPtr &context, const String &name,
   new_cf->name = "v1";
   new_cf->ag = "default";
   index_schema->add_column_family(new_cf);
+  index_schema->set_version("1");
 
   HT_ASSERT(index_schema->is_valid());
 

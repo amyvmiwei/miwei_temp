@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,80 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+/// @file
+/// Definitions for ScanContext.
+/// This file contains the type definitions for the ScanContext, a class that
+/// provides context for a scan.
+
+#include <Common/Compat.h>
+#include "ScanContext.h"
+
+#include <Hypertable/RangeServer/Global.h>
+
+#include <Hypertable/Lib/Key.h>
+
+#include <Common/Logger.h>
+
 #include <algorithm>
 #include <cassert>
 #include <re2/re2.h>
 
-#include "Common/Logger.h"
-
-#include "Hypertable/Lib/Key.h"
-
-#include "Global.h"
-#include "ScanContext.h"
 
 using namespace std;
 using namespace Hypertable;
 
-
-const uint8_t* CellFilterInfo::memfind(
-  const uint8_t* block,        // Block containing data
-  size_t         block_size,   // Size of block in bytes
-  const uint8_t* pattern,      // Pattern to search for
-  size_t         pattern_size, // Size of pattern block
-  size_t*        shift,        // Shift table (search buffer)
-  bool*          repeat_find)  // true: search buffer already init
-{
-  assert(block);
-  assert(pattern);
-  assert(shift);
-  if (block == 0 || pattern == 0 || shift == 0)
-    return 0;
-
-  // Pattern must be smaller or equal in size to string
-  if (block_size < pattern_size)
-    return 0;
-
-  if (pattern_size == 0)
-    return block;
-
-  // Build the shift table unless we're continuing a previous search.
-  // The shift table determines how far to shift before trying to match
-  // again, if a match at this point fails.  If the byte after where the
-  // end of our pattern falls is not in our pattern, then we start to
-  // match again after that byte; otherwise we line up the last occurence 
-  // of that byte in our pattern under that byte, and try match again.
-  if (!repeat_find || !*repeat_find) {
-    for (size_t byte_nbr = 0; byte_nbr < 256; byte_nbr++)
-      shift[byte_nbr] = pattern_size + 1;
-    for (size_t byte_nbr = 0; byte_nbr < pattern_size; byte_nbr++)
-      shift[(uint8_t) pattern[byte_nbr]] = pattern_size - byte_nbr;
-
-    if (repeat_find)
-      *repeat_find = true;
-  }
-
-  // Search for the block, each time jumping up by the amount
-  // computed in the shift table
-  const uint8_t* limit = block + (block_size - pattern_size + 1);
-  assert(limit > block);
-
-  for (const uint8_t* match_base = block;
-    match_base < limit;
-    match_base += shift[*(match_base + pattern_size)]) {
-    const uint8_t* match_ptr  = match_base;
-    size_t match_size = 0;
-    // Compare pattern until it all matches, or we find a difference
-    while (*match_ptr++ == pattern[match_size++]) {
-      assert(match_size <= pattern_size && match_ptr == (match_base + match_size));
-
-      // If we found a match, return the start address
-      if (match_size >= pattern_size)
-        return match_base;
-    }
-  }
-  return 0;
-}
 
 void
 ScanContext::initialize(int64_t rev, const ScanSpec *ss,
@@ -101,8 +49,11 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
   uint32_t max_versions = 0;
   boost::xtime xtnow;
   int64_t now;
-  String family, qualifier;
-  bool has_qualifier, is_regexp, is_prefix;
+  String family;
+  const char *qualifier;
+  size_t qualifier_len;
+  size_t id = 0;
+  bool is_regexp, is_prefix;
 
   boost::xtime_get(&xtnow, boost::TIME_UTC_);
   now = ((int64_t)xtnow.sec * 1000000000LL) + (int64_t)xtnow.nsec;
@@ -133,10 +84,14 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     schema = sp;
 
     if (spec && spec->columns.size() > 0) {
+      bool has_qualifier;
 
       foreach_ht(const char *cfstr, spec->columns) {
-        ScanSpec::parse_column(cfstr, family, qualifier, &has_qualifier, 
-                &is_regexp, &is_prefix);
+
+        cfstr = (const char *)arena.dup(cfstr);
+
+        ScanSpec::parse_column(cfstr, family, &qualifier, &qualifier_len,
+                               &has_qualifier, &is_regexp, &is_prefix);
         cf = schema->get_column_family(family.c_str());
 
         if (cf == 0)
@@ -144,28 +99,33 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
         family_mask[cf->id] = true;
         if (has_qualifier) {
-          family_info[cf->id].add_qualifier(qualifier.c_str(), 
-                  is_regexp, is_prefix);
+          ColumnPredicate cp;
+          cp.operation = 
+            is_regexp ? ColumnPredicate::QUALIFIER_REGEX_MATCH : 
+            (is_prefix ? ColumnPredicate::QUALIFIER_PREFIX_MATCH :
+             ColumnPredicate::QUALIFIER_EXACT_MATCH);
+          cp.column_qualifier = qualifier;
+          cp.column_qualifier_len = qualifier_len;
+          cell_predicates[cf->id].add_column_predicate(cp, id++);
         }
-        else
-          family_info[cf->id].accept_empty_qualifier = true;
 
         if (cf->ttl == 0)
-          family_info[cf->id].cutoff_time = TIMESTAMP_MIN;
+          cell_predicates[cf->id].cutoff_time = TIMESTAMP_MIN;
         else
-          family_info[cf->id].cutoff_time = now
+          cell_predicates[cf->id].cutoff_time = now
             - ((int64_t)cf->ttl * 1000000000LL);
         if (max_versions == 0)
-          family_info[cf->id].max_versions = cf->max_versions;
+          cell_predicates[cf->id].max_versions = cf->max_versions;
         else {
           if (cf->max_versions == 0)
-            family_info[cf->id].max_versions = max_versions;
+            cell_predicates[cf->id].max_versions = max_versions;
           else
-            family_info[cf->id].max_versions = max_versions < cf->max_versions
+            cell_predicates[cf->id].max_versions = max_versions < cf->max_versions
               ?  max_versions : cf->max_versions;
         }
         if (cf->counter)
-          family_info[cf->id].counter = true;
+          cell_predicates[cf->id].counter = true;
+        cell_predicates[cf->id].indexed = cf->has_index || cf->has_qualifier_index;
       }
     }
     else {
@@ -185,28 +145,25 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
             continue;
           }
           family_mask[(*cf_it)->id] = true;
-          if ((*cf_it)->has_index)
-            family_info[(*cf_it)->id].has_index = true;
-          if ((*cf_it)->has_qualifier_index)
-            family_info[(*cf_it)->id].has_qualifier_index = true;
           if ((*cf_it)->ttl == 0)
-            family_info[(*cf_it)->id].cutoff_time = TIMESTAMP_MIN;
+            cell_predicates[(*cf_it)->id].cutoff_time = TIMESTAMP_MIN;
           else
-            family_info[(*cf_it)->id].cutoff_time = now
+            cell_predicates[(*cf_it)->id].cutoff_time = now
               - ((int64_t)(*cf_it)->ttl * 1000000000LL);
 
           if (max_versions == 0)
-            family_info[(*cf_it)->id].max_versions = (*cf_it)->max_versions;
+            cell_predicates[(*cf_it)->id].max_versions = (*cf_it)->max_versions;
           else {
             if ((*cf_it)->max_versions == 0)
-              family_info[(*cf_it)->id].max_versions = max_versions;
+              cell_predicates[(*cf_it)->id].max_versions = max_versions;
             else
-              family_info[(*cf_it)->id].max_versions =
+              cell_predicates[(*cf_it)->id].max_versions =
                 (max_versions < (*cf_it)->max_versions)
                 ? max_versions : (*cf_it)->max_versions;
           }
           if ((*cf_it)->counter)
-            family_info[(*cf_it)->id].counter = true;
+            cell_predicates[(*cf_it)->id].counter = true;
+          cell_predicates[(*cf_it)->id].indexed = (*cf_it)->has_index || (*cf_it)->has_qualifier_index;
         }
       }
     }
@@ -438,7 +395,8 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         if (cf->counter) {
           HT_THROW(Error::BAD_SCAN_SPEC, "Counters are not supported for column predicates" );
         }
-        family_info[cf->id].add_column_predicate(cp);
+        cell_predicates[cf->id].add_column_predicate(cp, id++);
+        cell_predicates[cf->id].indexed = cf->has_index || cf->has_qualifier_index;
       }
     }
   }

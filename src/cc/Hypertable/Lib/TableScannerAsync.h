@@ -22,20 +22,23 @@
 #ifndef HYPERTABLE_TABLESCANNERASYNC_H
 #define HYPERTABLE_TABLESCANNERASYNC_H
 
-#include "Common/ReferenceCount.h"
+#include <Common/ReferenceCount.h>
+
+#include <Hypertable/Lib/Cells.h>
+#include <Hypertable/Lib/CellPredicate.h>
+#include <Hypertable/Lib/ClientObject.h>
+#include <Hypertable/Lib/RangeLocator.h>
+#include <Hypertable/Lib/RangeServerClient.h>
+#include <Hypertable/Lib/IntervalScannerAsync.h>
+#include <Hypertable/Lib/ScanBlock.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/ResultCallback.h>
+#include <Hypertable/Lib/Table.h>
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"
 
-#include "Cells.h"
-#include "ClientObject.h"
-#include "RangeLocator.h"
-#include "RangeServerClient.h"
-#include "IntervalScannerAsync.h"
-#include "ScanBlock.h"
-#include "Schema.h"
-#include "Types.h"
-#include "ResultCallback.h"
-#include "Table.h"
+#include <vector>
 
 namespace Hypertable {
 
@@ -136,7 +139,9 @@ namespace Hypertable {
     void wait_for_completion();
     void move_to_next_interval_scanner(int current_scanner);
     bool use_index(TablePtr table, const ScanSpec &primary_spec, 
-            ScanSpecBuilder &index_spec, bool *use_qualifier);
+                   ScanSpecBuilder &index_spec,
+                   std::vector<CellPredicate> &cell_predicates,
+                   bool *use_qualifier);
     void transform_primary_scan_spec(ScanSpecBuilder &primary_spec);
     void add_index_row(ScanSpecBuilder &ssb, const char *row);
 

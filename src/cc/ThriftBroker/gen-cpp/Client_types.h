@@ -19,7 +19,13 @@ namespace Hypertable { namespace ThriftGen {
 struct ColumnPredicateOperation {
   enum type {
     EXACT_MATCH = 1,
-    PREFIX_MATCH = 2
+    PREFIX_MATCH = 2,
+    REGEX_MATCH = 4,
+    VALUE_MATCH = 7,
+    QUALIFIER_EXACT_MATCH = 256,
+    QUALIFIER_PREFIX_MATCH = 512,
+    QUALIFIER_REGEX_MATCH = 1024,
+    QUALIFIER_MATCH = 1792
   };
 };
 
@@ -241,19 +247,20 @@ class CellInterval {
 };
 
 typedef struct _ColumnPredicate__isset {
-  _ColumnPredicate__isset() : column_family(false), operation(false), value(false) {}
+  _ColumnPredicate__isset() : column_family(false), operation(false), value(false), column_qualifier(false) {}
   bool column_family;
   bool operation;
   bool value;
+  bool column_qualifier;
 } _ColumnPredicate__isset;
 
 class ColumnPredicate {
  public:
 
-  static const char* ascii_fingerprint; // = "14018043915C33E523FDD5E9D2954D73";
-  static const uint8_t binary_fingerprint[16]; // = {0x14,0x01,0x80,0x43,0x91,0x5C,0x33,0xE5,0x23,0xFD,0xD5,0xE9,0xD2,0x95,0x4D,0x73};
+  static const char* ascii_fingerprint; // = "5E0D6E56B1DF2285E40B070B2E5E5E6E";
+  static const uint8_t binary_fingerprint[16]; // = {0x5E,0x0D,0x6E,0x56,0xB1,0xDF,0x22,0x85,0xE4,0x0B,0x07,0x0B,0x2E,0x5E,0x5E,0x6E};
 
-  ColumnPredicate() : column_family(""), operation((ColumnPredicateOperation::type)0), value("") {
+  ColumnPredicate() : column_family(""), operation((ColumnPredicateOperation::type)0), value(""), column_qualifier("") {
   }
 
   virtual ~ColumnPredicate() throw() {}
@@ -261,6 +268,7 @@ class ColumnPredicate {
   std::string column_family;
   ColumnPredicateOperation::type operation;
   std::string value;
+  std::string column_qualifier;
 
   _ColumnPredicate__isset __isset;
 
@@ -278,6 +286,11 @@ class ColumnPredicate {
     __isset.value = true;
   }
 
+  void __set_column_qualifier(const std::string& val) {
+    column_qualifier = val;
+    __isset.column_qualifier = true;
+  }
+
   bool operator == (const ColumnPredicate & rhs) const
   {
     if (__isset.column_family != rhs.__isset.column_family)
@@ -289,6 +302,10 @@ class ColumnPredicate {
     if (__isset.value != rhs.__isset.value)
       return false;
     else if (__isset.value && !(value == rhs.value))
+      return false;
+    if (__isset.column_qualifier != rhs.__isset.column_qualifier)
+      return false;
+    else if (__isset.column_qualifier && !(column_qualifier == rhs.column_qualifier))
       return false;
     return true;
   }
@@ -328,8 +345,8 @@ typedef struct _ScanSpec__isset {
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "8644886D3380F7FE3CE1EAC6657BD6F2";
-  static const uint8_t binary_fingerprint[16]; // = {0x86,0x44,0x88,0x6D,0x33,0x80,0xF7,0xFE,0x3C,0xE1,0xEA,0xC6,0x65,0x7B,0xD6,0xF2};
+  static const char* ascii_fingerprint; // = "CAB903AC8C5C4847373DE9F201D35C02";
+  static const uint8_t binary_fingerprint[16]; // = {0xCA,0xB9,0x03,0xAC,0x8C,0x5C,0x48,0x47,0x37,0x3D,0xE9,0xF2,0x01,0xD3,0x5C,0x02};
 
   ScanSpec() : return_deletes(false), versions(0), row_limit(0), start_time(0), end_time(0), keys_only(false), cell_limit(0), cell_limit_per_family(0), row_regexp(""), value_regexp(""), scan_and_filter_rows(false), row_offset(0), cell_offset(0), do_not_cache(false) {
   }

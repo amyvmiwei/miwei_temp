@@ -17,7 +17,7 @@ while (<FH>) {
     #print "col:  $9\n";
     #print "qual: $10\n";
     #print "cell: $11\n";
-    $select="SELECT $9:$10 FROM IndexTest WHERE $9 = \"$11\" AND TIMESTAMP = \"$1-$2-$3 $4:$5:$6:$7\" DISPLAY_TIMESTAMPS;";
+    $select="SELECT $9:$10 FROM IndexTest WHERE Exists($9:$10) AND TIMESTAMP = \"$1-$2-$3 $4:$5:$6:$7\" DISPLAY_TIMESTAMPS;";
   }
   else {
     /^(\d+)-(\d+)-(\d+) (\d+):(\d+):(\d+)\.(\d+)\t(\w+)\t(\w+)\t(.*)$/;

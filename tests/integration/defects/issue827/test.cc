@@ -56,7 +56,7 @@ main(int _argc, char **_argv)
     // scan all keys with the index
     ScanSpecBuilder ssb;
     ssb.add_column("Field1");
-    ssb.add_column_predicate("Field1", ColumnPredicate::PREFIX_MATCH, "");
+    ssb.add_column_predicate("Field1", "", ColumnPredicate::PREFIX_MATCH, "");
     TableScanner *ts = table->create_scanner(ssb.get());
     Cell cell;
     int i = 0;
