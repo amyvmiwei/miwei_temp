@@ -205,6 +205,20 @@ namespace Hypertable {
      */
     int get_generation() { ScopedLock lock(m_mutex); return m_generation; }
 
+    /** Sets the generation number (TESTING ONLY).
+     * @param new_generation New generation number
+     */
+    void set_generation(int new_generation) {
+      ScopedLock lock(m_mutex);
+      m_generation = new_generation;
+    }
+
+    /** Clears the #m_current_set of move specifications (TESTING ONLY).
+     */
+    void clear_current_set() {
+      m_current_set.clear();
+    }
+
     /** Registers a new balance plan for load balancing purposes.
      * This method registers the balance plan <code>plan</code> by adding
      * all of the moves in <code>plan</code>to #m_current_set.  It only

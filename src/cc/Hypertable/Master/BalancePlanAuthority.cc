@@ -71,6 +71,13 @@ BalancePlanAuthority::display(std::ostream &os)
         os << *(it->second.plans[i]) << " ";
     it++;
   }
+  if (BPA_VERSION >= 2) {
+    os << "current_set={";
+    foreach_ht (const RangeMoveSpecPtr &move_spec, m_current_set)
+      os << *move_spec << " ";
+    os << "}";
+  }
+
 }
 
 size_t 
@@ -268,6 +275,7 @@ void BalancePlanAuthority::change_receiver_plan_location(const String &location,
           for (size_t j=0; j<specs.size(); j++) {
             receiver_plan->remove(specs[j]);
             receiver_plan->insert(new_destination, specs[j], states[j]);
+            changed = true;
           }
         }
       }
