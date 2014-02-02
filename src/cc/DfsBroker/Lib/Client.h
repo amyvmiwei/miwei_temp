@@ -150,7 +150,7 @@ namespace Hypertable { namespace DfsBroker {
       virtual void rmdir(const String &name, bool force = true);
 
       virtual void readdir(const String &name, DispatchHandler *handler);
-      virtual void readdir(const String &name, std::vector<String> &listing);
+      virtual void readdir(const String &name, std::vector<Dirent> &listing);
 
       virtual void posix_readdir(const String &name,
               std::vector<Filesystem::DirectoryEntry> &listing);

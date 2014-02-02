@@ -59,7 +59,6 @@ void CommandCopyToLocal::run() {
   uint64_t offset;
   uint32_t amount;
   uint8_t *dst;
-  uint64_t pos;
 
   if (m_args.size() < 2)
     HT_THROW(Error::COMMAND_PARSE_ERROR, "Insufficient number of arguments");

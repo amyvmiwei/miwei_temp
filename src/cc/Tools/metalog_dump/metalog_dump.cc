@@ -96,10 +96,10 @@ namespace {
     }
 
     if (!*is_file) {
-      std::vector<String> listing;
+      std::vector<Filesystem::Dirent> listing;
       fs->readdir(path, listing);
       if (!listing.empty()) {
-        path += String("/") + listing[0];
+        path += String("/") + listing[0].name;
         check_file = true;
       }
     }

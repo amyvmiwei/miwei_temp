@@ -19,28 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-
-#include "AsyncComm/CommBuf.h"
-#include "Common/Serialization.h"
-
+#include <Common/Compat.h>
 #include "ResponseCallbackReaddir.h"
+
+#include <Common/Error.h>
+#include <Common/Serialization.h>
+
+#include <AsyncComm/CommBuf.h>
 
 using namespace Hypertable;
 using namespace DfsBroker;
 using namespace Serialization;
 
-int ResponseCallbackReaddir::response(std::vector<std::string> &listing) {
+int ResponseCallbackReaddir::response(std::vector<Filesystem::Dirent> &listing) {
   CommHeader header;
   header.initialize_from_request_header(m_event->header);
   uint32_t len = 8;
-  for (size_t i=0; i<listing.size(); i++)
-    len += encoded_length_str16(listing[i]);
+  foreach_ht (const Filesystem::Dirent &entry, listing)
+    len += entry.encoded_length();
   CommBufPtr cbp( new CommBuf(header, len) );
   cbp->append_i32(Error::OK);
   cbp->append_i32(listing.size());
-  for (size_t i=0; i<listing.size(); i++)
-    cbp->append_str16(listing[i]);
+  foreach_ht (const Filesystem::Dirent &entry, listing)
+    entry.encode(cbp->get_data_ptr_address());
   return m_comm->send_response(m_event->addr, cbp);
 }

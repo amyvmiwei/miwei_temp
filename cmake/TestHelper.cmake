@@ -27,10 +27,6 @@ if (Thrift_FOUND)
   set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/ThriftBroker)
 endif ()
 
-if (Kfs_FOUND)
-  set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/kosmosBroker)
-endif ()
-
 if (Ceph_FOUND)
   set(INSTALLED_SERVERS ${INSTALLED_SERVERS} ${INSTALL_DIR}/bin/cephBroker)
 endif ()

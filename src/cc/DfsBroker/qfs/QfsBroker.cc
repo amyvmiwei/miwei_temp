@@ -216,13 +216,17 @@ void QfsBroker::flush(ResponseCallback *cb, uint32_t fd) {
 }
 
 void QfsBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
-  std::vector<std::string> result, listing;
-  int err = m_client->Readdir(dname, result);
-  std::vector<std::string>::iterator end = result.end();
-  for(std::vector<std::string>::iterator it = result.begin(); it != end; ++it) {
-    const std::string& ent = *it;
-    if(ent != "." && ent != "..")
-      listing.push_back(ent);
+  std::vector<KfsFileAttr> result;
+  std::vector<Filesystem::Dirent> listing;
+  int err = m_client->ReaddirPlus(dname, result);
+
+  Filesystem::Dirent entry;
+  for (std::vector<KfsFileAttr>::iterator it = result.begin();
+       it != result.end(); ++it) {
+    if(it->filename != "." && it->filename != "..") {
+      entry.name = it->filename;
+      listing.push_back(entry);
+    }
   }
 
   if(err == 0)

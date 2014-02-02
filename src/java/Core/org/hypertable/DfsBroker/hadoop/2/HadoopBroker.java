@@ -808,41 +808,40 @@ public class HadoopBroker {
             if (mVerbose)
                 log.info("Readdir('" + dirName + "')");
 
-            String [] listing = null;
             FileStatus[] statuses = null;
+            org.hypertable.Common.Filesystem.Dirent [] listing = null;
             // if the directory doesn't exist then CDH4 throws
             // FileNotFoundException, but CDH3 returns NULL
             try {
-                statuses = mFilesystem.listStatus(new Path(dirName));
+              statuses = mFilesystem.listStatus(new Path(dirName));
             }
             catch (FileNotFoundException e) {
                 // ignore
             }
 
             if (statuses != null) {
-                Path[] paths = new Path[statuses.length];
-                for (int k = 0; k < statuses.length; k++) {
-                    paths[k] = statuses[k].getPath();
-                }
-
-                listing = new String [ paths.length ];
-                for (int i=0; i<paths.length; i++) {
-                    pathStr = paths[i].toString();
-                    int lastSlash = pathStr.lastIndexOf('/');
-                    if (lastSlash == -1)
-                        listing[i] = pathStr;
-                    else
-                        listing[i] = pathStr.substring(lastSlash+1);
-                }
+             listing = new org.hypertable.Common.Filesystem.Dirent [ statuses.length ];
+              for (int i = 0; i < statuses.length; i++) {
+                org.hypertable.Common.Filesystem.Dirent entry = new org.hypertable.Common.Filesystem.Dirent();
+                pathStr = statuses[i].getPath().toString();
+                int lastSlash = pathStr.lastIndexOf('/');
+                if (lastSlash == -1)
+                  entry.name = pathStr;
+                else
+                  entry.name = pathStr.substring(lastSlash+1);
+                entry.last_modification_time = (int)(statuses[i].getModificationTime() / 1000L);
+                entry.length = statuses[i].getLen();
+                entry.is_dir = statuses[i].isDir();
+                listing[i] = entry;
+              }
             }
 
             error = cb.response(listing);
-
         }
         catch (IOException e) {
-            log.severe("I/O exception while reading directory '" + dirName
-                       + "' - " + e.toString());
-            error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
+          log.severe("I/O exception while reading directory '" + dirName
+                     + "' - " + e.toString());
+          error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
         }
 
         if (error != Error.OK)

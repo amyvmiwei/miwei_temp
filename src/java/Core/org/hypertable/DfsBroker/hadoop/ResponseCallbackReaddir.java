@@ -28,6 +28,7 @@ import org.hypertable.AsyncComm.Event;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.AsyncComm.Serialization;
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Filesystem;
 
 public class ResponseCallbackReaddir extends ResponseCallback {
 
@@ -35,7 +36,7 @@ public class ResponseCallbackReaddir extends ResponseCallback {
         super(comm, event);
     }
 
-    int response(String [] listing) {
+    int response(Filesystem.Dirent [] listing) {
         CommHeader header = new CommHeader();
         int listing_count = 0;
         header.initialize_from_request_header(mEvent.header);
@@ -43,12 +44,12 @@ public class ResponseCallbackReaddir extends ResponseCallback {
             listing_count = listing.length;
         int len = 8;
         for (int i=0; i<listing_count; i++)
-            len += Serialization.EncodedLengthString(listing[i]);
+          len += listing[i].EncodedLength();
         CommBuf cbuf = new CommBuf(header, len);
         cbuf.AppendInt(Error.OK);
         cbuf.AppendInt(listing_count);
         for (int i=0; i<listing_count; i++)
-            cbuf.AppendString(listing[i]);
+          listing[i].Encode(cbuf.data);
         return mComm.SendResponse(mEvent.addr, cbuf);
     }
 }

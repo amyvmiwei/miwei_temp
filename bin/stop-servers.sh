@@ -83,8 +83,6 @@ usage() {
   echo "  hyperspace              stops the Hyperspace master"
   echo "  thriftbroker            stops the ThriftBroker"
   echo ""
-  echo "DFS choices: kfs, hadoop, local"
-  echo ""
 }
 
 while [ "$1" != "${1##[-+]}" ]; do

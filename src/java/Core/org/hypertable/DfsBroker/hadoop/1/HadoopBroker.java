@@ -40,7 +40,9 @@ import org.apache.hadoop.util.ReflectionUtils;
 
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.ResponseCallback;
+
 import org.hypertable.Common.Error;
+import org.hypertable.Common.Filesystem;
 
 import org.apache.hadoop.fs.FileStatus;
 
@@ -847,24 +849,24 @@ public class HadoopBroker {
             if (mVerbose)
                 log.info("Readdir('" + dirName + "')");
 
-            String [] listing = null;
+            org.hypertable.Common.Filesystem.Dirent [] listing = null;
             FileStatus[] statuses = mFilesystem.listStatus(new Path(dirName));
 
             if (statuses != null) {
-                Path[] paths = new Path[statuses.length];
-                for (int k = 0; k < statuses.length; k++) {
-                    paths[k] = statuses[k].getPath();
-                }
-
-                listing = new String [ paths.length ];
-                for (int i=0; i<paths.length; i++) {
-                    pathStr = paths[i].toString();
-                    int lastSlash = pathStr.lastIndexOf('/');
-                    if (lastSlash == -1)
-                        listing[i] = pathStr;
-                    else
-                        listing[i] = pathStr.substring(lastSlash+1);
-                }
+              listing = new org.hypertable.Common.Filesystem.Dirent [ statuses.length ];
+              for (int i = 0; i < statuses.length; i++) {
+                org.hypertable.Common.Filesystem.Dirent entry = new org.hypertable.Common.Filesystem.Dirent();
+                pathStr = statuses[i].getPath().toString();
+                int lastSlash = pathStr.lastIndexOf('/');
+                if (lastSlash == -1)
+                  entry.name = pathStr;
+                else
+                  entry.name = pathStr.substring(lastSlash+1);
+                entry.last_modification_time = (int)(statuses[i].getModificationTime() / 1000L);
+                entry.length = statuses[i].getLen();
+                entry.is_dir = statuses[i].isDir();
+                listing[i] = entry;
+              }
             }
 
             error = cb.response(listing);

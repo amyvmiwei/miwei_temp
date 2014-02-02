@@ -1074,10 +1074,10 @@ void AccessGroup::range_dir_initialize() {
       Global::dfs->mkdirs(abs_range_dir);
     else {
       uint32_t id;
-      vector<String> listing;
+      vector<Filesystem::Dirent> listing;
       Global::dfs->readdir(abs_range_dir, listing);
       for (size_t i=0; i<listing.size(); i++) {
-        const char *fname = listing[i].c_str();
+        const char *fname = listing[i].name.c_str();
         if (!strncmp(fname, "cs", 2)) {
           id = atoi(&fname[2]);
           if (id >= m_next_cs_id)

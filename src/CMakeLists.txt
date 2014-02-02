@@ -26,10 +26,6 @@ if (PYTHONTHRIFT_FOUND AND PYTHON_FOUND)
   add_subdirectory(cc/HyperPython)
 endif ()
 
-if (Kfs_FOUND)
-   add_subdirectory(cc/DfsBroker/kosmos)
-endif ()
-
 if (Ceph_FOUND)
    add_subdirectory(cc/DfsBroker/ceph)
 endif ()
