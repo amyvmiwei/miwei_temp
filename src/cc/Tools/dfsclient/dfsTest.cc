@@ -96,14 +96,18 @@ namespace {
 
   void test_readdir(DfsBroker::Client *client, const String &testdir) {
     ofstream filestr ("dfsTest.out");
-    vector<string> listing;
+    vector<Filesystem::Dirent> listing;
 
     client->readdir(testdir, listing);
 
     sort(listing.begin(), listing.end());
 
-    for (size_t i=0; i<listing.size(); i++)
-      filestr << listing[i] << endl;
+    for (size_t i=0; i<listing.size(); i++) {
+      filestr << listing[i].length << " " << listing[i].name;
+      if (listing[i].is_dir)
+        filestr << "/";
+      filestr << "\n";
+    }
 
     filestr.close();
 
@@ -158,7 +162,11 @@ int main(int argc, char **argv) {
     client->mkdirs(testdir);
 
     test_copy(client, testdir);
+
+    String subdir = testdir + "/mydir";;
+    client->mkdirs(subdir);
     test_readdir(client, testdir);
+
     test_rename(client, testdir);
 
     client->rmdir(testdir);

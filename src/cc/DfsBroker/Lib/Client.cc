@@ -602,19 +602,19 @@ Client::readdir(const String &name, DispatchHandler *handler) {
  *
  */
 void
-Client::readdir(const String &name, std::vector<String> &listing) {
+Client::readdir(const String &name, std::vector<Dirent> &listing) {
   DispatchHandlerSynchronizer sync_handler;
-  EventPtr event_ptr;
+  EventPtr event;
   CommBufPtr cbp(m_protocol.create_readdir_request(name));
 
   try {
     send_message(cbp, &sync_handler);
 
-    if (!sync_handler.wait_for_reply(event_ptr))
-      HT_THROW(Protocol::response_code(event_ptr.get()),
-               m_protocol.string_format_message(event_ptr).c_str());
+    if (!sync_handler.wait_for_reply(event))
+      HT_THROW(Protocol::response_code(event.get()),
+               m_protocol.string_format_message(event).c_str());
 
-    decode_response_readdir(event_ptr, listing);
+    decode_response_readdir(event, listing);
   }
   catch (Exception &e) {
     HT_THROW2F(e.code(), e, "Error reading directory entries for DFS "

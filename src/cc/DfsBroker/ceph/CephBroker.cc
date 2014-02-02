@@ -398,7 +398,7 @@ void CephBroker::shutdown(ResponseCallback *cb) {
 }
 
 void CephBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
-  std::vector<String> listing;
+  std::vector<Filesystem::Dirent> listing;
   String absdir;
 
   HT_DEBUGF("Readdir dir='%s'", dname);
@@ -411,7 +411,6 @@ void CephBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   int r;
   int buflen = 100; //good default?
   char *buf = new char[buflen];
-  String *ent;
   int bufpos;
   while (1) {
     r = ceph_getdnames(dirp, buf, buflen);
@@ -425,12 +424,12 @@ void CephBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
 
     //if we make it here, we got at least one name, maybe more
     bufpos = 0;
+    Filesystem::Dirent entry;
     while (bufpos<r) {//make new strings and add them to listing
-      ent = new String(buf+bufpos);
-      if (ent->compare(".") && ent->compare(".."))
-	listing.push_back(*ent);
-      bufpos+=ent->size()+1;
-      delete ent;
+      entry.name = String(buf+bufpos);
+      if (entry.name.compare(".") && entry.name.compare(".."))
+	listing.push_back(entry);
+      bufpos+=entry.name.size()+1;
     }
   }
   delete buf;

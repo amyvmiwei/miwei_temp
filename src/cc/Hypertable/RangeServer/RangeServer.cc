@@ -522,16 +522,16 @@ void RangeServer::initialize(PropertiesPtr &props) {
 namespace {
 
   struct ByFragmentNumber {
-    bool operator()(const String &x, const String &y) const {
-      int num_x = atoi(x.c_str());
-      int num_y = atoi(y.c_str());
+    bool operator()(const Filesystem::Dirent &x, const Filesystem::Dirent &y) const {
+      int num_x = atoi(x.name.c_str());
+      int num_y = atoi(y.name.c_str());
       return num_x < num_y;
     }
   };
 
   void add_mark_file_to_commit_logs(const String &logname) {
-    vector<String> listing;
-    vector<String> listing2;
+    vector<Filesystem::Dirent> listing;
+    vector<Filesystem::Dirent> listing2;
     String logdir = Global::log_dir + "/" + logname;
 
     try {
@@ -549,8 +549,8 @@ namespace {
     sort(listing.begin(), listing.end(), ByFragmentNumber());
 
     // Remove zero-length files
-    foreach_ht (String &entry, listing) {
-      String fragment_file = logdir + "/" + entry;
+    foreach_ht (Filesystem::Dirent &entry, listing) {
+      String fragment_file = logdir + "/" + entry.name;
       try {
         if (Global::log_dfs->length(fragment_file) == 0) {
           HT_INFOF("Removing log fragment '%s' because it has zero length",
@@ -569,7 +569,7 @@ namespace {
       return;
 
     char *endptr;
-    long num = strtol(listing2.back().c_str(), &endptr, 10);
+    long num = strtol(listing2.back().name.c_str(), &endptr, 10);
     String mark_filename = logdir + "/" + (int64_t)num + ".mark";
 
     try {

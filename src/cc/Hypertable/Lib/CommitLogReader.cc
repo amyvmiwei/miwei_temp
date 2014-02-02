@@ -56,9 +56,9 @@ using namespace std;
 
 namespace {
   struct ByFragmentNumber {
-    bool operator()(const String &x, const String &y) const {
-      int num_x = atoi(x.c_str());
-      int num_y = atoi(y.c_str());
+    bool operator()(const Filesystem::Dirent &x, const Filesystem::Dirent &y) const {
+      int num_x = atoi(x.name.c_str());
+      int num_y = atoi(y.name.c_str());
       return num_x < num_y;
     }
   };
@@ -209,7 +209,7 @@ CommitLogReader::next(const uint8_t **blockp, size_t *lenp,
 
 
 void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) {
-  vector<string> listing;
+  vector<Filesystem::Dirent> listing;
   CommitLogFileInfo *fi;
   int mark = -1;
 
@@ -238,16 +238,16 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
   sort(listing.begin(), listing.end(), ByFragmentNumber());
 
   for (size_t i = 0; i < listing.size(); i++) {
-    if (boost::ends_with(listing[i], ".tmp"))
+    if (boost::ends_with(listing[i].name, ".tmp"))
       continue;
 
-    if (boost::ends_with(listing[i], ".mark")) {
-      mark = atoi(listing[i].c_str());
+    if (boost::ends_with(listing[i].name, ".mark")) {
+      mark = atoi(listing[i].name.c_str());
       continue;
     }
 
     char *endptr;
-    long num = strtol(listing[i].c_str(), &endptr, 10);
+    long num = strtol(listing[i].name.c_str(), &endptr, 10);
     if (m_fragment_filter.size() && log_dir == m_log_dir &&
       m_fragment_filter.find(num) == m_fragment_filter.end()) {
       if (m_verbose)
@@ -263,14 +263,14 @@ void CommitLogReader::load_fragments(String log_dir, CommitLogFileInfo *parent) 
 
     if (*endptr != 0) {
       HT_WARNF("Invalid file '%s' found in commit log directory '%s'",
-               listing[i].c_str(), log_dir.c_str());
+               listing[i].name.c_str(), log_dir.c_str());
     }
     else {
       fi = new CommitLogFileInfo();
       fi->num = (uint32_t)num;
       fi->log_dir = log_dir;
       fi->log_dir_hash = md5_hash(log_dir.c_str());
-      fi->size = m_fs->length(log_dir + "/" + listing[i]);
+      fi->size = m_fs->length(log_dir + "/" + listing[i].name);
       fi->parent = parent;
       if (fi->size > 0) {
         if (parent)

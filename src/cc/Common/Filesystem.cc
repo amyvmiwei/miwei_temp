@@ -38,6 +38,25 @@
 using namespace Hypertable;
 using namespace Serialization;
 
+
+size_t Filesystem::Dirent::encoded_length() const {
+  return encoded_length_str16(name) + 13;
+}
+void Filesystem::Dirent::encode(uint8_t **bufp) const {
+  encode_str16(bufp, name);
+  encode_i64(bufp, length);
+  encode_i32(bufp, last_modification_time);
+  encode_bool(bufp, is_dir);
+}
+
+void Filesystem::Dirent::decode(const uint8_t **bufp, size_t *remainp) {
+  name = decode_str16(bufp, remainp);
+  length = decode_i64(bufp, remainp);
+  last_modification_time = decode_i32(bufp, remainp);
+  is_dir = decode_bool(bufp, remainp);
+}
+
+
 int Filesystem::decode_response_open(EventPtr &event_ptr) {
   const uint8_t *decode_ptr = event_ptr->payload;
   size_t decode_remain = event_ptr->payload_len;
@@ -144,7 +163,7 @@ Filesystem::decode_response_length(EventPtr &event_ptr) {
 
 void
 Filesystem::decode_response_readdir(EventPtr &event_ptr,
-                                    std::vector<String> &listing) {
+                                    std::vector<Dirent> &listing) {
   const uint8_t *decode_ptr = event_ptr->payload;
   size_t decode_remain = event_ptr->payload_len;
 
@@ -153,14 +172,14 @@ Filesystem::decode_response_readdir(EventPtr &event_ptr,
   if (error != Error::OK)
     HT_THROW(error, "");
 
-  listing.clear();
-
   uint32_t len = decode_i32(&decode_ptr, &decode_remain);
-  uint16_t slen;
 
+  listing.clear();
+  listing.reserve(len);
+  Dirent entry;
   for (uint32_t i = 0; i < len; i++) {
-    const char *str = decode_str16(&decode_ptr, &decode_remain, &slen);
-    listing.push_back(String(str, slen));
+    entry.decode(&decode_ptr, &decode_remain);
+    listing.push_back(entry);
   }
 }
 

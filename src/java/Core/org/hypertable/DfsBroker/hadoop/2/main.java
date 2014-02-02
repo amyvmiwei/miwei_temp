@@ -136,11 +136,11 @@ public class main {
 
         // Determine listen port
         port = DEFAULT_PORT;
-        if (props.contains("DfsBroker.Port")) {
+        if (props.containsKey("DfsBroker.Port")) {
           str  = props.getProperty("DfsBroker.Port");
           port = Integer.parseInt(str);
         }
-        if (props.contains("HdfsBroker.Port")) {
+        if (props.containsKey("HdfsBroker.Port")) {
           str  = props.getProperty("HdfsBroker.Port");
           port = Integer.parseInt(str);
         }

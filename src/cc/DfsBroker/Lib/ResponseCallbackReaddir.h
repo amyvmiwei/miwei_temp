@@ -24,10 +24,11 @@
 
 #include <vector>
 
-#include "Common/Error.h"
+#include <Common/Error.h>
+#include <Common/Filesystem.h>
 
-#include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ResponseCallback.h"
+#include <AsyncComm/CommBuf.h>
+#include <AsyncComm/ResponseCallback.h>
 
 namespace Hypertable {
 
@@ -38,7 +39,7 @@ namespace Hypertable {
       ResponseCallbackReaddir(Comm *comm, EventPtr &event_ptr)
         : ResponseCallback(comm, event_ptr) { }
 
-      int response(std::vector<std::string> &listing);
+      int response(std::vector<Filesystem::Dirent> &listing);
     };
   }
 

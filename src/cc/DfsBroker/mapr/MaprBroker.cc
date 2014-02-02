@@ -463,7 +463,7 @@ void MaprBroker::rmdir(ResponseCallback *cb, const char *dname) {
 
 
 void MaprBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
-  std::vector<String> listing;
+  std::vector<Filesystem::Dirent> listing;
   hdfsFileInfo *fileInfo;
   int numEntries;
 
@@ -475,13 +475,18 @@ void MaprBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
     return;
   }
 
+  Filesystem::Dirent entry;
   for (int i=0; i<numEntries; i++) {
     const char *ptr;
     if (fileInfo[i].mName[0] != '.' && fileInfo[i].mName[0] != 0) {
       if ((ptr = strrchr(fileInfo[i].mName, '/')))
-	listing.push_back((String)(ptr+1));
+	entry.name = (String)(ptr+1);
       else
-	listing.push_back((String)fileInfo[i].mName);
+	entry.name = (String)fileInfo[i].mName;
+      entry.length = fileInfo[i].mSize;
+      entry.last_modification_time = fileInfo[i].mLastMod;
+      entry.is_dir = fileInfo[i].mKind == kObjectKindDirectory;
+      listing.push_back(entry);
     }
   }
   hdfsFreeFileInfo(fileInfo, numEntries);
