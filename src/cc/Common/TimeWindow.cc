@@ -39,7 +39,7 @@
 using namespace Hypertable;
 
 TimeWindow::TimeWindow(std::vector<String> crontab_specs) 
-  : m_within_window(false) {
+  : m_within_window(false), m_enabled(true) {
 
   foreach_ht (String &spec, crontab_specs) {
     try {

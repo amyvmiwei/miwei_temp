@@ -158,7 +158,8 @@ void MaintenanceScheduler::schedule() {
   int flags = 0;
   /// Update current time to compute "low activity" window
   if (Global::low_activity_time.update_current_time()) {
-    flags = MaintenanceFlag::RECOMPUTE_MERGE_RUN;
+    if (Global::low_activity_time.is_window_enabled())
+      flags = MaintenanceFlag::RECOMPUTE_MERGE_RUN;
     HT_INFOF("%s low activity window", Global::low_activity_time.within_window()
              ? "Entering" : "Exiting");
   }
