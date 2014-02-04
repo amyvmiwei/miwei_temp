@@ -62,7 +62,7 @@ namespace Hypertable {
   public:
 
     /// Default constructor.
-    TimeWindow() : m_within_window(false) { }
+    TimeWindow() : m_within_window(false), m_enabled(true) { }
 
     /// Constructor initialized with crontab specs.
     /// This function constructs a Crontab object with each of the specs in
@@ -89,8 +89,16 @@ namespace Hypertable {
     /// Tests to see if current time is within the window.
     /// Checks to see if the current time (as set by set_current_time()) is
     /// within the time window.
-    /// @return <i>true</i> if within time window, <i>false</i> otherwise
-    bool within_window() { return m_within_window; }
+    /// @return <i>true</i> if within enabled time window, <i>false</i> otherwise
+    bool within_window() const { return m_within_window && m_enabled; }
+
+    /// Enables or disables this time window.
+    /// @param value <i>true</i> if enabled, <i>false</i> otherwise
+    void enable_window(bool enable) { m_enabled = enable; }
+
+    /// Indicates if the time window is enabled or disabled.
+    /// @return <i>true</i> if enabled, <i>false</i> otherwise
+    bool is_window_enabled() const { return m_enabled; }
 
   private:
 
@@ -99,6 +107,9 @@ namespace Hypertable {
 
     /// Set to <i>true</i> if currently within the time window
     bool m_within_window;
+
+    /// Set to <i>true</i> if the time window is enabled
+    bool m_enabled;
   };
 
   /// @}

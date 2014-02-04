@@ -141,10 +141,14 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   boost::xtime_get(&m_last_control_file_check, boost::TIME_UTC_);
 
   // Initialize "low activity" window
-  vector<String> time_window_specs = cfg.get_strs("LowActivityPeriod");
-  if (time_window_specs.empty())
-    time_window_specs.push_back("* 2-4 * * *");
-  Global::low_activity_time = TimeWindow(time_window_specs);
+  {
+    vector<String> specs = cfg.get_strs("LowActivityPeriod");
+    if (specs.empty())
+      specs.push_back("* 2-4 * * *");
+    else if (find(specs.begin(), specs.end(), "none") != specs.end())
+      specs.clear();
+    Global::low_activity_time = TimeWindow(specs);
+  }
 
   /** Compute maintenance threads **/
   uint32_t maintenance_threads;
@@ -4432,7 +4436,9 @@ void RangeServer::do_maintenance() {
     Global::scanner_map.purge_expired(m_scanner_ttl);
 
     // Set Low Memory mode
-    m_maintenance_scheduler->set_low_memory_mode(m_timer_handler->low_memory_mode());
+    bool low_memory_mode = m_timer_handler->low_memory_mode();
+    m_maintenance_scheduler->set_low_memory_mode(low_memory_mode);
+    Global::low_activity_time.enable_window(!low_memory_mode);
 
     // Schedule maintenance
     m_maintenance_scheduler->schedule();
