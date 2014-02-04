@@ -72,8 +72,8 @@ namespace Hypertable {
               key.timestamp, key.revision, (uint8_t *)value, 
               value_len, key.flag);
       m_cellbuffer.add(cell, true);
-      m_used_memory += strlen(key.row) + strlen(&tmp[0])
-          + 8 + 8 + 2 + value_len;
+      m_used_memory += (2*sizeof(Cell)) + sizeof(char *) + (4*sizeof(void *)) +
+        strlen(key.row) + strlen(&tmp[0]) + 20 + value_len;
       if (key.column_qualifier)
         m_used_memory += strlen(key.column_qualifier);
 
@@ -173,7 +173,7 @@ namespace Hypertable {
 
     void consume_keybuffer(TableMutatorAsync *mutator) {
       ScopedLock lock(m_mutex);
-
+      
       IndexMutatorCallback::KeyMap::iterator it;
       for (it = m_keymap.begin(); it != m_keymap.end(); ++it) {
         mutator->update_without_index(it->second);

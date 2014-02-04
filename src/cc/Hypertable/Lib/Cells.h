@@ -88,23 +88,22 @@ public:
   Cells &get() { return m_cells; }
   const Cells &get() const { return m_cells; }
 
-  void swap(CellsBuilder &x) {
-    m_cells.swap(x.m_cells);
-    m_arena.swap(x.m_arena);
+  void clear() { 
+    m_cells.clear();
+    m_arena.free();
+    Cells(CellAlloc(m_arena)).swap(m_cells);
   }
-
-  void clear() { m_cells.clear(); }
 
   void copy_failed_mutations(const FailedMutations &src, FailedMutations &dst) {
-  clear();
-  dst.clear();
-  size_t ii=0;
-  foreach_ht(const FailedMutation &v, src) {
-    add(v.first);
-    dst.push_back(std::make_pair(m_cells[ii], v.second));
-    ++ii;
+    clear();
+    dst.clear();
+    size_t ii=0;
+    foreach_ht(const FailedMutation &v, src) {
+      add(v.first);
+      dst.push_back(std::make_pair(m_cells[ii], v.second));
+      ++ii;
+    }
   }
-}
 protected:
   CharArena m_arena;
   Cells m_cells;
