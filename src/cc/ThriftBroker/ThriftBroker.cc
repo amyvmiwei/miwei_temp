@@ -2411,7 +2411,12 @@ public:
   }
 
   static void releaseHandler(ServerHandler* serverHandler) {
-    instance.release_handler(serverHandler);
+    try {
+      instance.release_handler(serverHandler);
+    }
+    catch (Hypertable::Exception &e) {
+      HT_ERRORF("%s - %s", Error::get_text(e.code()), e.what());
+    }
   }
 
 private:
