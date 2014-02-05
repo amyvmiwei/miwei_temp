@@ -496,6 +496,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
   bool merging = false;
   bool major = false;
   bool gc = false;
+  bool garbage_check_performed = false;
   bool cellstore_created = false;
   size_t merge_offset=0, merge_length=0;
   String added_file;
@@ -578,6 +579,7 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
       if (gc || (minor && m_garbage_tracker.check_needed(m_cell_cache_manager->immutable_memory_used()))) {
         uint64_t total_bytes, valid_bytes;
         compute_garbage_stats(&total_bytes, &valid_bytes);
+        garbage_check_performed = true;
         m_garbage_tracker.set_garbage_stats(total_bytes, valid_bytes);
         if (m_garbage_tracker.need_collection()) {
           if (minor)
@@ -589,7 +591,6 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
         else if (gc) {
           HT_INFOF("Aborting GC compaction because measured garbage of %.2f%% is below threshold",
                    ((double)(total_bytes-valid_bytes)/(double)total_bytes)*100.00);
-          HT_INFOF("GC total_bytes=%lld, valid_bytes=%lld", (Lld)total_bytes, (Lld)valid_bytes);
           merge_caches();
           hints->latest_stored_revision = m_latest_stored_revision;
           hints->disk_usage = m_disk_usage;
@@ -716,7 +717,21 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
       }
       else {
 
-        if (major || m_in_memory)
+        /**
+         * If major compaction was performed and we didn't do a garbage
+         * check, then update the garbage tracker with statistics from
+         * the MergeScanner.  Also clear the garbage tracker of accumulated
+         * data counts.
+         */
+        if (major) {
+          if (!garbage_check_performed) {
+            uint64_t input_bytes, output_bytes;
+            mscanner->get_io_accounting_data(&input_bytes, &output_bytes);
+            m_garbage_tracker.set_garbage_stats(input_bytes, output_bytes);
+          }
+          m_garbage_tracker.clear();
+        }
+        else if (m_in_memory)
           m_garbage_tracker.clear();
 
         if (m_in_memory) {

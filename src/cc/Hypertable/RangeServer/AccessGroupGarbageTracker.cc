@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/** -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -73,7 +73,6 @@ void AccessGroupGarbageTracker::set_schema(SchemaPtr &schema, Schema::AccessGrou
 void AccessGroupGarbageTracker::clear(time_t now) {
   m_delete_count = 0;
   m_data_accumulated = 0;
-  m_data_target = m_minimum_data_target;
   m_expirable_accumulated = 0;
   m_last_clear_time = (now == 0) ? time(0) : now;
   m_last_cache_size = -1;
@@ -106,11 +105,8 @@ bool AccessGroupGarbageTracker::check_needed(uint32_t additional_deletes,
        && (m_data_accumulated+additional_data) >= m_data_target) ||
       ((m_expirable_accumulated+cached_data) >= m_minimum_data_target 
        && m_min_ttl > 0 
-       && (now-m_last_clear_time) >= m_elapsed_target)) {
-    HT_INFOF("GC needed accum=%lld, additional=%lld, target=%lld",
-             (Lld)m_data_accumulated, (Lld)additional_data, (Lld)m_data_target);
+       && (now-m_last_clear_time) >= m_elapsed_target))
     return true;
-  }
   return false;
 }
 
@@ -119,25 +115,14 @@ void AccessGroupGarbageTracker::set_garbage_stats(int64_t total, int64_t valid, 
   int64_t new_data_target;
   int32_t new_elapsed_target;
   double garbage_pct = ((double)(total-valid)/(double)total)*100.0;
-
   m_need_collection = garbage_pct >= (double)Global::access_group_garbage_compaction_threshold;
-
-  // If GC is needed, then the targets are ok, so no need to change
-  if (m_need_collection)
-    return;
-
-  double multiplier = (double)Global::access_group_garbage_compaction_threshold / garbage_pct;
-
-  // Increase targets by at least 10%
-  if (multiplier < 1.1)
-    multiplier = 1.1;
 
   /**
    * recompute DATA target:
    *   data_accumulated/garbage_percentage = NEW_DATA_TARGET/threshold
    */
   if (garbage_pct > 0)
-    new_data_target = (int64_t)((double)m_data_accumulated * multiplier);
+    new_data_target = (int64_t)((double)(m_data_accumulated * Global::access_group_garbage_compaction_threshold) / garbage_pct);
   else
     new_data_target = m_data_target * 2;
 
@@ -155,7 +140,7 @@ void AccessGroupGarbageTracker::set_garbage_stats(int64_t total, int64_t valid, 
   if (now == 0)
     now = time(0);
   if (garbage_pct > 0)
-    new_elapsed_target = (int32_t)((double)(now-m_last_clear_time) * multiplier);
+    new_elapsed_target = (int32_t)((double)((now-m_last_clear_time) * Global::access_group_garbage_compaction_threshold) / garbage_pct);
   else
     new_elapsed_target = m_elapsed_target * 2;
 
@@ -165,4 +150,5 @@ void AccessGroupGarbageTracker::set_garbage_stats(int64_t total, int64_t valid, 
     m_elapsed_target *= 2;
   else
     m_elapsed_target = new_elapsed_target;
+
 }
