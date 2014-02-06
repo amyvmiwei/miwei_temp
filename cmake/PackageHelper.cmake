@@ -201,16 +201,20 @@ set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
 
 # Debian pakcage variables
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA
-    "${CMAKE_BINARY_DIR}/prerm")
+    "${CMAKE_BINARY_DIR}/prerm;${CMAKE_BINARY_DIR}/postinst;")
 
 # RPM package variables
 
-configure_file (${CMAKE_SOURCE_DIR}/bin/prerm.sh.in ${CMAKE_BINARY_DIR}/prerm.sh)
-install(PROGRAMS ${CMAKE_BINARY_DIR}/prerm.sh DESTINATION bin)
+configure_file (${CMAKE_SOURCE_DIR}/bin/rpm_pre_install.sh.in ${CMAKE_BINARY_DIR}/rpm_pre_install.sh)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/rpm_pre_install.sh DESTINATION bin)
+
+configure_file (${CMAKE_SOURCE_DIR}/bin/rpm_post_install.sh.in ${CMAKE_BINARY_DIR}/rpm_post_install.sh)
+install(PROGRAMS ${CMAKE_BINARY_DIR}/rpm_post_install.sh DESTINATION bin)
 
 set(CPACK_RPM_PACKAGE_LICENSE "GPLv3+")
 set(CPACK_RPM_PACKAGE_GROUP "Applications/Databases")
-set(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE ${CMAKE_INSTALL_PREFIX}/bin/prerm.sh)
+set(CPACK_RPM_PRE_INSTALL_SCRIPT_FILE ${CMAKE_INSTALL_PREFIX}/bin/rpm_pre_install.sh)
+set(CPACK_RPM_POST_INSTALL_SCRIPT_FILE ${CMAKE_INSTALL_PREFIX}/bin/rpm_post_install.sh)
 
 # rpm perl dependencies stuff is dumb
 set(CPACK_RPM_SPEC_MORE_DEFINE "

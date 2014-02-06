@@ -91,8 +91,13 @@ else
     if [ $nfiles -eq 0 ] ; then
       cp $HYPERTABLE_HOME/conf/* $etchome
     else
-      cp $HYPERTABLE_HOME/conf/METADATA.xml $etchome
-      cp $HYPERTABLE_HOME/conf/RS_METRICS.xml $etchome
+      pushd .
+      rm -f /tmp/hypertable-conf.tgz
+      cd $HYPERTABLE_HOME/conf/
+      tar czf /tmp/hypertable-conf.tgz --exclude=*.cfg --exclude=notification-hook.sh *
+      cd $etchome
+      tar xzf /tmp/hypertable-conf.tgz
+      popd
     fi
     rm -rf $HYPERTABLE_HOME/conf && ln -s $etchome $HYPERTABLE_HOME/conf
   fi

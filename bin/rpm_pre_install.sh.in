@@ -1,0 +1,81 @@
+#!/bin/bash
+#
+# Copyright (C) 2007-2012 Hypertable, Inc.
+#
+# This file is part of Hypertable.
+#
+# Hypertable is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License
+# as published by the Free Software Foundation; either version 3
+# of the License, or any later version.
+#
+# Hypertable is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with Hypertable. If not, see <http://www.gnu.org/licenses/>
+#
+
+rm -rf /tmp/hypertable-install
+
+if [ -h /opt/hypertable/current ]; then
+
+  mkdir /tmp/hypertable-install
+
+  POST_SCRIPT=/tmp/hypertable-install/post.sh
+  OLDVERSION=`readlink /opt/hypertable/current`
+  if ! echo $OLDVERSION | grep "^/" > /dev/null ; then
+    OLD_HOME="/opt/hypertable/$OLDVERSION"
+  else
+    OLD_HOME="$OLDVERSION"
+  fi
+
+  echo "#\!/bin/bash" | sed 's/\\//g' > $POST_SCRIPT
+  echo "pushd . > /dev/null" >> $POST_SCRIPT
+  echo "cd /opt/hypertable/@VERSION@/" >> $POST_SCRIPT
+  
+  # conf
+  if [ -h $OLD_HOME/conf ]; then
+    echo "rm -rf conf" >> $POST_SCRIPT
+    echo "ln -s `readlink $OLD_HOME/conf` conf" >> $POST_SCRIPT
+    rm -f $OLD_HOME/conf
+  elif [ -d $OLD_HOME/conf ]; then
+    if ls $OLD_HOME/conf/*.cfg > /dev/null 2>&1; then
+      cp $OLD_HOME/conf/*.cfg /tmp/hypertable-install/
+      rm -f $OLD_HOME/conf/*.cfg
+    fi
+    if [ -e $OLD_HOME/conf/notification-hook.sh ]; then
+      cp $OLD_HOME/conf/notification-hook.sh /tmp/hypertable-install/
+      rm -f $OLD_HOME/conf/notification-hook.sh
+    fi
+  fi
+  
+  # hyperspace
+  if [ -h $OLD_HOME/hyperspace ]; then
+    echo "ln -s `readlink $OLD_HOME/hyperspace` hyperspace" >> $POST_SCRIPT
+    rm -f $OLD_HOME/hyperspace
+  fi
+  
+  # fs
+  if [ -h $OLD_HOME/fs ]; then
+    echo "ln -s `readlink $OLD_HOME/fs` fs" >> $POST_SCRIPT
+    rm -f $OLD_HOME/fs
+  fi
+  
+  # run
+  if [ -h $OLD_HOME/run ]; then
+    echo "ln -s `readlink $OLD_HOME/run` run" >> $POST_SCRIPT
+    rm -f $OLD_HOME/run
+  fi
+  
+  # log
+  if [ -h $OLD_HOME/log ]; then
+    echo "ln -s `readlink $OLD_HOME/log` log" >> $POST_SCRIPT
+    rm -f $OLD_HOME/log
+  fi
+  
+  echo "popd > /dev/null" >> $POST_SCRIPT
+  chmod 755 $POST_SCRIPT
+fi

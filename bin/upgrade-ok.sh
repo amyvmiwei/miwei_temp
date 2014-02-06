@@ -59,8 +59,8 @@ if [ "$TO" == "current" ] ; then
 fi
 
 if [ "$FROM" == "$TO" ] ; then
-    echo "Can't upgrade to identical version: $FROM -> $TO"
-    exit 1
+    echo "Upgrading identical version: $FROM -> $TO"
+    exit 0
 fi
 
 MAJOR=`echo $FROM | cut -d'.' -f1`

@@ -52,7 +52,7 @@ upgrade_dir() {
   cwd=`pwd`
   old_dir=${HYPERTABLE_HOME}/../${FROM}/$dir
   new_dir=${HYPERTABLE_HOME}/$dir
-  
+
   status_msg="$status_msg [UPGRADE '$dir' STARTED]"
   if [ -e ${old_dir} ] ; then
     if [ -L ${old_dir} ] ; then
@@ -123,9 +123,15 @@ if [ "$TO" == "current" ] ; then
   TO=`/bin/ls -l $2 | tr -s " " | awk '{ print $NF; }' | awk -F'/' '{ print $NF; }'`
 fi
 
+if [ "$FROM" == "$TO" ]; then
+  echo "Previous version is same as the new one ... nothing to do."
+  status_msg="Upgrade succeeded."
+  exit 0
+fi
+
 upgrade_dir conf $etchome 0
 upgrade_dir run  $varhome/run 0
 upgrade_dir fs   $varhome/fs 0
 upgrade_dir hyperspace  $varhome/hyperspace 0
 upgrade_dir log  $varhome/log 1
-status_msg="Upgrade succeeded"
+status_msg="Upgrade succeeded."
