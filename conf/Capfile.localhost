@@ -159,7 +159,7 @@ task :install_package, :roles => [:master, :hyperspace, :slave, :thriftbroker_ad
   if (pkg_type == "deb")
     run("dpkg -i #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}") 
   elsif (pkg_type == "rpm")
-    run("rpm -ivh --replacepkgs --nomd5 --nodeps #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}")
+    run("rpm -ivh --replacepkgs --nomd5 --nodeps --oldpackage #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}")
   elsif (pkg_type == "bz2")
     ext_index = pkg_basename.index(".tar.bz2")
     if ext_index.nil?
