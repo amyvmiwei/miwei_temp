@@ -26,10 +26,15 @@
 #ifndef HYPERTABLE_SYSTEM_H
 #define HYPERTABLE_SYSTEM_H
 
+#include <Common/Version.h>
+#include <Common/Mutex.h>
+#include <Common/String.h>
+
 #include <boost/random.hpp>
-#include "Common/Version.h"
-#include "Common/Mutex.h"
-#include "Common/String.h"
+
+extern "C" {
+#include <time.h>
+}
 
 namespace Hypertable {
 
@@ -72,6 +77,20 @@ namespace Hypertable {
       if (ms_initialized)
         return;
 
+      // Set timezone
+      tzset();
+
+#if !defined(__sun__)
+      // Set timezone variables
+      {
+        struct tm tmbuf;
+        time_t now = time(0);
+        localtime_r(&now, &tmbuf);
+        tm_gmtoff = tmbuf.tm_gmtoff;
+        tm_zone = String(tmbuf.tm_zone);
+      }
+#endif
+
       check_version();
       _init(install_directory);
       ms_initialized = true;
@@ -98,6 +117,15 @@ namespace Hypertable {
 
     /** The exe file name */
     static String exe_name;
+
+    /// Seconds east of UTC
+    static long tm_gmtoff;
+
+    /// Timezone abbreviation
+    static String tm_zone;
+
+    /// Initialize struct tm
+    static void initialize_tm(struct tm *tmval);
 
     /** The processor count */
     static int32_t get_processor_count();

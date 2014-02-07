@@ -202,7 +202,7 @@ namespace Hypertable {
         HT_FATAL("invalid order");
       struct tm tm_val;
       const char *cformat = (format == "") ? "%F %T" : format.c_str();
-      gmtime_r(&m_next, &tm_val);
+      localtime_r(&m_next, &tm_val);
       strftime(m_render_buf, m_render_buf_len, cformat, &tm_val);
       return rval;
     }

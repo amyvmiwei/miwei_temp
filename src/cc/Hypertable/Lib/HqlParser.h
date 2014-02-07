@@ -288,7 +288,7 @@ namespace Hypertable {
                       replay(false), scanner_id(-1), row_uniquify_chars(0),
                       escape(true), nokeys(false), 
         current_column_predicate_operation(0), field_separator(0) {
-        memset(&tmval, 0, sizeof(tmval));
+        System::initialize_tm(&tmval);
       }
       int command;
       String ns;
@@ -1691,7 +1691,7 @@ namespace Hypertable {
     struct scan_set_time {
       scan_set_time(ParserState &state) : state(state){ }
       void operator()(char const *str, char const *end) const {
-        String time_str = create_string_without_quotes(str, end-str);
+        String time_str = strip_quotes(str, end-str);
 
         try {
           state.scan.current_timestamp = parse_ts(time_str.c_str());
@@ -1746,7 +1746,7 @@ namespace Hypertable {
         else
           state.scan.current_timestamp_set = true;
 
-        memset(&state.tmval, 0, sizeof(state.tmval));
+        System::initialize_tm(&state.tmval);
         state.decimal_seconds = 0;
         state.nanoseconds = 0;
       }
@@ -1790,7 +1790,7 @@ namespace Hypertable {
     struct set_insert_timestamp {
       set_insert_timestamp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String time_str = create_string_without_quotes(str, end-str);
+        String time_str = strip_quotes(str, end-str);
 
         try {
           state.current_insert_value.timestamp = parse_ts(time_str.c_str());
@@ -1901,7 +1901,7 @@ namespace Hypertable {
     struct set_delete_timestamp {
       set_delete_timestamp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String time_str = create_string_without_quotes(str, end-str);
+        String time_str = strip_quotes(str, end-str);
 
         try {
           state.delete_time = parse_ts(time_str.c_str());
@@ -1918,7 +1918,7 @@ namespace Hypertable {
     struct set_delete_version_timestamp {
       set_delete_version_timestamp(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String time_str = create_string_without_quotes(str, end-str);
+        String time_str = strip_quotes(str, end-str);
 
         try {
           state.delete_version_time = parse_ts(time_str.c_str());

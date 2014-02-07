@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,14 +18,18 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+#include <Common/Compat.h>
+#include "LoadDataSource.h"
 
-#include "Common/Compat.h"
-#include <fstream>
-#include <iostream>
-#include <cerrno>
-#include <cctype>
-#include <cstdlib>
-#include <cstring>
+#include <Common/DynamicBuffer.h>
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/System.h>
+#include <Common/Time.h>
+
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/LoadDataFlags.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/algorithm/string/predicate.hpp>
@@ -34,23 +38,19 @@
 #include <boost/spirit/include/classic_core.hpp>
 #include <boost/spirit/include/classic_assign_actor.hpp>
 
+#include <fstream>
+#include <iostream>
+#include <cerrno>
+#include <cctype>
+#include <cstdlib>
+#include <cstring>
+
 extern "C" {
 #include <strings.h>
 #include <sys/types.h>
 #include <time.h>
 #include <unistd.h>
 }
-
-#include "Common/DynamicBuffer.h"
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/Time.h"
-
-#include "Key.h"
-
-#include "LoadDataFlags.h"
-#include "LoadDataSource.h"
 
 using namespace boost::iostreams;
 using namespace boost::spirit::classic;
@@ -749,12 +749,13 @@ bool LoadDataSource::parse_date_format(const char *str, int64_t &timestamp)
     return false;
   tm.tm_sec = 0;
 
+  tm.tm_isdst = -1;
 #if !defined(__sun__)
-  tm.tm_gmtoff = 0;
-  tm.tm_zone = (char *)"GMT";
+  tm.tm_gmtoff = System::tm_gmtoff;
+  tm.tm_zone = (char *)System::tm_zone.c_str();
 #endif
 
-  if ((tt = timegm(&tm)) == (time_t)-1)
+  if ((tt = mktime(&tm)) == (time_t)-1)
     return false;
 
   ptr = end_ptr + 1;

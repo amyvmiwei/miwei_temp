@@ -399,7 +399,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
       else {
         nsec = cell.timestamp % 1000000000LL;
         unix_time = cell.timestamp / 1000000000LL;
-        gmtime_r(&unix_time, &tms);
+        localtime_r(&unix_time, &tms);
         fout << Hypertable::format("%d-%02d-%02d %02d:%02d:%02d.%09d%c", 
                         tms.tm_year + 1900, tms.tm_mon + 1, tms.tm_mday, 
                         tms.tm_hour, tms.tm_min, tms.tm_sec, nsec, fs);

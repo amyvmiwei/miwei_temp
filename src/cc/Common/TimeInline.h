@@ -25,9 +25,10 @@
 #ifndef HYPERTABLE_TIMEINLINE_H
 #define HYPERTABLE_TIMEINLINE_H
 
-#include <stdexcept>
+#include <Common/System.h>
+#include <Common/Time.h>
 
-#include "Time.h"
+#include <stdexcept>
 
 namespace Hypertable {
 
@@ -50,8 +51,8 @@ namespace Hypertable {
 #endif
 
 /**
- * Inline function which parses a string with a timestamp and returns a 64bit
- * nanosecond timestamp
+ * Inline function which parses a string with a timestamp in localtime and
+ * returns a 64bit nanosecond timestamp
  *
  * @param ts c-string with the timestamp formatted as
  *      YYYY-mm-dd[ HH:MM[:SS[.SS|:NS]]]
@@ -66,7 +67,7 @@ parse_ts(const char *ts) {
   char *last;
   int64_t ns=0;
 
-  memset(&tv, 0, sizeof(tm));
+  System::initialize_tm(&tv);
   tv.tm_year = strtol(ts, &last, 10) - 1900;
   HT_DELIM_CHECK(*last, '-');
   tv.tm_mon = strtol(last + 1, &last, 10) - 1;
@@ -76,7 +77,7 @@ parse_ts(const char *ts) {
   HT_RANGE_CHECK(tv.tm_mday, 1, 31);
 
   if (*last == 0)
-    return timegm(&tv) * G;
+    return mktime(&tv) * G;
 
   HT_DELIM_CHECK(*last, ' ');
   tv.tm_hour = strtol(last + 1, &last, 10);
@@ -86,7 +87,7 @@ parse_ts(const char *ts) {
   HT_RANGE_CHECK(tv.tm_min, 0, 59);
 
   if (*last == 0)
-    return timegm(&tv) * G;
+    return mktime(&tv) * G;
 
   HT_DELIM_CHECK(*last, ':');
 
@@ -99,7 +100,7 @@ parse_ts(const char *ts) {
   else if (*last == '.')
     ns = (int64_t)(strtod(last, 0) * 1000000000.0);
 
-  return (int64_t)(timegm(&tv) * G + ns);
+  return (int64_t)(mktime(&tv) * G + ns);
 }
 
 /** @} */
