@@ -34,7 +34,7 @@ case $1 in
   *)          file=$HYPERTABLE_HOME/bin/$1;;
 esac
 
-if [ $DARWIN == "yes" ] ; then
+if [ "$DARWIN" == "yes" ] ; then
   $ldd "$file" > /tmp/ldd-step1-$$
 
   lineno=0
