@@ -51,6 +51,7 @@ extern "C" {
 
 #include "Hypertable/Lib/CommitLog.h"
 #include "Hypertable/Lib/CommitLogReader.h"
+#include "Hypertable/Lib/LoadDataEscape.h"
 
 #include "CellStoreFactory.h"
 #include "Global.h"
@@ -1042,8 +1043,21 @@ void Range::split_install_log() {
                 m_name.c_str());
     }
 
-    HT_ASSERT(split_row.compare(end_row) < 0 &&
-              split_row.compare(start_row) > 0);
+    // Instrumentation for issue 1193
+    if (split_row.compare(end_row) >= 0 || split_row.compare(start_row) <= 0) {
+      LoadDataEscape escaper;
+      String escaped_start_row, escaped_end_row, escaped_split_row;
+      foreach_ht (SplitRowDataMapT::value_type &entry, split_row_data) {
+	escaper.escape(entry.first, strlen(entry.first), escaped_split_row);
+	HT_ERRORF("[split_row_data] %lld %s", (Lld)entry.second, escaped_split_row.c_str());
+      }
+      escaper.escape(start_row.c_str(), start_row.length(), escaped_start_row);
+      escaper.escape(end_row.c_str(), end_row.length(), escaped_end_row);
+      escaper.escape(split_row.c_str(), split_row.length(), escaped_split_row);
+      HT_FATALF("Bad split row estimate (%s) for range %s[%s..%s]",
+		escaped_split_row.c_str(), m_table.id, escaped_start_row.c_str(),
+		escaped_end_row.c_str());
+    }
 
     HT_INFOF("Split row estimate for %s is '%s'",
              m_name.c_str(), split_row.c_str());

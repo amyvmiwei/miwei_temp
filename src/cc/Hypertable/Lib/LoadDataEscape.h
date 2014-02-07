@@ -37,7 +37,8 @@ namespace Hypertable {
       const char *out_buf;
       size_t out_len;
       bool rval = escape(in_buf, in_len, &out_buf, &out_len);
-      out = String(out_buf, out_len);
+      out.clear();
+      out.append(out_buf, out_len);
       return rval;
     }
     bool unescape(const char *in_buf, size_t in_len, const char **out_bufp,
