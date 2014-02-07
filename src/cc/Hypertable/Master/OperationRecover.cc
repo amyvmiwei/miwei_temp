@@ -520,8 +520,6 @@ void OperationRecover::encode_state(uint8_t **bufp) const {
 
 void OperationRecover::decode_state(const uint8_t **bufp, size_t *remainp) {
   decode_request(bufp, remainp);
-  HT_INFOF("OperationRecover %s state=%s",
-           m_location.c_str(), OperationState::get_text(get_state()));
 }
 
 void OperationRecover::decode_request(const uint8_t **bufp, size_t *remainp) {
