@@ -3,7 +3,7 @@ set :install_dir,  "/opt/hypertable"
 set :hypertable_version, "0.9.8.0"
 set :default_pkg, "/tmp/hypertable-0.9.8.0-linux-x86_64.deb"
 set :default_dfs, "hadoop"
-set :default_distro, "cdh3"
+set :default_distro, "cdh4"
 set :default_config, "/opt/hypertable/dev-hypertable.cfg"
 
 role :source, "mothercompiler"

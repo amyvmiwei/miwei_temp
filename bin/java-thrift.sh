@@ -24,7 +24,7 @@
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 . $HYPERTABLE_HOME/bin/ht-env.sh
 
-$HYPERTABLE_HOME/bin/set-hadoop-distro.sh cdh3
+$HYPERTABLE_HOME/bin/set-hadoop-distro.sh cdh4
 
 javalib=$HYPERTABLE_HOME/lib/java
 CLASSPATH=`echo $javalib/libthrift-*.jar`

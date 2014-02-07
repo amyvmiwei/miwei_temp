@@ -12,7 +12,7 @@ usage() {
   echo "directory ($HT_HOME/lib/java)"
   echo "so that Hypertable will run on top of a Hadoop installation of type"
   echo "<distro>.  Supported values for <distro> are:  ${Distros[@]}."
-  echo "The default distribution is cdh3."
+  echo "The default distribution is cdh4."
   echo ""
 }
 
