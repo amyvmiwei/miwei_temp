@@ -19,7 +19,7 @@ $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
 $HT_HOME/bin/ht ht_load_generator update --spec-file=${SCRIPT_DIR}/data.spec \
         --table=LoadTest --max-keys=10000000 2>&1
 
-$HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/test.hql > test.output
+$HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/test.hql | grep -v "Waiting for connection to Hyperspace" > test.output
 
 diff test.output $SCRIPT_DIR/test.golden
 if [ $? -ne 0 ];
