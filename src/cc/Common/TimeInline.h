@@ -64,7 +64,6 @@ parse_ts(const char *ts) {
   const int64_t G = 1000000000LL;
   tm tv;
   char *last;
-  double sec=0;
   int64_t ns=0;
 
   memset(&tv, 0, sizeof(tm));
@@ -91,15 +90,16 @@ parse_ts(const char *ts) {
 
   HT_DELIM_CHECK(*last, ':');
 
-  sec = strtod(last+1, &last);
-  tv.tm_sec = 0;
-  HT_RANGE_CHECK(sec, 0, 59);
-  // integer nanoseconds
-  if (*last == ':') {
-    ns = strtol(last+1, &last, 10);
-  }
+  tv.tm_sec = strtol(last + 1, &last, 10);
+  HT_RANGE_CHECK(tv.tm_sec, 0, 59);
 
-  return (int64_t)(timegm(&tv) * G + sec * G + ns);
+  // nanoseconds
+  if (*last == ':')
+    ns = strtol(last+1, &last, 10);
+  else if (*last == '.')
+    ns = (int64_t)(strtod(last, 0) * 1000000000.0);
+
+  return (int64_t)(timegm(&tv) * G + ns);
 }
 
 /** @} */
