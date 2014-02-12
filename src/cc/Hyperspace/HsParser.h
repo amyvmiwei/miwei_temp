@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -30,24 +30,25 @@
 #define HS_DEBUG(str)
 #endif
 
+#include <Hyperspace/Protocol.h>
+#include <Hyperspace/Session.h>
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+
 #include <boost/algorithm/string.hpp>
+#include <boost/spirit/include/classic_confix.hpp>
 #include <boost/spirit/include/classic_core.hpp>
+#include <boost/spirit/include/classic_escape_char.hpp>
 #include <boost/spirit/include/classic_grammar.hpp>
 #include <boost/spirit/include/classic_symbols.hpp>
-#include <boost/spirit/include/classic_confix.hpp>
-#include <boost/spirit/include/classic_escape_char.hpp>
 
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
+#include <unordered_map>
 #include <vector>
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Session.h"
-#include "Protocol.h"
-#include "Common/HashMap.h"
 
 namespace Hyperspace {
 
@@ -104,7 +105,7 @@ namespace Hyperspace {
       String help_str;
       String outfile;
       std::vector<Attribute> attrs;
-      hash_map<String,String> attr_map;
+      std::unordered_map<String,String> attr_map;
       int open_flag;
       int event_mask;
       int command;
@@ -244,7 +245,7 @@ namespace Hyperspace {
       set_last_attr(ParserState &state_) : state(state_) { }
       void operator()(char const *str, char const *end) const {
         Attribute attr;
-        hash_map<String,String>::iterator iter;
+        std::unordered_map<String,String>::iterator iter;
 
         state.attr_map[state.last_attr_name] = state.last_attr_value;
         iter = state.attr_map.find(state.last_attr_name);

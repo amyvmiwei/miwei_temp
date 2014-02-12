@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -20,15 +20,15 @@
 /** @file
  * A HashSet optimized for blobs.
  * This file implements a HashSet for storing and looking up blobs efficiently.
- * It is used i.e. for Bloom Filters. The hash_set base class is from the
- * Boost library.
+ * It is used i.e. for Bloom Filters.
  */
 
 #ifndef HYPERTABLE_CHARSTR_HASHMAP_H
 #define HYPERTABLE_CHARSTR_HASHMAP_H
 
-#include "HashMap.h"
-#include "BlobHashTraits.h"
+#include <Common/BlobHashTraits.h>
+
+#include <unordered_set>
 
 namespace Hypertable {
 
@@ -41,11 +41,12 @@ namespace Hypertable {
  * simple structure with { void *, size_t } (see BlobHashTraits.h).
  */
 template <class TraitsT = BlobHashTraits<> >
-class BlobHashSet : public hash_set<Blob, typename TraitsT::hasher,
-                                    typename TraitsT::key_equal> {
+class BlobHashSet : public std::unordered_set<Blob, typename TraitsT::hasher,
+                                              typename TraitsT::key_equal> {
 private:
-  typedef hash_set<Blob, typename TraitsT::hasher,
-                   typename TraitsT::key_equal> Base;
+  typedef std::unordered_set<Blob, typename TraitsT::hasher,
+                             typename TraitsT::key_equal> Base;
+
 public:
   typedef typename Base::iterator iterator;
   typedef typename Base::key_type key_type;
@@ -101,14 +102,14 @@ public:
    * @param blob Reference to the blob to find
    * @return Iterator to the found blob, or end() if the blob was not found
    */
-  iterator find(const Blob &blob) const { return Base::find(blob); }
+  iterator find(const Blob &blob) { return Base::find(blob); }
 
   /** Find function for String objects
    *
    * @param s Reference to the string to find
    * @return Iterator to the found blob, or end() if the blob was not found
    */
-  iterator find(const String &s) const {
+  iterator find(const String &s) {
     return Base::find(Blob(s.data(), s.size()));
   }
 

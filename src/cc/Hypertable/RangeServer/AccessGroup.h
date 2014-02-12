@@ -22,32 +22,30 @@
 #ifndef HYPERTABLE_ACCESSGROUP_H
 #define HYPERTABLE_ACCESSGROUP_H
 
-#include <queue>
-#include <set>
-#include <vector>
-#include <cstdio>
-#include <ctime>
-#include <iostream>
-#include <fstream>
+#include <Hypertable/RangeServer/AccessGroupGarbageTracker.h>
+#include <Hypertable/RangeServer/CellCacheManager.h>
+#include <Hypertable/RangeServer/CellStore.h>
+#include <Hypertable/RangeServer/CellStoreInfo.h>
+#include <Hypertable/RangeServer/CellStoreTrailerV6.h>
+#include <Hypertable/RangeServer/LiveFileTracker.h>
+#include <Hypertable/RangeServer/MaintenanceFlag.h>
+
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/Types.h>
+
+#include <Common/PageArena.h>
+#include <Common/String.h>
+#include <Common/StringExt.h>
 
 #include <boost/thread/condition.hpp>
 
-#include "Common/PageArena.h"
-#include "Common/String.h"
-#include "Common/StringExt.h"
-#include "Common/HashMap.h"
-
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Types.h"
-
-#include "AccessGroupGarbageTracker.h"
-#include "CellCacheManager.h"
-#include "CellStore.h"
-#include "CellStoreTrailerV6.h"
-#include "CellStoreInfo.h"
-#include "LiveFileTracker.h"
-#include "MaintenanceFlag.h"
-
+#include <cstdio>
+#include <ctime>
+#include <fstream>
+#include <iostream>
+#include <queue>
+#include <set>
+#include <vector>
 
 namespace Hypertable {
 

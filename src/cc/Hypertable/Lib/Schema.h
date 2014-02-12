@@ -22,16 +22,15 @@
 #ifndef HYPERTABLE_SCHEMA_H
 #define HYPERTABLE_SCHEMA_H
 
+#include <Common/Mutex.h>
+#include <Common/ReferenceCount.h>
+#include <Common/Properties.h>
+
 #include <list>
+#include <unordered_map>
 #include <vector>
 
 #include <expat.h>
-
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
-#include "Common/HashMap.h"
-#include "Common/Properties.h"
-
 
 namespace Hypertable {
 
@@ -182,13 +181,13 @@ namespace Hypertable {
     }
     uint32_t get_group_commit_interval() { return m_group_commit_interval; }
 
-    typedef hash_map<String, ColumnFamily *> ColumnFamilyMap;
-    typedef hash_map<String, AccessGroup *> AccessGroupMap;
+    typedef std::unordered_map<String, ColumnFamily *> ColumnFamilyMap;
+    typedef std::unordered_map<String, AccessGroup *> AccessGroupMap;
 
     static const uint32_t      ms_max_column_id;
 
   private:
-    typedef hash_map<uint32_t, ColumnFamily *> ColumnFamilyIdMap;
+    typedef std::unordered_map<uint32_t, ColumnFamily *> ColumnFamilyIdMap;
 
     String m_error_string;
     int    m_next_column_id;

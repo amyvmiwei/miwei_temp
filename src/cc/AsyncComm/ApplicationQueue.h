@@ -28,23 +28,23 @@
 #ifndef HYPERTABLE_APPLICATIONQUEUE_H
 #define HYPERTABLE_APPLICATIONQUEUE_H
 
-#include <cassert>
-#include <list>
-#include <map>
-#include <vector>
+#include <AsyncComm/ApplicationQueueInterface.h>
+#include <AsyncComm/ApplicationHandler.h>
+
+#include <Common/Logger.h>
+#include <Common/Mutex.h>
+#include <Common/ReferenceCount.h>
+#include <Common/StringExt.h>
+#include <Common/Thread.h>
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/xtime.hpp>
 
-#include "Common/Thread.h"
-#include "Common/Mutex.h"
-#include "Common/HashMap.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StringExt.h"
-#include "Common/Logger.h"
-
-#include "ApplicationQueueInterface.h"
-#include "ApplicationHandler.h"
+#include <cassert>
+#include <list>
+#include <map>
+#include <unordered_map>
+#include <vector>
 
 namespace Hypertable {
 
@@ -105,7 +105,7 @@ namespace Hypertable {
 
     /** Hash map of thread group ID to GroupState
      */ 
-    typedef hash_map<uint64_t, GroupState *> GroupStateMap;
+    typedef std::unordered_map<uint64_t, GroupState *> GroupStateMap;
 
     /** Request record.
      */

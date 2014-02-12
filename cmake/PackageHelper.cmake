@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2012 Hypertable, Inc.
+# Copyright (C) 2007-2014 Hypertable, Inc.
 #
 # This file is part of Hypertable.
 #
@@ -57,6 +57,8 @@ macro(HT_INSTALL_LIBS dest)
         HT_GET_SONAME(soname ${fpath})
         configure_file(${fpath} "${dest}/${soname}" COPYONLY)
         install(FILES "${CMAKE_BINARY_DIR}/${dest}/${soname}" DESTINATION ${dest})
+      else ()
+         message(STATUS "Problem installing ${fpath} soname=${soname} to ${dest}")
       endif ()
     endforeach()
   endif ()
@@ -75,9 +77,15 @@ if (NOT PACKAGE_THRIFTBROKER)
 endif ()
 
 # Need to include some "system" libraries as well
-exec_program(${CMAKE_INSTALL_PREFIX}/bin/ldd.sh
+exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
              ARGS ${CMAKE_BINARY_DIR}/CMakeFiles/CompilerIdCXX/a.out
              OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
+
+if (NOT LDD_RETURN STREQUAL "0")
+  exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+               ARGS ${CMAKE_BINARY_DIR}/CMakeFiles/${CMAKE_VERSION}/CompilerIdCXX/a.out
+               OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
+endif ()
 
 if (HT_CMAKE_DEBUG)
   message("ldd.sh output: ${LDD_OUT}")
@@ -90,48 +98,22 @@ if (LDD_RETURN STREQUAL "0")
   set(stdcxx_lib ${CMAKE_MATCH_1})
   string(REGEX MATCH "[ \t](/[^ ]+/libstacktrace\\.[^ \n]+)" dummy ${LDD_OUT})
   set(stacktrace_lib ${CMAKE_MATCH_1})
-  HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib} ${stacktrace_lib})
+  string(REGEX MATCH "[ \t](/[^ ]+/libc\\+\\+\\.[^ \n]+)" dummy ${LDD_OUT})
+  # Mac libraries
+  set(cxx_lib ${CMAKE_MATCH_1})
+  string(REGEX MATCH "[ \t](/[^ ]+/libc\\+\\+abi\\.[^ \n]+)" dummy ${LDD_OUT})
+  set(cxxabi_lib ${CMAKE_MATCH_1})
+  HT_INSTALL_LIBS(lib ${gcc_s_lib} ${stdcxx_lib} ${stacktrace_lib} ${cxx_lib} ${cxxabi_lib})
+else ()
+  set(LDD_CMD "${CMAKE_BINARY_DIR}/CMakeFiles/CompilerIdCXX/a.out")
+  set(LDD_CMD "${CMAKE_SOURCE_DIR}/bin/ldd.sh ${LDD_CMD}")
+  message("ERROR: ${LDD_CMD} returned ${LDD_RETURN}")
+  message(FATAL_ERROR "${LDD_OUT}")
 endif ()
 
 # copy cronolog to the /bin directory
 install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION
       ${CMAKE_INSTALL_PREFIX}/bin)
-
-exec_program(${CMAKE_INSTALL_PREFIX}/bin/ldd.sh
-             ARGS ${CMAKE_BINARY_DIR}/src/cc/ThriftBroker/ThriftBroker
-             OUTPUT_VARIABLE LDD_OUT RETURN_VALUE LDD_RETURN)
-
-if (HT_CMAKE_DEBUG)
-  message("ldd.sh output: ${LDD_OUT}")
-endif ()
-
-if (LDD_RETURN STREQUAL "0")
-  string(REGEX MATCH "[ \t](/[^ ]+/libssl\\.[^ \n]+)" dummy ${LDD_OUT})
-  set(ssl_lib ${CMAKE_MATCH_1})
-  string(REGEX MATCH "[ \t](/[^ ]+/libgssapi_krb5\\.[^ \n]+)" dummy ${LDD_OUT})
-  set(gssapi_krb5_lib ${CMAKE_MATCH_1})
-  string(REGEX MATCH "[ \t](/[^ ]+/libkrb5\\.[^ \n]+)" dummy ${LDD_OUT})
-  set(krb5_lib ${CMAKE_MATCH_1})
-  string(REGEX MATCH "[ \t](/[^ ]+/libcom_err\\.[^ \n]+)" dummy ${LDD_OUT})
-  set(com_err_lib ${CMAKE_MATCH_1})
-  string(REGEX MATCH "[ \t](/[^ ]+/libk5crypto\\.[^ \n]+)" dummy ${LDD_OUT})
-  set(k5crypto_lib ${CMAKE_MATCH_1})
-  string(REGEX MATCH "[ \t](/[^ ]+/libcrypto\\.[^ \n]+)" dummy ${LDD_OUT})
-  set(crypto_lib ${CMAKE_MATCH_1})
-  string(REGEX MATCH "[ \t](/[^ ]+/libkrb5support\\.[^ \n]+)" dummy ${LDD_OUT})
-  set(krb5support_lib ${CMAKE_MATCH_1})
-endif ()
-
-HT_INSTALL_LIBS(lib ${dbi_lib} ${directfb_lib} ${fusion_lib} ${direct_lib}
-                ${xcb_render_util_lib} ${xcb_render_lib}
-                ${pangocairo_lib} ${pango_lib} ${cairo_lib}
-                ${fontconfig_lib} ${Xrender_lib} ${X11_lib} ${xml2_lib}
-                ${pixman_lib} ${gobject_lib} ${gmodule_lib} ${glib_lib}
-                ${pangoft2_lib} ${xcb_xlib_lib} ${xcb_lib} ${pcre_lib}
-                ${Xau_lib} ${Xdmcp_lib} ${ssl_lib} ${gssapi_krb5_lib}
-                ${krb5_lib} ${com_err_lib} ${k5crypto_lib} ${crypto_lib}
-                ${krb5support_lib} ${Xrender_lib} ${rrd_lib} ${intl_lib}
-                ${freetype_lib})
 
 # General package variables
 if (NOT CPACK_PACKAGE_NAME)

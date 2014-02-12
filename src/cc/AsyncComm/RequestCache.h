@@ -28,11 +28,11 @@
 #ifndef HYPERTABLE_REQUESTCACHE_H
 #define HYPERTABLE_REQUESTCACHE_H
 
+#include <AsyncComm/DispatchHandler.h>
+
 #include <boost/thread/xtime.hpp>
 
-#include "Common/HashMap.h"
-
-#include "DispatchHandler.h"
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -63,7 +63,7 @@ namespace Hypertable {
     };
 
     /// RequestID-to-CacheNode map
-    typedef hash_map<uint32_t, CacheNode *> IdHandlerMap;
+    typedef std::unordered_map<uint32_t, CacheNode *> IdHandlerMap;
 
   public:
 

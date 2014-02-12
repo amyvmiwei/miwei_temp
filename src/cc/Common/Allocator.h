@@ -28,6 +28,8 @@
 
 #include "Error.h"
 
+#include <utility>
+
 namespace Hypertable {
 
 /** @addtogroup Common
@@ -115,8 +117,15 @@ struct AllocatorBase {
    *        constructed
    * @param val An object that is copied
    */
+#if 0
   void construct(pointer p, const T& val) {
     new(static_cast<void*>(p)) T(val);
+  }
+#endif
+
+  template< class U, class... Args >
+    void construct( U* p, Args&&... args ) {
+    ::new((void *)p) U(std::forward<Args>(args)...);
   }
 
   /** Creates a new object instance using placement new and the default

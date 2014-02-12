@@ -36,7 +36,6 @@
 
 using namespace Hypertable;
 
-
 template <typename IndexT>
 CellStoreScanner<IndexT>::CellStoreScanner(CellStore *cellstore, ScanContextPtr &scan_ctx, IndexT *index) :
   CellListScanner(scan_ctx), m_cellstore(cellstore), m_interval_index(0),
@@ -202,5 +201,7 @@ void CellStoreScanner<IndexT>::forward() {
   m_interval_scanners[m_interval_index]->forward();
 }
 
-template class CellStoreScanner<CellStoreBlockIndexArray<uint32_t> >;
-template class CellStoreScanner<CellStoreBlockIndexArray<int64_t> >;
+namespace Hypertable {
+  template class CellStoreScanner<CellStoreBlockIndexArray<uint32_t> >;
+  template class CellStoreScanner<CellStoreBlockIndexArray<int64_t> >;
+}

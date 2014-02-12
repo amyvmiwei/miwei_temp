@@ -18,12 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+#include <Common/Logger.h>
+
+#include <HyperAppHelper/Unique.h>
+#include <Hypertable/Lib/Client.h>
+
 #include <iostream>
 #include <map>
 #include <cassert>
-#include "HyperAppHelper/Unique.h"
-#include "Hypertable/Lib/Client.h"
 
 using namespace Hypertable;
 using namespace Hypertable::HyperAppHelper;
@@ -120,7 +123,7 @@ test_create_cell_unique(void)
     assert(ex.code()==Error::FAILED_EXPECTATION);
     caught=true;
   }
-  assert(caught==true);
+  HT_ASSERT(caught==true);
 
   // negative tests: insert a cell in a column which is not TIME_ORDER DESC
   caught=false;
@@ -136,7 +139,7 @@ test_create_cell_unique(void)
     assert(ex.code()==Error::BAD_SCAN_SPEC);
     caught=true;
   }
-  assert(caught==true);
+  HT_ASSERT(caught==true);
 
   // negative tests: insert a cell twice
   caught=false;
@@ -152,7 +155,7 @@ test_create_cell_unique(void)
     assert(ex.code()==Error::ALREADY_EXISTS);
     caught=true;
   }
-  assert(caught==true);
+  HT_ASSERT(caught==true);
   delete client;
 }
 

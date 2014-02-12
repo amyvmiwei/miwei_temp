@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,17 +22,13 @@
 #ifndef HYPERTABLE_RANGESERVERCONNECTIONMANAGER_H
 #define HYPERTABLE_RANGESERVERCONNECTIONMANAGER_H
 
-#include "Common/HashMap.h"
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StringExt.h"
+#include <Hypertable/Master/RangeServerConnection.h>
 
-#include "AsyncComm/Comm.h"
+#include <AsyncComm/Comm.h>
 
-#include "RangeServerConnection.h"
-
-#include <set>
-#include <utility>
+#include <Common/Mutex.h>
+#include <Common/ReferenceCount.h>
+#include <Common/StringExt.h>
 
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
@@ -40,6 +36,8 @@
 #include <boost/multi_index/sequenced_index.hpp>
 #include <boost/multi_index/member.hpp>
 
+#include <set>
+#include <utility>
 
 namespace Hypertable {
 

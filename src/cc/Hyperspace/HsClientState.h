@@ -22,16 +22,17 @@
 #ifndef HYPERSPACE_CLIENTSTATE_H
 #define HYPERSPACE_CLIENTSTATE_H
 
-#include "Common/String.h"
-#include "Common/StringExt.h"
-#include "Common/HashMap.h"
+#include <Common/String.h>
+#include <Common/StringExt.h>
+
+#include <unordered_map>
 
 namespace Hyperspace {
 using namespace Hypertable;
   namespace HsClientState {
     extern int exit_status;
     extern String cwd;
-    typedef hash_map<String, uint64_t> FileMap;
+    typedef std::unordered_map<String, uint64_t> FileMap;
     extern FileMap file_map;
   }
 

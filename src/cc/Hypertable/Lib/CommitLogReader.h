@@ -22,22 +22,21 @@
 #ifndef HYPERTABLE_COMMITLOGREADER_H
 #define HYPERTABLE_COMMITLOGREADER_H
 
-#include <stack>
-#include <vector>
+#include <Hypertable/Lib/BlockCompressionCodec.h>
+#include <Hypertable/Lib/BlockCompressionHeaderCommitLog.h>
+#include <Hypertable/Lib/CommitLogBase.h>
+#include <Hypertable/Lib/CommitLogBlockStream.h>
+#include <Hypertable/Lib/Key.h>
+
+#include <Common/Filesystem.h>
+#include <Common/ReferenceCount.h>
+#include <Common/String.h>
 
 #include <boost/thread/mutex.hpp>
 
-#include "Common/ReferenceCount.h"
-#include "Common/String.h"
-#include "Common/HashMap.h"
-#include "Common/Filesystem.h"
-
-#include "BlockCompressionCodec.h"
-#include "BlockCompressionHeaderCommitLog.h"
-#include "CommitLogBase.h"
-#include "CommitLogBlockStream.h"
-#include "Key.h"
-
+#include <stack>
+#include <unordered_map>
+#include <vector>
 
 namespace Hypertable {
 
@@ -86,7 +85,7 @@ namespace Hypertable {
     DynamicBuffer     m_block_buffer;
     int64_t           m_revision;
 
-    typedef hash_map<uint16_t, BlockCompressionCodecPtr> CompressorMap;
+    typedef std::unordered_map<uint16_t, BlockCompressionCodecPtr> CompressorMap;
 
     CompressorMap          m_compressor_map;
     uint16_t               m_compressor_type;

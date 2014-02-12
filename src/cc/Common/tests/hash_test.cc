@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -20,18 +20,17 @@
  */
 
 #include "Common/Compat.h"
+#include <Common/BlobHashSet.h>
+#include <Common/CstrHashMap.h>
+#include <Common/Init.h>
+#include <Common/MurmurHash.h>
+#include <Common/Stopwatch.h>
+#include <Common/SystemInfo.h>
+#include <Common/TclHash.h>
+#include <Common/md5.h>
 
 #include <vector>
-
-#include "Common/Init.h"
-#include "Common/Stopwatch.h"
-#include "Common/md5.h"
-#include "Common/HashMap.h"
-#include "Common/TclHash.h"
-#include "Common/MurmurHash.h"
-#include "Common/BlobHashSet.h"
-#include "Common/CstrHashMap.h"
-#include "Common/SystemInfo.h"
+#include <unordered_set>
 
 using namespace Hypertable;
 using namespace Config;
@@ -113,7 +112,7 @@ struct HashTest {
 
   template <class HashT>
   void test(const String &label, int repeats) {
-    hash_set<String, HashT> str_set(items.size());
+    std::unordered_set<String, HashT> str_set(items.size());
     BlobHashSet<BlobHashTraits<HashT> > blob_set(items.size());
     CstrHashMap<size_t, CstrHashTraits<HashT> > cstr_map(items.size());
     uint32_t last_hash = 0;     // ditto

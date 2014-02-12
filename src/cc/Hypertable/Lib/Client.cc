@@ -19,35 +19,36 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+#include "Client.h"
+
+#include <Hypertable/Lib/HqlCommandInterpreter.h>
+
+#include <Hypertable/Master/Operation.h>
+
+#include <Hyperspace/DirEntry.h>
+#include <Hypertable/Lib/Config.h>
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ReactorFactory.h>
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/ScopeGuard.h>
+#include <Common/System.h>
+#include <Common/Timer.h>
+
+#include <boost/algorithm/string.hpp>
+
 #include <cassert>
 #include <cstdlib>
 
 extern "C" {
 #include <poll.h>
 }
-
-#include <boost/algorithm/string.hpp>
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ReactorFactory.h"
-
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/ScopeGuard.h"
-#include "Common/System.h"
-#include "Common/Timer.h"
-
-#include "Hyperspace/DirEntry.h"
-#include "Hypertable/Lib/Config.h"
-
-#include "Hypertable/Master/Operation.h"
-
-#include "Client.h"
-#include "HqlCommandInterpreter.h"
 
 using namespace std;
 using namespace Hypertable;

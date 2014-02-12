@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,15 +22,19 @@
 #ifndef HYPERTABLE_NAMESPACECACHE_H
 #define HYPERTABLE_NAMESPACECACHE_H
 
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
-#include "Common/String.h"
-#include "AsyncComm/ApplicationQueueInterface.h"
-#include "TableCache.h"
-#include "Schema.h"
-#include "RangeLocator.h"
-#include "Types.h"
-#include "Namespace.h"
+#include <Hypertable/Lib/TableCache.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/RangeLocator.h>
+#include <Hypertable/Lib/Types.h>
+#include <Hypertable/Lib/Namespace.h>
+
+#include <AsyncComm/ApplicationQueueInterface.h>
+
+#include <Common/Mutex.h>
+#include <Common/ReferenceCount.h>
+#include <Common/String.h>
+
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -58,7 +62,7 @@ namespace Hypertable {
     bool remove(const String &name);
 
   private:
-    typedef hash_map<String, NamespacePtr> NamespaceMap;
+    typedef std::unordered_map<String, NamespacePtr> NamespaceMap;
 
     PropertiesPtr           m_props;
     RangeLocatorPtr         m_range_locator;

@@ -299,6 +299,7 @@ bool CellStoreScannerIntervalBlockIndex<IndexT>::fetch_next_block(bool eob) {
   return false;
 }
 
-
-template class CellStoreScannerIntervalBlockIndex<CellStoreBlockIndexArray<uint32_t> >;
-template class CellStoreScannerIntervalBlockIndex<CellStoreBlockIndexArray<int64_t> >;
+namespace Hypertable {
+  template class CellStoreScannerIntervalBlockIndex<CellStoreBlockIndexArray<uint32_t> >;
+  template class CellStoreScannerIntervalBlockIndex<CellStoreBlockIndexArray<int64_t> >;
+}

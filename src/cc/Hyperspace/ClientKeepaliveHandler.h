@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,23 +22,23 @@
 #ifndef HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
 #define HYPERSPACE_CLIENTKEEPALIVEHANDLER_H
 
-#include <cassert>
-#include <set>
-#include <vector>
+#include <Hyperspace/ClientConnectionHandler.h>
+#include <Hyperspace/ClientHandleState.h>
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/DispatchHandler.h>
+
+#include <Common/Time.h>
+#include <Common/StringExt.h>
+#include <Common/Properties.h>
 
 #include <boost/thread/mutex.hpp>
 #include <boost/thread/xtime.hpp>
 
-#include "Common/Time.h"
-
-#include "Common/StringExt.h"
-#include "Common/Properties.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/DispatchHandler.h"
-
-#include "ClientConnectionHandler.h"
-#include "ClientHandleState.h"
+#include <cassert>
+#include <set>
+#include <unordered_map>
+#include <vector>
 
 namespace Hyperspace {
 
@@ -102,9 +102,9 @@ namespace Hyperspace {
     uint64_t m_session_id;
     ClientConnectionHandlerPtr m_conn_handler;
     std::set<uint64_t> m_delivered_events;
-    typedef hash_map<uint64_t, ClientHandleStatePtr> HandleMap;
+    typedef std::unordered_map<uint64_t, ClientHandleStatePtr> HandleMap;
     HandleMap  m_handle_map;
-    typedef hash_map<uint64_t, boost::xtime> BadNotificationHandleMap;
+    typedef std::unordered_map<uint64_t, boost::xtime> BadNotificationHandleMap;
     BadNotificationHandleMap m_bad_handle_map;
     static const uint64_t ms_bad_notification_grace_period = 120000;
     bool m_reconnect;

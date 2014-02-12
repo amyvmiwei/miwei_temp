@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,11 +22,11 @@
 #ifndef HYPERTABLE_GCWORKER_H
 #define HYPERTABLE_GCWORKER_H
 
-#include "Common/CstrHashMap.h"
+#include <Hypertable/Master/Context.h>
 
-#include "Hypertable/Lib/Client.h"
+#include <Hypertable/Lib/Client.h>
 
-#include "Context.h"
+#include <Common/CstrHashMap.h>
 
 namespace Hypertable {
 

@@ -27,47 +27,46 @@
 #ifndef HYPERTABLE_RANGESERVER_H
 #define HYPERTABLE_RANGESERVER_H
 
+#include <Hypertable/RangeServer/Global.h>
+#include <Hypertable/RangeServer/GroupCommitInterface.h>
+#include <Hypertable/RangeServer/GroupCommitTimerHandler.h>
+#include <Hypertable/RangeServer/LoadStatistics.h>
+#include <Hypertable/RangeServer/MaintenanceScheduler.h>
+#include <Hypertable/RangeServer/MetaLogEntityRange.h>
+#include <Hypertable/RangeServer/PhantomRangeMap.h>
+#include <Hypertable/RangeServer/QueryCache.h>
+#include <Hypertable/RangeServer/ResponseCallbackAcknowledgeLoad.h>
+#include <Hypertable/RangeServer/ResponseCallbackCreateScanner.h>
+#include <Hypertable/RangeServer/ResponseCallbackFetchScanblock.h>
+#include <Hypertable/RangeServer/ResponseCallbackGetStatistics.h>
+#include <Hypertable/RangeServer/ResponseCallbackPhantomUpdate.h>
+#include <Hypertable/RangeServer/ResponseCallbackUpdate.h>
+#include <Hypertable/RangeServer/ServerState.h>
+#include <Hypertable/RangeServer/TableInfo.h>
+#include <Hypertable/RangeServer/TableInfoMap.h>
+#include <Hypertable/RangeServer/TimerHandler.h>
+
+#include <Hypertable/Lib/Cells.h>
+#include <Hypertable/Lib/MasterClient.h>
+#include <Hypertable/Lib/NameIdMapper.h>
+#include <Hypertable/Lib/RangeState.h>
+#include <Hypertable/Lib/StatsRangeServer.h>
+#include <Hypertable/Lib/Types.h>
+
+#include <Hyperspace/Session.h>
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/Event.h>
+#include <AsyncComm/ResponseCallback.h>
+
+#include <Common/Logger.h>
+#include <Common/Properties.h>
+
 #include <boost/thread/condition.hpp>
 
 #include <map>
 
-#include "Common/Logger.h"
-#include "Common/Properties.h"
-#include "Common/HashMap.h"
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/Event.h"
-#include "AsyncComm/ResponseCallback.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Hypertable/Lib/Cells.h"
-#include "Hypertable/Lib/MasterClient.h"
-#include "Hypertable/Lib/RangeState.h"
-#include "Hypertable/Lib/Types.h"
-#include "Hypertable/Lib/NameIdMapper.h"
-#include "Hypertable/Lib/StatsRangeServer.h"
-
-#include "Global.h"
-#include "GroupCommitInterface.h"
-#include "GroupCommitTimerHandler.h"
-#include "MaintenanceScheduler.h"
-#include "MetaLogEntityRange.h"
-#include "QueryCache.h"
-#include "LoadStatistics.h"
-#include "ResponseCallbackCreateScanner.h"
-#include "ResponseCallbackFetchScanblock.h"
-#include "ResponseCallbackGetStatistics.h"
-#include "ResponseCallbackUpdate.h"
-#include "ResponseCallbackPhantomUpdate.h"
-#include "ResponseCallbackAcknowledgeLoad.h"
-
-#include "TableInfo.h"
-#include "TableInfoMap.h"
-#include "TimerHandler.h"
-#include "PhantomRangeMap.h"
-#include "ServerState.h"
 
 namespace Hypertable {
   using namespace Hyperspace;

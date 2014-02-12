@@ -72,7 +72,7 @@ namespace Hyperspace {
 
     // client/server protocol version; using msb to avoid overlaps with
     // Session::OpenFlags
-    static const int VERSION = 0xf0000002;
+    static const int Version = 0xf0000002;
 
     virtual const char *command_text(uint64_t command);
 

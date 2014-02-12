@@ -26,17 +26,18 @@
  * order.
  */
 
-
-#include "Common/Compat.h"
-#include "Common/StringExt.h"
-
-#include <sstream>
-
-#include "boost/graph/topological_sort.hpp"
-#include "boost/graph/graphviz.hpp"
-
-#include "OperationInitialize.h"
+#include <Common/Compat.h>
 #include "OperationProcessor.h"
+
+#include <Hypertable/Master/OperationInitialize.h>
+
+#include <Common/StringExt.h>
+
+#include <boost/graph/topological_sort.hpp>
+#include <boost/graph/graphviz.hpp>
+
+#include <unordered_map>
+#include <sstream>
 
 using namespace Hypertable;
 using namespace boost;
@@ -127,8 +128,8 @@ OperationPtr OperationProcessor::remove_operation(int64_t hash_code) {
   OperationPtr operation;
   Vertex vertex;
 
-  hash_map<int64_t, OperationVertex>::iterator iter =
-    m_context.operation_hash.find(hash_code);
+  //  std::unordered_map<int64_t, OperationVertex>::iterator iter =
+  auto iter = m_context.operation_hash.find(hash_code);
 
   if (iter == m_context.operation_hash.end() ||
       m_context.busy[iter->second.vertex])

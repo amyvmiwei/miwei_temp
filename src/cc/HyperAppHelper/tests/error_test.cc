@@ -18,12 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
-#include "Common/Compat.h"
-#include "Common/Error.h"
+#include <Common/Compat.h>
+
+#include <HyperAppHelper/Error.h>
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+
 #include <iostream>
 #include <map>
-#include <cassert>
-#include "HyperAppHelper/Error.h"
 
 using namespace Hypertable;
 using namespace Hypertable::HyperAppHelper;
@@ -40,13 +43,13 @@ main(int _argc, char **_argv)
   const char *s;
 
   s=error_get_text(Error::RANGESERVER_RANGE_BUSY);
-  assert(!strcmp(s, "RANGE SERVER range busy"));
+  HT_ASSERT(!strcmp(s, "RANGE SERVER range busy"));
   s=error_get_text(Error::UNPOSSIBLE);
-  assert(!strcmp(s, "But that's unpossible!"));
+  HT_ASSERT(!strcmp(s, "But that's unpossible!"));
   s=error_get_text(Error::EXTERNAL);
-  assert(!strcmp(s, "External error"));
+  HT_ASSERT(!strcmp(s, "External error"));
   s=error_get_text(999999);
-  assert(!strcmp(s, "ERROR NOT REGISTERED"));
+  HT_ASSERT(!strcmp(s, "ERROR NOT REGISTERED"));
 
   _exit(0);
 }

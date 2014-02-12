@@ -304,5 +304,7 @@ bool CellStoreScannerIntervalReadahead<IndexT>::fetch_next_block_readahead(bool 
   return false;
 }
 
-template class CellStoreScannerIntervalReadahead<CellStoreBlockIndexArray<uint32_t> >;
-template class CellStoreScannerIntervalReadahead<CellStoreBlockIndexArray<int64_t> >;
+namespace Hypertable {
+  template class CellStoreScannerIntervalReadahead<CellStoreBlockIndexArray<uint32_t> >;
+  template class CellStoreScannerIntervalReadahead<CellStoreBlockIndexArray<int64_t> >;
+}

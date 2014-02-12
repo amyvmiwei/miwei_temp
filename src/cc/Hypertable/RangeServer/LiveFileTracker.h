@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,15 +22,17 @@
 #ifndef HYPERTABLE_LIFEFILETRACKER_H
 #define HYPERTABLE_LIFEFILETRACKER_H
 
-#include "Common/Mutex.h"
-#include "Common/String.h"
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/Types.h>
 
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Types.h"
+#include <Common/Mutex.h>
+#include <Common/String.h>
+
+#include <unordered_map>
 
 namespace Hypertable {
 
-  typedef hash_map<String, uint32_t> FileRefCountMap;
+  typedef std::unordered_map<String, uint32_t> FileRefCountMap;
 
   /**
    * Tracks files that are live or referenced for purposes of

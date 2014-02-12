@@ -62,8 +62,9 @@ bool QueryCache::insert(Key *key, const char *tablename, const char *row,
 
   QueryCacheEntry entry(*key, tablename, row, result, result_length);
 
-  pair<Sequence::iterator, bool> insert_result = m_cache.push_back(entry);
+  auto insert_result = m_cache.push_back(entry);
   assert(insert_result.second);
+  (void)insert_result;
 
   m_avail_memory -= length;
 

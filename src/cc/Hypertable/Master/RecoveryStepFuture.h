@@ -22,15 +22,15 @@
 #ifndef HYPERTABLE_RECOVERYSTEPFUTURE_H
 #define HYPERTABLE_RECOVERYSTEPFUTURE_H
 
+#include <Common/ReferenceCount.h>
+#include <Common/Time.h>
+#include <Common/Timer.h>
+
 #include <boost/thread/condition.hpp>
 
-#include <set>
+#include <map>
 #include <utility>
 #include <vector>
-
-#include "Common/ReferenceCount.h"
-#include "Common/Time.h"
-#include "Common/Timer.h"
 
 namespace Hypertable {
 
@@ -40,7 +40,7 @@ namespace Hypertable {
   class RecoveryStepFuture : public ReferenceCount {
   public:
 
-    typedef std::map<const String, std::pair<int32_t, String> > ErrorMapT;
+    typedef std::map<String, std::pair<int32_t, String> > ErrorMapT;
 
     RecoveryStepFuture(const String &label, int plan_generation) :
       m_label(label), m_plan_generation(plan_generation),

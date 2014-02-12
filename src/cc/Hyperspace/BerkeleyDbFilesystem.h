@@ -28,29 +28,30 @@
 #ifndef HT_BERKELEYDBFILESYSTEM_H
 #define HT_BERKELEYDBFILESYSTEM_H
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
-#include <boost/thread/condition.hpp>
-#include <vector>
-#include <map>
-#include <ostream>
+#include <Hyperspace/DirEntry.h>
+#include <Hyperspace/DirEntryAttr.h>
+#include <Hyperspace/StateDbKeys.h>
+
+#include <Common/DynamicBuffer.h>
+#include <Common/FileUtils.h>
+#include <Common/InetAddr.h>
+#include <Common/InetAddr.h>
+#include <Common/Mutex.h>
+#include <Common/Properties.h>
+#include <Common/String.h>
+#include <Common/StringExt.h>
+#include <Common/Thread.h>
 
 #include <db_cxx.h>
 
-#include "Common/String.h"
-#include "Common/StringExt.h"
-#include "Common/DynamicBuffer.h"
-#include "Common/InetAddr.h"
-#include "Common/HashMap.h"
-#include "Common/Properties.h"
-#include "Common/InetAddr.h"
-#include "Common/Mutex.h"
-#include "Common/FileUtils.h"
-#include "Common/Thread.h"
+#include <boost/thread/condition.hpp>
 
-#include "DirEntry.h"
-#include "DirEntryAttr.h"
-#include "StateDbKeys.h"
+#include <map>
+#include <ostream>
+#include <unordered_map>
+#include <vector>
 
 namespace Hyperspace {
 
@@ -59,7 +60,7 @@ namespace Hyperspace {
    */
 
   /// Hash map from Node handle ID to Session ID
-  typedef hash_map<uint64_t, uint64_t> NotificationMap;
+  typedef std::unordered_map<uint64_t, uint64_t> NotificationMap;
 
   /** Encapsulates a lock request for a file node. */
   class LockRequest {
@@ -118,7 +119,7 @@ namespace Hyperspace {
     int master_eid;
     uint32_t num_replicas;
     String localhost;
-    hash_map<int, String> replica_map;
+    std::unordered_map<int, String> replica_map;
 
   private:
 
@@ -262,8 +263,7 @@ namespace Hyperspace {
       if (m_replication_info.is_master)
         return m_replication_info.localhost;
       else {
-        hash_map<int, String>::iterator it = m_replication_info.replica_map.find(
-                                                 m_replication_info.master_eid);
+        auto it = m_replication_info.replica_map.find(m_replication_info.master_eid);
         if (it != m_replication_info.replica_map.end())
           return it->second;
         else

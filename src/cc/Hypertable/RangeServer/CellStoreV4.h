@@ -26,12 +26,6 @@
 #include <string>
 #include <vector>
 
-#ifdef _GOOGLE_SPARSE_HASH
-#include <google/sparse_hash_set>
-#else
-#include <ext/hash_set>
-#endif
-
 #include "CellStoreBlockIndexArray.h"
 
 #include "AsyncComm/DispatchHandlerSynchronizer.h"

@@ -53,7 +53,7 @@ void RequestHandlerOpen::run() {
     return;
   }
 
-  if (version != Protocol::VERSION) {
+  if (version != Protocol::Version) {
     cb.error(Error::HYPERSPACE_VERSION_MISMATCH,
             "Hyperspace client/server version mismatch");
     return;

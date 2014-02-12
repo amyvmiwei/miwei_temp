@@ -26,15 +26,16 @@
  * operation classes are derived.
  */
 
-#include "Common/Compat.h"
-#include "Common/HashMap.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
+#include "Operation.h"
+
+#include <Hypertable/Master/ReferenceManager.h>
+
+#include <Common/Serialization.h>
 
 #include <ctime>
 #include <sstream>
-
-#include "Operation.h"
-#include "ReferenceManager.h"
+#include <unordered_map>
 
 using namespace Hypertable;
 
@@ -387,7 +388,7 @@ namespace {
     { 0, 0 }
   };
 
-  typedef hash_map<int32_t, const char *> TextMap;
+  typedef std::unordered_map<int32_t, const char *> TextMap;
 
   TextMap &build_text_map() {
     TextMap *map = new TextMap();

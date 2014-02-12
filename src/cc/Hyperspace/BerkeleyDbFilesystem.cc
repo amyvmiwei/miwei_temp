@@ -19,28 +19,28 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <vector>
-#include <ostream>
-#include <cstdlib>
-#include <cctype>
-#include <sstream>
+#include <Common/Compat.h>
+
+#include <Hyperspace/BerkeleyDbFilesystem.h>
+#include <Hyperspace/DbtManaged.h>
+
+#include <Common/Logger.h>
+#include <Common/Path.h>
+#include <Common/ScopeGuard.h>
+#include <Common/Serialization.h>
+#include <Common/String.h>
+#include <Common/System.h>
+#include <Common/SystemInfo.h>
+#include <Common/Time.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/filesystem.hpp>
 
-#include "Common/Time.h"
-#include "Common/Logger.h"
-#include "Common/Serialization.h"
-#include "Common/String.h"
-#include "Common/ScopeGuard.h"
-#include "Common/Path.h"
-#include "Common/System.h"
-#include "Common/SystemInfo.h"
-
-#include "BerkeleyDbFilesystem.h"
-#include "DbtManaged.h"
-
+#include <cctype>
+#include <cstdlib>
+#include <ostream>
+#include <sstream>
+#include <vector>
 
 using namespace boost::algorithm;
 using namespace Hyperspace;
@@ -422,8 +422,7 @@ void BerkeleyDbFilesystem::db_event_callback(DbEnv *dbenv, uint32_t which, void 
      HT_FATAL("Local site lost mastership");
    replication_info->master_eid = *((int*)info);
    {
-     hash_map<int, String>::iterator it =
-         replication_info->replica_map.find(replication_info->master_eid);
+     auto it = replication_info->replica_map.find(replication_info->master_eid);
      HT_ASSERT (it != replication_info->replica_map.end());
      HT_INFOF("New master elected: %s", it->second.c_str());
 
