@@ -1,4 +1,3 @@
-set :source_machine, "localhost"
 set :install_dir,  "/opt/hypertable"
 set :hypertable_version, "0.9.8.0"
 set :default_pkg, "/tmp/hypertable-0.9.8.0-linux-x86_64.deb"
@@ -12,7 +11,6 @@ role :hyperspace, "localhost"
 role :slave,  "localhost"
 role :thriftbroker_additional
 role :spare
-role :localhost, "localhost"
 
 ######################### END OF USER CONFIGURATION ############################
 set :prompt_stop, 0
@@ -53,13 +51,13 @@ set(:thriftbroker_args) do
 end unless exists?(:thriftbroker_args)
 
  desc <<-DESC
-    Copies config file to installation on localhost.
-    This task runs on localhost and copies the config file specified \
-    by the variable 'config' (default=#{config}) \
+    Copies config file into installation.
+    This task runs on the source machine (#{roles[:source].servers[0]}) and \
+    copies the config file specified by the variable 'config' (#{config}) \
     to the installation directory specified by the variable 'install_dir' \
-    (default-#{install_dir})
+    (#{install_dir})
  DESC
-task :copy_config_local, :roles => :localhost do
+task :copy_config_local, :roles => :source do
   run <<-CMD
     echo #{distro} > #{install_dir}/#{hypertable_version}/conf/hadoop-distro &&
     rsync -e \"ssh -o StrictHostKeyChecking=no\" #{config} #{install_dir}/#{hypertable_version}/conf
@@ -69,18 +67,20 @@ end
  desc <<-DESC
     Copies config file to installation on all servers in cluster.
     This task copies the dir\
-    #{source_machine}:#{install_dir}/{#hypertable_version}/conf
+    #{roles[:source].servers[0]}:#{install_dir}/{#hypertable_version}/conf
     to all machines in the cluster    
  DESC
 task :push_config_all do
    run <<-CMD
-     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
+     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace #{roles[:source].servers[0]}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
   CMD
 end
 
  desc <<-DESC
-    Copies config file to installation dir on localhost.\ 
-    Then copies entire conf fir to all servers in cluster.
+    Pushes config file to all macines.
+    This task copies the config file (#{config}), specified by the 'config' \
+    variable, into the conf/ directory of the installation on the source \
+    machine (#{roles[:source].servers[0]}) and then rsyncs it to all machines.
  DESC
 task :push_config do
   copy_config_local
@@ -97,13 +97,13 @@ end
  desc <<-DESC
     rsyncs installation directory to cluster.  For each machine in the \
     cluster, his commannd  rsyncs the installation from the source \
-    installation machine specified by the variable 'source_machine' \
-    (default=#{source_machine})
+    installation machine specified by the role 'source' \
+    (default=#{roles[:source].servers[0]})
  DESC
 task :rsync do
   run <<-CMD
-     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=conf --exclude=hyperspace #{source_machine}:#{install_dir}/#{hypertable_version} #{install_dir} &&
-     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace #{source_machine}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
+     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=conf --exclude=hyperspace #{roles[:source].servers[0]}:#{install_dir}/#{hypertable_version} #{install_dir} &&
+     rsync -av -e "ssh -o StrictHostKeyChecking=no" --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=hyperspace #{roles[:source].servers[0]}:#{install_dir}/#{hypertable_version}/conf/ #{install_dir}/#{hypertable_version}/conf 
   CMD
 end
 
@@ -122,10 +122,10 @@ end
 
  desc <<-DESC
    Distributes installation.  This task rsyncs everything under\
-   #{source_machine}:#{install_dir}/#{hypertable_version} to #{install_dir}\
+   #{roles[:source].servers[0]}:#{install_dir}/#{hypertable_version} to #{install_dir}\
    on all machines in the cluster
  DESC
-task :dist, :roles => :localhost do
+task :dist, :roles => :source do
   run "echo #{distro} > #{install_dir}/#{hypertable_version}/conf/hadoop-distro"
   transaction do
     rsync
@@ -154,7 +154,7 @@ task :install_package, :roles => [:master, :hyperspace, :slave, :thriftbroker_ad
     raise "Package #{pkg} doesn't match version #{hypertable_version}"
   end
 
-  run("rsync -e \"ssh -o StrictHostKeyChecking=no\" #{source_machine}:#{pkg} #{install_dir}/")
+  run("rsync -e \"ssh -o StrictHostKeyChecking=no\" #{roles[:source].servers[0]}:#{pkg} #{install_dir}/")
    
   if (pkg_type == "deb")
     run("dpkg -i #{install_dir}/#{pkg_basename} && rm #{install_dir}/#{pkg_basename}") 
