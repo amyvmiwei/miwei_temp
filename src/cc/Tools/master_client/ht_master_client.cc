@@ -50,12 +50,12 @@ namespace {
   struct AppPolicy : Policy {
     static void init_options() {
       cmdline_desc(usage);
-      cmdline_hidden_desc().add_options()("master-location", str(), "");
-      cmdline_positional_desc().add("master-location", -1);
+      cmdline_hidden_desc().add_options()("address", str(), "");
+      cmdline_positional_desc().add("address", -1);
     }
     static void init() {
-      if (has("master-location")) {
-        Endpoint e = InetAddr::parse_endpoint(get_str("master-location"));
+      if (has("address")) {
+        Endpoint e = InetAddr::parse_endpoint(get_str("address"));
         properties->set("master-host", e.host);
         if (e.port) properties->set("master-port", e.port);
       }

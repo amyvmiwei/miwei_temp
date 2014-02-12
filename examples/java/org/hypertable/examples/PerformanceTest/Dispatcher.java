@@ -319,7 +319,7 @@ public class Dispatcher {
 
     try {
       if (setup.driver.equals("hypertable")) {
-        ThriftClient client = ThriftClient.create("localhost", 38080);
+        ThriftClient client = ThriftClient.create("localhost", 15867);
         long namespace = client.open_namespace("/");
         if (!client.exists_table(namespace, "perftest")) {
           client.close_namespace(namespace);

@@ -226,7 +226,7 @@ void DefaultPolicy::init_options() {
         "Rename files with .deleted extension instead of removing (for testing)")
     ("DfsBroker.Local.DirectIO", boo()->default_value(false),
         "Read and write files using direct i/o")
-    ("DfsBroker.Local.Port", i16()->default_value(38030),
+    ("DfsBroker.Local.Port", i16()->default_value(15863),
         "Port number on which to listen (read by LocalBroker only)")
     ("DfsBroker.Local.Root", str(), "Root of file and directory "
         "hierarchy for local broker (if relative path, then is relative to "
@@ -237,7 +237,7 @@ void DefaultPolicy::init_options() {
         "Number of local broker communication reactor threads created")
     ("DfsBroker.Host", str()->default_value("localhost"),
         "Host on which the DFS broker is running (read by clients only)")
-    ("DfsBroker.Port", i16()->default_value(38030),
+    ("DfsBroker.Port", i16()->default_value(15863),
         "Port number on which DFS broker is listening (read by clients only)")
     ("DfsBroker.Timeout", i32(), "Length of time, "
         "in milliseconds, to wait before timing out DFS Broker requests. This "
@@ -255,9 +255,9 @@ void DefaultPolicy::init_options() {
     ("Hyperspace.LogGc.MaxUnusedLogs", i32()->default_value(200), "Number of unused BerkeleyDB "
         " to keep around in case of lagging replicas")
     ("Hyperspace.Replica.Host", strs(), "Hostname of Hyperspace replica")
-    ("Hyperspace.Replica.Port", i16()->default_value(38040),
+    ("Hyperspace.Replica.Port", i16()->default_value(15861),
         "Port number on which Hyperspace is or should be listening for requests")
-    ("Hyperspace.Replica.Replication.Port", i16()->default_value(38041),
+    ("Hyperspace.Replica.Replication.Port", i16()->default_value(15862),
         "Hyperspace replication port ")
     ("Hyperspace.Replica.Replication.Timeout", i32()->default_value(10000),
         "Hyperspace replication master dies if it doesn't receive replication acknowledgement "
@@ -318,7 +318,7 @@ void DefaultPolicy::init_options() {
         "Size of range location cache in number of entries")
     ("Hypertable.Master.Host", str(),
         "Host on which Hypertable Master is running")
-    ("Hypertable.Master.Port", i16()->default_value(38050),
+    ("Hypertable.Master.Port", i16()->default_value(15864),
         "Port number on which Hypertable Master is or should be listening")
     ("Hypertable.Master.Workers", i32()->default_value(100),
         "Number of Hypertable Master worker threads created")
@@ -364,7 +364,7 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.MemoryLimit.EnsureUnused", i64(), "Amount of unused physical memory")
     ("Hypertable.RangeServer.MemoryLimit.EnsureUnused.Percentage", i32(),
      "Amount of unused physical memory specified as percentage of physical RAM")
-    ("Hypertable.RangeServer.Port", i16()->default_value(38060),
+    ("Hypertable.RangeServer.Port", i16()->default_value(15865),
         "Port number on which range servers are or should be listening")
     ("Hypertable.RangeServer.AccessGroup.CellCache.PageSize",
      i32()->default_value(512*KiB), "Page size for CellCache pool allocator")
@@ -492,7 +492,7 @@ void DefaultPolicy::init_options() {
     ("Hypertable.RangeServer.ProxyName", str()->default_value(""),
         "Use this value for the proxy name (if set) instead of reading from run dir.")
     ("ThriftBroker.Timeout", i32(), "Timeout (ms) for thrift broker")
-    ("ThriftBroker.Port", i16()->default_value(38080), "Port number for "
+    ("ThriftBroker.Port", i16()->default_value(15867), "Port number for "
         "thrift broker")
     ("ThriftBroker.Future.Capacity", i32()->default_value(50*M), "Capacity "
         "of result queue (in bytes) for Future objects")

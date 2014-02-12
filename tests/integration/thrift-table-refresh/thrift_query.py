@@ -10,7 +10,7 @@ if (len(sys.argv) < 2):
   sys.exit(1);
 
 try:
-  client = ThriftClient("localhost", 38080)
+  client = ThriftClient("localhost", 15867)
 
   namespace = client.open_namespace("/")
 

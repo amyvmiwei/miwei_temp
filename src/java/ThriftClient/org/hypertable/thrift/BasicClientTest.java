@@ -19,7 +19,7 @@ public class BasicClientTest {
     ThriftClient client = null;
     long ns = -1;
     try {
-      client = ThriftClient.create("localhost", 38080);
+      client = ThriftClient.create("localhost", 15867);
       ns = client.namespace_open("test");
       // HQL examples
       show(client.hql_query(ns, "show tables").toString());

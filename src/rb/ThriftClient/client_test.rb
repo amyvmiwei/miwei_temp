@@ -5,7 +5,7 @@ require 'pp'
 include Hypertable::ThriftGen;
 
 begin
-  Hypertable.with_thrift_client("127.0.0.1", 38080) do |client|
+  Hypertable.with_thrift_client("127.0.0.1", 15867) do |client|
     puts "testing hql queries..."
     ns = client.namespace_open("test");
     res = client.hql_query(ns, "drop table if exists thrift_test");

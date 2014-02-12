@@ -58,18 +58,18 @@ $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker --no-rangeserver \
 sleep 5
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=rs1.pid \
      --Hypertable.RangeServer.ProxyName=rs1 \
-     --Hypertable.RangeServer.Port=38060 \
+     --Hypertable.RangeServer.Port=15870 \
      --Hypertable.RangeServer.Maintenance.Interval 100 \
      --Hypertable.RangeServer.Range.SplitSize=400K 2>1 > rangeserver.rs1.output&
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=rs2.pid \
      --Hypertable.RangeServer.ProxyName=rs2 \
-     --Hypertable.RangeServer.Port=38061 \
+     --Hypertable.RangeServer.Port=15871 \
      --induce-failure=fsstat-disk-full:signal:0 \
      --Hypertable.RangeServer.Maintenance.Interval 100 \
      --Hypertable.RangeServer.Range.SplitSize=400K 2>1 > rangeserver.rs2.output&
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=rs3.pid \
      --Hypertable.RangeServer.ProxyName=rs3 \
-     --Hypertable.RangeServer.Port=38062 \
+     --Hypertable.RangeServer.Port=15872 \
      --induce-failure=fsstat-disk-full:signal:0 \
      --Hypertable.RangeServer.Maintenance.Interval 100 \
      --Hypertable.RangeServer.Range.SplitSize=400K 2>1 > rangeserver.rs3.output&

@@ -15,25 +15,25 @@ start_masters() {
     kill -9 `cat $HT_HOME/run/Hypertable.Master*.pid` 2>&1 >& /dev/null
     /bin/rm -rf $HT_HOME/run/log_backup/mml $HT_HOME/run/Hypertable.Master*.pid
 
-    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38050 $@ \
-        --pidfile $HT_HOME/run/Hypertable.Master.38050.pid \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.38050.log&
-    wait_for_server_up "master" "master:38050" "--Hypertable.Master.Port=38050"
+    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=15870 $@ \
+        --pidfile $HT_HOME/run/Hypertable.Master.15870.pid \
+        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.15870.log&
+    wait_for_server_up "master" "master:15870" "--Hypertable.Master.Port=15870"
 
-    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38051 \
-        --pidfile $HT_HOME/run/Hypertable.Master.38051.pid \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.38051.log&
-    # wait_for_server_up "master" "master:38051" "--Hypertable.Master.Port=38051"
+    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=15871 \
+        --pidfile $HT_HOME/run/Hypertable.Master.15871.pid \
+        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.15871.log&
+    # wait_for_server_up "master" "master:15871" "--Hypertable.Master.Port=15871"
     # chris (Jan 16 2012) - do not use wait_for_server_up because serverup 
     # cannot connect to this master. It's caught in main(), trying to 
     # acquire the hyperspace lock and not yet able to accept socket connections.
     sleep 5
-    ps `cat $HT_HOME/run/Hypertable.Master.38051.pid`
+    ps `cat $HT_HOME/run/Hypertable.Master.15871.pid`
     if [ $? != 0 ] ; then
-        echo "Master (38051) not running, exiting...";
+        echo "Master (15871) not running, exiting...";
         exit 1
     fi
-    echo "Master (38051) appears to be running"
+    echo "Master (15871) appears to be running"
 }
 
 run_test() {

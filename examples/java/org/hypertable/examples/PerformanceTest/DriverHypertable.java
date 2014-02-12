@@ -44,7 +44,7 @@ public class DriverHypertable extends Driver {
 
   public static final int CLIENT_BUFFER_SIZE = 1024*1024*12;
 
-  public static final int DEFAULT_THRIFTBROKER_PORT = 38080;
+  public static final int DEFAULT_THRIFTBROKER_PORT = 15867;
 
   public DriverHypertable() throws TTransportException, TException {
   }
@@ -78,7 +78,7 @@ public class DriverHypertable extends Driver {
         mNamespaceId = mClient.namespace_open(mNamespace);
       }
       catch (Exception e) {
-        System.out.println("Unable to establish connection to ThriftBroker at localhost:38080 " +
+        System.out.println("Unable to establish connection to ThriftBroker at localhost:15867 " +
                            "and open namespace '/'- " +
                            e.getMessage());
         System.exit(-1);

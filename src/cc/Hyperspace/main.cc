@@ -83,7 +83,8 @@ int main(int argc, char **argv) {
     ApplicationQueuePtr app_queue_ptr;
     MasterPtr master = new Master(conn_mgr, properties,
                                   keepalive_handler, app_queue_ptr);
-    uint16_t port = get_i16("port");
+    uint16_t port = has("port") ? get_i16("port") :
+      get_i16("Hyperspace.Replica.Port");
     CommAddress local_addr = InetAddr(INADDR_ANY, port);
     ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue_ptr,
                                                       master));

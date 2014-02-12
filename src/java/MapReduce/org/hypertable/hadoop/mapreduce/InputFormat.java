@@ -269,10 +269,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         if (framesize == 0)
           framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
-          m_client = ThriftClient.create("localhost", 38080, 1600000,
+          m_client = ThriftClient.create("localhost", 15867, 1600000,
                   true, framesize);
         else
-          m_client = ThriftClient.create("localhost", 38080);
+          m_client = ThriftClient.create("localhost", 15867);
       }
       return new RecordReader(m_client, m_namespace, m_tablename, scan_spec);
     }
@@ -308,10 +308,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         if (framesize == 0)
           framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
-          m_client = ThriftClient.create("localhost", 38080, 1600000,
+          m_client = ThriftClient.create("localhost", 15867, 1600000,
                   true, framesize);
         else
-          m_client = ThriftClient.create("localhost", 38080);
+          m_client = ThriftClient.create("localhost", 15867);
       }
 
       if (m_base_spec == null)

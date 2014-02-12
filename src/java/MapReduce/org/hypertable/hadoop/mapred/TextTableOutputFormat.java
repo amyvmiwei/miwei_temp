@@ -49,7 +49,7 @@ import org.hypertable.thrift.SerializedCellsWriter;
  * Write Map/Reduce output to a table in Hypertable.
  *
  * TODO: For now we assume ThriftBroker is running on localhost on default
- * port (38080). Change this to read from configs at some point.
+ * port (15867). Change this to read from configs at some point.
  */
 public class TextTableOutputFormat
     implements org.apache.hadoop.mapred.OutputFormat<Text, Text> {

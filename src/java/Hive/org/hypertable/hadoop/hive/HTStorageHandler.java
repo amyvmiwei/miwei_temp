@@ -150,7 +150,7 @@ public class HTStorageHandler
       uniqueColumnFamilies.remove(htColumnFamilies.get(iKey));
       if (mClient == null) {
         //TODO: read values from configs
-        mClient = ThriftClient.create("localhost", 38080);
+        mClient = ThriftClient.create("localhost", 15867);
         mNamespaceId = mClient.open_namespace(namespace);
       }
       // TODO: support managed tables

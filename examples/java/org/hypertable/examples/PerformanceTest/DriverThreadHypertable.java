@@ -63,7 +63,7 @@ public class DriverThreadHypertable extends Thread {
       synchronized (mState) {
         mState.wait(wait_millis);
       }
-      mClient = ThriftClient.create("localhost", 38080);
+      mClient = ThriftClient.create("localhost", 15867);
       mNamespaceId = mClient.open_namespace(mNamespace);
       mMutator = mClient.open_mutator(mNamespaceId, mTableName, 0, 0);
 

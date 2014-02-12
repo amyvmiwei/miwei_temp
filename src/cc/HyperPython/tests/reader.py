@@ -5,7 +5,7 @@ from hypertable.thriftclient import *
 from hyperthrift.gen.ttypes import *
 
 try:
-  client = ThriftClient("localhost", 38080)
+  client = ThriftClient("localhost", 15867)
   print "SerializedCellsReader example"
 
   namespace = client.namespace_open("test")

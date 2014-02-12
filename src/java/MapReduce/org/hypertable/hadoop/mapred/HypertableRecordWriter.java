@@ -97,10 +97,10 @@ public class HypertableRecordWriter implements RecordWriter<Text, Text> {
       this.namespace = namespace;
       this.table = table;
       if (framesize != 0)
-        mClient = ThriftClient.create("localhost", 38080, 1600000,
+        mClient = ThriftClient.create("localhost", 15867, 1600000,
                 true, framesize);
       else
-        mClient = ThriftClient.create("localhost", 38080);
+        mClient = ThriftClient.create("localhost", 15867);
       mNamespaceId = mClient.namespace_open(namespace);
       mMutator = mClient.mutator_open(mNamespaceId, table,
               flags, flush_interval);

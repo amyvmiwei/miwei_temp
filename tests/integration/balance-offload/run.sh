@@ -16,27 +16,27 @@ RS2_RANGES="$RUN_DIR/rs2_ranges.out"
 . $HT_HOME/bin/ht-env.sh
 
 stop_rs2() {
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
   sleep 1
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
   \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid
 }
 
 stop_rs1() {
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
   sleep 1
   kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs1.pid`
   \rm -f $HT_HOME/run/Hypertable.RangeServer.rs1.pid
 }
 
 compact_user() {
-  echo "compact ranges user; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
-  echo "compact ranges user; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
+  echo "compact ranges user; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
+  echo "compact ranges user; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
 }
 
 dump_rs_ranges() {
-  echo "dump nokeys '$RS1_RANGES';" | $HT_HOME/bin/ht rsclient localhost:38060
-  echo "dump nokeys '$RS2_RANGES';" | $HT_HOME/bin/ht rsclient localhost:38061
+  echo "dump nokeys '$RS1_RANGES';" | $HT_HOME/bin/ht rsclient localhost:15870
+  echo "dump nokeys '$RS2_RANGES';" | $HT_HOME/bin/ht rsclient localhost:15871
 }
 
 
@@ -48,11 +48,11 @@ $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
-   --Hypertable.RangeServer.Port=38060 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs1.out&
+   --Hypertable.RangeServer.Port=15870 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs1.out&
 sleep 10
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
-   --Hypertable.RangeServer.Port=38061 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs2.out&
+   --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>&1 > rangeserver.rs2.out&
 
 #create table
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql

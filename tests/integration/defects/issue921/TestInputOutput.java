@@ -26,7 +26,7 @@ public class TestInputOutput {
     try {
       Text key = new Text();
       Text value = new Text();
-      ThriftClient client = ThriftClient.create("localhost", 38080);
+      ThriftClient client = ThriftClient.create("localhost", 15867);
       // now read them with no_escape = TRUE
       System.out.println("hypertable.mapreduce.input.no_escape = true");
       HypertableRecordReader hrr = new HypertableRecordReader(client, "test",

@@ -54,12 +54,12 @@ namespace {
       cmdline_desc(usage).add_options()
         ("no-hyperspace", "Do not establish a connection to hyperspace")
         ;
-      cmdline_hidden_desc().add_options()("rs-location", str(), "");
-      cmdline_positional_desc().add("rs-location", -1);
+      cmdline_hidden_desc().add_options()("address", str(), "");
+      cmdline_positional_desc().add("address", -1);
     }
     static void init() {
-      if (has("rs-location")) {
-        Endpoint e = InetAddr::parse_endpoint(get_str("rs-location"));
+      if (has("address")) {
+        Endpoint e = InetAddr::parse_endpoint(get_str("address"));
         properties->set("rs-host", e.host);
         if (e.port) properties->set("rs-port", e.port);
       }

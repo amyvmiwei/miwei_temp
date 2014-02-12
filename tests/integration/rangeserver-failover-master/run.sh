@@ -66,8 +66,8 @@ gen_test_data() {
 
 stop_range_servers() {
     local port
-    let port=38059+$1
-    while [ $port -ge 38060 ] ; do
+    let port=15869+$1
+    while [ $port -ge 15870 ] ; do
         echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
         let port-=1
     done
@@ -78,7 +78,7 @@ stop_range_servers() {
 
 stop_rs() {
     local port
-    let port=38059+$1
+    let port=15869+$1
     echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
     \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid
@@ -127,7 +127,7 @@ run_test() {
     while [ $# -gt 0 ] ; do
         INDUCED_FAILURE[$i]=$1
         PIDFILE[$i]=$HT_HOME/run/Hypertable.RangeServer.rs$i.pid
-        let port=38059+$i
+        let port=15869+$i
         PORT[$i]=$port
         let i+=1
         shift

@@ -20,31 +20,31 @@ cleanup_and_abort() {
 
 start_masters() {
 
-    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38050 $@ \
-        --pidfile $HT_HOME/run/Hypertable.Master.38050.pid \
+    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=15870 $@ \
+        --pidfile $HT_HOME/run/Hypertable.Master.15870.pid \
         --Hypertable.Master.Gc.Interval=30000 \
         --Hypertable.RangeServer.Range.SplitSize=18K \
         --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.38050.log&
-    wait_for_server_up "master" "master:38050" "--Hypertable.Master.Port=38050"
+        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.15870.log&
+    wait_for_server_up "master" "master:15870" "--Hypertable.Master.Port=15870"
 
-    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=38051 \
-        --pidfile $HT_HOME/run/Hypertable.Master.38051.pid \
+    $HT_HOME/bin/Hypertable.Master --Hypertable.Master.Port=15871 \
+        --pidfile $HT_HOME/run/Hypertable.Master.15871.pid \
         --Hypertable.Master.Gc.Interval=30000 \
         --Hypertable.RangeServer.Range.SplitSize=18K \
         --Hypertable.RangeServer.Range.MetadataSplitSize=10K \
-        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.38051.log&
-    #wait_for_server_up "master" "master:38051" "--Hypertable.Master.Port=38051"
+        --Hypertable.Connection.Retry.Interval=3000 2>&1 &> Hypertable.Master.15871.log&
+    #wait_for_server_up "master" "master:15871" "--Hypertable.Master.Port=15871"
     # chris - do not use wait_for_server_up because serverup cannot connect
     # to this master; it's caught in main(), trying to acquire the hyperspace
     # lock and not yet able to accept socket connections
     sleep 5
-    ps `cat $HT_HOME/run/Hypertable.Master.38051.pid`
+    ps `cat $HT_HOME/run/Hypertable.Master.15871.pid`
     if [ $? != 0 ] ; then
-      echo "Master (38051) not running, exiting...";
+      echo "Master (15871) not running, exiting...";
       exit 1
     fi
-    echo "Master (38051) seems to be running"
+    echo "Master (15871) seems to be running"
 }
 
 
@@ -148,7 +148,7 @@ run_test() {
   # Verify that the falure was induced
   if [ $@ ]; then
     if [ $TEST_ID == 9 ] || [ $TEST_ID == 10 ] || [ $TEST_ID == 11 ] || [ $TEST_ID == 12 ] ; then
-      fgrep "induced failure" Hypertable.Master.38050.log
+      fgrep "induced failure" Hypertable.Master.15870.log
     else
       fgrep "induced failure" rangeserver.output.$TEST_ID
     fi

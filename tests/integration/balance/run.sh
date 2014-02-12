@@ -36,13 +36,13 @@ $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --DfsBroker.DisableF
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
-   --Hypertable.RangeServer.Port=38060 \
+   --Hypertable.RangeServer.Port=15870 \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
    --Hypertable.RangeServer.Range.SplitSize=400K 2>&1 > rangeserver.rs1.output&
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
-   --Hypertable.RangeServer.Port=38061 \
+   --Hypertable.RangeServer.Port=15871 \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
    --Hypertable.RangeServer.Range.SplitSize=400K 2>&1 > rangeserver.rs2.output&
 
@@ -61,8 +61,8 @@ $HT_HOME/bin/ht ht_load_generator update \
 
 sleep 3
 
-echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
-echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
+echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
+echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
 
 sleep 1
 
@@ -70,11 +70,11 @@ kill_range_servers
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
-   --Hypertable.RangeServer.Port=38062 2>&1 >> rangeserver.rs1.output&
+   --Hypertable.RangeServer.Port=15872 2>&1 >> rangeserver.rs1.output&
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
-   --Hypertable.RangeServer.Port=38063 2>&1 >> rangeserver.rs2.output&
+   --Hypertable.RangeServer.Port=15873 2>&1 >> rangeserver.rs2.output&
 
 sleep 10
 

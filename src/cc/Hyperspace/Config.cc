@@ -33,7 +33,7 @@ namespace Hypertable { namespace Config {
 
 void init_hyperspace_client_options() {
   cmdline_desc().add_options()
-    ("hyperspace", str()->default_value("localhost:38040"),
+    ("hyperspace", str(),
         "hyperspace master server to connect to in <host:port> format")
     ("hyperspace-timeout", i32()->default_value(30000),
         "Timeout in milliseconds for hyperspace connection")
@@ -87,7 +87,7 @@ void init_hyperspace_command_shell_options() {
 
 void init_hyperspace_master_options() {
   cmdline_desc().add_options()
-    ("port", i16()->default_value(38040),
+    ("port", i16(),
         "Hyperspace master listening port")
     ("dir", str()->default_value("hyperspace"),
         "Hyperspace root directory name")

@@ -41,7 +41,7 @@ import org.hypertable.thrift.ThriftClient;
 /**
  * Write Map/Reduce output to a table in Hypertable.
  *
- * TODO: For now we assume ThriftBroker is running on localhost on default port (38080).
+ * TODO: For now we assume ThriftBroker is running on localhost on default port (15867).
  * Change this to read from configs at some point.
  */
 public class KeyWritable extends Key implements WritableComparable<Key> {

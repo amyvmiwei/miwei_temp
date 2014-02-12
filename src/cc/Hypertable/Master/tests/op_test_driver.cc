@@ -246,6 +246,8 @@ namespace {
                                               entities);
   }
 
+  uint16_t g_rs_port = 0;
+
 
 } // local namespace
 
@@ -271,8 +273,15 @@ int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
 
+    g_rs_port = get_i16("Hypertable.RangeServer.Port");
+
     context = new Context(properties);
     context->test_mode = true;
+
+    // Default Hyperspace replicat host
+    std::vector<String> replicas;
+    replicas.push_back("localhost");
+    context->props->set("Hyperspace.Replica.Host", replicas);
 
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
@@ -453,11 +462,11 @@ void create_table_test(ContextPtr &context) {
                                             log_dir + "/" + context->mml_definition->name(),
                                             entities);
 
-  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
-  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
+  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
 
-  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
-  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
+  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
 
   {
     std::vector<MetaLog::Entity *> entities;
@@ -524,7 +533,7 @@ void create_table_test(ContextPtr &context) {
   initialize_test(context, log_dir, entities, "");
   poll(0,0,100);
   context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("localhost", 30267),
-                                       InetAddr("localhost", 38060));
+                                       InetAddr("localhost", g_rs_port));
   context->op->wait_for_empty();
 
   context->op->shutdown();
@@ -549,14 +558,14 @@ void create_table_with_index_test(ContextPtr &context) {
                                         entities);
 
   rsc1 = new RangeServerConnection("rs1", 
-          "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+          "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
   rsc2 = new RangeServerConnection("rs2", 
-          "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+          "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
 
   context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", 
-          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
+          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
   context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", 
-          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
 
   {
     std::vector<MetaLog::Entity *> entities;
@@ -608,7 +617,7 @@ void create_table_with_index_test(ContextPtr &context) {
   initialize_test(context, log_dir, entities, "");
   poll(0,0,100);
   context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("localhost", 30267),
-                          InetAddr("localhost", 38060));
+                          InetAddr("localhost", g_rs_port));
   context->op->wait_for_empty();
 
   context->op->shutdown();
@@ -657,15 +666,15 @@ void master_initialize_test(ContextPtr &context) {
                                             log_dir + "/" + context->mml_definition->name(),
                                             entities);
 
-  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
-  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
-  rsc3 = new RangeServerConnection("rs3", "how.hypertable.com", InetAddr("72.14.204.98", 38060));
-  rsc4 = new RangeServerConnection("rs4", "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
+  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
+  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
+  rsc3 = new RangeServerConnection("rs3", "how.hypertable.com", InetAddr("72.14.204.98", g_rs_port));
+  rsc4 = new RangeServerConnection("rs4", "cow.hypertable.com", InetAddr("69.147.125.62", g_rs_port));
 
-  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
-  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
-  context->rsc_manager->connect_server(rsc3, "how.hypertable.com", InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", 38060));
-  context->rsc_manager->connect_server(rsc4, "cow.hypertable.com", InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", 38060));
+  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
+  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
+  context->rsc_manager->connect_server(rsc3, "how.hypertable.com", InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", g_rs_port));
+  context->rsc_manager->connect_server(rsc4, "cow.hypertable.com", InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", g_rs_port));
 
   {
     std::vector<MetaLog::Entity *> entities;
@@ -800,19 +809,19 @@ void move_range_test(ContextPtr &context) {
           log_dir + "/" + context->mml_definition->name(),
           entities);
 
-  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
-  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
-  rsc3 = new RangeServerConnection("rs3", "how.hypertable.com", InetAddr("72.14.204.98", 38060));
-  rsc4 = new RangeServerConnection("rs4", "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
+  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
+  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
+  rsc3 = new RangeServerConnection("rs3", "how.hypertable.com", InetAddr("72.14.204.98", g_rs_port));
+  rsc4 = new RangeServerConnection("rs4", "cow.hypertable.com", InetAddr("69.147.125.62", g_rs_port));
 
   context->rsc_manager->connect_server(rsc1, "foo.hypertable.com",
-          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
+          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
   context->rsc_manager->connect_server(rsc2, "bar.hypertable.com",
-          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
   context->rsc_manager->connect_server(rsc3, "how.hypertable.com",
-          InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", 38060));
+          InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", g_rs_port));
   context->rsc_manager->connect_server(rsc4, "cow.hypertable.com",
-          InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", 38060));
+          InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", g_rs_port));
 
   {
     std::vector<MetaLog::Entity *> entities;
@@ -925,26 +934,26 @@ void balance_plan_authority_test(ContextPtr &context) {
 
   RangeServerConnectionPtr rsc1, rsc2, rsc3, rsc4, rsc5;
   rsc1 = new RangeServerConnection("rs1",
-          "foo.hypertable.com", InetAddr("72.14.204.99", 38060));
+          "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
   rsc2 = new RangeServerConnection("rs2",
-          "bar.hypertable.com", InetAddr("69.147.125.65", 38060));
+          "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
   rsc3 = new RangeServerConnection("rs3",
-          "how.hypertable.com", InetAddr("72.14.204.98", 38060));
+          "how.hypertable.com", InetAddr("72.14.204.98", g_rs_port));
   rsc4 = new RangeServerConnection("rs4",
-          "cow.hypertable.com", InetAddr("69.147.125.62", 38060));
+          "cow.hypertable.com", InetAddr("69.147.125.62", g_rs_port));
   rsc5 = new RangeServerConnection("rs5",
-          "boo.hypertable.com", InetAddr("70.147.125.62", 38060));
+          "boo.hypertable.com", InetAddr("70.147.125.62", g_rs_port));
 
   context->rsc_manager->connect_server(rsc1, "foo.hypertable.com",
-          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", 38060));
+          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
   context->rsc_manager->connect_server(rsc2, "bar.hypertable.com",
-          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", 38060));
+          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
   context->rsc_manager->connect_server(rsc3, "how.hypertable.com",
-          InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", 38060));
+          InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", g_rs_port));
   context->rsc_manager->connect_server(rsc4, "cow.hypertable.com",
-          InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", 38060));
+          InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", g_rs_port));
   context->rsc_manager->connect_server(rsc5, "boo.hypertable.com",
-          InetAddr("70.147.125.62", 30569), InetAddr("70.147.125.62", 38060));
+          InetAddr("70.147.125.62", 30569), InetAddr("70.147.125.62", g_rs_port));
 
   context->add_available_server("rs1");
   context->add_available_server("rs2");

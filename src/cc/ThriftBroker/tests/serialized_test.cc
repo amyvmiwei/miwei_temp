@@ -123,7 +123,7 @@ void test_reader(Thrift::Client *client) {
 int main() {
   try {
     // connect to the local ThriftBroker
-    Thrift::Client *client = new Thrift::Client("localhost", 38080);
+    Thrift::Client *client = new Thrift::Client("localhost", 15867);
 
     // insert a couple of cells using the SerializedCellsWriter
     test_writer(client);

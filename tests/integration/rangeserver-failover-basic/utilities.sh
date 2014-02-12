@@ -103,7 +103,7 @@ dump_keys() {
 
 stop_rs() {
     local port
-    let port=38059+$1
+    let port=15869+$1
     echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:$port
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs$1.pid`
     \rm -f $HT_HOME/run/Hypertable.RangeServer.rs$1.pid

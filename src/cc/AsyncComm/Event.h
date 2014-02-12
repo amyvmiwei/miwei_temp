@@ -219,7 +219,7 @@ namespace Hypertable {
     /** Generates a one-line string representation of the event.  For example:
      * <pre>
      *   Event: type=MESSAGE id=2 gid=0 header_len=16 total_len=20 \
-     *   from=127.0.0.1:38040 ...
+     *   from=127.0.0.1:15861 ...
      * </pre>
      */
     String to_str() const;

@@ -12,13 +12,13 @@ $HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --Hypertable.Master.
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
-   --Hypertable.RangeServer.Port=38060 \
+   --Hypertable.RangeServer.Port=15870 \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
    --Hypertable.RangeServer.Range.SplitSize=400K 2>&1 > rangeserver.rs1.output&
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
-   --Hypertable.RangeServer.Port=38061 \
+   --Hypertable.RangeServer.Port=15871 \
    --Hypertable.RangeServer.Maintenance.Interval 100 \
    --Hypertable.RangeServer.Range.SplitSize=400K 2>&1 > rangeserver.rs2.output&
 
@@ -35,8 +35,8 @@ $HT_HOME/bin/ht ht_load_generator update \
     --Field.value.size=1000 \
     --max-bytes=$WRITE_SIZE
 
-echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
-echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
+echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
+echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
 
 echo "" > metadata.a
 echo "use sys; select * from METADATA MAX_VERSIONS 1;" | $HT_HOME/bin/ht shell --batch > metadata.b
@@ -48,13 +48,13 @@ while [ $? != 0 ]; do
   diff metadata.a metadata.b > /dev/null
 done
 
-echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
-echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
+echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
+echo "wait for maintenance; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
 
 $HT_HOME/bin/stop-servers.sh master
 
-echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
-echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
+echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
+echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
 sleep 1
 kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.rs?.pid`
 \rm -f $HT_HOME/run/Hypertable.RangeServer.rs?.pid

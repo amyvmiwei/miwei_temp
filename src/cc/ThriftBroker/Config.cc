@@ -28,7 +28,7 @@ namespace Hypertable { namespace Config {
 
 void init_thrift_client_options() {
   cmdline_desc().add_options()
-    ("thrift-broker", str()->default_value("localhost:38080"),
+    ("thrift-broker", str()->default_value("localhost:15867"),
         "Thrift client endpoint in <host:port> format")
     ("thrift-timeout", i32(),
         "Timeout in milli-seconds for thrift client connections")
@@ -50,7 +50,7 @@ void init_thrift_client() {
 
 void init_thrift_broker_options() {
   cmdline_desc().add_options()
-    ("port", i16()->default_value(38080), "Listening port")
+    ("port", i16()->default_value(15867), "Listening port")
     ("pidfile", str(), "File to contain the process id")
     ("log-api", boo()->default_value(false), "Enable or disable API logging")
     ("workers", i32()->default_value(50), "Worker threads")

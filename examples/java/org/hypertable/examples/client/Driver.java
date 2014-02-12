@@ -53,7 +53,7 @@ public class Driver  {
     if (args.length < 2)
       DumpUsageAndExit();
     try {
-      ThriftClient client = ThriftClient.create("localhost", 38080);
+      ThriftClient client = ThriftClient.create("localhost", 15867);
       namespace = client.open_namespace(args[0]);
       if (args.length < 3) {
         client.close_namespace(namespace);

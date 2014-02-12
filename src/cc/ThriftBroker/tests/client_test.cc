@@ -47,7 +47,7 @@ void test_error(Thrift::Client *client, std::ostream &out);
 void test_multiple_open(Thrift::Client *client, std::ostream &out);
 
 int main() {
-  Thrift::Client *client = new Thrift::Client("localhost", 38080);
+  Thrift::Client *client = new Thrift::Client("localhost", 15867);
   run(client);
 }
 

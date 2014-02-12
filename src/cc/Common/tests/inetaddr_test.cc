@@ -33,7 +33,7 @@ using namespace Hypertable;
 
 #define MEASURE(_code_, _n_) do { \
   InetAddr addr; \
-  addr.sin_port = htons(38060); \
+  addr.sin_port = htons(15865); \
   Stopwatch w; \
   for (int i = _n_; i--; ) { _code_; } \
   w.stop(); \
@@ -67,7 +67,7 @@ void bench_loop(uint32_t n, sockaddr_in &addr) {
 }
 
 void bench_parse_ipv4(const char *ipstr, sockaddr_in &addr, int base = 0) {
-  InetAddr::parse_ipv4(ipstr, 38060, addr, base);
+  InetAddr::parse_ipv4(ipstr, 15865, addr, base);
 }
 
 void bench_gethostbyname(const char *ipstr, sockaddr_in &addr) {

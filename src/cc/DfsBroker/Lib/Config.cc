@@ -50,7 +50,7 @@ void init_dfs_client() {
 
 void init_dfs_broker_options() {
   cmdline_desc().add_options()
-    ("port", i16()->default_value(38030), "Listening port")
+    ("port", i16(), "Listening port")
     ("pidfile", str(), "File to contain the process id")
     ;
 }

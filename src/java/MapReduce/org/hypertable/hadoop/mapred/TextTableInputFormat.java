@@ -394,10 +394,10 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         if (framesize == 0)
           framesize = job.getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
-          m_client = ThriftClient.create("localhost", 38080, 1600000,
+          m_client = ThriftClient.create("localhost", 15867, 1600000,
                   true, framesize);
         else
-          m_client = ThriftClient.create("localhost", 38080);
+          m_client = ThriftClient.create("localhost", 15867);
       }
       return new HypertableRecordReader(m_client, m_namespace, m_tablename,
               scan_spec, m_include_timestamps, m_no_escape);
@@ -423,10 +423,10 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         if (framesize == 0)
           framesize = job.getInt(THRIFT_FRAMESIZE2, 0);
         if (framesize != 0)
-          m_client = ThriftClient.create("localhost", 38080, 1600000,
+          m_client = ThriftClient.create("localhost", 15867, 1600000,
                   true, framesize);
         else
-          m_client = ThriftClient.create("localhost", 38080);
+          m_client = ThriftClient.create("localhost", 15867);
       }
 
       String tablename = job.get(TABLE);

@@ -141,7 +141,7 @@ namespace Hypertable {
     /** Sets an alias for a TCP connection.
      * RangeServers listen on a well-known port defined by the
      * <code>Hypertable.RangeServer.Port</code> configuration property
-     * (default = 38060).  However, RangeServers connect to the master using
+     * (default = 15865).  However, RangeServers connect to the master using
      * an ephemeral port due to a bind conflict with its listen socket.  So that
      * the Master can refer to the RangeServer using the well-known port, an
      * alias address can be registered and subsequently used to reference the

@@ -427,7 +427,7 @@ namespace {
                           String split_size_arg, uint32_t sleep_sec)
   {
     ServerLauncher *rs;
-    uint32_t base_port = 38060;
+    uint32_t base_port = 15870;
     vector<const char *> rs_args;
     String port;
     String outfile;

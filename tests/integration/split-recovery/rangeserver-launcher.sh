@@ -6,7 +6,6 @@ PIDFILE=$HT_HOME/run/Hypertable.RangeServer.pid
 LAUNCHER_PIDFILE=$HT_HOME/run/Hypertable.RangeServerLauncher.pid
 DUMP_METALOG=$HT_HOME/bin/metalog_dump
 MY_IP=`$HT_HOME/bin/system_info --my-ip`
-RS_PORT=38060
 METALOG="/hypertable/servers/rs1/log/rsml/"
 RANGE_SIZE=${RANGE_SIZE:-"7M"}
 

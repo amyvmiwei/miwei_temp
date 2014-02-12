@@ -25,7 +25,7 @@ if (!isset($GLOBALS['THRIFT_ROOT']))
 
 require_once dirname(__FILE__).'/ThriftClient.php';
 
-$client = new Hypertable_ThriftClient("localhost", 38080);
+$client = new Hypertable_ThriftClient("localhost", 15867);
 $namespace = $client->namespace_open("test");
 
 echo "HQL examples\n";

@@ -17,7 +17,7 @@
 
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 
-port=38090
+port=15860
 pidfile="$HYPERTABLE_HOME/run/MonitoringServer.pid"
 log="$HYPERTABLE_HOME/log/MonitoringServer.log"
 monitoring_script_dir="$HYPERTABLE_HOME/Monitoring"

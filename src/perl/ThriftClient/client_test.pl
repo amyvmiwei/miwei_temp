@@ -24,7 +24,7 @@
 use Hypertable::ThriftClient;
 use Data::Dumper;
 
-my $client = new Hypertable::ThriftClient("localhost", 38080);
+my $client = new Hypertable::ThriftClient("localhost", 15867);
 
 print "HQL examples\n";
 my $namespace = $client->namespace_open("test");

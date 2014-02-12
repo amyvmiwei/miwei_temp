@@ -29,7 +29,7 @@ public class GetCell {
 
   public static void main(String[] args) {
     try {
-      final ThriftClient client = ThriftClient.create("localhost", 38080);
+      final ThriftClient client = ThriftClient.create("localhost", 15867);
       client.namespace_create(NamespaceName);
 
       final Thread[] threads = new Thread[ThreadCount];
@@ -94,7 +94,7 @@ public class GetCell {
 
   private static void runTest(final String id) {
     try {
-      final ThriftClient client = ThriftClient.create("localhost", 38080);
+      final ThriftClient client = ThriftClient.create("localhost", 15867);
       final long ns = client.open_namespace(NamespaceName);
       final String table_name = "table" + id;
 

@@ -29,7 +29,7 @@ $HT_HOME/bin/ht Hypertable.RangeServer \
     --verbose \
     --pidfile=$HT_HOME/run/Hypertable.RangeServer.rs1.pid \
     --Hypertable.RangeServer.ProxyName=rs1 \
-    --Hypertable.RangeServer.Port=38060 > rangeserver.rs1.output &
+    --Hypertable.RangeServer.Port=15870 > rangeserver.rs1.output &
 
 # Start rs2
 $HT_HOME/bin/ht Hypertable.RangeServer \
@@ -37,7 +37,7 @@ $HT_HOME/bin/ht Hypertable.RangeServer \
     --verbose \
     --pidfile=$HT_HOME/run/Hypertable.RangeServer.rs2.pid \
     --Hypertable.RangeServer.ProxyName=rs2 \
-    --Hypertable.RangeServer.Port=38061 > rangeserver.rs2.output &
+    --Hypertable.RangeServer.Port=15871 > rangeserver.rs2.output &
 
 # Create test table
 $HT_SHELL --batch < $SCRIPT_DIR/create-test-table.hql
@@ -74,7 +74,7 @@ $HT_HOME/bin/ht Hypertable.RangeServer \
     --pidfile=$HT_HOME/run/Hypertable.RangeServer.rs1.pid \
     --Hypertable.RangeServer.ProxyName=rs1 \
     --induce-failure="bad-rsml:throw:0" \
-    --Hypertable.RangeServer.Port=38060 > rangeserver.rs1.output &
+    --Hypertable.RangeServer.Port=15870 > rangeserver.rs1.output &
 
 # Start rs2
 $HT_HOME/bin/ht Hypertable.RangeServer \
@@ -82,7 +82,7 @@ $HT_HOME/bin/ht Hypertable.RangeServer \
     --verbose \
     --pidfile=$HT_HOME/run/Hypertable.RangeServer.rs2.pid \
     --Hypertable.RangeServer.ProxyName=rs2 \
-    --Hypertable.RangeServer.Port=38061 > rangeserver.rs2.output &
+    --Hypertable.RangeServer.Port=15871 > rangeserver.rs2.output &
 
 ## Wait for "Problem reading RSML" to appear in Master log
 grep "Problem reading RSML" rangeserver.rs1.output

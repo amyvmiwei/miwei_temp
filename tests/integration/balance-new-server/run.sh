@@ -13,8 +13,8 @@ RUN_DIR=`pwd`
 . $HT_HOME/bin/ht-env.sh
 
 stop_range_servers() {
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
-  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:38060
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15871
+  echo "shutdown; quit;" | $HT_HOME/bin/ht rsclient localhost:15870
 
   sleep 1
 
@@ -28,7 +28,7 @@ $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-thriftbroker \
     --clear --config=${SCRIPT_DIR}/test.cfg
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \
-   --Hypertable.RangeServer.Port=38060 --config=${SCRIPT_DIR}/test.cfg 2>1 > rangeserver.rs1.output&
+   --Hypertable.RangeServer.Port=15870 --config=${SCRIPT_DIR}/test.cfg 2>1 > rangeserver.rs1.output&
 
 #create table
 $HT_HOME/bin/ht shell --no-prompt < $SCRIPT_DIR/create-table.hql
@@ -52,7 +52,7 @@ ${HT_HOME}/bin/ht shell --no-prompt --exec "use sys; select Location from METADA
 #start new rangeserver
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs2 \
-   --Hypertable.RangeServer.Port=38061 --config=${SCRIPT_DIR}/test.cfg 2>1 > rangeserver.rs2.output&
+   --Hypertable.RangeServer.Port=15871 --config=${SCRIPT_DIR}/test.cfg 2>1 > rangeserver.rs2.output&
 
 #wait for balance to complete 
 sleep 30 

@@ -14,7 +14,7 @@ host = Socket.gethostname
 
 # Parse options
 options = {
-  :port           =>  38090,
+  :port           =>  15860,
   :pidfile        => File.dirname(__FILE__) + "/MonitoringServer.pid"
 }
 

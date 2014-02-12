@@ -92,7 +92,8 @@ int main(int argc, char **argv) {
 
     ReactorFactory::initialize(2);
 
-    InetAddr::initialize(&addr, "localhost", DEFAULT_DFSBROKER_PORT);
+    InetAddr::initialize(&addr, "localhost",
+                         Config::properties->get_i16("DfsBroker.Port"));
 
     conn_mgr = new ConnectionManager();
     Global::dfs = new DfsBroker::Client(conn_mgr, addr, 15000);
