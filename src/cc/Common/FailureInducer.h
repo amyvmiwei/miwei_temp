@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -50,10 +50,11 @@
 #ifndef HYPERTABLE_FAILUREINDUCER_H
 #define HYPERTABLE_FAILUREINDUCER_H
 
-#include "HashMap.h"
-#include "Mutex.h"
-#include "String.h"
-#include "StringExt.h"
+#include <Common/Mutex.h>
+#include <Common/String.h>
+#include <Common/StringExt.h>
+
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -116,7 +117,7 @@ namespace Hypertable {
       int pause_millis;
     };
 
-    typedef hash_map<String, failure_inducer_state *> StateMap;
+    typedef std::unordered_map<String, failure_inducer_state *> StateMap;
 
     /** A mutex to serialize access */
     Mutex m_mutex;

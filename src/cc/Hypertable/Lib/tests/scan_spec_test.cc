@@ -19,14 +19,16 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Lib/Client.h>
+
+#include <Common/md5.h>
+#include <Common/Logger.h>
+#include <Common/Usage.h>
+
 #include <cstdlib>
 #include <iostream>
-
-#include "Common/md5.h"
-#include "Common/Usage.h"
-
-#include "Hypertable/Lib/Client.h"
 
 using namespace std;
 using namespace Hypertable;
@@ -61,7 +63,7 @@ int main(int argc, char **argv) {
     fired=true;
   }
 
-  assert(fired==true);
+  HT_ASSERT(fired==true);
   fired=false;
 
   // ... or vice versa
@@ -78,7 +80,7 @@ int main(int argc, char **argv) {
     fired=true;
   }
 
-  assert(fired==true);
+  HT_ASSERT(fired==true);
   fired=false;
 
   _exit(0);

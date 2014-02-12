@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,30 +22,30 @@
 #ifndef HYPERSPACE_SESSION_H
 #define HYPERSPACE_SESSION_H
 
-#include <vector>
+#include <Hyperspace/ClientKeepaliveHandler.h>
+#include <Hyperspace/DirEntry.h>
+#include <Hyperspace/DirEntryAttr.h>
+#include <Hyperspace/HandleCallback.h>
+#include <Hyperspace/HsCommandInterpreter.h>
+#include <Hyperspace/LockSequencer.h>
+#include <Hyperspace/Protocol.h>
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/CommBuf.h>
+#include <AsyncComm/ConnectionManager.h>
+#include <AsyncComm/DispatchHandler.h>
+
+#include <Common/DynamicBuffer.h>
+#include <Common/Properties.h>
+#include <Common/ReferenceCount.h>
+#include <Common/String.h>
+#include <Common/Timer.h>
 
 #include <boost/thread/condition.hpp>
 #include <boost/thread/mutex.hpp>
 
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/DispatchHandler.h"
-
-#include "Common/DynamicBuffer.h"
-#include "Common/ReferenceCount.h"
-#include "Common/Timer.h"
-#include "Common/Properties.h"
-#include "Common/String.h"
-#include "Common/HashMap.h"
-
-#include "ClientKeepaliveHandler.h"
-#include "HandleCallback.h"
-#include "LockSequencer.h"
-#include "Protocol.h"
-#include "DirEntry.h"
-#include "DirEntryAttr.h"
-#include "HsCommandInterpreter.h"
+#include <unordered_map>
+#include <vector>
 
 /** %Hyperspace definitions */
 namespace Hyperspace {
@@ -679,7 +679,7 @@ namespace Hyperspace {
 
   private:
 
-    typedef hash_map<uint64_t, SessionCallback *> CallbackMap;
+    typedef std::unordered_map<uint64_t, SessionCallback *> CallbackMap;
 
     void mkdir(const std::string &name, bool create_intermediate, const std::vector<Attribute> *init_attrs, Timer *timer);
     void decode_listing(Hypertable::EventPtr& event_ptr, std::vector<DirEntryAttr> &listing);

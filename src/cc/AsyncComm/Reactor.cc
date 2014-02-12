@@ -106,7 +106,7 @@ Reactor::Reactor() : m_interrupt_in_progress(false) {
     addr.sin_port = htons(port);
 
     // bind socket
-    if ((bind(m_interrupt_sd, (sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
+    if ((::bind(m_interrupt_sd, (sockaddr *)&addr, sizeof(sockaddr_in))) < 0) {
       if (errno == EADDRINUSE) {
         ::close(m_interrupt_sd);
         continue;

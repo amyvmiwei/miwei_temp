@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,32 +19,36 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
+#include <Hypertable/Master/MetaLogDefinitionMaster.h>
+
+#include <Hypertable/RangeServer/MetaLogDefinitionRangeServer.h>
+#include <Hypertable/RangeServer/MetaLogEntityRange.h>
+
+#include <Hypertable/Lib/MetaLog.h>
+#include <Hypertable/Lib/MetaLogReader.h>
+
+#include <DfsBroker/Lib/Client.h>
+#include <DfsBroker/Lib/Config.h>
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionManager.h>
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/InetAddr.h>
+#include <Common/Init.h>
+#include <Common/Logger.h>
+#include <Common/Usage.h>
+
+#include <boost/algorithm/string.hpp>
+
 #include <cctype>
 #include <cstdlib>
 #include <cstring>
 #include <iostream>
-
-#include <boost/algorithm/string.hpp>
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/Init.h"
-#include "Common/Usage.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-
-#include "DfsBroker/Lib/Config.h"
-#include "DfsBroker/Lib/Client.h"
-
-#include "Hypertable/Lib/MetaLog.h"
-#include "Hypertable/Lib/MetaLogReader.h"
-#include "Hypertable/RangeServer/MetaLogEntityRange.h"
-#include "Hypertable/RangeServer/MetaLogDefinitionRangeServer.h"
-#include "Hypertable/Master/MetaLogDefinitionMaster.h"
+#include <unordered_map>
 
 using namespace Hypertable;
 using namespace Config;
@@ -173,7 +177,7 @@ int main(int argc, char **argv) {
     }
 
     // Population Defintion map
-    hash_map<String, MetaLog::DefinitionPtr> defmap;
+    std::unordered_map<String, MetaLog::DefinitionPtr> defmap;
     MetaLog::DefinitionPtr def = new MetaLog::DefinitionRangeServer("");
     defmap[def->name()] = def;
     def = new MetaLog::DefinitionMaster("");
@@ -186,7 +190,7 @@ int main(int argc, char **argv) {
 
     determine_log_type(fs, log_path, name, &is_file);
 
-    hash_map<String, MetaLog::DefinitionPtr>::iterator iter = defmap.find(name);
+    auto iter = defmap.find(name);
     if (iter == defmap.end()) {
       cerr << "No definition for log type '" << name << "'" << endl;
       exit(1);

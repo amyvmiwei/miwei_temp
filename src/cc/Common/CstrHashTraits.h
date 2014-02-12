@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -24,8 +24,8 @@
 #ifndef HYPERTABLE_CSTR_HASH_TRAITS_H
 #define HYPERTABLE_CSTR_HASH_TRAITS_H
 
-#include "PageArena.h"
-#include "TclHash.h"
+#include <Common/PageArena.h>
+#include <Common/TclHash.h>
 
 namespace Hypertable {
 

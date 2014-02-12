@@ -22,14 +22,13 @@
 #ifndef HYPERTABLE_METADATANORMAL_H
 #define HYPERTABLE_METADATANORMAL_H
 
-#include <string>
-
-#include "Common/HashMap.h"
-
-#include "Hypertable/Lib/TableScanner.h"
-#include "Hypertable/Lib/Types.h"
-
 #include "Metadata.h"
+
+#include <Hypertable/Lib/TableScanner.h>
+#include <Hypertable/Lib/Types.h>
+
+#include <unordered_map>
+#include <string>
 
 namespace Hypertable {
   class MetadataNormal : public Metadata {
@@ -50,7 +49,7 @@ namespace Hypertable {
       String files;
       uint32_t nextcsid;
     };
-    typedef hash_map<String, AgMetadata> AgMetadataMap;
+    typedef std::unordered_map<String, AgMetadata> AgMetadataMap;
     
     String          m_metadata_key;
     AgMetadataMap   m_ag_map;

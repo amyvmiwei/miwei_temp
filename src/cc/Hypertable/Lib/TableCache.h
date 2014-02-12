@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,14 +22,18 @@
 #ifndef HYPERTABLE_TABLECACHE_H
 #define HYPERTABLE_TABLECACHE_H
 
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
-#include "Common/String.h"
-#include "AsyncComm/ApplicationQueueInterface.h"
-#include "Schema.h"
-#include "RangeLocator.h"
-#include "Types.h"
-#include "Table.h"
+#include <Hypertable/Lib/RangeLocator.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/Table.h>
+#include <Hypertable/Lib/Types.h>
+
+#include <AsyncComm/ApplicationQueueInterface.h>
+
+#include <Common/Mutex.h>
+#include <Common/ReferenceCount.h>
+#include <Common/String.h>
+
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -83,7 +87,7 @@ namespace Hypertable {
     virtual void disconnected() { }
     virtual void reconnected();
 
-    typedef hash_map<String, TablePtr> TableMap;
+    typedef std::unordered_map<String, TablePtr> TableMap;
 
     Mutex                   m_mutex;
     PropertiesPtr           m_props;

@@ -174,10 +174,10 @@ Hyperspace::Protocol::create_open_request(const std::string &name,
   CommBuf *cbuf = new CommBuf(header, len);
 
   if (HT_FAILURE_SIGNALLED("bad-hyperspace-version")) {
-    cbuf->append_i32(Protocol::VERSION + 1);
+    cbuf->append_i32(Protocol::Version + 1);
   }
   else {
-    cbuf->append_i32(Protocol::VERSION);
+    cbuf->append_i32(Protocol::Version);
   }
   cbuf->append_i32(flags);
   if (callback)

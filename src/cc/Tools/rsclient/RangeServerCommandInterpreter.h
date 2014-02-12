@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,19 +22,21 @@
 #ifndef HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H
 #define HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H
 
-#include "Common/String.h"
-
-#include "AsyncComm/Comm.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Tools/Lib/CommandInterpreter.h"
-
-#include "Hypertable/Lib/NameIdMapper.h"
-#include "Hypertable/Lib/RangeServerClient.h"
-#include "Hypertable/Lib/SerializedKey.h"
-
 #include "TableInfo.h"
+
+#include <Tools/Lib/CommandInterpreter.h>
+
+#include <Hyperspace/Session.h>
+
+#include <Hypertable/Lib/NameIdMapper.h>
+#include <Hypertable/Lib/RangeServerClient.h>
+#include <Hypertable/Lib/SerializedKey.h>
+
+#include <AsyncComm/Comm.h>
+
+#include <Common/String.h>
+
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -56,7 +58,7 @@ namespace Hypertable {
     NameIdMapperPtr         m_namemap;
     struct sockaddr_in m_addr;
     RangeServerClientPtr m_range_server;
-    typedef hash_map<String, TableInfo *> TableMap;
+    typedef std::unordered_map<String, TableInfo *> TableMap;
     TableMap m_table_map;
     int32_t m_cur_scanner_id;
     String m_toplevel_dir;

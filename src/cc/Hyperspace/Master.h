@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,35 +22,36 @@
 #ifndef HYPERSPACE_MASTER_H
 #define HYPERSPACE_MASTER_H
 
+#include <Hyperspace/BerkeleyDbFilesystem.h>
+#include <Hyperspace/Protocol.h>
+#include <Hyperspace/ServerKeepaliveHandler.h>
+#include <Hyperspace/response/ResponseCallbackAttrExists.h>
+#include <Hyperspace/response/ResponseCallbackAttrGet.h>
+#include <Hyperspace/response/ResponseCallbackAttrIncr.h>
+#include <Hyperspace/response/ResponseCallbackAttrList.h>
+#include <Hyperspace/response/ResponseCallbackExists.h>
+#include <Hyperspace/response/ResponseCallbackLock.h>
+#include <Hyperspace/response/ResponseCallbackOpen.h>
+#include <Hyperspace/response/ResponseCallbackReaddir.h>
+#include <Hyperspace/response/ResponseCallbackReaddirAttr.h>
+#include <Hyperspace/response/ResponseCallbackReadpathAttr.h>
+
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionManager.h>
+#include <AsyncComm/Event.h>
+#include <AsyncComm/ResponseCallback.h>
+
+#include <Common/Mutex.h>
+#include <Common/Properties.h>
+#include <Common/ReferenceCount.h>
+#include <Common/SockAddrMap.h>
+#include <Common/StringExt.h>
+#include <Common/Time.h>
+#include <Common/atomic.h>
+
 #include <queue>
+#include <unordered_map>
 #include <vector>
-
-#include "Common/atomic.h"
-#include "Common/Mutex.h"
-#include "Common/Properties.h"
-#include "Common/ReferenceCount.h"
-#include "Common/SockAddrMap.h"
-#include "Common/StringExt.h"
-#include "Common/Time.h"
-
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "AsyncComm/Event.h"
-#include "AsyncComm/ResponseCallback.h"
-
-#include "BerkeleyDbFilesystem.h"
-#include "Protocol.h"
-#include "response/ResponseCallbackOpen.h"
-#include "response/ResponseCallbackExists.h"
-#include "response/ResponseCallbackAttrGet.h"
-#include "response/ResponseCallbackAttrIncr.h"
-#include "response/ResponseCallbackAttrExists.h"
-#include "response/ResponseCallbackAttrList.h"
-#include "response/ResponseCallbackLock.h"
-#include "response/ResponseCallbackReaddir.h"
-#include "response/ResponseCallbackReaddirAttr.h"
-#include "response/ResponseCallbackReadpathAttr.h"
-#include "ServerKeepaliveHandler.h"
 
 namespace Hyperspace {
 
@@ -302,7 +303,7 @@ namespace Hyperspace {
         HyperspaceEventPtr &lock_acquired_event, NotificationMap &lock_acquired_notifications);
 
     typedef std::vector<SessionDataPtr> SessionDataVec;
-    typedef hash_map<uint64_t, SessionDataPtr> SessionMap;
+    typedef std::unordered_map<uint64_t, SessionDataPtr> SessionMap;
 
     bool          m_verbose;
     uint32_t      m_lease_interval;

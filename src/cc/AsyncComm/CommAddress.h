@@ -28,12 +28,13 @@
 #ifndef HYPERTABLE_COMMADDRESS_H
 #define HYPERTABLE_COMMADDRESS_H
 
-#include <set>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/String.h>
 
-#include "Common/HashMap.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/String.h"
+#include <functional>
+#include <set>
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -180,7 +181,7 @@ namespace Hypertable {
 
   /** Hash function (functor) for CommAddress objets.
    * This class is defined for use with STL template classes that require a
-   * hash functor (e.g. <code>std::hash_map</code>).
+   * hash functor (e.g. <code>std::unordered_map</code>).
    */
   class CommAddressHash {
   public:
@@ -196,17 +197,15 @@ namespace Hypertable {
     size_t operator () (const CommAddress &addr) const {
       if (addr.is_inet())
 	return (size_t)(addr.inet.sin_addr.s_addr ^ addr.inet.sin_port);
-      else if (addr.is_proxy()) {
-	__gnu_cxx::hash<const char *> cchash;
-	return cchash(addr.proxy.c_str());
-      }
+      else if (addr.is_proxy())
+        return std::hash<std::string>()(addr.proxy);
       return 0;
     }
   };
 
   /// Parameterized hash map for mapping CommAddress to arbitrary type.
   template<typename TypeT, typename addr=CommAddress>
-  class CommAddressMap : public hash_map<addr, TypeT, CommAddressHash> {
+  class CommAddressMap : public std::unordered_map<addr, TypeT, CommAddressHash> {
   };
 
   /// Set of CommAddress objects

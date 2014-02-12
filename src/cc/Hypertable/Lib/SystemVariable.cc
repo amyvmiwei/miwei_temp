@@ -25,14 +25,15 @@
  * conversion functions for representing system variables.
  */
 
-#include "Common/Compat.h"
-#include "Common/HashMap.h"
-#include "Common/Logger.h"
-#include "Common/Serialization.h"
-#include "Common/String.h"
-#include "Common/StringExt.h"
-
+#include <Common/Compat.h>
 #include "SystemVariable.h"
+
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
+#include <Common/String.h>
+#include <Common/StringExt.h>
+
+#include <unordered_map>
 
 using namespace Hypertable;
 
@@ -49,7 +50,7 @@ namespace {
     { 0, 0, false }
   };
 
-  typedef hash_map<int, const char *> CodeToStringMap;
+  typedef std::unordered_map<int, const char *> CodeToStringMap;
 
   CodeToStringMap &build_code_to_string_map() {
     CodeToStringMap *map = new CodeToStringMap();
@@ -61,7 +62,7 @@ namespace {
 
   CodeToStringMap &code_to_string_map = build_code_to_string_map();
 
-  typedef hash_map<String, int> StringToCodeMap;
+  typedef std::unordered_map<String, int> StringToCodeMap;
 
   StringToCodeMap &build_string_to_code_map() {
     StringToCodeMap *map = new StringToCodeMap();

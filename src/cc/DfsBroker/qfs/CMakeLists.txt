@@ -22,6 +22,6 @@ include_directories(${Qfs_INCLUDE_DIR})
 # qfsBroker
 add_executable(qfsBroker main.cc QfsBroker.cc)
 target_link_libraries(qfsBroker ${Qfs_LIBRARIES} HyperDfsBroker
-                      ${MALLOC_LIBRARY})
+                      ${MALLOC_LIBRARY} -lpthread)
 
 install(TARGETS qfsBroker RUNTIME DESTINATION bin)

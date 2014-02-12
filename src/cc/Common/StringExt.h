@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -26,13 +26,11 @@
 #ifndef HYPERTABLE_STRINGEXT_H
 #define HYPERTABLE_STRINGEXT_H
 
+#include <Common/String.h>
+
 #include <cstdio>
-#include <stdexcept>
 #include <set>
 #include <map>
-
-#include "HashMap.h"
-#include "String.h"
 
 /** @addtogroup Common
  *  @{

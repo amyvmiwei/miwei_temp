@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,17 +22,18 @@
 #ifndef HYPERTABLE_SCANNERMAP_H
 #define HYPERTABLE_SCANNERMAP_H
 
+#include <Hypertable/RangeServer/CellListScanner.h>
+#include <Hypertable/RangeServer/Range.h>
+
+#include <Common/atomic.h>
+
 #include <boost/thread/mutex.hpp>
 
 extern "C" {
 #include <time.h>
 }
 
-#include "Common/atomic.h"
-#include "Common/HashMap.h"
-
-#include "CellListScanner.h"
-#include "Range.h"
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -112,7 +113,7 @@ namespace Hypertable {
       int64_t last_access_millis;
       TableIdentifierManaged table;
     };
-    typedef hash_map<uint32_t, ScanInfo> CellListScannerMap;
+    typedef std::unordered_map<uint32_t, ScanInfo> CellListScannerMap;
 
     CellListScannerMap m_scanner_map;
 

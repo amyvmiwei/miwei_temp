@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -20,14 +20,15 @@
 /** @file
  * HashMap optimized for char * strings.
  * This file implements a HashMap for storing and looking up strings
- * efficiently. The hash_map base class is from the Boost library.
+ * efficiently.
  */
 
 #ifndef HYPERTABLE_CSTR_HASHMAP_H
 #define HYPERTABLE_CSTR_HASHMAP_H
 
-#include "HashMap.h"
-#include "CstrHashTraits.h"
+#include <Common/CstrHashTraits.h>
+
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -40,12 +41,12 @@ namespace Hypertable {
  * The keys are case-independent.
  */
 template <typename DataT, class TraitsT = CstrHashTraits<> >
-class CstrHashMap : public hash_map<const char *, DataT,
-                                    typename TraitsT::hasher,
-                                    typename TraitsT::key_equal> {
+class CstrHashMap : public std::unordered_map<const char *, DataT,
+                                              typename TraitsT::hasher,
+                                              typename TraitsT::key_equal> {
 private:
-  typedef hash_map<const char *, DataT, typename TraitsT::hasher,
-                   typename TraitsT::key_equal> Base;
+  typedef std::unordered_map<const char *, DataT, typename TraitsT::hasher,
+                             typename TraitsT::key_equal> Base;
 public:
   typedef typename Base::iterator iterator;
   typedef typename Base::key_type key_type;

@@ -30,12 +30,12 @@ using namespace boost;
 using namespace boost::program_options;
 using namespace std;
 
-bool sortfun(const shared_ptr<option_description> &lhs,
-        const shared_ptr<option_description> &rhs) {
+bool sortfun(const boost::shared_ptr<option_description> &lhs,
+        const boost::shared_ptr<option_description> &rhs) {
   return lhs->long_name() < rhs->long_name();
 }
 
-typedef std::vector< shared_ptr<option_description> > OptVec;
+typedef std::vector< boost::shared_ptr<option_description> > OptVec;
 
 int main(int argc, char *argv[]) {
   init(argc, argv);
@@ -48,7 +48,7 @@ int main(int argc, char *argv[]) {
 
   for (size_t i = 0; i < options.size(); i++) {
     std::cout << "<hr>" << std::endl;
-    shared_ptr<const value_semantic> s = options[i]->semantic();
+    boost::shared_ptr<const value_semantic> s = options[i]->semantic();
     cout << "<p><a name=\"" << options[i]->long_name() << "\"> </a></p>"
         << endl;
     cout << "<p><code>" << options[i]->long_name() << "</code></p>"

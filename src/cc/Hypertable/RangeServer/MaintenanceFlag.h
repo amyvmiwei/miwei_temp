@@ -29,7 +29,7 @@
 #ifndef HYPERTABLE_MAINTENANCEFLAG_H
 #define HYPERTABLE_MAINTENANCEFLAG_H
 
-#include "Common/HashMap.h"
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -184,7 +184,7 @@ namespace Hypertable {
      * used to map AccessGroup and CellStore pointers to corresponding bit
      * fields describing what maintenance needs to be performed on them.
      */
-    class Map : public hash_map<const void *, int, Hash, Equal> {
+    class Map : public std::unordered_map<const void *, int, Hash, Equal> {
     public:
       /** Returns bit field for a give pointer
        * @param key Pointer for which to return bit field

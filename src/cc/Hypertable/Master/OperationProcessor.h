@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -29,23 +29,23 @@
 #ifndef HYPERTABLE_OPERATIONPROCESSOR_H
 #define HYPERTABLE_OPERATIONPROCESSOR_H
 
-#include <list>
-#include <map>
+#include <Hypertable/Master/Context.h>
+#include <Hypertable/Master/Operation.h>
+#include <Hypertable/Master/ResponseManager.h>
+
+#include <Common/Mutex.h>
+#include <Common/Properties.h>
+#include <Common/ReferenceCount.h>
+#include <Common/StringExt.h>
+#include <Common/Thread.h>
 
 #include <boost/graph/adjacency_list.hpp>
 #include <boost/graph/properties.hpp>
 #include <boost/thread/condition.hpp>
 
-#include "Common/HashMap.h"
-#include "Common/Mutex.h"
-#include "Common/Properties.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StringExt.h"
-#include "Common/Thread.h"
-
-#include "Context.h"
-#include "Operation.h"
-#include "ResponseManager.h"
+#include <list>
+#include <map>
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -188,7 +188,7 @@ namespace Hypertable {
       ContextPtr &master_context;
       OperationGraph graph;
       VertexSet current_active;
-      hash_map<int64_t, OperationVertex> operation_hash;
+      std::unordered_map<int64_t, OperationVertex> operation_hash;
       size_t current_blocked;
       StringSet exclusive_ops;
       ExecutionList current;

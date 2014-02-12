@@ -16,20 +16,27 @@
  * You should have received a copy of the GNU General Public License
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
-#include "Common/Compat.h"
-#include "Common/Init.h"
-#include "Common/Logger.h"
-#include "Common/Mutex.h"
-#include "Common/Random.h"
-#include "Common/Time.h"
-#include "HyperAppHelper/Unique.h"
-#include "HyperAppHelper/Error.h"
+#include <Common/Compat.h>
 
-#include <iostream>
-#include <iomanip>
-#include <sstream>
+#include <ThriftBroker/Config.h>
+#include <ThriftBroker/SerializedCellsReader.h>
+#include <ThriftBroker/SerializedCellsWriter.h>
+#include <ThriftBroker/ThriftHelper.h>
 
-#include <boost/shared_ptr.hpp>
+#include <HyperAppHelper/Unique.h>
+#include <HyperAppHelper/Error.h>
+
+#include <Hypertable/Lib/Client.h>
+#include <Hypertable/Lib/Future.h>
+#include <Hypertable/Lib/HqlInterpreter.h>
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/NamespaceListing.h>
+
+#include <Common/Init.h>
+#include <Common/Logger.h>
+#include <Common/Mutex.h>
+#include <Common/Random.h>
+#include <Common/Time.h>
 
 #include <concurrency/ThreadManager.h>
 #include <protocol/TBinaryProtocol.h>
@@ -39,17 +46,12 @@
 #include <transport/TSocket.h>
 #include <transport/TTransportUtils.h>
 
-#include "Common/Time.h"
-#include "Hypertable/Lib/Client.h"
-#include "Hypertable/Lib/HqlInterpreter.h"
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/NamespaceListing.h"
-#include "Hypertable/Lib/Future.h"
+#include <boost/shared_ptr.hpp>
 
-#include "Config.h"
-#include "SerializedCellsReader.h"
-#include "SerializedCellsWriter.h"
-#include "ThriftHelper.h"
+#include <iostream>
+#include <iomanip>
+#include <sstream>
+#include <unordered_map>
 
 #define THROW_TE(_code_, _str_) do { ThriftGen::ClientException te; \
   te.code = _code_; te.message = _str_; \
@@ -166,7 +168,7 @@ inline bool operator < (const SharedMutatorMapKey &skey1,
 typedef Meta::list<ThriftBrokerPolicy, DefaultCommPolicy> Policies;
 
 typedef std::map<SharedMutatorMapKey, TableMutator * > SharedMutatorMap;
-typedef hash_map< ::int64_t, ClientObjectPtr> ObjectMap;
+typedef std::unordered_map< ::int64_t, ClientObjectPtr> ObjectMap;
 typedef std::vector<ThriftGen::Cell> ThriftCells;
 typedef std::vector<CellAsArray> ThriftCellsAsArrays;
 

@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -28,9 +28,9 @@
 #ifndef HYPERTABLE_REFERENCEMANAGER_H
 #define HYPERTABLE_REFERENCEMANAGER_H
 
-#include "Common/HashMap.h"
+#include <Hypertable/Master/Operation.h>
 
-#include "Operation.h"
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -98,7 +98,7 @@ namespace Hypertable {
   private:
 
     /// Reference map type (hash_code-to-operation)
-    typedef hash_map<int64_t, OperationPtr> ReferenceMapT;
+    typedef std::unordered_map<int64_t, OperationPtr> ReferenceMapT;
 
     /// %Mutex for serializing concurrent access
     Mutex m_mutex;

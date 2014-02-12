@@ -28,8 +28,14 @@
 #ifndef HYPERTABLE_CONNECTIONMANAGER_H
 #define HYPERTABLE_CONNECTIONMANAGER_H
 
-#include <queue>
-#include <string>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/CommAddress.h>
+#include <AsyncComm/ConnectionInitializer.h>
+#include <AsyncComm/DispatchHandler.h>
+
+#include <Common/ReferenceCount.h>
+#include <Common/SockAddrMap.h>
+#include <Common/Timer.h>
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/condition.hpp>
@@ -37,20 +43,14 @@
 #include <boost/thread/thread.hpp>
 #include <boost/thread/xtime.hpp>
 
+#include <queue>
+#include <string>
+#include <unordered_map>
+
 extern "C" {
 #include <time.h>
 #include <sys/time.h>
 }
-
-#include "Common/HashMap.h"
-#include "Common/ReferenceCount.h"
-#include "Common/SockAddrMap.h"
-#include "Common/Timer.h"
-
-#include "Comm.h"
-#include "CommAddress.h"
-#include "ConnectionInitializer.h"
-#include "DispatchHandler.h"
 
 namespace Hypertable {
 
@@ -136,7 +136,7 @@ namespace Hypertable {
       /// InetAddr-to-ConnectionState map
       SockAddrMap<ConnectionStatePtr> conn_map;
       /// Proxy-to-ConnectionState map
-      hash_map<String, ConnectionStatePtr> conn_map_proxy;
+      std::unordered_map<String, ConnectionStatePtr> conn_map_proxy;
       /// Connect retry heap
       std::priority_queue<ConnectionStatePtr, std::vector<ConnectionStatePtr>,
           LtConnectionState> retry_queue;

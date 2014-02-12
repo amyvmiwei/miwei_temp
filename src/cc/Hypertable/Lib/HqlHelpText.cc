@@ -25,14 +25,13 @@
  * provides access to help text for either the rsclient command interpreter
  * or the hypertable (HQL) command interpreter.
  */
+#include <Common/Compat.h>
+#include "HqlHelpText.h"
 
-#include "Common/Compat.h"
+#include <Common/StringExt.h>
 
 #include <iostream>
-
-#include "Common/StringExt.h"
-
-#include "HqlHelpText.h"
+#include <unordered_map>
 
 using namespace Hypertable;
 
@@ -2023,7 +2022,7 @@ namespace {
     0
   };
 
-  typedef hash_map<std::string, const char **>  HelpTextMap;
+  typedef std::unordered_map<std::string, const char **>  HelpTextMap;
 
   HelpTextMap &build_help_text_map() {
     HelpTextMap *map = new HelpTextMap();

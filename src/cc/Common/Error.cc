@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -26,13 +26,13 @@
  * base class and macros for logging and error handling.
  */
 
-#include "Common/Compat.h"
-#include "Common/HashMap.h"
-#include "Common/Logger.h"
-
+#include <Common/Compat.h>
 #include "Error.h"
 
+#include <Common/Logger.h>
+
 #include <iomanip>
+#include <unordered_map>
 
 using namespace Hypertable;
 
@@ -307,7 +307,7 @@ namespace {
     { 0, 0 }
   };
 
-  typedef hash_map<int, const char *>  TextMap;
+  typedef std::unordered_map<int, const char *>  TextMap;
 
   TextMap &build_text_map() {
     TextMap *map = new TextMap();

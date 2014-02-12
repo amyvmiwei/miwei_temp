@@ -25,10 +25,20 @@
  * establishing and maintaining TCP connections.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+#include "ConnectionManager.h"
+
+#include <AsyncComm/Comm.h>
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
+#include <Common/System.h>
+#include <Common/Time.h>
 
 #include <cstdlib>
 #include <iostream>
+#include <unordered_map>
 
 extern "C" {
 #include <poll.h>
@@ -37,16 +47,6 @@ extern "C" {
 #include <netinet/in.h>
 #include <arpa/inet.h>
 }
-
-#include "Common/Error.h"
-#include "Common/Logger.h"
-#include "Common/Serialization.h"
-#include "Common/System.h"
-#include "Common/Time.h"
-
-#include "AsyncComm/Comm.h"
-
-#include "ConnectionManager.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -102,8 +102,7 @@ ConnectionManager::add_internal(const CommAddress &addr,
   HT_ASSERT(addr.is_set());
 
   if (addr.is_proxy()) {
-    hash_map<String, ConnectionStatePtr>::iterator iter =
-      m_impl->conn_map_proxy.find(addr.proxy);
+    auto iter = m_impl->conn_map_proxy.find(addr.proxy);
     if (iter != m_impl->conn_map_proxy.end() && !iter->second->decomissioned)
       return;
   }
@@ -161,8 +160,7 @@ ConnectionManager::wait_for_connection(const CommAddress &addr,
       conn_state_ptr = (*iter).second;
     }
     else if (addr.is_proxy()) {
-      hash_map<String, ConnectionStatePtr>::iterator iter = 
-	m_impl->conn_map_proxy.find(addr.proxy);
+      auto iter = m_impl->conn_map_proxy.find(addr.proxy);
       if (iter == m_impl->conn_map_proxy.end())
 	return false;
       conn_state_ptr = (*iter).second;
@@ -269,8 +267,7 @@ int ConnectionManager::remove(const CommAddress &addr) {
     ScopedLock lock(m_impl->mutex);
 
     if (addr.is_proxy()) {
-      hash_map<String, ConnectionStatePtr>::iterator iter = 
-        m_impl->conn_map_proxy.find(addr.proxy);
+      auto iter = m_impl->conn_map_proxy.find(addr.proxy);
       if (iter != m_impl->conn_map_proxy.end()) {
 	{
 	  ScopedLock conn_lock((*iter).second->mutex);
@@ -341,8 +338,7 @@ ConnectionManager::handle(EventPtr &event) {
   }
 
   if (conn_state == 0 && event->proxy) {
-    hash_map<String, ConnectionStatePtr>::iterator iter = 
-      m_impl->conn_map_proxy.find(event->proxy);
+    auto iter = m_impl->conn_map_proxy.find(event->proxy);
     if (iter != m_impl->conn_map_proxy.end()) {
       conn_state = (*iter).second;
       /** register address **/

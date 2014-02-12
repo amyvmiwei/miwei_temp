@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -29,13 +29,12 @@
 #ifndef HYPERTABLE_PROXYMAP_H
 #define HYPERTABLE_PROXYMAP_H
 
-#include "Common/InetAddr.h"
-#include "Common/HashMap.h"
-#include "Common/Mutex.h"
-#include "Common/SockAddrMap.h"
-#include "Common/String.h"
+#include <AsyncComm/CommBuf.h>
 
-#include "CommBuf.h"
+#include <Common/InetAddr.h>
+#include <Common/Mutex.h>
+#include <Common/SockAddrMap.h>
+#include <Common/String.h>
 
 namespace Hypertable {
 
@@ -54,7 +53,7 @@ namespace Hypertable {
   };
 
   /// Forward mapping hash type from proxy name to ProxyAddressInfo
-  typedef hash_map<String, ProxyAddressInfo> ProxyMapT;
+  typedef std::unordered_map<String, ProxyAddressInfo> ProxyMapT;
 
   /** Maps a set of proxy names to their associated IP addresses.
    * Hypertable uses <i>proxy names</i> (e.g. "rs1") to refer to servers so

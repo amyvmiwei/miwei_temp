@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,20 +22,22 @@
 #ifndef HYPERSPACE_GROUPCOMMITINTERFACE_H
 #define HYPERSPACE_GROUPCOMMITINTERFACE_H
 
+#include <Hypertable/RangeServer/Range.h>
+#include <Hypertable/RangeServer/TableInfo.h>
+
+#include <Hypertable/Lib/CommitLog.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/Types.h>
+
+#include <AsyncComm/Event.h>
+
+#include <Common/ReferenceCount.h>
+#include <Common/StaticBuffer.h>
+
+#include <unordered_map>
 #include <vector>
 
-#include "Common/ReferenceCount.h"
-#include "Common/StaticBuffer.h"
-
-#include "AsyncComm/Event.h"
-
-#include "Hypertable/Lib/CommitLog.h"
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Types.h"
-
-#include "Range.h"
-#include "TableInfo.h"
-
+#if 0
 /** GNU C++ extensions. */
 namespace __gnu_cxx {
   template<> struct hash<Hypertable::Range *>  {
@@ -44,6 +46,7 @@ namespace __gnu_cxx {
     }
   };
 }
+#endif
 
 namespace Hypertable {
 
@@ -111,7 +114,7 @@ namespace Hypertable {
     ~TableUpdate() {
       foreach_ht (UpdateRequest *r, requests)
         delete r;
-      for (hash_map<Range *, RangeUpdateList *>::iterator iter = range_map.begin(); iter != range_map.end(); ++iter)
+      for (std::unordered_map<Range *, RangeUpdateList *>::iterator iter = range_map.begin(); iter != range_map.end(); ++iter)
         delete (*iter).second;
     }
     TableIdentifier id;
@@ -123,7 +126,7 @@ namespace Hypertable {
     uint64_t total_buffer_size;
     TableInfoPtr table_info;
     boost::xtime expire_time;
-    hash_map<Range *, RangeUpdateList *> range_map;
+    std::unordered_map<Range *, RangeUpdateList *> range_map;
     DynamicBuffer go_buf;
     bool wait_for_metadata_recovery;
     bool wait_for_system_recovery;

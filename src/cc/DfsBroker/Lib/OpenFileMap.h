@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,12 +19,15 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Mutex.h"
-#include "Common/InetAddr.h"
-#include "Common/HashMap.h"
-#include "Common/Logger.h"
-#include "Common/ReferenceCount.h"
+#include <Common/Mutex.h>
+#include <Common/Logger.h>
+#include <Common/ReferenceCount.h>
 
+#include <unordered_map>
+
+extern "C" {
+#include <netinet/in.h>
+}
 
 namespace Hypertable {
 
@@ -101,7 +104,7 @@ namespace Hypertable {
 
   private:
 
-    typedef hash_map<int, OpenFileDataPtr> FileMap;
+    typedef std::unordered_map<int, OpenFileDataPtr> FileMap;
 
     Mutex         m_mutex;
     FileMap       m_file_map;

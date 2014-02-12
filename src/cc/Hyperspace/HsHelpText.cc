@@ -19,10 +19,12 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/StringExt.h"
-#include "Common/HashMap.h"
+#include <Common/Compat.h>
 #include "HsHelpText.h"
+
+#include <Common/StringExt.h>
+
+#include <unordered_map>
 
 using namespace Hyperspace;
 
@@ -216,7 +218,7 @@ namespace {
   };
 
 
-  typedef Hypertable::hash_map<std::string, const char **>  HelpTextMap;
+  typedef std::unordered_map<std::string, const char **> HelpTextMap;
 
   HelpTextMap &build_help_text_map() {
     HelpTextMap *map = new HelpTextMap();
