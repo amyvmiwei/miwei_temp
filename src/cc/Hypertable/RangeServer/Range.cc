@@ -1168,7 +1168,7 @@ bool Range::estimate_split_row(SplitRowDataMapT &split_row_data, String &row) {
   HT_ASSERT(!row.empty());
   // If row chosen above is same as end row, find largest row <= end_row
   String end_row = m_metalog_entity->get_end_row();
-  if (row.compare(end_row) == 0) {
+  if (row.compare(end_row) >= 0) {
     row.clear();
     for (SplitRowDataMapT::iterator iter=split_row_data.begin();
          iter != split_row_data.end(); ++iter) {
