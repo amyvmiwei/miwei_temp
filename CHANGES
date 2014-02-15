@@ -1,3 +1,28 @@
+Version 0.9.7.16:
+(2014-02-16)
+
+    Upgraded to C++11 compiler
+    issue 1179: Fixed insert perf problem introduced by bad commit in 0.9.7.13
+    issue 1193: Fixed split_row/end_row comparison in Range::estimate_split_row()
+    Fixed memory leak in index table mutator
+    Avoid aggressive merging during low memory mode
+    Fixed BalancePlanAuthority::change_receiver_plan_location() to properly increment generation
+    issue 1191: Fixed DEB and RPM package installation
+    Fixed alloc-dealloc-mismatch error in hypertable_ldi_select_test
+    Fixed HQL-delete test
+    Fixed Spirit parser issues
+    issue 1104: Fixed intermittent failure of issue190 test
+    issue 1123: fixed ldd.sh script
+    Got rid of INFO log message in OperationRecover::decode_state()
+    issue 1193: Replaced assert with instrumentation logging
+    issue 1189: Propagate exceptions from ~TableMutator()
+    Modified issue890 test to compile java file into build directory
+    Modified Filesystem::readdir to return vector of Dirent structures
+    Reverted "merging compactions ahead of minor compactions" commit
+    Allow arbitrary column selection for secondary index queries
+    issue 1032: Fixed COUNTER columns "wrap around" on underflow problem
+    Added NO_CACHE option to SELECT statement
+
 Version 0.9.7.15:
 (2014-01-10)
 
