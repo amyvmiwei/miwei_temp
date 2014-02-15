@@ -114,7 +114,11 @@ namespace {
     }
     client->close(fd);
 
+#if defined(__linux__)
+    free(readbuf);
+#else
     delete[] readbuf;
+#endif
 
     return true;
   }
