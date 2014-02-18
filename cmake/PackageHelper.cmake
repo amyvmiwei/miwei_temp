@@ -111,6 +111,12 @@ else ()
   message(FATAL_ERROR "${LDD_OUT}")
 endif ()
 
+# Install Thrift dependencies
+string(REPLACE " " ";" Thrift_LIB_DEPENDENCIES_LIST ${Thrift_LIB_DEPENDENCIES})
+foreach(thrift_dep ${Thrift_LIB_DEPENDENCIES_LIST})
+  HT_INSTALL_LIBS(lib ${thrift_dep})
+endforeach ()
+
 # copy cronolog to the /bin directory
 install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION
       ${CMAKE_INSTALL_PREFIX}/bin)

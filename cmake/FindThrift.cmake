@@ -43,6 +43,33 @@ if (Thrift_VERSION MATCHES "^Thrift version" AND LibEvent_LIBS
     AND Thrift_INCLUDE_DIR)
   set(Thrift_FOUND TRUE)
   set(Thrift_LIBS ${Thrift_LIB} ${Thrift_NB_LIB})
+
+  exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
+               ARGS ${Thrift_LIB}
+               OUTPUT_VARIABLE LDD_OUT
+               RETURN_VALUE LDD_RETURN)
+
+  if (LDD_RETURN STREQUAL "0")
+    string(REGEX MATCH "[ \t](/[^ ]+/libssl\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(Thrift_LIB_DEPENDENCIES "${Thrift_LIB_DEPENDENCIES} ${CMAKE_MATCH_1}")
+    string(REGEX MATCH "[ \t](/[^ ]+/libgssapi_krb5\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(Thrift_LIB_DEPENDENCIES "${Thrift_LIB_DEPENDENCIES} ${CMAKE_MATCH_1}")
+    string(REGEX MATCH "[ \t](/[^ ]+/libkrb5\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(Thrift_LIB_DEPENDENCIES "${Thrift_LIB_DEPENDENCIES} ${CMAKE_MATCH_1}")
+    string(REGEX MATCH "[ \t](/[^ ]+/libcom_err\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(Thrift_LIB_DEPENDENCIES "${Thrift_LIB_DEPENDENCIES} ${CMAKE_MATCH_1}")
+    string(REGEX MATCH "[ \t](/[^ ]+/libk5crypto\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(Thrift_LIB_DEPENDENCIES "${Thrift_LIB_DEPENDENCIES} ${CMAKE_MATCH_1}")
+    string(REGEX MATCH "[ \t](/[^ ]+/libcrypto\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(Thrift_LIB_DEPENDENCIES "${Thrift_LIB_DEPENDENCIES} ${CMAKE_MATCH_1}")
+    string(REGEX MATCH "[ \t](/[^ ]+/libkrb5support\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(Thrift_LIB_DEPENDENCIES "${Thrift_LIB_DEPENDENCIES} ${CMAKE_MATCH_1}")
+    string(REGEX MATCH "[ \t](/[^ ]+/libz\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(Thrift_LIB_DEPENDENCIES "${Thrift_LIB_DEPENDENCIES} ${CMAKE_MATCH_1}")
+    string(REGEX MATCH "[ \t](/[^ ]+/libkeyutils\\.[^ \n]+)" dummy ${LDD_OUT})
+    set(Thrift_LIB_DEPENDENCIES "${Thrift_LIB_DEPENDENCIES} ${CMAKE_MATCH_1}")
+  endif ()
+
 else ()
   set(Thrift_FOUND FALSE)
   if (NOT LibEvent_LIBS OR NOT LibEvent_INCLUDE_DIR)
@@ -64,5 +91,6 @@ endif ()
 mark_as_advanced(
   Thrift_LIB
   Thrift_NB_LIB
+  Thrift_LIB_DEPENDENCIES
   Thrift_INCLUDE_DIR
   )
