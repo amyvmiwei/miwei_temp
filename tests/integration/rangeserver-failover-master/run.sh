@@ -261,29 +261,6 @@ run_test() {
 
     sleep 5
 
-    # Verify that there are no linked logs in any of the commit logs that
-    # are also not referenced in the RSML
-    let j=2
-    while [ $j -le $RS_COUNT ] ; do
-        if test -z "${INDUCED_FAILURE[$j]}" ; then
-            $HT_HOME/bin/metalog_dump --print-logs /hypertable/servers/rs$j/log/rsml | sort -u > rs$j-test$TEST-rsml-links.txt
-            \rm -f rs$j-test$TEST-commit-links-unsorted.txt
-            $HT_HOME/bin/ht dumplog --linked-logs /hypertable/servers/rs$j/log/root >> rs$j-test$TEST-commit-links-unsorted.txt
-            $HT_HOME/bin/ht dumplog --linked-logs /hypertable/servers/rs$j/log/metadata >> rs$j-test$TEST-commit-links-unsorted.txt
-            $HT_HOME/bin/ht dumplog --linked-logs /hypertable/servers/rs$j/log/system >> rs$j-test$TEST-commit-links-unsorted.txt
-            $HT_HOME/bin/ht dumplog --linked-logs /hypertable/servers/rs$j/log/user >> rs$j-test$TEST-commit-links-unsorted.txt
-            sort -u rs$j-test$TEST-commit-links-unsorted.txt > rs$j-test$TEST-commit-links.txt
-            diff rs$j-test$TEST-rsml-links.txt rs$j-test$TEST-commit-links.txt | fgrep ">"
-            if [ $? == 0 ]; then
-                echo "ERROR: Unreferenced log link found in commit log(s)"
-                echo "Test $TEST FAILED." >> report.txt
-            else
-                \rm -f rs$j-test$TEST-commit-links-unsorted.txt rs$j-test$TEST-commit-links.txt rs$j-test$TEST-rsml-links.txt
-            fi
-        fi
-        let j+=1
-    done
-
     # shut down range servers
     kill -9 `cat $HT_HOME/run/Hypertable.RangeServer.*.pid`
     \rm -f $HT_HOME/run/Hypertable.RangeServer.*.pid
