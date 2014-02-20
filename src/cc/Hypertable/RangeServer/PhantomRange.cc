@@ -87,33 +87,9 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
 
   *is_empty = true;
 
-  String original_transfer_log, transfer_log;
   MetaLogEntityRange *metalog_entity = m_range->metalog_entity();
-  int state = metalog_entity->get_state() & ~RangeState::PHANTOM;
 
-  if (state == RangeState::RELINQUISH_LOG_INSTALLED ||
-      state == RangeState::SPLIT_LOG_INSTALLED ||
-      state == RangeState::SPLIT_SHRUNK) {
-    // Set phantom log to "original transfer log"
-    original_transfer_log = metalog_entity->get_original_transfer_log();
-    if (!original_transfer_log.empty())
-      m_phantom_logname = original_transfer_log;
-    else {
-      m_phantom_logname = create_log(log_dfs, recovery_id, metalog_entity);
-      metalog_entity->set_original_transfer_log(m_phantom_logname);
-    }
-  }  
-  else {
-    // Set phantom log to "transfer log"
-    transfer_log = metalog_entity->get_transfer_log();
-    if (!transfer_log.empty() &&
-        log_dfs->exists(transfer_log))
-      m_phantom_logname = transfer_log;
-    else {
-      m_phantom_logname = create_log(log_dfs, recovery_id, metalog_entity);
-      metalog_entity->set_transfer_log(m_phantom_logname);
-    }
-  }
+  m_phantom_logname = create_log(log_dfs, recovery_id, metalog_entity);
 
   CommitLogPtr phantom_log = new CommitLog(log_dfs, m_phantom_logname,
                                            m_range_spec.table.is_metadata());
@@ -147,8 +123,6 @@ void PhantomRange::populate_range_and_log(FilesystemPtr &log_dfs,
     ;
   *is_empty = m_phantom_log->get_latest_revision() == TIMESTAMP_MIN;
 
-  m_phantom_log->get_linked_logs(m_linked_logs);
-  m_linked_logs.insert(m_phantom_logname);
 }
 
 const String & PhantomRange::get_phantom_logname() {
@@ -159,11 +133,6 @@ const String & PhantomRange::get_phantom_logname() {
 CommitLogReaderPtr PhantomRange::get_phantom_log() {
   ScopedLock lock(m_mutex);
   return m_phantom_log;
-}
-
-void PhantomRange::get_linked_logs(StringSet &linked_logs) {
-  ScopedLock lock(m_mutex);
-  linked_logs.insert(m_linked_logs.begin(), m_linked_logs.end());
 }
 
 

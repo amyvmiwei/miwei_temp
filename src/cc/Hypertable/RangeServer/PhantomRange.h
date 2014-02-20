@@ -77,7 +77,6 @@ namespace Hypertable {
                                 bool *is_empty);
     CommitLogReaderPtr get_phantom_log();
     const String &get_phantom_logname();
-    void get_linked_logs(StringSet &linked_logs);
 
     void set_replayed();
     bool replayed();
@@ -104,7 +103,6 @@ namespace Hypertable {
     RangePtr         m_range;
     CommitLogReaderPtr m_phantom_log;
     String           m_phantom_logname;
-    StringSet        m_linked_logs;
     int              m_state;
   };
 
