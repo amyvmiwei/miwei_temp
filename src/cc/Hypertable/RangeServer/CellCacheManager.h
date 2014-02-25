@@ -88,7 +88,7 @@ namespace Hypertable {
      */
     int64_t memory_used();
 
-    int64_t immutable_memory_used();
+    int64_t logical_size();
 
     /**
      * Returns the amount of memory allocated by the CellCache.
@@ -97,7 +97,9 @@ namespace Hypertable {
 
     void get_counts(size_t *cellsp, int64_t *key_bytesp, int64_t *value_bytesp);
 
-    int32_t get_delete_count();
+    int32_t mutable_delete_count();
+
+    int32_t delete_count();
 
     void freeze();
 

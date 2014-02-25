@@ -103,6 +103,11 @@ namespace Hypertable {
       return m_arena.total();
     }
 
+    int64_t logical_size() {
+      ScopedLock lock(m_mutex);
+      return m_key_bytes + m_value_bytes;
+    }
+
     void add_counts(size_t *cellsp, int64_t *key_bytesp, int64_t *value_bytesp) {
       ScopedLock lock(m_mutex);
       *cellsp += m_cell_map.size();
@@ -110,7 +115,7 @@ namespace Hypertable {
       *value_bytesp += m_value_bytes;
     }
 
-    int32_t get_delete_count() { return m_deletes; }
+    int32_t delete_count() { return m_deletes; }
 
     void freeze() { m_frozen = true; }
     void unfreeze() { m_frozen = false; }

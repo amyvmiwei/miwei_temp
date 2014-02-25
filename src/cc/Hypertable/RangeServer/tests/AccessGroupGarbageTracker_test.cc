@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -31,6 +31,7 @@
 using namespace Hypertable;
 using namespace Config;
 
+#if 0
 namespace {
 
   const char *schema_str =
@@ -64,17 +65,17 @@ namespace {
   "</Schema>";
 
 }
+#endif
 
 
 int main(int argc, char **argv) {
-
+#if 0
   init_with_policy<DefaultPolicy>(argc, argv);
 
   Global::access_group_garbage_compaction_threshold 
     = properties->get_i32("Hypertable.RangeServer.AccessGroup.GarbageThreshold.Percentage");
 
   {
-    AccessGroupGarbageTracker tracker;
 
     SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str));
     if (!schema->is_valid()) {
@@ -83,29 +84,29 @@ int main(int argc, char **argv) {
     }
     Schema::AccessGroup *ag = schema->get_access_group("default");
 
-    tracker.set_schema(schema, ag);
-    HT_ASSERT(!tracker.check_needed(0));
+    AccessGroupGarbageTracker tracker(properties, ag);
 
-    tracker.add_delete_count(1);
-    HT_ASSERT(!tracker.check_needed(0));
+    HT_ASSERT(!tracker.check_needed(time(0)));
+
+    tracker.accumulate(1, 0);
+    HT_ASSERT(!tracker.check_needed(time(0)));
 
     tracker.clear();
 
     int64_t split_size = properties->get_i64("Hypertable.RangeServer.Range.SplitSize");
 
     int64_t amount = split_size / 5;
-    tracker.add_data(amount);
-    HT_ASSERT(!tracker.check_needed(0));
+    tracker.accumulate(amount, 0);
+    HT_ASSERT(!tracker.check_needed(time(0)));
 
-    tracker.add_delete_count(1);
-    HT_ASSERT(tracker.check_needed(0));
+    tracker.accumulate(0, 1);
+    HT_ASSERT(tracker.check_needed(time(0)));
 
     tracker.clear();
-    tracker.add_delete_count(1);
-    tracker.add_data(split_size/20);
-    HT_ASSERT(!tracker.check_needed(0));
-    tracker.add_data(split_size/10);
-    HT_ASSERT(tracker.check_needed(0));
+    tracker.accumulate(split_size/20, 1);
+    HT_ASSERT(!tracker.check_needed(time(0)));
+    tracker.accumulate(split_size/10, 0);
+    HT_ASSERT(tracker.check_needed(time(0)));
 
     tracker.clear();
 
@@ -116,55 +117,39 @@ int main(int argc, char **argv) {
     }
     ag = schema->get_access_group("default");
 
-    tracker.set_schema(schema, ag);
-    HT_ASSERT(!tracker.check_needed(0));
+    tracker.update_schema(ag);
+    HT_ASSERT(!tracker.check_needed(time(0)));
 
-    tracker.add_data(amount);
-    HT_ASSERT(tracker.check_needed(0));
-    HT_ASSERT(tracker.current_target() == split_size/10);
+    tracker.accumulate(amount, 0);
+    HT_ASSERT(tracker.check_needed(time(0)));
 
     tracker.clear();
-    tracker.add_data(amount);
-    tracker.set_garbage_stats(1000000LL, 100000LL);
-    HT_ASSERT(tracker.current_target() == split_size/10);
-    HT_ASSERT(tracker.need_collection());
+    tracker.accumulate(amount, 0);
+    HT_ASSERT(tracker.set_garbage_stats(time(0), 1000000.0, 900000.0));
     
     tracker.clear();
-    tracker.add_data(amount);
-    tracker.set_garbage_stats(1000000LL, 950000LL);
-    HT_ASSERT(tracker.current_target() == 107374182);
-    HT_ASSERT(!tracker.need_collection());
+    tracker.accumulate(amount, 0);
+    HT_ASSERT(!tracker.set_garbage_stats(time(0), 1000000.0, 50000.0));
 
     tracker.clear();
-    tracker.add_data(amount);
-    tracker.set_garbage_stats(1000000LL, 600000LL);
-    HT_ASSERT(tracker.current_target() == split_size/10);
-    HT_ASSERT(tracker.need_collection());
+    tracker.accumulate(amount, 0);
+    HT_ASSERT(tracker.set_garbage_stats(time(0), 1000000.0, 400000.0));
 
     tracker.clear();
-    tracker.add_data(amount);
-    tracker.set_garbage_stats(1000000LL, 700000LL);
-    HT_ASSERT(tracker.current_target() == 71582788 || tracker.current_target() == 71582787);
-    HT_ASSERT(tracker.need_collection());
+    tracker.accumulate(amount, 0);
+    HT_ASSERT(tracker.set_garbage_stats(time(0), 1000000.0, 300000.0));
 
     tracker.clear();
-    tracker.add_data(amount);
-    tracker.set_garbage_stats(1000000LL, 500000LL);
-    HT_ASSERT(tracker.current_target() == split_size/10);
-    HT_ASSERT(tracker.need_collection());
+    tracker.accumulate(amount, 0);
+    HT_ASSERT(tracker.set_garbage_stats(time(0), 1000000.0, 500000.0));
 
     tracker.clear();
-    tracker.add_data(amount);
-    tracker.add_data(amount);
-    tracker.set_garbage_stats(1000000LL, 500000LL);
-    HT_ASSERT(tracker.current_target() == 85899345);
-    HT_ASSERT(tracker.need_collection());
+    tracker.accumulate(2*amount, 0);
+    HT_ASSERT(tracker.set_garbage_stats(time(0), 1000000.0, 500000.0));
 
     tracker.clear();
-    tracker.add_data(amount);
-    tracker.set_garbage_stats(1000000LL, 900000LL);
-    HT_ASSERT(tracker.current_target() == 171798690);
-    HT_ASSERT(!tracker.need_collection());
+    tracker.accumulate(amount, 0);
+    HT_ASSERT(!tracker.set_garbage_stats(time(0), 1000000.0, 100000.0));
 
     tracker.clear();
 
@@ -175,27 +160,32 @@ int main(int argc, char **argv) {
     }
     ag = schema->get_access_group("default");
 
-    tracker.set_schema(schema, ag);
-    HT_ASSERT(!tracker.check_needed(0));
+    tracker.update_schema(ag);
+    HT_ASSERT(!tracker.check_needed(time(0)));
 
-    time_t now = 1;
+    tracker.clear();
+    time_t base_time = time(0);
+    time_t now;
 
-    tracker.clear(now);
+    now = base_time + 2;
     tracker.accumulate_expirable(amount/4);
-    HT_ASSERT(!tracker.check_needed(0, 2));
+    HT_ASSERT(!tracker.check_needed(now, 0, 0));
 
-    HT_ASSERT(tracker.check_needed(amount/2, 361));
+    now = base_time + 360;
+    HT_ASSERT(tracker.check_needed(now, amount/2, 0));
 
+    now = base_time + 3;
     tracker.accumulate_expirable(amount/2);
-    HT_ASSERT(!tracker.check_needed(0, 3));
+    HT_ASSERT(!tracker.check_needed(now, 0, 0));
 
-    HT_ASSERT(tracker.check_needed(0, 361));
+    now = base_time + 360;
+    HT_ASSERT(tracker.check_needed(now, 0, 0));
 
-    tracker.clear(1);
-    HT_ASSERT(!tracker.check_needed(0, 361));
+    now = base_time + 359;
+    HT_ASSERT(!tracker.check_needed(now, 0, 0));
 
   }
-
+#endif
   return 0;
 }
 

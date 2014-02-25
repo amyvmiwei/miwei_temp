@@ -221,4 +221,10 @@ void CellCache::merge(CellCache *other) {
     }
     other->m_cell_map.clear();
   }
+
+  m_deletes += other->m_deletes;
+  m_collisions += other->m_collisions;
+  m_key_bytes += other->m_key_bytes;
+  m_value_bytes += other->m_value_bytes;
+  m_have_counter_deletes= m_have_counter_deletes||other->m_have_counter_deletes;
 }

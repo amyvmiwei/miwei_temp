@@ -184,9 +184,10 @@ namespace Hypertable {
       if (!m_in_memory &&
           m_latest_stored_revision > m_latest_stored_revision_hint)
         purge_stored_cells_from_cache();
+      m_garbage_tracker.update_cellstore_info(m_stores, time(0), true);
     }
 
-    void compute_garbage_stats(uint64_t *input_bytesp, uint64_t *output_bytesp);
+    void measure_garbage(double *total, double *garbage);
 
     void run_compaction(int maintenance_flags, Hints *hints);
 
@@ -215,6 +216,14 @@ namespace Hypertable {
     void recovery_finalize() { m_recovering = false; }
 
     void dump_keys(std::ofstream &out);
+
+    /// Prints human-readable representation of garbage tracker state to an
+    /// output stream.  This function prints the state of the garbage tracker
+    /// to <code>out</code> by calling AccessGroupGarbageTracker::output_state()
+    /// with the line prefix label being the fully qualified name of the access
+    /// group.
+    /// @param out Output stream on which to print state
+    void dump_garbage_tracker_statistics(std::ofstream &out);
 
     void set_next_csid(uint32_t nid) {
       if (nid > m_next_cs_id) {
@@ -253,41 +262,41 @@ namespace Hypertable {
 
     void sort_cellstores_by_timestamp();
 
-    Mutex                m_mutex;
-    Mutex                m_schema_mutex;
-    Mutex                m_outstanding_scanner_mutex;
-    boost::condition     m_outstanding_scanner_cond;
-    int32_t              m_outstanding_scanner_count;
+    Mutex m_mutex;
+    Mutex m_schema_mutex;
+    Mutex m_outstanding_scanner_mutex;
+    boost::condition m_outstanding_scanner_cond;
+    int32_t m_outstanding_scanner_count {};
     TableIdentifierManaged m_identifier;
-    SchemaPtr            m_schema;
-    std::set<uint8_t>    m_column_families;
-    String               m_name;
-    String               m_full_name;
-    String               m_table_name;
-    String               m_range_dir;
-    String               m_start_row;
-    String               m_end_row;
-    String               m_range_name;
+    SchemaPtr m_schema;
+    std::set<uint8_t> m_column_families;
+    String m_name;
+    String m_full_name;
+    String m_table_name;
+    String m_range_dir;
+    String m_start_row;
+    String m_end_row;
+    String m_range_name;
     std::vector<CellStoreInfo> m_stores;
-    PropertiesPtr        m_cellstore_props;
-    CellCacheManagerPtr  m_cell_cache_manager;
-    uint32_t             m_next_cs_id;
-    uint64_t             m_disk_usage;
-    float                m_compression_ratio;
-    int64_t              m_earliest_cached_revision;
-    int64_t              m_earliest_cached_revision_saved;
-    int64_t              m_latest_stored_revision;
-    int64_t              m_latest_stored_revision_hint;
-    LiveFileTracker      m_file_tracker;
+    PropertiesPtr m_cellstore_props;
+    CellCacheManagerPtr m_cell_cache_manager;
+    uint32_t m_next_cs_id {};
+    uint64_t m_disk_usage {};
+    float m_compression_ratio {1.0};
+    int64_t m_earliest_cached_revision {TIMESTAMP_MAX};
+    int64_t m_earliest_cached_revision_saved {TIMESTAMP_MAX};
+    int64_t m_latest_stored_revision {TIMESTAMP_MIN};
+    int64_t m_latest_stored_revision_hint {TIMESTAMP_MIN};
+    LiveFileTracker m_file_tracker;
     AccessGroupGarbageTracker m_garbage_tracker;
-    bool                 m_is_root;
-    bool                 m_in_memory;
-    bool                 m_recovering;
-    bool                 m_bloom_filter_disabled;
-    bool                 m_needs_merging;
-    bool                 m_end_merge;
-    bool                 m_dirty;
-    bool m_cellcache_needs_compaction;
+    bool m_is_root {};
+    bool m_in_memory {};
+    bool m_recovering {};
+    bool m_bloom_filter_disabled {};
+    bool m_needs_merging {};
+    bool m_end_merge {};
+    bool m_dirty {};
+    bool m_cellcache_needs_compaction {};
   };
   typedef boost::intrusive_ptr<AccessGroup> AccessGroupPtr;
 
