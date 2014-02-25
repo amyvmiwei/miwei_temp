@@ -45,10 +45,10 @@ add_executable(CellStoreScanner_delete_test CellStoreScanner_delete_test.cc
 target_link_libraries(CellStoreScanner_delete_test HyperRanger Hypertable)
 
 # AccessGroupGarbageTracker test
-add_executable(AccessGroupGarbageTracker_test AccessGroupGarbageTracker_test.cc)
-target_link_libraries(AccessGroupGarbageTracker_test HyperRanger Hypertable)
+#add_executable(AccessGroupGarbageTracker_test AccessGroupGarbageTracker_test.cc)
+#target_link_libraries(AccessGroupGarbageTracker_test HyperRanger Hypertable)
 
-# AccessGroupGarbageTracker test
+# AccessGroup-hints-file test
 add_executable(access_group_hints_file_test access_group_hints_file_test.cc)
 target_link_libraries(access_group_hints_file_test HyperRanger Hypertable)
 
@@ -61,5 +61,5 @@ add_test(FileBlockCache FileBlockCache_test)
 add_test(QueryCache QueryCache_test)
 add_test(CellStoreScanner CellStoreScanner_test)
 add_test(CellStoreScanner-delete CellStoreScanner_delete_test)
-add_test(AccessGroup-garbage-tracker AccessGroupGarbageTracker_test)
+#add_test(AccessGroup-garbage-tracker AccessGroupGarbageTracker_test)
 add_test(AccessGroup-hints-file access_group_hints_file_test)

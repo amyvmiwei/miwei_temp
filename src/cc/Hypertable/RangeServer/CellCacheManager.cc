@@ -157,17 +157,15 @@ bool CellCacheManager::immutable_cache_empty() {
   return !m_immutable_cache || m_immutable_cache->empty();
 }
 
+
 int64_t CellCacheManager::memory_used() {
-  if (m_read_cache->memory_used() == 0)
-    return m_write_cache->memory_used() + 
-      (m_immutable_cache ? m_immutable_cache->memory_used() : 0);
-  else
-    return m_read_cache->memory_used() + 
-      (m_immutable_cache ? m_immutable_cache->memory_used() : 0);
+  return m_read_cache->memory_used() +
+    (m_immutable_cache ? m_immutable_cache->memory_used() : 0);
 }
 
-int64_t CellCacheManager::immutable_memory_used() {
-  return m_immutable_cache ? m_immutable_cache->memory_used() : 0;
+int64_t CellCacheManager::logical_size() {
+  return m_read_cache->logical_size() + m_write_cache->logical_size() +
+    (m_immutable_cache ? m_immutable_cache->logical_size() : 0);
 }
 
 // only include read cache since write cache shares arena
@@ -176,9 +174,13 @@ uint64_t CellCacheManager::memory_allocated() {
     (m_immutable_cache ? m_immutable_cache->memory_allocated() : 0);
 }
 
-int32_t CellCacheManager::get_delete_count() {
-  return m_read_cache->get_delete_count() + m_write_cache->get_delete_count() +
-    (m_immutable_cache ? m_immutable_cache->get_delete_count() : 0);
+int32_t CellCacheManager::mutable_delete_count() {
+  return m_read_cache->delete_count() + m_write_cache->delete_count();
+}
+
+int32_t CellCacheManager::delete_count() {
+  return mutable_delete_count() +
+    (m_immutable_cache ? m_immutable_cache->delete_count() : 0);
 }
 
 void CellCacheManager::get_counts(size_t *cellsp, int64_t *key_bytesp, int64_t *value_bytesp) {

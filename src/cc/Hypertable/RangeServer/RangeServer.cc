@@ -3019,6 +3019,13 @@ void RangeServer::dump(ResponseCallback *cb, const char *outfile,
           ag_data->ag->dump_keys(out);
     }
 
+    // Dump AccessGroup garbage tracker statistics
+    out << "\nGarbage tracker statistics:\n";
+    for (RangeData &rd : ranges.array) {
+      for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)
+        ag_data->ag->dump_garbage_tracker_statistics(out);
+    }
+
     out << "\nCommit Log Info\n";
     str = "";
 

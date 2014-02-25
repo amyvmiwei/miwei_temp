@@ -58,13 +58,15 @@ namespace Hypertable {
       }
     };
 
-    MergeScanner(ScanContextPtr &scan_ctx);
+    MergeScanner(ScanContextPtr &scan_ctx, uint32_t flags=0);
 
     virtual ~MergeScanner();
 
     virtual void forward();
 
     virtual bool get(Key &key, ByteString &value);
+
+    uint32_t get_flags() { return m_flags; }
 
     void add_scanner(CellListScanner *scanner);
 
@@ -100,8 +102,10 @@ namespace Hypertable {
     virtual void do_initialize() = 0;
     virtual void do_forward() = 0;
 
-    bool          m_done;
-    bool          m_initialized;
+    uint32_t m_flags {};
+    bool m_done {};
+    bool m_initialized {};
+
     std::vector<CellListScanner *>  m_scanners;
     std::priority_queue<ScannerState, std::vector<ScannerState>,
         LtScannerState> m_queue;
@@ -109,10 +113,10 @@ namespace Hypertable {
     CellStoreReleaseCallback m_release_callback;
 
   private:
-    uint64_t      m_bytes_input;
-    uint64_t      m_bytes_output;
-    uint64_t      m_cells_input;
-    uint64_t      m_cells_output;
+    uint64_t m_bytes_input {};
+    uint64_t m_bytes_output {};
+    uint64_t m_cells_input {};
+    uint64_t m_cells_output {};
   };
 
   typedef boost::intrusive_ptr<MergeScanner> MergeScannerPtr;

@@ -31,11 +31,8 @@
 using namespace Hypertable;
 
 
-MergeScanner::MergeScanner(ScanContextPtr &scan_ctx) 
-  : CellListScanner(scan_ctx), m_done(false), 
-    m_initialized(false), m_scanners(), m_queue(), 
-    m_bytes_input(0), m_bytes_output(0),
-    m_cells_input(0), m_cells_output(0) {
+MergeScanner::MergeScanner(ScanContextPtr &scan_ctx, uint32_t flags)
+  : CellListScanner(scan_ctx), m_flags(flags) {
 }
 
 void 

@@ -33,14 +33,9 @@ using namespace Hypertable;
 MergeScannerAccessGroup::MergeScannerAccessGroup(String &table_name,
                                                  ScanContextPtr &scan_ctx,
                                                  uint32_t flags)
-  : MergeScanner(scan_ctx), m_return_deletes(flags & RETURN_DELETES),
-    m_accumulate_counters(flags & ACCUMULATE_COUNTERS),
-    m_revs_count(0), m_revs_limit(0), m_prev_key(0), m_prev_cf(-1),
-    m_no_forward(false), m_count_present(false),
-    m_skip_remaining_counter(false), m_counted_value(12),
-    m_delete_present(false), m_deleted_row(0),
-    m_deleted_column_family(0), m_deleted_cell(0), m_deleted_cell_version(0),
-    m_scan_context(scan_ctx.get())
+  : MergeScanner(scan_ctx, flags), m_return_deletes(flags & RETURN_DELETES),
+    m_accumulate_counters(flags & ACCUMULATE_COUNTERS), m_prev_cf(-1),
+    m_counted_value(12), m_scan_context(scan_ctx.get())
 { 
   m_start_timestamp = scan_ctx->time_interval.first;
   m_end_timestamp = scan_ctx->time_interval.second;
