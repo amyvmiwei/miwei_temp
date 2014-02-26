@@ -332,8 +332,6 @@ AccessGroup::MaintenanceData *
 AccessGroup::get_maintenance_data(ByteArena &arena, time_t now, int flags) {
   ScopedLock lock(m_mutex);
   MaintenanceData *mdata = (MaintenanceData *)arena.alloc(sizeof(MaintenanceData));
-  int64_t key_bytes = 0, value_bytes = 0;
-  size_t cell_count = 0;
 
   memset(mdata, 0, sizeof(MaintenanceData));
   mdata->ag = this;
@@ -348,14 +346,14 @@ AccessGroup::get_maintenance_data(ByteArena &arena, time_t now, int flags) {
 
   mdata->latest_stored_revision = m_latest_stored_revision;
 
-  m_cell_cache_manager->get_counts(&cell_count, &key_bytes, &value_bytes);  
-
-  mdata->cell_count = cell_count;
-  mdata->key_bytes = key_bytes;
-  mdata->value_bytes = value_bytes;
-  mdata->mem_allocated = m_cell_cache_manager->memory_allocated();
-  mdata->mem_used = m_cell_cache_manager->memory_used();
-  mdata->deletes = m_cell_cache_manager->delete_count();
+  CellCache::Statistics cache_stats;
+  m_cell_cache_manager->get_cache_statistics(cache_stats);
+  mdata->cell_count = cache_stats.size;
+  mdata->key_bytes = cache_stats.key_bytes;
+  mdata->value_bytes = cache_stats.value_bytes;
+  mdata->mem_allocated = cache_stats.memory_allocated;
+  mdata->mem_used = cache_stats.memory_used;
+  mdata->deletes = cache_stats.deletes;
   
   mdata->compression_ratio = (m_compression_ratio == 0.0) ? 1.0 : m_compression_ratio;
 
@@ -435,7 +433,7 @@ void AccessGroup::load_cellstore(CellStorePtr &cellstore) {
     HT_ASSERT(m_stores.empty());
     ScanContextPtr scan_context = new ScanContext(m_schema);
     CellListScannerPtr scanner = cellstore->create_scanner(scan_context);
-    m_cell_cache_manager->add_to_read_cache(scanner);
+    m_cell_cache_manager->add(scanner);
   }
 
   m_stores.push_back(cellstore);
@@ -837,18 +835,16 @@ String AccessGroup::describe() {
 void AccessGroup::purge_stored_cells_from_cache() {
   ScopedLock lock(m_mutex);
   ScanContextPtr scan_context = new ScanContext(m_schema);
-  CellCachePtr old_cell_cache;
   Key key;
   ByteString value;
 
   m_earliest_cached_revision_saved = m_earliest_cached_revision;
   m_earliest_cached_revision = TIMESTAMP_MAX;
 
-  m_cell_cache_manager->get_read_cache(old_cell_cache);
-
-  CellCachePtr new_cell_cache = new CellCache();
-  new_cell_cache->lock();
-  m_cell_cache_manager->install_new_cell_cache(new_cell_cache);
+  CellCachePtr old_cell_cache = m_cell_cache_manager->active_cache();
+  m_cell_cache_manager->install_new_active_cache(new CellCache());
+  
+  Locker<CellCacheManager> ccm_lock(*m_cell_cache_manager);
   
   CellListScannerPtr old_scanner = old_cell_cache->create_scanner(scan_context);
 
@@ -861,8 +857,6 @@ void AccessGroup::purge_stored_cells_from_cache() {
   m_recovering = false;
 
   m_earliest_cached_revision_saved = TIMESTAMP_MAX;
-  
-  new_cell_cache->unlock();
 }
 
 
@@ -873,7 +867,6 @@ void
 AccessGroup::shrink(String &split_row, bool drop_high, Hints *hints) {
   ScopedLock lock(m_mutex);
   ScanContextPtr scan_context = new ScanContext(m_schema);
-  CellCachePtr old_cell_cache;
   ByteString key;
   ByteString value;
   Key key_comps;
@@ -883,7 +876,7 @@ AccessGroup::shrink(String &split_row, bool drop_high, Hints *hints) {
   hints->ag_name = m_name;
   m_file_tracker.get_file_list(hints->files);
 
-  m_cell_cache_manager->get_read_cache(old_cell_cache);
+  CellCachePtr old_cell_cache = m_cell_cache_manager->active_cache();
 
   m_recovering = true;
 
@@ -904,38 +897,37 @@ AccessGroup::shrink(String &split_row, bool drop_high, Hints *hints) {
 
     m_file_tracker.change_range(m_start_row, m_end_row);
 
-    CellCachePtr new_cell_cache = new CellCache();
-    new_cell_cache->lock();
-    m_cell_cache_manager->install_new_cell_cache(new_cell_cache);
+    m_cell_cache_manager->install_new_active_cache(new CellCache());
+    {
+      Locker<CellCacheManager> ccm_lock(*m_cell_cache_manager);
 
-    CellListScannerPtr old_scanner = old_cell_cache->create_scanner(scan_context);
+      CellListScannerPtr old_scanner = old_cell_cache->create_scanner(scan_context);
 
-    /**
-     * Shrink the CellCache
-     */
-    while (old_scanner->get(key_comps, value)) {
+      /**
+       * Shrink the CellCache
+       */
+      while (old_scanner->get(key_comps, value)) {
 
-      cmp = strcmp(key_comps.row, split_row.c_str());
+        cmp = strcmp(key_comps.row, split_row.c_str());
 
-      if ((cmp > 0 && !drop_high) || (cmp <= 0 && drop_high)) {
-        /*
-         * For IN_MEMORY access groups, record earliest cached
-         * revision that is > latest_stored.  For normal access groups,
-         * record absolute earliest cached revision
-         */
-        if (m_in_memory) {
-          if (key_comps.revision > m_latest_stored_revision &&
-              key_comps.revision < m_earliest_cached_revision)
+        if ((cmp > 0 && !drop_high) || (cmp <= 0 && drop_high)) {
+          /*
+           * For IN_MEMORY access groups, record earliest cached
+           * revision that is > latest_stored.  For normal access groups,
+           * record absolute earliest cached revision
+           */
+          if (m_in_memory) {
+            if (key_comps.revision > m_latest_stored_revision &&
+                key_comps.revision < m_earliest_cached_revision)
+              m_earliest_cached_revision = key_comps.revision;
+          }
+          else if (key_comps.revision < m_earliest_cached_revision)
             m_earliest_cached_revision = key_comps.revision;
+          add(key_comps, value);
         }
-        else if (key_comps.revision < m_earliest_cached_revision)
-          m_earliest_cached_revision = key_comps.revision;
-        add(key_comps, value);
+        old_scanner->forward();
       }
-      old_scanner->forward();
     }
-
-    new_cell_cache->unlock();
 
     bool cellstores_shrunk = false;
     {
@@ -971,7 +963,7 @@ AccessGroup::shrink(String &split_row, bool drop_high, Hints *hints) {
   }
   catch (Exception &e) {
     m_recovering = false;
-    m_cell_cache_manager->install_new_cell_cache(old_cell_cache);
+    m_cell_cache_manager->install_new_active_cache(old_cell_cache);
     m_earliest_cached_revision = m_earliest_cached_revision_saved;
     m_earliest_cached_revision_saved = TIMESTAMP_MAX;
     throw;
@@ -996,9 +988,9 @@ void AccessGroup::release_files(const std::vector<String> &files) {
 
 void AccessGroup::stage_compaction() {
   ScopedLock lock(m_mutex);
+  HT_ASSERT(m_cell_cache_manager->immutable_cache_empty());
   if (m_cell_cache_manager->empty())
     return;
-  HT_ASSERT(m_cell_cache_manager->immutable_cache_empty());
   m_cell_cache_manager->freeze();
   if (m_dirty) {
     m_cellcache_needs_compaction = true;

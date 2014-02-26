@@ -142,25 +142,15 @@ namespace Hypertable {
      */
     void populate_cellstore_index_pseudo_table_scanner(CellListScannerBuffer *scanner);
 
-    virtual int64_t get_total_entries() {
-      boost::mutex::scoped_lock lock(m_mutex);
-      int64_t total = m_cell_cache_manager->get_total_entries();
-      if (!m_in_memory) {
-        for (size_t i=0; i<m_stores.size(); i++)
-          total += m_stores[i].cs->get_total_entries();
-      }
-      return total;
-    }
-
     void update_schema(SchemaPtr &schema_ptr, Schema::AccessGroup *ag);
 
     void lock() {
       m_mutex.lock();
-      m_cell_cache_manager->lock_write_cache();
+      m_cell_cache_manager->lock();
     }
 
     void unlock() {
-      m_cell_cache_manager->unlock_write_cache();
+      m_cell_cache_manager->unlock();
       m_mutex.unlock();
     }
 
