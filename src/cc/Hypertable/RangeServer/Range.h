@@ -125,16 +125,6 @@ namespace Hypertable {
     virtual void add(const Key &key, const ByteString value);
     virtual const char *get_split_row() { return 0; }
 
-    virtual int64_t get_total_entries() {
-      if (!m_initialized)
-        deferred_initialization();
-      int64_t total = 0;
-      boost::mutex::scoped_lock lock(m_schema_mutex);
-      for (size_t i=0; i<m_access_group_vector.size(); i++)
-        total += m_access_group_vector[i]->get_total_entries();
-      return total;
-    }
-
     void lock();
     void unlock();
 

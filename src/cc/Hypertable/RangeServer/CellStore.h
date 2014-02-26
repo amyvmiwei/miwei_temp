@@ -92,6 +92,8 @@ namespace Hypertable {
      */
     virtual void populate_index_pseudo_table_scanner(CellListScannerBuffer *scanner) { }
 
+    /// Returns the number of key/value pairs in the cell store.
+    /// @return Number of key/value pairs in list
     virtual int64_t get_total_entries() = 0;
 
     virtual CellListScanner *
