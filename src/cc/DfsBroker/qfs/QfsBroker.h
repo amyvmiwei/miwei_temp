@@ -1,4 +1,4 @@
-/**
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,15 +22,16 @@
 #ifndef HYPERTABLE_QFSROKER_H
 #define HYPERTABLE_QFSBROKER_H
 
+#include <DfsBroker/Lib/Broker.h>
+
+#include <Common/String.h>
+#include <Common/Properties.h>
+
+#include <atomic>
+
 extern "C" {
 #include <unistd.h>
 }
-
-#include "Common/String.h"
-#include "Common/atomic.h"
-#include "Common/Properties.h"
-
-#include "DfsBroker/Lib/Broker.h"
 
 namespace KFS {
   class KfsClient;
@@ -46,13 +47,11 @@ namespace Hypertable {
   class OpenFileDataQfs: public OpenFileData {
   public:
   OpenFileDataQfs(const std::string &fname, int fd, KFS::KfsClient *client)
-    : m_fname(fname), m_fd(fd), m_client(client) {};
-
+    : fname(fname), fd(fd), m_client(client) {};
     virtual ~OpenFileDataQfs();
-
+    std::string fname;
+    int fd;
   private:
-    std::string m_fname;
-    int m_fd;
     KFS::KfsClient *const m_client;
   };
 
@@ -101,6 +100,10 @@ namespace Hypertable {
     virtual void debug(ResponseCallback *cb, int32_t command,
                        StaticBuffer &serialized_parameters);
   private:
+
+    /// Atomic counter for file descriptor assignment
+    static std::atomic<int> ms_next_fd;
+
     std::string m_host;
     int m_port;
     void report_error(ResponseCallback *cb, int error);

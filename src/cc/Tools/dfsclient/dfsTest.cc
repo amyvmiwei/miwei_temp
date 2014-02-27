@@ -103,9 +103,11 @@ namespace {
     sort(listing.begin(), listing.end());
 
     for (size_t i=0; i<listing.size(); i++) {
-      filestr << listing[i].length << " " << listing[i].name;
+      // Directory sizes are reported differently on various filesystems
       if (listing[i].is_dir)
-        filestr << "/";
+        filestr << "0 " << listing[i].name << "/";
+      else
+        filestr << listing[i].length << " " << listing[i].name;
       filestr << "\n";
     }
 

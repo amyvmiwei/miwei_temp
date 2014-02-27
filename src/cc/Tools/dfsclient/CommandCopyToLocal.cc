@@ -30,6 +30,8 @@ extern "C" {
 
 #include "CommandCopyToLocal.h"
 
+#include <iostream>
+
 using namespace std;
 using namespace Hypertable;
 using namespace DfsBroker;
@@ -86,8 +88,6 @@ void CommandCopyToLocal::run() {
     while (sync_handler.wait_for_reply(event_ptr)) {
       amount = Filesystem::decode_response_read_header(event_ptr, &offset,
                                                        &dst);
-      fseek(fp, offset, SEEK_SET);
-
       if (amount > 0) {
         if (fwrite(dst, amount, 1, fp) != 1)
           HT_THROW(Error::EXTERNAL, strerror(errno));
