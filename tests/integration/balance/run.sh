@@ -150,6 +150,7 @@ if [ -s errors.txt ] ; then
   exit 1
 fi
 
+kill_range_servers
 let iteration=0
 $HT_HOME/bin/ht metalog_dump /hypertable/servers/rs1/log/rsml | fgrep "load_acknowledged=false" > errors.txt
 $HT_HOME/bin/ht metalog_dump /hypertable/servers/rs2/log/rsml | fgrep "load_acknowledged=false" >> errors.txt
@@ -169,7 +170,6 @@ if [ -s errors.txt ] ; then
   exit 1
 fi
 
-kill_range_servers
 $HT_HOME/bin/clean-database.sh
 
 exit 0

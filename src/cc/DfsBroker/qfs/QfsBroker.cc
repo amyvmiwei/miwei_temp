@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -18,8 +18,14 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+#include <Common/Compat.h>
+#include "QfsBroker.h"
 
-#include "Common/Compat.h"
+#include <Common/Filesystem.h>
+#include <Common/System.h>
+
+#include <kfs/KfsClient.h>
+
 #include <cerrno>
 #include <cstring>
 #include <cstdlib>
@@ -33,19 +39,14 @@ extern "C" {
 #include <time.h>
 }
 
-#include "Common/Filesystem.h"
-#include "Common/FileUtils.h"
-#include "Common/System.h"
-
-#include "QfsBroker.h"
-#include <kfs/KfsClient.h>
-
 using namespace Hypertable;
 using namespace KFS;
 
+std::atomic<int> QfsBroker::ms_next_fd {};
+
 OpenFileDataQfs::~OpenFileDataQfs() {
-  HT_INFOF("close(%d) file: %s", m_fd, m_fname.c_str());
-  m_client->Close(m_fd);
+  HT_INFOF("close(%d) file: %s", fd, fname.c_str());
+  m_client->Close(fd);
 }
 
 QfsBroker::QfsBroker(PropertiesPtr &cfg)
@@ -59,19 +60,28 @@ QfsBroker::~QfsBroker() {
 }
 
 void QfsBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t flags, uint32_t bufsz) {
-  int fd = m_client->Open(fname, O_RDONLY);
-  if(fd < 0) {
-    HT_ERRORF("open(%s) failure (%d) - %s", fname, -fd, KFS::ErrorCodeToStr(fd).c_str());
-    report_error(cb, fd);
+  
+  if (flags & Filesystem::OPEN_FLAG_VERIFY_CHECKSUM) {
+    int status = m_client->VerifyDataChecksums(fname);
+    if (status < 0)
+      HT_WARNF("Checksum verification of %s failed - %s", fname,
+               KFS::ErrorCodeToStr(status).c_str());
+  }
+
+  int qfs_fd = m_client->Open(fname, O_RDONLY);
+  if (qfs_fd < 0) {
+    HT_ERRORF("open(%s) failure (%d) - %s", fname, -qfs_fd, KFS::ErrorCodeToStr(qfs_fd).c_str());
+    report_error(cb, qfs_fd);
   }
   else {
-    HT_INFOF("open(%s) = %d", fname, fd);
+    int fd = ++ms_next_fd;
+    HT_INFOF("open(%s) -> fd=%d, qfs_fd=%d", fname, fd, qfs_fd);
     struct sockaddr_in addr;
     cb->get_address(addr);
-    OpenFileDataQfsPtr fdata(new OpenFileDataQfs(fname, fd, m_client));
+    OpenFileDataQfsPtr fdata(new OpenFileDataQfs(fname, qfs_fd, m_client));
     m_open_file_map.create(fd, addr, fdata);
     if(bufsz)
-      m_client->SetIoBufferSize(fd, bufsz);
+      m_client->SetIoBufferSize(qfs_fd, bufsz);
     cb->response(fd);
   }
 
@@ -80,37 +90,49 @@ void QfsBroker::open(ResponseCallbackOpen *cb, const char *fname, uint32_t flags
 void QfsBroker::close(ResponseCallback *cb, uint32_t fd) {
   HT_DEBUGF("close(%d)", fd);
   m_open_file_map.remove(fd);
-  cb->response_ok();
+  int error;
+  if ((error = cb->response_ok()) != Error::OK)
+    HT_ERRORF("Problem sending response for close(fd=%d) - %s", (int)fd, Error::get_text(error));
 }
 
 void QfsBroker::create(ResponseCallbackOpen *cb, const char *fname, uint32_t flags, int32_t bufsz, int16_t replication, int64_t blksz) {
-  int fd;
+  int qfs_fd;
   if(flags & Filesystem::OPEN_FLAG_OVERWRITE) {
-    fd = m_client->Open(fname, O_CREAT | O_TRUNC | O_RDWR);
+    qfs_fd = m_client->Open(fname, O_CREAT | O_TRUNC | O_RDWR);
   }
   else
-    fd = m_client->Open(fname, O_CREAT|O_WRONLY);
+    qfs_fd = m_client->Open(fname, O_CREAT|O_WRONLY);
 
-  if(fd<0) {
-    HT_ERRORF("create(%s) failure (%d) - %s", fname, -fd, KFS::ErrorCodeToStr(fd).c_str());
-    report_error(cb, fd);
+  if (qfs_fd < 0) {
+    HT_ERRORF("create(%s) failure (%d) - %s", fname, -qfs_fd, KFS::ErrorCodeToStr(qfs_fd).c_str());
+    report_error(cb, qfs_fd);
   }
   else {
-    HT_INFOF("create(%s) = %d", fname, fd);
+    int fd = ++ms_next_fd;
+    HT_INFOF("open(%s) -> fd=%d, qfs_fd=%d", fname, fd, qfs_fd);
     struct sockaddr_in addr;
     cb->get_address(addr);
-    OpenFileDataQfsPtr fdata(new OpenFileDataQfs(fname, fd, m_client));
+    OpenFileDataQfsPtr fdata(new OpenFileDataQfs(fname, qfs_fd, m_client));
     m_open_file_map.create(fd, addr, fdata);
     if(bufsz)
-      m_client->SetIoBufferSize(fd, bufsz);
+      m_client->SetIoBufferSize(qfs_fd, bufsz);
     cb->response(fd);
   }
 }
 
 void QfsBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
-  chunkOff_t status = m_client->Seek(fd, offset);
+
+  OpenFileDataQfsPtr fdata;
+  if (!m_open_file_map.get(fd, fdata)) {
+    cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    return;
+  }
+
+  chunkOff_t status = m_client->Seek(fdata->fd, offset);
   if(status == (chunkOff_t)-1) {
-    HT_ERRORF("seek(%d,%lld) failure (%d) - %s", (int)fd, (Lld)offset, (int)-status, KFS::ErrorCodeToStr(status).c_str());
+    HT_ERRORF("seek(fd=%d,qfsFd=%d,%lld) failure (%d) - %s", (int)fd,
+              (int)fdata->fd, (Lld)offset, (int)-status,
+              KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);
   }
   else
@@ -118,31 +140,52 @@ void QfsBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
 }
 
 void QfsBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
-  uint64_t offset = m_client->Tell(fd);
+
+  OpenFileDataQfsPtr fdata;
+  if (!m_open_file_map.get(fd, fdata)) {
+    cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    return;
+  }
+
+  uint64_t offset = m_client->Tell(fdata->fd);
+
   StaticBuffer buf((size_t)amount, (size_t)HT_DIRECT_IO_ALIGNMENT);
-  int len = m_client->Read(fd, reinterpret_cast<char*>(buf.base), amount);
+  int len = m_client->Read(fdata->fd, reinterpret_cast<char*>(buf.base), amount);
   if(len<0) {
-    HT_ERRORF("read(%d,%lld) failure (%d) - %s", (int)fd, (Lld)amount, -len, KFS::ErrorCodeToStr(len).c_str());
+    HT_ERRORF("read(fd=%d,qfsFd=%d,%lld) failure (%d) - %s", (int)fd,
+              (int)fdata->fd, (Lld)amount, -len,
+              KFS::ErrorCodeToStr(len).c_str());
     report_error(cb, len);
   }
-  else
+  else {
+    buf.size = (uint32_t)len;
     cb->response(offset, buf);
+  }
 }
 
 void QfsBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount, const void *data, bool flush) {
-  uint64_t offset = m_client->Tell(fd);
-  ssize_t written = m_client->Write(fd, reinterpret_cast<const char*>(data), amount);
+
+  OpenFileDataQfsPtr fdata;
+  if (!m_open_file_map.get(fd, fdata)) {
+    cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    return;
+  }
+
+  uint64_t offset = m_client->Tell(fdata->fd);
+  ssize_t written = m_client->Write(fdata->fd, reinterpret_cast<const char*>(data), amount);
   if(written < 0) {
-    HT_ERRORF("append(%d,%lld,%s) failure (%d) - %s", (int)fd, (Lld)amount,
-	     flush ? "true" : "false", (int)-written, KFS::ErrorCodeToStr(written).c_str());
+    HT_ERRORF("append(fd=%d,qfsFd=%d,%lld,%s) failure (%d) - %s", (int)fd,
+              (int)fdata->fd, (Lld)amount, flush ? "flush" : "",
+              (int)-written, KFS::ErrorCodeToStr(written).c_str());
     report_error(cb, written);
   }
   else {
     if(flush) {
-      int error = m_client->Sync(fd);
+      int error = m_client->Sync(fdata->fd);
       if(error) {
-	HT_ERRORF("append(%d,%lld,%s) failure (%d) - %s", (int)fd, (Lld)amount,
-		 flush ? "true" : "false", -error, KFS::ErrorCodeToStr(error).c_str());
+        HT_ERRORF("append(fd=%d,qfsFd=%d,%lld,%s) failure (%d) - %s", (int)fd,
+                  (int)fdata->fd, (Lld)amount, flush ? "flush" : "",
+                  (int)-written, KFS::ErrorCodeToStr(written).c_str());
         return report_error(cb, error);
       }
     }
@@ -172,16 +215,35 @@ void QfsBroker::length(ResponseCallbackLength *cb, const char *fname, bool accur
   }
 }
 
-void QfsBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset, uint32_t amount, bool verify_checksum) {
+void QfsBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
+                      uint32_t amount, bool verify_checksum) {
+
+  OpenFileDataQfsPtr fdata;
+  if (!m_open_file_map.get(fd, fdata)) {
+    cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    return;
+  }
+
+  if (verify_checksum) {
+    int status = m_client->VerifyDataChecksums(fdata->fd);
+    if (status < 0)
+      HT_WARNF("Checksum verification of fd=%d (qfsFd=%d) failed - %s", fd,
+               fdata->fd, KFS::ErrorCodeToStr(status).c_str());
+  }
+
   StaticBuffer buf((size_t)amount, (size_t)HT_DIRECT_IO_ALIGNMENT);
-  ssize_t status = m_client->PRead(fd, offset, reinterpret_cast<char*>(buf.base), amount);
+  ssize_t status = m_client->PRead(fdata->fd, offset,
+                                   reinterpret_cast<char*>(buf.base), amount);
   if(status < 0) {
-    HT_ERRORF("pread(%d,%lld,%lld) failure (%d) - %s", (int)fd, (Lld)offset,
-	      (Lld)amount, (int)-status, KFS::ErrorCodeToStr(status).c_str());
+    HT_ERRORF("pread(fd=%d,qfsFd=%d,%lld,%lld) failure (%d) - %s", (int)fd,
+              (int)fdata->fd, (Lld)offset, (Lld)amount, (int)-status,
+              KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);
   }
-  else
+  else {
+    buf.size = (uint32_t)status;
     cb->response(offset, buf);
+  }
 }
 
 void QfsBroker::mkdirs(ResponseCallback *cb, const char *dname) {
@@ -205,10 +267,18 @@ void QfsBroker::rmdir(ResponseCallback *cb, const char *dname) {
 }
 
 void QfsBroker::flush(ResponseCallback *cb, uint32_t fd) {
-  int status = m_client->Sync(fd);
-  if(status < 0) {
-    HT_ERRORF("flush(%d) failure (%d) - %s", (int)fd, -status, KFS::ErrorCodeToStr(status).c_str());
 
+  OpenFileDataQfsPtr fdata;
+  if (!m_open_file_map.get(fd, fdata)) {
+    cb->error(Error::DFSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    return;
+  }
+
+  int status = m_client->Sync(fdata->fd);
+  if(status < 0) {
+    HT_ERRORF("flush(fd=%d,qfsFd=%d) failure (%d) - %s", (int)fd,
+              (int)fdata->fd, -status,
+              KFS::ErrorCodeToStr(status).c_str());
     report_error(cb, status);
   }
   else
@@ -224,7 +294,11 @@ void QfsBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
   for (std::vector<KfsFileAttr>::iterator it = result.begin();
        it != result.end(); ++it) {
     if(it->filename != "." && it->filename != "..") {
-      entry.name = it->filename;
+      entry.name.clear();
+      entry.name.append(it->filename);
+      entry.is_dir = it->isDirectory;
+      entry.length = (uint64_t)it->fileSize;
+      entry.last_modification_time = it->mtime.tv_sec;
       listing.push_back(entry);
     }
   }
