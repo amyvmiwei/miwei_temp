@@ -71,17 +71,8 @@ namespace {
     if(fd<0)
       return false;
 
-
-#if defined(__linux__)
-    void *vptr = 0;
-    HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
-    uint8_t *readbuf = (uint8_t *)vptr;
-#else
-    uint8_t *readbuf = new uint8_t [amount];
-#endif
-
-    StaticBuffer buf(readbuf, amount);
-    while((buf.size = src_file.sgetn(reinterpret_cast<char*>(readbuf), amount))) {
+    StaticBuffer buf(amount, HT_DIRECT_IO_ALIGNMENT);
+    while((buf.size = src_file.sgetn(reinterpret_cast<char*>(buf.base), amount))) {
       client->append(fd, buf);
     }
     client->close(fd);
@@ -100,25 +91,12 @@ namespace {
     if(!dst_file.is_open())
       return false;
 
-#if defined(__linux__)
-    void *vptr = 0;
-    HT_ASSERT(posix_memalign(&vptr, HT_DIRECT_IO_ALIGNMENT, amount) == 0);
-    uint8_t *readbuf = (uint8_t *)vptr;
-#else
-    uint8_t *readbuf = new uint8_t [amount];
-#endif
-
     int nread;
-    while((nread = client->read(fd, readbuf, amount)) > 0) {
-      dst_file << std::string(reinterpret_cast<const char*>(readbuf), nread);
+    StaticBuffer buf(amount, HT_DIRECT_IO_ALIGNMENT);
+    while((nread = client->read(fd, buf.base, amount)) > 0) {
+      dst_file << std::string(reinterpret_cast<const char*>(buf.base), nread);
     }
     client->close(fd);
-
-#if defined(__linux__)
-    free(readbuf);
-#else
-    delete[] readbuf;
-#endif
 
     return true;
   }
