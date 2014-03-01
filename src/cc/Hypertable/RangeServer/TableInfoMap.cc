@@ -103,7 +103,7 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
 
 
 
-void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log) {
+void TableInfoMap::promote_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log) {
   ScopedLock lock(m_mutex);
   StringSet linked_logs;
   int error;
@@ -149,7 +149,7 @@ void TableInfoMap::add_staged_range(const TableIdentifier *table, RangePtr &rang
   entities.push_back(Global::remove_ok_logs.get());
   Global::rsml_writer->record_state(entities);
 
-  (*iter).second->add_staged_range(range);
+  (*iter).second->promote_staged_range(range);
 }
 
 

@@ -1024,23 +1024,21 @@ RangeServer::replay_load_range(TableInfoMap &replay_map,
 void RangeServer::replay_log(TableInfoMap &replay_map,
                              CommitLogReaderPtr &log_reader) {
   BlockCompressionHeaderCommitLog header;
+  TableIdentifier table_id;
+  TableInfoPtr table_info;
+  Key key;
+  SerializedKey skey;
+  ByteString value;
+  RangePtr range;
+  String start_row, end_row;
+  unsigned long block_count = 0;
   uint8_t *base;
   size_t len;
-  TableIdentifier table_id;
-  DynamicBuffer dbuf;
-  const uint8_t *ptr, *end;
-  int64_t revision;
-  TableInfoPtr table_info;
-  SerializedKey key;
-  ByteString value;
-  uint32_t block_count = 0;
 
   while (log_reader->next((const uint8_t **)&base, &len, &header)) {
 
-    revision = header.get_revision();
-
-    ptr = base;
-    end = base + len;
+    const uint8_t *ptr = base;
+    const uint8_t *end = base + len;
 
     table_id.decode(&ptr, &len);
 
@@ -1048,47 +1046,56 @@ void RangeServer::replay_log(TableInfoMap &replay_map,
     if (!replay_map.lookup(table_id.id, table_info))
       continue;
 
-    dbuf.clear();
-    dbuf.ensure(table_id.encoded_length() + 12 + len);
-
-    dbuf.ptr += 4;  // skip size
-    encode_i64(&dbuf.ptr, revision);
-    table_id.encode(&dbuf.ptr);
-    base = dbuf.ptr;
+    bool pair_loaded = false;
 
     while (ptr < end) {
 
-      // extract the key
-      key.ptr = ptr;
-      ptr += key.length();
-      if (ptr > end)
-        HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding key");
+      if (!pair_loaded) {
+        // extract the key
+        skey.ptr = ptr;
+        key.load(skey);
+        ptr += skey.length();
+        if (ptr > end)
+          HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding key");
+        // extract the value
+        value.ptr = ptr;
+        ptr += value.length();
+        if (ptr > end)
+          HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
+        pair_loaded = true;
+      }
 
-      // extract the value
-      value.ptr = ptr;
-      ptr += value.length();
-      if (ptr > end)
-        HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
-
-      // Look for containing range, add to stop mods if not found
-      if (!table_info->includes_row(key.row()))
-        continue;
-
-      // add key/value pair to buffer
-      memcpy(dbuf.ptr, key.ptr, ptr-key.ptr);
-      dbuf.ptr += ptr-key.ptr;
+      while (pair_loaded) {
+        if (!table_info->find_containing_range(key.row, range, start_row, end_row)) {
+          pair_loaded = false;
+          continue;
+        }
+        Locker<Range> lock(*range);
+        do {
+          range->add(key, value);
+          if (ptr == end) {
+            pair_loaded = false;
+            break;
+          }
+          // extract the key
+          skey.ptr = ptr;
+          key.load(skey);
+          ptr += skey.length();
+          if (ptr > end)
+            HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding key");
+          // extract the value
+          value.ptr = ptr;
+          ptr += value.length();
+          if (ptr > end)
+            HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
+        } while (start_row.compare(key.row) < 0 && end_row.compare(key.row) >= 0);
+      }
 
     }
-
-    uint32_t block_size = dbuf.ptr - base;
-    base = dbuf.base;
-    encode_i32(&base, block_size);
-
-    replay_update(replay_map, dbuf.base, dbuf.fill());
     block_count++;
   }
 
-  HT_INFOF("Replayed %u blocks of updates from '%s'", block_count,
+  HT_INFOF("Replayed %lu blocks of updates from '%s'", block_count,
            log_reader->get_log_dir().c_str());
 }
 
@@ -1836,7 +1843,7 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       poll(0, 0, diff);
     }
 
-    m_live_map->add_staged_range(table, range, range_state->transfer_log);
+    m_live_map->promote_staged_range(table, range, range_state->transfer_log);
 
     HT_MAYBE_FAIL_X("user-load-range-4", !table->is_system());
     HT_MAYBE_FAIL_X("metadata-load-range-4", table->is_metadata());
@@ -2293,7 +2300,8 @@ void RangeServer::update_qualify_and_transform() {
 
           // Look for containing range, add to stop mods if not found
           if (!table_update->table_info->find_containing_range(row, range,
-                                                        start_row, end_row)) {
+                                                          start_row, end_row) ||
+              range->get_relinquish()) {
             if (uc->send_back.error != Error::RANGESERVER_OUT_OF_RANGE
                 && uc->send_back.count > 0) {
               uc->send_back.len = (mod - request->buffer.base) - uc->send_back.offset;
@@ -3445,99 +3453,6 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   HT_INFO("Exiting get_statistics()");
 
   return;
-}
-
-
-void
-RangeServer::replay_update(TableInfoMap &replay_map,
-                           const uint8_t *data, size_t len) {
-  TableIdentifier table_identifier;
-  TableInfoPtr table_info;
-  SerializedKey serkey;
-  ByteString bsvalue;
-  Key key;
-  const uint8_t *ptr = data;
-  const uint8_t *end = data + len;
-  const uint8_t *block_end;
-  uint32_t block_size;
-  size_t remaining = len;
-  const char *row;
-  String err_msg;
-  RangePtr range;
-  String start_row, end_row;
-
-  //HT_DEBUGF("replay_update - length=%ld", len);
-
-  try {
-
-    while (ptr < end) {
-
-      // decode key/value block size + revision
-      block_size = decode_i32(&ptr, &remaining);
-      decode_i64(&ptr, &remaining);
-
-      // decode table identifier
-      table_identifier.decode(&ptr, &remaining);
-
-      if (block_size > remaining)
-        HT_THROWF(Error::MALFORMED_REQUEST, "Block (size=%lu) exceeds EOM",
-                  (Lu)block_size);
-
-      block_end = ptr + block_size;
-
-      // Fetch table info
-      if (!replay_map.lookup(table_identifier.id, table_info))
-        HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
-                  "table info for table name='%s'",
-                  table_identifier.id);
-
-      while (ptr < block_end) {
-
-        row = SerializedKey(ptr).row();
-
-        // Look for containing range, add to stop mods if not found
-        if (!table_info->find_containing_range(row, range, start_row, end_row))
-          HT_THROWF(Error::RANGESERVER_RANGE_NOT_FOUND, "Unable to find "
-                    "range for row '%s'", row);
-
-        serkey.ptr = ptr;
-
-        while (ptr < block_end && (end_row.empty() || (strcmp(row, end_row.c_str()) <= 0))) {
-
-          // extract the key
-          ptr += serkey.length();
-
-          if (ptr > end)
-            HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding key");
-
-          bsvalue.ptr = ptr;
-          ptr += bsvalue.length();
-
-          if (ptr > end)
-            HT_THROW(Error::REQUEST_TRUNCATED, "Problem decoding value");
-
-          key.load(serkey);
-
-          {
-            Locker<Range> lock(*range);
-            range->add(key, bsvalue);
-          }
-          serkey.ptr = ptr;
-
-          if (ptr < block_end)
-            row = serkey.row();
-        }
-      }
-    }
-
-  }
-  catch (Exception &e) {
-    if (e.code() == Error::RANGESERVER_RANGE_NOT_FOUND)
-      HT_INFOF("Range not found - %s", e.what());
-    else
-      HT_ERROR_OUT << e << HT_END;
-    HT_THROW(e.code(), e.what());
-  }
 }
 
 
