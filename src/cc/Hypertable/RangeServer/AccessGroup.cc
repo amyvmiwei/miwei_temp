@@ -40,6 +40,7 @@
 #include <Common/md5.h>
 
 #include <algorithm>
+#include <cassert>
 #include <cstdlib>
 #include <cstring>
 #include <iterator>
@@ -141,6 +142,8 @@ void AccessGroup::update_schema(SchemaPtr &schema,
  * CellCache should be locked as well.
  */
 void AccessGroup::add(const Key &key, const ByteString value) {
+
+  assert(m_start_row.compare(key.row) < 0 && m_end_row.compare(key.row) >= 0);
 
   if (!m_dirty)
     m_dirty = true;

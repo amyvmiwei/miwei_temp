@@ -216,7 +216,6 @@ namespace Hypertable {
     void replay_load_range(TableInfoMap &replay_map,
                            MetaLogEntityRange *range_entity);
     void replay_log(TableInfoMap &replay_map, CommitLogReaderPtr &log_reader);
-    void replay_update(TableInfoMap &replay_map, const uint8_t *data, size_t len);
 
     void verify_schema(TableInfoPtr &, uint32_t generation, const TableSchemaMap *table_schemas=0);
     void transform_key(ByteString &bskey, DynamicBuffer *dest_bufp,

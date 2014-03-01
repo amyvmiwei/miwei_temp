@@ -62,7 +62,7 @@ namespace Hypertable {
    * condition we've introduced MetaLogEntityRemoveOkLogs which contains the
    * set of transfer logs that have been linked in and which may be safely
    * removed.  The MetaLogEntityRemoveOkLogs entity is modified and persisted
-   * atomically to the RSML with new Range entities by the add_staged_range()
+   * atomically to the RSML with new Range entities by the promote_staged_range()
    * method.  The get_ranges() method returns a consistent snapshot of the
    * current set of live ranges and the set of transfer logs in
    * MetaLogEntityRemoveOkLogs.
@@ -114,14 +114,14 @@ namespace Hypertable {
      *   - Adds <code>transfer_log</code> to Global::remove_ok_logs
      *   - Persists Global::remove_ok_logs and the range's metalog entity
      *     to the RSML
-     *   - Calls TableInfo::add_staged_range() to make the range object live
+     *   - Calls TableInfo::promote_staged_range() to make the range object live
      *
      * @param table %Table identifier
      * @param range %Range object
      * @param transfer_log Transfer log for <code>range</code>
      * @see stage_range
      */
-    void add_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log);
+    void promote_staged_range(const TableIdentifier *table, RangePtr &range, const char *transfer_log);
 
     /** Removes a table from the map
      * @param table_id %Table identifier string
@@ -152,13 +152,13 @@ namespace Hypertable {
      * condition we've introduced MetaLogEntityRemoveOkLogs which contains the
      * set of transfer logs that have been linked in and which may be safely
      * removed.  The MetaLogEntityRemoveOkLogs entity is modified and persisted
-     * atomically to the RSML with new Range entities by the add_staged_range()
+     * atomically to the RSML with new Range entities by the promote_staged_range()
      * method.  This method returns a consistent snapshot of the current set of
      * live ranges and the set of transfer logs in MetaLogEntityRemoveOkLogs.
      * @param ranges Output parameter to hold RangeData objects
      * @param remove_ok_logs Pointer to string set to hold logs that can be
      * removed
-     * @see add_staged_range
+     * @see promote_staged_range
      */
     void get_ranges(Ranges &ranges, StringSet *remove_ok_logs=0);
 
@@ -173,7 +173,7 @@ namespace Hypertable {
     /** Merges in another map.
      * This method locks #m_mutex and calls merge_unlocked().  It should only
      * be called for ranges that have already been persisted into the RSML
-     * from a previous call to add_staged_range() such as during the loading
+     * from a previous call to promote_staged_range() such as during the loading
      * of ranges from the RSML at system startup.
      * @param other Map to merge in
      */
