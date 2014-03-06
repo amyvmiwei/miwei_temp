@@ -630,3 +630,9 @@ INSERT INTO CounterTest VALUES ("r", "f", "-1");
 INSERT INTO CounterTest VALUES ("r", "f", "-1");
 INSERT INTO CounterTest VALUES ("r", "f", "-1");
 SELECT * FROM CounterTest;
+# issue 1202
+CREATE NAMESPACE "/RenameTest" IF NOT EXISTS;
+USE "/RenameTest";
+CREATE TABLE foo (a);
+CREATE TABLE bar (a);
+RENAME TABLE foo TO bar;
