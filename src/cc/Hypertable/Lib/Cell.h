@@ -47,6 +47,11 @@ namespace Hypertable {
       if (row_key[0] == (char)0xff && row_key[1] == (char)0xff)
         HT_THROW(Error::BAD_KEY, "Invalid row key - cannot start with "
                  "character sequence 0xff 0xff");
+
+      if (timestamp == TIMESTAMP_NULL)
+        HT_THROWF(Error::BAD_KEY,
+                  "Invalid timestamp %lld (reserved for Hypertable use)",
+                  (Lld)TIMESTAMP_NULL);
     }
 
     const char *row_key;
