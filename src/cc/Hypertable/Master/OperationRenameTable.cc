@@ -75,8 +75,16 @@ void OperationRenameTable::execute() {
   switch (state) {
 
   case OperationState::INITIAL:
+
+    // Verify old name refers to an existing table
     if (!Utility::table_exists(m_context, m_old_name, m_id)) {
       complete_error(Error::TABLE_NOT_FOUND, m_old_name);
+      return;
+    }
+
+    // Verify new name does not refer to an existing table
+    if (Utility::table_exists(m_context, m_new_name, id)) {
+      complete_error(Error::NAME_ALREADY_IN_USE, m_new_name);
       return;
     }
 

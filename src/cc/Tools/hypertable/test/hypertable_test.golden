@@ -2806,3 +2806,10 @@ INSERT INTO CounterTest VALUES ("r", "f", "-1");
 INSERT INTO CounterTest VALUES ("r", "f", "-1");
 SELECT * FROM CounterTest;
 r	f	-1
+# issue 1202
+CREATE NAMESPACE "/RenameTest" IF NOT EXISTS;
+USE "/RenameTest";
+CREATE TABLE foo (a);
+CREATE TABLE bar (a);
+RENAME TABLE foo TO bar;
+Error: MasterClient operation rename_table(old='RenameTest/foo', new='RenameTest/bar') failed - HYPERTABLE name already in use
