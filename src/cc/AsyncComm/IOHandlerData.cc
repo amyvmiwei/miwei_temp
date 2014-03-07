@@ -653,6 +653,10 @@ bool IOHandlerData::handle_write_readiness() {
 	HT_INFOF("setsockopt(SO_RCVBUF) failed - %s", strerror(errno));
       }
 
+      int one = 1;
+      if (setsockopt(m_sd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) < 0)
+        HT_ERRORF("setsockopt(SO_KEEPALIVE) failure: %s", strerror(errno));
+
       if (getsockname(m_sd, (struct sockaddr *)&m_local_addr, &name_len) < 0) {
 	HT_INFOF("getsockname(%d) failed - %s", m_sd, strerror(errno));
 	break;

@@ -125,6 +125,9 @@ bool IOHandlerAccept::handle_incoming_connection() {
       HT_WARNF("setsockopt(SO_NOSIGPIPE) failure: %s", strerror(errno));
 #endif
 
+    if (setsockopt(m_sd, SOL_SOCKET, SO_KEEPALIVE, &one, sizeof(one)) < 0)
+      HT_ERRORF("setsockopt(SO_KEEPALIVE) failure: %s", strerror(errno));
+
     int bufsize = 4*32768;
 
     if (setsockopt(sd, SOL_SOCKET, SO_SNDBUF, (char *)&bufsize, sizeof(bufsize)) < 0)
