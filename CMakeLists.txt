@@ -23,7 +23,7 @@ project(HYPERTABLE)
 set(VERSION_MAJOR "0")
 set(VERSION_MINOR "9")
 set(VERSION_MICRO "7")
-set(VERSION_PATCH "16")
+set(VERSION_PATCH "17")
 #set(VERSION_MISC_SUFFIX  "pre6")
 
 # cmake behavior compatibility

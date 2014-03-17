@@ -1,3 +1,19 @@
+Version 0.9.7.17:
+(2014-03-17)
+
+    Set SO_KEEPALIVE on TCP sockets
+    issue 1202: If target of RENAME TABLE exists, terminate operation with error
+    Throw exception on invalid key timestamp (TIMESTAMP_NULL) in TableMutatorAsync
+    Upgraded to CDH4.6
+    issue 1193: Fixed bug in RangeServer::log_replay()
+    Added package_gcc.bash to src-utils
+    Fixed alloc/dealloc mismatch in Hypertable-shell-ldi-select test
+    Fixed QFS broker
+    Reverted back to single cell cache in access group
+    Cleaned up access group garbage tracking logic
+    Fixed potential loss of transfer log during failover
+    Fixed missing dependency problem
+
 Version 0.9.7.16:
 (2014-02-16)
 
