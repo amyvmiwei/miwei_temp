@@ -50,9 +50,6 @@ namespace Hypertable {
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
     virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
-    virtual bool remove_explicitly() { return true; }
-    virtual int32_t remove_approval_mask() { return 3; }
-
     String get_location() { return m_destination; }
     void set_destination(const String &new_dest) { m_destination=new_dest; }
 

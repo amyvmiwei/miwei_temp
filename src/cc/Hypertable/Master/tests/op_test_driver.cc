@@ -113,7 +113,7 @@ namespace {
                                               entities);
     for (size_t i=0; i<entities.size(); i++) {
       if ((operation = dynamic_cast<Operation *>(entities[i].get()))) {
-	if (operation->remove_explicitly())
+	if (operation->get_remove_approval_mask())
 	  context->reference_manager->add(operation);
         context->op->add_operation(operation);
       }
@@ -141,7 +141,7 @@ namespace {
 
     for (size_t i = 0; i < entities.size(); i++) {
       if ((operation = dynamic_cast<Operation *>(entities[i].get()))) {
-        if (operation->remove_explicitly())
+        if (operation->get_remove_approval_mask())
           context->reference_manager->add(operation);
         operations.push_back(operation);
       }

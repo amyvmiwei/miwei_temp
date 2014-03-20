@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -39,6 +39,7 @@ using namespace Hyperspace;
 OperationInitialize::OperationInitialize(ContextPtr &context)
   : Operation(context, MetaLog::EntityType::OPERATION_INITIALIZE) {
   m_obstructions.insert(Dependency::INIT);
+  set_remove_approval_mask(0x01);
 }
 
 OperationInitialize::OperationInitialize(ContextPtr &context,
@@ -258,6 +259,7 @@ void OperationInitialize::encode_state(uint8_t **bufp) const {
 }
 
 void OperationInitialize::decode_state(const uint8_t **bufp, size_t *remainp) {
+  set_remove_approval_mask(0x01);
   m_metadata_root_location = Serialization::decode_vstr(bufp, remainp);
   m_metadata_secondlevel_location = Serialization::decode_vstr(bufp, remainp);
   m_table.decode(bufp, remainp);
@@ -268,6 +270,7 @@ void OperationInitialize::decode_state(const uint8_t **bufp, size_t *remainp) {
 }
 
 void OperationInitialize::decode_result(const uint8_t **bufp, size_t *remainp) {
+  set_remove_approval_mask(0x01);
   // We need to do this here because we don't know the
   // state until we're decoding and if the state is COMPLETE,
   // this method is called instead of decode_state

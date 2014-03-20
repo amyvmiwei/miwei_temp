@@ -54,6 +54,7 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context, const String &source
   initialize_dependencies();
   m_hash_code = Utility::range_hash_code(m_table, m_range,
           String("OperationMoveRange-") + m_source);
+  set_remove_approval_mask(0x03);
 }
 
 OperationMoveRange::OperationMoveRange(ContextPtr &context,
@@ -66,6 +67,7 @@ OperationMoveRange::OperationMoveRange(ContextPtr &context, EventPtr &event)
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
   decode_request(&ptr, &remaining);
+  set_remove_approval_mask(0x03);
 }
 
 void OperationMoveRange::initialize_dependencies() {
@@ -271,6 +273,7 @@ void OperationMoveRange::encode_state(uint8_t **bufp) const {
 }
 
 void OperationMoveRange::decode_state(const uint8_t **bufp, size_t *remainp) {
+  set_remove_approval_mask(0x03);
   decode_request(bufp, remainp);
   m_destination = Serialization::decode_vstr(bufp, remainp);
 }
@@ -291,6 +294,7 @@ void OperationMoveRange::decode_request(const uint8_t **bufp, size_t *remainp) {
 }
 
 void OperationMoveRange::decode_result(const uint8_t **bufp, size_t *remainp) {
+  set_remove_approval_mask(0x03);
   Operation::decode_result(bufp, remainp);
 }
 

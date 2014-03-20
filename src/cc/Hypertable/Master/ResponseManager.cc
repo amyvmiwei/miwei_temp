@@ -153,7 +153,7 @@ void ResponseManager::add_operation(OperationPtr &operation) {
   ResponseManagerContext::DeliveryIdentifierIndex &delivery_identifier_index = m_context->delivery_list.get<2>();
   ResponseManagerContext::DeliveryIdentifierIndex::iterator iter;
 
-  HT_ASSERT(!operation->remove_explicitly());
+  HT_ASSERT(operation->get_remove_approval_mask() == 0);
 
   if ((iter = delivery_identifier_index.find(operation->id())) == delivery_identifier_index.end())
     m_context->expirable_ops.push_back(ResponseManagerContext::OperationRec(operation));

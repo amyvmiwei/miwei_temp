@@ -386,38 +386,33 @@ namespace Hypertable {
      */
     HiResTime expiration_time() { ScopedLock lock(m_mutex); return m_expiration_time; }
 
-    /** Indicates if operation is to be removed explicitly.
-     * By default, operations are implicitly removed (deleted and removed from MML)
-     * when they enter the state OperationState::COMPLETE.  This method can be
-     * overridden to return true, indicating that the operation won't be removed
-     * when it enters the state OperationState::COMPLETE, but will be removed
-     * explicitly.  This method is used in conjunction with remove_approval_mask(),
-     * remove_approval_add(), and remove_if_ready().
-     * @return <i>true</i> if operation is to be removed explicitly, <i>false</i>
-     * otherwise.
-     */
-    virtual bool remove_explicitly() { return false; }
+    /// Sets the remove approvals bit mask.
+    /// @param mask Bitmask to use as remove approvals mask.
+    /// @see remove_approval_add, get_remove_approval_mask
+    void set_remove_approval_mask(uint16_t mask) {
+      ScopedLock lock(m_mutex);
+      m_remove_approval_mask = mask;
+    }
 
-    /** Returns remove approval bitmask.
-     * This method is used for operations that are to be removed explicitly and
-     * returns a bitmask indicating the bits in #m_remove_approvals that
-     * need to be set before the operation can be safely removed.
-     * @see remove_explicitly, remove_approval_add, remove_if_ready
-     * @return remove approval bitmask
-     */
-    virtual int32_t remove_approval_mask() { return 0; }
+    /// Gets the remove approvals bit mask
+    /// @return The remove approvals bit mask
+    /// @see remove_approval_add, set_remove_approval_mask
+    uint16_t get_remove_approval_mask() {
+      ScopedLock lock(m_mutex);
+      return m_remove_approval_mask;
+    }
 
-    /** Sets #m_remove_approvals bits.
+    /** Sets remove approval bits.
      * This method is used for operations that are to be removed explicitly.
      * It sets bits in #m_remove_approvals by bitwise OR'ing it with
      * <code>approval</code>.  Once the bits in #m_remove_approvals are set such
      * that #m_remove_approvals is equal to those returned by
-     * remove_approval_mask(), the operation can be safely removed.
-     * @see remove_explicitly, remove_approval_mask, remove_if_ready
+     * #m_remove_approval_mask, the operation can be safely removed.
+     * @see get_remove_approval_mask, set_remove_approval_mask, remove_if_ready
      * @param approval Integer flag indicating bits to be set in #m_remove_approvals
      */
-    void remove_approval_add(int32_t approval) {
-      ScopedLock lock(m_remove_approval_mutex);
+    void remove_approval_add(uint16_t approval) {
+      ScopedLock lock(m_mutex);
       m_remove_approvals |= approval;
     }
 
@@ -462,27 +457,28 @@ namespace Hypertable {
 
     /** Sets the #m_ephemeral flag to <i>true</i>. */
     void set_ephemeral() {
+      ScopedLock lock(m_mutex);
       m_ephemeral = true;
     }
 
   protected:
-    Mutex m_remove_approval_mutex;
     ContextPtr m_context;
     EventPtr m_event;
-    int32_t m_state;
-    int32_t m_error;
-    int32_t m_remove_approvals;
-    int32_t m_original_type;
+    int32_t m_state {OperationState::INITIAL};
+    int32_t m_error {};
+    uint16_t m_remove_approvals {};
+    uint16_t m_remove_approval_mask {};
+    int32_t m_original_type {};
     String m_error_msg;
 
     /// Version of serialized operation
-    uint16_t m_decode_version;
+    uint16_t m_decode_version {};
 
-    bool m_unblock_on_exit;
-    bool m_blocked;
+    bool m_unblock_on_exit {};
+    bool m_blocked {};
 
     /// Indicates if operation is ephemeral and does not get persisted to MML
-    bool m_ephemeral;
+    bool m_ephemeral {};
 
     // Expiration time (used by ResponseManager)
     HiResTime m_expiration_time;

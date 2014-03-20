@@ -306,7 +306,7 @@ int main(int argc, char **argv) {
     foreach_ht (MetaLog::EntityPtr &entity, entities) {
       operation = dynamic_cast<Operation *>(entity.get());
       if (operation) {
-        if (operation->remove_explicitly())
+        if (operation->get_remove_approval_mask())
           context->reference_manager->add(operation);
         // master was interrupted in the middle of rangeserver failover
         if (dynamic_cast<OperationRecover *>(operation.get())) {

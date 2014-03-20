@@ -75,7 +75,7 @@ void OperationProcessor::add_operation(OperationPtr &operation) {
     m_context.current_iter = m_context.current.end();
     m_context.cond.notify_all();
   }
-  else if (!operation->remove_explicitly())
+  else if (operation->get_remove_approval_mask() == 0)
     m_context.master_context->response_manager->add_operation(operation);
 
 }
@@ -92,7 +92,7 @@ void OperationProcessor::add_operations(std::vector<OperationPtr> &operations) {
       add_operation_internal(operations[i]);
       added = true;
     }
-    else if (!operations[i]->remove_explicitly())
+    else if (operations[i]->get_remove_approval_mask() == 0)
       m_context.master_context->response_manager->add_operation(operations[i]);
   }
 
@@ -665,7 +665,7 @@ void OperationProcessor::retire_operation(Vertex v, OperationPtr &operation) {
   if (operation->is_perpetual())
     m_context.perpetual_ops.insert(operation);
   else {
-    if (!operation->remove_explicitly() &&
+    if (operation->get_remove_approval_mask() == 0 &&
         operation->get_state() == OperationState::COMPLETE)
       m_context.master_context->response_manager->add_operation(operation);
   }

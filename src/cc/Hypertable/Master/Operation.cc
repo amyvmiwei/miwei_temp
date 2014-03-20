@@ -56,9 +56,7 @@ namespace Hypertable {
 }
 
 Operation::Operation(ContextPtr &context, int32_t type)
-  : MetaLog::Entity(type), m_context(context), m_state(OperationState::INITIAL),
-    m_error(0), m_remove_approvals(0), m_original_type(0), m_decode_version(0),
-    m_unblock_on_exit(false), m_blocked(false), m_ephemeral(false) {
+  : MetaLog::Entity(type), m_context(context) {
   int32_t timeout = m_context->props->get_i32("Hypertable.Request.Timeout");
   m_expiration_time.sec = time(0) + timeout/1000;
   m_expiration_time.nsec = (timeout%1000) * 1000000LL;
@@ -66,20 +64,14 @@ Operation::Operation(ContextPtr &context, int32_t type)
 }
 
 Operation::Operation(ContextPtr &context, EventPtr &event, int32_t type)
-  : MetaLog::Entity(type), m_context(context), m_event(event),
-    m_state(OperationState::INITIAL), m_error(0), m_remove_approvals(0),
-    m_original_type(0),  m_decode_version(0), m_unblock_on_exit(false),
-    m_blocked(false), m_ephemeral(false) {
+  : MetaLog::Entity(type), m_context(context), m_event(event) {
   m_expiration_time.sec = time(0) + m_event->header.timeout_ms/1000;
   m_expiration_time.nsec = (m_event->header.timeout_ms%1000) * 1000000LL;
   m_hash_code = (int64_t)header.id;
 }
 
 Operation::Operation(ContextPtr &context, const MetaLog::EntityHeader &header_)
-  : MetaLog::Entity(header_), m_context(context),
-    m_state(OperationState::INITIAL), m_error(0), m_remove_approvals(0),
-    m_original_type(0), m_decode_version(0), m_unblock_on_exit(false),
-    m_blocked(false), m_ephemeral(false) {
+  : MetaLog::Entity(header_), m_context(context) {
   m_hash_code = (int64_t)header.id;
 }
 
@@ -87,6 +79,7 @@ void Operation::display(std::ostream &os) {
 
   os << " state=" << OperationState::get_text(m_state);
   os << " remove_approvals=" << m_remove_approvals;
+  os << " remove_approval_mask=" << m_remove_approval_mask;
   if (m_state == OperationState::COMPLETE) {
     os << " [" << Error::get_text(m_error) << "] ";
     if (m_error != Error::OK)
@@ -158,7 +151,8 @@ void Operation::encode(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_state);
   Serialization::encode_i64(bufp, m_expiration_time.sec);
   Serialization::encode_i32(bufp, m_expiration_time.nsec);
-  Serialization::encode_i32(bufp, m_remove_approvals);
+  Serialization::encode_i16(bufp, m_remove_approvals);
+  Serialization::encode_i16(bufp, m_remove_approval_mask);
   if (m_state == OperationState::COMPLETE) {
     Serialization::encode_i64(bufp, m_hash_code);
     encode_result(bufp);
@@ -189,8 +183,10 @@ void Operation::decode(const uint8_t **bufp, size_t *remainp,
   m_state = Serialization::decode_i32(bufp, remainp);
   m_expiration_time.sec = Serialization::decode_i64(bufp, remainp);
   m_expiration_time.nsec = Serialization::decode_i32(bufp, remainp);
-  if (m_original_type == 0 || (m_original_type & 0xF0000L) > 0x20000L)
-    m_remove_approvals = Serialization::decode_i32(bufp, remainp);
+  if (m_original_type == 0 || (m_original_type & 0xF0000L) > 0x20000L) {
+    m_remove_approvals = Serialization::decode_i16(bufp, remainp);
+    m_remove_approval_mask = Serialization::decode_i16(bufp, remainp);
+  }
   if (m_state == OperationState::COMPLETE) {
     m_hash_code = Serialization::decode_i64(bufp, remainp);
     decode_result(bufp, remainp);
@@ -240,13 +236,13 @@ void Operation::decode_result(const uint8_t **bufp, size_t *remainp) {
 }
 
 bool Operation::remove_if_ready() {
-  ScopedLock lock(m_remove_approval_mutex);
-  HT_ASSERT(remove_explicitly());
-  if (m_remove_approvals == remove_approval_mask()) {
-    m_context->mml_writer->record_removal(this);
-    return true;
+  {
+    ScopedLock lock(m_mutex);
+    if (m_remove_approvals != m_remove_approval_mask)
+      return false;
   }
-  return false;
+  m_context->mml_writer->record_removal(this);
+  return true;
 }
 
 void Operation::complete_error(int error, const String &msg) {
@@ -283,17 +279,14 @@ void Operation::complete_ok(MetaLog::Entity *additional) {
     m_dependencies.clear();
     m_obstructions.clear();
     m_exclusivities.clear();
-  }
-  {
-    ScopedLock lock(m_remove_approval_mutex);
-    if (remove_explicitly() && m_remove_approvals == remove_approval_mask()) {
+    if (m_remove_approval_mask && m_remove_approvals == m_remove_approval_mask) {
       m_context->reference_manager->remove(this);
       mark_for_removal();
     }
-  }
-  if (m_ephemeral) {
-    HT_ASSERT(additional == 0);
-    return;
+    if (m_ephemeral) {
+      HT_ASSERT(additional == 0);
+      return;
+    }
   }
   std::vector<MetaLog::Entity *> entities;
   entities.push_back(this);
