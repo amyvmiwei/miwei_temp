@@ -26,6 +26,8 @@
  */
 
 #include <Common/Compat.h>
+#include "ClusterId.h"
+
 #include <Common/Config.h>
 #include <Common/DynamicBuffer.h>
 #include <Common/InetAddr.h>
@@ -33,7 +35,9 @@
 #include <Common/SystemInfo.h>
 #include <Common/md5.h>
 
-#include "ClusterId.h"
+extern "C" {
+#include <poll.h>
+}
 
 using namespace Hyperspace;
 using namespace Hypertable;
@@ -53,19 +57,29 @@ ClusterId::ClusterId(Hyperspace::SessionPtr &hyperspace,
   handle = hyperspace->open(toplevel_dir + "/master",
                             OPEN_FLAG_READ|OPEN_FLAG_WRITE);
 
-  try {
-    // get the "cluster_id" attribute
-    DynamicBuffer buf;
-    hyperspace->attr_get(handle, "cluster_id", buf);
-    String cluster_id((const char *)buf.base, buf.fill());
-    id = (uint64_t)strtoull(cluster_id.c_str(), 0, 0);
-    return;
-  }
-  catch (Exception &e) {
-    // attribute not found? then the cluster ID was not yet assigned
-    if (e.code() != Error::HYPERSPACE_ATTR_NOT_FOUND ||
-        !generate_if_not_found)
+  size_t retry_count = 12;
+
+  while (true) {
+    try {
+      // get the "cluster_id" attribute
+      DynamicBuffer buf;
+      hyperspace->attr_get(handle, "cluster_id", buf);
+      String cluster_id((const char *)buf.base, buf.fill());
+      id = (uint64_t)strtoull(cluster_id.c_str(), 0, 0);
+      return;
+    }
+    catch (Exception &e) {
+      if (e.code() == Error::HYPERSPACE_ATTR_NOT_FOUND) {
+        if (generate_if_not_found)
+          break;
+        if (--retry_count) {
+          HT_INFO("Problem reading cluster ID from Hyperspace, will retry in 10 seconds ...");
+          poll(0, 0, 10000);
+          continue;
+        }
+      }
       HT_THROW2(e.code(), e, "Problem reading cluster ID from Hyperspace");
+    }
   }
 
   // Generate new cluster ID
