@@ -28,6 +28,7 @@ extern "C" {
 #include "Common/Config.h"
 #include "Common/StringExt.h"
 
+#include "IndexTables.h"
 #include "Key.h"
 #include "TableMutatorAsync.h"
 #include "ResultCallback.h"
@@ -177,74 +178,17 @@ TableMutatorAsync::update_with_index(Key &key, const void *value,
   if (key.flag != FLAG_INSERT)
     return;
 
-  // now create the key for the index
-  KeySpec k;
-  k.timestamp = key.timestamp;
-  k.flag = key.flag;
-  k.column_family = "v1";
+  TableMutatorAsync *value_index_mutator = 0;
+  TableMutatorAsync *qualifier_index_mutator = 0;
 
-  // every \t in the original row key gets escaped
-  const char *escaped_row;
-  const char *escaped_qualifier;
-  size_t escaped_row_len;
-  size_t escaped_qualifier_len;
-  LoadDataEscape escape_row;
-  LoadDataEscape escape_qualifier;
-  LoadDataEscape escape_value;
+  if (cf->has_index)
+    value_index_mutator = m_index_mutator.get();
 
-  escape_row.escape(key.row, key.row_len, &escaped_row, &escaped_row_len);
-  escape_qualifier.escape(key.column_qualifier, key.column_qualifier_len,
-                          &escaped_qualifier, &escaped_qualifier_len);
+  if (cf->has_qualifier_index)
+    qualifier_index_mutator = m_qualifier_index_mutator.get();
 
-  // in a normal (non-qualifier) index the format of the new row
-  // key is "<value>\t<qualifier>\t<row>"
-  //
-  // if value has a 0 byte then we also have to escape it
-  if (cf->has_index) {
-    size_t escaped_value_len;
-    const char *escaped_value;
-    escape_value.escape((const char *)value, (size_t)value_len, &escaped_value, &escaped_value_len);
-    //std::cout << escaped_value << std::endl;
-    StaticBuffer sb(4 + escaped_value_len + escaped_qualifier_len + escaped_row_len + 3);
-    char *p = (char *)sb.base;
-    sprintf(p, "%d,", (int)key.column_family_code);
-    p     += strlen(p);
-    memcpy(p, escaped_value, escaped_value_len);
-    p     += escaped_value_len;
-    *p++  = '\t';
-    memcpy(p, escaped_qualifier, escaped_qualifier_len);
-    p     += escaped_qualifier_len;
-    *p++  = '\t';
-    memcpy(p, escaped_row, escaped_row_len);
-    p     += escaped_row_len;
-    *p++  = '\0';
-    k.row = sb.base;
-    k.row_len = p - 1 - (const char *)sb.base; /* w/o the terminating zero */
-
-    // and insert it
-    m_index_mutator->set(k, 0, 0);
-  }
-
-  // in a qualifier index the format of the new row key is "qualifier\trow"
-  if (cf->has_qualifier_index) {
-    StaticBuffer sb(4 + key.column_qualifier_len + escaped_row_len + 2);
-    char *p = (char *)sb.base;
-    sprintf(p, "%d,", (int)key.column_family_code);
-    p += strlen(p);
-    if (key.column_qualifier_len) {
-      memcpy(p, key.column_qualifier, key.column_qualifier_len);
-      p += key.column_qualifier_len;
-    }
-    *p++  = '\t';
-    memcpy(p, escaped_row, escaped_row_len);
-    p += escaped_row_len;
-    *p++  = '\0';
-    k.row = sb.base;
-    k.row_len = p - 1 - (const char *)sb.base; /* w/o the terminating zero */
-
-    // and insert it
-    m_qualifier_index_mutator->set(k, 0, 0);
-  }
+  IndexTables::add(key, key.flag, value, value_len,
+                   value_index_mutator, qualifier_index_mutator);
 }
 
 void

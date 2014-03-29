@@ -20,12 +20,15 @@
  */
 
 #include "Common/Compat.h"
-#include "Common/Filesystem.h"
-#include "Common/Config.h"
-#include "Hypertable/Lib/LoadDataEscape.h"
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/ResultCallback.h"
 #include "IndexUpdater.h"
+
+#include <Hypertable/Lib/IndexTables.h>
+#include <Hypertable/Lib/LoadDataEscape.h>
+#include <Hypertable/Lib/ResultCallback.h>
+#include <Hypertable/Lib/Schema.h>
+
+#include <Common/Filesystem.h>
+#include <Common/Config.h>
 
 namespace Hypertable {
 
@@ -68,89 +71,23 @@ IndexUpdater::IndexUpdater(SchemaPtr &primary_schema, TablePtr index_table,
 
 void IndexUpdater::purge(const Key &key, const ByteString &value)
 {
-  const uint8_t *dptr = value.ptr;
-  size_t value_len = Serialization::decode_vi32(&dptr);
+  const uint8_t *vptr = value.ptr;
+  size_t value_len = Serialization::decode_vi32(&vptr);
 
   HT_ASSERT(key.column_family_code != 0);
 
+  TableMutatorAsync *value_index_mutator = 0;
+  TableMutatorAsync *qualifier_index_mutator = 0;
+
   try {
-    if (m_index_map[key.column_family_code]) {
-      // create the key for the index
-      KeySpec k;
-      k.timestamp = key.timestamp;
-      k.flag = FLAG_DELETE_ROW;
-      k.column_family = "v1";
+    if (m_index_map[key.column_family_code])
+      value_index_mutator = m_index_mutator;
+    if (m_qualifier_index_map[key.column_family_code])
+      qualifier_index_mutator = m_qualifier_index_mutator;
 
-      // every \t in the original row key gets escaped
-      const char *row;
-      size_t rowlen;
-      LoadDataEscape lde, ldev;
-      lde.escape(key.row, key.row_len, &row, &rowlen);
+    IndexTables::add(key, FLAG_DELETE_CELL_VERSION, vptr, value_len,
+                     value_index_mutator, qualifier_index_mutator);
 
-      // also escape the value if it contains \0
-      const char *val_ptr = (const char *)dptr;
-      for (const char *v = val_ptr; v < val_ptr + value_len; v++) {
-        if (*v == '\0') {
-          const char *outp;
-          ldev.escape(val_ptr, (size_t)value_len, 
-                      &outp, (size_t *)&value_len);
-          dptr = (const uint8_t *)outp;
-          break;
-        }
-      }
-
-      // in a normal (non-qualifier) index the format of the new row
-      // key is "value\trow"
-      StaticBuffer sb(4 + value_len + rowlen + 1 + 1);
-      char *p = (char *)sb.base;
-      sprintf(p, "%d,", (int)key.column_family_code);
-      p     += strlen(p);
-      memcpy(p, dptr, value_len);
-      p     += value_len;
-      *p++  = '\t';
-      memcpy(p, row, rowlen);
-      p     += rowlen;
-      *p++  = '\0';
-      k.row = sb.base;
-      k.row_len = p - 1 - (const char *)sb.base; /* w/o the terminating zero */
-
-      // and insert it
-      m_index_mutator->set_delete(k);
-    }
-
-    if (m_qualifier_index_map[key.column_family_code]) {
-      // create the key for the index
-      KeySpec k;
-      k.timestamp = key.timestamp;
-      k.flag = FLAG_DELETE_ROW;
-      k.column_family = "v1";
-
-      // every \t in the original row key gets escaped
-      const char *row;
-      size_t rowlen;
-      LoadDataEscape lde;
-      lde.escape(key.row, key.row_len, &row, &rowlen);
-
-      // in a qualifier index the format of the new row key is "qualifier\trow"
-      size_t qlen = key.column_qualifier ? strlen(key.column_qualifier) : 0;
-      StaticBuffer sb(4 + qlen + rowlen + 1 + 1);
-      char *p = (char *)sb.base;
-      sprintf(p, "%d,", (int)key.column_family_code);
-      p     += strlen(p);
-      if (qlen) {
-        memcpy(p, key.column_qualifier, qlen);
-        p   += qlen;
-      }
-      *p++  = '\t';
-      memcpy(p, row, rowlen);
-      p     += rowlen;
-      *p++  = '\0';
-      k.row = sb.base;
-      k.row_len = p - 1 - (const char *)sb.base; /* w/o the terminating zero */
-
-      // and insert it
-      m_qualifier_index_mutator->set_delete(k);
-    }
   }
   // log errors, but don't re-throw them; otherwise the whole compaction 
   // will stop
@@ -158,6 +95,8 @@ void IndexUpdater::purge(const Key &key, const ByteString &value)
     HT_ERROR_OUT << e << HT_END;
   }
 }
+
+
 
 IndexUpdater *IndexUpdaterFactory::create(const String &table_id,
                     SchemaPtr &schema, bool has_index, bool has_qualifier_index)

@@ -45,6 +45,7 @@ Future.cc
 HqlCommandInterpreter.cc
 HqlHelpText.cc
 HqlInterpreter.cc
+IndexTables.cc
 IntervalScannerAsync.cc
 Key.cc
 KeySpec.cc
