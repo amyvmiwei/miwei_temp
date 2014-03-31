@@ -111,6 +111,11 @@ sleep 10
 
 # dump keys again
 dump_keys dbdump-a.4
+if [ $? -ne 0 ] ; then
+  kill_all_rs
+  $HT_HOME/bin/stop-servers.sh
+  exit 1
+fi
 
 # bounce servers
 $HT_HOME/bin/stop-servers.sh
@@ -135,6 +140,11 @@ sleep 10
 
 # dump keys
 dump_keys dbdump-b.4
+if [ $? -ne 0 ] ; then
+  kill_all_rs
+  $HT_HOME/bin/stop-servers.sh
+  exit 1
+fi
 
 # stop servers
 $HT_HOME/bin/stop-servers.sh

@@ -16,6 +16,10 @@ save_failure_state() {
   cp rangeserver.* $ARCHIVE_DIR
   cp rangeserver.*.output $ARCHIVE_DIR
   cp master.* $ARCHIVE_DIR
+  for additional in "$@" ; do
+    cp $additional $ARCHIVE_DIR
+  done
+  return 0
 }
 
 
@@ -79,7 +83,7 @@ dump_keys() {
     if [ $? != 0 ] ; then
         echo "Problem dumping table 'LoadTest', exiting ..."
         save_failure_state
-        exit 1
+        return 1
     fi
     $DIGEST < $1.txt > $1.md5
     diff golden_dump.$MAX_KEYS.md5 $1.md5
@@ -87,9 +91,13 @@ dump_keys() {
         echo "Test $TEST FAILED."
         $HT_HOME/bin/ht shell -l error --batch < $SCRIPT_DIR/dump-test-table.hql \
             | grep -v "Waiting for connection to Hyperspace" > $1.again.txt
-        exec 1>&-
-        sleep 86400
+        diff $1.txt golden_dump.$MAX_KEYS.txt | fgrep "> " | cut -b3- > missing-keys.txt
+        $SCRIPT_DIR/analyze-missing-keys.sh 2 missing-keys.txt
+        echo "use sys; select * from METADATA;" | $HT_HOME/bin/ht shell --batch > metadata.tsv
+        save_failure_state missing-keys.txt metadata.tsv
+        return 1
     fi
+    return 0
 }
 
 
