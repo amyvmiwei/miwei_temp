@@ -61,6 +61,11 @@ sleep 2
 
 # dump keys
 dump_keys dbdump-scan-failover
+if [ $? -ne 0 ] ; then
+  kill_all_rs
+  $HT_HOME/bin/stop-servers.sh
+  exit 1
+fi
 
 # wait for recovery to complete 
 wait_for_recovery rs1

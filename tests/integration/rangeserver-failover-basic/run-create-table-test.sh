@@ -68,6 +68,11 @@ fi
 
 # dump keys
 dump_keys dbdump-a.create-table
+if [ $? -ne 0 ] ; then
+  kill_all_rs
+  $HT_HOME/bin/stop-servers.sh
+  exit 1
+fi
 
 # stop servers
 $HT_HOME/bin/stop-servers.sh

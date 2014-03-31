@@ -64,6 +64,11 @@ wait_for_recovery rs1
 
 # dump keys again
 dump_keys dbdump-a.2
+if [ $? -ne 0 ] ; then
+  kill_all_rs
+  $HT_HOME/bin/stop-servers.sh
+  exit 1
+fi
 
 # bounce servers
 $HT_HOME/bin/stop-servers.sh
@@ -82,6 +87,11 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS3_PIDFILE \
 
 # dump keys
 dump_keys dbdump-b.2
+if [ $? -ne 0 ] ; then
+  kill_all_rs
+  $HT_HOME/bin/stop-servers.sh
+  exit 1
+fi
 
 $HT_HOME/bin/stop-servers.sh
 kill_rs 2

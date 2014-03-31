@@ -70,6 +70,11 @@ wait_for_recovery rs1
 echo "dump nokeys '${RUN_DIR}/rs2_dump.post'; quit;" | $HT_HOME/bin/ht rsclient localhost:38061
 
 dump_keys dbdump-a.1
+if [ $? -ne 0 ] ; then
+  kill_all_rs
+  $HT_HOME/bin/stop-servers.sh
+  exit 1
+fi
 
 # dump METADATA location
 ${HT_HOME}/bin/ht shell --config=${SCRIPT_DIR}/test.cfg --no-prompt --exec "use sys; select Files,Location from METADATA MAX_VERSIONS=1 into file '${RUN_DIR}/metadata.post';"
@@ -89,6 +94,11 @@ $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS2_PIDFILE \
 ${HT_HOME}/bin/ht shell --config=${SCRIPT_DIR}/test.cfg --no-prompt --exec "use sys; select Files,Location from METADATA MAX_VERSIONS=1 into file '${RUN_DIR}/metadata.post2';"
 
 dump_keys dbdump-b.1
+if [ $? -ne 0 ] ; then
+  kill_all_rs
+  $HT_HOME/bin/stop-servers.sh
+  exit 1
+fi
 
 # stop servers
 $HT_HOME/bin/stop-servers.sh
