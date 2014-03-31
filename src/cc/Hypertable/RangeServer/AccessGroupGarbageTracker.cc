@@ -186,8 +186,7 @@ int64_t AccessGroupGarbageTracker::memory_accumulated_since_collection() {
     accum = m_cell_cache_manager->logical_size();
   if (m_in_memory)
     accum -= m_last_collection_disk_usage;
-  HT_ASSERT(accum >= 0);
-  return accum;
+  return (accum < 0) ? 0 : accum;
 }
 
 int64_t AccessGroupGarbageTracker::total_accumulated_since_collection() {
