@@ -193,6 +193,14 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
   m_scan_spec_builder.set_return_deletes(scan_spec.return_deletes);
   m_scan_spec_builder.set_keys_only(scan_spec.keys_only);
 
+  // If offset or limit specified, defer readahead until outstanding result is
+  // processed
+  m_defer_readahead =
+    m_scan_spec_builder.get().cell_offset ||
+    m_scan_spec_builder.get().cell_limit ||
+    m_scan_spec_builder.get().row_offset ||
+    m_scan_spec_builder.get().row_limit;
+
   // start scan asynchronously (can trigger table not found exceptions)
   m_create_scanner_row = m_start_row;
   if (!start_row_inclusive)
@@ -439,8 +447,6 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
   // if this event is from a fetch scanblock
   if (!is_create) {
     set_result(event, cells, is_create);
-    if (m_state != RESTART)
-      do_readahead();
     load_result(cells);
     if (!has_outstanding_requests()) {
       if (m_state == RESTART)
@@ -466,7 +472,6 @@ bool IntervalScannerAsync::handle_result(bool *show_results, ScanCellsPtr &cells
         if (m_state != RESTART) {
           m_range_info = m_next_range_info;
           set_result(event, cells, is_create);
-          do_readahead();
           load_result(cells);
         }
         else {
@@ -534,6 +539,9 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
   // arrived then add them to cells
   bool eos;
 
+  if (m_state != RESTART && !m_defer_readahead)
+    readahead();
+
   if (m_last_key.row)
     last_key = m_last_key;
 
@@ -545,7 +553,6 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
   // if scan is over but current scanner is not finished then destroy it
   if (m_eos) {
     if (!m_cur_scanner_finished) {
-      HT_ASSERT(m_fetch_outstanding);
       try {
         m_range_server.destroy_scanner(m_range_info.addr, m_cur_scanner_id, 0);
       }
@@ -564,6 +571,9 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
       m_last_key.load( SerializedKey(m_last_key_buf.base) );
     }
   }
+
+  if (m_state != RESTART && m_defer_readahead)
+    readahead();
 
   return;
 }
@@ -591,7 +601,6 @@ bool IntervalScannerAsync::set_current(bool *show_results, ScanCellsPtr &cells, 
   m_range_info = m_next_range_info;
   set_result(m_create_event, cells);
   HT_ASSERT(m_state != RESTART);
-  do_readahead();
   load_result(cells);
   if (!has_outstanding_requests()) {
     if (m_state == RESTART)
@@ -603,7 +612,7 @@ bool IntervalScannerAsync::set_current(bool *show_results, ScanCellsPtr &cells, 
   return m_eos && !(has_outstanding_requests());
 }
 
-void IntervalScannerAsync::do_readahead() {
+void IntervalScannerAsync::readahead() {
   if (m_eos)
     return;
 
@@ -631,10 +640,7 @@ void IntervalScannerAsync::do_readahead() {
                  m_range_info.addr.proxy.c_str(), (int)m_cur_scanner_id);
     }
 
-    // if an OFFSET predicate was specified: return; we don't want to create
-    // more scanners till the RangeServer returned the first data
-    if (m_scan_spec_builder.get().cell_offset ||
-        m_scan_spec_builder.get().row_offset)
+    if (m_defer_readahead)
       return;
   }
   // if the current scanner is finished

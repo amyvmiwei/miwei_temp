@@ -74,7 +74,7 @@ namespace Hypertable {
 
   private:
     void reset_outstanding_status(bool is_create, bool reset_timer);
-    void do_readahead();
+    void readahead();
     void init(const ScanSpec &);
     void find_range_and_start_scan(const char *row_key, bool hard=false);
     void set_result(EventPtr &event, ScanCellsPtr &cells, bool is_create=false);
@@ -115,6 +115,7 @@ namespace Hypertable {
     DynamicBuffer       m_last_key_buf;
     bool                m_create_event_saved;
     bool                m_invalid_scanner_id_ok;
+    bool m_defer_readahead {};
   };
 
   typedef intrusive_ptr<IntervalScannerAsync> IntervalScannerAsyncPtr;
