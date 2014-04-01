@@ -74,6 +74,7 @@ try:
   if (client.future_is_cancelled(future) or client.future_is_full(future) or not (client.future_is_empty(future)) or client.future_has_outstanding(future)):
     print "Future object in unexpected state"
     exit(1)
+
   client.async_mutator_close(mutator_async_1)
   client.async_mutator_close(mutator_async_2)
 
@@ -111,11 +112,13 @@ try:
       break
     print cells
 
+  # This should not cause scanners or mutators to crash on close
+  client.future_close(future)
+
   client.scanner_close(scanner)
   client.async_scanner_close(color_scanner);
   client.async_scanner_close(location_scanner);
   client.async_scanner_close(energy_scanner);
-  client.future_close(future);
 
   client.namespace_close(namespace)
 except:
