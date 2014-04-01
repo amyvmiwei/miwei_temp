@@ -50,6 +50,7 @@
 
 #include <iostream>
 #include <iomanip>
+#include <map>
 #include <sstream>
 #include <unordered_map>
 
@@ -708,6 +709,7 @@ public:
             << ff << " scan_spec=" << ss);
     try {
       id = get_object_id(_open_scanner_async(ns, table, ff, ss));
+      add_reference(id, ff);
     } RETHROW("namespace=" << ns << " table=" << table << " future="
             << ff << " scan_spec="<< ss)
 
@@ -773,6 +775,7 @@ public:
     LOG_API_START("scanner_async="<< scanner_async);
     try {
       remove_scanner(scanner_async);
+      remove_references(scanner_async);
     } RETHROW("scanner_async="<< scanner_async)
     LOG_API_FINISH;
   }
@@ -1311,6 +1314,7 @@ public:
     MutatorAsync id;
     try {
       id = get_object_id(_open_mutator_async(ns, table, ff, flags));
+      add_reference(id, ff);
     } RETHROW(" namespace=" << ns << " table=" << table << " future="
             << ff << " flags=" << flags)
     LOG_API_FINISH_E(" mutator=" << id);
@@ -1398,6 +1402,7 @@ public:
     try {
       flush_mutator_async(mutator);
       remove_mutator(mutator);
+      remove_references(mutator);
     } RETHROW(" mutator" << mutator)
     LOG_API_FINISH;
   }
@@ -2197,6 +2202,18 @@ public:
     return id;
   }
 
+  void add_reference(int64_t from, int64_t to) {
+    ScopedLock lock(m_mutex);
+    ObjectMap::iterator it = m_object_map.find(to);
+    ClientObject *obj = (it != m_object_map.end()) ? it->second.get() : 0;
+    m_reference_map.insert(make_pair(from, obj));
+  }
+
+  void remove_references(int64_t id) {
+    ScopedLock lock(m_mutex);
+    m_reference_map.erase(id);
+  }
+
   TableScannerAsync *get_scanner_async(int64_t id) {
     TableScannerAsync *scanner = 
       dynamic_cast<TableScannerAsync *>(get_object(id));
@@ -2362,6 +2379,7 @@ private:
   String m_remote_peer;
   Context &m_context;
   Mutex m_mutex;
+  multimap<::int64_t, ClientObjectPtr> m_reference_map;
   ObjectMap m_object_map;
   ObjectMap m_cached_object_map;
 };

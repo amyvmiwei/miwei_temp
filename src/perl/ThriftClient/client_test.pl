@@ -99,10 +99,12 @@ while (1) {
   }
 }
 
+# This should not cause problems with referencing scanners
+$client->future_close($future);
+
 $client->async_scanner_close($color_scanner);
 $client->async_scanner_close($location_scanner);
 $client->async_scanner_close($energy_scanner);;
-$client->future_close($future);
 
 die "Expected $expected_cells cells got $num_cells." if ($num_cells != $expected_cells);
 

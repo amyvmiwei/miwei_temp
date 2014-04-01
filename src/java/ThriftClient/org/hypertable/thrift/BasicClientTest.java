@@ -215,10 +215,11 @@ public class BasicClientTest {
         }
       }
       finally {
+        // This close order should be ok
+        client.future_close(future);
         client.async_scanner_close(color_scanner);
         client.async_scanner_close(location_scanner);
         client.async_scanner_close(energy_scanner);
-        client.future_close(future);
       }
       if (num_cells != 6) {
         System.out.println("Expected " + expected_cells + " cells got " + num_cells);
