@@ -541,14 +541,18 @@ void LocalBroker::readdir(ResponseCallbackReaddir *cb, const char *dname) {
           full_entry_path.append("/");
           full_entry_path.append(entry.name);
           if (stat(full_entry_path.c_str(), &statbuf) == -1) {
-            report_error(cb);
-            HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
-            delete [] (uint8_t *)dp;
-            return;
+            if (errno != ENOENT) {
+              report_error(cb);
+              HT_ERRORF("readdir('%s') failed - %s", absdir.c_str(), strerror(errno));
+              delete [] (uint8_t *)dp;
+              return;
+            }
           }
-          entry.length = (uint64_t)statbuf.st_size;
-          entry.last_modification_time = statbuf.st_mtime;
-          listing.push_back(entry);
+          else {
+            entry.length = (uint64_t)statbuf.st_size;
+            entry.last_modification_time = statbuf.st_mtime;
+            listing.push_back(entry);
+          }
         }
       }
       else {
