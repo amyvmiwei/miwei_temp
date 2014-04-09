@@ -1,0 +1,53 @@
+[drop-table-INITIAL:throw:0] RangeServerConnection {rs1}
+[drop-table-INITIAL:throw:0] RangeServerConnection {rs2}
+[drop-table-INITIAL:throw:0] OperationDropTable {DROP_VALUE_INDEX}
+
+[drop-table-DROP_VALUE_INDEX-1:throw:0] RangeServerConnection {rs1}
+[drop-table-DROP_VALUE_INDEX-1:throw:0] RangeServerConnection {rs2}
+[drop-table-DROP_VALUE_INDEX-1:throw:0] OperationDropTable {DROP_VALUE_INDEX}
+
+[drop-table-DROP_VALUE_INDEX-2:throw:0] RangeServerConnection {rs1}
+[drop-table-DROP_VALUE_INDEX-2:throw:0] RangeServerConnection {rs2}
+[drop-table-DROP_VALUE_INDEX-2:throw:0] OperationDropTable {DROP_QUALIFIER_INDEX}
+[drop-table-DROP_VALUE_INDEX-2:throw:0]   dependency: /^drop_table_test-drop-index
+[drop-table-DROP_VALUE_INDEX-2:throw:0] OperationDropTable {INITIAL}
+[drop-table-DROP_VALUE_INDEX-2:throw:0]   obstruction: /^drop_table_test-drop-index
+
+[drop-table-DROP_QUALIFIER_INDEX-1:throw:0] RangeServerConnection {rs1}
+[drop-table-DROP_QUALIFIER_INDEX-1:throw:0] RangeServerConnection {rs2}
+[drop-table-DROP_QUALIFIER_INDEX-1:throw:0] OperationDropTable {DROP_QUALIFIER_INDEX}
+[drop-table-DROP_QUALIFIER_INDEX-1:throw:0]   dependency: /^drop_table_test-drop-index
+[drop-table-DROP_QUALIFIER_INDEX-1:throw:0] OperationDropTable {COMPLETE}
+
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0] RangeServerConnection {rs1}
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0] RangeServerConnection {rs2}
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0] OperationDropTable {UPDATE_HYPERSPACE}
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0]   dependency: /^^drop_table_test-drop-qualifier-index
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0]   dependency: /^drop_table_test-drop-index
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0] OperationDropTable {INITIAL}
+[drop-table-DROP_QUALIFIER_INDEX-2:throw:0]   obstruction: /^^drop_table_test-drop-qualifier-index
+
+[drop-table-UPDATE_HYPERSPACE:throw:0] RangeServerConnection {rs1}
+[drop-table-UPDATE_HYPERSPACE:throw:0] RangeServerConnection {rs2}
+[drop-table-UPDATE_HYPERSPACE:throw:0] OperationDropTable {UPDATE_HYPERSPACE}
+[drop-table-UPDATE_HYPERSPACE:throw:0]   dependency: /^^drop_table_test-drop-qualifier-index
+[drop-table-UPDATE_HYPERSPACE:throw:0]   dependency: /^drop_table_test-drop-index
+[drop-table-UPDATE_HYPERSPACE:throw:0] OperationDropTable {DROP_VALUE_INDEX}
+[drop-table-UPDATE_HYPERSPACE:throw:0]   obstruction: /^^drop_table_test-drop-qualifier-index
+
+[drop-table-SCAN_METADATA:throw:0] RangeServerConnection {rs1}
+[drop-table-SCAN_METADATA:throw:0] RangeServerConnection {rs2}
+[drop-table-SCAN_METADATA:throw:0] OperationDropTable {UPDATE_HYPERSPACE}
+[drop-table-SCAN_METADATA:throw:0]   dependency: /^^drop_table_test-drop-qualifier-index
+[drop-table-SCAN_METADATA:throw:0]   dependency: /^drop_table_test-drop-index
+[drop-table-SCAN_METADATA:throw:0] OperationDropTable {ISSUE_REQUESTS}
+[drop-table-SCAN_METADATA:throw:0]   dependency: <tid> move range
+[drop-table-SCAN_METADATA:throw:0]   dependency: METADATA
+[drop-table-SCAN_METADATA:throw:0]   dependency: rs1
+[drop-table-SCAN_METADATA:throw:0]   dependency: rs2
+[drop-table-SCAN_METADATA:throw:0]   obstruction: /^^drop_table_test-drop-qualifier-index
+
+[] RangeServerConnection {rs1}
+[] RangeServerConnection {rs2}
+[] OperationDropTable {COMPLETE}
+

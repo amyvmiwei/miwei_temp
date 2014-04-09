@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -101,8 +101,9 @@ int main(int argc, char **argv) {
     // Initialize cluster ID from Hyperspace, enabling ClusterId::get()
     ClusterId cluster_id(Global::hyperspace);
     
-    RangeServerPtr range_server= new RangeServer(properties,
-        conn_manager, app_queue, Global::hyperspace);
+    RangeServerPtr range_server
+      = std::make_shared<RangeServer>(properties, conn_manager, app_queue,
+                                      Global::hyperspace);
 
     app_queue->join();
 

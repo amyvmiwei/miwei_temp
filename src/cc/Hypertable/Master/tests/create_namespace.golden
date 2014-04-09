@@ -1,0 +1,14 @@
+[create-namespace-INITIAL:throw:0] OperationCreateNamespace {ASSIGN_ID}
+[create-namespace-INITIAL:throw:0]   dependency: INIT
+[create-namespace-INITIAL:throw:0]   exclusivity: /foo
+
+[create-namespace-ASSIGN_ID-a:throw:0] OperationCreateNamespace {ASSIGN_ID}
+[create-namespace-ASSIGN_ID-a:throw:0]   dependency: INIT
+[create-namespace-ASSIGN_ID-a:throw:0]   exclusivity: /foo
+
+[create-namespace-ASSIGN_ID-b:throw:0] OperationCreateNamespace {ASSIGN_ID}
+[create-namespace-ASSIGN_ID-b:throw:0]   dependency: INIT
+[create-namespace-ASSIGN_ID-b:throw:0]   exclusivity: /foo
+
+[] OperationCreateNamespace {COMPLETE}
+

@@ -154,15 +154,14 @@ namespace Hypertable {
       }
     }
 
-    /** Expiration time of request message from which this Event was
-     * initialized.
-     * @return Absolute expiration time
+    /** Deadline for request.
+     * @return Absolute deadline
      */
-    boost::xtime expiration_time() {
-      boost::xtime expire_time;
-      boost::xtime_get(&expire_time, boost::TIME_UTC_);
-      expire_time.sec += header.timeout_ms/1000;
-      return expire_time;
+    boost::xtime deadline() {
+      boost::xtime dl;
+      boost::xtime_get(&dl, boost::TIME_UTC_);
+      dl.sec += header.timeout_ms/1000;
+      return dl;
     }
 
     /** Type of event.  Can take one of values CONNECTION_ESTABLISHED,

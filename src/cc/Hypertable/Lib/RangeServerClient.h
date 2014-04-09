@@ -48,13 +48,12 @@
 
 namespace Hypertable {
 
-  /** @addtogroup libHypertable
-   * @{
-   */
-
   class ScanBlock;
 
-  /** Client proxy interface to RangeServer.
+  /// @addtogroup libHypertable
+  /// @{
+
+  /** %Client interface to RangeServer.
    * This class provides a client interface to the RangeServer.  It has methods,
    * both synchronous and asynchronous, that carry out %RangeServer operations.
    */
@@ -556,6 +555,22 @@ namespace Hypertable {
     void set_state(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
                    uint64_t generation, DispatchHandler *handler, Timer &timer);
 
+    /// Issues an asynchronous RangeServer::table_maintenance_enable().
+    /// @param addr Address of RangeServer
+    /// @param table %Table identifier
+    /// @param handler Dispatch handler for asynchronous callback
+    void table_maintenance_enable(const CommAddress &addr,
+                                  const TableIdentifier &table,
+                                  DispatchHandler *handler);
+
+    /// Issues an asynchronous RangeServer::table_maintenance_disable() request.
+    /// @param addr Address of RangeServer
+    /// @param table %Table identifier
+    /// @param handler Dispatch handler for asynchronous callback
+    void table_maintenance_disable(const CommAddress &addr,
+                                   const TableIdentifier &table,
+                                   DispatchHandler *handler);
+
   private:
     void do_load_range(const CommAddress &addr, const TableIdentifier &table,
                        const RangeSpec &range, const RangeState &range_state,
@@ -588,7 +603,7 @@ namespace Hypertable {
   /// Smart pointer to RangeServerClient
   typedef boost::intrusive_ptr<RangeServerClient> RangeServerClientPtr;
 
-  /** @}*/
+  /// @}
 
 } // namespace Hypertable
 

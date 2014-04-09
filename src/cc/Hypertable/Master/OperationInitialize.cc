@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -192,7 +192,8 @@ void OperationInitialize::execute() {
                                             TableIdentifier::METADATA_NAME);
     filename = System::install_dir + "/conf/RS_METRICS.xml";
     schema = FileUtils::file_to_string(filename);
-    operation = new OperationCreateTable(m_context, "/sys/RS_METRICS", schema);
+    operation = new OperationCreateTable(m_context, "/sys/RS_METRICS", schema,
+                                         TableParts(TableParts::ALL));
     operation->add_obstruction("initialize[2]");
     operation->add_obstruction("initialize[3]");
     {

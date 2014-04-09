@@ -28,11 +28,13 @@
 #ifndef HYPERTABLE_INETADDR_H
 #define HYPERTABLE_INETADDR_H
 
+#include <Common/String.h>
+
+#include <cstring>
+
 extern "C" {
 #include <netinet/in.h>
 }
-
-#include "Common/String.h"
 
 namespace Hypertable {
 

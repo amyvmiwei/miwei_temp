@@ -1,0 +1,58 @@
+[create-table-INITIAL:throw:0] RangeServerConnection {rs1}
+[create-table-INITIAL:throw:0] RangeServerConnection {rs2}
+[create-table-INITIAL:throw:0] OperationCreateTable {ASSIGN_ID}
+[create-table-INITIAL:throw:0]   exclusivity: /tablefoo_index
+
+[create-table-CREATE_INDEX-1:throw:0] RangeServerConnection {rs1}
+[create-table-CREATE_INDEX-1:throw:0] RangeServerConnection {rs2}
+[create-table-CREATE_INDEX-1:throw:0] OperationCreateTable {ASSIGN_ID}
+[create-table-CREATE_INDEX-1:throw:0]   exclusivity: /tablefoo_index
+
+[create-table-CREATE_INDEX-2:throw:0] RangeServerConnection {rs1}
+[create-table-CREATE_INDEX-2:throw:0] RangeServerConnection {rs2}
+[create-table-CREATE_INDEX-2:throw:0] OperationCreateTable {CREATE_QUALIFIER_INDEX}
+[create-table-CREATE_INDEX-2:throw:0]   dependency: /tablefoo_index-create-index
+[create-table-CREATE_INDEX-2:throw:0]   exclusivity: /tablefoo_index
+[create-table-CREATE_INDEX-2:throw:0] OperationCreateTable {INITIAL}
+[create-table-CREATE_INDEX-2:throw:0]   obstruction: /tablefoo_index-create-index
+
+[create-table-CREATE_QUALIFIER_INDEX-1:throw:0] RangeServerConnection {rs1}
+[create-table-CREATE_QUALIFIER_INDEX-1:throw:0] RangeServerConnection {rs2}
+[create-table-CREATE_QUALIFIER_INDEX-1:throw:0] OperationCreateTable {CREATE_QUALIFIER_INDEX}
+[create-table-CREATE_QUALIFIER_INDEX-1:throw:0]   dependency: /tablefoo_index-create-index
+[create-table-CREATE_QUALIFIER_INDEX-1:throw:0]   exclusivity: /tablefoo_index
+[create-table-CREATE_QUALIFIER_INDEX-1:throw:0] OperationCreateTable {COMPLETE}
+
+[create-table-CREATE_QUALIFIER_INDEX-2:throw:0] RangeServerConnection {rs1}
+[create-table-CREATE_QUALIFIER_INDEX-2:throw:0] RangeServerConnection {rs2}
+[create-table-CREATE_QUALIFIER_INDEX-2:throw:0] OperationCreateTable {WRITE_METADATA}
+[create-table-CREATE_QUALIFIER_INDEX-2:throw:0]   dependency: /tablefoo_index-create-index
+[create-table-CREATE_QUALIFIER_INDEX-2:throw:0]   dependency: /tablefoo_index-create-qualifier-index
+[create-table-CREATE_QUALIFIER_INDEX-2:throw:0]   exclusivity: /tablefoo_index
+[create-table-CREATE_QUALIFIER_INDEX-2:throw:0] OperationCreateTable {INITIAL}
+[create-table-CREATE_QUALIFIER_INDEX-2:throw:0]   obstruction: /tablefoo_index-create-qualifier-index
+
+[create-table-FINALIZE:throw:0] RangeServerConnection {rs1}
+[create-table-FINALIZE:throw:0] RangeServerConnection {rs2}
+[create-table-FINALIZE:throw:0] OperationCreateTable {WRITE_METADATA}
+[create-table-FINALIZE:throw:0]   dependency: /tablefoo_index-create-index
+[create-table-FINALIZE:throw:0]   dependency: /tablefoo_index-create-qualifier-index
+[create-table-FINALIZE:throw:0]   exclusivity: /tablefoo_index
+[create-table-FINALIZE:throw:0] OperationCreateTable {ACKNOWLEDGE}
+[create-table-FINALIZE:throw:0]   dependency: METADATA
+[create-table-FINALIZE:throw:0]   dependency: SYSTEM
+[create-table-FINALIZE:throw:0]   obstruction: /tablefoo_index-create-qualifier-index
+[create-table-FINALIZE:throw:0]   obstruction: OperationMove 6[..ÿÿ]
+
+[create-table-FINALIZE:throw:1] RangeServerConnection {rs1}
+[create-table-FINALIZE:throw:1] RangeServerConnection {rs2}
+[create-table-FINALIZE:throw:1] OperationCreateTable {ACKNOWLEDGE}
+[create-table-FINALIZE:throw:1]   dependency: METADATA
+[create-table-FINALIZE:throw:1]   dependency: SYSTEM
+[create-table-FINALIZE:throw:1]   obstruction: OperationMove 4[..ÿÿ]
+[create-table-FINALIZE:throw:1]   exclusivity: /tablefoo_index
+
+[] RangeServerConnection {rs1}
+[] RangeServerConnection {rs2}
+[] OperationCreateTable {COMPLETE}
+

@@ -1,0 +1,14 @@
+[drop-namespace-INITIAL:throw:0] OperationDropNamespace {STARTED}
+[drop-namespace-INITIAL:throw:0]   dependency: INIT
+[drop-namespace-INITIAL:throw:0]   exclusivity: /foo
+
+[drop-namespace-STARTED-a:throw:0] OperationDropNamespace {STARTED}
+[drop-namespace-STARTED-a:throw:0]   dependency: INIT
+[drop-namespace-STARTED-a:throw:0]   exclusivity: /foo
+
+[drop-namespace-STARTED-b:throw:0] OperationDropNamespace {STARTED}
+[drop-namespace-STARTED-b:throw:0]   dependency: INIT
+[drop-namespace-STARTED-b:throw:0]   exclusivity: /foo
+
+[] OperationDropNamespace {COMPLETE}
+

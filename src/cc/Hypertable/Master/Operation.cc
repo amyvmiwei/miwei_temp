@@ -33,11 +33,14 @@
 
 #include <Common/Serialization.h>
 
+#include <algorithm>
 #include <ctime>
+#include <iterator>
 #include <sstream>
 #include <unordered_map>
 
 using namespace Hypertable;
+using namespace std;
 
 const char *Dependency::INIT = "INIT";
 const char *Dependency::SERVERS = "SERVERS";
@@ -245,7 +248,27 @@ bool Operation::remove_if_ready() {
   return true;
 }
 
-void Operation::complete_error(int error, const String &msg) {
+bool Operation::removal_approved() {
+  ScopedLock lock(m_mutex);
+  return m_remove_approval_mask && m_remove_approvals == m_remove_approval_mask;
+}
+
+void Operation::record_state(std::vector<MetaLog::Entity *> &entities) {
+  for (auto entity : entities) {
+    Operation *op = dynamic_cast<Operation *>(entity);
+    if (op && op->removal_approved())
+      op->mark_for_removal();
+  }
+  m_context->mml_writer->record_state(entities);
+  for (auto entity : entities) {
+    Operation *op = dynamic_cast<Operation *>(entity);
+    if (op && op->marked_for_removal())
+      m_context->reference_manager->remove(op);      
+  }
+}
+
+void Operation::complete_error(int error, const String &msg,
+                               std::vector<MetaLog::Entity *> &additional) {
   {
     ScopedLock lock(m_mutex);
     m_state = OperationState::COMPLETE;
@@ -257,21 +280,29 @@ void Operation::complete_error(int error, const String &msg) {
   }
 
   std::stringstream sout;
-
   sout << "Operation failed (" << *this << ") " << Error::get_text(error) << " - " << msg;
   HT_INFOF("%s", sout.str().c_str());
 
-  if (m_ephemeral)
+  if (m_ephemeral) {
+    HT_ASSERT(additional.empty());
     return;
+  }
 
-  m_context->mml_writer->record_state(this);
+  std::vector<MetaLog::Entity *> entities;
+  entities.push_back(this);
+  copy(additional.begin(), additional.end(), back_inserter(entities));
+  record_state(entities);
 }
 
-void Operation::complete_error(Exception &e) {
-  complete_error(e.code(), e.what());
+void Operation::complete_error(int error, const String &msg, MetaLog::Entity *additional) {
+  std::vector<MetaLog::Entity *> entities;
+  if (additional)
+    entities.push_back(additional);
+  complete_error(error, msg, entities);
 }
 
-void Operation::complete_ok(MetaLog::Entity *additional) {
+
+void Operation::complete_ok(std::vector<MetaLog::Entity *> &additional) {
   {
     ScopedLock lock(m_mutex);
     m_state = OperationState::COMPLETE;
@@ -279,20 +310,22 @@ void Operation::complete_ok(MetaLog::Entity *additional) {
     m_dependencies.clear();
     m_obstructions.clear();
     m_exclusivities.clear();
-    if (m_remove_approval_mask && m_remove_approvals == m_remove_approval_mask) {
-      m_context->reference_manager->remove(this);
-      mark_for_removal();
-    }
     if (m_ephemeral) {
-      HT_ASSERT(additional == 0);
+      HT_ASSERT(additional.empty());
       return;
     }
   }
   std::vector<MetaLog::Entity *> entities;
   entities.push_back(this);
+  copy(additional.begin(), additional.end(), back_inserter(entities));
+  record_state(entities);
+}
+
+void Operation::complete_ok(MetaLog::Entity *additional) {
+  std::vector<MetaLog::Entity *> entities;
   if (additional)
     entities.push_back(additional);
-  m_context->mml_writer->record_state(entities);
+  complete_ok(entities);
 }
 
 void Operation::exclusivities(DependencySet &exclusivities) {
@@ -378,6 +411,12 @@ namespace {
     { Hypertable::OperationState::COMMIT, "COMMIT" },
     { Hypertable::OperationState::PHANTOM_LOAD, "PHANTOM_LOAD" },
     { Hypertable::OperationState::REPLAY_FRAGMENTS, "REPLAY_FRAGMENTS" },
+    { Hypertable::OperationState::CREATE_INDICES, "CREATE_INDICES" },
+    { Hypertable::OperationState::DROP_INDICES, "DROP_INDICES" },
+    { Hypertable::OperationState::SUSPEND_TABLE_MAINTENANCE, "SUSPEND_TABLE_MAINTENANCE" },
+    { Hypertable::OperationState::RESUME_TABLE_MAINTENANCE, "RESUME_TABLE_MAINTENANCE" },
+    { Hypertable::OperationState::DROP_VALUE_INDEX, "DROP_VALUE_INDEX" },
+    { Hypertable::OperationState::DROP_QUALIFIER_INDEX, "DROP_QUALIFIER_INDEX" },
     { 0, 0 }
   };
 

@@ -1,0 +1,21 @@
+[move-range-INITIAL-b:throw:0] RangeServerConnection {rs1}
+[move-range-INITIAL-b:throw:0] RangeServerConnection {rs2}
+[move-range-INITIAL-b:throw:0] RangeServerConnection {rs3}
+[move-range-INITIAL-b:throw:0] RangeServerConnection {rs4}
+[move-range-INITIAL-b:throw:0] OperationMoveRange rs1 3/6/3[bar..foo] -> rs2 {STARTED}
+[move-range-INITIAL-b:throw:0]   dependency: 2911362820939874715
+[move-range-INITIAL-b:throw:0]   dependency: INIT
+[move-range-INITIAL-b:throw:0]   dependency: METADATA
+[move-range-INITIAL-b:throw:0]   dependency: ROOT
+[move-range-INITIAL-b:throw:0]   dependency: SERVERS
+[move-range-INITIAL-b:throw:0]   dependency: SYSTEM
+[move-range-INITIAL-b:throw:0]   obstruction: <tid> move range
+[move-range-INITIAL-b:throw:0]   obstruction: OperationMove 3/6/3[bar..foo]
+[move-range-INITIAL-b:throw:0]   exclusivity: -4102518627836282433
+
+[] RangeServerConnection {rs1}
+[] RangeServerConnection {rs2}
+[] RangeServerConnection {rs3}
+[] RangeServerConnection {rs4}
+[] OperationMoveRange {COMPLETE}
+

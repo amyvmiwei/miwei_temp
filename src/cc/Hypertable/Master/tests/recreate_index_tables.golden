@@ -1,0 +1,56 @@
+[recreate-index-tables-INITIAL:throw:0] RangeServerConnection {rs1}
+[recreate-index-tables-INITIAL:throw:0] RangeServerConnection {rs2}
+[recreate-index-tables-INITIAL:throw:0] OperationRecreateIndexTables {SUSPEND_TABLE_MAINTENANCE}
+[recreate-index-tables-INITIAL:throw:0]   exclusivity: /recreate_index_tables
+
+[toggle-table-maintenance-SCAN_METADATA:throw:0] RangeServerConnection {rs1}
+[toggle-table-maintenance-SCAN_METADATA:throw:0] RangeServerConnection {rs2}
+[toggle-table-maintenance-SCAN_METADATA:throw:0] OperationRecreateIndexTables {DROP_INDICES}
+[toggle-table-maintenance-SCAN_METADATA:throw:0]   dependency: RECREATE INDEX TABLES subop 13
+[toggle-table-maintenance-SCAN_METADATA:throw:0]   exclusivity: /recreate_index_tables
+[toggle-table-maintenance-SCAN_METADATA:throw:0] OperationToggleTableMaintenance {ISSUE_REQUESTS}
+[toggle-table-maintenance-SCAN_METADATA:throw:0]   dependency: <tid> move range
+[toggle-table-maintenance-SCAN_METADATA:throw:0]   dependency: METADATA
+[toggle-table-maintenance-SCAN_METADATA:throw:0]   dependency: rs1
+[toggle-table-maintenance-SCAN_METADATA:throw:0]   dependency: rs2
+[toggle-table-maintenance-SCAN_METADATA:throw:0]   obstruction: RECREATE INDEX TABLES subop 13
+
+[drop-table-INITIAL:throw:0] RangeServerConnection {rs1}
+[drop-table-INITIAL:throw:0] RangeServerConnection {rs2}
+[drop-table-INITIAL:throw:0] OperationRecreateIndexTables {CREATE_INDICES}
+[drop-table-INITIAL:throw:0]   dependency: RECREATE INDEX TABLES subop 15
+[drop-table-INITIAL:throw:0]   exclusivity: /recreate_index_tables
+[drop-table-INITIAL:throw:0] OperationDropTable {DROP_VALUE_INDEX}
+[drop-table-INITIAL:throw:0]   obstruction: RECREATE INDEX TABLES subop 15
+
+[create-table-ASSIGN_ID:throw:0] RangeServerConnection {rs1}
+[create-table-ASSIGN_ID:throw:0] RangeServerConnection {rs2}
+[create-table-ASSIGN_ID:throw:0] OperationRecreateIndexTables {RESUME_TABLE_MAINTENANCE}
+[create-table-ASSIGN_ID:throw:0]   dependency: RECREATE INDEX TABLES subop 19
+[create-table-ASSIGN_ID:throw:0]   exclusivity: /recreate_index_tables
+[create-table-ASSIGN_ID:throw:0] OperationCreateTable {CREATE_QUALIFIER_INDEX}
+[create-table-ASSIGN_ID:throw:0]   dependency: /recreate_index_tables-create-index
+[create-table-ASSIGN_ID:throw:0]   obstruction: RECREATE INDEX TABLES subop 19
+[create-table-ASSIGN_ID:throw:0] OperationCreateTable {ASSIGN_ID}
+[create-table-ASSIGN_ID:throw:0]   obstruction: /recreate_index_tables-create-index
+
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-a:throw:0] RangeServerConnection {rs1}
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-a:throw:0] RangeServerConnection {rs2}
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-a:throw:0] OperationRecreateIndexTables {RESUME_TABLE_MAINTENANCE}
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-a:throw:0]   dependency: RECREATE INDEX TABLES subop 19
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-a:throw:0]   exclusivity: /recreate_index_tables
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-a:throw:0] OperationCreateTable {COMPLETE}
+
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-b:throw:0] RangeServerConnection {rs1}
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-b:throw:0] RangeServerConnection {rs2}
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-b:throw:0] OperationRecreateIndexTables {FINALIZE}
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-b:throw:0]   dependency: RECREATE INDEX TABLES subop 25
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-b:throw:0]   exclusivity: /recreate_index_tables
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-b:throw:0] OperationToggleTableMaintenance {INITIAL}
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-b:throw:0]   dependency: INIT
+[recreate-index-tables-RESUME_TABLE_MAINTENANCE-b:throw:0]   obstruction: RECREATE INDEX TABLES subop 25
+
+[] RangeServerConnection {rs1}
+[] RangeServerConnection {rs2}
+[] OperationRecreateIndexTables {COMPLETE}
+

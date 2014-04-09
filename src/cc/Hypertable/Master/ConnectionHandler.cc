@@ -52,6 +52,7 @@
 #include "OperationProcessor.h"
 #include "OperationMoveRange.h"
 #include "OperationRecover.h"
+#include "OperationRecreateIndexTables.h"
 #include "OperationRegisterServer.h"
 #include "OperationRelinquishAcknowledge.h"
 #include "OperationRenameTable.h"
@@ -166,6 +167,9 @@ void ConnectionHandler::handle(EventPtr &event) {
         break;
       case MasterProtocol::COMMAND_DROP_NAMESPACE:
         operation = new OperationDropNamespace(m_context, event);
+        break;
+      case MasterProtocol::COMMAND_RECREATE_INDEX_TABLES:
+        operation = new OperationRecreateIndexTables(m_context, event);
         break;
 
       case MasterProtocol::COMMAND_FETCH_RESULT:

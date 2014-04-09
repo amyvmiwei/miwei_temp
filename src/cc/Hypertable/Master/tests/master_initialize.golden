@@ -1,0 +1,86 @@
+[initialize-INITIAL:throw:0] RangeServerConnection {rs1}
+[initialize-INITIAL:throw:0] RangeServerConnection {rs2}
+[initialize-INITIAL:throw:0] RangeServerConnection {rs3}
+[initialize-INITIAL:throw:0] RangeServerConnection {rs4}
+[initialize-INITIAL:throw:0] OperationInitialize {STARTED}
+[initialize-INITIAL:throw:0]   dependency: initialize[0]
+[initialize-INITIAL:throw:0]   obstruction: INIT
+[initialize-INITIAL:throw:0] OperationCreateNamespace {INITIAL}
+[initialize-INITIAL:throw:0]   obstruction: initialize[0]
+[initialize-INITIAL:throw:0]   exclusivity: /sys
+
+[initialize-STARTED:throw:0] RangeServerConnection {rs1}
+[initialize-STARTED:throw:0] RangeServerConnection {rs2}
+[initialize-STARTED:throw:0] RangeServerConnection {rs3}
+[initialize-STARTED:throw:0] RangeServerConnection {rs4}
+[initialize-STARTED:throw:0] OperationInitialize {STARTED}
+[initialize-STARTED:throw:0]   dependency: initialize[0]
+[initialize-STARTED:throw:0]   obstruction: INIT
+[initialize-STARTED:throw:0] OperationCreateNamespace {COMPLETE}
+
+[initialize-ASSIGN_METADATA_RANGES:throw:0] RangeServerConnection {rs1}
+[initialize-ASSIGN_METADATA_RANGES:throw:0] RangeServerConnection {rs2}
+[initialize-ASSIGN_METADATA_RANGES:throw:0] RangeServerConnection {rs3}
+[initialize-ASSIGN_METADATA_RANGES:throw:0] RangeServerConnection {rs4}
+[initialize-ASSIGN_METADATA_RANGES:throw:0] OperationInitialize {LOAD_ROOT_METADATA_RANGE}
+[initialize-ASSIGN_METADATA_RANGES:throw:0]   dependency: 0/0[..0/0:ÿÿ]
+[initialize-ASSIGN_METADATA_RANGES:throw:0]   dependency: 0/0[0/0:ÿÿ..ÿÿ]
+[initialize-ASSIGN_METADATA_RANGES:throw:0]   dependency: rs2
+[initialize-ASSIGN_METADATA_RANGES:throw:0]   dependency: rs3
+[initialize-ASSIGN_METADATA_RANGES:throw:0]   obstruction: INIT
+[initialize-ASSIGN_METADATA_RANGES:throw:0] OperationCreateNamespace {COMPLETE}
+
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0] RangeServerConnection {rs1}
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0] RangeServerConnection {rs2}
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0] RangeServerConnection {rs3}
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0] RangeServerConnection {rs4}
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0] OperationInitialize {LOAD_ROOT_METADATA_RANGE}
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0]   dependency: 0/0[..0/0:ÿÿ]
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0]   dependency: 0/0[0/0:ÿÿ..ÿÿ]
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0]   dependency: rs2
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0]   dependency: rs3
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0]   obstruction: INIT
+[initialize-LOAD_ROOT_METADATA_RANGE:throw:0] OperationCreateNamespace {COMPLETE}
+
+[initialize-LOAD_SECOND_METADATA_RANGE:throw:0] RangeServerConnection {rs1}
+[initialize-LOAD_SECOND_METADATA_RANGE:throw:0] RangeServerConnection {rs2}
+[initialize-LOAD_SECOND_METADATA_RANGE:throw:0] RangeServerConnection {rs3}
+[initialize-LOAD_SECOND_METADATA_RANGE:throw:0] RangeServerConnection {rs4}
+[initialize-LOAD_SECOND_METADATA_RANGE:throw:0] OperationInitialize {LOAD_SECOND_METADATA_RANGE}
+[initialize-LOAD_SECOND_METADATA_RANGE:throw:0]   dependency: 0/0[0/0:ÿÿ..ÿÿ]
+[initialize-LOAD_SECOND_METADATA_RANGE:throw:0]   dependency: rs3
+[initialize-LOAD_SECOND_METADATA_RANGE:throw:0]   obstruction: INIT
+[initialize-LOAD_SECOND_METADATA_RANGE:throw:0] OperationCreateNamespace {COMPLETE}
+
+[initialize-WRITE_METADATA:throw:0] RangeServerConnection {rs1}
+[initialize-WRITE_METADATA:throw:0] RangeServerConnection {rs2}
+[initialize-WRITE_METADATA:throw:0] RangeServerConnection {rs3}
+[initialize-WRITE_METADATA:throw:0] RangeServerConnection {rs4}
+[initialize-WRITE_METADATA:throw:0] OperationInitialize {WRITE_METADATA}
+[initialize-WRITE_METADATA:throw:0]   obstruction: INIT
+[initialize-WRITE_METADATA:throw:0] OperationCreateNamespace {COMPLETE}
+
+[initialize-CREATE_RS_METRICS:throw:0] RangeServerConnection {rs1}
+[initialize-CREATE_RS_METRICS:throw:0] RangeServerConnection {rs2}
+[initialize-CREATE_RS_METRICS:throw:0] RangeServerConnection {rs3}
+[initialize-CREATE_RS_METRICS:throw:0] RangeServerConnection {rs4}
+[initialize-CREATE_RS_METRICS:throw:0] OperationInitialize {FINALIZE}
+[initialize-CREATE_RS_METRICS:throw:0]   dependency: initialize[2]
+[initialize-CREATE_RS_METRICS:throw:0]   obstruction: INIT
+[initialize-CREATE_RS_METRICS:throw:0] OperationCreateNamespace {COMPLETE}
+[initialize-CREATE_RS_METRICS:throw:0] OperationCreateTable {INITIAL}
+[initialize-CREATE_RS_METRICS:throw:0]   obstruction: initialize[2]
+[initialize-CREATE_RS_METRICS:throw:0]   obstruction: initialize[3]
+[initialize-CREATE_RS_METRICS:throw:0] OperationCreateNamespace {INITIAL}
+[initialize-CREATE_RS_METRICS:throw:0]   dependency: initialize[3]
+[initialize-CREATE_RS_METRICS:throw:0]   exclusivity: /tmp
+
+[] RangeServerConnection {rs1}
+[] RangeServerConnection {rs2}
+[] RangeServerConnection {rs3}
+[] RangeServerConnection {rs4}
+[] OperationInitialize {COMPLETE}
+[] OperationCreateNamespace {COMPLETE}
+[] OperationCreateTable {COMPLETE}
+[] OperationCreateNamespace {COMPLETE}
+

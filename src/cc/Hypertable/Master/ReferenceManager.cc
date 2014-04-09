@@ -19,19 +19,15 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Definitions for ReferenceManager.
- * This file contains definitions for ReferenceManager, a class for tracking
- * outstanding OperationMoveRange operations.
- */
+/// @file
+/// Definitions for ReferenceManager.
+/// This file contains definitions for ReferenceManager, a class for tracking
+/// manually removed operation.
 
-
-#include "Common/Compat.h"
-
+#include <Common/Compat.h>
 #include "ReferenceManager.h"
 
 using namespace Hypertable;
-
 
 bool ReferenceManager::add(Operation *operation) {
   ScopedLock lock(m_mutex);
@@ -45,7 +41,7 @@ bool ReferenceManager::add(Operation *operation) {
 
 OperationPtr ReferenceManager::get(int64_t hash_code) {
   ScopedLock lock(m_mutex);
-  ReferenceMapT::iterator iter = m_map.find(hash_code);
+  auto iter = m_map.find(hash_code);
   if (iter == m_map.end())
     return 0;
   return (*iter).second;
@@ -54,8 +50,14 @@ OperationPtr ReferenceManager::get(int64_t hash_code) {
 
 void ReferenceManager::remove(int64_t hash_code) {
   ScopedLock lock(m_mutex);
-  ReferenceMapT::iterator iter = m_map.find(hash_code);
+  auto iter = m_map.find(hash_code);
   if (iter != m_map.end())
     m_map.erase(iter);
+}
+
+
+void ReferenceManager::clear() {
+  ScopedLock lock(m_mutex);
+  m_map.clear();
 }
 

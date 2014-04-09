@@ -116,6 +116,7 @@ namespace {
     { Error::INVALID_OPERATION,             "HYPERTABLE invalid operation" },
     { Error::UNSUPPORTED_OPERATION,         "HYPERTABLE unsupported operation" },
     { Error::COLUMN_FAMILY_NOT_FOUND,       "HYPERTABLE column family not found" },
+    { Error::NOTHING_TO_DO,                 "HYPERTABLE nothing to do" },
     { Error::CONFIG_BAD_ARGUMENT,         "CONFIG bad argument(s)"},
     { Error::CONFIG_BAD_CFG_FILE,         "CONFIG bad cfg file"},
     { Error::CONFIG_GET_ERROR,            "CONFIG failed to get config value"},

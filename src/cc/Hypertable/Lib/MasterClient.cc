@@ -812,6 +812,37 @@ MasterClient::drop_table(const String &table_name, bool if_exists, Timer *timer)
 
 }
 
+void MasterClient::recreate_index_tables(const std::string &table_name,
+                                         TableParts table_parts, Timer *timer) {
+  Timer tmp_timer(m_timeout_ms);
+  CommBufPtr cbp;
+  EventPtr event;
+  int64_t id = 0;
+  String label = format("recreate_index_tables('%s', part=%s)",
+                        table_name.c_str(), table_parts.to_string().c_str());
+
+  initialize(timer, tmp_timer);
+
+  while (!timer->expired()) {
+    cbp = MasterProtocol::create_recreate_index_tables_request(table_name, table_parts);
+    if (!send_message(cbp, timer, event, label))
+      continue;
+    const uint8_t *ptr = event->payload + 4;
+    size_t remain = event->payload_len - 4;
+    id = decode_i64(&ptr, &remain);
+    fetch_result(id, timer, event, label);
+    return;
+  }
+
+  {
+    ScopedLock lock(m_mutex);
+    HT_THROWF(Error::REQUEST_TIMEOUT,
+              "MasterClient operation %s to master %s failed", label.c_str(),
+              m_master_addr.format().c_str());
+  }
+}
+
+
 
 void MasterClient::shutdown(Timer *timer) {
   Timer tmp_timer(m_timeout_ms);

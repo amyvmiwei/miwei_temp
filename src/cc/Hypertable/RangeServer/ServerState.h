@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,49 +19,43 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Declarations for ServerState.
- * This file contains the type declarations for ServerState, a class for holding
- * and providing access to dynamic server state.
- */
+/// @file
+/// Declarations for ServerState.
+/// This file contains the type declarations for ServerState, a class for holding
+/// and providing access to dynamic server state.
 
-#ifndef HYPERTABLE_SERVERSTATE_H
-#define HYPERTABLE_SERVERSTATE_H
+#ifndef Hypertable_RangeServer_ServerState_h
+#define Hypertable_RangeServer_ServerState_h
 
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
+#include <Hypertable/Lib/SystemVariable.h>
 
-#include "Hypertable/Lib/SystemVariable.h"
+#include <Common/Mutex.h>
 
 namespace Hypertable {
 
-  /** @addtogroup RangeServer
-   * @{
-   */
+  /// @addtogroup RangeServer
+  /// @{
 
-  /** Holds dynamic server state. */
-  class ServerState : public ReferenceCount {
+  /// Holds dynamic server state.
+  class ServerState {
 
   public:
 
-    /** Constructor.
-     * This constructor initializes the #m_specs array to the
-     * set of know variables and their default values.
-     */
+    /// Constructor.
+    /// This constructor initializes the #m_specs array to the
+    /// set of know variables and their default values.
     ServerState();
 
-    /** Destructor. */
+    /// Destructor.
     virtual ~ServerState() { }
 
-    /** Returns value of READONLY variable.
-     * @return Value of READONLY variable
-     */
+    /// Returns value of READONLY variable.
+    /// @return Value of READONLY variable
     bool readonly();
 
-    /** Sets state variables.
-     * @param generation Generation number of state variables
-     * @param specs Vector of state variables
-     */
+    /// Sets state variables.
+    /// @param generation Generation number of state variables
+    /// @param specs Vector of state variables
     void set(uint64_t generation, std::vector<SystemVariable::Spec> &specs);
 
   private:
@@ -76,11 +70,8 @@ namespace Hypertable {
     std::vector<SystemVariable::Spec> m_specs;
   };
 
-  /// Smart pointer to ServerState
-  typedef intrusive_ptr<ServerState> ServerStatePtr;
-
-  /** @}*/
+  /// @}
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_SERVERSTATE_H
+#endif // Hypertable_RangeServer_ServerState_h

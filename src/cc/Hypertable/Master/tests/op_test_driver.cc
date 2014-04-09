@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -21,41 +21,50 @@
 
 #include "Common/Compat.h"
 
-#include <map>
-#include <fstream>
+#include <Hypertable/Master/BalancePlanAuthority.h>
+#include <Hypertable/Master/Context.h>
+#include <Hypertable/Master/LoadBalancer.h>
+#include <Hypertable/Master/MetaLogDefinitionMaster.h>
+#include <Hypertable/Master/OperationCreateNamespace.h>
+#include <Hypertable/Master/OperationCreateTable.h>
+#include <Hypertable/Master/OperationDropNamespace.h>
+#include <Hypertable/Master/OperationDropTable.h>
+#include <Hypertable/Master/OperationInitialize.h>
+#include <Hypertable/Master/OperationMoveRange.h>
+#include <Hypertable/Master/OperationProcessor.h>
+#include <Hypertable/Master/OperationRecreateIndexTables.h>
+#include <Hypertable/Master/OperationRenameTable.h>
+#include <Hypertable/Master/OperationSystemUpgrade.h>
+#include <Hypertable/Master/OperationToggleTableMaintenance.h>
+#include <Hypertable/Master/RangeServerConnectionManager.h>
+#include <Hypertable/Master/ReferenceManager.h>
+#include <Hypertable/Master/ResponseManager.h>
 
-#include "Common/FailureInducer.h"
-#include "Common/Init.h"
-#include "Common/System.h"
+#include <Hypertable/Lib/Config.h>
+#include <Hypertable/Lib/MetaLogReader.h>
+#include <Hypertable/Lib/RangeState.h>
+#include <Hypertable/Lib/TableParts.h>
+#include <Hypertable/Lib/Types.h>
 
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionHandlerFactory.h"
-#include "AsyncComm/ReactorFactory.h"
+#include <DfsBroker/Lib/Client.h>
 
-#include "Hypertable/Lib/Config.h"
-#include "Hypertable/Lib/MetaLogReader.h"
-#include "Hypertable/Lib/RangeState.h"
-#include "Hypertable/Lib/Types.h"
+#include <Common/FailureInducer.h>
+#include <Common/Init.h>
+#include <Common/System.h>
 
-#include "DfsBroker/Lib/Client.h"
-
-#include "Hypertable/Master/Context.h"
-#include "Hypertable/Master/LoadBalancer.h"
-#include "Hypertable/Master/MetaLogDefinitionMaster.h"
-#include "Hypertable/Master/OperationCreateNamespace.h"
-#include "Hypertable/Master/OperationCreateTable.h"
-#include "Hypertable/Master/OperationDropNamespace.h"
-#include "Hypertable/Master/OperationInitialize.h"
-#include "Hypertable/Master/OperationProcessor.h"
-#include "Hypertable/Master/OperationRenameTable.h"
-#include "Hypertable/Master/OperationSystemUpgrade.h"
-#include "Hypertable/Master/OperationMoveRange.h"
-#include "Hypertable/Master/RangeServerConnectionManager.h"
-#include "Hypertable/Master/ReferenceManager.h"
-#include "Hypertable/Master/ResponseManager.h"
-#include "Hypertable/Master/BalancePlanAuthority.h"
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionHandlerFactory.h>
+#include <AsyncComm/ReactorFactory.h>
 
 #include <boost/algorithm/string.hpp>
+
+#include <algorithm>
+#include <cstdlib>
+#include <fstream>
+#include <iterator>
+#include <list>
+#include <map>
+#include <vector>
 
 extern "C" {
 #include <poll.h>
@@ -64,8 +73,12 @@ extern "C" {
 using namespace Hypertable;
 using namespace Config;
 using namespace Hyperspace;
+using namespace std;
 
 namespace {
+
+  String g_mml_dir;
+  uint16_t g_rs_port = 0;
 
   struct AppPolicy : Config::Policy {
     static void init_options() {
@@ -79,9 +92,12 @@ namespace {
                    "  drop_namespace\n"
                    "  create_table\n"
                    "  create_table_with_index\n"
+                   "  drop_table\n"
                    "  rename_table\n"
                    "  move_range\n"
                    "  balance_plan_authority\n"
+                   "  toggle_table_maintenance\n"
+                   "  recreate_index_tables\n"
                    "\nOptions");
       cmdline_hidden_desc().add_options()("test", str(), "test to run");
       cmdline_positional_desc().add("test", -1);
@@ -94,25 +110,80 @@ namespace {
     }
   };
 
-
   typedef Meta::list<GenericServerPolicy, DfsClientPolicy,
                      HyperspaceClientPolicy, DefaultCommPolicy, AppPolicy> Policies;
 
-  void initialize_test(ContextPtr &context, const String &log_dir,
-                       std::vector<MetaLog::EntityPtr> &entities,
-                       const String &failure_point) {
-    OperationPtr operation;
+  vector<RangeServerConnectionPtr> g_rsc;
 
-    FailureInducer::instance->clear();
-    if (failure_point != "")
-      FailureInducer::instance->parse_option(failure_point);
+  void initialize_test_with_servers(ContextPtr &context, size_t server_count,
+                                    std::vector<MetaLog::EntityPtr> &entities) {
+
+    HT_ASSERT(server_count <= 5);
+
+    RangeServerConnectionPtr rsc;
+    size_t server_index = 0;
+
+    while (true) {
+
+      rsc = new RangeServerConnection("rs1", "rs1.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
+      context->rsc_manager->connect_server(rsc, "rs1.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
+      context->add_available_server("rs1");
+      g_rsc.push_back(rsc);
+      entities.push_back(rsc.get());
+
+      if (++server_index == server_count)
+        break;
+
+      rsc = new RangeServerConnection("rs2", "rs2.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
+      context->rsc_manager->connect_server(rsc, "rs2.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
+      context->add_available_server("rs2");
+      g_rsc.push_back(rsc);
+      entities.push_back(rsc.get());
+
+      if (++server_index == server_count)
+        break;
+
+      rsc = new RangeServerConnection("rs3", "rs3.hypertable.com", InetAddr("72.14.204.98", g_rs_port));
+      context->rsc_manager->connect_server(rsc, "rs3.hypertable.com", InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", g_rs_port));
+      context->add_available_server("rs3");
+      g_rsc.push_back(rsc);
+      entities.push_back(rsc.get());
+
+      if (++server_index == server_count)
+        break;
+
+      rsc = new RangeServerConnection("rs4", "rs4.hypertable.com", InetAddr("69.147.125.62", g_rs_port));
+      context->rsc_manager->connect_server(rsc, "rs4.hypertable.com", InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", g_rs_port));
+      context->add_available_server("rs4");
+      g_rsc.push_back(rsc);
+      entities.push_back(rsc.get());
+
+      if (++server_index == server_count)
+        break;
+
+      rsc = new RangeServerConnection("rs5", "rs5.hypertable.com", InetAddr("70.147.125.62", g_rs_port));
+      context->rsc_manager->connect_server(rsc, "rs5.hypertable.com", InetAddr("70.147.125.62", 30569), InetAddr("70.147.125.62", g_rs_port));
+      context->add_available_server("rs5");
+      g_rsc.push_back(rsc);
+      entities.push_back(rsc.get());
+
+      break;
+    }
+
+    context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
+                                              g_mml_dir, entities);
+    
+  }
+
+  void initialize_test(ContextPtr &context,
+                       std::vector<MetaLog::EntityPtr> &entities) {
+    OperationPtr operation;
 
     context->op = new OperationProcessor(context, 4);
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                              log_dir + "/" + context->mml_definition->name(),
-                                              entities);
-    for (size_t i=0; i<entities.size(); i++) {
-      if ((operation = dynamic_cast<Operation *>(entities[i].get()))) {
+                                              g_mml_dir, entities);
+    for (auto &entity : entities) {
+      if ((operation = dynamic_cast<Operation *>(entity.get()))) {
 	if (operation->get_remove_approval_mask())
 	  context->reference_manager->add(operation);
         context->op->add_operation(operation);
@@ -122,12 +193,8 @@ namespace {
 
   typedef std::multimap<String, int32_t> ExpectedResultsMap;
 
-
-  void run_test(ContextPtr &context, const String &log_dir,
-                std::vector<MetaLog::EntityPtr> &entities,
-                const String &failure_point,
-                ExpectedResultsMap &expected_operations,
-                std::vector<String> &expected_servers) {
+  void run_test2(ContextPtr &context, std::vector<MetaLog::EntityPtr> &entities,
+                 const String &failure_point, ofstream &out) {
     OperationPtr operation;
     RangeServerConnectionPtr rsc;
     std::vector<OperationPtr> operations;
@@ -139,8 +206,8 @@ namespace {
     if (failure_point != "")
       FailureInducer::instance->parse_option(failure_point);
 
-    for (size_t i = 0; i < entities.size(); i++) {
-      if ((operation = dynamic_cast<Operation *>(entities[i].get()))) {
+    for (auto &entity : entities) {
+      if ((operation = dynamic_cast<Operation *>(entity.get()))) {
         if (operation->get_remove_approval_mask())
           context->reference_manager->add(operation);
         operations.push_back(operation);
@@ -154,8 +221,7 @@ namespace {
       context->op->join();
 
     context->mml_writer = 0;
-    MetaLog::ReaderPtr mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition,
-                                                        log_dir + "/" + context->mml_definition->name());
+    MetaLog::ReaderPtr mml_reader = new MetaLog::Reader(context->dfs, context->mml_definition, g_mml_dir);
     entities.clear();
     mml_reader->get_entities(entities);
 
@@ -166,87 +232,106 @@ namespace {
     }
     entities.swap(tmp_entities);
 
-#if 0
-    HT_INFO("Entities:");
-    foreach_ht (MetaLog::EntityPtr &entity, entities)
-      HT_INFOF("%s", entity->name().c_str());
-    HT_INFO("Expected Entities:");
-    for (ExpectedResultsMap::iterator iter = expected_operations.begin();
-         iter != expected_operations.end(); ++iter) {
-      HT_INFOF("%s", iter->first.c_str());
-    }
-    foreach_ht (String &server, expected_servers)
-      HT_INFOF("%s", server.c_str());
-#endif
-
-    HT_ASSERT(entities.size() == expected_operations.size()
-              + expected_servers.size());
-
-    for (size_t i = 0; i < entities.size(); i++) {
-      bool match = false;
-      operation = dynamic_cast<Operation *>(entities[i].get());
-      rsc = dynamic_cast<RangeServerConnection *>(entities[i].get());
+    DependencySet strs;
+    string label = format("[%s] ", failure_point.c_str());
+    for (auto &entity : entities) {
+      operation = dynamic_cast<Operation *>(entity.get());
+      rsc = dynamic_cast<RangeServerConnection *>(entity.get());
       if (operation) {
-        String name = operation->name();
-        const char *ptr = strstr(name.c_str(), " ");
-        String operation_name = ptr ? String(name.c_str(), ptr-name.c_str()) : name;
-        for (ExpectedResultsMap::iterator iter = expected_operations.begin();
-             iter != expected_operations.end(); ++iter) {
-          if (operation_name == iter->first &&
-              operation->get_state() == iter->second) {
-            match = true;
-            break;
-          }
-        }
-        if (!match)
-          std::cout << "Unable to find match for '" << operation_name << "'" << std::endl;
+        out << label << operation->name() << " {" << OperationState::get_text(operation->get_state()) << "}\n";
+        operation->dependencies(strs);
+        for (auto &str : strs)
+          out << label << "  dependency: " << str << "\n";
+        operation->obstructions(strs);
+        for (auto &str : strs)
+          out << label << "  obstruction: " << str << "\n";
+        operation->exclusivities(strs);
+        for (auto &str : strs)
+          out << label << "  exclusivity: " << str << "\n";
       }
-      else if (rsc) {
-        match = false;
-        for (std::vector<String>::iterator iter = expected_servers.begin();
-             iter != expected_servers.end(); ++iter) {
-          if (rsc->location() == *iter) {
-            match = true;
-            break;
-          }
-        }
-        if (!match)
-          std::cout << "Unable to find match for '" << rsc->location() << "'" << std::endl;
-      }
-
-      if (!match) {
-        std::cout << "ERROR - invalid state" << std::endl;
-
-        std::cout << "expected:" << std::endl;
-        for (ExpectedResultsMap::iterator iter = expected_operations.begin();
-             iter != expected_operations.end(); ++iter)
-          std::cout << iter->first << " -> " << iter->second << std::endl;
-        for (std::vector<String>::iterator iter = expected_servers.begin();
-             iter != expected_servers.end(); ++iter) {
-          std::cout << "server " << *iter << std::endl;
-
-          std::cout << "got:" << std::endl;
-          for (size_t i=0; i<entities.size(); i++) {
-            operation = dynamic_cast<Operation *>(entities[i].get());
-            if (operation)
-              std::cout << operation->name() << " -> "
-                  << operation->get_state() << std::endl;
-            else {
-              rsc = dynamic_cast<RangeServerConnection *>(entities[i].get());
-              std::cout << "server " << rsc->location() << std::endl;
-            }
-          }
-          _exit(1);
-        }
-      }
+      else if (rsc)
+        out << label << rsc->name() << " {" << rsc->location() << "}\n";
     }
+    out << endl;
+
+    context->reference_manager->clear();
 
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                              log_dir + "/" + context->mml_definition->name(),
-                                              entities);
+                                              g_mml_dir, entities);
   }
 
-  uint16_t g_rs_port = 0;
+  void create_table(ContextPtr &context,
+                    std::vector<MetaLog::EntityPtr> &entities,
+                    const string &table_name, const string &schema,
+                    string &table_id) {
+    ofstream out;
+#if defined(__WIN32__) || defined(_WIN32)
+    string devnull("nul");
+#else
+    string devnull("/dev/null");
+#endif
+    out.open(devnull);
+
+    entities.push_back(new OperationCreateTable(context, table_name, schema,
+                                                TableParts(TableParts::ALL)));
+
+    run_test2(context, entities, "", out);
+
+    out.close();
+
+    std::vector<MetaLog::EntityPtr> entities2;
+
+    // Remove operations
+    for (auto &entity : entities) {
+      if (dynamic_cast<RangeServerConnection *>(entity.get()))
+        entities2.push_back(entity);
+    }
+    entities.swap(entities2);
+
+    if (!context->namemap->name_to_id(table_name, table_id))
+      HT_FATALF("Unable to determine table ID for table \"%s\"",
+                table_name.c_str());
+
+    context->mml_writer = 0;
+
+    initialize_test(context, entities);
+    poll(0,0,100);
+  }
+
+  bool check_for_diff(const string &basename) {
+    string cmd;
+    int ret;
+
+    // Transform table ID to "<tid>" since they can change depending on the
+    // order in which the tests are run
+
+    cmd = format("mv %s.output %s.tmp", basename.c_str(), basename.c_str());
+    if ((ret = system(cmd.c_str())) != 0) {
+      cout << "Shell command \"" << cmd << "\" returned " << ret << endl;
+      return false;
+    }
+
+    cmd = format("sed 's/[0-9/]* move range/<tid> move range/g' %s.tmp > %s.output",
+                 basename.c_str(), basename.c_str());
+    if ((ret = system(cmd.c_str())) != 0) {
+      cout << "Shell command \"" << cmd << "\" returned " << ret << endl;
+      return false;
+    }
+
+    cmd = format("rm %s.tmp", basename.c_str());
+    if ((ret = system(cmd.c_str())) != 0) {
+      cout << "Shell command \"" << cmd << "\" returned " << ret << endl;
+      return false;
+    }
+
+    cmd = format("diff %s.output %s.golden", basename.c_str(), basename.c_str());
+    if ((ret = system(cmd.c_str())) != 0) {
+      cout << "Shell command \"" << cmd << "\" returned " << ret << endl;
+      return false;
+    }
+
+    return true;
+  }
 
 
 } // local namespace
@@ -254,12 +339,15 @@ namespace {
 void create_namespace_test(ContextPtr &context);
 void drop_namespace_test(ContextPtr &context);
 void create_table_test(ContextPtr &context);
+void drop_table_test(ContextPtr &context);
 void create_table_with_index_test(ContextPtr &context);
 void rename_table_test(ContextPtr &context);
 void master_initialize_test(ContextPtr &context);
 void system_upgrade_test(ContextPtr &context);
 void move_range_test(ContextPtr &context);
 void balance_plan_authority_test(ContextPtr &context);
+void toggle_table_maintenance_test(ContextPtr &context);
+void recreate_index_tables_test(ContextPtr &context);
 
 
 int main(int argc, char **argv) {
@@ -296,10 +384,9 @@ int main(int argc, char **argv) {
     context->monitoring = new Monitoring(context.get());
 
     context->mml_definition = new MetaLog::DefinitionMaster(context, "master");
-    String log_dir = context->toplevel_dir + "/servers/master/log";
+    g_mml_dir = context->toplevel_dir + "/servers/master/log/" + context->mml_definition->name();
     context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                              log_dir + "/" + context->mml_definition->name(),
-                                              entities);
+                                              g_mml_dir, entities);
 
     bpa = context->get_balance_plan_authority();
 
@@ -326,6 +413,8 @@ int main(int argc, char **argv) {
       drop_namespace_test(context);
     else if (testname == "create_table")
       create_table_test(context);
+    else if (testname == "drop_table")
+      drop_table_test(context);
     else if (testname == "create_table_with_index")
       create_table_with_index_test(context);
     else if (testname == "rename_table")
@@ -334,6 +423,10 @@ int main(int argc, char **argv) {
       move_range_test(context);
     else if (testname == "balance_plan_authority")
       balance_plan_authority_test(context);
+    else if (testname == "toggle_table_maintenance")
+      toggle_table_maintenance_test(context);
+    else if (testname == "recreate_index_tables")
+      recreate_index_tables_test(context);
     else {
       HT_ERRORF("Unrecognized test name: %s", testname.c_str());
       _exit(1);
@@ -351,37 +444,26 @@ int main(int argc, char **argv) {
 
 void create_namespace_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
-  ExpectedResultsMap expected_operations;
-  std::vector<String> expected_servers;
-  String log_dir = context->toplevel_dir + "/servers/master/log";
 
   context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            log_dir + "/" + context->mml_definition->name(),
-                                            entities);
+                                            g_mml_dir, entities);
 
   entities.push_back( new OperationCreateNamespace(context, "foo", 0) );
 
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "create-namespace-INITIAL:throw:0",
-           expected_operations, expected_servers);
+  ofstream out("create_namespace.output", ios::out|ios::trunc);
 
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "create-namespace-ASSIGN_ID-a:throw:0",
-           expected_operations, expected_servers);
+  run_test2(context, entities, "create-namespace-INITIAL:throw:0", out);
+  run_test2(context, entities, "create-namespace-ASSIGN_ID-a:throw:0", out);
+  run_test2(context, entities, "create-namespace-ASSIGN_ID-b:throw:0", out);
+  run_test2(context, entities, "", out);
 
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "create-namespace-ASSIGN_ID-b:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
-  run_test(context, log_dir, entities, "", expected_operations, expected_servers);
+  out.close();
 
   context->op->shutdown();
   context->op->join();
+
+  if (!check_for_diff("create_namespace"))
+    _exit(1);
 
   context = 0;
   _exit(0);
@@ -390,37 +472,26 @@ void create_namespace_test(ContextPtr &context) {
 
 void drop_namespace_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
-  ExpectedResultsMap expected_operations;
-  std::vector<String> expected_servers;
-  String log_dir = context->toplevel_dir + "/servers/master/log";
 
   context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            log_dir + "/" + context->mml_definition->name(),
-                                            entities);
+                                            g_mml_dir, entities);
 
   entities.push_back( new OperationDropNamespace(context, "foo", false) );
 
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationDropNamespace", OperationState::STARTED) );
-  run_test(context, log_dir, entities, "drop-namespace-INITIAL:throw:0",
-           expected_operations, expected_servers);
+  ofstream out("drop_namespace.output", ios::out|ios::trunc);
 
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationDropNamespace", OperationState::STARTED) );
-  run_test(context, log_dir, entities, "drop-namespace-STARTED-a:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationDropNamespace", OperationState::STARTED) );
-  run_test(context, log_dir, entities, "drop-namespace-STARTED-b:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationDropNamespace", OperationState::COMPLETE) );
-  run_test(context, log_dir, entities, "", expected_operations, expected_servers);
+  run_test2(context, entities, "drop-namespace-INITIAL:throw:0", out);
+  run_test2(context, entities, "drop-namespace-STARTED-a:throw:0", out);
+  run_test2(context, entities, "drop-namespace-STARTED-b:throw:0", out);
+  run_test2(context, entities, "", out);
 
   context->op->shutdown();
   context->op->join();
+
+  out.close();
+
+  if (!check_for_diff("drop_namespace"))
+    _exit(1);
 
   context = 0;
   _exit(0);
@@ -453,91 +524,82 @@ namespace {
 
 void create_table_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
-  ExpectedResultsMap expected_operations;
-  std::vector<String> expected_servers;
-  String log_dir = context->toplevel_dir + "/servers/master/log";
-  RangeServerConnectionPtr rsc1, rsc2;
 
-  context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            log_dir + "/" + context->mml_definition->name(),
-                                            entities);
+  initialize_test_with_servers(context, 2, entities);
 
-  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
-  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
+  ofstream out("create_table.output", ios::out|ios::trunc);
 
-  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
-  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
+  Operation *op = new OperationCreateTable(context, "tablefoo", schema_str, 
+                                           TableParts(TableParts::ALL));
+  op->add_exclusivity("/tablefoo");
 
-  {
-    std::vector<MetaLog::Entity *> entities;
-    entities.push_back(rsc1.get());
-    entities.push_back(rsc2.get());
-    context->mml_writer->record_state(entities);
-  }
+  entities.push_back(op);
 
-  expected_servers.push_back("rs1");
-  expected_servers.push_back("rs2");
+  run_test2(context, entities, "create-table-INITIAL:throw:0", out);
+  run_test2(context, entities, "Utility-create-table-in-hyperspace-1:throw:0", out);
+  run_test2(context, entities, "Utility-create-table-in-hyperspace-2:throw:0", out);
+  run_test2(context, entities, "create-table-ASSIGN_ID:throw:0", out);
+  run_test2(context, entities, "create-table-WRITE_METADATA-a:throw:0", out);
+  run_test2(context, entities, "create-table-WRITE_METADATA-b:throw:0", out);
+  run_test2(context, entities, "create-table-ASSIGN_LOCATION:throw:0", out);
+  run_test2(context, entities, "create-table-LOAD_RANGE-a:throw:0", out);
+  run_test2(context, entities, "create-table-LOAD_RANGE-b:throw:0", out);
+  run_test2(context, entities, "create-table-ACKNOWLEDGE:throw:0", out);
+  run_test2(context, entities, "", out);
 
-  entities.push_back( new OperationCreateTable(context, "tablefoo", schema_str) );
-
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "create-table-INITIAL:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "Utility-create-table-in-hyperspace-1:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "Utility-create-table-in-hyperspace-2:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "create-table-ASSIGN_ID:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "create-table-WRITE_METADATA-a:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_LOCATION) );
-  run_test(context, log_dir, entities, "create-table-WRITE_METADATA-b:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::LOAD_RANGE) );
-  run_test(context, log_dir, entities, "create-table-ASSIGN_LOCATION:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::LOAD_RANGE) );
-  run_test(context, log_dir, entities, "create-table-LOAD_RANGE-a:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ACKNOWLEDGE) );
-  run_test(context, log_dir, entities, "create-table-LOAD_RANGE-b:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ACKNOWLEDGE) );
-  run_test(context, log_dir, entities, "create-table-ACKNOWLEDGE:throw:0",
-           expected_operations, expected_servers);
-
-  context->rsc_manager->disconnect_server(rsc1);
-  initialize_test(context, log_dir, entities, "");
+  context->rsc_manager->disconnect_server(g_rsc[0]);
+  initialize_test(context, entities);
   poll(0,0,100);
-  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("localhost", 30267),
+  context->rsc_manager->connect_server(g_rsc[0], "rs1.hypertable.com", InetAddr("localhost", 30267),
                                        InetAddr("localhost", g_rs_port));
   context->op->wait_for_empty();
 
   context->op->shutdown();
   context->op->join();
+
+  out.close();
+
+  if (!check_for_diff("create_table"))
+    _exit(1);
+
+  context = 0;
+  _exit(0);
+}
+
+
+void drop_table_test(ContextPtr &context) {
+  std::vector<MetaLog::EntityPtr> entities;
+
+  initialize_test_with_servers(context, 2, entities);
+
+  string table_id;
+  create_table(context, entities, "drop_table_test", index_schema_str, table_id);
+
+  ofstream out("drop_table.output", ios::out|ios::trunc);
+
+  OperationPtr operation = 
+    new OperationDropTable(context, "drop_table_test", true,
+                           TableParts(TableParts::ALL));
+  entities.push_back(operation.get());
+
+  run_test2(context, entities, "drop-table-INITIAL:throw:0", out);
+  run_test2(context, entities, "drop-table-DROP_VALUE_INDEX-1:throw:0", out);
+  run_test2(context, entities, "drop-table-DROP_VALUE_INDEX-2:throw:0", out);
+  run_test2(context, entities, "drop-table-DROP_QUALIFIER_INDEX-1:throw:0", out);
+  run_test2(context, entities, "drop-table-DROP_QUALIFIER_INDEX-2:throw:0", out);
+  run_test2(context, entities, "drop-table-UPDATE_HYPERSPACE:throw:0", out);
+  run_test2(context, entities, "drop-table-SCAN_METADATA:throw:0", out);
+  run_test2(context, entities, "", out);
+
+  context->op->wait_for_empty();
+
+  context->op->shutdown();
+  context->op->join();
+
+  out.close();
+
+  if (!check_for_diff("drop_table"))
+    _exit(1);
 
   context = 0;
   _exit(0);
@@ -546,82 +608,41 @@ void create_table_test(ContextPtr &context) {
 
 void create_table_with_index_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
-  ExpectedResultsMap expected_operations;
-  std::vector<String> expected_servers;
-  String log_dir = context->toplevel_dir + "/servers/master/log";
-  RangeServerConnectionPtr rsc1, rsc2;
 
-  context->mml_writer = new MetaLog::Writer(context->dfs, 
-                                        context->mml_definition,
-                                        log_dir + "/" + 
-                                            context->mml_definition->name(),
-                                        entities);
+  initialize_test_with_servers(context, 2, entities);
 
-  rsc1 = new RangeServerConnection("rs1", 
-          "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
-  rsc2 = new RangeServerConnection("rs2", 
-          "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
+  ofstream out("create_table_with_index.output", ios::out|ios::trunc);
 
-  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", 
-          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
-  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", 
-          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
+  Operation *op = new OperationCreateTable(context, "tablefoo_index",
+                                           index_schema_str,
+                                           TableParts(TableParts::ALL));
+  op->add_exclusivity("/tablefoo_index");
 
-  {
-    std::vector<MetaLog::Entity *> entities;
-    entities.push_back(rsc1.get());
-    entities.push_back(rsc2.get());
-    context->mml_writer->record_state(entities);
-  }
+  entities.push_back(op);
 
-  expected_servers.push_back("rs1");
-  expected_servers.push_back("rs2");
+  run_test2(context, entities, "create-table-INITIAL:throw:0", out);
+  run_test2(context, entities, "create-table-CREATE_INDEX-1:throw:0", out);
+  run_test2(context, entities, "create-table-CREATE_INDEX-2:throw:0", out);
+  run_test2(context, entities, "create-table-CREATE_QUALIFIER_INDEX-1:throw:0", out);
+  run_test2(context, entities, "create-table-CREATE_QUALIFIER_INDEX-2:throw:0", out);
+  run_test2(context, entities, "create-table-FINALIZE:throw:0", out);
+  run_test2(context, entities, "create-table-FINALIZE:throw:1", out);
+  run_test2(context, entities, "", out);
 
-  entities.push_back(new OperationCreateTable(context, 
-                            "tablefoo_index", index_schema_str));
-
-  expected_operations.insert(std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "create-table-INITIAL:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  run_test(context, log_dir, entities, "create-table-CREATE_INDEX:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  run_test(context, log_dir, entities, "create-table-CREATE_QUALIFIER_INDEX:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ACKNOWLEDGE) );
-  run_test(context, log_dir, entities, "create-table-FINALIZE:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ASSIGN_ID) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::ACKNOWLEDGE) );
-  run_test(context, log_dir, entities, "create-table-FINALIZE:throw:1",
-           expected_operations, expected_servers);
-
-  context->rsc_manager->disconnect_server(rsc1);
-  initialize_test(context, log_dir, entities, "");
+  context->rsc_manager->disconnect_server(g_rsc[0]);
+  initialize_test(context, entities);
   poll(0,0,100);
-  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("localhost", 30267),
+  context->rsc_manager->connect_server(g_rsc[0], "rs1.hypertable.com", InetAddr("localhost", 30267),
                           InetAddr("localhost", g_rs_port));
   context->op->wait_for_empty();
 
   context->op->shutdown();
   context->op->join();
+
+  out.close();
+
+  if (!check_for_diff("create_table_with_index"))
+    _exit(1);
 
   context = 0;
   _exit(0);
@@ -630,25 +651,24 @@ void create_table_with_index_test(ContextPtr &context) {
 
 void rename_table_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
-  ExpectedResultsMap expected_operations;
-  std::vector<String> expected_servers;
-  String log_dir = context->toplevel_dir + "/servers/master/log";
 
   context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            log_dir + "/" + context->mml_definition->name(),
-                                            entities);
+                                            g_mml_dir, entities);
 
   entities.push_back( new OperationRenameTable(context, "tablefoo", "tablebar") );
 
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationRenameTable", OperationState::STARTED) );
-  run_test(context, log_dir, entities, "rename-table-STARTED:throw:0",
-           expected_operations, expected_servers);
+  ofstream out("rename_table.output", ios::out|ios::trunc);
 
-  run_test(context, log_dir, entities, "", expected_operations, expected_servers);
+  run_test2(context, entities, "rename-table-STARTED:throw:0", out);
+  run_test2(context, entities, "", out);
 
   context->op->shutdown();
   context->op->join();
+
+  out.close();
+
+  if (!check_for_diff("rename_table"))
+    _exit(1);
 
   context = 0;
   _exit(0);
@@ -657,94 +677,29 @@ void rename_table_test(ContextPtr &context) {
 
 void master_initialize_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
-  ExpectedResultsMap expected_operations;
-  std::vector<String> expected_servers;
-  String log_dir = context->toplevel_dir + "/servers/master/log";
-  RangeServerConnectionPtr rsc1, rsc2, rsc3, rsc4;
 
-  context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            log_dir + "/" + context->mml_definition->name(),
-                                            entities);
+  initialize_test_with_servers(context, 4, entities);
 
-  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
-  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
-  rsc3 = new RangeServerConnection("rs3", "how.hypertable.com", InetAddr("72.14.204.98", g_rs_port));
-  rsc4 = new RangeServerConnection("rs4", "cow.hypertable.com", InetAddr("69.147.125.62", g_rs_port));
-
-  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com", InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
-  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com", InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
-  context->rsc_manager->connect_server(rsc3, "how.hypertable.com", InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", g_rs_port));
-  context->rsc_manager->connect_server(rsc4, "cow.hypertable.com", InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", g_rs_port));
-
-  {
-    std::vector<MetaLog::Entity *> entities;
-    entities.push_back(rsc1.get());
-    entities.push_back(rsc2.get());
-    entities.push_back(rsc3.get());
-    entities.push_back(rsc4.get());
-    context->mml_writer->record_state(entities);
-  }
-
-  expected_servers.push_back("rs1");
-  expected_servers.push_back("rs2");
-  expected_servers.push_back("rs3");
-  expected_servers.push_back("rs4");
+  ofstream out("master_initialize.output", ios::out|ios::trunc);
 
   entities.push_back( new OperationInitialize(context) );
 
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::STARTED) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::INITIAL) );
-  run_test(context, log_dir, entities, "initialize-INITIAL:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::STARTED) );
-  run_test(context, log_dir, entities, "initialize-STARTED:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::LOAD_ROOT_METADATA_RANGE) );
-  run_test(context, log_dir, entities, "initialize-ASSIGN_METADATA_RANGES:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::LOAD_ROOT_METADATA_RANGE) );
-  run_test(context, log_dir, entities, "initialize-LOAD_ROOT_METADATA_RANGE:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::LOAD_SECOND_METADATA_RANGE) );
-  run_test(context, log_dir, entities, "initialize-LOAD_SECOND_METADATA_RANGE:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::WRITE_METADATA) );
-  run_test(context, log_dir, entities, "initialize-WRITE_METADATA:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::INITIAL) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::INITIAL) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::FINALIZE) );
-  run_test(context, log_dir, entities, "initialize-CREATE_RS_METRICS:throw:0",
-           expected_operations, expected_servers);
-
-  expected_operations.clear();
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateNamespace", OperationState::INITIAL) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationCreateTable", OperationState::COMPLETE) );
-  expected_operations.insert( std::pair<String, int32_t>("OperationInitialize", OperationState::COMPLETE) );
-  run_test(context, log_dir, entities, "", expected_operations, expected_servers);
+  run_test2(context, entities, "initialize-INITIAL:throw:0", out);
+  run_test2(context, entities, "initialize-STARTED:throw:0", out);
+  run_test2(context, entities, "initialize-ASSIGN_METADATA_RANGES:throw:0", out);
+  run_test2(context, entities, "initialize-LOAD_ROOT_METADATA_RANGE:throw:0", out);
+  run_test2(context, entities, "initialize-LOAD_SECOND_METADATA_RANGE:throw:0", out);
+  run_test2(context, entities, "initialize-WRITE_METADATA:throw:0", out);
+  run_test2(context, entities, "initialize-CREATE_RS_METRICS:throw:0", out);
+  run_test2(context, entities, "", out);
 
   context->op->shutdown();
   context->op->join();
+
+  out.close();
+
+  if (!check_for_diff("master_initialize"))
+    _exit(1);
 
   context = 0;
   _exit(0);
@@ -769,9 +724,6 @@ namespace {
 
 void system_upgrade_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
-  ExpectedResultsMap expected_operations;
-  std::vector<String> expected_servers;
-  String log_dir = context->toplevel_dir + "/servers/master/log";
 
   // Write "old" schema
   String tablefile = context->toplevel_dir + "/tables/0/0";
@@ -780,16 +732,26 @@ void system_upgrade_test(ContextPtr &context) {
   context->hyperspace->close(handle);
 
   context->mml_writer = new MetaLog::Writer(context->dfs, context->mml_definition,
-                                            log_dir + "/" + context->mml_definition->name(),
-                                            entities);
+                                            g_mml_dir, entities);
 
-  entities.push_back( new OperationSystemUpgrade(context) );
+  OperationPtr operation = new OperationSystemUpgrade(context);
+  entities.push_back(operation.get());
 
-  expected_operations.clear();
-  run_test(context, log_dir, entities, "", expected_operations, expected_servers);
+#if defined(__WIN32__) || defined(_WIN32)
+  string devnull("nul");
+#else
+  string devnull("/dev/null");
+#endif
+  ofstream out(devnull);
+
+  run_test2(context, entities, "", out);
 
   context->op->shutdown();
   context->op->join();
+
+  out.close();
+
+  HT_ASSERT(operation->get_state() == OperationState::COMPLETE);
 
   context = 0;
   _exit(0);
@@ -798,44 +760,9 @@ void system_upgrade_test(ContextPtr &context) {
 
 void move_range_test(ContextPtr &context) {
   std::vector<MetaLog::EntityPtr> entities;
-  ExpectedResultsMap expected_operations;
-  std::vector<String> expected_servers;
-  String log_dir = context->toplevel_dir + "/servers/master/log";
-  RangeServerConnectionPtr rsc1, rsc2, rsc3, rsc4;
   OperationMoveRangePtr move_range_operation;
 
-  context->mml_writer = new MetaLog::Writer(context->dfs,
-          context->mml_definition,
-          log_dir + "/" + context->mml_definition->name(),
-          entities);
-
-  rsc1 = new RangeServerConnection("rs1", "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
-  rsc2 = new RangeServerConnection("rs2", "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
-  rsc3 = new RangeServerConnection("rs3", "how.hypertable.com", InetAddr("72.14.204.98", g_rs_port));
-  rsc4 = new RangeServerConnection("rs4", "cow.hypertable.com", InetAddr("69.147.125.62", g_rs_port));
-
-  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com",
-          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
-  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com",
-          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
-  context->rsc_manager->connect_server(rsc3, "how.hypertable.com",
-          InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", g_rs_port));
-  context->rsc_manager->connect_server(rsc4, "cow.hypertable.com",
-          InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", g_rs_port));
-
-  {
-    std::vector<MetaLog::Entity *> entities;
-    entities.push_back(rsc1.get());
-    entities.push_back(rsc2.get());
-    entities.push_back(rsc3.get());
-    entities.push_back(rsc4.get());
-    context->mml_writer->record_state(entities);
-  }
-
-  expected_servers.push_back("rs1");
-  expected_servers.push_back("rs2");
-  expected_servers.push_back("rs3");
-  expected_servers.push_back("rs4");
+  initialize_test_with_servers(context, 4, entities);
 
   TableIdentifier table;
   RangeSpec range;
@@ -853,19 +780,13 @@ void move_range_test(ContextPtr &context) {
   entities.push_back(move_range_operation.get());
   entities.push_back(context->get_balance_plan_authority());
 
-  expected_operations.clear();
-  expected_operations.insert(std::pair<String, int32_t>("OperationMoveRange",
-            OperationState::STARTED));
-  run_test(context, log_dir, entities, "move-range-INITIAL-b:throw:0",
-           expected_operations, expected_servers);
+  ofstream out("move_range.output", ios::out|ios::trunc);
+
+  run_test2(context, entities, "move-range-INITIAL-b:throw:0", out);
 
   String initial_location = move_range_operation->get_location();
 
-  expected_operations.clear();
-  expected_operations.insert(std::pair<String, int32_t>("OperationMoveRange",
-              OperationState::COMPLETE));
-  run_test(context, log_dir, entities, "",
-          expected_operations, expected_servers);
+  run_test2(context, entities, "", out);
 
   String final_location = move_range_operation->get_location();
 
@@ -873,6 +794,11 @@ void move_range_test(ContextPtr &context) {
 
   context->op->shutdown();
   context->op->join();
+
+  out.close();
+
+  if (!check_for_diff("move_range"))
+    _exit(1);
 
   context = 0;
   _exit(0);
@@ -926,50 +852,8 @@ void fill_ranges(vector<QualifiedRangeSpec> &root_specs,
 void balance_plan_authority_test(ContextPtr &context) {
   std::ofstream out("balance_plan_authority_test.output");
   std::vector<MetaLog::EntityPtr> entities;
-  String log_dir = context->toplevel_dir + "/servers/master/log";
 
-  context->mml_writer = new MetaLog::Writer(context->dfs,
-          context->mml_definition,
-          log_dir + "/" + context->mml_definition->name(), entities);
-
-  RangeServerConnectionPtr rsc1, rsc2, rsc3, rsc4, rsc5;
-  rsc1 = new RangeServerConnection("rs1",
-          "foo.hypertable.com", InetAddr("72.14.204.99", g_rs_port));
-  rsc2 = new RangeServerConnection("rs2",
-          "bar.hypertable.com", InetAddr("69.147.125.65", g_rs_port));
-  rsc3 = new RangeServerConnection("rs3",
-          "how.hypertable.com", InetAddr("72.14.204.98", g_rs_port));
-  rsc4 = new RangeServerConnection("rs4",
-          "cow.hypertable.com", InetAddr("69.147.125.62", g_rs_port));
-  rsc5 = new RangeServerConnection("rs5",
-          "boo.hypertable.com", InetAddr("70.147.125.62", g_rs_port));
-
-  context->rsc_manager->connect_server(rsc1, "foo.hypertable.com",
-          InetAddr("72.14.204.99", 33567), InetAddr("72.14.204.99", g_rs_port));
-  context->rsc_manager->connect_server(rsc2, "bar.hypertable.com",
-          InetAddr("69.147.125.65", 30569), InetAddr("69.147.125.65", g_rs_port));
-  context->rsc_manager->connect_server(rsc3, "how.hypertable.com",
-          InetAddr("72.14.204.98", 33572), InetAddr("72.14.204.98", g_rs_port));
-  context->rsc_manager->connect_server(rsc4, "cow.hypertable.com",
-          InetAddr("69.147.125.62", 30569), InetAddr("69.147.125.62", g_rs_port));
-  context->rsc_manager->connect_server(rsc5, "boo.hypertable.com",
-          InetAddr("70.147.125.62", 30569), InetAddr("70.147.125.62", g_rs_port));
-
-  context->add_available_server("rs1");
-  context->add_available_server("rs2");
-  context->add_available_server("rs3");
-  context->add_available_server("rs4");
-  context->add_available_server("rs5");
-
-  {
-    std::vector<MetaLog::Entity *> entities;
-    entities.push_back(rsc1.get());
-    entities.push_back(rsc2.get());
-    entities.push_back(rsc3.get());
-    entities.push_back(rsc4.get());
-    entities.push_back(rsc5.get());
-    context->mml_writer->record_state(entities);
-  }
+  initialize_test_with_servers(context, 5, entities);
 
   BalancePlanAuthority *bpa = context->get_balance_plan_authority();
 
@@ -985,7 +869,7 @@ void balance_plan_authority_test(ContextPtr &context) {
   // populate ranges
   fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
               system_specs, system_states, user_specs, user_states);
-  rsc1->set_removed();
+  g_rsc[0]->set_removed();
   context->remove_available_server("rs1");
   bpa->create_recovery_plan("rs1", root_specs, root_states, metadata_specs, metadata_states,
           system_specs, system_states, user_specs, user_states);
@@ -993,7 +877,7 @@ void balance_plan_authority_test(ContextPtr &context) {
 
   fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
               system_specs, system_states, user_specs, user_states);
-  rsc2->set_removed();
+  g_rsc[1]->set_removed();
   context->remove_available_server("rs2");
   bpa->create_recovery_plan("rs2", root_specs, root_states, metadata_specs, metadata_states,
           system_specs, system_states, user_specs, user_states);
@@ -1001,7 +885,7 @@ void balance_plan_authority_test(ContextPtr &context) {
 
   fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
               system_specs, system_states, user_specs, user_states);
-  rsc3->set_removed();
+  g_rsc[2]->set_removed();
   context->remove_available_server("rs3");
   bpa->create_recovery_plan("rs3", root_specs, root_states, metadata_specs, metadata_states,
           system_specs, system_states, user_specs, user_states);
@@ -1009,7 +893,7 @@ void balance_plan_authority_test(ContextPtr &context) {
 
   fill_ranges(root_specs, root_states, metadata_specs, metadata_states,
               system_specs, system_states, user_specs, user_states);
-  rsc4->set_removed();
+  g_rsc[3]->set_removed();
   context->remove_available_server("rs4");
   bpa->create_recovery_plan("rs4", root_specs, root_states, metadata_specs, metadata_states,
           system_specs, system_states, user_specs, user_states);
@@ -1022,6 +906,129 @@ void balance_plan_authority_test(ContextPtr &context) {
     std::cout << "balance_plan_authority_test.output differs from golden file\n";
     _exit(1);
   }
+
+  context = 0;
+  _exit(0);
+}
+
+void toggle_table_maintenance_test(ContextPtr &context) {
+  std::vector<MetaLog::EntityPtr> entities;
+
+  initialize_test_with_servers(context, 2, entities);
+
+  string table_id;
+  create_table(context, entities, "toggle", index_schema_str, table_id);
+
+  ofstream out("toggle_table_maintenance.output", ios::out|ios::trunc);
+
+  OperationPtr operation = new OperationToggleTableMaintenance(context, "toggle", TableMaintenance::OFF);
+  entities.push_back(operation.get());
+
+  context->add_available_server(g_rsc[0]->location());
+  context->add_available_server(g_rsc[1]->location());
+
+  run_test2(context, entities, "toggle-table-maintenance-INITIAL:throw:0", out);
+  run_test2(context, entities, "toggle-table-maintenance-UPDATE_HYPERSPACE-1:throw:0", out);
+  run_test2(context, entities, "toggle-table-maintenance-UPDATE_HYPERSPACE-2:throw:0", out);
+  run_test2(context, entities, "toggle-table-maintenance-SCAN_METADATA:throw:0", out);
+  run_test2(context, entities, "toggle-table-maintenance-ISSUE_REQUESTS:throw:0", out);
+  run_test2(context, entities, "", out);
+
+  // Check for "maintenance_disabled" attribute
+  try {
+    String tablefile = context->toplevel_dir + "/tables/" + table_id;
+    DynamicBuffer dbuf;
+    context->hyperspace->attr_get(tablefile, "maintenance_disabled", dbuf);
+  }
+  catch (Exception &e) {
+    HT_FATAL_OUT << e << HT_END;
+  }
+
+  context->mml_writer->record_removal(operation.get());
+
+  entities.clear();
+  entities.push_back(g_rsc[0].get());
+  entities.push_back(g_rsc[1].get());
+
+  operation = new OperationToggleTableMaintenance(context, "toggle", TableMaintenance::ON);
+  entities.push_back(operation.get());
+
+  run_test2(context, entities, "toggle-table-maintenance-INITIAL:throw:0", out);
+  run_test2(context, entities, "toggle-table-maintenance-UPDATE_HYPERSPACE-1:throw:0", out);
+  run_test2(context, entities, "toggle-table-maintenance-UPDATE_HYPERSPACE-2:throw:0", out);
+  run_test2(context, entities, "toggle-table-maintenance-SCAN_METADATA:throw:0", out);
+  run_test2(context, entities, "toggle-table-maintenance-ISSUE_REQUESTS:throw:0", out);
+  run_test2(context, entities, "", out);
+
+  // Check for absence of "maintenance_disabled" attribute
+  try {
+    String tablefile = context->toplevel_dir + "/tables/" + table_id;
+    DynamicBuffer dbuf;
+    context->hyperspace->attr_get(tablefile, "maintenance_disabled", dbuf);
+    HT_FATAL("Attribute \"maintenance_disabled\" found when it should not exist");
+  }
+  catch (Exception &e) {
+  }
+
+  out.close();
+
+  context->op->shutdown();
+  context->op->join();
+
+  out.close();
+
+  if (!check_for_diff("toggle_table_maintenance"))
+    _exit(1);
+
+  context = 0;
+  _exit(0);
+}
+
+
+void recreate_index_tables_test(ContextPtr &context) {
+  std::vector<MetaLog::EntityPtr> entities;
+
+  initialize_test_with_servers(context, 2, entities);
+
+  string table_id;
+  create_table(context, entities, "recreate_index_tables", index_schema_str, table_id);
+
+  ofstream out("recreate_index_tables.output", ios::out|ios::trunc);
+
+  OperationPtr operation = new OperationRecreateIndexTables(context, "recreate_index_tables",
+                                                            TableParts(TableParts::ALL));
+  entities.push_back(operation.get());
+
+  context->add_available_server(g_rsc[0]->location());
+  context->add_available_server(g_rsc[1]->location());
+
+  run_test2(context, entities, "recreate-index-tables-INITIAL:throw:0", out);
+  run_test2(context, entities, "toggle-table-maintenance-SCAN_METADATA:throw:0", out);
+  run_test2(context, entities, "drop-table-INITIAL:throw:0", out);
+  run_test2(context, entities, "create-table-ASSIGN_ID:throw:0", out);
+  run_test2(context, entities, "recreate-index-tables-RESUME_TABLE_MAINTENANCE-a:throw:0", out);
+  run_test2(context, entities, "recreate-index-tables-RESUME_TABLE_MAINTENANCE-b:throw:0", out);
+  run_test2(context, entities, "", out);
+
+  // Check for absence of "maintenance_disabled" attribute
+  try {
+    String tablefile = context->toplevel_dir + "/tables/" + table_id;
+    DynamicBuffer dbuf;
+    context->hyperspace->attr_get(tablefile, "maintenance_disabled", dbuf);
+    HT_FATAL("Attribute \"maintenance_disabled\" found when it should not exist");
+  }
+  catch (Exception &e) {
+  }
+
+  out.close();
+
+  context->op->shutdown();
+  context->op->join();
+
+  out.close();
+
+  if (!check_for_diff("recreate_index_tables"))
+    _exit(1);
 
   context = 0;
   _exit(0);

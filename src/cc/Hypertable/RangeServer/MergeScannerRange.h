@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,25 +19,35 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MERGESCANNERRANGE_H
-#define HYPERTABLE_MERGESCANNERRANGE_H
+/// @file
+/// Declarations for MergeScannerRange.
+/// This file contains type declarations for MergeScannerRange, a class used for
+/// performing a scan over a range.
+
+#ifndef Hypertable_RangeServer_MergeScannerRange_h
+#define Hypertable_RangeServer_MergeScannerRange_h
+
+#include <Hypertable/RangeServer/MergeScanner.h>
+#include <Hypertable/RangeServer/IndexUpdater.h>
+
+#include <Common/ByteString.h>
+#include <Common/DynamicBuffer.h>
 
 #include <queue>
+#include <set>
 #include <string>
 #include <vector>
-#include <set>
-
-#include "Common/ByteString.h"
-#include "Common/DynamicBuffer.h"
-
-#include "MergeScanner.h"
 
 namespace Hypertable {
 
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Performas a scan over a range.
   class MergeScannerRange : public MergeScanner {
 
   public:
-    MergeScannerRange(ScanContextPtr &scan_ctx);
+    MergeScannerRange(const std::string &table_id, ScanContextPtr &scan_ctx);
 
     int32_t get_skipped_cells() {
       return m_cell_skipped;
@@ -53,6 +63,9 @@ namespace Hypertable {
     virtual void do_forward();
 
   private:
+
+    /// Index updater for <i>rebuild indices</i> scan
+    IndexUpdaterPtr m_index_updater;
     int32_t       m_cell_offset;
     int32_t       m_cell_skipped;
     int32_t       m_cell_count;
@@ -69,6 +82,8 @@ namespace Hypertable {
     bool          m_skip_this_row;
   };
 
+  /// @}
+
 } // namespace Hypertable
 
-#endif // HYPERTABLE_MERGESCANNERRANGE_H
+#endif // Hypertable_RangeServer_MergeScannerRange_h

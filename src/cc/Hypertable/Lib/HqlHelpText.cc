@@ -51,6 +51,7 @@ namespace {
     "RENAME TABLE ....... Renames a table",
     "DUMP TABLE ......... Create efficient backup file",
     "ALTER TABLE ........ Add/remove column family from existing table",
+    "REBUILD INDICES .... Rebuilds a table's indices",
     "INSERT ............. Inserts data into a table",
     "LOAD DATA INFILE ... Loads data from a TSV input file into a table",
     "SELECT ............. Selects (and display) cells from a table",
@@ -1987,6 +1988,35 @@ namespace {
     0
   };
 
+  const char *help_text_rebuild_indices[] = {
+    "",
+    "REBUILD INDICES",
+    "===============",
+    "",
+    "REBUILD [QUALIFIER|VALUE] INDICES table_name",
+    "",
+    "This command will rebuild the indices for the table specified by",
+    "table_name.  It can be used to rebuild the qualifier indices, the value",
+    "indices, or both.  It does this by first dropping and recreating the",
+    "index table(s) and then scanning over the primary table, reconstructing",
+    "the indices by repopulating the index tables.",
+    "",
+    "NOTE: This command is not atomic with respect to queries.  While this",
+    "command is running, queries against the indices that are being rebuilt",
+    "may return incorrect results.  Also, the command is not serialized with",
+    "other REBUILD INDICES commands for the same table.  Multiple concurrent",
+    "invocations of this command for the same table will interfere with one",
+    "another, causing one of the commands to fail.",
+    "",
+    "Examples:",
+    "",
+    "  REBUILD INDICES mytable;",
+    "  REBUILD QUALIFIER INDICES mytable;",
+    "  REBUILD VALUE INDICES mytable;",
+    "",
+    0
+  };
+
   const char *help_text_set[] = {
     "",
     "SET",
@@ -2057,6 +2087,8 @@ namespace {
     (*map)["shutdown"] = help_text_shutdown;
     (*map)["dump"] = help_text_dump_table;
     (*map)["dump table"] = help_text_dump_table;
+    (*map)["rebuild"] = help_text_rebuild_indices;
+    (*map)["rebuild indices"] = help_text_rebuild_indices;
     (*map)["set"] = help_text_set;
     return *map;
   }

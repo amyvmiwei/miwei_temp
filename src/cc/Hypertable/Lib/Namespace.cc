@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -365,6 +365,31 @@ void Namespace::drop_table(const String &table_name, bool if_exists) {
 
   m_master_client->drop_table(full_name, if_exists);
   m_table_cache->remove(full_name);
+
+  // also remove the index tables from the cache
+  String index_name=get_index_table_name(table_name);
+  m_table_cache->remove(get_full_name(index_name));
+  index_name=get_qualifier_index_table_name(table_name);
+  m_table_cache->remove(get_full_name(index_name));
+}
+
+void Namespace::rebuild_indices(const std::string &table_name,
+                                TableParts table_parts) {
+
+  String full_name = get_full_name(table_name);
+
+  m_master_client->recreate_index_tables(full_name, table_parts);
+
+  // Rebuild indices
+  {
+    TablePtr table = open_table(table_name);
+    ScanSpec scan_spec;
+    scan_spec.rebuild_indices = table_parts;
+    TableScannerPtr scanner = table->create_scanner(scan_spec);
+    Cell cell;
+    while (scanner->next(cell))
+      HT_ASSERT(!"Rebuild index scan returned a cell");
+  }    
 
   // also remove the index tables from the cache
   String index_name=get_index_table_name(table_name);

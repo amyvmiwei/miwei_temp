@@ -1,0 +1,7 @@
+[rename-table-STARTED:throw:0] OperationRenameTable {STARTED}
+[rename-table-STARTED:throw:0]   dependency: INIT
+[rename-table-STARTED:throw:0]   exclusivity: /tablebar
+[rename-table-STARTED:throw:0]   exclusivity: /tablefoo
+
+[] OperationRenameTable {COMPLETE}
+

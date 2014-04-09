@@ -1,12 +1,12 @@
-/** -*- c++ -*-
- * Copyright (C) 2011 Hypertable Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
  * Hypertable is free software; you can redistribute it and/or
  * modify it under the terms of the GNU General Public License
- * as published by the Free Software Foundation; version 2 of the
- * License, or any later version.
+ * as published by the Free Software Foundation; either version 3
+ * of the License, or any later version.
  *
  * Hypertable is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -19,38 +19,44 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_INDEXUPDATER_H
-#define HYPERTABLE_INDEXUPDATER_H
+/// @file
+/// Declarations for IndexUpdater.
+/// This file contains type declarations for IndexUpdater, a class for keeping
+/// index tables up-to-date.
 
-#include "Common/Compat.h"
+#ifndef Hypertable_RangeServer_IndexUpdater_h
+#define Hypertable_RangeServer_IndexUpdater_h
+
+#include <Hypertable/RangeServer/Global.h>
+
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/Table.h>
+#include <Hypertable/Lib/TableMutatorAsync.h>
+
+#include <Common/Mutex.h>
+#include <Common/String.h>
+
 #include <map>
-
-#include "Common/ReferenceCount.h"
-#include "Common/Mutex.h"
-#include "Common/String.h"
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/Table.h"
-#include "Hypertable/Lib/TableMutatorAsync.h"
-
-#include "Global.h"
-
+#include <memory>
 
 namespace Hypertable {
 
   class ResultCallback;
 
-  /**
-   * The IndexUpdater purges keys from an index table. This object is 
-   * created once per scan.
-   */
-  class IndexUpdater : public ReferenceCount {
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Helper class for updating index tables.
+  class IndexUpdater {
     friend class IndexUpdaterFactory;
 
-    // constructor; objects are created by IndexUpdaterFactory
+  public:
+
+    /// constructor; objects are created by IndexUpdaterFactory
     IndexUpdater(SchemaPtr &primary_schema, TablePtr index_table, 
                  TablePtr qualifier_index_table);
 
-  public:
+    /// Destructor.
     ~IndexUpdater() {
       if (m_index_mutator)
         delete m_index_mutator;
@@ -59,8 +65,11 @@ namespace Hypertable {
       delete m_cb;
     }
 
-    // purges a key from the indices
+    /// Purges a key from index tables.
     void purge(const Key &key, const ByteString &value);
+
+    /// Adds a key to index tables.
+    void add(const Key &key, const ByteString &value);
 
   private:
     TableMutatorAsync *m_index_mutator;
@@ -72,20 +81,24 @@ namespace Hypertable {
     unsigned           m_highest_column_id;
   };
 
-  /**
-   * The IndexUpdaterFactory creates new IndexUpdater objects
-   */
+  /// Smart pointer to IndexUpdater.
+  typedef std::shared_ptr<IndexUpdater> IndexUpdaterPtr;
+
+  /// Factory class for creating IndexUpdater objects.
   class IndexUpdaterFactory {
   public:
-    // factory function
-    static IndexUpdater *create(const String &table_id, SchemaPtr &schema,
+    // Factory function.
+    static IndexUpdaterPtr create(const String &table_id, SchemaPtr &schema,
             bool has_index, bool has_qualifier_index);
 
-    // cleanup function; called before leaving main()
+    // Cleanup function; called before leaving main()
     static void close();
 
+    /// Clears both value and qualifier caches
+    static void clear_cache();
+
   private:
-    // loads a table
+    // Loads a table.
     static Table *load_table(const String &table_name);
 
     typedef std::map<String, TablePtr> TableMap;
@@ -96,7 +109,8 @@ namespace Hypertable {
     static TableMap ms_index_cache;
   };
 
-  typedef boost::intrusive_ptr<IndexUpdater> IndexUpdaterPtr;
+  /// @}
+
 } // namespace Hypertable
 
-#endif // HYPERTABLE_INDEXUPDATER_H
+#endif // Hypertable_RangeServer_IndexUpdater_h

@@ -38,12 +38,12 @@ namespace Hypertable {
 
     ConnectionHandler(Comm *, ApplicationQueuePtr &, RangeServerPtr);
 
-    virtual void handle(EventPtr &event_ptr);
+    virtual void handle(EventPtr &event);
 
   private:
     Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue_ptr;
-    RangeServerPtr       m_range_server_ptr;
+    ApplicationQueuePtr  m_app_queue;
+    RangeServerPtr       m_range_server;
     bool                 m_shutdown;
   };
 

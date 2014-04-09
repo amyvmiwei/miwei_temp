@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,15 +19,14 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Declarations for Operation.
- * This file contains declarations for Operation, an abstract base class that
- * that represents a master operation, and from which specific/concrete
- * operation classes are derived.
- */
+/// @file
+/// Declarations for Operation.
+/// This file contains declarations for Operation, an abstract base class that
+/// that represents a master operation, and from which specific/concrete
+/// operation classes are derived.
 
-#ifndef HYPERTABLE_OPERATION_H
-#define HYPERTABLE_OPERATION_H
+#ifndef Hypertable_Master_Operation_h
+#define Hypertable_Master_Operation_h
 
 #include <ctime>
 #include <set>
@@ -45,14 +44,13 @@
 
 namespace Hypertable {
 
-  /** @addtogroup Master
-   *  @{
-   */
+  /// @addtogroup Master
+  /// @{
 
-  /** %Master operation states. */
+  /// %Master operation states.
   namespace OperationState {
 
-    /** Enumeration for operation states */
+    /// Enumeration for operation states.
     enum {
       INITIAL = 0,
       COMPLETE = 1,
@@ -77,16 +75,21 @@ namespace Hypertable {
       PREPARE = 20,
       COMMIT = 21,
       PHANTOM_LOAD = 22,
-      REPLAY_FRAGMENTS = 23
+      REPLAY_FRAGMENTS = 23,
+      CREATE_INDICES = 24,
+      DROP_INDICES = 25,
+      SUSPEND_TABLE_MAINTENANCE = 26,
+      RESUME_TABLE_MAINTENANCE = 27,
+      DROP_VALUE_INDEX = 28,
+      DROP_QUALIFIER_INDEX = 29
     };
-    /** Converts operation state constant to human readable string.
-     * @param state %Operation state constant
-     * @return Human readable string representation for <code>state</code>.
-     */
+    /// Converts operation state constant to human readable string.
+    /// @param state %Operation state constant
+    /// @return Human readable string representation for <code>state</code>.
     const char *get_text(int state);
   }
 
-  /** %Master dependency strings */
+  /// %Master dependency strings
   namespace Dependency {
     extern const char *INIT;
     extern const char *SERVERS;
@@ -99,9 +102,9 @@ namespace Hypertable {
     extern const char *RECOVERY;
   }
 
-  /** %Namespace operation flags */
+  /// %Namespace operation flags
   namespace NamespaceFlag {
-    /** Enumeration for namespace operation flags */
+    /// Enumeration for namespace operation flags.
     enum {
       CREATE_INTERMEDIATE = 0x0001,
       IF_EXISTS           = 0x0002,
@@ -109,25 +112,24 @@ namespace Hypertable {
     };
   }
 
-  /** Set of dependency string */
+  /// Set of dependency string
   typedef std::set<String> DependencySet;
 
-  /** Abstract base class for master operations.
-   * The master is implemented as a dependency graph of operations that
-   * are executed by the OperationProcessor.  Each operation is implemented as a
-   * state machine and has a dependency relationship with other operations. This
-   * class is the base class for all operations and defines a common interface.
-   * The execute() method is called by the OperationProcessor to run the
-   * operation's state machine and the dependency relationship is defined by
-   * sets of dependency strings returned by the following methods:
-   *
-   *   - #exclusivities
-   *   - #dependencies
-   *   - #obstructions
-   * 
-   * See OperationProcessor for details on how the operation dependency graph
-   * is setup and how operations are carried out.
-   */
+  /// Abstract base class for master operations.
+  /// The master is implemented as a dependency graph of operations that
+  /// are executed by the OperationProcessor.  Each operation is implemented as a
+  /// state machine and has a dependency relationship with other operations. This
+  /// class is the base class for all operations and defines a common interface.
+  /// The execute() method is called by the OperationProcessor to run the
+  /// operation's state machine and the dependency relationship is defined by
+  /// sets of dependency strings returned by the following methods:
+  ///
+  ///   - #exclusivities
+  ///   - #dependencies
+  ///   - #obstructions
+  /// 
+  /// See OperationProcessor for details on how the operation dependency graph
+  /// is setup and how operations are carried out.
   class Operation : public MetaLog::Entity {
   public:
 
@@ -283,40 +285,36 @@ namespace Hypertable {
      */
     virtual uint16_t encoding_version() const = 0;
 
-    /** Length of encoded operation result.
-     * This method returns the length of the encoded result, which is
-     * encoded as follows:
-     * <pre>
-     *   i32  error code
-     *   vstr error message (if error code != Error::OK)
-     * </pre>
-     * @return length of encoded result
-     */
+    /// Length of encoded operation result.
+    /// This method returns the length of the encoded result.
+    /// @return length of encoded result
+    /// @see encode_result() for encoding format.
     virtual size_t encoded_result_length() const;
 
-    /** Encode operation result.
-     * Encodes the result of the operation as follows:
-     * <pre>
-     *   i32  error code
-     *   vstr error message (if error code != Error::OK)
-     * </pre>
-     * This method is called by encode() to handle encoding of the operation
-     * result.
-     * @param bufp Address of pointer to destination buffer
-     */
+    /// Encode operation result.
+    /// This method is called by encode() to encode the result of the operation
+    /// when it is in the OperationState::COMPLETE state.  The result is encoded
+    /// in the following format:
+    /// <table>
+    ///   <tr>
+    ///   <th>Encoding</th><th>Description</th>
+    ///   </tr>
+    ///   <tr>
+    ///   <td>i32</td><td>Error code</td>
+    ///   </tr>
+    ///   <tr>
+    ///   <td>vstr</td><td>Error message (if error code != Error::OK)</td>
+    ///   </tr>
+    /// </table>
+    /// @param bufp Address of pointer to destination buffer
     virtual void encode_result(uint8_t **bufp) const;
 
-    /** Decode operation result.
-     * Decodes the result of the operation encoded as follows:
-     * <pre>
-     *   i32  error code
-     *   vstr error message (if error code != Error::OK)
-     * </pre>
-     * This method is called by decode() to handle decoding of the operation
-     * result.
-     * @param bufp Address of pointer to encoded result
-     * @param remainp Address of integer holding amount of remaining buffer
-     */
+    /// Decode operation result.
+    /// This method is called by decode() to handle decoding of the operation
+    /// result.
+    /// @param bufp Address of pointer to encoded result
+    /// @param remainp Address of integer holding amount of remaining buffer
+    /// @see encode_result() for encoding format.
     virtual void decode_result(const uint8_t **bufp, size_t *remainp);
 
     /** Length of encoded operation.
@@ -426,8 +424,70 @@ namespace Hypertable {
      */
     bool remove_if_ready();
 
-    void complete_error(int error, const String &msg);
-    void complete_error(Exception &e);
+    /// Checks if all remove approvals have been received.
+    /// This member function will return <i>true</i> if the remove approval mask
+    /// is non-zero and the approvals received (#m_remove_approvals) equals the
+    /// mask.
+    /// @return <i>true</i> if remove approvals required for removal have been
+    /// received, <i>false</i> otherwise.
+    bool removal_approved();
+
+    /// Records a vector of entities to the MML.
+    /// This member function first iterates through <code>entities</code> and
+    /// for each operation, calls removal_approved() to see if it can be removed
+    /// and if so, marks it for removal.  Then the vector of entities is
+    /// persisted to the MML.  Finally, it again iterates through
+    /// <code>entities</code> and each operation that was marked for removal is
+    /// removed from the reference manager.
+    /// @param entities Entities to be recorded in MML
+    void record_state(std::vector<MetaLog::Entity *> &entities);
+
+    /// Completes operation with error.
+    /// <a name="complete_error1"></a>
+    /// This member function does the following:
+    ///   - Sets state to OperationState::COMPLETE
+    ///   - Sets #m_error to <code>error</code>
+    ///   - Sets #m_error_msg to <code>msg</code>
+    ///   - Clears dependency, obstruction, and exclusivity sets
+    ///   - Persists state along with <code>additional</code> with a call to
+    /// record_state()
+    /// @param error %Error code of operation result
+    /// @param msg %Error message of operation result
+    /// @param additional Vector of additional entities to persist to MML
+    void complete_error(int error, const String &msg, std::vector<MetaLog::Entity *> &additional);
+
+    /// Completes operation with error.
+    /// <a name="complete_error2"></a>
+    /// This member function wraps <code>additional</code> into a vector and
+    /// chains the call to <a href="#complete_error1">complete_error</a>
+    /// @param error %Error code of operation result
+    /// @param msg %Error message of operation result
+    /// @param additional Additional entity to persist to MML
+    void complete_error(int error, const String &msg, MetaLog::Entity *additional=0);
+
+    /// Completes operation with exception.
+    /// This method chains the call to
+    /// <a href="#complete_error1">complete_error</a> with
+    /// <code>e.code()</code> and <code>e.what()</code> as the error code and
+    /// message, respectively.
+    /// @param e %Exception precipitating the operation completion
+    /// @param additional Vector of additional entities to persist to MML
+    void complete_error(Exception &e, std::vector<MetaLog::Entity *> &additional) {
+      complete_error(e.code(), e.what(), additional);
+    }
+
+    /// Completes operation with exception.
+    /// This method chains the call to
+    /// <a href="#complete_error2">complete_error</a> with
+    /// <code>e.code()</code> and <code>e.what()</code> as the error code and
+    /// message, respectively.
+    /// @param e %Exception precipitating the operation completion
+    /// @param additional Vector of additional entity to persist to MML
+    void complete_error(Exception &e, MetaLog::Entity *additional=0) {
+      complete_error(e.code(), e.what(), additional);
+    }
+
+    void complete_ok(std::vector<MetaLog::Entity *> &additional);
     void complete_ok(MetaLog::Entity *additional=0);
 
     virtual int64_t hash_code() const { return m_hash_code; }
@@ -455,45 +515,90 @@ namespace Hypertable {
     int32_t get_original_type() { return m_original_type; }
     void set_original_type(int32_t original_type) { m_original_type = original_type; }
 
-    /** Sets the #m_ephemeral flag to <i>true</i>. */
+    /// Sets the #m_ephemeral flag to <i>true</i>.
     void set_ephemeral() {
       ScopedLock lock(m_mutex);
       m_ephemeral = true;
     }
 
+    /// Get error code
+    /// @return Error code
+    int32_t get_error() {
+      ScopedLock lock(m_mutex);
+      HT_ASSERT(m_state == OperationState::COMPLETE);
+      return m_error;
+    }
+
+    /// Get error message
+    /// @return Error message
+    String get_error_msg() {
+      ScopedLock lock(m_mutex);
+      HT_ASSERT(m_state == OperationState::COMPLETE);
+      return m_error_msg;
+    }
+
   protected:
+
+    /// Pointer to %Master context
     ContextPtr m_context;
+
+    /// Pointer to client event (if any) that originated the operation
     EventPtr m_event;
+
+    /// %Operation state
     int32_t m_state {OperationState::INITIAL};
-    int32_t m_error {};
+
+    /// Remove approvals received
     uint16_t m_remove_approvals {};
+
+    /// Remove approval mask
     uint16_t m_remove_approval_mask {};
+
+    /// Original entity type read from MML (prior to conversion)
     int32_t m_original_type {};
+
+    /// Result error code
+    int32_t m_error {};
+
+    /// Result error message
     String m_error_msg;
 
     /// Version of serialized operation
     uint16_t m_decode_version {};
 
+    /// Flag to signal operation to be unblocked on exit (post_run())
     bool m_unblock_on_exit {};
+
+    /// Flag indicating if operation is blocked
     bool m_blocked {};
 
     /// Indicates if operation is ephemeral and does not get persisted to MML
     bool m_ephemeral {};
 
-    // Expiration time (used by ResponseManager)
+    /// Expiration time (used by ResponseManager)
     HiResTime m_expiration_time;
+
+    /// Hash code uniqely identifying operation
     int64_t m_hash_code;
+
+    /// Set of exclusivities
     DependencySet m_exclusivities;
+
+    /// Set of dependencies
     DependencySet m_dependencies;
+
+    /// Set of obstructions
     DependencySet m_obstructions;
+
+    /// Vector of sub operations to be added to OperationProcessor
     std::vector<Operation *> m_sub_ops;
   };
 
-  /** Smart pointer to Operation */
+  /// Smart pointer to Operation
   typedef intrusive_ptr<Operation> OperationPtr;
 
-  /** @} */
+  /// @}
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_OPERATION_H
+#endif // Hypertable_Master_Operation_h

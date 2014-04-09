@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,19 +19,24 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cassert>
+/// @file
+/// Definitions for MergeScannerRange.
+/// This file contains type definitions for MergeScannerRange, a class used for
+/// performing a scan over a range.
 
-#include "Common/Logger.h"
-
-#include "Hypertable/Lib/Key.h"
-
+#include <Common/Compat.h>
 #include "MergeScannerRange.h"
 
+#include <Hypertable/Lib/Key.h>
+
+#include <Common/Logger.h>
+
+#include <cassert>
+
 using namespace Hypertable;
+using namespace std;
 
-
-MergeScannerRange::MergeScannerRange(ScanContextPtr &scan_ctx) 
+MergeScannerRange::MergeScannerRange(const string &table_id, ScanContextPtr &scan_ctx) 
   : MergeScanner(scan_ctx), m_cell_offset(0), m_cell_skipped(0), 
     m_cell_count(0), m_cell_limit(0), m_row_offset(0), m_row_skipped(0),
     m_row_count(0), m_row_limit(0), m_cell_count_per_family(0), 
@@ -43,6 +48,30 @@ MergeScannerRange::MergeScannerRange(ScanContextPtr &scan_ctx)
     m_cell_limit_per_family = scan_ctx->spec->cell_limit_per_family;
     m_row_offset = scan_ctx->spec->row_offset;
     m_cell_offset = scan_ctx->spec->cell_offset;
+
+    if (scan_ctx->spec->rebuild_indices) {
+      bool has_index = false;
+      bool has_qualifier_index = false;
+
+      for (auto cf : scan_ctx->schema->get_column_families()){
+        if (!cf || cf->deleted)
+          continue;
+        if (scan_ctx->spec->rebuild_indices.value_index() && cf->has_index) {
+          has_index = true;
+          if (has_qualifier_index)
+            break;
+        }
+        if (scan_ctx->spec->rebuild_indices.qualifier_index() && cf->has_qualifier_index) {
+          has_qualifier_index = true;
+          if (has_index)
+            break;
+        }
+      }
+      if (has_index || has_qualifier_index)
+        m_index_updater =
+          IndexUpdaterFactory::create(table_id, scan_ctx->schema,
+                                      has_index, has_qualifier_index);
+    }
   }
 }
 
@@ -102,8 +131,9 @@ MergeScannerRange::do_initialize()
 
   io_add_output_cell(cur_bytes);
 
-  // was OFFSET or CELL_OFFSET specified? then move forward and skip
-  if (m_cell_offset || m_row_offset)
+  // was OFFSET or CELL_OFFSET or index rebuild specified? then move forward and
+  // skip
+  if (m_cell_offset || m_row_offset || m_index_updater)
     do_forward();
 }
 
@@ -142,6 +172,13 @@ forward:
     // update the I/O tracking
     cur_bytes = sstate.key.length + sstate.value.length();
     io_add_input_cell(cur_bytes);
+
+    // If this scan is for rebuilding indexes, update indexes and continue
+    if (m_index_updater) {
+      assert(sstate.key.flag == FLAG_INSERT);
+      m_index_updater->add(sstate.key, sstate.value);
+      continue;
+    }
 
     // check if this insert starts a new row, a new column family
     // or a new column qualifier, and make sure that the limits

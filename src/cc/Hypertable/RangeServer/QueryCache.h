@@ -136,6 +136,9 @@ namespace Hypertable {
     uint32_t  m_recent_hit_count;
   };
 
+  /// Smart pointer to QueryCache
+  typedef std::shared_ptr<QueryCache> QueryCachePtr;
+
 }
 
 

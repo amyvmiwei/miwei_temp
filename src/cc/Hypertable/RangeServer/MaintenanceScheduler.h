@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,25 +19,47 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MAINTENANCESCHEDULER_H
-#define HYPERTABLE_MAINTENANCESCHEDULER_H
+/// @file
+/// Declarations for MaintenanceScheduler.
+/// This file contains type declarations for MaintenanceScheduler, a class for
+/// scheduling range server maintenance (e.g. compactions, splits, memory
+/// purging, ...).
 
-#include "Common/ReferenceCount.h"
+#ifndef Hypertable_RangeServer_MaintenanceScheduler_h
+#define Hypertable_RangeServer_MaintenanceScheduler_h
 
-#include "MaintenancePrioritizerLogCleanup.h"
-#include "MaintenancePrioritizerLowMemory.h"
-#include "LoadStatistics.h"
-#include "TableInfoMap.h"
+#include <Hypertable/RangeServer/MaintenancePrioritizerLogCleanup.h>
+#include <Hypertable/RangeServer/MaintenancePrioritizerLowMemory.h>
+#include <Hypertable/RangeServer/LoadStatistics.h>
+#include <Hypertable/RangeServer/TableInfoMap.h>
+
+#include <memory>
+#include <mutex>
+#include <set>
 
 namespace Hypertable {
 
-  class MaintenanceScheduler : public ReferenceCount {
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Schedules range server maintenance.
+  class MaintenanceScheduler {
   public:
+
+    /// Constructor.
     MaintenanceScheduler(MaintenanceQueuePtr &queue,
                          TableInfoMapPtr &live_map);
 
+    /// Schedules maintenance.
     void schedule();
 
+    /// Includes a table for maintenance scheduling.
+    void include(const TableIdentifier *table);
+
+    /// Excludes a table from maintenance scheduling.
+    void exclude(const TableIdentifier *table);
+
+    /// Sets <i>low memory</i> maintenance prioritization.
     void set_low_memory_mode(bool on) {
       if (on) {
         if (!m_low_memory_mode && m_low_memory_prioritization)
@@ -56,45 +78,57 @@ namespace Hypertable {
 
     int get_level(RangeData &rd);
 
-    /** Returns <i>true</i> if in low memory mode
-     * @return <i>true</i> if in low memory mode, <i>false</i> otherwise
-     */
+    /// Checks if low memory maintenance prioritization is enabled.
+    /// @return <i>true</i> if in low memory mode, <i>false</i> otherwise
     bool low_memory_mode() { return m_low_memory_mode; }
 
-    /** Checks to see if scheduler debug signal file exists.
-     */
+    /// Checks to see if scheduler debug signal file exists.
+    /// @return <i>true</i> if scheduler debug signal file exists, <i>false</i>
+    /// otherwise.
     bool debug_signal_file_exists(boost::xtime now);
 
-    /** Writes debugging output and removes signal file.
-     */
+    /// Writes debugging output and removes signal file.
+    /// @param now Current time
+    /// @param ranges Set of ranges for which to output scheduler debugging
+    /// informantion
+    /// @param header_str Beginning content written to debugging output
     void write_debug_output(boost::xtime now, Ranges &ranges,
                             const String &header_str);
 
+    /// %Mutex to serialize concurrent access
+    std::mutex m_mutex;
+
+    /// Set of table IDs to exclude from maintenance scheduling
+    std::set<std::string> m_table_blacklist;
+
+    /// Maintenance queue
     MaintenanceQueuePtr m_queue;
     TableInfoMapPtr m_live_map;
     MaintenancePrioritizer *m_prioritizer;
     MaintenancePrioritizerLogCleanup m_prioritizer_log_cleanup;
     MaintenancePrioritizerLowMemory  m_prioritizer_low_memory;
-    int32_t m_maintenance_interval;
     boost::xtime m_last_low_memory;
     boost::xtime m_last_check;
     int64_t m_query_cache_memory;
+    int32_t m_maintenance_interval;
     int32_t m_low_memory_limit_percentage;
     int32_t m_merging_delay;
     int32_t m_merges_per_interval;
     int32_t m_move_compactions_per_interval;
     int32_t m_maintenance_queue_worker_count;
-    int32_t m_start_offset;
-    bool m_initialized;
+    int32_t m_start_offset {};
+    bool m_initialized {};
     bool m_low_memory_prioritization;
-    bool m_low_memory_mode;
+    bool m_low_memory_mode {};
   };
 
-  typedef intrusive_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;
+  /// Smart pointer to MaintenanceScheduler
+  typedef std::shared_ptr<MaintenanceScheduler> MaintenanceSchedulerPtr;
 
+  /// @}
 
 }
 
-#endif // HYPERTABLE_MAINTENANCESCHEDULER_H
+#endif // Hypertable_RangeServer_MaintenanceScheduler_h
 
 

@@ -1,5 +1,5 @@
-/* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,14 +19,27 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cctype>
-#include <iostream>
-#include <string>
+/// @file
+/// Definitions for Schema.
+/// This file contains type definitions for Context, a class abstraction for a
+/// table schema.
+
+#include <Common/Compat.h>
+#include "Schema.h"
+
+#include <Common/FileUtils.h>
+#include <Common/Logger.h>
+#include <Common/StringExt.h>
+#include <Common/System.h>
+#include <Common/Config.h>
+
+#include <expat.h>
 
 #include <boost/algorithm/string.hpp>
 
-#include <expat.h>
+#include <cctype>
+#include <iostream>
+#include <string>
 
 extern "C" {
 #include <ctype.h>
@@ -35,14 +48,6 @@ extern "C" {
 #include <sys/types.h>
 #include <sys/stat.h>
 }
-
-#include "Common/FileUtils.h"
-#include "Common/Logger.h"
-#include "Common/StringExt.h"
-#include "Common/System.h"
-#include "Common/Config.h"
-
-#include "Schema.h"
 
 using namespace Hypertable;
 using namespace Property;
@@ -120,13 +125,6 @@ void init_schema_options_desc() {
 } // local namespace
 
 
-Schema::Schema()
-  : m_error_string(), m_next_column_id(0), m_access_group_map(),
-    m_column_family_map(), m_generation(0), m_version(0), m_access_groups(),
-    m_open_access_group(0), m_open_column_family(0), m_need_id_assignment(false),
-    m_output_ids(false), m_max_column_family_id(0), m_counter_flags(0),
-    m_group_commit_interval(0) {
-}
 /**
  * Assumes src_schema has been checked for validity
  */

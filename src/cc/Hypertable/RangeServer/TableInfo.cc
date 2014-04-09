@@ -32,9 +32,10 @@
 using namespace std;
 using namespace Hypertable;
 
-
-TableInfo::TableInfo(const TableIdentifier *identifier, SchemaPtr &schema)
-    : m_identifier(*identifier), m_schema(schema) {
+TableInfo::TableInfo(const TableIdentifier *identifier, SchemaPtr &schema,
+                     bool maintenance_disabled)
+  : m_identifier(*identifier), m_schema(schema),
+    m_maintenance_disabled(maintenance_disabled) {
 }
 
 

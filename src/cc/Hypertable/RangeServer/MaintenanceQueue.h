@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,10 +19,9 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Declarations for MaintenanceQueue
- * This file contains the type declarations for the MaintenanceQueue
- */
+/// @file
+/// Declarations for MaintenanceQueue
+/// This file contains the type declarations for the MaintenanceQueue
 
 #ifndef HYPERTABLE_MAINTENANCEQUEUE_H
 #define HYPERTABLE_MAINTENANCEQUEUE_H
@@ -281,16 +280,20 @@ namespace Hypertable {
       }
     }
 
-    /** Drops all range maintenance tasks from the queue.
-     */
-    void drop_range_tasks() {
+    /// Drops range maintenance tasks from the queue.
+    /// @tparam _Function Predicate function accepting Range *
+    /// @param __f Unary predicate function to determine which range tasks to
+    /// drop
+    template<typename _Function>
+    void drop_range_tasks(_Function __f) {
       ScopedLock lock(m_state.mutex);
       TaskQueue filtered_queue;
       MaintenanceTask *task = 0;
       while (!m_state.queue.empty()) {
 	task = m_state.queue.top();
         m_state.queue.pop();
-	if (task->get_range()) {
+	if (task->get_range() && __f(task->get_range())) {
+          m_state.ranges.erase(task->get_range());
 	  delete task;
           m_state.generation++;
         }
@@ -298,7 +301,6 @@ namespace Hypertable {
 	  filtered_queue.push(task);
       }
       m_state.queue = filtered_queue;
-      m_state.ranges.clear();
     }
 
     /** Returns <i>true</i> if queue contains a maintenance task for
@@ -375,7 +377,7 @@ namespace Hypertable {
      * @param deadline Return if queue not empty by this absolute time
      * @return <i>true</i> if queue empty, <i>false</i> if deadline reached
      */
-    bool wait_for_empty(boost::xtime &deadline) {
+    bool wait_for_empty(boost::xtime deadline) {
       ScopedLock lock(m_state.mutex);
       while (!m_state.queue.empty() || (m_state.inflight > 0)) {
 	if (!m_state.empty_cond.timed_wait(lock, deadline))

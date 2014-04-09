@@ -269,6 +269,17 @@ namespace Hypertable {
     return cbuf;
   }
 
+  CommBuf *MasterProtocol::create_recreate_index_tables_request(const std::string &table_name,
+                                                                TableParts table_parts) {
+    CommHeader header(COMMAND_RECREATE_INDEX_TABLES);
+    CommBuf *cbuf = new CommBuf(header, encoded_length_vstr(table_name) +
+                                table_parts.encoded_length());
+    cbuf->append_vstr(table_name);
+    table_parts.encode(cbuf->get_data_ptr_address());
+    return cbuf;
+  }
+
+
   const char *MasterProtocol::m_command_strings[] = {
     "create table",
     "get schema",
@@ -288,7 +299,12 @@ namespace Hypertable {
     "replay complete",
     "phantom prepare complete",
     "phantom commit complete",
-    "stop"
+    "stop",
+    "replay status",
+    "compact",
+    "set",
+    "recreate index tables",
+    (const char *)0
   };
 
   const char *MasterProtocol::command_text(uint64_t command) {

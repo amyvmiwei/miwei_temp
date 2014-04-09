@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -62,19 +62,22 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
     return;
   }
 
-  SchemaPtr schema;
+  HyperspaceTableCache::Entry entry;
 
   if (m_schema_cache) {
-    if (!m_schema_cache->get(table_id, schema))
+    if (!m_schema_cache->get(table_id, entry))
       HT_THROWF(Error::RANGESERVER_TABLE_NOT_FOUND,
                 "Unable to locate schema for table %s", table_id.c_str());
   }
   else {
-    DynamicBuffer valbuf;
     String tablefile = Global::toplevel_dir + "/tables/" + table_id;
 
     try {
+      DynamicBuffer valbuf;
       Global::hyperspace->attr_get(tablefile, "schema", valbuf);
+      entry.schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
+      entry.maintenance_disabled =
+        Global::hyperspace->attr_exists(tablefile, "maintenance_disabled");
     }
     catch (Exception &e) {
       if (e.code() == Error::HYPERSPACE_FILE_NOT_FOUND ||
@@ -84,20 +87,18 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
       throw;
     }
 
-    schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
-
-    if (!schema->is_valid())
+    if (!entry.schema->is_valid())
       HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table_id);
 
-    if (schema->need_id_assignment())
+    if (entry.schema->need_id_assignment())
       HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table_id);
 
   }
 
   table.id = table_id.c_str();
-  table.generation = schema->get_generation();
+  table.generation = entry.schema->get_generation();
 
-  info = new TableInfo(&table, schema);
+  info = new TableInfo(&table, entry.schema, entry.maintenance_disabled);
 
   m_map[table_id] = info;
 }

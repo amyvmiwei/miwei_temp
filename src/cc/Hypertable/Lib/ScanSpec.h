@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,12 +22,15 @@
 #ifndef HYPERTABLE_SCANSPEC_H
 #define HYPERTABLE_SCANSPEC_H
 
+#include <Hypertable/Lib/KeySpec.h>
+#include <Hypertable/Lib/TableParts.h>
+
+#include <Common/PageArenaAllocator.h>
+
 #include <boost/noncopyable.hpp>
 
 #include <vector>
 
-#include "Common/PageArenaAllocator.h"
-#include "KeySpec.h"
 
 namespace Hypertable {
 
@@ -49,15 +52,12 @@ public:
     QUALIFIER_MATCH        = 0x0700
   };
 
-  ColumnPredicate() : 
-    column_family(0), column_qualifier(0), value(0), column_qualifier_len(0),
-    value_len(0), operation(0) { }
+  ColumnPredicate() { }
 
-  ColumnPredicate(const char *_column_family, const char *_column_qualifier,
-                 uint32_t _operation, const char *_value, uint32_t _value_len=0)
-    : column_family(_column_family), column_qualifier(_column_qualifier),
-      value(_value), column_qualifier_len(0), value_len(_value_len),
-      operation(_operation) {
+  ColumnPredicate(const char *column_family, const char *column_qualifier,
+                  uint32_t operation, const char *value, uint32_t value_len=0)
+    : column_family(column_family), column_qualifier(column_qualifier),
+      value(value), value_len(value_len), operation(operation) {
     if (!value_len && value)
       value_len = strlen(value);
     column_qualifier_len = strlen(column_qualifier);
@@ -71,12 +71,12 @@ public:
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
 
-  const char *column_family;
-  const char *column_qualifier;
-  const char *value;
-  uint32_t column_qualifier_len;
-  uint32_t value_len;
-  uint32_t operation;
+  const char *column_family {};
+  const char *column_qualifier {};
+  const char *value {};
+  uint32_t column_qualifier_len {};
+  uint32_t value_len {};
+  uint32_t operation {};
 };
 
 /**
@@ -85,8 +85,7 @@ public:
  */
 class RowInterval {
 public:
-  RowInterval() : start(0), start_inclusive(true), end(0),
-      end_inclusive(true) { }
+  RowInterval() { }
   RowInterval(const char *start_row, bool start_row_inclusive,
               const char *end_row, bool end_row_inclusive)
     : start(start_row), start_inclusive(start_row_inclusive),
@@ -99,10 +98,10 @@ public:
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
 
-  const char *start;
-  bool start_inclusive;
-  const char *end;
-  bool end_inclusive;
+  const char *start {};
+  bool start_inclusive {true};
+  const char *end {};
+  bool end_inclusive {true};
 };
 
 
@@ -112,8 +111,7 @@ public:
  */
 class CellInterval {
 public:
-  CellInterval() : start_row(0), start_column(0), start_inclusive(true),
-      end_row(0), end_column(0), end_inclusive(true) { }
+  CellInterval() { }
   CellInterval(const char *start_row, const char *start_column,
                bool start_inclusive, const char *end_row,
                const char *end_column, bool end_inclusive)
@@ -128,12 +126,12 @@ public:
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
 
-  const char *start_row;
-  const char *start_column;
-  bool start_inclusive;
-  const char *end_row;
-  const char *end_column;
-  bool end_inclusive;
+  const char *start_row {};
+  const char *start_column {};
+  bool start_inclusive {true};
+  const char *end_row {};
+  const char *end_column {};
+  bool end_inclusive {true};
 };
 
 typedef PageArenaAllocator<RowInterval> RowIntervalAlloc;
@@ -148,29 +146,16 @@ typedef std::vector<const char *, CstrAlloc> CstrColumns;
 typedef PageArenaAllocator<ColumnPredicate> ColumnPredicateAlloc;
 typedef std::vector<ColumnPredicate, ColumnPredicateAlloc> ColumnPredicates;
 
-/**
- * Represents a scan predicate.
- */
+/// Scan predicate and control specification.
 class ScanSpec {
 public:
-  ScanSpec()
-    : row_limit(0), cell_limit(0), cell_limit_per_family(0), row_offset(0),
-      cell_offset(0), max_versions(0),
-      time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX), row_regexp(0),
-      value_regexp(0), return_deletes(false), keys_only(false),
-      scan_and_filter_rows(false), do_not_cache(false),
-      and_column_predicates(false) { }
+  ScanSpec() : time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX) { }
   ScanSpec(CharArena &arena)
-    : row_limit(0), cell_limit(0), cell_limit_per_family(0), 
-      row_offset(0), cell_offset(0), max_versions(0), columns(CstrAlloc(arena)),
+    : columns(CstrAlloc(arena)),
       row_intervals(RowIntervalAlloc(arena)),
       cell_intervals(CellIntervalAlloc(arena)),
       column_predicates(ColumnPredicateAlloc(arena)),
-      time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX),
-      row_regexp(0), value_regexp(0),
-      return_deletes(false), keys_only(false),
-      scan_and_filter_rows(false),
-      do_not_cache(false), and_column_predicates(false) { }
+      time_interval(TIMESTAMP_MIN, TIMESTAMP_MAX) { }
   ScanSpec(CharArena &arena, const ScanSpec &);
   ScanSpec(const uint8_t **bufp, size_t *remainp) { decode(bufp, remainp); }
 
@@ -191,6 +176,7 @@ public:
     column_predicates.clear();
     time_interval.first = TIMESTAMP_MIN;
     time_interval.second = TIMESTAMP_MAX;
+    rebuild_indices.clear();
     keys_only = false;
     return_deletes = false;
     row_regexp = 0;
@@ -200,14 +186,10 @@ public:
     and_column_predicates = false;
   }
 
-  /** 
-   * Initialize 'other' ScanSpec with this copy sans the intervals 
-   *
-   * !!
-   * This function performs a "shallow copy" of the column_predicate vector.
-   * If other.column_predicate is destroyed, the pointers of the column
-   * predicates might become invalid.
-   */
+  /// Initialize another ScanSpec object with this copy sans the intervals.
+  /// This function performs a <i>shallow copy</i> of the column_predicate vector.
+  /// If other.column_predicate is destroyed, the pointers of the column
+  /// predicates might become invalid.
   void base_copy(ScanSpec &other) const {
     other.row_limit = row_limit;
     other.cell_limit = cell_limit;
@@ -228,10 +210,11 @@ public:
     other.do_not_cache = do_not_cache;
     other.column_predicates = column_predicates;
     other.and_column_predicates = and_column_predicates;
+    other.rebuild_indices = rebuild_indices;
   }
 
   bool cacheable() {
-    if (do_not_cache)
+    if (do_not_cache || rebuild_indices)
       return false;
     else if (row_intervals.size() == 1) {
       HT_ASSERT(row_intervals[0].start && row_intervals[0].end);
@@ -374,24 +357,25 @@ public:
     time_interval.second = end;
   }
 
-  int32_t row_limit;
-  int32_t cell_limit;
-  int32_t cell_limit_per_family;
-  int32_t row_offset;
-  int32_t cell_offset;
-  uint32_t max_versions;
+  int32_t row_limit {};
+  int32_t cell_limit {};
+  int32_t cell_limit_per_family {};
+  int32_t row_offset {};
+  int32_t cell_offset {};
+  uint32_t max_versions {};
   CstrColumns columns;
   RowIntervals row_intervals;
   CellIntervals cell_intervals;
   ColumnPredicates column_predicates;
   std::pair<int64_t,int64_t> time_interval;
-  const char *row_regexp;
-  const char *value_regexp;
-  bool return_deletes;
-  bool keys_only;
-  bool scan_and_filter_rows;
-  bool do_not_cache;
-  bool and_column_predicates;
+  const char *row_regexp {};
+  const char *value_regexp {};
+  bool return_deletes {};
+  bool keys_only {};
+  bool scan_and_filter_rows {};
+  bool do_not_cache {};
+  bool and_column_predicates {};
+  TableParts rebuild_indices;
 };
 
 /**
@@ -605,6 +589,12 @@ public:
    */
   void set_do_not_cache(bool val) {
     m_scan_spec.do_not_cache = val;
+  }
+
+  /// Rebuild indices
+  /// @param parts Describes which indices to rebuild
+  void set_rebuild_indices(TableParts parts) {
+    m_scan_spec.rebuild_indices = parts;
   }
 
   /**

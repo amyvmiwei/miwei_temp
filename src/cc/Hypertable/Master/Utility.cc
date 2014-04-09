@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,32 +19,32 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Definitions for general-purpose utility functions.
- * This file contains definitions for a set of general-purpose utility
- * functions used by the %Master.
- */
+/// @file
+/// Definitions for general-purpose utility functions.
+/// This file contains definitions for a set of general-purpose utility
+/// functions used by the %Master.
 
-#include "Common/Compat.h"
-#include "Common/FailureInducer.h"
-#include "Common/ScopeGuard.h"
-#include "Common/StringExt.h"
-#include "Common/md5.h"
-
-#include "AsyncComm/CommAddress.h"
-
-#include "Hyperspace/Session.h"
-
-#include "Hypertable/Lib/Key.h"
-#include "Hypertable/Lib/KeySpec.h"
-#include "Hypertable/Lib/RangeServerClient.h"
-#include "Hypertable/Lib/Schema.h"
-#include "Hypertable/Lib/TableMutator.h"
-#include "Hypertable/Lib/TableScanner.h"
-#include "Hypertable/Lib/Types.h"
-
-#include "Context.h"
+#include <Common/Compat.h>
 #include "Utility.h"
+
+#include <Hypertable/Master/Context.h>
+
+#include <Hypertable/Lib/Key.h>
+#include <Hypertable/Lib/KeySpec.h>
+#include <Hypertable/Lib/RangeServerClient.h>
+#include <Hypertable/Lib/Schema.h>
+#include <Hypertable/Lib/TableMutator.h>
+#include <Hypertable/Lib/TableScanner.h>
+#include <Hypertable/Lib/Types.h>
+
+#include <Hyperspace/Session.h>
+
+#include <AsyncComm/CommAddress.h>
+
+#include <Common/FailureInducer.h>
+#include <Common/ScopeGuard.h>
+#include <Common/StringExt.h>
+#include <Common/md5.h>
 
 using namespace Hyperspace;
 
@@ -58,6 +58,11 @@ void get_table_server_set(ContextPtr &context, const String &id,
   TableScannerPtr scanner;
   Cell cell;
   String location;
+
+  if (context->test_mode) {
+    context->get_available_servers(servers);
+    return;
+  }
 
   if (row.empty()) {
     start_row = format("%s:", id.c_str());
@@ -386,6 +391,12 @@ String root_range_location(ContextPtr &context) {
     HT_THROW(e.code(), e.what());
   }
   return location;
+}
+
+void canonicalize_pathname(std::string &pathname) {
+  boost::trim_if(pathname, boost::is_any_of("/ "));
+  if (!pathname.empty())
+    pathname = String("/") + pathname;
 }
 
 }}

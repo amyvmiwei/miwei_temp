@@ -66,6 +66,8 @@ const char *RangeServerProtocol::m_command_strings[] = {
   "phantom commit ranges",
   "dump pseudo table",
   "set state",
+  "table maintenance enable",
+  "table maintenance disable",
   (const char *)0
 };
 
@@ -507,5 +509,21 @@ create_request_phantom_ranges(uint64_t cmd_id, int64_t op_id,
   for(size_t ii = 0; ii < ranges.size(); ++ii)
     ranges[ii].encode(cbuf->get_data_ptr_address());
 
+  return cbuf;
+}
+
+CommBuf *RangeServerProtocol::create_request_table_maintenance_enable
+(const TableIdentifier &table) {
+  CommHeader header(COMMAND_TABLE_MAINTENANCE_ENABLE);
+  CommBuf *cbuf = new CommBuf(header, table.encoded_length());
+  table.encode(cbuf->get_data_ptr_address());
+  return cbuf;
+}
+
+CommBuf *RangeServerProtocol::create_request_table_maintenance_disable
+(const TableIdentifier &table) {
+  CommHeader header(COMMAND_TABLE_MAINTENANCE_DISABLE);
+  CommBuf *cbuf = new CommBuf(header, table.encoded_length());
+  table.encode(cbuf->get_data_ptr_address());
   return cbuf;
 }

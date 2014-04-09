@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -703,6 +703,23 @@ set_state(const CommAddress &addr, std::vector<SystemVariable::Spec> &specs,
   CommBufPtr cbp(RangeServerProtocol::create_request_set_state(specs,
                                                                generation));
   send_message(addr, cbp, handler, timer.remaining());
+}
+
+
+void
+RangeServerClient::table_maintenance_enable(const CommAddress &addr,
+                                            const TableIdentifier &table,
+                                            DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_table_maintenance_enable(table));
+  send_message(addr, cbp, handler, m_default_timeout_ms);
+}
+
+void
+RangeServerClient::table_maintenance_disable(const CommAddress &addr,
+                                             const TableIdentifier &table,
+                                             DispatchHandler *handler) {
+  CommBufPtr cbp(RangeServerProtocol::create_request_table_maintenance_disable(table));
+  send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
 

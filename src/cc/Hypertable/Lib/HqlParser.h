@@ -58,6 +58,8 @@
 #include "Cells.h"
 #include "Schema.h"
 #include "ScanSpec.h"
+#include "Table.h"
+#include "TableParts.h"
 #include "LoadDataFlags.h"
 #include "LoadDataSource.h"
 #include "RangeServerProtocol.h"
@@ -109,6 +111,7 @@ namespace Hypertable {
       COMMAND_STOP,
       COMMAND_DUMP_PSEUDO_TABLE,
       COMMAND_SET,
+      COMMAND_REBUILD_INDICES,
       COMMAND_MAX
     };
 
@@ -1994,6 +1997,23 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct set_flags_index_type {
+      set_flags_index_type(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String index_type_str = String(str, end-str);
+        to_lower(index_type_str);
+        if (index_type_str == "value")
+          state.flags = TableParts::VALUE_INDEX;
+        else if (index_type_str == "qualifier")
+          state.flags = TableParts::QUALIFIER_INDEX;
+        else
+          HT_THROW(Error::HQL_PARSE_ERROR,
+                   format("Invalid index type specifier:  %s", index_type_str.c_str()));
+      }
+      ParserState &state;
+    };
+
+
     struct set_variable_name {
       set_variable_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -2228,6 +2248,8 @@ namespace Hypertable {
           Token SYNC         = as_lower_d["sync"];
           Token FS           = as_lower_d["fs"];
           Token SET          = as_lower_d["set"];
+          Token REBUILD      = as_lower_d["rebuild"];
+          Token INDICES      = as_lower_d["indices"];
 
           /**
            * Start grammar definition
@@ -2325,6 +2347,17 @@ namespace Hypertable {
             | metadata_sync_statement[set_command(self.state, COMMAND_METADATA_SYNC)]
             | stop_statement[set_command(self.state, COMMAND_STOP)]
             | set_statement[set_command(self.state, COMMAND_SET)]
+            | rebuild_indices_statement[set_command(self.state, COMMAND_REBUILD_INDICES)]
+            ;
+
+          rebuild_indices_statement
+            = REBUILD 
+            >> *(index_type_spec[set_flags_index_type(self.state)])
+            >> INDICES >> user_identifier[set_table_name(self.state)]
+            ;
+
+          index_type_spec
+            = (VALUE | QUALIFIER)
             ;
 
           set_statement
@@ -3119,6 +3152,11 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(range_type);
           BOOST_SPIRIT_DEBUG_RULE(table_identifier);
           BOOST_SPIRIT_DEBUG_RULE(pseudo_table_reference);
+          BOOST_SPIRIT_DEBUG_RULE(dump_pseudo_table_statement);
+          BOOST_SPIRIT_DEBUG_RULE(set_statement);
+          BOOST_SPIRIT_DEBUG_RULE(set_variable_spec);
+          BOOST_SPIRIT_DEBUG_RULE(rebuild_indices_statement);
+          BOOST_SPIRIT_DEBUG_RULE(index_type_spec);
 #endif
         }
 
@@ -3165,7 +3203,8 @@ namespace Hypertable {
           compact_type_option, compaction_type,
           metadata_sync_statement, metadata_sync_option_spec, stop_statement,
           range_type, table_identifier, pseudo_table_reference,
-          dump_pseudo_table_statement, set_statement, set_variable_spec;
+          dump_pseudo_table_statement, set_statement, set_variable_spec,
+          rebuild_indices_statement, index_type_spec;
       };
 
       ParserState &state;

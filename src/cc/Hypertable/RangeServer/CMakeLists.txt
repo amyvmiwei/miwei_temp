@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2013 Hypertable, Inc.
+# Copyright (C) 2007-2014 Hypertable, Inc.
 #
 # This file is part of Hypertable.
 #
@@ -61,6 +61,7 @@ Global.cc
 GroupCommit.cc
 GroupCommitTimerHandler.cc
 HyperspaceSessionHandler.cc
+HyperspaceTableCache.cc
 IndexUpdater.cc
 KeyCompressorNone.cc
 KeyCompressorPrefix.cc
@@ -69,6 +70,7 @@ KeyDecompressorPrefix.cc
 LiveFileTracker.cc
 LoadMetricsRange.cc
 LocationInitializer.cc
+LogReplayBarrier.cc
 MaintenancePrioritizer.cc
 MaintenancePrioritizerLogCleanup.cc
 MaintenancePrioritizerLowMemory.cc
@@ -122,6 +124,8 @@ RequestHandlerPhantomUpdate.cc
 RequestHandlerPhantomCommitRanges.cc
 RequestHandlerPhantomPrepareRanges.cc
 RequestHandlerSetState.cc
+RequestHandlerTableMaintenanceDisable.cc
+RequestHandlerTableMaintenanceEnable.cc
 ResponseCallbackCreateScanner.cc
 ResponseCallbackFetchScanblock.cc
 ResponseCallbackGetStatistics.cc
@@ -136,9 +140,8 @@ ScannerMap.cc
 ServerState.cc
 TableInfo.cc
 TableInfoMap.cc
-TableSchemaCache.cc
 TimerHandler.cc
-UpdateThread.cc
+UpdatePipeline.cc
 )
 
 if (USE_TCMALLOC)

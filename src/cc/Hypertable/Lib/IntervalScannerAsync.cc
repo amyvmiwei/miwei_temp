@@ -86,6 +86,7 @@ void IntervalScannerAsync::init(const ScanSpec &scan_spec) {
   m_scan_spec_builder.set_row_offset(scan_spec.row_offset);
   m_scan_spec_builder.set_cell_offset(scan_spec.cell_offset);
   m_scan_spec_builder.set_do_not_cache(scan_spec.do_not_cache);
+  m_scan_spec_builder.set_rebuild_indices(scan_spec.rebuild_indices);
 
   foreach_ht (const ColumnPredicate &cp, scan_spec.column_predicates)
     m_scan_spec_builder.add_column_predicate(cp.column_family,

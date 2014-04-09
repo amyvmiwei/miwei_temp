@@ -45,16 +45,16 @@
 
 #include "BalancePlan.h"
 #include "MasterProtocol.h"
+#include "TableParts.h"
 #include "Types.h"
 
 namespace Hypertable {
 
-  /** @addtogroup libHypertable
-   * @{
-   */
-
   class Comm;
   class MasterClient;
+
+  /// @addtogroup libHypertable
+  /// @{
 
   class MasterClientHyperspaceSessionCallback: public Hyperspace::SessionCallback {
   public:
@@ -71,7 +71,7 @@ namespace Hypertable {
     MasterClient *m_masterclient;
   };
 
-  /** Client interface to Master.
+  /** %Client interface to Master.
    * This class provides a client interface to the Master.  It has methods,
    * both synchronous and asynchronous, that carry out %Master operations.
    */
@@ -143,6 +143,15 @@ namespace Hypertable {
     void drop_table(const String &table_name, bool if_exists,
                     DispatchHandler *handler, Timer *timer=0);
     void drop_table(const String &table_name, bool if_exists, Timer *timer=0);
+
+    /// Carries out a <i>recreate index tables<i> %Master operation.
+    /// @param table_name Name of table for which to recreate index tables
+    /// @param table_parts Specifies which index tables to recreate
+    /// @param timer Deadline timer
+    /// @throws Exception with code set to Error::REQUEST_TIMEOUT if deadline
+    /// is reached before operation completes.
+    void recreate_index_tables(const std::string &table_name,
+                               TableParts table_parts, Timer *timer=0);
 
     void shutdown(Timer *timer=0);
 
@@ -222,7 +231,7 @@ namespace Hypertable {
   /// Smart pointer to MasterClient
   typedef intrusive_ptr<MasterClient> MasterClientPtr;
 
-  /** @}*/
+  /// @}
 }
 
 #endif // HYPERTABLE_MASTERCLIENT_H

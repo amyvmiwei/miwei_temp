@@ -58,11 +58,10 @@ namespace Hypertable {
   public:
 
     enum {
-      OPEN_FLAG_BYPASS_TABLE_CACHE           = 0x01,
-      OPEN_FLAG_REFRESH_TABLE_CACHE          = 0x02,
-      OPEN_FLAG_NO_AUTO_TABLE_REFRESH        = 0x04,
-
-      SCANNER_FLAG_IGNORE_INDEX              = 0x01
+      OPEN_FLAG_BYPASS_TABLE_CACHE = 0x01,
+      OPEN_FLAG_REFRESH_TABLE_CACHE = 0x02,
+      OPEN_FLAG_NO_AUTO_TABLE_REFRESH = 0x04,
+      SCANNER_FLAG_IGNORE_INDEX = 0x01
     };
 
     enum {

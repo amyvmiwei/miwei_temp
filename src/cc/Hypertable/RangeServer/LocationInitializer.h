@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,48 +19,85 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_LOCATIONINITIALIZER_H
-#define HYPERTABLE_LOCATIONINITIALIZER_H
+/// @file
+/// Declarations for LocationInitializer.
+/// This file contains type declarations for LocationInitializer, a class used
+/// to obtain the location string (<i>proxy name</i>) for the range server.
 
-#include "Common/String.h"
-#include "Common/Mutex.h"
+#ifndef Hypertable_RangeServer_LocationInitializer_h
+#define Hypertable_RangeServer_LocationInitializer_h
 
-#include "Hypertable/Lib/RangeServerProtocol.h"
+#include <Hypertable/RangeServer/Context.h>
 
-#include "AsyncComm/ConnectionInitializer.h"
-#include "Hyperspace/Session.h"
-#include <boost/thread/condition.hpp>
+#include <Hypertable/Lib/RangeServerProtocol.h>
 
-#include "ServerState.h"
+#include <Hyperspace/Session.h>
+
+#include <AsyncComm/ConnectionInitializer.h>
+
+#include <Common/String.h>
+#include <Common/Mutex.h>
 
 namespace Hypertable {
 
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Obtains location string (<i>proxy name</i>) for the range server.
   class LocationInitializer : public ConnectionInitializer {
 
   public:
-    LocationInitializer(PropertiesPtr &props, ServerStatePtr server_state);
-    virtual bool is_removed(const String &path, Hyperspace::SessionPtr &hyperspace);
+
+    /// Constructor.
+    /// @param context %Range server context
+    LocationInitializer(std::shared_ptr<Context> &context);
+
+    /// Checks if "removed" attribute is set on Hyperspace location file
+    virtual bool is_removed(const String &path,
+                            Hyperspace::SessionPtr &hyperspace);
+
     virtual CommBuf *create_initialization_request();
     virtual bool process_initialization_response(Event *event);
     virtual uint64_t initialization_command() { return RangeServerProtocol::COMMAND_INITIALIZE; }
+
+    /// Gets assigned location (proxy name) 
     String get();
+
+    /// Waits for completion of initialization handshake
     void wait_for_handshake();
+
+    /// Signals that Hyperspace lock on location file is held
     void set_lock_held() { m_lock_held=true; }
 
   private:
-    Mutex m_mutex;
-    boost::condition m_cond;
-    PropertiesPtr m_props;
-    ServerStatePtr m_server_state;
-    String m_location;
-    String m_location_file;
-    bool m_location_persisted;
-    bool m_handshake_complete;
-    bool m_lock_held;
-  };
-  typedef boost::intrusive_ptr<LocationInitializer> LocationInitializerPtr;
 
+    /// %Range server context
+    std::shared_ptr<Context> m_context;
+
+    /// %Mutex for serializing concurrent access.
+    Mutex m_mutex;
+
+    /// Condition variable signalling completion of initialization handshake
+    boost::condition m_cond;
+
+    /// Assigned location (proxy name)
+    String m_location;
+
+    /// Local pathname to location file
+    String m_location_file;
+
+    /// Flag indicating if assigned location has been written to location file
+    bool m_location_persisted {};
+
+    /// Flag indicating completion of initialization handshake
+    bool m_handshake_complete {};
+
+    /// Flag indicating that Hyperspace lock on location file is held
+    bool m_lock_held {};
+  };
+
+  /// @}
 }
 
 
-#endif // HYPERTABLE_LOCATIONINITIALIZER_H
+#endif // Hypertable_RangeServer_LocationInitializer_h

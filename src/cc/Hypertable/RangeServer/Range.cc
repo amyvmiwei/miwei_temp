@@ -184,6 +184,7 @@ void Range::initialize() {
 
 }
 
+
 void Range::deferred_initialization() {
   RangeMaintenanceGuard::Activator activator(m_maintenance_guard);
 
@@ -489,7 +490,7 @@ void Range::add(const Key &key, const ByteString value) {
 
 
 CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
-  MergeScanner *mscanner = new MergeScannerRange(scan_ctx);
+  MergeScanner *mscanner = new MergeScannerRange(m_table.id, scan_ctx);
   AccessGroupVector  ag_vector(0);
 
 
@@ -920,6 +921,9 @@ void Range::relinquish_finalize() {
 
   // Add tasks to work queue
   Global::add_to_work_queue(acknowledge_relinquish_task);
+
+  // Clear to unblock those waiting for maintenance to complete
+  m_metalog_entity->clear_state();
 
   // disables any further maintenance
   m_maintenance_guard.disable();

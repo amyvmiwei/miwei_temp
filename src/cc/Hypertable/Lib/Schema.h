@@ -19,8 +19,13 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_SCHEMA_H
-#define HYPERTABLE_SCHEMA_H
+/// @file
+/// Declarations for Schema.
+/// This file contains type declarations for Context, a class abstraction for a
+/// table schema.
+
+#ifndef Hypertable_Lib_Schema_h
+#define Hypertable_Lib_Schema_h
 
 #include <Common/Mutex.h>
 #include <Common/ReferenceCount.h>
@@ -34,62 +39,75 @@
 
 namespace Hypertable {
 
+  /// @addtogroup libHypertable
+  /// @{
+
   enum BloomFilterMode {
     BLOOM_FILTER_DISABLED,
     BLOOM_FILTER_ROWS,
     BLOOM_FILTER_ROWS_COLS
   };
 
+  /// %Table schema abstraction
   class Schema : public ReferenceCount {
   public:
-    struct ColumnFamily {
-      ColumnFamily() : id(0), max_versions(0), ttl(0), generation(0),
-                       has_index(false), has_qualifier_index(false),
-                       time_order_desc(false), time_order_desc_set(false),
-                       deleted(false), renamed(false), counter(false),
-                       modification(false) { return; }
 
+    /// Column family abstraction
+    struct ColumnFamily {
       String   name;
       String   ag;
-      uint32_t id;
-      uint32_t max_versions;
-      time_t   ttl;
-      uint32_t generation;
+      uint32_t id {};
+      uint32_t max_versions {};
+      time_t   ttl {};
+      uint32_t generation {};
       String new_name;
-      bool has_index;
-      bool has_qualifier_index;
-      bool time_order_desc;
-      bool time_order_desc_set;
-      bool deleted;
-      bool renamed;
-      bool counter;
-      bool modification;
+      bool has_index {};
+      bool has_qualifier_index {};
+      bool time_order_desc {};
+      bool time_order_desc_set {};
+      bool deleted {};
+      bool renamed {};
+      bool counter {};
+      bool modification {};
     };
 
     typedef std::vector<ColumnFamily *> ColumnFamilies;
 
+    /// Access group abstraction
     struct AccessGroup {
-      AccessGroup() : replication(-1), blocksize(0), in_memory(false),
-                      counter(false), modification(false) { }
-
       String   name;
-      int16_t  replication;
-      uint32_t blocksize;
+      int16_t  replication {-1};
+      uint32_t blocksize {};
       String compressor;
       String bloom_filter;
       ColumnFamilies columns;
-      bool in_memory;
-      bool counter;
-      bool modification;
+      bool in_memory {};
+      bool counter {};
+      bool modification {};
     };
 
     typedef std::vector<AccessGroup *> AccessGroups;
 
-    Schema();
+    /// Default constructor.
+    Schema() {}
+
+    /// Copy constructor.
+    /// @param src_schema Source schema
     Schema(const Schema &src_schema);
+
+    /// Destructor.
+    /// Deletes all access groups and column families from #m_access_groups and
+    /// #m_column_families, respectively.
     ~Schema();
 
     static Schema *new_instance(const String &buf, int len);
+
+    /// Creates schema object from XML schema string.
+    /// @param buf Buffer holding XML schema string.
+    /// @return Pointer to newly allocated Schema object.
+    static Schema *new_instance(const String &buf) {
+      return new_instance(buf, buf.size());
+    }
 
     static void parse_compressor(const String &spec, PropertiesPtr &);
     void validate_compressor(const String &spec);
@@ -192,22 +210,22 @@ namespace Hypertable {
     typedef std::unordered_map<uint32_t, ColumnFamily *> ColumnFamilyIdMap;
 
     String m_error_string;
-    int m_next_column_id;
+    int m_next_column_id {};
     AccessGroupMap m_access_group_map;
     ColumnFamilies m_column_families; // preserve order
     ColumnFamilyMap m_column_family_map;
     ColumnFamilyIdMap m_column_family_id_map;
-    uint32_t m_generation;
-    uint32_t m_version;
-    AccessGroups   m_access_groups;
-    AccessGroup   *m_open_access_group;
-    ColumnFamily  *m_open_column_family;
-    bool           m_need_id_assignment;
-    bool           m_output_ids;
-    size_t         m_max_column_family_id;
-    String         m_compressor;
-    std::vector<int>  m_counter_flags;
-    uint32_t       m_group_commit_interval;
+    uint32_t m_generation {};
+    uint32_t m_version {};
+    AccessGroups m_access_groups;
+    AccessGroup *m_open_access_group {};
+    ColumnFamily *m_open_column_family {};
+    bool m_need_id_assignment {};
+    bool m_output_ids {};
+    size_t m_max_column_family_id {};
+    String m_compressor;
+    std::vector<int> m_counter_flags;
+    uint32_t m_group_commit_interval {};
 
     static void
     start_element_handler(void *userdata, const XML_Char *name,
@@ -221,8 +239,11 @@ namespace Hypertable {
     static Mutex      ms_mutex;
   };
 
+  /// Smart pointer to Schema
   typedef intrusive_ptr<Schema> SchemaPtr;
+
+  /// @}
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_SCHEMA_H
+#endif // Hypertable_Lib_Schema_h

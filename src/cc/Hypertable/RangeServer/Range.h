@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -321,6 +321,15 @@ namespace Hypertable {
     }
 
     void remove_original_transfer_log();
+
+    /// Get table ID
+    /// @return %Table ID
+    const std::string get_table_id() { return m_table.id; }
+
+    /// Wait for range to enter STEADY state.
+    void wait_for_steady_state() {
+      m_metalog_entity->wait_for_state(RangeState::STEADY);
+    }
 
   private:
 

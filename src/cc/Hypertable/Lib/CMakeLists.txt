@@ -99,6 +99,7 @@ TableMutatorAsync.cc
 TableMutatorAsyncDispatchHandler.cc
 TableMutatorAsyncHandler.cc
 TableMutatorAsyncScatterBuffer.cc
+TableParts.cc
 TableScanner.cc
 TableScannerDispatchHandler.cc
 TableScannerAsync.cc

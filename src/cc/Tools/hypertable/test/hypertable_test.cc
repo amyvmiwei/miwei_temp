@@ -79,6 +79,16 @@ int main(int argc, char **argv) {
   if (system(cmd_str.c_str()) != 0)
     _exit(1);
 
+  // Check value index before and after REBUILD
+  cmd_str = "diff products-value-index-before.tsv products-value-index-after.tsv";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
+  // Check qualifier index before and after REBUILD
+  cmd_str = "diff products-qualifier-index-before.tsv products-qualifier-index-after.tsv";
+  if (system(cmd_str.c_str()) != 0)
+    _exit(1);
+
   /**
    *  offset-test
    */

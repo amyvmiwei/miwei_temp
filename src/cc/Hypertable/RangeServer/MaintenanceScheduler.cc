@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -18,6 +18,13 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/// @file
+/// Definitions for MaintenanceScheduler.
+/// This file contains type definitions for MaintenanceScheduler, a class for
+/// scheduling range server maintenance (e.g. compactions, splits, memory
+/// purging, ...).
+
 #include <Common/Compat.h>
 #include "MaintenanceScheduler.h"
 
@@ -38,7 +45,9 @@
 
 #include <algorithm>
 #include <fstream>
+#include <functional>
 #include <iostream>
+#include <iterator>
 #include <limits>
 
 using namespace Hypertable;
@@ -77,6 +86,23 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
 }
 
 
+void MaintenanceScheduler::exclude(const TableIdentifier *table) {
+  lock_guard<mutex> lock(m_mutex);
+  if (m_table_blacklist.count(table->id) > 0)
+    return;
+  m_table_blacklist.insert(table->id);
+  // Drop range maintenance tasks for table ID
+  function<bool(Range *)> drop_predicate =
+    [table](Range *r) -> bool {return r->get_table_id().compare(table->id)==0;};
+  Global::maintenance_queue->drop_range_tasks(drop_predicate);
+}
+
+void MaintenanceScheduler::include(const TableIdentifier *table) {
+  lock_guard<mutex> lock(m_mutex);
+  m_table_blacklist.erase(table->id);
+}
+
+
 
 void MaintenanceScheduler::schedule() {
   Ranges ranges;
@@ -92,6 +118,8 @@ void MaintenanceScheduler::schedule() {
   bool do_scheduling = true;
   bool debug = false;
   boost::xtime now;
+  function<bool(RangeData &)> in_blacklist =
+    [this](RangeData &rd) -> bool {return this->m_table_blacklist.count(rd.data->table_id);};
 
   boost::xtime_get(&now, TIME_UTC_);
 
@@ -150,7 +178,8 @@ void MaintenanceScheduler::schedule() {
   if (!do_scheduling)
     return;
 
-  Global::maintenance_queue->drop_range_tasks();
+  // Drop all outstanding range tasks from maintenance queue
+  Global::maintenance_queue->drop_range_tasks([](Range *) -> bool {return true;});
 
   StringSet remove_ok_logs, removed_logs;
   m_live_map->get_ranges(ranges, &remove_ok_logs);
@@ -201,6 +230,13 @@ void MaintenanceScheduler::schedule() {
       ranges.array.swap(rotated);
     }
     m_start_offset += m_maintenance_queue_worker_count;
+  }
+
+  // Remove ranges in table blacklist
+  {
+    lock_guard<mutex> lock(m_mutex);
+    if (!m_table_blacklist.empty())
+      ranges.remove_if(in_blacklist);
   }
 
   HT_ASSERT(m_prioritizer);
@@ -351,6 +387,12 @@ void MaintenanceScheduler::schedule() {
   }
   else {
 
+    lock_guard<mutex> lock(m_mutex);
+
+    // Remove ranges for tables in blacklist
+    if (!m_table_blacklist.empty())
+      ranges.remove_if(in_blacklist);
+
     // Sort the ranges based on priority
     ranges_prioritized.array.reserve( ranges.array.size() );
     foreach_ht (RangeData &rd, ranges.array) {
@@ -453,12 +495,12 @@ bool MaintenanceScheduler::debug_signal_file_exists(boost::xtime now) {
 
 
 void MaintenanceScheduler::write_debug_output(boost::xtime now, Ranges &ranges,
-                                              const String &trace_str) {
+                                              const String &header_str) {
   AccessGroup::MaintenanceData *ag_data;
   String output_fname = System::install_dir + "/run/scheduler.output";
   ofstream out;
   out.open(output_fname.c_str());
-  out << trace_str << "\n";
+  out << header_str << "\n";
   foreach_ht (RangeData &rd, ranges.array) {
     out << *rd.data << "\n";
     for (ag_data = rd.data->agdata; ag_data; ag_data = ag_data->next)

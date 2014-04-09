@@ -640,3 +640,8 @@ SELECT title FROM products WHERE info:author =~ /^Stephen P/ OR info:publisher =
 SELECT title FROM products WHERE info:author =~ /^Stephen P/ OR info:publisher =~ /^Anchor/;
 SELECT title FROM products WHERE info:author =~ /^Stephen [PK]/ AND info:publisher =^ "Anchor";
 SELECT title FROM products WHERE info:author =~ /^Stephen [PK]/ AND info:publisher =~ /^Anchor/;
+SELECT * FROM "^products" INTO FILE "products-value-index-before.tsv" DISPLAY_TIMESTAMPS;
+SELECT * FROM "^^products" INTO FILE "products-qualifier-index-before.tsv" DISPLAY_TIMESTAMPS;
+REBUILD INDICES products;
+SELECT * FROM "^products" INTO FILE "products-value-index-after.tsv" DISPLAY_TIMESTAMPS;
+SELECT * FROM "^^products" INTO FILE "products-qualifier-index-after.tsv" DISPLAY_TIMESTAMPS;

@@ -94,7 +94,9 @@ namespace Hypertable {
         OPERATION_COMPACT                    = 0x0003001A,
         OPERATION_SET                        = 0x0003001B,
         SYSTEM_STATE                         = 0x0003001C,
-        OPERATION_REGISTER_SERVER_BLOCKER    = 0x0003001D
+        OPERATION_REGISTER_SERVER_BLOCKER    = 0x0003001D,
+        OPERATION_TOGGLE_TABLE_MAINTENANCE   = 0x0003001E,
+        OPERATION_RECREATE_INDEX_TABLES      = 0x0003001F
       };
     }
   }

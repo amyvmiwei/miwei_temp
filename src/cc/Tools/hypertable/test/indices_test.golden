@@ -2063,3 +2063,8 @@ SELECT title FROM products WHERE info:author =~ /^Stephen [PK]/ AND info:publish
 0307743659	title	The Shining Mass Market Paperback
 SELECT title FROM products WHERE info:author =~ /^Stephen [PK]/ AND info:publisher =~ /^Anchor/;
 0307743659	title	The Shining Mass Market Paperback
+SELECT * FROM "^products" INTO FILE "products-value-index-before.tsv" DISPLAY_TIMESTAMPS;
+SELECT * FROM "^^products" INTO FILE "products-qualifier-index-before.tsv" DISPLAY_TIMESTAMPS;
+REBUILD INDICES products;
+SELECT * FROM "^products" INTO FILE "products-value-index-after.tsv" DISPLAY_TIMESTAMPS;
+SELECT * FROM "^^products" INTO FILE "products-qualifier-index-after.tsv" DISPLAY_TIMESTAMPS;

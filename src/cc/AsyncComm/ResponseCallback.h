@@ -100,7 +100,7 @@ namespace Hypertable {
     /** Get smart pointer to event object that triggered the request.
      * @return Smart pointer to event object that triggered the request.
      */
-    EventPtr &get_event() { return m_event; }
+    EventPtr &event() { return m_event; }
 
   protected:
     Comm     *m_comm; //!< Comm pointer

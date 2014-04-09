@@ -104,6 +104,7 @@ namespace Hypertable {
       INVALID_OPERATION                            = 57,
       UNSUPPORTED_OPERATION                        = 58,
       COLUMN_FAMILY_NOT_FOUND                      = 59,
+      NOTHING_TO_DO                                = 60,
 
       CONFIG_BAD_ARGUMENT                          = 1001,
       CONFIG_BAD_CFG_FILE                          = 1002,

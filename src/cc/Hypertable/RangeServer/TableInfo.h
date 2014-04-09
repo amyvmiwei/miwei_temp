@@ -37,6 +37,7 @@
 #include <Common/StringExt.h>
 #include <Common/ReferenceCount.h>
 
+#include <algorithm>
 #include <iterator>
 #include <set>
 #include <string>
@@ -66,7 +67,19 @@ namespace Hypertable {
   /// that is used to allocate the maintenance data objects.
   class Ranges : public ReferenceCount {
   public:
+    /// Template function for removing ranges that satisfy a predicate.
+    /// @tparam Func Predicate function
+    /// @param pred Predicate function
+    template<typename Func>
+    void remove_if(Func pred) {
+      std::vector<RangeData> stripped;
+      stripped.reserve(array.size());
+      remove_copy_if(array.begin(), array.end(), back_inserter(stripped), pred);
+      array.swap(stripped);
+    }
+    /// Vector of RangeData objects
     std::vector<RangeData> array;
+    /// Memory arena
     ByteArena arena;
   };
 
@@ -76,10 +89,16 @@ namespace Hypertable {
   /// Holds pointer to range and cached start and end rows.
   class RangeInfo {
   public:
+    /// Constructor.
+    /// @param start_row Start row of range
+    /// @param end_row End row of range
     RangeInfo(const String &start_row, const String &end_row)
        : start_row(start_row), end_row(end_row) { }
+    /// Cached start row of range
     String start_row;
+    /// Cached end row of range
     String end_row;
+    /// Smart pointer to Range object
     RangePtr range;
   };
 
@@ -98,8 +117,10 @@ namespace Hypertable {
     /// Constructor.
     /// @param identifier %Table identifier
     /// @param schema Smart pointer to schema object
+    /// @param maintenance_disabled Flag indicating if maintenance is disabled
+    /// for this table
     TableInfo(const TableIdentifier *identifier,
-              SchemaPtr &schema);
+              SchemaPtr &schema, bool maintenance_disabled);
 
     /// Destructor.
     virtual ~TableInfo() { }
@@ -138,6 +159,21 @@ namespace Hypertable {
     SchemaPtr get_schema() {
       ScopedLock lock(m_mutex);
       return m_schema;
+    }
+
+    /// Checks if maintenance has been disabled for this table
+    /// @return <i>true</i> if maintenance has been disabled, <i>false</i>
+    /// otherwise
+    bool maintenance_disabled() {
+      ScopedLock lock(m_mutex);
+      return m_maintenance_disabled;
+    }
+
+    /// Sets the maintenance disabled flag
+    /// @param val Value for maintenance disabled flag
+    void set_maintenance_disabled(bool val) {
+      ScopedLock lock(m_mutex);
+      m_maintenance_disabled = val;
     }
 
     /// Updates schema, propagating change to all ranges in active set.
@@ -263,6 +299,9 @@ namespace Hypertable {
 
     /// Set of staged ranges (soon to become active)
     std::set<RangeInfo> m_staged_set;
+
+    /// Flag indicating if maintenance is disabled for table
+    bool m_maintenance_disabled {};
   };
 
   /// Smart pointer to TableInfo
