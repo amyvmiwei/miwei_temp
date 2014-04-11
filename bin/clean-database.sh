@@ -36,7 +36,7 @@ if tty > /dev/null && [ $# == 1 ]; then
   esac
 fi
 
-# Stop servers other than dfsbroker
+# Stop servers other than fsbroker
 stop_server thriftbroker rangeserver master hyperspace
 sleep 1
 wait_for_server_shutdown thriftbroker "thrift broker" "$@" &
@@ -49,9 +49,9 @@ case $confirm in
     #
     # Clear state
     #
-    check_server "$@" dfsbroker 
+    check_server "$@" fsbroker 
     if [ $? != 0 ] ; then
-      echo "ERROR: DfsBroker not running, database not cleaned"
+      echo "ERROR: FsBroker not running, database not cleaned"
       # remove local stuff anyway.
       rm -rf $RUNTIME_ROOT/hyperspace/* $RUNTIME_ROOT/fs/* $RUNTIME_ROOT/run/log_backup/rsml/* $RUNTIME_ROOT/run/log_backup/mml/*
       exit 1
@@ -60,15 +60,15 @@ case $confirm in
     TOPLEVEL="/"`$HYPERTABLE_HOME/bin/get_property $@ Hypertable.Directory`"/"
     TOPLEVEL=`echo $TOPLEVEL | tr -s "/" | sed 's/.$//g'`
 
-    $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir $TOPLEVEL/servers" "$@"
-    $HYPERTABLE_HOME/bin/dfsclient --timeout 60000 --eval "rmdir $TOPLEVEL/tables" "$@"
-    echo "Removed $TOPLEVEL/servers in DFS"
-    echo "Removed $TOPLEVEL/tables in DFS"
+    $HYPERTABLE_HOME/bin/fsclient --timeout 60000 --eval "rmdir $TOPLEVEL/servers" "$@"
+    $HYPERTABLE_HOME/bin/fsclient --timeout 60000 --eval "rmdir $TOPLEVEL/tables" "$@"
+    echo "Removed $TOPLEVEL/servers in FS"
+    echo "Removed $TOPLEVEL/tables in FS"
     /bin/rm -rf $RUNTIME_ROOT/hyperspace/*
     /bin/rm -rf $RUNTIME_ROOT/run/log_backup/rsml/*
     /bin/rm -rf $RUNTIME_ROOT/run/log_backup/mml/*
     /bin/rm -rf $RUNTIME_ROOT/run/location
-    /bin/rm -rf $RUNTIME_ROOT/run/last-dfs
+    /bin/rm -rf $RUNTIME_ROOT/run/last-fs
     echo "Cleared hyperspace"
     #/bin/rm -rf $RUNTIME_ROOT/run/monitoring/*
     #echo "Cleared monitoring data"
@@ -77,9 +77,9 @@ case $confirm in
 esac
 
 #
-# Stop dfsbroker
+# Stop fsbroker
 #
-stop_server dfsbroker
+stop_server fsbroker
 sleep 1
-wait_for_server_shutdown dfsbroker "DFS broker" "$@" &
+wait_for_server_shutdown fsbroker "FS broker" "$@" &
 wait

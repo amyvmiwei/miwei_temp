@@ -1,7 +1,7 @@
 set :install_dir,  "/opt/hypertable"
 set :hypertable_version, "0.9.8.0"
 set :default_pkg, "/tmp/hypertable-0.9.8.0-linux-x86_64.deb"
-set :default_dfs, "hadoop"
+set :default_fs, "hadoop"
 set :default_distro, "cdh4"
 set :default_config, "/opt/hypertable/dev-hypertable.cfg"
 
@@ -31,9 +31,9 @@ set(:pkg) do
   "#{default_pkg}"
 end unless exists?(:pkg)
 
-set(:dfs) do
-  "#{default_dfs}"
-end unless exists?(:dfs)
+set(:fs) do
+  "#{default_fs}"
+end unless exists?(:fs)
 
 set(:distro) do
   "#{default_distro}"
@@ -269,7 +269,7 @@ end
 desc "Starts master processes."
 task :start_master, :roles => :master do
   run <<-CMD
-   #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
+   #{install_dir}/current/bin/start-fsbroker.sh #{fs} \
       #{config_option} &&
    #{install_dir}/current/bin/start-master.sh #{config_option} &&
    #{install_dir}/current/bin/start-monitoring.sh
@@ -285,7 +285,7 @@ desc "Starts slave processes."
 task :start_slaves, :roles => :slave do
   run <<-CMD
    #{install_dir}/current/bin/random-wait.sh 5 &&
-   #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
+   #{install_dir}/current/bin/start-fsbroker.sh #{fs} \
       #{config_option} &&
    #{install_dir}/current/bin/start-rangeserver.sh \
       #{config_option}
@@ -332,7 +332,7 @@ desc "Starts ThriftBroker on thriftbroker_additional machines."
 task :start_thriftbrokers_additional, :roles => :thriftbroker_additional do
   run <<-CMD
    #{install_dir}/current/bin/random-wait.sh 5 &&
-   #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
+   #{install_dir}/current/bin/start-fsbroker.sh #{fs} \
       #{config_option} &&
    #{install_dir}/current/bin/start-thriftbroker.sh \
       #{config_option} #{thriftbroker_args}
@@ -342,13 +342,13 @@ end
 desc "Stops ThriftBroker on thriftbroker_additional machines."
 task :stop_thriftbrokers_additional, :roles => :thriftbroker_additional do
   run <<-CMD
-   #{install_dir}/current/bin/stop-servers.sh thriftbroker dfsbroker
+   #{install_dir}/current/bin/stop-servers.sh thriftbroker fsbroker
   CMD
 end
 
-desc "Starts DFS brokers."
-task :start_dfsbrokers, :roles => [:master, :slave] do
-  run "#{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
+desc "Starts FS brokers."
+task :start_fsbrokers, :roles => [:master, :slave] do
+  run "#{install_dir}/current/bin/start-fsbroker.sh #{fs} \
       #{config_option}"
 end
 
@@ -365,12 +365,12 @@ task :stop_servers do
     stop_master
     stop_slaves
     stop_hyperspace
-    stop_dfsbrokers
+    stop_fsbrokers
   end
 end
 
-desc "Stops DFS brokers."
-task :stop_dfsbrokers, :roles => [:master, :slave] do
+desc "Stops FS brokers."
+task :stop_fsbrokers, :roles => [:master, :slave] do
   run <<-CMD
   #{install_dir}/current/bin/stop-servers.sh
   CMD
@@ -379,14 +379,14 @@ end
 desc "Stops slave processes."
 task :stop_slaves, :roles => :slave do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master --no-dfsbroker
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-master --no-fsbroker
   CMD
 end
 
 desc "Stops master processes."
 task :stop_master, :roles => :master do
   run <<-CMD
-  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver --no-dfsbroker &&
+  #{install_dir}/current/bin/stop-servers.sh --no-hyperspace --no-rangeserver --no-fsbroker &&
   #{install_dir}/current/bin/stop-monitoring.sh
   CMD
 end
@@ -422,7 +422,7 @@ end
 desc "Cleans master state but not hyperspace."
 task :clean_master, :roles => :master do
   run <<-CMD
-   #{install_dir}/current/bin/start-dfsbroker.sh #{dfs} \
+   #{install_dir}/current/bin/start-fsbroker.sh #{fs} \
       #{config_option} && \
    #{install_dir}/current/bin/clean-database.sh #{config_option} && \ 
    #{install_dir}/current/bin/stop-monitoring.sh ;
@@ -447,17 +447,17 @@ end
 desc "Reports status for all processes."
 task :status do
   transaction do
-    dfs_status
+    fs_status
     master_status
     hyperspace_status
     rangeserver_status
   end
 end
 
-desc "Get status for dfs processes."
-task :dfs_status, :roles => [:master, :slave] do
+desc "Get status for fs processes."
+task :fs_status, :roles => [:master, :slave] do
   run <<-CMD
-   #{install_dir}/current/bin/ht serverup dfsbroker
+   #{install_dir}/current/bin/ht serverup fsbroker
   CMD
 end
 

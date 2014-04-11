@@ -71,7 +71,7 @@ CellStore *CellStoreFactory::open(const String &name,
   if (HT_IO_ALIGNED(file_length))
     oflags = Filesystem::OPEN_FLAG_DIRECTIO;
 
-  /** Open the DFS file **/
+  /** Open the FS file **/
   fd = Global::dfs->open(name, oflags);
 
  try_again:
@@ -84,7 +84,7 @@ CellStore *CellStoreFactory::open(const String &name,
   nread = Global::dfs->pread(fd, trailer_buf.get(), amount, offset, second_try);
 
   if (nread != amount)
-    HT_THROWF(Error::DFSBROKER_IO_ERROR,
+    HT_THROWF(Error::FSBROKER_IO_ERROR,
               "Problem reading trailer for CellStore file '%s'"
               " - only read %d of %lu bytes", name.c_str(),
               (int)nread, (Lu)amount);

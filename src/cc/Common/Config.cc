@@ -222,25 +222,37 @@ void DefaultPolicy::init_options() {
         "QFS meta server")
     ("Qfs.MetaServer.Port", i16()->default_value(20000), "Port number for QFS "
         "meta server")
-    ("DfsBroker.DisableFileRemoval", boo()->default_value(false),
+    ("DfsBroker.Local.DirectIO", boo(),
+        "DEPRECATED: renamed to FsBroker.Local.DirectIO")
+    ("DfsBroker.Local.Port", i16(),
+        "DEPRECATED: renamed to FsBroker.Local.Port")
+    ("DfsBroker.Local.Root", str(), "DEPRECATED: renamed to FsBroker.Local.Root")
+    ("DfsBroker.Local.Workers", i32(),
+        "DEPRECATED: renamed to FsBroker.Local.Workers")
+    ("DfsBroker.Local.Reactors", i32(),
+        "DEPRECATED: renamed to FsBroker.Local.Reactors")
+    ("DfsBroker.Host", str(), "DEPRECATED: renamed to FsBroker.Host")
+    ("DfsBroker.Port", i16(), "DEPRECATED: renamed to FsBroker.Port")
+    ("DfsBroker.Timeout", i32(), "DEPRECATED: renamed to FsBroker.Timeout")
+    ("FsBroker.DisableFileRemoval", boo()->default_value(false),
         "Rename files with .deleted extension instead of removing (for testing)")
-    ("DfsBroker.Local.DirectIO", boo()->default_value(false),
+    ("FsBroker.Local.DirectIO", boo()->default_value(false),
         "Read and write files using direct i/o")
-    ("DfsBroker.Local.Port", i16()->default_value(15863),
+    ("FsBroker.Local.Port", i16()->default_value(15863),
         "Port number on which to listen (read by LocalBroker only)")
-    ("DfsBroker.Local.Root", str(), "Root of file and directory "
+    ("FsBroker.Local.Root", str(), "Root of file and directory "
         "hierarchy for local broker (if relative path, then is relative to "
         "the Hypertable data directory root)")
-    ("DfsBroker.Local.Workers", i32()->default_value(20),
+    ("FsBroker.Local.Workers", i32()->default_value(20),
         "Number of local broker worker threads created")
-    ("DfsBroker.Local.Reactors", i32(),
+    ("FsBroker.Local.Reactors", i32(),
         "Number of local broker communication reactor threads created")
-    ("DfsBroker.Host", str()->default_value("localhost"),
-        "Host on which the DFS broker is running (read by clients only)")
-    ("DfsBroker.Port", i16()->default_value(15863),
-        "Port number on which DFS broker is listening (read by clients only)")
-    ("DfsBroker.Timeout", i32(), "Length of time, "
-        "in milliseconds, to wait before timing out DFS Broker requests. This "
+    ("FsBroker.Host", str()->default_value("localhost"),
+        "Host on which the FS broker is running (read by clients only)")
+    ("FsBroker.Port", i16()->default_value(15863),
+        "Port number on which FS broker is listening (read by clients only)")
+    ("FsBroker.Timeout", i32(), "Length of time, "
+        "in milliseconds, to wait before timing out FS Broker requests. This "
         "takes precedence over Hypertable.Request.Timeout")
     ("Hyperspace.Timeout", i32()->default_value(30000), "Timeout (millisec) "
         "for hyperspace requests (preferred to Hypertable.Request.Timeout")

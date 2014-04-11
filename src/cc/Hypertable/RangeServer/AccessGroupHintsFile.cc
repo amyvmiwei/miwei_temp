@@ -205,7 +205,7 @@ void AccessGroupHintsFile::read() {
     }
   }
   catch (Exception &e) {
-    if (e.code() == Error::DFSBROKER_BAD_FILENAME)
+    if (e.code() == Error::FSBROKER_BAD_FILENAME)
       HT_INFOF("Hints file %s does not exist, skipping...", filename.c_str());
     else
       HT_ERRORF("Problem loading hints file %s - %s", filename.c_str(),

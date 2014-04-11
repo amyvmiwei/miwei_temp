@@ -1,4 +1,4 @@
-/** -*- C++ -*-
+/* -*- C++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -26,7 +26,7 @@ namespace Hypertable { namespace Config {
 
 void init_range_server_options() {
   cmdline_desc().add_options()
-    ("log-broker", str(), "Use the specified DFS broker (in <host>:<port> "
+    ("log-broker", str(), "Use the specified FS broker (in <host>:<port> "
         "format for commit log)")
     ("crash-test", str(), "Arguments for crash simulation")
     ;

@@ -103,7 +103,7 @@ run_test() {
     shift
 
     $HT_HOME/bin/start-test-servers.sh --no-rangeserver --no-master \
-        --no-thriftbroker --clear --DfsBroker.DisableFileRemoval=true
+        --no-thriftbroker --clear --FsBroker.DisableFileRemoval=true
 
     \rm -f rangeserver.rs1.compaction-exception-$TEST.output
     \rm -f rangeserver.rs2.compaction-exception-$TEST.output

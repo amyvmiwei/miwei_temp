@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -22,7 +22,7 @@
 #include "Common/Compat.h"
 #include "Common/Init.h"
 #include "Common/Logger.h"
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/Client.h"
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/old/RangeServerMetaLog.h"
 #include "Hypertable/Lib/old/RangeServerMetaLogReader.h"
@@ -40,7 +40,7 @@ struct MyPolicy : Policy {
       ("states,s", "Dump metalog as states tree")
       ("copy", str(), "Make a copy of the metalog to <arg> until errors")
       ;
-    cmdline_hidden_desc().add_options()("path", str(), "path in DFS");
+    cmdline_hidden_desc().add_options()("path", str(), "path in FS");
     cmdline_positional_desc().add("path", -1);
   }
   static void init() {
@@ -51,7 +51,7 @@ struct MyPolicy : Policy {
   }
 };
 
-typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
+typedef Meta::list<MyPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
 void dump_range_states(RangeServerMetaLogReader *rdr) {
   bool found_recover_entry;
@@ -99,10 +99,10 @@ int main(int ac, char *av[]) {
   try {
     init_with_policies<Policies>(ac, av);
 
-    DfsBroker::Client *dfs = new DfsBroker::Client(get_str("dfs-host"),
-        get_i16("dfs-port"), get_i32("timeout"));
+    FsBroker::Client *fs = new FsBroker::Client(get_str("fs-host"),
+        get_i16("fs-port"), get_i32("timeout"));
 
-    dump_metalog(*dfs, get_str("path"), properties);
+    dump_metalog(*fs, get_str("path"), properties);
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;

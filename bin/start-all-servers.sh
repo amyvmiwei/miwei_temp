@@ -29,7 +29,7 @@ START_THRIFTBROKER="true"
 
 usage() {
   echo ""
-  echo "usage: start-all-servers.sh [OPTIONS] <dfs-choice> [<global-options>]"
+  echo "usage: start-all-servers.sh [OPTIONS] <fs-choice> [<global-options>]"
   echo ""
   echo "OPTIONS:"
   echo "  --heapcheck-rangeserver run Hyperspace.RangeServer with tcmalloc heapcheck"
@@ -41,7 +41,7 @@ usage() {
   echo "  --no-master             do not launch the Hypertable master"
   echo "  --no-thriftbroker       do not launch the ThriftBroker"
   echo ""
-  echo "DFS choices: qfs, hadoop, mapr, local"
+  echo "FS choices: qfs, hadoop, mapr, local"
   echo ""
 }
 
@@ -97,13 +97,13 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
-DFS=$1
+FS=$1
 shift
 
 #
-# Start DfsBroker
+# Start FsBroker
 #
-$HYPERTABLE_HOME/bin/start-dfsbroker.sh $DFS $@ &
+$HYPERTABLE_HOME/bin/start-fsbroker.sh $FS $@ &
 
 #
 # Start Hyperspace

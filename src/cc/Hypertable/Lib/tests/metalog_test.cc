@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -26,7 +26,7 @@
 #include "Common/Random.h"
 #include "Common/StringExt.h"
 #include "Common/Serialization.h"
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/Client.h"
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/ReactorFactory.h"
 #include "AsyncComm/ConnectionManager.h"
@@ -93,7 +93,7 @@ namespace {
     }
   };
 
-  typedef Meta::list<MyPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
+  typedef Meta::list<MyPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
   MetaLog::DefinitionPtr g_test_definition = new MetaLog::TestDefinition();
 
@@ -138,14 +138,14 @@ main(int ac, char *av[]) {
   try {
     init_with_policies<Policies>(ac, av);
 
-    int timeout = has("dfs-timeout") ? get_i32("dfs-timeout") : 180000;
-    String host = get_str("dfs-host");
-    uint16_t port = get_i16("dfs-port");
+    int timeout = has("fs-timeout") ? get_i32("fs-timeout") : 180000;
+    String host = get_str("fs-host");
+    uint16_t port = get_i16("fs-port");
 
-    DfsBroker::Client *client = new DfsBroker::Client(host, port, timeout);
+    FsBroker::Client *client = new FsBroker::Client(host, port, timeout);
 
     if (!client->wait_for_connection(timeout)) {
-      HT_ERROR_OUT <<"Unable to connect to DFS: "<< host <<':'<< port << HT_END;
+      HT_ERROR_OUT <<"Unable to connect to FS: "<< host <<':'<< port << HT_END;
       return 1;
     }
 

@@ -71,7 +71,7 @@ add_test(Hypertable-shell env INSTALL_DIR=${INSTALL_DIR}
 
 # hypertable_ldi_select_test
 add_executable(hypertable_ldi_select_test test/hypertable_ldi_select_test.cc ${TEST_DEPENDENCIES})
-target_link_libraries(hypertable_ldi_select_test HyperDfsBroker HyperComm)
+target_link_libraries(hypertable_ldi_select_test HyperFsBroker HyperComm)
 
 configure_file(${SRC_DIR}/test/hypertable_ldi_stdin_test_load.hql
                ${DST_DIR}/hypertable_ldi_stdin_test_load.hql)

@@ -40,7 +40,7 @@ namespace Hypertable {
 /**
  * Abstract base class for simple interactive shell commands. The base
  * class parses the command and runs it. For a usage example see the
- * DfsBroker client shell: src/cc/Tools/dfsclient/dfsclient.cc.
+ * FsBroker client shell: src/cc/Tools/fsclient/fsclient.cc.
  */
 class InteractiveCommand {
   public:

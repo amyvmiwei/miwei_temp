@@ -69,19 +69,19 @@ SystemState.cc
 
 # HyperMaster Lib
 add_library(HyperMaster ${Master_SRCS})
-target_link_libraries(HyperMaster m Hyperspace HyperDfsBroker Hypertable ${RRD_LIBRARIES})
+target_link_libraries(HyperMaster m Hyperspace HyperFsBroker Hypertable ${RRD_LIBRARIES})
 
 # Hypertable.Master
 add_executable(Hypertable.Master main.cc)
-target_link_libraries(Hypertable.Master HyperMaster Hyperspace Hypertable HyperRanger HyperDfsBroker ${MALLOC_LIBRARY})
+target_link_libraries(Hypertable.Master HyperMaster Hyperspace Hypertable HyperRanger HyperFsBroker ${MALLOC_LIBRARY})
 
 # op_test_driver
 add_executable(op_test_driver tests/op_test_driver.cc)
-target_link_libraries(op_test_driver HyperMaster HyperRanger Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
+target_link_libraries(op_test_driver HyperMaster HyperRanger Hyperspace Hypertable HyperFsBroker ${MALLOC_LIBRARY})
 
 # op_dependency_test
 add_executable(op_dependency_test tests/op_dependency_test.cc tests/OperationTest.cc)
-target_link_libraries(op_dependency_test HyperMaster HyperRanger Hyperspace Hypertable HyperDfsBroker ${MALLOC_LIBRARY})
+target_link_libraries(op_dependency_test HyperMaster HyperRanger Hyperspace Hypertable HyperFsBroker ${MALLOC_LIBRARY})
 
 # system_state_test
 add_executable(system_state_test tests/system_state_test.cc)
@@ -94,7 +94,7 @@ set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hypertable/Master/tests")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hypertable/Master")
 
 add_executable(htgc htgc.cc GcWorker.cc)
-target_link_libraries(htgc HyperMaster HyperDfsBroker Hypertable ${RRD_LIBRARIES})
+target_link_libraries(htgc HyperMaster HyperFsBroker Hypertable ${RRD_LIBRARIES})
 
 configure_file(${SRC_DIR}/balance_plan_authority_test.golden
     ${DST_DIR}/balance_plan_authority_test.golden COPYONLY)

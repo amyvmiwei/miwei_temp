@@ -150,7 +150,7 @@ endif ()
 
 # RangeServer Lib
 add_library(HyperRanger ${RangeServer_SRCS})
-target_link_libraries(HyperRanger m HyperDfsBroker Hypertable ${RE2_LIBRARIES})
+target_link_libraries(HyperRanger m HyperFsBroker Hypertable ${RE2_LIBRARIES})
 
 # RangeServer
 add_executable(Hypertable.RangeServer main.cc)

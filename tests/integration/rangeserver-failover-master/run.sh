@@ -150,7 +150,7 @@ run_test() {
     sleep 10
 
     $HT_HOME/bin/start-test-servers.sh --no-master --no-rangeserver \
-        --no-thriftbroker --clear --DfsBroker.DisableFileRemoval=true
+        --no-thriftbroker --clear --FsBroker.DisableFileRemoval=true
 
     # start master-launcher script in background. it will restart the
     # master as soon as it crashes

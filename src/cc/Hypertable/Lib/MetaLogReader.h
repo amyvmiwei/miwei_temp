@@ -148,7 +148,7 @@ namespace Hypertable {
        * This method throws an Exception with error code
        * Error::METALOG_BACKUP_FILE_MISMATCH if the backup file with
        * numeric name <code>file_num</code> exists and has size less
-       * than the corresponding file in the DFS.  Otherwise it returns
+       * than the corresponding file in the FS.  Otherwise it returns
        * successfuly.
        * @param file_num Numeric file name of file for which to verify
        * backup

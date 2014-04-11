@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# Copyright (C) 2007-2012 Hypertable, Inc.
+# Copyright (C) 2007-2014 Hypertable, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@ export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
 FORCE="false"
 only="false"
 
-STOP_DFSBROKER="false"
+STOP_FSBROKER="false"
 STOP_MASTER="false"
 STOP_RANGESERVER="false"
 STOP_THRIFTBROKER="false"
@@ -51,13 +51,17 @@ do
       ;;
     dfsbroker)
       only="true"
-      STOP_DFSBROKER="true"
+      STOP_FSBROKER="true"
+      ;;
+    fsbroker)
+      only="true"
+      STOP_FSBROKER="true"
       ;;
   esac
 done
 
 if [ $only == "false" ]; then
-  STOP_DFSBROKER="true"
+  STOP_FSBROKER="true"
   STOP_MASTER="true"
   STOP_RANGESERVER="true"
   STOP_THRIFTBROKER="true"
@@ -72,12 +76,12 @@ usage() {
   echo ""
   echo "OPTIONS:"
   echo "  --force                 kill processes to ensure they're stopped"
-  echo "  --no-dfsbroker          do not stop the DFS broker"
+  echo "  --no-fsbroker           do not stop the FS broker"
   echo "  --no-master             do not stop the Hypertable master"
   echo "  --no-rangeserver        do not stop the RangeServer"
   echo "  --no-hyperspace         do not stop the Hyperspace master"
   echo "  --no-thriftbroker       do not stop the ThriftBroker"
-  echo "  dfsbroker               stops the DFS broker"
+  echo "  fsbroker                stops the FS broker"
   echo "  master                  stops the Hypertable master"
   echo "  rangeserver             stops the RangeServer"
   echo "  hyperspace              stops the Hyperspace master"
@@ -94,8 +98,12 @@ while [ "$1" != "${1##[-+]}" ]; do
       FORCE="true"
       shift
       ;;
+    --no-fsbroker)
+      STOP_FSBROKER="false"
+      shift
+      ;;
     --no-dfsbroker)
-      STOP_DFSBROKER="false"
+      STOP_FSBROKER="false"
       shift
       ;;
     --no-master)
@@ -115,7 +123,11 @@ while [ "$1" != "${1##[-+]}" ]; do
       shift
       ;;
     --only-dfsbroker)
-      STOP_DFSBROKER="true"
+      STOP_FSBROKER="true"
+      shift
+      ;;
+    --only-fsbroker)
+      STOP_FSBROKER="true"
       shift
       ;;
     --only-master)
@@ -195,12 +207,12 @@ if [ $STOP_RANGESERVER == "true" ] ; then
 fi
 
 #
-# Stop DFSBroker
+# Stop FS Broker
 #
-if [ $STOP_DFSBROKER == "true" ] ; then
-  echo "Sending shutdown command to DFS broker"
-  echo 'shutdown' | $HYPERTABLE_HOME/bin/ht dfsclient --nowait --batch
-  stop_server dfsbroker
+if [ $STOP_FSBROKER == "true" ] ; then
+  echo "Sending shutdown command to FS broker"
+  echo 'shutdown' | $HYPERTABLE_HOME/bin/ht fsclient --nowait --batch
+  stop_server fsbroker
 fi
 
 #
@@ -220,10 +232,10 @@ if [ $STOP_THRIFTBROKER == "true" ] ; then
 fi
 
 #
-# wait for dfsbroker shutdown
+# wait for FS Broker shutdown
 #
-if [ $STOP_DFSBROKER == "true" ] ; then
-  wait_for_server_shutdown dfsbroker "DFS broker" "$@" &
+if [ $STOP_FSBROKER == "true" ] ; then
+  wait_for_server_shutdown fsbroker "FS broker" "$@" &
 fi
 
 #

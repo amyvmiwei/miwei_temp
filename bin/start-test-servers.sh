@@ -16,7 +16,7 @@
 #
 
 INSTALL_DIR=${INSTALL_DIR:-$(cd `dirname $0`/.. && pwd)}
-HT_TEST_DFS=${HT_TEST_DFS:-local}
+HT_TEST_FS=${HT_TEST_FS:-local}
 
 usage_exit() {
   echo "$0 [Options]"
@@ -39,10 +39,10 @@ while [ $# -gt 0 ]; do
 done
 
 if [ "$clear" ]; then
-  $INSTALL_DIR/bin/start-dfsbroker.sh $HT_TEST_DFS
+  $INSTALL_DIR/bin/start-fsbroker.sh $HT_TEST_FS
   $INSTALL_DIR/bin/ht clean-database $@
 else
   $INSTALL_DIR/bin/ht stop servers
 fi
 
-$INSTALL_DIR/bin/ht start all-servers "${opts[@]}" $HT_TEST_DFS $@
+$INSTALL_DIR/bin/ht start all-servers "${opts[@]}" $HT_TEST_FS $@

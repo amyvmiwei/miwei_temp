@@ -1085,7 +1085,11 @@ namespace Hypertable {
         String file = String(str, end-str);
         trim_if(file, is_any_of("'\""));
 
-        if (boost::algorithm::starts_with(file, "dfs://")) {
+        if (boost::algorithm::starts_with(file, "fs://")) {
+          state.input_file_src = DFS_FILE;
+          state.input_file = file.substr(5);
+        }
+        else if (boost::algorithm::starts_with(file, "dfs://")) {
           state.input_file_src = DFS_FILE;
           state.input_file = file.substr(6);
         }
@@ -1112,9 +1116,10 @@ namespace Hypertable {
         trim_if(file, is_any_of("'\""));
 
         state.header_file_src = LOCAL_FILE;
-        if (boost::algorithm::starts_with(file, "dfs://")) {
+        if (boost::algorithm::starts_with(file, "fs://") ||
+            boost::algorithm::starts_with(file, "dfs://")) {
           HT_THROW(Error::HQL_PARSE_ERROR,
-                   "Header file must be on local FS and not on the DFS");
+                   "Header file must be in local filesystem, not in the brokered FS");
         }
         else {
           if (boost::algorithm::starts_with(file, "file://"))

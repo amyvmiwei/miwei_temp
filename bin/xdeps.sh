@@ -34,7 +34,7 @@ ldd_if_exists $HYPERTABLE_HOME/bin/Hypertable.Master
 ldd_if_exists $HYPERTABLE_HOME/bin/Hypertable.RangeServer
 ldd_if_exists $HYPERTABLE_HOME/bin/ThriftBroker
 ldd_if_exists $HYPERTABLE_HOME/bin/csdump
-ldd_if_exists $HYPERTABLE_HOME/bin/dfsclient
+ldd_if_exists $HYPERTABLE_HOME/bin/fsclient
 ldd_if_exists $HYPERTABLE_HOME/bin/dumplog
 ldd_if_exists $HYPERTABLE_HOME/bin/hyperspace
 ldd_if_exists $HYPERTABLE_HOME/bin/hypertable

@@ -32,7 +32,7 @@ if [ -e failure ]; then
   rm -f failure
 fi
 
-$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --DfsBroker.DisableFileRemoval=true
+$HT_HOME/bin/start-test-servers.sh --clear --no-rangeserver --FsBroker.DisableFileRemoval=true
 
 $HT_HOME/bin/ht Hypertable.RangeServer --verbose --pidfile=$RS1_PIDFILE \
    --Hypertable.RangeServer.ProxyName=rs1 \

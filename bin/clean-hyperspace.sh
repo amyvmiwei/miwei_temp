@@ -32,7 +32,7 @@ if tty > /dev/null && [ $# == 1 ]; then
   esac
 fi
 
-# Stop servers other than dfsbroker
+# Stop hyperspace
 stop_server hyperspace
 sleep 1
 wait_for_server_shutdown hyperspace "hyperspace" "$@" &

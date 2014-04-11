@@ -57,7 +57,7 @@ Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition) :
 Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition, const String &path) :
   m_fs(fs), m_definition(definition), m_version(0) {
 
-  // Setup DFS path name
+  // Setup FS path name
   m_path = path;
   boost::trim_right_if(m_path, boost::is_any_of("/"));
 

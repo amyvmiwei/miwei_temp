@@ -36,7 +36,6 @@ extern "C" {
 #include "Common/FileUtils.h"
 #include "Common/Logger.h"
 #include "Common/System.h"
-#include "DfsBroker/Lib/Client.h"
 
 using namespace Hypertable;
 using namespace std;

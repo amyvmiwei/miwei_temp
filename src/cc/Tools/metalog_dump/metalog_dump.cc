@@ -29,8 +29,8 @@
 #include <Hypertable/Lib/MetaLog.h>
 #include <Hypertable/Lib/MetaLogReader.h>
 
-#include <DfsBroker/Lib/Client.h>
-#include <DfsBroker/Lib/Config.h>
+#include <FsBroker/Lib/Client.h>
+#include <FsBroker/Lib/Config.h>
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/ConnectionManager.h>
@@ -83,7 +83,7 @@ namespace {
     }
   };
 
-  typedef Meta::list<DfsClientPolicy, DefaultCommPolicy, AppPolicy> Policies;
+  typedef Meta::list<FsClientPolicy, DefaultCommPolicy, AppPolicy> Policies;
 
   void determine_log_type(FilesystemPtr &fs, String path, String &name, bool *is_file) {
     bool check_file=false;
@@ -159,16 +159,16 @@ int main(int argc, char **argv) {
     /**
      * Check for and connect to commit log DFS broker
      */
-    DfsBroker::Client *dfs_client;
+    FsBroker::Client *dfs_client;
 
     if (log_host.length()) {
       int log_port = get_i16("log-port");
       InetAddr addr(log_host, log_port);
 
-      dfs_client = new DfsBroker::Client(conn_manager_ptr, addr, timeout);
+      dfs_client = new FsBroker::Client(conn_manager_ptr, addr, timeout);
     }
     else {
-      dfs_client = new DfsBroker::Client(conn_manager_ptr, properties);
+      dfs_client = new FsBroker::Client(conn_manager_ptr, properties);
     }
 
     if (!dfs_client->wait_for_connection(timeout)) {

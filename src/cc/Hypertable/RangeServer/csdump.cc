@@ -27,7 +27,7 @@
 #include <Hypertable/RangeServer/Config.h>
 #include <Hypertable/RangeServer/Global.h>
 
-#include <DfsBroker/Lib/Client.h>
+#include <FsBroker/Lib/Client.h>
 
 #include <Hypertable/Lib/LoadDataEscape.h>
 #include <Hypertable/Lib/Key.h>
@@ -59,7 +59,7 @@ namespace {
   struct AppPolicy : Config::Policy {
     static void init_options() {
       cmdline_desc("Usage: %s [options] <filename>\n\n"
-        "Dumps the contents of the CellStore contained in the DFS <filename>."
+        "Dumps the contents of the CellStore contained in the FS <filename>."
         "\n\nOptions").add_options()
         ("all,a", "Dump everything, including key/value pairs")
         ("compact,c", "Only prints the cellstore name and a status ('ok' or 'corrupt')")
@@ -81,7 +81,7 @@ namespace {
     }
   };
 
-  typedef Meta::list<AppPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
+  typedef Meta::list<AppPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
   typedef std::unordered_map<uint32_t, String> ColumnIdMapT;
 
@@ -107,10 +107,10 @@ int main(int argc, char **argv) {
 
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
 
-    DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
+    FsBroker::Client *dfs = new FsBroker::Client(conn_mgr, properties);
 
     if (!dfs->wait_for_connection(timeout)) {
-      cerr << "error: timed out waiting for DFS broker" << endl;
+      cerr << "error: timed out waiting for FS broker" << endl;
       exit(1);
     }
 

@@ -66,7 +66,7 @@ namespace Hypertable {
    * them out independently, it is possible for requests to get executed out
    * of order relative to the order in which they arrived in the queue.  This
    * can cause problems for certain request sequences such as appending data
-   * to a file in the DfsBroker, or fetching scanner results from a scanner
+   * to a file in the FsBroker, or fetching scanner results from a scanner
    * using multiple readahead requests.  <i>Groups</i> are a way to give
    * applications the ability to serialize a set of requests.  Each request
    * has a <i>group ID</i> that is returned by 

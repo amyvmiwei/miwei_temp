@@ -30,8 +30,8 @@
 #include <AsyncComm/ConnectionManager.h>
 #include <AsyncComm/ReactorFactory.h>
 
-#include <DfsBroker/Lib/Config.h>
-#include <DfsBroker/Lib/Client.h>
+#include <FsBroker/Lib/Config.h>
+#include <FsBroker/Lib/Client.h>
 
 #include <Hypertable/Lib/CommitLog.h>
 #include <Hypertable/Lib/CommitLogReader.h>
@@ -68,13 +68,13 @@ struct AppPolicy : Config::Policy {
   }
 };
 
-typedef Meta::list<AppPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
+typedef Meta::list<AppPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
-void display_log(DfsBroker::Client *dfs_client, const String &prefix,
+void display_log(FsBroker::Client *dfs_client, const String &prefix,
     CommitLogReader *log_reader, bool display_values);
-void display_log_block_summary(DfsBroker::Client *dfs_client,
+void display_log_block_summary(FsBroker::Client *dfs_client,
     const String &prefix, CommitLogReader *log_reader);
-void display_log_valid_links(DfsBroker::Client *dfs_client,
+void display_log_valid_links(FsBroker::Client *dfs_client,
     const String &prefix, CommitLogReader *log_reader);
 
 } // local namespace
@@ -95,16 +95,16 @@ int main(int argc, char **argv) {
     /**
      * Check for and connect to commit log DFS broker
      */
-    DfsBroker::Client *dfs_client;
+    FsBroker::Client *dfs_client;
 
     if (log_host.length()) {
       int log_port = get_i16("log-port");
       InetAddr addr(log_host, log_port);
 
-      dfs_client = new DfsBroker::Client(conn_manager_ptr, addr, timeout);
+      dfs_client = new FsBroker::Client(conn_manager_ptr, addr, timeout);
     }
     else {
-      dfs_client = new DfsBroker::Client(conn_manager_ptr, properties);
+      dfs_client = new FsBroker::Client(conn_manager_ptr, properties);
     }
 
     if (!dfs_client->wait_for_connection(timeout)) {
@@ -139,7 +139,7 @@ int main(int argc, char **argv) {
 namespace {
 
   void
-  display_log(DfsBroker::Client *dfs_client, const String &prefix,
+  display_log(FsBroker::Client *dfs_client, const String &prefix,
               CommitLogReader *log_reader, bool display_values) {
     BlockHeaderCommitLog header;
     const uint8_t *base;
@@ -191,7 +191,7 @@ namespace {
 
 
   void
-  display_log_block_summary(DfsBroker::Client *dfs_client, const String &prefix,
+  display_log_block_summary(FsBroker::Client *dfs_client, const String &prefix,
       CommitLogReader *log_reader) {
     CommitLogBlockInfo binfo;
     BlockHeaderCommitLog header;
@@ -228,7 +228,7 @@ namespace {
   }
 
   void
-  display_log_valid_links(DfsBroker::Client *dfs_client, const String &prefix,
+  display_log_valid_links(FsBroker::Client *dfs_client, const String &prefix,
                           CommitLogReader *log_reader) {
     BlockHeaderCommitLog header;
     const uint8_t *base;

@@ -34,7 +34,7 @@ extern "C" {
 #include "Hypertable/Lib/KeySpec.h"
 #include "Hypertable/Lib/LoadDataSource.h"
 #include "Hypertable/Lib/LoadDataSourceFactory.h"
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/Client.h"
 
 using namespace Hypertable;
 using namespace std;
@@ -46,7 +46,7 @@ int main(int argc, char **argv) {
   uint32_t value_len;
   int fd;
   std::vector<String> key_columns;
-  DfsBroker::ClientPtr null_dfs_client;
+  FsBroker::ClientPtr null_dfs_client;
   bool is_delete;
 
   vector<String> testnames;

@@ -57,7 +57,7 @@
 #include <Hypertable/Lib/RangeServerProtocol.h>
 #include <Hypertable/Lib/RangeRecoveryReceiverPlan.h>
 
-#include <DfsBroker/Lib/Client.h>
+#include <FsBroker/Lib/Client.h>
 
 #include <Common/FailureInducer.h>
 #include <Common/FileUtils.h>
@@ -248,33 +248,33 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
 
   Global::protocol = new Hypertable::RangeServerProtocol();
 
-  DfsBroker::Client *dfsclient = new DfsBroker::Client(conn_mgr, props);
+  FsBroker::Client *dfsclient = new FsBroker::Client(conn_mgr, props);
 
   int dfs_timeout;
-  if (props->has("DfsBroker.Timeout"))
-    dfs_timeout = props->get_i32("DfsBroker.Timeout");
+  if (props->has("FsBroker.Timeout"))
+    dfs_timeout = props->get_i32("FsBroker.Timeout");
   else
     dfs_timeout = props->get_i32("Hypertable.Request.Timeout");
 
   if (!dfsclient->wait_for_connection(dfs_timeout))
-    HT_THROW(Error::REQUEST_TIMEOUT, "connecting to DFS Broker");
+    HT_THROW(Error::REQUEST_TIMEOUT, "connecting to FS Broker");
 
   Global::dfs = dfsclient;
 
   m_log_roll_limit = cfg.get_i64("CommitLog.RollLimit");
 
   /**
-   * Check for and connect to commit log DFS broker
+   * Check for and connect to commit log FS broker
    */
   if (cfg.has("CommitLog.DfsBroker.Host")) {
     String loghost = cfg.get_str("CommitLog.DfsBroker.Host");
     uint16_t logport = cfg.get_i16("CommitLog.DfsBroker.Port");
     InetAddr addr(loghost, logport);
 
-    dfsclient = new DfsBroker::Client(conn_mgr, addr, dfs_timeout);
+    dfsclient = new FsBroker::Client(conn_mgr, addr, dfs_timeout);
 
     if (!dfsclient->wait_for_connection(30000))
-      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to commit log DFS broker");
+      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to commit log FS broker");
 
     Global::log_dfs = dfsclient;
   }

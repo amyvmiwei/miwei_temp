@@ -113,7 +113,7 @@ bmz/bmz.c
 
 add_library(Hypertable ${Hypertable_SRCS})
 add_dependencies(Hypertable HyperComm Hyperspace HyperCommon)
-target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperDfsBroker ${MALLOC_LIBRARY} HyperThirdParty m)
+target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperFsBroker ${MALLOC_LIBRARY} HyperThirdParty m)
 
 # generate_test_data
 add_executable(generate_test_data generate_test_data.cc)
@@ -156,7 +156,7 @@ target_link_libraries(block_header_test Hypertable)
 
 # commit_log_test
 add_executable(commit_log_test tests/commit_log_test.cc)
-target_link_libraries(commit_log_test HyperDfsBroker Hypertable)
+target_link_libraries(commit_log_test HyperFsBroker Hypertable)
 
 # escape_test
 add_executable(escape_test tests/escape_test.cc)
@@ -220,7 +220,7 @@ target_link_libraries(rangeserver_serialize_test Hypertable Hyperspace)
 
 # MetaLog test
 add_executable(metalog_test tests/metalog_test.cc)
-target_link_libraries(metalog_test HyperDfsBroker Hypertable)
+target_link_libraries(metalog_test HyperFsBroker Hypertable)
 
 
 #

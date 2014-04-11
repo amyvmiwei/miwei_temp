@@ -50,8 +50,8 @@ using namespace Hypertable;
 using namespace Hypertable::MetaLog;
 
 namespace {
-  const int32_t DFS_BUFFER_SIZE = -1;
-  const int64_t DFS_BLOCK_SIZE = -1;
+  const int32_t FS_BUFFER_SIZE = -1;
+  const int64_t FS_BLOCK_SIZE = -1;
 }
 
 bool Writer::skip_recover_entry = false;
@@ -63,7 +63,7 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
 
   HT_EXPECT(Config::properties, Error::FAILED_EXPECTATION);
 
-  // Setup DFS path name
+  // Setup FS path name
   m_path = path;
   boost::trim_right_if(m_path, boost::is_any_of("/"));
   if (!m_fs->exists(m_path))
@@ -86,9 +86,9 @@ Writer::Writer(FilesystemPtr &fs, DefinitionPtr &definition, const String &path,
   // get replication
   int replication = Config::properties->get_i32("Hypertable.Metadata.Replication");
 
-  // Open DFS file
+  // Open FS file
   m_filename = m_path + "/" + next_id;
-  m_fd = m_fs->create(m_filename, 0, DFS_BUFFER_SIZE, replication, DFS_BLOCK_SIZE);
+  m_fd = m_fs->create(m_filename, 0, FS_BUFFER_SIZE, replication, FS_BLOCK_SIZE);
 
   // Open backup file
   m_backup_filename = m_backup_path + "/" + next_id;
@@ -143,7 +143,7 @@ void Writer::purge_old_log_files(std::vector<int32_t> &file_ids, size_t keep_cou
     for (size_t i=keep_count; i< file_ids.size(); i++) {
       String tmp_name;
 
-      // remove from DFS
+      // remove from FS
       tmp_name = m_path + String("/") + file_ids[i];
       m_fs->remove(tmp_name);
 
@@ -178,7 +178,7 @@ void Writer::write_header() {
 
   FileUtils::write(m_backup_fd, backup_buf, Header::LENGTH);
   if (m_fs->append(m_fd, buf, Filesystem::O_FLUSH) != Header::LENGTH)
-    HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error writing %s "
+    HT_THROWF(Error::FSBROKER_IO_ERROR, "Error writing %s "
               "metalog header to file: %s", m_definition->name(),
               m_filename.c_str());
 

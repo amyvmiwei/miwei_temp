@@ -51,7 +51,7 @@ using namespace Hypertable;
 using namespace Config;
 using namespace std;
 
-typedef Meta::list<RangeServerPolicy, DfsClientPolicy, HyperspaceClientPolicy,
+typedef Meta::list<RangeServerPolicy, FsClientPolicy, HyperspaceClientPolicy,
         MasterClientPolicy, DefaultServerPolicy> Policies;
 
 int main(int argc, char **argv) {

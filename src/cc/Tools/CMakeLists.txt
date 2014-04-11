@@ -17,7 +17,7 @@
 # 02110-1301, USA.
 #
 
-add_subdirectory(dfsclient)
+add_subdirectory(fsclient)
 add_subdirectory(dumplog)
 add_subdirectory(generate_error_code_doc)
 add_subdirectory(hyperspace)

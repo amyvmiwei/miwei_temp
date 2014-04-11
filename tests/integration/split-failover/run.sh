@@ -142,7 +142,7 @@ run_test() {
     stop_range_servers $RS_COUNT
 
     $HT_HOME/bin/start-test-servers.sh --no-master --no-rangeserver \
-        --no-thriftbroker --clear --DfsBroker.DisableFileRemoval=true
+        --no-thriftbroker --clear --FsBroker.DisableFileRemoval=true
 
     start_master
 

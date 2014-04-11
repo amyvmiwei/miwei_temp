@@ -60,7 +60,7 @@ namespace Hypertable {
    * will come back in the same order in which they were issued. Unless other-
    * wise mentioned, the methods could throw Exception.
    *
-   * This abstract base class is overwritten by the various DfsBrokers.
+   * This abstract base class is overwritten by the various FsBrokers.
    */
   class Filesystem : public ReferenceCount {
   public:

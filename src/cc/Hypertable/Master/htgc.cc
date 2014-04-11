@@ -29,7 +29,7 @@
 #include "Hypertable/Lib/Config.h"
 #include "Hypertable/Lib/Client.h"
 #include "Hypertable/Lib/Namespace.h"
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/Client.h"
 #include "GcWorker.h"
 
 using namespace Hypertable;
@@ -65,7 +65,7 @@ main(int ac, char *av[]) {
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));
     context->toplevel_dir = String("/") + context->toplevel_dir;
-    context->dfs = new DfsBroker::Client(context->conn_manager, context->props);
+    context->dfs = new FsBroker::Client(context->conn_manager, context->props);
 
     client = new Hypertable::Client("htgc");
     ns = client->open_namespace("sys");

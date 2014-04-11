@@ -33,7 +33,7 @@
 
 #include "AsyncComm/ConnectionManager.h"
 
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/Client.h"
 
 #include "Hypertable/Lib/Key.h"
 #include "Hypertable/Lib/Schema.h"
@@ -569,7 +569,7 @@ int main(int argc, char **argv) {
   try {
     struct sockaddr_in addr;
     ConnectionManagerPtr conn_mgr;
-    DfsBroker::ClientPtr client;
+    FsBroker::ClientPtr client;
     CellStorePtr cs;
     std::ofstream out("CellStoreScanner_test.output");
     size_t wordi=0;
@@ -598,15 +598,15 @@ int main(int argc, char **argv) {
     System::initialize(System::locate_install_dir(argv[0]));
     ReactorFactory::initialize(2);
 
-    uint16_t port = Config::properties->get_i16("DfsBroker.Port");
+    uint16_t port = Config::properties->get_i16("FsBroker.Port");
 
     InetAddr::initialize(&addr, "localhost", port);
 
     conn_mgr = new ConnectionManager();
-    Global::dfs = new DfsBroker::Client(conn_mgr, addr, 15000);
+    Global::dfs = new FsBroker::Client(conn_mgr, addr, 15000);
 
     // force broker client to be destroyed before connection manager
-    client = (DfsBroker::Client *)Global::dfs.get();
+    client = (FsBroker::Client *)Global::dfs.get();
 
     if (!client->wait_for_connection(15000)) {
       HT_ERROR("Unable to connect to DFS");

@@ -52,10 +52,10 @@ namespace Hypertable {
      * server process and is used to persist state changes by appending updated
      * Entity objects.  It is typically constructed as follows:
      * <pre>
-     * MetaLog::Reader reader = new MetaLog::Reader(log_dfs, definition, log_dir);
+     * MetaLog::Reader reader = new MetaLog::Reader(log_fs, definition, log_dir);
      * vector<MetaLog::EntityPtr> entities;
      * reader->get_entities(entities);
-     * MetaLog::Writer writer = new MetaLog::Writer(log_dfs, definition, log_dir, entities);
+     * MetaLog::Writer writer = new MetaLog::Writer(log_fs, definition, log_dir, entities);
      * </pre>
      */
     class Writer : public ReferenceCount {
@@ -109,7 +109,7 @@ namespace Hypertable {
        * returns <i>true</i>, just the entity header is persisted, otherwise
        * the entity header and state are persisted with a call to the
        * Entity::encode_entry() method.  First the entity is appended
-       * to the local backup file and then to the log file in the DFS.
+       * to the local backup file and then to the log file in the FS.
        * #m_offset is incremented by the length of the serialized entity.
        * @param entity Pointer to entity to persist
        */
@@ -130,7 +130,7 @@ namespace Hypertable {
        * of the header, setting the <i>length</i> and <i>checksum</i>
        * header fields to 0, and then writing the entity header. First the
        * entity header is appended to the local backup file and then to the log
-       * file in the DFS.
+       * file in the FS.
        * #m_offset is incremented by the length of the serialized entity.
        * @param entity Pointer to entity to remove
        */
@@ -154,7 +154,7 @@ namespace Hypertable {
        * by initializing a MetaLog::Header object with the name and version
        * obtained by calling the methods Definition::name() and
        * Definition::version() of #m_definition.  First the file header is
-       * appended to the local backup file and then to the log file in the DFS.
+       * appended to the local backup file and then to the log file in the FS.
        * #m_offset is incremented by the length of the serialized file header
        * (Header::LENGTH).
        */
@@ -163,7 +163,7 @@ namespace Hypertable {
       /** Purges old %MetaLog files.
        * This method removes the %MetaLog files with the numerically smallest
        * names until the number of remaining files is equal to
-       * <code>keep_count</code>.  The files are removed from the DFS as well
+       * <code>keep_count</code>.  The files are removed from the FS as well
        * as the backup directory.  The <code>file_ids</code> parameter is
        * adjusted to only include the numeric file names that remain after
        * purging.
@@ -187,7 +187,7 @@ namespace Hypertable {
       /// Full pathname of %MetaLog file open for writing
       String  m_filename;
 
-      /// File descriptor of %MetaLog file in DFS
+      /// File descriptor of %MetaLog file in FS
       int m_fd;
 
       /// Pathname of local log backup directory

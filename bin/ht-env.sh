@@ -35,6 +35,7 @@ server_pidfile() {
   case $1 in
     hyperspace)         echo $RUNTIME_ROOT/run/Hyperspace.pid;;
     dfsbroker)          echo $RUNTIME_ROOT/run/DfsBroker.*.pid | grep -v "*";;
+    fsbroker)           echo $RUNTIME_ROOT/run/FsBroker.*.pid | grep -v "*";;
     master)             echo $RUNTIME_ROOT/run/Hypertable.Master.pid;;
     rangeserver)        echo $RUNTIME_ROOT/run/Hypertable.RangeServer.pid;;
     thriftbroker)       echo $RUNTIME_ROOT/run/ThriftBroker*.pid | grep -v "*";;

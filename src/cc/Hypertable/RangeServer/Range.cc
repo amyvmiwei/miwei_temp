@@ -358,9 +358,9 @@ void Range::load_cell_stores() {
       }
       catch (Exception &e) {
         // issue 986: mapr returns IO_ERROR if CellStore does not exist
-	if (e.code() == Error::DFSBROKER_FILE_NOT_FOUND ||
-	    e.code() == Error::DFSBROKER_BAD_FILENAME ||
-	    e.code() == Error::DFSBROKER_IO_ERROR) {
+	if (e.code() == Error::FSBROKER_FILE_NOT_FOUND ||
+	    e.code() == Error::FSBROKER_BAD_FILENAME ||
+	    e.code() == Error::FSBROKER_IO_ERROR) {
 	  if (skip_not_found) {
 	    HT_WARNF("CellStore file '%s' not found, skipping", csvec[i].c_str());
 	    continue;
@@ -1347,7 +1347,7 @@ void Range::split_compact_and_shrink() {
   }
 
   if (m_split_off_high) {
-    /** Create DFS directories for this range **/
+    /** Create FS directories for this range **/
     {
       char md5DigestStr[33];
       String table_dir, range_dir;

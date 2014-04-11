@@ -27,7 +27,7 @@
 #include <iostream>
 #include <set>
 
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/Client.h"
 
 #include "Hypertable/Lib/Config.h"
 
@@ -44,7 +44,7 @@ using namespace Config;
 
 namespace {
 
-  typedef Meta::list<GenericServerPolicy, DfsClientPolicy,
+  typedef Meta::list<GenericServerPolicy, FsClientPolicy,
                      HyperspaceClientPolicy, DefaultCommPolicy> Policies;
 
   void verify_order_test1(std::set<String> &seen, const String &name) {
@@ -130,7 +130,7 @@ int main(int argc, char **argv) {
 
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
-    context->dfs = new DfsBroker::Client(context->conn_manager, context->props);
+    context->dfs = new FsBroker::Client(context->conn_manager, context->props);
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     String log_dir = context->toplevel_dir + "/servers/master/log";
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));

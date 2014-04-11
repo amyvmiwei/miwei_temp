@@ -374,8 +374,8 @@ void CommitLog::remove_file_info(CommitLogFileInfo *fi, StringSet &removed_logs)
     m_fs->remove(fname);
   }
   catch (Exception &e) {
-    if (e.code() != Error::DFSBROKER_BAD_FILENAME &&
-        e.code() != Error::DFSBROKER_FILE_NOT_FOUND)
+    if (e.code() != Error::FSBROKER_BAD_FILENAME &&
+        e.code() != Error::FSBROKER_FILE_NOT_FOUND)
       HT_ERRORF("Problem removing log fragment '%s' (%s - %s)",
                 fname.c_str(), Error::get_text(e.code()), e.what());
   }

@@ -46,7 +46,7 @@
 #include <Hypertable/Lib/TableParts.h>
 #include <Hypertable/Lib/Types.h>
 
-#include <DfsBroker/Lib/Client.h>
+#include <FsBroker/Lib/Client.h>
 
 #include <Common/FailureInducer.h>
 #include <Common/Init.h>
@@ -110,7 +110,7 @@ namespace {
     }
   };
 
-  typedef Meta::list<GenericServerPolicy, DfsClientPolicy,
+  typedef Meta::list<GenericServerPolicy, FsClientPolicy,
                      HyperspaceClientPolicy, DefaultCommPolicy, AppPolicy> Policies;
 
   vector<RangeServerConnectionPtr> g_rsc;
@@ -374,7 +374,7 @@ int main(int argc, char **argv) {
     context->comm = Comm::instance();
     context->conn_manager = new ConnectionManager(context->comm);
     context->hyperspace = new Hyperspace::Session(context->comm, context->props);
-    context->dfs = new DfsBroker::Client(context->conn_manager, context->props);
+    context->dfs = new FsBroker::Client(context->conn_manager, context->props);
     context->rsc_manager = new RangeServerConnectionManager();
 
     context->toplevel_dir = properties->get_str("Hypertable.Directory");

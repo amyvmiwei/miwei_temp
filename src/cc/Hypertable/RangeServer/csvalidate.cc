@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -33,7 +33,7 @@
 #include <Hypertable/Lib/Key.h>
 #include <Hypertable/Lib/LoadDataEscape.h>
 
-#include <DfsBroker/Lib/Client.h>
+#include <FsBroker/Lib/Client.h>
 
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/ConnectionManager.h>
@@ -65,7 +65,7 @@ namespace {
   struct AppPolicy : Config::Policy {
     static void init_options() {
       cmdline_desc("Usage: %s [options] <filename>\n\n"
-        "Dumps the contents of the CellStore contained in the DFS <filename>."
+        "Dumps the contents of the CellStore contained in the FS <filename>."
         "\n\nOptions").add_options()
         ("repair", "Repair any corruption that is found")
         ;
@@ -81,7 +81,7 @@ namespace {
     }
   };
 
-  typedef Meta::list<AppPolicy, DfsClientPolicy, DefaultCommPolicy> Policies;
+  typedef Meta::list<AppPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
   class BlockEntry {
   public:
@@ -437,10 +437,10 @@ int main(int argc, char **argv) {
 
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
 
-    DfsBroker::Client *dfs = new DfsBroker::Client(conn_mgr, properties);
+    FsBroker::Client *dfs = new FsBroker::Client(conn_mgr, properties);
 
     if (!dfs->wait_for_connection(timeout)) {
-      cout << "timed out waiting for DFS broker" << endl;
+      cout << "timed out waiting for FS broker" << endl;
       _exit(1);
     }
 

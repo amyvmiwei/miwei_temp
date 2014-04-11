@@ -15,7 +15,7 @@
 # limitations under the License.
 #
 
-echo "DFS broker: available file descriptors: `ulimit -n`"
+echo "FS broker: available file descriptors: `ulimit -n`"
 
 # The installation directory
 export HYPERTABLE_HOME=$(cd `dirname "$0"`/.. && pwd)
@@ -30,43 +30,43 @@ usage() {
   echo ""
 }
 
-dfs_conflict_error() {
-    OLD_DFS=$1
+fs_conflict_error() {
+    OLD_FS=$1
     shift
-    NEW_DFS=$1
+    NEW_FS=$1
     echo ""
-    echo "ERROR: DFS conflict"
+    echo "ERROR: FS conflict"
     echo ""
-    echo "You are trying to run Hypertable with the '$NEW_DFS' broker"
-    echo "on a system that was previously run with the '$OLD_DFS' broker."
+    echo "You are trying to run Hypertable with the '$NEW_FS' broker"
+    echo "on a system that was previously run with the '$OLD_FS' broker."
     echo ""
-    if [ "$OLD_DFS" == "local" ] ; then
+    if [ "$OLD_FS" == "local" ] ; then
         echo "Run the following command to remove the previous database,"
         echo "and all of its associated state, before launching with the"
-        echo "'$NEW_DFS' broker:"
+        echo "'$NEW_FS' broker:"
         echo ""
-        echo "$HYPERTABLE_HOME/bin/stop-servers.sh ; $HYPERTABLE_HOME/bin/start-dfsbroker.sh $OLD_DFS ; $HYPERTABLE_HOME/bin/clean-database.sh"
+        echo "$HYPERTABLE_HOME/bin/stop-servers.sh ; $HYPERTABLE_HOME/bin/start-fsbroker.sh $OLD_FS ; $HYPERTABLE_HOME/bin/clean-database.sh"
         echo ""
     else
         echo "To remove the previous database, and all it's associated state,"
-        echo "in order to launch with the '$NEW_DFS' broker, start the system"
-        echo "on the old DFS and then clean the database.  For example, with"
+        echo "in order to launch with the '$NEW_FS' broker, start the system"
+        echo "on the old FS and then clean the database.  For example, with"
         echo "Capistrano:"
         echo ""
-        echo "cap stop ; cap -S dfs=$OLD_DFS cleandb"
+        echo "cap stop ; cap -S fs=$OLD_FS cleandb"
         echo ""
     fi
     echo "Alternatively, you can manually purge the database state by issuing"
     echo "the following command on each Master and Hyperspace replica machine:"
     echo ""
-    echo "rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/* $HYPERTABLE_HOME/run/rsml_backup/* $HYPERTABLE_HOME/run/last-dfs"
+    echo "rm -rf $HYPERTABLE_HOME/hyperspace/* $HYPERTABLE_HOME/fs/* $HYPERTABLE_HOME/run/rsml_backup/* $HYPERTABLE_HOME/run/last-fs"
     echo ""
 }
 
 while [ "$1" != "${1##[-+]}" ]; do
   case $1 in
     --valgrind)
-      VALGRIND="valgrind -v --log-file=vg.dfsbroker.%p --leak-check=full --num-callers=20 "
+      VALGRIND="valgrind -v --log-file=vg.fsbroker.%p --leak-check=full --num-callers=20 "
       shift
       ;;
     *)
@@ -80,45 +80,45 @@ if [ "$#" -eq 0 ]; then
   exit 1
 fi
 
-DFS=$1
+FS=$1
 shift
 
-if [ -e $HYPERTABLE_HOME/run/last-dfs ] ; then
-    LAST_DFS=`cat $HYPERTABLE_HOME/run/last-dfs`
-    if [ "$DFS" != "$LAST_DFS" ] ; then
-        dfs_conflict_error $LAST_DFS $DFS
+if [ -e $HYPERTABLE_HOME/run/last-fs ] ; then
+    LAST_FS=`cat $HYPERTABLE_HOME/run/last-fs`
+    if [ "$FS" != "$LAST_FS" ] ; then
+        fs_conflict_error $LAST_FS $FS
         exit 1
     fi
 else
-    # record last DFS
-    echo $DFS > $HYPERTABLE_HOME/run/last-dfs
+    # record last FS
+    echo $FS > $HYPERTABLE_HOME/run/last-fs
 fi
 
-set_start_vars DfsBroker.$DFS
+set_start_vars FsBroker.$FS
 check_pidfile $pidfile && exit 0
 
-check_server "$@" dfsbroker 
+check_server "$@" fsbroker 
 if [ $? != 0 ] ; then
-  if [ "$DFS" == "hadoop" ] ; then
+  if [ "$FS" == "hadoop" ] ; then
     if [ "n$VALGRIND" != "n" ] ; then
       echo "ERROR: hadoop broker cannot be run with valgrind"
       exit 1
     fi
-    exec_server jrun org.hypertable.DfsBroker.hadoop.main --verbose "$@"
-  elif [ "$DFS" == "mapr" ] ; then
+    exec_server jrun org.hypertable.FsBroker.hadoop.main --verbose "$@"
+  elif [ "$FS" == "mapr" ] ; then
     exec_server maprBroker --verbose "$@"
-  elif [ "$DFS" == "ceph" ] ; then
+  elif [ "$FS" == "ceph" ] ; then
     exec_server cephBroker --verbose "$@"
-  elif [ "$DFS" == "local" ] ; then
+  elif [ "$FS" == "local" ] ; then
     exec_server localBroker --verbose "$@"
-  elif [ "$DFS" == "qfs" ] ; then
+  elif [ "$FS" == "qfs" ] ; then
     exec_server qfsBroker --verbose "$@"
   else
     usage
     exit 1
   fi
 
-  wait_for_server_up dfsbroker "DFS Broker ($DFS)" "$@"
+  wait_for_server_up fsbroker "FS Broker ($FS)" "$@"
 else
-  echo "WARNING: DFSBroker already running."
+  echo "WARNING: FSBroker already running."
 fi

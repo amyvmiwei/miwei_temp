@@ -25,7 +25,7 @@
 #include <vector>
 
 #include "AsyncComm/ConnectionManager.h"
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/Client.h"
 
 #include "Cells.h"
 #include "TableDumper.h"
@@ -137,7 +137,7 @@ namespace Hypertable {
     NamespacePtr m_namespace;
     uint32_t m_mutator_flags;
     ConnectionManagerPtr m_conn_manager;
-    DfsBroker::ClientPtr m_dfs_client;
+    FsBroker::ClientPtr m_fs_client;
     bool m_immutable_namespace;
   };
 

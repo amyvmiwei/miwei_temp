@@ -36,15 +36,15 @@
 #include "DataSource.h"
 #include "FixedRandomStringGenerator.h"
 #include "LoadDataSource.h"
-#include "DfsBroker/Lib/FileDevice.h"
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/FileDevice.h"
+#include "FsBroker/Lib/Client.h"
 
 namespace Hypertable {
 
   class LoadDataSourceFileDfs: public LoadDataSource {
 
   public:
-    LoadDataSourceFileDfs(DfsBroker::ClientPtr &client, const String &fname,
+    LoadDataSourceFileDfs(FsBroker::ClientPtr &client, const String &fname,
                           const String &header_fname,
                           int row_uniquify_chars = 0, int load_flags = 0);
 
@@ -54,7 +54,7 @@ namespace Hypertable {
 
   protected:
     void init_src();
-    DfsBroker::FileSource *m_source;
+    FsBroker::FileSource *m_source;
     String m_fname;
     String m_header_fname;
     unsigned long m_cur_offset;

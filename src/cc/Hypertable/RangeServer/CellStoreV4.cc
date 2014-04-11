@@ -285,7 +285,7 @@ void CellStoreV4::load_bloom_filter() {
     }
 
     if (len != m_bloom_filter->total_size())
-      HT_THROWF(Error::DFSBROKER_IO_ERROR, "Problem loading bloomfilter for"
+      HT_THROWF(Error::FSBROKER_IO_ERROR, "Problem loading bloomfilter for"
                 "CellStore '%s' : tried to read %lld but only got %lld",
                 m_filename.c_str(), (Lld)m_bloom_filter->total_size(), (Lld)len);
 
@@ -359,10 +359,10 @@ void CellStoreV4::add(const Key &key, const ByteString value) {
       if (!m_sync_handler.wait_for_reply(event_ptr)) {
         if (event_ptr->type == Event::MESSAGE)
           HT_THROWF(Hypertable::Protocol::response_code(event_ptr),
-             "Problem writing to DFS file '%s' : %s", m_filename.c_str(),
+             "Problem writing to FS file '%s' : %s", m_filename.c_str(),
              Hypertable::Protocol::string_format_message(event_ptr).c_str());
         HT_THROWF(event_ptr->error,
-                  "Problem writing to DFS file '%s'", m_filename.c_str());
+                  "Problem writing to FS file '%s'", m_filename.c_str());
       }
       m_outstanding_appends--;
     }
@@ -377,7 +377,7 @@ void CellStoreV4::add(const Key &key, const ByteString value) {
 
     try { m_filesys->append(m_fd, send_buf, 0, &m_sync_handler); }
     catch (Exception &e) {
-      HT_THROW2F(e.code(), e, "Problem writing to DFS file '%s'",
+      HT_THROW2F(e.code(), e, "Problem writing to FS file '%s'",
                  m_filename.c_str());
     }
     m_outstanding_appends++;
@@ -748,7 +748,7 @@ void CellStoreV4::load_block_index() {
     len = m_filesys->pread(m_fd, buf.ptr, amount, m_trailer.fix_index_offset, second_try);
 
     if (len != amount)
-      HT_THROWF(Error::DFSBROKER_IO_ERROR, "Error loading index for "
+      HT_THROWF(Error::FSBROKER_IO_ERROR, "Error loading index for "
                 "CellStore '%s' : tried to read %lld but only got %lld",
                 m_filename.c_str(), (Lld)amount, (Lld)len);
     /** inflate fixed index **/

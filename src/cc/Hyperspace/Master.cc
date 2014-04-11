@@ -52,8 +52,6 @@ extern "C" {
 #include "Common/System.h"
 #include "Common/SystemInfo.h"
 
-#include "DfsBroker/Lib/Client.h"
-
 #include "Config.h"
 #include "Event.h"
 #include "Notification.h"

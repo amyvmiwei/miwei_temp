@@ -33,7 +33,7 @@ using namespace std;
  *
  */
 LoadDataSource *
-LoadDataSourceFactory::create(DfsBroker::ClientPtr &dfs_client,
+LoadDataSourceFactory::create(FsBroker::ClientPtr &dfs_client,
     const String &input_fname, const int src,
     const String &header_fname, const int header_src,
     const std::vector<String> &key_columns, const String &timestamp_column,

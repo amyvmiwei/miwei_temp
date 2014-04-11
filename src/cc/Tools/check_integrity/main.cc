@@ -80,7 +80,7 @@ namespace {
     }
   };
 
-  typedef Meta::list<AppPolicy, DfsClientPolicy, HyperspaceClientPolicy,
+  typedef Meta::list<AppPolicy, FsClientPolicy, HyperspaceClientPolicy,
           MasterClientPolicy, RangeServerClientPolicy, DefaultCommPolicy>
           Policies;
 

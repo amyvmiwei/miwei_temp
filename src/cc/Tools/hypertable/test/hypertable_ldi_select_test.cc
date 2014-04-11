@@ -40,7 +40,7 @@ extern "C" {
 #include "AsyncComm/Comm.h"
 #include "AsyncComm/Config.h"
 
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/Client.h"
 
 using namespace Hypertable;
 using namespace Config;
@@ -60,7 +60,7 @@ namespace {
 
   static const size_t amount = 4096;
 
-  bool copyToDfs(DfsBroker::Client *client, const char *src, const char *dst) {
+  bool copyToDfs(FsBroker::Client *client, const char *src, const char *dst) {
     client->mkdirs("/ldi_test");
 
     std::filebuf src_file;
@@ -80,7 +80,7 @@ namespace {
     return true;
   }
 
-  bool copyFromDfs(DfsBroker::Client *client, const char *src, const char *dst) {
+  bool copyFromDfs(FsBroker::Client *client, const char *src, const char *dst) {
     client->mkdirs("/ldi_test");
 
     int fd=client->open(src,0);
@@ -127,8 +127,8 @@ int main(int argc, char **argv) {
     }
   }
 
-  String host = get_str("DfsBroker.Host");
-  uint16_t port = get_i16("DfsBroker.Port");
+  String host = get_str("FsBroker.Host");
+  uint16_t port = get_i16("FsBroker.Port");
   uint32_t timeout_ms = get_i32("Hypertable.Request.Timeout");
 
   InetAddr addr;
@@ -146,7 +146,7 @@ int main(int argc, char **argv) {
   }
 
 
-  DfsBroker::Client *client = new DfsBroker::Client(comm, addr, timeout_ms);
+  FsBroker::Client *client = new FsBroker::Client(comm, addr, timeout_ms);
 
   /**
    * LDI and Select using stdin
@@ -162,7 +162,7 @@ int main(int argc, char **argv) {
     _exit(1);
 
   /**
-   * LDI and Select using DfsBroker
+   * LDI and Select using FsBroker
    */
 
 
@@ -174,7 +174,7 @@ int main(int argc, char **argv) {
                 " DROP TABLE IF EXISTS hypertable;" +
                 " CREATE TABLE hypertable ( TestColumnFamily );" +
                 " LOAD DATA INFILE ROW_KEY_COLUMN=rowkey" +
-                " \"dfs:///ldi_test/hypertable_test.tsv.gz\"" +
+                " \"fs:///ldi_test/hypertable_test.tsv.gz\"" +
                 " INTO TABLE hypertable;"
                 ;
   // load from dfs zipped file
@@ -182,7 +182,7 @@ int main(int argc, char **argv) {
   if (system(cmd_str.c_str()) != 0)
     _exit(1);
   // select into dfs zipped file
-  hql = "USE \"/test\"; SELECT * FROM hypertable INTO FILE \"dfs:///ldi_test/dfs_select.gz\";";
+  hql = "USE \"/test\"; SELECT * FROM hypertable INTO FILE \"fs:///ldi_test/dfs_select.gz\";";
   cmd_str = "./hypertable --test-mode --config hypertable.cfg --exec '"+ hql + "'";
   if (system(cmd_str.c_str()) != 0)
     _exit(1);

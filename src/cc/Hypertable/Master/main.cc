@@ -48,7 +48,7 @@
 #include <Hypertable/Lib/Config.h>
 #include <Hypertable/Lib/MetaLogReader.h>
 
-#include <DfsBroker/Lib/Client.h>
+#include <FsBroker/Lib/Client.h>
 
 #include <AsyncComm/Comm.h>
 
@@ -78,7 +78,7 @@ namespace {
     }
   };
 
-  typedef Meta::list<GenericServerPolicy, DfsClientPolicy,
+  typedef Meta::list<GenericServerPolicy, FsClientPolicy,
                      HyperspaceClientPolicy, DefaultCommPolicy, AppPolicy> Policies;
 
   class HandlerFactory : public ConnectionHandlerFactory {
@@ -195,7 +195,7 @@ int main(int argc, char **argv) {
       HT_INFOF("Unable to delete state file %s", state_file.c_str());
 
     context->namemap = new NameIdMapper(context->hyperspace, context->toplevel_dir);
-    context->dfs = new DfsBroker::Client(context->conn_manager, context->props);
+    context->dfs = new FsBroker::Client(context->conn_manager, context->props);
     context->mml_definition =
         new MetaLog::DefinitionMaster(context, format("%s_%u", "master", port).c_str());
     context->monitoring = new Monitoring(context.get());

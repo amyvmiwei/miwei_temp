@@ -1,5 +1,5 @@
-/** -*- C++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,7 +25,7 @@
 #include "Common/Config.h"
 #include "AsyncComm/Config.h"
 #include "Hyperspace/Config.h"
-#include "DfsBroker/Lib/Config.h"
+#include "FsBroker/Lib/Config.h"
 
 namespace Hypertable { namespace Config {
 

@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -44,7 +44,7 @@ extern "C" {
 #include "AsyncComm/ConnectionManager.h"
 #include "AsyncComm/ReactorFactory.h"
 
-#include "DfsBroker/Lib/Client.h"
+#include "FsBroker/Lib/Client.h"
 
 #include "Hyperspace/Session.h"
 #include "Hypertable/Lib/Config.h"
@@ -68,7 +68,7 @@ namespace {
     "Description:\n"
     "  This program checks to see if the server, specified by <server-name>\n"
     "  is up. return 0 if true, 1 otherwise. <server-name> may be one of the\n"
-    "  following values: dfsbroker, hyperspace, master, global-master, \n"
+    "  following values: fsbroker, hyperspace, master, global-master, \n"
     "  rangeserver, thriftbroker\n\n"
     "  master: checks for a master running on localhost\n"
     "  global-master: checks for a master running in the cluster (address is\n"
@@ -95,11 +95,11 @@ namespace {
   };
 
 #ifdef HT_WITH_THRIFT
-  typedef Meta::list<AppPolicy, DfsClientPolicy, HyperspaceClientPolicy,
+  typedef Meta::list<AppPolicy, FsClientPolicy, HyperspaceClientPolicy,
           MasterClientPolicy, RangeServerClientPolicy, ThriftClientPolicy,
           DefaultCommPolicy> Policies;
 #else
-  typedef Meta::list<AppPolicy, DfsClientPolicy, HyperspaceClientPolicy,
+  typedef Meta::list<AppPolicy, FsClientPolicy, HyperspaceClientPolicy,
           MasterClientPolicy, RangeServerClientPolicy, DefaultCommPolicy>
           Policies;
 #endif
@@ -115,27 +115,37 @@ namespace {
       HT_THROWF(Error::REQUEST_TIMEOUT, "connecting to %s", server);
   }
 
-  void check_dfsbroker(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
-    HT_DEBUG_OUT << "Checking dfsbroker at " << get_str("dfs-host")
-        << ':' << get_i16("dfs-port") << HT_END;
+  void check_fsbroker(ConnectionManagerPtr &conn_mgr, uint32_t wait_ms) {
+    HT_DEBUG_OUT << "Checking fsbroker at " << get_str("fs-host")
+        << ':' << get_i16("fs-port") << HT_END;
 
     if (properties->has("host")) {
-      properties->set("DfsBroker.Host", properties->get_str("host"));
-      properties->set("dfs-host", properties->get_str("host"));
+      properties->set("FsBroker.Host", properties->get_str("host"));
+      properties->set("fs-host", properties->get_str("host"));
+    }
+
+    // Backward compatibility
+    if (properties->has("DfsBroker.Host")) {
+      properties->set("FsBroker.Host", properties->get_str("DfsBroker.Host"));
+      properties->set("fs-host", properties->get_str("DfsBroker.Host"));
+    }
+    if (properties->has("DfsBroker.Port")) {
+      properties->set("FsBroker.Port", properties->get_i16("DfsBroker.Port"));
+      properties->set("fs-port", properties->get_i16("DfsBroker.Port"));
     }
 
     if (get_bool("display-address")) {
-      std::cout << get_str("dfs-host") << ":" << get_i16("dfs-port")
+      std::cout << get_str("fs-host") << ":" << get_i16("fs-port")
           << std::endl;
       _exit(0);
     }
 
-    DfsBroker::ClientPtr dfs = new DfsBroker::Client(conn_mgr, properties);
+    FsBroker::ClientPtr fs = new FsBroker::Client(conn_mgr, properties);
 
-    if (!dfs->wait_for_connection(wait_ms))
-      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to dfsbroker");
+    if (!fs->wait_for_connection(wait_ms))
+      HT_THROW(Error::REQUEST_TIMEOUT, "connecting to fsbroker");
 
-    HT_TRY("getting dfsbroker status", dfs->status());
+    HT_TRY("getting fsbroker status", fs->status());
 
   }
 
@@ -332,10 +342,10 @@ int main(int argc, char **argv) {
     ConnectionManagerPtr conn_mgr = new ConnectionManager();
     conn_mgr->set_quiet_mode(silent);
 
-    properties->set("DfsBroker.Timeout", (int32_t)wait_ms);
+    properties->set("FsBroker.Timeout", (int32_t)wait_ms);
 
-    if (server_name == "dfsbroker") {
-      CHECK_SERVER(dfsbroker);
+    if (server_name == "fsbroker") {
+      CHECK_SERVER(fsbroker);
     }
     else if (server_name == "hyperspace") {
       CHECK_SERVER(hyperspace);
@@ -353,7 +363,7 @@ int main(int argc, char **argv) {
       CHECK_SERVER(thriftbroker);
     }
     else {
-      CHECK_SERVER(dfsbroker);
+      CHECK_SERVER(fsbroker);
       CHECK_SERVER(hyperspace);
       //CHECK_SERVER(master);
       CHECK_SERVER(global_master);
