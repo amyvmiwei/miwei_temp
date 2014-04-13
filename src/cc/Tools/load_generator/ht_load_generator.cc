@@ -1,4 +1,4 @@
-/**
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -696,9 +696,9 @@ void generate_query_load(PropertiesPtr &props, String &tablename,
                << (*iter).column_qualifier << "\n";
       }
       else if (query_mode == INDEX) {
-        cout << "\t" << (*iter).column_family;
+        cout << (*iter).row_key << "\t" << (*iter).column_family;
         if (*(*iter).column_qualifier != 0)
-          cout << (*iter).column_qualifier;
+          cout << ":" << (*iter).column_qualifier;
         cout << "\t" << (const char *)(*iter).value << "\n";
       }
       else
@@ -735,14 +735,15 @@ void generate_query_load(PropertiesPtr &props, String &tablename,
 
       scan_spec.clear();
       if (query_mode == INDEX) {
-        scan_spec.add_column((*iter).column_family);
-        scan_spec.add_column_predicate((*iter).column_family, "",
-                ColumnPredicate::EXACT_MATCH, (const char *)(*iter).value);
+        scan_spec.add_column_predicate((*iter).column_family,
+                                       (*iter).column_qualifier ? (*iter).column_qualifier : "",
+                                       ColumnPredicate::QUALIFIER_EXACT_MATCH|ColumnPredicate::EXACT_MATCH,
+                                       (const char *)(*iter).value);
       }
       else if (query_mode == QUALIFIER) {
-        String s = Hypertable::format("%s:%s", (*iter).column_family, 
-                (*iter).column_qualifier ? (*iter).column_qualifier : "");
-        scan_spec.add_column(s.c_str());
+        scan_spec.add_column_predicate((*iter).column_family,
+                                       (*iter).column_qualifier ? (*iter).column_qualifier : "",
+                                       ColumnPredicate::QUALIFIER_EXACT_MATCH, "");
       }
       else {
         scan_spec.add_column((*iter).column_family);
