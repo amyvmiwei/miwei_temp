@@ -2813,3 +2813,16 @@ CREATE TABLE foo (a);
 CREATE TABLE bar (a);
 RENAME TABLE foo TO bar;
 Error: MasterClient operation rename_table(old='RenameTest/foo', new='RenameTest/bar') failed - HYPERTABLE name already in use
+# issue 1237
+CREATE NAMESPACE '/1';
+CREATE NAMESPACE '/1/2';
+CREATE NAMESPACE '/1/2/3';
+CREATE NAMESPACE '/1/2/3/4';
+CREATE NAMESPACE '/1/2/3/4/5';
+CREATE NAMESPACE '/1/2/3/4/5/6';
+CREATE NAMESPACE '/1/2/3/4/5/6/7';
+CREATE NAMESPACE '/1/2/3/4/5/6/7/8';
+CREATE NAMESPACE '/1/2/3/4/5/6/7/8/9';
+USE '/1/2/3/4/5/6/7/8/9';
+CREATE TABLE T (C);
+DUMP TABLE 'T' INTO FILE '/tmp/T.gz';
