@@ -48,6 +48,8 @@ extern "C" {
 #include "Client.h"
 #include "HqlCommandInterpreter.h"
 
+#include <memory>
+
 using namespace std;
 using namespace Hypertable;
 using namespace Hyperspace;
@@ -380,8 +382,6 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
   TablePtr table;
   TableIdentifierManaged tid;
   SchemaPtr schema;
-  char start_row[16];
-  char end_row[16];
   TableScannerPtr scanner_ptr;
   ScanSpec scan_spec;
   Cell cell;
@@ -403,8 +403,12 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
     table = _open_table(TableIdentifier::METADATA_NAME);
   }
 
-  sprintf(start_row, "%s:", tid.id);
-  sprintf(end_row, "%s:%s", tid.id, Key::END_ROW_MARKER);
+  size_t rowlen = strlen(tid.id)+2;
+  std::shared_ptr<char> start_row( new char[rowlen], []( char *p ) { delete[] p; } );
+  std::shared_ptr<char> end_row( new char[rowlen+strlen(Key::END_ROW_MARKER)], []( char *p ) { delete[] p; } );
+
+  sprintf(start_row.get(), "%s:", tid.id);
+  sprintf(end_row.get(), "%s:%s", tid.id, Key::END_ROW_MARKER);
 
   scan_spec.clear();
   scan_spec.row_limit = 0;
@@ -413,8 +417,8 @@ void Namespace::get_table_splits(const String &table_name, TableSplitsContainer 
   scan_spec.columns.push_back("Location");
   scan_spec.columns.push_back("StartRow");
 
-  ri.start = start_row;
-  ri.end = end_row;
+  ri.start = start_row.get();
+  ri.end = end_row.get();
   scan_spec.row_intervals.push_back(ri);
 
   scanner_ptr = table->create_scanner(scan_spec);
