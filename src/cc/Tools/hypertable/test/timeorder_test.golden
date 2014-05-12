@@ -15,13 +15,13 @@ Error: parse error at: CREATE TABLE timeorder_test (cf1 TIME_ORDER, cf2, cf3) (C
 CREATE TABLE timeorder_test (cf1 TIME_ORDER blah, cf2, cf3);
 Error: parse error at: CREATE TABLE timeorder_test (cf1 TIME_ORDER blah, cf2, cf3) (CREATE TABLE timeorder_test (cf1 TIME_ORDER blah, cf2, cf3)) - HYPERTABLE HQL parse error
 CREATE TABLE timeorder_test (cf1 TIME_ORDER ASC TIME_ORDER ASC, cf2, cf3);
-Error: SELECT TIME_ORDER predicate multiply defined. - HYPERTABLE HQL parse error
+Error: Multiple specifications of TIME_ORDER option for column 'cf1' - HYPERTABLE HQL parse error
 CREATE TABLE timeorder_test (cf1 TIME_ORDER ASC TIME_ORDER DESC, cf2, cf3);
-Error: SELECT TIME_ORDER predicate multiply defined. - HYPERTABLE HQL parse error
+Error: Multiple specifications of TIME_ORDER option for column 'cf1' - HYPERTABLE HQL parse error
 CREATE TABLE timeorder_test (cf1 TIME_ORDER DESC TIME_ORDER DESC, cf2, cf3);
-Error: SELECT TIME_ORDER predicate multiply defined. - HYPERTABLE HQL parse error
+Error: Multiple specifications of TIME_ORDER option for column 'cf1' - HYPERTABLE HQL parse error
 CREATE TABLE timeorder_test (cf1 TIME_ORDER DESC TIME_ORDER ASC, cf2, cf3);
-Error: SELECT TIME_ORDER predicate multiply defined. - HYPERTABLE HQL parse error
+Error: Multiple specifications of TIME_ORDER option for column 'cf1' - HYPERTABLE HQL parse error
 
 # TIME_ORDER ASC is the default
 CREATE TABLE timeorder_test (cf1 TIME_ORDER ASC, cf2);
@@ -52,28 +52,39 @@ DROP TABLE IF EXISTS timeorder_test;
 CREATE TABLE timeorder_test (cf1 TIME_ORDER DESC, cf2);
 DESCRIBE TABLE timeorder_test;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>cf1</Name>
-      <Counter>false</Counter>
-      <TimeOrder>DESC</TimeOrder>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TimeOrder>desc</TimeOrder>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>cf2</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
 
 SHOW CREATE TABLE timeorder_test;
-
 CREATE TABLE 'timeorder_test' (
-  cf1 TIME_ORDER DESC,
+  cf1 TIME_ORDER desc,
   cf2,
   ACCESS GROUP default (cf1, cf2)
-)
+);
 
 
 # insert more data, verify

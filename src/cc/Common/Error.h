@@ -105,6 +105,9 @@ namespace Hypertable {
       UNSUPPORTED_OPERATION                        = 58,
       COLUMN_FAMILY_NOT_FOUND                      = 59,
       NOTHING_TO_DO                                = 60,
+      INCOMPATIBLE_OPTIONS                         = 61,
+      BAD_VALUE                                    = 62,
+      SCHEMA_GENERATION_MISMATCH                   = 63,
 
       CONFIG_BAD_ARGUMENT                          = 1001,
       CONFIG_BAD_CFG_FILE                          = 1002,
@@ -234,6 +237,7 @@ namespace Hypertable {
       RANGESERVER_RANGE_NOT_YET_RELINQUISHED       = 0x00050023,
     
       HQL_BAD_LOAD_FILE_FORMAT                     = 0x00060001,
+      HQL_BAD_COMMAND                              = 0x00060002,
 
       METALOG_ERROR                                = 0x00070000,
       METALOG_VERSION_MISMATCH                     = 0x00070001,

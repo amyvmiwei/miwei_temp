@@ -232,16 +232,16 @@ namespace Hypertable {
 
     void to_full_key(const void *row, const char *cf, const void *cq,
                      int64_t ts, int64_t rev, uint8_t flag, Key &full_key,
-                     Schema::ColumnFamily **pcf = 0);
+                     ColumnFamilySpec **pcf = 0);
 
     void to_full_key(const KeySpec &key, Key &full_key,
-                     Schema::ColumnFamily **cf = 0) {
+                     ColumnFamilySpec **cf = 0) {
       to_full_key(key.row, key.column_family, key.column_qualifier,
                   key.timestamp, key.revision, key.flag, full_key, cf);
     }
 
     void to_full_key(const Cell &cell, Key &full_key,
-                     Schema::ColumnFamily **cf = 0) {
+                     ColumnFamilySpec **cf = 0) {
       to_full_key(cell.row_key, cell.column_family, cell.column_qualifier,
                   cell.timestamp, cell.revision, cell.flag, full_key, cf);
     }
@@ -258,7 +258,7 @@ namespace Hypertable {
     bool key_uses_index(Key &key);
 
     void update_with_index(Key &key, const void *value, uint32_t value_len, 
-                           Schema::ColumnFamily *cf);
+                           ColumnFamilySpec *cf);
 
     typedef std::map<uint32_t, TableMutatorAsyncScatterBufferPtr> ScatterBufferAsyncMap;
 

@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -392,24 +392,24 @@ RangeServerCommandInterpreter::display_scan_data(const SerializedKey &serkey,
                                                  const ByteString &value,
                                                  SchemaPtr &schema) {
   Key key(serkey);
-  Schema::ColumnFamily *cf;
+  ColumnFamilySpec *cf_spec;
 
   if (key.flag == FLAG_DELETE_ROW) {
     cout << key.timestamp << " " << key.row << " DELETE" << endl;
   }
   else if (key.flag == FLAG_DELETE_COLUMN_FAMILY) {
-     cf = schema->get_column_family(key.column_family_code);
-     cout << key.timestamp << " " << key.row << " " << cf->name << " DELETE"
+     cf_spec = schema->get_column_family(key.column_family_code);
+     cout << key.timestamp << " " << key.row << " " << cf_spec->get_name() << " DELETE"
           << endl;
   }
   else {
     if (key.column_family_code > 0) {
-      cf = schema->get_column_family(key.column_family_code);
+      cf_spec = schema->get_column_family(key.column_family_code);
       if (key.flag == FLAG_DELETE_CELL)
-        cout << key.timestamp << " " << key.row << " " << cf->name << ":"
+        cout << key.timestamp << " " << key.row << " " << cf_spec->get_name() << ":"
              << key.column_qualifier << " DELETE" << endl;
       else {
-        cout << key.timestamp << " " << key.row << " " << cf->name << ":"
+        cout << key.timestamp << " " << key.row << " " << cf_spec->get_name() << ":"
              << key.column_qualifier;
         cout << endl;
       }

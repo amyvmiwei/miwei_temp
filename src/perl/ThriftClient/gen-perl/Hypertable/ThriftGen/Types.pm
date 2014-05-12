@@ -1831,37 +1831,162 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::ColumnFamily;
+package Hypertable::ThriftGen::ColumnFamilyOptions;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ColumnFamily->mk_accessors( qw( name ag max_versions ttl ) );
+Hypertable::ThriftGen::ColumnFamilyOptions->mk_accessors( qw( max_versions ttl time_order_desc counter ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
-  $self->{name} = undef;
-  $self->{ag} = undef;
   $self->{max_versions} = undef;
   $self->{ttl} = undef;
+  $self->{time_order_desc} = undef;
+  $self->{counter} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
-    if (defined $vals->{name}) {
-      $self->{name} = $vals->{name};
-    }
-    if (defined $vals->{ag}) {
-      $self->{ag} = $vals->{ag};
-    }
     if (defined $vals->{max_versions}) {
       $self->{max_versions} = $vals->{max_versions};
     }
     if (defined $vals->{ttl}) {
       $self->{ttl} = $vals->{ttl};
     }
+    if (defined $vals->{time_order_desc}) {
+      $self->{time_order_desc} = $vals->{time_order_desc};
+    }
+    if (defined $vals->{counter}) {
+      $self->{counter} = $vals->{counter};
+    }
   }
   return bless ($self, $classname);
 }
 
 sub getName {
-  return 'ColumnFamily';
+  return 'ColumnFamilyOptions';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{max_versions});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{ttl});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{time_order_desc});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{counter});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('ColumnFamilyOptions');
+  if (defined $self->{max_versions}) {
+    $xfer += $output->writeFieldBegin('max_versions', TType::I32, 1);
+    $xfer += $output->writeI32($self->{max_versions});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{ttl}) {
+    $xfer += $output->writeFieldBegin('ttl', TType::I32, 2);
+    $xfer += $output->writeI32($self->{ttl});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{time_order_desc}) {
+    $xfer += $output->writeFieldBegin('time_order_desc', TType::BOOL, 3);
+    $xfer += $output->writeBool($self->{time_order_desc});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{counter}) {
+    $xfer += $output->writeFieldBegin('counter', TType::BOOL, 4);
+    $xfer += $output->writeBool($self->{counter});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::ColumnFamilySpec;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::ColumnFamilySpec->mk_accessors( qw( name access_group deleted generation id value_index qualifier_index options ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{name} = undef;
+  $self->{access_group} = undef;
+  $self->{deleted} = undef;
+  $self->{generation} = undef;
+  $self->{id} = undef;
+  $self->{value_index} = undef;
+  $self->{qualifier_index} = undef;
+  $self->{options} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{name}) {
+      $self->{name} = $vals->{name};
+    }
+    if (defined $vals->{access_group}) {
+      $self->{access_group} = $vals->{access_group};
+    }
+    if (defined $vals->{deleted}) {
+      $self->{deleted} = $vals->{deleted};
+    }
+    if (defined $vals->{generation}) {
+      $self->{generation} = $vals->{generation};
+    }
+    if (defined $vals->{id}) {
+      $self->{id} = $vals->{id};
+    }
+    if (defined $vals->{value_index}) {
+      $self->{value_index} = $vals->{value_index};
+    }
+    if (defined $vals->{qualifier_index}) {
+      $self->{qualifier_index} = $vals->{qualifier_index};
+    }
+    if (defined $vals->{options}) {
+      $self->{options} = $vals->{options};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'ColumnFamilySpec';
 }
 
 sub read {
@@ -1886,19 +2011,44 @@ sub read {
       }
       last; };
       /^2$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{ag});
+        $xfer += $input->readString(\$self->{access_group});
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^3$/ && do{      if ($ftype == TType::I32) {
-        $xfer += $input->readI32(\$self->{max_versions});
+      /^3$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{deleted});
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^4$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{ttl});
+      /^4$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{generation});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^5$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{id});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^6$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{value_index});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^7$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{qualifier_index});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^8$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{options} = new Hypertable::ThriftGen::ColumnFamilyOptions();
+        $xfer += $self->{options}->read($input);
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -1914,25 +2064,45 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('ColumnFamily');
+  $xfer += $output->writeStructBegin('ColumnFamilySpec');
   if (defined $self->{name}) {
     $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
     $xfer += $output->writeString($self->{name});
     $xfer += $output->writeFieldEnd();
   }
-  if (defined $self->{ag}) {
-    $xfer += $output->writeFieldBegin('ag', TType::STRING, 2);
-    $xfer += $output->writeString($self->{ag});
+  if (defined $self->{access_group}) {
+    $xfer += $output->writeFieldBegin('access_group', TType::STRING, 2);
+    $xfer += $output->writeString($self->{access_group});
     $xfer += $output->writeFieldEnd();
   }
-  if (defined $self->{max_versions}) {
-    $xfer += $output->writeFieldBegin('max_versions', TType::I32, 3);
-    $xfer += $output->writeI32($self->{max_versions});
+  if (defined $self->{deleted}) {
+    $xfer += $output->writeFieldBegin('deleted', TType::BOOL, 3);
+    $xfer += $output->writeBool($self->{deleted});
     $xfer += $output->writeFieldEnd();
   }
-  if (defined $self->{ttl}) {
-    $xfer += $output->writeFieldBegin('ttl', TType::STRING, 4);
-    $xfer += $output->writeString($self->{ttl});
+  if (defined $self->{generation}) {
+    $xfer += $output->writeFieldBegin('generation', TType::I64, 4);
+    $xfer += $output->writeI64($self->{generation});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{id}) {
+    $xfer += $output->writeFieldBegin('id', TType::I32, 5);
+    $xfer += $output->writeI32($self->{id});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{value_index}) {
+    $xfer += $output->writeFieldBegin('value_index', TType::BOOL, 6);
+    $xfer += $output->writeBool($self->{value_index});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{qualifier_index}) {
+    $xfer += $output->writeFieldBegin('qualifier_index', TType::BOOL, 7);
+    $xfer += $output->writeBool($self->{qualifier_index});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{options}) {
+    $xfer += $output->writeFieldBegin('options', TType::STRUCT, 8);
+    $xfer += $self->{options}->write($output);
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -1940,28 +2110,20 @@ sub write {
   return $xfer;
 }
 
-package Hypertable::ThriftGen::AccessGroup;
+package Hypertable::ThriftGen::AccessGroupOptions;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::AccessGroup->mk_accessors( qw( name in_memory replication blocksize compressor bloom_filter columns ) );
+Hypertable::ThriftGen::AccessGroupOptions->mk_accessors( qw( replication blocksize compressor bloom_filter in_memory ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
-  $self->{name} = undef;
-  $self->{in_memory} = undef;
   $self->{replication} = undef;
   $self->{blocksize} = undef;
   $self->{compressor} = undef;
   $self->{bloom_filter} = undef;
-  $self->{columns} = undef;
+  $self->{in_memory} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
-    if (defined $vals->{name}) {
-      $self->{name} = $vals->{name};
-    }
-    if (defined $vals->{in_memory}) {
-      $self->{in_memory} = $vals->{in_memory};
-    }
     if (defined $vals->{replication}) {
       $self->{replication} = $vals->{replication};
     }
@@ -1974,15 +2136,135 @@ sub new {
     if (defined $vals->{bloom_filter}) {
       $self->{bloom_filter} = $vals->{bloom_filter};
     }
-    if (defined $vals->{columns}) {
-      $self->{columns} = $vals->{columns};
+    if (defined $vals->{in_memory}) {
+      $self->{in_memory} = $vals->{in_memory};
     }
   }
   return bless ($self, $classname);
 }
 
 sub getName {
-  return 'AccessGroup';
+  return 'AccessGroupOptions';
+}
+
+sub read {
+  my ($self, $input) = @_;
+  my $xfer  = 0;
+  my $fname;
+  my $ftype = 0;
+  my $fid   = 0;
+  $xfer += $input->readStructBegin(\$fname);
+  while (1) 
+  {
+    $xfer += $input->readFieldBegin(\$fname, \$ftype, \$fid);
+    if ($ftype == TType::STOP) {
+      last;
+    }
+    SWITCH: for($fid)
+    {
+      /^1$/ && do{      if ($ftype == TType::I16) {
+        $xfer += $input->readI16(\$self->{replication});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^2$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{blocksize});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{compressor});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{bloom_filter});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^5$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{in_memory});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+        $xfer += $input->skip($ftype);
+    }
+    $xfer += $input->readFieldEnd();
+  }
+  $xfer += $input->readStructEnd();
+  return $xfer;
+}
+
+sub write {
+  my ($self, $output) = @_;
+  my $xfer   = 0;
+  $xfer += $output->writeStructBegin('AccessGroupOptions');
+  if (defined $self->{replication}) {
+    $xfer += $output->writeFieldBegin('replication', TType::I16, 1);
+    $xfer += $output->writeI16($self->{replication});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{blocksize}) {
+    $xfer += $output->writeFieldBegin('blocksize', TType::I32, 2);
+    $xfer += $output->writeI32($self->{blocksize});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{compressor}) {
+    $xfer += $output->writeFieldBegin('compressor', TType::STRING, 3);
+    $xfer += $output->writeString($self->{compressor});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{bloom_filter}) {
+    $xfer += $output->writeFieldBegin('bloom_filter', TType::STRING, 4);
+    $xfer += $output->writeString($self->{bloom_filter});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{in_memory}) {
+    $xfer += $output->writeFieldBegin('in_memory', TType::BOOL, 5);
+    $xfer += $output->writeBool($self->{in_memory});
+    $xfer += $output->writeFieldEnd();
+  }
+  $xfer += $output->writeFieldStop();
+  $xfer += $output->writeStructEnd();
+  return $xfer;
+}
+
+package Hypertable::ThriftGen::AccessGroupSpec;
+use base qw(Class::Accessor);
+Hypertable::ThriftGen::AccessGroupSpec->mk_accessors( qw( name generation options defaults ) );
+
+sub new {
+  my $classname = shift;
+  my $self      = {};
+  my $vals      = shift || {};
+  $self->{name} = undef;
+  $self->{generation} = undef;
+  $self->{options} = undef;
+  $self->{defaults} = undef;
+  if (UNIVERSAL::isa($vals,'HASH')) {
+    if (defined $vals->{name}) {
+      $self->{name} = $vals->{name};
+    }
+    if (defined $vals->{generation}) {
+      $self->{generation} = $vals->{generation};
+    }
+    if (defined $vals->{options}) {
+      $self->{options} = $vals->{options};
+    }
+    if (defined $vals->{defaults}) {
+      $self->{defaults} = $vals->{defaults};
+    }
+  }
+  return bless ($self, $classname);
+}
+
+sub getName {
+  return 'AccessGroupSpec';
 }
 
 sub read {
@@ -2006,51 +2288,22 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^2$/ && do{      if ($ftype == TType::BOOL) {
-        $xfer += $input->readBool(\$self->{in_memory});
+      /^2$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{generation});
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^3$/ && do{      if ($ftype == TType::I16) {
-        $xfer += $input->readI16(\$self->{replication});
+      /^3$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{options} = new Hypertable::ThriftGen::AccessGroupOptions();
+        $xfer += $self->{options}->read($input);
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^4$/ && do{      if ($ftype == TType::I32) {
-        $xfer += $input->readI32(\$self->{blocksize});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
-      /^5$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{compressor});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
-      /^6$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{bloom_filter});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
-      /^7$/ && do{      if ($ftype == TType::LIST) {
-        {
-          my $_size49 = 0;
-          $self->{columns} = [];
-          my $_etype52 = 0;
-          $xfer += $input->readListBegin(\$_etype52, \$_size49);
-          for (my $_i53 = 0; $_i53 < $_size49; ++$_i53)
-          {
-            my $elem54 = undef;
-            $elem54 = new Hypertable::ThriftGen::ColumnFamily();
-            $xfer += $elem54->read($input);
-            push(@{$self->{columns}},$elem54);
-          }
-          $xfer += $input->readListEnd();
-        }
+      /^4$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{defaults} = new Hypertable::ThriftGen::ColumnFamilyOptions();
+        $xfer += $self->{defaults}->read($input);
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -2066,49 +2319,25 @@ sub read {
 sub write {
   my ($self, $output) = @_;
   my $xfer   = 0;
-  $xfer += $output->writeStructBegin('AccessGroup');
+  $xfer += $output->writeStructBegin('AccessGroupSpec');
   if (defined $self->{name}) {
     $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
     $xfer += $output->writeString($self->{name});
     $xfer += $output->writeFieldEnd();
   }
-  if (defined $self->{in_memory}) {
-    $xfer += $output->writeFieldBegin('in_memory', TType::BOOL, 2);
-    $xfer += $output->writeBool($self->{in_memory});
+  if (defined $self->{generation}) {
+    $xfer += $output->writeFieldBegin('generation', TType::I64, 2);
+    $xfer += $output->writeI64($self->{generation});
     $xfer += $output->writeFieldEnd();
   }
-  if (defined $self->{replication}) {
-    $xfer += $output->writeFieldBegin('replication', TType::I16, 3);
-    $xfer += $output->writeI16($self->{replication});
+  if (defined $self->{options}) {
+    $xfer += $output->writeFieldBegin('options', TType::STRUCT, 3);
+    $xfer += $self->{options}->write($output);
     $xfer += $output->writeFieldEnd();
   }
-  if (defined $self->{blocksize}) {
-    $xfer += $output->writeFieldBegin('blocksize', TType::I32, 4);
-    $xfer += $output->writeI32($self->{blocksize});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{compressor}) {
-    $xfer += $output->writeFieldBegin('compressor', TType::STRING, 5);
-    $xfer += $output->writeString($self->{compressor});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{bloom_filter}) {
-    $xfer += $output->writeFieldBegin('bloom_filter', TType::STRING, 6);
-    $xfer += $output->writeString($self->{bloom_filter});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{columns}) {
-    $xfer += $output->writeFieldBegin('columns', TType::LIST, 7);
-    {
-      $xfer += $output->writeListBegin(TType::STRUCT, scalar(@{$self->{columns}}));
-      {
-        foreach my $iter55 (@{$self->{columns}}) 
-        {
-          $xfer += ${iter55}->write($output);
-        }
-      }
-      $xfer += $output->writeListEnd();
-    }
+  if (defined $self->{defaults}) {
+    $xfer += $output->writeFieldBegin('defaults', TType::STRUCT, 4);
+    $xfer += $self->{defaults}->write($output);
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();
@@ -2118,7 +2347,7 @@ sub write {
 
 package Hypertable::ThriftGen::Schema;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::Schema->mk_accessors( qw( access_groups column_families ) );
+Hypertable::ThriftGen::Schema->mk_accessors( qw( access_groups column_families generation version group_commit_interval access_group_defaults column_family_defaults ) );
 
 sub new {
   my $classname = shift;
@@ -2126,12 +2355,32 @@ sub new {
   my $vals      = shift || {};
   $self->{access_groups} = undef;
   $self->{column_families} = undef;
+  $self->{generation} = undef;
+  $self->{version} = undef;
+  $self->{group_commit_interval} = undef;
+  $self->{access_group_defaults} = undef;
+  $self->{column_family_defaults} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{access_groups}) {
       $self->{access_groups} = $vals->{access_groups};
     }
     if (defined $vals->{column_families}) {
       $self->{column_families} = $vals->{column_families};
+    }
+    if (defined $vals->{generation}) {
+      $self->{generation} = $vals->{generation};
+    }
+    if (defined $vals->{version}) {
+      $self->{version} = $vals->{version};
+    }
+    if (defined $vals->{group_commit_interval}) {
+      $self->{group_commit_interval} = $vals->{group_commit_interval};
+    }
+    if (defined $vals->{access_group_defaults}) {
+      $self->{access_group_defaults} = $vals->{access_group_defaults};
+    }
+    if (defined $vals->{column_family_defaults}) {
+      $self->{column_family_defaults} = $vals->{column_family_defaults};
     }
   }
   return bless ($self, $classname);
@@ -2158,19 +2407,19 @@ sub read {
     {
       /^1$/ && do{      if ($ftype == TType::MAP) {
         {
-          my $_size56 = 0;
+          my $_size49 = 0;
           $self->{access_groups} = {};
-          my $_ktype57 = 0;
-          my $_vtype58 = 0;
-          $xfer += $input->readMapBegin(\$_ktype57, \$_vtype58, \$_size56);
-          for (my $_i60 = 0; $_i60 < $_size56; ++$_i60)
+          my $_ktype50 = 0;
+          my $_vtype51 = 0;
+          $xfer += $input->readMapBegin(\$_ktype50, \$_vtype51, \$_size49);
+          for (my $_i53 = 0; $_i53 < $_size49; ++$_i53)
           {
-            my $key61 = '';
-            my $val62 = new Hypertable::ThriftGen::AccessGroup();
-            $xfer += $input->readString(\$key61);
-            $val62 = new Hypertable::ThriftGen::AccessGroup();
-            $xfer += $val62->read($input);
-            $self->{access_groups}->{$key61} = $val62;
+            my $key54 = '';
+            my $val55 = new Hypertable::ThriftGen::AccessGroupSpec();
+            $xfer += $input->readString(\$key54);
+            $val55 = new Hypertable::ThriftGen::AccessGroupSpec();
+            $xfer += $val55->read($input);
+            $self->{access_groups}->{$key54} = $val55;
           }
           $xfer += $input->readMapEnd();
         }
@@ -2180,22 +2429,54 @@ sub read {
       last; };
       /^2$/ && do{      if ($ftype == TType::MAP) {
         {
-          my $_size63 = 0;
+          my $_size56 = 0;
           $self->{column_families} = {};
-          my $_ktype64 = 0;
-          my $_vtype65 = 0;
-          $xfer += $input->readMapBegin(\$_ktype64, \$_vtype65, \$_size63);
-          for (my $_i67 = 0; $_i67 < $_size63; ++$_i67)
+          my $_ktype57 = 0;
+          my $_vtype58 = 0;
+          $xfer += $input->readMapBegin(\$_ktype57, \$_vtype58, \$_size56);
+          for (my $_i60 = 0; $_i60 < $_size56; ++$_i60)
           {
-            my $key68 = '';
-            my $val69 = new Hypertable::ThriftGen::ColumnFamily();
-            $xfer += $input->readString(\$key68);
-            $val69 = new Hypertable::ThriftGen::ColumnFamily();
-            $xfer += $val69->read($input);
-            $self->{column_families}->{$key68} = $val69;
+            my $key61 = '';
+            my $val62 = new Hypertable::ThriftGen::ColumnFamilySpec();
+            $xfer += $input->readString(\$key61);
+            $val62 = new Hypertable::ThriftGen::ColumnFamilySpec();
+            $xfer += $val62->read($input);
+            $self->{column_families}->{$key61} = $val62;
           }
           $xfer += $input->readMapEnd();
         }
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::I64) {
+        $xfer += $input->readI64(\$self->{generation});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^4$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{version});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^5$/ && do{      if ($ftype == TType::I32) {
+        $xfer += $input->readI32(\$self->{group_commit_interval});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^6$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{access_group_defaults} = new Hypertable::ThriftGen::AccessGroupOptions();
+        $xfer += $self->{access_group_defaults}->read($input);
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^7$/ && do{      if ($ftype == TType::STRUCT) {
+        $self->{column_family_defaults} = new Hypertable::ThriftGen::ColumnFamilyOptions();
+        $xfer += $self->{column_family_defaults}->read($input);
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -2217,10 +2498,10 @@ sub write {
     {
       $xfer += $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{access_groups}}));
       {
-        while( my ($kiter70,$viter71) = each %{$self->{access_groups}}) 
+        while( my ($kiter63,$viter64) = each %{$self->{access_groups}}) 
         {
-          $xfer += $output->writeString($kiter70);
-          $xfer += ${viter71}->write($output);
+          $xfer += $output->writeString($kiter63);
+          $xfer += ${viter64}->write($output);
         }
       }
       $xfer += $output->writeMapEnd();
@@ -2232,14 +2513,39 @@ sub write {
     {
       $xfer += $output->writeMapBegin(TType::STRING, TType::STRUCT, scalar(keys %{$self->{column_families}}));
       {
-        while( my ($kiter72,$viter73) = each %{$self->{column_families}}) 
+        while( my ($kiter65,$viter66) = each %{$self->{column_families}}) 
         {
-          $xfer += $output->writeString($kiter72);
-          $xfer += ${viter73}->write($output);
+          $xfer += $output->writeString($kiter65);
+          $xfer += ${viter66}->write($output);
         }
       }
       $xfer += $output->writeMapEnd();
     }
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{generation}) {
+    $xfer += $output->writeFieldBegin('generation', TType::I64, 3);
+    $xfer += $output->writeI64($self->{generation});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{version}) {
+    $xfer += $output->writeFieldBegin('version', TType::I32, 4);
+    $xfer += $output->writeI32($self->{version});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{group_commit_interval}) {
+    $xfer += $output->writeFieldBegin('group_commit_interval', TType::I32, 5);
+    $xfer += $output->writeI32($self->{group_commit_interval});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{access_group_defaults}) {
+    $xfer += $output->writeFieldBegin('access_group_defaults', TType::STRUCT, 6);
+    $xfer += $self->{access_group_defaults}->write($output);
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{column_family_defaults}) {
+    $xfer += $output->writeFieldBegin('column_family_defaults', TType::STRUCT, 7);
+    $xfer += $self->{column_family_defaults}->write($output);
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

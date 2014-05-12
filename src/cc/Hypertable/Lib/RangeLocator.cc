@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -195,33 +195,24 @@ void RangeLocator::initialize() {
     }
   }
 
-  SchemaPtr schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
-
-  if (!schema->is_valid()) {
-    HT_ERRORF("Schema Parse Error for table METADATA : %s (%s)",
-              schema->get_error_string(), (char *)valbuf.base);
-    HT_THROW_(Error::RANGESERVER_SCHEMA_PARSE_ERROR);
-  }
-
-  if (schema->need_id_assignment())
-    HT_THROW(Error::SCHEMA_PARSE_ERROR, "Schema needs ID assignment");
+  SchemaPtr schema = Schema::new_instance((const char *)valbuf.base);
 
   m_metadata_table.id = TableIdentifier::METADATA_ID;
   m_metadata_table.generation = schema->get_generation();
 
-  Schema::ColumnFamily *cf;
+  ColumnFamilySpec *cf_spec;
 
-  if ((cf = schema->get_column_family("StartRow")) == 0) {
+  if ((cf_spec = schema->get_column_family("StartRow")) == 0) {
     HT_ERROR("Unable to find column family 'StartRow' in METADATA schema");
     HT_THROW_(Error::BAD_SCHEMA);
   }
-  m_startrow_cid = cf->id;
+  m_startrow_cid = cf_spec->get_id();
 
-  if ((cf = schema->get_column_family("Location")) == 0) {
+  if ((cf_spec = schema->get_column_family("Location")) == 0) {
     HT_ERROR("Unable to find column family 'Location' in METADATA schema");
     HT_THROW_(Error::BAD_SCHEMA);
   }
-  m_location_cid = cf->id;
+  m_location_cid = cf_spec->get_id();
   m_hyperspace_init = true;
 }
 

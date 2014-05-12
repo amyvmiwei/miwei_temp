@@ -30,6 +30,7 @@
 #include "Common/FailureInducer.h"
 #include "Common/ScopeGuard.h"
 #include "Common/Serialization.h"
+#include "Common/Time.h"
 
 #include "Hyperspace/Session.h"
 
@@ -98,33 +99,35 @@ void OperationAlterTable::execute() {
 
   case OperationState::VALIDATE_SCHEMA:
     try {
-      SchemaPtr alter_schema;
-      SchemaPtr existing_schema;
+
+      SchemaPtr alter_schema = Schema::new_instance(m_schema);
+
       DynamicBuffer value_buf;
-
-      alter_schema = Schema::new_instance(m_schema, m_schema.length());
-      if (!alter_schema->is_valid())
-        HT_THROW(Error::MASTER_BAD_SCHEMA, alter_schema->get_error_string());
-      if (alter_schema->need_id_assignment())
-        HT_THROW(Error::MASTER_BAD_SCHEMA, "Updated schema needs ID assignment");
-
       filename = m_context->toplevel_dir + "/tables/" + m_id;
-
       m_context->hyperspace->attr_get(filename, "schema", value_buf);
-      existing_schema = Schema::new_instance((char *)value_buf.base,
-                                             strlen((char *)value_buf.base));
+      SchemaPtr existing_schema =
+        Schema::new_instance((const char *)value_buf.base);
       value_buf.clear();
 
-      uint32_t generation =  existing_schema->get_generation()+1;
-      if (alter_schema->get_generation() != generation) {
-        HT_THROW(Error::MASTER_SCHEMA_GENERATION_MISMATCH,
-                 format("Expected updated schema generation %lld got %lld",
-                        (Lld)generation, (Lld)alter_schema->get_generation()));
+      if (existing_schema->get_generation() != alter_schema->get_generation())
+        HT_THROWF(Error::MASTER_SCHEMA_GENERATION_MISMATCH,
+                  "Expected altered schema generation %lld to match existing"
+                  " %lld", (Lld)alter_schema->get_generation(),
+                  (Lld)existing_schema->get_generation());
+
+      if (!alter_schema->clear_generation_if_changed(*existing_schema)) {
+        // No change, therefore nothing to do
+        complete_ok();
+        break;
       }
+
+      // Assign new generation number
+      int64_t generation = get_ts64();
+      alter_schema->update_generation(generation);
+      m_schema = alter_schema->render_xml(true);
     }
     catch (Exception &e) {
-      if (e.code() != Error::MASTER_BAD_SCHEMA &&
-          e.code() != Error::MASTER_SCHEMA_GENERATION_MISMATCH)
+      if (e.code() != Error::MASTER_SCHEMA_GENERATION_MISMATCH)
         HT_ERROR_OUT << e << HT_END;
       complete_error(e);
       return;

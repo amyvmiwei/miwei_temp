@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -45,17 +45,8 @@ namespace Hypertable {
 
     hyperspace->attr_get(table_file, "schema", valbuf);
 
-    Schema *schema = Schema::new_instance((const char *)valbuf.base,
-                                          valbuf.fill());
-    if (!schema->is_valid())
-      HT_THROWF(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
-                "Schema Parse Error: %s", schema->get_error_string());
-    if (schema->need_id_assignment())
-      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
-               "Schema Parse Error: need ID assignment");
+    m_schema = Schema::new_instance((const char *)valbuf.base);
 
-    m_schema = schema;
-
-    m_table.generation = schema->get_generation();
+    m_table.generation = m_schema->get_generation();
   }
 }

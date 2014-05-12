@@ -190,8 +190,8 @@ TestSource::create_column_delete(const char *row, const char *column,
     qualifier = ptr+1;
   }
 
-  Schema::ColumnFamily *cf = m_schema->get_column_family(cfstr);
-  if (cf == 0) {
+  ColumnFamilySpec *cf_spec = m_schema->get_column_family(cfstr);
+  if (cf_spec == 0) {
     cerr << "Column family '" << cfstr << "' not found in schema" << endl;
     return false;
   }
@@ -204,7 +204,7 @@ TestSource::create_column_delete(const char *row, const char *column,
     Serialization::encode_vi32(&m_key_buffer.ptr, keylen);
     *m_key_buffer.ptr++ = control;
     m_key_buffer.add_unchecked(row, strlen(row)+1);
-    *m_key_buffer.ptr++ = cf->id;
+    *m_key_buffer.ptr++ = cf_spec->get_id();
     *m_key_buffer.ptr++ = 0;
     *m_key_buffer.ptr++ = FLAG_DELETE_COLUMN_FAMILY;
     Key::encode_ts64(&m_key_buffer.ptr, timestamp);
@@ -223,7 +223,7 @@ TestSource::create_column_delete(const char *row, const char *column,
     Serialization::encode_vi32(&m_key_buffer.ptr, keylen);
     *m_key_buffer.ptr++ = control;
     m_key_buffer.add_unchecked(row, strlen(row)+1);
-    *m_key_buffer.ptr++ = cf->id;
+    *m_key_buffer.ptr++ = cf_spec->get_id();
     m_key_buffer.add_unchecked(qualifier, strlen(qualifier)+1);
     *m_key_buffer.ptr++ = FLAG_DELETE_CELL;
     Key::encode_ts64(&m_key_buffer.ptr, timestamp);
@@ -262,8 +262,8 @@ TestSource::create_insert(const char *row, const char *column,
   cfstr = string(column, ptr-column);
   qualifier = ptr+1;
 
-  Schema::ColumnFamily *cf = m_schema->get_column_family(cfstr);
-  if (cf == 0) {
+  ColumnFamilySpec *cf_spec = m_schema->get_column_family(cfstr);
+  if (cf_spec == 0) {
     cerr << "Column family '" << cfstr << "' not found in schema" << endl;
     return false;
   }
@@ -275,7 +275,7 @@ TestSource::create_insert(const char *row, const char *column,
   Serialization::encode_vi32(&m_key_buffer.ptr, keylen);
   *m_key_buffer.ptr++ = control;
   m_key_buffer.add_unchecked(row, strlen(row)+1);
-  *m_key_buffer.ptr++ = cf->id;
+  *m_key_buffer.ptr++ = cf_spec->get_id();
   m_key_buffer.add_unchecked(qualifier, strlen(qualifier)+1);
   *m_key_buffer.ptr++ = FLAG_INSERT;
   Key::encode_ts64(&m_key_buffer.ptr, timestamp);

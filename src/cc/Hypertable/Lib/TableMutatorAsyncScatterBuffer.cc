@@ -87,7 +87,7 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
     // counter? make sure that a valid integer was specified and re-encode
     // it as a 64bit value
     if (key.column_family_code
-	&& m_schema->get_column_family(key.column_family_code)->counter) {
+	&& m_schema->get_column_family(key.column_family_code)->get_option_counter()) {
       const char *ascii_value = (const char *)value;
       char *endptr;
       m_counter_value.clear();
@@ -123,7 +123,7 @@ TableMutatorAsyncScatterBuffer::set(const Key &key, const void *value, uint32_t 
 
     // now append the counter
     if (key.column_family_code
-	&& m_schema->get_column_family(key.column_family_code)->counter) {
+	&& m_schema->get_column_family(key.column_family_code)->get_option_counter()) {
       if (counter_reset) {
 	*m_counter_value.ptr++ = '=';
 	append_as_byte_string((*iter).second->accum, m_counter_value.base, 9);
@@ -417,7 +417,7 @@ void TableMutatorAsyncScatterBuffer::set_retries_to_fail(int error) {
   Key key;
   Cell cell;
   ByteString value, bs;
-  Schema::ColumnFamily *cf;
+  ColumnFamilySpec *cf_spec;
 
   for (TableMutatorAsyncSendBufferMap::const_iterator iter = m_buffer_map.begin();
       iter != m_buffer_map.end(); ++iter) {
@@ -436,9 +436,9 @@ void TableMutatorAsyncScatterBuffer::set_retries_to_fail(int error) {
           cell.column_family = 0;
         }
         else {
-          cf = m_schema->get_column_family(key.column_family_code);
-          HT_ASSERT(cf);
-          cell.column_family = m_constant_strings.get(cf->name.c_str());
+          cf_spec = m_schema->get_column_family(key.column_family_code);
+          HT_ASSERT(cf_spec);
+          cell.column_family = m_constant_strings.get(cf_spec->get_name().c_str());
         }
         cell.column_qualifier = key.column_qualifier;
         cell.timestamp = key.timestamp;
@@ -467,7 +467,7 @@ int TableMutatorAsyncScatterBuffer::set_failed_mutations() {
     Key key;
     ByteString bs;
     const uint8_t *endptr;
-    Schema::ColumnFamily *cf;
+    ColumnFamilySpec *cf_spec;
     for (size_t i=0; i<failed_regions.size(); i++) {
       bs.ptr = failed_regions[i].base;
       endptr = bs.ptr + failed_regions[i].len;
@@ -479,9 +479,9 @@ int TableMutatorAsyncScatterBuffer::set_failed_mutations() {
           cell.column_family = 0;
         }
         else {
-          cf = m_schema->get_column_family(key.column_family_code);
-          HT_ASSERT(cf);
-          cell.column_family = m_constant_strings.get(cf->name.c_str());
+          cf_spec = m_schema->get_column_family(key.column_family_code);
+          HT_ASSERT(cf_spec);
+          cell.column_family = m_constant_strings.get(cf_spec->get_name().c_str());
         }
         cell.column_qualifier = key.column_qualifier;
         cell.timestamp = key.timestamp;

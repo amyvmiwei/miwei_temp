@@ -138,12 +138,10 @@ static String last;
         m_all_matching |= 1;
       }
 
-      Schema::ColumnFamilies &families =
-                primary_table->schema()->get_column_families();
-      foreach_ht (Schema::ColumnFamily *cf, families) {
-        if (!cf->has_index && !cf->has_qualifier_index)
+      for (auto cf : primary_table->schema()->get_column_families()) {
+        if (!cf->get_value_index() && !cf->get_qualifier_index())
           continue;
-        m_column_map[cf->id] = cf->name;
+        m_column_map[cf->get_id()] = cf->get_name();
       }
     }
 
@@ -542,13 +540,12 @@ static String last;
       HT_ASSERT(m_mutator == NULL);
 
       String inner;
-      foreach_ht (Schema::ColumnFamily *cf, 
-              m_primary_table->schema()->get_column_families()) {
-        if (m_qualifier_scan && !cf->has_qualifier_index)
+      for (auto cf : m_primary_table->schema()->get_column_families()) {
+        if (m_qualifier_scan && !cf->get_qualifier_index())
           continue;
-        if (!m_qualifier_scan && !cf->has_index)
+        if (!m_qualifier_scan && !cf->get_value_index())
           continue;
-        inner += format(tmp_schema_inner, cf->name.c_str());
+        inner += format(tmp_schema_inner, cf->get_name().c_str());
       }
 
       Client *client = m_primary_table->get_namespace()->get_client();

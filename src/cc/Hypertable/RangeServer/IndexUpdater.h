@@ -78,7 +78,7 @@ namespace Hypertable {
     bool               m_index_map[256];
     bool               m_qualifier_index_map[256];
     String             m_cf_namemap[256];
-    unsigned           m_highest_column_id;
+    int32_t m_highest_column_id;
   };
 
   /// Smart pointer to IndexUpdater.

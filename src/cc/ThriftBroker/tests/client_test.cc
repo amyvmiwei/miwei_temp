@@ -98,26 +98,17 @@ void test_rename_alter(Thrift::Client *client, std::ostream &out) {
   client->hql_query(result, ns, "drop table if exists foo_renamed");
   client->hql_query(result, ns, "create table foo('bar')");
   client->rename_table(ns, "foo", "foo_renamed");
-  String str = (String)"<Schema generation=\"2\">" +
-    "  <AccessGroup name=\"default\">" +
-    "    <ColumnFamily id=\"1\">" +
-    "      <Generation>1</Generation>" +
-    "      <Name>bar</Name>" +
-    "      <Counter>false</Counter>" +
-    "      <deleted>true</deleted>" +
-    "    </ColumnFamily>" +
-    "    <ColumnFamily id=\"2\">" +
-    "      <Generation>2</Generation>" +
-    "      <Name>\"bar2\"</Name>" +
-    "      <Counter>false</Counter>" +
-    "      <deleted>false</deleted>" +
-    "    </ColumnFamily>" +
-    "   </AccessGroup>" +
-    "</Schema>";
-  client->alter_table(ns, "foo_renamed", str);
+  Hypertable::ThriftGen::Schema schema;
+  client->table_get_schema(schema, ns, "foo_renamed");
+  Hypertable::ThriftGen::ColumnFamilySpec cf_spec;
+  cf_spec.name = "bar2";
+  cf_spec.access_group = "default";
+  schema.column_families["bar2"] = cf_spec;
+  client->table_alter(ns, "foo_renamed", schema);
+  std::string str;
   client->get_schema_str_with_ids(str, ns, "foo_renamed");
   out << str << std::endl;
-  client->drop_table(ns, "foo_renamed", false);
+  client->table_drop(ns, "foo_renamed", false);
   client->namespace_close(ns);
 }
 
@@ -280,13 +271,13 @@ void test_schema(Thrift::Client *client, std::ostream &out) {
   client->get_schema(schema, ns, "thrift_test");
   client->namespace_close(ns);
 
-  std::map<std::string, AccessGroup>::iterator ag_it = schema.access_groups.begin();
+  auto ag_it = schema.access_groups.begin();
   out << "thrift test access groups:" << std::endl;
   while (ag_it != schema.access_groups.end()) {
     out << "\t" << ag_it->first << std::endl;
     ++ag_it;
   }
-  std::map<std::string, ColumnFamily>::iterator cf_it = schema.column_families.begin();
+  auto cf_it = schema.column_families.begin();
   out << "thrift test column families:" << std::endl;
   while (cf_it != schema.column_families.end()) {
     out << "\t" << cf_it->first << std::endl;

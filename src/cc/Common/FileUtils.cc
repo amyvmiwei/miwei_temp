@@ -119,7 +119,7 @@ ssize_t FileUtils::pread(int fd, void *vptr, size_t n, off_t offset) {
 }
 
 
-ssize_t FileUtils::write(const String &fname, String &contents) {
+ssize_t FileUtils::write(const String &fname, const std::string &contents) {
   int fd = open(fname.c_str(), O_WRONLY | O_CREAT | O_TRUNC, 0644);
   if (fd < 0) {
     int saved_errno = errno;
@@ -128,7 +128,7 @@ ssize_t FileUtils::write(const String &fname, String &contents) {
     errno = saved_errno;
     return -1;
   }
-  ssize_t rval = write(fd, contents.c_str(), contents.length());
+  ssize_t rval = write(fd, contents);
   ::close(fd);
   return rval;
 }

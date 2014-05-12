@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -522,6 +522,14 @@ struct TableSplit {
   5: optional string hostname
 }
 
+struct ColumnFamilyOptions {
+  1: optional i32 max_versions 
+  2: optional i32 ttl 
+  3: optional bool time_order_desc
+  4: optional bool counter
+}
+
+
 /**  
  * Describes a ColumnFamily 
  * <dl>
@@ -538,11 +546,23 @@ struct TableSplit {
  *   <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd> 
  * </dl>
  */
-struct ColumnFamily {
-  1: optional string name 
-  2: optional string ag 
-  3: optional i32 max_versions 
-  4: optional string ttl 
+struct ColumnFamilySpec {
+  1: string name 
+  2: string access_group
+  3: bool deleted
+  4: optional i64 generation
+  5: optional i32 id
+  6: bool value_index
+  7: bool qualifier_index
+  8: optional ColumnFamilyOptions options
+}
+
+struct AccessGroupOptions {
+  1: optional i16 replication
+  2: optional i32 blocksize
+  3: optional string compressor
+  4: optional string bloom_filter
+  5: optional bool in_memory
 }
 
 /**  
@@ -570,44 +590,31 @@ struct ColumnFamily {
  *   <dd>Specifies list of column families in this AG</dd> 
  * </dl>
  */
-struct AccessGroup {
-  1: optional string name 
-  2: optional bool in_memory 
-  3: optional i16 replication 
-  4: optional i32 blocksize
-  5: optional string compressor 
-  6: optional string bloom_filter 
-  7: optional list<ColumnFamily> columns 
+struct AccessGroupSpec {
+  1: string name
+  2: optional i64 generation
+  3: optional AccessGroupOptions options
+  4: optional ColumnFamilyOptions defaults
 }
 
 /**  
- * Describes a schema
+ * Describes a schema.
  * <dl>
- *   <dt>name</dt>
- *   <dd>Name of the access group</dd>
+ *   <dt>access_groups</dt>
+ *   <dd>Map of access groups</dd>
  *
- *   <dt>in_memory</dt>
- *   <dd>Is this access group in memory</dd>
- *
- *   <dt>replication</dt>
- *   <dd>Replication factor for this AG</dd> 
- *
- *   <dt>blocksize</dt>
- *   <dd>Specifies blocksize for this AG</dd> 
- *
- *   <dt>compressor</dt>
- *   <dd>Specifies compressor for this AG</dd>
- *
- *   <dt>bloom_filter</dt>
- *   <dd>Specifies bloom filter type</dd>
- *
- *   <dt>columns</dt>
- *   <dd>Specifies list of column families in this AG</dd> 
+ *   <dt>column_families</dt>
+ *   <dd>Map of column families</dd>
  * </dl>
  */
 struct Schema {
-  1: optional map<string, AccessGroup> access_groups
-  2: optional map<string, ColumnFamily> column_families
+  1: optional map<string, AccessGroupSpec> access_groups
+  2: optional map<string, ColumnFamilySpec> column_families
+  3: optional i64 generation
+  4: optional i32 version
+  5: optional i32 group_commit_interval
+  6: optional AccessGroupOptions access_group_defaults
+  7: optional ColumnFamilyOptions column_family_defaults
 }
 
 
@@ -646,11 +653,9 @@ service ClientService {
    *
    * @param ns - namespace id 
    * @param table_name - table name
-   * @param schema - schema of the table (in xml)
+   * @param schema - schema of the table
    */
-  void create_table(1:Namespace ns, 2:string table_name, 3:string schema)
-      throws (1:ClientException e),
-  void table_create(1:Namespace ns, 2:string table_name, 3:string schema)
+  void table_create(1:Namespace ns, 2:string table_name, 3:Schema schema)
       throws (1:ClientException e),
   
   /**
@@ -658,11 +663,9 @@ service ClientService {
    *
    * @param ns - namespace id 
    * @param table_name - table name
-   * @param schema - schema of the table (in xml)
+   * @param schema - schema of the table
    */
-  void alter_table(1:Namespace ns, 2:string table_name, 3:string schema)
-      throws (1:ClientException e),
-  void table_alter(1:Namespace ns, 2:string table_name, 3:string schema)
+  void table_alter(1:Namespace ns, 2:string table_name, 3:Schema schema)
       throws (1:ClientException e),
   
   /**

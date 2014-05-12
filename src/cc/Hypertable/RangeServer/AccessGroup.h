@@ -127,7 +127,7 @@ namespace Hypertable {
     };
 
     AccessGroup(const TableIdentifier *identifier, SchemaPtr &schema,
-                Schema::AccessGroup *ag, const RangeSpec *range,
+                AccessGroupSpec *ag_spec, const RangeSpec *range,
                 const Hints *hints=0);
 
     virtual void add(const Key &key, const ByteString value);
@@ -145,7 +145,7 @@ namespace Hypertable {
      */
     void populate_cellstore_index_pseudo_table_scanner(CellListScannerBuffer *scanner);
 
-    void update_schema(SchemaPtr &schema_ptr, Schema::AccessGroup *ag);
+    void update_schema(SchemaPtr &schema, AccessGroupSpec *ag_spec);
 
     void lock() {
       m_mutex.lock();
@@ -285,7 +285,6 @@ namespace Hypertable {
     bool m_is_root {};
     bool m_in_memory {};
     bool m_recovering {};
-    bool m_bloom_filter_disabled {};
     bool m_needs_merging {};
     bool m_end_merge {};
     bool m_dirty {};

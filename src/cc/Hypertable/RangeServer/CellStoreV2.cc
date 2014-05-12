@@ -109,7 +109,7 @@ void
 CellStoreV2::create(const char *fname, size_t max_entries,
                     PropertiesPtr &props, const TableIdentifier *table_id) {
   int32_t replication = props->get_i32("replication", int32_t(-1));
-  int64_t blocksize = props->get("blocksize", uint32_t(0));
+  int64_t blocksize = props->get("blocksize", 0);
   String compressor = props->get("compressor", String());
 
   assert(Config::properties); // requires Config::init* first
@@ -125,7 +125,7 @@ CellStoreV2::create(const char *fname, size_t max_entries,
                                  ".DefaultCompressor");
   if (!props->has("bloom-filter-mode")) {
     // probably not called from AccessGroup
-    Schema::parse_bloom_filter(Config::get_str("Hypertable.RangeServer"
+    AccessGroupOptions::parse_bloom_filter(Config::get_str("Hypertable.RangeServer"
         ".CellStore.DefaultBloomFilter"), props);
   }
 
@@ -768,7 +768,7 @@ bool CellStoreV2::may_contain(ScanContextPtr &scan_context) {
         memcpy(rowcol.get(), scan_context->start_row.c_str(), rowlen + 1);
 
         foreach_ht(const char *col, scan_context->spec->columns) {
-          uint8_t column_family_id = schema->get_column_family(col)->id;
+          uint8_t column_family_id = schema->get_column_family(col)->get_id();
           rowcol[rowlen + 1] = column_family_id;
 
           if (may_contain(rowcol.get(), rowlen + 2))

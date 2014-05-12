@@ -1,0 +1,274 @@
+
+Welcome to the hypertable command interpreter.
+For information about Hypertable, visit http://hypertable.com
+
+Type 'help' for a list of commands, or 'help shell' for a
+list of shell meta commands.
+
+CREATE NAMESPACE create_test;
+USE create_test;
+DROP TABLE IF EXISTS Test1;
+CREATE TABLE Test1 (
+'refer-url',
+Green,
+Yellow,
+Orange,
+Red,
+ACCESS GROUP ag1 ('refer-url'),
+ACCESS GROUP ag2 (),
+ACCESS GROUP ag3 (),
+ACCESS GROUP ag4 (Green, Yellow),
+ACCESS GROUP default (Orange, Red)
+);
+SHOW CREATE TABLE Test1;
+CREATE TABLE Test1 (
+  'refer-url',
+  Green,
+  Yellow,
+  Orange,
+  Red,
+  ACCESS GROUP ag1 ('refer-url'),
+  ACCESS GROUP ag2 (),
+  ACCESS GROUP ag3 (),
+  ACCESS GROUP ag4 (Green, Yellow),
+  ACCESS GROUP default (Orange, Red)
+);
+
+DROP TABLE IF EXISTS Test2;
+CREATE TABLE Test2 (
+INDEX a,
+ACCESS GROUP ag1 (a),
+ACCESS GROUP ag2 (b),
+a,
+b
+);
+SHOW CREATE TABLE Test2;
+CREATE TABLE Test2 (
+  a, INDEX a,
+  b,
+  ACCESS GROUP ag1 (a),
+  ACCESS GROUP ag2 (b)
+);
+
+DROP TABLE IF EXISTS Test3;
+CREATE TABLE Test3 (
+a TIME_ORDER desc,
+b,
+ACCESS GROUP ag (a, b) MAX_VERSIONS 3
+);
+SHOW CREATE TABLE Test3;
+CREATE TABLE Test3 (
+  a MAX_VERSIONS 3 TIME_ORDER desc,
+  b MAX_VERSIONS 3,
+  ACCESS GROUP ag (a, b) MAX_VERSIONS 3
+);
+
+DROP TABLE IF EXISTS Test4;
+CREATE TABLE Test4 (
+a,
+b,
+ACCESS GROUP ag (a, b) MAX_VERSIONS 3
+) TIME_ORDER desc;
+SHOW CREATE TABLE Test4;
+CREATE TABLE Test4 (
+  a MAX_VERSIONS 3 TIME_ORDER desc,
+  b MAX_VERSIONS 3 TIME_ORDER desc,
+  ACCESS GROUP ag (a, b) MAX_VERSIONS 3
+) TIME_ORDER desc;
+
+DROP TABLE IF EXISTS Test5;
+CREATE TABLE Test5 (
+a,
+b,
+ACCESS GROUP ag1 (a) MAX_VERSIONS 1 REPLICATION 3,
+ACCESS GROUP ag2 (b) COMPRESSOR "none"
+) TIME_ORDER desc BLOCKSIZE 32000;
+SHOW CREATE TABLE Test5;
+CREATE TABLE Test5 (
+  a MAX_VERSIONS 1 TIME_ORDER desc,
+  b TIME_ORDER desc,
+  ACCESS GROUP ag1 (a) REPLICATION 3 BLOCKSIZE 32000 MAX_VERSIONS 1,
+  ACCESS GROUP ag2 (b) BLOCKSIZE 32000 COMPRESSOR "none"
+) BLOCKSIZE 32000 TIME_ORDER desc;
+
+DROP TABLE IF EXISTS Test6;
+CREATE TABLE Test6 (
+a,
+b,
+ACCESS GROUP ag1 (a) REPLICATION 3,
+ACCESS GROUP ag2 (b) COMPRESSOR "none"
+) BLOOMFILTER "rows+cols --false-positive 0.02" COUNTER BLOCKSIZE 32000;
+SHOW CREATE TABLE Test6;
+CREATE TABLE Test6 (
+  a COUNTER true,
+  b COUNTER true,
+  ACCESS GROUP ag1 (a) REPLICATION 3 BLOCKSIZE 32000 BLOOMFILTER "rows+cols --false-positive 0.02",
+  ACCESS GROUP ag2 (b) BLOCKSIZE 32000 COMPRESSOR "none" BLOOMFILTER "rows+cols --false-positive 0.02"
+) BLOCKSIZE 32000 BLOOMFILTER "rows+cols --false-positive 0.02" COUNTER true;
+
+DROP TABLE IF EXISTS Foo;
+CREATE TABLE Foo (a);
+ALTER TABLE Foo ADD (b);
+SHOW CREATE TABLE Foo;
+CREATE TABLE Foo (
+  a,
+  b,
+  ACCESS GROUP default (a, b)
+);
+
+ALTER TABLE Foo ADD (c, d);
+SHOW CREATE TABLE Foo;
+CREATE TABLE Foo (
+  a,
+  b,
+  c,
+  d,
+  ACCESS GROUP default (a, b, c, d)
+);
+
+ALTER TABLE Foo MODIFY (a COUNTER);
+Error: Modificaton of COUNTER option for column 'a' is not allowed. - HQL bad command
+ALTER TABLE Foo MODIFY (a TIME_ORDER desc);
+Error: Modificaton of TIME ORDER option for column 'a' is not allowed. - HQL bad command
+#ALTER TABLE Foo MODIFY (INDEX a);
+#SHOW CREATE TABLE Foo;
+#ALTER TABLE Foo MODIFY (QUALIFIER INDEX b);
+#SHOW CREATE TABLE Foo;
+#ALTER TABLE Foo DROP INDEX a;
+#SHOW CREATE TABLE Foo;
+#ALTER TABLE Foo DROP QUALIFIER INDEX b;
+#SHOW CREATE TABLE Foo;
+ALTER TABLE Foo MODIFY (a MAX_VERSIONS 3);
+SHOW CREATE TABLE Foo;
+CREATE TABLE Foo (
+  a MAX_VERSIONS 3,
+  b,
+  c,
+  d,
+  ACCESS GROUP default (a, b, c, d)
+);
+
+ALTER TABLE Foo MODIFY (a TTL 86400);
+SHOW CREATE TABLE Foo;
+CREATE TABLE Foo (
+  a TTL 86400,
+  b,
+  c,
+  d,
+  ACCESS GROUP default (a, b, c, d)
+);
+
+ALTER TABLE Foo MODIFY (ACCESS GROUP default (a, b, c, d) BLOCKSIZE 128000) MODIFY (a MAX_VERSIONS 1);
+SHOW CREATE TABLE Foo;
+CREATE TABLE Foo (
+  a MAX_VERSIONS 1,
+  b,
+  c,
+  d,
+  ACCESS GROUP default (a, b, c, d) BLOCKSIZE 128000
+);
+
+ALTER TABLE Foo MODIFY (a MAX_VERSIONS 2) MODIFY (ACCESS GROUP default (a, b, c, d) BLOCKSIZE 129000);
+SHOW CREATE TABLE Foo;
+CREATE TABLE Foo (
+  a MAX_VERSIONS 2,
+  b,
+  c,
+  d,
+  ACCESS GROUP default (a, b, c, d) BLOCKSIZE 129000
+);
+
+ALTER TABLE Foo DROP (c) MODIFY (ACCESS GROUP default (a, b, d) BLOCKSIZE 130000);
+SHOW CREATE TABLE Foo;
+CREATE TABLE Foo (
+  a MAX_VERSIONS 2,
+  b,
+  d,
+  ACCESS GROUP default (a, b, d) BLOCKSIZE 130000
+);
+
+ALTER TABLE Foo MODIFY (ACCESS GROUP default (a, b, d) BLOCKSIZE 131000) DROP (b);
+SHOW CREATE TABLE Foo;
+CREATE TABLE Foo (
+  a MAX_VERSIONS 2,
+  d,
+  ACCESS GROUP default (a, d) BLOCKSIZE 131000
+);
+
+ALTER TABLE Foo MODIFY (ACCESS GROUP default (a, d) BLOCKSIZE 132000) DROP (a);
+SHOW CREATE TABLE Foo;
+CREATE TABLE Foo (
+  d,
+  ACCESS GROUP default (d) BLOCKSIZE 132000
+);
+
+DESCRIBE TABLE Foo;
+<Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Options>
+      <BlockSize>132000</BlockSize>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily>
+      <Name>!1</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>true</Deleted>
+      <Options>
+        <MaxVersions>2</MaxVersions>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>d</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>!2</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>true</Deleted>
+      <Options>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>!3</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>true</Deleted>
+      <Options>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+
+DROP TABLE IF EXISTS Bar;
+CREATE TABLE Bar (
+a COUNTER false,
+b
+) COUNTER;
+SHOW CREATE TABLE Bar;
+CREATE TABLE Bar (
+  a COUNTER false,
+  b COUNTER true,
+  ACCESS GROUP default (a, b)
+) COUNTER true;
+
+DROP TABLE IF EXISTS Baz;
+CREATE TABLE Baz (
+a,
+b,
+ACCESS GROUP meta (a) IN_MEMORY false
+) IN_MEMORY true;
+SHOW CREATE TABLE Baz;
+CREATE TABLE Baz (
+  a,
+  b,
+  ACCESS GROUP meta (a) IN_MEMORY false,
+  ACCESS GROUP default (b) IN_MEMORY true
+) IN_MEMORY true;
+

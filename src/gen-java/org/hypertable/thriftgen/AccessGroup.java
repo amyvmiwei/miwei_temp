@@ -61,7 +61,7 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
   private static final org.apache.thrift.protocol.TField BLOCKSIZE_FIELD_DESC = new org.apache.thrift.protocol.TField("blocksize", org.apache.thrift.protocol.TType.I32, (short)4);
   private static final org.apache.thrift.protocol.TField COMPRESSOR_FIELD_DESC = new org.apache.thrift.protocol.TField("compressor", org.apache.thrift.protocol.TType.STRING, (short)5);
   private static final org.apache.thrift.protocol.TField BLOOM_FILTER_FIELD_DESC = new org.apache.thrift.protocol.TField("bloom_filter", org.apache.thrift.protocol.TType.STRING, (short)6);
-  private static final org.apache.thrift.protocol.TField COLUMNS_FIELD_DESC = new org.apache.thrift.protocol.TField("columns", org.apache.thrift.protocol.TType.LIST, (short)7);
+  private static final org.apache.thrift.protocol.TField COUNTER_FIELD_DESC = new org.apache.thrift.protocol.TField("counter", org.apache.thrift.protocol.TType.BOOL, (short)7);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -69,13 +69,13 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
     schemes.put(TupleScheme.class, new AccessGroupTupleSchemeFactory());
   }
 
-  public String name; // optional
+  public String name; // required
   public boolean in_memory; // optional
   public short replication; // optional
   public int blocksize; // optional
   public String compressor; // optional
   public String bloom_filter; // optional
-  public List<ColumnFamily> columns; // optional
+  public boolean counter; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -85,7 +85,7 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
     BLOCKSIZE((short)4, "blocksize"),
     COMPRESSOR((short)5, "compressor"),
     BLOOM_FILTER((short)6, "bloom_filter"),
-    COLUMNS((short)7, "columns");
+    COUNTER((short)7, "counter");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -112,8 +112,8 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
           return COMPRESSOR;
         case 6: // BLOOM_FILTER
           return BLOOM_FILTER;
-        case 7: // COLUMNS
-          return COLUMNS;
+        case 7: // COUNTER
+          return COUNTER;
         default:
           return null;
       }
@@ -157,12 +157,13 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
   private static final int __IN_MEMORY_ISSET_ID = 0;
   private static final int __REPLICATION_ISSET_ID = 1;
   private static final int __BLOCKSIZE_ISSET_ID = 2;
-  private BitSet __isset_bit_vector = new BitSet(3);
-  private _Fields optionals[] = {_Fields.NAME,_Fields.IN_MEMORY,_Fields.REPLICATION,_Fields.BLOCKSIZE,_Fields.COMPRESSOR,_Fields.BLOOM_FILTER,_Fields.COLUMNS};
+  private static final int __COUNTER_ISSET_ID = 3;
+  private BitSet __isset_bit_vector = new BitSet(4);
+  private _Fields optionals[] = {_Fields.IN_MEMORY,_Fields.REPLICATION,_Fields.BLOCKSIZE,_Fields.COMPRESSOR,_Fields.BLOOM_FILTER,_Fields.COUNTER};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.IN_MEMORY, new org.apache.thrift.meta_data.FieldMetaData("in_memory", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
@@ -174,14 +175,20 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.BLOOM_FILTER, new org.apache.thrift.meta_data.FieldMetaData("bloom_filter", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.COLUMNS, new org.apache.thrift.meta_data.FieldMetaData("columns", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.ListMetaData(org.apache.thrift.protocol.TType.LIST, 
-            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ColumnFamily.class))));
+    tmpMap.put(_Fields.COUNTER, new org.apache.thrift.meta_data.FieldMetaData("counter", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(AccessGroup.class, metaDataMap);
   }
 
   public AccessGroup() {
+  }
+
+  public AccessGroup(
+    String name)
+  {
+    this();
+    this.name = name;
   }
 
   /**
@@ -202,13 +209,7 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
     if (other.isSetBloom_filter()) {
       this.bloom_filter = other.bloom_filter;
     }
-    if (other.isSetColumns()) {
-      List<ColumnFamily> __this__columns = new ArrayList<ColumnFamily>();
-      for (ColumnFamily other_element : other.columns) {
-        __this__columns.add(new ColumnFamily(other_element));
-      }
-      this.columns = __this__columns;
-    }
+    this.counter = other.counter;
   }
 
   public AccessGroup deepCopy() {
@@ -226,7 +227,8 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
     this.blocksize = 0;
     this.compressor = null;
     this.bloom_filter = null;
-    this.columns = null;
+    setCounterIsSet(false);
+    this.counter = false;
   }
 
   public String getName() {
@@ -370,43 +372,27 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
     }
   }
 
-  public int getColumnsSize() {
-    return (this.columns == null) ? 0 : this.columns.size();
+  public boolean isCounter() {
+    return this.counter;
   }
 
-  public java.util.Iterator<ColumnFamily> getColumnsIterator() {
-    return (this.columns == null) ? null : this.columns.iterator();
-  }
-
-  public void addToColumns(ColumnFamily elem) {
-    if (this.columns == null) {
-      this.columns = new ArrayList<ColumnFamily>();
-    }
-    this.columns.add(elem);
-  }
-
-  public List<ColumnFamily> getColumns() {
-    return this.columns;
-  }
-
-  public AccessGroup setColumns(List<ColumnFamily> columns) {
-    this.columns = columns;
+  public AccessGroup setCounter(boolean counter) {
+    this.counter = counter;
+    setCounterIsSet(true);
     return this;
   }
 
-  public void unsetColumns() {
-    this.columns = null;
+  public void unsetCounter() {
+    __isset_bit_vector.clear(__COUNTER_ISSET_ID);
   }
 
-  /** Returns true if field columns is set (has been assigned a value) and false otherwise */
-  public boolean isSetColumns() {
-    return this.columns != null;
+  /** Returns true if field counter is set (has been assigned a value) and false otherwise */
+  public boolean isSetCounter() {
+    return __isset_bit_vector.get(__COUNTER_ISSET_ID);
   }
 
-  public void setColumnsIsSet(boolean value) {
-    if (!value) {
-      this.columns = null;
-    }
+  public void setCounterIsSet(boolean value) {
+    __isset_bit_vector.set(__COUNTER_ISSET_ID, value);
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -459,11 +445,11 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
       }
       break;
 
-    case COLUMNS:
+    case COUNTER:
       if (value == null) {
-        unsetColumns();
+        unsetCounter();
       } else {
-        setColumns((List<ColumnFamily>)value);
+        setCounter((Boolean)value);
       }
       break;
 
@@ -490,8 +476,8 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
     case BLOOM_FILTER:
       return getBloom_filter();
 
-    case COLUMNS:
-      return getColumns();
+    case COUNTER:
+      return Boolean.valueOf(isCounter());
 
     }
     throw new IllegalStateException();
@@ -516,8 +502,8 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
       return isSetCompressor();
     case BLOOM_FILTER:
       return isSetBloom_filter();
-    case COLUMNS:
-      return isSetColumns();
+    case COUNTER:
+      return isSetCounter();
     }
     throw new IllegalStateException();
   }
@@ -589,12 +575,12 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
         return false;
     }
 
-    boolean this_present_columns = true && this.isSetColumns();
-    boolean that_present_columns = true && that.isSetColumns();
-    if (this_present_columns || that_present_columns) {
-      if (!(this_present_columns && that_present_columns))
+    boolean this_present_counter = true && this.isSetCounter();
+    boolean that_present_counter = true && that.isSetCounter();
+    if (this_present_counter || that_present_counter) {
+      if (!(this_present_counter && that_present_counter))
         return false;
-      if (!this.columns.equals(that.columns))
+      if (this.counter != that.counter)
         return false;
     }
 
@@ -674,12 +660,12 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
         return lastComparison;
       }
     }
-    lastComparison = Boolean.valueOf(isSetColumns()).compareTo(typedOther.isSetColumns());
+    lastComparison = Boolean.valueOf(isSetCounter()).compareTo(typedOther.isSetCounter());
     if (lastComparison != 0) {
       return lastComparison;
     }
-    if (isSetColumns()) {
-      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.columns, typedOther.columns);
+    if (isSetCounter()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.counter, typedOther.counter);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -704,15 +690,13 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
     StringBuilder sb = new StringBuilder("AccessGroup(");
     boolean first = true;
 
-    if (isSetName()) {
-      sb.append("name:");
-      if (this.name == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.name);
-      }
-      first = false;
+    sb.append("name:");
+    if (this.name == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.name);
     }
+    first = false;
     if (isSetIn_memory()) {
       if (!first) sb.append(", ");
       sb.append("in_memory:");
@@ -751,14 +735,10 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
       }
       first = false;
     }
-    if (isSetColumns()) {
+    if (isSetCounter()) {
       if (!first) sb.append(", ");
-      sb.append("columns:");
-      if (this.columns == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.columns);
-      }
+      sb.append("counter:");
+      sb.append(this.counter);
       first = false;
     }
     sb.append(")");
@@ -853,21 +833,10 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
             break;
-          case 7: // COLUMNS
-            if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
-              {
-                org.apache.thrift.protocol.TList _list56 = iprot.readListBegin();
-                struct.columns = new ArrayList<ColumnFamily>(_list56.size);
-                for (int _i57 = 0; _i57 < _list56.size; ++_i57)
-                {
-                  ColumnFamily _elem58; // required
-                  _elem58 = new ColumnFamily();
-                  _elem58.read(iprot);
-                  struct.columns.add(_elem58);
-                }
-                iprot.readListEnd();
-              }
-              struct.setColumnsIsSet(true);
+          case 7: // COUNTER
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.counter = iprot.readBool();
+              struct.setCounterIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -888,11 +857,9 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
 
       oprot.writeStructBegin(STRUCT_DESC);
       if (struct.name != null) {
-        if (struct.isSetName()) {
-          oprot.writeFieldBegin(NAME_FIELD_DESC);
-          oprot.writeString(struct.name);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
+        oprot.writeString(struct.name);
+        oprot.writeFieldEnd();
       }
       if (struct.isSetIn_memory()) {
         oprot.writeFieldBegin(IN_MEMORY_FIELD_DESC);
@@ -923,19 +890,10 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
           oprot.writeFieldEnd();
         }
       }
-      if (struct.columns != null) {
-        if (struct.isSetColumns()) {
-          oprot.writeFieldBegin(COLUMNS_FIELD_DESC);
-          {
-            oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.columns.size()));
-            for (ColumnFamily _iter59 : struct.columns)
-            {
-              _iter59.write(oprot);
-            }
-            oprot.writeListEnd();
-          }
-          oprot.writeFieldEnd();
-        }
+      if (struct.isSetCounter()) {
+        oprot.writeFieldBegin(COUNTER_FIELD_DESC);
+        oprot.writeBool(struct.counter);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -973,7 +931,7 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
       if (struct.isSetBloom_filter()) {
         optionals.set(5);
       }
-      if (struct.isSetColumns()) {
+      if (struct.isSetCounter()) {
         optionals.set(6);
       }
       oprot.writeBitSet(optionals, 7);
@@ -995,14 +953,8 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
       if (struct.isSetBloom_filter()) {
         oprot.writeString(struct.bloom_filter);
       }
-      if (struct.isSetColumns()) {
-        {
-          oprot.writeI32(struct.columns.size());
-          for (ColumnFamily _iter60 : struct.columns)
-          {
-            _iter60.write(oprot);
-          }
-        }
+      if (struct.isSetCounter()) {
+        oprot.writeBool(struct.counter);
       }
     }
 
@@ -1035,18 +987,8 @@ public class AccessGroup implements org.apache.thrift.TBase<AccessGroup, AccessG
         struct.setBloom_filterIsSet(true);
       }
       if (incoming.get(6)) {
-        {
-          org.apache.thrift.protocol.TList _list61 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.columns = new ArrayList<ColumnFamily>(_list61.size);
-          for (int _i62 = 0; _i62 < _list61.size; ++_i62)
-          {
-            ColumnFamily _elem63; // required
-            _elem63 = new ColumnFamily();
-            _elem63.read(iprot);
-            struct.columns.add(_elem63);
-          }
-        }
-        struct.setColumnsIsSet(true);
+        struct.counter = iprot.readBool();
+        struct.setCounterIsSet(true);
       }
     }
   }

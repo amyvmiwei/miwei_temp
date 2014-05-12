@@ -91,15 +91,11 @@ void OperationRecreateIndexTables::execute() {
       if (!fetch_schema(schema_str))
         break;
       SchemaPtr schema = Schema::new_instance(schema_str);
-      if (!schema->is_valid()) {
-        complete_error(Error::SCHEMA_PARSE_ERROR, schema->get_error_string());
-        break;
-      }
       uint8_t parts = 0;
-      for (auto cf : schema->get_column_families()) {
-        if (m_parts.value_index() && cf->has_index)
+      for (auto cf_spec : schema->get_column_families()) {
+        if (m_parts.value_index() && cf_spec->get_value_index())
           parts |= TableParts::VALUE_INDEX;
-        if (m_parts.qualifier_index() && cf->has_qualifier_index)
+        if (m_parts.qualifier_index() && cf_spec->get_qualifier_index())
           parts |= TableParts::QUALIFIER_INDEX;
       }
       if (parts == 0) {

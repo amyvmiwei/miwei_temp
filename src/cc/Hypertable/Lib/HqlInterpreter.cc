@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -152,14 +152,10 @@ cmd_show_create_table(NamespacePtr &ns, ParserState &state,
                       HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
-  String out_str;
-  String schema_str = ns->get_schema_str(state.table_name, true);
-  SchemaPtr schema = Schema::new_instance(schema_str.c_str(),
-                                          schema_str.length());
-  if (!schema->is_valid())
-    HT_THROW(Error::BAD_SCHEMA, schema->get_error_string());
-
-  schema->render_hql_create_table(state.table_name, out_str);
+  string schema_str = ns->get_schema_str(state.table_name, true);
+  SchemaPtr schema = Schema::new_instance(schema_str);
+  string out_str = schema->render_hql(state.table_name);
+  out_str += ";\n";
   cb.on_return(out_str);
   cb.on_finish();
 }
@@ -168,83 +164,7 @@ cmd_show_create_table(NamespacePtr &ns, ParserState &state,
 void
 cmd_create_table(NamespacePtr &ns, ParserState &state,
                  HqlInterpreter::Callback &cb) {
-  if (!ns)
-    HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
-  String schema_str;
-  SchemaPtr schema;
-  bool need_default_ag = false;
-
-  if (!state.clone_table_name.empty()) {
-    schema_str = ns->get_schema_str(state.clone_table_name, true);
-    schema = Schema::new_instance(schema_str.c_str(), schema_str.size());
-    schema_str.clear();
-    schema->render(schema_str);
-    ns->create_table(state.table_name, schema_str.c_str());
-  }
-  else {
-    schema = new Schema();
-    schema->validate_compressor(state.table_compressor);
-    schema->set_compressor(state.table_compressor);
-    schema->set_group_commit_interval(state.group_commit_interval);
-
-    foreach_ht(Schema::AccessGroup *ag, state.ag_list) {
-      schema->validate_compressor(ag->compressor);
-      schema->validate_bloom_filter(ag->bloom_filter);
-      if (state.table_in_memory)
-        ag->in_memory = true;
-      if (state.table_blocksize != 0 && ag->blocksize == 0)
-        ag->blocksize = state.table_blocksize;
-      if (state.table_replication != -1 && ag->replication == -1)
-        ag->replication = (int16_t)state.table_replication;
-      schema->add_access_group(ag);
-    }
-
-    if (state.ag_map.find("default") == state.ag_map.end())
-      need_default_ag = true;
-
-    foreach_ht(Schema::ColumnFamily *cf, state.cf_list) {
-      if (cf->ag == "") {
-        cf->ag = "default";
-        if (need_default_ag) {
-          Schema::AccessGroup *ag = new Schema::AccessGroup();
-          ag->name = "default";
-          if (state.table_in_memory)
-            ag->in_memory = true;
-          if (state.table_blocksize != 0 && ag->blocksize == 0)
-            ag->blocksize = state.table_blocksize;
-          if (state.table_replication != -1 && ag->replication == -1)
-            ag->replication = (int16_t)state.table_replication;
-          schema->add_access_group(ag);
-          need_default_ag = false;
-        }
-      }
-      if (cf->ttl == 0 && state.ttl != 0)
-        cf->ttl = state.ttl;
-      if (cf->max_versions == 0 && state.max_versions != 0)
-        cf->max_versions = state.max_versions;
-      if (cf->counter) {
-        if (cf->max_versions)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Incompatible options (COUNTER & MAX_VERSIONS) specified for column '%s'",
-                    cf->name.c_str());
-        if (cf->time_order_desc_set && cf->time_order_desc)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Incompatible options (COUNTER & TIME_ORDER DESC) specified for column '%s'",
-                    cf->name.c_str());
-      }
-      if (!cf->time_order_desc_set) {
-        cf->time_order_desc = state.time_order_desc;
-        cf->time_order_desc_set = true;
-      }
-      schema->add_column_family(cf);
-    }
-
-    if (!schema->is_valid())
-      HT_THROW(Error::HQL_PARSE_ERROR, schema->get_error_string());
-
-    schema->render(schema_str);
-    ns->create_table(state.table_name, schema_str.c_str());
-  }
+  ns->create_table(state.table_name, state.create_schema);
   cb.on_finish();
 }
 
@@ -253,38 +173,7 @@ cmd_alter_table(NamespacePtr &ns, ParserState &state,
                  HqlInterpreter::Callback &cb) {
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
-  String schema_str;
-  SchemaPtr schema = new Schema();
-  bool need_default_ag = false;
-
-  foreach_ht(Schema::AccessGroup *ag, state.ag_list)
-    schema->add_access_group(ag);
-
-  if (state.ag_map.find("default") == state.ag_map.end())
-    need_default_ag = true;
-
-  foreach_ht(Schema::ColumnFamily *cf, state.cf_list) {
-    if (cf->ag == "") {
-      cf->ag = "default";
-      if (need_default_ag) {
-        Schema::AccessGroup *ag = new Schema::AccessGroup();
-        ag->name = "default";
-        schema->add_access_group(ag);
-        need_default_ag = false;
-      }
-    }
-    schema->add_column_family(cf);
-  }
-
-  const char *error_str = schema->get_error_string();
-  if (error_str)
-    HT_THROW(Error::HQL_PARSE_ERROR, error_str);
-
-  ns->alter_table(state.table_name, schema);
-
-  /**
-   * Refresh the cached table
-   */
+  ns->alter_table(state.table_name, state.alter_schema);
   ns->refresh_table(state.table_name);
   cb.on_finish();
 }
@@ -991,7 +880,7 @@ void HqlInterpreter::set_namespace(const String &ns) {
 }
 
 void HqlInterpreter::execute(const String &line, Callback &cb) {
-  ParserState state;
+  ParserState state(m_namespace.get());
   String stripped_line = line;
 
   boost::trim(stripped_line);

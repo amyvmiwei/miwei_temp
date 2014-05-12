@@ -938,7 +938,7 @@ RangeServer::replay_load_range(TableInfoMap &replay_map,
     // Check table generation.  If table generation obtained from TableInfoMap
     // is greater than the table generation in the range entity, then
     // automatically upgrade to new generation
-    uint32_t generation = live_table_info->get_schema()->get_generation();
+    int64_t generation = live_table_info->get_schema()->get_generation();
     if (generation > table.generation) {
       range_entity->set_table_generation(generation);
       table.generation = generation;
@@ -1568,10 +1568,10 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     // verify schema
     if (schema->get_generation() != scanner_table.generation) {
       Global::scanner_map.remove(scanner_id);
-      HT_THROW(Error::RANGESERVER_GENERATION_MISMATCH,
-               format("RangeServer Schema generation for table '%s' is %d but "
-                      "scanner has generation %d", scanner_table.id,
-                      schema->get_generation(), scanner_table.generation));
+      HT_THROWF(Error::RANGESERVER_GENERATION_MISMATCH,
+               "RangeServer Schema generation for table '%s' is %lld but "
+                "scanner has generation %lld", scanner_table.id,
+                (Lld)schema->get_generation(), (Lld)scanner_table.generation);
     }
 
     uint64_t cells_scanned, cells_returned, bytes_scanned, bytes_returned;
@@ -1714,9 +1714,9 @@ RangeServer::load_range(ResponseCallback *cb, const TableIdentifier *table,
       md5DigestStr[16] = 0;
       table_dfsdir = Global::toplevel_dir + "/tables/" + table->id;
 
-      foreach_ht(Schema::AccessGroup *ag, schema->get_access_groups()) {
+      for (auto ag_spec : schema->get_access_groups()) {
         // notice the below variables are different "range" vs. "table"
-        range_dfsdir = table_dfsdir + "/" + ag->name + "/" + md5DigestStr;
+        range_dfsdir = table_dfsdir + "/" + ag_spec->get_name() + "/" + md5DigestStr;
         Global::dfs->mkdirs(range_dfsdir);
       }
     }
@@ -1892,20 +1892,8 @@ RangeServer::update_schema(ResponseCallback *cb,
   HT_INFOF("Updating schema for: %s schema = %s", table->id, schema_str);
 
   try {
-    /**
-     * Create new schema object and test for validity
-     */
-    schema = Schema::new_instance(schema_str, strlen(schema_str));
 
-    if (!schema->is_valid()) {
-      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
-        (String) "Update schema Parse Error for table '"
-        + table->id + "' : " + schema->get_error_string());
-    }
-    if (schema->need_id_assignment())
-      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
-               (String) "Update schema Parse Error for table '"
-               + table->id + "' : needs ID assignment");
+    schema = Schema::new_instance(schema_str);
 
     if (m_context->live_map->lookup(table->id, table_info))
       table_info->update_schema(schema);
@@ -2085,7 +2073,7 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   }
 
   SchemaPtr schema = table_info->get_schema();
-  Schema::AccessGroups &ags = schema->get_access_groups();
+  AccessGroupSpecs &ag_specs = schema->get_access_groups();
 
   // create METADATA table mutator for clearing 'Location' columns
   mutator = Global::metadata_table->create_mutator();
@@ -2103,10 +2091,10 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
       key.row_len = metadata_key.length();
       key.column_family = "Location";
       mutator->set(key, "!", 1);
-      for (size_t j=0; j<ags.size(); j++) {
+      for (size_t j=0; j<ag_specs.size(); j++) {
         key.column_family = "Files";
-        key.column_qualifier = ags[j]->name.c_str();
-        key.column_qualifier_len = ags[j]->name.length();
+        key.column_qualifier = ag_specs[j]->get_name().c_str();
+        key.column_qualifier_len = ag_specs[j]->get_name().length();
         mutator->set(key, (uint8_t *)"!", 1);
       }
     }
@@ -2204,7 +2192,7 @@ RangeServer::dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *tabl
     ScanContextPtr scan_ctx = new ScanContext();
     Key key;
     ByteString value;
-    Schema::ColumnFamily *cf;
+    ColumnFamilySpec *cf_spec;
     const uint8_t *ptr;
     size_t len;
 
@@ -2221,13 +2209,13 @@ RangeServer::dump_pseudo_table(ResponseCallback *cb, const TableIdentifier *tabl
     foreach_ht(RangeData &rd, ranges.array) {
       scanner = rd.range->create_scanner_pseudo_table(scan_ctx, pseudo_table);
       while (scanner->get(key, value)) {
-        cf = Global::pseudo_tables->cellstore_index->get_column_family(key.column_family_code);
-        if (cf == 0) {
+        cf_spec = Global::pseudo_tables->cellstore_index->get_column_family(key.column_family_code);
+        if (cf_spec == 0) {
           HT_ERRORF("Column family code %d not found in %s pseudo table schema",
                     key.column_family_code, pseudo_table);
         }
         else {
-          out << key.row << "\t" << cf->name;
+          out << key.row << "\t" << cf_spec->get_name();
           if (key.column_qualifier)
             out << ":" << key.column_qualifier;
           out << "\t";
@@ -3049,9 +3037,9 @@ void RangeServer::phantom_prepare_ranges(ResponseCallback *cb, int64_t op_id,
         m_maintenance_scheduler->exclude(&rr.table);
 
       if (rr.table.generation != table_info->get_schema()->get_generation())
-        HT_WARNF("Table (id=%s) generation mismatch %d != %d", rr.table.id, 
-                 rr.table.generation,
-                 table_info->get_schema()->get_generation());
+        HT_WARNF("Table (id=%s) generation mismatch %lld != %lld", rr.table.id, 
+                 (Lld)rr.table.generation,
+                 (Lld)table_info->get_schema()->get_generation());
 
       //HT_DEBUG_OUT << "Creating Range object for range " << rr << HT_END;
       // create a real range and its transfer log
@@ -3456,23 +3444,12 @@ void RangeServer::verify_schema(TableInfoPtr &table_info, uint32_t generation,
             != table_schemas->end())
       schema = it->second;
 
-    if (schema.get() == 0) {
+    if (!schema) {
       String tablefile = Global::toplevel_dir + "/tables/"
           + table_info->identifier().id;
       m_hyperspace->attr_get(tablefile, "schema", valbuf);
-      schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
+      schema = Schema::new_instance((const char *)valbuf.base);
     }
-
-    if (!schema->is_valid())
-      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
-              (String)"Schema Parse Error for table '"
-              + table_info->identifier().id + "' : "
-              + schema->get_error_string());
-
-    if (schema->need_id_assignment())
-      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR,
-              (String)"Schema Parse Error for table '"
-              + table_info->identifier().id + "' : needs ID assignment");
 
     table_info->update_schema(schema);
 

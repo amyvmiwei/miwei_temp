@@ -46,14 +46,14 @@ MergeScannerAccessGroup::MergeScannerAccessGroup(String &table_name,
 
   if (flags & IS_COMPACTION) {
     // check if there are any indices in this schema
-    foreach_ht (Schema::ColumnFamily *cf, scan_ctx->schema->get_column_families()){
-      if (!cf || cf->deleted)
+    for (auto cf_spec : scan_ctx->schema->get_column_families()){
+      if (!cf_spec || cf_spec->get_deleted())
         continue;
-      if (cf->has_index) {
+      if (cf_spec->get_value_index()) {
         HT_INFO("Compaction scan has cell value index");
         has_index = true;
       }
-      if (cf->has_qualifier_index) {
+      if (cf_spec->get_qualifier_index()) {
         HT_INFO("Compaction scan has column qualifier index");
         has_qualifier_index = true;
       }

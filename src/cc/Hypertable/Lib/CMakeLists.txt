@@ -18,6 +18,7 @@
 #
 
 set(Hypertable_SRCS
+AccessGroupSpec.cc
 ApacheLogParser.cc
 BalancePlan.cc
 BlockCompressionCodec.cc
@@ -33,6 +34,7 @@ BlockHeaderCommitLog.cc
 Cell.cc
 Client.cc
 ClusterId.cc
+ColumnFamilySpec.cc
 CommitLog.cc
 CommitLogBlockStream.cc
 CommitLogReader.cc
@@ -119,9 +121,17 @@ target_link_libraries(Hypertable ${EXPAT_LIBRARIES} Hyperspace HyperFsBroker ${M
 add_executable(generate_test_data generate_test_data.cc)
 target_link_libraries(generate_test_data Hypertable)
 
-# schemaTest
-add_executable(schemaTest tests/schemaTest.cc)
-target_link_libraries(schemaTest Hypertable)
+# ColumnFamilySpec_test
+add_executable(ColumnFamilySpec_test tests/ColumnFamilySpec_test.cc)
+target_link_libraries(ColumnFamilySpec_test Hypertable)
+
+# AccessGroupSpec_test
+add_executable(AccessGroupSpec_test tests/AccessGroupSpec_test.cc)
+target_link_libraries(AccessGroupSpec_test Hypertable)
+
+# Schema_test
+add_executable(Schema_test tests/Schema_test.cc)
+target_link_libraries(Schema_test Hypertable)
 
 # locationCacheTest
 add_executable(locationCacheTest tests/locationCacheTest.cc)
@@ -228,21 +238,13 @@ target_link_libraries(metalog_test HyperFsBroker Hypertable)
 #
 set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Hypertable/Lib/tests")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Hypertable/Lib")
-configure_file(${SRC_DIR}/bad-schema-1.xml ${DST_DIR}/bad-schema-1.xml COPYONLY)
-configure_file(${SRC_DIR}/bad-schema-2.xml ${DST_DIR}/bad-schema-2.xml COPYONLY)
-configure_file(${SRC_DIR}/bad-schema-3.xml ${DST_DIR}/bad-schema-3.xml COPYONLY)
-configure_file(${SRC_DIR}/bad-schema-4.xml ${DST_DIR}/bad-schema-4.xml COPYONLY)
-configure_file(${SRC_DIR}/bad-schema-5.xml ${DST_DIR}/bad-schema-5.xml COPYONLY)
-configure_file(${SRC_DIR}/bad-schema-6.xml ${DST_DIR}/bad-schema-6.xml COPYONLY)
-configure_file(${SRC_DIR}/bad-schema-7.xml ${DST_DIR}/bad-schema-7.xml COPYONLY)
-configure_file(${SRC_DIR}/bad-schema-8.xml ${DST_DIR}/bad-schema-8.xml COPYONLY)
-configure_file(${SRC_DIR}/bad-schema-9.xml ${DST_DIR}/bad-schema-9.xml COPYONLY)
-configure_file(${SRC_DIR}/good-schema-1.xml ${DST_DIR}/good-schema-1.xml
-               COPYONLY)
+configure_file(${SRC_DIR}/test-schemas.xml ${DST_DIR}/test-schemas.xml COPYONLY)
 
 configure_file(${HYPERTABLE_SOURCE_DIR}/tests/data/random.dat
                ${DST_DIR}/random.dat COPYONLY)
-configure_file(${SRC_DIR}/schemaTest.golden ${DST_DIR}/schemaTest.golden)
+configure_file(${SRC_DIR}/ColumnFamilySpec_test.golden ${DST_DIR}/ColumnFamilySpec_test.golden)
+configure_file(${SRC_DIR}/AccessGroupSpec_test.golden ${DST_DIR}/AccessGroupSpec_test.golden)
+configure_file(${SRC_DIR}/Schema_test.golden ${DST_DIR}/Schema_test.golden)
 configure_file(${SRC_DIR}/indices_test.golden ${DST_DIR}/indices_test.golden)
 configure_file(${SRC_DIR}/locationCacheTest.golden
                ${DST_DIR}/locationCacheTest.golden)
@@ -270,7 +272,9 @@ configure_file(${SRC_DIR}/metalog_test2.golden ${DST_DIR}/metalog_test2.golden)
 
 add_test(Hypertable-Lib-TestSetup env INSTALL_DIR=${INSTALL_DIR}
          ${SRC_DIR}/test_setup.sh)
-add_test(Schema schemaTest)
+add_test(ColumnFamilySpec ColumnFamilySpec_test)
+add_test(AccessGroupSpec AccessGroupSpec_test)
+add_test(Schema Schema_test)
 add_test(LocationCache locationCacheTest)
 add_test(LoadDataSource loadDataSourceTest)
 add_test(LoadDataEscape escape_test)

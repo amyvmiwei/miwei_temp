@@ -75,7 +75,7 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
     try {
       DynamicBuffer valbuf;
       Global::hyperspace->attr_get(tablefile, "schema", valbuf);
-      entry.schema = Schema::new_instance((char *)valbuf.base, valbuf.fill());
+      entry.schema = Schema::new_instance((const char *)valbuf.base);
       entry.maintenance_disabled =
         Global::hyperspace->attr_exists(tablefile, "maintenance_disabled");
     }
@@ -86,13 +86,6 @@ void TableInfoMap::get(const String &table_id, TableInfoPtr &info) {
                   "Table %s does not exist in hyperspace", table_id.c_str());
       throw;
     }
-
-    if (!entry.schema->is_valid())
-      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table_id);
-
-    if (entry.schema->need_id_assignment())
-      HT_THROW(Error::RANGESERVER_SCHEMA_PARSE_ERROR, table_id);
-
   }
 
   table.id = table_id.c_str();

@@ -35,8 +35,8 @@ using namespace Hyperspace;
 
 MetadataRoot::MetadataRoot(SchemaPtr &schema) : m_next(0) {
 
-  foreach_ht(const Schema::AccessGroup *ag, schema->get_access_groups())
-    m_agnames.push_back(ag->name);
+  for (auto ag_spec : schema->get_access_groups())
+    m_agnames.push_back(ag_spec->get_name());
 
   try {
     m_handle = Global::hyperspace->open(Global::toplevel_dir + "/root",

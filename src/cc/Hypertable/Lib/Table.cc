@@ -125,15 +125,7 @@ void Table::initialize() {
                tablefile.c_str());
   }
 
-  m_schema = Schema::new_instance((const char *)value_buf.base,
-                                  strlen((const char *)value_buf.base));
-
-  if (!m_schema->is_valid()) {
-    HT_ERRORF("Schema Parse Error: %s", m_schema->get_error_string());
-    HT_THROW_(Error::SCHEMA_PARSE_ERROR);
-  }
-  if (m_schema->need_id_assignment())
-    HT_THROW(Error::SCHEMA_PARSE_ERROR, "Schema needs ID assignment");
+  m_schema = Schema::new_instance((const char *)value_buf.base);
 
   if (is_index && m_schema->get_version() < 1)
     HT_THROW(Error::BAD_FORMAT, "Unsupported index format.  Indexes must be "

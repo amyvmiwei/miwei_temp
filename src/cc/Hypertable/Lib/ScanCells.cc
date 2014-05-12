@@ -42,7 +42,7 @@ ScanCells::load(SchemaPtr &schema, const String &end_row, bool end_inclusive,
   Key key;
   Cell cell;
   ScanBlock *scanblock;
-  Schema::ColumnFamily *cf;
+  ColumnFamilySpec *cf_spec;
   size_t total_cells=0;
   bool skipping = lastkey->row != 0;
 
@@ -93,14 +93,14 @@ ScanCells::load(SchemaPtr &schema, const String &end_row, bool end_inclusive,
 
       cell.row_key = key.row;
       cell.column_qualifier = key.column_qualifier;
-      if ((cf = schema->get_column_family(key.column_family_code)) == 0) {
+      if ((cf_spec = schema->get_column_family(key.column_family_code)) == 0) {
         if (key.flag != FLAG_DELETE_ROW)
           HT_THROWF(Error::BAD_KEY, "Unexpected column family code %d",
               (int)key.column_family_code);
         cell.column_family = "";
       }
       else
-        cell.column_family = cf->name.c_str();
+        cell.column_family = cf_spec->get_name().c_str();
 
       cell.timestamp = key.timestamp;
       cell.revision = key.revision;

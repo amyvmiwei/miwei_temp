@@ -31,15 +31,15 @@ void
 create_cell_unique(const TablePtr &table, const KeySpec &key,
                 String &guid)
 {
-  Schema::ColumnFamily *cf;
+  ColumnFamilySpec *cf_spec;
 
   // check the schema - if TIME_ORDER is not descending then this function
   // will not work
-  cf=table->schema()->get_column_family(key.column_family);
-  if (!cf)
+  cf_spec=table->schema()->get_column_family(key.column_family);
+  if (!cf_spec)
     HT_THROW(Error::FAILED_EXPECTATION, 
             "Unknown column family");
-  if (!cf->time_order_desc)
+  if (!cf_spec->get_option_time_order_desc())
     HT_THROW(Error::BAD_SCAN_SPEC, 
             "Column family is not chronological (use TIME_ORDER DESC)");
 

@@ -70,7 +70,7 @@ namespace Hypertable {
     virtual void decode(const uint8_t **bufp, size_t *remainp);
 
     const char *id;
-    uint32_t generation;
+    int64_t generation;
   };
 
   /** Wrapper for TableIdentifier.  Handles name allocation */

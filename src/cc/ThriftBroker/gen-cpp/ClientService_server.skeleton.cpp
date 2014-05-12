@@ -32,22 +32,12 @@ class ClientServiceHandler : virtual public ClientServiceIf {
     printf("create_namespace\n");
   }
 
-  void create_table(const Namespace ns, const std::string& table_name, const std::string& schema) {
-    // Your implementation goes here
-    printf("create_table\n");
-  }
-
-  void table_create(const Namespace ns, const std::string& table_name, const std::string& schema) {
+  void table_create(const Namespace ns, const std::string& table_name, const Schema& schema) {
     // Your implementation goes here
     printf("table_create\n");
   }
 
-  void alter_table(const Namespace ns, const std::string& table_name, const std::string& schema) {
-    // Your implementation goes here
-    printf("alter_table\n");
-  }
-
-  void table_alter(const Namespace ns, const std::string& table_name, const std::string& schema) {
+  void table_alter(const Namespace ns, const std::string& table_name, const Schema& schema) {
     // Your implementation goes here
     printf("table_alter\n");
   }

@@ -28,28 +28,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Describes a schema
+ * Describes a schema.
  * <dl>
- *   <dt>name</dt>
- *   <dd>Name of the access group</dd>
+ *   <dt>access_groups</dt>
+ *   <dd>Map of access groups</dd>
  * 
- *   <dt>in_memory</dt>
- *   <dd>Is this access group in memory</dd>
- * 
- *   <dt>replication</dt>
- *   <dd>Replication factor for this AG</dd>
- * 
- *   <dt>blocksize</dt>
- *   <dd>Specifies blocksize for this AG</dd>
- * 
- *   <dt>compressor</dt>
- *   <dd>Specifies compressor for this AG</dd>
- * 
- *   <dt>bloom_filter</dt>
- *   <dd>Specifies bloom filter type</dd>
- * 
- *   <dt>columns</dt>
- *   <dd>Specifies list of column families in this AG</dd>
+ *   <dt>column_families</dt>
+ *   <dd>Map of column families</dd>
  * </dl>
  */
 public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, java.io.Serializable, Cloneable {
@@ -57,6 +42,11 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
 
   private static final org.apache.thrift.protocol.TField ACCESS_GROUPS_FIELD_DESC = new org.apache.thrift.protocol.TField("access_groups", org.apache.thrift.protocol.TType.MAP, (short)1);
   private static final org.apache.thrift.protocol.TField COLUMN_FAMILIES_FIELD_DESC = new org.apache.thrift.protocol.TField("column_families", org.apache.thrift.protocol.TType.MAP, (short)2);
+  private static final org.apache.thrift.protocol.TField GENERATION_FIELD_DESC = new org.apache.thrift.protocol.TField("generation", org.apache.thrift.protocol.TType.I64, (short)3);
+  private static final org.apache.thrift.protocol.TField VERSION_FIELD_DESC = new org.apache.thrift.protocol.TField("version", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField GROUP_COMMIT_INTERVAL_FIELD_DESC = new org.apache.thrift.protocol.TField("group_commit_interval", org.apache.thrift.protocol.TType.I32, (short)5);
+  private static final org.apache.thrift.protocol.TField ACCESS_GROUP_DEFAULTS_FIELD_DESC = new org.apache.thrift.protocol.TField("access_group_defaults", org.apache.thrift.protocol.TType.STRUCT, (short)6);
+  private static final org.apache.thrift.protocol.TField COLUMN_FAMILY_DEFAULTS_FIELD_DESC = new org.apache.thrift.protocol.TField("column_family_defaults", org.apache.thrift.protocol.TType.STRUCT, (short)7);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -64,13 +54,23 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
     schemes.put(TupleScheme.class, new SchemaTupleSchemeFactory());
   }
 
-  public Map<String,AccessGroup> access_groups; // optional
-  public Map<String,ColumnFamily> column_families; // optional
+  public Map<String,AccessGroupSpec> access_groups; // optional
+  public Map<String,ColumnFamilySpec> column_families; // optional
+  public long generation; // optional
+  public int version; // optional
+  public int group_commit_interval; // optional
+  public AccessGroupOptions access_group_defaults; // optional
+  public ColumnFamilyOptions column_family_defaults; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     ACCESS_GROUPS((short)1, "access_groups"),
-    COLUMN_FAMILIES((short)2, "column_families");
+    COLUMN_FAMILIES((short)2, "column_families"),
+    GENERATION((short)3, "generation"),
+    VERSION((short)4, "version"),
+    GROUP_COMMIT_INTERVAL((short)5, "group_commit_interval"),
+    ACCESS_GROUP_DEFAULTS((short)6, "access_group_defaults"),
+    COLUMN_FAMILY_DEFAULTS((short)7, "column_family_defaults");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -89,6 +89,16 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
           return ACCESS_GROUPS;
         case 2: // COLUMN_FAMILIES
           return COLUMN_FAMILIES;
+        case 3: // GENERATION
+          return GENERATION;
+        case 4: // VERSION
+          return VERSION;
+        case 5: // GROUP_COMMIT_INTERVAL
+          return GROUP_COMMIT_INTERVAL;
+        case 6: // ACCESS_GROUP_DEFAULTS
+          return ACCESS_GROUP_DEFAULTS;
+        case 7: // COLUMN_FAMILY_DEFAULTS
+          return COLUMN_FAMILY_DEFAULTS;
         default:
           return null;
       }
@@ -129,18 +139,32 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
   }
 
   // isset id assignments
-  private _Fields optionals[] = {_Fields.ACCESS_GROUPS,_Fields.COLUMN_FAMILIES};
+  private static final int __GENERATION_ISSET_ID = 0;
+  private static final int __VERSION_ISSET_ID = 1;
+  private static final int __GROUP_COMMIT_INTERVAL_ISSET_ID = 2;
+  private BitSet __isset_bit_vector = new BitSet(3);
+  private _Fields optionals[] = {_Fields.ACCESS_GROUPS,_Fields.COLUMN_FAMILIES,_Fields.GENERATION,_Fields.VERSION,_Fields.GROUP_COMMIT_INTERVAL,_Fields.ACCESS_GROUP_DEFAULTS,_Fields.COLUMN_FAMILY_DEFAULTS};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
     tmpMap.put(_Fields.ACCESS_GROUPS, new org.apache.thrift.meta_data.FieldMetaData("access_groups", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
-            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AccessGroup.class))));
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AccessGroupSpec.class))));
     tmpMap.put(_Fields.COLUMN_FAMILIES, new org.apache.thrift.meta_data.FieldMetaData("column_families", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.MapMetaData(org.apache.thrift.protocol.TType.MAP, 
             new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING), 
-            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ColumnFamily.class))));
+            new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ColumnFamilySpec.class))));
+    tmpMap.put(_Fields.GENERATION, new org.apache.thrift.meta_data.FieldMetaData("generation", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.VERSION, new org.apache.thrift.meta_data.FieldMetaData("version", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.GROUP_COMMIT_INTERVAL, new org.apache.thrift.meta_data.FieldMetaData("group_commit_interval", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.ACCESS_GROUP_DEFAULTS, new org.apache.thrift.meta_data.FieldMetaData("access_group_defaults", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, AccessGroupOptions.class)));
+    tmpMap.put(_Fields.COLUMN_FAMILY_DEFAULTS, new org.apache.thrift.meta_data.FieldMetaData("column_family_defaults", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, ColumnFamilyOptions.class)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(Schema.class, metaDataMap);
   }
@@ -152,35 +176,46 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
    * Performs a deep copy on <i>other</i>.
    */
   public Schema(Schema other) {
+    __isset_bit_vector.clear();
+    __isset_bit_vector.or(other.__isset_bit_vector);
     if (other.isSetAccess_groups()) {
-      Map<String,AccessGroup> __this__access_groups = new HashMap<String,AccessGroup>();
-      for (Map.Entry<String, AccessGroup> other_element : other.access_groups.entrySet()) {
+      Map<String,AccessGroupSpec> __this__access_groups = new HashMap<String,AccessGroupSpec>();
+      for (Map.Entry<String, AccessGroupSpec> other_element : other.access_groups.entrySet()) {
 
         String other_element_key = other_element.getKey();
-        AccessGroup other_element_value = other_element.getValue();
+        AccessGroupSpec other_element_value = other_element.getValue();
 
         String __this__access_groups_copy_key = other_element_key;
 
-        AccessGroup __this__access_groups_copy_value = new AccessGroup(other_element_value);
+        AccessGroupSpec __this__access_groups_copy_value = new AccessGroupSpec(other_element_value);
 
         __this__access_groups.put(__this__access_groups_copy_key, __this__access_groups_copy_value);
       }
       this.access_groups = __this__access_groups;
     }
     if (other.isSetColumn_families()) {
-      Map<String,ColumnFamily> __this__column_families = new HashMap<String,ColumnFamily>();
-      for (Map.Entry<String, ColumnFamily> other_element : other.column_families.entrySet()) {
+      Map<String,ColumnFamilySpec> __this__column_families = new HashMap<String,ColumnFamilySpec>();
+      for (Map.Entry<String, ColumnFamilySpec> other_element : other.column_families.entrySet()) {
 
         String other_element_key = other_element.getKey();
-        ColumnFamily other_element_value = other_element.getValue();
+        ColumnFamilySpec other_element_value = other_element.getValue();
 
         String __this__column_families_copy_key = other_element_key;
 
-        ColumnFamily __this__column_families_copy_value = new ColumnFamily(other_element_value);
+        ColumnFamilySpec __this__column_families_copy_value = new ColumnFamilySpec(other_element_value);
 
         __this__column_families.put(__this__column_families_copy_key, __this__column_families_copy_value);
       }
       this.column_families = __this__column_families;
+    }
+    this.generation = other.generation;
+    this.version = other.version;
+    this.group_commit_interval = other.group_commit_interval;
+    if (other.isSetAccess_group_defaults()) {
+      this.access_group_defaults = new AccessGroupOptions(other.access_group_defaults);
+    }
+    if (other.isSetColumn_family_defaults()) {
+      this.column_family_defaults = new ColumnFamilyOptions(other.column_family_defaults);
     }
   }
 
@@ -192,24 +227,32 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
   public void clear() {
     this.access_groups = null;
     this.column_families = null;
+    setGenerationIsSet(false);
+    this.generation = 0;
+    setVersionIsSet(false);
+    this.version = 0;
+    setGroup_commit_intervalIsSet(false);
+    this.group_commit_interval = 0;
+    this.access_group_defaults = null;
+    this.column_family_defaults = null;
   }
 
   public int getAccess_groupsSize() {
     return (this.access_groups == null) ? 0 : this.access_groups.size();
   }
 
-  public void putToAccess_groups(String key, AccessGroup val) {
+  public void putToAccess_groups(String key, AccessGroupSpec val) {
     if (this.access_groups == null) {
-      this.access_groups = new HashMap<String,AccessGroup>();
+      this.access_groups = new HashMap<String,AccessGroupSpec>();
     }
     this.access_groups.put(key, val);
   }
 
-  public Map<String,AccessGroup> getAccess_groups() {
+  public Map<String,AccessGroupSpec> getAccess_groups() {
     return this.access_groups;
   }
 
-  public Schema setAccess_groups(Map<String,AccessGroup> access_groups) {
+  public Schema setAccess_groups(Map<String,AccessGroupSpec> access_groups) {
     this.access_groups = access_groups;
     return this;
   }
@@ -233,18 +276,18 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
     return (this.column_families == null) ? 0 : this.column_families.size();
   }
 
-  public void putToColumn_families(String key, ColumnFamily val) {
+  public void putToColumn_families(String key, ColumnFamilySpec val) {
     if (this.column_families == null) {
-      this.column_families = new HashMap<String,ColumnFamily>();
+      this.column_families = new HashMap<String,ColumnFamilySpec>();
     }
     this.column_families.put(key, val);
   }
 
-  public Map<String,ColumnFamily> getColumn_families() {
+  public Map<String,ColumnFamilySpec> getColumn_families() {
     return this.column_families;
   }
 
-  public Schema setColumn_families(Map<String,ColumnFamily> column_families) {
+  public Schema setColumn_families(Map<String,ColumnFamilySpec> column_families) {
     this.column_families = column_families;
     return this;
   }
@@ -264,13 +307,130 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
     }
   }
 
+  public long getGeneration() {
+    return this.generation;
+  }
+
+  public Schema setGeneration(long generation) {
+    this.generation = generation;
+    setGenerationIsSet(true);
+    return this;
+  }
+
+  public void unsetGeneration() {
+    __isset_bit_vector.clear(__GENERATION_ISSET_ID);
+  }
+
+  /** Returns true if field generation is set (has been assigned a value) and false otherwise */
+  public boolean isSetGeneration() {
+    return __isset_bit_vector.get(__GENERATION_ISSET_ID);
+  }
+
+  public void setGenerationIsSet(boolean value) {
+    __isset_bit_vector.set(__GENERATION_ISSET_ID, value);
+  }
+
+  public int getVersion() {
+    return this.version;
+  }
+
+  public Schema setVersion(int version) {
+    this.version = version;
+    setVersionIsSet(true);
+    return this;
+  }
+
+  public void unsetVersion() {
+    __isset_bit_vector.clear(__VERSION_ISSET_ID);
+  }
+
+  /** Returns true if field version is set (has been assigned a value) and false otherwise */
+  public boolean isSetVersion() {
+    return __isset_bit_vector.get(__VERSION_ISSET_ID);
+  }
+
+  public void setVersionIsSet(boolean value) {
+    __isset_bit_vector.set(__VERSION_ISSET_ID, value);
+  }
+
+  public int getGroup_commit_interval() {
+    return this.group_commit_interval;
+  }
+
+  public Schema setGroup_commit_interval(int group_commit_interval) {
+    this.group_commit_interval = group_commit_interval;
+    setGroup_commit_intervalIsSet(true);
+    return this;
+  }
+
+  public void unsetGroup_commit_interval() {
+    __isset_bit_vector.clear(__GROUP_COMMIT_INTERVAL_ISSET_ID);
+  }
+
+  /** Returns true if field group_commit_interval is set (has been assigned a value) and false otherwise */
+  public boolean isSetGroup_commit_interval() {
+    return __isset_bit_vector.get(__GROUP_COMMIT_INTERVAL_ISSET_ID);
+  }
+
+  public void setGroup_commit_intervalIsSet(boolean value) {
+    __isset_bit_vector.set(__GROUP_COMMIT_INTERVAL_ISSET_ID, value);
+  }
+
+  public AccessGroupOptions getAccess_group_defaults() {
+    return this.access_group_defaults;
+  }
+
+  public Schema setAccess_group_defaults(AccessGroupOptions access_group_defaults) {
+    this.access_group_defaults = access_group_defaults;
+    return this;
+  }
+
+  public void unsetAccess_group_defaults() {
+    this.access_group_defaults = null;
+  }
+
+  /** Returns true if field access_group_defaults is set (has been assigned a value) and false otherwise */
+  public boolean isSetAccess_group_defaults() {
+    return this.access_group_defaults != null;
+  }
+
+  public void setAccess_group_defaultsIsSet(boolean value) {
+    if (!value) {
+      this.access_group_defaults = null;
+    }
+  }
+
+  public ColumnFamilyOptions getColumn_family_defaults() {
+    return this.column_family_defaults;
+  }
+
+  public Schema setColumn_family_defaults(ColumnFamilyOptions column_family_defaults) {
+    this.column_family_defaults = column_family_defaults;
+    return this;
+  }
+
+  public void unsetColumn_family_defaults() {
+    this.column_family_defaults = null;
+  }
+
+  /** Returns true if field column_family_defaults is set (has been assigned a value) and false otherwise */
+  public boolean isSetColumn_family_defaults() {
+    return this.column_family_defaults != null;
+  }
+
+  public void setColumn_family_defaultsIsSet(boolean value) {
+    if (!value) {
+      this.column_family_defaults = null;
+    }
+  }
+
   public void setFieldValue(_Fields field, Object value) {
     switch (field) {
     case ACCESS_GROUPS:
       if (value == null) {
         unsetAccess_groups();
       } else {
-        setAccess_groups((Map<String,AccessGroup>)value);
+        setAccess_groups((Map<String,AccessGroupSpec>)value);
       }
       break;
 
@@ -278,7 +438,47 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
       if (value == null) {
         unsetColumn_families();
       } else {
-        setColumn_families((Map<String,ColumnFamily>)value);
+        setColumn_families((Map<String,ColumnFamilySpec>)value);
+      }
+      break;
+
+    case GENERATION:
+      if (value == null) {
+        unsetGeneration();
+      } else {
+        setGeneration((Long)value);
+      }
+      break;
+
+    case VERSION:
+      if (value == null) {
+        unsetVersion();
+      } else {
+        setVersion((Integer)value);
+      }
+      break;
+
+    case GROUP_COMMIT_INTERVAL:
+      if (value == null) {
+        unsetGroup_commit_interval();
+      } else {
+        setGroup_commit_interval((Integer)value);
+      }
+      break;
+
+    case ACCESS_GROUP_DEFAULTS:
+      if (value == null) {
+        unsetAccess_group_defaults();
+      } else {
+        setAccess_group_defaults((AccessGroupOptions)value);
+      }
+      break;
+
+    case COLUMN_FAMILY_DEFAULTS:
+      if (value == null) {
+        unsetColumn_family_defaults();
+      } else {
+        setColumn_family_defaults((ColumnFamilyOptions)value);
       }
       break;
 
@@ -292,6 +492,21 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
 
     case COLUMN_FAMILIES:
       return getColumn_families();
+
+    case GENERATION:
+      return Long.valueOf(getGeneration());
+
+    case VERSION:
+      return Integer.valueOf(getVersion());
+
+    case GROUP_COMMIT_INTERVAL:
+      return Integer.valueOf(getGroup_commit_interval());
+
+    case ACCESS_GROUP_DEFAULTS:
+      return getAccess_group_defaults();
+
+    case COLUMN_FAMILY_DEFAULTS:
+      return getColumn_family_defaults();
 
     }
     throw new IllegalStateException();
@@ -308,6 +523,16 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
       return isSetAccess_groups();
     case COLUMN_FAMILIES:
       return isSetColumn_families();
+    case GENERATION:
+      return isSetGeneration();
+    case VERSION:
+      return isSetVersion();
+    case GROUP_COMMIT_INTERVAL:
+      return isSetGroup_commit_interval();
+    case ACCESS_GROUP_DEFAULTS:
+      return isSetAccess_group_defaults();
+    case COLUMN_FAMILY_DEFAULTS:
+      return isSetColumn_family_defaults();
     }
     throw new IllegalStateException();
   }
@@ -343,6 +568,51 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
         return false;
     }
 
+    boolean this_present_generation = true && this.isSetGeneration();
+    boolean that_present_generation = true && that.isSetGeneration();
+    if (this_present_generation || that_present_generation) {
+      if (!(this_present_generation && that_present_generation))
+        return false;
+      if (this.generation != that.generation)
+        return false;
+    }
+
+    boolean this_present_version = true && this.isSetVersion();
+    boolean that_present_version = true && that.isSetVersion();
+    if (this_present_version || that_present_version) {
+      if (!(this_present_version && that_present_version))
+        return false;
+      if (this.version != that.version)
+        return false;
+    }
+
+    boolean this_present_group_commit_interval = true && this.isSetGroup_commit_interval();
+    boolean that_present_group_commit_interval = true && that.isSetGroup_commit_interval();
+    if (this_present_group_commit_interval || that_present_group_commit_interval) {
+      if (!(this_present_group_commit_interval && that_present_group_commit_interval))
+        return false;
+      if (this.group_commit_interval != that.group_commit_interval)
+        return false;
+    }
+
+    boolean this_present_access_group_defaults = true && this.isSetAccess_group_defaults();
+    boolean that_present_access_group_defaults = true && that.isSetAccess_group_defaults();
+    if (this_present_access_group_defaults || that_present_access_group_defaults) {
+      if (!(this_present_access_group_defaults && that_present_access_group_defaults))
+        return false;
+      if (!this.access_group_defaults.equals(that.access_group_defaults))
+        return false;
+    }
+
+    boolean this_present_column_family_defaults = true && this.isSetColumn_family_defaults();
+    boolean that_present_column_family_defaults = true && that.isSetColumn_family_defaults();
+    if (this_present_column_family_defaults || that_present_column_family_defaults) {
+      if (!(this_present_column_family_defaults && that_present_column_family_defaults))
+        return false;
+      if (!this.column_family_defaults.equals(that.column_family_defaults))
+        return false;
+    }
+
     return true;
   }
 
@@ -375,6 +645,56 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
     }
     if (isSetColumn_families()) {
       lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.column_families, typedOther.column_families);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetGeneration()).compareTo(typedOther.isSetGeneration());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetGeneration()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.generation, typedOther.generation);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetVersion()).compareTo(typedOther.isSetVersion());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetVersion()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.version, typedOther.version);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetGroup_commit_interval()).compareTo(typedOther.isSetGroup_commit_interval());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetGroup_commit_interval()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.group_commit_interval, typedOther.group_commit_interval);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetAccess_group_defaults()).compareTo(typedOther.isSetAccess_group_defaults());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetAccess_group_defaults()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.access_group_defaults, typedOther.access_group_defaults);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetColumn_family_defaults()).compareTo(typedOther.isSetColumn_family_defaults());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetColumn_family_defaults()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.column_family_defaults, typedOther.column_family_defaults);
       if (lastComparison != 0) {
         return lastComparison;
       }
@@ -418,6 +738,44 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
       }
       first = false;
     }
+    if (isSetGeneration()) {
+      if (!first) sb.append(", ");
+      sb.append("generation:");
+      sb.append(this.generation);
+      first = false;
+    }
+    if (isSetVersion()) {
+      if (!first) sb.append(", ");
+      sb.append("version:");
+      sb.append(this.version);
+      first = false;
+    }
+    if (isSetGroup_commit_interval()) {
+      if (!first) sb.append(", ");
+      sb.append("group_commit_interval:");
+      sb.append(this.group_commit_interval);
+      first = false;
+    }
+    if (isSetAccess_group_defaults()) {
+      if (!first) sb.append(", ");
+      sb.append("access_group_defaults:");
+      if (this.access_group_defaults == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.access_group_defaults);
+      }
+      first = false;
+    }
+    if (isSetColumn_family_defaults()) {
+      if (!first) sb.append(", ");
+      sb.append("column_family_defaults:");
+      if (this.column_family_defaults == null) {
+        sb.append("null");
+      } else {
+        sb.append(this.column_family_defaults);
+      }
+      first = false;
+    }
     sb.append(")");
     return sb.toString();
   }
@@ -436,6 +794,8 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
 
   private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
     try {
+      // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+      __isset_bit_vector = new BitSet(1);
       read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
     } catch (org.apache.thrift.TException te) {
       throw new java.io.IOException(te);
@@ -463,16 +823,16 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
           case 1: // ACCESS_GROUPS
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                org.apache.thrift.protocol.TMap _map64 = iprot.readMapBegin();
-                struct.access_groups = new HashMap<String,AccessGroup>(2*_map64.size);
-                for (int _i65 = 0; _i65 < _map64.size; ++_i65)
+                org.apache.thrift.protocol.TMap _map56 = iprot.readMapBegin();
+                struct.access_groups = new HashMap<String,AccessGroupSpec>(2*_map56.size);
+                for (int _i57 = 0; _i57 < _map56.size; ++_i57)
                 {
-                  String _key66; // required
-                  AccessGroup _val67; // required
-                  _key66 = iprot.readString();
-                  _val67 = new AccessGroup();
-                  _val67.read(iprot);
-                  struct.access_groups.put(_key66, _val67);
+                  String _key58; // required
+                  AccessGroupSpec _val59; // required
+                  _key58 = iprot.readString();
+                  _val59 = new AccessGroupSpec();
+                  _val59.read(iprot);
+                  struct.access_groups.put(_key58, _val59);
                 }
                 iprot.readMapEnd();
               }
@@ -484,20 +844,62 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
           case 2: // COLUMN_FAMILIES
             if (schemeField.type == org.apache.thrift.protocol.TType.MAP) {
               {
-                org.apache.thrift.protocol.TMap _map68 = iprot.readMapBegin();
-                struct.column_families = new HashMap<String,ColumnFamily>(2*_map68.size);
-                for (int _i69 = 0; _i69 < _map68.size; ++_i69)
+                org.apache.thrift.protocol.TMap _map60 = iprot.readMapBegin();
+                struct.column_families = new HashMap<String,ColumnFamilySpec>(2*_map60.size);
+                for (int _i61 = 0; _i61 < _map60.size; ++_i61)
                 {
-                  String _key70; // required
-                  ColumnFamily _val71; // required
-                  _key70 = iprot.readString();
-                  _val71 = new ColumnFamily();
-                  _val71.read(iprot);
-                  struct.column_families.put(_key70, _val71);
+                  String _key62; // required
+                  ColumnFamilySpec _val63; // required
+                  _key62 = iprot.readString();
+                  _val63 = new ColumnFamilySpec();
+                  _val63.read(iprot);
+                  struct.column_families.put(_key62, _val63);
                 }
                 iprot.readMapEnd();
               }
               struct.setColumn_familiesIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 3: // GENERATION
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.generation = iprot.readI64();
+              struct.setGenerationIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 4: // VERSION
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.version = iprot.readI32();
+              struct.setVersionIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 5: // GROUP_COMMIT_INTERVAL
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.group_commit_interval = iprot.readI32();
+              struct.setGroup_commit_intervalIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 6: // ACCESS_GROUP_DEFAULTS
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+              struct.access_group_defaults = new AccessGroupOptions();
+              struct.access_group_defaults.read(iprot);
+              struct.setAccess_group_defaultsIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 7: // COLUMN_FAMILY_DEFAULTS
+            if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+              struct.column_family_defaults = new ColumnFamilyOptions();
+              struct.column_family_defaults.read(iprot);
+              struct.setColumn_family_defaultsIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -522,10 +924,10 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
           oprot.writeFieldBegin(ACCESS_GROUPS_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.access_groups.size()));
-            for (Map.Entry<String, AccessGroup> _iter72 : struct.access_groups.entrySet())
+            for (Map.Entry<String, AccessGroupSpec> _iter64 : struct.access_groups.entrySet())
             {
-              oprot.writeString(_iter72.getKey());
-              _iter72.getValue().write(oprot);
+              oprot.writeString(_iter64.getKey());
+              _iter64.getValue().write(oprot);
             }
             oprot.writeMapEnd();
           }
@@ -537,13 +939,42 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
           oprot.writeFieldBegin(COLUMN_FAMILIES_FIELD_DESC);
           {
             oprot.writeMapBegin(new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, struct.column_families.size()));
-            for (Map.Entry<String, ColumnFamily> _iter73 : struct.column_families.entrySet())
+            for (Map.Entry<String, ColumnFamilySpec> _iter65 : struct.column_families.entrySet())
             {
-              oprot.writeString(_iter73.getKey());
-              _iter73.getValue().write(oprot);
+              oprot.writeString(_iter65.getKey());
+              _iter65.getValue().write(oprot);
             }
             oprot.writeMapEnd();
           }
+          oprot.writeFieldEnd();
+        }
+      }
+      if (struct.isSetGeneration()) {
+        oprot.writeFieldBegin(GENERATION_FIELD_DESC);
+        oprot.writeI64(struct.generation);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetVersion()) {
+        oprot.writeFieldBegin(VERSION_FIELD_DESC);
+        oprot.writeI32(struct.version);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetGroup_commit_interval()) {
+        oprot.writeFieldBegin(GROUP_COMMIT_INTERVAL_FIELD_DESC);
+        oprot.writeI32(struct.group_commit_interval);
+        oprot.writeFieldEnd();
+      }
+      if (struct.access_group_defaults != null) {
+        if (struct.isSetAccess_group_defaults()) {
+          oprot.writeFieldBegin(ACCESS_GROUP_DEFAULTS_FIELD_DESC);
+          struct.access_group_defaults.write(oprot);
+          oprot.writeFieldEnd();
+        }
+      }
+      if (struct.column_family_defaults != null) {
+        if (struct.isSetColumn_family_defaults()) {
+          oprot.writeFieldBegin(COLUMN_FAMILY_DEFAULTS_FIELD_DESC);
+          struct.column_family_defaults.write(oprot);
           oprot.writeFieldEnd();
         }
       }
@@ -571,64 +1002,116 @@ public class Schema implements org.apache.thrift.TBase<Schema, Schema._Fields>, 
       if (struct.isSetColumn_families()) {
         optionals.set(1);
       }
-      oprot.writeBitSet(optionals, 2);
+      if (struct.isSetGeneration()) {
+        optionals.set(2);
+      }
+      if (struct.isSetVersion()) {
+        optionals.set(3);
+      }
+      if (struct.isSetGroup_commit_interval()) {
+        optionals.set(4);
+      }
+      if (struct.isSetAccess_group_defaults()) {
+        optionals.set(5);
+      }
+      if (struct.isSetColumn_family_defaults()) {
+        optionals.set(6);
+      }
+      oprot.writeBitSet(optionals, 7);
       if (struct.isSetAccess_groups()) {
         {
           oprot.writeI32(struct.access_groups.size());
-          for (Map.Entry<String, AccessGroup> _iter74 : struct.access_groups.entrySet())
+          for (Map.Entry<String, AccessGroupSpec> _iter66 : struct.access_groups.entrySet())
           {
-            oprot.writeString(_iter74.getKey());
-            _iter74.getValue().write(oprot);
+            oprot.writeString(_iter66.getKey());
+            _iter66.getValue().write(oprot);
           }
         }
       }
       if (struct.isSetColumn_families()) {
         {
           oprot.writeI32(struct.column_families.size());
-          for (Map.Entry<String, ColumnFamily> _iter75 : struct.column_families.entrySet())
+          for (Map.Entry<String, ColumnFamilySpec> _iter67 : struct.column_families.entrySet())
           {
-            oprot.writeString(_iter75.getKey());
-            _iter75.getValue().write(oprot);
+            oprot.writeString(_iter67.getKey());
+            _iter67.getValue().write(oprot);
           }
         }
+      }
+      if (struct.isSetGeneration()) {
+        oprot.writeI64(struct.generation);
+      }
+      if (struct.isSetVersion()) {
+        oprot.writeI32(struct.version);
+      }
+      if (struct.isSetGroup_commit_interval()) {
+        oprot.writeI32(struct.group_commit_interval);
+      }
+      if (struct.isSetAccess_group_defaults()) {
+        struct.access_group_defaults.write(oprot);
+      }
+      if (struct.isSetColumn_family_defaults()) {
+        struct.column_family_defaults.write(oprot);
       }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, Schema struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(2);
+      BitSet incoming = iprot.readBitSet(7);
       if (incoming.get(0)) {
         {
-          org.apache.thrift.protocol.TMap _map76 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.access_groups = new HashMap<String,AccessGroup>(2*_map76.size);
-          for (int _i77 = 0; _i77 < _map76.size; ++_i77)
+          org.apache.thrift.protocol.TMap _map68 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.access_groups = new HashMap<String,AccessGroupSpec>(2*_map68.size);
+          for (int _i69 = 0; _i69 < _map68.size; ++_i69)
           {
-            String _key78; // required
-            AccessGroup _val79; // required
-            _key78 = iprot.readString();
-            _val79 = new AccessGroup();
-            _val79.read(iprot);
-            struct.access_groups.put(_key78, _val79);
+            String _key70; // required
+            AccessGroupSpec _val71; // required
+            _key70 = iprot.readString();
+            _val71 = new AccessGroupSpec();
+            _val71.read(iprot);
+            struct.access_groups.put(_key70, _val71);
           }
         }
         struct.setAccess_groupsIsSet(true);
       }
       if (incoming.get(1)) {
         {
-          org.apache.thrift.protocol.TMap _map80 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-          struct.column_families = new HashMap<String,ColumnFamily>(2*_map80.size);
-          for (int _i81 = 0; _i81 < _map80.size; ++_i81)
+          org.apache.thrift.protocol.TMap _map72 = new org.apache.thrift.protocol.TMap(org.apache.thrift.protocol.TType.STRING, org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+          struct.column_families = new HashMap<String,ColumnFamilySpec>(2*_map72.size);
+          for (int _i73 = 0; _i73 < _map72.size; ++_i73)
           {
-            String _key82; // required
-            ColumnFamily _val83; // required
-            _key82 = iprot.readString();
-            _val83 = new ColumnFamily();
-            _val83.read(iprot);
-            struct.column_families.put(_key82, _val83);
+            String _key74; // required
+            ColumnFamilySpec _val75; // required
+            _key74 = iprot.readString();
+            _val75 = new ColumnFamilySpec();
+            _val75.read(iprot);
+            struct.column_families.put(_key74, _val75);
           }
         }
         struct.setColumn_familiesIsSet(true);
+      }
+      if (incoming.get(2)) {
+        struct.generation = iprot.readI64();
+        struct.setGenerationIsSet(true);
+      }
+      if (incoming.get(3)) {
+        struct.version = iprot.readI32();
+        struct.setVersionIsSet(true);
+      }
+      if (incoming.get(4)) {
+        struct.group_commit_interval = iprot.readI32();
+        struct.setGroup_commit_intervalIsSet(true);
+      }
+      if (incoming.get(5)) {
+        struct.access_group_defaults = new AccessGroupOptions();
+        struct.access_group_defaults.read(iprot);
+        struct.setAccess_group_defaultsIsSet(true);
+      }
+      if (incoming.get(6)) {
+        struct.column_family_defaults = new ColumnFamilyOptions();
+        struct.column_family_defaults.read(iprot);
+        struct.setColumn_family_defaultsIsSet(true);
       }
     }
   }

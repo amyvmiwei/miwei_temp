@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -21,8 +21,8 @@
 
 /// @file
 /// Declarations for Schema.
-/// This file contains type declarations for Context, a class abstraction for a
-/// table schema.
+/// This file contains type declarations for Schema, a class representing a
+/// table schema specification.
 
 #ifndef Hypertable_Lib_Schema_h
 #define Hypertable_Lib_Schema_h
@@ -31,212 +31,413 @@
 #include <Common/ReferenceCount.h>
 #include <Common/Properties.h>
 
+#include <Hypertable/Lib/AccessGroupSpec.h>
+#include <Hypertable/Lib/ColumnFamilySpec.h>
+
+#include <expat.h>
+
+#include <bitset>
 #include <list>
 #include <unordered_map>
 #include <vector>
-
-#include <expat.h>
 
 namespace Hypertable {
 
   /// @addtogroup libHypertable
   /// @{
 
-  enum BloomFilterMode {
-    BLOOM_FILTER_DISABLED,
-    BLOOM_FILTER_ROWS,
-    BLOOM_FILTER_ROWS_COLS
-  };
-
-  /// %Table schema abstraction
+  /// %Schema specification.
   class Schema : public ReferenceCount {
   public:
 
-    /// Column family abstraction
-    struct ColumnFamily {
-      String   name;
-      String   ag;
-      uint32_t id {};
-      uint32_t max_versions {};
-      time_t   ttl {};
-      uint32_t generation {};
-      String new_name;
-      bool has_index {};
-      bool has_qualifier_index {};
-      bool time_order_desc {};
-      bool time_order_desc_set {};
-      bool deleted {};
-      bool renamed {};
-      bool counter {};
-      bool modification {};
-    };
-
-    typedef std::vector<ColumnFamily *> ColumnFamilies;
-
-    /// Access group abstraction
-    struct AccessGroup {
-      String   name;
-      int16_t  replication {-1};
-      uint32_t blocksize {};
-      String compressor;
-      String bloom_filter;
-      ColumnFamilies columns;
-      bool in_memory {};
-      bool counter {};
-      bool modification {};
-    };
-
-    typedef std::vector<AccessGroup *> AccessGroups;
-
     /// Default constructor.
-    Schema() {}
+    Schema() : m_counter_mask(256) {}
 
     /// Copy constructor.
-    /// @param src_schema Source schema
-    Schema(const Schema &src_schema);
+    /// Copies contents of <code>other</code> schema into this one and then
+    /// calls validate().
+    /// @param other Other schema from which to copy
+    Schema(const Schema &other);
 
     /// Destructor.
-    /// Deletes all access groups and column families from #m_access_groups and
-    /// #m_column_families, respectively.
+    /// Deletes all access group specifications in #m_access_groups
     ~Schema();
 
-    static Schema *new_instance(const String &buf, int len);
+    /// Clears generation values.
+    /// Sets #m_generation to 0 and sets the generation value of all column
+    /// families within all access groups to 0.
+    void clear_generation();
 
-    /// Creates schema object from XML schema string.
-    /// @param buf Buffer holding XML schema string.
-    /// @return Pointer to newly allocated Schema object.
-    static Schema *new_instance(const String &buf) {
-      return new_instance(buf, buf.size());
+    /// Clears generation if different than <code>original</code>.
+    /// Compares this object with <code>original</code> and if then differ, sets
+    /// #m_generation to 0 and returns <i>true</i>.  Comparison of each member
+    /// access group is compared with
+    /// AccessGroupSpec::clear_generation_if_changed() causing the access
+    /// group spec's generation to be set to 0 if they differ.
+    /// @param original Original schema with which to compare
+    /// @return <i>true</i> if this object differs from <code>original</code>,
+    /// <i>false</i> otherwise.
+    bool clear_generation_if_changed(Schema &original);
+
+    /// Updates generation and assigns column family IDs.
+    /// For each column family specification that has a generation value of
+    /// zero, its generation is set to <code>generation</code>, and if its ID is
+    /// also zero, it is assigned an ID that is one larger than the maximum
+    /// column family ID of all of the column families.  If any column family
+    /// was assigned the new generation value, <code>generation</code>, then
+    /// #m_generation is also set to <code>generation</code>.  Lastly,
+    /// validate() is called.
+    /// @param generation New generation
+    void update_generation(int64_t generation);
+
+    /** Renders schema in XML format.
+     * The name of the toplevel element of the output is <i>%Schema</i> and
+     * contains the following child elements:
+     * <table>
+     * <tr>
+     * <th>Element</th>
+     * <th>Description</th>
+     * </tr>
+     * <tr>
+     * <td>Generation</td>
+     * <td>Generation number</td>
+     * </tr>
+     * <tr>
+     * <td>GroupCommitInterval</td>
+     * <td>Group commit interval</td>
+     * </tr>
+     * <tr>
+     * <td>AccessGroupDefaults</td>
+     * <td>Default access group options</td>
+     * </tr>
+     * <tr>
+     * <td>ColumnFamilyDefaults</td>
+     * <td>Default column family options</td>
+     * </tr>
+     * <tr>
+     * <td>%AccessGroup</td>
+     * <td>Access group specification (see AccessGroupSpec::render_xml())</td>
+     * </tr>
+     * </table>
+     * The following is example output produced by this member function.
+     * @verbatim
+     <Schema>
+       <Generation>42</Generation>
+       <GroupCommitInterval>100</GroupCommitInterval>
+       <AccessGroupDefaults>
+         <BlockSize>65000</BlockSize>
+       </AccessGroupDefaults>
+       <ColumnFamilyDefaults>
+       </ColumnFamilyDefaults>
+       <AccessGroup name="default">
+         <Options>
+           <BlockSize>65000</BlockSize>
+         </Options>
+         <ColumnFamilyDefaults>
+         </ColumnFamilyDefaults>
+         <ColumnFamily id="1">
+           <Generation>42</Generation>
+           <Name>actions</Name>
+           <AccessGroup>default</AccessGroup>
+           <Deleted>false</Deleted>
+           <Options>
+             <MaxVersions>3</MaxVersions>
+             <TTL>2592000</TTL>
+           </Options>
+         </ColumnFamily>
+       </AccessGroup>
+       <AccessGroup name="meta">
+         <Options>
+           <BlockSize>65000</BlockSize>
+         </Options>
+         <ColumnFamilyDefaults>
+           <MaxVersions>2</MaxVersions>
+         </ColumnFamilyDefaults>
+         <ColumnFamily id="2">
+           <Generation>42</Generation>
+           <Name>language</Name>
+           <AccessGroup>meta</AccessGroup>
+           <Deleted>false</Deleted>
+           <Options>
+             <MaxVersions>2</MaxVersions>
+           </Options>
+         </ColumnFamily>
+         <ColumnFamily id="3">
+           <Generation>42</Generation>
+           <Name>checksum</Name>
+           <AccessGroup>meta</AccessGroup>
+           <Deleted>false</Deleted>
+           <Options>
+             <MaxVersions>1</MaxVersions>
+           </Options>
+         </ColumnFamily>
+       </AccessGroup>
+     </Schema>
+     @endverbatim
+     * @param with_ids Include generation and column IDs in output
+     * @return %String representation of schema in XML format
+     */
+    const std::string render_xml(bool with_ids=false);
+
+    /// Renders schema as HQL <code>CREATE TABLE</code> statement.
+    /// The following is example output produced by this member function with
+    /// "MyTable" passed in as <code>table_name</code>.
+    /// <pre>
+    /// CREATE TABLE MyTable (
+    ///   actions MAX_VERSIONS 3 TTL 2592000,
+    ///   language MAX_VERSIONS 2,
+    ///   checksum MAX_VERSIONS 1,
+    ///   ACCESS GROUP default (actions) BLOCKSIZE 65000,
+    ///   ACCESS GROUP meta (language, checksum) BLOCKSIZE 65000 MAX_VERSIONS 2
+    /// ) GROUP_COMMIT_INTERVAL 200 BLOCKSIZE 65000
+    /// </pre>
+    /// @param table_name Name of table
+    /// @return %String representation of schema as HQL
+    /// <code>CREATE TABLE</code> statement.
+    const std::string render_hql(const String &table_name);
+
+    /// Gets generation.
+    /// Returns the value of #m_generation.
+    /// @returns Generation
+    int64_t get_generation() const { return m_generation; }
+
+    /// Sets generation.
+    /// Sets #m_generation to <code>generation</code>
+    /// @param generation New generation value
+    void set_generation(int64_t generation) { m_generation = generation; }
+
+    /// Gets version number.
+    /// Returns the value of #m_version.
+    /// @returns Version Number
+    int32_t get_version() const { return m_version; }
+
+    /// Sets version number.
+    /// Sets #m_version to <code>version</code>
+    /// @param version New version number
+    void set_version(int32_t version) { m_version = version; }
+
+    /// Gets the maximum column family ID.
+    /// @return Maximum column family ID.
+    int32_t get_max_column_family_id();
+
+    /// Returns reference to access group vector.
+    /// @return Reference to access group vector.
+    AccessGroupSpecs &get_access_groups() { return m_access_groups; }
+
+    /// Gets an access group specification given its name.
+    /// Searches #m_access_group_map for the access group named
+    /// <code>name</code>, returning it if it exists or nullptr if it does not.
+    /// @param name Name of access group to return
+    /// @return Access group specification corresponding to <code>name</code>,
+    /// or nullptr if it does not exist.
+    AccessGroupSpec *get_access_group(const String &name) {
+      auto iter = m_access_group_map.find(name);
+      if (iter != m_access_group_map.end())
+        return iter->second;
+      return nullptr;
     }
 
-    static void parse_compressor(const String &spec, PropertiesPtr &);
-    void validate_compressor(const String &spec);
-    static const PropertiesDesc &compressor_spec_desc();
+    /// Returns reference to column family vector.
+    /// @return Reference to column family vector.
+    ColumnFamilySpecs &get_column_families() { return m_column_families; }
 
-    static void parse_bloom_filter(const String &spec, PropertiesPtr &);
-    void validate_bloom_filter(const String &spec);
-    static const PropertiesDesc &bloom_filter_spec_desc();
-
-    void open_access_group();
-    void close_access_group();
-    void open_column_family();
-    void close_column_family();
-    void set_access_group_parameter(const char *param, const char *value);
-    void set_column_family_parameter(const char *param, const char *value);
-
-    void assign_ids();
-    bool need_id_assignment() { return m_need_id_assignment; }
-
-    void render(String &output, bool with_ids=false);
-
-    void render_hql_create_table(const String &table_name, String &output);
-
-    bool is_valid();
-
-    const char *get_error_string() {
-      return (m_error_string.length() == 0) ? 0 : m_error_string.c_str();
+    /// Gets a column family specification given its name.
+    /// Searches #m_column_family_map for the column family named
+    /// <code>name</code>, returning it if it exists or nullptr if it does not.
+    /// @param name Name of column family to return
+    /// @return %Column family specification corresponding to <code>name</code>,
+    /// or nullptr if it does not exist.
+    ColumnFamilySpec *get_column_family(const String &name) {
+      auto iter = m_column_family_map.find(name);
+      if (iter != m_column_family_map.end())
+        return iter->second;
+      return nullptr;
     }
 
-    void set_error_string(const String &errstr) {
-      if (m_error_string.length() == 0)
-        m_error_string = errstr;
-    }
+    /// Removes column family.
+    /// Removes column family named <code>name</code> from #m_column_family_map.
+    /// If column family ID is non-zero, then the column family is removed from
+    /// #m_column_family_id_map and the corresponding entry in #m_counter_mask
+    /// is set to false.  If column family exists in #m_column_family_map, then
+    /// it is returned, otherwise, nullptr is returned.
+    /// @param name Name of column family to remove
+    /// @return Removed column family
+    ColumnFamilySpec *remove_column_family(const String &name);
 
-    void incr_generation() { m_generation++; }
-    void set_generation(const char *generation);
-    void set_version(const char *version_str);
-    void set_max_column_family_id(const char *generation);
-    uint32_t get_generation() const { return m_generation; }
-    uint32_t get_version() const { return m_version; }
-
-    size_t get_max_column_family_id() { return m_max_column_family_id; }
-    void incr_max_column_family_id() {++m_max_column_family_id; }
-
-    AccessGroups &
-    get_access_groups() { return m_access_groups; }
-
-    AccessGroup *
-    get_access_group(const String &name) { return m_access_group_map[name]; }
-
-    ColumnFamilies &
-    get_column_families() { return m_column_families; }
-
-    ColumnFamily *
-    get_column_family(const String &name, bool get_deleted=false) {
-      ColumnFamilyMap::iterator iter = m_column_family_map.find(name);
-      if (iter != m_column_family_map.end()) {
-        if (get_deleted || iter->second->deleted == false)
-          return (iter->second);
-      }
-      return (ColumnFamily*) 0;
-    }
-
-    ColumnFamily *
-    get_column_family(uint32_t id, bool get_deleted=false) {
-      ColumnFamilyIdMap::iterator iter = m_column_family_id_map.find(id);
+    /// Gets a column family specification given its ID.
+    /// Searches #m_column_family_id_map for the column family with ID
+    /// <code>id</code>, returning it if it exists and is not deleted or
+    /// <code>get_deleted</code> is <i>true</i>.  Otherwise, nullptr is
+    /// returned.
+    /// @param id %Column family ID of specification to fetch
+    /// @param get_deleted Return specification even if it is deleted
+    /// @return %Column family specification with ID <code>id</code>
+    /// if it exists and it is not deleted or <code>get_deleted</code> is
+    /// <i>true</i>.  Otherwise, nullptr is returned.
+    ColumnFamilySpec *get_column_family(int32_t id, bool get_deleted=false) {
+      auto iter = m_column_family_id_map.find(id);
       if (iter != m_column_family_id_map.end()) {
-        if (get_deleted || iter->second->deleted==false)
+        if (get_deleted || iter->second->get_deleted() == false)
           return (iter->second);
       }
-      return (ColumnFamily*) 0;
+      return nullptr;
     }
 
-    bool access_group_exists(const String &ag_name) const;
-    bool add_access_group(AccessGroup *ag);
+    /// Adds access group specification.
+    /// Merges access group defaults (#m_ag_defaults) into <code>ag</code> and
+    /// merges column family defaults (#m_cf_defaults) into each of its column
+    /// family specs.  Pushes <code>ag</code> onto the end of #m_access_groups
+    /// and inserts it into #m_access_group_map.  
+    /// @param ag Access group specification
+    /// @throws Exception with code set to Error::TOO_MANY_COLUMNS if added
+    /// access group pushes the number of column families past the maximum, or
+    /// Error::BAD_SCHEMA if access group or any of its colums already exist.
+    void add_access_group(AccessGroupSpec *ag);
 
-    bool column_family_exists(uint32_t id, bool get_deleted = false) const;
-    bool add_column_family(ColumnFamily *cf);
-    bool drop_column_family(const String& name);
-    bool rename_column_family(const String& old_name, const String& new_name);
+    /// Replaces access group specification.
+    /// Removes access group specification with the same name as the name of
+    /// <code>new_ag</code> from #m_access_groups and then adds
+    /// <code>new_ag</code> with a call to add_access_group().
+    /// @param new_ag Replacement access group specification
+    /// @return Old access group specification
+    AccessGroupSpec *replace_access_group(AccessGroupSpec *new_ag);
 
-    bool column_is_counter(uint8_t family) {
-      return !m_counter_flags.empty() && (m_counter_flags[family] == 1);
+    /// Checks if access group exists.
+    /// Looks up <code>name</code> in #m_access_group_map and returns
+    /// <i>true</i> if it is found.
+    /// @param Access group name
+    /// @return <i>true</i> if access group exists, <i>false</i> otherwise
+    bool access_group_exists(const String &name) const;
+
+    /// Checks if column family exists.
+    /// Checks if the column family with ID, <code>id</code>, exists by
+    /// searching for it in #m_column_family_id_map.  Returns <i>true</i> if
+    /// column family exists and either a) is not deleted, or b) is deleted and
+    /// the value passed in for <code>get_deleted</code> is <i>true</i>.
+    /// @param id ID of column family to search for
+    /// @param get_deleted Return 
+    /// @return <i>true</i> if column family exists, <i>false</i> otherwise.
+    bool column_family_exists(int32_t id, bool get_deleted = false) const;
+
+    /// Drops column family.
+    /// Locates access group for column family <code>name</code> and marks it as
+    /// deleted with a call to AccessGroupSpec::drop_column(), then re-inserts
+    /// the column family back into #m_column_family_map with its new new
+    /// ("!<id>").
+    /// @param name Name of column family to drop
+    void drop_column_family(const String& name);
+
+    /// Renames a column family.
+    /// Locates column family <code>old_name</code> in #m_column_family_map,
+    /// renames it to <code>new_name</code> and sets its generation to 0.
+    /// @param old_name Name of existing column family to be renamed
+    /// @param new_name New name for column family
+    void rename_column_family(const String& old_name, const String& new_name);
+
+    /// Checks if column is a counter column.
+    /// Returns the value of the <code>id</code><sup>th</sup> bit of
+    /// #m_counter_mask.
+    /// @param id %Column family ID
+    /// @return <i>true</i> if column is a counter, <i>false</i> otherwise.
+    bool column_is_counter(int id) {
+      return m_counter_mask[id];
     }
 
-    void set_compressor(const String &compressor) { m_compressor = compressor; }
-    const String &get_compressor() { return m_compressor; }
-
-    void set_group_commit_interval(uint32_t interval) {
+    /// Sets group commit interval.
+    /// Sets #m_group_commit_interval to <code>interval</code>.
+    /// @param interval New value for group commit interval
+    void set_group_commit_interval(int32_t interval) {
       m_group_commit_interval = interval;
     }
-    uint32_t get_group_commit_interval() { return m_group_commit_interval; }
 
-    typedef std::unordered_map<String, ColumnFamily *> ColumnFamilyMap;
-    typedef std::unordered_map<String, AccessGroup *> AccessGroupMap;
+    /// Gets group commit interval.
+    /// @return Group commit interval
+    int32_t get_group_commit_interval() { return m_group_commit_interval; }
 
-    static const uint32_t      ms_max_column_id;
+    /// Sets default access group options.
+    /// Sets #m_ag_defaults to <code>defaults</code>
+    /// @param defaults Access group options to use as table defaults
+    void set_access_group_defaults(const AccessGroupOptions &defaults) {
+      m_ag_defaults = defaults;
+    }
+
+    /// Returns reference to default access group options.
+    /// @return Reference to default access group options.
+    AccessGroupOptions &access_group_defaults() { return m_ag_defaults; }
+
+    /// Sets default column family options.
+    /// Sets #m_cf_defaults to <code>defaults</code>
+    /// @param defaults Column family options to use as table defaults
+    void set_column_family_defaults(const ColumnFamilyOptions &defaults) {
+      m_cf_defaults = defaults;
+    }
+
+    /// Returns reference to default column family options.
+    /// @return Reference to default column family options.
+    ColumnFamilyOptions &column_family_defaults() { return m_cf_defaults; }
+
+    /// Validates schema and reconstructs data structures.
+    /// Reconstructs #m_column_families, #m_column_family_map,
+    /// #m_column_family_id_map, and #m_counter_mask by recursing through
+    /// #m_access_groups.  During the data structure reconstruction, validation
+    /// checks are performed to make sure there aren't too many columns or there
+    /// exists a column that is assigned to two different access groups.
+    /// @throws Exception with code set to Error::TOO_MANY_COLUMNS if too many
+    /// columns are defined, or Error::BAD_SCHEMA if the same column is assigned
+    /// to two different access groups.
+    void validate();
+
+    /// Creates schema object from XML schema string.
+    /// Constructs a new schema from the XML specification held in
+    /// <code>buf</code> and them calls validate().
+    /// @param buf Buffer holding XML schema string.
+    /// @return Pointer to newly allocated Schema object.
+    static Schema *new_instance(const String &buf);
 
   private:
-    typedef std::unordered_map<uint32_t, ColumnFamily *> ColumnFamilyIdMap;
 
-    String m_error_string;
-    int m_next_column_id {};
-    AccessGroupMap m_access_group_map;
-    ColumnFamilies m_column_families; // preserve order
-    ColumnFamilyMap m_column_family_map;
-    ColumnFamilyIdMap m_column_family_id_map;
-    uint32_t m_generation {};
-    uint32_t m_version {};
-    AccessGroups m_access_groups;
-    AccessGroup *m_open_access_group {};
-    ColumnFamily *m_open_column_family {};
-    bool m_need_id_assignment {};
-    bool m_output_ids {};
-    size_t m_max_column_family_id {};
-    String m_compressor;
-    std::vector<int> m_counter_flags;
-    uint32_t m_group_commit_interval {};
+    /// Merges default column family options into a column family spec.
+    /// @param cf_spec Column family spec into which table defaults are to be
+    /// merged
+    void merge_table_defaults(ColumnFamilySpec *cf_spec);
 
-    static void
-    start_element_handler(void *userdata, const XML_Char *name,
-                          const XML_Char **atts);
-    static void end_element_handler(void *userdata, const XML_Char *name);
-    static void
-    character_data_handler(void *userdata, const XML_Char *s, int len);
+    /// Merges default access group options into access group spec.
+    /// @param ag_spec Access group spec into which table defaults are to be
+    /// merged
+    void merge_table_defaults(AccessGroupSpec *ag_spec);
 
-    static Schema       *ms_schema;
-    static String        ms_collected_text;
-    static Mutex      ms_mutex;
+    /// Generation
+    int64_t m_generation {};
+
+    /// Version number
+    int32_t m_version {};
+
+    /// Group commit interval
+    int32_t m_group_commit_interval {};
+
+    /// Default access group options
+    AccessGroupOptions m_ag_defaults;
+
+    /// Default column family options
+    ColumnFamilyOptions m_cf_defaults;
+
+    /// Access group specifications
+    AccessGroupSpecs m_access_groups;
+
+    /// Map of access group specifications
+    std::unordered_map<std::string, AccessGroupSpec *> m_access_group_map;
+
+    /// &Column family specifications
+    ColumnFamilySpecs m_column_families;
+
+    /// Map of column family specifications (key == name)
+    std::unordered_map<std::string, ColumnFamilySpec *> m_column_family_map;
+
+    /// Map of column family specifications (key == ID)
+    std::unordered_map<int32_t, ColumnFamilySpec *> m_column_family_id_map;
+
+    /// Bitmask describing which column families are counters
+    std::vector<bool> m_counter_mask;
   };
 
   /// Smart pointer to Schema

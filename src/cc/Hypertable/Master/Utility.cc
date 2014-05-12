@@ -45,6 +45,7 @@
 #include <Common/ScopeGuard.h>
 #include <Common/StringExt.h>
 #include <Common/md5.h>
+#include <Common/Time.h>
 
 using namespace Hyperspace;
 
@@ -176,30 +177,18 @@ void create_table_in_hyperspace(ContextPtr &context, const String &name,
 
   HT_MAYBE_FAIL("Utility-create-table-in-hyperspace-1");
 
-  table->set_id(table_id);
+
 
   HT_ASSERT(table_name != TableIdentifier::METADATA_NAME ||
             table_id == TableIdentifier::METADATA_ID);
-
-  SchemaPtr schema = Schema::new_instance(schema_str, schema_str.length());
-  if (!schema->is_valid())
-    HT_THROW(Error::MASTER_BAD_SCHEMA, schema->get_error_string());
-
-  if (schema->need_id_assignment())
-    schema->assign_ids();
-
-  table->generation = schema->get_generation();
-
-  String finalschema = "";
-  schema->render(finalschema, true);
 
   // Create table file
   String tablefile = context->toplevel_dir + "/tables/" + table_id;
   int oflags = OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE;
 
   // Write schema attribute
-  context->hyperspace->attr_set(tablefile, oflags, "schema", finalschema.c_str(),
-                         finalschema.length());
+  context->hyperspace->attr_set(tablefile, oflags, "schema", schema_str.c_str(),
+                                schema_str.length());
 
   HT_MAYBE_FAIL("Utility-create-table-in-hyperspace-2");
 
@@ -207,10 +196,16 @@ void create_table_in_hyperspace(ContextPtr &context, const String &name,
   // for this table in DFS
   String table_basedir = context->toplevel_dir + "/tables/" + table_id + "/";
 
-  foreach_ht(const Schema::AccessGroup *ag, schema->get_access_groups()) {
-    String agdir = table_basedir + ag->name;
+  SchemaPtr schema = Schema::new_instance(schema_str);
+
+  for (auto ag_spec : schema->get_access_groups()) {
+    String agdir = table_basedir + ag_spec->get_name();
     context->dfs->mkdirs(agdir);
   }
+
+  table->set_id(table_id);
+  table->generation = schema->get_generation();
+
 }
 
 void prepare_index(ContextPtr &context, const String &name,
@@ -218,26 +213,21 @@ void prepare_index(ContextPtr &context, const String &name,
                    String &index_name, String &index_schema_str)
 {
   // load the schema of the primary table
-  SchemaPtr primary_schema = Schema::new_instance(schema_str.c_str(), 
-          schema_str.size());
-  if (primary_schema->need_id_assignment())
-    primary_schema->assign_ids();
+  SchemaPtr primary_schema = Schema::new_instance(schema_str);
 
   // create a new schema and fill it 
-  Schema::AccessGroup *ag = new Schema::AccessGroup;
-  ag->name = "default";
-  Schema *index_schema = new Schema;
-  index_schema->add_access_group(ag);
+  AccessGroupSpec *ag_spec = new AccessGroupSpec("default");
+  ColumnFamilySpec *new_cf_spec = new ColumnFamilySpec("v1");
+  new_cf_spec->set_access_group("default");
+  ag_spec->add_column(new_cf_spec);
+
+  Schema *index_schema = new Schema();
+  index_schema->add_access_group(ag_spec);
   index_schema->set_group_commit_interval(
           primary_schema->get_group_commit_interval());
-
-  Schema::ColumnFamily *new_cf = new Schema::ColumnFamily;
-  new_cf->name = "v1";
-  new_cf->ag = "default";
-  index_schema->add_column_family(new_cf);
-  index_schema->set_version("1");
-
-  HT_ASSERT(index_schema->is_valid());
+  index_schema->set_version(1);
+  int64_t generation = get_ts64();
+  index_schema->update_generation(generation);
 
   // the index table name is prepended with ^, and the qualified
   // index with ^^
@@ -255,8 +245,7 @@ void prepare_index(ContextPtr &context, const String &name,
       index_name += String("/^") + Filesystem::basename(name);
   }
 
-  index_schema_str.clear();
-  index_schema->render(index_schema_str);
+  index_schema_str = index_schema->render_xml();
   delete index_schema;
 }
 

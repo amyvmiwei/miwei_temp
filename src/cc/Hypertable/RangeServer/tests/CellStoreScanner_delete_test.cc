@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -48,7 +48,7 @@ using namespace std;
 
 namespace {
   const char *usage[] = {
-    "usage: CellStoreScanner_test",
+    "usage: CellStoreScanner_delete_test",
     "",
     "  This program tests for the proper functioning of the CellStore",
     "  scanner.  It creates a dummy cell store and then repeatedly scans",
@@ -529,16 +529,12 @@ int main(int argc, char **argv) {
     String testdir = "/CellStoreScanner_delete_test";
     client->mkdirs(testdir);
 
-    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str));
-    if (!schema->is_valid()) {
-      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      exit(1);
-    }
+    SchemaPtr schema = Schema::new_instance(schema_str);
 
     String csname = testdir + "/cs0";
     PropertiesPtr cs_props = new Properties();
     // make sure blocks are small so only one key value pair fits in a block
-    cs_props->set("blocksize", uint32_t(32));
+    cs_props->set("blocksize", int32_t(32));
     cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 24000, cs_props, &table_id));
 

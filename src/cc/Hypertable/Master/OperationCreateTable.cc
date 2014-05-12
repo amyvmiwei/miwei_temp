@@ -39,6 +39,7 @@
 #include <Common/FailureInducer.h>
 #include <Common/ScopeGuard.h>
 #include <Common/Serialization.h>
+#include <Common/Time.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -71,15 +72,14 @@ OperationCreateTable::OperationCreateTable(ContextPtr &context, EventPtr &event)
 
 void OperationCreateTable::requires_indices(bool &needs_index, 
         bool &needs_qualifier_index) {
-  SchemaPtr s;
+  SchemaPtr s = Schema::new_instance(m_schema);
 
-  s = Schema::new_instance(m_schema.c_str(), m_schema.size());
-  foreach_ht (Schema::ColumnFamily *cf, s->get_column_families()) {
-    if (cf && !cf->deleted) {
-     if (cf->has_index)
-       needs_index = true;
-     if (cf->has_qualifier_index)
-       needs_qualifier_index = true;
+  for (auto cf_spec : s->get_column_families()) {
+    if (cf_spec && !cf_spec->get_deleted()) {
+      if (cf_spec->get_value_index())
+        needs_index = true;
+      if (cf_spec->get_qualifier_index())
+        needs_qualifier_index = true;
     }
     if (needs_index && needs_qualifier_index)
       return;
@@ -110,6 +110,15 @@ void OperationCreateTable::execute() {
     // Check to see if namespace exists
     if (m_context->namemap->exists_mapping(m_name, &is_namespace))
       complete_error(Error::NAME_ALREADY_IN_USE, "");
+
+    // Update table/schema generation number
+    {
+      SchemaPtr schema = Schema::new_instance(m_schema);
+      int64_t generation = get_ts64();
+      schema->update_generation(generation);
+      m_schema = schema->render_xml(true);
+      m_table.generation = schema->get_generation();
+    }
 
     set_state(OperationState::ASSIGN_ID);
     m_context->mml_writer->record_state(this);

@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -622,14 +622,9 @@ int main(int argc, char **argv) {
 
     String csname = testdir + "/cs0";
     PropertiesPtr cs_props = new Properties();
-    Schema::parse_bloom_filter("rows+cols", cs_props);
+    AccessGroupOptions::parse_bloom_filter("rows+cols", cs_props);
 
-    SchemaPtr schema = Schema::new_instance(schema_str, strlen(schema_str));
-
-    if (!schema->is_valid()) {
-      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      exit(1);
-    }
+    SchemaPtr schema = Schema::new_instance(schema_str);
 
     cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
@@ -1435,7 +1430,7 @@ int main(int argc, char **argv) {
 
     csname = testdir + "/cs1";
     cs_props = new Properties();
-    cs_props->set("blocksize", (uint32_t)10000);
+    cs_props->set("blocksize", (int32_t)10000);
     cs_props->set("compressor", String("none"));
     cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
@@ -1544,11 +1539,7 @@ int main(int argc, char **argv) {
     csname = testdir + "/cs2";
     cs_props = new Properties();
 
-    schema = Schema::new_instance(schema2_str, strlen(schema2_str));
-    if (!schema->is_valid()) {
-      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      exit(1);
-    }
+    schema = Schema::new_instance(schema2_str);
 
     cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 0, cs_props, &table_id));
@@ -1601,12 +1592,9 @@ int main(int argc, char **argv) {
     out << "[issue1017]\n";
     csname = testdir + "/cs3";
     cs_props = new Properties();
-    Schema::parse_bloom_filter("rows", cs_props);
-    schema = Schema::new_instance(schema_str, strlen(schema_str));
-    if (!schema->is_valid()) {
-      HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-      exit(1);
-    }
+    AccessGroupOptions::parse_bloom_filter("rows", cs_props);
+    schema = Schema::new_instance(schema_str);
+
     cs = new CellStoreV7(Global::dfs.get(), schema.get());
     HT_TRY("creating cellstore", cs->create(csname.c_str(), 735, cs_props, &table_id));
     strcpy((char *)rowbuf, "the only row");

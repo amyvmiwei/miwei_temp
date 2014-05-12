@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -56,6 +56,7 @@
 #include "BalancePlan.h"
 #include "Key.h"
 #include "Cells.h"
+#include "Client.h"
 #include "Schema.h"
 #include "ScanSpec.h"
 #include "Table.h"
@@ -64,6 +65,10 @@
 #include "LoadDataSource.h"
 #include "RangeServerProtocol.h"
 #include "SystemVariable.h"
+
+#include <cctype>
+#include <functional>
+#include <set>
 
 namespace Hypertable {
   namespace Hql {
@@ -281,19 +286,11 @@ namespace Hypertable {
 
     class ParserState {
     public:
-      ParserState() : command(0), group_commit_interval(0), table_blocksize(0),
-                      table_replication(-1), table_in_memory(false), 
-                      max_versions(0), time_order_desc(false), ttl(0), 
-                      load_flags(0), flags(0), cf(0), ag(0), nanoseconds(0),
-                      decimal_seconds(0), delete_all_columns(false),
-                      delete_time(0), delete_version_time(0),
-                      if_exists(false), tables_only(false), with_ids(false),
-                      replay(false), scanner_id(-1), row_uniquify_chars(0),
-                      escape(true), nokeys(false), 
-        current_column_predicate_operation(0), field_separator(0) {
+      ParserState(Namespace *nsp=0) : nsp(nsp) {
         System::initialize_tm(&tmval);
       }
-      int command;
+      NamespacePtr nsp;
+      int command {};
       String ns;
       String table_name;
       String pseudo_table_name;
@@ -305,57 +302,62 @@ namespace Hypertable {
       String source;
       String destination;
       String rs_name;
-      int input_file_src;
+      int input_file_src {};
       String header_file;
-      int header_file_src;
-      String table_compressor;
-      ::uint32_t group_commit_interval;
-      ::uint32_t table_blocksize;
-      ::int32_t table_replication;
-      bool table_in_memory;
-      ::uint32_t max_versions;
-      bool time_order_desc;
-      time_t   ttl;
+      int header_file_src {};
+      ::uint32_t group_commit_interval {};
+      ColumnFamilyOptions table_cf_defaults;
+      AccessGroupOptions table_ag_defaults;
       std::vector<String> columns;
       String timestamp_column;
-      int load_flags;
-      uint32_t flags;
-      Schema::ColumnFamily *cf;
-      Schema::AccessGroup *ag;
-      Schema::ColumnFamilyMap cf_map;
-      Schema::AccessGroupMap ag_map;
-      Schema::ColumnFamilies cf_list;   // preserve order
-      Schema::AccessGroups ag_list;     // ditto
+      int load_flags {};
+      uint32_t flags {};
+      SchemaPtr alter_schema;
+      SchemaPtr create_schema;
+      ColumnFamilySpec *cf_spec {};
+      AccessGroupSpec *ag_spec {};
+      std::map<std::string, ColumnFamilySpec *> new_cf_map;
+      std::vector<ColumnFamilySpec *> new_cf_vector;
+      std::map<std::string, ColumnFamilySpec *> modified_cf_map;
+      std::vector<ColumnFamilySpec *> modified_cf_vector;
+      std::map<std::string, AccessGroupSpec *> new_ag_map;
+      std::vector<AccessGroupSpec *> new_ag_vector;
+      std::map<std::string, AccessGroupSpec *> modified_ag_map;
+      std::vector<AccessGroupSpec *> modified_ag_vector;
+      std::set<std::string> new_cf;
+      std::set<std::string> column_option_definition_set;
+      std::set<std::string> access_group_option_definition_set;
       struct tm tmval;
-      ::uint32_t nanoseconds;
-      double decimal_seconds;
+      ::uint32_t nanoseconds {};
+      double decimal_seconds {};
       ScanState scan;
       InsertRecord current_insert_value;
       CellsBuilder inserts;
       BalancePlan balance_plan;
       std::vector<String> delete_columns;
-      bool delete_all_columns;
+      bool delete_all_columns {};
       String delete_row;
-      ::int64_t delete_time;
-      ::int64_t delete_version_time;
+      ::int64_t delete_time {};
+      ::int64_t delete_version_time {};
       SystemVariable::Spec current_variable_spec;
       std::vector<SystemVariable::Spec> variable_specs;
-      bool if_exists;
-      bool tables_only;
-      bool with_ids;
-      bool replay;
+      bool modify {};
+      bool if_exists {};
+      bool tables_only {};
+      bool with_ids {};
+      bool replay {};
       String range_start_row;
       String range_end_row;
-      ::int32_t scanner_id;
-      ::int32_t row_uniquify_chars;
-      bool escape;
-      bool nokeys;
+      ::int32_t scanner_id {-1};
+      ::int32_t row_uniquify_chars {};
+      bool escape {true};
+      bool nokeys {};
       String current_rename_column_old_name;
       String current_column_family;
       String current_column_predicate_name;
       String current_column_predicate_qualifier;
-      uint32_t current_column_predicate_operation;
-      char field_separator;
+      uint32_t current_column_predicate_operation {};
+      char field_separator {};
 
       void validate_function(const String &s) {
         if (s=="guid")
@@ -385,6 +387,123 @@ namespace Hypertable {
         HT_THROW(Error::HQL_PARSE_ERROR, String("Unknown function "
                 "identifier '") + s + "()'");
       }
+
+      void check_and_set_column_option(const std::string &name,
+                                       const std::string &option) {
+        std::string key = name + "." + option;
+        if (column_option_definition_set.count(key) > 0)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Multiple specifications of %s option for column '%s'",
+                    option.c_str(), name.c_str());
+        column_option_definition_set.insert(key);
+      }
+
+      void check_and_set_access_group_option(const std::string &name,
+                                       const std::string &option) {
+        std::string key = name + "." + option;
+        if (access_group_option_definition_set.count(key) > 0)
+          HT_THROWF(Error::HQL_PARSE_ERROR,
+                    "Multiple specifications of %s option for access group '%s'",
+                    option.c_str(), name.c_str());
+        access_group_option_definition_set.insert(key);
+      }
+
+      ColumnFamilySpec *get_new_column_family(const std::string &name) {
+        auto iter = new_cf_map.find(name);
+        if (iter != new_cf_map.end())
+          return iter->second;
+        ColumnFamilySpec *cf = new ColumnFamilySpec(name);
+        new_cf_map[name] = cf;
+        new_cf_vector.push_back(cf);
+        return cf;
+      }
+
+      ColumnFamilySpec *get_modified_column_family(const std::string &name) {
+        auto iter = modified_cf_map.find(name);
+        if (iter != modified_cf_map.end())
+          return iter->second;
+        HT_ASSERT(alter_schema);
+        ColumnFamilySpec *existing_cf {};
+        // Search for existing CF in modified AGs
+        for (auto ag : modified_ag_vector) {
+          if ((existing_cf = ag->get_column(name)) != nullptr)
+            break;
+        }
+        // If not found in modified AGs, fetch from schema
+        if (existing_cf == nullptr) {
+          existing_cf = alter_schema->get_column_family(name);
+          if (existing_cf == nullptr)
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Attempt to modify column '%s' which does not exist",
+                      name.c_str());
+        }
+        ColumnFamilySpec *new_cf = new ColumnFamilySpec(name);
+        new_cf->set_id(existing_cf->get_id());
+        new_cf->set_access_group(existing_cf->get_access_group());
+        new_cf->set_value_index(existing_cf->get_value_index());
+        new_cf->set_qualifier_index(existing_cf->get_qualifier_index());
+        modified_cf_map[name] = new_cf;
+        modified_cf_vector.push_back(new_cf);
+        return new_cf;
+      }
+
+      AccessGroupSpec *create_new_access_group(const std::string &name) {
+        if (new_ag_map.find(name) != new_ag_map.end())
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Multiple definitions for access group '%s'",
+                    name.c_str());
+        AccessGroupSpec *ag = new AccessGroupSpec(name);
+        new_ag_map[name] = ag;
+        new_ag_vector.push_back(ag);
+        return ag;
+      }
+
+      AccessGroupSpec *find_new_access_group(const std::string &name) {
+        auto iter = new_ag_map.find(name);
+        if (iter != new_ag_map.end())
+          return iter->second;
+        return nullptr;
+      }
+
+      AccessGroupSpec *create_modified_access_group(const std::string &name) {
+        auto iter = modified_ag_map.find(name);
+        if (iter != modified_ag_map.end())
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Attempt to modify access group '%s' twice in the same command",
+                    name.c_str());
+        HT_ASSERT(alter_schema);
+        auto existing_ag = alter_schema->get_access_group(name);
+        if (existing_ag == nullptr)
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Attempt to modify access group '%s' which does not exist",
+                    name.c_str());
+        AccessGroupSpec *ag = new AccessGroupSpec(name);
+        modified_ag_map[name] = ag;
+        modified_ag_vector.push_back(ag);
+        return ag;
+      }
+
+      AccessGroupSpec *find_modified_access_group(const std::string &name) {
+        auto iter = modified_ag_map.find(name);
+        if (iter != modified_ag_map.end())
+          return iter->second;
+        return nullptr;
+      }
+
+      ColumnFamilySpec *find_column_family_in_modified_ag(const std::string &name) {
+        for (auto ag : modified_ag_vector) {
+          auto cf = ag->get_column(name);
+          if (cf)
+            return cf;
+        }
+        return nullptr;
+      }
+
+      bool ag_spec_is_new() {
+        return create_schema ||
+          (alter_schema && new_ag_map.find(ag_spec->get_name()) != new_ag_map.end());
+      }
+
     };
 
     /// Creates string with outer quotes stripped off.
@@ -411,6 +530,14 @@ namespace Hypertable {
       return regex;
     }
 
+    inline bool invalid_column_name(const String &name) {
+      if (!isalpha(name[0]))
+        return false;
+      std::function<bool(char)> valid_char_predicate =
+        [](char c) -> bool {return isalnum(c) || c == '_' || c == '-';};
+      return find_if_not(name.begin(), name.end(), valid_char_predicate) != name.end();
+    }
+
     struct set_command {
       set_command(ParserState &state, int cmd) : state(state), command(cmd) { }
       void operator()(char const *, char const *) const {
@@ -423,8 +550,7 @@ namespace Hypertable {
     struct set_namespace{
       set_namespace(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.ns = String(str, end-str);
-        trim_if(state.ns, is_any_of("'\""));
+        state.ns = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -432,8 +558,7 @@ namespace Hypertable {
     struct set_rangeserver {
       set_rangeserver(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.rs_name = String(str, end-str);
-        trim_if(state.rs_name, is_any_of("'\""));
+        state.rs_name = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -459,18 +584,29 @@ namespace Hypertable {
     struct set_new_table_name {
       set_new_table_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.new_table_name = String(str, end-str);
-        trim_if(state.new_table_name, is_any_of("'\""));
+        state.new_table_name = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
 
+    struct start_alter_table {
+      start_alter_table(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String name = strip_quotes(str, end-str);
+        if (strstr(name.c_str(), "^."))
+          HT_THROWF(Error::UNSUPPORTED_OPERATION,
+                    "Psudo-table '%s' schema cannot be altered", name.c_str());
+        state.table_name = name;
+        HT_ASSERT(state.nsp);
+        state.alter_schema = state.nsp->get_schema(name);
+      }
+      ParserState &state;
+    };
 
     struct set_clone_table_name {
       set_clone_table_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.clone_table_name = String(str, end-str);
-        trim_if(state.clone_table_name, is_any_of("'\""));
+        state.clone_table_name = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -494,8 +630,7 @@ namespace Hypertable {
     struct set_source {
       set_source(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.source = String(str, end-str);
-        trim_if(state.source, is_any_of("'\""));
+        state.source = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -503,8 +638,7 @@ namespace Hypertable {
     struct set_destination {
       set_destination(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.destination = String(str, end-str);
-        trim_if(state.destination, is_any_of("'\""));
+        state.destination = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -512,8 +646,7 @@ namespace Hypertable {
     struct set_balance_algorithm {
       set_balance_algorithm(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.balance_plan.algorithm = String(str, end-str);
-        trim_if(state.balance_plan.algorithm, is_any_of("'\""));
+        state.balance_plan.algorithm = strip_quotes(str, end-str);
       }
       ParserState &state;
     };
@@ -572,98 +705,276 @@ namespace Hypertable {
       ParserState &state;
     };
 
-    struct create_column_family {
-      create_column_family(ParserState &state) : state(state) { }
+    struct start_create_table_statement {
+      start_create_table_statement(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.cf = new Schema::ColumnFamily();
-        state.cf->name = String(str, end-str);
-        if (state.cf->name.find_first_of(':') != String::npos)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Invalid column family name %s, ':' character not allowed",
-                    state.cf->name.c_str());
-        state.cf->deleted = false;
-        trim_if(state.cf->name, is_any_of("'\""));
-        Schema::ColumnFamilyMap::const_iterator iter =
-            state.cf_map.find(state.cf->name);
-        if (iter != state.cf_map.end())
-          HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
-                   state.cf->name + " multiply defined.");
-        state.cf_map[state.cf->name] = state.cf;
-        state.cf_list.push_back(state.cf);
+        String name = strip_quotes(str, end-str);
+        state.table_name = name;
+        state.create_schema = new Schema();
       }
       ParserState &state;
     };
 
-    struct modify_column_family {
-      modify_column_family(ParserState &state) : state(state) { }
-      void operator()(char const *str, char const *end) const {
-        state.cf = new Schema::ColumnFamily();
-        state.cf->name = String(str, end-str);
-        if (state.cf->name.find_first_of(':') != String::npos)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Invalid column family name %s, ':' character not allowed",
-                    state.cf->name.c_str());
-        state.cf->deleted = false;
-        state.cf->modification = true;
-        trim_if(state.cf->name, is_any_of("'\""));
-        Schema::ColumnFamilyMap::const_iterator iter =
-            state.cf_map.find(state.cf->name);
-        if (iter != state.cf_map.end())
-          HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
-                   state.cf->name + " multiply defined.");
-        state.cf_map[state.cf->name] = state.cf;
-        state.cf_list.push_back(state.cf);
+    struct finish_create_table_statement {
+      finish_create_table_statement(ParserState &state) : state(state) { }
+      void operator()(char const *, char const *) const {
+
+        if (!state.clone_table_name.empty()) {
+          std::string schema_str = state.nsp->get_schema_str(state.clone_table_name, true);
+          state.create_schema = Schema::new_instance(schema_str);
+          state.create_schema->clear_generation();
+        }
+        else {
+
+          state.create_schema->set_group_commit_interval(state.group_commit_interval);
+          state.create_schema->set_access_group_defaults(state.table_ag_defaults);
+          state.create_schema->set_column_family_defaults(state.table_cf_defaults);
+
+          // Assign columns with no access group to "default" access group,
+          // creating it if necessary
+          for (auto cf : state.new_cf_vector) {
+            // Verify that the column family was created
+            if (state.new_cf.count(cf->get_name()) == 0)
+              HT_THROWF(Error::HQL_BAD_COMMAND,
+                        "Reference to undefined column '%s'", cf->get_name().c_str());
+            // If column family access group empty, assign it to the "default"
+            // access group
+            if (cf->get_access_group().empty()) {
+              cf->set_access_group("default");
+              if (state.new_ag_map.find("default") == state.new_ag_map.end())
+                state.create_new_access_group("default");
+            }
+            auto iter = state.new_ag_map.find(cf->get_access_group());
+            HT_ASSERT(iter != state.new_ag_map.end());
+            iter->second->add_column(cf);
+          }
+
+          // Add access groups to schema
+          for (auto ag_spec : state.new_ag_vector)
+            state.create_schema->add_access_group(ag_spec);
+
+          state.create_schema->validate();
+        }
+        state.command = COMMAND_CREATE_TABLE;
       }
       ParserState &state;
     };
 
+    struct finish_alter_table_statement {
+      finish_alter_table_statement(ParserState &state) : state(state) { }
+      void operator()(char const *, char const *) const {
+
+        // Verify column family modifications are OK then replace old column
+        // family with modified one
+        for (auto modified_cf : state.modified_cf_vector) {
+          AccessGroupSpec *ag_spec {};
+          auto iter = state.modified_ag_map.find(modified_cf->get_access_group());
+          if (iter != state.modified_ag_map.end())
+            ag_spec = iter->second;
+          else
+            ag_spec = state.alter_schema->get_access_group(modified_cf->get_access_group());
+          HT_ASSERT(ag_spec);
+          const ColumnFamilySpec *old_cf = ag_spec->replace_column(modified_cf);
+          HT_ASSERT(old_cf);
+          if (old_cf->get_option_time_order_desc() != modified_cf->get_option_time_order_desc())
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Modificaton of TIME ORDER option for column '%s' is not allowed.",
+                      old_cf->get_name().c_str());
+          if (old_cf->get_option_counter() != modified_cf->get_option_counter())
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Modificaton of COUNTER option for column '%s' is not allowed.",
+                      old_cf->get_name().c_str());
+          delete old_cf;
+        }
+
+        // Add new columns to the appropriate access group
+        for (auto cf : state.new_cf_vector) {
+          if (cf->get_access_group().empty()) {
+            cf->set_access_group("default");
+            if (state.new_ag_map.find("default") == state.new_ag_map.end() &&
+                state.alter_schema->get_access_group("default") == nullptr)
+              state.create_new_access_group("default");
+          }
+          AccessGroupSpec *ag = state.find_modified_access_group(cf->get_access_group());
+          if (ag == nullptr) {
+            ag = state.alter_schema->get_access_group(cf->get_access_group());
+            if (ag == nullptr)
+              ag = state.find_new_access_group(cf->get_access_group());
+          }
+          HT_ASSERT(ag);
+          ag->add_column(cf);
+        }
+
+        // Add access groups to schema
+        for (auto ag_spec : state.new_ag_vector)
+          state.alter_schema->add_access_group(ag_spec);
+
+        // Replace modified access groups.  Verify that all of the non-deleted
+        // column families in each modified access group were moved from the old
+        // access group to the modified one and move the deleted ones
+        for (auto modified_ag_spec : state.modified_ag_vector) {
+          string ag_name = modified_ag_spec->get_name();
+          auto old_ag_spec = state.alter_schema->get_access_group(ag_name);
+          for (auto old_cf : old_ag_spec->columns()) {
+            string cf_name = old_cf->get_name();
+            if (!old_cf->get_deleted())
+              HT_THROWF(Error::HQL_BAD_COMMAND,
+                        "Missing column '%s' from modified access group '%s'",
+                        cf_name.c_str(), ag_name.c_str());
+            modified_ag_spec->add_column(old_ag_spec->get_column(cf_name));
+          }
+          old_ag_spec->clear_columns();
+          old_ag_spec = state.alter_schema->replace_access_group(modified_ag_spec);
+          delete old_ag_spec;
+        }
+
+        state.alter_schema->validate();
+        state.command = COMMAND_ALTER_TABLE;
+      }
+      ParserState &state;
+    };
+
+    struct set_modify_flag {
+      set_modify_flag(ParserState &state, bool val) : state(state), value(val) { }
+      void operator()(char const *str, char const *end) const {
+        state.modify = value;
+      }
+      ParserState &state;
+      bool value;
+    };
+
+    struct open_column_family {
+      open_column_family(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String name = strip_quotes(str, end-str);
+
+        if (state.modify) {
+          state.cf_spec = state.get_modified_column_family(name);
+        }
+        else {
+
+          // sanity check name
+          if (invalid_column_name(name))
+            HT_THROWF(Error::HQL_PARSE_ERROR, "Invalid column name %s",
+                      name.c_str());
+
+          // Make sure column being added doesn't already exist
+          if (state.alter_schema) {
+            if (state.alter_schema->get_column_family(name))
+              HT_THROWF(Error::HQL_BAD_COMMAND,
+                        "Attempt to add column '%s' which already exists",
+                        name.c_str());
+          }
+
+          if (state.new_cf.count(name) > 0)
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Column family '%s' multiply defined", name.c_str());
+
+          state.new_cf.insert(name);
+          state.cf_spec = state.get_new_column_family(name);
+        }
+      }
+      ParserState &state;
+    };
+
+    struct open_existing_column_family {
+      open_existing_column_family(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String name = strip_quotes(str, end-str);
+        HT_ASSERT(state.alter_schema);
+        state.cf_spec = state.alter_schema->get_column_family(name);
+        if (state.cf_spec == nullptr)
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Attempt to modify column '%s' which does not exist",
+                    name.c_str());
+      }
+      ParserState &state;
+    };
+
+    struct close_column_family {
+      close_column_family(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.cf_spec = nullptr;
+      }
+      ParserState &state;
+    };
 
     struct drop_column_family {
       drop_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.cf = new Schema::ColumnFamily();
-        state.cf->name = String(str, end-str);
-        state.cf->deleted = true;
-        trim_if(state.cf->name, is_any_of("'\""));
-        Schema::ColumnFamilyMap::const_iterator iter =
-            state.cf_map.find(state.cf->name);
-        if (iter != state.cf_map.end())
-          HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
-                   state.cf->name + " multiply dropped.");
-        state.cf_map[state.cf->name] = state.cf;
-        state.cf_list.push_back(state.cf);
+        String name = strip_quotes(str, end-str);
+        HT_ASSERT(state.alter_schema);
+        bool drop_from_modified_ag {};
+        state.cf_spec = state.alter_schema->get_column_family(name);
+        if (state.cf_spec == nullptr) {
+          state.cf_spec = state.find_column_family_in_modified_ag(name);
+          if (state.cf_spec == nullptr)
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Attempt to drop column '%s' which does not exist",
+                      name.c_str());
+          drop_from_modified_ag = true;
+        }
+        if (state.cf_spec->get_deleted())
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Attempt to drop column '%s' which is already dropped",
+                    name.c_str());
+        if (drop_from_modified_ag) {
+          auto ag = state.find_modified_access_group(state.cf_spec->get_access_group());
+          HT_ASSERT(ag);
+          ag->drop_column(name);
+        }
+        else
+          state.alter_schema->drop_column_family(name);
       }
       ParserState &state;
     };
 
-    struct set_rename_column_family_old_name{
+    struct set_rename_column_family_old_name {
       set_rename_column_family_old_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.current_rename_column_old_name = String(str, end-str);
-        trim_if(state.current_rename_column_old_name, is_any_of("'\""));
+        state.current_rename_column_old_name = strip_quotes(str, end-str);
+        HT_ASSERT(state.alter_schema);
+        state.cf_spec = state.alter_schema->get_column_family(state.current_rename_column_old_name);
+        if (state.cf_spec == nullptr)
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Attempt to rename column family '%s' which does not exist",
+                    state.current_rename_column_old_name.c_str());
       }
       ParserState &state;
     };
 
-    struct set_rename_column_family_new_name{
+    struct set_rename_column_family_new_name {
       set_rename_column_family_new_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String new_name = String(str, end-str);
-        trim_if(new_name, is_any_of("'\""));
-        state.cf = new Schema::ColumnFamily();
-        state.cf->name = state.current_rename_column_old_name;
-        state.cf->renamed = true;
-        state.cf->new_name = new_name;
-        if (state.cf->new_name.find_first_of(':') != String::npos)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Invalid column family name %s, ':' character not allowed",
-                    state.cf->new_name.c_str());
-        Schema::ColumnFamilyMap::const_iterator iter = state.cf_map.find(state.cf->name);
-        if (iter != state.cf_map.end())
-          HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") +
-                   state.cf->name + " multiply defined.");
-        state.cf_map[state.cf->name] = state.cf;
-        state.cf_list.push_back(state.cf);
+        String new_name = strip_quotes(str, end-str);
+        if (state.alter_schema->get_column_family(new_name))
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Attempt to rename column '%s' to '%s', which already exists",
+                    state.current_rename_column_old_name.c_str(),
+                    new_name.c_str());
+        state.alter_schema->rename_column_family(state.current_rename_column_old_name, new_name);
+      }
+      ParserState &state;
+    };
+
+    struct set_counter {
+      set_counter(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        string value(str, end-str);
+        bool bval {};
+        if (!strcasecmp(value.c_str(), "counter") ||
+            !strcasecmp(value.c_str(), "true"))
+          bval = true;
+        if (state.cf_spec) {
+          state.check_and_set_column_option(state.cf_spec->get_name(), "COUNTER");
+          state.cf_spec->set_option_counter(bval);
+        }
+        else if (state.ag_spec) {
+          state.check_and_set_access_group_option(state.ag_spec->get_name(), "COUNTER");
+          state.ag_spec->set_default_counter(bval);
+        }
+        else
+          state.table_cf_defaults.set_counter(bval);
       }
       ParserState &state;
     };
@@ -671,10 +982,16 @@ namespace Hypertable {
     struct set_max_versions {
       set_max_versions(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        if (state.cf == 0)
-          state.max_versions = (::uint32_t)strtol(str, 0, 10);
+        if (state.cf_spec) {
+          state.check_and_set_column_option(state.cf_spec->get_name(), "MAX_VERSIONS");
+          state.cf_spec->set_option_max_versions((::int32_t)strtol(str, 0, 10));
+        }
+        else if (state.ag_spec) {
+          state.check_and_set_access_group_option(state.ag_spec->get_name(), "MAX_VERSIONS");
+          state.ag_spec->set_default_max_versions((::int32_t)strtol(str, 0, 10));
+        }
         else
-          state.cf->max_versions = (::uint32_t)strtol(str, 0, 10);
+          state.table_cf_defaults.set_max_versions((::int32_t)strtol(str, 0, 10));
       }
       ParserState &state;
     };
@@ -682,16 +999,18 @@ namespace Hypertable {
     struct set_time_order {
       set_time_order(ParserState &state) : state(state) { }
       void operator()(const char *str, const char *end) const {
-        if (state.cf->time_order_desc_set)
-          HT_THROW(Error::HQL_PARSE_ERROR,
-                   "SELECT TIME_ORDER predicate multiply defined.");
         String val = String(str, end-str);
         to_lower(val);
-        if (val == "desc")
-          state.cf->time_order_desc=true;
+        if (state.cf_spec) {
+          state.check_and_set_column_option(state.cf_spec->get_name(), "TIME_ORDER");
+          state.cf_spec->set_option_time_order_desc(val == "desc");
+        }
+        else if (state.ag_spec) {
+          state.check_and_set_access_group_option(state.ag_spec->get_name(), "TIME_ORDER");
+          state.ag_spec->set_default_time_order_desc(val == "desc");
+        }
         else
-          state.cf->time_order_desc=false;
-        state.cf->time_order_desc_set=true;
+          state.table_cf_defaults.set_time_order_desc(val == "desc");
       }
       ParserState &state;
     };
@@ -721,103 +1040,128 @@ namespace Hypertable {
             ttl *= 60.0;
         }
 
-        if (state.cf == 0)
-          state.ttl = (time_t)ttl;
-        else
-          state.cf->ttl = (time_t)ttl;
-      }
-      ParserState &state;
-    };
-
-    struct set_counter {
-      set_counter(ParserState &state) : state(state) { }
-      void operator()(char const *str, char const *end) const {
-       state.cf->counter = true;
-      }
-      ParserState &state;
-    };
-
-    struct clear_column_definition {
-      clear_column_definition(ParserState &state) : state(state) { }
-      void operator()(char c) const {
-        state.cf = 0;
-      }
-      ParserState &state;
-    };
-
-    struct create_access_group {
-      create_access_group(ParserState &state) : state(state) { }
-      void operator()(char const *str, char const *end) const {
-        String name(str, end-str);
-        trim_if(name, is_any_of("'\""));
-        Schema::AccessGroupMap::const_iterator iter = state.ag_map.find(name);
-
-        if (iter != state.ag_map.end())
-          state.ag = (*iter).second;
-        else {
-          state.ag = new Schema::AccessGroup();
-          state.ag->name = name;
-          state.ag_map[state.ag->name] = state.ag;
-          state.ag_list.push_back(state.ag);
+        if (state.cf_spec) {
+          state.check_and_set_column_option(state.cf_spec->get_name(), "TTL");
+          state.cf_spec->set_option_ttl(ttl);
         }
+        else if (state.ag_spec) {
+          state.check_and_set_access_group_option(state.ag_spec->get_name(), "TTL");
+          state.ag_spec->set_default_ttl(ttl);
+        }
+        else
+          state.table_cf_defaults.set_ttl(ttl);
       }
       ParserState &state;
     };
 
-    struct set_access_group_in_memory {
-      set_access_group_in_memory(ParserState &state) : state(state) { }
-      void operator()(char const *, char const *) const {
-        state.ag->in_memory=true;
-      }
-      ParserState &state;
-    };
-
-    struct set_access_group_counter {
-      set_access_group_counter(ParserState &state) : state(state) { }
-      void operator()(char const *, char const *) const {
-        state.ag->counter=true;
-      }
-      ParserState &state;
-    };
-
-    struct set_access_group_compressor {
-      set_access_group_compressor(ParserState &state) : state(state) { }
+    struct open_access_group {
+      open_access_group(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        state.ag->compressor = String(str, end-str);
-        trim_if(state.ag->compressor, is_any_of("'\""));
-        to_lower(state.ag->compressor);
+        String name = strip_quotes(str, end-str);
+        if (state.modify)
+          state.ag_spec = state.create_modified_access_group(name);
+        else
+          state.ag_spec = state.create_new_access_group(name);
       }
       ParserState &state;
     };
 
-    struct set_access_group_blocksize {
-      set_access_group_blocksize(ParserState &state) : state(state) { }
+    struct close_access_group {
+      close_access_group(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        state.ag_spec = nullptr;
+      }
+      ParserState &state;
+    };
+
+    struct set_in_memory {
+      set_in_memory(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        string value(str, end-str);
+        bool bval {};
+        if (!strcasecmp(value.c_str(), "in_memory") ||
+            !strcasecmp(value.c_str(), "true"))
+          bval = true;
+        if (state.ag_spec) {
+          if (!state.ag_spec_is_new() &&
+              !state.ag_spec->get_option_in_memory())
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Modification of IN_MEMORY attribute for access group '%s'"
+                      " is not supported", state.ag_spec->get_name().c_str());
+          state.ag_spec->set_option_in_memory(bval);
+        }
+        else
+          state.table_ag_defaults.set_in_memory(bval);
+      }
+      ParserState &state;
+    };
+
+    struct set_compressor {
+      set_compressor(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String compressor = strip_quotes(str, end-str);
+        to_lower(compressor);
+        if (state.ag_spec) {
+          if (!state.ag_spec_is_new() &&
+              compressor != state.ag_spec->get_option_compressor())
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Modification of COMPRESSOR attribute for access group '%s'"
+                      " is not supported", state.ag_spec->get_name().c_str());
+          state.ag_spec->set_option_compressor(compressor);
+        }
+        else
+          state.table_ag_defaults.set_compressor(compressor);
+      }
+      ParserState &state;
+    };
+
+    struct set_blocksize {
+      set_blocksize(ParserState &state) : state(state) { }
       void operator()(size_t blocksize) const {
-        std::stringstream ss;
-        ss << "AG " << state.ag->name << " block size = " << blocksize;
-        state.ag->blocksize = blocksize;
+        if (state.ag_spec)
+          state.ag_spec->set_option_blocksize(blocksize);
+        else
+          state.table_ag_defaults.set_blocksize(blocksize);
       }
       ParserState &state;
     };
 
-    struct set_access_group_replication {
-      set_access_group_replication(ParserState &state) : state(state) { }
+    struct set_replication {
+      set_replication(ParserState &state) : state(state) { }
       void operator()(size_t replication) const {
-        if (replication >= 32768)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Invalid replication factor (%u) for access group '%s'",
-                    (unsigned)replication, state.ag->name.c_str());
-        state.ag->replication = (::int16_t)replication;
+        if (state.ag_spec) {
+          if (!state.ag_spec_is_new() &&
+              replication != (size_t)state.ag_spec->get_option_replication())
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Modification of REPLICATION attribute for access group '%s'"
+                      " is not supported", state.ag_spec->get_name().c_str());
+          if (replication >= 32768)
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Invalid replication factor (%u) for access group '%s'",
+                      (unsigned)replication, state.ag_spec->get_name().c_str());
+          state.ag_spec->set_option_replication(replication);
+        }
+        else
+          state.table_ag_defaults.set_replication(replication);
       }
       ParserState &state;
     };
 
-    struct set_access_group_bloom_filter {
-      set_access_group_bloom_filter(ParserState &state) : state(state) { }
+    struct set_bloom_filter {
+      set_bloom_filter(ParserState &state) : state(state) { }
       void operator()(char const * str, char const *end) const {
-        state.ag->bloom_filter = String(str, end-str);
-        trim_if(state.ag->bloom_filter, boost::is_any_of("'\""));
-        to_lower(state.ag->bloom_filter);
+        String bloom_filter = strip_quotes(str, end-str);
+        to_lower(bloom_filter);
+        if (state.ag_spec) {
+          if (!state.ag_spec_is_new() &&
+              bloom_filter != state.ag_spec->get_option_bloom_filter())
+            HT_THROWF(Error::HQL_BAD_COMMAND,
+                      "Modification of BLOOMFILTER attribute for access group '%s'"
+                      " is not supported", state.ag_spec->get_name().c_str());
+          state.ag_spec->set_option_bloom_filter(bloom_filter);
+        }
+        else
+          state.table_ag_defaults.set_bloom_filter(bloom_filter);
       }
       ParserState &state;
     };
@@ -825,23 +1169,36 @@ namespace Hypertable {
     struct access_group_add_column_family {
       access_group_add_column_family(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name(str, end-str);
-        trim_if(name, is_any_of("'\""));
-        if (name.find_first_of(':') != String::npos)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Invalid column family name %s, ':' character not allowed",
-                    name.c_str());
-        Schema::ColumnFamilyMap::const_iterator iter = state.cf_map.find(name);
-        if (iter == state.cf_map.end())
-          HT_THROW(Error::HQL_PARSE_ERROR, String("Access Group '")
-                   + state.ag->name + "' includes unknown column family '"
-                   + name + "'");
-        if ((*iter).second->ag != "" && (*iter).second->ag != state.ag->name)
-          HT_THROW(Error::HQL_PARSE_ERROR, String("Column family '") + name
-                   + "' can belong to only one access group");
-        (*iter).second->ag = state.ag->name;
-        if (state.ag->counter)
-          (*iter).second->counter = true;
+        ColumnFamilySpec *cf = nullptr;
+        String name = strip_quotes(str, end-str);
+
+        if (state.modify) {
+          if (state.ag_spec->get_column(name) != nullptr)
+            HT_THROWF(Error::HQL_BAD_COMMAND, "Bad modify command - attempt to"
+                      " add column '%s' to access group '%s' twice",
+                      name.c_str(), state.ag_spec->get_name().c_str());
+          cf = state.alter_schema->remove_column_family(name);
+          if (cf && cf->get_access_group() != state.ag_spec->get_name())
+            HT_THROWF(Error::HQL_BAD_COMMAND, "Bad modify command - moving"
+                      " column '%s' from access group '%s' to '%s' is not "
+                      "supported", name.c_str(), cf->get_access_group().c_str(),
+                      state.ag_spec->get_name().c_str());
+        }
+
+        if (cf == nullptr)
+          cf = state.get_new_column_family(name);
+
+        if (cf->get_access_group().empty())
+          cf->set_access_group(state.ag_spec->get_name());
+        else if (cf->get_access_group() != state.ag_spec->get_name())
+          HT_THROWF(Error::HQL_BAD_COMMAND, "Attempt to add column '%s' to "
+                    "access group '%s' when it already belongs to access group"
+                    " '%s'", name.c_str(), state.ag_spec->get_name().c_str(),
+                    cf->get_access_group().c_str());
+
+        if (state.modify)
+          state.ag_spec->add_column(cf);
+
       }
       ParserState &state;
     };
@@ -849,19 +1206,26 @@ namespace Hypertable {
     struct create_index {
       create_index(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name(str, end-str);
-        trim_if(name, is_any_of("'\""));
-        Schema::ColumnFamilyMap::iterator it = state.cf_map.find(name);
-        if (it == state.cf_map.end())
-          HT_THROWF(Error::HQL_PARSE_ERROR, "Unknown column family '%s'", 
-                    name.c_str());
+        String name = strip_quotes(str, end-str);
+        ColumnFamilySpec *cf = 0;
 
-        Schema::ColumnFamily *cf = it->second;
-        if (cf->has_index)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Index for column family '%s' multiply defined", 
+        if (state.alter_schema)
+          cf = state.alter_schema->get_column_family(name);
+
+        if (cf == 0)
+          cf = state.get_new_column_family(name);
+
+        if (cf->get_value_index())
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Index for column family '%s' %s defined",
+                    name.c_str(), state.alter_schema ? "already" : "multiply");
+
+        if (cf->get_option_counter())
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Attempt to define value index for COUNTER column '%s'",
                     name.c_str());
-        cf->has_index = true;
+          
+        cf->set_value_index(true);
       }
       ParserState &state;
     };
@@ -869,19 +1233,26 @@ namespace Hypertable {
     struct create_qualifier_index {
       create_qualifier_index(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
-        String name(str, end-str);
-        trim_if(name, is_any_of("'\""));
-        Schema::ColumnFamilyMap::iterator it = state.cf_map.find(name);
-        if (it == state.cf_map.end())
-          HT_THROWF(Error::HQL_PARSE_ERROR, "Unknown column family '%s'", 
+        String name = strip_quotes(str, end-str);
+        ColumnFamilySpec *cf = 0;
+
+        if (state.alter_schema)
+          cf = state.alter_schema->get_column_family(name);
+
+        if (cf == 0)
+          cf = state.get_new_column_family(name);
+
+        if (cf->get_qualifier_index())
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Qualifier index for column family '%s' %s defined",
+                    name.c_str(), state.alter_schema ? "already" : "multiply");
+
+        if (cf->get_option_counter())
+          HT_THROWF(Error::HQL_BAD_COMMAND,
+                    "Attempt to define qualifier index for COUNTER column '%s'",
                     name.c_str());
 
-        Schema::ColumnFamily *cf = it->second;
-        if (cf->has_qualifier_index)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Qualifier Index for column family '%s' multiply defined", 
-                    name.c_str());
-        cf->has_qualifier_index = true;
+        cf->set_qualifier_index(true);
       }
       ParserState &state;
     };
@@ -992,53 +1363,12 @@ namespace Hypertable {
        uint32_t operation;
     };
 
-    struct set_table_compressor {
-      set_table_compressor(ParserState &state) : state(state) { }
-      void operator()(char const *str, char const *end) const {
-        if (state.table_compressor != "")
-          HT_THROW(Error::HQL_PARSE_ERROR, "table compressor multiply defined");
-        state.table_compressor = String(str, end-str);
-        trim_if(state.table_compressor, is_any_of("'\""));
-      }
-      ParserState &state;
-    };
-
     struct set_group_commit_interval {
       set_group_commit_interval(ParserState &state) : state(state) { }
       void operator()(size_t interval) const {
         if (state.group_commit_interval != 0)
           HT_THROW(Error::HQL_PARSE_ERROR, "GROUP_COMMIT_INTERVAL multiply defined");
         state.group_commit_interval = (::uint32_t)interval;
-      }
-      ParserState &state;
-    };
-
-    struct set_table_in_memory {
-      set_table_in_memory(ParserState &state) : state(state) { }
-      void operator()(char const *, char const *) const {
-        state.table_in_memory=true;
-      }
-      ParserState &state;
-    };
-
-    struct set_table_blocksize {
-      set_table_blocksize(ParserState &state) : state(state) { }
-      void operator()(size_t blocksize) const {
-        std::stringstream ss;
-        ss << "table block size = " << blocksize;
-        state.table_blocksize = blocksize;
-      }
-      ParserState &state;
-    };
-
-    struct set_table_replication {
-      set_table_replication(ParserState &state) : state(state) { }
-      void operator()(size_t replication) const {
-        if (replication >= 32768)
-          HT_THROWF(Error::HQL_PARSE_ERROR,
-                    "Invalid replication factor (%u) for access group '%s'",
-                    (unsigned)replication, state.ag->name.c_str());
-        state.table_replication = (::int32_t)replication;
       }
       ParserState &state;
     };
@@ -2260,7 +2590,7 @@ namespace Hypertable {
            * Start grammar definition
            */
           boolean_literal
-            = lexeme_d[TRUE | FALSE | YES | NO | ON | OFF | ONE | ZERO]
+            = lexeme_d[TRUE | FALSE]
             ;
 
           identifier
@@ -2308,8 +2638,7 @@ namespace Hypertable {
                 COMMAND_USE_NAMESPACE)]
             | create_namespace_statement[set_command(self.state,
                 COMMAND_CREATE_NAMESPACE)]
-            | create_table_statement[set_command(self.state,
-                COMMAND_CREATE_TABLE)]
+            | create_table_statement[finish_create_table_statement(self.state)]
             | describe_table_statement[set_command(self.state,
                 COMMAND_DESCRIBE_TABLE)]
             | load_data_statement[set_command(self.state, COMMAND_LOAD_DATA)]
@@ -2322,8 +2651,7 @@ namespace Hypertable {
             | drop_namespace_statement[set_command(self.state, COMMAND_DROP_NAMESPACE)]
             | drop_table_statement[set_command(self.state, COMMAND_DROP_TABLE)]
             | rename_table_statement[set_command(self.state, COMMAND_RENAME_TABLE)]
-            | alter_table_statement[set_command(self.state, COMMAND_ALTER_TABLE)]
-
+            | alter_table_statement[finish_alter_table_statement(self.state)]
             | load_range_statement[set_command(self.state, COMMAND_LOAD_RANGE)]
             | dump_statement[set_command(self.state, COMMAND_DUMP)]
             | dump_table_statement[set_command(self.state, COMMAND_DUMP_TABLE)]
@@ -2548,11 +2876,12 @@ namespace Hypertable {
             ;
 
           alter_table_statement
-            = ALTER >> TABLE >> user_identifier[set_table_name(self.state)]
-            >> +(ADD >> add_column_definitions
-                | MODIFY >> modify_column_definitions
-                | DROP >> drop_column_definitions
-                | RENAME >> COLUMN >> FAMILY >> rename_column_definition)
+            = ALTER >> TABLE >> user_identifier[start_alter_table(self.state)]
+            >> +(ADD >> create_definitions
+                 | MODIFY[set_modify_flag(self.state, true)] >>
+                   create_definitions[set_modify_flag(self.state, false)]
+                 | DROP >> drop_column_definitions
+                 | RENAME >> COLUMN >> FAMILY >> rename_column_definition)
             ;
 
           exists_table_statement
@@ -2630,7 +2959,7 @@ namespace Hypertable {
 
           create_table_statement
             = CREATE >> TABLE
-              >> user_identifier[set_table_name(self.state)]
+              >> user_identifier[start_create_table_statement(self.state)]
               >> ((LIKE >> user_identifier[set_clone_table_name(self.state)])
                   | (create_definitions))
               >> *(table_option)
@@ -2651,53 +2980,21 @@ namespace Hypertable {
               >> user_identifier[set_namespace(self.state)]
             ;
 
-
           table_option
-            = COMPRESSOR >> *EQUAL >> string_literal[
-                set_table_compressor(self.state)]
-            | GROUP_COMMIT_INTERVAL >> *EQUAL >> uint_p[set_group_commit_interval(self.state)]
-            | table_option_in_memory[set_table_in_memory(self.state)]
-            | table_option_blocksize
-            | table_option_replication
-            | max_versions_option
-            | ttl_option
-            ;
-
-          table_option_in_memory
-            = IN_MEMORY
-            ;
-
-          table_option_blocksize
-            = BLOCKSIZE >> *EQUAL >> uint_p[
-                set_table_blocksize(self.state)]
-            ;
-
-          table_option_replication
-            = REPLICATION >> EQUAL >> uint_p[
-                set_table_replication(self.state)]
+            = GROUP_COMMIT_INTERVAL >> *EQUAL >> uint_p[set_group_commit_interval(self.state)]
+            | access_group_option
+            | column_option
             ;
 
           create_definitions
             = LPAREN >> create_definition
                      >> *(COMMA >> create_definition)
-                     >> RPAREN[clear_column_definition(self.state)]
-            ;
-
-          create_definition
-            = column_definition
-              | access_group_definition
-              | index_definition
-            ;
-
-          add_column_definitions
-            = LPAREN >> add_column_definition
-                     >> *(COMMA >> add_column_definition)
                      >> RPAREN
             ;
 
-          add_column_definition
-            = column_definition
-              | access_group_definition
+          create_definition
+            = column_definition[close_column_family(self.state)]
+              | access_group_definition[close_access_group(self.state)]
               | index_definition
             ;
 
@@ -2719,13 +3016,14 @@ namespace Hypertable {
             ;
 
           modify_column_definitions
-            = LPAREN >> modify_column_definition
-                     >> *(COMMA >> modify_column_definition)
-                     >> RPAREN
+            = LPAREN
+            >> modify_column_definition[close_column_family(self.state)]
+            >> *(COMMA >> modify_column_definition[close_column_family(self.state)])
+            >> RPAREN
             ;
 
           modify_column_definition
-            = column_name[modify_column_family(self.state)] >> *(column_option)
+            = column_name[open_existing_column_family(self.state)] >> *(column_option)
             ;
 
           column_name
@@ -2733,7 +3031,7 @@ namespace Hypertable {
             ;
 
            column_definition
-            = column_name[create_column_family(self.state)] >> *(column_option)
+            = column_name[open_column_family(self.state)] >> *(column_option)
             ;
 
           column_option
@@ -2758,7 +3056,8 @@ namespace Hypertable {
             ;
 
           counter_option
-            = COUNTER[set_counter(self.state)]
+            = COUNTER >> boolean_literal[set_counter(self.state)]
+            | COUNTER[set_counter(self.state)]
             ;
 
           duration
@@ -2768,11 +3067,12 @@ namespace Hypertable {
 
           access_group_definition
             = ACCESS >> GROUP
-              >> user_identifier[create_access_group(self.state)]
-              >> *(access_group_option)
-              >> !(LPAREN >> column_name[access_group_add_column_family(self.state)]
-              >> *(COMMA >> column_name[access_group_add_column_family(self.state)])
-              >> RPAREN)
+              >> user_identifier[open_access_group(self.state)]
+              >> LPAREN 
+              >> !(column_name[access_group_add_column_family(self.state)]
+              >>   *(COMMA >> column_name[access_group_add_column_family(self.state)]))
+              >> RPAREN
+              >> *(access_group_option | column_option)
             ;
 
           index_definition
@@ -2783,32 +3083,32 @@ namespace Hypertable {
             ;
 
           access_group_option
-            = COUNTER[set_access_group_counter(self.state)]
-            | in_memory_option[set_access_group_in_memory(self.state)]
+            = in_memory_option
             | blocksize_option
             | replication_option
             | COMPRESSOR >> *EQUAL >> string_literal[
-                set_access_group_compressor(self.state)]
+                set_compressor(self.state)]
             | bloom_filter_option
             ;
 
           bloom_filter_option
             = BLOOMFILTER >> *EQUAL
-              >> string_literal[set_access_group_bloom_filter(self.state)]
+              >> string_literal[set_bloom_filter(self.state)]
             ;
 
           in_memory_option
-            = IN_MEMORY
+            = IN_MEMORY >> boolean_literal[set_in_memory(self.state)]
+            | IN_MEMORY[set_in_memory(self.state)]
             ;
 
           blocksize_option
             = BLOCKSIZE >> *EQUAL >> uint_p[
-                set_access_group_blocksize(self.state)]
+                set_blocksize(self.state)]
             ;
 
           replication_option
             = REPLICATION >> *EQUAL >> uint_p[
-                set_access_group_replication(self.state)]
+                set_replication(self.state)]
             ;
 
           select_statement
@@ -3056,8 +3356,6 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(column_selection);
           BOOST_SPIRIT_DEBUG_RULE(create_definition);
           BOOST_SPIRIT_DEBUG_RULE(create_definitions);
-          BOOST_SPIRIT_DEBUG_RULE(add_column_definition);
-          BOOST_SPIRIT_DEBUG_RULE(add_column_definitions);
           BOOST_SPIRIT_DEBUG_RULE(drop_column_definition);
           BOOST_SPIRIT_DEBUG_RULE(drop_column_definitions);
           BOOST_SPIRIT_DEBUG_RULE(rename_column_definition);
@@ -3116,9 +3414,6 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(delete_statement);
           BOOST_SPIRIT_DEBUG_RULE(delete_column_clause);
           BOOST_SPIRIT_DEBUG_RULE(table_option);
-          BOOST_SPIRIT_DEBUG_RULE(table_option_in_memory);
-          BOOST_SPIRIT_DEBUG_RULE(table_option_blocksize);
-          BOOST_SPIRIT_DEBUG_RULE(table_option_replication);
           BOOST_SPIRIT_DEBUG_RULE(get_listing_statement);
           BOOST_SPIRIT_DEBUG_RULE(drop_table_statement);
           BOOST_SPIRIT_DEBUG_RULE(rename_table_statement);
@@ -3172,7 +3467,6 @@ namespace Hypertable {
 
         rule<ScannerT> boolean_literal, column_definition, column_name,
           column_option, create_definition, create_definitions,
-          add_column_definition, add_column_definitions,
           drop_column_definition, drop_column_definitions,
           rename_column_definition, create_table_statement, duration,
           modify_column_definitions, modify_column_definition,

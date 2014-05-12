@@ -155,9 +155,9 @@ void UpdatePipeline::qualify_and_transform() {
           table_update->id.generation) {
         table_update->error = Error::RANGESERVER_GENERATION_MISMATCH;
         table_update->error_msg =
-          format("Update schema generation mismatch for table %s (received %u != %u)",
-                 table_update->id.id, table_update->id.generation,
-                 table_update->table_info->get_schema()->get_generation());
+          format("Update schema generation mismatch for table %s (received %lld != %lld)",
+                 table_update->id.id, (Lld)table_update->id.generation,
+                 (Lld)table_update->table_info->get_schema()->get_generation());
         continue;
       }
 
@@ -400,7 +400,7 @@ void UpdatePipeline::qualify_and_transform() {
             try {
               SchemaPtr schema = table_update->table_info->get_schema();
               uint8_t family=*(key.ptr+1+strlen((const char *)key.ptr+1)+1);
-              Schema::ColumnFamily *cf = schema->get_column_family(family);
+              ColumnFamilySpec *cf_spec = schema->get_column_family(family);
 
               // reset auto_revision if it's gotten behind
               if (uc->auto_revision < latest_range_revision) {
@@ -417,8 +417,8 @@ void UpdatePipeline::qualify_and_transform() {
               // This will transform keys that need to be assigned a
               // timestamp and/or revision number by re-writing the key
               // with the added timestamp and/or revision tacked on to the end
-              transform_key(key, cur_bufp, ++uc->auto_revision,
-                      &m_last_revision, cf ? cf->time_order_desc : false);
+              transform_key(key, cur_bufp, ++uc->auto_revision,&m_last_revision,
+                            cf_spec ? cf_spec->get_option_time_order_desc() : false);
 
               // Validate revision number
               if (m_last_revision < latest_range_revision) {

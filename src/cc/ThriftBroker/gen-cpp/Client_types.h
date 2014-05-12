@@ -1153,62 +1153,54 @@ class TableSplit {
 
 };
 
-typedef struct _ColumnFamily__isset {
-  _ColumnFamily__isset() : name(false), ag(false), max_versions(false), ttl(false) {}
-  bool name;
-  bool ag;
+typedef struct _ColumnFamilyOptions__isset {
+  _ColumnFamilyOptions__isset() : max_versions(false), ttl(false), time_order_desc(false), counter(false) {}
   bool max_versions;
   bool ttl;
-} _ColumnFamily__isset;
+  bool time_order_desc;
+  bool counter;
+} _ColumnFamilyOptions__isset;
 
-class ColumnFamily {
+class ColumnFamilyOptions {
  public:
 
-  static const char* ascii_fingerprint; // = "0EDE17B70FBE0133B4243A5167158E5C";
-  static const uint8_t binary_fingerprint[16]; // = {0x0E,0xDE,0x17,0xB7,0x0F,0xBE,0x01,0x33,0xB4,0x24,0x3A,0x51,0x67,0x15,0x8E,0x5C};
+  static const char* ascii_fingerprint; // = "ACE5CDEF5DC5021F5001821D7845FB8C";
+  static const uint8_t binary_fingerprint[16]; // = {0xAC,0xE5,0xCD,0xEF,0x5D,0xC5,0x02,0x1F,0x50,0x01,0x82,0x1D,0x78,0x45,0xFB,0x8C};
 
-  ColumnFamily() : name(""), ag(""), max_versions(0), ttl("") {
+  ColumnFamilyOptions() : max_versions(0), ttl(0), time_order_desc(0), counter(0) {
   }
 
-  virtual ~ColumnFamily() throw() {}
+  virtual ~ColumnFamilyOptions() throw() {}
 
-  std::string name;
-  std::string ag;
   int32_t max_versions;
-  std::string ttl;
+  int32_t ttl;
+  bool time_order_desc;
+  bool counter;
 
-  _ColumnFamily__isset __isset;
-
-  void __set_name(const std::string& val) {
-    name = val;
-    __isset.name = true;
-  }
-
-  void __set_ag(const std::string& val) {
-    ag = val;
-    __isset.ag = true;
-  }
+  _ColumnFamilyOptions__isset __isset;
 
   void __set_max_versions(const int32_t val) {
     max_versions = val;
     __isset.max_versions = true;
   }
 
-  void __set_ttl(const std::string& val) {
+  void __set_ttl(const int32_t val) {
     ttl = val;
     __isset.ttl = true;
   }
 
-  bool operator == (const ColumnFamily & rhs) const
+  void __set_time_order_desc(const bool val) {
+    time_order_desc = val;
+    __isset.time_order_desc = true;
+  }
+
+  void __set_counter(const bool val) {
+    counter = val;
+    __isset.counter = true;
+  }
+
+  bool operator == (const ColumnFamilyOptions & rhs) const
   {
-    if (__isset.name != rhs.__isset.name)
-      return false;
-    else if (__isset.name && !(name == rhs.name))
-      return false;
-    if (__isset.ag != rhs.__isset.ag)
-      return false;
-    else if (__isset.ag && !(ag == rhs.ag))
-      return false;
     if (__isset.max_versions != rhs.__isset.max_versions)
       return false;
     else if (__isset.max_versions && !(max_versions == rhs.max_versions))
@@ -1217,60 +1209,160 @@ class ColumnFamily {
       return false;
     else if (__isset.ttl && !(ttl == rhs.ttl))
       return false;
+    if (__isset.time_order_desc != rhs.__isset.time_order_desc)
+      return false;
+    else if (__isset.time_order_desc && !(time_order_desc == rhs.time_order_desc))
+      return false;
+    if (__isset.counter != rhs.__isset.counter)
+      return false;
+    else if (__isset.counter && !(counter == rhs.counter))
+      return false;
     return true;
   }
-  bool operator != (const ColumnFamily &rhs) const {
+  bool operator != (const ColumnFamilyOptions &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const ColumnFamily & ) const;
+  bool operator < (const ColumnFamilyOptions & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
 
 };
 
-typedef struct _AccessGroup__isset {
-  _AccessGroup__isset() : name(false), in_memory(false), replication(false), blocksize(false), compressor(false), bloom_filter(false), columns(false) {}
+typedef struct _ColumnFamilySpec__isset {
+  _ColumnFamilySpec__isset() : name(false), access_group(false), deleted(false), generation(false), id(false), value_index(false), qualifier_index(false), options(false) {}
   bool name;
-  bool in_memory;
+  bool access_group;
+  bool deleted;
+  bool generation;
+  bool id;
+  bool value_index;
+  bool qualifier_index;
+  bool options;
+} _ColumnFamilySpec__isset;
+
+class ColumnFamilySpec {
+ public:
+
+  static const char* ascii_fingerprint; // = "42BC359FA17CBF00292D6912CDDB5034";
+  static const uint8_t binary_fingerprint[16]; // = {0x42,0xBC,0x35,0x9F,0xA1,0x7C,0xBF,0x00,0x29,0x2D,0x69,0x12,0xCD,0xDB,0x50,0x34};
+
+  ColumnFamilySpec() : name(""), access_group(""), deleted(0), generation(0), id(0), value_index(0), qualifier_index(0) {
+  }
+
+  virtual ~ColumnFamilySpec() throw() {}
+
+  std::string name;
+  std::string access_group;
+  bool deleted;
+  int64_t generation;
+  int32_t id;
+  bool value_index;
+  bool qualifier_index;
+  ColumnFamilyOptions options;
+
+  _ColumnFamilySpec__isset __isset;
+
+  void __set_name(const std::string& val) {
+    name = val;
+  }
+
+  void __set_access_group(const std::string& val) {
+    access_group = val;
+  }
+
+  void __set_deleted(const bool val) {
+    deleted = val;
+  }
+
+  void __set_generation(const int64_t val) {
+    generation = val;
+    __isset.generation = true;
+  }
+
+  void __set_id(const int32_t val) {
+    id = val;
+    __isset.id = true;
+  }
+
+  void __set_value_index(const bool val) {
+    value_index = val;
+  }
+
+  void __set_qualifier_index(const bool val) {
+    qualifier_index = val;
+  }
+
+  void __set_options(const ColumnFamilyOptions& val) {
+    options = val;
+    __isset.options = true;
+  }
+
+  bool operator == (const ColumnFamilySpec & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    if (!(access_group == rhs.access_group))
+      return false;
+    if (!(deleted == rhs.deleted))
+      return false;
+    if (__isset.generation != rhs.__isset.generation)
+      return false;
+    else if (__isset.generation && !(generation == rhs.generation))
+      return false;
+    if (__isset.id != rhs.__isset.id)
+      return false;
+    else if (__isset.id && !(id == rhs.id))
+      return false;
+    if (!(value_index == rhs.value_index))
+      return false;
+    if (!(qualifier_index == rhs.qualifier_index))
+      return false;
+    if (__isset.options != rhs.__isset.options)
+      return false;
+    else if (__isset.options && !(options == rhs.options))
+      return false;
+    return true;
+  }
+  bool operator != (const ColumnFamilySpec &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const ColumnFamilySpec & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _AccessGroupOptions__isset {
+  _AccessGroupOptions__isset() : replication(false), blocksize(false), compressor(false), bloom_filter(false), in_memory(false) {}
   bool replication;
   bool blocksize;
   bool compressor;
   bool bloom_filter;
-  bool columns;
-} _AccessGroup__isset;
+  bool in_memory;
+} _AccessGroupOptions__isset;
 
-class AccessGroup {
+class AccessGroupOptions {
  public:
 
-  static const char* ascii_fingerprint; // = "17108017AF8680A78499DB15024EC92B";
-  static const uint8_t binary_fingerprint[16]; // = {0x17,0x10,0x80,0x17,0xAF,0x86,0x80,0xA7,0x84,0x99,0xDB,0x15,0x02,0x4E,0xC9,0x2B};
+  static const char* ascii_fingerprint; // = "4346BA357564A572D7812C869630F2AF";
+  static const uint8_t binary_fingerprint[16]; // = {0x43,0x46,0xBA,0x35,0x75,0x64,0xA5,0x72,0xD7,0x81,0x2C,0x86,0x96,0x30,0xF2,0xAF};
 
-  AccessGroup() : name(""), in_memory(0), replication(0), blocksize(0), compressor(""), bloom_filter("") {
+  AccessGroupOptions() : replication(0), blocksize(0), compressor(""), bloom_filter(""), in_memory(0) {
   }
 
-  virtual ~AccessGroup() throw() {}
+  virtual ~AccessGroupOptions() throw() {}
 
-  std::string name;
-  bool in_memory;
   int16_t replication;
   int32_t blocksize;
   std::string compressor;
   std::string bloom_filter;
-  std::vector<ColumnFamily>  columns;
+  bool in_memory;
 
-  _AccessGroup__isset __isset;
-
-  void __set_name(const std::string& val) {
-    name = val;
-    __isset.name = true;
-  }
-
-  void __set_in_memory(const bool val) {
-    in_memory = val;
-    __isset.in_memory = true;
-  }
+  _AccessGroupOptions__isset __isset;
 
   void __set_replication(const int16_t val) {
     replication = val;
@@ -1292,21 +1384,13 @@ class AccessGroup {
     __isset.bloom_filter = true;
   }
 
-  void __set_columns(const std::vector<ColumnFamily> & val) {
-    columns = val;
-    __isset.columns = true;
+  void __set_in_memory(const bool val) {
+    in_memory = val;
+    __isset.in_memory = true;
   }
 
-  bool operator == (const AccessGroup & rhs) const
+  bool operator == (const AccessGroupOptions & rhs) const
   {
-    if (__isset.name != rhs.__isset.name)
-      return false;
-    else if (__isset.name && !(name == rhs.name))
-      return false;
-    if (__isset.in_memory != rhs.__isset.in_memory)
-      return false;
-    else if (__isset.in_memory && !(in_memory == rhs.in_memory))
-      return false;
     if (__isset.replication != rhs.__isset.replication)
       return false;
     else if (__isset.replication && !(replication == rhs.replication))
@@ -1323,17 +1407,91 @@ class AccessGroup {
       return false;
     else if (__isset.bloom_filter && !(bloom_filter == rhs.bloom_filter))
       return false;
-    if (__isset.columns != rhs.__isset.columns)
+    if (__isset.in_memory != rhs.__isset.in_memory)
       return false;
-    else if (__isset.columns && !(columns == rhs.columns))
+    else if (__isset.in_memory && !(in_memory == rhs.in_memory))
       return false;
     return true;
   }
-  bool operator != (const AccessGroup &rhs) const {
+  bool operator != (const AccessGroupOptions &rhs) const {
     return !(*this == rhs);
   }
 
-  bool operator < (const AccessGroup & ) const;
+  bool operator < (const AccessGroupOptions & ) const;
+
+  uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
+  uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
+
+};
+
+typedef struct _AccessGroupSpec__isset {
+  _AccessGroupSpec__isset() : name(false), generation(false), options(false), defaults(false) {}
+  bool name;
+  bool generation;
+  bool options;
+  bool defaults;
+} _AccessGroupSpec__isset;
+
+class AccessGroupSpec {
+ public:
+
+  static const char* ascii_fingerprint; // = "45567B8B7814C24C13725F0ED4F36F3B";
+  static const uint8_t binary_fingerprint[16]; // = {0x45,0x56,0x7B,0x8B,0x78,0x14,0xC2,0x4C,0x13,0x72,0x5F,0x0E,0xD4,0xF3,0x6F,0x3B};
+
+  AccessGroupSpec() : name(""), generation(0) {
+  }
+
+  virtual ~AccessGroupSpec() throw() {}
+
+  std::string name;
+  int64_t generation;
+  AccessGroupOptions options;
+  ColumnFamilyOptions defaults;
+
+  _AccessGroupSpec__isset __isset;
+
+  void __set_name(const std::string& val) {
+    name = val;
+  }
+
+  void __set_generation(const int64_t val) {
+    generation = val;
+    __isset.generation = true;
+  }
+
+  void __set_options(const AccessGroupOptions& val) {
+    options = val;
+    __isset.options = true;
+  }
+
+  void __set_defaults(const ColumnFamilyOptions& val) {
+    defaults = val;
+    __isset.defaults = true;
+  }
+
+  bool operator == (const AccessGroupSpec & rhs) const
+  {
+    if (!(name == rhs.name))
+      return false;
+    if (__isset.generation != rhs.__isset.generation)
+      return false;
+    else if (__isset.generation && !(generation == rhs.generation))
+      return false;
+    if (__isset.options != rhs.__isset.options)
+      return false;
+    else if (__isset.options && !(options == rhs.options))
+      return false;
+    if (__isset.defaults != rhs.__isset.defaults)
+      return false;
+    else if (__isset.defaults && !(defaults == rhs.defaults))
+      return false;
+    return true;
+  }
+  bool operator != (const AccessGroupSpec &rhs) const {
+    return !(*this == rhs);
+  }
+
+  bool operator < (const AccessGroupSpec & ) const;
 
   uint32_t read(::apache::thrift::protocol::TProtocol* iprot);
   uint32_t write(::apache::thrift::protocol::TProtocol* oprot) const;
@@ -1341,35 +1499,70 @@ class AccessGroup {
 };
 
 typedef struct _Schema__isset {
-  _Schema__isset() : access_groups(false), column_families(false) {}
+  _Schema__isset() : access_groups(false), column_families(false), generation(false), version(false), group_commit_interval(false), access_group_defaults(false), column_family_defaults(false) {}
   bool access_groups;
   bool column_families;
+  bool generation;
+  bool version;
+  bool group_commit_interval;
+  bool access_group_defaults;
+  bool column_family_defaults;
 } _Schema__isset;
 
 class Schema {
  public:
 
-  static const char* ascii_fingerprint; // = "69B5DA4C91BFF355857D905B1B5A3A03";
-  static const uint8_t binary_fingerprint[16]; // = {0x69,0xB5,0xDA,0x4C,0x91,0xBF,0xF3,0x55,0x85,0x7D,0x90,0x5B,0x1B,0x5A,0x3A,0x03};
+  static const char* ascii_fingerprint; // = "CE3A6EFB26C0FEE4181164C929D9051B";
+  static const uint8_t binary_fingerprint[16]; // = {0xCE,0x3A,0x6E,0xFB,0x26,0xC0,0xFE,0xE4,0x18,0x11,0x64,0xC9,0x29,0xD9,0x05,0x1B};
 
-  Schema() {
+  Schema() : generation(0), version(0), group_commit_interval(0) {
   }
 
   virtual ~Schema() throw() {}
 
-  std::map<std::string, AccessGroup>  access_groups;
-  std::map<std::string, ColumnFamily>  column_families;
+  std::map<std::string, AccessGroupSpec>  access_groups;
+  std::map<std::string, ColumnFamilySpec>  column_families;
+  int64_t generation;
+  int32_t version;
+  int32_t group_commit_interval;
+  AccessGroupOptions access_group_defaults;
+  ColumnFamilyOptions column_family_defaults;
 
   _Schema__isset __isset;
 
-  void __set_access_groups(const std::map<std::string, AccessGroup> & val) {
+  void __set_access_groups(const std::map<std::string, AccessGroupSpec> & val) {
     access_groups = val;
     __isset.access_groups = true;
   }
 
-  void __set_column_families(const std::map<std::string, ColumnFamily> & val) {
+  void __set_column_families(const std::map<std::string, ColumnFamilySpec> & val) {
     column_families = val;
     __isset.column_families = true;
+  }
+
+  void __set_generation(const int64_t val) {
+    generation = val;
+    __isset.generation = true;
+  }
+
+  void __set_version(const int32_t val) {
+    version = val;
+    __isset.version = true;
+  }
+
+  void __set_group_commit_interval(const int32_t val) {
+    group_commit_interval = val;
+    __isset.group_commit_interval = true;
+  }
+
+  void __set_access_group_defaults(const AccessGroupOptions& val) {
+    access_group_defaults = val;
+    __isset.access_group_defaults = true;
+  }
+
+  void __set_column_family_defaults(const ColumnFamilyOptions& val) {
+    column_family_defaults = val;
+    __isset.column_family_defaults = true;
   }
 
   bool operator == (const Schema & rhs) const
@@ -1381,6 +1574,26 @@ class Schema {
     if (__isset.column_families != rhs.__isset.column_families)
       return false;
     else if (__isset.column_families && !(column_families == rhs.column_families))
+      return false;
+    if (__isset.generation != rhs.__isset.generation)
+      return false;
+    else if (__isset.generation && !(generation == rhs.generation))
+      return false;
+    if (__isset.version != rhs.__isset.version)
+      return false;
+    else if (__isset.version && !(version == rhs.version))
+      return false;
+    if (__isset.group_commit_interval != rhs.__isset.group_commit_interval)
+      return false;
+    else if (__isset.group_commit_interval && !(group_commit_interval == rhs.group_commit_interval))
+      return false;
+    if (__isset.access_group_defaults != rhs.__isset.access_group_defaults)
+      return false;
+    else if (__isset.access_group_defaults && !(access_group_defaults == rhs.access_group_defaults))
+      return false;
+    if (__isset.column_family_defaults != rhs.__isset.column_family_defaults)
+      return false;
+    else if (__isset.column_family_defaults && !(column_family_defaults == rhs.column_family_defaults))
       return false;
     return true;
   }

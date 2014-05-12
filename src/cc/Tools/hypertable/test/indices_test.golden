@@ -15,49 +15,67 @@ DROP TABLE IF EXISTS test;
 CREATE TABLE t (a, INDEX (a));
 Error: parse error at: CREATE TABLE t (a, INDEX (a)) (CREATE TABLE t (a, INDEX (a))) - HYPERTABLE HQL parse error
 CREATE TABLE t (a, INDEX b);
-Error: Unknown column family 'b' - HYPERTABLE HQL parse error
+Error: Reference to undefined column 'b' - HQL bad command
 CREATE TABLE t (a, INDEX a, INDEX a);
-Error: Index for column family 'a' multiply defined - HYPERTABLE HQL parse error
+Error: Index for column family 'a' multiply defined - HQL bad command
 CREATE TABLE "^t" (a, b);
 Error: Invalid table name character '^' - HYPERTABLE syntax error
 
 # CREATE TABLE
 CREATE TABLE t (a, INDEX a);
 SHOW CREATE TABLE t;
-
 CREATE TABLE t (
   a, INDEX a,
   ACCESS GROUP default (a)
-)
+);
 
 DESCRIBE TABLE t;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
 
 CREATE TABLE t2 LIKE t;
 SHOW CREATE TABLE t2;
-
 CREATE TABLE t2 (
   a, INDEX a,
   ACCESS GROUP default (a)
-)
+);
 
 DESCRIBE TABLE t2;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
@@ -67,52 +85,74 @@ DROP TABLE t;
 
 CREATE TABLE t (a, b, INDEX a);
 SHOW CREATE TABLE t;
-
 CREATE TABLE t (
   a, INDEX a,
   b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
 
 CREATE TABLE t2 LIKE t;
 SHOW CREATE TABLE t2;
-
 CREATE TABLE t2 (
   a, INDEX a,
   b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t2;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
@@ -122,54 +162,76 @@ DROP TABLE t;
 
 CREATE TABLE t (a, b, INDEX a, INDEX b);
 SHOW CREATE TABLE t;
-
 CREATE TABLE t (
   a, INDEX a,
   b, INDEX b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
 
 CREATE TABLE t2 LIKE t;
 SHOW CREATE TABLE t2;
-
 CREATE TABLE t2 (
   a, INDEX a,
   b, INDEX b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t2;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
@@ -180,13 +242,12 @@ DROP TABLE t;
 # verify that the secondary index table is created
 CREATE TABLE t (a, b, c);
 SHOW CREATE TABLE "t";
-
 CREATE TABLE t (
   a,
   b,
   c,
   ACCESS GROUP default (a, b, c)
-)
+);
 
 SHOW CREATE TABLE "^t";
 Error: indices/^t - HYPERTABLE table does not exist
@@ -195,18 +256,16 @@ DROP TABLE t;
 # verify that the secondary index table is created
 CREATE TABLE t (a, INDEX a);
 SHOW CREATE TABLE "t";
-
 CREATE TABLE t (
   a, INDEX a,
   ACCESS GROUP default (a)
-)
+);
 
 SHOW CREATE TABLE "^t";
-
 CREATE TABLE '^t' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 DROP TABLE t;
 DROP TABLE '^t';
@@ -215,20 +274,18 @@ Error: Invalid table name character '^' - HYPERTABLE syntax error
 # verify that the secondary index table is created
 CREATE TABLE t (a, b, c, INDEX a, INDEX b, INDEX c);
 SHOW CREATE TABLE "t";
-
 CREATE TABLE t (
   a, INDEX a,
   b, INDEX b,
   c, INDEX c,
   ACCESS GROUP default (a, b, c)
-)
+);
 
 SHOW CREATE TABLE "^t";
-
 CREATE TABLE '^t' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 DROP TABLE t;
 DROP TABLE '^t';
@@ -714,11 +771,21 @@ DROP TABLE IF EXISTS t;
 CREATE TABLE t (a TIME_ORDER DESC MAX_VERSIONS=1, INDEX a);
 DESCRIBE TABLE "^t";
 <Schema version="1">
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>v1</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
@@ -738,11 +805,21 @@ DROP TABLE IF EXISTS t;
 CREATE TABLE t (a, INDEX a, b, INDEX b);
 DESCRIBE TABLE "^t";
 <Schema version="1">
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>v1</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
@@ -818,35 +895,31 @@ SELECT b FROM t WHERE a = "cella2";
 SELECT a FROM t WHERE b = "cellb2";
 
 SHOW CREATE TABLE t;
-
 CREATE TABLE t (
   a, INDEX a,
   b, INDEX b,
   ACCESS GROUP default (a, b)
-)
+);
 
 SHOW CREATE TABLE "^t";
-
 CREATE TABLE '^t' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 ALTER TABLE t RENAME COLUMN FAMILY (a, c);
 SHOW CREATE TABLE t;
-
 CREATE TABLE t (
   c, INDEX c,
   b, INDEX b,
   ACCESS GROUP default (c, b)
-)
+);
 
 SHOW CREATE TABLE "^t";
-
 CREATE TABLE '^t' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 SELECT c FROM t WHERE ROW < "row05" AND c =^ "cell";
 row00	c	cella00
@@ -863,19 +936,17 @@ row04	b	cellb04
 
 RENAME TABLE t TO r;
 SHOW CREATE TABLE r;
-
 CREATE TABLE r (
   c, INDEX c,
   b, INDEX b,
   ACCESS GROUP default (c, b)
-)
+);
 
 SHOW CREATE TABLE "^r";
-
 CREATE TABLE '^r' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 SELECT c FROM r WHERE ROW < "row05" AND c =^ "cell";
 row00	c	cella00
@@ -911,40 +982,58 @@ row22	b:bar	cellb22bar
 DROP TABLE t;
 CREATE TABLE t (a, QUALIFIER INDEX a);
 SHOW CREATE TABLE t;
-
 CREATE TABLE t (
   a, QUALIFIER INDEX a,
   ACCESS GROUP default (a)
-)
+);
 
 DESCRIBE TABLE t;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
 
 CREATE TABLE t2 LIKE t;
 SHOW CREATE TABLE t2;
-
 CREATE TABLE t2 (
   a, QUALIFIER INDEX a,
   ACCESS GROUP default (a)
-)
+);
 
 DESCRIBE TABLE t2;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
@@ -954,52 +1043,74 @@ DROP TABLE t;
 
 CREATE TABLE t (a, b, QUALIFIER INDEX a);
 SHOW CREATE TABLE t;
-
 CREATE TABLE t (
   a, QUALIFIER INDEX a,
   b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
 
 CREATE TABLE t2 LIKE t;
 SHOW CREATE TABLE t2;
-
 CREATE TABLE t2 (
   a, QUALIFIER INDEX a,
   b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t2;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
@@ -1009,54 +1120,76 @@ DROP TABLE t;
 
 CREATE TABLE t (a, b, QUALIFIER INDEX a, QUALIFIER INDEX b);
 SHOW CREATE TABLE t;
-
 CREATE TABLE t (
   a, QUALIFIER INDEX a,
   b, QUALIFIER INDEX b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
 
 CREATE TABLE t2 LIKE t;
 SHOW CREATE TABLE t2;
-
 CREATE TABLE t2 (
   a, QUALIFIER INDEX a,
   b, QUALIFIER INDEX b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t2;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
@@ -1066,13 +1199,12 @@ DROP TABLE t;
 
 CREATE TABLE t (a, b, c);
 SHOW CREATE TABLE "t";
-
 CREATE TABLE t (
   a,
   b,
   c,
   ACCESS GROUP default (a, b, c)
-)
+);
 
 SHOW CREATE TABLE "^^t";
 Error: indices/^^t - HYPERTABLE table does not exist
@@ -1080,18 +1212,16 @@ DROP TABLE t;
 
 CREATE TABLE t (a, QUALIFIER INDEX a);
 SHOW CREATE TABLE "t";
-
 CREATE TABLE t (
   a, QUALIFIER INDEX a,
   ACCESS GROUP default (a)
-)
+);
 
 SHOW CREATE TABLE "^^t";
-
 CREATE TABLE '^^t' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 DROP TABLE t;
 DROP TABLE '^^t';
@@ -1099,73 +1229,93 @@ Error: Invalid table name character '^' - HYPERTABLE syntax error
 
 CREATE TABLE t (a, b, c, QUALIFIER INDEX a, QUALIFIER INDEX b, QUALIFIER INDEX c);
 SHOW CREATE TABLE "t";
-
 CREATE TABLE t (
   a, QUALIFIER INDEX a,
   b, QUALIFIER INDEX b,
   c, QUALIFIER INDEX c,
   ACCESS GROUP default (a, b, c)
-)
+);
 
 SHOW CREATE TABLE "^^t";
-
 CREATE TABLE '^^t' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 DROP TABLE t;
 
 CREATE TABLE t (a, b, INDEX a, QUALIFIER INDEX b);
 SHOW CREATE TABLE t;
-
 CREATE TABLE t (
   a, INDEX a,
   b, QUALIFIER INDEX b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
 
 CREATE TABLE t2 LIKE t;
 SHOW CREATE TABLE t2;
-
 CREATE TABLE t2 (
   a, INDEX a,
   b, QUALIFIER INDEX b,
   ACCESS GROUP default (a, b)
-)
+);
 
 DESCRIBE TABLE t2;
 <Schema>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>a</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>b</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <QualifierIndex>true</QualifierIndex>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
@@ -1175,51 +1325,45 @@ DROP TABLE t;
 
 CREATE TABLE t (a, b, c, QUALIFIER INDEX a, INDEX a, QUALIFIER INDEX b, INDEX b);
 SHOW CREATE TABLE "t";
-
 CREATE TABLE t (
   a, INDEX a, QUALIFIER INDEX a,
   b, INDEX b, QUALIFIER INDEX b,
   c,
   ACCESS GROUP default (a, b, c)
-)
+);
 
 SHOW CREATE TABLE "^t";
-
 CREATE TABLE '^t' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 SHOW CREATE TABLE "^^t";
-
 CREATE TABLE '^^t' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 RENAME TABLE t TO r;
 SHOW CREATE TABLE "r";
-
 CREATE TABLE r (
   a, INDEX a, QUALIFIER INDEX a,
   b, INDEX b, QUALIFIER INDEX b,
   c,
   ACCESS GROUP default (a, b, c)
-)
+);
 
 SHOW CREATE TABLE "^r";
-
 CREATE TABLE '^r' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 SHOW CREATE TABLE "^^r";
-
 CREATE TABLE '^^r' (
   v1,
   ACCESS GROUP default (v1)
-)
+);
 
 DROP TABLE r;
 DROP TABLE "^r";
@@ -1918,9 +2062,9 @@ r1	join:a1	value 1
 
 # issue 989
 CREATE TABLE badidea (c COUNTER, INDEX c);
-Error: Column family 'c' is a COUNTER and therefore cannot have indices - HYPERTABLE HQL parse error
+Error: Attempt to define value index for COUNTER column 'c' - HQL bad command
 CREATE TABLE badidea (c COUNTER, QUALIFIER INDEX c);
-Error: Column family 'c' is a COUNTER and therefore cannot have indices - HYPERTABLE HQL parse error
+Error: Attempt to define qualifier index for COUNTER column 'c' - HQL bad command
 
 # More Index testing
 DROP TABLE IF EXISTS User;

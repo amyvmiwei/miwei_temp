@@ -8,30 +8,54 @@ list of shell meta commands.
 use '/';
 
 DESCRIBE TABLE IndexTest;
-<Schema compressor="none">
+<Schema>
+  <AccessGroupDefaults>
+    <Compressor>none</Compressor>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+      <Compressor>none</Compressor>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>Field1</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
     <ColumnFamily>
       <Name>Field2</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
       <Index>true</Index>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>
 
 DESCRIBE TABLE "^IndexTest";
 <Schema version="1">
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
   <AccessGroup name="default">
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
     <ColumnFamily>
       <Name>v1</Name>
-      <Counter>false</Counter>
-      <deleted>false</deleted>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
     </ColumnFamily>
   </AccessGroup>
 </Schema>

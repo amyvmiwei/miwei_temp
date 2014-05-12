@@ -53,15 +53,15 @@ MergeScannerRange::MergeScannerRange(const string &table_id, ScanContextPtr &sca
       bool has_index = false;
       bool has_qualifier_index = false;
 
-      for (auto cf : scan_ctx->schema->get_column_families()){
-        if (!cf || cf->deleted)
+      for (auto cf_spec : scan_ctx->schema->get_column_families()){
+        if (!cf_spec || cf_spec->get_deleted())
           continue;
-        if (scan_ctx->spec->rebuild_indices.value_index() && cf->has_index) {
+        if (scan_ctx->spec->rebuild_indices.value_index() && cf_spec->get_value_index()) {
           has_index = true;
           if (has_qualifier_index)
             break;
         }
-        if (scan_ctx->spec->rebuild_indices.qualifier_index() && cf->has_qualifier_index) {
+        if (scan_ctx->spec->rebuild_indices.qualifier_index() && cf_spec->get_qualifier_index()) {
           has_qualifier_index = true;
           if (has_index)
             break;

@@ -58,9 +58,7 @@ namespace {
 }
 
 PseudoTables::PseudoTables() {
-
-  cellstore_index = Schema::new_instance(cellstore_index_schema_str,
-                                         strlen(cellstore_index_schema_str));
+  cellstore_index = Schema::new_instance(cellstore_index_schema_str);
 }
 
 PseudoTables::~PseudoTables() {

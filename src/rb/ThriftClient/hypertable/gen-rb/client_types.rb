@@ -626,6 +626,28 @@ module Hypertable
           ::Thrift::Struct.generate_accessors self
         end
 
+        class ColumnFamilyOptions
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          MAX_VERSIONS = 1
+          TTL = 2
+          TIME_ORDER_DESC = 3
+          COUNTER = 4
+
+          FIELDS = {
+            MAX_VERSIONS => {:type => ::Thrift::Types::I32, :name => 'max_versions', :optional => true},
+            TTL => {:type => ::Thrift::Types::I32, :name => 'ttl', :optional => true},
+            TIME_ORDER_DESC => {:type => ::Thrift::Types::BOOL, :name => 'time_order_desc', :optional => true},
+            COUNTER => {:type => ::Thrift::Types::BOOL, :name => 'counter', :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
         # Describes a ColumnFamily
         # <dl>
         #   <dt>name</dt>
@@ -640,18 +662,50 @@ module Hypertable
         #   <dt>ttl</dt>
         #   <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
         # </dl>
-        class ColumnFamily
+        class ColumnFamilySpec
           include ::Thrift::Struct, ::Thrift::Struct_Union
           NAME = 1
-          AG = 2
-          MAX_VERSIONS = 3
-          TTL = 4
+          ACCESS_GROUP = 2
+          DELETED = 3
+          GENERATION = 4
+          ID = 5
+          VALUE_INDEX = 6
+          QUALIFIER_INDEX = 7
+          OPTIONS = 8
 
           FIELDS = {
-            NAME => {:type => ::Thrift::Types::STRING, :name => 'name', :optional => true},
-            AG => {:type => ::Thrift::Types::STRING, :name => 'ag', :optional => true},
-            MAX_VERSIONS => {:type => ::Thrift::Types::I32, :name => 'max_versions', :optional => true},
-            TTL => {:type => ::Thrift::Types::STRING, :name => 'ttl', :optional => true}
+            NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+            ACCESS_GROUP => {:type => ::Thrift::Types::STRING, :name => 'access_group'},
+            DELETED => {:type => ::Thrift::Types::BOOL, :name => 'deleted'},
+            GENERATION => {:type => ::Thrift::Types::I64, :name => 'generation', :optional => true},
+            ID => {:type => ::Thrift::Types::I32, :name => 'id', :optional => true},
+            VALUE_INDEX => {:type => ::Thrift::Types::BOOL, :name => 'value_index'},
+            QUALIFIER_INDEX => {:type => ::Thrift::Types::BOOL, :name => 'qualifier_index'},
+            OPTIONS => {:type => ::Thrift::Types::STRUCT, :name => 'options', :class => Hypertable::ThriftGen::ColumnFamilyOptions, :optional => true}
+          }
+
+          def struct_fields; FIELDS; end
+
+          def validate
+          end
+
+          ::Thrift::Struct.generate_accessors self
+        end
+
+        class AccessGroupOptions
+          include ::Thrift::Struct, ::Thrift::Struct_Union
+          REPLICATION = 1
+          BLOCKSIZE = 2
+          COMPRESSOR = 3
+          BLOOM_FILTER = 4
+          IN_MEMORY = 5
+
+          FIELDS = {
+            REPLICATION => {:type => ::Thrift::Types::I16, :name => 'replication', :optional => true},
+            BLOCKSIZE => {:type => ::Thrift::Types::I32, :name => 'blocksize', :optional => true},
+            COMPRESSOR => {:type => ::Thrift::Types::STRING, :name => 'compressor', :optional => true},
+            BLOOM_FILTER => {:type => ::Thrift::Types::STRING, :name => 'bloom_filter', :optional => true},
+            IN_MEMORY => {:type => ::Thrift::Types::BOOL, :name => 'in_memory', :optional => true}
           }
 
           def struct_fields; FIELDS; end
@@ -685,24 +739,18 @@ module Hypertable
         #   <dt>columns</dt>
         #   <dd>Specifies list of column families in this AG</dd>
         # </dl>
-        class AccessGroup
+        class AccessGroupSpec
           include ::Thrift::Struct, ::Thrift::Struct_Union
           NAME = 1
-          IN_MEMORY = 2
-          REPLICATION = 3
-          BLOCKSIZE = 4
-          COMPRESSOR = 5
-          BLOOM_FILTER = 6
-          COLUMNS = 7
+          GENERATION = 2
+          OPTIONS = 3
+          DEFAULTS = 4
 
           FIELDS = {
-            NAME => {:type => ::Thrift::Types::STRING, :name => 'name', :optional => true},
-            IN_MEMORY => {:type => ::Thrift::Types::BOOL, :name => 'in_memory', :optional => true},
-            REPLICATION => {:type => ::Thrift::Types::I16, :name => 'replication', :optional => true},
-            BLOCKSIZE => {:type => ::Thrift::Types::I32, :name => 'blocksize', :optional => true},
-            COMPRESSOR => {:type => ::Thrift::Types::STRING, :name => 'compressor', :optional => true},
-            BLOOM_FILTER => {:type => ::Thrift::Types::STRING, :name => 'bloom_filter', :optional => true},
-            COLUMNS => {:type => ::Thrift::Types::LIST, :name => 'columns', :element => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnFamily}, :optional => true}
+            NAME => {:type => ::Thrift::Types::STRING, :name => 'name'},
+            GENERATION => {:type => ::Thrift::Types::I64, :name => 'generation', :optional => true},
+            OPTIONS => {:type => ::Thrift::Types::STRUCT, :name => 'options', :class => Hypertable::ThriftGen::AccessGroupOptions, :optional => true},
+            DEFAULTS => {:type => ::Thrift::Types::STRUCT, :name => 'defaults', :class => Hypertable::ThriftGen::ColumnFamilyOptions, :optional => true}
           }
 
           def struct_fields; FIELDS; end
@@ -713,37 +761,32 @@ module Hypertable
           ::Thrift::Struct.generate_accessors self
         end
 
-        # Describes a schema
+        # Describes a schema.
         # <dl>
-        #   <dt>name</dt>
-        #   <dd>Name of the access group</dd>
+        #   <dt>access_groups</dt>
+        #   <dd>Map of access groups</dd>
         # 
-        #   <dt>in_memory</dt>
-        #   <dd>Is this access group in memory</dd>
-        # 
-        #   <dt>replication</dt>
-        #   <dd>Replication factor for this AG</dd>
-        # 
-        #   <dt>blocksize</dt>
-        #   <dd>Specifies blocksize for this AG</dd>
-        # 
-        #   <dt>compressor</dt>
-        #   <dd>Specifies compressor for this AG</dd>
-        # 
-        #   <dt>bloom_filter</dt>
-        #   <dd>Specifies bloom filter type</dd>
-        # 
-        #   <dt>columns</dt>
-        #   <dd>Specifies list of column families in this AG</dd>
+        #   <dt>column_families</dt>
+        #   <dd>Map of column families</dd>
         # </dl>
         class Schema
           include ::Thrift::Struct, ::Thrift::Struct_Union
           ACCESS_GROUPS = 1
           COLUMN_FAMILIES = 2
+          GENERATION = 3
+          VERSION = 4
+          GROUP_COMMIT_INTERVAL = 5
+          ACCESS_GROUP_DEFAULTS = 6
+          COLUMN_FAMILY_DEFAULTS = 7
 
           FIELDS = {
-            ACCESS_GROUPS => {:type => ::Thrift::Types::MAP, :name => 'access_groups', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::AccessGroup}, :optional => true},
-            COLUMN_FAMILIES => {:type => ::Thrift::Types::MAP, :name => 'column_families', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnFamily}, :optional => true}
+            ACCESS_GROUPS => {:type => ::Thrift::Types::MAP, :name => 'access_groups', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::AccessGroupSpec}, :optional => true},
+            COLUMN_FAMILIES => {:type => ::Thrift::Types::MAP, :name => 'column_families', :key => {:type => ::Thrift::Types::STRING}, :value => {:type => ::Thrift::Types::STRUCT, :class => Hypertable::ThriftGen::ColumnFamilySpec}, :optional => true},
+            GENERATION => {:type => ::Thrift::Types::I64, :name => 'generation', :optional => true},
+            VERSION => {:type => ::Thrift::Types::I32, :name => 'version', :optional => true},
+            GROUP_COMMIT_INTERVAL => {:type => ::Thrift::Types::I32, :name => 'group_commit_interval', :optional => true},
+            ACCESS_GROUP_DEFAULTS => {:type => ::Thrift::Types::STRUCT, :name => 'access_group_defaults', :class => Hypertable::ThriftGen::AccessGroupOptions, :optional => true},
+            COLUMN_FAMILY_DEFAULTS => {:type => ::Thrift::Types::STRUCT, :name => 'column_family_defaults', :class => Hypertable::ThriftGen::ColumnFamilyOptions, :optional => true}
           }
 
           def struct_fields; FIELDS; end

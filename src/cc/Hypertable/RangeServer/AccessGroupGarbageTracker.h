@@ -120,10 +120,10 @@ namespace Hypertable {
     /// respectively.  Then calls update_schema().
     /// @param props Configuration properties
     /// @param cell_cache_manager %Cell cache manager
-    /// @param ag Access group schema object
+    /// @param ag_spec Access group specification
     AccessGroupGarbageTracker(PropertiesPtr &props,
                               CellCacheManagerPtr &cell_cache_manager,
-                              Schema::AccessGroup *ag);
+                              AccessGroupSpec *ag_spec);
 
     /// Updates control variables from access group schema definition.
     /// This method sets #m_have_max_versions to <i>true</i> if any of the
@@ -132,8 +132,8 @@ namespace Hypertable {
     /// in the column families, and sets #m_elapsed_target_minimum and
     /// #m_elapsed_target to 10% of the minimum TTL encountered.  This function
     /// should be called whenever the access group's schema changes.
-    /// @param ag Access group schema definition
-    void update_schema(Schema::AccessGroup *ag);
+    /// @param ag_spec Access group specification
+    void update_schema(AccessGroupSpec *ag_spec);
     
     /// Signals if garbage collection is likely needed.
     /// Returns <i>true</i> if check_needed_deletes() or check_needed_ttl()

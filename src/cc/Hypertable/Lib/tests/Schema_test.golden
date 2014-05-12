@@ -1,0 +1,829 @@
+<!-- 1 -->
+<Schema>
+  <Generation>3</Generation>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>LogDir</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>Files</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="6">
+      <Generation>2</Generation>
+      <Name>NextCSID</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="7">
+      <Generation>3</Generation>
+      <Name>BlockCount</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="location">
+    <Generation>0</Generation>
+    <Options>
+      <InMemory>true</InMemory>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>StartRow</Name>
+      <AccessGroup>location</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>5</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>Location</Name>
+      <AccessGroup>location</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>5</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="logging">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="5">
+      <Generation>1</Generation>
+      <Name>Event</Name>
+      <AccessGroup>logging</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 2 -->
+<Schema>
+  <Generation>1</Generation>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="server">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>server</Name>
+      <AccessGroup>server</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>336</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="range">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>range</Name>
+      <AccessGroup>range</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>24</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>range_start_row</Name>
+      <AccessGroup>range</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>range_move</Name>
+      <AccessGroup>range</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 3 -->
+<Schema>
+  <Generation>1</Generation>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>service</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>implemented</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>application</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>program</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="5">
+      <Generation>1</Generation>
+      <Name>usually</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="6">
+      <Generation>1</Generation>
+      <Name>contains</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>100</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 4 -->
+<Schema>
+  <Generation>1</Generation>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>code</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>600</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>a</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>600</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>request</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>600</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 5 -->
+<Schema>
+  <Generation>7</Generation>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>comes</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>in</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>saying</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <Counter>true</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="5">
+      <Generation>2</Generation>
+      <Name>what</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>true</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <TTL>2592000</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="deletes">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>services</Name>
+      <AccessGroup>deletes</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <TTL>2592000</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="actions">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="6">
+      <Generation>4</Generation>
+      <Name>wants</Name>
+      <AccessGroup>actions</AccessGroup>
+      <Deleted>true</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <TTL>2592000</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="7">
+      <Generation>7</Generation>
+      <Name>brevity</Name>
+      <AccessGroup>actions</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+        <TTL>2592000</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 6 -->
+<Schema>
+  <Generation>1</Generation>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>a</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Index>true</Index>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 7 -->
+<Schema>
+  <Generation>7</Generation>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>dispatched</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>server</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Index>true</Index>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>service_invocation</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>transaction_code</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="5">
+      <Generation>1</Generation>
+      <Name>time_to_live</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="6">
+      <Generation>1</Generation>
+      <Name>let</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="7">
+      <Generation>1</Generation>
+      <Name>us</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="8">
+      <Generation>1</Generation>
+      <Name>now</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="9">
+      <Generation>1</Generation>
+      <Name>return</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="10">
+      <Generation>1</Generation>
+      <Name>to</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="11">
+      <Generation>1</Generation>
+      <Name>the</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="12">
+      <Generation>1</Generation>
+      <Name>overview</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="13">
+      <Generation>1</Generation>
+      <Name>of</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="14">
+      <Generation>2</Generation>
+      <Name>techniques</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>true</Deleted>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="15">
+      <Generation>4</Generation>
+      <Name>available</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>true</Deleted>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="16">
+      <Generation>7</Generation>
+      <Name>map</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <TTL>172800</TTL>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 8 -->
+<Schema>
+  <Generation>1</Generation>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>piece_of_code</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Index>true</Index>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>server_class</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Index>true</Index>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>pros_and_cons</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 9 -->
+HYPERTABLE schema parse error: not well-formed (invalid token) (default>)
+<!-- 10 -->
+HYPERTABLE schema parse error: mismatched tag (ColumnFamily)
+<!-- 11 -->
+HYPERTABLE schema parse error: Unrecognized Schema element (ColumnFamily)
+<!-- 12 -->
+HYPERTABLE schema parse error: Unrecognized attribute (foo) in AccessGroup element
+<!-- 13 -->
+HYPERTABLE schema parse error: Unrecognized ColumnFamily element (BogusElement)
+<!-- 14 -->
+HYPERTABLE schema parse error: Invalid value for MaxVersions (abc)
+<!-- 15 -->
+HYPERTABLE schema parse error: Invalid value for MAX VERSIONS (-1), must be non-negative
+<!-- 16 -->
+HYPERTABLE schema parse error: Invalid value for ttl (abc)
+<!-- 17 -->
+HYPERTABLE schema parse error: Invalid boolean value for inMemory (foo)
+<!-- 18 -->
+<Schema>
+  <Generation>0</Generation>
+  <GroupCommitInterval>100</GroupCommitInterval>
+  <AccessGroupDefaults>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>0</Generation>
+    <Options>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="0">
+      <Generation>0</Generation>
+      <Name>Field</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+CREATE TABLE MyTable (
+  actions MAX_VERSIONS 3 TTL 2592000,
+  language MAX_VERSIONS 2,
+  checksum MAX_VERSIONS 1,
+  ACCESS GROUP default (actions) BLOCKSIZE 65000,
+  ACCESS GROUP meta (language, checksum) BLOCKSIZE 65000 MAX_VERSIONS 2
+) GROUP_COMMIT_INTERVAL 200 BLOCKSIZE 65000
+<Schema>
+  <GroupCommitInterval>200</GroupCommitInterval>
+  <AccessGroupDefaults>
+    <BlockSize>65000</BlockSize>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Options>
+      <BlockSize>65000</BlockSize>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily>
+      <Name>actions</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>3</MaxVersions>
+        <TTL>2592000</TTL>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="meta">
+    <Options>
+      <BlockSize>65000</BlockSize>
+    </Options>
+    <ColumnFamilyDefaults>
+      <MaxVersions>2</MaxVersions>
+    </ColumnFamilyDefaults>
+    <ColumnFamily>
+      <Name>language</Name>
+      <AccessGroup>meta</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>2</MaxVersions>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>checksum</Name>
+      <AccessGroup>meta</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<Schema>
+  <Generation>42</Generation>
+  <GroupCommitInterval>200</GroupCommitInterval>
+  <AccessGroupDefaults>
+    <BlockSize>65000</BlockSize>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>42</Generation>
+    <Options>
+      <BlockSize>65000</BlockSize>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>42</Generation>
+      <Name>actions</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>3</MaxVersions>
+        <TTL>2592000</TTL>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="meta">
+    <Generation>42</Generation>
+    <Options>
+      <BlockSize>65000</BlockSize>
+    </Options>
+    <ColumnFamilyDefaults>
+      <MaxVersions>2</MaxVersions>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="2">
+      <Generation>42</Generation>
+      <Name>language</Name>
+      <AccessGroup>meta</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>2</MaxVersions>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>42</Generation>
+      <Name>checksum</Name>
+      <AccessGroup>meta</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>1</MaxVersions>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<Schema>
+  <Generation>0</Generation>
+  <GroupCommitInterval>200</GroupCommitInterval>
+  <AccessGroupDefaults>
+    <BlockSize>65000</BlockSize>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>42</Generation>
+    <Options>
+      <BlockSize>65000</BlockSize>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>42</Generation>
+      <Name>actions</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>3</MaxVersions>
+        <TTL>2592000</TTL>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="meta">
+    <Generation>0</Generation>
+    <Options>
+      <BlockSize>65000</BlockSize>
+    </Options>
+    <ColumnFamilyDefaults>
+      <MaxVersions>2</MaxVersions>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="2">
+      <Generation>42</Generation>
+      <Name>language</Name>
+      <AccessGroup>meta</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>2</MaxVersions>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>0</Generation>
+      <Name>checksum</Name>
+      <AccessGroup>meta</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <MaxVersions>2</MaxVersions>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>

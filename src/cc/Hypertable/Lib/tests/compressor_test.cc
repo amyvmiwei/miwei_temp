@@ -70,9 +70,9 @@ int main(int argc, char **argv) {
   if (!compressor)
     return 1;
 
-  if ((input.base = (uint8_t *)FileUtils::file_to_buffer("./good-schema-1.xml",
+  if ((input.base = (uint8_t *)FileUtils::file_to_buffer("./test-schemas.xml",
       &len)) == 0) {
-    HT_ERROR("Problem loading './good-schema-1.xml'");
+    HT_ERROR("Problem loading './test-schemas.xml'");
     return 1;
   }
   input.ptr = input.base + len;

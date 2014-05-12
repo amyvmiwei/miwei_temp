@@ -43,21 +43,6 @@ require 'client_types'
                   return
                 end
 
-                def create_table(ns, table_name, schema)
-                  send_create_table(ns, table_name, schema)
-                  recv_create_table()
-                end
-
-                def send_create_table(ns, table_name, schema)
-                  send_message('create_table', Create_table_args, :ns => ns, :table_name => table_name, :schema => schema)
-                end
-
-                def recv_create_table()
-                  result = receive_message(Create_table_result)
-                  raise result.e unless result.e.nil?
-                  return
-                end
-
                 def table_create(ns, table_name, schema)
                   send_table_create(ns, table_name, schema)
                   recv_table_create()
@@ -69,21 +54,6 @@ require 'client_types'
 
                 def recv_table_create()
                   result = receive_message(Table_create_result)
-                  raise result.e unless result.e.nil?
-                  return
-                end
-
-                def alter_table(ns, table_name, schema)
-                  send_alter_table(ns, table_name, schema)
-                  recv_alter_table()
-                end
-
-                def send_alter_table(ns, table_name, schema)
-                  send_message('alter_table', Alter_table_args, :ns => ns, :table_name => table_name, :schema => schema)
-                end
-
-                def recv_alter_table()
-                  result = receive_message(Alter_table_result)
                   raise result.e unless result.e.nil?
                   return
                 end
@@ -1989,17 +1959,6 @@ require 'client_types'
                   write_result(result, oprot, 'create_namespace', seqid)
                 end
 
-                def process_create_table(seqid, iprot, oprot)
-                  args = read_args(iprot, Create_table_args)
-                  result = Create_table_result.new()
-                  begin
-                    @handler.create_table(args.ns, args.table_name, args.schema)
-                  rescue Hypertable::ThriftGen::ClientException => e
-                    result.e = e
-                  end
-                  write_result(result, oprot, 'create_table', seqid)
-                end
-
                 def process_table_create(seqid, iprot, oprot)
                   args = read_args(iprot, Table_create_args)
                   result = Table_create_result.new()
@@ -2009,17 +1968,6 @@ require 'client_types'
                     result.e = e
                   end
                   write_result(result, oprot, 'table_create', seqid)
-                end
-
-                def process_alter_table(seqid, iprot, oprot)
-                  args = read_args(iprot, Alter_table_args)
-                  result = Alter_table_result.new()
-                  begin
-                    @handler.alter_table(args.ns, args.table_name, args.schema)
-                  rescue Hypertable::ThriftGen::ClientException => e
-                    result.e = e
-                  end
-                  write_result(result, oprot, 'alter_table', seqid)
                 end
 
                 def process_table_alter(seqid, iprot, oprot)
@@ -3413,42 +3361,6 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Create_table_args
-                include ::Thrift::Struct, ::Thrift::Struct_Union
-                NS = 1
-                TABLE_NAME = 2
-                SCHEMA = 3
-
-                FIELDS = {
-                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
-                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
-                  SCHEMA => {:type => ::Thrift::Types::STRING, :name => 'schema'}
-                }
-
-                def struct_fields; FIELDS; end
-
-                def validate
-                end
-
-                ::Thrift::Struct.generate_accessors self
-              end
-
-              class Create_table_result
-                include ::Thrift::Struct, ::Thrift::Struct_Union
-                E = 1
-
-                FIELDS = {
-                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
-                }
-
-                def struct_fields; FIELDS; end
-
-                def validate
-                end
-
-                ::Thrift::Struct.generate_accessors self
-              end
-
               class Table_create_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
@@ -3458,7 +3370,7 @@ require 'client_types'
                 FIELDS = {
                   NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
                   TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
-                  SCHEMA => {:type => ::Thrift::Types::STRING, :name => 'schema'}
+                  SCHEMA => {:type => ::Thrift::Types::STRUCT, :name => 'schema', :class => Hypertable::ThriftGen::Schema}
                 }
 
                 def struct_fields; FIELDS; end
@@ -3485,42 +3397,6 @@ require 'client_types'
                 ::Thrift::Struct.generate_accessors self
               end
 
-              class Alter_table_args
-                include ::Thrift::Struct, ::Thrift::Struct_Union
-                NS = 1
-                TABLE_NAME = 2
-                SCHEMA = 3
-
-                FIELDS = {
-                  NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
-                  TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
-                  SCHEMA => {:type => ::Thrift::Types::STRING, :name => 'schema'}
-                }
-
-                def struct_fields; FIELDS; end
-
-                def validate
-                end
-
-                ::Thrift::Struct.generate_accessors self
-              end
-
-              class Alter_table_result
-                include ::Thrift::Struct, ::Thrift::Struct_Union
-                E = 1
-
-                FIELDS = {
-                  E => {:type => ::Thrift::Types::STRUCT, :name => 'e', :class => Hypertable::ThriftGen::ClientException}
-                }
-
-                def struct_fields; FIELDS; end
-
-                def validate
-                end
-
-                ::Thrift::Struct.generate_accessors self
-              end
-
               class Table_alter_args
                 include ::Thrift::Struct, ::Thrift::Struct_Union
                 NS = 1
@@ -3530,7 +3406,7 @@ require 'client_types'
                 FIELDS = {
                   NS => {:type => ::Thrift::Types::I64, :name => 'ns'},
                   TABLE_NAME => {:type => ::Thrift::Types::STRING, :name => 'table_name'},
-                  SCHEMA => {:type => ::Thrift::Types::STRING, :name => 'schema'}
+                  SCHEMA => {:type => ::Thrift::Types::STRUCT, :name => 'schema', :class => Hypertable::ThriftGen::Schema}
                 }
 
                 def struct_fields; FIELDS; end

@@ -95,8 +95,8 @@ namespace Hypertable {
 
     /** Creates a table.
      *
-     * The schema parameter is a string that contains an XML-style
-     * schema specification.  The best way to learn the syntax
+     * The <code>schema_str</code> parameter is a string that contains an
+     * XML-style schema specification.  The best way to learn the syntax
      * of this specification format is to create tables with HQL
      * in the command interpreter and then run DESCRIBE TABLE to
      * see what the XML specification looks like.  For example,
@@ -136,9 +136,11 @@ namespace Hypertable {
      * @endverbatim
      *
      * @param name name of the table
-     * @param schema schema definition for the table
+     * @param schema_str schema definition for the table
      */
-    void create_table(const String &name, const String &schema);
+    void create_table(const String &name, const String &schema_str);
+
+    void create_table(const String &name, SchemaPtr &schema);
 
     /** Alter table schema.
      * @param table_name Name of table to alter
@@ -146,6 +148,7 @@ namespace Hypertable {
      */
     void alter_table(const String &table_name, SchemaPtr &schema);
 
+#if 0
     /**
      * Alters column families within a table.  The schema parameter
      * contains an XML-style schema difference and supports a
@@ -186,9 +189,10 @@ namespace Hypertable {
      * </pre>
      *
      * @param table_name Name of the table to alter
-     * @param schema desired alterations represented as schema
+     * @param schema_str desired alterations represented as schema
      */
-    void alter_table(const String &table_name, const String &schema);
+#endif
+    void alter_table(const String &table_name, const String &schema_str);
 
     /**
      * Opens a table

@@ -21,25 +21,22 @@
 
 /// @file
 /// Definitions for Schema.
-/// This file contains type definitions for Context, a class abstraction for a
-/// table schema.
+/// This file contains type definitions for Schema, a class representing a
+/// table schema specification.
 
 #include <Common/Compat.h>
 #include "Schema.h"
 
+#include <Common/Config.h>
 #include <Common/FileUtils.h>
 #include <Common/Logger.h>
 #include <Common/StringExt.h>
 #include <Common/System.h>
-#include <Common/Config.h>
+#include <Common/XmlParser.h>
 
 #include <expat.h>
 
 #include <boost/algorithm/string.hpp>
-
-#include <cctype>
-#include <iostream>
-#include <string>
 
 extern "C" {
 #include <ctype.h>
@@ -49,824 +46,267 @@ extern "C" {
 #include <sys/stat.h>
 }
 
+#include <algorithm>
+#include <cctype>
+#include <cstdio>
+#include <cstdlib>
+#include <iostream>
+#include <map>
+#include <set>
+#include <string>
+
 using namespace Hypertable;
 using namespace Property;
 using namespace std;
 
-Schema *Schema::ms_schema = 0;
-String Schema::ms_collected_text = "";
-Mutex Schema::ms_mutex;
-const uint32_t Schema::ms_max_column_id = 255;
+#define MAX_COLUMN_ID 255
 
 namespace {
-
-bool hql_needs_quotes(const char *name) {
-  if (!isalpha(*name))
-    return true;
-  else {
-    for (; *name; name++) {
-      if (!isalnum(*name)) {
-        return true;
-      }
-    }
+  const std::string maybe_quote(const string &name) {
+    auto valid_char = [](char c) { return isalnum(c); };
+    if (!isalpha(name[0]) ||
+        find_if_not(name.begin(), name.end(), valid_char) != name.end())
+      return String("'") + name + "'";
+    return name;
   }
-  return false;
 }
-
-Mutex desc_mutex;
-bool desc_inited = false;
-
-PropertiesDesc
-  compressor_desc("  bmz|lzo|quicklz|zlib|snappy|none [compressor_options]\n\n"
-      "compressor_options"),
-  bloom_filter_desc("  rows|rows+cols|none [bloom_filter_options]\n\n"
-      "  Default bloom filter is defined by the config property:\n"
-      "  Hypertable.RangeServer.CellStore.DefaultBloomFilter.\n\n"
-      "bloom_filter_options");
-
-PropertiesDesc compressor_hidden_desc, bloom_filter_hidden_desc;
-PositionalDesc compressor_pos_desc, bloom_filter_pos_desc;
-
-void init_schema_options_desc() {
-  ScopedLock lock(desc_mutex);
-
-  if (desc_inited)
-    return;
-
-  compressor_desc.add_options()
-    ("best,9", "Highest setting (probably slower) for zlib")
-    ("normal", "Normal setting for zlib")
-    ("fp-len", i16()->default_value(19), "Minimum fingerprint length for bmz")
-    ("offset", i16()->default_value(0), "Starting fingerprint offset for bmz")
-    ;
-  compressor_hidden_desc.add_options()
-    ("compressor-type", str(), 
-        "Compressor type (bmz|lzo|quicklz|zlib|snappy|none)")
-    ;
-  compressor_pos_desc.add("compressor-type", 1);
-
-  bloom_filter_desc.add_options()
-    ("bits-per-item", f64(), "Number of bits to use per item "
-        "for the Bloom filter")
-    ("num-hashes", i32(), "Number of hash functions to use "
-        "for the Bloom filter")
-    ("false-positive", f64()->default_value(0.01), "Expected false positive "
-     "probability for the Bloom filter")
-    ("max-approx-items", i32()->default_value(1000), "Number of cell store "
-        "items used to guess the number of actual Bloom filter entries")
-    ;
-  bloom_filter_hidden_desc.add_options()
-    ("bloom-filter-mode", str(), "Bloom filter mode (rows|rows+cols|none)")
-    ;
-  bloom_filter_pos_desc.add("bloom-filter-mode", 1);
-  desc_inited = true;
-}
-
-} // local namespace
-
 
 /**
  * Assumes src_schema has been checked for validity
  */
-Schema::Schema(const Schema &src_schema)
+Schema::Schema(const Schema &other)
 {
-  AccessGroup *ag;
-  ColumnFamily *cf;
 
   // Set schema attributes
-  m_generation = src_schema.m_generation;
-  m_version = src_schema.m_version;
-  m_compressor = src_schema.m_compressor;
-  m_group_commit_interval = src_schema.m_group_commit_interval;
-  m_next_column_id = src_schema.m_next_column_id;
-  m_max_column_family_id = src_schema.m_max_column_family_id;
-  m_need_id_assignment = src_schema.m_need_id_assignment;
-  m_output_ids = src_schema.m_output_ids;
-  m_counter_flags = src_schema.m_counter_flags;
+  m_generation = other.m_generation;
+  m_version = other.m_version;
+  m_group_commit_interval = other.m_group_commit_interval;
 
   // Create access groups
-  foreach_ht(const AccessGroup *src_ag, src_schema.m_access_groups) {
-    ag = new Schema::AccessGroup();
-    ag->name = src_ag->name;
-    ag->in_memory = src_ag->in_memory;
-    ag->counter = src_ag->counter;
-    ag->replication = src_ag->replication;
-    ag->blocksize = src_ag->blocksize;
-    ag->compressor = src_ag->compressor;
-    ag->bloom_filter = src_ag->bloom_filter;
+  for (auto src_ag : other.m_access_groups) {
+    AccessGroupSpec *ag = new AccessGroupSpec(src_ag->get_name());
 
-    m_access_group_map.insert(make_pair(ag->name, ag));
-    m_access_groups.push_back(ag);
+    if (src_ag->options().is_set_replication())
+      ag->set_option_replication(src_ag->get_option_replication());
+    if (src_ag->options().is_set_blocksize())
+      ag->set_option_blocksize(src_ag->get_option_blocksize());
+    if (src_ag->options().is_set_compressor())
+      ag->set_option_compressor(src_ag->get_option_compressor());
+    if (src_ag->options().is_set_bloom_filter())
+      ag->set_option_bloom_filter(src_ag->get_option_bloom_filter());
+    if (src_ag->options().is_set_in_memory())
+      ag->set_option_in_memory(src_ag->get_option_in_memory());
+
+    if (src_ag->defaults().is_set_max_versions())
+      ag->set_default_max_versions(src_ag->get_default_max_versions());
+    if (src_ag->defaults().is_set_ttl())
+      ag->set_default_ttl(src_ag->get_default_ttl());
+    if (src_ag->defaults().is_set_time_order_desc())
+      ag->set_default_time_order_desc(src_ag->get_default_time_order_desc());
+    if (src_ag->defaults().is_set_counter())
+      ag->set_default_counter(src_ag->get_default_counter());
 
     // Populate access group with column families
-    foreach_ht(const ColumnFamily *src_cf, src_ag->columns) {
-      cf = new Schema::ColumnFamily(*src_cf);
-      m_column_family_map.insert(make_pair(cf->name, cf));
-      m_column_families.push_back(cf);
-      ag->columns.push_back(cf);
-    }
+    for (auto src_cf : src_ag->columns())
+      ag->add_column(new ColumnFamilySpec(*src_cf));
+
+    m_access_group_map.insert(make_pair(ag->get_name(), ag));
+    m_access_groups.push_back(ag);
+
   }
+
+  validate();
+
 }
 
 Schema::~Schema() {
-  foreach_ht(AccessGroup *ag, m_access_groups)
-    delete ag;
-  foreach_ht(ColumnFamily *cf, m_column_families)
-    delete cf;
+  for_each(m_access_groups.begin(), m_access_groups.end(),
+           [](AccessGroupSpec *ag) { delete ag; });
 }
 
 
-Schema *Schema::new_instance(const String &buf, int len) {
-  ScopedLock lock(ms_mutex);
-  XML_Parser parser = XML_ParserCreate("US-ASCII");
+namespace {
+  
+  class XmlParserSchema : public XmlParser {
+  public:
+    XmlParserSchema(Schema *schema, const char *s, int len) :
+      XmlParser(s,len,{"AccessGroup","AccessGroupDefaults","ColumnFamilyDefaults"}),
+      m_schema(schema) {}
 
-  XML_SetElementHandler(parser, &start_element_handler, &end_element_handler);
-  XML_SetCharacterDataHandler(parser, &character_data_handler);
-
-  ms_schema = new Schema();
-
-  try {
-    if (XML_Parse(parser, buf.c_str(), len, 1) == 0) {
-      String errstr = (String)"Schema Parse Error: "
-        + (const char *)XML_ErrorString(XML_GetErrorCode(parser))
-        + " line " + (int)XML_GetCurrentLineNumber(parser) + ", offset "
-        + (int)XML_GetCurrentByteIndex(parser);
-      ms_schema->set_error_string(errstr);
+    void start_element(const XML_Char *name, const XML_Char **atts) override {
+      if (m_element_stack.empty()) {
+        for (int i=0; atts[i] != 0; i+=2) {
+          if (!strcasecmp(atts[i], "generation"))
+            m_schema->set_generation(content_to_i64(atts[i], atts[i+1]));
+          else if (!strcasecmp(atts[i], "version"))
+            m_schema->set_version(content_to_i32(atts[i], atts[i+1]));
+          else if (!strcasecmp(atts[i], "group_commit_interval"))
+            m_schema->set_group_commit_interval(content_to_i32(atts[i], atts[i+1]));
+          else
+            HT_THROWF(Error::SCHEMA_PARSE_ERROR,
+                      "Unrecognized attribute (%s) in Schema element", atts[i]);
+        }
+      }
+      else if (strcasecmp(name, "Generation") &&
+               strcasecmp(name, "GroupCommitInterval"))
+        HT_THROWF(Error::SCHEMA_PARSE_ERROR,
+                  "Unrecognized Schema element (%s)", name);
     }
+
+    void end_element(const XML_Char *name, const string &content) override {
+      if (!strcasecmp(name, "Generation"))
+        m_schema->set_generation(content_to_i64(name, content));
+      else if (!strcasecmp(name, "GroupCommitInterval"))
+        m_schema->set_group_commit_interval(content_to_i32(name, content));
+      else if (!m_element_stack.empty())
+        HT_THROWF(Error::SCHEMA_PARSE_ERROR,
+                  "Unrecognized Schema element (%s)", name);
+    }
+
+    void sub_parse(const XML_Char *name, const char *s, int len) override {
+      if (!strcasecmp(name, "AccessGroup")) {
+        AccessGroupSpec *ag_spec = new AccessGroupSpec();
+        try { ag_spec->parse_xml(s, len); }
+        catch (Exception &e) { delete ag_spec; throw; }
+        m_schema->add_access_group(ag_spec);
+      }
+      else if (!strcasecmp(name, "AccessGroupDefaults")) {
+        AccessGroupOptions defaults;
+        defaults.parse_xml(s, len);
+        m_schema->set_access_group_defaults(defaults);
+      }
+      else if (!strcasecmp(name, "ColumnFamilyDefaults")) {
+        ColumnFamilyOptions defaults;
+        defaults.parse_xml(s, len);
+        m_schema->set_column_family_defaults(defaults);
+      }
+    }
+
+  private:
+    Schema *m_schema;
+  };
+  
+}
+
+
+Schema *Schema::new_instance(const String &buf) {
+  Schema *schema = new Schema();
+  XmlParserSchema parser(schema, buf.c_str(), buf.length());
+  try {
+    parser.parse();
+    schema->validate();
   }
   catch (Exception &e) {
-    delete ms_schema;
-    ms_schema = 0;
-    XML_ParserFree(parser);
+    delete schema;
     throw;
   }
-
-  XML_ParserFree(parser);
-
-  Schema *schema = ms_schema;
-  ms_schema = 0;
   return schema;
 }
 
-
-void Schema::parse_compressor(const String &compressor, PropertiesPtr &props) {
-  init_schema_options_desc();
-
-  vector<String> args;
-  boost::split(args, compressor, boost::is_any_of(" \t"));
-  HT_TRY("parsing compressor spec",
-    props->parse_args(args, compressor_desc, &compressor_hidden_desc,
-                      &compressor_pos_desc));
+void Schema::clear_generation() {
+  m_generation = 0;
+  for (auto ag : m_access_groups)
+    for (auto cf : ag->columns())
+      cf->set_generation(0);
 }
 
-
-const PropertiesDesc &Schema::compressor_spec_desc() {
-  init_schema_options_desc();
-  return compressor_desc;
-}
-
-
-void
-Schema::parse_bloom_filter(const String &bloom_filter, PropertiesPtr &props) {
-  init_schema_options_desc();
-
-  vector<String> args;
-
-  boost::split(args, bloom_filter, boost::is_any_of(" \t"));
-  HT_TRY("parsing bloom filter spec",
-    props->parse_args(args, bloom_filter_desc, &bloom_filter_hidden_desc,
-                      &bloom_filter_pos_desc));
-
-  String mode = props->get_str("bloom-filter-mode");
-
-  if (mode == "none" || mode == "disabled")
-    props->set("bloom-filter-mode", BLOOM_FILTER_DISABLED);
-  else if (mode == "rows" || mode == "row")
-    props->set("bloom-filter-mode", BLOOM_FILTER_ROWS);
-  else if (mode == "rows+cols" || mode == "row+col"
-           || mode == "rows-cols" || mode == "row-col"
-           || mode == "rows_cols" || mode == "row_col")
-    props->set("bloom-filter-mode", BLOOM_FILTER_ROWS_COLS);
-  else HT_THROWF(Error::BAD_SCHEMA, "unknown bloom filter mode: '%s'",
-                 mode.c_str());
-}
-
-
-const PropertiesDesc &Schema::bloom_filter_spec_desc() {
-  init_schema_options_desc();
-  return bloom_filter_desc;
-}
-
-
-void Schema::validate_compressor(const String &compressor) {
-  if (compressor.empty())
-    return;
-
-  try {
-    PropertiesPtr props = new Properties();
-    parse_compressor(compressor, props);
-  }
-  catch (Exception &e) {
-    ostringstream oss;
-    oss << e;
-    set_error_string(oss.str());
-  }
-}
-
-
-void Schema::validate_bloom_filter(const String &bloom_filter) {
-  if (bloom_filter.empty())
-    return;
-
-  try {
-    PropertiesPtr props = new Properties();
-    parse_bloom_filter(bloom_filter, props);
-  }
-  catch (Exception &e) {
-    ostringstream oss;
-    oss << e;
-    set_error_string(oss.str());
-  }
-}
-
-
-/**
- */
-void Schema::start_element_handler(void *userdata,
-                         const XML_Char *name,
-                         const XML_Char **atts) {
-  int i;
-
-  if (!strcasecmp(name, "Schema")) {
-    for (i=0; atts[i] != 0; i+=2) {
-      if (atts[i+1] == 0)
-        return;
-      if (!strcasecmp(atts[i], "generation"))
-        ms_schema->set_generation(atts[i+1]);
-      else if (!strcasecmp(atts[i], "version"))
-        ms_schema->set_version(atts[i+1]);
-      else if (!strcasecmp(atts[i], "compressor"))
-        ms_schema->set_compressor((String)atts[i+1]);
-      else if (!strcasecmp(atts[i], "group_commit_interval"))
-        ms_schema->set_group_commit_interval(atoi(atts[i+1]));
-      else
-        ms_schema->set_error_string((String)"Unrecognized 'Schema' attribute : "
-                                     + atts[i]);
+bool Schema::clear_generation_if_changed(Schema &original) {
+  bool changed {};
+  for (auto ag : m_access_groups) {
+    auto orig_ag = original.get_access_group(ag->get_name());
+    if (orig_ag == nullptr || ag->clear_generation_if_changed(*orig_ag)) {
+      m_generation = 0;
+      changed = true;
     }
   }
-  else if (!strcasecmp(name, "AccessGroup")) {
-    ms_schema->open_access_group();
-    for (i=0; atts[i] != 0; i+=2) {
-      if (atts[i+1] == 0)
-        return;
-      ms_schema->set_access_group_parameter(atts[i], atts[i+1]);
-    }
-  }
-  else if (!strcasecmp(name, "ColumnFamily")) {
-    ms_schema->open_column_family();
-    for (i=0; atts[i] != 0; i+=2) {
-      if (atts[i+1] == 0)
-        return;
-      ms_schema->set_column_family_parameter(atts[i], atts[i+1]);
-    }
-  }
-  else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
-           || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
-           || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
-           || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter")
-           || !strcasecmp(name, "TimeOrder") || !strcasecmp(name, "Index")
-           || !strcasecmp(name, "QualifierIndex"))
-    ms_collected_text = "";
-  else
-    ms_schema->set_error_string(format("Unrecognized element - '%s'", name));
-
-  return;
-}
-
-
-void Schema::end_element_handler(void *userdata, const XML_Char *name) {
-  if (!strcasecmp(name, "AccessGroup"))
-    ms_schema->close_access_group();
-  else if (!strcasecmp(name, "ColumnFamily"))
-    ms_schema->close_column_family();
-  else if (!strcasecmp(name, "MaxVersions") || !strcasecmp(name, "ttl")
-           || !strcasecmp(name, "Name") || !strcasecmp(name, "Generation")
-           || !strcasecmp(name, "deleted") || !strcasecmp(name, "renamed")
-           || !strcasecmp(name, "NewName") || !strcasecmp(name, "Counter")
-           || !strcasecmp(name, "TimeOrder") || !strcasecmp(name, "Index")
-           || !strcasecmp(name, "QualifierIndex")) {
-    boost::trim(ms_collected_text);
-    ms_schema->set_column_family_parameter(name, ms_collected_text.c_str());
-  }
-}
-
-
-
-void
-Schema::character_data_handler(void *userdata, const XML_Char *s, int len) {
-  ms_collected_text.assign(s, len);
-}
-
-
-
-void Schema::open_access_group() {
-  if (m_open_access_group != 0)
-    set_error_string((string)"Nested AccessGroup elements not allowed");
-  else {
-    m_open_access_group = new AccessGroup();
-  }
-}
-
-
-
-void Schema::close_access_group() {
-  if (m_open_access_group == 0)
-    set_error_string((string)"Unable to close locality group, not open");
-  else {
-    if (m_open_access_group->name == "")
-      set_error_string("Name attribute required for all AccessGroup elements");
-    else {
-      if (m_access_group_map.find(m_open_access_group->name)
-          != m_access_group_map.end())
-        set_error_string((String)"Multiply defined locality group '"
-                          + m_open_access_group->name + "'");
-      else {
-        m_access_group_map[m_open_access_group->name] = m_open_access_group;
-        m_access_groups.push_back(m_open_access_group);
+  if (!changed) {
+    for (auto ag : original.get_access_groups()) {
+      if (get_access_group(ag->get_name()) == nullptr) {
+        m_generation = 0;
+        changed = true;
+        break;
       }
     }
-    m_open_access_group = 0;
   }
+  return changed;
 }
 
-
-
-void Schema::open_column_family() {
-  if (m_open_access_group == 0)
-    set_error_string((string)"ColumnFamily defined outside of AccessGroup");
-  else {
-    if (m_open_column_family != 0)
-      set_error_string((string)"Nested ColumnFamily elements not allowed");
-    else {
-      m_open_column_family = new ColumnFamily();
-      m_open_column_family->ag = m_open_access_group->name;
-    }
-  }
-}
-
-
-
-void Schema::close_column_family() {
-  if (m_open_access_group == 0)
-    set_error_string((string)"ColumnFamily defined outside of AccessGroup");
-  else if (m_open_column_family == 0)
-    set_error_string((string)"Unable to close column family, not open");
-  else {
-    if (m_open_column_family->name == "")
-      set_error_string((string)"ColumnFamily must have Name child element");
-    else {
-      if (m_open_column_family->id == 0)
-        m_need_id_assignment = true;
-      if (m_column_family_map.find(m_open_column_family->name)
-          != m_column_family_map.end())
-        set_error_string((string)"Multiply defined column families '"
-                          + m_open_column_family->name + "'");
-      else {
-        // Validate option combinations
-        if (m_open_column_family->counter) {
-          if (m_open_column_family->max_versions)
-            HT_THROWF(Error::SCHEMA_PARSE_ERROR,
-                      "Incompatible options (COUNTER & MAX_VERSIONS) specified for column '%s'",
-                      m_open_column_family->name.c_str());
-          if (m_open_column_family->time_order_desc)
-            HT_THROWF(Error::SCHEMA_PARSE_ERROR,
-                      "Incompatible options (COUNTER & TIME_ORDER DESC) specified for column '%s'",
-                      m_open_column_family->name.c_str());
-        }
-        m_column_family_map[m_open_column_family->name] = m_open_column_family;
-        if (m_open_column_family->id != 0) {
-          m_column_family_id_map[m_open_column_family->id] =
-              m_open_column_family;
-          if (m_open_column_family->counter) {
-            if (m_counter_flags.empty())
-              m_counter_flags.resize(256);
-            m_counter_flags[m_open_column_family->id] = 1;
-          }
-        }
-        m_open_access_group->columns.push_back(m_open_column_family);
-        m_column_families.push_back(m_open_column_family);
+void Schema::update_generation(int64_t generation) {
+  int64_t max_id = get_max_column_family_id();
+  for (auto ag : m_access_groups) {
+    for (auto cf : ag->columns()) {
+      if (cf->get_generation() == 0) {
+        if (cf->get_id() == 0)
+          cf->set_id(++max_id);
+        cf->set_generation(generation);
+        ag->set_generation(generation);
+        m_generation = generation;
       }
-      m_open_column_family = 0;
+      else
+        HT_ASSERT(cf->get_id());
     }
+    if (ag->get_generation() == 0)
+      ag->set_generation(generation);
   }
+  validate();
 }
 
 
-
-void Schema::set_access_group_parameter(const char *param, const char *value) {
-  if (m_open_access_group == 0)
-    set_error_string((String)"Unable to set AccessGroup attribute '" + param
-                      + "', locality group not open");
-  else {
-    if (!strcasecmp(param, "name"))
-      m_open_access_group->name = value;
-    else if (!strcasecmp(param, "inMemory")) {
-      if (!strcasecmp(value, "true") || !strcmp(value, "1"))
-        m_open_access_group->in_memory = true;
-      else if (!strcasecmp(value, "false") || !strcmp(value, "0"))
-        m_open_access_group->in_memory = false;
-      else
-        set_error_string((String)"Invalid value (" + value
-                          + ") for AccessGroup attribute '" + param + "'");
-    }
-    else if (!strcasecmp(param, "counter")) {
-      if (!strcasecmp(value, "true") || !strcmp(value, "1"))
-        m_open_access_group->counter = true;
-      else if (!strcasecmp(value, "false") || !strcmp(value, "0"))
-        m_open_access_group->counter = false;
-      else
-        set_error_string((String)"Invalid value (" + value
-                          + ") for AccessGroup attribute '" + param + "'");
-    }
-    else if (!strcasecmp(param, "blksz")) {
-      long long blocksize = strtoll(value, 0, 10);
-      if (blocksize == 0 || blocksize >= 4294967296LL)
-        set_error_string((String)"Invalid value (" + value
-                          + ") for AccessGroup attribute '" + param + "'");
-      else
-        m_open_access_group->blocksize = (uint32_t)blocksize;
-    }
-    else if (!strcasecmp(param, "replication")) {
-      long long replication = strtoll(value, 0, 10);
-      if (replication < 0 || replication >= 32768LL)
-        set_error_string((String)"Invalid value (" + value
-                          + ") for AccessGroup attribute '" + param + "'");
-      else
-        m_open_access_group->replication = (int32_t)replication;
-    }
-    else if (!strcasecmp(param, "compressor")) {
-      m_open_access_group->compressor = value;
-      boost::trim(m_open_access_group->compressor);
-      validate_compressor(m_open_access_group->compressor);
-    }
-    else if (!strcasecmp(param, "bloomFilter")) {
-      m_open_access_group->bloom_filter = value;
-      boost::trim(m_open_access_group->bloom_filter);
-      validate_bloom_filter(m_open_access_group->bloom_filter);
-    }
-    else
-      set_error_string((string)"Invalid AccessGroup attribute '" + param + "'");
-  }
-}
-
-
-
-void Schema::set_column_family_parameter(const char *param, const char *value) {
-  if (m_open_column_family == 0) {
-    set_error_string((String)"Unable to set ColumnFamily parameter '" + param
-                      + "', column family not open");
-    return;
-  }
-
-  if (!strcasecmp(param, "Name"))
-    m_open_column_family->name = value;
-  else if (!strcasecmp(param, "ttl")) {
-    long long secs = strtoll(value, 0, 10);
-    m_open_column_family->ttl = (time_t)secs;
-  }
-  else if (!strcasecmp(param, "deleted")) {
-    if (!strcasecmp(value, "true"))
-      m_open_column_family->deleted = true;
-    else
-      m_open_column_family->deleted = false;
-  }
-  else if (!strcasecmp(param, "renamed")) {
-    if (!strcasecmp(value, "true"))
-      m_open_column_family->renamed = true;
-    else
-      m_open_column_family->renamed = false;
-  }
-  else if (!strcasecmp(param, "NewName")) {
-    m_open_column_family->new_name = value;
-  }
-  else if (!strcasecmp(param, "Index")) {
-    if (!strcasecmp(value, "true"))
-      m_open_column_family->has_index = true;
-    else
-      m_open_column_family->has_index = false;
-  }
-  else if (!strcasecmp(param, "QualifierIndex")) {
-    if (!strcasecmp(value, "true"))
-      m_open_column_family->has_qualifier_index = true;
-    else
-      m_open_column_family->has_qualifier_index = false;
-  }
-  else if (!strcasecmp(param, "MaxVersions")) {
-    m_open_column_family->max_versions = atoi(value);
-    if (m_open_column_family->max_versions == 0)
-      set_error_string((String)"Invalid value (" + value
-                        + ") for MaxVersions");
-  }
-  else if (!strcasecmp(param, "TimeOrder")) {
-    if (!strcasecmp(value, "desc"))
-      m_open_column_family->time_order_desc = true;
-    else
-      m_open_column_family->time_order_desc = false;
-  }
-  else if (!strcasecmp(param, "Counter")) {
-    if (!strcasecmp(value, "true"))
-      m_open_column_family->counter = true;
-    else
-      m_open_column_family->counter = false;
-  }
-  else if (!strcasecmp(param, "id")) {
-    m_open_column_family->id = atoi(value);
-    if (m_open_column_family->id == 0)
-      set_error_string((String)"Invalid value (" + value
-                        + ") for ColumnFamily id attribute");
-    if (m_open_column_family->id > m_max_column_family_id)
-      m_max_column_family_id = m_open_column_family->id;
-  }
-  else if (!strcasecmp(param, "Generation")) {
-    m_open_column_family->generation = atoi(value);
-    if (m_open_column_family->generation == 0)
-      m_need_id_assignment = true;
-  }
-  else
-    set_error_string(format("Invalid ColumnFamily parameter '%s'", param));
-
-  if (m_open_column_family->counter
-      && (m_open_column_family->has_index
-        || m_open_column_family->has_qualifier_index)) {
-    m_error_string = String("Column family '") + m_open_column_family->name
-        + "' is a COUNTER and therefore cannot have indices";
-  }
-}
-
-
-void Schema::assign_ids() {
-  bool need_assignment = false;
-  size_t max_column_family_id = 0;
-  uint32_t generation = 0;
-
-  /**
-   * Sanity check and determine if ID assignment is necessary
-   */
-  foreach_ht(ColumnFamily *cf, m_column_families) {
-    if (cf->generation == 0) {
-      need_assignment = true;
-      if (cf->id != 0)
-        HT_THROW(Error::SCHEMA_PARSE_ERROR,
-                 format("Column '%s' has ID %d but unassigned generation",
-                        cf->name.c_str(), (int)cf->id));
-    }
-    else {
-      if (cf->id == 0)
-        HT_THROW(Error::SCHEMA_PARSE_ERROR,
-                 format("Column '%s' has empty ID with generation %d",
-                        cf->name.c_str(), (int)cf->generation));
-      if (cf->generation > m_generation)
-        HT_THROW(Error::SCHEMA_PARSE_ERROR, 
-                 format("Column '%s' has newer generation (%d) than schema generation (%d)",
-                        cf->name.c_str(), (int)cf->generation, (int)m_generation));
-      if (cf->generation > generation)
-        generation = cf->generation;
-    }
-    if (cf->id == 0)
-      need_assignment = true;
-    if (cf->id > max_column_family_id)
-      max_column_family_id = cf->id;
-  }
-
-  if (!need_assignment)
-    return;
-
-  m_max_column_family_id = max_column_family_id;
-  if (m_generation == 0)
-    m_generation = 1;
-
-  m_output_ids=true;
-  foreach_ht(ColumnFamily *cf, m_column_families) {
-    if (cf->id == 0) {
-      cf->id = ++m_max_column_family_id;
-      cf->generation = m_generation;
-    }
-    if (cf->counter) {
-      if (m_counter_flags.empty())
-        m_counter_flags.resize(256);
-      m_counter_flags[cf->id] = 1;
-    }
-  }
-  m_need_id_assignment = false;
-}
-
-
-void Schema::render(String &output, bool with_ids) {
-  if (!is_valid()) {
-    output = m_error_string;
-    return;
-  }
-  output += "<Schema";
-
-  if (m_output_ids || with_ids) {
-    output += format(" generation=\"%d\"", m_generation);
-  }
-
+const string Schema::render_xml(bool with_ids) {
+  string output = "<Schema";
   if (m_version != 0)
     output += format(" version=\"%d\"", (int)m_version);
-
-  if (m_compressor != "")
-    output += format(" compressor=\"%s\"", m_compressor.c_str());
-
-  if (m_group_commit_interval > 0)
-    output += format(" group_commit_interval=\"%u\"", m_group_commit_interval);
-
   output += ">\n";
 
-  foreach_ht(const AccessGroup *ag, m_access_groups) {
-    output += format("  <AccessGroup name=\"%s\"", ag->name.c_str());
+  if (with_ids)
+    output += format("  <Generation>%lld</Generation>\n", (Lld)m_generation);
 
-    if (ag->in_memory)
-      output += " inMemory=\"true\"";
+  if (m_group_commit_interval > 0)
+    output += format("  <GroupCommitInterval>%u</GroupCommitInterval>\n", m_group_commit_interval);
 
-    if (ag->counter)
-      output += " counter=\"true\"";
+  output += "  <AccessGroupDefaults>\n";
+  output += m_ag_defaults.render_xml("    ");
+  output += "  </AccessGroupDefaults>\n";
 
-    if (ag->replication >= 0)
-      output += format(" replication=\"%d\"", ag->replication);
+  output += "  <ColumnFamilyDefaults>\n";
+  output += m_cf_defaults.render_xml("    ");
+  output += "  </ColumnFamilyDefaults>\n";
 
-    if (ag->blocksize > 0)
-      output += format(" blksz=\"%u\"", ag->blocksize);
+  for (auto ag_spec : m_access_groups)
+    output += ag_spec->render_xml("  ", with_ids);
 
-    if (ag->compressor != "")
-      output += format(" compressor=\"%s\"", ag->compressor.c_str());
-
-    if (ag->bloom_filter != "")
-      output += (String)" bloomFilter=\"" + ag->bloom_filter + "\"";
-
-    output += ">\n";
-
-    foreach_ht(const ColumnFamily *cf, ag->columns) {
-      output += "    <ColumnFamily";
-
-      if (m_output_ids || with_ids) {
-        output += format(" id=\"%u\"", cf->id);
-        output += ">\n";
-        output += format("      <Generation>%u</Generation>\n", cf->generation);
-      }
-      else
-        output += ">\n";
-      output += format("      <Name>%s</Name>\n", cf->name.c_str());
-
-      if (cf->counter)
-        output += format("      <Counter>true</Counter>\n");
-      else
-        output += format("      <Counter>false</Counter>\n");
-
-      if (cf->max_versions != 0)
-        output += format("      <MaxVersions>%u</MaxVersions>\n",
-                         cf->max_versions);
-      if (cf->time_order_desc)
-        output += format("      <TimeOrder>DESC</TimeOrder>\n");
-
-      if (cf->ttl != 0)
-        output += format("      <ttl>%d</ttl>\n", (int)cf->ttl);
-
-      if (cf->deleted)
-        output += format("      <deleted>true</deleted>\n");
-      else
-        output += format("      <deleted>false</deleted>\n");
-      if (cf->renamed) {
-        output += format("      <renamed>true</renamed>\n");
-        output += format("      <NewName>%s</NewName>\n", cf->new_name.c_str());
-      }
-      if (cf->has_index)
-        output += format("      <Index>true</Index>\n");
-      if (cf->has_qualifier_index)
-        output += format("      <QualifierIndex>true</QualifierIndex>\n");
-
-      output += "    </ColumnFamily>\n";
-    }
-    output += "  </AccessGroup>\n";
-  }
   output += "</Schema>\n";
+  return output;
 }
 
-void Schema::render_hql_create_table(const String &table_name, String &output) {
-  String ag_string;
-  bool got_columns;
-
-  output += "\n";
-  output += "CREATE TABLE ";
-
-  if (hql_needs_quotes(table_name.c_str()))
-    output += "'" + table_name + "'";
-  else
-    output += table_name;
+const string Schema::render_hql(const String &table_name) {
+  string output = "CREATE TABLE ";
+  output += maybe_quote(table_name);
   output += " (\n";
 
-  foreach_ht(const ColumnFamily *cf, m_column_families) {
-    // don't display deleted cfs
-    if (cf->deleted)
-      continue;
-    // check to see if column family name needs quotes around it
-    if (hql_needs_quotes(cf->name.c_str()))
-      output += format("  '%s'", cf->name.c_str());
-    else
-      output += format("  %s", cf->name.c_str());
-
-    if (cf->max_versions != 0)
-      output += format(" MAX_VERSIONS %u", cf->max_versions);
-
-    if (cf->time_order_desc)
-      output += format(" TIME_ORDER DESC");
-
-    if (cf->counter)
-      output += format(" COUNTER");
-
-    if (cf->ttl != 0)
-      output += format(" TTL %d", (int)cf->ttl);
-
-    if (cf->has_index) {
-      if (hql_needs_quotes(cf->name.c_str()))
-        output += format(", INDEX '%s'", cf->name.c_str());
-      else
-        output += format(", INDEX %s", cf->name.c_str());
+  for (auto ag_spec : m_access_groups) {
+    for (auto cf_spec : ag_spec->columns()) {
+      if (!cf_spec->get_deleted()) {
+        output += cf_spec->render_hql();
+        output += ",\n";
+      }
     }
-    if (cf->has_qualifier_index) {
-      if (hql_needs_quotes(cf->name.c_str()))
-        output += format(", QUALIFIER INDEX '%s'", cf->name.c_str());
-      else
-        output += format(", QUALIFIER INDEX %s", cf->name.c_str());
-    }
-
-    output += ",\n";
   }
 
   size_t i = 1;
-  foreach_ht(const AccessGroup *ag, m_access_groups) {
-    got_columns = false;
-    ag_string = "  ACCESS GROUP ";
-
-    if (hql_needs_quotes(ag->name.c_str()))
-      ag_string += format("'%s'", ag->name.c_str());
-    else
-      ag_string += ag->name;
-
-    if (ag->in_memory)
-      ag_string += " IN_MEMORY";
-
-    if (ag->counter)
-      ag_string += " COUNTER";
-
-    if (ag->replication >= 0)
-      ag_string += format(" REPLICATION %d", ag->replication);
-
-    if (ag->blocksize != 0)
-      ag_string += format(" BLOCKSIZE %u", ag->blocksize);
-
-    if (ag->compressor != "")
-      ag_string += format(" COMPRESSOR \"%s\"", ag->compressor.c_str());
-
-    if (ag->bloom_filter != "")
-      ag_string += format(" BLOOMFILTER \"%s\"",
-          ag->bloom_filter.c_str());
-
-    if (!ag->columns.empty()) {
-      bool display_comma = false;
-      ag_string += " (";
-
-      foreach_ht(const ColumnFamily *cf, ag->columns) {
-        if (cf->deleted)
-          continue;
-        got_columns = true;
-        // check to see if column family name needs quotes around it
-        if (display_comma)
-          ag_string += ", ";
-        else
-          display_comma = true;
-
-        if (hql_needs_quotes(cf->name.c_str()))
-          ag_string += format("'%s'", cf->name.c_str());
-        else
-          ag_string += cf->name;
-      }
-      ag_string += ")";
-    }
-    ag_string += i == m_access_groups.size() ? "\n" : ",\n";
+  for (auto ag_spec : m_access_groups) {
+    output += ag_spec->render_hql();
+    output += i == m_access_groups.size() ? "\n" : ",\n";
     i++;
-    if (got_columns)
-      output += ag_string;
   }
   output += ")";
-
-  if (m_compressor != "")
-    output += format(" COMPRESSOR \"%s\"", m_compressor.c_str());
 
   if (m_group_commit_interval > 0)
     output += format(" GROUP_COMMIT_INTERVAL %u", m_group_commit_interval);
 
-  output += "\n";
+  output += m_ag_defaults.render_hql();
+  output += m_cf_defaults.render_hql();
+  return output;
 }
 
 
@@ -874,85 +314,98 @@ void Schema::render_hql_create_table(const String &table_name, String &output) {
  * Protected methods
  */
 
-bool Schema::is_valid() {
-  if (get_error_string() != 0)
-    return false;
-  return true;
+
+int32_t Schema::get_max_column_family_id() {
+  int32_t max {};
+  for (auto ag : m_access_groups)
+    for (auto cf : ag->columns())
+      if (cf->get_id() > max)
+        max = cf->get_id();
+  return max;
 }
 
-/**
- *
- */
-void Schema::set_generation(const char *generation) {
-  int gen_num = atoi(generation);
-  if (gen_num <= 0)
-    set_error_string((String)"Invalid Table 'generation' value (" + generation
-                      + ")");
-  m_generation = gen_num;
-}
 
-void Schema::set_version(const char *version_str) {
-  m_version = atoi(version_str);
-}
+void Schema::add_access_group(AccessGroupSpec *ag) {
 
-/**
- *
- */
-void Schema::set_max_column_family_id(const char *str) {
-  int gen_num = atoi(str);
-  if (gen_num <= 0)
-    set_error_string((String)"Invalid Table 'max_column_family_id' value ("
-        + str + ")");
-  m_max_column_family_id = (size_t) gen_num;
-}
+  // Add to access group map
+  auto res = m_access_group_map.insert(make_pair(ag->get_name(), ag));
+  if (!res.second)
+    HT_THROWF(Error::BAD_SCHEMA,
+              "Attempt to add access group '%s' which already exists",
+              ag->get_name().c_str());
 
-bool Schema::add_access_group(AccessGroup *ag) {
-  pair<AccessGroupMap::iterator, bool> res =
-      m_access_group_map.insert(make_pair(ag->name, ag));
+  set<string> column_families;
+  for (auto cf : ag->columns())
+    column_families.insert(cf->get_name());
 
-  if (!res.second) {
-    m_error_string = String("Access group '") + ag->name + "' multiply defined";
-    return false;
+  size_t column_count {};
+  for (auto ag : m_access_groups) {
+    column_count += ag->columns().size();
+    for (auto cf : ag->columns()) {
+      if (column_families.count(cf->get_name()))
+        HT_THROWF(Error::BAD_SCHEMA,
+                  "Column family '%s' already defined",
+                  cf->get_name().c_str());
+    }
   }
+
+  if (column_count + ag->columns().size() > MAX_COLUMN_ID)
+    HT_THROWF(Error::TOO_MANY_COLUMNS,
+              "Attempt to add > %d column families to table",
+              MAX_COLUMN_ID);    
+
+  // Add to access group vector
   m_access_groups.push_back(ag);
-  return true;
+
+  // Merge table defaults into added access group
+  merge_table_defaults(ag);
+
+  // Merge table defaults into each added column
+  for (auto cf : ag->columns())
+    merge_table_defaults(cf);
+
 }
 
-bool Schema::add_column_family(ColumnFamily *cf) {
-  pair<ColumnFamilyMap::iterator, bool> res =
-      m_column_family_map.insert(make_pair(cf->name, cf));
-
-  // For now you can't drop and add the same column
-  if (!res.second) {
-    m_error_string = format("Column family '%s' multiply defined",
-                            cf->name.c_str());
-    return false;
+ColumnFamilySpec *Schema::remove_column_family(const String &name) {
+  auto iter = m_column_family_map.find(name);
+  if (iter != m_column_family_map.end()) {
+    ColumnFamilySpec *cf = iter->second;
+    auto ag_map_iter = m_access_group_map.find(cf->get_access_group());
+    HT_ASSERT(ag_map_iter != m_access_group_map.end());
+    ag_map_iter->second->remove_column(name);
+    if (cf->get_id()) {
+      m_column_family_id_map.erase(cf->get_id());
+      m_counter_mask[cf->get_id()] = false;
+    }
+    m_column_family_map.erase(iter);
+    return cf;
   }
-
-  AccessGroupMap::const_iterator ag_iter = m_access_group_map.find(cf->ag);
-
-  if (ag_iter == m_access_group_map.end()) {
-    m_error_string = String("Invalid access group '") + cf->ag
-        + "' for column family '" + cf->name + "'";
-    return false;
-  }
-
-  if (cf->counter && (cf->has_index || cf->has_qualifier_index)) {
-    m_error_string = String("Column family '") + cf->name
-        + "' is a COUNTER and therefore cannot have indices";
-    return false;
-  }
-
-  m_column_families.push_back(cf);
-  ag_iter->second->columns.push_back(cf);
-  return true;
+  return nullptr;
 }
 
-bool Schema::column_family_exists(uint32_t id, bool get_deleted) const
+
+AccessGroupSpec *Schema::replace_access_group(AccessGroupSpec *new_ag) {
+  AccessGroupSpec *old_ag {};
+  auto iter = m_access_group_map.find(new_ag->get_name());
+  if (iter != m_access_group_map.end()) {
+    old_ag = iter->second;
+    m_access_group_map.erase(iter);
+    AccessGroupSpecs new_ags(m_access_groups.size());
+    auto it = copy_if(m_access_groups.begin(), m_access_groups.end(),
+                      new_ags.begin(),
+                      [old_ag](AccessGroupSpec *ag){return ag != old_ag;});
+    new_ags.resize(distance(new_ags.begin(), it));
+    m_access_groups.swap(new_ags);
+  }
+  add_access_group(new_ag);
+  return old_ag;
+}
+
+bool Schema::column_family_exists(int32_t id, bool get_deleted) const
 {
-  ColumnFamilyIdMap::const_iterator cf_iter = m_column_family_id_map.find(id);
+  auto cf_iter = m_column_family_id_map.find(id);
   if (cf_iter != m_column_family_id_map.end()) {
-    if (get_deleted || cf_iter->second->deleted==false)
+    if (get_deleted || !cf_iter->second->get_deleted())
       return true;
   }
   return false;
@@ -960,78 +413,119 @@ bool Schema::column_family_exists(uint32_t id, bool get_deleted) const
 
 bool Schema::access_group_exists(const String &name) const
 {
-  AccessGroupMap::const_iterator ag_iter = m_access_group_map.find(name);
+  auto ag_iter = m_access_group_map.find(name);
   return (ag_iter != m_access_group_map.end());
 }
 
-bool Schema::rename_column_family(const String &old_name, const String &new_name) {
-  ColumnFamily *cf;
-  ColumnFamilyMap::iterator cf_map_it;
-  ColumnFamilies::iterator cfs_it;
-  ColumnFamilies::iterator ag_cfs_it;
+void Schema::rename_column_family(const String &old_name, const String &new_name) {
+  ColumnFamilySpec *cf;
 
   // update key and ColumnFamily in m_column_family_map
-  cf_map_it = m_column_family_map.find(old_name);
-  if (cf_map_it == m_column_family_map.end()) {
-    m_error_string = format("Column family '%s' not defined", old_name.c_str());
-    return false;
-  }
+  auto cf_map_it = m_column_family_map.find(old_name);
+  if (cf_map_it == m_column_family_map.end())
+    HT_THROWF(Error::INVALID_OPERATION,
+              "Source column '%s' of rename does not exist", old_name.c_str());
 
-  if(old_name != new_name) {
+  if (old_name != new_name) {
     cf = cf_map_it->second;
-    cf->name = new_name;
-    pair<ColumnFamilyMap::iterator, bool> res =
-        m_column_family_map.insert(make_pair(cf->name, cf));
-    if (!res.second) {
-      m_error_string = format("Column family '%s' multiply defined", cf->name.c_str());
-      return false;
-    }
+    cf->set_name(new_name);
+    cf->set_generation(0);
+    auto res = m_column_family_map.insert(make_pair(cf->get_name(), cf));
+    if (!res.second)
+    HT_THROWF(Error::INVALID_OPERATION,
+              "Destination column '%s' of rename already exists",
+              cf->get_name().c_str());
     m_column_family_map.erase(old_name);
   }
-
-  return true;
 }
 
-bool Schema::drop_column_family(const String &name) {
-  ColumnFamily *cf;
-  ColumnFamilyMap::iterator cf_map_it = m_column_family_map.find(name);
-  ColumnFamilies::iterator cfs_it;
-  ColumnFamilies::iterator ag_cfs_it;
+void Schema::drop_column_family(const String &name) {
 
-  if (cf_map_it == m_column_family_map.end()) {
-    m_error_string = format("Column family '%s' not defined",
-                            name.c_str());
-    return false;
+  auto cf_map_it = m_column_family_map.find(name);
+  if (cf_map_it == m_column_family_map.end())
+    HT_THROWF(Error::INVALID_OPERATION,
+              "Column family to drop (%s) does not exist",
+              name.c_str());
+
+  ColumnFamilySpec *cf = cf_map_it->second;
+
+  auto ag_it = m_access_group_map.find(cf->get_access_group());
+  if (ag_it == m_access_group_map.end())
+    HT_THROWF(Error::SCHEMA_PARSE_ERROR,
+              "Invalid access group '%s' for column family '%s'",
+              cf->get_access_group().c_str(), cf->get_name().c_str());
+
+  auto ag_cfs_it = find(ag_it->second->columns().begin(),
+                        ag_it->second->columns().end(), cf);
+  if (ag_cfs_it == ag_it->second->columns().end())
+    HT_THROWF(Error::SCHEMA_PARSE_ERROR,
+              "Column family '%s' not found in access group '%s'",
+              cf->get_name().c_str(), cf->get_access_group().c_str());
+
+  auto cfs_it = find(m_column_families.begin(),
+                     m_column_families.end(), cf);
+  if (cfs_it == m_column_families.end())
+    HT_THROWF(Error::SCHEMA_PARSE_ERROR,
+              "Column family '%s' not found in Schema list of columns",
+              cf->get_name().c_str());
+
+  ag_it->second->drop_column(name);
+
+  m_column_family_map.erase(cf_map_it);
+  m_column_family_map[cf->get_name()] = cf;  
+}
+
+void Schema::validate() {
+  size_t column_count {};
+  map<string, string> column_to_ag_map;
+  m_column_families.clear();
+  m_column_family_map.clear();
+  m_column_family_id_map.clear();
+  m_counter_mask.clear();
+  m_counter_mask.resize(256);
+  for (auto ag_spec : m_access_groups) {
+    column_count += ag_spec->columns().size();
+    if (column_count > MAX_COLUMN_ID)
+        HT_THROWF(Error::TOO_MANY_COLUMNS,
+                  "Attempt to add > %d column families to table",
+                  MAX_COLUMN_ID);
+    for (auto cf_spec : ag_spec->columns()) {
+      if (cf_spec->get_access_group().empty())
+        cf_spec->set_access_group(ag_spec->get_name());
+      auto iter = column_to_ag_map.find(cf_spec->get_name());
+      if (iter != column_to_ag_map.end())
+        HT_THROWF(Error::BAD_SCHEMA,
+                  "Column '%s' assigned to two access groups (%s & %s)",
+                  cf_spec->get_name().c_str(), iter->second.c_str(),
+                  ag_spec->get_name().c_str());
+      column_to_ag_map[cf_spec->get_name()] = ag_spec->get_name();
+      m_column_families.push_back(cf_spec);
+      m_column_family_map[cf_spec->get_name()] = cf_spec;
+      if (cf_spec->get_id()) {
+        m_column_family_id_map[cf_spec->get_id()] = cf_spec;
+        if (cf_spec->get_option_counter())
+          m_counter_mask[cf_spec->get_id()] = true;
+      }
+    }
   }
+}
 
-  cf = cf_map_it->second;
-  AccessGroupMap::const_iterator ag_it = m_access_group_map.find(cf->ag);
-
-  if (ag_it == m_access_group_map.end()) {
-    m_error_string = String("Invalid access group '") + cf->ag
-        + "' for column family '" + cf->name + "'";
-    return false;
+void Schema::merge_table_defaults(ColumnFamilySpec *cf_spec) {
+  try {
+    cf_spec->merge_options(m_cf_defaults);
   }
-
-  ag_cfs_it = find(ag_it->second->columns.begin(),
-      ag_it->second->columns.end(), cf);
-
-  if (ag_cfs_it == ag_it->second->columns.end()) {
-    m_error_string = String("Column family '") + cf->name
-        + "' not found in access group '" + cf->ag + "'";
-    return false;
+  catch (Exception &e) {
+    HT_THROWF(e.code(), "Merging column '%s' options with table defaults: %s",
+              cf_spec->get_name().c_str(), e.what());
   }
+}
 
-  cfs_it = find(m_column_families.begin(),
-      m_column_families.end(), cf);
-
-  if (cfs_it == m_column_families.end()) {
-    m_error_string = String("Column family '") + cf->name
-        + "' not found in Schema list of columns";
-    return false;
+void Schema::merge_table_defaults(AccessGroupSpec *ag_spec) {
+  try {
+    ag_spec->merge_options(m_ag_defaults);
   }
-
-  cf->deleted = true;
-
-  return true;
+  catch (Exception &e) {
+    HT_THROWF(e.code(), "Merging access group '%s' options with table defaults: %s",
+              ag_spec->get_name().c_str(), e.what());
+  }
 }

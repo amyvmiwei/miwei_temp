@@ -19,14 +19,14 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Serialization.h"
-#include "Common/Logger.h"
-#include "Common/StringExt.h"
-extern "C" {
-#include "Common/md5.h"
-}
+#include <Common/Compat.h>
 #include "Types.h"
+
+#include <Common/Logger.h>
+#include <Common/Properties.h>
+#include <Common/Serialization.h>
+#include <Common/StringExt.h>
+#include <Common/md5.h>
 
 using namespace std;
 using namespace Hypertable;
@@ -66,20 +66,34 @@ bool TableIdentifier::operator<(const TableIdentifier &other) const {
   return false;
 }
 
+#define TABLE_IDENTIFIER_VERSION 1
 
 size_t TableIdentifier::encoded_length() const {
-  return 4 + encoded_length_vstr(id);
+  return 9 + encoded_length_vstr(id);
 }
 
 void TableIdentifier::encode(uint8_t **bufp) const {
+  encode_i8(bufp, TABLE_IDENTIFIER_VERSION);
   encode_vstr(bufp, id);
-  encode_i32(bufp, generation);
+  encode_i64(bufp, generation);
 }
 
 void TableIdentifier::decode(const uint8_t **bufp, size_t *remainp) {
-  HT_TRY("decoding table identitier",
-    id = decode_vstr(bufp, remainp);
-    generation = decode_i32(bufp, remainp));
+  int8_t version;
+  HT_TRY("decoding table identitier version",
+         version = decode_i8(bufp, remainp));
+  if (version > TABLE_IDENTIFIER_VERSION) {
+    *bufp -= 1;
+    *remainp += 1;
+    HT_TRY("decoding table identitier",
+           id = decode_vstr(bufp, remainp);
+           generation = decode_i32(bufp, remainp));
+  }
+  else {
+    HT_TRY("decoding table identitier",
+           id = decode_vstr(bufp, remainp);
+           generation = decode_i64(bufp, remainp));
+  }
 }
 
 void TableIdentifierManaged::decode(const uint8_t **bufp, size_t *remainp) {

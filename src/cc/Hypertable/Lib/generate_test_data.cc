@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -160,23 +160,14 @@ int main(int argc, char **argv) {
     return e.code();
   }
 
-  schema = Schema::new_instance(schemaspec.c_str(), schemaspec.length());
-  if (!schema->is_valid()) {
-    HT_ERRORF("Schema Parse Error: %s", schema->get_error_string());
-    exit(1);
-  }
-
-  if (schema->need_id_assignment()) {
-    HT_ERROR("Schema Parse Error: needs ID assignment");
-    exit(1);
-  }
+  schema = Schema::new_instance(schemaspec);
 
   cfmax = schema->get_max_column_family_id();
   cfnames.resize(cfmax+1);
 
-  foreach_ht(Schema::AccessGroup *ag, schema->get_access_groups()) {
-    foreach_ht(Schema::ColumnFamily *cf, ag->columns)
-      cfnames[cf->id] = cf->name;
+  for (auto ag : schema->get_access_groups()) {
+    for (auto cf : ag->columns())
+      cfnames[cf->get_id()] = cf->get_name();
   }
 
   if (cqlimit == 0)

@@ -49,7 +49,14 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
   private static final org.apache.thrift.protocol.TField NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("name", org.apache.thrift.protocol.TType.STRING, (short)1);
   private static final org.apache.thrift.protocol.TField AG_FIELD_DESC = new org.apache.thrift.protocol.TField("ag", org.apache.thrift.protocol.TType.STRING, (short)2);
   private static final org.apache.thrift.protocol.TField MAX_VERSIONS_FIELD_DESC = new org.apache.thrift.protocol.TField("max_versions", org.apache.thrift.protocol.TType.I32, (short)3);
-  private static final org.apache.thrift.protocol.TField TTL_FIELD_DESC = new org.apache.thrift.protocol.TField("ttl", org.apache.thrift.protocol.TType.STRING, (short)4);
+  private static final org.apache.thrift.protocol.TField TTL_FIELD_DESC = new org.apache.thrift.protocol.TField("ttl", org.apache.thrift.protocol.TType.I32, (short)4);
+  private static final org.apache.thrift.protocol.TField GENERATION_FIELD_DESC = new org.apache.thrift.protocol.TField("generation", org.apache.thrift.protocol.TType.I64, (short)5);
+  private static final org.apache.thrift.protocol.TField ID_FIELD_DESC = new org.apache.thrift.protocol.TField("id", org.apache.thrift.protocol.TType.I32, (short)6);
+  private static final org.apache.thrift.protocol.TField HAS_INDEX_FIELD_DESC = new org.apache.thrift.protocol.TField("has_index", org.apache.thrift.protocol.TType.BOOL, (short)7);
+  private static final org.apache.thrift.protocol.TField HAS_QUALIFIER_INDEX_FIELD_DESC = new org.apache.thrift.protocol.TField("has_qualifier_index", org.apache.thrift.protocol.TType.BOOL, (short)8);
+  private static final org.apache.thrift.protocol.TField TIME_ORDER_DESC_FIELD_DESC = new org.apache.thrift.protocol.TField("time_order_desc", org.apache.thrift.protocol.TType.BOOL, (short)9);
+  private static final org.apache.thrift.protocol.TField DELETED_FIELD_DESC = new org.apache.thrift.protocol.TField("deleted", org.apache.thrift.protocol.TType.BOOL, (short)10);
+  private static final org.apache.thrift.protocol.TField COUNTER_FIELD_DESC = new org.apache.thrift.protocol.TField("counter", org.apache.thrift.protocol.TType.BOOL, (short)11);
 
   private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
   static {
@@ -57,17 +64,31 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
     schemes.put(TupleScheme.class, new ColumnFamilyTupleSchemeFactory());
   }
 
-  public String name; // optional
-  public String ag; // optional
+  public String name; // required
+  public String ag; // required
   public int max_versions; // optional
-  public String ttl; // optional
+  public int ttl; // optional
+  public long generation; // optional
+  public int id; // optional
+  public boolean has_index; // optional
+  public boolean has_qualifier_index; // optional
+  public boolean time_order_desc; // optional
+  public boolean deleted; // optional
+  public boolean counter; // optional
 
   /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
   public enum _Fields implements org.apache.thrift.TFieldIdEnum {
     NAME((short)1, "name"),
     AG((short)2, "ag"),
     MAX_VERSIONS((short)3, "max_versions"),
-    TTL((short)4, "ttl");
+    TTL((short)4, "ttl"),
+    GENERATION((short)5, "generation"),
+    ID((short)6, "id"),
+    HAS_INDEX((short)7, "has_index"),
+    HAS_QUALIFIER_INDEX((short)8, "has_qualifier_index"),
+    TIME_ORDER_DESC((short)9, "time_order_desc"),
+    DELETED((short)10, "deleted"),
+    COUNTER((short)11, "counter");
 
     private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
 
@@ -90,6 +111,20 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
           return MAX_VERSIONS;
         case 4: // TTL
           return TTL;
+        case 5: // GENERATION
+          return GENERATION;
+        case 6: // ID
+          return ID;
+        case 7: // HAS_INDEX
+          return HAS_INDEX;
+        case 8: // HAS_QUALIFIER_INDEX
+          return HAS_QUALIFIER_INDEX;
+        case 9: // TIME_ORDER_DESC
+          return TIME_ORDER_DESC;
+        case 10: // DELETED
+          return DELETED;
+        case 11: // COUNTER
+          return COUNTER;
         default:
           return null;
       }
@@ -131,24 +166,55 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
 
   // isset id assignments
   private static final int __MAX_VERSIONS_ISSET_ID = 0;
-  private BitSet __isset_bit_vector = new BitSet(1);
-  private _Fields optionals[] = {_Fields.NAME,_Fields.AG,_Fields.MAX_VERSIONS,_Fields.TTL};
+  private static final int __TTL_ISSET_ID = 1;
+  private static final int __GENERATION_ISSET_ID = 2;
+  private static final int __ID_ISSET_ID = 3;
+  private static final int __HAS_INDEX_ISSET_ID = 4;
+  private static final int __HAS_QUALIFIER_INDEX_ISSET_ID = 5;
+  private static final int __TIME_ORDER_DESC_ISSET_ID = 6;
+  private static final int __DELETED_ISSET_ID = 7;
+  private static final int __COUNTER_ISSET_ID = 8;
+  private BitSet __isset_bit_vector = new BitSet(9);
+  private _Fields optionals[] = {_Fields.MAX_VERSIONS,_Fields.TTL,_Fields.GENERATION,_Fields.ID,_Fields.HAS_INDEX,_Fields.HAS_QUALIFIER_INDEX,_Fields.TIME_ORDER_DESC,_Fields.DELETED,_Fields.COUNTER};
   public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
   static {
     Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.NAME, new org.apache.thrift.meta_data.FieldMetaData("name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-    tmpMap.put(_Fields.AG, new org.apache.thrift.meta_data.FieldMetaData("ag", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+    tmpMap.put(_Fields.AG, new org.apache.thrift.meta_data.FieldMetaData("ag", org.apache.thrift.TFieldRequirementType.DEFAULT, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
     tmpMap.put(_Fields.MAX_VERSIONS, new org.apache.thrift.meta_data.FieldMetaData("max_versions", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
         new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
     tmpMap.put(_Fields.TTL, new org.apache.thrift.meta_data.FieldMetaData("ttl", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
-        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.GENERATION, new org.apache.thrift.meta_data.FieldMetaData("generation", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64)));
+    tmpMap.put(_Fields.ID, new org.apache.thrift.meta_data.FieldMetaData("id", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I32)));
+    tmpMap.put(_Fields.HAS_INDEX, new org.apache.thrift.meta_data.FieldMetaData("has_index", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.HAS_QUALIFIER_INDEX, new org.apache.thrift.meta_data.FieldMetaData("has_qualifier_index", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.TIME_ORDER_DESC, new org.apache.thrift.meta_data.FieldMetaData("time_order_desc", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.DELETED, new org.apache.thrift.meta_data.FieldMetaData("deleted", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
+    tmpMap.put(_Fields.COUNTER, new org.apache.thrift.meta_data.FieldMetaData("counter", org.apache.thrift.TFieldRequirementType.OPTIONAL, 
+        new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.BOOL)));
     metaDataMap = Collections.unmodifiableMap(tmpMap);
     org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(ColumnFamily.class, metaDataMap);
   }
 
   public ColumnFamily() {
+  }
+
+  public ColumnFamily(
+    String name,
+    String ag)
+  {
+    this();
+    this.name = name;
+    this.ag = ag;
   }
 
   /**
@@ -164,9 +230,14 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
       this.ag = other.ag;
     }
     this.max_versions = other.max_versions;
-    if (other.isSetTtl()) {
-      this.ttl = other.ttl;
-    }
+    this.ttl = other.ttl;
+    this.generation = other.generation;
+    this.id = other.id;
+    this.has_index = other.has_index;
+    this.has_qualifier_index = other.has_qualifier_index;
+    this.time_order_desc = other.time_order_desc;
+    this.deleted = other.deleted;
+    this.counter = other.counter;
   }
 
   public ColumnFamily deepCopy() {
@@ -179,7 +250,22 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
     this.ag = null;
     setMax_versionsIsSet(false);
     this.max_versions = 0;
-    this.ttl = null;
+    setTtlIsSet(false);
+    this.ttl = 0;
+    setGenerationIsSet(false);
+    this.generation = 0;
+    setIdIsSet(false);
+    this.id = 0;
+    setHas_indexIsSet(false);
+    this.has_index = false;
+    setHas_qualifier_indexIsSet(false);
+    this.has_qualifier_index = false;
+    setTime_order_descIsSet(false);
+    this.time_order_desc = false;
+    setDeletedIsSet(false);
+    this.deleted = false;
+    setCounterIsSet(false);
+    this.counter = false;
   }
 
   public String getName() {
@@ -253,28 +339,188 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
     __isset_bit_vector.set(__MAX_VERSIONS_ISSET_ID, value);
   }
 
-  public String getTtl() {
+  public int getTtl() {
     return this.ttl;
   }
 
-  public ColumnFamily setTtl(String ttl) {
+  public ColumnFamily setTtl(int ttl) {
     this.ttl = ttl;
+    setTtlIsSet(true);
     return this;
   }
 
   public void unsetTtl() {
-    this.ttl = null;
+    __isset_bit_vector.clear(__TTL_ISSET_ID);
   }
 
   /** Returns true if field ttl is set (has been assigned a value) and false otherwise */
   public boolean isSetTtl() {
-    return this.ttl != null;
+    return __isset_bit_vector.get(__TTL_ISSET_ID);
   }
 
   public void setTtlIsSet(boolean value) {
-    if (!value) {
-      this.ttl = null;
-    }
+    __isset_bit_vector.set(__TTL_ISSET_ID, value);
+  }
+
+  public long getGeneration() {
+    return this.generation;
+  }
+
+  public ColumnFamily setGeneration(long generation) {
+    this.generation = generation;
+    setGenerationIsSet(true);
+    return this;
+  }
+
+  public void unsetGeneration() {
+    __isset_bit_vector.clear(__GENERATION_ISSET_ID);
+  }
+
+  /** Returns true if field generation is set (has been assigned a value) and false otherwise */
+  public boolean isSetGeneration() {
+    return __isset_bit_vector.get(__GENERATION_ISSET_ID);
+  }
+
+  public void setGenerationIsSet(boolean value) {
+    __isset_bit_vector.set(__GENERATION_ISSET_ID, value);
+  }
+
+  public int getId() {
+    return this.id;
+  }
+
+  public ColumnFamily setId(int id) {
+    this.id = id;
+    setIdIsSet(true);
+    return this;
+  }
+
+  public void unsetId() {
+    __isset_bit_vector.clear(__ID_ISSET_ID);
+  }
+
+  /** Returns true if field id is set (has been assigned a value) and false otherwise */
+  public boolean isSetId() {
+    return __isset_bit_vector.get(__ID_ISSET_ID);
+  }
+
+  public void setIdIsSet(boolean value) {
+    __isset_bit_vector.set(__ID_ISSET_ID, value);
+  }
+
+  public boolean isHas_index() {
+    return this.has_index;
+  }
+
+  public ColumnFamily setHas_index(boolean has_index) {
+    this.has_index = has_index;
+    setHas_indexIsSet(true);
+    return this;
+  }
+
+  public void unsetHas_index() {
+    __isset_bit_vector.clear(__HAS_INDEX_ISSET_ID);
+  }
+
+  /** Returns true if field has_index is set (has been assigned a value) and false otherwise */
+  public boolean isSetHas_index() {
+    return __isset_bit_vector.get(__HAS_INDEX_ISSET_ID);
+  }
+
+  public void setHas_indexIsSet(boolean value) {
+    __isset_bit_vector.set(__HAS_INDEX_ISSET_ID, value);
+  }
+
+  public boolean isHas_qualifier_index() {
+    return this.has_qualifier_index;
+  }
+
+  public ColumnFamily setHas_qualifier_index(boolean has_qualifier_index) {
+    this.has_qualifier_index = has_qualifier_index;
+    setHas_qualifier_indexIsSet(true);
+    return this;
+  }
+
+  public void unsetHas_qualifier_index() {
+    __isset_bit_vector.clear(__HAS_QUALIFIER_INDEX_ISSET_ID);
+  }
+
+  /** Returns true if field has_qualifier_index is set (has been assigned a value) and false otherwise */
+  public boolean isSetHas_qualifier_index() {
+    return __isset_bit_vector.get(__HAS_QUALIFIER_INDEX_ISSET_ID);
+  }
+
+  public void setHas_qualifier_indexIsSet(boolean value) {
+    __isset_bit_vector.set(__HAS_QUALIFIER_INDEX_ISSET_ID, value);
+  }
+
+  public boolean isTime_order_desc() {
+    return this.time_order_desc;
+  }
+
+  public ColumnFamily setTime_order_desc(boolean time_order_desc) {
+    this.time_order_desc = time_order_desc;
+    setTime_order_descIsSet(true);
+    return this;
+  }
+
+  public void unsetTime_order_desc() {
+    __isset_bit_vector.clear(__TIME_ORDER_DESC_ISSET_ID);
+  }
+
+  /** Returns true if field time_order_desc is set (has been assigned a value) and false otherwise */
+  public boolean isSetTime_order_desc() {
+    return __isset_bit_vector.get(__TIME_ORDER_DESC_ISSET_ID);
+  }
+
+  public void setTime_order_descIsSet(boolean value) {
+    __isset_bit_vector.set(__TIME_ORDER_DESC_ISSET_ID, value);
+  }
+
+  public boolean isDeleted() {
+    return this.deleted;
+  }
+
+  public ColumnFamily setDeleted(boolean deleted) {
+    this.deleted = deleted;
+    setDeletedIsSet(true);
+    return this;
+  }
+
+  public void unsetDeleted() {
+    __isset_bit_vector.clear(__DELETED_ISSET_ID);
+  }
+
+  /** Returns true if field deleted is set (has been assigned a value) and false otherwise */
+  public boolean isSetDeleted() {
+    return __isset_bit_vector.get(__DELETED_ISSET_ID);
+  }
+
+  public void setDeletedIsSet(boolean value) {
+    __isset_bit_vector.set(__DELETED_ISSET_ID, value);
+  }
+
+  public boolean isCounter() {
+    return this.counter;
+  }
+
+  public ColumnFamily setCounter(boolean counter) {
+    this.counter = counter;
+    setCounterIsSet(true);
+    return this;
+  }
+
+  public void unsetCounter() {
+    __isset_bit_vector.clear(__COUNTER_ISSET_ID);
+  }
+
+  /** Returns true if field counter is set (has been assigned a value) and false otherwise */
+  public boolean isSetCounter() {
+    return __isset_bit_vector.get(__COUNTER_ISSET_ID);
+  }
+
+  public void setCounterIsSet(boolean value) {
+    __isset_bit_vector.set(__COUNTER_ISSET_ID, value);
   }
 
   public void setFieldValue(_Fields field, Object value) {
@@ -307,7 +553,63 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
       if (value == null) {
         unsetTtl();
       } else {
-        setTtl((String)value);
+        setTtl((Integer)value);
+      }
+      break;
+
+    case GENERATION:
+      if (value == null) {
+        unsetGeneration();
+      } else {
+        setGeneration((Long)value);
+      }
+      break;
+
+    case ID:
+      if (value == null) {
+        unsetId();
+      } else {
+        setId((Integer)value);
+      }
+      break;
+
+    case HAS_INDEX:
+      if (value == null) {
+        unsetHas_index();
+      } else {
+        setHas_index((Boolean)value);
+      }
+      break;
+
+    case HAS_QUALIFIER_INDEX:
+      if (value == null) {
+        unsetHas_qualifier_index();
+      } else {
+        setHas_qualifier_index((Boolean)value);
+      }
+      break;
+
+    case TIME_ORDER_DESC:
+      if (value == null) {
+        unsetTime_order_desc();
+      } else {
+        setTime_order_desc((Boolean)value);
+      }
+      break;
+
+    case DELETED:
+      if (value == null) {
+        unsetDeleted();
+      } else {
+        setDeleted((Boolean)value);
+      }
+      break;
+
+    case COUNTER:
+      if (value == null) {
+        unsetCounter();
+      } else {
+        setCounter((Boolean)value);
       }
       break;
 
@@ -326,7 +628,28 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
       return Integer.valueOf(getMax_versions());
 
     case TTL:
-      return getTtl();
+      return Integer.valueOf(getTtl());
+
+    case GENERATION:
+      return Long.valueOf(getGeneration());
+
+    case ID:
+      return Integer.valueOf(getId());
+
+    case HAS_INDEX:
+      return Boolean.valueOf(isHas_index());
+
+    case HAS_QUALIFIER_INDEX:
+      return Boolean.valueOf(isHas_qualifier_index());
+
+    case TIME_ORDER_DESC:
+      return Boolean.valueOf(isTime_order_desc());
+
+    case DELETED:
+      return Boolean.valueOf(isDeleted());
+
+    case COUNTER:
+      return Boolean.valueOf(isCounter());
 
     }
     throw new IllegalStateException();
@@ -347,6 +670,20 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
       return isSetMax_versions();
     case TTL:
       return isSetTtl();
+    case GENERATION:
+      return isSetGeneration();
+    case ID:
+      return isSetId();
+    case HAS_INDEX:
+      return isSetHas_index();
+    case HAS_QUALIFIER_INDEX:
+      return isSetHas_qualifier_index();
+    case TIME_ORDER_DESC:
+      return isSetTime_order_desc();
+    case DELETED:
+      return isSetDeleted();
+    case COUNTER:
+      return isSetCounter();
     }
     throw new IllegalStateException();
   }
@@ -396,7 +733,70 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
     if (this_present_ttl || that_present_ttl) {
       if (!(this_present_ttl && that_present_ttl))
         return false;
-      if (!this.ttl.equals(that.ttl))
+      if (this.ttl != that.ttl)
+        return false;
+    }
+
+    boolean this_present_generation = true && this.isSetGeneration();
+    boolean that_present_generation = true && that.isSetGeneration();
+    if (this_present_generation || that_present_generation) {
+      if (!(this_present_generation && that_present_generation))
+        return false;
+      if (this.generation != that.generation)
+        return false;
+    }
+
+    boolean this_present_id = true && this.isSetId();
+    boolean that_present_id = true && that.isSetId();
+    if (this_present_id || that_present_id) {
+      if (!(this_present_id && that_present_id))
+        return false;
+      if (this.id != that.id)
+        return false;
+    }
+
+    boolean this_present_has_index = true && this.isSetHas_index();
+    boolean that_present_has_index = true && that.isSetHas_index();
+    if (this_present_has_index || that_present_has_index) {
+      if (!(this_present_has_index && that_present_has_index))
+        return false;
+      if (this.has_index != that.has_index)
+        return false;
+    }
+
+    boolean this_present_has_qualifier_index = true && this.isSetHas_qualifier_index();
+    boolean that_present_has_qualifier_index = true && that.isSetHas_qualifier_index();
+    if (this_present_has_qualifier_index || that_present_has_qualifier_index) {
+      if (!(this_present_has_qualifier_index && that_present_has_qualifier_index))
+        return false;
+      if (this.has_qualifier_index != that.has_qualifier_index)
+        return false;
+    }
+
+    boolean this_present_time_order_desc = true && this.isSetTime_order_desc();
+    boolean that_present_time_order_desc = true && that.isSetTime_order_desc();
+    if (this_present_time_order_desc || that_present_time_order_desc) {
+      if (!(this_present_time_order_desc && that_present_time_order_desc))
+        return false;
+      if (this.time_order_desc != that.time_order_desc)
+        return false;
+    }
+
+    boolean this_present_deleted = true && this.isSetDeleted();
+    boolean that_present_deleted = true && that.isSetDeleted();
+    if (this_present_deleted || that_present_deleted) {
+      if (!(this_present_deleted && that_present_deleted))
+        return false;
+      if (this.deleted != that.deleted)
+        return false;
+    }
+
+    boolean this_present_counter = true && this.isSetCounter();
+    boolean that_present_counter = true && that.isSetCounter();
+    if (this_present_counter || that_present_counter) {
+      if (!(this_present_counter && that_present_counter))
+        return false;
+      if (this.counter != that.counter)
         return false;
     }
 
@@ -456,6 +856,76 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
         return lastComparison;
       }
     }
+    lastComparison = Boolean.valueOf(isSetGeneration()).compareTo(typedOther.isSetGeneration());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetGeneration()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.generation, typedOther.generation);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetId()).compareTo(typedOther.isSetId());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetId()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.id, typedOther.id);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetHas_index()).compareTo(typedOther.isSetHas_index());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetHas_index()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.has_index, typedOther.has_index);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetHas_qualifier_index()).compareTo(typedOther.isSetHas_qualifier_index());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetHas_qualifier_index()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.has_qualifier_index, typedOther.has_qualifier_index);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetTime_order_desc()).compareTo(typedOther.isSetTime_order_desc());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetTime_order_desc()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.time_order_desc, typedOther.time_order_desc);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetDeleted()).compareTo(typedOther.isSetDeleted());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetDeleted()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.deleted, typedOther.deleted);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
+    lastComparison = Boolean.valueOf(isSetCounter()).compareTo(typedOther.isSetCounter());
+    if (lastComparison != 0) {
+      return lastComparison;
+    }
+    if (isSetCounter()) {
+      lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.counter, typedOther.counter);
+      if (lastComparison != 0) {
+        return lastComparison;
+      }
+    }
     return 0;
   }
 
@@ -476,25 +946,21 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
     StringBuilder sb = new StringBuilder("ColumnFamily(");
     boolean first = true;
 
-    if (isSetName()) {
-      sb.append("name:");
-      if (this.name == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.name);
-      }
-      first = false;
+    sb.append("name:");
+    if (this.name == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.name);
     }
-    if (isSetAg()) {
-      if (!first) sb.append(", ");
-      sb.append("ag:");
-      if (this.ag == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.ag);
-      }
-      first = false;
+    first = false;
+    if (!first) sb.append(", ");
+    sb.append("ag:");
+    if (this.ag == null) {
+      sb.append("null");
+    } else {
+      sb.append(this.ag);
     }
+    first = false;
     if (isSetMax_versions()) {
       if (!first) sb.append(", ");
       sb.append("max_versions:");
@@ -504,11 +970,49 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
     if (isSetTtl()) {
       if (!first) sb.append(", ");
       sb.append("ttl:");
-      if (this.ttl == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.ttl);
-      }
+      sb.append(this.ttl);
+      first = false;
+    }
+    if (isSetGeneration()) {
+      if (!first) sb.append(", ");
+      sb.append("generation:");
+      sb.append(this.generation);
+      first = false;
+    }
+    if (isSetId()) {
+      if (!first) sb.append(", ");
+      sb.append("id:");
+      sb.append(this.id);
+      first = false;
+    }
+    if (isSetHas_index()) {
+      if (!first) sb.append(", ");
+      sb.append("has_index:");
+      sb.append(this.has_index);
+      first = false;
+    }
+    if (isSetHas_qualifier_index()) {
+      if (!first) sb.append(", ");
+      sb.append("has_qualifier_index:");
+      sb.append(this.has_qualifier_index);
+      first = false;
+    }
+    if (isSetTime_order_desc()) {
+      if (!first) sb.append(", ");
+      sb.append("time_order_desc:");
+      sb.append(this.time_order_desc);
+      first = false;
+    }
+    if (isSetDeleted()) {
+      if (!first) sb.append(", ");
+      sb.append("deleted:");
+      sb.append(this.deleted);
+      first = false;
+    }
+    if (isSetCounter()) {
+      if (!first) sb.append(", ");
+      sb.append("counter:");
+      sb.append(this.counter);
       first = false;
     }
     sb.append(")");
@@ -580,9 +1084,65 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
             }
             break;
           case 4: // TTL
-            if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-              struct.ttl = iprot.readString();
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.ttl = iprot.readI32();
               struct.setTtlIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 5: // GENERATION
+            if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
+              struct.generation = iprot.readI64();
+              struct.setGenerationIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 6: // ID
+            if (schemeField.type == org.apache.thrift.protocol.TType.I32) {
+              struct.id = iprot.readI32();
+              struct.setIdIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 7: // HAS_INDEX
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.has_index = iprot.readBool();
+              struct.setHas_indexIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 8: // HAS_QUALIFIER_INDEX
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.has_qualifier_index = iprot.readBool();
+              struct.setHas_qualifier_indexIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 9: // TIME_ORDER_DESC
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.time_order_desc = iprot.readBool();
+              struct.setTime_order_descIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 10: // DELETED
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.deleted = iprot.readBool();
+              struct.setDeletedIsSet(true);
+            } else { 
+              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
+            }
+            break;
+          case 11: // COUNTER
+            if (schemeField.type == org.apache.thrift.protocol.TType.BOOL) {
+              struct.counter = iprot.readBool();
+              struct.setCounterIsSet(true);
             } else { 
               org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
             }
@@ -603,30 +1163,59 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
 
       oprot.writeStructBegin(STRUCT_DESC);
       if (struct.name != null) {
-        if (struct.isSetName()) {
-          oprot.writeFieldBegin(NAME_FIELD_DESC);
-          oprot.writeString(struct.name);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(NAME_FIELD_DESC);
+        oprot.writeString(struct.name);
+        oprot.writeFieldEnd();
       }
       if (struct.ag != null) {
-        if (struct.isSetAg()) {
-          oprot.writeFieldBegin(AG_FIELD_DESC);
-          oprot.writeString(struct.ag);
-          oprot.writeFieldEnd();
-        }
+        oprot.writeFieldBegin(AG_FIELD_DESC);
+        oprot.writeString(struct.ag);
+        oprot.writeFieldEnd();
       }
       if (struct.isSetMax_versions()) {
         oprot.writeFieldBegin(MAX_VERSIONS_FIELD_DESC);
         oprot.writeI32(struct.max_versions);
         oprot.writeFieldEnd();
       }
-      if (struct.ttl != null) {
-        if (struct.isSetTtl()) {
-          oprot.writeFieldBegin(TTL_FIELD_DESC);
-          oprot.writeString(struct.ttl);
-          oprot.writeFieldEnd();
-        }
+      if (struct.isSetTtl()) {
+        oprot.writeFieldBegin(TTL_FIELD_DESC);
+        oprot.writeI32(struct.ttl);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetGeneration()) {
+        oprot.writeFieldBegin(GENERATION_FIELD_DESC);
+        oprot.writeI64(struct.generation);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetId()) {
+        oprot.writeFieldBegin(ID_FIELD_DESC);
+        oprot.writeI32(struct.id);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetHas_index()) {
+        oprot.writeFieldBegin(HAS_INDEX_FIELD_DESC);
+        oprot.writeBool(struct.has_index);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetHas_qualifier_index()) {
+        oprot.writeFieldBegin(HAS_QUALIFIER_INDEX_FIELD_DESC);
+        oprot.writeBool(struct.has_qualifier_index);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetTime_order_desc()) {
+        oprot.writeFieldBegin(TIME_ORDER_DESC_FIELD_DESC);
+        oprot.writeBool(struct.time_order_desc);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetDeleted()) {
+        oprot.writeFieldBegin(DELETED_FIELD_DESC);
+        oprot.writeBool(struct.deleted);
+        oprot.writeFieldEnd();
+      }
+      if (struct.isSetCounter()) {
+        oprot.writeFieldBegin(COUNTER_FIELD_DESC);
+        oprot.writeBool(struct.counter);
+        oprot.writeFieldEnd();
       }
       oprot.writeFieldStop();
       oprot.writeStructEnd();
@@ -658,7 +1247,28 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
       if (struct.isSetTtl()) {
         optionals.set(3);
       }
-      oprot.writeBitSet(optionals, 4);
+      if (struct.isSetGeneration()) {
+        optionals.set(4);
+      }
+      if (struct.isSetId()) {
+        optionals.set(5);
+      }
+      if (struct.isSetHas_index()) {
+        optionals.set(6);
+      }
+      if (struct.isSetHas_qualifier_index()) {
+        optionals.set(7);
+      }
+      if (struct.isSetTime_order_desc()) {
+        optionals.set(8);
+      }
+      if (struct.isSetDeleted()) {
+        optionals.set(9);
+      }
+      if (struct.isSetCounter()) {
+        optionals.set(10);
+      }
+      oprot.writeBitSet(optionals, 11);
       if (struct.isSetName()) {
         oprot.writeString(struct.name);
       }
@@ -669,14 +1279,35 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
         oprot.writeI32(struct.max_versions);
       }
       if (struct.isSetTtl()) {
-        oprot.writeString(struct.ttl);
+        oprot.writeI32(struct.ttl);
+      }
+      if (struct.isSetGeneration()) {
+        oprot.writeI64(struct.generation);
+      }
+      if (struct.isSetId()) {
+        oprot.writeI32(struct.id);
+      }
+      if (struct.isSetHas_index()) {
+        oprot.writeBool(struct.has_index);
+      }
+      if (struct.isSetHas_qualifier_index()) {
+        oprot.writeBool(struct.has_qualifier_index);
+      }
+      if (struct.isSetTime_order_desc()) {
+        oprot.writeBool(struct.time_order_desc);
+      }
+      if (struct.isSetDeleted()) {
+        oprot.writeBool(struct.deleted);
+      }
+      if (struct.isSetCounter()) {
+        oprot.writeBool(struct.counter);
       }
     }
 
     @Override
     public void read(org.apache.thrift.protocol.TProtocol prot, ColumnFamily struct) throws org.apache.thrift.TException {
       TTupleProtocol iprot = (TTupleProtocol) prot;
-      BitSet incoming = iprot.readBitSet(4);
+      BitSet incoming = iprot.readBitSet(11);
       if (incoming.get(0)) {
         struct.name = iprot.readString();
         struct.setNameIsSet(true);
@@ -690,8 +1321,36 @@ public class ColumnFamily implements org.apache.thrift.TBase<ColumnFamily, Colum
         struct.setMax_versionsIsSet(true);
       }
       if (incoming.get(3)) {
-        struct.ttl = iprot.readString();
+        struct.ttl = iprot.readI32();
         struct.setTtlIsSet(true);
+      }
+      if (incoming.get(4)) {
+        struct.generation = iprot.readI64();
+        struct.setGenerationIsSet(true);
+      }
+      if (incoming.get(5)) {
+        struct.id = iprot.readI32();
+        struct.setIdIsSet(true);
+      }
+      if (incoming.get(6)) {
+        struct.has_index = iprot.readBool();
+        struct.setHas_indexIsSet(true);
+      }
+      if (incoming.get(7)) {
+        struct.has_qualifier_index = iprot.readBool();
+        struct.setHas_qualifier_indexIsSet(true);
+      }
+      if (incoming.get(8)) {
+        struct.time_order_desc = iprot.readBool();
+        struct.setTime_order_descIsSet(true);
+      }
+      if (incoming.get(9)) {
+        struct.deleted = iprot.readBool();
+        struct.setDeletedIsSet(true);
+      }
+      if (incoming.get(10)) {
+        struct.counter = iprot.readBool();
+        struct.setCounterIsSet(true);
       }
     }
   }

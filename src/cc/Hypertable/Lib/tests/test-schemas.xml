@@ -1,0 +1,506 @@
+<!-- 1 -->
+<Schema generation="3">
+  <AccessGroup name="default">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>LogDir</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>Files</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="6">
+      <Generation>2</Generation>
+      <Name>NextCSID</Name>
+      <MaxVersions>1</MaxVersions>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="7">
+      <Generation>3</Generation>
+      <Name>BlockCount</Name>
+      <MaxVersions>1</MaxVersions>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="location" inMemory="true">
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>StartRow</Name>
+      <Counter>false</Counter>
+      <MaxVersions>5</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>Location</Name>
+      <Counter>false</Counter>
+      <MaxVersions>5</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="logging">
+    <ColumnFamily id="5">
+      <Generation>1</Generation>
+      <Name>Event</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 2 -->
+<Schema generation="1">
+  <AccessGroup name="server">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>server</Name>
+      <Counter>false</Counter>
+      <MaxVersions>336</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="range">
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>range</Name>
+      <Counter>false</Counter>
+      <MaxVersions>24</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>range_start_row</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>range_move</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 3 -->
+<Schema generation="1">
+  <AccessGroup name="default">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>service</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>implemented</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>application</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>program</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="5">
+      <Generation>1</Generation>
+      <Name>usually</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="6">
+      <Generation>1</Generation>
+      <Name>contains</Name>
+      <Counter>false</Counter>
+      <MaxVersions>100</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 4 -->
+<Schema generation="1">
+  <AccessGroup name="default">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>code</Name>
+      <Counter>false</Counter>
+      <ttl>600</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>a</Name>
+      <Counter>false</Counter>
+      <ttl>600</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>request</Name>
+      <Counter>false</Counter>
+      <ttl>600</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 5 -->
+<Schema generation="7">
+  <AccessGroup name="default">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>comes</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>in</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>saying</Name>
+      <Counter>true</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="5">
+      <Generation>2</Generation>
+      <Name>what</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <ttl>2592000</ttl>
+      <deleted>true</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="deletes">
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>services</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <ttl>2592000</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+  <AccessGroup name="actions">
+    <ColumnFamily id="6">
+      <Generation>4</Generation>
+      <Name>wants</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <ttl>2592000</ttl>
+      <deleted>true</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="7">
+      <Generation>7</Generation>
+      <Name>brevity</Name>
+      <Counter>false</Counter>
+      <MaxVersions>1</MaxVersions>
+      <ttl>2592000</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 6 -->
+<Schema generation="1">
+  <AccessGroup name="default">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>a</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+      <Index>true</Index>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 7 -->
+<Schema generation="7">
+  <AccessGroup name="default">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>dispatched</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>server</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+      <Index>true</Index>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>service_invocation</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="4">
+      <Generation>1</Generation>
+      <Name>transaction_code</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="5">
+      <Generation>1</Generation>
+      <Name>time_to_live</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="6">
+      <Generation>1</Generation>
+      <Name>let</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="7">
+      <Generation>1</Generation>
+      <Name>us</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="8">
+      <Generation>1</Generation>
+      <Name>now</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="9">
+      <Generation>1</Generation>
+      <Name>return</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="10">
+      <Generation>1</Generation>
+      <Name>to</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="11">
+      <Generation>1</Generation>
+      <Name>the</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="12">
+      <Generation>1</Generation>
+      <Name>overview</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="13">
+      <Generation>1</Generation>
+      <Name>of</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="14">
+      <Generation>2</Generation>
+      <Name>techniques</Name>
+      <Counter>false</Counter>
+      <deleted>true</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="15">
+      <Generation>4</Generation>
+      <Name>available</Name>
+      <Counter>false</Counter>
+      <deleted>true</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="16">
+      <Generation>7</Generation>
+      <Name>map</Name>
+      <Counter>false</Counter>
+      <ttl>172800</ttl>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 8 -->
+<Schema generation="1">
+  <AccessGroup name="default">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>piece_of_code</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+      <Index>true</Index>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>server_class</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+      <Index>true</Index>
+    </ColumnFamily>
+    <ColumnFamily id="3">
+      <Generation>1</Generation>
+      <Name>pros_and_cons</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 9 -->
+<Schema>
+  <AccessGroup name=default>
+    <ColumnFamily>
+      <Name>content</Name>
+      <MaxVersions>1</MaxVersions>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ttl>604800</ttl>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 10 -->
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>content</Name>
+      <MaxVersions>1</MaxVersions>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ttl>604800</ttl>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 11 -->
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>content</Name>
+      <MaxVersions>1</MaxVersions>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ttl>604800</ttl>
+    </ColumnFamily>
+  </AccessGroup>
+  <ColumnFamily>
+    <Name>bad</Name>
+    <MaxVersions>1</MaxVersions>
+  </ColumnFamily>
+</Schema>
+<!-- 12 -->
+<Schema>
+  <AccessGroup name="default" foo="bar">
+    <ColumnFamily>
+      <Name>content</Name>
+      <MaxVersions>1</MaxVersions>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ttl>604800</ttl>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 13 -->
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>content</Name>
+      <MaxVersions>1</MaxVersions>
+      <BogusElement>1</BogusElement>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ttl>604800</ttl>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 14 -->
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>content</Name>
+      <MaxVersions>abc</MaxVersions>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ttl>604800</ttl>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 15 -->
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>content</Name>
+      <MaxVersions>-1</MaxVersions>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ttl>604800</ttl>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 16 -->
+<Schema>
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>content</Name>
+      <MaxVersions>1</MaxVersions>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ttl>abc</ttl>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 17 -->
+<Schema>
+  <AccessGroup name="default" inMemory="foo">
+    <ColumnFamily>
+      <Name>content</Name>
+      <MaxVersions>1</MaxVersions>
+    </ColumnFamily>
+    <ColumnFamily>
+      <Name>language</Name>
+      <ttl>abc</ttl>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
+<!-- 18 -->
+<Schema group_commit_interval="100">
+  <AccessGroup name="default">
+    <ColumnFamily>
+      <Name>Field</Name>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>

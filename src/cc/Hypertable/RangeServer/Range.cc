@@ -169,17 +169,17 @@ void Range::initialize() {
 
   RangeSpecManaged range_spec;
   m_metalog_entity->get_range_spec(range_spec);
-  foreach_ht(Schema::AccessGroup *sag, m_schema->get_access_groups()) {
+  for (auto ag_spec : m_schema->get_access_groups()) {
     const AccessGroup::Hints *h = 0;
-    std::map<String, const AccessGroup::Hints *>::iterator iter = hints_map.find(sag->name);
+    std::map<String, const AccessGroup::Hints *>::iterator iter = hints_map.find(ag_spec->get_name());
     if (iter != hints_map.end())
       h = iter->second;
-    ag = new AccessGroup(&m_table, m_schema, sag, &range_spec, h);
-    m_access_group_map[sag->name] = ag;
+    ag = new AccessGroup(&m_table, m_schema, ag_spec, &range_spec, h);
+    m_access_group_map[ag_spec->get_name()] = ag;
     m_access_group_vector.push_back(ag);
 
-    foreach_ht(Schema::ColumnFamily *scf, sag->columns)
-      m_column_family_vector[scf->id] = ag;
+    for (auto cf_spec : ag_spec->columns())
+      m_column_family_vector[cf_spec->get_id()] = ag;
   }
 
 }
@@ -398,7 +398,7 @@ void Range::load_cell_stores() {
 void Range::update_schema(SchemaPtr &schema) {
   ScopedLock lock(m_schema_mutex);
 
-  vector<Schema::AccessGroup*> new_access_groups;
+  vector<AccessGroupSpec*> new_access_groups;
   AccessGroup *ag;
   AccessGroupMap::iterator ag_iter;
   size_t max_column_family_id = schema->get_max_column_family_id();
@@ -412,17 +412,17 @@ void Range::update_schema(SchemaPtr &schema) {
     m_column_family_vector.resize(max_column_family_id+1);
 
   // update all existing access groups & create new ones as needed
-  foreach_ht(Schema::AccessGroup *s_ag, schema->get_access_groups()) {
-    if( (ag_iter = m_access_group_map.find(s_ag->name)) !=
+  for (auto ag_spec : schema->get_access_groups()) {
+    if( (ag_iter = m_access_group_map.find(ag_spec->get_name())) !=
         m_access_group_map.end()) {
-      ag_iter->second->update_schema(schema, s_ag);
-      foreach_ht(Schema::ColumnFamily *s_cf, s_ag->columns) {
-        if (s_cf->deleted == false)
-          m_column_family_vector[s_cf->id] = ag_iter->second;
+      ag_iter->second->update_schema(schema, ag_spec);
+      for (auto cf_spec : ag_spec->columns()) {
+        if (!cf_spec->get_deleted())
+          m_column_family_vector[cf_spec->get_id()] = ag_iter->second;
       }
     }
     else {
-      new_access_groups.push_back(s_ag);
+      new_access_groups.push_back(ag_spec);
     }
   }
 
@@ -433,14 +433,13 @@ void Range::update_schema(SchemaPtr &schema) {
     m_metalog_entity->set_table_generation(m_table.generation);
     RangeSpecManaged range_spec;
     m_metalog_entity->get_range_spec(range_spec);
-    foreach_ht(Schema::AccessGroup *s_ag, new_access_groups) {
-      ag = new AccessGroup(&m_table, schema, s_ag, &range_spec, 0);
-      m_access_group_map[s_ag->name] = ag;
+    for (auto ag_spec : new_access_groups) {
+      ag = new AccessGroup(&m_table, schema, ag_spec, &range_spec, 0);
+      m_access_group_map[ag_spec->get_name()] = ag;
       m_access_group_vector.push_back(ag);
-
-      foreach_ht(Schema::ColumnFamily *s_cf, s_ag->columns) {
-        if (s_cf->deleted == false)
-          m_column_family_vector[s_cf->id] = ag;
+      for (auto cf_spec : ag_spec->columns()) {
+        if (!cf_spec->get_deleted())
+          m_column_family_vector[cf_spec->get_id()] = ag;
       }
     }
   }
@@ -1358,9 +1357,9 @@ void Range::split_compact_and_shrink() {
 
       {
         ScopedLock lock(m_schema_mutex);
-        foreach_ht(Schema::AccessGroup *ag, m_schema->get_access_groups()) {
+        for (auto ag_spec : m_schema->get_access_groups()) {
           // notice the below variables are different "range" vs. "table"
-          range_dir = table_dir + "/" + ag->name + "/" + md5DigestStr;
+          range_dir = table_dir + "/" + ag_spec->get_name() + "/" + md5DigestStr;
           Global::dfs->mkdirs(range_dir);
         }
       }

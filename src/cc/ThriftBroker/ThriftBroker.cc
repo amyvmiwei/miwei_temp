@@ -499,6 +499,197 @@ void convert_table_split(const Hypertable::TableSplit &hsplit,
 
 }
 
+bool convert_column_family_options(const Hypertable::ColumnFamilyOptions &hoptions,
+                                   ThriftGen::ColumnFamilyOptions &toptions) {
+  bool ret = false;
+  if (hoptions.is_set_max_versions()) {
+    toptions.__set_max_versions(true);
+    ret = true;
+  }
+  if (hoptions.is_set_ttl()) {
+    toptions.__set_ttl(true);
+    ret = true;
+  }
+  if (hoptions.is_set_time_order_desc()) {
+    toptions.__set_time_order_desc(true);
+    ret = true;
+  }
+  if (hoptions.is_set_counter()) {
+    toptions.__set_counter(true);
+    ret = true;
+  }
+  return ret;
+}
+
+void convert_column_family_options(const ThriftGen::ColumnFamilyOptions &toptions,
+                                   Hypertable::ColumnFamilyOptions &hoptions) {
+  if (toptions.__isset.max_versions)
+    hoptions.set_max_versions(toptions.max_versions);
+  if (toptions.__isset.ttl)
+    hoptions.set_ttl(toptions.ttl);
+  if (toptions.__isset.time_order_desc)
+    hoptions.set_time_order_desc(toptions.time_order_desc);
+  if (toptions.__isset.counter)
+    hoptions.set_counter(toptions.counter);
+}
+
+bool convert_access_group_options(const Hypertable::AccessGroupOptions &hoptions,
+                                  ThriftGen::AccessGroupOptions &toptions) {
+  bool ret = false;
+  if (hoptions.is_set_in_memory()) {
+    toptions.__set_in_memory(true);
+    ret = true;
+  }
+  if (hoptions.is_set_replication()) {
+    toptions.__set_replication(true);
+    ret = true;
+  }
+  if (hoptions.is_set_blocksize()) {
+    toptions.__set_blocksize(true);
+    ret = true;
+  }
+  if (hoptions.is_set_compressor()) {
+    toptions.__set_compressor(hoptions.get_compressor());
+    ret = true;
+  }
+  if (hoptions.is_set_bloom_filter()) {
+    toptions.__set_bloom_filter(hoptions.get_bloom_filter());
+    ret = true;
+  }
+  return ret;
+}
+
+void convert_access_group_options(const ThriftGen::AccessGroupOptions &toptions,
+                                  Hypertable::AccessGroupOptions &hoptions) {
+  if (toptions.__isset.in_memory)
+    hoptions.set_in_memory(toptions.in_memory);
+  if (toptions.__isset.replication)
+    hoptions.set_replication(toptions.replication);
+  if (toptions.__isset.blocksize)
+    hoptions.set_blocksize(toptions.blocksize);
+  if (toptions.__isset.compressor)
+    hoptions.set_compressor(toptions.compressor);
+  if (toptions.__isset.bloom_filter)
+    hoptions.set_bloom_filter(toptions.bloom_filter);
+}
+
+
+void convert_schema(const Hypertable::SchemaPtr &hschema,
+                    ThriftGen::Schema &tschema) {
+
+  if (hschema->get_generation())
+    tschema.__set_generation(hschema->get_generation());
+
+  tschema.__set_version(hschema->get_version());
+  
+  if (hschema->get_group_commit_interval())
+    tschema.__set_group_commit_interval(hschema->get_group_commit_interval());
+
+  for (auto ag_spec : hschema->get_access_groups()) {
+    ThriftGen::AccessGroupSpec tag;
+    tag.name = ag_spec->get_name();
+    tag.__set_generation(ag_spec->get_generation());
+    if (convert_access_group_options(ag_spec->options(), tag.options))
+      tag.__isset.options = true;      
+    if (convert_column_family_options(ag_spec->defaults(), tag.defaults))
+      tag.__isset.defaults = true;
+    tschema.access_groups[ag_spec->get_name()] = tag;
+    tschema.__isset.access_groups = true;
+  }
+
+  for (auto cf_spec : hschema->get_column_families()) {
+    ThriftGen::ColumnFamilySpec tcf;
+    tcf.name = cf_spec->get_name();
+    tcf.access_group = cf_spec->get_access_group();
+    tcf.deleted = cf_spec->get_deleted();
+    if (cf_spec->get_generation())
+      tcf.__set_generation(true);
+    if (cf_spec->get_id())
+      tcf.__set_id(cf_spec->get_id());
+    tcf.value_index = cf_spec->get_value_index();
+    tcf.qualifier_index = cf_spec->get_qualifier_index();
+    if (convert_column_family_options(cf_spec->options(), tcf.options))
+      tcf.__isset.options = true;
+    tschema.column_families[cf_spec->get_name()] = tcf;
+    tschema.__isset.column_families = true;
+  }
+
+  if (convert_access_group_options(hschema->access_group_defaults(),
+                                   tschema.access_group_defaults))
+      tschema.__isset.access_group_defaults = true;
+
+  if (convert_column_family_options(hschema->column_family_defaults(),
+                                    tschema.column_family_defaults))
+      tschema.__isset.column_family_defaults = true;
+
+}
+
+void convert_schema(const ThriftGen::Schema &tschema,
+                    Hypertable::SchemaPtr &hschema) {
+
+  if (tschema.__isset.generation)
+    hschema->set_generation(tschema.generation);
+
+  hschema->set_version(tschema.version);
+  
+  hschema->set_group_commit_interval(tschema.group_commit_interval);
+
+  convert_access_group_options(tschema.access_group_defaults,
+                               hschema->access_group_defaults());
+
+  convert_column_family_options(tschema.column_family_defaults,
+                                hschema->column_family_defaults());
+
+  bool need_default = true;
+  unordered_map<string, Hypertable::AccessGroupSpec *> ag_map;
+  for (auto & entry : tschema.access_groups) {
+    if (entry.second.name == "default")
+      need_default = false;
+    Hypertable::AccessGroupSpec *ag = new Hypertable::AccessGroupSpec(entry.second.name);
+    if (entry.second.__isset.generation)
+      ag->set_generation(entry.second.generation);
+    ag_map[entry.second.name] = ag;
+    Hypertable::AccessGroupOptions ag_options;
+    convert_access_group_options(entry.second.options, ag_options);
+    ag->merge_options(ag_options);
+    Hypertable::ColumnFamilyOptions cf_defaults;
+    convert_column_family_options(entry.second.defaults, cf_defaults);
+    ag->merge_defaults(cf_defaults);
+  }
+  if (need_default)
+    ag_map["default"] = new Hypertable::AccessGroupSpec("default");
+
+  for (auto & entry : tschema.column_families) {
+    Hypertable::ColumnFamilySpec *cf = new Hypertable::ColumnFamilySpec();
+    cf->set_name(entry.second.name);
+    if (entry.second.access_group.empty())
+      cf->set_access_group("default");
+    else
+      cf->set_access_group(entry.second.access_group);
+    cf->set_deleted(entry.second.deleted);
+    if (entry.second.__isset.generation)
+      cf->set_generation(entry.second.generation);
+    if (entry.second.__isset.id)
+      cf->set_id(entry.second.id);
+    cf->set_value_index(entry.second.value_index);
+    cf->set_qualifier_index(entry.second.qualifier_index);
+    Hypertable::ColumnFamilyOptions cf_options;
+    convert_column_family_options(entry.second.options, cf_options);
+    cf->merge_options(cf_options);
+    // Add column family to corresponding schema
+    auto iter = ag_map.find(cf->get_access_group());
+    if (iter == ag_map.end())
+      HT_THROWF(Error::BAD_SCHEMA,
+                "Undefined access group '%s' referenced by column '%s'",
+                cf->get_access_group().c_str(), cf->get_name().c_str());
+    iter->second->add_column(cf);
+  }
+
+  // Add access groups to schema
+  for (auto & entry : ag_map)
+    hschema->add_access_group(entry.second);
+
+}
 
 class ServerHandler;
 
@@ -650,39 +841,31 @@ public:
   }
 
   virtual void table_create(const ThriftGen::Namespace ns, const String &table,
-          const String &schema) {
-    LOG_API_START("namespace=" << ns << " table=" << table << " schema="
-            << schema);
+                            const ThriftGen::Schema &schema) {
+    LOG_API_START("namespace=" << ns << " table=" << table);
 
     try {
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
-      namespace_ptr->create_table(table, schema);
-    } RETHROW("namespace=" << ns << " table="<< table <<" schema="<< schema)
+      Hypertable::SchemaPtr hschema = new Hypertable::Schema();
+      convert_schema(schema, hschema);
+      namespace_ptr->create_table(table, hschema);
+    } RETHROW("namespace=" << ns << " table="<< table)
 
     LOG_API_FINISH;
-  }
-
-  virtual void create_table(const ThriftGen::Namespace ns, const String &table,
-          const String &schema) {
-    table_create(ns, table, schema);
   }
 
   virtual void table_alter(const ThriftGen::Namespace ns, const String &table,
-          const String &schema) {
-    LOG_API_START("namespace=" << ns << " table=" << table << " schema="
-            << schema);
+                           const ThriftGen::Schema &schema) {
+    LOG_API_START("namespace=" << ns << " table=" << table);
 
     try {
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
-      namespace_ptr->alter_table(table, schema);
-    } RETHROW("namespace=" << ns << " table="<< table <<" schema="<< schema)
+      Hypertable::SchemaPtr hschema = new Hypertable::Schema();
+      convert_schema(schema, hschema);
+      namespace_ptr->alter_table(table, hschema);
+    } RETHROW("namespace=" << ns << " table="<< table)
 
     LOG_API_FINISH;
-  }
-
-  virtual void alter_table(const ThriftGen::Namespace ns, const String &table,
-          const String &schema) {
-    table_alter(ns, table, schema);
   }
 
   virtual Scanner scanner_open(const ThriftGen::Namespace ns,
@@ -1718,45 +1901,8 @@ public:
     try {
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       Hypertable::SchemaPtr schema = namespace_ptr->get_schema(table);
-      if (schema) {
-        Hypertable::Schema::AccessGroups ags = schema->get_access_groups();
-        foreach_ht(Hypertable::Schema::AccessGroup *ag, ags) {
-          ThriftGen::AccessGroup t_ag;
-
-          t_ag.name = ag->name;
-          t_ag.in_memory = ag->in_memory;
-          t_ag.blocksize = (int32_t)ag->blocksize;
-          t_ag.compressor = ag->compressor;
-          t_ag.bloom_filter = ag->bloom_filter;
-
-          foreach_ht(Hypertable::Schema::ColumnFamily *cf, ag->columns) {
-            ThriftGen::ColumnFamily t_cf;
-            t_cf.name = cf->name;
-            t_cf.ag = cf->ag;
-            t_cf.max_versions = cf->max_versions;
-            t_cf.ttl = (String) ctime(&(cf->ttl));
-            t_cf.__isset.name = true;
-            t_cf.__isset.ag = true;
-            t_cf.__isset.max_versions = true;
-            t_cf.__isset.ttl = true;
-
-            // store this cf in the access group
-            t_ag.columns.push_back(t_cf);
-            // store this cf in the cf map
-            result.column_families[t_cf.name] = t_cf;
-          }
-          t_ag.__isset.name = true;
-          t_ag.__isset.in_memory = true;
-          t_ag.__isset.blocksize = true;
-          t_ag.__isset.compressor = true;
-          t_ag.__isset.bloom_filter = true;
-          t_ag.__isset.columns = true;
-          // push this access group into the map
-          result.access_groups[t_ag.name] = t_ag;
-        }
-        result.__isset.access_groups = true;
-        result.__isset.column_families = true;
-      }
+      if (schema)
+        convert_schema(schema, result);
     } RETHROW(" namespace=" << ns << " table="<< table)
     LOG_API_FINISH;
   }

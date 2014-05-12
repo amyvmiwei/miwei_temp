@@ -59,20 +59,16 @@ bool OperationSystemUpgrade::update_schema(const String &name, const String &sch
     return false;
 
   m_context->hyperspace->attr_get(handle, "schema", value_buf);
-  old_schema = Schema::new_instance((char *)value_buf.base,
-                                    strlen((char *)value_buf.base));
+  old_schema = Schema::new_instance((const char *)value_buf.base);
 
   String schema_str = FileUtils::file_to_string( System::install_dir + schema_file );
-  new_schema = Schema::new_instance(schema_str.c_str(), schema_str.length());
-  
-  if (new_schema->need_id_assignment())
-    HT_THROW(Error::SCHEMA_PARSE_ERROR, "conf/METADATA.xml missing ID assignment");
+  new_schema = Schema::new_instance(schema_str);
 
   if (old_schema->get_generation() < new_schema->get_generation()) {
     m_context->hyperspace->attr_set(handle, "schema", schema_str.c_str(),
                            schema_str.length());
-    HT_INFOF("Upgraded schema for '%s' from generation %u to %u", name.c_str(),
-             old_schema->get_generation(), new_schema->get_generation());
+    HT_INFOF("Upgraded schema for '%s' from generation %lld to %lld", name.c_str(),
+             (Lld)old_schema->get_generation(), (Lld)new_schema->get_generation());
     return true;
   }
   return false;

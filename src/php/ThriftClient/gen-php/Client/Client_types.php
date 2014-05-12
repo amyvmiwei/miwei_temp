@@ -2313,13 +2313,149 @@ class Hypertable_ThriftGen_TableSplit {
 
 }
 
-class Hypertable_ThriftGen_ColumnFamily {
+class Hypertable_ThriftGen_ColumnFamilyOptions {
+  static $_TSPEC;
+
+  public $max_versions = null;
+  public $ttl = null;
+  public $time_order_desc = null;
+  public $counter = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'max_versions',
+          'type' => TType::I32,
+          ),
+        2 => array(
+          'var' => 'ttl',
+          'type' => TType::I32,
+          ),
+        3 => array(
+          'var' => 'time_order_desc',
+          'type' => TType::BOOL,
+          ),
+        4 => array(
+          'var' => 'counter',
+          'type' => TType::BOOL,
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['max_versions'])) {
+        $this->max_versions = $vals['max_versions'];
+      }
+      if (isset($vals['ttl'])) {
+        $this->ttl = $vals['ttl'];
+      }
+      if (isset($vals['time_order_desc'])) {
+        $this->time_order_desc = $vals['time_order_desc'];
+      }
+      if (isset($vals['counter'])) {
+        $this->counter = $vals['counter'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'ColumnFamilyOptions';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->max_versions);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->ttl);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->time_order_desc);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->counter);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('ColumnFamilyOptions');
+    if ($this->max_versions !== null) {
+      $xfer += $output->writeFieldBegin('max_versions', TType::I32, 1);
+      $xfer += $output->writeI32($this->max_versions);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->ttl !== null) {
+      $xfer += $output->writeFieldBegin('ttl', TType::I32, 2);
+      $xfer += $output->writeI32($this->ttl);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->time_order_desc !== null) {
+      $xfer += $output->writeFieldBegin('time_order_desc', TType::BOOL, 3);
+      $xfer += $output->writeBool($this->time_order_desc);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->counter !== null) {
+      $xfer += $output->writeFieldBegin('counter', TType::BOOL, 4);
+      $xfer += $output->writeBool($this->counter);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_ColumnFamilySpec {
   static $_TSPEC;
 
   public $name = null;
-  public $ag = null;
-  public $max_versions = null;
-  public $ttl = null;
+  public $access_group = null;
+  public $deleted = null;
+  public $generation = null;
+  public $id = null;
+  public $value_index = null;
+  public $qualifier_index = null;
+  public $options = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -2329,16 +2465,33 @@ class Hypertable_ThriftGen_ColumnFamily {
           'type' => TType::STRING,
           ),
         2 => array(
-          'var' => 'ag',
+          'var' => 'access_group',
           'type' => TType::STRING,
           ),
         3 => array(
-          'var' => 'max_versions',
-          'type' => TType::I32,
+          'var' => 'deleted',
+          'type' => TType::BOOL,
           ),
         4 => array(
-          'var' => 'ttl',
-          'type' => TType::STRING,
+          'var' => 'generation',
+          'type' => TType::I64,
+          ),
+        5 => array(
+          'var' => 'id',
+          'type' => TType::I32,
+          ),
+        6 => array(
+          'var' => 'value_index',
+          'type' => TType::BOOL,
+          ),
+        7 => array(
+          'var' => 'qualifier_index',
+          'type' => TType::BOOL,
+          ),
+        8 => array(
+          'var' => 'options',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ColumnFamilyOptions',
           ),
         );
     }
@@ -2346,20 +2499,32 @@ class Hypertable_ThriftGen_ColumnFamily {
       if (isset($vals['name'])) {
         $this->name = $vals['name'];
       }
-      if (isset($vals['ag'])) {
-        $this->ag = $vals['ag'];
+      if (isset($vals['access_group'])) {
+        $this->access_group = $vals['access_group'];
       }
-      if (isset($vals['max_versions'])) {
-        $this->max_versions = $vals['max_versions'];
+      if (isset($vals['deleted'])) {
+        $this->deleted = $vals['deleted'];
       }
-      if (isset($vals['ttl'])) {
-        $this->ttl = $vals['ttl'];
+      if (isset($vals['generation'])) {
+        $this->generation = $vals['generation'];
+      }
+      if (isset($vals['id'])) {
+        $this->id = $vals['id'];
+      }
+      if (isset($vals['value_index'])) {
+        $this->value_index = $vals['value_index'];
+      }
+      if (isset($vals['qualifier_index'])) {
+        $this->qualifier_index = $vals['qualifier_index'];
+      }
+      if (isset($vals['options'])) {
+        $this->options = $vals['options'];
       }
     }
   }
 
   public function getName() {
-    return 'ColumnFamily';
+    return 'ColumnFamilySpec';
   }
 
   public function read($input)
@@ -2386,21 +2551,50 @@ class Hypertable_ThriftGen_ColumnFamily {
           break;
         case 2:
           if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->ag);
+            $xfer += $input->readString($this->access_group);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
         case 3:
-          if ($ftype == TType::I32) {
-            $xfer += $input->readI32($this->max_versions);
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->deleted);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
         case 4:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->ttl);
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->generation);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 5:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->id);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 6:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->value_index);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 7:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->qualifier_index);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 8:
+          if ($ftype == TType::STRUCT) {
+            $this->options = new Hypertable_ThriftGen_ColumnFamilyOptions();
+            $xfer += $this->options->read($input);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -2417,25 +2611,48 @@ class Hypertable_ThriftGen_ColumnFamily {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('ColumnFamily');
+    $xfer += $output->writeStructBegin('ColumnFamilySpec');
     if ($this->name !== null) {
       $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
       $xfer += $output->writeString($this->name);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->ag !== null) {
-      $xfer += $output->writeFieldBegin('ag', TType::STRING, 2);
-      $xfer += $output->writeString($this->ag);
+    if ($this->access_group !== null) {
+      $xfer += $output->writeFieldBegin('access_group', TType::STRING, 2);
+      $xfer += $output->writeString($this->access_group);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->max_versions !== null) {
-      $xfer += $output->writeFieldBegin('max_versions', TType::I32, 3);
-      $xfer += $output->writeI32($this->max_versions);
+    if ($this->deleted !== null) {
+      $xfer += $output->writeFieldBegin('deleted', TType::BOOL, 3);
+      $xfer += $output->writeBool($this->deleted);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->ttl !== null) {
-      $xfer += $output->writeFieldBegin('ttl', TType::STRING, 4);
-      $xfer += $output->writeString($this->ttl);
+    if ($this->generation !== null) {
+      $xfer += $output->writeFieldBegin('generation', TType::I64, 4);
+      $xfer += $output->writeI64($this->generation);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->id !== null) {
+      $xfer += $output->writeFieldBegin('id', TType::I32, 5);
+      $xfer += $output->writeI32($this->id);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->value_index !== null) {
+      $xfer += $output->writeFieldBegin('value_index', TType::BOOL, 6);
+      $xfer += $output->writeBool($this->value_index);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->qualifier_index !== null) {
+      $xfer += $output->writeFieldBegin('qualifier_index', TType::BOOL, 7);
+      $xfer += $output->writeBool($this->qualifier_index);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->options !== null) {
+      if (!is_object($this->options)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('options', TType::STRUCT, 8);
+      $xfer += $this->options->write($output);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -2445,62 +2662,41 @@ class Hypertable_ThriftGen_ColumnFamily {
 
 }
 
-class Hypertable_ThriftGen_AccessGroup {
+class Hypertable_ThriftGen_AccessGroupOptions {
   static $_TSPEC;
 
-  public $name = null;
-  public $in_memory = null;
   public $replication = null;
   public $blocksize = null;
   public $compressor = null;
   public $bloom_filter = null;
-  public $columns = null;
+  public $in_memory = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
       self::$_TSPEC = array(
         1 => array(
-          'var' => 'name',
-          'type' => TType::STRING,
-          ),
-        2 => array(
-          'var' => 'in_memory',
-          'type' => TType::BOOL,
-          ),
-        3 => array(
           'var' => 'replication',
           'type' => TType::I16,
           ),
-        4 => array(
+        2 => array(
           'var' => 'blocksize',
           'type' => TType::I32,
           ),
-        5 => array(
+        3 => array(
           'var' => 'compressor',
           'type' => TType::STRING,
           ),
-        6 => array(
+        4 => array(
           'var' => 'bloom_filter',
           'type' => TType::STRING,
           ),
-        7 => array(
-          'var' => 'columns',
-          'type' => TType::LST,
-          'etype' => TType::STRUCT,
-          'elem' => array(
-            'type' => TType::STRUCT,
-            'class' => 'Hypertable_ThriftGen_ColumnFamily',
-            ),
+        5 => array(
+          'var' => 'in_memory',
+          'type' => TType::BOOL,
           ),
         );
     }
     if (is_array($vals)) {
-      if (isset($vals['name'])) {
-        $this->name = $vals['name'];
-      }
-      if (isset($vals['in_memory'])) {
-        $this->in_memory = $vals['in_memory'];
-      }
       if (isset($vals['replication'])) {
         $this->replication = $vals['replication'];
       }
@@ -2513,14 +2709,160 @@ class Hypertable_ThriftGen_AccessGroup {
       if (isset($vals['bloom_filter'])) {
         $this->bloom_filter = $vals['bloom_filter'];
       }
-      if (isset($vals['columns'])) {
-        $this->columns = $vals['columns'];
+      if (isset($vals['in_memory'])) {
+        $this->in_memory = $vals['in_memory'];
       }
     }
   }
 
   public function getName() {
-    return 'AccessGroup';
+    return 'AccessGroupOptions';
+  }
+
+  public function read($input)
+  {
+    $xfer = 0;
+    $fname = null;
+    $ftype = 0;
+    $fid = 0;
+    $xfer += $input->readStructBegin($fname);
+    while (true)
+    {
+      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
+      if ($ftype == TType::STOP) {
+        break;
+      }
+      switch ($fid)
+      {
+        case 1:
+          if ($ftype == TType::I16) {
+            $xfer += $input->readI16($this->replication);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 2:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->blocksize);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->compressor);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->bloom_filter);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 5:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->in_memory);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        default:
+          $xfer += $input->skip($ftype);
+          break;
+      }
+      $xfer += $input->readFieldEnd();
+    }
+    $xfer += $input->readStructEnd();
+    return $xfer;
+  }
+
+  public function write($output) {
+    $xfer = 0;
+    $xfer += $output->writeStructBegin('AccessGroupOptions');
+    if ($this->replication !== null) {
+      $xfer += $output->writeFieldBegin('replication', TType::I16, 1);
+      $xfer += $output->writeI16($this->replication);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->blocksize !== null) {
+      $xfer += $output->writeFieldBegin('blocksize', TType::I32, 2);
+      $xfer += $output->writeI32($this->blocksize);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->compressor !== null) {
+      $xfer += $output->writeFieldBegin('compressor', TType::STRING, 3);
+      $xfer += $output->writeString($this->compressor);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->bloom_filter !== null) {
+      $xfer += $output->writeFieldBegin('bloom_filter', TType::STRING, 4);
+      $xfer += $output->writeString($this->bloom_filter);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->in_memory !== null) {
+      $xfer += $output->writeFieldBegin('in_memory', TType::BOOL, 5);
+      $xfer += $output->writeBool($this->in_memory);
+      $xfer += $output->writeFieldEnd();
+    }
+    $xfer += $output->writeFieldStop();
+    $xfer += $output->writeStructEnd();
+    return $xfer;
+  }
+
+}
+
+class Hypertable_ThriftGen_AccessGroupSpec {
+  static $_TSPEC;
+
+  public $name = null;
+  public $generation = null;
+  public $options = null;
+  public $defaults = null;
+
+  public function __construct($vals=null) {
+    if (!isset(self::$_TSPEC)) {
+      self::$_TSPEC = array(
+        1 => array(
+          'var' => 'name',
+          'type' => TType::STRING,
+          ),
+        2 => array(
+          'var' => 'generation',
+          'type' => TType::I64,
+          ),
+        3 => array(
+          'var' => 'options',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_AccessGroupOptions',
+          ),
+        4 => array(
+          'var' => 'defaults',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ColumnFamilyOptions',
+          ),
+        );
+    }
+    if (is_array($vals)) {
+      if (isset($vals['name'])) {
+        $this->name = $vals['name'];
+      }
+      if (isset($vals['generation'])) {
+        $this->generation = $vals['generation'];
+      }
+      if (isset($vals['options'])) {
+        $this->options = $vals['options'];
+      }
+      if (isset($vals['defaults'])) {
+        $this->defaults = $vals['defaults'];
+      }
+    }
+  }
+
+  public function getName() {
+    return 'AccessGroupSpec';
   }
 
   public function read($input)
@@ -2546,54 +2888,24 @@ class Hypertable_ThriftGen_AccessGroup {
           }
           break;
         case 2:
-          if ($ftype == TType::BOOL) {
-            $xfer += $input->readBool($this->in_memory);
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->generation);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
         case 3:
-          if ($ftype == TType::I16) {
-            $xfer += $input->readI16($this->replication);
+          if ($ftype == TType::STRUCT) {
+            $this->options = new Hypertable_ThriftGen_AccessGroupOptions();
+            $xfer += $this->options->read($input);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
         case 4:
-          if ($ftype == TType::I32) {
-            $xfer += $input->readI32($this->blocksize);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 5:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->compressor);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 6:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->bloom_filter);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 7:
-          if ($ftype == TType::LST) {
-            $this->columns = array();
-            $_size49 = 0;
-            $_etype52 = 0;
-            $xfer += $input->readListBegin($_etype52, $_size49);
-            for ($_i53 = 0; $_i53 < $_size49; ++$_i53)
-            {
-              $elem54 = null;
-              $elem54 = new Hypertable_ThriftGen_ColumnFamily();
-              $xfer += $elem54->read($input);
-              $this->columns []= $elem54;
-            }
-            $xfer += $input->readListEnd();
+          if ($ftype == TType::STRUCT) {
+            $this->defaults = new Hypertable_ThriftGen_ColumnFamilyOptions();
+            $xfer += $this->defaults->read($input);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -2610,52 +2922,31 @@ class Hypertable_ThriftGen_AccessGroup {
 
   public function write($output) {
     $xfer = 0;
-    $xfer += $output->writeStructBegin('AccessGroup');
+    $xfer += $output->writeStructBegin('AccessGroupSpec');
     if ($this->name !== null) {
       $xfer += $output->writeFieldBegin('name', TType::STRING, 1);
       $xfer += $output->writeString($this->name);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->in_memory !== null) {
-      $xfer += $output->writeFieldBegin('in_memory', TType::BOOL, 2);
-      $xfer += $output->writeBool($this->in_memory);
+    if ($this->generation !== null) {
+      $xfer += $output->writeFieldBegin('generation', TType::I64, 2);
+      $xfer += $output->writeI64($this->generation);
       $xfer += $output->writeFieldEnd();
     }
-    if ($this->replication !== null) {
-      $xfer += $output->writeFieldBegin('replication', TType::I16, 3);
-      $xfer += $output->writeI16($this->replication);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->blocksize !== null) {
-      $xfer += $output->writeFieldBegin('blocksize', TType::I32, 4);
-      $xfer += $output->writeI32($this->blocksize);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->compressor !== null) {
-      $xfer += $output->writeFieldBegin('compressor', TType::STRING, 5);
-      $xfer += $output->writeString($this->compressor);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->bloom_filter !== null) {
-      $xfer += $output->writeFieldBegin('bloom_filter', TType::STRING, 6);
-      $xfer += $output->writeString($this->bloom_filter);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->columns !== null) {
-      if (!is_array($this->columns)) {
+    if ($this->options !== null) {
+      if (!is_object($this->options)) {
         throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
       }
-      $xfer += $output->writeFieldBegin('columns', TType::LST, 7);
-      {
-        $output->writeListBegin(TType::STRUCT, count($this->columns));
-        {
-          foreach ($this->columns as $iter55)
-          {
-            $xfer += $iter55->write($output);
-          }
-        }
-        $output->writeListEnd();
+      $xfer += $output->writeFieldBegin('options', TType::STRUCT, 3);
+      $xfer += $this->options->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->defaults !== null) {
+      if (!is_object($this->defaults)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
       }
+      $xfer += $output->writeFieldBegin('defaults', TType::STRUCT, 4);
+      $xfer += $this->defaults->write($output);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -2670,6 +2961,11 @@ class Hypertable_ThriftGen_Schema {
 
   public $access_groups = null;
   public $column_families = null;
+  public $generation = null;
+  public $version = null;
+  public $group_commit_interval = null;
+  public $access_group_defaults = null;
+  public $column_family_defaults = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -2684,7 +2980,7 @@ class Hypertable_ThriftGen_Schema {
           ),
           'val' => array(
             'type' => TType::STRUCT,
-            'class' => 'Hypertable_ThriftGen_AccessGroup',
+            'class' => 'Hypertable_ThriftGen_AccessGroupSpec',
             ),
           ),
         2 => array(
@@ -2697,8 +2993,30 @@ class Hypertable_ThriftGen_Schema {
           ),
           'val' => array(
             'type' => TType::STRUCT,
-            'class' => 'Hypertable_ThriftGen_ColumnFamily',
+            'class' => 'Hypertable_ThriftGen_ColumnFamilySpec',
             ),
+          ),
+        3 => array(
+          'var' => 'generation',
+          'type' => TType::I64,
+          ),
+        4 => array(
+          'var' => 'version',
+          'type' => TType::I32,
+          ),
+        5 => array(
+          'var' => 'group_commit_interval',
+          'type' => TType::I32,
+          ),
+        6 => array(
+          'var' => 'access_group_defaults',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_AccessGroupOptions',
+          ),
+        7 => array(
+          'var' => 'column_family_defaults',
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_ColumnFamilyOptions',
           ),
         );
     }
@@ -2708,6 +3026,21 @@ class Hypertable_ThriftGen_Schema {
       }
       if (isset($vals['column_families'])) {
         $this->column_families = $vals['column_families'];
+      }
+      if (isset($vals['generation'])) {
+        $this->generation = $vals['generation'];
+      }
+      if (isset($vals['version'])) {
+        $this->version = $vals['version'];
+      }
+      if (isset($vals['group_commit_interval'])) {
+        $this->group_commit_interval = $vals['group_commit_interval'];
+      }
+      if (isset($vals['access_group_defaults'])) {
+        $this->access_group_defaults = $vals['access_group_defaults'];
+      }
+      if (isset($vals['column_family_defaults'])) {
+        $this->column_family_defaults = $vals['column_family_defaults'];
       }
     }
   }
@@ -2734,18 +3067,18 @@ class Hypertable_ThriftGen_Schema {
         case 1:
           if ($ftype == TType::MAP) {
             $this->access_groups = array();
-            $_size56 = 0;
-            $_ktype57 = 0;
-            $_vtype58 = 0;
-            $xfer += $input->readMapBegin($_ktype57, $_vtype58, $_size56);
-            for ($_i60 = 0; $_i60 < $_size56; ++$_i60)
+            $_size49 = 0;
+            $_ktype50 = 0;
+            $_vtype51 = 0;
+            $xfer += $input->readMapBegin($_ktype50, $_vtype51, $_size49);
+            for ($_i53 = 0; $_i53 < $_size49; ++$_i53)
             {
-              $key61 = '';
-              $val62 = new Hypertable_ThriftGen_AccessGroup();
-              $xfer += $input->readString($key61);
-              $val62 = new Hypertable_ThriftGen_AccessGroup();
-              $xfer += $val62->read($input);
-              $this->access_groups[$key61] = $val62;
+              $key54 = '';
+              $val55 = new Hypertable_ThriftGen_AccessGroupSpec();
+              $xfer += $input->readString($key54);
+              $val55 = new Hypertable_ThriftGen_AccessGroupSpec();
+              $xfer += $val55->read($input);
+              $this->access_groups[$key54] = $val55;
             }
             $xfer += $input->readMapEnd();
           } else {
@@ -2755,20 +3088,57 @@ class Hypertable_ThriftGen_Schema {
         case 2:
           if ($ftype == TType::MAP) {
             $this->column_families = array();
-            $_size63 = 0;
-            $_ktype64 = 0;
-            $_vtype65 = 0;
-            $xfer += $input->readMapBegin($_ktype64, $_vtype65, $_size63);
-            for ($_i67 = 0; $_i67 < $_size63; ++$_i67)
+            $_size56 = 0;
+            $_ktype57 = 0;
+            $_vtype58 = 0;
+            $xfer += $input->readMapBegin($_ktype57, $_vtype58, $_size56);
+            for ($_i60 = 0; $_i60 < $_size56; ++$_i60)
             {
-              $key68 = '';
-              $val69 = new Hypertable_ThriftGen_ColumnFamily();
-              $xfer += $input->readString($key68);
-              $val69 = new Hypertable_ThriftGen_ColumnFamily();
-              $xfer += $val69->read($input);
-              $this->column_families[$key68] = $val69;
+              $key61 = '';
+              $val62 = new Hypertable_ThriftGen_ColumnFamilySpec();
+              $xfer += $input->readString($key61);
+              $val62 = new Hypertable_ThriftGen_ColumnFamilySpec();
+              $xfer += $val62->read($input);
+              $this->column_families[$key61] = $val62;
             }
             $xfer += $input->readMapEnd();
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
+          if ($ftype == TType::I64) {
+            $xfer += $input->readI64($this->generation);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 4:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->version);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 5:
+          if ($ftype == TType::I32) {
+            $xfer += $input->readI32($this->group_commit_interval);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 6:
+          if ($ftype == TType::STRUCT) {
+            $this->access_group_defaults = new Hypertable_ThriftGen_AccessGroupOptions();
+            $xfer += $this->access_group_defaults->read($input);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 7:
+          if ($ftype == TType::STRUCT) {
+            $this->column_family_defaults = new Hypertable_ThriftGen_ColumnFamilyOptions();
+            $xfer += $this->column_family_defaults->read($input);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -2794,10 +3164,10 @@ class Hypertable_ThriftGen_Schema {
       {
         $output->writeMapBegin(TType::STRING, TType::STRUCT, count($this->access_groups));
         {
-          foreach ($this->access_groups as $kiter70 => $viter71)
+          foreach ($this->access_groups as $kiter63 => $viter64)
           {
-            $xfer += $output->writeString($kiter70);
-            $xfer += $viter71->write($output);
+            $xfer += $output->writeString($kiter63);
+            $xfer += $viter64->write($output);
           }
         }
         $output->writeMapEnd();
@@ -2812,14 +3182,45 @@ class Hypertable_ThriftGen_Schema {
       {
         $output->writeMapBegin(TType::STRING, TType::STRUCT, count($this->column_families));
         {
-          foreach ($this->column_families as $kiter72 => $viter73)
+          foreach ($this->column_families as $kiter65 => $viter66)
           {
-            $xfer += $output->writeString($kiter72);
-            $xfer += $viter73->write($output);
+            $xfer += $output->writeString($kiter65);
+            $xfer += $viter66->write($output);
           }
         }
         $output->writeMapEnd();
       }
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->generation !== null) {
+      $xfer += $output->writeFieldBegin('generation', TType::I64, 3);
+      $xfer += $output->writeI64($this->generation);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->version !== null) {
+      $xfer += $output->writeFieldBegin('version', TType::I32, 4);
+      $xfer += $output->writeI32($this->version);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->group_commit_interval !== null) {
+      $xfer += $output->writeFieldBegin('group_commit_interval', TType::I32, 5);
+      $xfer += $output->writeI32($this->group_commit_interval);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->access_group_defaults !== null) {
+      if (!is_object($this->access_group_defaults)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('access_group_defaults', TType::STRUCT, 6);
+      $xfer += $this->access_group_defaults->write($output);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->column_family_defaults !== null) {
+      if (!is_object($this->column_family_defaults)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('column_family_defaults', TType::STRUCT, 7);
+      $xfer += $this->column_family_defaults->write($output);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

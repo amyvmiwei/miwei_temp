@@ -1,0 +1,92 @@
+HQL: 
+<Options>
+</Options>
+HQL:  REPLICATION 3
+<Options>
+<Replication>3</Replication>
+</Options>
+HQL:  REPLICATION 3 BLOCKSIZE 67108864
+<Options>
+<Replication>3</Replication>
+<BlockSize>67108864</BlockSize>
+</Options>
+HQL:  REPLICATION 3 BLOCKSIZE 67108864 COMPRESSOR "zlib --best"
+<Options>
+<Replication>3</Replication>
+<BlockSize>67108864</BlockSize>
+<Compressor>zlib --best</Compressor>
+</Options>
+HQL:  REPLICATION 3 BLOCKSIZE 67108864 COMPRESSOR "zlib --best" BLOOMFILTER "rows+cols --false-positive 0.02 --bits-per-item 9 --num-hashes 7 --max-approx-items 900"
+<Options>
+<Replication>3</Replication>
+<BlockSize>67108864</BlockSize>
+<Compressor>zlib --best</Compressor>
+<BloomFilter>rows+cols --false-positive 0.02 --bits-per-item 9 --num-hashes 7 --max-approx-items 900</BloomFilter>
+</Options>
+HQL:  REPLICATION 3 BLOCKSIZE 67108864 COMPRESSOR "zlib --best" BLOOMFILTER "rows+cols --false-positive 0.02 --bits-per-item 9 --num-hashes 7 --max-approx-items 900" IN_MEMORY true
+<Options>
+<Replication>3</Replication>
+<BlockSize>67108864</BlockSize>
+<Compressor>zlib --best</Compressor>
+<BloomFilter>rows+cols --false-positive 0.02 --bits-per-item 9 --num-hashes 7 --max-approx-items 900</BloomFilter>
+<InMemory>true</InMemory>
+</Options>
+HQL:  REPLICATION 3 IN_MEMORY true
+<Options>
+<Replication>3</Replication>
+<InMemory>true</InMemory>
+</Options>
+HYPERTABLE incompatible options: COUNTER and MAX VERSIONS are incompatible
+HQL:   ACCESS GROUP default (foo, baz) REPLICATION 3 BLOCKSIZE 67108864 COMPRESSOR "bmz --fp-len 20 --offset 5" BLOOMFILTER "none" IN_MEMORY true MAX_VERSIONS 3 TTL 86400 TIME_ORDER desc
+<AccessGroup name="default">
+  <Generation>2999</Generation>
+  <Options>
+    <Replication>3</Replication>
+    <BlockSize>67108864</BlockSize>
+    <Compressor>bmz --fp-len 20 --offset 5</Compressor>
+    <BloomFilter>none</BloomFilter>
+    <InMemory>true</InMemory>
+  </Options>
+  <ColumnFamilyDefaults>
+    <MaxVersions>3</MaxVersions>
+    <TTL>86400</TTL>
+    <TimeOrder>desc</TimeOrder>
+  </ColumnFamilyDefaults>
+  <ColumnFamily id="42">
+    <Generation>123</Generation>
+    <Name>foo</Name>
+    <AccessGroup>default</AccessGroup>
+    <Deleted>false</Deleted>
+    <Index>true</Index>
+    <QualifierIndex>true</QualifierIndex>
+    <Options>
+      <MaxVersions>1</MaxVersions>
+      <TTL>86400</TTL>
+      <TimeOrder>desc</TimeOrder>
+    </Options>
+  </ColumnFamily>
+  <ColumnFamily id="43">
+    <Generation>234</Generation>
+    <Name>bar</Name>
+    <AccessGroup>default</AccessGroup>
+    <Deleted>true</Deleted>
+    <QualifierIndex>true</QualifierIndex>
+    <Options>
+      <MaxVersions>3</MaxVersions>
+      <TTL>86400</TTL>
+      <TimeOrder>desc</TimeOrder>
+    </Options>
+  </ColumnFamily>
+  <ColumnFamily id="44">
+    <Generation>345</Generation>
+    <Name>baz</Name>
+    <AccessGroup>default</AccessGroup>
+    <Deleted>false</Deleted>
+    <Options>
+      <MaxVersions>3</MaxVersions>
+      <TTL>86400</TTL>
+      <TimeOrder>desc</TimeOrder>
+      <Counter>false</Counter>
+    </Options>
+  </ColumnFamily>
+</AccessGroup>

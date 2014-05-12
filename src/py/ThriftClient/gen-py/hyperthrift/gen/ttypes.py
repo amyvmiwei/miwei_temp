@@ -1907,43 +1907,28 @@ class TableSplit(object):
   def __ne__(self, other):
     return not (self == other)
 
-class ColumnFamily(object):
+class ColumnFamilyOptions(object):
   """
-  Describes a ColumnFamily
-  <dl>
-    <dt>name</dt>
-    <dd>Name of the column family</dd>
-
-    <dt>ag</dt>
-    <dd>Name of the access group for this CF</dd>
-
-    <dt>max_versions</dt>
-    <dd>Max versions of the same cell to be stored</dd>
-
-    <dt>ttl</dt>
-    <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
-  </dl>
-
   Attributes:
-   - name
-   - ag
    - max_versions
    - ttl
+   - time_order_desc
+   - counter
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.STRING, 'ag', None, None, ), # 2
-    (3, TType.I32, 'max_versions', None, None, ), # 3
-    (4, TType.STRING, 'ttl', None, None, ), # 4
+    (1, TType.I32, 'max_versions', None, None, ), # 1
+    (2, TType.I32, 'ttl', None, None, ), # 2
+    (3, TType.BOOL, 'time_order_desc', None, None, ), # 3
+    (4, TType.BOOL, 'counter', None, None, ), # 4
   )
 
-  def __init__(self, name=None, ag=None, max_versions=None, ttl=None,):
-    self.name = name
-    self.ag = ag
+  def __init__(self, max_versions=None, ttl=None, time_order_desc=None, counter=None,):
     self.max_versions = max_versions
     self.ttl = ttl
+    self.time_order_desc = time_order_desc
+    self.counter = counter
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -1955,23 +1940,23 @@ class ColumnFamily(object):
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.STRING:
-          self.name = iprot.readString();
-        else:
-          iprot.skip(ftype)
-      elif fid == 2:
-        if ftype == TType.STRING:
-          self.ag = iprot.readString();
-        else:
-          iprot.skip(ftype)
-      elif fid == 3:
         if ftype == TType.I32:
           self.max_versions = iprot.readI32();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.ttl = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.BOOL:
+          self.time_order_desc = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       elif fid == 4:
-        if ftype == TType.STRING:
-          self.ttl = iprot.readString();
+        if ftype == TType.BOOL:
+          self.counter = iprot.readBool();
         else:
           iprot.skip(ftype)
       else:
@@ -1983,22 +1968,22 @@ class ColumnFamily(object):
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('ColumnFamily')
-    if self.name is not None:
-      oprot.writeFieldBegin('name', TType.STRING, 1)
-      oprot.writeString(self.name)
-      oprot.writeFieldEnd()
-    if self.ag is not None:
-      oprot.writeFieldBegin('ag', TType.STRING, 2)
-      oprot.writeString(self.ag)
-      oprot.writeFieldEnd()
+    oprot.writeStructBegin('ColumnFamilyOptions')
     if self.max_versions is not None:
-      oprot.writeFieldBegin('max_versions', TType.I32, 3)
+      oprot.writeFieldBegin('max_versions', TType.I32, 1)
       oprot.writeI32(self.max_versions)
       oprot.writeFieldEnd()
     if self.ttl is not None:
-      oprot.writeFieldBegin('ttl', TType.STRING, 4)
-      oprot.writeString(self.ttl)
+      oprot.writeFieldBegin('ttl', TType.I32, 2)
+      oprot.writeI32(self.ttl)
+      oprot.writeFieldEnd()
+    if self.time_order_desc is not None:
+      oprot.writeFieldBegin('time_order_desc', TType.BOOL, 3)
+      oprot.writeBool(self.time_order_desc)
+      oprot.writeFieldEnd()
+    if self.counter is not None:
+      oprot.writeFieldBegin('counter', TType.BOOL, 4)
+      oprot.writeBool(self.counter)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -2018,7 +2003,275 @@ class ColumnFamily(object):
   def __ne__(self, other):
     return not (self == other)
 
-class AccessGroup(object):
+class ColumnFamilySpec(object):
+  """
+  Describes a ColumnFamily
+  <dl>
+    <dt>name</dt>
+    <dd>Name of the column family</dd>
+
+    <dt>ag</dt>
+    <dd>Name of the access group for this CF</dd>
+
+    <dt>max_versions</dt>
+    <dd>Max versions of the same cell to be stored</dd>
+
+    <dt>ttl</dt>
+    <dd>Time to live for cells in the CF (ie delete cells older than this time)</dd>
+  </dl>
+
+  Attributes:
+   - name
+   - access_group
+   - deleted
+   - generation
+   - id
+   - value_index
+   - qualifier_index
+   - options
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.STRING, 'name', None, None, ), # 1
+    (2, TType.STRING, 'access_group', None, None, ), # 2
+    (3, TType.BOOL, 'deleted', None, None, ), # 3
+    (4, TType.I64, 'generation', None, None, ), # 4
+    (5, TType.I32, 'id', None, None, ), # 5
+    (6, TType.BOOL, 'value_index', None, None, ), # 6
+    (7, TType.BOOL, 'qualifier_index', None, None, ), # 7
+    (8, TType.STRUCT, 'options', (ColumnFamilyOptions, ColumnFamilyOptions.thrift_spec), None, ), # 8
+  )
+
+  def __init__(self, name=None, access_group=None, deleted=None, generation=None, id=None, value_index=None, qualifier_index=None, options=None,):
+    self.name = name
+    self.access_group = access_group
+    self.deleted = deleted
+    self.generation = generation
+    self.id = id
+    self.value_index = value_index
+    self.qualifier_index = qualifier_index
+    self.options = options
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.STRING:
+          self.name = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.STRING:
+          self.access_group = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.BOOL:
+          self.deleted = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.I64:
+          self.generation = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.I32:
+          self.id = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.BOOL:
+          self.value_index = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.BOOL:
+          self.qualifier_index = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      elif fid == 8:
+        if ftype == TType.STRUCT:
+          self.options = ColumnFamilyOptions()
+          self.options.read(iprot)
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('ColumnFamilySpec')
+    if self.name is not None:
+      oprot.writeFieldBegin('name', TType.STRING, 1)
+      oprot.writeString(self.name)
+      oprot.writeFieldEnd()
+    if self.access_group is not None:
+      oprot.writeFieldBegin('access_group', TType.STRING, 2)
+      oprot.writeString(self.access_group)
+      oprot.writeFieldEnd()
+    if self.deleted is not None:
+      oprot.writeFieldBegin('deleted', TType.BOOL, 3)
+      oprot.writeBool(self.deleted)
+      oprot.writeFieldEnd()
+    if self.generation is not None:
+      oprot.writeFieldBegin('generation', TType.I64, 4)
+      oprot.writeI64(self.generation)
+      oprot.writeFieldEnd()
+    if self.id is not None:
+      oprot.writeFieldBegin('id', TType.I32, 5)
+      oprot.writeI32(self.id)
+      oprot.writeFieldEnd()
+    if self.value_index is not None:
+      oprot.writeFieldBegin('value_index', TType.BOOL, 6)
+      oprot.writeBool(self.value_index)
+      oprot.writeFieldEnd()
+    if self.qualifier_index is not None:
+      oprot.writeFieldBegin('qualifier_index', TType.BOOL, 7)
+      oprot.writeBool(self.qualifier_index)
+      oprot.writeFieldEnd()
+    if self.options is not None:
+      oprot.writeFieldBegin('options', TType.STRUCT, 8)
+      self.options.write(oprot)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class AccessGroupOptions(object):
+  """
+  Attributes:
+   - replication
+   - blocksize
+   - compressor
+   - bloom_filter
+   - in_memory
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I16, 'replication', None, None, ), # 1
+    (2, TType.I32, 'blocksize', None, None, ), # 2
+    (3, TType.STRING, 'compressor', None, None, ), # 3
+    (4, TType.STRING, 'bloom_filter', None, None, ), # 4
+    (5, TType.BOOL, 'in_memory', None, None, ), # 5
+  )
+
+  def __init__(self, replication=None, blocksize=None, compressor=None, bloom_filter=None, in_memory=None,):
+    self.replication = replication
+    self.blocksize = blocksize
+    self.compressor = compressor
+    self.bloom_filter = bloom_filter
+    self.in_memory = in_memory
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I16:
+          self.replication = iprot.readI16();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.blocksize = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRING:
+          self.compressor = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRING:
+          self.bloom_filter = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.BOOL:
+          self.in_memory = iprot.readBool();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('AccessGroupOptions')
+    if self.replication is not None:
+      oprot.writeFieldBegin('replication', TType.I16, 1)
+      oprot.writeI16(self.replication)
+      oprot.writeFieldEnd()
+    if self.blocksize is not None:
+      oprot.writeFieldBegin('blocksize', TType.I32, 2)
+      oprot.writeI32(self.blocksize)
+      oprot.writeFieldEnd()
+    if self.compressor is not None:
+      oprot.writeFieldBegin('compressor', TType.STRING, 3)
+      oprot.writeString(self.compressor)
+      oprot.writeFieldEnd()
+    if self.bloom_filter is not None:
+      oprot.writeFieldBegin('bloom_filter', TType.STRING, 4)
+      oprot.writeString(self.bloom_filter)
+      oprot.writeFieldEnd()
+    if self.in_memory is not None:
+      oprot.writeFieldBegin('in_memory', TType.BOOL, 5)
+      oprot.writeBool(self.in_memory)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class AccessGroupSpec(object):
   """
   Describes an AccessGroup
   <dl>
@@ -2046,33 +2299,24 @@ class AccessGroup(object):
 
   Attributes:
    - name
-   - in_memory
-   - replication
-   - blocksize
-   - compressor
-   - bloom_filter
-   - columns
+   - generation
+   - options
+   - defaults
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'name', None, None, ), # 1
-    (2, TType.BOOL, 'in_memory', None, None, ), # 2
-    (3, TType.I16, 'replication', None, None, ), # 3
-    (4, TType.I32, 'blocksize', None, None, ), # 4
-    (5, TType.STRING, 'compressor', None, None, ), # 5
-    (6, TType.STRING, 'bloom_filter', None, None, ), # 6
-    (7, TType.LIST, 'columns', (TType.STRUCT,(ColumnFamily, ColumnFamily.thrift_spec)), None, ), # 7
+    (2, TType.I64, 'generation', None, None, ), # 2
+    (3, TType.STRUCT, 'options', (AccessGroupOptions, AccessGroupOptions.thrift_spec), None, ), # 3
+    (4, TType.STRUCT, 'defaults', (ColumnFamilyOptions, ColumnFamilyOptions.thrift_spec), None, ), # 4
   )
 
-  def __init__(self, name=None, in_memory=None, replication=None, blocksize=None, compressor=None, bloom_filter=None, columns=None,):
+  def __init__(self, name=None, generation=None, options=None, defaults=None,):
     self.name = name
-    self.in_memory = in_memory
-    self.replication = replication
-    self.blocksize = blocksize
-    self.compressor = compressor
-    self.bloom_filter = bloom_filter
-    self.columns = columns
+    self.generation = generation
+    self.options = options
+    self.defaults = defaults
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -2089,39 +2333,20 @@ class AccessGroup(object):
         else:
           iprot.skip(ftype)
       elif fid == 2:
-        if ftype == TType.BOOL:
-          self.in_memory = iprot.readBool();
+        if ftype == TType.I64:
+          self.generation = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 3:
-        if ftype == TType.I16:
-          self.replication = iprot.readI16();
+        if ftype == TType.STRUCT:
+          self.options = AccessGroupOptions()
+          self.options.read(iprot)
         else:
           iprot.skip(ftype)
       elif fid == 4:
-        if ftype == TType.I32:
-          self.blocksize = iprot.readI32();
-        else:
-          iprot.skip(ftype)
-      elif fid == 5:
-        if ftype == TType.STRING:
-          self.compressor = iprot.readString();
-        else:
-          iprot.skip(ftype)
-      elif fid == 6:
-        if ftype == TType.STRING:
-          self.bloom_filter = iprot.readString();
-        else:
-          iprot.skip(ftype)
-      elif fid == 7:
-        if ftype == TType.LIST:
-          self.columns = []
-          (_etype52, _size49) = iprot.readListBegin()
-          for _i53 in xrange(_size49):
-            _elem54 = ColumnFamily()
-            _elem54.read(iprot)
-            self.columns.append(_elem54)
-          iprot.readListEnd()
+        if ftype == TType.STRUCT:
+          self.defaults = ColumnFamilyOptions()
+          self.defaults.read(iprot)
         else:
           iprot.skip(ftype)
       else:
@@ -2133,37 +2358,22 @@ class AccessGroup(object):
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('AccessGroup')
+    oprot.writeStructBegin('AccessGroupSpec')
     if self.name is not None:
       oprot.writeFieldBegin('name', TType.STRING, 1)
       oprot.writeString(self.name)
       oprot.writeFieldEnd()
-    if self.in_memory is not None:
-      oprot.writeFieldBegin('in_memory', TType.BOOL, 2)
-      oprot.writeBool(self.in_memory)
+    if self.generation is not None:
+      oprot.writeFieldBegin('generation', TType.I64, 2)
+      oprot.writeI64(self.generation)
       oprot.writeFieldEnd()
-    if self.replication is not None:
-      oprot.writeFieldBegin('replication', TType.I16, 3)
-      oprot.writeI16(self.replication)
+    if self.options is not None:
+      oprot.writeFieldBegin('options', TType.STRUCT, 3)
+      self.options.write(oprot)
       oprot.writeFieldEnd()
-    if self.blocksize is not None:
-      oprot.writeFieldBegin('blocksize', TType.I32, 4)
-      oprot.writeI32(self.blocksize)
-      oprot.writeFieldEnd()
-    if self.compressor is not None:
-      oprot.writeFieldBegin('compressor', TType.STRING, 5)
-      oprot.writeString(self.compressor)
-      oprot.writeFieldEnd()
-    if self.bloom_filter is not None:
-      oprot.writeFieldBegin('bloom_filter', TType.STRING, 6)
-      oprot.writeString(self.bloom_filter)
-      oprot.writeFieldEnd()
-    if self.columns is not None:
-      oprot.writeFieldBegin('columns', TType.LIST, 7)
-      oprot.writeListBegin(TType.STRUCT, len(self.columns))
-      for iter55 in self.columns:
-        iter55.write(oprot)
-      oprot.writeListEnd()
+    if self.defaults is not None:
+      oprot.writeFieldBegin('defaults', TType.STRUCT, 4)
+      self.defaults.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -2185,44 +2395,44 @@ class AccessGroup(object):
 
 class Schema(object):
   """
-  Describes a schema
+  Describes a schema.
   <dl>
-    <dt>name</dt>
-    <dd>Name of the access group</dd>
+    <dt>access_groups</dt>
+    <dd>Map of access groups</dd>
 
-    <dt>in_memory</dt>
-    <dd>Is this access group in memory</dd>
-
-    <dt>replication</dt>
-    <dd>Replication factor for this AG</dd>
-
-    <dt>blocksize</dt>
-    <dd>Specifies blocksize for this AG</dd>
-
-    <dt>compressor</dt>
-    <dd>Specifies compressor for this AG</dd>
-
-    <dt>bloom_filter</dt>
-    <dd>Specifies bloom filter type</dd>
-
-    <dt>columns</dt>
-    <dd>Specifies list of column families in this AG</dd>
+    <dt>column_families</dt>
+    <dd>Map of column families</dd>
   </dl>
 
   Attributes:
    - access_groups
    - column_families
+   - generation
+   - version
+   - group_commit_interval
+   - access_group_defaults
+   - column_family_defaults
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.MAP, 'access_groups', (TType.STRING,None,TType.STRUCT,(AccessGroup, AccessGroup.thrift_spec)), None, ), # 1
-    (2, TType.MAP, 'column_families', (TType.STRING,None,TType.STRUCT,(ColumnFamily, ColumnFamily.thrift_spec)), None, ), # 2
+    (1, TType.MAP, 'access_groups', (TType.STRING,None,TType.STRUCT,(AccessGroupSpec, AccessGroupSpec.thrift_spec)), None, ), # 1
+    (2, TType.MAP, 'column_families', (TType.STRING,None,TType.STRUCT,(ColumnFamilySpec, ColumnFamilySpec.thrift_spec)), None, ), # 2
+    (3, TType.I64, 'generation', None, None, ), # 3
+    (4, TType.I32, 'version', None, None, ), # 4
+    (5, TType.I32, 'group_commit_interval', None, None, ), # 5
+    (6, TType.STRUCT, 'access_group_defaults', (AccessGroupOptions, AccessGroupOptions.thrift_spec), None, ), # 6
+    (7, TType.STRUCT, 'column_family_defaults', (ColumnFamilyOptions, ColumnFamilyOptions.thrift_spec), None, ), # 7
   )
 
-  def __init__(self, access_groups=None, column_families=None,):
+  def __init__(self, access_groups=None, column_families=None, generation=None, version=None, group_commit_interval=None, access_group_defaults=None, column_family_defaults=None,):
     self.access_groups = access_groups
     self.column_families = column_families
+    self.generation = generation
+    self.version = version
+    self.group_commit_interval = group_commit_interval
+    self.access_group_defaults = access_group_defaults
+    self.column_family_defaults = column_family_defaults
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -2236,25 +2446,52 @@ class Schema(object):
       if fid == 1:
         if ftype == TType.MAP:
           self.access_groups = {}
-          (_ktype57, _vtype58, _size56 ) = iprot.readMapBegin() 
-          for _i60 in xrange(_size56):
-            _key61 = iprot.readString();
-            _val62 = AccessGroup()
-            _val62.read(iprot)
-            self.access_groups[_key61] = _val62
+          (_ktype50, _vtype51, _size49 ) = iprot.readMapBegin() 
+          for _i53 in xrange(_size49):
+            _key54 = iprot.readString();
+            _val55 = AccessGroupSpec()
+            _val55.read(iprot)
+            self.access_groups[_key54] = _val55
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
       elif fid == 2:
         if ftype == TType.MAP:
           self.column_families = {}
-          (_ktype64, _vtype65, _size63 ) = iprot.readMapBegin() 
-          for _i67 in xrange(_size63):
-            _key68 = iprot.readString();
-            _val69 = ColumnFamily()
-            _val69.read(iprot)
-            self.column_families[_key68] = _val69
+          (_ktype57, _vtype58, _size56 ) = iprot.readMapBegin() 
+          for _i60 in xrange(_size56):
+            _key61 = iprot.readString();
+            _val62 = ColumnFamilySpec()
+            _val62.read(iprot)
+            self.column_families[_key61] = _val62
           iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I64:
+          self.generation = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.I32:
+          self.version = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.I32:
+          self.group_commit_interval = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.STRUCT:
+          self.access_group_defaults = AccessGroupOptions()
+          self.access_group_defaults.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
+        if ftype == TType.STRUCT:
+          self.column_family_defaults = ColumnFamilyOptions()
+          self.column_family_defaults.read(iprot)
         else:
           iprot.skip(ftype)
       else:
@@ -2270,18 +2507,38 @@ class Schema(object):
     if self.access_groups is not None:
       oprot.writeFieldBegin('access_groups', TType.MAP, 1)
       oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.access_groups))
-      for kiter70,viter71 in self.access_groups.items():
-        oprot.writeString(kiter70)
-        viter71.write(oprot)
+      for kiter63,viter64 in self.access_groups.items():
+        oprot.writeString(kiter63)
+        viter64.write(oprot)
       oprot.writeMapEnd()
       oprot.writeFieldEnd()
     if self.column_families is not None:
       oprot.writeFieldBegin('column_families', TType.MAP, 2)
       oprot.writeMapBegin(TType.STRING, TType.STRUCT, len(self.column_families))
-      for kiter72,viter73 in self.column_families.items():
-        oprot.writeString(kiter72)
-        viter73.write(oprot)
+      for kiter65,viter66 in self.column_families.items():
+        oprot.writeString(kiter65)
+        viter66.write(oprot)
       oprot.writeMapEnd()
+      oprot.writeFieldEnd()
+    if self.generation is not None:
+      oprot.writeFieldBegin('generation', TType.I64, 3)
+      oprot.writeI64(self.generation)
+      oprot.writeFieldEnd()
+    if self.version is not None:
+      oprot.writeFieldBegin('version', TType.I32, 4)
+      oprot.writeI32(self.version)
+      oprot.writeFieldEnd()
+    if self.group_commit_interval is not None:
+      oprot.writeFieldBegin('group_commit_interval', TType.I32, 5)
+      oprot.writeI32(self.group_commit_interval)
+      oprot.writeFieldEnd()
+    if self.access_group_defaults is not None:
+      oprot.writeFieldBegin('access_group_defaults', TType.STRUCT, 6)
+      self.access_group_defaults.write(oprot)
+      oprot.writeFieldEnd()
+    if self.column_family_defaults is not None:
+      oprot.writeFieldBegin('column_family_defaults', TType.STRUCT, 7)
+      self.column_family_defaults.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

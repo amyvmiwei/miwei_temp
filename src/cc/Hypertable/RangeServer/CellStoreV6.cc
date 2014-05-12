@@ -178,7 +178,7 @@ namespace {
 void
 CellStoreV6::create(const char *fname, size_t max_entries,
                     PropertiesPtr &props, const TableIdentifier *table_id) {
-  int64_t blocksize = props->get("blocksize", uint32_t(0));
+  int64_t blocksize = props->get("blocksize", 0);
   String compressor = props->get("compressor", String());
 
   m_key_compressor = new KeyCompressorPrefix();
@@ -194,7 +194,7 @@ CellStoreV6::create(const char *fname, size_t max_entries,
                                  ".DefaultCompressor");
   if (!props->has("bloom-filter-mode")) {
     // probably not called from AccessGroup
-    Schema::parse_bloom_filter(Config::get_str("Hypertable.RangeServer"
+    AccessGroupOptions::parse_bloom_filter(Config::get_str("Hypertable.RangeServer"
         ".CellStore.DefaultBloomFilter"), props);
   }
 
@@ -217,14 +217,14 @@ CellStoreV6::create(const char *fname, size_t max_entries,
 
   // set up the "column_ttl" vector
   HT_ASSERT(m_schema);
-  Schema::ColumnFamilies &column_families = m_schema->get_column_families();
-  for (size_t i=0; i<column_families.size(); i++) {
-    if (column_families[i]->ttl) {
+  ColumnFamilySpecs &column_family_specs = m_schema->get_column_families();
+  for (size_t i=0; i<column_family_specs.size(); i++) {
+    if (column_family_specs[i]->get_option_ttl()) {
       if (m_column_ttl == 0) {
         m_column_ttl = new int64_t[256];
         memset(m_column_ttl, 0, 256*8);
       }
-      m_column_ttl[ column_families[i]->id ] = column_families[i]->ttl * 1000000000LL;
+      m_column_ttl[ column_family_specs[i]->get_id() ] = column_family_specs[i]->get_option_ttl() * 1000000000LL;
     }
   }
 
@@ -1065,10 +1065,10 @@ bool CellStoreV6::may_contain(ScanContextPtr &scan_context) {
         foreach_ht(const char *col, scan_context->spec->columns) {
           if ((ptr = strchr(col, ':')) != 0) {
             String family(col, (size_t)(ptr-col));
-            column_family_id = schema->get_column_family(family.c_str())->id;
+            column_family_id = schema->get_column_family(family.c_str())->get_id();
           }
           else
-            column_family_id = schema->get_column_family(col)->id;
+            column_family_id = schema->get_column_family(col)->get_id();
 
           rowcol[rowlen + 1] = column_family_id;
 

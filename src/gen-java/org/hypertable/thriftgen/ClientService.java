@@ -51,30 +51,26 @@ public class ClientService {
      * 
      * @param ns - namespace id
      * @param table_name - table name
-     * @param schema - schema of the table (in xml)
+     * @param schema - schema of the table
      * 
      * @param ns
      * @param table_name
      * @param schema
      */
-    public void create_table(long ns, String table_name, String schema) throws ClientException, org.apache.thrift.TException;
-
-    public void table_create(long ns, String table_name, String schema) throws ClientException, org.apache.thrift.TException;
+    public void table_create(long ns, String table_name, Schema schema) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Alter a table
      * 
      * @param ns - namespace id
      * @param table_name - table name
-     * @param schema - schema of the table (in xml)
+     * @param schema - schema of the table
      * 
      * @param ns
      * @param table_name
      * @param schema
      */
-    public void alter_table(long ns, String table_name, String schema) throws ClientException, org.apache.thrift.TException;
-
-    public void table_alter(long ns, String table_name, String schema) throws ClientException, org.apache.thrift.TException;
+    public void table_alter(long ns, String table_name, Schema schema) throws ClientException, org.apache.thrift.TException;
 
     /**
      * Refreshes the cached table information
@@ -998,13 +994,9 @@ public class ClientService {
 
     public void create_namespace(String ns, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.create_namespace_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void create_table(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.create_table_call> resultHandler) throws org.apache.thrift.TException;
+    public void table_create(long ns, String table_name, Schema schema, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.table_create_call> resultHandler) throws org.apache.thrift.TException;
 
-    public void table_create(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.table_create_call> resultHandler) throws org.apache.thrift.TException;
-
-    public void alter_table(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.alter_table_call> resultHandler) throws org.apache.thrift.TException;
-
-    public void table_alter(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.table_alter_call> resultHandler) throws org.apache.thrift.TException;
+    public void table_alter(long ns, String table_name, Schema schema, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.table_alter_call> resultHandler) throws org.apache.thrift.TException;
 
     public void refresh_table(long ns, String table_name, org.apache.thrift.async.AsyncMethodCallback<AsyncClient.refresh_table_call> resultHandler) throws org.apache.thrift.TException;
 
@@ -1314,38 +1306,13 @@ public class ClientService {
       return;
     }
 
-    public void create_table(long ns, String table_name, String schema) throws ClientException, org.apache.thrift.TException
-    {
-      send_create_table(ns, table_name, schema);
-      recv_create_table();
-    }
-
-    public void send_create_table(long ns, String table_name, String schema) throws org.apache.thrift.TException
-    {
-      create_table_args args = new create_table_args();
-      args.setNs(ns);
-      args.setTable_name(table_name);
-      args.setSchema(schema);
-      sendBase("create_table", args);
-    }
-
-    public void recv_create_table() throws ClientException, org.apache.thrift.TException
-    {
-      create_table_result result = new create_table_result();
-      receiveBase(result, "create_table");
-      if (result.e != null) {
-        throw result.e;
-      }
-      return;
-    }
-
-    public void table_create(long ns, String table_name, String schema) throws ClientException, org.apache.thrift.TException
+    public void table_create(long ns, String table_name, Schema schema) throws ClientException, org.apache.thrift.TException
     {
       send_table_create(ns, table_name, schema);
       recv_table_create();
     }
 
-    public void send_table_create(long ns, String table_name, String schema) throws org.apache.thrift.TException
+    public void send_table_create(long ns, String table_name, Schema schema) throws org.apache.thrift.TException
     {
       table_create_args args = new table_create_args();
       args.setNs(ns);
@@ -1364,38 +1331,13 @@ public class ClientService {
       return;
     }
 
-    public void alter_table(long ns, String table_name, String schema) throws ClientException, org.apache.thrift.TException
-    {
-      send_alter_table(ns, table_name, schema);
-      recv_alter_table();
-    }
-
-    public void send_alter_table(long ns, String table_name, String schema) throws org.apache.thrift.TException
-    {
-      alter_table_args args = new alter_table_args();
-      args.setNs(ns);
-      args.setTable_name(table_name);
-      args.setSchema(schema);
-      sendBase("alter_table", args);
-    }
-
-    public void recv_alter_table() throws ClientException, org.apache.thrift.TException
-    {
-      alter_table_result result = new alter_table_result();
-      receiveBase(result, "alter_table");
-      if (result.e != null) {
-        throw result.e;
-      }
-      return;
-    }
-
-    public void table_alter(long ns, String table_name, String schema) throws ClientException, org.apache.thrift.TException
+    public void table_alter(long ns, String table_name, Schema schema) throws ClientException, org.apache.thrift.TException
     {
       send_table_alter(ns, table_name, schema);
       recv_table_alter();
     }
 
-    public void send_table_alter(long ns, String table_name, String schema) throws org.apache.thrift.TException
+    public void send_table_alter(long ns, String table_name, Schema schema) throws org.apache.thrift.TException
     {
       table_alter_args args = new table_alter_args();
       args.setNs(ns);
@@ -4557,45 +4499,7 @@ public class ClientService {
       }
     }
 
-    public void create_table(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<create_table_call> resultHandler) throws org.apache.thrift.TException {
-      checkReady();
-      create_table_call method_call = new create_table_call(ns, table_name, schema, resultHandler, this, ___protocolFactory, ___transport);
-      this.___currentMethod = method_call;
-      ___manager.call(method_call);
-    }
-
-    public static class create_table_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private long ns;
-      private String table_name;
-      private String schema;
-      public create_table_call(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<create_table_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
-        super(client, protocolFactory, transport, resultHandler, false);
-        this.ns = ns;
-        this.table_name = table_name;
-        this.schema = schema;
-      }
-
-      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("create_table", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        create_table_args args = new create_table_args();
-        args.setNs(ns);
-        args.setTable_name(table_name);
-        args.setSchema(schema);
-        args.write(prot);
-        prot.writeMessageEnd();
-      }
-
-      public void getResult() throws ClientException, org.apache.thrift.TException {
-        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
-          throw new IllegalStateException("Method call not finished!");
-        }
-        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
-        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_create_table();
-      }
-    }
-
-    public void table_create(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<table_create_call> resultHandler) throws org.apache.thrift.TException {
+    public void table_create(long ns, String table_name, Schema schema, org.apache.thrift.async.AsyncMethodCallback<table_create_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       table_create_call method_call = new table_create_call(ns, table_name, schema, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -4605,8 +4509,8 @@ public class ClientService {
     public static class table_create_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ns;
       private String table_name;
-      private String schema;
-      public table_create_call(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<table_create_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private Schema schema;
+      public table_create_call(long ns, String table_name, Schema schema, org.apache.thrift.async.AsyncMethodCallback<table_create_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.table_name = table_name;
@@ -4633,45 +4537,7 @@ public class ClientService {
       }
     }
 
-    public void alter_table(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<alter_table_call> resultHandler) throws org.apache.thrift.TException {
-      checkReady();
-      alter_table_call method_call = new alter_table_call(ns, table_name, schema, resultHandler, this, ___protocolFactory, ___transport);
-      this.___currentMethod = method_call;
-      ___manager.call(method_call);
-    }
-
-    public static class alter_table_call extends org.apache.thrift.async.TAsyncMethodCall {
-      private long ns;
-      private String table_name;
-      private String schema;
-      public alter_table_call(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<alter_table_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
-        super(client, protocolFactory, transport, resultHandler, false);
-        this.ns = ns;
-        this.table_name = table_name;
-        this.schema = schema;
-      }
-
-      public void write_args(org.apache.thrift.protocol.TProtocol prot) throws org.apache.thrift.TException {
-        prot.writeMessageBegin(new org.apache.thrift.protocol.TMessage("alter_table", org.apache.thrift.protocol.TMessageType.CALL, 0));
-        alter_table_args args = new alter_table_args();
-        args.setNs(ns);
-        args.setTable_name(table_name);
-        args.setSchema(schema);
-        args.write(prot);
-        prot.writeMessageEnd();
-      }
-
-      public void getResult() throws ClientException, org.apache.thrift.TException {
-        if (getState() != org.apache.thrift.async.TAsyncMethodCall.State.RESPONSE_READ) {
-          throw new IllegalStateException("Method call not finished!");
-        }
-        org.apache.thrift.transport.TMemoryInputTransport memoryTransport = new org.apache.thrift.transport.TMemoryInputTransport(getFrameBuffer().array());
-        org.apache.thrift.protocol.TProtocol prot = client.getProtocolFactory().getProtocol(memoryTransport);
-        (new Client(prot)).recv_alter_table();
-      }
-    }
-
-    public void table_alter(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<table_alter_call> resultHandler) throws org.apache.thrift.TException {
+    public void table_alter(long ns, String table_name, Schema schema, org.apache.thrift.async.AsyncMethodCallback<table_alter_call> resultHandler) throws org.apache.thrift.TException {
       checkReady();
       table_alter_call method_call = new table_alter_call(ns, table_name, schema, resultHandler, this, ___protocolFactory, ___transport);
       this.___currentMethod = method_call;
@@ -4681,8 +4547,8 @@ public class ClientService {
     public static class table_alter_call extends org.apache.thrift.async.TAsyncMethodCall {
       private long ns;
       private String table_name;
-      private String schema;
-      public table_alter_call(long ns, String table_name, String schema, org.apache.thrift.async.AsyncMethodCallback<table_alter_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
+      private Schema schema;
+      public table_alter_call(long ns, String table_name, Schema schema, org.apache.thrift.async.AsyncMethodCallback<table_alter_call> resultHandler, org.apache.thrift.async.TAsyncClient client, org.apache.thrift.protocol.TProtocolFactory protocolFactory, org.apache.thrift.transport.TNonblockingTransport transport) throws org.apache.thrift.TException {
         super(client, protocolFactory, transport, resultHandler, false);
         this.ns = ns;
         this.table_name = table_name;
@@ -8936,9 +8802,7 @@ public class ClientService {
     private static <I extends Iface> Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> getProcessMap(Map<String,  org.apache.thrift.ProcessFunction<I, ? extends  org.apache.thrift.TBase>> processMap) {
       processMap.put("namespace_create", new namespace_create());
       processMap.put("create_namespace", new create_namespace());
-      processMap.put("create_table", new create_table());
       processMap.put("table_create", new table_create());
-      processMap.put("alter_table", new alter_table());
       processMap.put("table_alter", new table_alter());
       processMap.put("refresh_table", new refresh_table());
       processMap.put("namespace_open", new namespace_open());
@@ -9103,26 +8967,6 @@ public class ClientService {
       }
     }
 
-    private static class create_table<I extends Iface> extends org.apache.thrift.ProcessFunction<I, create_table_args> {
-      public create_table() {
-        super("create_table");
-      }
-
-      protected create_table_args getEmptyArgsInstance() {
-        return new create_table_args();
-      }
-
-      protected create_table_result getResult(I iface, create_table_args args) throws org.apache.thrift.TException {
-        create_table_result result = new create_table_result();
-        try {
-          iface.create_table(args.ns, args.table_name, args.schema);
-        } catch (ClientException e) {
-          result.e = e;
-        }
-        return result;
-      }
-    }
-
     private static class table_create<I extends Iface> extends org.apache.thrift.ProcessFunction<I, table_create_args> {
       public table_create() {
         super("table_create");
@@ -9136,26 +8980,6 @@ public class ClientService {
         table_create_result result = new table_create_result();
         try {
           iface.table_create(args.ns, args.table_name, args.schema);
-        } catch (ClientException e) {
-          result.e = e;
-        }
-        return result;
-      }
-    }
-
-    private static class alter_table<I extends Iface> extends org.apache.thrift.ProcessFunction<I, alter_table_args> {
-      public alter_table() {
-        super("alter_table");
-      }
-
-      protected alter_table_args getEmptyArgsInstance() {
-        return new alter_table_args();
-      }
-
-      protected alter_table_result getResult(I iface, alter_table_args args) throws org.apache.thrift.TException {
-        alter_table_result result = new alter_table_result();
-        try {
-          iface.alter_table(args.ns, args.table_name, args.schema);
         } catch (ClientException e) {
           result.e = e;
         }
@@ -13013,917 +12837,12 @@ public class ClientService {
 
   }
 
-  public static class create_table_args implements org.apache.thrift.TBase<create_table_args, create_table_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("create_table_args");
-
-    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
-    private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
-    private static final org.apache.thrift.protocol.TField SCHEMA_FIELD_DESC = new org.apache.thrift.protocol.TField("schema", org.apache.thrift.protocol.TType.STRING, (short)3);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new create_table_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new create_table_argsTupleSchemeFactory());
-    }
-
-    public long ns; // required
-    public String table_name; // required
-    public String schema; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      NS((short)1, "ns"),
-      TABLE_NAME((short)2, "table_name"),
-      SCHEMA((short)3, "schema");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // NS
-            return NS;
-          case 2: // TABLE_NAME
-            return TABLE_NAME;
-          case 3: // SCHEMA
-            return SCHEMA;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    private static final int __NS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Namespace")));
-      tmpMap.put(_Fields.TABLE_NAME, new org.apache.thrift.meta_data.FieldMetaData("table_name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.SCHEMA, new org.apache.thrift.meta_data.FieldMetaData("schema", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(create_table_args.class, metaDataMap);
-    }
-
-    public create_table_args() {
-    }
-
-    public create_table_args(
-      long ns,
-      String table_name,
-      String schema)
-    {
-      this();
-      this.ns = ns;
-      setNsIsSet(true);
-      this.table_name = table_name;
-      this.schema = schema;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public create_table_args(create_table_args other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.ns = other.ns;
-      if (other.isSetTable_name()) {
-        this.table_name = other.table_name;
-      }
-      if (other.isSetSchema()) {
-        this.schema = other.schema;
-      }
-    }
-
-    public create_table_args deepCopy() {
-      return new create_table_args(this);
-    }
-
-    @Override
-    public void clear() {
-      setNsIsSet(false);
-      this.ns = 0;
-      this.table_name = null;
-      this.schema = null;
-    }
-
-    public long getNs() {
-      return this.ns;
-    }
-
-    public create_table_args setNs(long ns) {
-      this.ns = ns;
-      setNsIsSet(true);
-      return this;
-    }
-
-    public void unsetNs() {
-      __isset_bit_vector.clear(__NS_ISSET_ID);
-    }
-
-    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
-    public boolean isSetNs() {
-      return __isset_bit_vector.get(__NS_ISSET_ID);
-    }
-
-    public void setNsIsSet(boolean value) {
-      __isset_bit_vector.set(__NS_ISSET_ID, value);
-    }
-
-    public String getTable_name() {
-      return this.table_name;
-    }
-
-    public create_table_args setTable_name(String table_name) {
-      this.table_name = table_name;
-      return this;
-    }
-
-    public void unsetTable_name() {
-      this.table_name = null;
-    }
-
-    /** Returns true if field table_name is set (has been assigned a value) and false otherwise */
-    public boolean isSetTable_name() {
-      return this.table_name != null;
-    }
-
-    public void setTable_nameIsSet(boolean value) {
-      if (!value) {
-        this.table_name = null;
-      }
-    }
-
-    public String getSchema() {
-      return this.schema;
-    }
-
-    public create_table_args setSchema(String schema) {
-      this.schema = schema;
-      return this;
-    }
-
-    public void unsetSchema() {
-      this.schema = null;
-    }
-
-    /** Returns true if field schema is set (has been assigned a value) and false otherwise */
-    public boolean isSetSchema() {
-      return this.schema != null;
-    }
-
-    public void setSchemaIsSet(boolean value) {
-      if (!value) {
-        this.schema = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case NS:
-        if (value == null) {
-          unsetNs();
-        } else {
-          setNs((Long)value);
-        }
-        break;
-
-      case TABLE_NAME:
-        if (value == null) {
-          unsetTable_name();
-        } else {
-          setTable_name((String)value);
-        }
-        break;
-
-      case SCHEMA:
-        if (value == null) {
-          unsetSchema();
-        } else {
-          setSchema((String)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case NS:
-        return Long.valueOf(getNs());
-
-      case TABLE_NAME:
-        return getTable_name();
-
-      case SCHEMA:
-        return getSchema();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case NS:
-        return isSetNs();
-      case TABLE_NAME:
-        return isSetTable_name();
-      case SCHEMA:
-        return isSetSchema();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof create_table_args)
-        return this.equals((create_table_args)that);
-      return false;
-    }
-
-    public boolean equals(create_table_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_ns = true;
-      boolean that_present_ns = true;
-      if (this_present_ns || that_present_ns) {
-        if (!(this_present_ns && that_present_ns))
-          return false;
-        if (this.ns != that.ns)
-          return false;
-      }
-
-      boolean this_present_table_name = true && this.isSetTable_name();
-      boolean that_present_table_name = true && that.isSetTable_name();
-      if (this_present_table_name || that_present_table_name) {
-        if (!(this_present_table_name && that_present_table_name))
-          return false;
-        if (!this.table_name.equals(that.table_name))
-          return false;
-      }
-
-      boolean this_present_schema = true && this.isSetSchema();
-      boolean that_present_schema = true && that.isSetSchema();
-      if (this_present_schema || that_present_schema) {
-        if (!(this_present_schema && that_present_schema))
-          return false;
-        if (!this.schema.equals(that.schema))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(create_table_args other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      create_table_args typedOther = (create_table_args)other;
-
-      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetNs()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetTable_name()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table_name, typedOther.table_name);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetSchema()).compareTo(typedOther.isSetSchema());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetSchema()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.schema, typedOther.schema);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("create_table_args(");
-      boolean first = true;
-
-      sb.append("ns:");
-      sb.append(this.ns);
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("table_name:");
-      if (this.table_name == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.table_name);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("schema:");
-      if (this.schema == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.schema);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class create_table_argsStandardSchemeFactory implements SchemeFactory {
-      public create_table_argsStandardScheme getScheme() {
-        return new create_table_argsStandardScheme();
-      }
-    }
-
-    private static class create_table_argsStandardScheme extends StandardScheme<create_table_args> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, create_table_args struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // NS
-              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
-                struct.ns = iprot.readI64();
-                struct.setNsIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 2: // TABLE_NAME
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.table_name = iprot.readString();
-                struct.setTable_nameIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 3: // SCHEMA
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.schema = iprot.readString();
-                struct.setSchemaIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, create_table_args struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(NS_FIELD_DESC);
-        oprot.writeI64(struct.ns);
-        oprot.writeFieldEnd();
-        if (struct.table_name != null) {
-          oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
-          oprot.writeString(struct.table_name);
-          oprot.writeFieldEnd();
-        }
-        if (struct.schema != null) {
-          oprot.writeFieldBegin(SCHEMA_FIELD_DESC);
-          oprot.writeString(struct.schema);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class create_table_argsTupleSchemeFactory implements SchemeFactory {
-      public create_table_argsTupleScheme getScheme() {
-        return new create_table_argsTupleScheme();
-      }
-    }
-
-    private static class create_table_argsTupleScheme extends TupleScheme<create_table_args> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, create_table_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetNs()) {
-          optionals.set(0);
-        }
-        if (struct.isSetTable_name()) {
-          optionals.set(1);
-        }
-        if (struct.isSetSchema()) {
-          optionals.set(2);
-        }
-        oprot.writeBitSet(optionals, 3);
-        if (struct.isSetNs()) {
-          oprot.writeI64(struct.ns);
-        }
-        if (struct.isSetTable_name()) {
-          oprot.writeString(struct.table_name);
-        }
-        if (struct.isSetSchema()) {
-          oprot.writeString(struct.schema);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, create_table_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(3);
-        if (incoming.get(0)) {
-          struct.ns = iprot.readI64();
-          struct.setNsIsSet(true);
-        }
-        if (incoming.get(1)) {
-          struct.table_name = iprot.readString();
-          struct.setTable_nameIsSet(true);
-        }
-        if (incoming.get(2)) {
-          struct.schema = iprot.readString();
-          struct.setSchemaIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class create_table_result implements org.apache.thrift.TBase<create_table_result, create_table_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("create_table_result");
-
-    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new create_table_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new create_table_resultTupleSchemeFactory());
-    }
-
-    public ClientException e; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      E((short)1, "e");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // E
-            return E;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(create_table_result.class, metaDataMap);
-    }
-
-    public create_table_result() {
-    }
-
-    public create_table_result(
-      ClientException e)
-    {
-      this();
-      this.e = e;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public create_table_result(create_table_result other) {
-      if (other.isSetE()) {
-        this.e = new ClientException(other.e);
-      }
-    }
-
-    public create_table_result deepCopy() {
-      return new create_table_result(this);
-    }
-
-    @Override
-    public void clear() {
-      this.e = null;
-    }
-
-    public ClientException getE() {
-      return this.e;
-    }
-
-    public create_table_result setE(ClientException e) {
-      this.e = e;
-      return this;
-    }
-
-    public void unsetE() {
-      this.e = null;
-    }
-
-    /** Returns true if field e is set (has been assigned a value) and false otherwise */
-    public boolean isSetE() {
-      return this.e != null;
-    }
-
-    public void setEIsSet(boolean value) {
-      if (!value) {
-        this.e = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case E:
-        if (value == null) {
-          unsetE();
-        } else {
-          setE((ClientException)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case E:
-        return getE();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case E:
-        return isSetE();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof create_table_result)
-        return this.equals((create_table_result)that);
-      return false;
-    }
-
-    public boolean equals(create_table_result that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_e = true && this.isSetE();
-      boolean that_present_e = true && that.isSetE();
-      if (this_present_e || that_present_e) {
-        if (!(this_present_e && that_present_e))
-          return false;
-        if (!this.e.equals(that.e))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(create_table_result other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      create_table_result typedOther = (create_table_result)other;
-
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetE()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-      }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("create_table_result(");
-      boolean first = true;
-
-      sb.append("e:");
-      if (this.e == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.e);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class create_table_resultStandardSchemeFactory implements SchemeFactory {
-      public create_table_resultStandardScheme getScheme() {
-        return new create_table_resultStandardScheme();
-      }
-    }
-
-    private static class create_table_resultStandardScheme extends StandardScheme<create_table_result> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, create_table_result struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // E
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new ClientException();
-                struct.e.read(iprot);
-                struct.setEIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, create_table_result struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.e != null) {
-          oprot.writeFieldBegin(E_FIELD_DESC);
-          struct.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class create_table_resultTupleSchemeFactory implements SchemeFactory {
-      public create_table_resultTupleScheme getScheme() {
-        return new create_table_resultTupleScheme();
-      }
-    }
-
-    private static class create_table_resultTupleScheme extends TupleScheme<create_table_result> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, create_table_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetE()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetE()) {
-          struct.e.write(oprot);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, create_table_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          struct.e = new ClientException();
-          struct.e.read(iprot);
-          struct.setEIsSet(true);
-        }
-      }
-    }
-
-  }
-
   public static class table_create_args implements org.apache.thrift.TBase<table_create_args, table_create_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("table_create_args");
 
     private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
     private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
-    private static final org.apache.thrift.protocol.TField SCHEMA_FIELD_DESC = new org.apache.thrift.protocol.TField("schema", org.apache.thrift.protocol.TType.STRING, (short)3);
+    private static final org.apache.thrift.protocol.TField SCHEMA_FIELD_DESC = new org.apache.thrift.protocol.TField("schema", org.apache.thrift.protocol.TType.STRUCT, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -13933,7 +12852,7 @@ public class ClientService {
 
     public long ns; // required
     public String table_name; // required
-    public String schema; // required
+    public Schema schema; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -14010,7 +12929,7 @@ public class ClientService {
       tmpMap.put(_Fields.TABLE_NAME, new org.apache.thrift.meta_data.FieldMetaData("table_name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.SCHEMA, new org.apache.thrift.meta_data.FieldMetaData("schema", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Schema.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(table_create_args.class, metaDataMap);
     }
@@ -14021,7 +12940,7 @@ public class ClientService {
     public table_create_args(
       long ns,
       String table_name,
-      String schema)
+      Schema schema)
     {
       this();
       this.ns = ns;
@@ -14041,7 +12960,7 @@ public class ClientService {
         this.table_name = other.table_name;
       }
       if (other.isSetSchema()) {
-        this.schema = other.schema;
+        this.schema = new Schema(other.schema);
       }
     }
 
@@ -14104,11 +13023,11 @@ public class ClientService {
       }
     }
 
-    public String getSchema() {
+    public Schema getSchema() {
       return this.schema;
     }
 
-    public table_create_args setSchema(String schema) {
+    public table_create_args setSchema(Schema schema) {
       this.schema = schema;
       return this;
     }
@@ -14150,7 +13069,7 @@ public class ClientService {
         if (value == null) {
           unsetSchema();
         } else {
-          setSchema((String)value);
+          setSchema((Schema)value);
         }
         break;
 
@@ -14332,8 +13251,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -14375,8 +13292,9 @@ public class ClientService {
               }
               break;
             case 3: // SCHEMA
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.schema = iprot.readString();
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.schema = new Schema();
+                struct.schema.read(iprot);
                 struct.setSchemaIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -14407,7 +13325,7 @@ public class ClientService {
         }
         if (struct.schema != null) {
           oprot.writeFieldBegin(SCHEMA_FIELD_DESC);
-          oprot.writeString(struct.schema);
+          struct.schema.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -14445,7 +13363,7 @@ public class ClientService {
           oprot.writeString(struct.table_name);
         }
         if (struct.isSetSchema()) {
-          oprot.writeString(struct.schema);
+          struct.schema.write(oprot);
         }
       }
 
@@ -14462,7 +13380,8 @@ public class ClientService {
           struct.setTable_nameIsSet(true);
         }
         if (incoming.get(2)) {
-          struct.schema = iprot.readString();
+          struct.schema = new Schema();
+          struct.schema.read(iprot);
           struct.setSchemaIsSet(true);
         }
       }
@@ -14825,917 +13744,12 @@ public class ClientService {
 
   }
 
-  public static class alter_table_args implements org.apache.thrift.TBase<alter_table_args, alter_table_args._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("alter_table_args");
-
-    private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
-    private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
-    private static final org.apache.thrift.protocol.TField SCHEMA_FIELD_DESC = new org.apache.thrift.protocol.TField("schema", org.apache.thrift.protocol.TType.STRING, (short)3);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new alter_table_argsStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new alter_table_argsTupleSchemeFactory());
-    }
-
-    public long ns; // required
-    public String table_name; // required
-    public String schema; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      NS((short)1, "ns"),
-      TABLE_NAME((short)2, "table_name"),
-      SCHEMA((short)3, "schema");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // NS
-            return NS;
-          case 2: // TABLE_NAME
-            return TABLE_NAME;
-          case 3: // SCHEMA
-            return SCHEMA;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    private static final int __NS_ISSET_ID = 0;
-    private BitSet __isset_bit_vector = new BitSet(1);
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.NS, new org.apache.thrift.meta_data.FieldMetaData("ns", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.I64          , "Namespace")));
-      tmpMap.put(_Fields.TABLE_NAME, new org.apache.thrift.meta_data.FieldMetaData("table_name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      tmpMap.put(_Fields.SCHEMA, new org.apache.thrift.meta_data.FieldMetaData("schema", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(alter_table_args.class, metaDataMap);
-    }
-
-    public alter_table_args() {
-    }
-
-    public alter_table_args(
-      long ns,
-      String table_name,
-      String schema)
-    {
-      this();
-      this.ns = ns;
-      setNsIsSet(true);
-      this.table_name = table_name;
-      this.schema = schema;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public alter_table_args(alter_table_args other) {
-      __isset_bit_vector.clear();
-      __isset_bit_vector.or(other.__isset_bit_vector);
-      this.ns = other.ns;
-      if (other.isSetTable_name()) {
-        this.table_name = other.table_name;
-      }
-      if (other.isSetSchema()) {
-        this.schema = other.schema;
-      }
-    }
-
-    public alter_table_args deepCopy() {
-      return new alter_table_args(this);
-    }
-
-    @Override
-    public void clear() {
-      setNsIsSet(false);
-      this.ns = 0;
-      this.table_name = null;
-      this.schema = null;
-    }
-
-    public long getNs() {
-      return this.ns;
-    }
-
-    public alter_table_args setNs(long ns) {
-      this.ns = ns;
-      setNsIsSet(true);
-      return this;
-    }
-
-    public void unsetNs() {
-      __isset_bit_vector.clear(__NS_ISSET_ID);
-    }
-
-    /** Returns true if field ns is set (has been assigned a value) and false otherwise */
-    public boolean isSetNs() {
-      return __isset_bit_vector.get(__NS_ISSET_ID);
-    }
-
-    public void setNsIsSet(boolean value) {
-      __isset_bit_vector.set(__NS_ISSET_ID, value);
-    }
-
-    public String getTable_name() {
-      return this.table_name;
-    }
-
-    public alter_table_args setTable_name(String table_name) {
-      this.table_name = table_name;
-      return this;
-    }
-
-    public void unsetTable_name() {
-      this.table_name = null;
-    }
-
-    /** Returns true if field table_name is set (has been assigned a value) and false otherwise */
-    public boolean isSetTable_name() {
-      return this.table_name != null;
-    }
-
-    public void setTable_nameIsSet(boolean value) {
-      if (!value) {
-        this.table_name = null;
-      }
-    }
-
-    public String getSchema() {
-      return this.schema;
-    }
-
-    public alter_table_args setSchema(String schema) {
-      this.schema = schema;
-      return this;
-    }
-
-    public void unsetSchema() {
-      this.schema = null;
-    }
-
-    /** Returns true if field schema is set (has been assigned a value) and false otherwise */
-    public boolean isSetSchema() {
-      return this.schema != null;
-    }
-
-    public void setSchemaIsSet(boolean value) {
-      if (!value) {
-        this.schema = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case NS:
-        if (value == null) {
-          unsetNs();
-        } else {
-          setNs((Long)value);
-        }
-        break;
-
-      case TABLE_NAME:
-        if (value == null) {
-          unsetTable_name();
-        } else {
-          setTable_name((String)value);
-        }
-        break;
-
-      case SCHEMA:
-        if (value == null) {
-          unsetSchema();
-        } else {
-          setSchema((String)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case NS:
-        return Long.valueOf(getNs());
-
-      case TABLE_NAME:
-        return getTable_name();
-
-      case SCHEMA:
-        return getSchema();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case NS:
-        return isSetNs();
-      case TABLE_NAME:
-        return isSetTable_name();
-      case SCHEMA:
-        return isSetSchema();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof alter_table_args)
-        return this.equals((alter_table_args)that);
-      return false;
-    }
-
-    public boolean equals(alter_table_args that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_ns = true;
-      boolean that_present_ns = true;
-      if (this_present_ns || that_present_ns) {
-        if (!(this_present_ns && that_present_ns))
-          return false;
-        if (this.ns != that.ns)
-          return false;
-      }
-
-      boolean this_present_table_name = true && this.isSetTable_name();
-      boolean that_present_table_name = true && that.isSetTable_name();
-      if (this_present_table_name || that_present_table_name) {
-        if (!(this_present_table_name && that_present_table_name))
-          return false;
-        if (!this.table_name.equals(that.table_name))
-          return false;
-      }
-
-      boolean this_present_schema = true && this.isSetSchema();
-      boolean that_present_schema = true && that.isSetSchema();
-      if (this_present_schema || that_present_schema) {
-        if (!(this_present_schema && that_present_schema))
-          return false;
-        if (!this.schema.equals(that.schema))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(alter_table_args other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      alter_table_args typedOther = (alter_table_args)other;
-
-      lastComparison = Boolean.valueOf(isSetNs()).compareTo(typedOther.isSetNs());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetNs()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.ns, typedOther.ns);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetTable_name()).compareTo(typedOther.isSetTable_name());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetTable_name()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.table_name, typedOther.table_name);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      lastComparison = Boolean.valueOf(isSetSchema()).compareTo(typedOther.isSetSchema());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetSchema()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.schema, typedOther.schema);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-    }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("alter_table_args(");
-      boolean first = true;
-
-      sb.append("ns:");
-      sb.append(this.ns);
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("table_name:");
-      if (this.table_name == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.table_name);
-      }
-      first = false;
-      if (!first) sb.append(", ");
-      sb.append("schema:");
-      if (this.schema == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.schema);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class alter_table_argsStandardSchemeFactory implements SchemeFactory {
-      public alter_table_argsStandardScheme getScheme() {
-        return new alter_table_argsStandardScheme();
-      }
-    }
-
-    private static class alter_table_argsStandardScheme extends StandardScheme<alter_table_args> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, alter_table_args struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // NS
-              if (schemeField.type == org.apache.thrift.protocol.TType.I64) {
-                struct.ns = iprot.readI64();
-                struct.setNsIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 2: // TABLE_NAME
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.table_name = iprot.readString();
-                struct.setTable_nameIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            case 3: // SCHEMA
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.schema = iprot.readString();
-                struct.setSchemaIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, alter_table_args struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        oprot.writeFieldBegin(NS_FIELD_DESC);
-        oprot.writeI64(struct.ns);
-        oprot.writeFieldEnd();
-        if (struct.table_name != null) {
-          oprot.writeFieldBegin(TABLE_NAME_FIELD_DESC);
-          oprot.writeString(struct.table_name);
-          oprot.writeFieldEnd();
-        }
-        if (struct.schema != null) {
-          oprot.writeFieldBegin(SCHEMA_FIELD_DESC);
-          oprot.writeString(struct.schema);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class alter_table_argsTupleSchemeFactory implements SchemeFactory {
-      public alter_table_argsTupleScheme getScheme() {
-        return new alter_table_argsTupleScheme();
-      }
-    }
-
-    private static class alter_table_argsTupleScheme extends TupleScheme<alter_table_args> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, alter_table_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetNs()) {
-          optionals.set(0);
-        }
-        if (struct.isSetTable_name()) {
-          optionals.set(1);
-        }
-        if (struct.isSetSchema()) {
-          optionals.set(2);
-        }
-        oprot.writeBitSet(optionals, 3);
-        if (struct.isSetNs()) {
-          oprot.writeI64(struct.ns);
-        }
-        if (struct.isSetTable_name()) {
-          oprot.writeString(struct.table_name);
-        }
-        if (struct.isSetSchema()) {
-          oprot.writeString(struct.schema);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, alter_table_args struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(3);
-        if (incoming.get(0)) {
-          struct.ns = iprot.readI64();
-          struct.setNsIsSet(true);
-        }
-        if (incoming.get(1)) {
-          struct.table_name = iprot.readString();
-          struct.setTable_nameIsSet(true);
-        }
-        if (incoming.get(2)) {
-          struct.schema = iprot.readString();
-          struct.setSchemaIsSet(true);
-        }
-      }
-    }
-
-  }
-
-  public static class alter_table_result implements org.apache.thrift.TBase<alter_table_result, alter_table_result._Fields>, java.io.Serializable, Cloneable   {
-    private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("alter_table_result");
-
-    private static final org.apache.thrift.protocol.TField E_FIELD_DESC = new org.apache.thrift.protocol.TField("e", org.apache.thrift.protocol.TType.STRUCT, (short)1);
-
-    private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
-    static {
-      schemes.put(StandardScheme.class, new alter_table_resultStandardSchemeFactory());
-      schemes.put(TupleScheme.class, new alter_table_resultTupleSchemeFactory());
-    }
-
-    public ClientException e; // required
-
-    /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
-    public enum _Fields implements org.apache.thrift.TFieldIdEnum {
-      E((short)1, "e");
-
-      private static final Map<String, _Fields> byName = new HashMap<String, _Fields>();
-
-      static {
-        for (_Fields field : EnumSet.allOf(_Fields.class)) {
-          byName.put(field.getFieldName(), field);
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, or null if its not found.
-       */
-      public static _Fields findByThriftId(int fieldId) {
-        switch(fieldId) {
-          case 1: // E
-            return E;
-          default:
-            return null;
-        }
-      }
-
-      /**
-       * Find the _Fields constant that matches fieldId, throwing an exception
-       * if it is not found.
-       */
-      public static _Fields findByThriftIdOrThrow(int fieldId) {
-        _Fields fields = findByThriftId(fieldId);
-        if (fields == null) throw new IllegalArgumentException("Field " + fieldId + " doesn't exist!");
-        return fields;
-      }
-
-      /**
-       * Find the _Fields constant that matches name, or null if its not found.
-       */
-      public static _Fields findByName(String name) {
-        return byName.get(name);
-      }
-
-      private final short _thriftId;
-      private final String _fieldName;
-
-      _Fields(short thriftId, String fieldName) {
-        _thriftId = thriftId;
-        _fieldName = fieldName;
-      }
-
-      public short getThriftFieldId() {
-        return _thriftId;
-      }
-
-      public String getFieldName() {
-        return _fieldName;
-      }
-    }
-
-    // isset id assignments
-    public static final Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> metaDataMap;
-    static {
-      Map<_Fields, org.apache.thrift.meta_data.FieldMetaData> tmpMap = new EnumMap<_Fields, org.apache.thrift.meta_data.FieldMetaData>(_Fields.class);
-      tmpMap.put(_Fields.E, new org.apache.thrift.meta_data.FieldMetaData("e", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRUCT)));
-      metaDataMap = Collections.unmodifiableMap(tmpMap);
-      org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(alter_table_result.class, metaDataMap);
-    }
-
-    public alter_table_result() {
-    }
-
-    public alter_table_result(
-      ClientException e)
-    {
-      this();
-      this.e = e;
-    }
-
-    /**
-     * Performs a deep copy on <i>other</i>.
-     */
-    public alter_table_result(alter_table_result other) {
-      if (other.isSetE()) {
-        this.e = new ClientException(other.e);
-      }
-    }
-
-    public alter_table_result deepCopy() {
-      return new alter_table_result(this);
-    }
-
-    @Override
-    public void clear() {
-      this.e = null;
-    }
-
-    public ClientException getE() {
-      return this.e;
-    }
-
-    public alter_table_result setE(ClientException e) {
-      this.e = e;
-      return this;
-    }
-
-    public void unsetE() {
-      this.e = null;
-    }
-
-    /** Returns true if field e is set (has been assigned a value) and false otherwise */
-    public boolean isSetE() {
-      return this.e != null;
-    }
-
-    public void setEIsSet(boolean value) {
-      if (!value) {
-        this.e = null;
-      }
-    }
-
-    public void setFieldValue(_Fields field, Object value) {
-      switch (field) {
-      case E:
-        if (value == null) {
-          unsetE();
-        } else {
-          setE((ClientException)value);
-        }
-        break;
-
-      }
-    }
-
-    public Object getFieldValue(_Fields field) {
-      switch (field) {
-      case E:
-        return getE();
-
-      }
-      throw new IllegalStateException();
-    }
-
-    /** Returns true if field corresponding to fieldID is set (has been assigned a value) and false otherwise */
-    public boolean isSet(_Fields field) {
-      if (field == null) {
-        throw new IllegalArgumentException();
-      }
-
-      switch (field) {
-      case E:
-        return isSetE();
-      }
-      throw new IllegalStateException();
-    }
-
-    @Override
-    public boolean equals(Object that) {
-      if (that == null)
-        return false;
-      if (that instanceof alter_table_result)
-        return this.equals((alter_table_result)that);
-      return false;
-    }
-
-    public boolean equals(alter_table_result that) {
-      if (that == null)
-        return false;
-
-      boolean this_present_e = true && this.isSetE();
-      boolean that_present_e = true && that.isSetE();
-      if (this_present_e || that_present_e) {
-        if (!(this_present_e && that_present_e))
-          return false;
-        if (!this.e.equals(that.e))
-          return false;
-      }
-
-      return true;
-    }
-
-    @Override
-    public int hashCode() {
-      return 0;
-    }
-
-    public int compareTo(alter_table_result other) {
-      if (!getClass().equals(other.getClass())) {
-        return getClass().getName().compareTo(other.getClass().getName());
-      }
-
-      int lastComparison = 0;
-      alter_table_result typedOther = (alter_table_result)other;
-
-      lastComparison = Boolean.valueOf(isSetE()).compareTo(typedOther.isSetE());
-      if (lastComparison != 0) {
-        return lastComparison;
-      }
-      if (isSetE()) {
-        lastComparison = org.apache.thrift.TBaseHelper.compareTo(this.e, typedOther.e);
-        if (lastComparison != 0) {
-          return lastComparison;
-        }
-      }
-      return 0;
-    }
-
-    public _Fields fieldForId(int fieldId) {
-      return _Fields.findByThriftId(fieldId);
-    }
-
-    public void read(org.apache.thrift.protocol.TProtocol iprot) throws org.apache.thrift.TException {
-      schemes.get(iprot.getScheme()).getScheme().read(iprot, this);
-    }
-
-    public void write(org.apache.thrift.protocol.TProtocol oprot) throws org.apache.thrift.TException {
-      schemes.get(oprot.getScheme()).getScheme().write(oprot, this);
-      }
-
-    @Override
-    public String toString() {
-      StringBuilder sb = new StringBuilder("alter_table_result(");
-      boolean first = true;
-
-      sb.append("e:");
-      if (this.e == null) {
-        sb.append("null");
-      } else {
-        sb.append(this.e);
-      }
-      first = false;
-      sb.append(")");
-      return sb.toString();
-    }
-
-    public void validate() throws org.apache.thrift.TException {
-      // check for required fields
-    }
-
-    private void writeObject(java.io.ObjectOutputStream out) throws java.io.IOException {
-      try {
-        write(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(out)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
-      try {
-        read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
-      } catch (org.apache.thrift.TException te) {
-        throw new java.io.IOException(te);
-      }
-    }
-
-    private static class alter_table_resultStandardSchemeFactory implements SchemeFactory {
-      public alter_table_resultStandardScheme getScheme() {
-        return new alter_table_resultStandardScheme();
-      }
-    }
-
-    private static class alter_table_resultStandardScheme extends StandardScheme<alter_table_result> {
-
-      public void read(org.apache.thrift.protocol.TProtocol iprot, alter_table_result struct) throws org.apache.thrift.TException {
-        org.apache.thrift.protocol.TField schemeField;
-        iprot.readStructBegin();
-        while (true)
-        {
-          schemeField = iprot.readFieldBegin();
-          if (schemeField.type == org.apache.thrift.protocol.TType.STOP) { 
-            break;
-          }
-          switch (schemeField.id) {
-            case 1: // E
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
-                struct.e = new ClientException();
-                struct.e.read(iprot);
-                struct.setEIsSet(true);
-              } else { 
-                org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-              }
-              break;
-            default:
-              org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
-          }
-          iprot.readFieldEnd();
-        }
-        iprot.readStructEnd();
-
-        // check for required fields of primitive type, which can't be checked in the validate method
-        struct.validate();
-      }
-
-      public void write(org.apache.thrift.protocol.TProtocol oprot, alter_table_result struct) throws org.apache.thrift.TException {
-        struct.validate();
-
-        oprot.writeStructBegin(STRUCT_DESC);
-        if (struct.e != null) {
-          oprot.writeFieldBegin(E_FIELD_DESC);
-          struct.e.write(oprot);
-          oprot.writeFieldEnd();
-        }
-        oprot.writeFieldStop();
-        oprot.writeStructEnd();
-      }
-
-    }
-
-    private static class alter_table_resultTupleSchemeFactory implements SchemeFactory {
-      public alter_table_resultTupleScheme getScheme() {
-        return new alter_table_resultTupleScheme();
-      }
-    }
-
-    private static class alter_table_resultTupleScheme extends TupleScheme<alter_table_result> {
-
-      @Override
-      public void write(org.apache.thrift.protocol.TProtocol prot, alter_table_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol oprot = (TTupleProtocol) prot;
-        BitSet optionals = new BitSet();
-        if (struct.isSetE()) {
-          optionals.set(0);
-        }
-        oprot.writeBitSet(optionals, 1);
-        if (struct.isSetE()) {
-          struct.e.write(oprot);
-        }
-      }
-
-      @Override
-      public void read(org.apache.thrift.protocol.TProtocol prot, alter_table_result struct) throws org.apache.thrift.TException {
-        TTupleProtocol iprot = (TTupleProtocol) prot;
-        BitSet incoming = iprot.readBitSet(1);
-        if (incoming.get(0)) {
-          struct.e = new ClientException();
-          struct.e.read(iprot);
-          struct.setEIsSet(true);
-        }
-      }
-    }
-
-  }
-
   public static class table_alter_args implements org.apache.thrift.TBase<table_alter_args, table_alter_args._Fields>, java.io.Serializable, Cloneable   {
     private static final org.apache.thrift.protocol.TStruct STRUCT_DESC = new org.apache.thrift.protocol.TStruct("table_alter_args");
 
     private static final org.apache.thrift.protocol.TField NS_FIELD_DESC = new org.apache.thrift.protocol.TField("ns", org.apache.thrift.protocol.TType.I64, (short)1);
     private static final org.apache.thrift.protocol.TField TABLE_NAME_FIELD_DESC = new org.apache.thrift.protocol.TField("table_name", org.apache.thrift.protocol.TType.STRING, (short)2);
-    private static final org.apache.thrift.protocol.TField SCHEMA_FIELD_DESC = new org.apache.thrift.protocol.TField("schema", org.apache.thrift.protocol.TType.STRING, (short)3);
+    private static final org.apache.thrift.protocol.TField SCHEMA_FIELD_DESC = new org.apache.thrift.protocol.TField("schema", org.apache.thrift.protocol.TType.STRUCT, (short)3);
 
     private static final Map<Class<? extends IScheme>, SchemeFactory> schemes = new HashMap<Class<? extends IScheme>, SchemeFactory>();
     static {
@@ -15745,7 +13759,7 @@ public class ClientService {
 
     public long ns; // required
     public String table_name; // required
-    public String schema; // required
+    public Schema schema; // required
 
     /** The set of fields this struct contains, along with convenience methods for finding and manipulating them. */
     public enum _Fields implements org.apache.thrift.TFieldIdEnum {
@@ -15822,7 +13836,7 @@ public class ClientService {
       tmpMap.put(_Fields.TABLE_NAME, new org.apache.thrift.meta_data.FieldMetaData("table_name", org.apache.thrift.TFieldRequirementType.DEFAULT, 
           new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
       tmpMap.put(_Fields.SCHEMA, new org.apache.thrift.meta_data.FieldMetaData("schema", org.apache.thrift.TFieldRequirementType.DEFAULT, 
-          new org.apache.thrift.meta_data.FieldValueMetaData(org.apache.thrift.protocol.TType.STRING)));
+          new org.apache.thrift.meta_data.StructMetaData(org.apache.thrift.protocol.TType.STRUCT, Schema.class)));
       metaDataMap = Collections.unmodifiableMap(tmpMap);
       org.apache.thrift.meta_data.FieldMetaData.addStructMetaDataMap(table_alter_args.class, metaDataMap);
     }
@@ -15833,7 +13847,7 @@ public class ClientService {
     public table_alter_args(
       long ns,
       String table_name,
-      String schema)
+      Schema schema)
     {
       this();
       this.ns = ns;
@@ -15853,7 +13867,7 @@ public class ClientService {
         this.table_name = other.table_name;
       }
       if (other.isSetSchema()) {
-        this.schema = other.schema;
+        this.schema = new Schema(other.schema);
       }
     }
 
@@ -15916,11 +13930,11 @@ public class ClientService {
       }
     }
 
-    public String getSchema() {
+    public Schema getSchema() {
       return this.schema;
     }
 
-    public table_alter_args setSchema(String schema) {
+    public table_alter_args setSchema(Schema schema) {
       this.schema = schema;
       return this;
     }
@@ -15962,7 +13976,7 @@ public class ClientService {
         if (value == null) {
           unsetSchema();
         } else {
-          setSchema((String)value);
+          setSchema((Schema)value);
         }
         break;
 
@@ -16144,8 +14158,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -16187,8 +14199,9 @@ public class ClientService {
               }
               break;
             case 3: // SCHEMA
-              if (schemeField.type == org.apache.thrift.protocol.TType.STRING) {
-                struct.schema = iprot.readString();
+              if (schemeField.type == org.apache.thrift.protocol.TType.STRUCT) {
+                struct.schema = new Schema();
+                struct.schema.read(iprot);
                 struct.setSchemaIsSet(true);
               } else { 
                 org.apache.thrift.protocol.TProtocolUtil.skip(iprot, schemeField.type);
@@ -16219,7 +14232,7 @@ public class ClientService {
         }
         if (struct.schema != null) {
           oprot.writeFieldBegin(SCHEMA_FIELD_DESC);
-          oprot.writeString(struct.schema);
+          struct.schema.write(oprot);
           oprot.writeFieldEnd();
         }
         oprot.writeFieldStop();
@@ -16257,7 +14270,7 @@ public class ClientService {
           oprot.writeString(struct.table_name);
         }
         if (struct.isSetSchema()) {
-          oprot.writeString(struct.schema);
+          struct.schema.write(oprot);
         }
       }
 
@@ -16274,7 +14287,8 @@ public class ClientService {
           struct.setTable_nameIsSet(true);
         }
         if (incoming.get(2)) {
-          struct.schema = iprot.readString();
+          struct.schema = new Schema();
+          struct.schema.read(iprot);
           struct.setSchemaIsSet(true);
         }
       }
@@ -42735,14 +40749,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list84 = iprot.readListBegin();
-                  struct.success = new ArrayList<Cell>(_list84.size);
-                  for (int _i85 = 0; _i85 < _list84.size; ++_i85)
+                  org.apache.thrift.protocol.TList _list76 = iprot.readListBegin();
+                  struct.success = new ArrayList<Cell>(_list76.size);
+                  for (int _i77 = 0; _i77 < _list76.size; ++_i77)
                   {
-                    Cell _elem86; // required
-                    _elem86 = new Cell();
-                    _elem86.read(iprot);
-                    struct.success.add(_elem86);
+                    Cell _elem78; // required
+                    _elem78 = new Cell();
+                    _elem78.read(iprot);
+                    struct.success.add(_elem78);
                   }
                   iprot.readListEnd();
                 }
@@ -42779,9 +40793,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Cell _iter87 : struct.success)
+            for (Cell _iter79 : struct.success)
             {
-              _iter87.write(oprot);
+              _iter79.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -42820,9 +40834,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Cell _iter88 : struct.success)
+            for (Cell _iter80 : struct.success)
             {
-              _iter88.write(oprot);
+              _iter80.write(oprot);
             }
           }
         }
@@ -42837,14 +40851,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list89 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Cell>(_list89.size);
-            for (int _i90 = 0; _i90 < _list89.size; ++_i90)
+            org.apache.thrift.protocol.TList _list81 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Cell>(_list81.size);
+            for (int _i82 = 0; _i82 < _list81.size; ++_i82)
             {
-              Cell _elem91; // required
-              _elem91 = new Cell();
-              _elem91.read(iprot);
-              struct.success.add(_elem91);
+              Cell _elem83; // required
+              _elem83 = new Cell();
+              _elem83.read(iprot);
+              struct.success.add(_elem83);
             }
           }
           struct.setSuccessIsSet(true);
@@ -43596,14 +41610,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list92 = iprot.readListBegin();
-                  struct.success = new ArrayList<Cell>(_list92.size);
-                  for (int _i93 = 0; _i93 < _list92.size; ++_i93)
+                  org.apache.thrift.protocol.TList _list84 = iprot.readListBegin();
+                  struct.success = new ArrayList<Cell>(_list84.size);
+                  for (int _i85 = 0; _i85 < _list84.size; ++_i85)
                   {
-                    Cell _elem94; // required
-                    _elem94 = new Cell();
-                    _elem94.read(iprot);
-                    struct.success.add(_elem94);
+                    Cell _elem86; // required
+                    _elem86 = new Cell();
+                    _elem86.read(iprot);
+                    struct.success.add(_elem86);
                   }
                   iprot.readListEnd();
                 }
@@ -43640,9 +41654,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Cell _iter95 : struct.success)
+            for (Cell _iter87 : struct.success)
             {
-              _iter95.write(oprot);
+              _iter87.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -43681,9 +41695,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Cell _iter96 : struct.success)
+            for (Cell _iter88 : struct.success)
             {
-              _iter96.write(oprot);
+              _iter88.write(oprot);
             }
           }
         }
@@ -43698,14 +41712,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list97 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Cell>(_list97.size);
-            for (int _i98 = 0; _i98 < _list97.size; ++_i98)
+            org.apache.thrift.protocol.TList _list89 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Cell>(_list89.size);
+            for (int _i90 = 0; _i90 < _list89.size; ++_i90)
             {
-              Cell _elem99; // required
-              _elem99 = new Cell();
-              _elem99.read(iprot);
-              struct.success.add(_elem99);
+              Cell _elem91; // required
+              _elem91 = new Cell();
+              _elem91.read(iprot);
+              struct.success.add(_elem91);
             }
           }
           struct.setSuccessIsSet(true);
@@ -44457,23 +42471,23 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list100 = iprot.readListBegin();
-                  struct.success = new ArrayList<List<String>>(_list100.size);
-                  for (int _i101 = 0; _i101 < _list100.size; ++_i101)
+                  org.apache.thrift.protocol.TList _list92 = iprot.readListBegin();
+                  struct.success = new ArrayList<List<String>>(_list92.size);
+                  for (int _i93 = 0; _i93 < _list92.size; ++_i93)
                   {
-                    List<String> _elem102; // required
+                    List<String> _elem94; // required
                     {
-                      org.apache.thrift.protocol.TList _list103 = iprot.readListBegin();
-                      _elem102 = new ArrayList<String>(_list103.size);
-                      for (int _i104 = 0; _i104 < _list103.size; ++_i104)
+                      org.apache.thrift.protocol.TList _list95 = iprot.readListBegin();
+                      _elem94 = new ArrayList<String>(_list95.size);
+                      for (int _i96 = 0; _i96 < _list95.size; ++_i96)
                       {
-                        String _elem105; // required
-                        _elem105 = iprot.readString();
-                        _elem102.add(_elem105);
+                        String _elem97; // required
+                        _elem97 = iprot.readString();
+                        _elem94.add(_elem97);
                       }
                       iprot.readListEnd();
                     }
-                    struct.success.add(_elem102);
+                    struct.success.add(_elem94);
                   }
                   iprot.readListEnd();
                 }
@@ -44510,13 +42524,13 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.success.size()));
-            for (List<String> _iter106 : struct.success)
+            for (List<String> _iter98 : struct.success)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter106.size()));
-                for (String _iter107 : _iter106)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter98.size()));
+                for (String _iter99 : _iter98)
                 {
-                  oprot.writeString(_iter107);
+                  oprot.writeString(_iter99);
                 }
                 oprot.writeListEnd();
               }
@@ -44558,13 +42572,13 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (List<String> _iter108 : struct.success)
+            for (List<String> _iter100 : struct.success)
             {
               {
-                oprot.writeI32(_iter108.size());
-                for (String _iter109 : _iter108)
+                oprot.writeI32(_iter100.size());
+                for (String _iter101 : _iter100)
                 {
-                  oprot.writeString(_iter109);
+                  oprot.writeString(_iter101);
                 }
               }
             }
@@ -44581,22 +42595,22 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list110 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.success = new ArrayList<List<String>>(_list110.size);
-            for (int _i111 = 0; _i111 < _list110.size; ++_i111)
+            org.apache.thrift.protocol.TList _list102 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.success = new ArrayList<List<String>>(_list102.size);
+            for (int _i103 = 0; _i103 < _list102.size; ++_i103)
             {
-              List<String> _elem112; // required
+              List<String> _elem104; // required
               {
-                org.apache.thrift.protocol.TList _list113 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem112 = new ArrayList<String>(_list113.size);
-                for (int _i114 = 0; _i114 < _list113.size; ++_i114)
+                org.apache.thrift.protocol.TList _list105 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem104 = new ArrayList<String>(_list105.size);
+                for (int _i106 = 0; _i106 < _list105.size; ++_i106)
                 {
-                  String _elem115; // required
-                  _elem115 = iprot.readString();
-                  _elem112.add(_elem115);
+                  String _elem107; // required
+                  _elem107 = iprot.readString();
+                  _elem104.add(_elem107);
                 }
               }
-              struct.success.add(_elem112);
+              struct.success.add(_elem104);
             }
           }
           struct.setSuccessIsSet(true);
@@ -45348,23 +43362,23 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list116 = iprot.readListBegin();
-                  struct.success = new ArrayList<List<String>>(_list116.size);
-                  for (int _i117 = 0; _i117 < _list116.size; ++_i117)
+                  org.apache.thrift.protocol.TList _list108 = iprot.readListBegin();
+                  struct.success = new ArrayList<List<String>>(_list108.size);
+                  for (int _i109 = 0; _i109 < _list108.size; ++_i109)
                   {
-                    List<String> _elem118; // required
+                    List<String> _elem110; // required
                     {
-                      org.apache.thrift.protocol.TList _list119 = iprot.readListBegin();
-                      _elem118 = new ArrayList<String>(_list119.size);
-                      for (int _i120 = 0; _i120 < _list119.size; ++_i120)
+                      org.apache.thrift.protocol.TList _list111 = iprot.readListBegin();
+                      _elem110 = new ArrayList<String>(_list111.size);
+                      for (int _i112 = 0; _i112 < _list111.size; ++_i112)
                       {
-                        String _elem121; // required
-                        _elem121 = iprot.readString();
-                        _elem118.add(_elem121);
+                        String _elem113; // required
+                        _elem113 = iprot.readString();
+                        _elem110.add(_elem113);
                       }
                       iprot.readListEnd();
                     }
-                    struct.success.add(_elem118);
+                    struct.success.add(_elem110);
                   }
                   iprot.readListEnd();
                 }
@@ -45401,13 +43415,13 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.success.size()));
-            for (List<String> _iter122 : struct.success)
+            for (List<String> _iter114 : struct.success)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter122.size()));
-                for (String _iter123 : _iter122)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter114.size()));
+                for (String _iter115 : _iter114)
                 {
-                  oprot.writeString(_iter123);
+                  oprot.writeString(_iter115);
                 }
                 oprot.writeListEnd();
               }
@@ -45449,13 +43463,13 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (List<String> _iter124 : struct.success)
+            for (List<String> _iter116 : struct.success)
             {
               {
-                oprot.writeI32(_iter124.size());
-                for (String _iter125 : _iter124)
+                oprot.writeI32(_iter116.size());
+                for (String _iter117 : _iter116)
                 {
-                  oprot.writeString(_iter125);
+                  oprot.writeString(_iter117);
                 }
               }
             }
@@ -45472,22 +43486,22 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list126 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.success = new ArrayList<List<String>>(_list126.size);
-            for (int _i127 = 0; _i127 < _list126.size; ++_i127)
+            org.apache.thrift.protocol.TList _list118 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.success = new ArrayList<List<String>>(_list118.size);
+            for (int _i119 = 0; _i119 < _list118.size; ++_i119)
             {
-              List<String> _elem128; // required
+              List<String> _elem120; // required
               {
-                org.apache.thrift.protocol.TList _list129 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem128 = new ArrayList<String>(_list129.size);
-                for (int _i130 = 0; _i130 < _list129.size; ++_i130)
+                org.apache.thrift.protocol.TList _list121 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem120 = new ArrayList<String>(_list121.size);
+                for (int _i122 = 0; _i122 < _list121.size; ++_i122)
                 {
-                  String _elem131; // required
-                  _elem131 = iprot.readString();
-                  _elem128.add(_elem131);
+                  String _elem123; // required
+                  _elem123 = iprot.readString();
+                  _elem120.add(_elem123);
                 }
               }
-              struct.success.add(_elem128);
+              struct.success.add(_elem120);
             }
           }
           struct.setSuccessIsSet(true);
@@ -47873,14 +45887,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list132 = iprot.readListBegin();
-                  struct.success = new ArrayList<Cell>(_list132.size);
-                  for (int _i133 = 0; _i133 < _list132.size; ++_i133)
+                  org.apache.thrift.protocol.TList _list124 = iprot.readListBegin();
+                  struct.success = new ArrayList<Cell>(_list124.size);
+                  for (int _i125 = 0; _i125 < _list124.size; ++_i125)
                   {
-                    Cell _elem134; // required
-                    _elem134 = new Cell();
-                    _elem134.read(iprot);
-                    struct.success.add(_elem134);
+                    Cell _elem126; // required
+                    _elem126 = new Cell();
+                    _elem126.read(iprot);
+                    struct.success.add(_elem126);
                   }
                   iprot.readListEnd();
                 }
@@ -47917,9 +45931,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Cell _iter135 : struct.success)
+            for (Cell _iter127 : struct.success)
             {
-              _iter135.write(oprot);
+              _iter127.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -47958,9 +45972,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Cell _iter136 : struct.success)
+            for (Cell _iter128 : struct.success)
             {
-              _iter136.write(oprot);
+              _iter128.write(oprot);
             }
           }
         }
@@ -47975,14 +45989,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list137 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Cell>(_list137.size);
-            for (int _i138 = 0; _i138 < _list137.size; ++_i138)
+            org.apache.thrift.protocol.TList _list129 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Cell>(_list129.size);
+            for (int _i130 = 0; _i130 < _list129.size; ++_i130)
             {
-              Cell _elem139; // required
-              _elem139 = new Cell();
-              _elem139.read(iprot);
-              struct.success.add(_elem139);
+              Cell _elem131; // required
+              _elem131 = new Cell();
+              _elem131.read(iprot);
+              struct.success.add(_elem131);
             }
           }
           struct.setSuccessIsSet(true);
@@ -48734,14 +46748,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list140 = iprot.readListBegin();
-                  struct.success = new ArrayList<Cell>(_list140.size);
-                  for (int _i141 = 0; _i141 < _list140.size; ++_i141)
+                  org.apache.thrift.protocol.TList _list132 = iprot.readListBegin();
+                  struct.success = new ArrayList<Cell>(_list132.size);
+                  for (int _i133 = 0; _i133 < _list132.size; ++_i133)
                   {
-                    Cell _elem142; // required
-                    _elem142 = new Cell();
-                    _elem142.read(iprot);
-                    struct.success.add(_elem142);
+                    Cell _elem134; // required
+                    _elem134 = new Cell();
+                    _elem134.read(iprot);
+                    struct.success.add(_elem134);
                   }
                   iprot.readListEnd();
                 }
@@ -48778,9 +46792,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Cell _iter143 : struct.success)
+            for (Cell _iter135 : struct.success)
             {
-              _iter143.write(oprot);
+              _iter135.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -48819,9 +46833,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Cell _iter144 : struct.success)
+            for (Cell _iter136 : struct.success)
             {
-              _iter144.write(oprot);
+              _iter136.write(oprot);
             }
           }
         }
@@ -48836,14 +46850,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list145 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Cell>(_list145.size);
-            for (int _i146 = 0; _i146 < _list145.size; ++_i146)
+            org.apache.thrift.protocol.TList _list137 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Cell>(_list137.size);
+            for (int _i138 = 0; _i138 < _list137.size; ++_i138)
             {
-              Cell _elem147; // required
-              _elem147 = new Cell();
-              _elem147.read(iprot);
-              struct.success.add(_elem147);
+              Cell _elem139; // required
+              _elem139 = new Cell();
+              _elem139.read(iprot);
+              struct.success.add(_elem139);
             }
           }
           struct.setSuccessIsSet(true);
@@ -49595,23 +47609,23 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list148 = iprot.readListBegin();
-                  struct.success = new ArrayList<List<String>>(_list148.size);
-                  for (int _i149 = 0; _i149 < _list148.size; ++_i149)
+                  org.apache.thrift.protocol.TList _list140 = iprot.readListBegin();
+                  struct.success = new ArrayList<List<String>>(_list140.size);
+                  for (int _i141 = 0; _i141 < _list140.size; ++_i141)
                   {
-                    List<String> _elem150; // required
+                    List<String> _elem142; // required
                     {
-                      org.apache.thrift.protocol.TList _list151 = iprot.readListBegin();
-                      _elem150 = new ArrayList<String>(_list151.size);
-                      for (int _i152 = 0; _i152 < _list151.size; ++_i152)
+                      org.apache.thrift.protocol.TList _list143 = iprot.readListBegin();
+                      _elem142 = new ArrayList<String>(_list143.size);
+                      for (int _i144 = 0; _i144 < _list143.size; ++_i144)
                       {
-                        String _elem153; // required
-                        _elem153 = iprot.readString();
-                        _elem150.add(_elem153);
+                        String _elem145; // required
+                        _elem145 = iprot.readString();
+                        _elem142.add(_elem145);
                       }
                       iprot.readListEnd();
                     }
-                    struct.success.add(_elem150);
+                    struct.success.add(_elem142);
                   }
                   iprot.readListEnd();
                 }
@@ -49648,13 +47662,13 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.success.size()));
-            for (List<String> _iter154 : struct.success)
+            for (List<String> _iter146 : struct.success)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter154.size()));
-                for (String _iter155 : _iter154)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter146.size()));
+                for (String _iter147 : _iter146)
                 {
-                  oprot.writeString(_iter155);
+                  oprot.writeString(_iter147);
                 }
                 oprot.writeListEnd();
               }
@@ -49696,13 +47710,13 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (List<String> _iter156 : struct.success)
+            for (List<String> _iter148 : struct.success)
             {
               {
-                oprot.writeI32(_iter156.size());
-                for (String _iter157 : _iter156)
+                oprot.writeI32(_iter148.size());
+                for (String _iter149 : _iter148)
                 {
-                  oprot.writeString(_iter157);
+                  oprot.writeString(_iter149);
                 }
               }
             }
@@ -49719,22 +47733,22 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list158 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.success = new ArrayList<List<String>>(_list158.size);
-            for (int _i159 = 0; _i159 < _list158.size; ++_i159)
+            org.apache.thrift.protocol.TList _list150 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.success = new ArrayList<List<String>>(_list150.size);
+            for (int _i151 = 0; _i151 < _list150.size; ++_i151)
             {
-              List<String> _elem160; // required
+              List<String> _elem152; // required
               {
-                org.apache.thrift.protocol.TList _list161 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem160 = new ArrayList<String>(_list161.size);
-                for (int _i162 = 0; _i162 < _list161.size; ++_i162)
+                org.apache.thrift.protocol.TList _list153 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem152 = new ArrayList<String>(_list153.size);
+                for (int _i154 = 0; _i154 < _list153.size; ++_i154)
                 {
-                  String _elem163; // required
-                  _elem163 = iprot.readString();
-                  _elem160.add(_elem163);
+                  String _elem155; // required
+                  _elem155 = iprot.readString();
+                  _elem152.add(_elem155);
                 }
               }
-              struct.success.add(_elem160);
+              struct.success.add(_elem152);
             }
           }
           struct.setSuccessIsSet(true);
@@ -50486,23 +48500,23 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list164 = iprot.readListBegin();
-                  struct.success = new ArrayList<List<String>>(_list164.size);
-                  for (int _i165 = 0; _i165 < _list164.size; ++_i165)
+                  org.apache.thrift.protocol.TList _list156 = iprot.readListBegin();
+                  struct.success = new ArrayList<List<String>>(_list156.size);
+                  for (int _i157 = 0; _i157 < _list156.size; ++_i157)
                   {
-                    List<String> _elem166; // required
+                    List<String> _elem158; // required
                     {
-                      org.apache.thrift.protocol.TList _list167 = iprot.readListBegin();
-                      _elem166 = new ArrayList<String>(_list167.size);
-                      for (int _i168 = 0; _i168 < _list167.size; ++_i168)
+                      org.apache.thrift.protocol.TList _list159 = iprot.readListBegin();
+                      _elem158 = new ArrayList<String>(_list159.size);
+                      for (int _i160 = 0; _i160 < _list159.size; ++_i160)
                       {
-                        String _elem169; // required
-                        _elem169 = iprot.readString();
-                        _elem166.add(_elem169);
+                        String _elem161; // required
+                        _elem161 = iprot.readString();
+                        _elem158.add(_elem161);
                       }
                       iprot.readListEnd();
                     }
-                    struct.success.add(_elem166);
+                    struct.success.add(_elem158);
                   }
                   iprot.readListEnd();
                 }
@@ -50539,13 +48553,13 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.success.size()));
-            for (List<String> _iter170 : struct.success)
+            for (List<String> _iter162 : struct.success)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter170.size()));
-                for (String _iter171 : _iter170)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter162.size()));
+                for (String _iter163 : _iter162)
                 {
-                  oprot.writeString(_iter171);
+                  oprot.writeString(_iter163);
                 }
                 oprot.writeListEnd();
               }
@@ -50587,13 +48601,13 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (List<String> _iter172 : struct.success)
+            for (List<String> _iter164 : struct.success)
             {
               {
-                oprot.writeI32(_iter172.size());
-                for (String _iter173 : _iter172)
+                oprot.writeI32(_iter164.size());
+                for (String _iter165 : _iter164)
                 {
-                  oprot.writeString(_iter173);
+                  oprot.writeString(_iter165);
                 }
               }
             }
@@ -50610,22 +48624,22 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list174 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.success = new ArrayList<List<String>>(_list174.size);
-            for (int _i175 = 0; _i175 < _list174.size; ++_i175)
+            org.apache.thrift.protocol.TList _list166 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.success = new ArrayList<List<String>>(_list166.size);
+            for (int _i167 = 0; _i167 < _list166.size; ++_i167)
             {
-              List<String> _elem176; // required
+              List<String> _elem168; // required
               {
-                org.apache.thrift.protocol.TList _list177 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem176 = new ArrayList<String>(_list177.size);
-                for (int _i178 = 0; _i178 < _list177.size; ++_i178)
+                org.apache.thrift.protocol.TList _list169 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem168 = new ArrayList<String>(_list169.size);
+                for (int _i170 = 0; _i170 < _list169.size; ++_i170)
                 {
-                  String _elem179; // required
-                  _elem179 = iprot.readString();
-                  _elem176.add(_elem179);
+                  String _elem171; // required
+                  _elem171 = iprot.readString();
+                  _elem168.add(_elem171);
                 }
               }
-              struct.success.add(_elem176);
+              struct.success.add(_elem168);
             }
           }
           struct.setSuccessIsSet(true);
@@ -53209,14 +51223,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list180 = iprot.readListBegin();
-                  struct.success = new ArrayList<Cell>(_list180.size);
-                  for (int _i181 = 0; _i181 < _list180.size; ++_i181)
+                  org.apache.thrift.protocol.TList _list172 = iprot.readListBegin();
+                  struct.success = new ArrayList<Cell>(_list172.size);
+                  for (int _i173 = 0; _i173 < _list172.size; ++_i173)
                   {
-                    Cell _elem182; // required
-                    _elem182 = new Cell();
-                    _elem182.read(iprot);
-                    struct.success.add(_elem182);
+                    Cell _elem174; // required
+                    _elem174 = new Cell();
+                    _elem174.read(iprot);
+                    struct.success.add(_elem174);
                   }
                   iprot.readListEnd();
                 }
@@ -53253,9 +51267,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Cell _iter183 : struct.success)
+            for (Cell _iter175 : struct.success)
             {
-              _iter183.write(oprot);
+              _iter175.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -53294,9 +51308,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Cell _iter184 : struct.success)
+            for (Cell _iter176 : struct.success)
             {
-              _iter184.write(oprot);
+              _iter176.write(oprot);
             }
           }
         }
@@ -53311,14 +51325,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list185 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Cell>(_list185.size);
-            for (int _i186 = 0; _i186 < _list185.size; ++_i186)
+            org.apache.thrift.protocol.TList _list177 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Cell>(_list177.size);
+            for (int _i178 = 0; _i178 < _list177.size; ++_i178)
             {
-              Cell _elem187; // required
-              _elem187 = new Cell();
-              _elem187.read(iprot);
-              struct.success.add(_elem187);
+              Cell _elem179; // required
+              _elem179 = new Cell();
+              _elem179.read(iprot);
+              struct.success.add(_elem179);
             }
           }
           struct.setSuccessIsSet(true);
@@ -54270,23 +52284,23 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list188 = iprot.readListBegin();
-                  struct.success = new ArrayList<List<String>>(_list188.size);
-                  for (int _i189 = 0; _i189 < _list188.size; ++_i189)
+                  org.apache.thrift.protocol.TList _list180 = iprot.readListBegin();
+                  struct.success = new ArrayList<List<String>>(_list180.size);
+                  for (int _i181 = 0; _i181 < _list180.size; ++_i181)
                   {
-                    List<String> _elem190; // required
+                    List<String> _elem182; // required
                     {
-                      org.apache.thrift.protocol.TList _list191 = iprot.readListBegin();
-                      _elem190 = new ArrayList<String>(_list191.size);
-                      for (int _i192 = 0; _i192 < _list191.size; ++_i192)
+                      org.apache.thrift.protocol.TList _list183 = iprot.readListBegin();
+                      _elem182 = new ArrayList<String>(_list183.size);
+                      for (int _i184 = 0; _i184 < _list183.size; ++_i184)
                       {
-                        String _elem193; // required
-                        _elem193 = iprot.readString();
-                        _elem190.add(_elem193);
+                        String _elem185; // required
+                        _elem185 = iprot.readString();
+                        _elem182.add(_elem185);
                       }
                       iprot.readListEnd();
                     }
-                    struct.success.add(_elem190);
+                    struct.success.add(_elem182);
                   }
                   iprot.readListEnd();
                 }
@@ -54323,13 +52337,13 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.success.size()));
-            for (List<String> _iter194 : struct.success)
+            for (List<String> _iter186 : struct.success)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter194.size()));
-                for (String _iter195 : _iter194)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter186.size()));
+                for (String _iter187 : _iter186)
                 {
-                  oprot.writeString(_iter195);
+                  oprot.writeString(_iter187);
                 }
                 oprot.writeListEnd();
               }
@@ -54371,13 +52385,13 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (List<String> _iter196 : struct.success)
+            for (List<String> _iter188 : struct.success)
             {
               {
-                oprot.writeI32(_iter196.size());
-                for (String _iter197 : _iter196)
+                oprot.writeI32(_iter188.size());
+                for (String _iter189 : _iter188)
                 {
-                  oprot.writeString(_iter197);
+                  oprot.writeString(_iter189);
                 }
               }
             }
@@ -54394,22 +52408,22 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list198 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.success = new ArrayList<List<String>>(_list198.size);
-            for (int _i199 = 0; _i199 < _list198.size; ++_i199)
+            org.apache.thrift.protocol.TList _list190 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.success = new ArrayList<List<String>>(_list190.size);
+            for (int _i191 = 0; _i191 < _list190.size; ++_i191)
             {
-              List<String> _elem200; // required
+              List<String> _elem192; // required
               {
-                org.apache.thrift.protocol.TList _list201 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem200 = new ArrayList<String>(_list201.size);
-                for (int _i202 = 0; _i202 < _list201.size; ++_i202)
+                org.apache.thrift.protocol.TList _list193 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem192 = new ArrayList<String>(_list193.size);
+                for (int _i194 = 0; _i194 < _list193.size; ++_i194)
                 {
-                  String _elem203; // required
-                  _elem203 = iprot.readString();
-                  _elem200.add(_elem203);
+                  String _elem195; // required
+                  _elem195 = iprot.readString();
+                  _elem192.add(_elem195);
                 }
               }
-              struct.success.add(_elem200);
+              struct.success.add(_elem192);
             }
           }
           struct.setSuccessIsSet(true);
@@ -57493,14 +55507,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list204 = iprot.readListBegin();
-                  struct.success = new ArrayList<Cell>(_list204.size);
-                  for (int _i205 = 0; _i205 < _list204.size; ++_i205)
+                  org.apache.thrift.protocol.TList _list196 = iprot.readListBegin();
+                  struct.success = new ArrayList<Cell>(_list196.size);
+                  for (int _i197 = 0; _i197 < _list196.size; ++_i197)
                   {
-                    Cell _elem206; // required
-                    _elem206 = new Cell();
-                    _elem206.read(iprot);
-                    struct.success.add(_elem206);
+                    Cell _elem198; // required
+                    _elem198 = new Cell();
+                    _elem198.read(iprot);
+                    struct.success.add(_elem198);
                   }
                   iprot.readListEnd();
                 }
@@ -57537,9 +55551,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (Cell _iter207 : struct.success)
+            for (Cell _iter199 : struct.success)
             {
-              _iter207.write(oprot);
+              _iter199.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -57578,9 +55592,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (Cell _iter208 : struct.success)
+            for (Cell _iter200 : struct.success)
             {
-              _iter208.write(oprot);
+              _iter200.write(oprot);
             }
           }
         }
@@ -57595,14 +55609,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list209 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<Cell>(_list209.size);
-            for (int _i210 = 0; _i210 < _list209.size; ++_i210)
+            org.apache.thrift.protocol.TList _list201 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<Cell>(_list201.size);
+            for (int _i202 = 0; _i202 < _list201.size; ++_i202)
             {
-              Cell _elem211; // required
-              _elem211 = new Cell();
-              _elem211.read(iprot);
-              struct.success.add(_elem211);
+              Cell _elem203; // required
+              _elem203 = new Cell();
+              _elem203.read(iprot);
+              struct.success.add(_elem203);
             }
           }
           struct.setSuccessIsSet(true);
@@ -58556,23 +56570,23 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list212 = iprot.readListBegin();
-                  struct.success = new ArrayList<List<String>>(_list212.size);
-                  for (int _i213 = 0; _i213 < _list212.size; ++_i213)
+                  org.apache.thrift.protocol.TList _list204 = iprot.readListBegin();
+                  struct.success = new ArrayList<List<String>>(_list204.size);
+                  for (int _i205 = 0; _i205 < _list204.size; ++_i205)
                   {
-                    List<String> _elem214; // required
+                    List<String> _elem206; // required
                     {
-                      org.apache.thrift.protocol.TList _list215 = iprot.readListBegin();
-                      _elem214 = new ArrayList<String>(_list215.size);
-                      for (int _i216 = 0; _i216 < _list215.size; ++_i216)
+                      org.apache.thrift.protocol.TList _list207 = iprot.readListBegin();
+                      _elem206 = new ArrayList<String>(_list207.size);
+                      for (int _i208 = 0; _i208 < _list207.size; ++_i208)
                       {
-                        String _elem217; // required
-                        _elem217 = iprot.readString();
-                        _elem214.add(_elem217);
+                        String _elem209; // required
+                        _elem209 = iprot.readString();
+                        _elem206.add(_elem209);
                       }
                       iprot.readListEnd();
                     }
-                    struct.success.add(_elem214);
+                    struct.success.add(_elem206);
                   }
                   iprot.readListEnd();
                 }
@@ -58609,13 +56623,13 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.success.size()));
-            for (List<String> _iter218 : struct.success)
+            for (List<String> _iter210 : struct.success)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter218.size()));
-                for (String _iter219 : _iter218)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter210.size()));
+                for (String _iter211 : _iter210)
                 {
-                  oprot.writeString(_iter219);
+                  oprot.writeString(_iter211);
                 }
                 oprot.writeListEnd();
               }
@@ -58657,13 +56671,13 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (List<String> _iter220 : struct.success)
+            for (List<String> _iter212 : struct.success)
             {
               {
-                oprot.writeI32(_iter220.size());
-                for (String _iter221 : _iter220)
+                oprot.writeI32(_iter212.size());
+                for (String _iter213 : _iter212)
                 {
-                  oprot.writeString(_iter221);
+                  oprot.writeString(_iter213);
                 }
               }
             }
@@ -58680,22 +56694,22 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list222 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.success = new ArrayList<List<String>>(_list222.size);
-            for (int _i223 = 0; _i223 < _list222.size; ++_i223)
+            org.apache.thrift.protocol.TList _list214 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.success = new ArrayList<List<String>>(_list214.size);
+            for (int _i215 = 0; _i215 < _list214.size; ++_i215)
             {
-              List<String> _elem224; // required
+              List<String> _elem216; // required
               {
-                org.apache.thrift.protocol.TList _list225 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem224 = new ArrayList<String>(_list225.size);
-                for (int _i226 = 0; _i226 < _list225.size; ++_i226)
+                org.apache.thrift.protocol.TList _list217 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem216 = new ArrayList<String>(_list217.size);
+                for (int _i218 = 0; _i218 < _list217.size; ++_i218)
                 {
-                  String _elem227; // required
-                  _elem227 = iprot.readString();
-                  _elem224.add(_elem227);
+                  String _elem219; // required
+                  _elem219 = iprot.readString();
+                  _elem216.add(_elem219);
                 }
               }
-              struct.success.add(_elem224);
+              struct.success.add(_elem216);
             }
           }
           struct.setSuccessIsSet(true);
@@ -62108,14 +60122,14 @@ public class ClientService {
             case 4: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list228 = iprot.readListBegin();
-                  struct.cells = new ArrayList<Cell>(_list228.size);
-                  for (int _i229 = 0; _i229 < _list228.size; ++_i229)
+                  org.apache.thrift.protocol.TList _list220 = iprot.readListBegin();
+                  struct.cells = new ArrayList<Cell>(_list220.size);
+                  for (int _i221 = 0; _i221 < _list220.size; ++_i221)
                   {
-                    Cell _elem230; // required
-                    _elem230 = new Cell();
-                    _elem230.read(iprot);
-                    struct.cells.add(_elem230);
+                    Cell _elem222; // required
+                    _elem222 = new Cell();
+                    _elem222.read(iprot);
+                    struct.cells.add(_elem222);
                   }
                   iprot.readListEnd();
                 }
@@ -62156,9 +60170,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.cells.size()));
-            for (Cell _iter231 : struct.cells)
+            for (Cell _iter223 : struct.cells)
             {
-              _iter231.write(oprot);
+              _iter223.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -62207,9 +60221,9 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (Cell _iter232 : struct.cells)
+            for (Cell _iter224 : struct.cells)
             {
-              _iter232.write(oprot);
+              _iter224.write(oprot);
             }
           }
         }
@@ -62234,14 +60248,14 @@ public class ClientService {
         }
         if (incoming.get(3)) {
           {
-            org.apache.thrift.protocol.TList _list233 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.cells = new ArrayList<Cell>(_list233.size);
-            for (int _i234 = 0; _i234 < _list233.size; ++_i234)
+            org.apache.thrift.protocol.TList _list225 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.cells = new ArrayList<Cell>(_list225.size);
+            for (int _i226 = 0; _i226 < _list225.size; ++_i226)
             {
-              Cell _elem235; // required
-              _elem235 = new Cell();
-              _elem235.read(iprot);
-              struct.cells.add(_elem235);
+              Cell _elem227; // required
+              _elem227 = new Cell();
+              _elem227.read(iprot);
+              struct.cells.add(_elem227);
             }
           }
           struct.setCellsIsSet(true);
@@ -63171,14 +61185,14 @@ public class ClientService {
             case 4: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list236 = iprot.readListBegin();
-                  struct.cells = new ArrayList<Cell>(_list236.size);
-                  for (int _i237 = 0; _i237 < _list236.size; ++_i237)
+                  org.apache.thrift.protocol.TList _list228 = iprot.readListBegin();
+                  struct.cells = new ArrayList<Cell>(_list228.size);
+                  for (int _i229 = 0; _i229 < _list228.size; ++_i229)
                   {
-                    Cell _elem238; // required
-                    _elem238 = new Cell();
-                    _elem238.read(iprot);
-                    struct.cells.add(_elem238);
+                    Cell _elem230; // required
+                    _elem230 = new Cell();
+                    _elem230.read(iprot);
+                    struct.cells.add(_elem230);
                   }
                   iprot.readListEnd();
                 }
@@ -63219,9 +61233,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.cells.size()));
-            for (Cell _iter239 : struct.cells)
+            for (Cell _iter231 : struct.cells)
             {
-              _iter239.write(oprot);
+              _iter231.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -63270,9 +61284,9 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (Cell _iter240 : struct.cells)
+            for (Cell _iter232 : struct.cells)
             {
-              _iter240.write(oprot);
+              _iter232.write(oprot);
             }
           }
         }
@@ -63297,14 +61311,14 @@ public class ClientService {
         }
         if (incoming.get(3)) {
           {
-            org.apache.thrift.protocol.TList _list241 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.cells = new ArrayList<Cell>(_list241.size);
-            for (int _i242 = 0; _i242 < _list241.size; ++_i242)
+            org.apache.thrift.protocol.TList _list233 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.cells = new ArrayList<Cell>(_list233.size);
+            for (int _i234 = 0; _i234 < _list233.size; ++_i234)
             {
-              Cell _elem243; // required
-              _elem243 = new Cell();
-              _elem243.read(iprot);
-              struct.cells.add(_elem243);
+              Cell _elem235; // required
+              _elem235 = new Cell();
+              _elem235.read(iprot);
+              struct.cells.add(_elem235);
             }
           }
           struct.setCellsIsSet(true);
@@ -64234,23 +62248,23 @@ public class ClientService {
             case 4: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list244 = iprot.readListBegin();
-                  struct.cells = new ArrayList<List<String>>(_list244.size);
-                  for (int _i245 = 0; _i245 < _list244.size; ++_i245)
+                  org.apache.thrift.protocol.TList _list236 = iprot.readListBegin();
+                  struct.cells = new ArrayList<List<String>>(_list236.size);
+                  for (int _i237 = 0; _i237 < _list236.size; ++_i237)
                   {
-                    List<String> _elem246; // required
+                    List<String> _elem238; // required
                     {
-                      org.apache.thrift.protocol.TList _list247 = iprot.readListBegin();
-                      _elem246 = new ArrayList<String>(_list247.size);
-                      for (int _i248 = 0; _i248 < _list247.size; ++_i248)
+                      org.apache.thrift.protocol.TList _list239 = iprot.readListBegin();
+                      _elem238 = new ArrayList<String>(_list239.size);
+                      for (int _i240 = 0; _i240 < _list239.size; ++_i240)
                       {
-                        String _elem249; // required
-                        _elem249 = iprot.readString();
-                        _elem246.add(_elem249);
+                        String _elem241; // required
+                        _elem241 = iprot.readString();
+                        _elem238.add(_elem241);
                       }
                       iprot.readListEnd();
                     }
-                    struct.cells.add(_elem246);
+                    struct.cells.add(_elem238);
                   }
                   iprot.readListEnd();
                 }
@@ -64291,13 +62305,13 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.cells.size()));
-            for (List<String> _iter250 : struct.cells)
+            for (List<String> _iter242 : struct.cells)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter250.size()));
-                for (String _iter251 : _iter250)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter242.size()));
+                for (String _iter243 : _iter242)
                 {
-                  oprot.writeString(_iter251);
+                  oprot.writeString(_iter243);
                 }
                 oprot.writeListEnd();
               }
@@ -64349,13 +62363,13 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (List<String> _iter252 : struct.cells)
+            for (List<String> _iter244 : struct.cells)
             {
               {
-                oprot.writeI32(_iter252.size());
-                for (String _iter253 : _iter252)
+                oprot.writeI32(_iter244.size());
+                for (String _iter245 : _iter244)
                 {
-                  oprot.writeString(_iter253);
+                  oprot.writeString(_iter245);
                 }
               }
             }
@@ -64382,22 +62396,22 @@ public class ClientService {
         }
         if (incoming.get(3)) {
           {
-            org.apache.thrift.protocol.TList _list254 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.cells = new ArrayList<List<String>>(_list254.size);
-            for (int _i255 = 0; _i255 < _list254.size; ++_i255)
+            org.apache.thrift.protocol.TList _list246 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.cells = new ArrayList<List<String>>(_list246.size);
+            for (int _i247 = 0; _i247 < _list246.size; ++_i247)
             {
-              List<String> _elem256; // required
+              List<String> _elem248; // required
               {
-                org.apache.thrift.protocol.TList _list257 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem256 = new ArrayList<String>(_list257.size);
-                for (int _i258 = 0; _i258 < _list257.size; ++_i258)
+                org.apache.thrift.protocol.TList _list249 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem248 = new ArrayList<String>(_list249.size);
+                for (int _i250 = 0; _i250 < _list249.size; ++_i250)
                 {
-                  String _elem259; // required
-                  _elem259 = iprot.readString();
-                  _elem256.add(_elem259);
+                  String _elem251; // required
+                  _elem251 = iprot.readString();
+                  _elem248.add(_elem251);
                 }
               }
-              struct.cells.add(_elem256);
+              struct.cells.add(_elem248);
             }
           }
           struct.setCellsIsSet(true);
@@ -65327,23 +63341,23 @@ public class ClientService {
             case 4: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list260 = iprot.readListBegin();
-                  struct.cells = new ArrayList<List<String>>(_list260.size);
-                  for (int _i261 = 0; _i261 < _list260.size; ++_i261)
+                  org.apache.thrift.protocol.TList _list252 = iprot.readListBegin();
+                  struct.cells = new ArrayList<List<String>>(_list252.size);
+                  for (int _i253 = 0; _i253 < _list252.size; ++_i253)
                   {
-                    List<String> _elem262; // required
+                    List<String> _elem254; // required
                     {
-                      org.apache.thrift.protocol.TList _list263 = iprot.readListBegin();
-                      _elem262 = new ArrayList<String>(_list263.size);
-                      for (int _i264 = 0; _i264 < _list263.size; ++_i264)
+                      org.apache.thrift.protocol.TList _list255 = iprot.readListBegin();
+                      _elem254 = new ArrayList<String>(_list255.size);
+                      for (int _i256 = 0; _i256 < _list255.size; ++_i256)
                       {
-                        String _elem265; // required
-                        _elem265 = iprot.readString();
-                        _elem262.add(_elem265);
+                        String _elem257; // required
+                        _elem257 = iprot.readString();
+                        _elem254.add(_elem257);
                       }
                       iprot.readListEnd();
                     }
-                    struct.cells.add(_elem262);
+                    struct.cells.add(_elem254);
                   }
                   iprot.readListEnd();
                 }
@@ -65384,13 +63398,13 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.cells.size()));
-            for (List<String> _iter266 : struct.cells)
+            for (List<String> _iter258 : struct.cells)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter266.size()));
-                for (String _iter267 : _iter266)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter258.size()));
+                for (String _iter259 : _iter258)
                 {
-                  oprot.writeString(_iter267);
+                  oprot.writeString(_iter259);
                 }
                 oprot.writeListEnd();
               }
@@ -65442,13 +63456,13 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (List<String> _iter268 : struct.cells)
+            for (List<String> _iter260 : struct.cells)
             {
               {
-                oprot.writeI32(_iter268.size());
-                for (String _iter269 : _iter268)
+                oprot.writeI32(_iter260.size());
+                for (String _iter261 : _iter260)
                 {
-                  oprot.writeString(_iter269);
+                  oprot.writeString(_iter261);
                 }
               }
             }
@@ -65475,22 +63489,22 @@ public class ClientService {
         }
         if (incoming.get(3)) {
           {
-            org.apache.thrift.protocol.TList _list270 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.cells = new ArrayList<List<String>>(_list270.size);
-            for (int _i271 = 0; _i271 < _list270.size; ++_i271)
+            org.apache.thrift.protocol.TList _list262 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.cells = new ArrayList<List<String>>(_list262.size);
+            for (int _i263 = 0; _i263 < _list262.size; ++_i263)
             {
-              List<String> _elem272; // required
+              List<String> _elem264; // required
               {
-                org.apache.thrift.protocol.TList _list273 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem272 = new ArrayList<String>(_list273.size);
-                for (int _i274 = 0; _i274 < _list273.size; ++_i274)
+                org.apache.thrift.protocol.TList _list265 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem264 = new ArrayList<String>(_list265.size);
+                for (int _i266 = 0; _i266 < _list265.size; ++_i266)
                 {
-                  String _elem275; // required
-                  _elem275 = iprot.readString();
-                  _elem272.add(_elem275);
+                  String _elem267; // required
+                  _elem267 = iprot.readString();
+                  _elem264.add(_elem267);
                 }
               }
-              struct.cells.add(_elem272);
+              struct.cells.add(_elem264);
             }
           }
           struct.setCellsIsSet(true);
@@ -68435,13 +66449,13 @@ public class ClientService {
             case 4: // CELL
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list276 = iprot.readListBegin();
-                  struct.cell = new ArrayList<String>(_list276.size);
-                  for (int _i277 = 0; _i277 < _list276.size; ++_i277)
+                  org.apache.thrift.protocol.TList _list268 = iprot.readListBegin();
+                  struct.cell = new ArrayList<String>(_list268.size);
+                  for (int _i269 = 0; _i269 < _list268.size; ++_i269)
                   {
-                    String _elem278; // required
-                    _elem278 = iprot.readString();
-                    struct.cell.add(_elem278);
+                    String _elem270; // required
+                    _elem270 = iprot.readString();
+                    struct.cell.add(_elem270);
                   }
                   iprot.readListEnd();
                 }
@@ -68482,9 +66496,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELL_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.cell.size()));
-            for (String _iter279 : struct.cell)
+            for (String _iter271 : struct.cell)
             {
-              oprot.writeString(_iter279);
+              oprot.writeString(_iter271);
             }
             oprot.writeListEnd();
           }
@@ -68533,9 +66547,9 @@ public class ClientService {
         if (struct.isSetCell()) {
           {
             oprot.writeI32(struct.cell.size());
-            for (String _iter280 : struct.cell)
+            for (String _iter272 : struct.cell)
             {
-              oprot.writeString(_iter280);
+              oprot.writeString(_iter272);
             }
           }
         }
@@ -68560,13 +66574,13 @@ public class ClientService {
         }
         if (incoming.get(3)) {
           {
-            org.apache.thrift.protocol.TList _list281 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.cell = new ArrayList<String>(_list281.size);
-            for (int _i282 = 0; _i282 < _list281.size; ++_i282)
+            org.apache.thrift.protocol.TList _list273 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.cell = new ArrayList<String>(_list273.size);
+            for (int _i274 = 0; _i274 < _list273.size; ++_i274)
             {
-              String _elem283; // required
-              _elem283 = iprot.readString();
-              struct.cell.add(_elem283);
+              String _elem275; // required
+              _elem275 = iprot.readString();
+              struct.cell.add(_elem275);
             }
           }
           struct.setCellIsSet(true);
@@ -69437,6 +67451,8 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
+        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
+        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -69489,13 +67505,13 @@ public class ClientService {
             case 4: // CELL
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list284 = iprot.readListBegin();
-                  struct.cell = new ArrayList<String>(_list284.size);
-                  for (int _i285 = 0; _i285 < _list284.size; ++_i285)
+                  org.apache.thrift.protocol.TList _list276 = iprot.readListBegin();
+                  struct.cell = new ArrayList<String>(_list276.size);
+                  for (int _i277 = 0; _i277 < _list276.size; ++_i277)
                   {
-                    String _elem286; // required
-                    _elem286 = iprot.readString();
-                    struct.cell.add(_elem286);
+                    String _elem278; // required
+                    _elem278 = iprot.readString();
+                    struct.cell.add(_elem278);
                   }
                   iprot.readListEnd();
                 }
@@ -69536,9 +67552,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELL_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.cell.size()));
-            for (String _iter287 : struct.cell)
+            for (String _iter279 : struct.cell)
             {
-              oprot.writeString(_iter287);
+              oprot.writeString(_iter279);
             }
             oprot.writeListEnd();
           }
@@ -69587,9 +67603,9 @@ public class ClientService {
         if (struct.isSetCell()) {
           {
             oprot.writeI32(struct.cell.size());
-            for (String _iter288 : struct.cell)
+            for (String _iter280 : struct.cell)
             {
-              oprot.writeString(_iter288);
+              oprot.writeString(_iter280);
             }
           }
         }
@@ -69614,13 +67630,13 @@ public class ClientService {
         }
         if (incoming.get(3)) {
           {
-            org.apache.thrift.protocol.TList _list289 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.cell = new ArrayList<String>(_list289.size);
-            for (int _i290 = 0; _i290 < _list289.size; ++_i290)
+            org.apache.thrift.protocol.TList _list281 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.cell = new ArrayList<String>(_list281.size);
+            for (int _i282 = 0; _i282 < _list281.size; ++_i282)
             {
-              String _elem291; // required
-              _elem291 = iprot.readString();
-              struct.cell.add(_elem291);
+              String _elem283; // required
+              _elem283 = iprot.readString();
+              struct.cell.add(_elem283);
             }
           }
           struct.setCellIsSet(true);
@@ -71566,8 +69582,6 @@ public class ClientService {
 
     private void readObject(java.io.ObjectInputStream in) throws java.io.IOException, ClassNotFoundException {
       try {
-        // it doesn't seem like you should have to do this, but java serialization is wacky, and doesn't call the default constructor.
-        __isset_bit_vector = new BitSet(1);
         read(new org.apache.thrift.protocol.TCompactProtocol(new org.apache.thrift.transport.TIOStreamTransport(in)));
       } catch (org.apache.thrift.TException te) {
         throw new java.io.IOException(te);
@@ -80708,13 +78722,13 @@ public class ClientService {
             case 2: // CELL
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list292 = iprot.readListBegin();
-                  struct.cell = new ArrayList<String>(_list292.size);
-                  for (int _i293 = 0; _i293 < _list292.size; ++_i293)
+                  org.apache.thrift.protocol.TList _list284 = iprot.readListBegin();
+                  struct.cell = new ArrayList<String>(_list284.size);
+                  for (int _i285 = 0; _i285 < _list284.size; ++_i285)
                   {
-                    String _elem294; // required
-                    _elem294 = iprot.readString();
-                    struct.cell.add(_elem294);
+                    String _elem286; // required
+                    _elem286 = iprot.readString();
+                    struct.cell.add(_elem286);
                   }
                   iprot.readListEnd();
                 }
@@ -80745,9 +78759,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELL_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.cell.size()));
-            for (String _iter295 : struct.cell)
+            for (String _iter287 : struct.cell)
             {
-              oprot.writeString(_iter295);
+              oprot.writeString(_iter287);
             }
             oprot.writeListEnd();
           }
@@ -80784,9 +78798,9 @@ public class ClientService {
         if (struct.isSetCell()) {
           {
             oprot.writeI32(struct.cell.size());
-            for (String _iter296 : struct.cell)
+            for (String _iter288 : struct.cell)
             {
-              oprot.writeString(_iter296);
+              oprot.writeString(_iter288);
             }
           }
         }
@@ -80802,13 +78816,13 @@ public class ClientService {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list297 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.cell = new ArrayList<String>(_list297.size);
-            for (int _i298 = 0; _i298 < _list297.size; ++_i298)
+            org.apache.thrift.protocol.TList _list289 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.cell = new ArrayList<String>(_list289.size);
+            for (int _i290 = 0; _i290 < _list289.size; ++_i290)
             {
-              String _elem299; // required
-              _elem299 = iprot.readString();
-              struct.cell.add(_elem299);
+              String _elem291; // required
+              _elem291 = iprot.readString();
+              struct.cell.add(_elem291);
             }
           }
           struct.setCellIsSet(true);
@@ -81647,13 +79661,13 @@ public class ClientService {
             case 3: // CELL
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list300 = iprot.readListBegin();
-                  struct.cell = new ArrayList<String>(_list300.size);
-                  for (int _i301 = 0; _i301 < _list300.size; ++_i301)
+                  org.apache.thrift.protocol.TList _list292 = iprot.readListBegin();
+                  struct.cell = new ArrayList<String>(_list292.size);
+                  for (int _i293 = 0; _i293 < _list292.size; ++_i293)
                   {
-                    String _elem302; // required
-                    _elem302 = iprot.readString();
-                    struct.cell.add(_elem302);
+                    String _elem294; // required
+                    _elem294 = iprot.readString();
+                    struct.cell.add(_elem294);
                   }
                   iprot.readListEnd();
                 }
@@ -81689,9 +79703,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELL_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.cell.size()));
-            for (String _iter303 : struct.cell)
+            for (String _iter295 : struct.cell)
             {
-              oprot.writeString(_iter303);
+              oprot.writeString(_iter295);
             }
             oprot.writeListEnd();
           }
@@ -81734,9 +79748,9 @@ public class ClientService {
         if (struct.isSetCell()) {
           {
             oprot.writeI32(struct.cell.size());
-            for (String _iter304 : struct.cell)
+            for (String _iter296 : struct.cell)
             {
-              oprot.writeString(_iter304);
+              oprot.writeString(_iter296);
             }
           }
         }
@@ -81756,13 +79770,13 @@ public class ClientService {
         }
         if (incoming.get(2)) {
           {
-            org.apache.thrift.protocol.TList _list305 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.cell = new ArrayList<String>(_list305.size);
-            for (int _i306 = 0; _i306 < _list305.size; ++_i306)
+            org.apache.thrift.protocol.TList _list297 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.cell = new ArrayList<String>(_list297.size);
+            for (int _i298 = 0; _i298 < _list297.size; ++_i298)
             {
-              String _elem307; // required
-              _elem307 = iprot.readString();
-              struct.cell.add(_elem307);
+              String _elem299; // required
+              _elem299 = iprot.readString();
+              struct.cell.add(_elem299);
             }
           }
           struct.setCellIsSet(true);
@@ -82519,14 +80533,14 @@ public class ClientService {
             case 2: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list308 = iprot.readListBegin();
-                  struct.cells = new ArrayList<Cell>(_list308.size);
-                  for (int _i309 = 0; _i309 < _list308.size; ++_i309)
+                  org.apache.thrift.protocol.TList _list300 = iprot.readListBegin();
+                  struct.cells = new ArrayList<Cell>(_list300.size);
+                  for (int _i301 = 0; _i301 < _list300.size; ++_i301)
                   {
-                    Cell _elem310; // required
-                    _elem310 = new Cell();
-                    _elem310.read(iprot);
-                    struct.cells.add(_elem310);
+                    Cell _elem302; // required
+                    _elem302 = new Cell();
+                    _elem302.read(iprot);
+                    struct.cells.add(_elem302);
                   }
                   iprot.readListEnd();
                 }
@@ -82557,9 +80571,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.cells.size()));
-            for (Cell _iter311 : struct.cells)
+            for (Cell _iter303 : struct.cells)
             {
-              _iter311.write(oprot);
+              _iter303.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -82596,9 +80610,9 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (Cell _iter312 : struct.cells)
+            for (Cell _iter304 : struct.cells)
             {
-              _iter312.write(oprot);
+              _iter304.write(oprot);
             }
           }
         }
@@ -82614,14 +80628,14 @@ public class ClientService {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list313 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.cells = new ArrayList<Cell>(_list313.size);
-            for (int _i314 = 0; _i314 < _list313.size; ++_i314)
+            org.apache.thrift.protocol.TList _list305 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.cells = new ArrayList<Cell>(_list305.size);
+            for (int _i306 = 0; _i306 < _list305.size; ++_i306)
             {
-              Cell _elem315; // required
-              _elem315 = new Cell();
-              _elem315.read(iprot);
-              struct.cells.add(_elem315);
+              Cell _elem307; // required
+              _elem307 = new Cell();
+              _elem307.read(iprot);
+              struct.cells.add(_elem307);
             }
           }
           struct.setCellsIsSet(true);
@@ -83463,14 +81477,14 @@ public class ClientService {
             case 3: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list316 = iprot.readListBegin();
-                  struct.cells = new ArrayList<Cell>(_list316.size);
-                  for (int _i317 = 0; _i317 < _list316.size; ++_i317)
+                  org.apache.thrift.protocol.TList _list308 = iprot.readListBegin();
+                  struct.cells = new ArrayList<Cell>(_list308.size);
+                  for (int _i309 = 0; _i309 < _list308.size; ++_i309)
                   {
-                    Cell _elem318; // required
-                    _elem318 = new Cell();
-                    _elem318.read(iprot);
-                    struct.cells.add(_elem318);
+                    Cell _elem310; // required
+                    _elem310 = new Cell();
+                    _elem310.read(iprot);
+                    struct.cells.add(_elem310);
                   }
                   iprot.readListEnd();
                 }
@@ -83506,9 +81520,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.cells.size()));
-            for (Cell _iter319 : struct.cells)
+            for (Cell _iter311 : struct.cells)
             {
-              _iter319.write(oprot);
+              _iter311.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -83551,9 +81565,9 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (Cell _iter320 : struct.cells)
+            for (Cell _iter312 : struct.cells)
             {
-              _iter320.write(oprot);
+              _iter312.write(oprot);
             }
           }
         }
@@ -83573,14 +81587,14 @@ public class ClientService {
         }
         if (incoming.get(2)) {
           {
-            org.apache.thrift.protocol.TList _list321 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.cells = new ArrayList<Cell>(_list321.size);
-            for (int _i322 = 0; _i322 < _list321.size; ++_i322)
+            org.apache.thrift.protocol.TList _list313 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.cells = new ArrayList<Cell>(_list313.size);
+            for (int _i314 = 0; _i314 < _list313.size; ++_i314)
             {
-              Cell _elem323; // required
-              _elem323 = new Cell();
-              _elem323.read(iprot);
-              struct.cells.add(_elem323);
+              Cell _elem315; // required
+              _elem315 = new Cell();
+              _elem315.read(iprot);
+              struct.cells.add(_elem315);
             }
           }
           struct.setCellsIsSet(true);
@@ -84339,23 +82353,23 @@ public class ClientService {
             case 2: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list324 = iprot.readListBegin();
-                  struct.cells = new ArrayList<List<String>>(_list324.size);
-                  for (int _i325 = 0; _i325 < _list324.size; ++_i325)
+                  org.apache.thrift.protocol.TList _list316 = iprot.readListBegin();
+                  struct.cells = new ArrayList<List<String>>(_list316.size);
+                  for (int _i317 = 0; _i317 < _list316.size; ++_i317)
                   {
-                    List<String> _elem326; // required
+                    List<String> _elem318; // required
                     {
-                      org.apache.thrift.protocol.TList _list327 = iprot.readListBegin();
-                      _elem326 = new ArrayList<String>(_list327.size);
-                      for (int _i328 = 0; _i328 < _list327.size; ++_i328)
+                      org.apache.thrift.protocol.TList _list319 = iprot.readListBegin();
+                      _elem318 = new ArrayList<String>(_list319.size);
+                      for (int _i320 = 0; _i320 < _list319.size; ++_i320)
                       {
-                        String _elem329; // required
-                        _elem329 = iprot.readString();
-                        _elem326.add(_elem329);
+                        String _elem321; // required
+                        _elem321 = iprot.readString();
+                        _elem318.add(_elem321);
                       }
                       iprot.readListEnd();
                     }
-                    struct.cells.add(_elem326);
+                    struct.cells.add(_elem318);
                   }
                   iprot.readListEnd();
                 }
@@ -84386,13 +82400,13 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.cells.size()));
-            for (List<String> _iter330 : struct.cells)
+            for (List<String> _iter322 : struct.cells)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter330.size()));
-                for (String _iter331 : _iter330)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter322.size()));
+                for (String _iter323 : _iter322)
                 {
-                  oprot.writeString(_iter331);
+                  oprot.writeString(_iter323);
                 }
                 oprot.writeListEnd();
               }
@@ -84432,13 +82446,13 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (List<String> _iter332 : struct.cells)
+            for (List<String> _iter324 : struct.cells)
             {
               {
-                oprot.writeI32(_iter332.size());
-                for (String _iter333 : _iter332)
+                oprot.writeI32(_iter324.size());
+                for (String _iter325 : _iter324)
                 {
-                  oprot.writeString(_iter333);
+                  oprot.writeString(_iter325);
                 }
               }
             }
@@ -84456,22 +82470,22 @@ public class ClientService {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list334 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.cells = new ArrayList<List<String>>(_list334.size);
-            for (int _i335 = 0; _i335 < _list334.size; ++_i335)
+            org.apache.thrift.protocol.TList _list326 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.cells = new ArrayList<List<String>>(_list326.size);
+            for (int _i327 = 0; _i327 < _list326.size; ++_i327)
             {
-              List<String> _elem336; // required
+              List<String> _elem328; // required
               {
-                org.apache.thrift.protocol.TList _list337 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem336 = new ArrayList<String>(_list337.size);
-                for (int _i338 = 0; _i338 < _list337.size; ++_i338)
+                org.apache.thrift.protocol.TList _list329 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem328 = new ArrayList<String>(_list329.size);
+                for (int _i330 = 0; _i330 < _list329.size; ++_i330)
                 {
-                  String _elem339; // required
-                  _elem339 = iprot.readString();
-                  _elem336.add(_elem339);
+                  String _elem331; // required
+                  _elem331 = iprot.readString();
+                  _elem328.add(_elem331);
                 }
               }
-              struct.cells.add(_elem336);
+              struct.cells.add(_elem328);
             }
           }
           struct.setCellsIsSet(true);
@@ -85315,23 +83329,23 @@ public class ClientService {
             case 3: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list340 = iprot.readListBegin();
-                  struct.cells = new ArrayList<List<String>>(_list340.size);
-                  for (int _i341 = 0; _i341 < _list340.size; ++_i341)
+                  org.apache.thrift.protocol.TList _list332 = iprot.readListBegin();
+                  struct.cells = new ArrayList<List<String>>(_list332.size);
+                  for (int _i333 = 0; _i333 < _list332.size; ++_i333)
                   {
-                    List<String> _elem342; // required
+                    List<String> _elem334; // required
                     {
-                      org.apache.thrift.protocol.TList _list343 = iprot.readListBegin();
-                      _elem342 = new ArrayList<String>(_list343.size);
-                      for (int _i344 = 0; _i344 < _list343.size; ++_i344)
+                      org.apache.thrift.protocol.TList _list335 = iprot.readListBegin();
+                      _elem334 = new ArrayList<String>(_list335.size);
+                      for (int _i336 = 0; _i336 < _list335.size; ++_i336)
                       {
-                        String _elem345; // required
-                        _elem345 = iprot.readString();
-                        _elem342.add(_elem345);
+                        String _elem337; // required
+                        _elem337 = iprot.readString();
+                        _elem334.add(_elem337);
                       }
                       iprot.readListEnd();
                     }
-                    struct.cells.add(_elem342);
+                    struct.cells.add(_elem334);
                   }
                   iprot.readListEnd();
                 }
@@ -85367,13 +83381,13 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.cells.size()));
-            for (List<String> _iter346 : struct.cells)
+            for (List<String> _iter338 : struct.cells)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter346.size()));
-                for (String _iter347 : _iter346)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter338.size()));
+                for (String _iter339 : _iter338)
                 {
-                  oprot.writeString(_iter347);
+                  oprot.writeString(_iter339);
                 }
                 oprot.writeListEnd();
               }
@@ -85419,13 +83433,13 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (List<String> _iter348 : struct.cells)
+            for (List<String> _iter340 : struct.cells)
             {
               {
-                oprot.writeI32(_iter348.size());
-                for (String _iter349 : _iter348)
+                oprot.writeI32(_iter340.size());
+                for (String _iter341 : _iter340)
                 {
-                  oprot.writeString(_iter349);
+                  oprot.writeString(_iter341);
                 }
               }
             }
@@ -85447,22 +83461,22 @@ public class ClientService {
         }
         if (incoming.get(2)) {
           {
-            org.apache.thrift.protocol.TList _list350 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.cells = new ArrayList<List<String>>(_list350.size);
-            for (int _i351 = 0; _i351 < _list350.size; ++_i351)
+            org.apache.thrift.protocol.TList _list342 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.cells = new ArrayList<List<String>>(_list342.size);
+            for (int _i343 = 0; _i343 < _list342.size; ++_i343)
             {
-              List<String> _elem352; // required
+              List<String> _elem344; // required
               {
-                org.apache.thrift.protocol.TList _list353 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem352 = new ArrayList<String>(_list353.size);
-                for (int _i354 = 0; _i354 < _list353.size; ++_i354)
+                org.apache.thrift.protocol.TList _list345 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem344 = new ArrayList<String>(_list345.size);
+                for (int _i346 = 0; _i346 < _list345.size; ++_i346)
                 {
-                  String _elem355; // required
-                  _elem355 = iprot.readString();
-                  _elem352.add(_elem355);
+                  String _elem347; // required
+                  _elem347 = iprot.readString();
+                  _elem344.add(_elem347);
                 }
               }
-              struct.cells.add(_elem352);
+              struct.cells.add(_elem344);
             }
           }
           struct.setCellsIsSet(true);
@@ -91076,13 +89090,13 @@ public class ClientService {
             case 2: // CELL
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list356 = iprot.readListBegin();
-                  struct.cell = new ArrayList<String>(_list356.size);
-                  for (int _i357 = 0; _i357 < _list356.size; ++_i357)
+                  org.apache.thrift.protocol.TList _list348 = iprot.readListBegin();
+                  struct.cell = new ArrayList<String>(_list348.size);
+                  for (int _i349 = 0; _i349 < _list348.size; ++_i349)
                   {
-                    String _elem358; // required
-                    _elem358 = iprot.readString();
-                    struct.cell.add(_elem358);
+                    String _elem350; // required
+                    _elem350 = iprot.readString();
+                    struct.cell.add(_elem350);
                   }
                   iprot.readListEnd();
                 }
@@ -91113,9 +89127,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELL_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.cell.size()));
-            for (String _iter359 : struct.cell)
+            for (String _iter351 : struct.cell)
             {
-              oprot.writeString(_iter359);
+              oprot.writeString(_iter351);
             }
             oprot.writeListEnd();
           }
@@ -91152,9 +89166,9 @@ public class ClientService {
         if (struct.isSetCell()) {
           {
             oprot.writeI32(struct.cell.size());
-            for (String _iter360 : struct.cell)
+            for (String _iter352 : struct.cell)
             {
-              oprot.writeString(_iter360);
+              oprot.writeString(_iter352);
             }
           }
         }
@@ -91170,13 +89184,13 @@ public class ClientService {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list361 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.cell = new ArrayList<String>(_list361.size);
-            for (int _i362 = 0; _i362 < _list361.size; ++_i362)
+            org.apache.thrift.protocol.TList _list353 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.cell = new ArrayList<String>(_list353.size);
+            for (int _i354 = 0; _i354 < _list353.size; ++_i354)
             {
-              String _elem363; // required
-              _elem363 = iprot.readString();
-              struct.cell.add(_elem363);
+              String _elem355; // required
+              _elem355 = iprot.readString();
+              struct.cell.add(_elem355);
             }
           }
           struct.setCellIsSet(true);
@@ -91930,13 +89944,13 @@ public class ClientService {
             case 2: // CELL
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list364 = iprot.readListBegin();
-                  struct.cell = new ArrayList<String>(_list364.size);
-                  for (int _i365 = 0; _i365 < _list364.size; ++_i365)
+                  org.apache.thrift.protocol.TList _list356 = iprot.readListBegin();
+                  struct.cell = new ArrayList<String>(_list356.size);
+                  for (int _i357 = 0; _i357 < _list356.size; ++_i357)
                   {
-                    String _elem366; // required
-                    _elem366 = iprot.readString();
-                    struct.cell.add(_elem366);
+                    String _elem358; // required
+                    _elem358 = iprot.readString();
+                    struct.cell.add(_elem358);
                   }
                   iprot.readListEnd();
                 }
@@ -91967,9 +89981,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELL_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.cell.size()));
-            for (String _iter367 : struct.cell)
+            for (String _iter359 : struct.cell)
             {
-              oprot.writeString(_iter367);
+              oprot.writeString(_iter359);
             }
             oprot.writeListEnd();
           }
@@ -92006,9 +90020,9 @@ public class ClientService {
         if (struct.isSetCell()) {
           {
             oprot.writeI32(struct.cell.size());
-            for (String _iter368 : struct.cell)
+            for (String _iter360 : struct.cell)
             {
-              oprot.writeString(_iter368);
+              oprot.writeString(_iter360);
             }
           }
         }
@@ -92024,13 +90038,13 @@ public class ClientService {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list369 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.cell = new ArrayList<String>(_list369.size);
-            for (int _i370 = 0; _i370 < _list369.size; ++_i370)
+            org.apache.thrift.protocol.TList _list361 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.cell = new ArrayList<String>(_list361.size);
+            for (int _i362 = 0; _i362 < _list361.size; ++_i362)
             {
-              String _elem371; // required
-              _elem371 = iprot.readString();
-              struct.cell.add(_elem371);
+              String _elem363; // required
+              _elem363 = iprot.readString();
+              struct.cell.add(_elem363);
             }
           }
           struct.setCellIsSet(true);
@@ -92787,14 +90801,14 @@ public class ClientService {
             case 2: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list372 = iprot.readListBegin();
-                  struct.cells = new ArrayList<Cell>(_list372.size);
-                  for (int _i373 = 0; _i373 < _list372.size; ++_i373)
+                  org.apache.thrift.protocol.TList _list364 = iprot.readListBegin();
+                  struct.cells = new ArrayList<Cell>(_list364.size);
+                  for (int _i365 = 0; _i365 < _list364.size; ++_i365)
                   {
-                    Cell _elem374; // required
-                    _elem374 = new Cell();
-                    _elem374.read(iprot);
-                    struct.cells.add(_elem374);
+                    Cell _elem366; // required
+                    _elem366 = new Cell();
+                    _elem366.read(iprot);
+                    struct.cells.add(_elem366);
                   }
                   iprot.readListEnd();
                 }
@@ -92825,9 +90839,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.cells.size()));
-            for (Cell _iter375 : struct.cells)
+            for (Cell _iter367 : struct.cells)
             {
-              _iter375.write(oprot);
+              _iter367.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -92864,9 +90878,9 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (Cell _iter376 : struct.cells)
+            for (Cell _iter368 : struct.cells)
             {
-              _iter376.write(oprot);
+              _iter368.write(oprot);
             }
           }
         }
@@ -92882,14 +90896,14 @@ public class ClientService {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list377 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.cells = new ArrayList<Cell>(_list377.size);
-            for (int _i378 = 0; _i378 < _list377.size; ++_i378)
+            org.apache.thrift.protocol.TList _list369 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.cells = new ArrayList<Cell>(_list369.size);
+            for (int _i370 = 0; _i370 < _list369.size; ++_i370)
             {
-              Cell _elem379; // required
-              _elem379 = new Cell();
-              _elem379.read(iprot);
-              struct.cells.add(_elem379);
+              Cell _elem371; // required
+              _elem371 = new Cell();
+              _elem371.read(iprot);
+              struct.cells.add(_elem371);
             }
           }
           struct.setCellsIsSet(true);
@@ -93648,14 +91662,14 @@ public class ClientService {
             case 2: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list380 = iprot.readListBegin();
-                  struct.cells = new ArrayList<Cell>(_list380.size);
-                  for (int _i381 = 0; _i381 < _list380.size; ++_i381)
+                  org.apache.thrift.protocol.TList _list372 = iprot.readListBegin();
+                  struct.cells = new ArrayList<Cell>(_list372.size);
+                  for (int _i373 = 0; _i373 < _list372.size; ++_i373)
                   {
-                    Cell _elem382; // required
-                    _elem382 = new Cell();
-                    _elem382.read(iprot);
-                    struct.cells.add(_elem382);
+                    Cell _elem374; // required
+                    _elem374 = new Cell();
+                    _elem374.read(iprot);
+                    struct.cells.add(_elem374);
                   }
                   iprot.readListEnd();
                 }
@@ -93686,9 +91700,9 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.cells.size()));
-            for (Cell _iter383 : struct.cells)
+            for (Cell _iter375 : struct.cells)
             {
-              _iter383.write(oprot);
+              _iter375.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -93725,9 +91739,9 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (Cell _iter384 : struct.cells)
+            for (Cell _iter376 : struct.cells)
             {
-              _iter384.write(oprot);
+              _iter376.write(oprot);
             }
           }
         }
@@ -93743,14 +91757,14 @@ public class ClientService {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list385 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.cells = new ArrayList<Cell>(_list385.size);
-            for (int _i386 = 0; _i386 < _list385.size; ++_i386)
+            org.apache.thrift.protocol.TList _list377 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.cells = new ArrayList<Cell>(_list377.size);
+            for (int _i378 = 0; _i378 < _list377.size; ++_i378)
             {
-              Cell _elem387; // required
-              _elem387 = new Cell();
-              _elem387.read(iprot);
-              struct.cells.add(_elem387);
+              Cell _elem379; // required
+              _elem379 = new Cell();
+              _elem379.read(iprot);
+              struct.cells.add(_elem379);
             }
           }
           struct.setCellsIsSet(true);
@@ -94509,23 +92523,23 @@ public class ClientService {
             case 2: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list388 = iprot.readListBegin();
-                  struct.cells = new ArrayList<List<String>>(_list388.size);
-                  for (int _i389 = 0; _i389 < _list388.size; ++_i389)
+                  org.apache.thrift.protocol.TList _list380 = iprot.readListBegin();
+                  struct.cells = new ArrayList<List<String>>(_list380.size);
+                  for (int _i381 = 0; _i381 < _list380.size; ++_i381)
                   {
-                    List<String> _elem390; // required
+                    List<String> _elem382; // required
                     {
-                      org.apache.thrift.protocol.TList _list391 = iprot.readListBegin();
-                      _elem390 = new ArrayList<String>(_list391.size);
-                      for (int _i392 = 0; _i392 < _list391.size; ++_i392)
+                      org.apache.thrift.protocol.TList _list383 = iprot.readListBegin();
+                      _elem382 = new ArrayList<String>(_list383.size);
+                      for (int _i384 = 0; _i384 < _list383.size; ++_i384)
                       {
-                        String _elem393; // required
-                        _elem393 = iprot.readString();
-                        _elem390.add(_elem393);
+                        String _elem385; // required
+                        _elem385 = iprot.readString();
+                        _elem382.add(_elem385);
                       }
                       iprot.readListEnd();
                     }
-                    struct.cells.add(_elem390);
+                    struct.cells.add(_elem382);
                   }
                   iprot.readListEnd();
                 }
@@ -94556,13 +92570,13 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.cells.size()));
-            for (List<String> _iter394 : struct.cells)
+            for (List<String> _iter386 : struct.cells)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter394.size()));
-                for (String _iter395 : _iter394)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter386.size()));
+                for (String _iter387 : _iter386)
                 {
-                  oprot.writeString(_iter395);
+                  oprot.writeString(_iter387);
                 }
                 oprot.writeListEnd();
               }
@@ -94602,13 +92616,13 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (List<String> _iter396 : struct.cells)
+            for (List<String> _iter388 : struct.cells)
             {
               {
-                oprot.writeI32(_iter396.size());
-                for (String _iter397 : _iter396)
+                oprot.writeI32(_iter388.size());
+                for (String _iter389 : _iter388)
                 {
-                  oprot.writeString(_iter397);
+                  oprot.writeString(_iter389);
                 }
               }
             }
@@ -94626,22 +92640,22 @@ public class ClientService {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list398 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.cells = new ArrayList<List<String>>(_list398.size);
-            for (int _i399 = 0; _i399 < _list398.size; ++_i399)
+            org.apache.thrift.protocol.TList _list390 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.cells = new ArrayList<List<String>>(_list390.size);
+            for (int _i391 = 0; _i391 < _list390.size; ++_i391)
             {
-              List<String> _elem400; // required
+              List<String> _elem392; // required
               {
-                org.apache.thrift.protocol.TList _list401 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem400 = new ArrayList<String>(_list401.size);
-                for (int _i402 = 0; _i402 < _list401.size; ++_i402)
+                org.apache.thrift.protocol.TList _list393 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem392 = new ArrayList<String>(_list393.size);
+                for (int _i394 = 0; _i394 < _list393.size; ++_i394)
                 {
-                  String _elem403; // required
-                  _elem403 = iprot.readString();
-                  _elem400.add(_elem403);
+                  String _elem395; // required
+                  _elem395 = iprot.readString();
+                  _elem392.add(_elem395);
                 }
               }
-              struct.cells.add(_elem400);
+              struct.cells.add(_elem392);
             }
           }
           struct.setCellsIsSet(true);
@@ -95400,23 +93414,23 @@ public class ClientService {
             case 2: // CELLS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list404 = iprot.readListBegin();
-                  struct.cells = new ArrayList<List<String>>(_list404.size);
-                  for (int _i405 = 0; _i405 < _list404.size; ++_i405)
+                  org.apache.thrift.protocol.TList _list396 = iprot.readListBegin();
+                  struct.cells = new ArrayList<List<String>>(_list396.size);
+                  for (int _i397 = 0; _i397 < _list396.size; ++_i397)
                   {
-                    List<String> _elem406; // required
+                    List<String> _elem398; // required
                     {
-                      org.apache.thrift.protocol.TList _list407 = iprot.readListBegin();
-                      _elem406 = new ArrayList<String>(_list407.size);
-                      for (int _i408 = 0; _i408 < _list407.size; ++_i408)
+                      org.apache.thrift.protocol.TList _list399 = iprot.readListBegin();
+                      _elem398 = new ArrayList<String>(_list399.size);
+                      for (int _i400 = 0; _i400 < _list399.size; ++_i400)
                       {
-                        String _elem409; // required
-                        _elem409 = iprot.readString();
-                        _elem406.add(_elem409);
+                        String _elem401; // required
+                        _elem401 = iprot.readString();
+                        _elem398.add(_elem401);
                       }
                       iprot.readListEnd();
                     }
-                    struct.cells.add(_elem406);
+                    struct.cells.add(_elem398);
                   }
                   iprot.readListEnd();
                 }
@@ -95447,13 +93461,13 @@ public class ClientService {
           oprot.writeFieldBegin(CELLS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, struct.cells.size()));
-            for (List<String> _iter410 : struct.cells)
+            for (List<String> _iter402 : struct.cells)
             {
               {
-                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter410.size()));
-                for (String _iter411 : _iter410)
+                oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, _iter402.size()));
+                for (String _iter403 : _iter402)
                 {
-                  oprot.writeString(_iter411);
+                  oprot.writeString(_iter403);
                 }
                 oprot.writeListEnd();
               }
@@ -95493,13 +93507,13 @@ public class ClientService {
         if (struct.isSetCells()) {
           {
             oprot.writeI32(struct.cells.size());
-            for (List<String> _iter412 : struct.cells)
+            for (List<String> _iter404 : struct.cells)
             {
               {
-                oprot.writeI32(_iter412.size());
-                for (String _iter413 : _iter412)
+                oprot.writeI32(_iter404.size());
+                for (String _iter405 : _iter404)
                 {
-                  oprot.writeString(_iter413);
+                  oprot.writeString(_iter405);
                 }
               }
             }
@@ -95517,22 +93531,22 @@ public class ClientService {
         }
         if (incoming.get(1)) {
           {
-            org.apache.thrift.protocol.TList _list414 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
-            struct.cells = new ArrayList<List<String>>(_list414.size);
-            for (int _i415 = 0; _i415 < _list414.size; ++_i415)
+            org.apache.thrift.protocol.TList _list406 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.LIST, iprot.readI32());
+            struct.cells = new ArrayList<List<String>>(_list406.size);
+            for (int _i407 = 0; _i407 < _list406.size; ++_i407)
             {
-              List<String> _elem416; // required
+              List<String> _elem408; // required
               {
-                org.apache.thrift.protocol.TList _list417 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-                _elem416 = new ArrayList<String>(_list417.size);
-                for (int _i418 = 0; _i418 < _list417.size; ++_i418)
+                org.apache.thrift.protocol.TList _list409 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+                _elem408 = new ArrayList<String>(_list409.size);
+                for (int _i410 = 0; _i410 < _list409.size; ++_i410)
                 {
-                  String _elem419; // required
-                  _elem419 = iprot.readString();
-                  _elem416.add(_elem419);
+                  String _elem411; // required
+                  _elem411 = iprot.readString();
+                  _elem408.add(_elem411);
                 }
               }
-              struct.cells.add(_elem416);
+              struct.cells.add(_elem408);
             }
           }
           struct.setCellsIsSet(true);
@@ -110542,13 +108556,13 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list420 = iprot.readListBegin();
-                  struct.success = new ArrayList<String>(_list420.size);
-                  for (int _i421 = 0; _i421 < _list420.size; ++_i421)
+                  org.apache.thrift.protocol.TList _list412 = iprot.readListBegin();
+                  struct.success = new ArrayList<String>(_list412.size);
+                  for (int _i413 = 0; _i413 < _list412.size; ++_i413)
                   {
-                    String _elem422; // required
-                    _elem422 = iprot.readString();
-                    struct.success.add(_elem422);
+                    String _elem414; // required
+                    _elem414 = iprot.readString();
+                    struct.success.add(_elem414);
                   }
                   iprot.readListEnd();
                 }
@@ -110585,9 +108599,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, struct.success.size()));
-            for (String _iter423 : struct.success)
+            for (String _iter415 : struct.success)
             {
-              oprot.writeString(_iter423);
+              oprot.writeString(_iter415);
             }
             oprot.writeListEnd();
           }
@@ -110626,9 +108640,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (String _iter424 : struct.success)
+            for (String _iter416 : struct.success)
             {
-              oprot.writeString(_iter424);
+              oprot.writeString(_iter416);
             }
           }
         }
@@ -110643,13 +108657,13 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list425 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
-            struct.success = new ArrayList<String>(_list425.size);
-            for (int _i426 = 0; _i426 < _list425.size; ++_i426)
+            org.apache.thrift.protocol.TList _list417 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRING, iprot.readI32());
+            struct.success = new ArrayList<String>(_list417.size);
+            for (int _i418 = 0; _i418 < _list417.size; ++_i418)
             {
-              String _elem427; // required
-              _elem427 = iprot.readString();
-              struct.success.add(_elem427);
+              String _elem419; // required
+              _elem419 = iprot.readString();
+              struct.success.add(_elem419);
             }
           }
           struct.setSuccessIsSet(true);
@@ -111401,14 +109415,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list428 = iprot.readListBegin();
-                  struct.success = new ArrayList<NamespaceListing>(_list428.size);
-                  for (int _i429 = 0; _i429 < _list428.size; ++_i429)
+                  org.apache.thrift.protocol.TList _list420 = iprot.readListBegin();
+                  struct.success = new ArrayList<NamespaceListing>(_list420.size);
+                  for (int _i421 = 0; _i421 < _list420.size; ++_i421)
                   {
-                    NamespaceListing _elem430; // required
-                    _elem430 = new NamespaceListing();
-                    _elem430.read(iprot);
-                    struct.success.add(_elem430);
+                    NamespaceListing _elem422; // required
+                    _elem422 = new NamespaceListing();
+                    _elem422.read(iprot);
+                    struct.success.add(_elem422);
                   }
                   iprot.readListEnd();
                 }
@@ -111445,9 +109459,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (NamespaceListing _iter431 : struct.success)
+            for (NamespaceListing _iter423 : struct.success)
             {
-              _iter431.write(oprot);
+              _iter423.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -111486,9 +109500,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (NamespaceListing _iter432 : struct.success)
+            for (NamespaceListing _iter424 : struct.success)
             {
-              _iter432.write(oprot);
+              _iter424.write(oprot);
             }
           }
         }
@@ -111503,14 +109517,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list433 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<NamespaceListing>(_list433.size);
-            for (int _i434 = 0; _i434 < _list433.size; ++_i434)
+            org.apache.thrift.protocol.TList _list425 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<NamespaceListing>(_list425.size);
+            for (int _i426 = 0; _i426 < _list425.size; ++_i426)
             {
-              NamespaceListing _elem435; // required
-              _elem435 = new NamespaceListing();
-              _elem435.read(iprot);
-              struct.success.add(_elem435);
+              NamespaceListing _elem427; // required
+              _elem427 = new NamespaceListing();
+              _elem427.read(iprot);
+              struct.success.add(_elem427);
             }
           }
           struct.setSuccessIsSet(true);
@@ -112262,14 +110276,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list436 = iprot.readListBegin();
-                  struct.success = new ArrayList<NamespaceListing>(_list436.size);
-                  for (int _i437 = 0; _i437 < _list436.size; ++_i437)
+                  org.apache.thrift.protocol.TList _list428 = iprot.readListBegin();
+                  struct.success = new ArrayList<NamespaceListing>(_list428.size);
+                  for (int _i429 = 0; _i429 < _list428.size; ++_i429)
                   {
-                    NamespaceListing _elem438; // required
-                    _elem438 = new NamespaceListing();
-                    _elem438.read(iprot);
-                    struct.success.add(_elem438);
+                    NamespaceListing _elem430; // required
+                    _elem430 = new NamespaceListing();
+                    _elem430.read(iprot);
+                    struct.success.add(_elem430);
                   }
                   iprot.readListEnd();
                 }
@@ -112306,9 +110320,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (NamespaceListing _iter439 : struct.success)
+            for (NamespaceListing _iter431 : struct.success)
             {
-              _iter439.write(oprot);
+              _iter431.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -112347,9 +110361,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (NamespaceListing _iter440 : struct.success)
+            for (NamespaceListing _iter432 : struct.success)
             {
-              _iter440.write(oprot);
+              _iter432.write(oprot);
             }
           }
         }
@@ -112364,14 +110378,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list441 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<NamespaceListing>(_list441.size);
-            for (int _i442 = 0; _i442 < _list441.size; ++_i442)
+            org.apache.thrift.protocol.TList _list433 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<NamespaceListing>(_list433.size);
+            for (int _i434 = 0; _i434 < _list433.size; ++_i434)
             {
-              NamespaceListing _elem443; // required
-              _elem443 = new NamespaceListing();
-              _elem443.read(iprot);
-              struct.success.add(_elem443);
+              NamespaceListing _elem435; // required
+              _elem435 = new NamespaceListing();
+              _elem435.read(iprot);
+              struct.success.add(_elem435);
             }
           }
           struct.setSuccessIsSet(true);
@@ -113223,14 +111237,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list444 = iprot.readListBegin();
-                  struct.success = new ArrayList<TableSplit>(_list444.size);
-                  for (int _i445 = 0; _i445 < _list444.size; ++_i445)
+                  org.apache.thrift.protocol.TList _list436 = iprot.readListBegin();
+                  struct.success = new ArrayList<TableSplit>(_list436.size);
+                  for (int _i437 = 0; _i437 < _list436.size; ++_i437)
                   {
-                    TableSplit _elem446; // required
-                    _elem446 = new TableSplit();
-                    _elem446.read(iprot);
-                    struct.success.add(_elem446);
+                    TableSplit _elem438; // required
+                    _elem438 = new TableSplit();
+                    _elem438.read(iprot);
+                    struct.success.add(_elem438);
                   }
                   iprot.readListEnd();
                 }
@@ -113267,9 +111281,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (TableSplit _iter447 : struct.success)
+            for (TableSplit _iter439 : struct.success)
             {
-              _iter447.write(oprot);
+              _iter439.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -113308,9 +111322,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (TableSplit _iter448 : struct.success)
+            for (TableSplit _iter440 : struct.success)
             {
-              _iter448.write(oprot);
+              _iter440.write(oprot);
             }
           }
         }
@@ -113325,14 +111339,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list449 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<TableSplit>(_list449.size);
-            for (int _i450 = 0; _i450 < _list449.size; ++_i450)
+            org.apache.thrift.protocol.TList _list441 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<TableSplit>(_list441.size);
+            for (int _i442 = 0; _i442 < _list441.size; ++_i442)
             {
-              TableSplit _elem451; // required
-              _elem451 = new TableSplit();
-              _elem451.read(iprot);
-              struct.success.add(_elem451);
+              TableSplit _elem443; // required
+              _elem443 = new TableSplit();
+              _elem443.read(iprot);
+              struct.success.add(_elem443);
             }
           }
           struct.setSuccessIsSet(true);
@@ -114184,14 +112198,14 @@ public class ClientService {
             case 0: // SUCCESS
               if (schemeField.type == org.apache.thrift.protocol.TType.LIST) {
                 {
-                  org.apache.thrift.protocol.TList _list452 = iprot.readListBegin();
-                  struct.success = new ArrayList<TableSplit>(_list452.size);
-                  for (int _i453 = 0; _i453 < _list452.size; ++_i453)
+                  org.apache.thrift.protocol.TList _list444 = iprot.readListBegin();
+                  struct.success = new ArrayList<TableSplit>(_list444.size);
+                  for (int _i445 = 0; _i445 < _list444.size; ++_i445)
                   {
-                    TableSplit _elem454; // required
-                    _elem454 = new TableSplit();
-                    _elem454.read(iprot);
-                    struct.success.add(_elem454);
+                    TableSplit _elem446; // required
+                    _elem446 = new TableSplit();
+                    _elem446.read(iprot);
+                    struct.success.add(_elem446);
                   }
                   iprot.readListEnd();
                 }
@@ -114228,9 +112242,9 @@ public class ClientService {
           oprot.writeFieldBegin(SUCCESS_FIELD_DESC);
           {
             oprot.writeListBegin(new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, struct.success.size()));
-            for (TableSplit _iter455 : struct.success)
+            for (TableSplit _iter447 : struct.success)
             {
-              _iter455.write(oprot);
+              _iter447.write(oprot);
             }
             oprot.writeListEnd();
           }
@@ -114269,9 +112283,9 @@ public class ClientService {
         if (struct.isSetSuccess()) {
           {
             oprot.writeI32(struct.success.size());
-            for (TableSplit _iter456 : struct.success)
+            for (TableSplit _iter448 : struct.success)
             {
-              _iter456.write(oprot);
+              _iter448.write(oprot);
             }
           }
         }
@@ -114286,14 +112300,14 @@ public class ClientService {
         BitSet incoming = iprot.readBitSet(2);
         if (incoming.get(0)) {
           {
-            org.apache.thrift.protocol.TList _list457 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
-            struct.success = new ArrayList<TableSplit>(_list457.size);
-            for (int _i458 = 0; _i458 < _list457.size; ++_i458)
+            org.apache.thrift.protocol.TList _list449 = new org.apache.thrift.protocol.TList(org.apache.thrift.protocol.TType.STRUCT, iprot.readI32());
+            struct.success = new ArrayList<TableSplit>(_list449.size);
+            for (int _i450 = 0; _i450 < _list449.size; ++_i450)
             {
-              TableSplit _elem459; // required
-              _elem459 = new TableSplit();
-              _elem459.read(iprot);
-              struct.success.add(_elem459);
+              TableSplit _elem451; // required
+              _elem451 = new TableSplit();
+              _elem451.read(iprot);
+              struct.success.add(_elem451);
             }
           }
           struct.setSuccessIsSet(true);

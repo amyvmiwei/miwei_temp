@@ -1,0 +1,75 @@
+HQL: 
+<Options>
+</Options>
+HQL:  MAX_VERSIONS 3
+<Options>
+<MaxVersions>3</MaxVersions>
+</Options>
+HQL:  MAX_VERSIONS 3 TIME_ORDER desc
+<Options>
+<MaxVersions>3</MaxVersions>
+<TimeOrder>desc</TimeOrder>
+</Options>
+HQL:  MAX_VERSIONS 3 TTL 1398615345 TIME_ORDER desc
+<Options>
+<MaxVersions>3</MaxVersions>
+<TTL>1398615345</TTL>
+<TimeOrder>desc</TimeOrder>
+</Options>
+HQL:  MAX_VERSIONS 3 TTL 1398615345 TIME_ORDER desc COUNTER false
+<Options>
+<MaxVersions>3</MaxVersions>
+<TTL>1398615345</TTL>
+<TimeOrder>desc</TimeOrder>
+<Counter>false</Counter>
+</Options>
+HYPERTABLE bad value: Invalid value for MAX VERSIONS (-1), must be non-negative
+HYPERTABLE incompatible options: COUNTER and MAX_VERSIONS are incompatible
+HYPERTABLE incompatible options: COUNTER and MAX VERSIONS are incompatible
+HYPERTABLE incompatible options: COUNTER and TIME_ORDER_DESC are incompatible
+HYPERTABLE bad value: Invalid value for TTL (-1), must be non-negative
+HYPERTABLE incompatible options: COUNTER and TIME_ORDER_DESC are incompatible
+HYPERTABLE incompatible options: COUNTER and MAX_VERSIONS are incompatible
+HYPERTABLE schema parse error: mismatched tag (MaxVersions)
+HYPERTABLE schema parse error: Unrecognized ColumnFamily option element (Bad)
+HYPERTABLE schema parse error: mismatched tag (Counter)
+HYPERTABLE schema parse error: Invalid value for MAX VERSIONS (-1), must be non-negative
+HYPERTABLE schema parse error: Invalid value for MaxVersions (2147483649)
+HYPERTABLE schema parse error: Invalid value for TTL (-1), must be non-negative
+HYPERTABLE schema parse error: Invalid value for TTL (2147483649)
+HYPERTABLE schema parse error: Invalid value for TimeOrder (bad)
+HYPERTABLE schema parse error: Invalid boolean value for Counter (bad)
+HQL:  MAX_VERSIONS 3 TIME_ORDER desc
+<Options>
+<MaxVersions>3</MaxVersions>
+<TimeOrder>desc</TimeOrder>
+</Options>
+HYPERTABLE incompatible options: COUNTER and MAX_VERSIONS are incompatible
+<ColumnFamily id="42">
+  <Generation>0</Generation>
+  <Name>foo</Name>
+  <AccessGroup>default</AccessGroup>
+  <Deleted>true</Deleted>
+  <Index>true</Index>
+  <QualifierIndex>true</QualifierIndex>
+  <Options>
+  </Options>
+</ColumnFamily>
+  foo, INDEX foo, QUALIFIER INDEX foo
+<ColumnFamily id="42">
+  <Generation>123</Generation>
+  <Name>foo</Name>
+  <AccessGroup>default</AccessGroup>
+  <Deleted>false</Deleted>
+  <QualifierIndex>true</QualifierIndex>
+  <Options>
+    <MaxVersions>3</MaxVersions>
+    <TTL>1398615345</TTL>
+    <TimeOrder>desc</TimeOrder>
+  </Options>
+</ColumnFamily>
+  foo MAX_VERSIONS 3 TTL 1398615345 TIME_ORDER desc, QUALIFIER INDEX foo
+HYPERTABLE incompatible options: COUNTER and INDEX are incompatible
+HYPERTABLE incompatible options: COUNTER and QUALIFIER INDEX are incompatible
+HYPERTABLE incompatible options: COUNTER and INDEX are incompatible
+HYPERTABLE incompatible options: COUNTER and QUALIFIER INDEX are incompatible

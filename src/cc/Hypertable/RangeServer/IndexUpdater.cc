@@ -60,18 +60,17 @@ IndexUpdater::IndexUpdater(SchemaPtr &primary_schema, TablePtr index_table,
   memset(&m_index_map[0], 0, sizeof(m_index_map));
   memset(&m_qualifier_index_map[0], 0, sizeof(m_qualifier_index_map));
 
-  foreach_ht (const Schema::ColumnFamily *cf, 
-          primary_schema->get_column_families()) {
-    if (!cf || cf->deleted)
+  for (auto cf_spec : primary_schema->get_column_families()) {
+    if (!cf_spec || cf_spec->get_deleted())
       continue;
-    if (cf->id > m_highest_column_id)
-      m_highest_column_id = cf->id;
+    if (cf_spec->get_id() > m_highest_column_id)
+      m_highest_column_id = cf_spec->get_id();
 
-    if (cf->has_index)
-      m_index_map[cf->id] = true;
-    if (cf->has_qualifier_index)
-      m_qualifier_index_map[cf->id] = true;
-    m_cf_namemap[cf->id] = cf->name;
+    if (cf_spec->get_value_index())
+      m_index_map[cf_spec->get_id()] = true;
+    if (cf_spec->get_qualifier_index())
+      m_qualifier_index_map[cf_spec->get_id()] = true;
+    m_cf_namemap[cf_spec->get_id()] = cf_spec->get_name();
   }
 }
 

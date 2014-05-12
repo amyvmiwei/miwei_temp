@@ -25,10 +25,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print 'Functions:'
   print '  void namespace_create(string ns)'
   print '  void create_namespace(string ns)'
-  print '  void create_table(Namespace ns, string table_name, string schema)'
-  print '  void table_create(Namespace ns, string table_name, string schema)'
-  print '  void alter_table(Namespace ns, string table_name, string schema)'
-  print '  void table_alter(Namespace ns, string table_name, string schema)'
+  print '  void table_create(Namespace ns, string table_name, Schema schema)'
+  print '  void table_alter(Namespace ns, string table_name, Schema schema)'
   print '  void refresh_table(Namespace ns, string table_name)'
   print '  Namespace namespace_open(string ns)'
   print '  Namespace open_namespace(string ns)'
@@ -212,29 +210,17 @@ elif cmd == 'create_namespace':
     sys.exit(1)
   pp.pprint(client.create_namespace(args[0],))
 
-elif cmd == 'create_table':
-  if len(args) != 3:
-    print 'create_table requires 3 args'
-    sys.exit(1)
-  pp.pprint(client.create_table(eval(args[0]),args[1],args[2],))
-
 elif cmd == 'table_create':
   if len(args) != 3:
     print 'table_create requires 3 args'
     sys.exit(1)
-  pp.pprint(client.table_create(eval(args[0]),args[1],args[2],))
-
-elif cmd == 'alter_table':
-  if len(args) != 3:
-    print 'alter_table requires 3 args'
-    sys.exit(1)
-  pp.pprint(client.alter_table(eval(args[0]),args[1],args[2],))
+  pp.pprint(client.table_create(eval(args[0]),args[1],eval(args[2]),))
 
 elif cmd == 'table_alter':
   if len(args) != 3:
     print 'table_alter requires 3 args'
     sys.exit(1)
-  pp.pprint(client.table_alter(eval(args[0]),args[1],args[2],))
+  pp.pprint(client.table_alter(eval(args[0]),args[1],eval(args[2]),))
 
 elif cmd == 'refresh_table':
   if len(args) != 2:

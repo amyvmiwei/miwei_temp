@@ -49,6 +49,7 @@ TimeWindow.cc
 Usage.cc
 Version.cc
 WordStream.cc
+XmlParser.cc
 md5.cc
 )
 
@@ -57,8 +58,8 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 
 add_library(HyperCommon ${Common_SRCS})
-target_link_libraries(HyperCommon ${SIGAR_LIBRARIES} ${BOOST_LIBS}
-  ${READLINE_LIBRARIES} ${ZLIB_LIBRARIES} ${SNAPPY_LIBRARIES}
+target_link_libraries(HyperCommon ${EXPAT_LIBRARIES} ${SIGAR_LIBRARIES}
+  ${BOOST_LIBS} ${READLINE_LIBRARIES} ${ZLIB_LIBRARIES} ${SNAPPY_LIBRARIES}
   ${NCURSES_LIBRARY} ${CMAKE_THREAD_LIBS_INIT}
     ${RE2_LIBRARIES} ${MALLOC_LIBRARY})
 

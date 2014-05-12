@@ -74,7 +74,7 @@ bool TableCache::get_schema_str(const String &table_name, String &schema, bool w
 
   if (it == m_table_map.end())
     return false;
-  it->second->schema()->render(schema, with_ids);
+  schema = it->second->schema()->render_xml(with_ids);
   return true;
 }
 

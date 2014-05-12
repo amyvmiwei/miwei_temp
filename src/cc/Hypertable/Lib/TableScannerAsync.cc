@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -122,8 +122,6 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
                                   std::vector<CellPredicate> &cell_predicates,
                                   bool *use_qualifier)
 {
-  HT_ASSERT(!table->schema()->need_id_assignment());
-
   if (!table->has_index_table() && !table->has_qualifier_index_table())
     return false;
 
@@ -138,7 +136,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
   DynamicBuffer regex_prefix_buf;
   const char *prefix;
   size_t prefix_len;
-  Schema::ColumnFamily *cf = 0;
+  ColumnFamilySpec *cf_spec = 0;
   String index_row_prefix;
   DynamicBuffer index_row_buf;
   LoadDataEscape lde;
@@ -153,12 +151,12 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
 
     foreach_ht (const ColumnPredicate &cp, primary_spec.column_predicates) {
 
-      if ((cf = table->schema()->get_column_family(cp.column_family)) == 0)
+      if ((cf_spec = table->schema()->get_column_family(cp.column_family)) == 0)
         return false;
 
-      if (cf->has_index)
+      if (cf_spec->get_value_index())
         value_index_count++;
-      if (cf->has_qualifier_index)
+      if (cf_spec->get_qualifier_index())
         qualifier_index_count++;
 
       // Make sure that all prediates match against the value index, or all
@@ -180,14 +178,14 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
           return false;
         if (index_row_buf.size < prefix_len+5)
           index_row_buf.grow(prefix_len+5);
-        sprintf((char *)index_row_buf.base, "%d,", (int)cf->id);
+        sprintf((char *)index_row_buf.base, "%d,", (int)cf_spec->get_id());
         index_row_buf.ptr =
           index_row_buf.base + strlen((const char *)index_row_buf.base);
         index_row_buf.add_unchecked(prefix, prefix_len);
         *index_row_buf.ptr = 0;
         HT_ASSERT(index_row_buf.fill() < index_row_buf.size);
         add_index_row(index_spec, (const char *)index_row_buf.base);
-        cell_predicates[cf->id].add_column_predicate(cp, id++);
+        cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
       }
       else if ((cp.operation & ColumnPredicate::EXACT_MATCH) ||
                (cp.operation & ColumnPredicate::PREFIX_MATCH)) {
@@ -202,7 +200,7 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
         if (index_row_buf.size < value_len+6)
           index_row_buf.grow(value_len+6);
         // %d,
-        sprintf((char *)index_row_buf.base, "%d,", (int)cf->id);
+        sprintf((char *)index_row_buf.base, "%d,", (int)cf_spec->get_id());
         index_row_buf.ptr =
           index_row_buf.base + strlen((const char *)index_row_buf.base);
         // value
@@ -212,17 +210,17 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
         *index_row_buf.ptr = 0;
         HT_ASSERT(index_row_buf.fill() < index_row_buf.size);
         add_index_row(index_spec, (const char *)index_row_buf.base);
-        cell_predicates[cf->id].add_column_predicate(cp, id++);
+        cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
       }
       else if (cp.operation & ColumnPredicate::QUALIFIER_REGEX_MATCH) {
         if (Regex::extract_prefix(cp.column_qualifier, cp.column_qualifier_len,
                                   &prefix, &prefix_len, regex_prefix_buf)) {
           index_row_prefix.clear();
           index_row_prefix.reserve(5+prefix_len);
-          index_row_prefix = format("%d,", (int)cf->id);
+          index_row_prefix = format("%d,", (int)cf_spec->get_id());
           index_row_prefix.append(prefix, prefix_len);
           add_index_row(index_spec, index_row_prefix.c_str());
-          cell_predicates[cf->id].add_column_predicate(cp, id++);
+          cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
         }
         else
           return false;
@@ -236,12 +234,12 @@ bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec,
                    &escaped_qualifier, &escaped_qualifier_len);
         index_row_prefix.clear();
         index_row_prefix.reserve(6+escaped_qualifier_len);
-        index_row_prefix = format("%d,", (int)cf->id);
+        index_row_prefix = format("%d,", (int)cf_spec->get_id());
         index_row_prefix.append(escaped_qualifier, escaped_qualifier_len);
         if (cp.operation & ColumnPredicate::QUALIFIER_EXACT_MATCH)
           index_row_prefix.append("\t", 1);
         add_index_row(index_spec, index_row_prefix.c_str());
-        cell_predicates[cf->id].add_column_predicate(cp, id++);
+        cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
       }
       else
         return false;

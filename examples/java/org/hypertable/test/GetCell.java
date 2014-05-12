@@ -7,6 +7,9 @@ import org.hypertable.thrift.SerializedCellsWriter;
 import org.hypertable.thrift.ThriftClient;
 import org.hypertable.thriftgen.RowInterval;
 import org.hypertable.thriftgen.ScanSpec;
+import org.hypertable.thriftgen.ColumnFamilySpec;
+import org.hypertable.thriftgen.AccessGroupSpec;
+import org.hypertable.thriftgen.Schema;
 
 import java.nio.ByteBuffer;
 import java.util.Arrays;
@@ -98,7 +101,16 @@ public class GetCell {
       final long ns = client.open_namespace(NamespaceName);
       final String table_name = "table" + id;
 
-      client.create_table(ns, table_name, counter_table_schema_xml);
+      Schema schema = new Schema();
+      AccessGroupSpec ag = new AccessGroupSpec();
+      ag.setName("default");
+      schema.putToAccess_groups(ag.name, ag);
+      ColumnFamilySpec cf = new ColumnFamilySpec();
+      cf.setName("D");
+      cf.options.setCounter(true);
+      schema.putToColumn_families(cf.name, cf);
+
+      client.table_create(ns, table_name, schema);
 
       long expectedValue = 0;
       Random random = new Random();

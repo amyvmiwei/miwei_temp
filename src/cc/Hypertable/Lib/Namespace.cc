@@ -112,133 +112,47 @@ void Namespace::compact(const String &name, const String &row, uint32_t flags) {
   }
 }
 
-void Namespace::create_table(const String &table_name, const String &schema) {
-  String name = Filesystem::basename(table_name);
+void Namespace::create_table(const String &table_name, const String &schema_str) {
+  string name = Filesystem::basename(table_name);
   if (name.size() && name[0]=='^')
     HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
 
   // Parse and validate schema
-  {
-    SchemaPtr schema_ptr = Schema::new_instance(schema.c_str(), schema.length());
-    if (!schema_ptr->is_valid())
-      HT_THROW(Error::BAD_SCHEMA, schema_ptr->get_error_string());
-  }
+  SchemaPtr schema = Schema::new_instance(schema_str);
 
-  String full_name = get_full_name(table_name);
-  m_master_client->create_table(full_name, schema);
+  string full_name = get_full_name(table_name);
+  m_master_client->create_table(full_name, schema_str);
 }
 
-void Namespace::alter_table(const String &table_name, SchemaPtr &alter_schema) {
-  String name = Filesystem::basename(table_name);
+void
+Namespace::create_table(const String &table_name, SchemaPtr &schema) {
+  string name = Filesystem::basename(table_name);
   if (name.size() && name[0]=='^')
     HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
 
-  // Construct a new schema which is a merge of the existing schema
-  // and the desired alterations.
-  String full_name = get_full_name(table_name);
-
-  Schema::AccessGroup *final_ag;
-  Schema::ColumnFamily *final_cf;
-  String final_schema_str;
-  TablePtr table = open_table(table_name, Table::OPEN_FLAG_BYPASS_TABLE_CACHE);
-
-  SchemaPtr schema = table->schema();
-
-  SchemaPtr final_schema = new Schema(*(schema.get()));
-  final_schema->incr_generation();
-
-  foreach_ht(Schema::AccessGroup *alter_ag, alter_schema->get_access_groups()) {
-    // create a new access group if needed
-    if(!final_schema->access_group_exists(alter_ag->name)) {
-      final_ag = new Schema::AccessGroup();
-      final_ag->name = alter_ag->name;
-      final_ag->in_memory = alter_ag->in_memory;
-      final_ag->blocksize = alter_ag->blocksize;
-      final_ag->compressor = alter_ag->compressor;
-      final_ag->bloom_filter = alter_ag->bloom_filter;
-      if (!final_schema->add_access_group(final_ag)) {
-        String error_msg = final_schema->get_error_string();
-        delete final_ag;
-        HT_THROW(Error::BAD_SCHEMA, error_msg);
-      }
-    }
-    else {
-      final_ag = final_schema->get_access_group(alter_ag->name);
-    }
-  }
-
-  // go through each column family to be altered
-  foreach_ht(Schema::ColumnFamily *alter_cf, alter_schema->get_column_families()) {
-    if (alter_cf->deleted) {
-      if (!final_schema->drop_column_family(alter_cf->name))
-        HT_THROW(Error::BAD_SCHEMA, final_schema->get_error_string());
-    }
-    else if (alter_cf->renamed) {
-      if (!final_schema->rename_column_family(alter_cf->name, alter_cf->new_name))
-        HT_THROW(Error::BAD_SCHEMA, final_schema->get_error_string());
-    }
-    else {
-      // Check to see if column family exists, if so replace
-      Schema::ColumnFamily *existing_cf 
-        = final_schema->get_column_family(alter_cf->name, true);
-      if (existing_cf) {
-
-        if (!alter_cf->modification)
-          HT_THROWF(Error::INVALID_OPERATION,
-                    "Attempt to add column %s which already exists",
-                    existing_cf->name.c_str());
-
-        if (existing_cf->deleted)
-          HT_THROWF(Error::UNSUPPORTED_OPERATION,
-                    "Attempt to %s column %s which has been deleted",
-                    alter_cf->modification ? "modify" : "add",
-                    existing_cf->name.c_str());
-
-        if (existing_cf->time_order_desc != alter_cf->time_order_desc)
-          HT_THROWF(Error::UNSUPPORTED_OPERATION,
-                    "Changing value of TIME_ORDER on column %s is not supported",
-                    existing_cf->name.c_str());
-
-        if (existing_cf->counter != alter_cf->counter)
-          HT_THROWF(Error::UNSUPPORTED_OPERATION,
-                    "Changing COUNTER attribute of column %s is not supported",
-                    existing_cf->name.c_str());
-
-        existing_cf->max_versions = alter_cf->max_versions;
-        existing_cf->ttl = alter_cf->ttl;
-        existing_cf->generation = final_schema->get_generation();
-      }
-      else {
-
-        // add column family
-        if(final_schema->get_max_column_family_id() >= Schema::ms_max_column_id)
-          HT_THROW(Error::TOO_MANY_COLUMNS,
-                   format("Attempting to add > %d column families to table",
-                          (int)Schema::ms_max_column_id));
-        final_schema->incr_max_column_family_id();
-        final_cf = new Schema::ColumnFamily(*alter_cf);
-        final_cf->id = (uint32_t) final_schema->get_max_column_family_id();
-        final_cf->generation = final_schema->get_generation();
-
-        if(!final_schema->add_column_family(final_cf)) {
-          String error_msg = final_schema->get_error_string();
-          delete final_cf;
-          HT_THROW(Error::BAD_SCHEMA, error_msg);
-        }
-      }
-    }
-  }
-
-  final_schema->render(final_schema_str, true);
-  m_master_client->alter_table(full_name, final_schema_str);
+  const string schema_str = schema->render_xml(true);
+  string full_name = get_full_name(table_name);
+  m_master_client->create_table(full_name, schema_str);
 }
 
-void Namespace::alter_table(const String &table_name, const String &alter_schema_str) {
-  SchemaPtr alter_schema = Schema::new_instance(alter_schema_str, 
-                                                alter_schema_str.length());
-  if (!alter_schema->is_valid())
-    HT_THROW(Error::BAD_SCHEMA, alter_schema->get_error_string());
-  alter_table(table_name, alter_schema);
+
+void Namespace::alter_table(const String &table_name, SchemaPtr &schema) {
+  String name = Filesystem::basename(table_name);
+  if (name.size() && name[0]=='^')
+    HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
+  string full_name = get_full_name(table_name);
+  const string schema_str = schema->render_xml(true);
+  m_master_client->alter_table(full_name, schema_str);
+}
+
+
+void Namespace::alter_table(const String &table_name, const String &schema_str) {
+  String name = Filesystem::basename(table_name);
+  if (name.size() && name[0]=='^')
+    HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
+  String full_name = get_full_name(table_name);
+  SchemaPtr schema = Schema::new_instance(schema_str);
+  m_master_client->alter_table(full_name, schema_str);
 }
 
 

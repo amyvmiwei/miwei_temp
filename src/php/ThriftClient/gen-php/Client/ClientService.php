@@ -12,9 +12,7 @@ include_once $GLOBALS['THRIFT_ROOT'].'/packages/Client/Client_types.php';
 interface Hypertable_ThriftGen_ClientServiceIf {
   public function namespace_create($ns);
   public function create_namespace($ns);
-  public function create_table($ns, $table_name, $schema);
   public function table_create($ns, $table_name, $schema);
-  public function alter_table($ns, $table_name, $schema);
   public function table_alter($ns, $table_name, $schema);
   public function refresh_table($ns, $table_name);
   public function namespace_open($ns);
@@ -251,59 +249,6 @@ class Hypertable_ThriftGen_ClientServiceClient implements Hypertable_ThriftGen_C
     return;
   }
 
-  public function create_table($ns, $table_name, $schema)
-  {
-    $this->send_create_table($ns, $table_name, $schema);
-    $this->recv_create_table();
-  }
-
-  public function send_create_table($ns, $table_name, $schema)
-  {
-    $args = new Hypertable_ThriftGen_ClientService_create_table_args();
-    $args->ns = $ns;
-    $args->table_name = $table_name;
-    $args->schema = $schema;
-    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
-    if ($bin_accel)
-    {
-      thrift_protocol_write_binary($this->output_, 'create_table', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
-    }
-    else
-    {
-      $this->output_->writeMessageBegin('create_table', TMessageType::CALL, $this->seqid_);
-      $args->write($this->output_);
-      $this->output_->writeMessageEnd();
-      $this->output_->getTransport()->flush();
-    }
-  }
-
-  public function recv_create_table()
-  {
-    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_create_table_result', $this->input_->isStrictRead());
-    else
-    {
-      $rseqid = 0;
-      $fname = null;
-      $mtype = 0;
-
-      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
-      if ($mtype == TMessageType::EXCEPTION) {
-        $x = new TApplicationException();
-        $x->read($this->input_);
-        $this->input_->readMessageEnd();
-        throw $x;
-      }
-      $result = new Hypertable_ThriftGen_ClientService_create_table_result();
-      $result->read($this->input_);
-      $this->input_->readMessageEnd();
-    }
-    if ($result->e !== null) {
-      throw $result->e;
-    }
-    return;
-  }
-
   public function table_create($ns, $table_name, $schema)
   {
     $this->send_table_create($ns, $table_name, $schema);
@@ -348,59 +293,6 @@ class Hypertable_ThriftGen_ClientServiceClient implements Hypertable_ThriftGen_C
         throw $x;
       }
       $result = new Hypertable_ThriftGen_ClientService_table_create_result();
-      $result->read($this->input_);
-      $this->input_->readMessageEnd();
-    }
-    if ($result->e !== null) {
-      throw $result->e;
-    }
-    return;
-  }
-
-  public function alter_table($ns, $table_name, $schema)
-  {
-    $this->send_alter_table($ns, $table_name, $schema);
-    $this->recv_alter_table();
-  }
-
-  public function send_alter_table($ns, $table_name, $schema)
-  {
-    $args = new Hypertable_ThriftGen_ClientService_alter_table_args();
-    $args->ns = $ns;
-    $args->table_name = $table_name;
-    $args->schema = $schema;
-    $bin_accel = ($this->output_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_write_binary');
-    if ($bin_accel)
-    {
-      thrift_protocol_write_binary($this->output_, 'alter_table', TMessageType::CALL, $args, $this->seqid_, $this->output_->isStrictWrite());
-    }
-    else
-    {
-      $this->output_->writeMessageBegin('alter_table', TMessageType::CALL, $this->seqid_);
-      $args->write($this->output_);
-      $this->output_->writeMessageEnd();
-      $this->output_->getTransport()->flush();
-    }
-  }
-
-  public function recv_alter_table()
-  {
-    $bin_accel = ($this->input_ instanceof TProtocol::$TBINARYPROTOCOLACCELERATED) && function_exists('thrift_protocol_read_binary');
-    if ($bin_accel) $result = thrift_protocol_read_binary($this->input_, 'Hypertable_ThriftGen_ClientService_alter_table_result', $this->input_->isStrictRead());
-    else
-    {
-      $rseqid = 0;
-      $fname = null;
-      $mtype = 0;
-
-      $this->input_->readMessageBegin($fname, $mtype, $rseqid);
-      if ($mtype == TMessageType::EXCEPTION) {
-        $x = new TApplicationException();
-        $x->read($this->input_);
-        $this->input_->readMessageEnd();
-        throw $x;
-      }
-      $result = new Hypertable_ThriftGen_ClientService_alter_table_result();
       $result->read($this->input_);
       $this->input_->readMessageEnd();
     }
@@ -7180,192 +7072,6 @@ class Hypertable_ThriftGen_ClientService_create_namespace_result {
 
 }
 
-class Hypertable_ThriftGen_ClientService_create_table_args {
-  static $_TSPEC;
-
-  public $ns = null;
-  public $table_name = null;
-  public $schema = null;
-
-  public function __construct($vals=null) {
-    if (!isset(self::$_TSPEC)) {
-      self::$_TSPEC = array(
-        1 => array(
-          'var' => 'ns',
-          'type' => TType::I64,
-          ),
-        2 => array(
-          'var' => 'table_name',
-          'type' => TType::STRING,
-          ),
-        3 => array(
-          'var' => 'schema',
-          'type' => TType::STRING,
-          ),
-        );
-    }
-    if (is_array($vals)) {
-      if (isset($vals['ns'])) {
-        $this->ns = $vals['ns'];
-      }
-      if (isset($vals['table_name'])) {
-        $this->table_name = $vals['table_name'];
-      }
-      if (isset($vals['schema'])) {
-        $this->schema = $vals['schema'];
-      }
-    }
-  }
-
-  public function getName() {
-    return 'ClientService_create_table_args';
-  }
-
-  public function read($input)
-  {
-    $xfer = 0;
-    $fname = null;
-    $ftype = 0;
-    $fid = 0;
-    $xfer += $input->readStructBegin($fname);
-    while (true)
-    {
-      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
-      if ($ftype == TType::STOP) {
-        break;
-      }
-      switch ($fid)
-      {
-        case 1:
-          if ($ftype == TType::I64) {
-            $xfer += $input->readI64($this->ns);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 2:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->table_name);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 3:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->schema);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        default:
-          $xfer += $input->skip($ftype);
-          break;
-      }
-      $xfer += $input->readFieldEnd();
-    }
-    $xfer += $input->readStructEnd();
-    return $xfer;
-  }
-
-  public function write($output) {
-    $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_create_table_args');
-    if ($this->ns !== null) {
-      $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
-      $xfer += $output->writeI64($this->ns);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->table_name !== null) {
-      $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
-      $xfer += $output->writeString($this->table_name);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->schema !== null) {
-      $xfer += $output->writeFieldBegin('schema', TType::STRING, 3);
-      $xfer += $output->writeString($this->schema);
-      $xfer += $output->writeFieldEnd();
-    }
-    $xfer += $output->writeFieldStop();
-    $xfer += $output->writeStructEnd();
-    return $xfer;
-  }
-
-}
-
-class Hypertable_ThriftGen_ClientService_create_table_result {
-  static $_TSPEC;
-
-  public $e = null;
-
-  public function __construct($vals=null) {
-    if (!isset(self::$_TSPEC)) {
-      self::$_TSPEC = array(
-        1 => array(
-          'var' => 'e',
-          'type' => TType::STRUCT,
-          'class' => 'Hypertable_ThriftGen_ClientException',
-          ),
-        );
-    }
-    if (is_array($vals)) {
-      if (isset($vals['e'])) {
-        $this->e = $vals['e'];
-      }
-    }
-  }
-
-  public function getName() {
-    return 'ClientService_create_table_result';
-  }
-
-  public function read($input)
-  {
-    $xfer = 0;
-    $fname = null;
-    $ftype = 0;
-    $fid = 0;
-    $xfer += $input->readStructBegin($fname);
-    while (true)
-    {
-      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
-      if ($ftype == TType::STOP) {
-        break;
-      }
-      switch ($fid)
-      {
-        case 1:
-          if ($ftype == TType::STRUCT) {
-            $this->e = new Hypertable_ThriftGen_ClientException();
-            $xfer += $this->e->read($input);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        default:
-          $xfer += $input->skip($ftype);
-          break;
-      }
-      $xfer += $input->readFieldEnd();
-    }
-    $xfer += $input->readStructEnd();
-    return $xfer;
-  }
-
-  public function write($output) {
-    $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_create_table_result');
-    if ($this->e !== null) {
-      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
-      $xfer += $this->e->write($output);
-      $xfer += $output->writeFieldEnd();
-    }
-    $xfer += $output->writeFieldStop();
-    $xfer += $output->writeStructEnd();
-    return $xfer;
-  }
-
-}
-
 class Hypertable_ThriftGen_ClientService_table_create_args {
   static $_TSPEC;
 
@@ -7386,7 +7092,8 @@ class Hypertable_ThriftGen_ClientService_table_create_args {
           ),
         3 => array(
           'var' => 'schema',
-          'type' => TType::STRING,
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_Schema',
           ),
         );
     }
@@ -7437,8 +7144,9 @@ class Hypertable_ThriftGen_ClientService_table_create_args {
           }
           break;
         case 3:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->schema);
+          if ($ftype == TType::STRUCT) {
+            $this->schema = new Hypertable_ThriftGen_Schema();
+            $xfer += $this->schema->read($input);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -7467,8 +7175,11 @@ class Hypertable_ThriftGen_ClientService_table_create_args {
       $xfer += $output->writeFieldEnd();
     }
     if ($this->schema !== null) {
-      $xfer += $output->writeFieldBegin('schema', TType::STRING, 3);
-      $xfer += $output->writeString($this->schema);
+      if (!is_object($this->schema)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('schema', TType::STRUCT, 3);
+      $xfer += $this->schema->write($output);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -7552,192 +7263,6 @@ class Hypertable_ThriftGen_ClientService_table_create_result {
 
 }
 
-class Hypertable_ThriftGen_ClientService_alter_table_args {
-  static $_TSPEC;
-
-  public $ns = null;
-  public $table_name = null;
-  public $schema = null;
-
-  public function __construct($vals=null) {
-    if (!isset(self::$_TSPEC)) {
-      self::$_TSPEC = array(
-        1 => array(
-          'var' => 'ns',
-          'type' => TType::I64,
-          ),
-        2 => array(
-          'var' => 'table_name',
-          'type' => TType::STRING,
-          ),
-        3 => array(
-          'var' => 'schema',
-          'type' => TType::STRING,
-          ),
-        );
-    }
-    if (is_array($vals)) {
-      if (isset($vals['ns'])) {
-        $this->ns = $vals['ns'];
-      }
-      if (isset($vals['table_name'])) {
-        $this->table_name = $vals['table_name'];
-      }
-      if (isset($vals['schema'])) {
-        $this->schema = $vals['schema'];
-      }
-    }
-  }
-
-  public function getName() {
-    return 'ClientService_alter_table_args';
-  }
-
-  public function read($input)
-  {
-    $xfer = 0;
-    $fname = null;
-    $ftype = 0;
-    $fid = 0;
-    $xfer += $input->readStructBegin($fname);
-    while (true)
-    {
-      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
-      if ($ftype == TType::STOP) {
-        break;
-      }
-      switch ($fid)
-      {
-        case 1:
-          if ($ftype == TType::I64) {
-            $xfer += $input->readI64($this->ns);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 2:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->table_name);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        case 3:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->schema);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        default:
-          $xfer += $input->skip($ftype);
-          break;
-      }
-      $xfer += $input->readFieldEnd();
-    }
-    $xfer += $input->readStructEnd();
-    return $xfer;
-  }
-
-  public function write($output) {
-    $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_alter_table_args');
-    if ($this->ns !== null) {
-      $xfer += $output->writeFieldBegin('ns', TType::I64, 1);
-      $xfer += $output->writeI64($this->ns);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->table_name !== null) {
-      $xfer += $output->writeFieldBegin('table_name', TType::STRING, 2);
-      $xfer += $output->writeString($this->table_name);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->schema !== null) {
-      $xfer += $output->writeFieldBegin('schema', TType::STRING, 3);
-      $xfer += $output->writeString($this->schema);
-      $xfer += $output->writeFieldEnd();
-    }
-    $xfer += $output->writeFieldStop();
-    $xfer += $output->writeStructEnd();
-    return $xfer;
-  }
-
-}
-
-class Hypertable_ThriftGen_ClientService_alter_table_result {
-  static $_TSPEC;
-
-  public $e = null;
-
-  public function __construct($vals=null) {
-    if (!isset(self::$_TSPEC)) {
-      self::$_TSPEC = array(
-        1 => array(
-          'var' => 'e',
-          'type' => TType::STRUCT,
-          'class' => 'Hypertable_ThriftGen_ClientException',
-          ),
-        );
-    }
-    if (is_array($vals)) {
-      if (isset($vals['e'])) {
-        $this->e = $vals['e'];
-      }
-    }
-  }
-
-  public function getName() {
-    return 'ClientService_alter_table_result';
-  }
-
-  public function read($input)
-  {
-    $xfer = 0;
-    $fname = null;
-    $ftype = 0;
-    $fid = 0;
-    $xfer += $input->readStructBegin($fname);
-    while (true)
-    {
-      $xfer += $input->readFieldBegin($fname, $ftype, $fid);
-      if ($ftype == TType::STOP) {
-        break;
-      }
-      switch ($fid)
-      {
-        case 1:
-          if ($ftype == TType::STRUCT) {
-            $this->e = new Hypertable_ThriftGen_ClientException();
-            $xfer += $this->e->read($input);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
-        default:
-          $xfer += $input->skip($ftype);
-          break;
-      }
-      $xfer += $input->readFieldEnd();
-    }
-    $xfer += $input->readStructEnd();
-    return $xfer;
-  }
-
-  public function write($output) {
-    $xfer = 0;
-    $xfer += $output->writeStructBegin('ClientService_alter_table_result');
-    if ($this->e !== null) {
-      $xfer += $output->writeFieldBegin('e', TType::STRUCT, 1);
-      $xfer += $this->e->write($output);
-      $xfer += $output->writeFieldEnd();
-    }
-    $xfer += $output->writeFieldStop();
-    $xfer += $output->writeStructEnd();
-    return $xfer;
-  }
-
-}
-
 class Hypertable_ThriftGen_ClientService_table_alter_args {
   static $_TSPEC;
 
@@ -7758,7 +7283,8 @@ class Hypertable_ThriftGen_ClientService_table_alter_args {
           ),
         3 => array(
           'var' => 'schema',
-          'type' => TType::STRING,
+          'type' => TType::STRUCT,
+          'class' => 'Hypertable_ThriftGen_Schema',
           ),
         );
     }
@@ -7809,8 +7335,9 @@ class Hypertable_ThriftGen_ClientService_table_alter_args {
           }
           break;
         case 3:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->schema);
+          if ($ftype == TType::STRUCT) {
+            $this->schema = new Hypertable_ThriftGen_Schema();
+            $xfer += $this->schema->read($input);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -7839,8 +7366,11 @@ class Hypertable_ThriftGen_ClientService_table_alter_args {
       $xfer += $output->writeFieldEnd();
     }
     if ($this->schema !== null) {
-      $xfer += $output->writeFieldBegin('schema', TType::STRING, 3);
-      $xfer += $output->writeString($this->schema);
+      if (!is_object($this->schema)) {
+        throw new TProtocolException('Bad type in structure.', TProtocolException::INVALID_DATA);
+      }
+      $xfer += $output->writeFieldBegin('schema', TType::STRUCT, 3);
+      $xfer += $this->schema->write($output);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();
@@ -13329,15 +12859,15 @@ class Hypertable_ThriftGen_ClientService_scanner_get_cells_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size74 = 0;
-            $_etype77 = 0;
-            $xfer += $input->readListBegin($_etype77, $_size74);
-            for ($_i78 = 0; $_i78 < $_size74; ++$_i78)
+            $_size67 = 0;
+            $_etype70 = 0;
+            $xfer += $input->readListBegin($_etype70, $_size67);
+            for ($_i71 = 0; $_i71 < $_size67; ++$_i71)
             {
-              $elem79 = null;
-              $elem79 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem79->read($input);
-              $this->success []= $elem79;
+              $elem72 = null;
+              $elem72 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem72->read($input);
+              $this->success []= $elem72;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -13373,9 +12903,9 @@ class Hypertable_ThriftGen_ClientService_scanner_get_cells_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter80)
+          foreach ($this->success as $iter73)
           {
-            $xfer += $iter80->write($output);
+            $xfer += $iter73->write($output);
           }
         }
         $output->writeListEnd();
@@ -13523,15 +13053,15 @@ class Hypertable_ThriftGen_ClientService_next_cells_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size81 = 0;
-            $_etype84 = 0;
-            $xfer += $input->readListBegin($_etype84, $_size81);
-            for ($_i85 = 0; $_i85 < $_size81; ++$_i85)
+            $_size74 = 0;
+            $_etype77 = 0;
+            $xfer += $input->readListBegin($_etype77, $_size74);
+            for ($_i78 = 0; $_i78 < $_size74; ++$_i78)
             {
-              $elem86 = null;
-              $elem86 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem86->read($input);
-              $this->success []= $elem86;
+              $elem79 = null;
+              $elem79 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem79->read($input);
+              $this->success []= $elem79;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -13567,9 +13097,9 @@ class Hypertable_ThriftGen_ClientService_next_cells_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter87)
+          foreach ($this->success as $iter80)
           {
-            $xfer += $iter87->write($output);
+            $xfer += $iter80->write($output);
           }
         }
         $output->writeListEnd();
@@ -13720,24 +13250,24 @@ class Hypertable_ThriftGen_ClientService_scanner_get_cells_as_arrays_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size88 = 0;
-            $_etype91 = 0;
-            $xfer += $input->readListBegin($_etype91, $_size88);
-            for ($_i92 = 0; $_i92 < $_size88; ++$_i92)
+            $_size81 = 0;
+            $_etype84 = 0;
+            $xfer += $input->readListBegin($_etype84, $_size81);
+            for ($_i85 = 0; $_i85 < $_size81; ++$_i85)
             {
-              $elem93 = null;
-              $elem93 = array();
-              $_size94 = 0;
-              $_etype97 = 0;
-              $xfer += $input->readListBegin($_etype97, $_size94);
-              for ($_i98 = 0; $_i98 < $_size94; ++$_i98)
+              $elem86 = null;
+              $elem86 = array();
+              $_size87 = 0;
+              $_etype90 = 0;
+              $xfer += $input->readListBegin($_etype90, $_size87);
+              for ($_i91 = 0; $_i91 < $_size87; ++$_i91)
               {
-                $elem99 = null;
-                $xfer += $input->readString($elem99);
-                $elem93 []= $elem99;
+                $elem92 = null;
+                $xfer += $input->readString($elem92);
+                $elem86 []= $elem92;
               }
               $xfer += $input->readListEnd();
-              $this->success []= $elem93;
+              $this->success []= $elem86;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -13773,14 +13303,14 @@ class Hypertable_ThriftGen_ClientService_scanner_get_cells_as_arrays_result {
       {
         $output->writeListBegin(TType::LST, count($this->success));
         {
-          foreach ($this->success as $iter100)
+          foreach ($this->success as $iter93)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter100));
+              $output->writeListBegin(TType::STRING, count($iter93));
               {
-                foreach ($iter100 as $iter101)
+                foreach ($iter93 as $iter94)
                 {
-                  $xfer += $output->writeString($iter101);
+                  $xfer += $output->writeString($iter94);
                 }
               }
               $output->writeListEnd();
@@ -13935,24 +13465,24 @@ class Hypertable_ThriftGen_ClientService_next_cells_as_arrays_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size102 = 0;
-            $_etype105 = 0;
-            $xfer += $input->readListBegin($_etype105, $_size102);
-            for ($_i106 = 0; $_i106 < $_size102; ++$_i106)
+            $_size95 = 0;
+            $_etype98 = 0;
+            $xfer += $input->readListBegin($_etype98, $_size95);
+            for ($_i99 = 0; $_i99 < $_size95; ++$_i99)
             {
-              $elem107 = null;
-              $elem107 = array();
-              $_size108 = 0;
-              $_etype111 = 0;
-              $xfer += $input->readListBegin($_etype111, $_size108);
-              for ($_i112 = 0; $_i112 < $_size108; ++$_i112)
+              $elem100 = null;
+              $elem100 = array();
+              $_size101 = 0;
+              $_etype104 = 0;
+              $xfer += $input->readListBegin($_etype104, $_size101);
+              for ($_i105 = 0; $_i105 < $_size101; ++$_i105)
               {
-                $elem113 = null;
-                $xfer += $input->readString($elem113);
-                $elem107 []= $elem113;
+                $elem106 = null;
+                $xfer += $input->readString($elem106);
+                $elem100 []= $elem106;
               }
               $xfer += $input->readListEnd();
-              $this->success []= $elem107;
+              $this->success []= $elem100;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -13988,14 +13518,14 @@ class Hypertable_ThriftGen_ClientService_next_cells_as_arrays_result {
       {
         $output->writeListBegin(TType::LST, count($this->success));
         {
-          foreach ($this->success as $iter114)
+          foreach ($this->success as $iter107)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter114));
+              $output->writeListBegin(TType::STRING, count($iter107));
               {
-                foreach ($iter114 as $iter115)
+                foreach ($iter107 as $iter108)
                 {
-                  $xfer += $output->writeString($iter115);
+                  $xfer += $output->writeString($iter108);
                 }
               }
               $output->writeListEnd();
@@ -14479,15 +14009,15 @@ class Hypertable_ThriftGen_ClientService_scanner_get_row_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size116 = 0;
-            $_etype119 = 0;
-            $xfer += $input->readListBegin($_etype119, $_size116);
-            for ($_i120 = 0; $_i120 < $_size116; ++$_i120)
+            $_size109 = 0;
+            $_etype112 = 0;
+            $xfer += $input->readListBegin($_etype112, $_size109);
+            for ($_i113 = 0; $_i113 < $_size109; ++$_i113)
             {
-              $elem121 = null;
-              $elem121 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem121->read($input);
-              $this->success []= $elem121;
+              $elem114 = null;
+              $elem114 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem114->read($input);
+              $this->success []= $elem114;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -14523,9 +14053,9 @@ class Hypertable_ThriftGen_ClientService_scanner_get_row_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter122)
+          foreach ($this->success as $iter115)
           {
-            $xfer += $iter122->write($output);
+            $xfer += $iter115->write($output);
           }
         }
         $output->writeListEnd();
@@ -14673,15 +14203,15 @@ class Hypertable_ThriftGen_ClientService_next_row_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size123 = 0;
-            $_etype126 = 0;
-            $xfer += $input->readListBegin($_etype126, $_size123);
-            for ($_i127 = 0; $_i127 < $_size123; ++$_i127)
+            $_size116 = 0;
+            $_etype119 = 0;
+            $xfer += $input->readListBegin($_etype119, $_size116);
+            for ($_i120 = 0; $_i120 < $_size116; ++$_i120)
             {
-              $elem128 = null;
-              $elem128 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem128->read($input);
-              $this->success []= $elem128;
+              $elem121 = null;
+              $elem121 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem121->read($input);
+              $this->success []= $elem121;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -14717,9 +14247,9 @@ class Hypertable_ThriftGen_ClientService_next_row_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter129)
+          foreach ($this->success as $iter122)
           {
-            $xfer += $iter129->write($output);
+            $xfer += $iter122->write($output);
           }
         }
         $output->writeListEnd();
@@ -14870,24 +14400,24 @@ class Hypertable_ThriftGen_ClientService_scanner_get_row_as_arrays_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size130 = 0;
-            $_etype133 = 0;
-            $xfer += $input->readListBegin($_etype133, $_size130);
-            for ($_i134 = 0; $_i134 < $_size130; ++$_i134)
+            $_size123 = 0;
+            $_etype126 = 0;
+            $xfer += $input->readListBegin($_etype126, $_size123);
+            for ($_i127 = 0; $_i127 < $_size123; ++$_i127)
             {
-              $elem135 = null;
-              $elem135 = array();
-              $_size136 = 0;
-              $_etype139 = 0;
-              $xfer += $input->readListBegin($_etype139, $_size136);
-              for ($_i140 = 0; $_i140 < $_size136; ++$_i140)
+              $elem128 = null;
+              $elem128 = array();
+              $_size129 = 0;
+              $_etype132 = 0;
+              $xfer += $input->readListBegin($_etype132, $_size129);
+              for ($_i133 = 0; $_i133 < $_size129; ++$_i133)
               {
-                $elem141 = null;
-                $xfer += $input->readString($elem141);
-                $elem135 []= $elem141;
+                $elem134 = null;
+                $xfer += $input->readString($elem134);
+                $elem128 []= $elem134;
               }
               $xfer += $input->readListEnd();
-              $this->success []= $elem135;
+              $this->success []= $elem128;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -14923,14 +14453,14 @@ class Hypertable_ThriftGen_ClientService_scanner_get_row_as_arrays_result {
       {
         $output->writeListBegin(TType::LST, count($this->success));
         {
-          foreach ($this->success as $iter142)
+          foreach ($this->success as $iter135)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter142));
+              $output->writeListBegin(TType::STRING, count($iter135));
               {
-                foreach ($iter142 as $iter143)
+                foreach ($iter135 as $iter136)
                 {
-                  $xfer += $output->writeString($iter143);
+                  $xfer += $output->writeString($iter136);
                 }
               }
               $output->writeListEnd();
@@ -15085,24 +14615,24 @@ class Hypertable_ThriftGen_ClientService_next_row_as_arrays_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size144 = 0;
-            $_etype147 = 0;
-            $xfer += $input->readListBegin($_etype147, $_size144);
-            for ($_i148 = 0; $_i148 < $_size144; ++$_i148)
+            $_size137 = 0;
+            $_etype140 = 0;
+            $xfer += $input->readListBegin($_etype140, $_size137);
+            for ($_i141 = 0; $_i141 < $_size137; ++$_i141)
             {
-              $elem149 = null;
-              $elem149 = array();
-              $_size150 = 0;
-              $_etype153 = 0;
-              $xfer += $input->readListBegin($_etype153, $_size150);
-              for ($_i154 = 0; $_i154 < $_size150; ++$_i154)
+              $elem142 = null;
+              $elem142 = array();
+              $_size143 = 0;
+              $_etype146 = 0;
+              $xfer += $input->readListBegin($_etype146, $_size143);
+              for ($_i147 = 0; $_i147 < $_size143; ++$_i147)
               {
-                $elem155 = null;
-                $xfer += $input->readString($elem155);
-                $elem149 []= $elem155;
+                $elem148 = null;
+                $xfer += $input->readString($elem148);
+                $elem142 []= $elem148;
               }
               $xfer += $input->readListEnd();
-              $this->success []= $elem149;
+              $this->success []= $elem142;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -15138,14 +14668,14 @@ class Hypertable_ThriftGen_ClientService_next_row_as_arrays_result {
       {
         $output->writeListBegin(TType::LST, count($this->success));
         {
-          foreach ($this->success as $iter156)
+          foreach ($this->success as $iter149)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter156));
+              $output->writeListBegin(TType::STRING, count($iter149));
               {
-                foreach ($iter156 as $iter157)
+                foreach ($iter149 as $iter150)
                 {
-                  $xfer += $output->writeString($iter157);
+                  $xfer += $output->writeString($iter150);
                 }
               }
               $output->writeListEnd();
@@ -15669,15 +15199,15 @@ class Hypertable_ThriftGen_ClientService_get_row_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size158 = 0;
-            $_etype161 = 0;
-            $xfer += $input->readListBegin($_etype161, $_size158);
-            for ($_i162 = 0; $_i162 < $_size158; ++$_i162)
+            $_size151 = 0;
+            $_etype154 = 0;
+            $xfer += $input->readListBegin($_etype154, $_size151);
+            for ($_i155 = 0; $_i155 < $_size151; ++$_i155)
             {
-              $elem163 = null;
-              $elem163 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem163->read($input);
-              $this->success []= $elem163;
+              $elem156 = null;
+              $elem156 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem156->read($input);
+              $this->success []= $elem156;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -15713,9 +15243,9 @@ class Hypertable_ThriftGen_ClientService_get_row_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter164)
+          foreach ($this->success as $iter157)
           {
-            $xfer += $iter164->write($output);
+            $xfer += $iter157->write($output);
           }
         }
         $output->writeListEnd();
@@ -15906,24 +15436,24 @@ class Hypertable_ThriftGen_ClientService_get_row_as_arrays_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size165 = 0;
-            $_etype168 = 0;
-            $xfer += $input->readListBegin($_etype168, $_size165);
-            for ($_i169 = 0; $_i169 < $_size165; ++$_i169)
+            $_size158 = 0;
+            $_etype161 = 0;
+            $xfer += $input->readListBegin($_etype161, $_size158);
+            for ($_i162 = 0; $_i162 < $_size158; ++$_i162)
             {
-              $elem170 = null;
-              $elem170 = array();
-              $_size171 = 0;
-              $_etype174 = 0;
-              $xfer += $input->readListBegin($_etype174, $_size171);
-              for ($_i175 = 0; $_i175 < $_size171; ++$_i175)
+              $elem163 = null;
+              $elem163 = array();
+              $_size164 = 0;
+              $_etype167 = 0;
+              $xfer += $input->readListBegin($_etype167, $_size164);
+              for ($_i168 = 0; $_i168 < $_size164; ++$_i168)
               {
-                $elem176 = null;
-                $xfer += $input->readString($elem176);
-                $elem170 []= $elem176;
+                $elem169 = null;
+                $xfer += $input->readString($elem169);
+                $elem163 []= $elem169;
               }
               $xfer += $input->readListEnd();
-              $this->success []= $elem170;
+              $this->success []= $elem163;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -15959,14 +15489,14 @@ class Hypertable_ThriftGen_ClientService_get_row_as_arrays_result {
       {
         $output->writeListBegin(TType::LST, count($this->success));
         {
-          foreach ($this->success as $iter177)
+          foreach ($this->success as $iter170)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter177));
+              $output->writeListBegin(TType::STRING, count($iter170));
               {
-                foreach ($iter177 as $iter178)
+                foreach ($iter170 as $iter171)
                 {
-                  $xfer += $output->writeString($iter178);
+                  $xfer += $output->writeString($iter171);
                 }
               }
               $output->writeListEnd();
@@ -16595,15 +16125,15 @@ class Hypertable_ThriftGen_ClientService_get_cells_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size179 = 0;
-            $_etype182 = 0;
-            $xfer += $input->readListBegin($_etype182, $_size179);
-            for ($_i183 = 0; $_i183 < $_size179; ++$_i183)
+            $_size172 = 0;
+            $_etype175 = 0;
+            $xfer += $input->readListBegin($_etype175, $_size172);
+            for ($_i176 = 0; $_i176 < $_size172; ++$_i176)
             {
-              $elem184 = null;
-              $elem184 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem184->read($input);
-              $this->success []= $elem184;
+              $elem177 = null;
+              $elem177 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem177->read($input);
+              $this->success []= $elem177;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -16639,9 +16169,9 @@ class Hypertable_ThriftGen_ClientService_get_cells_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter185)
+          foreach ($this->success as $iter178)
           {
-            $xfer += $iter185->write($output);
+            $xfer += $iter178->write($output);
           }
         }
         $output->writeListEnd();
@@ -16837,24 +16367,24 @@ class Hypertable_ThriftGen_ClientService_get_cells_as_arrays_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size186 = 0;
-            $_etype189 = 0;
-            $xfer += $input->readListBegin($_etype189, $_size186);
-            for ($_i190 = 0; $_i190 < $_size186; ++$_i190)
+            $_size179 = 0;
+            $_etype182 = 0;
+            $xfer += $input->readListBegin($_etype182, $_size179);
+            for ($_i183 = 0; $_i183 < $_size179; ++$_i183)
             {
-              $elem191 = null;
-              $elem191 = array();
-              $_size192 = 0;
-              $_etype195 = 0;
-              $xfer += $input->readListBegin($_etype195, $_size192);
-              for ($_i196 = 0; $_i196 < $_size192; ++$_i196)
+              $elem184 = null;
+              $elem184 = array();
+              $_size185 = 0;
+              $_etype188 = 0;
+              $xfer += $input->readListBegin($_etype188, $_size185);
+              for ($_i189 = 0; $_i189 < $_size185; ++$_i189)
               {
-                $elem197 = null;
-                $xfer += $input->readString($elem197);
-                $elem191 []= $elem197;
+                $elem190 = null;
+                $xfer += $input->readString($elem190);
+                $elem184 []= $elem190;
               }
               $xfer += $input->readListEnd();
-              $this->success []= $elem191;
+              $this->success []= $elem184;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -16890,14 +16420,14 @@ class Hypertable_ThriftGen_ClientService_get_cells_as_arrays_result {
       {
         $output->writeListBegin(TType::LST, count($this->success));
         {
-          foreach ($this->success as $iter198)
+          foreach ($this->success as $iter191)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter198));
+              $output->writeListBegin(TType::STRING, count($iter191));
               {
-                foreach ($iter198 as $iter199)
+                foreach ($iter191 as $iter192)
                 {
-                  $xfer += $output->writeString($iter199);
+                  $xfer += $output->writeString($iter192);
                 }
               }
               $output->writeListEnd();
@@ -17608,15 +17138,15 @@ class Hypertable_ThriftGen_ClientService_shared_mutator_set_cells_args {
         case 4:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size200 = 0;
-            $_etype203 = 0;
-            $xfer += $input->readListBegin($_etype203, $_size200);
-            for ($_i204 = 0; $_i204 < $_size200; ++$_i204)
+            $_size193 = 0;
+            $_etype196 = 0;
+            $xfer += $input->readListBegin($_etype196, $_size193);
+            for ($_i197 = 0; $_i197 < $_size193; ++$_i197)
             {
-              $elem205 = null;
-              $elem205 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem205->read($input);
-              $this->cells []= $elem205;
+              $elem198 = null;
+              $elem198 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem198->read($input);
+              $this->cells []= $elem198;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -17662,9 +17192,9 @@ class Hypertable_ThriftGen_ClientService_shared_mutator_set_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter206)
+          foreach ($this->cells as $iter199)
           {
-            $xfer += $iter206->write($output);
+            $xfer += $iter199->write($output);
           }
         }
         $output->writeListEnd();
@@ -17847,15 +17377,15 @@ class Hypertable_ThriftGen_ClientService_offer_cells_args {
         case 4:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size207 = 0;
-            $_etype210 = 0;
-            $xfer += $input->readListBegin($_etype210, $_size207);
-            for ($_i211 = 0; $_i211 < $_size207; ++$_i211)
+            $_size200 = 0;
+            $_etype203 = 0;
+            $xfer += $input->readListBegin($_etype203, $_size200);
+            for ($_i204 = 0; $_i204 < $_size200; ++$_i204)
             {
-              $elem212 = null;
-              $elem212 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem212->read($input);
-              $this->cells []= $elem212;
+              $elem205 = null;
+              $elem205 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem205->read($input);
+              $this->cells []= $elem205;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -17901,9 +17431,9 @@ class Hypertable_ThriftGen_ClientService_offer_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter213)
+          foreach ($this->cells as $iter206)
           {
-            $xfer += $iter213->write($output);
+            $xfer += $iter206->write($output);
           }
         }
         $output->writeListEnd();
@@ -18089,24 +17619,24 @@ class Hypertable_ThriftGen_ClientService_shared_mutator_set_cells_as_arrays_args
         case 4:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size214 = 0;
-            $_etype217 = 0;
-            $xfer += $input->readListBegin($_etype217, $_size214);
-            for ($_i218 = 0; $_i218 < $_size214; ++$_i218)
+            $_size207 = 0;
+            $_etype210 = 0;
+            $xfer += $input->readListBegin($_etype210, $_size207);
+            for ($_i211 = 0; $_i211 < $_size207; ++$_i211)
             {
-              $elem219 = null;
-              $elem219 = array();
-              $_size220 = 0;
-              $_etype223 = 0;
-              $xfer += $input->readListBegin($_etype223, $_size220);
-              for ($_i224 = 0; $_i224 < $_size220; ++$_i224)
+              $elem212 = null;
+              $elem212 = array();
+              $_size213 = 0;
+              $_etype216 = 0;
+              $xfer += $input->readListBegin($_etype216, $_size213);
+              for ($_i217 = 0; $_i217 < $_size213; ++$_i217)
               {
-                $elem225 = null;
-                $xfer += $input->readString($elem225);
-                $elem219 []= $elem225;
+                $elem218 = null;
+                $xfer += $input->readString($elem218);
+                $elem212 []= $elem218;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem219;
+              $this->cells []= $elem212;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -18152,14 +17682,14 @@ class Hypertable_ThriftGen_ClientService_shared_mutator_set_cells_as_arrays_args
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter226)
+          foreach ($this->cells as $iter219)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter226));
+              $output->writeListBegin(TType::STRING, count($iter219));
               {
-                foreach ($iter226 as $iter227)
+                foreach ($iter219 as $iter220)
                 {
-                  $xfer += $output->writeString($iter227);
+                  $xfer += $output->writeString($iter220);
                 }
               }
               $output->writeListEnd();
@@ -18349,24 +17879,24 @@ class Hypertable_ThriftGen_ClientService_offer_cells_as_arrays_args {
         case 4:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size228 = 0;
-            $_etype231 = 0;
-            $xfer += $input->readListBegin($_etype231, $_size228);
-            for ($_i232 = 0; $_i232 < $_size228; ++$_i232)
+            $_size221 = 0;
+            $_etype224 = 0;
+            $xfer += $input->readListBegin($_etype224, $_size221);
+            for ($_i225 = 0; $_i225 < $_size221; ++$_i225)
             {
-              $elem233 = null;
-              $elem233 = array();
-              $_size234 = 0;
-              $_etype237 = 0;
-              $xfer += $input->readListBegin($_etype237, $_size234);
-              for ($_i238 = 0; $_i238 < $_size234; ++$_i238)
+              $elem226 = null;
+              $elem226 = array();
+              $_size227 = 0;
+              $_etype230 = 0;
+              $xfer += $input->readListBegin($_etype230, $_size227);
+              for ($_i231 = 0; $_i231 < $_size227; ++$_i231)
               {
-                $elem239 = null;
-                $xfer += $input->readString($elem239);
-                $elem233 []= $elem239;
+                $elem232 = null;
+                $xfer += $input->readString($elem232);
+                $elem226 []= $elem232;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem233;
+              $this->cells []= $elem226;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -18412,14 +17942,14 @@ class Hypertable_ThriftGen_ClientService_offer_cells_as_arrays_args {
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter240)
+          foreach ($this->cells as $iter233)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter240));
+              $output->writeListBegin(TType::STRING, count($iter233));
               {
-                foreach ($iter240 as $iter241)
+                foreach ($iter233 as $iter234)
                 {
-                  $xfer += $output->writeString($iter241);
+                  $xfer += $output->writeString($iter234);
                 }
               }
               $output->writeListEnd();
@@ -19037,14 +18567,14 @@ class Hypertable_ThriftGen_ClientService_shared_mutator_set_cell_as_array_args {
         case 4:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size242 = 0;
-            $_etype245 = 0;
-            $xfer += $input->readListBegin($_etype245, $_size242);
-            for ($_i246 = 0; $_i246 < $_size242; ++$_i246)
+            $_size235 = 0;
+            $_etype238 = 0;
+            $xfer += $input->readListBegin($_etype238, $_size235);
+            for ($_i239 = 0; $_i239 < $_size235; ++$_i239)
             {
-              $elem247 = null;
-              $xfer += $input->readString($elem247);
-              $this->cell []= $elem247;
+              $elem240 = null;
+              $xfer += $input->readString($elem240);
+              $this->cell []= $elem240;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -19090,9 +18620,9 @@ class Hypertable_ThriftGen_ClientService_shared_mutator_set_cell_as_array_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter248)
+          foreach ($this->cell as $iter241)
           {
-            $xfer += $output->writeString($iter248);
+            $xfer += $output->writeString($iter241);
           }
         }
         $output->writeListEnd();
@@ -19274,14 +18804,14 @@ class Hypertable_ThriftGen_ClientService_offer_cell_as_array_args {
         case 4:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size249 = 0;
-            $_etype252 = 0;
-            $xfer += $input->readListBegin($_etype252, $_size249);
-            for ($_i253 = 0; $_i253 < $_size249; ++$_i253)
+            $_size242 = 0;
+            $_etype245 = 0;
+            $xfer += $input->readListBegin($_etype245, $_size242);
+            for ($_i246 = 0; $_i246 < $_size242; ++$_i246)
             {
-              $elem254 = null;
-              $xfer += $input->readString($elem254);
-              $this->cell []= $elem254;
+              $elem247 = null;
+              $xfer += $input->readString($elem247);
+              $this->cell []= $elem247;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -19327,9 +18857,9 @@ class Hypertable_ThriftGen_ClientService_offer_cell_as_array_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter255)
+          foreach ($this->cell as $iter248)
           {
-            $xfer += $output->writeString($iter255);
+            $xfer += $output->writeString($iter248);
           }
         }
         $output->writeListEnd();
@@ -21621,14 +21151,14 @@ class Hypertable_ThriftGen_ClientService_mutator_set_cell_as_array_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size256 = 0;
-            $_etype259 = 0;
-            $xfer += $input->readListBegin($_etype259, $_size256);
-            for ($_i260 = 0; $_i260 < $_size256; ++$_i260)
+            $_size249 = 0;
+            $_etype252 = 0;
+            $xfer += $input->readListBegin($_etype252, $_size249);
+            for ($_i253 = 0; $_i253 < $_size249; ++$_i253)
             {
-              $elem261 = null;
-              $xfer += $input->readString($elem261);
-              $this->cell []= $elem261;
+              $elem254 = null;
+              $xfer += $input->readString($elem254);
+              $this->cell []= $elem254;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -21661,9 +21191,9 @@ class Hypertable_ThriftGen_ClientService_mutator_set_cell_as_array_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter262)
+          foreach ($this->cell as $iter255)
           {
-            $xfer += $output->writeString($iter262);
+            $xfer += $output->writeString($iter255);
           }
         }
         $output->writeListEnd();
@@ -21828,14 +21358,14 @@ class Hypertable_ThriftGen_ClientService_set_cell_as_array_args {
         case 3:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size263 = 0;
-            $_etype266 = 0;
-            $xfer += $input->readListBegin($_etype266, $_size263);
-            for ($_i267 = 0; $_i267 < $_size263; ++$_i267)
+            $_size256 = 0;
+            $_etype259 = 0;
+            $xfer += $input->readListBegin($_etype259, $_size256);
+            for ($_i260 = 0; $_i260 < $_size256; ++$_i260)
             {
-              $elem268 = null;
-              $xfer += $input->readString($elem268);
-              $this->cell []= $elem268;
+              $elem261 = null;
+              $xfer += $input->readString($elem261);
+              $this->cell []= $elem261;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -21873,9 +21403,9 @@ class Hypertable_ThriftGen_ClientService_set_cell_as_array_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter269)
+          foreach ($this->cell as $iter262)
           {
-            $xfer += $output->writeString($iter269);
+            $xfer += $output->writeString($iter262);
           }
         }
         $output->writeListEnd();
@@ -22026,15 +21556,15 @@ class Hypertable_ThriftGen_ClientService_mutator_set_cells_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size270 = 0;
-            $_etype273 = 0;
-            $xfer += $input->readListBegin($_etype273, $_size270);
-            for ($_i274 = 0; $_i274 < $_size270; ++$_i274)
+            $_size263 = 0;
+            $_etype266 = 0;
+            $xfer += $input->readListBegin($_etype266, $_size263);
+            for ($_i267 = 0; $_i267 < $_size263; ++$_i267)
             {
-              $elem275 = null;
-              $elem275 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem275->read($input);
-              $this->cells []= $elem275;
+              $elem268 = null;
+              $elem268 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem268->read($input);
+              $this->cells []= $elem268;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -22067,9 +21597,9 @@ class Hypertable_ThriftGen_ClientService_mutator_set_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter276)
+          foreach ($this->cells as $iter269)
           {
-            $xfer += $iter276->write($output);
+            $xfer += $iter269->write($output);
           }
         }
         $output->writeListEnd();
@@ -22235,15 +21765,15 @@ class Hypertable_ThriftGen_ClientService_set_cells_args {
         case 3:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size277 = 0;
-            $_etype280 = 0;
-            $xfer += $input->readListBegin($_etype280, $_size277);
-            for ($_i281 = 0; $_i281 < $_size277; ++$_i281)
+            $_size270 = 0;
+            $_etype273 = 0;
+            $xfer += $input->readListBegin($_etype273, $_size270);
+            for ($_i274 = 0; $_i274 < $_size270; ++$_i274)
             {
-              $elem282 = null;
-              $elem282 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem282->read($input);
-              $this->cells []= $elem282;
+              $elem275 = null;
+              $elem275 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem275->read($input);
+              $this->cells []= $elem275;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -22281,9 +21811,9 @@ class Hypertable_ThriftGen_ClientService_set_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter283)
+          foreach ($this->cells as $iter276)
           {
-            $xfer += $iter283->write($output);
+            $xfer += $iter276->write($output);
           }
         }
         $output->writeListEnd();
@@ -22437,24 +21967,24 @@ class Hypertable_ThriftGen_ClientService_mutator_set_cells_as_arrays_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size284 = 0;
-            $_etype287 = 0;
-            $xfer += $input->readListBegin($_etype287, $_size284);
-            for ($_i288 = 0; $_i288 < $_size284; ++$_i288)
+            $_size277 = 0;
+            $_etype280 = 0;
+            $xfer += $input->readListBegin($_etype280, $_size277);
+            for ($_i281 = 0; $_i281 < $_size277; ++$_i281)
             {
-              $elem289 = null;
-              $elem289 = array();
-              $_size290 = 0;
-              $_etype293 = 0;
-              $xfer += $input->readListBegin($_etype293, $_size290);
-              for ($_i294 = 0; $_i294 < $_size290; ++$_i294)
+              $elem282 = null;
+              $elem282 = array();
+              $_size283 = 0;
+              $_etype286 = 0;
+              $xfer += $input->readListBegin($_etype286, $_size283);
+              for ($_i287 = 0; $_i287 < $_size283; ++$_i287)
               {
-                $elem295 = null;
-                $xfer += $input->readString($elem295);
-                $elem289 []= $elem295;
+                $elem288 = null;
+                $xfer += $input->readString($elem288);
+                $elem282 []= $elem288;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem289;
+              $this->cells []= $elem282;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -22487,14 +22017,14 @@ class Hypertable_ThriftGen_ClientService_mutator_set_cells_as_arrays_args {
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter296)
+          foreach ($this->cells as $iter289)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter296));
+              $output->writeListBegin(TType::STRING, count($iter289));
               {
-                foreach ($iter296 as $iter297)
+                foreach ($iter289 as $iter290)
                 {
-                  $xfer += $output->writeString($iter297);
+                  $xfer += $output->writeString($iter290);
                 }
               }
               $output->writeListEnd();
@@ -22667,24 +22197,24 @@ class Hypertable_ThriftGen_ClientService_set_cells_as_arrays_args {
         case 3:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size298 = 0;
-            $_etype301 = 0;
-            $xfer += $input->readListBegin($_etype301, $_size298);
-            for ($_i302 = 0; $_i302 < $_size298; ++$_i302)
+            $_size291 = 0;
+            $_etype294 = 0;
+            $xfer += $input->readListBegin($_etype294, $_size291);
+            for ($_i295 = 0; $_i295 < $_size291; ++$_i295)
             {
-              $elem303 = null;
-              $elem303 = array();
-              $_size304 = 0;
-              $_etype307 = 0;
-              $xfer += $input->readListBegin($_etype307, $_size304);
-              for ($_i308 = 0; $_i308 < $_size304; ++$_i308)
+              $elem296 = null;
+              $elem296 = array();
+              $_size297 = 0;
+              $_etype300 = 0;
+              $xfer += $input->readListBegin($_etype300, $_size297);
+              for ($_i301 = 0; $_i301 < $_size297; ++$_i301)
               {
-                $elem309 = null;
-                $xfer += $input->readString($elem309);
-                $elem303 []= $elem309;
+                $elem302 = null;
+                $xfer += $input->readString($elem302);
+                $elem296 []= $elem302;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem303;
+              $this->cells []= $elem296;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -22722,14 +22252,14 @@ class Hypertable_ThriftGen_ClientService_set_cells_as_arrays_args {
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter310)
+          foreach ($this->cells as $iter303)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter310));
+              $output->writeListBegin(TType::STRING, count($iter303));
               {
-                foreach ($iter310 as $iter311)
+                foreach ($iter303 as $iter304)
                 {
-                  $xfer += $output->writeString($iter311);
+                  $xfer += $output->writeString($iter304);
                 }
               }
               $output->writeListEnd();
@@ -23889,14 +23419,14 @@ class Hypertable_ThriftGen_ClientService_async_mutator_set_cell_as_array_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size312 = 0;
-            $_etype315 = 0;
-            $xfer += $input->readListBegin($_etype315, $_size312);
-            for ($_i316 = 0; $_i316 < $_size312; ++$_i316)
+            $_size305 = 0;
+            $_etype308 = 0;
+            $xfer += $input->readListBegin($_etype308, $_size305);
+            for ($_i309 = 0; $_i309 < $_size305; ++$_i309)
             {
-              $elem317 = null;
-              $xfer += $input->readString($elem317);
-              $this->cell []= $elem317;
+              $elem310 = null;
+              $xfer += $input->readString($elem310);
+              $this->cell []= $elem310;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -23929,9 +23459,9 @@ class Hypertable_ThriftGen_ClientService_async_mutator_set_cell_as_array_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter318)
+          foreach ($this->cell as $iter311)
           {
-            $xfer += $output->writeString($iter318);
+            $xfer += $output->writeString($iter311);
           }
         }
         $output->writeListEnd();
@@ -24081,14 +23611,14 @@ class Hypertable_ThriftGen_ClientService_set_cell_as_array_async_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cell = array();
-            $_size319 = 0;
-            $_etype322 = 0;
-            $xfer += $input->readListBegin($_etype322, $_size319);
-            for ($_i323 = 0; $_i323 < $_size319; ++$_i323)
+            $_size312 = 0;
+            $_etype315 = 0;
+            $xfer += $input->readListBegin($_etype315, $_size312);
+            for ($_i316 = 0; $_i316 < $_size312; ++$_i316)
             {
-              $elem324 = null;
-              $xfer += $input->readString($elem324);
-              $this->cell []= $elem324;
+              $elem317 = null;
+              $xfer += $input->readString($elem317);
+              $this->cell []= $elem317;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -24121,9 +23651,9 @@ class Hypertable_ThriftGen_ClientService_set_cell_as_array_async_args {
       {
         $output->writeListBegin(TType::STRING, count($this->cell));
         {
-          foreach ($this->cell as $iter325)
+          foreach ($this->cell as $iter318)
           {
-            $xfer += $output->writeString($iter325);
+            $xfer += $output->writeString($iter318);
           }
         }
         $output->writeListEnd();
@@ -24274,15 +23804,15 @@ class Hypertable_ThriftGen_ClientService_async_mutator_set_cells_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size326 = 0;
-            $_etype329 = 0;
-            $xfer += $input->readListBegin($_etype329, $_size326);
-            for ($_i330 = 0; $_i330 < $_size326; ++$_i330)
+            $_size319 = 0;
+            $_etype322 = 0;
+            $xfer += $input->readListBegin($_etype322, $_size319);
+            for ($_i323 = 0; $_i323 < $_size319; ++$_i323)
             {
-              $elem331 = null;
-              $elem331 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem331->read($input);
-              $this->cells []= $elem331;
+              $elem324 = null;
+              $elem324 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem324->read($input);
+              $this->cells []= $elem324;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -24315,9 +23845,9 @@ class Hypertable_ThriftGen_ClientService_async_mutator_set_cells_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter332)
+          foreach ($this->cells as $iter325)
           {
-            $xfer += $iter332->write($output);
+            $xfer += $iter325->write($output);
           }
         }
         $output->writeListEnd();
@@ -24468,15 +23998,15 @@ class Hypertable_ThriftGen_ClientService_set_cells_async_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size333 = 0;
-            $_etype336 = 0;
-            $xfer += $input->readListBegin($_etype336, $_size333);
-            for ($_i337 = 0; $_i337 < $_size333; ++$_i337)
+            $_size326 = 0;
+            $_etype329 = 0;
+            $xfer += $input->readListBegin($_etype329, $_size326);
+            for ($_i330 = 0; $_i330 < $_size326; ++$_i330)
             {
-              $elem338 = null;
-              $elem338 = new Hypertable_ThriftGen_Cell();
-              $xfer += $elem338->read($input);
-              $this->cells []= $elem338;
+              $elem331 = null;
+              $elem331 = new Hypertable_ThriftGen_Cell();
+              $xfer += $elem331->read($input);
+              $this->cells []= $elem331;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -24509,9 +24039,9 @@ class Hypertable_ThriftGen_ClientService_set_cells_async_args {
       {
         $output->writeListBegin(TType::STRUCT, count($this->cells));
         {
-          foreach ($this->cells as $iter339)
+          foreach ($this->cells as $iter332)
           {
-            $xfer += $iter339->write($output);
+            $xfer += $iter332->write($output);
           }
         }
         $output->writeListEnd();
@@ -24665,24 +24195,24 @@ class Hypertable_ThriftGen_ClientService_async_mutator_set_cells_as_arrays_args 
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size340 = 0;
-            $_etype343 = 0;
-            $xfer += $input->readListBegin($_etype343, $_size340);
-            for ($_i344 = 0; $_i344 < $_size340; ++$_i344)
+            $_size333 = 0;
+            $_etype336 = 0;
+            $xfer += $input->readListBegin($_etype336, $_size333);
+            for ($_i337 = 0; $_i337 < $_size333; ++$_i337)
             {
-              $elem345 = null;
-              $elem345 = array();
-              $_size346 = 0;
-              $_etype349 = 0;
-              $xfer += $input->readListBegin($_etype349, $_size346);
-              for ($_i350 = 0; $_i350 < $_size346; ++$_i350)
+              $elem338 = null;
+              $elem338 = array();
+              $_size339 = 0;
+              $_etype342 = 0;
+              $xfer += $input->readListBegin($_etype342, $_size339);
+              for ($_i343 = 0; $_i343 < $_size339; ++$_i343)
               {
-                $elem351 = null;
-                $xfer += $input->readString($elem351);
-                $elem345 []= $elem351;
+                $elem344 = null;
+                $xfer += $input->readString($elem344);
+                $elem338 []= $elem344;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem345;
+              $this->cells []= $elem338;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -24715,14 +24245,14 @@ class Hypertable_ThriftGen_ClientService_async_mutator_set_cells_as_arrays_args 
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter352)
+          foreach ($this->cells as $iter345)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter352));
+              $output->writeListBegin(TType::STRING, count($iter345));
               {
-                foreach ($iter352 as $iter353)
+                foreach ($iter345 as $iter346)
                 {
-                  $xfer += $output->writeString($iter353);
+                  $xfer += $output->writeString($iter346);
                 }
               }
               $output->writeListEnd();
@@ -24880,24 +24410,24 @@ class Hypertable_ThriftGen_ClientService_set_cells_as_arrays_async_args {
         case 2:
           if ($ftype == TType::LST) {
             $this->cells = array();
-            $_size354 = 0;
-            $_etype357 = 0;
-            $xfer += $input->readListBegin($_etype357, $_size354);
-            for ($_i358 = 0; $_i358 < $_size354; ++$_i358)
+            $_size347 = 0;
+            $_etype350 = 0;
+            $xfer += $input->readListBegin($_etype350, $_size347);
+            for ($_i351 = 0; $_i351 < $_size347; ++$_i351)
             {
-              $elem359 = null;
-              $elem359 = array();
-              $_size360 = 0;
-              $_etype363 = 0;
-              $xfer += $input->readListBegin($_etype363, $_size360);
-              for ($_i364 = 0; $_i364 < $_size360; ++$_i364)
+              $elem352 = null;
+              $elem352 = array();
+              $_size353 = 0;
+              $_etype356 = 0;
+              $xfer += $input->readListBegin($_etype356, $_size353);
+              for ($_i357 = 0; $_i357 < $_size353; ++$_i357)
               {
-                $elem365 = null;
-                $xfer += $input->readString($elem365);
-                $elem359 []= $elem365;
+                $elem358 = null;
+                $xfer += $input->readString($elem358);
+                $elem352 []= $elem358;
               }
               $xfer += $input->readListEnd();
-              $this->cells []= $elem359;
+              $this->cells []= $elem352;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -24930,14 +24460,14 @@ class Hypertable_ThriftGen_ClientService_set_cells_as_arrays_async_args {
       {
         $output->writeListBegin(TType::LST, count($this->cells));
         {
-          foreach ($this->cells as $iter366)
+          foreach ($this->cells as $iter359)
           {
             {
-              $output->writeListBegin(TType::STRING, count($iter366));
+              $output->writeListBegin(TType::STRING, count($iter359));
               {
-                foreach ($iter366 as $iter367)
+                foreach ($iter359 as $iter360)
                 {
-                  $xfer += $output->writeString($iter367);
+                  $xfer += $output->writeString($iter360);
                 }
               }
               $output->writeListEnd();
@@ -28023,14 +27553,14 @@ class Hypertable_ThriftGen_ClientService_get_tables_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size368 = 0;
-            $_etype371 = 0;
-            $xfer += $input->readListBegin($_etype371, $_size368);
-            for ($_i372 = 0; $_i372 < $_size368; ++$_i372)
+            $_size361 = 0;
+            $_etype364 = 0;
+            $xfer += $input->readListBegin($_etype364, $_size361);
+            for ($_i365 = 0; $_i365 < $_size361; ++$_i365)
             {
-              $elem373 = null;
-              $xfer += $input->readString($elem373);
-              $this->success []= $elem373;
+              $elem366 = null;
+              $xfer += $input->readString($elem366);
+              $this->success []= $elem366;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -28066,9 +27596,9 @@ class Hypertable_ThriftGen_ClientService_get_tables_result {
       {
         $output->writeListBegin(TType::STRING, count($this->success));
         {
-          foreach ($this->success as $iter374)
+          foreach ($this->success as $iter367)
           {
-            $xfer += $output->writeString($iter374);
+            $xfer += $output->writeString($iter367);
           }
         }
         $output->writeListEnd();
@@ -28216,15 +27746,15 @@ class Hypertable_ThriftGen_ClientService_namespace_get_listing_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size375 = 0;
-            $_etype378 = 0;
-            $xfer += $input->readListBegin($_etype378, $_size375);
-            for ($_i379 = 0; $_i379 < $_size375; ++$_i379)
+            $_size368 = 0;
+            $_etype371 = 0;
+            $xfer += $input->readListBegin($_etype371, $_size368);
+            for ($_i372 = 0; $_i372 < $_size368; ++$_i372)
             {
-              $elem380 = null;
-              $elem380 = new Hypertable_ThriftGen_NamespaceListing();
-              $xfer += $elem380->read($input);
-              $this->success []= $elem380;
+              $elem373 = null;
+              $elem373 = new Hypertable_ThriftGen_NamespaceListing();
+              $xfer += $elem373->read($input);
+              $this->success []= $elem373;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -28260,9 +27790,9 @@ class Hypertable_ThriftGen_ClientService_namespace_get_listing_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter381)
+          foreach ($this->success as $iter374)
           {
-            $xfer += $iter381->write($output);
+            $xfer += $iter374->write($output);
           }
         }
         $output->writeListEnd();
@@ -28410,15 +27940,15 @@ class Hypertable_ThriftGen_ClientService_get_listing_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size382 = 0;
-            $_etype385 = 0;
-            $xfer += $input->readListBegin($_etype385, $_size382);
-            for ($_i386 = 0; $_i386 < $_size382; ++$_i386)
+            $_size375 = 0;
+            $_etype378 = 0;
+            $xfer += $input->readListBegin($_etype378, $_size375);
+            for ($_i379 = 0; $_i379 < $_size375; ++$_i379)
             {
-              $elem387 = null;
-              $elem387 = new Hypertable_ThriftGen_NamespaceListing();
-              $xfer += $elem387->read($input);
-              $this->success []= $elem387;
+              $elem380 = null;
+              $elem380 = new Hypertable_ThriftGen_NamespaceListing();
+              $xfer += $elem380->read($input);
+              $this->success []= $elem380;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -28454,9 +27984,9 @@ class Hypertable_ThriftGen_ClientService_get_listing_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter388)
+          foreach ($this->success as $iter381)
           {
-            $xfer += $iter388->write($output);
+            $xfer += $iter381->write($output);
           }
         }
         $output->writeListEnd();
@@ -28624,15 +28154,15 @@ class Hypertable_ThriftGen_ClientService_table_get_splits_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size389 = 0;
-            $_etype392 = 0;
-            $xfer += $input->readListBegin($_etype392, $_size389);
-            for ($_i393 = 0; $_i393 < $_size389; ++$_i393)
+            $_size382 = 0;
+            $_etype385 = 0;
+            $xfer += $input->readListBegin($_etype385, $_size382);
+            for ($_i386 = 0; $_i386 < $_size382; ++$_i386)
             {
-              $elem394 = null;
-              $elem394 = new Hypertable_ThriftGen_TableSplit();
-              $xfer += $elem394->read($input);
-              $this->success []= $elem394;
+              $elem387 = null;
+              $elem387 = new Hypertable_ThriftGen_TableSplit();
+              $xfer += $elem387->read($input);
+              $this->success []= $elem387;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -28668,9 +28198,9 @@ class Hypertable_ThriftGen_ClientService_table_get_splits_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter395)
+          foreach ($this->success as $iter388)
           {
-            $xfer += $iter395->write($output);
+            $xfer += $iter388->write($output);
           }
         }
         $output->writeListEnd();
@@ -28838,15 +28368,15 @@ class Hypertable_ThriftGen_ClientService_get_table_splits_result {
         case 0:
           if ($ftype == TType::LST) {
             $this->success = array();
-            $_size396 = 0;
-            $_etype399 = 0;
-            $xfer += $input->readListBegin($_etype399, $_size396);
-            for ($_i400 = 0; $_i400 < $_size396; ++$_i400)
+            $_size389 = 0;
+            $_etype392 = 0;
+            $xfer += $input->readListBegin($_etype392, $_size389);
+            for ($_i393 = 0; $_i393 < $_size389; ++$_i393)
             {
-              $elem401 = null;
-              $elem401 = new Hypertable_ThriftGen_TableSplit();
-              $xfer += $elem401->read($input);
-              $this->success []= $elem401;
+              $elem394 = null;
+              $elem394 = new Hypertable_ThriftGen_TableSplit();
+              $xfer += $elem394->read($input);
+              $this->success []= $elem394;
             }
             $xfer += $input->readListEnd();
           } else {
@@ -28882,9 +28412,9 @@ class Hypertable_ThriftGen_ClientService_get_table_splits_result {
       {
         $output->writeListBegin(TType::STRUCT, count($this->success));
         {
-          foreach ($this->success as $iter402)
+          foreach ($this->success as $iter395)
           {
-            $xfer += $iter402->write($output);
+            $xfer += $iter395->write($output);
           }
         }
         $output->writeListEnd();

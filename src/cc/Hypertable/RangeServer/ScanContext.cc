@@ -45,8 +45,8 @@ using namespace Hypertable;
 void
 ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     const RangeSpec *range_spec, SchemaPtr &sp) {
-  Schema::ColumnFamily *cf;
-  uint32_t max_versions = 0;
+  ColumnFamilySpec *cf_spec;
+  int32_t max_versions = 0;
   boost::xtime xtnow;
   int64_t now;
   String family;
@@ -92,12 +92,12 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
         ScanSpec::parse_column(cfstr, family, &qualifier, &qualifier_len,
                                &has_qualifier, &is_regexp, &is_prefix);
-        cf = schema->get_column_family(family.c_str());
+        cf_spec = schema->get_column_family(family.c_str());
 
-        if (cf == 0)
+        if (cf_spec == 0)
           HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY, cfstr);
 
-        family_mask[cf->id] = true;
+        family_mask[cf_spec->get_id()] = true;
         if (has_qualifier) {
           ColumnPredicate cp;
           cp.operation = 
@@ -106,64 +106,61 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
              ColumnPredicate::QUALIFIER_EXACT_MATCH);
           cp.column_qualifier = qualifier;
           cp.column_qualifier_len = qualifier_len;
-          cell_predicates[cf->id].add_column_predicate(cp, id++);
+          cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
         }
 
-        if (cf->ttl == 0)
-          cell_predicates[cf->id].cutoff_time = TIMESTAMP_MIN;
+        if (cf_spec->get_option_ttl() == 0)
+          cell_predicates[cf_spec->get_id()].cutoff_time = TIMESTAMP_MIN;
         else
-          cell_predicates[cf->id].cutoff_time = now
-            - ((int64_t)cf->ttl * 1000000000LL);
+          cell_predicates[cf_spec->get_id()].cutoff_time = now
+            - ((int64_t)cf_spec->get_option_ttl() * 1000000000LL);
         if (max_versions == 0)
-          cell_predicates[cf->id].max_versions = cf->max_versions;
+          cell_predicates[cf_spec->get_id()].max_versions = cf_spec->get_option_max_versions();
         else {
-          if (cf->max_versions == 0)
-            cell_predicates[cf->id].max_versions = max_versions;
+          if (cf_spec->get_option_max_versions() == 0)
+            cell_predicates[cf_spec->get_id()].max_versions = max_versions;
           else
-            cell_predicates[cf->id].max_versions = max_versions < cf->max_versions
-              ?  max_versions : cf->max_versions;
+            cell_predicates[cf_spec->get_id()].max_versions = max_versions < cf_spec->get_option_max_versions()
+              ?  max_versions : cf_spec->get_option_max_versions();
         }
-        if (cf->counter)
-          cell_predicates[cf->id].counter = true;
-        cell_predicates[cf->id].indexed = cf->has_index || cf->has_qualifier_index;
+        if (cf_spec->get_option_counter())
+          cell_predicates[cf_spec->get_id()].counter = true;
+        cell_predicates[cf_spec->get_id()].indexed = cf_spec->get_value_index() || cf_spec->get_qualifier_index();
       }
     }
     else {
-      Schema::AccessGroups &aglist = schema->get_access_groups();
 
       family_mask[0] = true;  // ROW_DELETE records have 0 column family, so
       // this allows them to pass through
-      for (Schema::AccessGroups::iterator ag_it = aglist.begin();
-          ag_it != aglist.end(); ++ag_it) {
-        for (Schema::ColumnFamilies::iterator cf_it = (*ag_it)->columns.begin();
-            cf_it != (*ag_it)->columns.end(); ++cf_it) {
-          if ((*cf_it)->id == 0)
+      for (auto ag_spec : schema->get_access_groups()) {
+        for (auto cf_spec : ag_spec->columns()) {
+          if (cf_spec->get_id() == 0)
             HT_THROWF(Error::RANGESERVER_SCHEMA_INVALID_CFID,
-                "Bad ID for Column Family '%s'", (*cf_it)->name.c_str());
-          if ((*cf_it)->deleted) {
-            family_mask[(*cf_it)->id] = false;
+                      "Bad ID for Column Family '%s'", cf_spec->get_name().c_str());
+          if (cf_spec->get_deleted()) {
+            family_mask[cf_spec->get_id()] = false;
             continue;
           }
-          family_mask[(*cf_it)->id] = true;
-          if ((*cf_it)->ttl == 0)
-            cell_predicates[(*cf_it)->id].cutoff_time = TIMESTAMP_MIN;
+          family_mask[cf_spec->get_id()] = true;
+          if (cf_spec->get_option_ttl() == 0)
+            cell_predicates[cf_spec->get_id()].cutoff_time = TIMESTAMP_MIN;
           else
-            cell_predicates[(*cf_it)->id].cutoff_time = now
-              - ((int64_t)(*cf_it)->ttl * 1000000000LL);
+            cell_predicates[cf_spec->get_id()].cutoff_time = now
+              - ((int64_t)cf_spec->get_option_ttl() * 1000000000LL);
 
           if (max_versions == 0)
-            cell_predicates[(*cf_it)->id].max_versions = (*cf_it)->max_versions;
+            cell_predicates[cf_spec->get_id()].max_versions = cf_spec->get_option_max_versions();
           else {
-            if ((*cf_it)->max_versions == 0)
-              cell_predicates[(*cf_it)->id].max_versions = max_versions;
+            if (cf_spec->get_option_max_versions() == 0)
+              cell_predicates[cf_spec->get_id()].max_versions = max_versions;
             else
-              cell_predicates[(*cf_it)->id].max_versions =
-                (max_versions < (*cf_it)->max_versions)
-                ? max_versions : (*cf_it)->max_versions;
+              cell_predicates[cf_spec->get_id()].max_versions =
+                (max_versions < cf_spec->get_option_max_versions())
+                ? max_versions : cf_spec->get_option_max_versions();
           }
-          if ((*cf_it)->counter)
-            cell_predicates[(*cf_it)->id].counter = true;
-          cell_predicates[(*cf_it)->id].indexed = (*cf_it)->has_index || (*cf_it)->has_qualifier_index;
+          if (cf_spec->get_option_counter())
+            cell_predicates[cf_spec->get_id()].counter = true;
+          cell_predicates[cf_spec->get_id()].indexed = cf_spec->get_value_index() || cf_spec->get_qualifier_index();
         }
       }
     }
@@ -209,7 +206,7 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
     }
     else if (!spec->cell_intervals.empty()) {
       String column_family_str;
-      Schema::ColumnFamily *cf;
+      ColumnFamilySpec *cf_spec;
 
       has_cell_interval = true;
 
@@ -228,11 +225,11 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
         }
         column_family_str = String(spec->cell_intervals[0].start_column,
             ptr - spec->cell_intervals[0].start_column);
-        if ((cf = schema->get_column_family(column_family_str)) == 0)
+        if ((cf_spec = schema->get_column_family(column_family_str)) == 0)
           HT_THROW(Error::RANGESERVER_BAD_SCAN_SPEC,
               format("Bad column family (%s)", column_family_str.c_str()));
 
-        start_key.column_family_code = cf->id;
+        start_key.column_family_code = cf_spec->get_id();
 
         start_row = spec->cell_intervals[0].start_row;
         start_inclusive = spec->cell_intervals[0].start_inclusive;
@@ -258,11 +255,11 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
         column_family_str = String(spec->cell_intervals[0].end_column,
             ptr - spec->cell_intervals[0].end_column);
-        if ((cf = schema->get_column_family(column_family_str)) == 0)
+        if ((cf_spec = schema->get_column_family(column_family_str)) == 0)
           HT_THROWF(Error::RANGESERVER_BAD_SCAN_SPEC, "Bad column family (%s)",
               column_family_str.c_str());
 
-        end_key.column_family_code = cf->id;
+        end_key.column_family_code = cf_spec->get_id();
 
         end_row = spec->cell_intervals[0].end_row;
         end_inclusive = spec->cell_intervals[0].end_inclusive;
@@ -383,20 +380,20 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
     foreach_ht (const ColumnPredicate& cp, spec->column_predicates) {
       if (cp.column_family && *cp.column_family) {
-        cf = schema->get_column_family(cp.column_family);
-        if (cf == 0) {
-          HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY,
-                   format("Invalid column family '%s'", cp.column_family).c_str() );
+        cf_spec = schema->get_column_family(cp.column_family);
+        if (cf_spec == 0) {
+          HT_THROWF(Error::RANGESERVER_INVALID_COLUMNFAMILY,
+                    "Invalid column family '%s'", cp.column_family);
         }
-        if (cf->id == 0) {
-          HT_THROW(Error::RANGESERVER_SCHEMA_INVALID_CFID,
-                   format("Bad id for column family '%s'", cf->name.c_str()).c_str() );
+        if (cf_spec->get_id() == 0) {
+          HT_THROWF(Error::RANGESERVER_SCHEMA_INVALID_CFID,
+                    "Bad id for column family '%s'", cf_spec->get_name().c_str());
         }
-        if (cf->counter) {
+        if (cf_spec->get_option_counter()) {
           HT_THROW(Error::BAD_SCAN_SPEC, "Counters are not supported for column predicates" );
         }
-        cell_predicates[cf->id].add_column_predicate(cp, id++);
-        cell_predicates[cf->id].indexed = cf->has_index || cf->has_qualifier_index;
+        cell_predicates[cf_spec->get_id()].add_column_predicate(cp, id++);
+        cell_predicates[cf_spec->get_id()].indexed = cf_spec->get_value_index() || cf_spec->get_qualifier_index();
       }
     }
   }

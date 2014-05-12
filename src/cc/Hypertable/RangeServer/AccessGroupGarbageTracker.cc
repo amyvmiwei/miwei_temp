@@ -40,7 +40,7 @@ using namespace Config;
 using namespace std;
 
 AccessGroupGarbageTracker::AccessGroupGarbageTracker(PropertiesPtr &props,
-               CellCacheManagerPtr &cell_cache_manager, Schema::AccessGroup *ag)
+               CellCacheManagerPtr &cell_cache_manager, AccessGroupSpec *ag_spec)
   : m_cell_cache_manager(cell_cache_manager) {
   SubProperties cfg(props, "Hypertable.RangeServer.");
   m_garbage_threshold 
@@ -48,23 +48,23 @@ AccessGroupGarbageTracker::AccessGroupGarbageTracker(PropertiesPtr &props,
   m_accum_data_target = cfg.get_i64("Range.SplitSize") / 10;
   m_accum_data_target_minimum = m_accum_data_target / 2;
   m_last_collection_time = time(0);
-  update_schema(ag);
+  update_schema(ag_spec);
 }
 
 
-void AccessGroupGarbageTracker::update_schema(Schema::AccessGroup *ag) {
+void AccessGroupGarbageTracker::update_schema(AccessGroupSpec *ag_spec) {
   ScopedLock lock(m_mutex);
   m_have_max_versions = false;
   m_min_ttl = 0;
-  m_in_memory = ag->in_memory;
-  foreach_ht(Schema::ColumnFamily *cf, ag->columns) {
-    if (cf->max_versions > 0)
+  m_in_memory = ag_spec->get_option_in_memory();
+  for (auto cf_spec : ag_spec->columns()) {
+    if (cf_spec->get_option_max_versions() > 0)
       m_have_max_versions = true;
-    if (cf->ttl > 0) {
+    if (cf_spec->get_option_ttl() > 0) {
       if (m_min_ttl == 0)
-        m_min_ttl = (time_t)cf->ttl;
-      else if (cf->ttl < m_min_ttl)
-        m_min_ttl = cf->ttl;
+        m_min_ttl = (time_t)cf_spec->get_option_ttl();
+      else if (cf_spec->get_option_ttl() < m_min_ttl)
+        m_min_ttl = cf_spec->get_option_ttl();
     }
   }
   m_elapsed_target_minimum = m_elapsed_target = m_min_ttl/10;
