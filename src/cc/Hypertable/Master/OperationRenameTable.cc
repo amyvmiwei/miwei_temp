@@ -88,6 +88,13 @@ void OperationRenameTable::execute() {
       return;
     }
 
+    // Verify new name does not refer to an existing namespace
+    bool is_namespace;
+    if (m_context->namemap->exists_mapping(m_new_name, &is_namespace) && is_namespace) {
+      complete_error(Error::NAME_ALREADY_IN_USE, m_new_name);
+      return;
+    }
+
     // check if an index table exists; if yes then create a sub-operation
     old_index = Filesystem::dirname(m_old_name) 
                    + "/^" + Filesystem::basename(m_old_name);
