@@ -81,8 +81,15 @@ do_cmd() {
 
 print_version() {
   $HYPERTABLE_HOME/bin/hypertable --version
-  echo "  Hadoop:" `basename $HYPERTABLE_HOME/lib/java/hadoop-*.jar .jar |
-                    sed 's/hadoop-\([^-]*\)-.*/\1/'`
+  HADOOP_VERSION="unknown"
+  if [ -f $HYPERTABLE_HOME/lib/java/hadoop-core-* ] ; then
+    HADOOP_VERSION=`basename $HYPERTABLE_HOME/lib/java/hadoop-core-*.jar .jar |
+                    sed 's/hadoop-[a-z-]*\(.*\)-.*/\1/'`
+  elif [ -f $HYPERTABLE_HOME/lib/java/hadoop-hdfs-* ] ; then
+    HADOOP_VERSION=`basename $HYPERTABLE_HOME/lib/java/hadoop-hdfs-*.jar .jar |
+                    sed 's/hadoop-[a-z-]*\(.*\)-.*/\1/'`
+  fi
+  echo "  Hadoop: $HADOOP_VERSION"
   if [ -x $HYPERTABLE_HOME/bin/cephBroker ]; then
     echo " " `$HYPERTABLE_HOME/bin/cephBroker --ceph-version`
   fi
