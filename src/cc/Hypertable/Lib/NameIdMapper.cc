@@ -151,6 +151,7 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags, bool i
   boost::char_separator<char> sep("/");
   std::vector<String> name_components;
   std::vector<uint64_t> id_components;
+  std::vector<DirEntryAttr> listing;
   DynamicBuffer value_buf;
 
   tokenizer tokens(name, sep);
@@ -163,6 +164,7 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags, bool i
   String names_parent = "";
   String names_child = "";
 
+  listing.reserve(name_components.size());
   for (size_t i=0; i<name_components.size()-1; i++) {
 
     names_child += String("/") + name_components[i];
@@ -170,6 +172,11 @@ void NameIdMapper::add_mapping(const String &name, String &id, int flags, bool i
     try {
       String names_file = m_names_dir + names_child;
       m_hyperspace->attr_get(names_file, "id", value_buf);
+      if (flags & CREATE_INTERMEDIATE) {
+        m_hyperspace->readpath_attr(names_file, "id", listing);
+        if (!listing.back().is_dir)
+          HT_THROW(Error::NAME_ALREADY_IN_USE, names_child);
+      }
       id_components.push_back( strtoll((const char *)value_buf.base, 0, 0) );
     }
     catch (Exception &e) {
