@@ -153,6 +153,10 @@ void Client::drop_namespace(const String &name, Namespace *base, bool if_exists)
 
   Namespace::canonicalize(&sub_name);
 
+  if (sub_name == "tmp" || sub_name == "sys")
+    HT_THROWF(Error::INVALID_OPERATION,
+              "Dropping system namespace /%s is not allowed", sub_name.c_str());
+
   if (base != NULL) {
     full_name = base->get_name() + '/';
   }
