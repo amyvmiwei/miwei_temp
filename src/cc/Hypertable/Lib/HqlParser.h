@@ -929,6 +929,40 @@ namespace Hypertable {
       ParserState &state;
     };
 
+    struct drop_value_index {
+      drop_value_index(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String name = strip_quotes(str, end-str);
+        HT_ASSERT(state.alter_schema);
+        ColumnFamilySpec *cf = state.find_column_family_in_modified_ag(name);
+        if (cf == nullptr) {
+          cf = state.alter_schema->get_column_family(name);
+          if (cf == nullptr)
+            HT_THROWF(Error::HQL_BAD_COMMAND, "Attempt to drop index from "
+                      "column '%s' which does not exist", name.c_str());
+        }
+        cf->set_value_index(false);
+      }
+      ParserState &state;
+    };
+
+    struct drop_qualifier_index {
+      drop_qualifier_index(ParserState &state) : state(state) { }
+      void operator()(char const *str, char const *end) const {
+        String name = strip_quotes(str, end-str);
+        HT_ASSERT(state.alter_schema);
+        ColumnFamilySpec *cf = state.find_column_family_in_modified_ag(name);
+        if (cf == nullptr) {
+          cf = state.alter_schema->get_column_family(name);
+          if (cf == nullptr)
+            HT_THROWF(Error::HQL_BAD_COMMAND, "Attempt to drop index from "
+                      "column '%s' which does not exist", name.c_str());
+        }
+        cf->set_qualifier_index(false);
+      }
+      ParserState &state;
+    };
+
     struct set_rename_column_family_old_name {
       set_rename_column_family_old_name(ParserState &state) : state(state) { }
       void operator()(char const *str, char const *end) const {
@@ -2880,7 +2914,7 @@ namespace Hypertable {
             >> +(ADD >> create_definitions
                  | MODIFY[set_modify_flag(self.state, true)] >>
                    create_definitions[set_modify_flag(self.state, false)]
-                 | DROP >> drop_column_definitions
+                 | drop_specification
                  | RENAME >> COLUMN >> FAMILY >> rename_column_definition)
             ;
 
@@ -2998,14 +3032,18 @@ namespace Hypertable {
               | index_definition
             ;
 
-          drop_column_definitions
-            = LPAREN >> drop_column_definition
-                     >> *(COMMA >> drop_column_definition)
-                     >> RPAREN
-            ;
-
-          drop_column_definition
-            = column_name[drop_column_family(self.state)]
+          drop_specification
+            = DROP >> LPAREN >> column_name[drop_column_family(self.state)]
+                   >> *(COMMA >> column_name[drop_column_family(self.state)])
+                   >> RPAREN
+            | DROP >> *VALUE >> INDEX >> LPAREN
+                   >> column_name[drop_value_index(self.state)]
+                   >> *(COMMA >> column_name[drop_value_index(self.state)])
+                   >> RPAREN
+            | DROP >> QUALIFIER >> INDEX >> LPAREN
+                   >> column_name[drop_qualifier_index(self.state)]
+                   >> *(COMMA >> column_name[drop_qualifier_index(self.state)])
+                   >> RPAREN
             ;
 
           rename_column_definition
@@ -3030,7 +3068,7 @@ namespace Hypertable {
             = (identifier | string_literal)
             ;
 
-           column_definition
+          column_definition
             = column_name[open_column_family(self.state)] >> *(column_option)
             ;
 
@@ -3356,8 +3394,7 @@ namespace Hypertable {
           BOOST_SPIRIT_DEBUG_RULE(column_selection);
           BOOST_SPIRIT_DEBUG_RULE(create_definition);
           BOOST_SPIRIT_DEBUG_RULE(create_definitions);
-          BOOST_SPIRIT_DEBUG_RULE(drop_column_definition);
-          BOOST_SPIRIT_DEBUG_RULE(drop_column_definitions);
+          BOOST_SPIRIT_DEBUG_RULE(drop_specification);
           BOOST_SPIRIT_DEBUG_RULE(rename_column_definition);
           BOOST_SPIRIT_DEBUG_RULE(modify_column_definitions);
           BOOST_SPIRIT_DEBUG_RULE(modify_column_definition);
@@ -3467,7 +3504,7 @@ namespace Hypertable {
 
         rule<ScannerT> boolean_literal, column_definition, column_name,
           column_option, create_definition, create_definitions,
-          drop_column_definition, drop_column_definitions,
+          drop_specification,
           rename_column_definition, create_table_statement, duration,
           modify_column_definitions, modify_column_definition,
           create_namespace_statement, use_namespace_statement, 

@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,26 +19,24 @@
  * 02110-1301, USA.
  */
 
-/** @file
- * Declarations for OperationAlterTable.
- * This file contains declarations for OperationAlterTable, an Operation class
- * for carrying out an ALTER TABLE operation.
- */
+/// @file
+/// Declarations for OperationAlterTable.
+/// This file contains declarations for OperationAlterTable, an Operation class
+/// for carrying out an ALTER TABLE operation.
 
-#ifndef HYPERTABLE_OPERATIONALTERTABLE_H
-#define HYPERTABLE_OPERATIONALTERTABLE_H
+#ifndef Hypertable_Master_OperationAlterTable_h
+#define Hypertable_Master_OperationAlterTable_h
 
-#include "Common/StringExt.h"
+#include <Hypertable/Master/Operation.h>
 
-#include "Operation.h"
+#include <Common/StringExt.h>
 
 namespace Hypertable {
 
-  /** @addtogroup Master
-   *  @{
-   */
+  /// @addtogroup Master
+  /// @{
 
-  /** Carries out an alter table operation. */
+  /// Carries out an alter table operation.
   class OperationAlterTable : public Operation {
   public:
 
@@ -82,16 +80,31 @@ namespace Hypertable {
      *   <li> Validates new schema and if bad, completes with
      *        Error::MASTER_BAD_SCHEMA </li>
      *   <li> Loads existing schema and checks to make sure new schema
-     *        generation number is exacly 1 greater than the generation
-     *        number of the existing schema, if not completes with
-     *        Error::MASTER_SCHEMA_GENERATION_MISMATCH </li>
-     *   <li> Otherwise, sets dependencies to Dependency::METADATA and
-     *        transitions to SCAN_METADATA </li>
+     *        generation number is the same as the original generation
+     *        number, if not completes with
+     *        Error::MASTER_SCHEMA_GENERATION_MISMATCH. </li>
+     *   <li> Otherwise, sets #m_parts to the index table that need to be
+     *        created with a call to get_create_index_parts(), sets,
+     *        dependencies to Dependency::METADATA, and transitions to
+     *        CREATE_INDICES </li>
+     * </ul></td>
+     * </tr>
+     * <tr>
+     * <td>CREATE_INDICES</td>
+     * <td><ul>
+     * <li>If #m_parts specifies either a value or qualifier index, creates an
+     *     OperationCreateTable sub operation to create index tables and stages
+     *     it with a call to stage_subop()</li>
+     * <li>Transition state to SCAN_METADATA</li>
+     * <li>Persists this operation and sub operation to MML and then
+     *     returns</li>
      * </ul></td>
      * </tr>
      * <tr>
      * <td> SCAN_METADATA </td>
      * <td><ul>
+     *   <li> Handles result of create table sub operation with a call to
+     *        fetch_and_validate_subop(), returning on failure</li>
      *   <li> Scans the METADATA table and populates #m_servers to hold the set
      *        of servers that hold the table to be altered which are not in the
      *        #m_completed set. </li>
@@ -117,8 +130,58 @@ namespace Hypertable {
      * <tr>
      * <td> UPDATE_HYPERSPACE </td>
      * <td><ul>
+     *   <li> Sets #m_parts to the index table that need to be dropped with a
+     *        call to get_drop_index_parts() </li>
      *   <li> Updates the schema attribute of table in hyperspace </li>
-     *   <li> Transitions to state COMPLETED </li>
+     *   <li> If any of the index tables need to be dropped, transitions to
+     *        state SUSPEND_TABLE_MAINTENANCE, records this operation to
+     *        the MML, and then returns </li>
+     *   <li> Otherwise, transitions to COMPLETE and then returns </li>
+     * </ul></td>
+     * </tr>
+     * <tr>
+     * <td>SUSPEND_TABLE_MAINTENANCE</td>
+     * <td><ul>
+     * <li>Creates an OperationToggleMaintenance sub operation to turn
+     *     maintenance off</li>
+     * <li>Stages sub operation with a call to stage_subop()</li>
+     * <li>Transition state to DROP_INDICES</li>
+     * <li>Persists this operation and sub operation to MML and then
+     *     returns</li>
+     * </ul></td>
+     * </tr>
+     * <tr>
+     * <td>DROP_INDICES</td>
+     * <td><ul>
+     * <li>Handles result of toggle table maintenance sub operation with a
+     *     call to fetch_and_validate_subop(), returning on failure</li>
+     * <li>Creates an OperationDropTable sub operation to drop index
+     *     tables</li>
+     * <li>Stages sub operation with a call to stage_subop()</li>
+     * <li>Transition state to RESUME_TABLE_MAINTENANCE</li>
+     * <li>Persists this operation and sub operation to MML and then
+     *     returns</li>
+     * </ul></td>
+     * </tr>
+     * <tr>
+     * <td>RESUME_TABLE_MAINTENANCE</td>
+     * <td><ul>
+     * <li>Handles result of drop table sub operation with a call to
+     *     fetch_and_validate_subop(), returning on failure</li>
+     * <li>Creates an OperationToggleMaintenance sub operation to turn
+     *     maintenance back on</li>
+     * <li>Stages sub operation with a call to stage_subop()</li>
+     * <li>Transition state to FINALIZE</li>
+     * <li>Persists this operation and sub operation to MML and then
+     *     returns</li>
+     * </ul></td>
+     * </tr>
+     * <tr>
+     * <td>FINALIZE</td>
+     * <td><ul>
+     * <li>Handles result of the toggle maintenance sub operation with a call to
+     *     fetch_and_validate_subop(), returning on failure</li>
+     * <li>Calls complete_ok()</li>
      * </ul></td>
      * </tr>
      * </table>
@@ -140,6 +203,8 @@ namespace Hypertable {
      */
     virtual void display_state(std::ostream &os);
 
+    /// Returns encoding version
+    /// @return Encoding version
     virtual uint16_t encoding_version() const;
 
     /** Returns serialized state length.
@@ -159,9 +224,15 @@ namespace Hypertable {
      *   <tr><td> vstr </td><td> New table schema </td></tr>
      *   <tr><td> vstr </td><td> %Table identifier </td></tr>
      *   <tr><td> i32  </td><td> Size of #m_completed </td></tr>
-     *   <tr><td> vstr </td><td> <b>Foreach server</b> in #m_completed, server name </td></tr>
+     *   <tr><td> vstr </td><td> <b>Foreach server</b> in #m_completed, server
+     *                           name </td></tr>
      *   <tr><td> i32  </td><td> [VERSION 2] Size of #m_servers </td></tr>
-     *   <tr><td> vstr </td><td> [VERSION 2] <b>Foreach server</b> in #m_servers, server name </td></tr>
+     *   <tr><td> vstr </td><td> [VERSION 2] <b>Foreach server</b>
+     *                           in #m_servers, server name </td></tr>
+     *   <tr><td> i64  </td><td> [VERSION 3] Hash code for currently outstanding
+     *                           sub operation </td></tr>
+     *   <tr><td> TableParts </td><td> [VERSION 3] Index tables to be created
+     *                                 or dropped </td></tr>
      * </table>
      * @param bufp Address of destination buffer pointer (advanced by call)
      */
@@ -194,6 +265,72 @@ namespace Hypertable {
 
   private:
 
+    /// Gets schema objects.
+    /// If either <code>original_schema</code> and <code>alter_schema</code> are
+    /// are set to nullptr, this member function constructs and returns original
+    /// schema object and alter schema object.  The original schema is
+    /// constructed from XML read from Hyperspace and the alter schema is
+    /// constructed from #m_schema.  If any errors are encountered,
+    /// the operation is terminated with a call to complete_error() and
+    //// <i>false</i> is returned.
+    /// @param original_schema Reference to original schema
+    /// @param alter_schema Reference to alter schema
+    /// @return <i>true</i> on success, <i>false</i> on error signaling operaton
+    /// has been terminated.
+    bool get_schemas(SchemaPtr &original_schema, SchemaPtr &alter_schema);
+
+    /// Determines which index tables to drop.
+    /// Determines if either the value or qualifier index table was required in
+    /// <code>original_schema</code> but not in <code>alter_schema</code>.  Each
+    /// index type, for which this is the case, is marked in a TableParts object
+    /// that is returned.
+    /// @param original_schema Original schema
+    /// @param alter_schema New altered schema
+    /// @return TableParts describing index tables to drop
+    TableParts get_drop_index_parts(SchemaPtr &original_schema,
+                                    SchemaPtr &alter_schema);
+
+    /// Determines which index tables to create.
+    /// Determines if either the value or qualifier index table was not required
+    /// in <code>original_schema</code> but is required in
+    /// <code>alter_schema</code>.  Each index type, for which this is the case,
+    /// is marked in a TableParts object that is returned.
+    /// @param original_schema Original schema
+    /// @param alter_schema New altered schema
+    /// @return TableParts describing index tables to create
+    TableParts get_create_index_parts(SchemaPtr &original_schema,
+                                      SchemaPtr &alter_schema);
+
+    /// Fetchs and handles the result of sub operation.
+    /// If #m_subop_hash_code is non-zero, a sub operation is outstanding and
+    /// this member function will fetch it and process it as follows:
+    ///   - Fetches the sub operation from the ReferenceManager
+    ///   - Adds remove approvals 0x01 to the sub operation
+    ///   - Sets #m_subop_hash_code to zero
+    ///   - If sub operation error code is non-zero, completes overall operaton
+    ///     with a call to complete_error(), and returns <i>false</i>.
+    ///   - Otherwise, sub operation is added to <code>entities</code>
+    /// @param entities Reference to vector of entites to hold sucessfully
+    /// completed sub operation
+    /// @return <i>true</i> if no sub operation is outstanding or the sub
+    /// operation completed without error, <i>false</i> otherwise.
+    bool fetch_and_validate_subop(vector<Entity *> &entities);
+
+    /// Stages a sub operation for execution.
+    /// This member function does the following:
+    ///   - Sets local variable <code>dpendency_string</code> to
+    ///     "ALTER TABLE subop &lt;subop-name&gt; &lt;subop-hash-code&gt;"
+    ///   - Adds <code>dependency_string</code> to sub operation's set of
+    ///     obstructions
+    ///   - Sets sub operation remove approval mask to 0x01
+    ///   - Adds sub operation to ReferenceManager
+    ///   - Adds <code>dependency_string</code> to parent (this) operation's set
+    ///     of dependencies
+    ///   - Pushes sub operation onto #m_sub_ops
+    ///   - Sets #m_subop_hash_code to sub operation's hash code
+    /// @param opartion Sub operation
+    void stage_subop(Operation *operation);
+
     /** Initializes dependency graph state.
      * This method initializes the dependency graph state as follows:
      *
@@ -216,10 +353,16 @@ namespace Hypertable {
 
     /// Set of range servers that have completed operation
     StringSet m_completed;
+
+    /// Hash code for currently outstanding sub operation
+    int64_t m_subop_hash_code {};
+
+    /// Index tables to be created or dropped
+    TableParts m_parts;
   };
 
-  /** @}*/
+  /// @}
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_OPERATIONALTERTABLE_H
+#endif // Hypertable_Master_OperationAlterTable_h

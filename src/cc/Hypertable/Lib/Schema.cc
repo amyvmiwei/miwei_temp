@@ -324,6 +324,22 @@ int32_t Schema::get_max_column_family_id() {
   return max;
 }
 
+TableParts Schema::get_table_parts() {
+  int parts {};
+  for (auto ag : m_access_groups) {
+    for (auto cf : ag->columns()) {
+      if (!cf->get_deleted()) {
+        parts |= TableParts::PRIMARY;
+        if (cf->get_value_index())
+          parts |= TableParts::VALUE_INDEX;
+        if (cf->get_qualifier_index())
+          parts |= TableParts::QUALIFIER_INDEX;
+      }
+    }
+  }
+  return TableParts(parts);
+}
+
 
 void Schema::add_access_group(AccessGroupSpec *ag) {
 

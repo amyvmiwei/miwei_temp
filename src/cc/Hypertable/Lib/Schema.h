@@ -33,6 +33,7 @@
 
 #include <Hypertable/Lib/AccessGroupSpec.h>
 #include <Hypertable/Lib/ColumnFamilySpec.h>
+#include <Hypertable/Lib/TableParts.h>
 
 #include <expat.h>
 
@@ -219,6 +220,10 @@ namespace Hypertable {
     /// Gets the maximum column family ID.
     /// @return Maximum column family ID.
     int32_t get_max_column_family_id();
+
+    /// Gets table parts.
+    /// @return TableParts object describing table parts defined by this schema.
+    TableParts get_table_parts();
 
     /// Returns reference to access group vector.
     /// @return Reference to access group vector.
