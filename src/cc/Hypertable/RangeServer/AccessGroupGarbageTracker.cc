@@ -47,6 +47,7 @@ AccessGroupGarbageTracker::AccessGroupGarbageTracker(PropertiesPtr &props,
     = cfg.get_i32("AccessGroup.GarbageThreshold.Percentage") / 100.0;
   m_accum_data_target = cfg.get_i64("Range.SplitSize") / 10;
   m_accum_data_target_minimum = m_accum_data_target / 2;
+  m_last_collection_time = time(0);
   update_schema(ag);
 }
 
