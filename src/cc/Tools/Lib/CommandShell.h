@@ -60,6 +60,7 @@ namespace Hypertable {
     NotifierPtr m_notifier_ptr;
 
     String m_accum;
+    bool m_verbose {};
     bool m_batch_mode;
     bool m_silent;
     bool m_test_mode;

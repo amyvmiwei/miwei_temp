@@ -105,6 +105,7 @@ CommandShell::CommandShell(const String &program_name,
   else
     ms_history_file = (String)"." + m_program_name + "_history";
 
+  m_verbose = m_props->has("verbose") ? m_props->get_bool("verbose") : false;
   m_batch_mode = m_props->has("batch");
   if (m_batch_mode)
     m_silent = true;
@@ -462,11 +463,11 @@ process_line:
       if (e.code() == Error::BAD_NAMESPACE)
         cerr << "ERROR: No namespace is open (see 'use' command)" << endl;
       else {
-        if (m_test_mode)
+        if (m_verbose)
+          cerr << e << endl;
+        else
           cerr << "Error: " << e.what() << " - " << Error::get_text(e.code())
               << endl;
-        else
-          cerr << "Error: " << e << " - " << Error::get_text(e.code()) << endl;
       }
       if(m_notify)
         m_notifier_ptr->notify();
