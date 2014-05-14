@@ -1,3 +1,14 @@
+Version 0.9.7.18:
+(2014-05-14)
+
+    issue 1242: Fixed state init problem in AccessGroupGarbageTracker
+    issue 1237: Fix stack corruption bug in dump table logic
+    issue 1227: Fixed readhead problem in IntervalScannerAsync client lib class
+    issue 1226: Fixed race condition in LocalBroker::readdir()
+    Fixed future/scanner/mutator close order problem causing ThriftBroker crash
+    Added better error state capture to rangeserver-failover-basic tests
+    Removed bad assert in AccessGroupGarbageTracker
+
 Version 0.9.7.17:
 (2014-03-17)
 
