@@ -44,7 +44,8 @@ using namespace Hypertable;
 
 void
 ScanContext::initialize(int64_t rev, const ScanSpec *ss,
-    const RangeSpec *range_spec, SchemaPtr &sp) {
+                        const RangeSpec *range_spec, SchemaPtr &sp,
+                        std::set<uint8_t> *columns) {
   ColumnFamilySpec *cf_spec;
   int32_t max_versions = 0;
   boost::xtime xtnow;
@@ -96,6 +97,9 @@ ScanContext::initialize(int64_t rev, const ScanSpec *ss,
 
         if (cf_spec == 0)
           HT_THROW(Error::RANGESERVER_INVALID_COLUMNFAMILY, cfstr);
+
+        if (columns)
+          columns->insert(cf_spec->get_id());
 
         family_mask[cf_spec->get_id()] = true;
         if (has_qualifier) {

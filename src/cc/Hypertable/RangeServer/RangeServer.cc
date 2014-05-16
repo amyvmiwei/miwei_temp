@@ -1432,20 +1432,22 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     if (cache_key && m_query_cache && !table->is_metadata()) {
       boost::shared_array<uint8_t> ext_buffer;
       uint32_t ext_len;
-      if (m_query_cache->lookup(cache_key, ext_buffer, &ext_len)) {
+      uint32_t cell_count;
+      if (m_query_cache->lookup(cache_key, ext_buffer, &ext_len, &cell_count)) {
         // The first argument to the response method is flags and the
         // 0th bit is the EOS (end-of-scan) bit, hence the 1
         if ((error = cb->response(1, id, ext_buffer, ext_len, 0, 0))
                 != Error::OK)
           HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
         range->decrement_scan_counter();
-        decrement_needed = false;
+        Locker<LoadStatistics> lock(*Global::load_statistics);
+        Global::load_statistics->add_scan_data(1, cell_count, ext_len);
         return;
       }
     }
-
+    std::set<uint8_t> columns;
     scan_ctx = new ScanContext(range->get_scan_revision(cb->event()->header.timeout_ms),
-                               scan_spec, range_spec, schema);
+                               scan_spec, range_spec, schema, &columns);
     scan_ctx->timeout_ms = cb->event()->header.timeout_ms;
 
     scanner = range->create_scanner(scan_ctx);
@@ -1454,8 +1456,9 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     decrement_needed = false;
 
     uint64_t cells_scanned, cells_returned, bytes_scanned, bytes_returned;
+    uint32_t cell_count {};
 
-    more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size);
+    more = FillScanBlock(scanner, rbuf, &cell_count, m_scanner_buffer_size);
 
     MergeScanner *mscanner = dynamic_cast<MergeScanner*>(scanner.get());
 
@@ -1501,7 +1504,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       tablename_ptr = row_key_ptr + strlen(row_key_ptr) + 1;
       strcpy(tablename_ptr, table->id);
       boost::shared_array<uint8_t> ext_buffer(buffer);
-      m_query_cache->insert(cache_key, tablename_ptr, row_key_ptr, ext_buffer, rbuf.fill());
+      m_query_cache->insert(cache_key, tablename_ptr, row_key_ptr,
+                            columns, cell_count, ext_buffer, rbuf.fill());
       if ((error = cb->response(1, id, ext_buffer, rbuf.fill(),
              skipped_rows, skipped_cells)) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
@@ -1575,8 +1579,9 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     }
 
     uint64_t cells_scanned, cells_returned, bytes_scanned, bytes_returned;
+    uint32_t cell_count {};
 
-    more = FillScanBlock(scanner, rbuf, m_scanner_buffer_size);
+    more = FillScanBlock(scanner, rbuf, &cell_count, m_scanner_buffer_size);
 
     MergeScanner *mscanner = dynamic_cast<MergeScanner*>(scanner.get());
 

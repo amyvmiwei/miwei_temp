@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -63,6 +63,8 @@ int main(int argc, char **argv) {
   char keybuf[32];
   TrackRecT  track_buf[TRACK_BUFFER_SIZE];
   size_t track_buf_i = 0;
+  std::set<uint8_t> columns;
+  uint32_t cell_count {};
 
   System::initialize(System::locate_install_dir(argv[0]));
 
@@ -77,12 +79,12 @@ int main(int argc, char **argv) {
 
   md5_csum((unsigned char *)"aa", 2, (unsigned char *)key.digest);
 
-  if (cache->insert(&key, "/1", "aa", result, MAX_MEMORY+1)) {
+  if (cache->insert(&key, "/1", "aa", columns, cell_count, result, MAX_MEMORY+1)) {
     cout << "Error: insert should have failed." << endl;
     exit(1);
   }
 
-  if (cache->lookup(&key, result, &result_length)) {
+  if (cache->lookup(&key, result, &result_length, &cell_count)) {
     cout << "Error: key should not exist in cache." << endl;
     exit(1);
   }
@@ -94,7 +96,7 @@ int main(int argc, char **argv) {
     for (size_t i=0; i<100; i++) {
       sprintf(keybuf, "%s-%d", row, (int)i);
       md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)key.digest);
-      if (!cache->insert(&key, "/1", row, result, 1000)) {
+      if (!cache->insert(&key, "/1", row, columns, cell_count, result, 1000)) {
 	cout << "Error: insert failed." << endl;
 	exit(1);
       }
@@ -108,18 +110,18 @@ int main(int argc, char **argv) {
   for (size_t i=0; i<100; i++) {
     sprintf(keybuf, "%s-%d", row, (int)i);
     md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)key.digest);
-    if (!cache->lookup(&key, result, &result_length)) {
+    if (!cache->lookup(&key, result, &result_length, &cell_count)) {
       cout << "Error: key not found." << endl;
       exit(1);
     }
   }
 
-  cache->invalidate("/1", row);
+  cache->invalidate("/1", row, columns);
 
   for (size_t i=0; i<100; i++) {
     sprintf(keybuf, "%s-%d", row, (int)i);
     md5_csum((unsigned char *)keybuf, strlen(keybuf), (unsigned char *)key.digest);
-    if (cache->lookup(&key, result, &result_length)) {
+    if (cache->lookup(&key, result, &result_length, &cell_count)) {
       cout << "Error: key found." << endl;
       exit(1);
     }
@@ -129,7 +131,7 @@ int main(int argc, char **argv) {
     row[0] = (char)rowi;
     row[1] = (char)rowi;
     row[2] = 0;
-    cache->invalidate("/1", row);
+    cache->invalidate("/1", row, columns);
   }
 
   HT_ASSERT(cache->available_memory() == MAX_MEMORY);
@@ -146,7 +148,7 @@ int main(int argc, char **argv) {
     track_buf[track_buf_i].row[0] = (char)charno;
     track_buf[track_buf_i].row[1] = (char)charno;
     track_buf[track_buf_i].row[2] = 0;
-    cache->insert(&track_buf[track_buf_i].key, "/1", track_buf[track_buf_i].row, result, 1000);
+    cache->insert(&track_buf[track_buf_i].key, "/1", track_buf[track_buf_i].row, columns, cell_count, result, 1000);
     track_buf_i = (track_buf_i + 1) % TRACK_BUFFER_SIZE;
   }
 
@@ -154,13 +156,13 @@ int main(int argc, char **argv) {
   row[0] = charno;
   row[1] = charno;
   row[2] = 0;
-  cache->invalidate("/1", row);
+  cache->invalidate("/1", row, columns);
 
   for (size_t i=0; i<TRACK_BUFFER_SIZE; i++) {
     if (track_buf[i].row[0] == (char)charno)
-      HT_ASSERT( !cache->lookup(&track_buf[i].key, result, &result_length) );
+      HT_ASSERT( !cache->lookup(&track_buf[i].key, result, &result_length, &cell_count) );
     else
-      HT_ASSERT( cache->lookup(&track_buf[i].key, result, &result_length) );
+      HT_ASSERT( cache->lookup(&track_buf[i].key, result, &result_length, &cell_count) );
   }
 
   delete cache;

@@ -75,20 +75,18 @@ void DataGeneratorIterator::next() {
   if (m_columns.empty())
     m_next_column = 0;
   else
-    m_next_column = (m_next_column + 1) % m_columns.size();
+    m_next_column = (Random::number32()) % m_columns.size();
 
-  if (m_next_column == 0) {
-    do {
-      compi--;
-      if (m_row_components[compi]->next())
-        break;
-    } while (compi > 0);
+  do {
+    compi--;
+    if (m_row_components[compi]->next())
+      break;
+  } while (compi > 0);
 
-    m_row = "";
+  m_row = "";
 
-    for (size_t i=0; i<m_row_components.size(); i++)
-      m_row_components[i]->render(m_row);
-  }
+  for (size_t i=0; i<m_row_components.size(); i++)
+    m_row_components[i]->render(m_row);
 
   m_cell.row_key = m_row.c_str();
 

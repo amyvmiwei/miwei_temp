@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,19 +19,44 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_FILLSCANBLOCK_H
-#define HYPERTABLE_FILLSCANBLOCK_H
+/// @file
+/// Declaration for FillScanBlock.
+/// This file contains the type declaration for FillScanBlock, a function for
+/// filling a block of scan (query) results to be returned back to the client.
 
-#include "Common/DynamicBuffer.h"
 
-#include "CellListScanner.h"
+#ifndef Hypertable_RangeServer_FillScanBlock_h
+#define Hypertable_RangeServer_FillScanBlock_h
+
+#include <Hypertable/RangeServer/CellListScanner.h>
+
+#include <Common/DynamicBuffer.h>
 
 namespace Hypertable {
 
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Fills a block of scan results to be sent back to client.
+  /// Iterates through <code>scanner</code> and serializes each key/value pair
+  /// into <code>dbuf</code>, stopping when the buffer exceeds
+  /// <code>buffer_size</code>.  If the KEYS_ONLY predicate is specified in the
+  /// scan specification, then an empty value is encoded for each key/value
+  /// pair.  For each key representing a COUNTER, the value is an encoded
+  /// 64-bit integer and is converted to an ASCII value.
+  /// @param scanner Scanner frome which results are to be obtained
+  /// @param dbuf Buffer to hold encoded results
+  /// @param cell_count Address of variable to hold number of cells in the scan
+  /// block.
+  /// @param buffer_size Target size of scan block
+  /// @return <i>true</i> if there are more results to be pulled from the
+  /// scanner when this function returns, <i>false</i> otherwise.
   bool FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf,
-                     int64_t buffer_size);
+                     uint32_t *cell_count, int64_t buffer_size);
+
+  /// @}
 
 }
 
-#endif // HYPERTABLE_FILLSCANBLOCK_H
+#endif // Hypertable_RangeServer_FillScanBlock_h
 

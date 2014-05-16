@@ -87,9 +87,9 @@ namespace Hypertable {
      * @param schema smart pointer to schema object
      */
     ScanContext(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
-                SchemaPtr &schema) : cell_predicates(256), row_regexp(0),
-                                     value_regexp(0), timeout_ms(0) {
-      initialize(rev, ss, range, schema);
+                SchemaPtr &schema, std::set<uint8_t> *columns=0) :
+      cell_predicates(256), row_regexp(0), value_regexp(0), timeout_ms(0) {
+      initialize(rev, ss, range, schema, columns);
     }
 
     /**
@@ -154,9 +154,10 @@ namespace Hypertable {
      * @param ss scan specification
      * @param range range specifier
      * @param sp shared pointer to schema object
+     * @param columns Pointer to column family ID set to be populated
      */
     void initialize(int64_t rev, const ScanSpec *ss, const RangeSpec *range,
-                    SchemaPtr &sp);
+                    SchemaPtr &sp, std::set<uint8_t> *columns=0);
     /**
      * Disable copy ctor and assignment op
      */

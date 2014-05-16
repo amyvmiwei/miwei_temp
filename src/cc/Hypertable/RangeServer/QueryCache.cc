@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,20 +19,23 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cassert>
-#include <iostream>
-
+#include <Common/Compat.h>
 #include "QueryCache.h"
 
+#include <cassert>
+#include <iostream>
+#include <vector>
+
 using namespace Hypertable;
-using std::pair;
+using namespace std;
 
 #define OVERHEAD 64
 
-bool QueryCache::insert(Key *key, const char *tablename, const char *row,
-			boost::shared_array<uint8_t> &result,
-			uint32_t result_length) {
+bool
+QueryCache::insert(Key *key, const char *tablename, const char *row,
+                   std::set<uint8_t> &columns, uint32_t cell_count,
+                   boost::shared_array<uint8_t> &result,
+                   uint32_t result_length) {
   ScopedLock lock(m_mutex);
   LookupHashIndex &hash_index = m_cache.get<1>();
   LookupHashIndex::iterator lookup_iter;
@@ -60,7 +63,8 @@ bool QueryCache::insert(Key *key, const char *tablename, const char *row,
   if (m_avail_memory < length)
     return false;
 
-  QueryCacheEntry entry(*key, tablename, row, result, result_length);
+  QueryCacheEntry entry(*key, tablename, row, columns, cell_count,
+                        result, result_length);
 
   auto insert_result = m_cache.push_back(entry);
   assert(insert_result.second);
@@ -73,7 +77,7 @@ bool QueryCache::insert(Key *key, const char *tablename, const char *row,
 
 
 bool QueryCache::lookup(Key *key, boost::shared_array<uint8_t> &result,
-			uint32_t *lenp) {
+			uint32_t *lenp, uint32_t *cell_count) {
   ScopedLock lock(m_mutex);
   LookupHashIndex &hash_index = m_cache.get<1>();
   LookupHashIndex::iterator iter;
@@ -99,6 +103,7 @@ bool QueryCache::lookup(Key *key, boost::shared_array<uint8_t> &result,
 
   result = (*insert_result.first).result;
   *lenp = (*insert_result.first).result_length;
+  *cell_count = (*insert_result.first).cell_count;
 
   m_total_hit_count++;
   m_recent_hit_count++;
@@ -115,46 +120,34 @@ void QueryCache::get_stats(uint64_t *max_memoryp, uint64_t *available_memoryp,
   *available_memoryp = m_avail_memory;
 }
 
-void QueryCache::invalidate(const char *tablename, const char *row) {
+void QueryCache::invalidate(const char *tablename, const char *row, std::set<uint8_t> &columns) {
   ScopedLock lock(m_mutex);
   InvalidateHashIndex &hash_index = m_cache.get<2>();
   InvalidateHashIndex::iterator iter;
   RowKey row_key(tablename, row);
   pair<InvalidateHashIndex::iterator, InvalidateHashIndex::iterator> p = hash_index.equal_range(row_key);
   uint64_t length;
+  vector<uint8_t> intersection;
+  bool do_invalidation {};
+
+  intersection.reserve(columns.size());
 
   while (p.first != p.second) {
-    length = (*p.first).result_length + OVERHEAD + strlen((*p.first).row_key.row);
-    /** HT_ASSERT(strcmp((*p.first).row_key.tablename, tablename) == 0 &&
-        strcmp((*p.first).row_key.row.c_str(), row) == 0); **/
-    m_avail_memory += length;
-    p.first = hash_index.erase(p.first);
-  }
-
-}
-
-
-void QueryCache::dump() {
-  ScopedLock lock(m_mutex);
-  Sequence &index0 = m_cache.get<0>();
-  LookupHashIndex &index1 = m_cache.get<1>();
-  InvalidateHashIndex &index2 = m_cache.get<2>();
-
-  std::cout << "index0:" << std::endl;
-  for (Sequence::iterator iter = index0.begin(); iter != index0.end(); ++iter) {
-    QueryCacheEntry entry(*iter);
-    entry.dump();
-  }
-
-  std::cout << "index1:" << std::endl;
-  for (LookupHashIndex::iterator iter = index1.begin(); iter != index1.end(); ++iter) {
-    QueryCacheEntry entry(*iter);
-    entry.dump();
-  }
-
-  std::cout << "index2:" << std::endl;
-  for (InvalidateHashIndex::iterator iter = index2.begin(); iter != index2.end(); ++iter) {
-    QueryCacheEntry entry(*iter);
-    entry.dump();
+    do_invalidation = p.first->columns.empty() || columns.empty();
+    if (!do_invalidation) {
+      intersection.clear();
+      set_intersection(columns.begin(), columns.end(), p.first->columns.begin(),
+                       p.first->columns.end(), back_inserter(intersection));
+      do_invalidation = !intersection.empty();
+    }
+    if (do_invalidation) {
+      length = (*p.first).result_length + OVERHEAD + strlen((*p.first).row_key.row);
+      /** HT_ASSERT(strcmp((*p.first).row_key.tablename, tablename) == 0 &&
+          strcmp((*p.first).row_key.row.c_str(), row) == 0); **/
+      m_avail_memory += length;
+      p.first = hash_index.erase(p.first);
+    }
+    else
+      p.first++;
   }
 }

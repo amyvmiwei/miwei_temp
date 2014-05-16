@@ -40,6 +40,8 @@
 #include <Common/Logger.h>
 #include <Common/Serialization.h>
 
+#include <set>
+
 using namespace Hypertable;
 using namespace std;
 
@@ -187,7 +189,7 @@ void UpdatePipeline::qualify_and_transform() {
 
           // error inducer for tests/integration/fail-index-mutator
           if (HT_FAILURE_SIGNALLED("fail-index-mutator-0")) {
-            if (!strcmp(row, "1,+9RfmqoH62hPVvDTh6EC4zpTNfzNr8\t\t01918")) {
+            if (!strcmp(row, "1,+9RfmqoH62hPVvDTh6EC4zpTNfzNr8\t\t00959")) {
               uc->send_back.count++;
               uc->send_back.error = Error::INDUCED_FAILURE;
               uc->send_back.offset = mod - request->buffer.base;
@@ -679,25 +681,49 @@ void UpdatePipeline::add_and_respond() {
             uc->total_bytes_added += update.len;
 
           rangep->add_bytes_written( update.len );
-          const char *last_row = "";
+          std::set<uint8_t> columns;
+          bool invalidate {};
+          const char *current_row {};
           uint64_t count = 0;
           while (ptr < end) {
             key.ptr = ptr;
             key_comps.load(key);
+            if (current_row == nullptr)
+              current_row = key_comps.row;
             count++;
-            if (key_comps.column_family_code == 0 && key_comps.flag != FLAG_DELETE_ROW) {
-              HT_ERRORF("Skipping bad key - column family not specified in non-delete row update on %s row=%s",
-                        table_update->id.id, key_comps.row);
-            }
             ptr += key_comps.length;
             value.ptr = ptr;
             ptr += value.length();
+            if (key_comps.column_family_code == 0 && key_comps.flag != FLAG_DELETE_ROW) {
+              HT_ERRORF("Skipping bad key - column family not specified in "
+                        "non-delete row update on %s row=%s",
+                        table_update->id.id, key_comps.row);
+              continue;
+            }
             rangep->add(key_comps, value);
             // invalidate
-            if (m_query_cache && strcmp(last_row, key_comps.row))
-              m_query_cache->invalidate(table_update->id.id, key_comps.row);
-            last_row = key_comps.row;
+            if (m_query_cache) {
+              if (strcmp(current_row, key_comps.row)) {
+                if (invalidate)
+                  columns.clear();
+                m_query_cache->invalidate(table_update->id.id, current_row, columns);
+                columns.clear();
+                invalidate = false;
+                current_row = key_comps.row;
+              }
+              if (key_comps.flag == FLAG_DELETE_ROW)
+                invalidate = true;
+              else
+                columns.insert(key_comps.column_family_code);
+            }
           }
+
+          if (m_query_cache && current_row) {
+            if (invalidate)
+              columns.clear();
+            m_query_cache->invalidate(table_update->id.id, current_row, columns);
+          }
+
           rangep->add_cells_written(count);
         }
       }
