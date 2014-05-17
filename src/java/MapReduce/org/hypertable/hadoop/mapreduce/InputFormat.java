@@ -119,10 +119,6 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         e.printStackTrace();
         throw new IOException(e.getMessage());
       }
-      catch (ClientException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
     }
 
     /**
@@ -223,10 +219,6 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         throw new IOException(e.getMessage());
       }
       catch (TException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
-      catch (ClientException e) {
         e.printStackTrace();
         throw new IOException(e.getMessage());
       }
@@ -352,10 +344,6 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       throw new IOException(e.getMessage());
     }
     catch (TException e) {
-      e.printStackTrace();
-      throw new IOException(e.getMessage());
-    }
-    catch (ClientException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }

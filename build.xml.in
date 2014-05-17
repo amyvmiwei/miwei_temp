@@ -107,10 +107,12 @@
            debug="true" includeantruntime='false'>
       <classpath refid="project.classpath"/>
     </javac>
+    <!--
     <javac srcdir="${hivesrc.dir}" destdir="${build.classes}" deprecation="yes"
            debug="true" includeantruntime='false'>
       <classpath refid="project.classpath"/>
     </javac>
+    -->
     <javac srcdir="${examples.dir}" destdir="${build.classes}" deprecation="yes"
            debug="true" includeantruntime='false'>
       <classpath refid="project.classpath"/>

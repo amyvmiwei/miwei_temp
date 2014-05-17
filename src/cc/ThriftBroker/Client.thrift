@@ -164,7 +164,7 @@ enum ColumnPredicateOperation {
  *
  *   <dt>value_len</dt>
  *   <dd>The size of the value</dd>
-*    
+ *
  *   <dt>column_qualifier</dt>
  *   <dd>The column qualifier</dd>
  * </dl>

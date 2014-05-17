@@ -32,7 +32,7 @@ add_custom_command(
 add_custom_target(ThriftGenRb ALL DEPENDS ${GenRb_SRCS})
 
 if (RUBYTHRIFT_FOUND)
-  add_test(ThriftClient-ruby ruby -I ${THRIFT_SOURCE_DIR}/lib/rb/lib 
+  add_test(ThriftClient-ruby ruby -I ${INSTALL_DIR}/lib/rb
       ${CMAKE_CURRENT_SOURCE_DIR}/client_test.rb)
 endif ()
 

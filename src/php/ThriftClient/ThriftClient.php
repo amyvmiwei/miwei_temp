@@ -22,9 +22,15 @@
 
 //$GLOBALS['THRIFT_ROOT'] = '/Users/luke/Source/thrift/lib/php/src';
 require_once $GLOBALS['THRIFT_ROOT'].'/Thrift.php';
-require_once $GLOBALS['THRIFT_ROOT'].'/protocol/TBinaryProtocol.php';
-require_once $GLOBALS['THRIFT_ROOT'].'/transport/TSocket.php';
-require_once $GLOBALS['THRIFT_ROOT'].'/transport/TFramedTransport.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift/Exception/TException.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift/Factory/TStringFuncFactory.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift/Protocol/TBinaryProtocol.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift/StringFunc/TStringFunc.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift/StringFunc/Core.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift/Transport/TSocket.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift/Transport/TFramedTransport.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift/Type/TMessageType.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/Thrift/Type/TType.php';
 
 /**
  * Suppress errors in here, which happen because we have not installed into
@@ -34,16 +40,16 @@ require_once $GLOBALS['THRIFT_ROOT'].'/transport/TFramedTransport.php';
  * include the other files from their packages/ folder locations, but we
  * include everything here due to the bogus path setup.
  */
-$old_error_reporting = error_reporting();
-error_reporting(0); // E_NONE
-$GEN_DIR = dirname(__FILE__).'/gen-php';
-require_once $GEN_DIR.'/Client/ClientService.php';
-require_once $GEN_DIR.'/Client/Client_types.php';
-require_once $GEN_DIR.'/Hql/HqlService.php';
-require_once $GEN_DIR.'/Hql/Hql_types.php';
-error_reporting($old_error_reporting);
+require_once $GLOBALS['THRIFT_ROOT'].'/gen-php/Hypertable_ThriftGen/ClientService.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/gen-php/Hypertable_ThriftGen/Types.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/gen-php/Hypertable_ThriftGen2/HqlService.php';
+require_once $GLOBALS['THRIFT_ROOT'].'/gen-php/Hypertable_ThriftGen2/Types.php';
 
-class Hypertable_ThriftClient extends Hypertable_ThriftGen_HqlServiceClient {
+use Thrift\Transport\TSocket;
+use Thrift\Transport\TFramedTransport;
+use Thrift\Protocol\TBinaryProtocol;
+
+class Hypertable_ThriftClient extends \Hypertable_ThriftGen2\HqlServiceClient {
   function __construct($host, $port, $timeout_ms = 300000, $do_open = true) {
     $socket = new TSocket($host, $port);
     $socket->setSendTimeout($timeout_ms);

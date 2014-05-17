@@ -113,10 +113,6 @@ public class HypertableRecordReader
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }
-    catch (ClientException e) {
-      e.printStackTrace();
-      throw new IOException(e.getMessage());
-    }
   }
 
   public Text createKey() {
@@ -285,10 +281,6 @@ public class HypertableRecordReader
       throw new IOException(e.getMessage());
     }
     catch (TException e) {
-      e.printStackTrace();
-      throw new IOException(e.getMessage());
-    }
-    catch (ClientException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }

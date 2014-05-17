@@ -143,10 +143,6 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
         e.printStackTrace();
         throw new IOException(e.getMessage());
       }
-      catch (ClientException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
     }
 
     public BytesWritable createKey() {
@@ -205,10 +201,6 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
         throw new IOException(e.getMessage());
       }
       catch (TException e) {
-        e.printStackTrace();
-        throw new IOException(e.getMessage());
-      }
-      catch (ClientException e) {
         e.printStackTrace();
         throw new IOException(e.getMessage());
       }
@@ -306,10 +298,6 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
       throw new IOException(e.getMessage());
     }
     catch (TException e) {
-      e.printStackTrace();
-      throw new IOException(e.getMessage());
-    }
-    catch (ClientException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }

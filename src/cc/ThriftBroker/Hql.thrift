@@ -21,7 +21,7 @@ include "Client.thrift"
 namespace cpp   Hypertable.ThriftGen
 namespace java  org.hypertable.thriftgen
 namespace perl  Hypertable.ThriftGen2 # perl generator would overide types
-namespace php   Hypertable_ThriftGen
+namespace php   Hypertable_ThriftGen2 # ditto
 namespace py    hyperthrift.gen2 # ditto
 namespace rb    Hypertable.ThriftGen
 

@@ -17,7 +17,7 @@
 # 02110-1301, USA.
 #
 
-HT_GLOB(GenPHP_SRCS gen-php/*.php)
+HT_GLOB(GenPHP_SRCS gen-php/Hypertable_ThriftGen/*.php)
 
 add_custom_command(
   OUTPUT    ${GenPHP_SRCS}
@@ -32,7 +32,7 @@ add_custom_command(
 add_custom_target(ThriftGenPHP ALL DEPENDS ${GenPHP_SRCS})
 
 if (PHPTHRIFT_FOUND)
-  add_test(ThriftClient-php env PHPTHRIFT_ROOT=${THRIFT_SOURCE_DIR}/lib/php/src
+  add_test(ThriftClient-php env PHPTHRIFT_ROOT=${INSTALL_DIR}/lib/php
            php ${CMAKE_CURRENT_SOURCE_DIR}/client_test.php)
 endif ()
 

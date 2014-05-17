@@ -479,10 +479,6 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }
-    catch (ClientException e) {
-      e.printStackTrace();
-      throw new IOException(e.getMessage());
-    }
     catch (UnsupportedEncodingException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
