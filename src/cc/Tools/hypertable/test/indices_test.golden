@@ -2207,6 +2207,11 @@ SELECT title FROM products WHERE info:author =~ /^Stephen [PK]/ AND info:publish
 0307743659	title	The Shining Mass Market Paperback
 SELECT title FROM products WHERE info:author =~ /^Stephen [PK]/ AND info:publisher =~ /^Anchor/;
 0307743659	title	The Shining Mass Market Paperback
+SELECT title FROM products WHERE ROW > 'B00002VWE0' AND info:actor = 'Jack Nicholson';
+B002VWNIDG	title	The Shining (1980)
+SELECT title FROM products WHERE ROW =^ 'B' AND info:actor = 'Jack Nicholson';
+B00002VWE0	title	Five Easy Pieces (1970)
+B002VWNIDG	title	The Shining (1980)
 SELECT * FROM "^products" INTO FILE "products-value-index-before.tsv" DISPLAY_TIMESTAMPS;
 SELECT * FROM "^^products" INTO FILE "products-qualifier-index-before.tsv" DISPLAY_TIMESTAMPS;
 REBUILD INDICES products;
