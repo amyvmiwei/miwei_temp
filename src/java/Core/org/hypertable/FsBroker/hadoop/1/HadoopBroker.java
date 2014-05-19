@@ -370,15 +370,17 @@ public class HadoopBroker {
             if (mVerbose)
                 log.info("Creating file '" + fileName + "' handle = " + fd);
 
+            Path toplevelPath = new Path("/hypertable");
+
             if (replication == -1)
                 replication = (short)mConf.getInt("dfs.replication", 
-                        mFilesystem.getDefaultReplication());
+                        mFilesystem.getDefaultReplication(toplevelPath));
 
             if (bufferSize == -1)
                 bufferSize = mConf.getInt("io.file.buffer.size", 70000);
 
             if (blockSize == -1)
-                blockSize = mFilesystem.getDefaultBlockSize();
+                blockSize = mFilesystem.getDefaultBlockSize(toplevelPath);
 
             boolean overwrite = (flags & OPEN_FLAG_OVERWRITE) != 0;
 

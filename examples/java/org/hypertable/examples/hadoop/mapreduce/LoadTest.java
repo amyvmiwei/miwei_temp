@@ -234,7 +234,7 @@ public class LoadTest {
 
   private void doMapReduce() {
     try {
-      Job job = new Job();
+      Job job = Job.getInstance();
 
       job.getConfiguration().set(OutputFormat.NAMESPACE, "/");
       job.getConfiguration().set(OutputFormat.TABLE, "LoadTest");

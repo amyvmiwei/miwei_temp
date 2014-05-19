@@ -31,11 +31,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.logging.Logger;
 
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.FSDataInputStream;
+import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hdfs.server.namenode.NotReplicatedYetException;
 import org.apache.hadoop.hdfs.DFSClient;
+import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
+import org.apache.hadoop.hdfs.server.namenode.NotReplicatedYetException;
 import org.apache.hadoop.util.ReflectionUtils;
 
 import org.hypertable.AsyncComm.Comm;
@@ -344,15 +345,17 @@ public class HadoopBroker {
             if (mVerbose)
                 log.info("Creating file '" + fileName + "' handle = " + fd);
 
+            Path toplevelPath = new Path("/hypertable");
+
             if (replication == -1)
                 replication = (short)mConf.getInt("dfs.replication", 
-                        mFilesystem.getDefaultReplication());
+                        mFilesystem.getDefaultReplication(toplevelPath));
 
             if (bufferSize == -1)
                 bufferSize = mConf.getInt("io.file.buffer.size", 70000);
 
             if (blockSize == -1)
-                blockSize = mFilesystem.getDefaultBlockSize();
+                blockSize = mFilesystem.getDefaultBlockSize(toplevelPath);
 
             boolean overwrite = (flags & OPEN_FLAG_OVERWRITE) != 0;
 
@@ -401,8 +404,7 @@ public class HadoopBroker {
 
             Path path = new Path(fileName);
             if (accurate) {
-              DFSClient.DFSDataInputStream in =
-                (DFSClient.DFSDataInputStream)mFilesystem.open(path);
+              HdfsDataInputStream in = (HdfsDataInputStream) mFilesystem.open(path);
               length = in.getVisibleLength();
               in.close();
             }
@@ -831,7 +833,7 @@ public class HadoopBroker {
                   entry.name = pathStr.substring(lastSlash+1);
                 entry.last_modification_time = (int)(statuses[i].getModificationTime() / 1000L);
                 entry.length = statuses[i].getLen();
-                entry.is_dir = statuses[i].isDir();
+                entry.is_dir = statuses[i].isDirectory();
                 listing[i] = entry;
               }
             }
@@ -880,7 +882,7 @@ public class HadoopBroker {
                     int lastSlash = dirent.name.lastIndexOf('/');
                     if (lastSlash != -1)
                         dirent.name = dirent.name.substring(lastSlash + 1);
-                    dirent.flags = statuses[k].isDir() ? 1 : 0;
+                    dirent.flags = statuses[k].isDirectory() ? 1 : 0;
                     listing[k] = dirent;
                 }
             }

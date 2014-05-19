@@ -188,7 +188,7 @@ public class WikipediaBuildIndex {
     Arguments parsed_args = parseArgs(args);
     Configuration conf = new Configuration();
     String[] otherArgs = new GenericOptionsParser(conf, args).getRemainingArgs();
-    Job job = new Job(conf, "wikipedia");
+    Job job = Job.getInstance(conf, "wikipedia");
     job.setJarByClass(WikipediaBuildIndex.class);
     job.setCombinerClass(IntSumReducer.class);
 

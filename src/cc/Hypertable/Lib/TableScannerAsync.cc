@@ -93,29 +93,6 @@ TableScannerAsync::TableScannerAsync(Comm *comm,
   init(comm, app_queue, table, range_locator, *first_pass_spec, timeout_ms, cb);
 }
 
-namespace {
-  bool extract_prefix_from_regex(const char *input, size_t input_len,
-                                 const char **output, size_t *output_len) {
-    const char *ptr;
-    if (input_len == 0 || *input != '^')
-      return false;
-    *output = input+1;
-    for (ptr=*output; ptr<input+input_len; ptr++) {
-      if (*ptr == '.' || *ptr == '[' || *ptr == '(' || *ptr == '{' || *ptr == '\\' || *ptr == '+' || *ptr == '$') {
-        *output_len = ptr - *output;
-        return *output_len > 0;
-      }
-      else if (*ptr == '*' || *ptr == '?' || *ptr == '|') {
-        if ((ptr - *output) == 0)
-          return false;
-        *output_len = (ptr - *output) - 1;
-        return *output_len > 0;
-      }
-    }
-    *output_len = ptr - *output;
-    return *output_len > 0;
-  }
-}
 
 bool TableScannerAsync::use_index(TablePtr table, const ScanSpec &primary_spec, 
                                   ScanSpecBuilder &index_spec,

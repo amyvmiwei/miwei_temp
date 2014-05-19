@@ -53,7 +53,7 @@ namespace {
 
   typedef Meta::list<MyPolicy, FsClientPolicy, DefaultCommPolicy> Policies;
 
-  void test1(FsBroker::Client *fs_client);
+  //void test1(FsBroker::Client *fs_client);
   void test_link(FsBroker::Client *fs_client);
   void write_entries(CommitLog *log, int num_entries, uint64_t *sump,
                      CommitLogBase *link_log);
@@ -97,6 +97,7 @@ int main(int argc, char **argv) {
 
 namespace {
 
+#if 0
   void test1(FsBroker::Client *fs_client) {
     String log_dir = "/hypertable/test_log";
     String fname;
@@ -131,6 +132,7 @@ namespace {
 
     HT_ASSERT(sum_read == sum_written);
   }
+#endif
 
   void test_link(FsBroker::Client *fs_client) {
     String log_dir = "/hypertable/test_log";

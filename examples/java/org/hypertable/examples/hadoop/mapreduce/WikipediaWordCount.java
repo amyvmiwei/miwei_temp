@@ -299,7 +299,7 @@ public class WikipediaWordCount extends Configured implements Tool {
    * @throws Exception When running the job fails.
    */
   public int run(String[] args) throws Exception {
-    Job job = new Job(getConf());
+    Job job = Job.getInstance(getConf());
     job.setJarByClass(WikipediaWordCount.class);
     job.setJobName("wordcount");
     Arguments parsed_args = parseArgs(args);
