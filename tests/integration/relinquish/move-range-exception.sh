@@ -35,7 +35,7 @@ start_master() {
   set_start_vars Hypertable.Master
   check_pidfile $pidfile && return 0
 
-  check_server --config=${SCRIPT_DIR}/test.cfg master
+  check_server master
   if [ $? -ne 0 ] ; then
       $HT_HOME/bin/Hypertable.Master --verbose \
         --pidfile=$HT_HOME/run/Hypertable.Master.pid \

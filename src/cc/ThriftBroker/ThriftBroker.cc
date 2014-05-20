@@ -761,6 +761,51 @@ public:
       HT_WARNF("Destroying ServerHandler for remote peer %s with %d objects in map",
                m_remote_peer.c_str(),
                (int)m_object_map.size());
+    // Clear reference map.  Force each object to be destroyed individually and
+    // catch and log exceptions.
+    for (auto entry : m_reference_map) {
+      try {
+        entry.second = nullptr;
+      }
+      catch (Exception &e) {
+        HT_ERROR_OUT << e << HT_END;
+      }
+    }
+    try {
+      m_reference_map.clear();
+    }
+    catch (Exception &e) {
+    }
+    // Clear object map.  Force each object to be destroyed individually and
+    // catch and log exceptions.
+    for (auto entry : m_object_map) {
+      try {
+        entry.second = nullptr;
+      }
+      catch (Exception &e) {
+        HT_ERROR_OUT << e << HT_END;
+      }
+    }
+    try {
+      m_object_map.clear();
+    }
+    catch (Exception &e) {
+    }
+    // Clear cached object map.  Force each object to be destroyed individually
+    // and catch and log exceptions.
+    for (auto entry : m_cached_object_map) {
+      try {
+        entry.second = nullptr;
+      }
+      catch (Exception &e) {
+        HT_ERROR_OUT << e << HT_END;
+      }
+    }
+    try {
+      m_cached_object_map.clear();
+    }
+    catch (Exception &e) {
+    }
   }
 
   const String& remote_peer() const {
