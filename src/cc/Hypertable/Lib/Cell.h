@@ -48,6 +48,15 @@ namespace Hypertable {
         HT_THROW(Error::BAD_KEY, "Invalid row key - cannot start with "
                  "character sequence 0xff 0xff");
 
+      if (flag > FLAG_DELETE_ROW && flag < FLAG_INSERT) {
+        if (column_family == 0)
+          HT_THROWF(Error::BAD_KEY, "Flag is set to %d but column family is null", flag);
+        if (flag > FLAG_DELETE_COLUMN_FAMILY && flag < FLAG_INSERT) {
+          if (flag == FLAG_DELETE_CELL_VERSION && timestamp == AUTO_ASSIGN)
+            HT_THROWF(Error::BAD_KEY, "Flag is set to %d but timestamp is AUTO_ASSIGN", flag);
+        }
+      }
+
       if (timestamp == TIMESTAMP_NULL)
         HT_THROWF(Error::BAD_KEY,
                   "Invalid timestamp %lld (reserved for Hypertable use)",
