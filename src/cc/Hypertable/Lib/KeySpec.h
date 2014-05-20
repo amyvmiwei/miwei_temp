@@ -114,6 +114,12 @@ namespace Hypertable {
             HT_THROWF(Error::BAD_KEY, "Flag is set to %d but timestamp is AUTO_ASSIGN", flag);
         }
       }
+
+      if (timestamp == TIMESTAMP_NULL)
+        HT_THROWF(Error::BAD_KEY,
+                  "Invalid timestamp %lld (reserved for Hypertable use)",
+                  (Lld)TIMESTAMP_NULL);
+
     }
 
     const void  *row;
