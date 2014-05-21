@@ -43,7 +43,7 @@ bool ColumnFamilyOptions::set_max_versions(int32_t max_versions) {
               "Invalid value for MAX VERSIONS (%d), must be non-negative",
               (int)max_versions);
     
-  if (m_counter)
+  if (m_counter && max_versions != 0)
     HT_THROW(Error::INCOMPATIBLE_OPTIONS,
               "COUNTER and MAX VERSIONS are incompatible");
 
