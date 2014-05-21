@@ -19,7 +19,7 @@ check_logs() {
     rm -f $LABEL-log-contents.txt
     /bin/rm -rf $HT_HOME/fs/local/hypertable/servers/tmp/user/0
     cp $log $HT_HOME/fs/local/hypertable/servers/tmp/user/0
-    $HT_HOME/bin/ht dumplog --dfs-timeout=10000 /hypertable/servers/tmp/user >> $LABEL-log-contents.txt
+    $HT_HOME/bin/ht dumplog --fs-timeout=10000 /hypertable/servers/tmp/user >> $LABEL-log-contents.txt
 
     let found_count=0
     while IFS= read -r key; do
@@ -41,7 +41,7 @@ if [ $# != 2 ]; then
     exit 0
 fi
 
-check_logs '*/hypertable/servers/*/log/user/*' $2 "user"
-check_logs '*/hypertable/tables/$1/_xfer/*' $2 "transfer"
+check_logs "*/hypertable/servers/*/log/user/*" $2 "user"
+check_logs "*/hypertable/tables/$1/_xfer/*" $2 "transfer"
 
 
