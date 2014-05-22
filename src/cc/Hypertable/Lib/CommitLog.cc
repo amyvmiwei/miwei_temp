@@ -370,7 +370,8 @@ void CommitLog::remove_file_info(CommitLogFileInfo *fi, StringSet &removed_logs)
   // Remove fragment file
   try {
     fname = fi->log_dir + "/" + fi->num;
-    HT_INFOF("Removing log fragment '%s' revision=%lld", fname.c_str(), (Lld)fi->revision);
+    HT_INFOF("Removing log fragment '%s' revision=%lld, parent=%lld",
+             fname.c_str(), (Lld)fi->revision, (Lld)fi->parent);
     m_fs->remove(fname);
   }
   catch (Exception &e) {

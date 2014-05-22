@@ -41,8 +41,9 @@ static int s_no_mmap = 1;
 
 #define BMZ_MAGIC       "BMZ"
 #define BMZIP_VER       0x0110
-// the following line generates C90 warnings:
-//#define BMZ_HEADER_SZ   (strlen(BMZ_MAGIC) + 2 + 1 + 6 + 4)
+/* The following line generates C90 warnings:
+ * #define BMZ_HEADER_SZ   (strlen(BMZ_MAGIC) + 2 + 1 + 6 + 4)
+ */
 #define BMZ_HEADER_SZ   (3 + 2 + 1 + 6 + 4)
 
 #define BMZ_A_PACK      0

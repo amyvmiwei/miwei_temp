@@ -774,7 +774,6 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
       }
 
       get_merge_info(m_needs_merging, m_end_merge);
-      m_earliest_cached_revision_saved = TIMESTAMP_MAX;
       recompute_compression_ratio(&total_index_entries);
       hints->latest_stored_revision = m_latest_stored_revision;
       hints->disk_usage = m_disk_usage;
@@ -794,6 +793,11 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
     m_file_tracker.update_live(added_file, removed_files, m_next_cs_id, total_index_entries);
     m_file_tracker.update_files_column();
     m_file_tracker.get_file_list(hints->files);
+
+    {
+      ScopedLock lock(m_mutex);
+      m_earliest_cached_revision_saved = TIMESTAMP_MAX;
+    }
 
     if (FailureInducer::enabled()) {
       if (MaintenanceFlag::split(maintenance_flags))
