@@ -111,65 +111,55 @@ void OperationRecreateIndexTables::execute() {
     // drop through ...
 
   case OperationState::SUSPEND_TABLE_MAINTENANCE:
-    HT_ASSERT(entities.empty());
     op = new OperationToggleTableMaintenance(m_context, m_name,
                                              TableMaintenance::OFF);
     stage_subop(op);
     set_state(OperationState::DROP_INDICES);
-    entities.push_back(this);
-    entities.push_back(op);
-    m_context->mml_writer->record_state(entities);
+    record_state();
     break;
 
   case OperationState::DROP_INDICES:
-    HT_ASSERT(entities.empty());
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
     op = new OperationDropTable(m_context, m_name, true, m_parts);
     stage_subop(op);
-    entities.push_back(op);
-    entities.push_back(this);
     set_state(OperationState::CREATE_INDICES);
-    record_state(entities);
+    record_state();
     break;
 
   case OperationState::CREATE_INDICES:
-    HT_ASSERT(entities.empty());
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
+
     if (m_parts) {
       string schema;
       if (!fetch_schema(schema))
         break;
       op = new OperationCreateTable(m_context, m_name, schema, m_parts);
       stage_subop(op);
-      entities.push_back(op);
     }
-    entities.push_back(this);
     set_state(OperationState::RESUME_TABLE_MAINTENANCE);
-    record_state(entities);
+    record_state();
     break;
 
   case OperationState::RESUME_TABLE_MAINTENANCE:
-    HT_ASSERT(entities.empty());
-    if (!fetch_and_validate_subop(entities))
+
+    if (!validate_subops())
       break;
+
     op = new OperationToggleTableMaintenance(m_context, m_name,
                                              TableMaintenance::ON);
     stage_subop(op);
-    entities.push_back(op);
-    entities.push_back(this);
     set_state(OperationState::FINALIZE);
     HT_MAYBE_FAIL("recreate-index-tables-RESUME_TABLE_MAINTENANCE-a");
-    record_state(entities);
+    record_state();
     HT_MAYBE_FAIL("recreate-index-tables-RESUME_TABLE_MAINTENANCE-b");
     break;
 
   case OperationState::FINALIZE:
-    HT_ASSERT(entities.empty());
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
-    complete_ok(entities);
+    complete_ok();
     break;
 
   default:
@@ -184,8 +174,7 @@ void OperationRecreateIndexTables::execute() {
 
 void OperationRecreateIndexTables::display_state(std::ostream &os) {
   os << " table_name=" << m_name
-     << " parts=" << m_parts.to_string()
-     << " sub_op="  << m_subop_hash_code;
+     << " parts=" << m_parts.to_string();
 }
 
 #define OPERATION_RECREATE_INDEX_TABLES_VERSION 1
@@ -196,18 +185,16 @@ uint16_t OperationRecreateIndexTables::encoding_version() const {
 
 size_t OperationRecreateIndexTables::encoded_state_length() const {
   return Serialization::encoded_length_vstr(m_name) +
-    m_parts.encoded_length() + 8;
+    m_parts.encoded_length();
 }
 
 void OperationRecreateIndexTables::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_name);
   m_parts.encode(bufp);
-  Serialization::encode_i64(bufp, m_subop_hash_code);
 }
 
 void OperationRecreateIndexTables::decode_state(const uint8_t **bufp, size_t *remainp) {
   decode_request(bufp, remainp);
-  m_subop_hash_code = Serialization::decode_i64(bufp, remainp);
 }
 
 void OperationRecreateIndexTables::decode_request(const uint8_t **bufp, size_t *remainp) {
@@ -244,35 +231,3 @@ bool OperationRecreateIndexTables::fetch_schema(std::string &schema) {
   return true;
 }
 
-
-bool OperationRecreateIndexTables::fetch_and_validate_subop(vector<Entity *> &entities) {
-  if (m_subop_hash_code) {
-    OperationPtr op = m_context->reference_manager->get(m_subop_hash_code);
-    op->remove_approval_add(0x01);
-    m_subop_hash_code = 0;
-    if (op->get_error()) {
-      complete_error(op->get_error(), op->get_error_msg(), op.get());
-      return false;
-    }
-    entities.push_back(op.get());
-    string dependency_string =
-      format("RECREATE INDEX TABLES subop %lld", (Lld)op->hash_code());
-    ScopedLock lock(m_mutex);
-    m_dependencies.erase(dependency_string);
-  }
-  return true;
-}
-
-void OperationRecreateIndexTables::stage_subop(Operation *operation) {
-  string dependency_string =
-    format("RECREATE INDEX TABLES subop %lld", (Lld)operation->hash_code());
-  operation->add_obstruction(dependency_string);
-  operation->set_remove_approval_mask(0x01);
-  m_context->reference_manager->add(operation);
-  {
-    ScopedLock lock(m_mutex);
-    add_dependency(dependency_string);
-    m_sub_ops.push_back(operation);
-    m_subop_hash_code = operation->hash_code();
-  }
-}

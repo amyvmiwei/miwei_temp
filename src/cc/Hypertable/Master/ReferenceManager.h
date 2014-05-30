@@ -34,7 +34,7 @@
 namespace Hypertable {
 
   /// @addtogroup Master
-  ///  @{
+  /// @{
 
   /// Holds references to operations that are manually removed.
   /// This class was originally introduced to handle <i>move range</i>
@@ -64,39 +64,51 @@ namespace Hypertable {
   /// the master, it will first check to see if the same move range operation
   /// exists in the ReferenceManager, and if so, it will not create another one,
   /// thus avoiding the race condition.
+  template<typename K>
   class ReferenceManager {
   public:
-
-    /// Adds an operation.
-    /// @return Pointer to operation to add
-    /// @return <i>true</i> if successfully added, <i>false</i> if not added
-    /// because operation already exists in #m_map.
-    bool add(Operation *operation);
 
     /// Adds an operation.
     /// @return Smart pointer to operation to add
     /// @return <i>true</i> if successfully added, <i>false</i> if not added
     /// because operation already exists in #m_map.
-    bool add(OperationPtr &operation) { return add(operation.get()); }
+    bool add(K key, OperationPtr operation) {
+      ScopedLock lock(m_mutex);
+      if (m_map.find(key) != m_map.end())
+        return false;
+      m_map[key] = operation;
+      return true;
+    }
 
     /// Looks up <code>hash_code</code> and returns associated operation.
     /// @return %Operation associated with <code>hash_code</code>, 0 otherwise
-    OperationPtr get(int64_t hash_code);
+    OperationPtr get(K key) {
+      ScopedLock lock(m_mutex);
+      auto iter = m_map.find(key);
+      if (iter == m_map.end())
+        return 0;
+      return (*iter).second;
+    }
+
+    bool exists(K key) {
+      ScopedLock lock(m_mutex);
+      auto iter = m_map.find(key);
+      return iter != m_map.end();
+    }
 
     /// Remove operation associated with <code>hash_code</code>.
     /// @param hash_code Hash code of operation to remove.
-    void remove(int64_t hash_code);
+    void remove(K key) {
+      ScopedLock lock(m_mutex);
+      auto iter = m_map.find(key);
+      if (iter != m_map.end())
+        m_map.erase(iter);
+    }
 
-    /// Remove operation.
-    /// @param operation Pointer to operation to remove
-    void remove(Operation *operation) { remove(operation->hash_code()); }
-
-    /// Remove operation.
-    /// @param operation Smart pointer to operation to remove
-    void remove(OperationPtr &operation) { remove(operation->hash_code()); }
-
-    /// Clears map of all operations
-    void clear();
+    void clear() {
+      ScopedLock lock(m_mutex);
+      m_map.clear();
+    }
 
   private:
 
@@ -104,7 +116,7 @@ namespace Hypertable {
     Mutex m_mutex;
 
     /// Reference map
-    std::unordered_map<int64_t, OperationPtr> m_map;
+    std::unordered_map<K, OperationPtr> m_map;
   };
 
   /// @}

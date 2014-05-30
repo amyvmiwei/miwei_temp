@@ -80,7 +80,6 @@ void OperationAlterTable::execute() {
   TableIdentifier table;
   int32_t state = get_state();
   DependencySet dependencies;
-  std::vector<Entity *> entities;
   Operation *op;
   SchemaPtr original_schema;
   SchemaPtr alter_schema;
@@ -147,16 +146,13 @@ void OperationAlterTable::execute() {
     if (m_parts.value_index() || m_parts.qualifier_index()) {
       op = new OperationCreateTable(m_context, m_name, m_schema, m_parts);
       stage_subop(op);
-      entities.push_back(op);
     }
-    entities.push_back(this);
     set_state(OperationState::SCAN_METADATA);
-    record_state(entities);
+    record_state();
     break;
 
   case OperationState::SCAN_METADATA:
-    HT_ASSERT(entities.empty());
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
     servers.clear();
     Utility::get_table_server_set(m_context, m_id, "", servers);
@@ -172,8 +168,7 @@ void OperationAlterTable::execute() {
       }
       m_state = OperationState::ISSUE_REQUESTS;
     }
-    entities.push_back(this);
-    record_state(entities);
+    record_state();
     break;
 
   case OperationState::ISSUE_REQUESTS:
@@ -227,46 +222,36 @@ void OperationAlterTable::execute() {
     break;
 
   case OperationState::SUSPEND_TABLE_MAINTENANCE:
-    HT_ASSERT(entities.empty());
     op = new OperationToggleTableMaintenance(m_context, m_name,
                                              TableMaintenance::OFF);
     stage_subop(op);
-    entities.push_back(this);
-    entities.push_back(op);
     set_state(OperationState::DROP_INDICES);
-    record_state(entities);
+    record_state();
     break;
 
   case OperationState::DROP_INDICES:
-    HT_ASSERT(entities.empty());
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
     op = new OperationDropTable(m_context, m_name, true, m_parts);
     stage_subop(op);
-    entities.push_back(op);
-    entities.push_back(this);
     set_state(OperationState::RESUME_TABLE_MAINTENANCE);
-    record_state(entities);
+    record_state();
     break;
 
   case OperationState::RESUME_TABLE_MAINTENANCE:
-    HT_ASSERT(entities.empty());
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
     op = new OperationToggleTableMaintenance(m_context, m_name,
                                              TableMaintenance::ON);
     stage_subop(op);
-    entities.push_back(op);
-    entities.push_back(this);
     set_state(OperationState::FINALIZE);
-    record_state(entities);
+    record_state();
     break;
 
   case OperationState::FINALIZE:
-    HT_ASSERT(entities.empty());
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
-    complete_ok(entities);
+    complete_ok();
     break;
 
   default:
@@ -298,7 +283,7 @@ size_t OperationAlterTable::encoded_state_length() const {
   length += 4;
   foreach_ht (const String &location, m_servers)
     length += Serialization::encoded_length_vstr(location);
-  length += 9;
+  length += m_parts.encoded_length();
   return length;
 }
 
@@ -312,7 +297,6 @@ void OperationAlterTable::encode_state(uint8_t **bufp) const {
   Serialization::encode_i32(bufp, m_servers.size());
   foreach_ht (const String &location, m_servers)
     Serialization::encode_vstr(bufp, location);
-  Serialization::encode_i64(bufp, m_subop_hash_code);
   m_parts.encode(bufp);
 }
 
@@ -326,10 +310,8 @@ void OperationAlterTable::decode_state(const uint8_t **bufp, size_t *remainp) {
     length = Serialization::decode_i32(bufp, remainp);
     for (size_t i=0; i<length; i++)
       m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
-    if (m_decode_version >= 3) {
-      m_subop_hash_code = Serialization::decode_i64(bufp, remainp);
+    if (m_decode_version >= 3)
       m_parts.decode(bufp, remainp);
-    }
   }
 }
 
@@ -386,38 +368,4 @@ TableParts OperationAlterTable::get_create_index_parts(SchemaPtr &original_schem
   if (!original_parts.qualifier_index() && alter_parts.qualifier_index())
     parts |= TableParts::QUALIFIER_INDEX;
   return TableParts(parts);
-}
-
-bool OperationAlterTable::fetch_and_validate_subop(vector<Entity *> &entities) {
-  if (m_subop_hash_code) {
-    OperationPtr op = m_context->reference_manager->get(m_subop_hash_code);
-    op->remove_approval_add(0x01);
-    m_subop_hash_code = 0;
-    if (op->get_error()) {
-      complete_error(op->get_error(), op->get_error_msg(), op.get());
-      return false;
-    }
-    entities.push_back(op.get());
-    string dependency_string =
-      format("ALTER TABLES subo %s %lld", op->name().c_str(),
-             (Lld)op->hash_code());
-    ScopedLock lock(m_mutex);
-    m_dependencies.erase(dependency_string);
-  }
-  return true;
-}
-
-void OperationAlterTable::stage_subop(Operation *operation) {
-  string dependency_string =
-    format("ALTER TABLES subo %s %lld", operation->name().c_str(),
-           (Lld)operation->hash_code());
-  operation->add_obstruction(dependency_string);
-  operation->set_remove_approval_mask(0x01);
-  m_context->reference_manager->add(operation);
-  {
-    ScopedLock lock(m_mutex);
-    add_dependency(dependency_string);
-    m_sub_ops.push_back(operation);
-    m_subop_hash_code = operation->hash_code();
-  }
 }

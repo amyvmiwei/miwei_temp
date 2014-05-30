@@ -52,8 +52,6 @@ OperationRecover::OperationRecover(ContextPtr &context,
     m_location(rsc->location()), m_rsc(rsc), m_hyperspace_handle(0), 
     m_restart(flags==RESTART),
     m_lock_acquired(false) {
-  m_subop_dependency = format("operation-id-%lld", (Lld)id());
-  m_dependencies.insert(m_subop_dependency);
   m_dependencies.insert(Dependency::RECOVERY_BLOCKER);
   m_dependencies.insert(Dependency::RECOVERY);
   m_dependencies.insert(String("RegisterServer ") + m_location);
@@ -67,7 +65,6 @@ OperationRecover::OperationRecover(ContextPtr &context,
                                    const MetaLog::EntityHeader &header_)
   : Operation(context, header_), m_hyperspace_handle(0),
     m_restart(false), m_lock_acquired(false) {
-  m_subop_dependency = format("operation-id-%lld", (Lld)id());
 }
 
 
@@ -175,46 +172,42 @@ void OperationRecover::execute() {
     break;
 
   case OperationState::ISSUE_REQUESTS:
-    HT_ASSERT(!m_subop_dependency.empty());
     if (m_root_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::ROOT, m_subop_dependency);
+                                          RangeSpec::ROOT);
       HT_INFOF("Number of root ranges to recover for location %s = %u",
                m_location.c_str(), (unsigned)m_root_specs.size());
-      m_sub_ops.push_back(sub_op);
-      entities.push_back(sub_op);
+      stage_subop(sub_op);
     }
     if (m_metadata_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::METADATA, m_subop_dependency);
+                                          RangeSpec::METADATA);
       HT_INFOF("Number of metadata ranges to recover for location %s = %u",
                m_location.c_str(), (unsigned)m_metadata_specs.size());
-      m_sub_ops.push_back(sub_op);
-      entities.push_back(sub_op);
+      stage_subop(sub_op);
     }
     if (m_system_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::SYSTEM, m_subop_dependency);
+                                          RangeSpec::SYSTEM);
       HT_INFOF("Number of system ranges to recover for location %s = %d",
                m_location.c_str(), (int)m_system_specs.size());
-      m_sub_ops.push_back(sub_op);
-      entities.push_back(sub_op);
+      stage_subop(sub_op);
     }
     if (m_user_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::USER, m_subop_dependency);
+                                          RangeSpec::USER);
       HT_INFOF("Number of user ranges to recover for location %s = %d",
                m_location.c_str(), (int)m_user_specs.size());
-      m_sub_ops.push_back(sub_op);
-      entities.push_back(sub_op);
+      stage_subop(sub_op);
     }
     set_state(OperationState::FINALIZE);
-    entities.push_back(this);
-    m_context->mml_writer->record_state(entities);
+    record_state();
     HT_MAYBE_FAIL("recover-server-3");
     break;
 
   case OperationState::FINALIZE:
+    if (!validate_subops())
+      break;
     // Once recovery is complete, the master blows away the RSML and CL for the
     // server being recovered then it unlocks the hyperspace file
     clear_server_state();

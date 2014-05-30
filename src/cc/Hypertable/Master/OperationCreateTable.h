@@ -299,36 +299,6 @@ namespace Hypertable {
     /// of the table's columns are qualifier indexed
     void requires_indices(bool &needs_index, bool &needs_qualifier_index);
 
-    /// Fetchs and handles the result of sub operation.
-    /// If #m_subop_hash_code is non-zero, a sub operation is outstanding and
-    /// this member function will fetch it and process it as follows:
-    ///   - Fetches the sub operation from the ReferenceManager
-    ///   - Adds remove approvals 0x01 to the sub operation
-    ///   - Sets #m_subop_hash_code to zero
-    ///   - If sub operation error code is non-zero, completes overall operaton
-    ///     with a call to complete_error(), and returns <i>false</i>.
-    ///   - Otherwise, sub operation is added to <code>entities</code>
-    /// @param entities Reference to vector of entites to hold sucessfully
-    /// completed sub operation
-    /// @return <i>true</i> if no sub operation is outstanding or the sub
-    /// operation completed without error, <i>false</i> otherwise.
-    bool fetch_and_validate_subop(vector<Entity *> &entities);
-
-    /// Stages a sub operation for execution.
-    /// This member function does the following:
-    ///   - Adds <code>dependency_string</code> to sub operation's set of
-    ///     obstructions
-    ///   - Sets sub operation remove approval mask to 0x01
-    ///   - Adds sub operation to ReferenceManager
-    ///   - Adds <code>dependency_string</code> to parent (this) operation's set
-    ///     of dependencies
-    ///   - Pushes sub operation onto #m_sub_ops
-    ///   - Sets #m_subop_hash_code to sub operation's hash code
-    /// @param opartion Sub operation
-    /// @param dependency_string %Dependency string used to serialize sub
-    /// operation with parent operation
-    void stage_subop(Operation *operation, const std::string dependency_string);
-
     /// Pathtname of table to create
     String m_name;
 
@@ -344,8 +314,6 @@ namespace Hypertable {
     /// Which parts of table to create
     TableParts m_parts {TableParts::ALL};
 
-    /// Hash code for currently outstanding sub operation
-    int64_t m_subop_hash_code {};
   };
 
   /// @}

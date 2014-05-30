@@ -69,7 +69,7 @@ namespace Hypertable {
   class OperationTimedBarrier;
   class OperationProcessor;
   class ResponseManager;
-  class ReferenceManager;
+  template<typename K> class ReferenceManager;
   class BalancePlanAuthority;
 
   /** Represents execution context for the Master.
@@ -129,7 +129,7 @@ namespace Hypertable {
     LoadBalancer *balancer;
     MonitoringPtr monitoring;
     ResponseManager *response_manager;
-    ReferenceManager *reference_manager;
+    ReferenceManager<int64_t> *reference_manager;
     TablePtr metadata_table;
     TablePtr rs_metrics_table;
     time_t request_timeout;

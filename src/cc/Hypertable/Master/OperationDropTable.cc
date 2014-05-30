@@ -78,7 +78,6 @@ void OperationDropTable::initialize_dependencies() {
 }
 
 void OperationDropTable::execute() {
-  vector<Entity *> entities;
   String index_id;
   String qualifier_index_id;
   String index_name = Filesystem::dirname(m_name);
@@ -124,8 +123,6 @@ void OperationDropTable::execute() {
 
   case OperationState::DROP_VALUE_INDEX:
 
-    entities.clear();
-
     // maybe issue another request for an index table
     if (m_parts.value_index() &&
         m_context->namemap->name_to_id(index_name, index_id)) {
@@ -134,13 +131,10 @@ void OperationDropTable::execute() {
       Operation *op =
         new OperationDropTable(m_context, index_name, false,
                                TableParts(TableParts::PRIMARY));
-      string dependency_string = index_name + "-drop-index";
-      stage_subop(op, dependency_string);        
-      entities.push_back(op);
+      stage_subop(op);
       set_state(OperationState::DROP_QUALIFIER_INDEX);
-      entities.push_back(this);
       HT_MAYBE_FAIL("drop-table-DROP_VALUE_INDEX-1");
-      m_context->mml_writer->record_state(entities);
+      record_state();
       HT_MAYBE_FAIL("drop-table-DROP_VALUE_INDEX-2");
       break;
     }
@@ -149,9 +143,7 @@ void OperationDropTable::execute() {
 
   case OperationState::DROP_QUALIFIER_INDEX:
 
-    entities.clear();
-
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
 
     // ... and for the qualifier index
@@ -163,32 +155,26 @@ void OperationDropTable::execute() {
       Operation *op =
         new OperationDropTable(m_context, qualifier_index_name,
                                false, TableParts(TableParts::PRIMARY));
-      string dependency_string = qualifier_index_name + "-drop-qualifier-index";
-      stage_subop(op, dependency_string);
-      entities.push_back(op);
+      stage_subop(op);
       set_state(OperationState::UPDATE_HYPERSPACE);
-      entities.push_back(this);
       HT_MAYBE_FAIL("drop-table-DROP_QUALIFIER_INDEX-1");
-      record_state(entities);
+      record_state();
       HT_MAYBE_FAIL("drop-table-DROP_QUALIFIER_INDEX-2");
       break;
     }
     set_state(OperationState::UPDATE_HYPERSPACE);
-    if (!entities.empty()) {
-      entities.push_back(this);
-      record_state(entities);
-    }
+    if (!m_sub_ops.empty())
+      record_state();
+
     // drop through ...
 
   case OperationState::UPDATE_HYPERSPACE:
 
-    entities.clear();
-
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
 
     if (!m_parts.primary()) {
-      complete_ok(entities);
+      complete_ok();
       break;
     }
 
@@ -211,8 +197,7 @@ void OperationDropTable::execute() {
       m_state = OperationState::SCAN_METADATA;
     }
     HT_MAYBE_FAIL("drop-table-UPDATE_HYPERSPACE");
-    entities.push_back(this);
-    record_state(entities);
+    record_state();
     break;
 
   case OperationState::SCAN_METADATA:
@@ -290,7 +275,7 @@ uint16_t OperationDropTable::encoding_version() const {
 }
 
 size_t OperationDropTable::encoded_state_length() const {
-  size_t length = 9 + Serialization::encoded_length_vstr(m_name) +
+  size_t length = 1 + Serialization::encoded_length_vstr(m_name) +
     Serialization::encoded_length_vstr(m_id);
   length += 4;
   foreach_ht (const String &location, m_completed)
@@ -313,7 +298,6 @@ void OperationDropTable::encode_state(uint8_t **bufp) const {
   foreach_ht (const String &location, m_servers)
     Serialization::encode_vstr(bufp, location);
   m_parts.encode(bufp);
-  Serialization::encode_i64(bufp, m_subop_hash_code);
 }
 
 void OperationDropTable::decode_state(const uint8_t **bufp, size_t *remainp) {
@@ -326,10 +310,8 @@ void OperationDropTable::decode_state(const uint8_t **bufp, size_t *remainp) {
     length = Serialization::decode_i32(bufp, remainp);
     for (size_t i=0; i<length; i++)
       m_servers.insert( Serialization::decode_vstr(bufp, remainp) );
-    if (m_decode_version >= 3) {
+    if (m_decode_version >= 3)
       m_parts.decode(bufp, remainp);
-      m_subop_hash_code = Serialization::decode_i64(bufp, remainp);
-    }
   }
 }
 
@@ -346,29 +328,3 @@ const String OperationDropTable::label() {
   return String("DropTable ") + m_name;
 }
 
-bool OperationDropTable::fetch_and_validate_subop(vector<Entity *> &entities) {
-  if (m_subop_hash_code) {
-    OperationPtr op = m_context->reference_manager->get(m_subop_hash_code);
-    op->remove_approval_add(0x01);
-    m_subop_hash_code = 0;
-    if (op->get_error()) {
-      complete_error(op->get_error(), op->get_error_msg(), op.get());
-      return false;
-    }
-    entities.push_back(op.get());
-  }
-  return true;
-}
-
-void OperationDropTable::stage_subop(Operation *operation,
-                                     std::string dependency_string) {
-  operation->add_obstruction(dependency_string);
-  operation->set_remove_approval_mask(0x01);
-  m_context->reference_manager->add(operation);
-  {
-    ScopedLock lock(m_mutex);
-    add_dependency(dependency_string);
-    m_sub_ops.push_back(operation);
-    m_subop_hash_code = operation->hash_code();
-  }
-}

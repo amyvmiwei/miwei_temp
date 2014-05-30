@@ -105,11 +105,7 @@ void OperationRenameTable::execute() {
       boost::trim_if(new_index, boost::is_any_of("/ "));
 
       Operation *op = new OperationRenameTable(m_context, old_index, new_index);
-      op->add_obstruction(old_index + "-rename-index");
-
-      ScopedLock lock(m_mutex);
-      add_dependency(old_index + "-rename-index");
-      m_sub_ops.push_back(op);
+      stage_subop(op);
     }
 
     // and now the same for a qualified index
@@ -122,18 +118,16 @@ void OperationRenameTable::execute() {
       boost::trim_if(new_index, boost::is_any_of("/ "));
 
       Operation *op = new OperationRenameTable(m_context, old_index, new_index);
-      op->add_obstruction(old_index + "-rename-qualified-index");
-
-      ScopedLock lock(m_mutex);
-      add_dependency(old_index + "-rename-qualified-index");
-      m_sub_ops.push_back(op);
+      stage_subop(op);
     }
 
     set_state(OperationState::STARTED);
-    m_context->mml_writer->record_state(this);
+    record_state();
     break;
 
   case OperationState::STARTED:
+    if (!validate_subops())
+      break;
     m_context->namemap->rename(m_old_name, m_new_name);
     m_context->monitoring->change_id_mapping(m_id, m_new_name);
 

@@ -236,44 +236,11 @@ namespace Hypertable {
 
     bool fetch_schema(std::string &schema);
 
-    /// Fetchs and handles the result of sub operation.
-    /// If #m_subop_hash_code is non-zero, a sub operation is outstanding and
-    /// this member function will fetch it and process it as follows:
-    ///   - Fetches the sub operation from the ReferenceManager
-    ///   - Adds remove approvals 0x01 to the sub operation
-    ///   - Sets #m_subop_hash_code to zero
-    ///   - If sub operation error code is non-zero, completes overall operaton
-    ///     with a call to complete_error(), and returns <i>false</i>.
-    ///   - Otherwise, sub operation is added to <code>entities</code>
-    /// @param entities Reference to vector of entites to hold sucessfully
-    /// completed sub operation
-    /// @return <i>true</i> if no sub operation is outstanding or the sub
-    /// operation completed without error, <i>false</i> otherwise.
-    bool fetch_and_validate_subop(vector<Entity *> &entities);
-
-    /// Stages a sub operation for execution.
-    /// This member function does the following:
-    ///   - Sets local variable <code>dpendency_string</code> to
-    ///     "RECREATE INDEX TABLES subop " + operation->hash_code()
-    ///   - Adds <code>dependency_string</code> to sub operation's set of
-    ///     obstructions
-    ///   - Sets sub operation remove approval mask to 0x01
-    ///   - Adds sub operation to ReferenceManager
-    ///   - Adds <code>dependency_string</code> to parent (this) operation's set
-    ///     of dependencies
-    ///   - Pushes sub operation onto #m_sub_ops
-    ///   - Sets #m_subop_hash_code to sub operation's hash code
-    /// @param opartion Sub operation
-    void stage_subop(Operation *operation);
-
     /// %Table name
     std::string m_name;
 
     /// Specification for which index tables to re-create
     TableParts m_parts {0};
-
-    /// Hash code for currently outstanding sub operation
-    int64_t m_subop_hash_code {};
   };
 
   /// @}

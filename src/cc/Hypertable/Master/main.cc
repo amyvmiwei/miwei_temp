@@ -34,6 +34,7 @@
 #include <Hypertable/Master/MetaLogDefinitionMaster.h>
 #include <Hypertable/Master/OperationBalance.h>
 #include <Hypertable/Master/OperationInitialize.h>
+#include <Hypertable/Master/OperationMoveRange.h>
 #include <Hypertable/Master/OperationProcessor.h>
 #include <Hypertable/Master/OperationRecover.h>
 #include <Hypertable/Master/OperationRecoveryBlocker.h>
@@ -286,7 +287,7 @@ int main(int argc, char **argv) {
       HT_INFOF("%s", sout.str().c_str());
     }
 
-    context->reference_manager = new ReferenceManager();
+    context->reference_manager = new ReferenceManager<int64_t>();
 
     /** Response Manager */
     ResponseManagerContext *rmctx = 
@@ -306,10 +307,11 @@ int main(int argc, char **argv) {
     foreach_ht (MetaLog::EntityPtr &entity, entities) {
       operation = dynamic_cast<Operation *>(entity.get());
       if (operation) {
-        if (operation->get_remove_approval_mask())
-          context->reference_manager->add(operation);
+        if (dynamic_cast<OperationMoveRange *>(operation.get())) {
+          context->reference_manager->add(operation->hash_code(), operation);
+        }
         // master was interrupted in the middle of rangeserver failover
-        if (dynamic_cast<OperationRecover *>(operation.get())) {
+        else if (dynamic_cast<OperationRecover *>(operation.get())) {
           HT_INFO("Recovery was interrupted; continuing");
           OperationRecover *op =
             dynamic_cast<OperationRecover *>(operation.get());
@@ -341,11 +343,11 @@ int main(int argc, char **argv) {
     recovery_ops.clear();
 
     if (operations.empty()) {
-      OperationInitializePtr init_op = new OperationInitialize(context);
+      OperationPtr init_op = new OperationInitialize(context);
       if (context->namemap->exists_mapping("/sys/METADATA", 0))
         init_op->set_state(OperationState::CREATE_RS_METRICS);
-      context->reference_manager->add(init_op.get());
-      operations.push_back( init_op );
+      context->reference_manager->add(init_op->id(), init_op);
+      operations.push_back(init_op);
     }
     else {
       if (context->metadata_table == 0)

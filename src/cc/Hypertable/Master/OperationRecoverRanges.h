@@ -36,7 +36,7 @@ namespace Hypertable {
   class OperationRecoverRanges : public Operation {
   public:
     OperationRecoverRanges(ContextPtr &context, const String &location,
-                           int type, const String &parent_dependency);
+                           int type);
 
     OperationRecoverRanges(ContextPtr &context,
             const MetaLog::EntityHeader &header_);
@@ -72,9 +72,9 @@ namespace Hypertable {
     RangeRecoveryPlan m_plan;
     StringSet m_redo_set;
     String m_type_str;
-    uint32_t m_timeout;
-    int m_plan_generation;
-    time_t m_last_notification;
+    uint32_t m_timeout {};
+    int m_plan_generation {};
+    time_t m_last_notification {};
   };
 
 } // namespace Hypertable

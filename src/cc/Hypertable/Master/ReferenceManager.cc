@@ -29,35 +29,34 @@
 
 using namespace Hypertable;
 
-bool ReferenceManager::add(Operation *operation) {
+bool ReferenceManager::add(K key, OperationPtr operation) {
   ScopedLock lock(m_mutex);
 
-  if (m_map.find(operation->hash_code()) != m_map.end())
+  if (m_map.find(key) != m_map.end())
     return false;
   
-  m_map[operation->hash_code()] = operation;
+  m_map[key] = operation;
   return true;
 }
 
-OperationPtr ReferenceManager::get(int64_t hash_code) {
+OperationPtr ReferenceManager::get(K key) {
   ScopedLock lock(m_mutex);
-  auto iter = m_map.find(hash_code);
+  auto iter = m_map.find(key);
   if (iter == m_map.end())
     return 0;
   return (*iter).second;
 }
 
-
-void ReferenceManager::remove(int64_t hash_code) {
+bool ReferenceManager::exists(K key) {
   ScopedLock lock(m_mutex);
-  auto iter = m_map.find(hash_code);
+  auto iter = m_map.find(key);
+  return iter != m_map.end();
+}
+
+
+void ReferenceManager::remove(K key) {
+  ScopedLock lock(m_mutex);
+  auto iter = m_map.find(key);
   if (iter != m_map.end())
     m_map.erase(iter);
 }
-
-
-void ReferenceManager::clear() {
-  ScopedLock lock(m_mutex);
-  m_map.clear();
-}
-

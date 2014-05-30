@@ -131,7 +131,7 @@ void ConnectionHandler::handle(EventPtr &event) {
         return;
       case MasterProtocol::COMMAND_MOVE_RANGE:
         operation = new OperationMoveRange(m_context, event);
-        if (!m_context->reference_manager->add(operation)) {
+        if (!m_context->reference_manager->add(operation->hash_code(), operation)) {
           HT_INFOF("Skipping %s because already in progress",
                   operation->label().c_str());
           send_error_response(event, Error::MASTER_OPERATION_IN_PROGRESS, "");

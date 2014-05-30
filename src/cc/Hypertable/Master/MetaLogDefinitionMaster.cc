@@ -46,7 +46,7 @@ using namespace Hypertable;
 using namespace Hypertable::MetaLog;
 
 uint16_t DefinitionMaster::version() {
-  return 2;
+  return 3;
 }
 
 const char *DefinitionMaster::name() {

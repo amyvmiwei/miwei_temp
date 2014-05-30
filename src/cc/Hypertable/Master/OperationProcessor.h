@@ -191,6 +191,7 @@ namespace Hypertable {
       std::unordered_map<int64_t, OperationVertex> operation_hash;
       size_t current_blocked;
       StringSet exclusive_ops;
+      std::set<int64_t> op_ids;
       ExecutionList current;
       ExecutionList::iterator current_iter;
       ExecutionList execution_order;

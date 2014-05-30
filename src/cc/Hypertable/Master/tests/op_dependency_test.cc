@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     context->response_manager = new ResponseManager(rmctx);
     Thread response_manager_thread(*context->response_manager);
 
-    context->reference_manager = new ReferenceManager();
+    context->reference_manager = new ReferenceManager<int64_t>();
 
     context->op = new OperationProcessor(context, 4);
 

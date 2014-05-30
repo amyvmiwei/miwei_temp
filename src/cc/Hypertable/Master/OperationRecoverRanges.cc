@@ -41,10 +41,9 @@
 using namespace Hypertable;
 
 OperationRecoverRanges::OperationRecoverRanges(ContextPtr &context,
-        const String &location, int type, const String &parent_dependency)
+        const String &location, int type)
   : Operation(context, MetaLog::EntityType::OPERATION_RECOVER_SERVER_RANGES),
-    m_location(location), m_parent_dependency(parent_dependency),
-    m_type(type), m_plan_generation(0), m_last_notification(0) {
+    m_location(location), m_type(type) {
   HT_ASSERT(type != RangeSpec::UNKNOWN);
   initialize_obstructions_dependencies();
 }
@@ -245,7 +244,6 @@ void OperationRecoverRanges::initialize_obstructions_dependencies() {
   ScopedLock lock(m_mutex);
   m_dependencies.clear();
   m_obstructions.clear();
-  m_obstructions.insert(m_parent_dependency);
   m_dependencies.insert(Dependency::RECOVERY_BLOCKER);
   switch (m_type) {
   case RangeSpec::ROOT:
@@ -278,7 +276,7 @@ void OperationRecoverRanges::initialize_obstructions_dependencies() {
                                  spec.range.end_row));
 }
 
-#define OPERATION_RECOVER_RANGES_VERSION 1
+#define OPERATION_RECOVER_RANGES_VERSION 2
 
 uint16_t OperationRecoverRanges::encoding_version() const {
   return OPERATION_RECOVER_RANGES_VERSION;
@@ -286,13 +284,11 @@ uint16_t OperationRecoverRanges::encoding_version() const {
 
 size_t OperationRecoverRanges::encoded_state_length() const {
   return Serialization::encoded_length_vstr(m_location) + 
-    Serialization::encoded_length_vstr(m_parent_dependency) + 4 + 4 +
-    m_plan.encoded_length();
+    + 4 + 4 + m_plan.encoded_length();
 }
 
 void OperationRecoverRanges::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_location);
-  Serialization::encode_vstr(bufp, m_parent_dependency);
   Serialization::encode_i32(bufp, m_type);
   Serialization::encode_i32(bufp, m_plan_generation);
   m_plan.encode(bufp);
@@ -308,7 +304,10 @@ void OperationRecoverRanges::decode_request(const uint8_t **bufp,
   if (m_decode_version == 0)
     Serialization::decode_i16(bufp, remainp); // skip old version
   m_location = Serialization::decode_vstr(bufp, remainp);
-  m_parent_dependency = Serialization::decode_vstr(bufp, remainp);
+  if (m_decode_version < 2) {
+    string parent_dependency = Serialization::decode_vstr(bufp, remainp);
+    m_obstructions_permanent.insert(parent_dependency);
+  }
   m_type = Serialization::decode_i32(bufp, remainp);
   m_plan_generation = Serialization::decode_i32(bufp, remainp);
   m_plan.decode(bufp, remainp);

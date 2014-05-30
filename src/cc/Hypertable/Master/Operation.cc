@@ -144,6 +144,14 @@ size_t Operation::encoded_length() const {
       length += Serialization::encoded_length_vstr(*iter);
     for (DependencySet::iterator iter = m_obstructions.begin(); iter != m_obstructions.end(); ++iter)
       length += Serialization::encoded_length_vstr(*iter);
+    // permanent obstructions
+    length += Serialization::encoded_length_vi32(m_obstructions_permanent.size());
+    for (auto & str : m_obstructions_permanent)
+      length += Serialization::encoded_length_vstr(str);
+    // sub operations
+    length += Serialization::encoded_length_vi32(m_sub_ops.size());
+    for (int64_t id : m_sub_ops)
+      length += Serialization::encoded_length_vi64(id);
   }
   return length;
 }
@@ -171,6 +179,12 @@ void Operation::encode(uint8_t **bufp) const {
     Serialization::encode_vi32(bufp, m_obstructions.size());
     for (DependencySet::iterator iter = m_obstructions.begin(); iter != m_obstructions.end(); ++iter)
       Serialization::encode_vstr(bufp, *iter);
+    Serialization::encode_vi32(bufp, m_obstructions_permanent.size());
+    for (auto & str : m_obstructions_permanent)
+      Serialization::encode_vstr(bufp, str);
+    Serialization::encode_vi32(bufp, m_sub_ops.size());
+    for (int64_t id : m_sub_ops)
+      Serialization::encode_vi64(bufp, id);
   }
 }
 
@@ -217,6 +231,21 @@ void Operation::decode(const uint8_t **bufp, size_t *remainp,
       str = Serialization::decode_vstr(bufp, remainp);
       m_obstructions.insert(str);
     }
+
+    if (definition_version >= 3) {
+      // permanent obstructions
+      m_obstructions_permanent.clear();
+      length = Serialization::decode_vi32(bufp, remainp);
+      for (size_t i=0; i<length; i++) {
+        str = Serialization::decode_vstr(bufp, remainp);
+        m_obstructions_permanent.insert(str);
+      }
+      // sub operations
+      m_sub_ops.clear();
+      length = Serialization::decode_vi32(bufp, remainp);
+      for (size_t i=0; i<length; i++)
+        m_sub_ops.insert( Serialization::decode_vi64(bufp, remainp) );
+    }
   }
 }
 
@@ -253,18 +282,36 @@ bool Operation::removal_approved() {
   return m_remove_approval_mask && m_remove_approvals == m_remove_approval_mask;
 }
 
-void Operation::record_state(std::vector<MetaLog::Entity *> &entities) {
-  for (auto entity : entities) {
+void Operation::record_state(std::vector<MetaLog::Entity *> &additional) {
+  std::vector<MetaLog::Entity *> entities;
+  entities.reserve(1 + additional.size() + m_sub_ops.size());
+  // Add this
+  entities.push_back(this);
+  // ??? should we check this for removed and mark for removal here ???
+  // Add additional entities
+  for (auto entity : additional) {
     Operation *op = dynamic_cast<Operation *>(entity);
     if (op && op->removal_approved())
       op->mark_for_removal();
+    entities.push_back(entity);
+  }
+  // Add sub operations
+  std::set<int64_t> new_sub_ops;
+  for (int64_t id : m_sub_ops) {
+    OperationPtr op = m_context->reference_manager->get(id);
+    if (op->removal_approved())
+      op->mark_for_removal();
+    else
+      new_sub_ops.insert(op->id());
+    entities.push_back(op.get());
   }
   m_context->mml_writer->record_state(entities);
   for (auto entity : entities) {
     Operation *op = dynamic_cast<Operation *>(entity);
     if (op && op->marked_for_removal())
-      m_context->reference_manager->remove(op);      
+      m_context->reference_manager->remove(op->id());
   }
+  m_sub_ops.swap(new_sub_ops);
 }
 
 void Operation::complete_error(int error, const String &msg,
@@ -277,6 +324,10 @@ void Operation::complete_error(int error, const String &msg,
     m_dependencies.clear();
     m_obstructions.clear();
     m_exclusivities.clear();
+    for (int64_t id : m_sub_ops) {
+      OperationPtr op = m_context->reference_manager->get(id);
+      op->remove_approval_add(op->get_remove_approval_mask());
+    }
   }
 
   std::stringstream sout;
@@ -288,10 +339,7 @@ void Operation::complete_error(int error, const String &msg,
     return;
   }
 
-  std::vector<MetaLog::Entity *> entities;
-  entities.push_back(this);
-  copy(additional.begin(), additional.end(), back_inserter(entities));
-  record_state(entities);
+  record_state(additional);
 }
 
 void Operation::complete_error(int error, const String &msg, MetaLog::Entity *additional) {
@@ -315,10 +363,7 @@ void Operation::complete_ok(std::vector<MetaLog::Entity *> &additional) {
       return;
     }
   }
-  std::vector<MetaLog::Entity *> entities;
-  entities.push_back(this);
-  copy(additional.begin(), additional.end(), back_inserter(entities));
-  record_state(entities);
+  record_state(additional);
 }
 
 void Operation::complete_ok(MetaLog::Entity *additional) {
@@ -341,11 +386,15 @@ void Operation::dependencies(DependencySet &dependencies) {
 void Operation::obstructions(DependencySet &obstructions) {
   ScopedLock lock(m_mutex);
   obstructions = m_obstructions;
+  obstructions.insert(m_obstructions_permanent.begin(), m_obstructions_permanent.end());
 }
 
-void Operation::swap_sub_operations(std::vector<Operation *> &sub_ops) {
+void Operation::fetch_sub_operations(std::vector<Operation *> &sub_ops) {
   ScopedLock lock(m_mutex);
-  sub_ops.swap(m_sub_ops);
+  for (int64_t id : m_sub_ops) {
+    OperationPtr op = m_context->reference_manager->get(id);
+    sub_ops.push_back(op.get());
+  }
 }
 
 
@@ -378,6 +427,42 @@ bool Operation::unblock() {
   m_blocked = false;
   return blocked_on_entry;
 }
+
+bool Operation::validate_subops() {
+  for (int64_t id : m_sub_ops) {
+    OperationPtr op = m_context->reference_manager->get(id);
+    if (op->get_error()) {
+      complete_error(op->get_error(), op->get_error_msg());
+      return false;
+    }
+    string dependency_string =
+      format("%s subop %s %lld", name().c_str(), op->name().c_str(),
+             (Lld)op->hash_code());
+    ScopedLock lock(m_mutex);
+    m_dependencies.erase(dependency_string);
+  }
+  // All sub ops are OK, so mark each one for removal
+  for (int64_t id : m_sub_ops) {
+    OperationPtr op = m_context->reference_manager->get(id);
+    op->remove_approval_add(op->get_remove_approval_mask());
+  }
+  return true;
+}
+
+void Operation::stage_subop(Operation *operation) {
+  string dependency_string =
+    format("%s subop %s %lld", name().c_str(), operation->name().c_str(),
+           (Lld)operation->hash_code());
+  operation->add_obstruction_permanent(dependency_string);
+  operation->set_remove_approval_mask(0x01);
+  m_context->reference_manager->add(operation->id(), operation);
+  {
+    ScopedLock lock(m_mutex);
+    add_dependency(dependency_string);
+    HT_ASSERT(m_sub_ops.insert(operation->id()).second);
+  }
+}
+
 
 
 namespace {

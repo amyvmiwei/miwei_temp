@@ -28,9 +28,6 @@
 #ifndef Hypertable_Master_Operation_h
 #define Hypertable_Master_Operation_h
 
-#include <ctime>
-#include <set>
-
 #include "AsyncComm/Event.h"
 
 #include "Common/Mutex.h"
@@ -41,6 +38,9 @@
 
 #include "Context.h"
 #include "MetaLogEntityTypes.h"
+
+#include <ctime>
+#include <set>
 
 namespace Hypertable {
 
@@ -439,8 +439,21 @@ namespace Hypertable {
     /// persisted to the MML.  Finally, it again iterates through
     /// <code>entities</code> and each operation that was marked for removal is
     /// removed from the reference manager.
-    /// @param entities Entities to be recorded in MML
-    void record_state(std::vector<MetaLog::Entity *> &entities);
+    /// @param additional Additional entities to be recorded in MML
+    void record_state() {
+      std::vector<MetaLog::Entity *> additional;
+      record_state(additional);
+    }
+
+    /// Records a vector of entities to the MML.
+    /// This member function first iterates through <code>entities</code> and
+    /// for each operation, calls removal_approved() to see if it can be removed
+    /// and if so, marks it for removal.  Then the vector of entities is
+    /// persisted to the MML.  Finally, it again iterates through
+    /// <code>entities</code> and each operation that was marked for removal is
+    /// removed from the reference manager.
+    /// @param additional Additional entities to be recorded in MML
+    void record_state(std::vector<MetaLog::Entity *> &additional);
 
     /// Completes operation with error.
     /// <a name="complete_error1"></a>
@@ -499,8 +512,11 @@ namespace Hypertable {
     void add_exclusivity(const String &exclusivity) { m_exclusivities.insert(exclusivity); }
     void add_dependency(const String &dependency) { m_dependencies.insert(dependency); }
     void add_obstruction(const String &obstruction) { m_obstructions.insert(obstruction); }
+    void add_obstruction_permanent(const String &obstruction) {
+      m_obstructions_permanent.insert(obstruction);
+    }
 
-    void swap_sub_operations(std::vector<Operation *> &sub_ops);
+    void fetch_sub_operations(std::vector<Operation *> &sub_ops);
 
     void pre_run();
     void post_run();
@@ -538,6 +554,36 @@ namespace Hypertable {
     }
 
   protected:
+
+    /// Fetchs and handles the result of sub operation.
+    /// If #m_subop_hash_code is non-zero, a sub operation is outstanding and
+    /// this member function will fetch it and process it as follows:
+    ///   - Fetches the sub operation from the ReferenceManager
+    ///   - Adds remove approvals 0x01 to the sub operation
+    ///   - Sets #m_subop_hash_code to zero
+    ///   - If sub operation error code is non-zero, completes overall operaton
+    ///     with a call to complete_error(), and returns <i>false</i>.
+    ///   - Otherwise, sub operation is added to <code>entities</code>
+    /// @param entities Reference to vector of entites to hold sucessfully
+    /// completed sub operation
+    /// @return <i>true</i> if no sub operation is outstanding or the sub
+    /// operation completed without error, <i>false</i> otherwise.
+    bool validate_subops();
+
+    /// Stages a sub operation for execution.
+    /// This member function does the following:
+    ///   - Sets local variable <code>dpendency_string</code> to
+    ///     "ALTER TABLE subop &lt;subop-name&gt; &lt;subop-hash-code&gt;"
+    ///   - Adds <code>dependency_string</code> to sub operation's set of
+    ///     obstructions
+    ///   - Sets sub operation remove approval mask to 0x01
+    ///   - Adds sub operation to ReferenceManager
+    ///   - Adds <code>dependency_string</code> to parent (this) operation's set
+    ///     of dependencies
+    ///   - Pushes sub operation onto #m_sub_ops
+    ///   - Sets #m_subop_hash_code to sub operation's hash code
+    /// @param opartion Sub operation
+   void stage_subop(Operation *operation);
 
     /// Pointer to %Master context
     ContextPtr m_context;
@@ -590,8 +636,12 @@ namespace Hypertable {
     /// Set of obstructions
     DependencySet m_obstructions;
 
-    /// Vector of sub operations to be added to OperationProcessor
-    std::vector<Operation *> m_sub_ops;
+    /// Set of permanent obstructions
+    DependencySet m_obstructions_permanent;
+
+    /// Vector of sub operations IDs
+    std::set<int64_t> m_sub_ops;
+
   };
 
   /// Smart pointer to Operation
