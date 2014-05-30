@@ -429,23 +429,26 @@ bool Operation::unblock() {
 }
 
 bool Operation::validate_subops() {
+  vector<MetaLog::Entity *> entities;
+
   for (int64_t id : m_sub_ops) {
     OperationPtr op = m_context->reference_manager->get(id);
     if (op->get_error()) {
       complete_error(op->get_error(), op->get_error_msg());
       return false;
     }
+    op->remove_approval_add(op->get_remove_approval_mask());
     string dependency_string =
       format("%s subop %s %lld", name().c_str(), op->name().c_str(),
              (Lld)op->hash_code());
     ScopedLock lock(m_mutex);
     m_dependencies.erase(dependency_string);
+    entities.push_back(op.get());
   }
-  // All sub ops are OK, so mark each one for removal
-  for (int64_t id : m_sub_ops) {
-    OperationPtr op = m_context->reference_manager->get(id);
-    op->remove_approval_add(op->get_remove_approval_mask());
-  }
+
+  m_sub_ops.clear();
+  record_state(entities);
+
   return true;
 }
 
