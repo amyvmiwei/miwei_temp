@@ -220,7 +220,7 @@ namespace {
         }
         operations.push_back(operation);
         HT_INFOF("Adding operation %s id=%lld state=%s",
-                 operation->label().c_str(), operation->id(),
+                 operation->label().c_str(), (Lld)operation->id(),
                  OperationState::get_text(operation->get_state()));
       }
     }

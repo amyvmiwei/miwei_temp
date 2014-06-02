@@ -290,14 +290,7 @@ namespace Hypertable {
 
   private:
 
-    /// Checks index tables need to be created.
-    /// This member function parses the table schema and checks if any of the
-    /// columns have a value index or qualifier index
-    /// @param needs_index Output parameter set to <i>true</i> if any of the
-    /// table's columns are value indexed
-    /// @param needs_qualifier_index Output parameter set to <i>true</i> if any
-    /// of the table's columns are qualifier indexed
-    void requires_indices(bool &needs_index, bool &needs_qualifier_index);
+    void update_parts(TableParts index_parts);
 
     /// Pathtname of table to create
     String m_name;

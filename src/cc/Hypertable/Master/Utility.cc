@@ -118,6 +118,21 @@ bool table_exists(ContextPtr &context, const String &name, String &id) {
   return false;
 }
 
+TableParts get_index_parts(const std::string &schema) {
+  uint8_t parts {};
+  SchemaPtr s = Schema::new_instance(schema);
+
+  for (auto cf_spec : s->get_column_families()) {
+    if (cf_spec && !cf_spec->get_deleted()) {
+      if (cf_spec->get_value_index())
+        parts |= TableParts::VALUE_INDEX;
+      if (cf_spec->get_qualifier_index())
+        parts |= TableParts::QUALIFIER_INDEX;
+    }
+  }
+  return TableParts(parts);
+}
+
 
 bool table_exists(ContextPtr &context, const String &id) {
 

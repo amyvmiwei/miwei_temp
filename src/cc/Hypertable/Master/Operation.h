@@ -81,7 +81,9 @@ namespace Hypertable {
       SUSPEND_TABLE_MAINTENANCE = 26,
       RESUME_TABLE_MAINTENANCE = 27,
       DROP_VALUE_INDEX = 28,
-      DROP_QUALIFIER_INDEX = 29
+      DROP_QUALIFIER_INDEX = 29,
+      RENAME_VALUE_INDEX = 30,
+      RENAME_QUALIFIER_INDEX = 31
     };
     /// Converts operation state constant to human readable string.
     /// @param state %Operation state constant

@@ -24,6 +24,8 @@
 
 #include "Operation.h"
 
+#include <Hypertable/Lib/TableParts.h>
+
 namespace Hypertable {
 
   class OperationRenameTable : public Operation {
@@ -48,6 +50,7 @@ namespace Hypertable {
     String m_old_name;
     String m_new_name;
     String m_id;
+    TableParts m_parts;
   };
 
 } // namespace Hypertable

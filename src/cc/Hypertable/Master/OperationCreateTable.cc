@@ -70,29 +70,10 @@ OperationCreateTable::OperationCreateTable(ContextPtr &context, EventPtr &event)
   m_dependencies.insert(Dependency::SYSTEM);
 }
 
-void OperationCreateTable::requires_indices(bool &needs_index, 
-        bool &needs_qualifier_index) {
-  SchemaPtr s = Schema::new_instance(m_schema);
-
-  for (auto cf_spec : s->get_column_families()) {
-    if (cf_spec && !cf_spec->get_deleted()) {
-      if (cf_spec->get_value_index())
-        needs_index = true;
-      if (cf_spec->get_qualifier_index())
-        needs_qualifier_index = true;
-    }
-    if (needs_index && needs_qualifier_index)
-      return;
-  }
-}
-
 void OperationCreateTable::execute() {
   RangeSpec range, index_range, qualifier_index_range;
   std::string range_name;
   int32_t state = get_state();
-  bool has_index = false;
-  bool has_qualifier_index = false;
-  bool initialized = false;
   bool is_namespace; 
 
   HT_INFOF("Entering CreateTable-%lld(%s, location=%s, parts=%s) state=%s",
@@ -138,15 +119,15 @@ void OperationCreateTable::execute() {
       break;
     }
 
+    update_parts(Utility::get_index_parts(m_schema));
+
     HT_MAYBE_FAIL("create-table-ASSIGN_ID");
     set_state(OperationState::CREATE_INDEX);
     // fall through
 
   case OperationState::CREATE_INDEX:
-    requires_indices(has_index, has_qualifier_index);
-    initialized = true;
 
-    if (has_index && m_parts.value_index()) {
+    if (m_parts.value_index()) {
       Operation *op = 0;
       try {
         String index_name;
@@ -181,13 +162,10 @@ void OperationCreateTable::execute() {
 
   case OperationState::CREATE_QUALIFIER_INDEX:
 
-    if (!initialized)
-      requires_indices(has_index, has_qualifier_index);
-
     if (!validate_subops())
       break;
 
-    if (has_qualifier_index && m_parts.qualifier_index()) {
+    if (m_parts.qualifier_index()) {
       try {
         String index_name;
         String index_schema;
@@ -383,4 +361,16 @@ const String OperationCreateTable::name() {
 
 const String OperationCreateTable::label() {
   return String("CreateTable ") + m_name;
+}
+
+
+void OperationCreateTable::update_parts(TableParts index_parts) {
+  uint8_t parts {};
+  if (m_parts.primary())
+    parts |= TableParts::PRIMARY;
+  if (m_parts.value_index() && index_parts.value_index())
+    parts |= TableParts::VALUE_INDEX;
+  if (m_parts.qualifier_index() && index_parts.qualifier_index())
+    parts |= TableParts::QUALIFIER_INDEX;
+  m_parts = TableParts(parts);
 }
