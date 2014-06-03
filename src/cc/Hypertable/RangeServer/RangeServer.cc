@@ -2288,8 +2288,13 @@ RangeServer::table_maintenance_enable(ResponseCallback *cb,
     return;
 
   TableInfoPtr table_info;
-  if (m_context->live_map->lookup(table->id, table_info))
+  if (m_context->live_map->lookup(table->id, table_info)) {
     table_info->set_maintenance_disabled(false);
+    Ranges ranges;
+    table_info->get_ranges(ranges);
+    for (RangeData &rd : ranges.array)
+      rd.range->enable_maintenance();
+  }
 
   m_maintenance_scheduler->include(table);
 
@@ -2319,7 +2324,7 @@ RangeServer::table_maintenance_disable(ResponseCallback *cb,
   Ranges ranges;
   table_info->get_ranges(ranges);
   for (RangeData &rd : ranges.array)
-    rd.range->wait_for_steady_state();
+    rd.range->disable_maintenance();
 
   // Clear any cached index tables
   IndexUpdaterFactory::clear_cache();
