@@ -28,8 +28,6 @@
 #ifndef HYPERTABLE_CONTEXT_H
 #define HYPERTABLE_CONTEXT_H
 
-#include <set>
-
 #include <boost/multi_index_container.hpp>
 #include <boost/multi_index/hashed_index.hpp>
 #include <boost/multi_index/mem_fun.hpp>
@@ -57,6 +55,9 @@
 #include "RangeServerConnectionManager.h"
 #include "RecoveryStepFuture.h"
 #include "SystemState.h"
+
+#include <set>
+#include <unordered_map>
 
 namespace Hypertable {
 
@@ -130,6 +131,8 @@ namespace Hypertable {
     MonitoringPtr monitoring;
     ResponseManager *response_manager;
     ReferenceManager<int64_t> *reference_manager;
+    Mutex outstanding_move_ops_mutex;
+    std::unordered_map<int64_t, int64_t> outstanding_move_ops;
     TablePtr metadata_table;
     TablePtr rs_metrics_table;
     time_t request_timeout;
@@ -146,6 +149,10 @@ namespace Hypertable {
     int32_t max_allowable_skew;
     bool test_mode;
     bool quorum_reached;
+
+    bool add_move_operation(Operation *operation);
+    void remove_move_operation(Operation *operation);
+    Operation *get_move_operation(int64_t hash_code);
 
     void add_available_server(const String &location);
     void remove_available_server(const String &location);

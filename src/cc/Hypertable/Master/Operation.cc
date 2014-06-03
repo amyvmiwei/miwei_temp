@@ -267,16 +267,6 @@ void Operation::decode_result(const uint8_t **bufp, size_t *remainp) {
     m_error_msg = Serialization::decode_vstr(bufp, remainp);
 }
 
-bool Operation::remove_if_ready() {
-  {
-    ScopedLock lock(m_mutex);
-    if (m_remove_approvals != m_remove_approval_mask)
-      return false;
-  }
-  m_context->mml_writer->record_removal(this);
-  return true;
-}
-
 bool Operation::removal_approved() {
   ScopedLock lock(m_mutex);
   return m_remove_approval_mask && m_remove_approvals == m_remove_approval_mask;
@@ -286,8 +276,9 @@ void Operation::record_state(std::vector<MetaLog::Entity *> &additional) {
   std::vector<MetaLog::Entity *> entities;
   entities.reserve(1 + additional.size() + m_sub_ops.size());
   // Add this
+  if (removal_approved())
+    mark_for_removal();
   entities.push_back(this);
-  // ??? should we check this for removed and mark for removal here ???
   // Add additional entities
   for (auto entity : additional) {
     Operation *op = dynamic_cast<Operation *>(entity);

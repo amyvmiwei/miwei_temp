@@ -64,12 +64,13 @@ void OperationRelinquishAcknowledge::execute() {
   int64_t hash_code = Utility::range_hash_code(m_table, m_range,
           String("OperationMoveRange-") + m_source);
 
-  OperationPtr move_op = m_context->reference_manager->get(hash_code);
+  OperationPtr move_op = m_context->get_move_operation(hash_code);
 
   if (move_op) {
-    move_op->remove_approval_add(0x01);
-    if (move_op->remove_if_ready())
-      m_context->reference_manager->remove(hash_code);
+    if (move_op->remove_approval_add(0x01)) {
+      move_op->record_state();
+      m_context->remove_move_operation(move_op.get());
+    }
   }
   else
     HT_WARNF("Skipping relinquish_acknowledge(%s %s[%s..%s] because correspoing MoveRange does not exist",

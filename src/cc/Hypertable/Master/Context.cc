@@ -249,6 +249,33 @@ void Context::commit_complete(EventPtr &event) {
     HT_WARN_OUT << "No Recovery commit step future found for operation=" << id << HT_END;
 }
 
+bool Context::add_move_operation(Operation *operation) {
+  ScopedLock lock(outstanding_move_ops_mutex);
+  auto iter = outstanding_move_ops.find(operation->hash_code());
+  if (iter != outstanding_move_ops.end())
+    return false;
+  outstanding_move_ops[operation->hash_code()] = operation->id();
+  return true;
+}
+
+void Context::remove_move_operation(Operation *operation) {
+  ScopedLock lock(outstanding_move_ops_mutex);
+  auto iter = outstanding_move_ops.find(operation->hash_code());
+  HT_ASSERT(iter != outstanding_move_ops.end());
+  outstanding_move_ops.erase(iter);
+}
+
+Operation *Context::get_move_operation(int64_t hash_code) {
+  ScopedLock lock(outstanding_move_ops_mutex);
+  auto iter = outstanding_move_ops.find(hash_code);
+  if (iter != outstanding_move_ops.end()) {
+    OperationPtr operation = reference_manager->get(iter->second);
+    HT_ASSERT(operation);
+    return operation.get();
+  }
+  return nullptr;
+}
+
 void Context::add_available_server(const String &location) {
   ScopedLock lock(mutex);
   available_servers.insert(location);

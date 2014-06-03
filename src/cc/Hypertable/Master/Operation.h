@@ -408,23 +408,14 @@ namespace Hypertable {
      * <code>approval</code>.  Once the bits in #m_remove_approvals are set such
      * that #m_remove_approvals is equal to those returned by
      * #m_remove_approval_mask, the operation can be safely removed.
-     * @see get_remove_approval_mask, set_remove_approval_mask, remove_if_ready
+     * @see get_remove_approval_mask, set_remove_approval_mask
      * @param approval Integer flag indicating bits to be set in #m_remove_approvals
      */
-    void remove_approval_add(uint16_t approval) {
+    bool remove_approval_add(uint16_t approval) {
       ScopedLock lock(m_mutex);
       m_remove_approvals |= approval;
+      return m_remove_approvals == m_remove_approval_mask;
     }
-
-    /** Remove operation from MML if received all approvals.
-     * This method is used for operations that are to be removed explicitly. It
-     * removes the operation from the MML if #m_remove_approvals equals what is
-     * returned by remove_approval_mask(), indicating that the operation can be
-     * safely removed.
-     * @see remove_explicitly, remove_approval_mask, remove_approval_add
-     * @return <i>true</i> if operation was removed, <i>false</i> otherwise.
-     */
-    bool remove_if_ready();
 
     /// Checks if all remove approvals have been received.
     /// This member function will return <i>true</i> if the remove approval mask
