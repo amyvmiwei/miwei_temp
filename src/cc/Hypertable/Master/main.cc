@@ -313,8 +313,9 @@ int main(int argc, char **argv) {
 
         if (dynamic_cast<OperationMoveRange *>(operation.get()))
           context->add_move_operation(operation.get());
+
         // master was interrupted in the middle of rangeserver failover
-        else if (dynamic_cast<OperationRecover *>(operation.get())) {
+        if (dynamic_cast<OperationRecover *>(operation.get())) {
           HT_INFO("Recovery was interrupted; continuing");
           OperationRecover *op =
             dynamic_cast<OperationRecover *>(operation.get());

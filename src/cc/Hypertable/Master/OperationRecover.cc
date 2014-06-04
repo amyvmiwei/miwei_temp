@@ -173,6 +173,7 @@ void OperationRecover::execute() {
     for (auto entity : removable_move_ops) {
       Operation *operation = dynamic_cast<Operation *>(entity);
       m_context->remove_move_operation(operation);
+      m_context->reference_manager->remove(operation->id());
     }
     HT_MAYBE_FAIL("recover-server-2");
     break;
