@@ -244,7 +244,7 @@ void Operation::decode(const uint8_t **bufp, size_t *remainp,
       m_sub_ops.clear();
       length = Serialization::decode_vi32(bufp, remainp);
       for (size_t i=0; i<length; i++)
-        m_sub_ops.insert( Serialization::decode_vi64(bufp, remainp) );
+        m_sub_ops.push_back( Serialization::decode_vi64(bufp, remainp) );
     }
   }
 }
@@ -287,13 +287,13 @@ void Operation::record_state(std::vector<MetaLog::Entity *> &additional) {
     entities.push_back(entity);
   }
   // Add sub operations
-  std::set<int64_t> new_sub_ops;
+  std::vector<int64_t> new_sub_ops;
   for (int64_t id : m_sub_ops) {
     OperationPtr op = m_context->reference_manager->get(id);
     if (op->removal_approved())
       op->mark_for_removal();
     else
-      new_sub_ops.insert(op->id());
+      new_sub_ops.push_back(op->id());
     entities.push_back(op.get());
   }
   m_context->mml_writer->record_state(entities);
@@ -453,7 +453,7 @@ void Operation::stage_subop(Operation *operation) {
   {
     ScopedLock lock(m_mutex);
     add_dependency(dependency_string);
-    HT_ASSERT(m_sub_ops.insert(operation->id()).second);
+    m_sub_ops.push_back(operation->id());
   }
 }
 

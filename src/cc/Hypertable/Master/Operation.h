@@ -633,7 +633,7 @@ namespace Hypertable {
     DependencySet m_obstructions_permanent;
 
     /// Vector of sub operations IDs
-    std::set<int64_t> m_sub_ops;
+    std::vector<int64_t> m_sub_ops;
 
   };
 
