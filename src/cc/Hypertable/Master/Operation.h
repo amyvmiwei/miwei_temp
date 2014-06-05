@@ -328,21 +328,38 @@ namespace Hypertable {
 
     /** Encode operation.
      * Encodes operation in the following format:
-     * <pre>
-     *   i32  operation state
-     *   i64  expiration time seconds
-     *   i32  expiration time nanoseconds
-     *   i32  remove approvals flag
-     *   if (m_state == %COMPLETE)
-     *     i64  hash code
-     *     result
-     *   else
-     *     state
-     *     exclusivities
-     *     dependencies
-     *     obstructions
-     *   end
-     * </pre>
+     * <table>
+     *   <tr><th> Encoding </th><th> Description </th></tr>
+     *   <tr><td> i16 </td><td> Encoding version </td></tr>
+     *   <tr><td> i32 </td><td> State code </td></tr>
+     *   <tr><td> i64 </td><td> Expiration time seconds </td></tr>
+     *   <tr><td> i32 </td><td> Expiration time nanoseconds </td></tr>
+     *   <tr><td> i16 </td><td> Remove approvals </td></tr>
+     *   <tr><td> i16 </td><td> Remove approval mask </td></tr>
+     * </table>
+     * If state is COMPLETE, the rest of the operation is encoded as
+     * follows:
+     * <table>
+     *   <tr><th> Encoding </th><th> Description </th></tr>
+     *   <tr><td> i64 </td><td> Hash code returned by hash_code() </td></tr>
+     *   <tr><td> variable </td><td> %Result encoded with encode_result() </td></tr>
+     * </table>
+     * Otherwise, if state is not COMPLETE, the rest of the operation is
+     * encoded as follows:
+     * <table>
+     *   <tr><th> Encoding </th><th> Description </th></tr>
+     *   <tr><td> variable </td><td> State encoded with encode_state() </td></tr>
+     *   <tr><td> i32 </td><td> Exclusivity count </td></tr>
+     *   <tr><td> vstr list </td><td> Exclusivity strings </td></tr>
+     *   <tr><td> i32 </td><td> %Dependency count </td></tr>
+     *   <tr><td> vstr list </td><td> %Dependency strings </td></tr>
+     *   <tr><td> i32 </td><td> Obstruction count </td></tr>
+     *   <tr><td> vstr list </td><td> Obstruction strings </td></tr>
+     *   <tr><td> i32 </td><td> Permanent obstruction count </td></tr>
+     *   <tr><td> vstr list </td><td> Permanent obstruction strings </td></tr>
+     *   <tr><td> i32 </td><td> Sub operation count </td></tr>
+     *   <tr><td> i64 list </td><td> Sub operation IDs </td></tr>
+     * </table>
      */
     virtual void encode(uint8_t **bufp) const;
 
@@ -425,28 +442,30 @@ namespace Hypertable {
     /// received, <i>false</i> otherwise.
     bool removal_approved();
 
-    /// Records a vector of entities to the MML.
-    /// This member function first iterates through <code>entities</code> and
-    /// for each operation, calls removal_approved() to see if it can be removed
-    /// and if so, marks it for removal.  Then the vector of entities is
-    /// persisted to the MML.  Finally, it again iterates through
-    /// <code>entities</code> and each operation that was marked for removal is
-    /// removed from the reference manager.
+    /// Records operation state and additional entities to the MML.
+    /// This member function builds up a vector of entities to record in the MML
+    /// by adding the following:
+    ///   - This operation.
+    ///   - The <code>additional</code> entities.
+    ///   - This operation's sub operations.
+    ///
+    /// For each entity to be recorded in the MML, if the entity is an operation
+    /// and removal_approved() returns <i>true</i>, then the operation is marked
+    /// for removal with a call to mark_for_removal().  The vector of entities
+    /// is recorded to the MML.  Then, the operations that were marked for
+    /// removal are removed from the reference manager.  Finally, the #m_sub_ops
+    /// array is modified to hold the sub operation IDs that were not removed by
+    /// this function.
     /// @param additional Additional entities to be recorded in MML
+    void record_state(std::vector<MetaLog::Entity *> &additional);
+
+    /// Records operation state to the MML.
+    /// This member function creates an empty entity vector and passes it into a
+    /// chained call to record_state().
     void record_state() {
       std::vector<MetaLog::Entity *> additional;
       record_state(additional);
     }
-
-    /// Records a vector of entities to the MML.
-    /// This member function first iterates through <code>entities</code> and
-    /// for each operation, calls removal_approved() to see if it can be removed
-    /// and if so, marks it for removal.  Then the vector of entities is
-    /// persisted to the MML.  Finally, it again iterates through
-    /// <code>entities</code> and each operation that was marked for removal is
-    /// removed from the reference manager.
-    /// @param additional Additional entities to be recorded in MML
-    void record_state(std::vector<MetaLog::Entity *> &additional);
 
     /// Completes operation with error.
     /// <a name="complete_error1"></a>
@@ -455,6 +474,7 @@ namespace Hypertable {
     ///   - Sets #m_error to <code>error</code>
     ///   - Sets #m_error_msg to <code>msg</code>
     ///   - Clears dependency, obstruction, and exclusivity sets
+    ///   - Each sub operation has all of its remove approvals set.
     ///   - Persists state along with <code>additional</code> with a call to
     /// record_state()
     /// @param error %Error code of operation result
@@ -548,34 +568,31 @@ namespace Hypertable {
 
   protected:
 
-    /// Fetchs and handles the result of sub operation.
-    /// If #m_subop_hash_code is non-zero, a sub operation is outstanding and
-    /// this member function will fetch it and process it as follows:
-    ///   - Fetches the sub operation from the ReferenceManager
-    ///   - Adds remove approvals 0x01 to the sub operation
-    ///   - Sets #m_subop_hash_code to zero
-    ///   - If sub operation error code is non-zero, completes overall operaton
-    ///     with a call to complete_error(), and returns <i>false</i>.
-    ///   - Otherwise, sub operation is added to <code>entities</code>
-    /// @param entities Reference to vector of entites to hold sucessfully
-    /// completed sub operation
-    /// @return <i>true</i> if no sub operation is outstanding or the sub
-    /// operation completed without error, <i>false</i> otherwise.
+    /// Handles the results of sub operations.
+    /// For each sub operation, fetches the operation from the reference manager.
+    /// Checks to see if sub operation resulted in an error, if so, calls
+    /// complete_error() with the sub operation's error information and
+    /// returns <i>false</i>.  Otherwise, the sub operation's remove approvals
+    /// are set and the sub operation dependency string (see stage_subop()) is removed from
+    /// #m_dependencies.  All of the sub operations are added to a local
+    /// <i>additional</i> vector, then #m_sub_ops is cleared, and the
+    /// <i>additional</i> vector is passed into a call to record_state().
+    /// @return <i>true</i> if no sub operation is outstanding or if all of the
+    /// sub operations completed without error, <i>false</i> otherwise.
     bool validate_subops();
 
     /// Stages a sub operation for execution.
-    /// This member function does the following:
-    ///   - Sets local variable <code>dpendency_string</code> to
-    ///     "ALTER TABLE subop &lt;subop-name&gt; &lt;subop-hash-code&gt;"
-    ///   - Adds <code>dependency_string</code> to sub operation's set of
-    ///     obstructions
-    ///   - Sets sub operation remove approval mask to 0x01
-    ///   - Adds sub operation to ReferenceManager
-    ///   - Adds <code>dependency_string</code> to parent (this) operation's set
-    ///     of dependencies
-    ///   - Pushes sub operation onto #m_sub_ops
-    ///   - Sets #m_subop_hash_code to sub operation's hash code
-    /// @param opartion Sub operation
+    /// This member function creates the following dependency string:
+    /// <pre>
+    ///   this->name() + " subop " + operation->name() + operation->hash_code()
+    /// </pre>
+    /// and adds it as a dependency to the current operation (this) and also
+    /// adds it as a permanent obstruction to <code>operation</code>, making the
+    /// current operation dependent on the sub operation.  A remove approval
+    /// mask of <code>0x01</code> is set for <code>operation</code>, and then
+    /// <code>operation</code> is added to the reference manager and it's ID is
+    /// pushed onto the end of #m_sub_ops.
+    /// @param operation Sub operation to stage
    void stage_subop(Operation *operation);
 
     /// Pointer to %Master context

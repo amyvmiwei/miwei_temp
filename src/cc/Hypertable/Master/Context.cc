@@ -250,25 +250,25 @@ void Context::commit_complete(EventPtr &event) {
 }
 
 bool Context::add_move_operation(Operation *operation) {
-  ScopedLock lock(outstanding_move_ops_mutex);
-  auto iter = outstanding_move_ops.find(operation->hash_code());
-  if (iter != outstanding_move_ops.end())
+  ScopedLock lock(m_outstanding_move_ops_mutex);
+  auto iter = m_outstanding_move_ops.find(operation->hash_code());
+  if (iter != m_outstanding_move_ops.end())
     return false;
-  outstanding_move_ops[operation->hash_code()] = operation->id();
+  m_outstanding_move_ops[operation->hash_code()] = operation->id();
   return true;
 }
 
 void Context::remove_move_operation(Operation *operation) {
-  ScopedLock lock(outstanding_move_ops_mutex);
-  auto iter = outstanding_move_ops.find(operation->hash_code());
-  HT_ASSERT(iter != outstanding_move_ops.end());
-  outstanding_move_ops.erase(iter);
+  ScopedLock lock(m_outstanding_move_ops_mutex);
+  auto iter = m_outstanding_move_ops.find(operation->hash_code());
+  HT_ASSERT(iter != m_outstanding_move_ops.end());
+  m_outstanding_move_ops.erase(iter);
 }
 
 Operation *Context::get_move_operation(int64_t hash_code) {
-  ScopedLock lock(outstanding_move_ops_mutex);
-  auto iter = outstanding_move_ops.find(hash_code);
-  if (iter != outstanding_move_ops.end()) {
+  ScopedLock lock(m_outstanding_move_ops_mutex);
+  auto iter = m_outstanding_move_ops.find(hash_code);
+  if (iter != m_outstanding_move_ops.end()) {
     OperationPtr operation = reference_manager->get(iter->second);
     HT_ASSERT(operation);
     return operation.get();

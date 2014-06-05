@@ -61,9 +61,8 @@
 
 namespace Hypertable {
 
-  /** @addtogroup Master
-   *  @{
-   */
+  /// @addtogroup Master
+  /// @{
 
   class LoadBalancer;
   class Operation;
@@ -73,8 +72,7 @@ namespace Hypertable {
   class ReferenceManager;
   class BalancePlanAuthority;
 
-  /** Represents execution context for the Master.
-   */
+  /// Execution context for the Master.
   class Context : public ReferenceCount {
 
     class RecoveryState {
@@ -131,8 +129,6 @@ namespace Hypertable {
     MonitoringPtr monitoring;
     ResponseManager *response_manager;
     ReferenceManager *reference_manager;
-    Mutex outstanding_move_ops_mutex;
-    std::unordered_map<int64_t, int64_t> outstanding_move_ops;
     TablePtr metadata_table;
     TablePtr rs_metrics_table;
     time_t request_timeout;
@@ -150,8 +146,36 @@ namespace Hypertable {
     bool test_mode;
     bool quorum_reached;
 
+    /// Adds operation to active <i>move range</i> operation map.
+    /// This method adds a mapping for <code>operation</code> to the
+    /// #m_outstanding_move_ops map.  This map holds references to outstanding
+    /// OperationMoveRange operations, mapping the operation's hash_code to it's
+    /// ID.  The actual reference to the operation is held in #reference_manager
+    /// and the #m_outstanding_move_ops map is used to map the operation's hash
+    /// code to it's ID which is used as the key to #reference_manager.  This
+    /// map is used to prevent multiple OperationMoveRange operations to get
+    /// created for the same range.
+    /// @param operation Move range operation to add to map
+    /// @return <i>true</i> if operation was successfully added to map,
+    /// <i>false</i> if operation was not added to the map because an entry
+    /// already exists in the map for the same operation hash code
     bool add_move_operation(Operation *operation);
+
+    /// Removes operation from active <i>move range</i> operation map.
+    /// Removes entry from #m_outstanding_move_ops map correspoding to
+    /// <code>operation</code>.
+    /// @param operation Move range operation to remove from map
+    /// @see add_move_operation().
     void remove_move_operation(Operation *operation);
+
+    /// Gets operation from active <i>move range</i> operation map.
+    /// Gets operation corresponding with <code>hash_code</code> by consulting
+    /// #m_outstanding_move_ops to determine the operation ID of the outstanding
+    /// move range operation and fetching it from #reference_manager.
+    /// @param hash_code Hash code of move range operation to get.
+    /// @return Pointer to outstanding move range operation corresponding with
+    /// <code>hash_code</code>, or nullptr if no mapping exists.
+    /// @see add_move_operation().
     Operation *get_move_operation(int64_t hash_code);
 
     void add_available_server(const String &location);
@@ -181,12 +205,16 @@ namespace Hypertable {
 
     RecoveryState m_recovery_state;
     BalancePlanAuthority *m_balance_plan_authority;
+    /// %Mutex for serializing access to #m_outstanding_move_ops
+    Mutex m_outstanding_move_ops_mutex;
+    /// Map of outstanding <i>move range</i> operations
+    std::unordered_map<int64_t, int64_t> m_outstanding_move_ops;
   };
 
   /// Smart pointer to Context
   typedef intrusive_ptr<Context> ContextPtr;
 
-  /** @}*/
+  /// @}
 
 } // namespace Hypertable
 

@@ -507,6 +507,8 @@ namespace {
     { Hypertable::OperationState::RESUME_TABLE_MAINTENANCE, "RESUME_TABLE_MAINTENANCE" },
     { Hypertable::OperationState::DROP_VALUE_INDEX, "DROP_VALUE_INDEX" },
     { Hypertable::OperationState::DROP_QUALIFIER_INDEX, "DROP_QUALIFIER_INDEX" },
+    { Hypertable::OperationState::RENAME_VALUE_INDEX, "RENAME VALUE INDEX" },
+    { Hypertable::OperationState::RENAME_QUALIFIER_INDEX, "RENAME QUALIFIER INDEX" },
     { 0, 0 }
   };
 

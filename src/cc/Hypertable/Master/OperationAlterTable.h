@@ -96,15 +96,14 @@ namespace Hypertable {
      *     OperationCreateTable sub operation to create index tables and stages
      *     it with a call to stage_subop()</li>
      * <li>Transition state to SCAN_METADATA</li>
-     * <li>Persists this operation and sub operation to MML and then
-     *     returns</li>
+     * <li>Persists this operation to MML and then returns</li>
      * </ul></td>
      * </tr>
      * <tr>
      * <td> SCAN_METADATA </td>
      * <td><ul>
      *   <li> Handles result of create table sub operation with a call to
-     *        fetch_and_validate_subop(), returning on failure</li>
+     *        validate_subops(), returning on failure</li>
      *   <li> Scans the METADATA table and populates #m_servers to hold the set
      *        of servers that hold the table to be altered which are not in the
      *        #m_completed set. </li>
@@ -146,34 +145,31 @@ namespace Hypertable {
      *     maintenance off</li>
      * <li>Stages sub operation with a call to stage_subop()</li>
      * <li>Transition state to DROP_INDICES</li>
-     * <li>Persists this operation and sub operation to MML and then
-     *     returns</li>
+     * <li>Persists this operation to MML and then returns</li>
      * </ul></td>
      * </tr>
      * <tr>
      * <td>DROP_INDICES</td>
      * <td><ul>
      * <li>Handles result of toggle table maintenance sub operation with a
-     *     call to fetch_and_validate_subop(), returning on failure</li>
+     *     call to validate_subops(), returning on failure</li>
      * <li>Creates an OperationDropTable sub operation to drop index
      *     tables</li>
      * <li>Stages sub operation with a call to stage_subop()</li>
      * <li>Transition state to RESUME_TABLE_MAINTENANCE</li>
-     * <li>Persists this operation and sub operation to MML and then
-     *     returns</li>
+     * <li>Persists this operation to MML and then returns</li>
      * </ul></td>
      * </tr>
      * <tr>
      * <td>RESUME_TABLE_MAINTENANCE</td>
      * <td><ul>
      * <li>Handles result of drop table sub operation with a call to
-     *     fetch_and_validate_subop(), returning on failure</li>
+     *     validate_subops(), returning on failure</li>
      * <li>Creates an OperationToggleMaintenance sub operation to turn
      *     maintenance back on</li>
      * <li>Stages sub operation with a call to stage_subop()</li>
      * <li>Transition state to FINALIZE</li>
-     * <li>Persists this operation and sub operation to MML and then
-     *     returns</li>
+     * <li>Persists this operation to MML and then returns</li>
      * </ul></td>
      * </tr>
      * <tr>
@@ -229,8 +225,6 @@ namespace Hypertable {
      *   <tr><td> i32  </td><td> [VERSION 2] Size of #m_servers </td></tr>
      *   <tr><td> vstr </td><td> [VERSION 2] <b>Foreach server</b>
      *                           in #m_servers, server name </td></tr>
-     *   <tr><td> i64  </td><td> [VERSION 3] Hash code for currently outstanding
-     *                           sub operation </td></tr>
      *   <tr><td> TableParts </td><td> [VERSION 3] Index tables to be created
      *                                 or dropped </td></tr>
      * </table>
