@@ -169,12 +169,6 @@ void OperationRecover::execute() {
 
     HT_MAYBE_FAIL("recover-server-1");
     record_state(removable_move_ops);
-    // Remove move operations
-    for (auto entity : removable_move_ops) {
-      Operation *operation = dynamic_cast<Operation *>(entity);
-      m_context->remove_move_operation(operation);
-      m_context->reference_manager->remove(operation->id());
-    }
     HT_MAYBE_FAIL("recover-server-2");
     break;
 
@@ -455,8 +449,10 @@ void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity,
 
   OperationPtr operation = m_context->get_move_operation(hash_code);
   if (operation) {
-    if (operation->remove_approval_add(0x01))
+    if (operation->remove_approval_add(0x01)) {
+      m_context->remove_move_operation(operation.get());
       removable_move_ops.push_back(operation.get());
+    }
     int64_t soft_limit = range_entity->get_soft_limit();
     range_entity->clear_state();
     range_entity->set_soft_limit(soft_limit);
