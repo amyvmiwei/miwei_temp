@@ -287,7 +287,7 @@ int main(int argc, char **argv) {
       HT_INFOF("%s", sout.str().c_str());
     }
 
-    context->reference_manager = new ReferenceManager<int64_t>();
+    context->reference_manager = new ReferenceManager();
 
     /** Response Manager */
     ResponseManagerContext *rmctx = 
@@ -309,7 +309,7 @@ int main(int argc, char **argv) {
       if (operation) {
 
         if (operation->get_remove_approval_mask() && !operation->removal_approved())
-          context->reference_manager->add(operation->id(), operation);
+          context->reference_manager->add(operation);
 
         if (dynamic_cast<OperationMoveRange *>(operation.get()))
           context->add_move_operation(operation.get());
@@ -350,7 +350,6 @@ int main(int argc, char **argv) {
       OperationPtr init_op = new OperationInitialize(context);
       if (context->namemap->exists_mapping("/sys/METADATA", 0))
         init_op->set_state(OperationState::CREATE_RS_METRICS);
-      context->reference_manager->add(init_op->id(), init_op);
       operations.push_back(init_op);
     }
     else {

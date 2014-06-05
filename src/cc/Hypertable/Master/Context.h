@@ -70,7 +70,7 @@ namespace Hypertable {
   class OperationTimedBarrier;
   class OperationProcessor;
   class ResponseManager;
-  template<typename K> class ReferenceManager;
+  class ReferenceManager;
   class BalancePlanAuthority;
 
   /** Represents execution context for the Master.
@@ -130,7 +130,7 @@ namespace Hypertable {
     LoadBalancer *balancer;
     MonitoringPtr monitoring;
     ResponseManager *response_manager;
-    ReferenceManager<int64_t> *reference_manager;
+    ReferenceManager *reference_manager;
     Mutex outstanding_move_ops_mutex;
     std::unordered_map<int64_t, int64_t> outstanding_move_ops;
     TablePtr metadata_table;

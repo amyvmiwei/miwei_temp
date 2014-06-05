@@ -300,7 +300,7 @@ void Operation::record_state(std::vector<MetaLog::Entity *> &additional) {
   for (auto entity : entities) {
     Operation *op = dynamic_cast<Operation *>(entity);
     if (op && op->marked_for_removal())
-      m_context->reference_manager->remove(op->id());
+      m_context->reference_manager->remove(op);
   }
   m_sub_ops.swap(new_sub_ops);
 }
@@ -449,7 +449,7 @@ void Operation::stage_subop(Operation *operation) {
            (Lld)operation->hash_code());
   operation->add_obstruction_permanent(dependency_string);
   operation->set_remove_approval_mask(0x01);
-  m_context->reference_manager->add(operation->id(), operation);
+  m_context->reference_manager->add(operation);
   {
     ScopedLock lock(m_mutex);
     add_dependency(dependency_string);

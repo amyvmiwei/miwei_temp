@@ -138,7 +138,7 @@ void ConnectionHandler::handle(EventPtr &event) {
           return;
         }
         // Add to reference manager
-        m_context->reference_manager->add(operation->id(), operation);
+        m_context->reference_manager->add(operation);
         HT_MAYBE_FAIL("connection-handler-move-range");
         m_context->op->add_operation(operation);
         return;

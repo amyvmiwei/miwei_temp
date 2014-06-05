@@ -185,10 +185,9 @@ namespace {
     for (auto &entity : entities) {
       if ((operation = dynamic_cast<Operation *>(entity.get()))) {
 	if (operation->get_remove_approval_mask()) {
+          context->reference_manager->add(operation);
           if (dynamic_cast<OperationMoveRange *>(entity.get()))
-            context->reference_manager->add(operation->hash_code(), operation);
-          else
-            context->reference_manager->add(operation->id(), operation);
+            context->add_move_operation(operation.get());
         }
         context->op->add_operation(operation);
       }
@@ -213,10 +212,9 @@ namespace {
     for (auto &entity : entities) {
       if ((operation = dynamic_cast<Operation *>(entity.get()))) {
         if (operation->get_remove_approval_mask()) {
+          context->reference_manager->add(operation);
           if (dynamic_cast<OperationMoveRange *>(entity.get()))
-            context->reference_manager->add(operation->hash_code(), operation);
-          else
-            context->reference_manager->add(operation->id(), operation);            
+            context->add_move_operation(operation.get());
         }
         operations.push_back(operation);
         HT_INFOF("Adding operation %s id=%lld state=%s",
@@ -410,7 +408,7 @@ int main(int argc, char **argv) {
     context->response_manager = new ResponseManager(rmctx);
     Thread response_manager_thread(*context->response_manager);
 
-    context->reference_manager = new ReferenceManager<int64_t>();
+    context->reference_manager = new ReferenceManager();
 
     String testname = get_str("test");
 

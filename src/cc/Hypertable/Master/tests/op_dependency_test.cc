@@ -144,7 +144,7 @@ int main(int argc, char **argv) {
     context->response_manager = new ResponseManager(rmctx);
     Thread response_manager_thread(*context->response_manager);
 
-    context->reference_manager = new ReferenceManager<int64_t>();
+    context->reference_manager = new ReferenceManager();
 
     context->op = new OperationProcessor(context, 4);
 
