@@ -93,35 +93,46 @@ void Operation::display(std::ostream &os) {
     display_state(os);
 
     os << " exclusivities=";
-    for (DependencySet::iterator iter = m_exclusivities.begin(); iter != m_exclusivities.end(); ++iter) {
+    for (auto & str : m_exclusivities) {
       if (first) {
-        os << *iter;
+        os << "\"" << str << "\"";
         first = false;
       }
       else
-        os << "," << *iter;
+        os << ",\"" << str << "\"";
     }
 
     first = true;
     os << " dependencies=";
-    for (DependencySet::iterator iter = m_dependencies.begin(); iter != m_dependencies.end(); ++iter) {
+    for (auto & str : m_dependencies) {
       if (first) {
-        os << *iter;
+        os << "\"" << str << "\"";
         first = false;
       }
       else
-        os << "," << *iter;
+        os << ",\"" << str << "\"";
     }
 
     first = true;
     os << " obstructions=";
-    for (DependencySet::iterator iter = m_obstructions.begin(); iter != m_obstructions.end(); ++iter) {
+    for (auto & str : m_obstructions) {
       if (first) {
-        os << *iter;
+        os << "\"" << str << "\"";
         first = false;
       }
       else
-        os << "," << *iter;
+        os << ",\"" << str << "\"";
+    }
+
+    first = true;
+    os << " permanent_obstructions=";
+    for (auto & str : m_obstructions_permanent) {
+      if (first) {
+        os << "\"" << str << "\"";
+        first = false;
+      }
+      else
+        os << ",\"" << str << "\"";
     }
     os << " ";
   }
@@ -138,12 +149,12 @@ size_t Operation::encoded_length() const {
     length += Serialization::encoded_length_vi32(m_exclusivities.size()) +
       Serialization::encoded_length_vi32(m_dependencies.size()) +
       Serialization::encoded_length_vi32(m_obstructions.size());
-    for (DependencySet::iterator iter = m_exclusivities.begin(); iter != m_exclusivities.end(); ++iter)
-      length += Serialization::encoded_length_vstr(*iter);
-    for (DependencySet::iterator iter = m_dependencies.begin(); iter != m_dependencies.end(); ++iter)
-      length += Serialization::encoded_length_vstr(*iter);
-    for (DependencySet::iterator iter = m_obstructions.begin(); iter != m_obstructions.end(); ++iter)
-      length += Serialization::encoded_length_vstr(*iter);
+    for (auto & str : m_exclusivities)
+      length += Serialization::encoded_length_vstr(str);
+    for (auto & str : m_dependencies)
+      length += Serialization::encoded_length_vstr(str);
+    for (auto & str : m_obstructions)
+      length += Serialization::encoded_length_vstr(str);
     // permanent obstructions
     length += Serialization::encoded_length_vi32(m_obstructions_permanent.size());
     for (auto & str : m_obstructions_permanent)
@@ -171,14 +182,14 @@ void Operation::encode(uint8_t **bufp) const {
   else {
     encode_state(bufp);
     Serialization::encode_vi32(bufp, m_exclusivities.size());
-    for (DependencySet::iterator iter = m_exclusivities.begin(); iter != m_exclusivities.end(); ++iter)
-      Serialization::encode_vstr(bufp, *iter);
+    for (auto & str : m_exclusivities)
+      Serialization::encode_vstr(bufp, str);
     Serialization::encode_vi32(bufp, m_dependencies.size());
-    for (DependencySet::iterator iter = m_dependencies.begin(); iter != m_dependencies.end(); ++iter)
-      Serialization::encode_vstr(bufp, *iter);
+    for (auto & str : m_dependencies)
+      Serialization::encode_vstr(bufp, str);
     Serialization::encode_vi32(bufp, m_obstructions.size());
-    for (DependencySet::iterator iter = m_obstructions.begin(); iter != m_obstructions.end(); ++iter)
-      Serialization::encode_vstr(bufp, *iter);
+    for (auto & str : m_obstructions)
+      Serialization::encode_vstr(bufp, str);
     Serialization::encode_vi32(bufp, m_obstructions_permanent.size());
     for (auto & str : m_obstructions_permanent)
       Serialization::encode_vstr(bufp, str);

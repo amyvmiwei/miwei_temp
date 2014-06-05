@@ -66,25 +66,25 @@ bool TableIdentifier::operator<(const TableIdentifier &other) const {
   return false;
 }
 
-#define TABLE_IDENTIFIER_VERSION 1
+#define TABLE_IDENTIFIER_VERSION 2
 
 size_t TableIdentifier::encoded_length() const {
-  return 9 + encoded_length_vstr(id);
+  return 10 + encoded_length_vstr(id);
 }
 
 void TableIdentifier::encode(uint8_t **bufp) const {
-  encode_i8(bufp, TABLE_IDENTIFIER_VERSION);
+  encode_i16(bufp, TABLE_IDENTIFIER_VERSION);
   encode_vstr(bufp, id);
   encode_i64(bufp, generation);
 }
 
 void TableIdentifier::decode(const uint8_t **bufp, size_t *remainp) {
-  int8_t version;
+  int16_t version;
   HT_TRY("decoding table identitier version",
-         version = decode_i8(bufp, remainp));
-  if (version > TABLE_IDENTIFIER_VERSION) {
-    *bufp -= 1;
-    *remainp += 1;
+         version = decode_i16(bufp, remainp));
+  if (version != TABLE_IDENTIFIER_VERSION) {
+    *bufp -= 2;
+    *remainp += 2;
     HT_TRY("decoding table identitier",
            id = decode_vstr(bufp, remainp);
            generation = decode_i32(bufp, remainp));
