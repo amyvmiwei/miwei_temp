@@ -516,7 +516,7 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
       if (consumedp && !m_zipped)
         *consumedp += line.length() + 1;
 
-      boost::trim(line);
+      boost::trim_right_if(line, boost::is_any_of("\n"));
       if (line.length() == 0)
         continue;
 
@@ -548,6 +548,11 @@ LoadDataSource::next(KeySpec *keyp, uint8_t **valuep, uint32_t *value_lenp,
         m_values.push_back(0);
       else
         m_values.push_back(base);
+
+      if (!m_hyperformat && m_values.size() != m_column_info.size()) {
+	cerr << "warn: field count on line " << m_cur_line << " does not match header, skipping..." << endl;
+	continue;
+      }
 
       m_limit = std::min(m_values.size(), m_column_info.size());
 
