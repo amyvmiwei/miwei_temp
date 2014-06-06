@@ -3,6 +3,11 @@
 HT_HOME=${INSTALL_DIR:-"$HOME/hypertable/current"}
 SCRIPT_DIR=`dirname $0`
 
+function finish {
+    $HT_HOME/bin/stop-servers.sh
+}
+trap finish EXIT
+
 . $HT_HOME/bin/ht-env.sh
 
 $HT_HOME/bin/start-test-servers.sh --clear --no-thriftbroker --no-rangeserver --no-master
