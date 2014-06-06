@@ -119,7 +119,18 @@ void OperationCreateTable::execute() {
       break;
     }
 
-    update_parts(Utility::get_index_parts(m_schema));
+    // Update m_parts to reflect indices actually found in the schema
+    {
+      uint8_t parts {};
+      TableParts schema_parts = Utility::get_index_parts(m_schema);
+      if (m_parts.primary())
+        parts |= TableParts::PRIMARY;
+      if (m_parts.value_index() && schema_parts.value_index())
+        parts |= TableParts::VALUE_INDEX;
+      if (m_parts.qualifier_index() && schema_parts.qualifier_index())
+        parts |= TableParts::QUALIFIER_INDEX;
+      m_parts = TableParts(parts);
+    }
 
     HT_MAYBE_FAIL("create-table-ASSIGN_ID");
     set_state(OperationState::CREATE_INDEX);
@@ -361,16 +372,4 @@ const String OperationCreateTable::name() {
 
 const String OperationCreateTable::label() {
   return String("CreateTable ") + m_name;
-}
-
-
-void OperationCreateTable::update_parts(TableParts index_parts) {
-  uint8_t parts {};
-  if (m_parts.primary())
-    parts |= TableParts::PRIMARY;
-  if (m_parts.value_index() && index_parts.value_index())
-    parts |= TableParts::VALUE_INDEX;
-  if (m_parts.qualifier_index() && index_parts.qualifier_index())
-    parts |= TableParts::QUALIFIER_INDEX;
-  m_parts = TableParts(parts);
 }

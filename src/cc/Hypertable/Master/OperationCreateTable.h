@@ -90,7 +90,11 @@ namespace Hypertable {
     /// <tr>
     /// <td>INITIAL</td>
     /// <td><ul>
-    /// <li>Verifies that a table of name #m_name does not already exist in Hyperspace and completes with error Error::NAME_ALREADY_IN_USE if it does.</li>
+    /// <li>Verifies that a table of name #m_name does not already exist in
+    ///     Hyperspace and completes with error Error::NAME_ALREADY_IN_USE if it
+    ///     does.</li>
+    /// <li>Obtains current timestamp and uses it as the schema generation
+    ///     number.</li>
     /// <li>Transitions to state ASSIGN_ID</li>
     /// <li>Persists operation to MML and returns</li>
     /// </ul></td>
@@ -99,31 +103,30 @@ namespace Hypertable {
     /// <td>ASSIGN_ID</td>
     /// <td><ul>
     /// <li>Creates table in Hyperspace</li>
+    /// <li>Updates #m_parts to reflect indices that actually exist in the
+    ///     schema</li>
     /// <li>Transitions to the CREATE_INDEX</li>
     /// </ul></td>
     /// </tr>
     /// <tr>
     /// <td>CREATE_INDEX</td>
     /// <td><ul>
-    /// <li>If schema indicates that a value index is not required or #m_parts
-    ///     does not include the value index, state is transitioned to
+    /// <li>If value index not specified in #m_parts, state is transitioned to
     ///     CREATE_QUALIFIER_INDEX
     /// <br>... otherwise ...</li>
     /// <li>Prepares the value index with call to Utility::prepare_index()</li>
     /// <li>Creates OperationCreateTable sub operation for value index table</li>
-    /// <li>Stages sub operation with call to stage_subop() with dependency string
-    ///     #m_name + "-create-index"</li>
+    /// <li>Stages sub operation with call to stage_subop()</li>
     /// <li>Transitions to state CREATE_QUALIFIER_INDEX</li>
-    /// <li>Persists operation and sub operation to MML and returns</li>
+    /// <li>Persists operation with call to record_state() and returns</li>
     /// </ul></td>
     /// </tr>
     /// <tr>
     /// <td>CREATE_QUALIFIER_INDEX</td>
     /// <td><ul>
     /// <li>Handles result of value index sub operation with a call to
-    ///     fetch_and_validate_subop(), returning if it failed</li>
-    /// <li>If schema indicates that a qualifier index is not required or
-    ///     #m_parts does not include the qualifier index, state is transitioned
+    ///     validate_subops(), returning if it failed</li>
+    /// <li>If qualifier index not specified in #m_parts, state is transitioned
     ///     to WRITE_METADATA, the operation is persisted to the MML, and drops
     ///     through to the next state.
     /// <br>... otherwise ...</li>
@@ -131,25 +134,23 @@ namespace Hypertable {
     ///     Utility::prepare_index()</li>
     /// <li>Creates OperationCreateTable sub operation for qualifier index
     ///     table</li>
-    /// <li>Stages sub operation with call to stage_subop() with dependency
-    ///     string #m_name + "-create-qualifier-index"</li>
+    /// <li>Stages sub operation with call to stage_subop()</li>
     /// <li>Transitions to state WRITE_METADATA</li>
-    /// <li>Persists operation and sub operation to MML and returns</li>
+    /// <li>Persists operation with a call to record_state() and returns</li>
     /// </ul></td>
     /// </tr>
     /// <tr>
     /// <td>WRITE_METADATA</td>
     /// <td><ul>
     /// <li>Handles result of qualifier index sub operation with a call to
-    ///     fetch_and_validate_subop(), returning on failure</li>
+    ///     validate_subops(), returning on failure</li>
     /// <li>If primary table is not specified in #m_parts, complete_ok() is
     ///     called and the function returns</li>
     /// <li>Utility::create_table_write_metadata() is called</li>
     /// <li>The operation's dependencies are set to SERVERS, METADATA, and
     ///     SYSTEM and an obstruction ("OperationMove " + range) is added.</li>
     /// <li>Transitions to state ASSIGN_LOCATION</li>
-    /// <li>Operation plus completed sub op are written to MML and function
-    ///     returns</li>
+    /// <li>Persists operation with a call to record_state() and returns</li>
     /// </ul></td>
     /// </tr>
     /// <tr>
@@ -251,10 +252,6 @@ namespace Hypertable {
     ///   <td>TableParts</td><td>[VERSION 2] %Table parts to create (#m_parts)
     ///   </td>
     ///   </tr>
-    ///   <tr>
-    ///   <td>i64</td><td>[VERSION 2] Sub operation hash code
-    ///       (#m_subop_hash_code)</td>
-    ///   </tr>
     /// </table>
     /// @param bufp Address of destination buffer pointer (advanced by call)
     virtual void encode_state(uint8_t **bufp) const;
@@ -289,8 +286,6 @@ namespace Hypertable {
     virtual void decode_request(const uint8_t **bufp, size_t *remainp);
 
   private:
-
-    void update_parts(TableParts index_parts);
 
     /// Pathtname of table to create
     String m_name;

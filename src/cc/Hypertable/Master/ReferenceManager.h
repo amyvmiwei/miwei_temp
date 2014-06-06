@@ -36,39 +36,13 @@ namespace Hypertable {
   /// @addtogroup Master
   /// @{
 
-  /// Holds references to operations that are manually removed.
-  /// This class was originally introduced to handle <i>move range</i>
-  /// operations, but has since been used for any operation that needs to be
-  /// manually removed.
-  ///
-  /// To motivate the original use case, a move range operation is initiated by
-  /// a range server when it wants to give up a range.  It happens in two
-  /// phases:
-  ///
-  ///   1. The range server calls MasterClient::move_range() which creates an
-  ///      OperationMoveRange to handle the moving of a range to another range
-  ///      server.
-  ///   2. Once the range entity has been removed from the RSML, the range
-  ///      server will call MasterClient::relinquish_acknowledge() to tell
-  ///      the master that it has completely relinquished the range.
-  ///
-  /// This class was introduced to avoid a race condition in which a range server
-  /// could create multiple OperationMoveRange operations for a range, causing it
-  /// to be assigned to multiple servers.  When an OperationMoveRange gets
-  /// created, it is added to the reference manager and won't be removed until
-  /// the range server successfully completes the
-  /// MasterClient::relinquish_acknowledge() call indicating that it has
-  /// completely relinqished the range and will not call
-  /// MasterClient::move_range() again for this range (unless it is later
-  /// re-assigned to the server).  When a MOVE_RANGE command is received by
-  /// the master, it will first check to see if the same move range operation
-  /// exists in the ReferenceManager, and if so, it will not create another one,
-  /// thus avoiding the race condition.
+  /// Holds references to operations that are to be manually removed.
   class ReferenceManager {
   public:
 
     /// Adds an operation.
-    /// @return Smart pointer to operation to add
+    /// Adds <code>operation</code> to #m_map using it's ID as the key.
+    /// @param Smart pointer to operation to add
     /// @return <i>true</i> if successfully added, <i>false</i> if not added
     /// because operation already exists in #m_map.
     bool add(OperationPtr operation) {
@@ -79,8 +53,10 @@ namespace Hypertable {
       return true;
     }
 
-    /// Looks up <code>hash_code</code> and returns associated operation.
-    /// @return %Operation associated with <code>hash_code</code>, 0 otherwise
+    /// Fetches an operation given its <code>id</code>.
+    /// Looks up <code>id</code> in #m_map and returns the operation to which it
+    /// maps.
+    /// @return %Operation associated with <code>id</code>, nullptr if not found
     OperationPtr get(int64_t id) {
       ScopedLock lock(m_mutex);
       auto iter = m_map.find(id);
@@ -89,8 +65,8 @@ namespace Hypertable {
       return (*iter).second;
     }
 
-    /// Remove operation associated with <code>hash_code</code>.
-    /// @param hash_code Hash code of operation to remove.
+    /// Remove an operation.
+    /// @param operation Operation for which to remove.
     void remove(OperationPtr operation) {
       ScopedLock lock(m_mutex);
       auto iter = m_map.find(operation->id());
@@ -98,6 +74,8 @@ namespace Hypertable {
         m_map.erase(iter);
     }
 
+    /// Clears all referenced operations.
+    /// Clears #m_map.
     void clear() {
       ScopedLock lock(m_mutex);
       m_map.clear();

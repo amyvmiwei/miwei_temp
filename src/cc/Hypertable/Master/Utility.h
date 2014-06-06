@@ -80,6 +80,12 @@ namespace Hypertable {
      */
     extern bool table_exists(ContextPtr &context, const String &id);
 
+    /// Gets index parts specified in schema.
+    /// Returns a TableParts object specifying the indices that are specified in
+    /// <code>schema</code>.
+    /// @param schema %Schema for which to obtain index parts
+    /// @return TableParts object specifying indices specified in
+    /// <code>schema</code>
     extern TableParts get_index_parts(const std::string &schema);
 
     /** Checks if table name is available.
