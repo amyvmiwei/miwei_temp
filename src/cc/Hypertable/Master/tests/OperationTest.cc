@@ -62,15 +62,13 @@ void OperationTest::execute() {
       DependencySet exclusivities;
       DependencySet dependencies;
       DependencySet obstructions;
-      String sub_node_id = format("node-%d[0]", (int)header.id);
-      obstructions.insert( sub_node_id );
-      m_dependencies.insert( sub_node_id );
-      m_sub_ops.clear();
-      m_sub_ops.push_back( new OperationTest(m_context, m_results, m_name+"[0]", dependencies, exclusivities, obstructions) );
+      Operation *op = new OperationTest(m_context, m_results, m_name+"[0]", dependencies, exclusivities, obstructions);
+      stage_subop(op);
       set_state(OperationState::STARTED);
       return;
     }
     else if (state == OperationState::STARTED) {
+      HT_ASSERT(validate_subops());
       ScopedLock lock(m_context->mutex);
       m_results.push_back(m_name);
       set_state(OperationState::COMPLETE);

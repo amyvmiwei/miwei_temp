@@ -50,8 +50,6 @@ namespace Hypertable {
     String m_metadata_range_name;
   };
 
-  typedef intrusive_ptr<OperationInitialize> OperationInitializePtr;
-
 } // namespace Hypertable
 
 #endif // HYPERTABLE_OPERATIONINITIALIZE_H

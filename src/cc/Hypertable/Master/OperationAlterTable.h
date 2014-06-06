@@ -96,15 +96,14 @@ namespace Hypertable {
      *     OperationCreateTable sub operation to create index tables and stages
      *     it with a call to stage_subop()</li>
      * <li>Transition state to SCAN_METADATA</li>
-     * <li>Persists this operation and sub operation to MML and then
-     *     returns</li>
+     * <li>Persists this operation to MML and then returns</li>
      * </ul></td>
      * </tr>
      * <tr>
      * <td> SCAN_METADATA </td>
      * <td><ul>
      *   <li> Handles result of create table sub operation with a call to
-     *        fetch_and_validate_subop(), returning on failure</li>
+     *        validate_subops(), returning on failure</li>
      *   <li> Scans the METADATA table and populates #m_servers to hold the set
      *        of servers that hold the table to be altered which are not in the
      *        #m_completed set. </li>
@@ -146,34 +145,31 @@ namespace Hypertable {
      *     maintenance off</li>
      * <li>Stages sub operation with a call to stage_subop()</li>
      * <li>Transition state to DROP_INDICES</li>
-     * <li>Persists this operation and sub operation to MML and then
-     *     returns</li>
+     * <li>Persists this operation to MML and then returns</li>
      * </ul></td>
      * </tr>
      * <tr>
      * <td>DROP_INDICES</td>
      * <td><ul>
      * <li>Handles result of toggle table maintenance sub operation with a
-     *     call to fetch_and_validate_subop(), returning on failure</li>
+     *     call to validate_subops(), returning on failure</li>
      * <li>Creates an OperationDropTable sub operation to drop index
      *     tables</li>
      * <li>Stages sub operation with a call to stage_subop()</li>
      * <li>Transition state to RESUME_TABLE_MAINTENANCE</li>
-     * <li>Persists this operation and sub operation to MML and then
-     *     returns</li>
+     * <li>Persists this operation to MML and then returns</li>
      * </ul></td>
      * </tr>
      * <tr>
      * <td>RESUME_TABLE_MAINTENANCE</td>
      * <td><ul>
      * <li>Handles result of drop table sub operation with a call to
-     *     fetch_and_validate_subop(), returning on failure</li>
+     *     validate_subops(), returning on failure</li>
      * <li>Creates an OperationToggleMaintenance sub operation to turn
      *     maintenance back on</li>
      * <li>Stages sub operation with a call to stage_subop()</li>
      * <li>Transition state to FINALIZE</li>
-     * <li>Persists this operation and sub operation to MML and then
-     *     returns</li>
+     * <li>Persists this operation to MML and then returns</li>
      * </ul></td>
      * </tr>
      * <tr>
@@ -229,8 +225,6 @@ namespace Hypertable {
      *   <tr><td> i32  </td><td> [VERSION 2] Size of #m_servers </td></tr>
      *   <tr><td> vstr </td><td> [VERSION 2] <b>Foreach server</b>
      *                           in #m_servers, server name </td></tr>
-     *   <tr><td> i64  </td><td> [VERSION 3] Hash code for currently outstanding
-     *                           sub operation </td></tr>
      *   <tr><td> TableParts </td><td> [VERSION 3] Index tables to be created
      *                                 or dropped </td></tr>
      * </table>
@@ -301,36 +295,6 @@ namespace Hypertable {
     TableParts get_create_index_parts(SchemaPtr &original_schema,
                                       SchemaPtr &alter_schema);
 
-    /// Fetchs and handles the result of sub operation.
-    /// If #m_subop_hash_code is non-zero, a sub operation is outstanding and
-    /// this member function will fetch it and process it as follows:
-    ///   - Fetches the sub operation from the ReferenceManager
-    ///   - Adds remove approvals 0x01 to the sub operation
-    ///   - Sets #m_subop_hash_code to zero
-    ///   - If sub operation error code is non-zero, completes overall operaton
-    ///     with a call to complete_error(), and returns <i>false</i>.
-    ///   - Otherwise, sub operation is added to <code>entities</code>
-    /// @param entities Reference to vector of entites to hold sucessfully
-    /// completed sub operation
-    /// @return <i>true</i> if no sub operation is outstanding or the sub
-    /// operation completed without error, <i>false</i> otherwise.
-    bool fetch_and_validate_subop(vector<Entity *> &entities);
-
-    /// Stages a sub operation for execution.
-    /// This member function does the following:
-    ///   - Sets local variable <code>dpendency_string</code> to
-    ///     "ALTER TABLE subop &lt;subop-name&gt; &lt;subop-hash-code&gt;"
-    ///   - Adds <code>dependency_string</code> to sub operation's set of
-    ///     obstructions
-    ///   - Sets sub operation remove approval mask to 0x01
-    ///   - Adds sub operation to ReferenceManager
-    ///   - Adds <code>dependency_string</code> to parent (this) operation's set
-    ///     of dependencies
-    ///   - Pushes sub operation onto #m_sub_ops
-    ///   - Sets #m_subop_hash_code to sub operation's hash code
-    /// @param opartion Sub operation
-    void stage_subop(Operation *operation);
-
     /** Initializes dependency graph state.
      * This method initializes the dependency graph state as follows:
      *
@@ -353,9 +317,6 @@ namespace Hypertable {
 
     /// Set of range servers that have completed operation
     StringSet m_completed;
-
-    /// Hash code for currently outstanding sub operation
-    int64_t m_subop_hash_code {};
 
     /// Index tables to be created or dropped
     TableParts m_parts;

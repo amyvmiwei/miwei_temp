@@ -121,8 +121,9 @@ void OperationCreateNamespace::execute() {
     HT_FATALF("Unrecognized state %d", state);
   }
 
-  HT_INFOF("Leaving CreateNamespace-%lld('%s', %d, '%s')",
-           (Lld)header.id, m_name.c_str(), m_flags, m_id.c_str());
+  HT_INFOF("Leaving CreateNamespace-%lld('%s', %d, '%s') state=%s",
+           (Lld)header.id, m_name.c_str(), m_flags, m_id.c_str(),
+           OperationState::get_text(get_state()));
 
 }
 

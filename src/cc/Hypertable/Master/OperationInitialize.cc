@@ -49,9 +49,7 @@ OperationInitialize::OperationInitialize(ContextPtr &context,
 
 
 void OperationInitialize::execute() {
-  std::vector<Entity *> entities;
   Operation *operation = 0;
-  Operation *operation2 = 0;
   String filename, schema;
   uint64_t handle = 0;
   RangeSpec range;
@@ -77,24 +75,16 @@ void OperationInitialize::execute() {
                                   OPEN_FLAG_READ|OPEN_FLAG_WRITE|OPEN_FLAG_CREATE);
     }
 
-    {
-      ScopedLock lock(m_mutex);
-      m_state = OperationState::STARTED;
-      m_dependencies.insert("initialize[0]");
-    }
     operation = new OperationCreateNamespace(m_context, "/sys", 0);
-    operation->add_obstruction("initialize[0]");
-    entities.push_back(operation);
-    entities.push_back(this);
-    m_context->mml_writer->record_state(entities);
-    {
-      ScopedLock lock(m_mutex);
-      m_sub_ops.push_back(operation);
-    }
+    stage_subop(operation);
+    set_state(OperationState::STARTED);
+    record_state();
     HT_MAYBE_FAIL("initialize-INITIAL");
-    return;
+    break;
 
   case OperationState::STARTED:
+    if (!validate_subops())
+      break;
     filename = System::install_dir + "/conf/METADATA.xml";
     schema = FileUtils::file_to_string(filename);
     Utility::create_table_in_hyperspace(m_context, "/sys/METADATA", schema, &m_table);
@@ -112,7 +102,7 @@ void OperationInitialize::execute() {
   case OperationState::ASSIGN_METADATA_RANGES:
     if (!Utility::next_available_server(m_context, m_metadata_root_location) ||
         !Utility::next_available_server(m_context, m_metadata_secondlevel_location))
-      return;
+      break;
     {
       ScopedLock lock(m_mutex);
       m_dependencies.clear();
@@ -183,7 +173,7 @@ void OperationInitialize::execute() {
       m_state = OperationState::CREATE_RS_METRICS;
     }
     m_context->mml_writer->record_state(this);
-    return;
+    break;
 
   case OperationState::CREATE_RS_METRICS:
     if (!m_context->metadata_table)
@@ -194,26 +184,19 @@ void OperationInitialize::execute() {
     schema = FileUtils::file_to_string(filename);
     operation = new OperationCreateTable(m_context, "/sys/RS_METRICS", schema,
                                          TableParts(TableParts::ALL));
-    operation->add_obstruction("initialize[2]");
-    operation->add_obstruction("initialize[3]");
-    {
-      ScopedLock lock(m_mutex);
-      m_dependencies.insert("initialize[2]");
-      m_state = OperationState::FINALIZE;
-      m_sub_ops.push_back(operation);
-    }
-    entities.clear();
-    entities.push_back(operation);
-    entities.push_back(this);
-    operation2 = new OperationCreateNamespace(m_context, "/tmp", 0);
-    operation2->add_dependency("initialize[3]");
-    m_sub_ops.push_back(operation2);
-    entities.push_back(operation2);
-    m_context->mml_writer->record_state(entities);
+    stage_subop(operation);
+    operation = new OperationCreateNamespace(m_context, "/tmp", 0);
+    stage_subop(operation);
+    set_state(OperationState::FINALIZE);
+    record_state();
     HT_MAYBE_FAIL("initialize-CREATE_RS_METRICS");
-    return;
+    break;
 
   case OperationState::FINALIZE:
+
+    if (!validate_subops())
+      break;
+
     if (!m_context->metadata_table)
       m_context->metadata_table = new Table(m_context->props, m_context->conn_manager,
                                             m_context->hyperspace, m_context->namemap,
@@ -230,7 +213,8 @@ void OperationInitialize::execute() {
     HT_FATALF("Unrecognized state %d", state);
   }
 
-  HT_INFOF("Leaving Initialize-%lld", (Lld)header.id);
+  HT_INFOF("Leaving Initialize-%lld state=%s", (Lld)header.id,
+           OperationState::get_text(get_state()));
 
 }
 

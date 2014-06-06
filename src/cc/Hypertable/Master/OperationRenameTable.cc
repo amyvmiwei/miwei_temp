@@ -30,6 +30,7 @@
 #include "Utility.h"
 
 using namespace Hypertable;
+using namespace std;
 
 OperationRenameTable::OperationRenameTable(ContextPtr &context,
                                            const String &old_name,
@@ -66,8 +67,6 @@ void OperationRenameTable::initialize_dependencies() {
 void OperationRenameTable::execute() {
   int32_t state = get_state();
   String id;
-  String old_index;
-  String new_index;
 
   HT_INFOF("Entering RenameTable-%lld(%s, %s) state=%s",
            (Lld)header.id, m_old_name.c_str(), m_new_name.c_str(), OperationState::get_text(state));
@@ -79,61 +78,80 @@ void OperationRenameTable::execute() {
     // Verify old name refers to an existing table
     if (!Utility::table_exists(m_context, m_old_name, m_id)) {
       complete_error(Error::TABLE_NOT_FOUND, m_old_name);
-      return;
+      break;
     }
 
     // Verify new name does not refer to an existing table
     if (Utility::table_exists(m_context, m_new_name, id)) {
       complete_error(Error::NAME_ALREADY_IN_USE, m_new_name);
-      return;
+      break;
     }
 
     // Verify new name does not refer to an existing namespace
     bool is_namespace;
     if (m_context->namemap->exists_mapping(m_new_name, &is_namespace) && is_namespace) {
       complete_error(Error::NAME_ALREADY_IN_USE, m_new_name);
-      return;
+      break;
     }
 
-    // check if an index table exists; if yes then create a sub-operation
-    old_index = Filesystem::dirname(m_old_name) 
-                   + "/^" + Filesystem::basename(m_old_name);
-    boost::trim_if(old_index, boost::is_any_of("/ "));
-    if (Utility::table_exists(m_context, old_index, id)) {
-      new_index = Filesystem::dirname(m_new_name) 
-                     + "/^" + Filesystem::basename(m_new_name);
+    try {
+      DynamicBuffer value_buf;
+      string filename = m_context->toplevel_dir + "/tables/" + m_id;
+      m_context->hyperspace->attr_get(filename, "schema", value_buf);
+      m_parts = Utility::get_index_parts((const char *)value_buf.base);
+    }
+    catch (Exception &e) {
+      complete_error(e);
+      break;
+    }
+    
+    set_state(OperationState::RENAME_VALUE_INDEX);
+    record_state();
+
+  case OperationState::RENAME_VALUE_INDEX:
+
+    if (m_parts.value_index()) {
+      string old_index = Filesystem::dirname(m_old_name) 
+        + "/^" + Filesystem::basename(m_old_name);
+      string new_index = Filesystem::dirname(m_new_name) 
+        + "/^" + Filesystem::basename(m_new_name);
+
+      boost::trim_if(old_index, boost::is_any_of("/ "));
       boost::trim_if(new_index, boost::is_any_of("/ "));
-
       Operation *op = new OperationRenameTable(m_context, old_index, new_index);
-      op->add_obstruction(old_index + "-rename-index");
-
-      ScopedLock lock(m_mutex);
-      add_dependency(old_index + "-rename-index");
-      m_sub_ops.push_back(op);
+      stage_subop(op);
+      set_state(OperationState::RENAME_QUALIFIER_INDEX);
+      record_state();
+      break;
     }
 
-    // and now the same for a qualified index
-    old_index = Filesystem::dirname(m_old_name) 
-                   + "/^^" + Filesystem::basename(m_old_name);
-    boost::trim_if(old_index, boost::is_any_of("/ "));
-    if (Utility::table_exists(m_context, old_index, id)) {
-      new_index = Filesystem::dirname(m_new_name) 
-                     + "/^^" + Filesystem::basename(m_new_name);
+    set_state(OperationState::RENAME_QUALIFIER_INDEX);
+
+  case OperationState::RENAME_QUALIFIER_INDEX:
+
+    if (!validate_subops())
+      break;
+    
+    if (m_parts.qualifier_index()) {
+      string old_index = Filesystem::dirname(m_old_name) 
+        + "/^^" + Filesystem::basename(m_old_name);
+      string new_index = Filesystem::dirname(m_new_name) 
+        + "/^^" + Filesystem::basename(m_new_name);
+
+      boost::trim_if(old_index, boost::is_any_of("/ "));
       boost::trim_if(new_index, boost::is_any_of("/ "));
-
       Operation *op = new OperationRenameTable(m_context, old_index, new_index);
-      op->add_obstruction(old_index + "-rename-qualified-index");
-
-      ScopedLock lock(m_mutex);
-      add_dependency(old_index + "-rename-qualified-index");
-      m_sub_ops.push_back(op);
+      stage_subop(op);
+      set_state(OperationState::STARTED);
+      record_state();
+      break;
     }
 
     set_state(OperationState::STARTED);
-    m_context->mml_writer->record_state(this);
-    break;
 
   case OperationState::STARTED:
+    if (!validate_subops())
+      break;
     m_context->namemap->rename(m_old_name, m_new_name);
     m_context->monitoring->change_id_mapping(m_id, m_new_name);
 
@@ -145,8 +163,9 @@ void OperationRenameTable::execute() {
     HT_FATALF("Unrecognized state %d", state);
   }
 
-  HT_INFOF("Leaving RenameTable-%lld(%s, %s)",
-           (Lld)header.id, m_old_name.c_str(), m_new_name.c_str());
+  HT_INFOF("Leaving RenameTable-%lld(%s, %s) state=%s",
+           (Lld)header.id, m_old_name.c_str(), m_new_name.c_str(),
+           OperationState::get_text(get_state()));
 }
 
 
@@ -155,7 +174,7 @@ void OperationRenameTable::display_state(std::ostream &os) {
      << " id=" << m_id << " ";
 }
 
-#define OPERATION_RENAME_TABLE_VERSION 1
+#define OPERATION_RENAME_TABLE_VERSION 2
 
 uint16_t OperationRenameTable::encoding_version() const {
   return OPERATION_RENAME_TABLE_VERSION;
@@ -164,18 +183,22 @@ uint16_t OperationRenameTable::encoding_version() const {
 size_t OperationRenameTable::encoded_state_length() const {
   return Serialization::encoded_length_vstr(m_old_name) + 
     Serialization::encoded_length_vstr(m_new_name) +
-    Serialization::encoded_length_vstr(m_id);
+    Serialization::encoded_length_vstr(m_id) +
+    m_parts.encoded_length();
 }
 
 void OperationRenameTable::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_old_name);
   Serialization::encode_vstr(bufp, m_new_name);
   Serialization::encode_vstr(bufp, m_id);
+  m_parts.encode(bufp);
 }
 
 void OperationRenameTable::decode_state(const uint8_t **bufp, size_t *remainp) {
   decode_request(bufp, remainp);
   m_id = Serialization::decode_vstr(bufp, remainp);
+  if (m_decode_version >= 2)
+    m_parts.decode(bufp, remainp);
 }
 
 void OperationRenameTable::decode_request(const uint8_t **bufp, size_t *remainp) {

@@ -45,6 +45,7 @@ extern "C" {
 
 using namespace Hypertable;
 using namespace Hyperspace;
+using namespace std;
 
 OperationRecover::OperationRecover(ContextPtr &context, 
                                    RangeServerConnectionPtr &rsc, int flags)
@@ -52,8 +53,6 @@ OperationRecover::OperationRecover(ContextPtr &context,
     m_location(rsc->location()), m_rsc(rsc), m_hyperspace_handle(0), 
     m_restart(flags==RESTART),
     m_lock_acquired(false) {
-  m_subop_dependency = format("operation-id-%lld", (Lld)id());
-  m_dependencies.insert(m_subop_dependency);
   m_dependencies.insert(Dependency::RECOVERY_BLOCKER);
   m_dependencies.insert(Dependency::RECOVERY);
   m_dependencies.insert(String("RegisterServer ") + m_location);
@@ -67,12 +66,11 @@ OperationRecover::OperationRecover(ContextPtr &context,
                                    const MetaLog::EntityHeader &header_)
   : Operation(context, header_), m_hyperspace_handle(0),
     m_restart(false), m_lock_acquired(false) {
-  m_subop_dependency = format("operation-id-%lld", (Lld)id());
 }
 
 
 void OperationRecover::execute() {
-  std::vector<Entity *> entities;
+  vector<MetaLog::Entity *> removable_move_ops;
   Operation *sub_op;
   int state = get_state();
   String subject, message;
@@ -143,7 +141,7 @@ void OperationRecover::execute() {
     // read rsml figure out what types of ranges lived on this server
     // and populate the various vectors of ranges
     try {
-      read_rsml();
+      read_rsml(removable_move_ops);
     }
     catch (Exception &e) {
       subject = format("ERROR: Recovery of %s (%s)",
@@ -170,51 +168,47 @@ void OperationRecover::execute() {
     set_state(OperationState::ISSUE_REQUESTS);
 
     HT_MAYBE_FAIL("recover-server-1");
-    m_context->mml_writer->record_state(this);
+    record_state(removable_move_ops);
     HT_MAYBE_FAIL("recover-server-2");
     break;
 
   case OperationState::ISSUE_REQUESTS:
-    HT_ASSERT(!m_subop_dependency.empty());
     if (m_root_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::ROOT, m_subop_dependency);
+                                          RangeSpec::ROOT);
       HT_INFOF("Number of root ranges to recover for location %s = %u",
                m_location.c_str(), (unsigned)m_root_specs.size());
-      m_sub_ops.push_back(sub_op);
-      entities.push_back(sub_op);
+      stage_subop(sub_op);
     }
     if (m_metadata_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::METADATA, m_subop_dependency);
+                                          RangeSpec::METADATA);
       HT_INFOF("Number of metadata ranges to recover for location %s = %u",
                m_location.c_str(), (unsigned)m_metadata_specs.size());
-      m_sub_ops.push_back(sub_op);
-      entities.push_back(sub_op);
+      stage_subop(sub_op);
     }
     if (m_system_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::SYSTEM, m_subop_dependency);
+                                          RangeSpec::SYSTEM);
       HT_INFOF("Number of system ranges to recover for location %s = %d",
                m_location.c_str(), (int)m_system_specs.size());
-      m_sub_ops.push_back(sub_op);
-      entities.push_back(sub_op);
+      stage_subop(sub_op);
     }
     if (m_user_specs.size()) {
       sub_op = new OperationRecoverRanges(m_context, m_location,
-                                          RangeSpec::USER, m_subop_dependency);
+                                          RangeSpec::USER);
       HT_INFOF("Number of user ranges to recover for location %s = %d",
                m_location.c_str(), (int)m_user_specs.size());
-      m_sub_ops.push_back(sub_op);
-      entities.push_back(sub_op);
+      stage_subop(sub_op);
     }
     set_state(OperationState::FINALIZE);
-    entities.push_back(this);
-    m_context->mml_writer->record_state(entities);
+    record_state();
     HT_MAYBE_FAIL("recover-server-3");
     break;
 
   case OperationState::FINALIZE:
+    if (!validate_subops())
+      break;
     // Once recovery is complete, the master blows away the RSML and CL for the
     // server being recovered then it unlocks the hyperspace file
     clear_server_state();
@@ -337,7 +331,7 @@ void OperationRecover::create_recovery_plan() {
                              m_user_specs, m_user_states);
 }
 
-void OperationRecover::read_rsml() {
+void OperationRecover::read_rsml(vector<MetaLog::Entity *> &removable_move_ops) {
   // move rsml and commit log to some recovered dir
   MetaLog::DefinitionPtr rsml_definition
       = new MetaLog::DefinitionRangeServer(m_location.c_str());  
@@ -389,7 +383,7 @@ void OperationRecover::read_rsml() {
           HT_INFOF("%s", sout.str().c_str());
 
           if (range->get_state() == RangeState::SPLIT_SHRUNK)
-            handle_split_shrunk(range);
+            handle_split_shrunk(range, removable_move_ops);
 
           range->get_table_identifier(spec.table);
           range->get_range_spec(range_spec);
@@ -428,7 +422,8 @@ void OperationRecover::read_rsml() {
 }
 
 
-void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity) {
+void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity,
+                                           vector<MetaLog::Entity *> &removable_move_ops) {
   String start_row, end_row;
   String split_row = range_entity->get_split_row();
   String old_boundary_row = range_entity->get_old_boundary_row();
@@ -452,11 +447,12 @@ void OperationRecover::handle_split_shrunk(MetaLogEntityRange *range_entity) {
   int64_t hash_code = Utility::range_hash_code(table, range,
                  String("OperationMoveRange-")+range_entity->get_source());
 
-  OperationPtr operation = m_context->reference_manager->get(hash_code);
+  OperationPtr operation = m_context->get_move_operation(hash_code);
   if (operation) {
-    operation->remove_approval_add(0x01);
-    if (operation->remove_if_ready())
-      m_context->reference_manager->remove(hash_code);
+    if (operation->remove_approval_add(0x01)) {
+      m_context->remove_move_operation(operation.get());
+      removable_move_ops.push_back(operation.get());
+    }
     int64_t soft_limit = range_entity->get_soft_limit();
     range_entity->clear_state();
     range_entity->set_soft_limit(soft_limit);

@@ -113,10 +113,6 @@ namespace Hypertable {
     /** Clears range state object */
     void clear_state();
 
-    /// Waits for entity to enter a given state
-    /// @param state State to wait for
-    void wait_for_state(uint8_t state);
-
     /** Gets soft limit
      * @return Soft limit
      */

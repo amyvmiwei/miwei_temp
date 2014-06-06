@@ -70,30 +70,10 @@ OperationCreateTable::OperationCreateTable(ContextPtr &context, EventPtr &event)
   m_dependencies.insert(Dependency::SYSTEM);
 }
 
-void OperationCreateTable::requires_indices(bool &needs_index, 
-        bool &needs_qualifier_index) {
-  SchemaPtr s = Schema::new_instance(m_schema);
-
-  for (auto cf_spec : s->get_column_families()) {
-    if (cf_spec && !cf_spec->get_deleted()) {
-      if (cf_spec->get_value_index())
-        needs_index = true;
-      if (cf_spec->get_qualifier_index())
-        needs_qualifier_index = true;
-    }
-    if (needs_index && needs_qualifier_index)
-      return;
-  }
-}
-
 void OperationCreateTable::execute() {
-  vector<Entity *> entities;
   RangeSpec range, index_range, qualifier_index_range;
   std::string range_name;
   int32_t state = get_state();
-  bool has_index = false;
-  bool has_qualifier_index = false;
-  bool initialized = false;
   bool is_namespace; 
 
   HT_INFOF("Entering CreateTable-%lld(%s, location=%s, parts=%s) state=%s",
@@ -136,7 +116,20 @@ void OperationCreateTable::execute() {
       if (e.code() != Error::NAMESPACE_DOES_NOT_EXIST)
         HT_ERROR_OUT << e << HT_END;
       complete_error(e);
-      return;
+      break;
+    }
+
+    // Update m_parts to reflect indices actually found in the schema
+    {
+      uint8_t parts {};
+      TableParts schema_parts = Utility::get_index_parts(m_schema);
+      if (m_parts.primary())
+        parts |= TableParts::PRIMARY;
+      if (m_parts.value_index() && schema_parts.value_index())
+        parts |= TableParts::VALUE_INDEX;
+      if (m_parts.qualifier_index() && schema_parts.qualifier_index())
+        parts |= TableParts::QUALIFIER_INDEX;
+      m_parts = TableParts(parts);
     }
 
     HT_MAYBE_FAIL("create-table-ASSIGN_ID");
@@ -144,10 +137,8 @@ void OperationCreateTable::execute() {
     // fall through
 
   case OperationState::CREATE_INDEX:
-    requires_indices(has_index, has_qualifier_index);
-    initialized = true;
 
-    if (has_index && m_parts.value_index()) {
+    if (m_parts.value_index()) {
       Operation *op = 0;
       try {
         String index_name;
@@ -158,8 +149,7 @@ void OperationCreateTable::execute() {
                         false, index_name, index_schema);
         op = new OperationCreateTable(m_context, index_name, index_schema,
                                       TableParts(TableParts::PRIMARY));
-        stage_subop(op, m_name + "-create-index");
-        entities.push_back(op);
+        stage_subop(op);
       }
       catch (Exception &e) {
         if (e.code() == Error::INDUCED_FAILURE)
@@ -167,13 +157,12 @@ void OperationCreateTable::execute() {
         if (e.code() != Error::NAMESPACE_DOES_NOT_EXIST)
           HT_ERROR_OUT << e << HT_END;
         complete_error(e);
-        return;
+        break;
       }
 
       HT_MAYBE_FAIL("create-table-CREATE_INDEX-1");
       set_state(OperationState::CREATE_QUALIFIER_INDEX);
-      entities.push_back(this);
-      m_context->mml_writer->record_state(entities);
+      record_state();
       HT_MAYBE_FAIL("create-table-CREATE_INDEX-2");
       break;
     }
@@ -184,15 +173,10 @@ void OperationCreateTable::execute() {
 
   case OperationState::CREATE_QUALIFIER_INDEX:
 
-    if (!initialized)
-      requires_indices(has_index, has_qualifier_index);
-
-    entities.clear();
-
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
 
-    if (has_qualifier_index && m_parts.qualifier_index()) {
+    if (m_parts.qualifier_index()) {
       try {
         String index_name;
         String index_schema;
@@ -203,41 +187,36 @@ void OperationCreateTable::execute() {
                         true, index_name, index_schema);
         op = new OperationCreateTable(m_context, index_name, index_schema,
                                       TableParts(TableParts::PRIMARY));
-        stage_subop(op, m_name + "-create-qualifier-index");
-        entities.push_back(op);
+        stage_subop(op);
       }
       catch (Exception &e) {
         if (e.code() == Error::INDUCED_FAILURE)
           throw;
         if (e.code() != Error::NAMESPACE_DOES_NOT_EXIST)
           HT_ERROR_OUT << e << HT_END;
-        complete_error(e, entities);
+        complete_error(e);
         break;
       }
 
       HT_MAYBE_FAIL("create-table-CREATE_QUALIFIER_INDEX-1");
       set_state(OperationState::WRITE_METADATA);
-      entities.push_back(this);
-      record_state(entities);
+      record_state();
       HT_MAYBE_FAIL("create-table-CREATE_QUALIFIER_INDEX-2");
       break;
     }
     set_state(OperationState::WRITE_METADATA);
-    entities.push_back(this);
-    record_state(entities);
+    record_state();
     
     // fall through
 
   case OperationState::WRITE_METADATA:
 
-    entities.clear();
-
-    if (!fetch_and_validate_subop(entities))
+    if (!validate_subops())
       break;
 
     // If skipping primary table creation, finish here
     if (!m_parts.primary()) {
-      complete_ok(entities);
+      complete_ok();
       break;
     }
 
@@ -254,10 +233,9 @@ void OperationCreateTable::execute() {
       m_obstructions.insert(String("OperationMove ") + range_name);
       m_state = OperationState::ASSIGN_LOCATION;
     }
-    entities.push_back(this);
-    record_state(entities);
+    record_state();
     HT_MAYBE_FAIL("create-table-WRITE_METADATA-b");
-    return;
+    break;
 
   case OperationState::ASSIGN_LOCATION:
 
@@ -277,7 +255,7 @@ void OperationCreateTable::execute() {
     }
     m_context->mml_writer->record_state(this);
     HT_MAYBE_FAIL("create-table-ASSIGN_LOCATION");
-    return;
+    break;
 
   case OperationState::LOAD_RANGE:
     try {
@@ -290,7 +268,7 @@ void OperationCreateTable::execute() {
       HT_INFOF("%s - %s", Error::get_text(e.code()), e.what());
       poll(0, 0, 5000);
       set_state(OperationState::ASSIGN_LOCATION);
-      return;
+      break;
     }
     HT_MAYBE_FAIL("create-table-LOAD_RANGE-a");
     set_state(OperationState::ACKNOWLEDGE);
@@ -317,7 +295,7 @@ void OperationCreateTable::execute() {
       range.start_row = 0;
       range.end_row = Key::END_ROW_MARKER;
       m_context->get_balance_plan_authority()->get_balance_destination(m_table, range, m_location);
-      return;
+      break;
     }
     HT_MAYBE_FAIL("create-table-ACKNOWLEDGE");
     set_state(OperationState::FINALIZE);
@@ -364,7 +342,7 @@ size_t OperationCreateTable::encoded_state_length() const {
     Serialization::encoded_length_vstr(m_schema) +
     m_table.encoded_length() +
     Serialization::encoded_length_vstr(m_location) +
-    m_parts.encoded_length() + 8;
+    m_parts.encoded_length();
 }
 
 void OperationCreateTable::encode_state(uint8_t **bufp) const {
@@ -373,17 +351,14 @@ void OperationCreateTable::encode_state(uint8_t **bufp) const {
   m_table.encode(bufp);
   Serialization::encode_vstr(bufp, m_location);
   m_parts.encode(bufp);
-  Serialization::encode_i64(bufp, m_subop_hash_code);
 }
 
 void OperationCreateTable::decode_state(const uint8_t **bufp, size_t *remainp) {
   decode_request(bufp, remainp);
   m_table.decode(bufp, remainp);
   m_location = Serialization::decode_vstr(bufp, remainp);
-  if (m_decode_version >= 2) {
+  if (m_decode_version >= 2)
     m_parts.decode(bufp, remainp);
-    m_subop_hash_code = Serialization::decode_i64(bufp, remainp);
-  }
 }
 
 void OperationCreateTable::decode_request(const uint8_t **bufp, size_t *remainp) {
@@ -397,31 +372,4 @@ const String OperationCreateTable::name() {
 
 const String OperationCreateTable::label() {
   return String("CreateTable ") + m_name;
-}
-
-bool OperationCreateTable::fetch_and_validate_subop(vector<Entity *> &entities) {
-  if (m_subop_hash_code) {
-    OperationPtr op = m_context->reference_manager->get(m_subop_hash_code);
-    op->remove_approval_add(0x01);
-    m_subop_hash_code = 0;
-    if (op->get_error()) {
-      complete_error(op->get_error(), op->get_error_msg(), op.get());
-      return false;
-    }
-    entities.push_back(op.get());
-  }
-  return true;
-}
-
-void OperationCreateTable::stage_subop(Operation *operation,
-                                       const std::string dependency_string) {
-  operation->add_obstruction(dependency_string);
-  operation->set_remove_approval_mask(0x01);
-  m_context->reference_manager->add(operation);
-  {
-    ScopedLock lock(m_mutex);
-    add_dependency(dependency_string);
-    m_sub_ops.push_back(operation);
-    m_subop_hash_code = operation->hash_code();
-  }
 }

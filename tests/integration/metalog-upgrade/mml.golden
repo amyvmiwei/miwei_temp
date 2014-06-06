@@ -1,0 +1,175 @@
+---  26  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=1258924204,id=2,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=39} payload={ generation 0 current_set={{RangeMoveSpec: {TableIdentifier: id='3' generation=1} {RangeSpec: start='' end='ÿÿ'} source_location= dest_location=rs2 error='HYPERTABLE ok' complete=false} }}
+---  27  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-265434539,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=213} payload={ state=ASSIGN_ID remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='' generation=0}  location=  exclusivities="/tablefoo" dependencies="INIT","METADATA","SYSTEM" obstructions= permanent_obstructions= }
+---  28  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-265434539,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=213} payload={ state=ASSIGN_ID remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='' generation=0}  location=  exclusivities="/tablefoo" dependencies="INIT","METADATA","SYSTEM" obstructions= permanent_obstructions= }
+---  29  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-265434539,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=213} payload={ state=ASSIGN_ID remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='' generation=0}  location=  exclusivities="/tablefoo" dependencies="INIT","METADATA","SYSTEM" obstructions= permanent_obstructions= }
+---  30  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-265434539,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=213} payload={ state=ASSIGN_ID remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='' generation=0}  location=  exclusivities="/tablefoo" dependencies="INIT","METADATA","SYSTEM" obstructions= permanent_obstructions= }
+---  31  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-265434539,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=213} payload={ state=ASSIGN_ID remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='' generation=0}  location=  exclusivities="/tablefoo" dependencies="INIT","METADATA","SYSTEM" obstructions= permanent_obstructions= }
+---  32  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1485478984,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=240} payload={ state=ASSIGN_LOCATION remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='3' generation=1}  location=  exclusivities="/tablefoo" dependencies="METADATA","SERVERS","SYSTEM" obstructions="OperationMove 3[..ÿÿ]" permanent_obstructions= }
+---  33  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-391243926,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=250} payload={ state=LOAD_RANGE remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='3' generation=1}  location=rs2  exclusivities="/tablefoo" dependencies="METADATA","SYSTEM" obstructions="OperationMove ","OperationMove 3[..ÿÿ]" permanent_obstructions= }
+---  34  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-391243926,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=250} payload={ state=LOAD_RANGE remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='3' generation=1}  location=rs2  exclusivities="/tablefoo" dependencies="METADATA","SYSTEM" obstructions="OperationMove ","OperationMove 3[..ÿÿ]" permanent_obstructions= }
+---  35  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=1152589930,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=250} payload={ state=ACKNOWLEDGE remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='3' generation=1}  location=rs2  exclusivities="/tablefoo" dependencies="METADATA","SYSTEM" obstructions="OperationMove ","OperationMove 3[..ÿÿ]" permanent_obstructions= }
+---  36  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=1152589930,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=250} payload={ state=ACKNOWLEDGE remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='3' generation=1}  location=rs2  exclusivities="/tablefoo" dependencies="METADATA","SYSTEM" obstructions="OperationMove ","OperationMove 3[..ÿÿ]" permanent_obstructions= }
+---  37  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=1152589930,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=250} payload={ state=ACKNOWLEDGE remove_approvals=0 remove_approval_mask=0 name=/tablefoo {TableIdentifier: id='3' generation=1}  location=rs2  exclusivities="/tablefoo" dependencies="METADATA","SYSTEM" obstructions="OperationMove ","OperationMove 3[..ÿÿ]" permanent_obstructions= }
+---  38  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=234881536,id=2,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=14} payload={ generation 0 current_set={}}
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1910387101,id=6,timestamp=Wed Jun  4 23:27:42 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+---  39  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=1259776173,id=2,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=39} payload={ generation 0 current_set={{RangeMoveSpec: {TableIdentifier: id='4' generation=1} {RangeSpec: start='' end='ÿÿ'} source_location= dest_location=rs2 error='HYPERTABLE ok' complete=false} }}
+---  40  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=830376243,id=6,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=350} payload={ state=ASSIGN_ID remove_approvals=0 remove_approval_mask=0 name=/tablefoo_index {TableIdentifier: id='' generation=0}  location=  exclusivities="/tablefoo_index" dependencies="INIT","METADATA","SYSTEM" obstructions= permanent_obstructions= }
+---  41  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=830376243,id=6,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=350} payload={ state=ASSIGN_ID remove_approvals=0 remove_approval_mask=0 name=/tablefoo_index {TableIdentifier: id='' generation=0}  location=  exclusivities="/tablefoo_index" dependencies="INIT","METADATA","SYSTEM" obstructions= permanent_obstructions= }
+---  42  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=234881536,id=2,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=14} payload={ generation 0 current_set={}}
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=830376243,id=6,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=350} payload={ state=ASSIGN_ID remove_approvals=0 remove_approval_mask=0 name=/tablefoo_index {TableIdentifier: id='' generation=0}  location=  exclusivities="/tablefoo_index" dependencies="INIT","METADATA","SYSTEM" obstructions= permanent_obstructions= }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1272851613,id=10,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+---  43  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=830376243,id=6,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=350} payload={ state=ASSIGN_ID remove_approvals=0 remove_approval_mask=0 name=/tablefoo_index {TableIdentifier: id='' generation=0}  location=  exclusivities="/tablefoo_index" dependencies="INIT","METADATA","SYSTEM" obstructions= permanent_obstructions= }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1272851613,id=10,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-2058101608,id=13,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 5 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1029220604,id=14,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=349} payload={ state=ACKNOWLEDGE remove_approvals=0 remove_approval_mask=0 name=/^^tablefoo_index {TableIdentifier: id='6' generation=1}  location=rs1  exclusivities="/^^tablefoo_index" dependencies="METADATA","SYSTEM" obstructions="/tablefoo_index-create-qualifier-index","OperationMove 6[..ÿÿ]" permanent_obstructions= }
+---  44  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=234881536,id=2,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=14} payload={ generation 0 current_set={}}
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=1077670075,id=6,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=371} payload={ state=ACKNOWLEDGE remove_approvals=0 remove_approval_mask=0 name=/tablefoo_index {TableIdentifier: id='4' generation=1}  location=rs2  exclusivities="/tablefoo_index" dependencies="METADATA","SYSTEM" obstructions="OperationMove 4[..ÿÿ]" permanent_obstructions= }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1272851613,id=10,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-2058101608,id=13,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 5 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-870197405,id=14,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1655447656,id=16,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 5 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1521098599,id=17,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 6 }
+---  45  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=1077670075,id=6,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=371} payload={ state=ACKNOWLEDGE remove_approvals=0 remove_approval_mask=0 name=/tablefoo_index {TableIdentifier: id='4' generation=1}  location=rs2  exclusivities="/tablefoo_index" dependencies="METADATA","SYSTEM" obstructions="OperationMove 4[..ÿÿ]" permanent_obstructions= }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1272851613,id=10,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-2058101608,id=13,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 5 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-870197405,id=14,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1655447656,id=16,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 5 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1521098599,id=17,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 6 }
+---  46  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=234881536,id=2,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=14} payload={ generation 0 current_set={}}
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1675505821,id=6,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1272851613,id=10,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-2058101608,id=13,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 5 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-870197405,id=14,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1655447656,id=16,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 5 }
+{MetaLog::Entity OperationCreateTable header={type=196620,checksum=-1521098599,id=17,timestamp=Wed Jun  4 23:27:43 2014,flags=0,length=37} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [MASTER table exists] 6 }
+---  47  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=234881536,id=2,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=14} payload={ generation 0 current_set={}}
+---  48  ---
+log version: 2
+{MetaLog::Entity OperationRenameTable header={type=196623,checksum=1322082623,id=4,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=78} payload={ state=STARTED remove_approvals=0 remove_approval_mask=0 old_name=/tablefoo new_name=/tablebar id=3  exclusivities="/tablebar","/tablefoo" dependencies="INIT" obstructions= permanent_obstructions= }
+---  49  ---
+log version: 2
+{MetaLog::Entity OperationRenameTable header={type=196623,checksum=-1641951645,id=4,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+---  50  ---
+log version: 2
+{MetaLog::Entity OperationRenameTable header={type=196623,checksum=-1641951645,id=4,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=0 remove_approval_mask=0 [HYPERTABLE ok] }
+---  51  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=-1616948657,id=2,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=47} payload={ generation 0 current_set={{RangeMoveSpec: {TableIdentifier: id='3/6/3' generation=2} {RangeSpec: start='bar' end='foo'} source_location= dest_location=rs2 error='HYPERTABLE ok' complete=false} }}
+---  52  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-1208891552,id=6,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs3 (how.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=214724802,id=7,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs4 (cow.hypertable.com) state=0 }
+{MetaLog::Entity OperationMoveRange rs1 3/6/3[bar..foo] -> rs2 header={type=196625,checksum=-1771809781,id=8,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=229} payload={ state=STARTED remove_approvals=0 remove_approval_mask=3 {TableIdentifier: id='3/6/3' generation=2} {RangeSpec: start='bar' end='foo'} transfer-log='/hypertable/servers/log/xferlog' soft-limit=100000000 is_split=truesource='rs1' location='rs2'  exclusivities="-4102518627836282433" dependencies="2911362820939874715","INIT","METADATA","ROOT","SERVERS","SYSTEM" obstructions="3/6/3 move range","OperationMove 3/6/3[bar..foo]" permanent_obstructions= }
+---  53  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=234881536,id=2,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=14} payload={ generation 0 current_set={}}
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-1208891552,id=6,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs3 (how.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=214724802,id=7,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs4 (cow.hypertable.com) state=0 }
+{MetaLog::Entity OperationMoveRange header={type=196625,checksum=-728013963,id=8,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=2 remove_approval_mask=3 [HYPERTABLE ok] }
+---  54  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-1208891552,id=6,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs3 (how.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=214724802,id=7,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=43} payload={ rs4 (cow.hypertable.com) state=0 }
+{MetaLog::Entity OperationMoveRange header={type=196625,checksum=-728013963,id=8,timestamp=Wed Jun  4 23:27:44 2014,flags=0,length=34} payload={ state=COMPLETE remove_approvals=2 remove_approval_mask=3 [HYPERTABLE ok] }
+---  55  ---
+log version: 2
+{MetaLog::Entity BalancePlanAuthority header={type=196608,checksum=-1130507352,id=2,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=838} payload={ generation 4 rs1: rs2: {RangeRecoveryPlan: type=3, replay_plan={RangeRecoveryReplayPlan: num_entries=0}, receiver_plan={RangeRecoveryReceiverPlan: num_entries=1{ReceiverEntry:{TableIdentifier: id='2/0' generation=0}{RangeSpec: start='start_user3' end='end_user3'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}}} rs3: {RangeRecoveryPlan: type=0, replay_plan={RangeRecoveryReplayPlan: num_entries=0}, receiver_plan={RangeRecoveryReceiverPlan: num_entries=1{ReceiverEntry:{TableIdentifier: id='0/0' generation=0}{RangeSpec: start='start_root1' end='end_root1'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}}} {RangeRecoveryPlan: type=1, replay_plan={RangeRecoveryReplayPlan: num_entries=0}, receiver_plan={RangeRecoveryReceiverPlan: num_entries=1{ReceiverEntry:{TableIdentifier: id='1/0' generation=0}{RangeSpec: start='start_meta2' end='end_meta2'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}}} {RangeRecoveryPlan: type=3, replay_plan={RangeRecoveryReplayPlan: num_entries=0}, receiver_plan={RangeRecoveryReceiverPlan: num_entries=1{ReceiverEntry:{TableIdentifier: id='2/0' generation=0}{RangeSpec: start='start_user2' end='end_user2'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}}} rs4: {RangeRecoveryPlan: type=0, replay_plan={RangeRecoveryReplayPlan: num_entries=0}, receiver_plan={RangeRecoveryReceiverPlan: num_entries=2{ReceiverEntry:{TableIdentifier: id='0/0' generation=0}{RangeSpec: start='start_root0' end='end_root0'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}{ReceiverEntry:{TableIdentifier: id='0/0' generation=0}{RangeSpec: start='start_root1' end='end_root1'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}}} {RangeRecoveryPlan: type=1, replay_plan={RangeRecoveryReplayPlan: num_entries=0}, receiver_plan={RangeRecoveryReceiverPlan: num_entries=2{ReceiverEntry:{TableIdentifier: id='1/0' generation=0}{RangeSpec: start='start_meta1' end='end_meta1'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}{ReceiverEntry:{TableIdentifier: id='1/0' generation=0}{RangeSpec: start='start_meta2' end='end_meta2'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}}} {RangeRecoveryPlan: type=3, replay_plan={RangeRecoveryReplayPlan: num_entries=0}, receiver_plan={RangeRecoveryReceiverPlan: num_entries=3{ReceiverEntry:{TableIdentifier: id='2/0' generation=0}{RangeSpec: start='start_user1' end='end_user1'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}{ReceiverEntry:{TableIdentifier: id='2/0' generation=0}{RangeSpec: start='start_user2' end='end_user2'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}{ReceiverEntry:{TableIdentifier: id='2/0' generation=0}{RangeSpec: start='start_user3' end='end_user3'}{RangeState: state=STEADY timestamp=0 soft_limit=0 transfer_log='' split_point='' old_boundary_row=''}, location=rs5}}} current_set={}}
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-2048409761,id=4,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=REMOVED }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-11440971,id=5,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=REMOVED }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-504247968,id=6,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=43} payload={ rs3 (how.hypertable.com) state=REMOVED }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=919368386,id=7,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=43} payload={ rs4 (cow.hypertable.com) state=REMOVED }
+---  56  ---
+log version: 2
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=1541913951,id=4,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=43} payload={ rs1 (foo.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-716084555,id=5,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=43} payload={ rs2 (bar.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-1208891552,id=6,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=43} payload={ rs3 (how.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=214724802,id=7,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=43} payload={ rs4 (cow.hypertable.com) state=0 }
+{MetaLog::Entity RangeServerConnection header={type=131072,checksum=-908629821,id=8,timestamp=Wed Jun  4 23:27:45 2014,flags=0,length=43} payload={ rs5 (boo.hypertable.com) state=0 }

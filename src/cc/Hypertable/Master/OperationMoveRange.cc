@@ -170,6 +170,7 @@ void OperationMoveRange::execute() {
           bpa->balance_move_complete(m_table, m_range);
           remove_approval_add(0x03);
           complete_ok(bpa);
+          m_context->remove_move_operation(this);
           return;
         }
 
@@ -227,8 +228,12 @@ void OperationMoveRange::execute() {
       }
     }
     bpa->balance_move_complete(m_table, m_range);
-    remove_approval_add(0x02);
-    complete_ok(bpa);
+    {
+      bool remove_ok = remove_approval_add(0x02);
+      complete_ok(bpa);
+      if (remove_ok)
+        m_context->remove_move_operation(this);
+    }
     break;
 
   case OperationState::COMPLETE:

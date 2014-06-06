@@ -172,6 +172,10 @@ namespace Hypertable {
       m_maintenance_guard.wait_for_complete(true);
     }
 
+    void enable_maintenance() {
+      m_maintenance_guard.enable();
+    }
+
     void update_schema(SchemaPtr &schema);
 
     void split();
@@ -325,11 +329,6 @@ namespace Hypertable {
     /// Get table ID
     /// @return %Table ID
     const std::string get_table_id() { return m_table.id; }
-
-    /// Wait for range to enter STEADY state.
-    void wait_for_steady_state() {
-      m_metalog_entity->wait_for_state(RangeState::STEADY);
-    }
 
   private:
 

@@ -85,13 +85,6 @@ namespace Hypertable {
     /// does not exist in %Hyperspace, then if #m_if_exists is <i>true</i> it
     /// completes successfully, otherwise it completes with error
     /// Error::TABLE_NOT_FOUND</li>
-    /// <li>Checks %Hyperspace to see if a <i>value</i> index exists for the
-    /// table.  If so, it creates an OperationDropTable for the value index table
-    /// (<i>^table-name</i>) and makes the current operation dependent on it</li>
-    /// <li>Checks %Hyperspace to see if a <i>qualifier</i> index exists for the
-    /// table.  If so, it creates an OperationDropTable for the qualifier index
-    /// table (<i>^^table-name</i>) and makes the current operation dependent on
-    /// it</li>
     /// <li>Transitions to DROP_VALUE_INDEX</li>
     /// <li>Persists self to MML and returns</li>
     /// </ul></td>
@@ -103,36 +96,37 @@ namespace Hypertable {
     ///     does not exist in Hyperspace, state is transitioned to
     ///     DROP_QUALIFIER_INDEX and function drops through to next state</li>
     /// <li>Creates OperationDropTable sub operation for value index table</li>
-    /// <li>Stages sub operation with call to stage_subop() with dependency string
-    ///     #m_name + "-drop-index"</li>
+    /// <li>Stages sub operation with call to stage_subop()</li>
     /// <li>Transitions to state DROP_QUALIFIER_INDEX</li>
-    /// <li>Persists operation and sub operation to MML and returns</li>
+    /// <li>Persists operation with a call to record_state() and returns</li>
     /// </tr>
     /// <tr>
     /// <td>DROP_QUALIFIER_INDEX</td>
     /// <td><ul>
     /// <li>Handles result of value index dropping sub operation with a call to
-    ///     fetch_and_validate_subop(), returning if it failed</li>
+    ///     validate_subops(), returning if it failed</li>
     /// <li>If qualifier index is not specified in #m_parts or the qualifier
     ///     index table does not exist in Hyperspace, state is transitioned to
-    ///     UPDATE_HYPERSPACE, this and the completed sub op are persisted to
-    ///     the MML and then drops through to next state</li>
+    ///     UPDATE_HYPERSPACE, state is persisted with a call to record_state(),
+    ///     then drops through to next state</li>
     /// <li>Creates OperationDropTable sub operation for the qualifier index
     ///     table</li>
-    /// <li>Stages sub operation with call to stage_subop() with dependency string
-    ///     #m_name + "-drop-qualifier-index"</li>
+    /// <li>Stages sub operation with call to stage_subop()</li>
     /// <li>Transitions to state UPDATE_HYPERSPACE</li>
-    /// <li>Persists operation and sub operation to MML and returns</li>
+    /// <li>Persists operation with a call to record_state() and returns</li>
     /// </tr>
     /// <tr>
     /// <td>UPDATE_HYPERSPACE</td>
     /// <td><ul>
+    /// <li>Handles result of qualifier index dropping sub operation with a call
+    ///     to validate_subops(), returning if it failed</li>
     /// <li>Drops the name/id mapping for table in %Hyperspace</li>
+    /// <li>Removes the table directory from the brokered FS</li>
     /// <li>Dependencies set to Dependency::METADATA and "<table-id> move range",
     /// the latter causing the drop table operation to wait for all in-progress
     /// MoveRange operations on the table to complete</li>
     /// <li>Transitions to SCAN_METADATA state</li>
-    /// <li>Persists self to MML and returns</li>
+    /// <li>Persists operation with a call to record_state() and returns</li>
     /// </ul></td>
     /// </tr>
     /// <tr>
@@ -224,10 +218,6 @@ namespace Hypertable {
     ///   <td>TableParts</td><td>[VERSION 3] %Table parts to create (#m_parts)
     ///   </td>
     ///   </tr>
-    ///   <tr>
-    ///   <td>i64</td><td>[VERSION 3] Sub operation hash code
-    ///       (#m_subop_hash_code)</td>
-    ///   </tr>
     /// </table>
     /// @param bufp Address of destination buffer pointer (advanced by call)
     virtual void encode_state(uint8_t **bufp) const;
@@ -263,36 +253,6 @@ namespace Hypertable {
     ////
     void initialize_dependencies();
 
-    /// Fetchs and handles the result of sub operation.
-    /// If #m_subop_hash_code is non-zero, a sub operation is outstanding and
-    /// this member function will fetch it and process it as follows:
-    ///   - Fetches the sub operation from the ReferenceManager
-    ///   - Adds remove approvals 0x01 to the sub operation
-    ///   - Sets #m_subop_hash_code to zero
-    ///   - If sub operation error code is non-zero, completes overall operaton
-    ///     with a call to complete_error(), and returns <i>false</i>.
-    ///   - Otherwise, sub operation is added to <code>entities</code>
-    /// @param entities Reference to vector of entites to hold sucessfully
-    /// completed sub operation
-    /// @return <i>true</i> if no sub operation is outstanding or the sub
-    /// operation completed without error, <i>false</i> otherwise.
-    bool fetch_and_validate_subop(vector<Entity *> &entities);
-
-    /// Stages a sub operation for execution.
-    /// This member function does the following:
-    ///   - Adds <code>dependency_string</code> to sub operation's set of
-    ///     obstructions
-    ///   - Sets sub operation remove approval mask to 0x01
-    ///   - Adds sub operation to ReferenceManager
-    ///   - Adds <code>dependency_string</code> to parent (this) operation's set
-    ///     of dependencies
-    ///   - Pushes sub operation onto #m_sub_ops
-    ///   - Sets #m_subop_hash_code to sub operation's hash code
-    /// @param opartion Sub operation
-    /// @param dependency_string %Dependency string used to serialize sub
-    /// operation with parent operation
-    void stage_subop(Operation *operation, std::string dependency_string);
-
     /// Pathtname of table to drop
     String m_name;
 
@@ -310,9 +270,6 @@ namespace Hypertable {
 
     /// Specification for which parts of table to drop
     TableParts m_parts {TableParts::ALL};
-
-    /// Hash code for currently outstanding sub operation
-    int64_t m_subop_hash_code {};
   };
 
   /// @}

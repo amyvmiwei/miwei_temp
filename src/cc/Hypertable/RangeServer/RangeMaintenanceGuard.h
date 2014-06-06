@@ -66,6 +66,11 @@ namespace Hypertable {
       m_disabled = true;
     }
 
+    void enable() {
+      ScopedLock lock(m_mutex);
+      m_disabled = false;
+    }
+
     class Activator {
     public:
       Activator(RangeMaintenanceGuard &guard) : m_guard(&guard) {

@@ -27,11 +27,12 @@
 #ifndef HYPERTABLE_UTILITY_H
 #define HYPERTABLE_UTILITY_H
 
-#include "Common/StringExt.h"
+#include <Hypertable/Master/Context.h>
 
-#include "Hypertable/Lib/Types.h"
+#include <Hypertable/Lib/TableParts.h>
+#include <Hypertable/Lib/Types.h>
 
-#include "Context.h"
+#include <Common/StringExt.h>
 
 namespace Hypertable {
 
@@ -78,6 +79,14 @@ namespace Hypertable {
      * @return <i>true</i> if table exists, <i>false</i> otherwise
      */
     extern bool table_exists(ContextPtr &context, const String &id);
+
+    /// Gets index parts specified in schema.
+    /// Returns a TableParts object specifying the indices that are specified in
+    /// <code>schema</code>.
+    /// @param schema %Schema for which to obtain index parts
+    /// @return TableParts object specifying indices specified in
+    /// <code>schema</code>
+    extern TableParts get_index_parts(const std::string &schema);
 
     /** Checks if table name is available.
      * Checks to see if table <code>name</code> is available for

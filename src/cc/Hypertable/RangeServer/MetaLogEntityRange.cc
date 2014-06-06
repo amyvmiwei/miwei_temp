@@ -101,12 +101,6 @@ void MetaLogEntityRange::clear_state() {
   m_cond.notify_all();
 }
 
-void MetaLogEntityRange::wait_for_state(uint8_t state) {
-  ScopedLock lock(m_mutex);
-  while (m_state.state != state)
-    m_cond.wait(lock);
-}
-
 uint64_t MetaLogEntityRange::get_soft_limit() {
   ScopedLock lock(m_mutex);
   return m_state.soft_limit;

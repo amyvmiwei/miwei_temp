@@ -69,6 +69,10 @@ void OperationProcessor::add_operation(OperationPtr &operation) {
 
   //HT_INFOF("Adding operation %s", operation->label().c_str());
 
+  // Make sure this operation hasn't already been added
+  if (m_context.op_ids.count(operation->id()) > 0)
+    return;
+
   if (!operation->is_complete() || operation->is_perpetual()) {
     add_operation_internal(operation);
     m_context.need_order_recompute = true;
@@ -84,16 +88,20 @@ void OperationProcessor::add_operations(std::vector<OperationPtr> &operations) {
   ScopedLock lock(m_context.mutex);
   bool added = false;
 
-  for (size_t i=0; i<operations.size(); i++) {
+  for (auto & operation : operations) {
 
     //HT_INFOF("Adding operation %s", operations[i]->label().c_str());
 
-    if (!operations[i]->is_complete() || operations[i]->is_perpetual()) {
-      add_operation_internal(operations[i]);
+    // Make sure this operation hasn't already been added
+    if (m_context.op_ids.count(operation->id()) > 0)
+      continue;
+
+    if (!operation->is_complete() || operation->is_perpetual()) {
+      add_operation_internal(operation);
       added = true;
     }
-    else if (operations[i]->get_remove_approval_mask() == 0)
-      m_context.master_context->response_manager->add_operation(operations[i]);
+    else if (operation->get_remove_approval_mask() == 0)
+      m_context.master_context->response_manager->add_operation(operation);
   }
 
   if (added) {
@@ -121,6 +129,7 @@ void OperationProcessor::add_operation_internal(OperationPtr &operation) {
   m_context.live.insert(v);
   m_context.operation_hash[operation->hash_code()]=OperationVertex(operation,v);
   add_dependencies(v, operation);
+  HT_ASSERT(m_context.op_ids.insert(operation->id()).second);
 }
 
 OperationPtr OperationProcessor::remove_operation(int64_t hash_code) {
@@ -358,15 +367,6 @@ void OperationProcessor::add_dependencies(Vertex v, OperationPtr &operation) {
   operation->obstructions(names);
   for (DependencySet::iterator iter = names.begin(); iter != names.end(); ++iter) {
     add_obstruction(v, *iter);
-  }
-
-  // Add sub-operations
-  std::vector<Operation *> sub_ops;
-  operation->swap_sub_operations(sub_ops);
-  OperationPtr sub_op;
-  for (size_t i=0; i<sub_ops.size(); i++) {
-    sub_op = sub_ops[i];
-    m_context.op->add_operation_internal(sub_op);
   }
 
 }
@@ -669,6 +669,7 @@ void OperationProcessor::retire_operation(Vertex v, OperationPtr &operation) {
         operation->get_state() == OperationState::COMPLETE)
       m_context.master_context->response_manager->add_operation(operation);
   }
+  m_context.op_ids.erase(operation->id());
 }
 
 
@@ -682,6 +683,18 @@ void OperationProcessor::update_operation(Vertex v, OperationPtr &operation) {
   remove_out_edge_if(v, np, m_context.graph);
 
   m_context.op->add_dependencies(v, operation);
+
+  // Add sub-operations
+  std::vector<Operation *> sub_ops;
+  operation->fetch_sub_operations(sub_ops);
+  OperationPtr sub_op;
+  for (auto op : sub_ops) {
+    if (m_context.op_ids.count(op->id()) == 0 && !op->is_complete()) {
+      sub_op = op;
+      m_context.op->add_operation_internal(sub_op);
+    }
+  }
+
   m_context.need_order_recompute = true;
   m_context.current_iter = m_context.current.end();
   m_context.cond.notify_all();
