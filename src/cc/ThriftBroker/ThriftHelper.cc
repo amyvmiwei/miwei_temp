@@ -48,13 +48,11 @@ std::ostream &operator<<(std::ostream &out, const RowInterval &ri) {
 std::ostream &operator<<(std::ostream &out, const Key &key) {
   out <<"{Key:";
 
-  if (key.__isset.row)
-    out <<" row='"<< key.row <<"'";
+  out <<" row='"<< key.row <<"'";
 
-  if (key.__isset.column_family)
-    out <<" cf='"<< key.column_family <<"'";
+  out <<" cf='"<< key.column_family <<"'";
 
-  if (key.__isset.column_qualifier)
+  if (!key.column_qualifier.empty())
     out <<" cq='"<< key.column_qualifier <<"'";
 
   if (key.__isset.timestamp)
