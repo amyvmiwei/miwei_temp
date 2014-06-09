@@ -59,7 +59,7 @@ fi
 let j=$COUNT
 
 while [ $j -gt 0 ] ; do
-  let tbport=38080+j%THRIFTBROKER_COUNT
+  let tbport=15867+j%THRIFTBROKER_COUNT
   start_server_no_check test_client jrun Hypertable.TestClient-$j $JRUN_OPTS org.hypertable.examples.PerformanceTest.Client --thriftbroker-port=$tbport "$@"
   let j--
 done
