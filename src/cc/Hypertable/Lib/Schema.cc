@@ -106,6 +106,8 @@ Schema::Schema(const Schema &other)
     if (src_ag->defaults().is_set_counter())
       ag->set_default_counter(src_ag->get_default_counter());
 
+    ag->set_generation(src_ag->get_generation());
+
     // Populate access group with column families
     for (auto src_cf : src_ag->columns())
       ag->add_column(new ColumnFamilySpec(*src_cf));
@@ -114,6 +116,9 @@ Schema::Schema(const Schema &other)
     m_access_groups.push_back(ag);
 
   }
+
+  m_ag_defaults = other.m_ag_defaults;
+  m_cf_defaults = other.m_cf_defaults;
 
   validate();
 

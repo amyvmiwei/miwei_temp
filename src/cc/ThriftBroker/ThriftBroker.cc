@@ -506,19 +506,19 @@ bool convert_column_family_options(const Hypertable::ColumnFamilyOptions &hoptio
                                    ThriftGen::ColumnFamilyOptions &toptions) {
   bool ret = false;
   if (hoptions.is_set_max_versions()) {
-    toptions.__set_max_versions(true);
+    toptions.__set_max_versions(hoptions.get_max_versions());
     ret = true;
   }
   if (hoptions.is_set_ttl()) {
-    toptions.__set_ttl(true);
+    toptions.__set_ttl(hoptions.get_ttl());
     ret = true;
   }
   if (hoptions.is_set_time_order_desc()) {
-    toptions.__set_time_order_desc(true);
+    toptions.__set_time_order_desc(hoptions.get_time_order_desc());
     ret = true;
   }
   if (hoptions.is_set_counter()) {
-    toptions.__set_counter(true);
+    toptions.__set_counter(hoptions.get_counter());
     ret = true;
   }
   return ret;
@@ -540,15 +540,15 @@ bool convert_access_group_options(const Hypertable::AccessGroupOptions &hoptions
                                   ThriftGen::AccessGroupOptions &toptions) {
   bool ret = false;
   if (hoptions.is_set_in_memory()) {
-    toptions.__set_in_memory(true);
+    toptions.__set_in_memory(hoptions.get_in_memory());
     ret = true;
   }
   if (hoptions.is_set_replication()) {
-    toptions.__set_replication(true);
+    toptions.__set_replication(hoptions.get_replication());
     ret = true;
   }
   if (hoptions.is_set_blocksize()) {
-    toptions.__set_blocksize(true);
+    toptions.__set_blocksize(hoptions.get_blocksize());
     ret = true;
   }
   if (hoptions.is_set_compressor()) {
@@ -606,7 +606,7 @@ void convert_schema(const Hypertable::SchemaPtr &hschema,
     tcf.access_group = cf_spec->get_access_group();
     tcf.deleted = cf_spec->get_deleted();
     if (cf_spec->get_generation())
-      tcf.__set_generation(true);
+      tcf.__set_generation(cf_spec->get_generation());
     if (cf_spec->get_id())
       tcf.__set_id(cf_spec->get_id());
     tcf.value_index = cf_spec->get_value_index();
