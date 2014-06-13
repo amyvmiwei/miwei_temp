@@ -34,6 +34,7 @@
 #include <boost/shared_ptr.hpp>
 
 #include <bitset>
+#include <memory>
 #include <vector>
 
 namespace Hypertable {
@@ -46,9 +47,24 @@ namespace Hypertable {
 
     struct CellPattern {
       CellPattern(const ColumnPredicate &cp, size_t id) : 
-        qualifier(cp.column_qualifier), value(cp.value),
         qualifier_len(cp.column_qualifier_len), value_len(cp.value_len),
-        operation(cp.operation), id(id) { }
+        operation(cp.operation), id(id) {
+        buffer = std::shared_ptr<char>(new char[cp.column_qualifier_len+cp.value_len+2],
+                                       []( char *p ) { delete[] p; });
+        char *ptr = buffer.get();
+        if (cp.column_qualifier) {
+          qualifier = ptr;
+          memcpy(ptr, cp.column_qualifier, cp.column_qualifier_len);
+          ptr += cp.column_qualifier_len;
+          *ptr++ = 0;
+        }
+        if (cp.value) {
+          value = ptr;
+          memcpy(ptr, cp.value, cp.value_len);
+          ptr += cp.value_len;
+          *ptr++ = 0;
+        }
+      }
       bool regex_qualifier_match(const char *str) {
         if (!qualifier_regex) {
           String pattern(qualifier, (size_t)qualifier_len);
@@ -63,15 +79,19 @@ namespace Hypertable {
         }
         return RE2::PartialMatch(str, *value_regex);
       }
-      const char *qualifier;
-      const char *value;
+      const char *qualifier {};
+      const char *value {};
       uint32_t qualifier_len;
       uint32_t value_len;
       uint32_t operation;
       boost::shared_ptr<RE2> value_regex;
       boost::shared_ptr<RE2> qualifier_regex;
+      std::shared_ptr<char> buffer;
       size_t id;
     };
+
+    /// Smart pointer to CellPattern
+    typedef std::shared_ptr<CellPattern> CellPatternPtr;
 
   public:
 
@@ -82,9 +102,9 @@ namespace Hypertable {
     void all_matches(const char *qualifier, size_t qualifier_len,
                      const char* value, size_t value_len,
                      std::bitset<32> &matching) {
-      foreach_ht (CellPattern &cp, patterns) {
+      for (auto & cp : patterns) {
         if (pattern_match(cp, qualifier, qualifier_len, value, value_len))
-          matching.set(cp.id);
+          matching.set(cp->id);
       }
     }
 
@@ -98,30 +118,30 @@ namespace Hypertable {
                  const char* value, size_t value_len) {
       if (patterns.empty())
         return true;
-      foreach_ht (CellPattern &cp, patterns) {
+      for (auto & cp : patterns) {
         if (pattern_match(cp, qualifier, qualifier_len, value, value_len))
           return true;
       }
       return false;
     }
 
-    bool pattern_match(CellPattern &cp, const char *qualifier,
+    bool pattern_match(CellPatternPtr &cp, const char *qualifier,
                        size_t qualifier_len, const char* value,
                        size_t value_len) {
 
       // Qualifier match
-      if (cp.operation & ColumnPredicate::QUALIFIER_MATCH) {
-        if (cp.operation & ColumnPredicate::QUALIFIER_EXACT_MATCH) {
-          if (qualifier_len != cp.qualifier_len ||
-              memcmp(qualifier, cp.qualifier, qualifier_len))
+      if (cp->operation & ColumnPredicate::QUALIFIER_MATCH) {
+        if (cp->operation & ColumnPredicate::QUALIFIER_EXACT_MATCH) {
+          if (qualifier_len != cp->qualifier_len ||
+              memcmp(qualifier, cp->qualifier, qualifier_len))
             return false;
         }
-        else if (cp.operation & ColumnPredicate::QUALIFIER_PREFIX_MATCH) {
-          if (qualifier_len < cp.qualifier_len)
+        else if (cp->operation & ColumnPredicate::QUALIFIER_PREFIX_MATCH) {
+          if (qualifier_len < cp->qualifier_len)
             return false;
           const char *p1 = qualifier;
-          const char *p2 = cp.qualifier;
-          const char *prefix_end = cp.qualifier + cp.qualifier_len;
+          const char *p2 = cp->qualifier;
+          const char *prefix_end = cp->qualifier + cp->qualifier_len;
           for (; p2 < prefix_end; ++p1,++p2) {
             if (*p1 != *p2)
               break;
@@ -129,8 +149,8 @@ namespace Hypertable {
           if (p2 != prefix_end)
             return false;
         }
-        else if (cp.operation & ColumnPredicate::QUALIFIER_REGEX_MATCH) {
-          if (!cp.regex_qualifier_match(qualifier))
+        else if (cp->operation & ColumnPredicate::QUALIFIER_REGEX_MATCH) {
+          if (!cp->regex_qualifier_match(qualifier))
             return false;
         }
       }
@@ -138,19 +158,19 @@ namespace Hypertable {
         return false;
 
       // Value match
-      if (cp.operation & ColumnPredicate::VALUE_MATCH) {
-        if (cp.operation & ColumnPredicate::EXACT_MATCH) {
-          if (cp.value_len != value_len ||
-              memcmp(cp.value, value, cp.value_len))
+      if (cp->operation & ColumnPredicate::VALUE_MATCH) {
+        if (cp->operation & ColumnPredicate::EXACT_MATCH) {
+          if (cp->value_len != value_len ||
+              memcmp(cp->value, value, cp->value_len))
             return false;
         }
-        else if (cp.operation & ColumnPredicate::PREFIX_MATCH) {
-          if (cp.value_len > value_len ||
-              memcmp(cp.value, value, cp.value_len))
+        else if (cp->operation & ColumnPredicate::PREFIX_MATCH) {
+          if (cp->value_len > value_len ||
+              memcmp(cp->value, value, cp->value_len))
             return false;
         }
-        else if (cp.operation & ColumnPredicate::REGEX_MATCH) {
-          if (!cp.regex_value_match(value))
+        else if (cp->operation & ColumnPredicate::REGEX_MATCH) {
+          if (!cp->regex_value_match(value))
             return false;
         }
       }
@@ -158,7 +178,7 @@ namespace Hypertable {
     }
 
     void add_column_predicate(const ColumnPredicate &column_predicate, size_t id) {
-      patterns.push_back(CellPattern(column_predicate, id));
+      patterns.push_back(std::make_shared<CellPattern>(column_predicate, id));
     }
 
     /// TTL cutoff time
@@ -176,7 +196,7 @@ namespace Hypertable {
   private:
 
     /// Vector of patterns used in predicate match
-    std::vector<CellPattern> patterns;
+    std::vector<CellPatternPtr> patterns;
   };
 
   /// @}

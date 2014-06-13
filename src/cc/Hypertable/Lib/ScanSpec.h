@@ -54,11 +54,11 @@ public:
 
   ColumnPredicate() { }
 
-  ColumnPredicate(const char *column_family, const char *column_qualifier,
-                  uint32_t operation, const char *value, uint32_t value_len=0)
-    : column_family(column_family), column_qualifier(column_qualifier),
-      value(value), value_len(value_len), operation(operation) {
-    if (!value_len && value)
+  ColumnPredicate(const char *family, const char *qualifier,
+                  uint32_t op, const char *v, uint32_t vlen=0)
+    : column_family(family), column_qualifier(qualifier),
+      value(v), value_len(vlen), operation(op) {
+    if (!vlen && value)
       value_len = strlen(value);
     column_qualifier_len = strlen(column_qualifier);
   }
@@ -629,6 +629,8 @@ private:
 std::ostream &operator<<(std::ostream &os, const RowInterval &ri);
 
 std::ostream &operator<<(std::ostream &os, const CellInterval &ci);
+
+std::ostream &operator<<(std::ostream &os, const ColumnPredicate &cp);
 
 std::ostream &operator<<(std::ostream &os, const ScanSpec &scan_spec);
 

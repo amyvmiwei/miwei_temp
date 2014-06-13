@@ -636,8 +636,13 @@ void ScanSpec::__set_do_not_cache(const bool val) {
 __isset.do_not_cache = true;
 }
 
-const char* ScanSpec::ascii_fingerprint = "CAB903AC8C5C4847373DE9F201D35C02";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0xCA,0xB9,0x03,0xAC,0x8C,0x5C,0x48,0x47,0x37,0x3D,0xE9,0xF2,0x01,0xD3,0x5C,0x02};
+void ScanSpec::__set_and_column_predicates(const bool val) {
+  and_column_predicates = val;
+__isset.and_column_predicates = true;
+}
+
+const char* ScanSpec::ascii_fingerprint = "AB0BF4CCEE25EA751C9EBCDB64D907B5";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0xAB,0x0B,0xF4,0xCC,0xEE,0x25,0xEA,0x75,0x1C,0x9E,0xBC,0xDB,0x64,0xD9,0x07,0xB5};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -851,6 +856,14 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
+      case 19:
+        if (ftype == ::apache::thrift::protocol::T_BOOL) {
+          xfer += iprot->readBool(this->and_column_predicates);
+          this->__isset.and_column_predicates = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
       default:
         xfer += iprot->skip(ftype);
         break;
@@ -990,6 +1003,11 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeBool(this->do_not_cache);
     xfer += oprot->writeFieldEnd();
   }
+  if (this->__isset.and_column_predicates) {
+    xfer += oprot->writeFieldBegin("and_column_predicates", ::apache::thrift::protocol::T_BOOL, 19);
+    xfer += oprot->writeBool(this->and_column_predicates);
+    xfer += oprot->writeFieldEnd();
+  }
   xfer += oprot->writeFieldStop();
   xfer += oprot->writeStructEnd();
   oprot->decrementRecursionDepth();
@@ -1016,6 +1034,7 @@ void swap(ScanSpec &a, ScanSpec &b) {
   swap(a.cell_offset, b.cell_offset);
   swap(a.column_predicates, b.column_predicates);
   swap(a.do_not_cache, b.do_not_cache);
+  swap(a.and_column_predicates, b.and_column_predicates);
   swap(a.__isset, b.__isset);
 }
 
@@ -1038,6 +1057,7 @@ ScanSpec::ScanSpec(const ScanSpec& other31) {
   cell_offset = other31.cell_offset;
   column_predicates = other31.column_predicates;
   do_not_cache = other31.do_not_cache;
+  and_column_predicates = other31.and_column_predicates;
   __isset = other31.__isset;
 }
 ScanSpec& ScanSpec::operator=(const ScanSpec& other32) {
@@ -1059,6 +1079,7 @@ ScanSpec& ScanSpec::operator=(const ScanSpec& other32) {
   cell_offset = other32.cell_offset;
   column_predicates = other32.column_predicates;
   do_not_cache = other32.do_not_cache;
+  and_column_predicates = other32.and_column_predicates;
   __isset = other32.__isset;
   return *this;
 }

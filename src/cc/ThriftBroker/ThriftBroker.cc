@@ -247,6 +247,9 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
   if (tss.__isset.cell_offset)
     hss.cell_offset = tss.cell_offset;
 
+  if (tss.__isset.and_column_predicates)
+    hss.and_column_predicates = tss.and_column_predicates;
+
   // shallow copy
   foreach_ht(const ThriftGen::RowInterval &ri, tss.row_intervals)
     hss.row_intervals.push_back(Hypertable::RowInterval(ri.start_row.c_str(),

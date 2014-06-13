@@ -763,6 +763,10 @@ class ScanSpec {
    * @var bool
    */
   public $do_not_cache = false;
+  /**
+   * @var bool
+   */
+  public $and_column_predicates = false;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -858,6 +862,10 @@ class ScanSpec {
           'var' => 'do_not_cache',
           'type' => TType::BOOL,
           ),
+        19 => array(
+          'var' => 'and_column_predicates',
+          'type' => TType::BOOL,
+          ),
         );
     }
     if (is_array($vals)) {
@@ -914,6 +922,9 @@ class ScanSpec {
       }
       if (isset($vals['do_not_cache'])) {
         $this->do_not_cache = $vals['do_not_cache'];
+      }
+      if (isset($vals['and_column_predicates'])) {
+        $this->and_column_predicates = $vals['and_column_predicates'];
       }
     }
   }
@@ -1106,6 +1117,13 @@ class ScanSpec {
             $xfer += $input->skip($ftype);
           }
           break;
+        case 19:
+          if ($ftype == TType::BOOL) {
+            $xfer += $input->readBool($this->and_column_predicates);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
         default:
           $xfer += $input->skip($ftype);
           break;
@@ -1255,6 +1273,11 @@ class ScanSpec {
     if ($this->do_not_cache !== null) {
       $xfer += $output->writeFieldBegin('do_not_cache', TType::BOOL, 18);
       $xfer += $output->writeBool($this->do_not_cache);
+      $xfer += $output->writeFieldEnd();
+    }
+    if ($this->and_column_predicates !== null) {
+      $xfer += $output->writeFieldBegin('and_column_predicates', TType::BOOL, 19);
+      $xfer += $output->writeBool($this->and_column_predicates);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

@@ -385,7 +385,7 @@ sub write {
 
 package Hypertable::ThriftGen::ScanSpec;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes versions row_limit start_time end_time columns keys_only cell_limit cell_limit_per_family row_regexp value_regexp scan_and_filter_rows row_offset cell_offset column_predicates do_not_cache ) );
+Hypertable::ThriftGen::ScanSpec->mk_accessors( qw( row_intervals cell_intervals return_deletes versions row_limit start_time end_time columns keys_only cell_limit cell_limit_per_family row_regexp value_regexp scan_and_filter_rows row_offset cell_offset column_predicates do_not_cache and_column_predicates ) );
 
 sub new {
   my $classname = shift;
@@ -409,6 +409,7 @@ sub new {
   $self->{cell_offset} = 0;
   $self->{column_predicates} = undef;
   $self->{do_not_cache} = 0;
+  $self->{and_column_predicates} = 0;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{row_intervals}) {
       $self->{row_intervals} = $vals->{row_intervals};
@@ -463,6 +464,9 @@ sub new {
     }
     if (defined $vals->{do_not_cache}) {
       $self->{do_not_cache} = $vals->{do_not_cache};
+    }
+    if (defined $vals->{and_column_predicates}) {
+      $self->{and_column_predicates} = $vals->{and_column_predicates};
     }
   }
   return bless ($self, $classname);
@@ -646,6 +650,12 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
+      /^19$/ && do{      if ($ftype == TType::BOOL) {
+        $xfer += $input->readBool(\$self->{and_column_predicates});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
         $xfer += $input->skip($ftype);
     }
     $xfer += $input->readFieldEnd();
@@ -782,6 +792,11 @@ sub write {
   if (defined $self->{do_not_cache}) {
     $xfer += $output->writeFieldBegin('do_not_cache', TType::BOOL, 18);
     $xfer += $output->writeBool($self->{do_not_cache});
+    $xfer += $output->writeFieldEnd();
+  }
+  if (defined $self->{and_column_predicates}) {
+    $xfer += $output->writeFieldBegin('and_column_predicates', TType::BOOL, 19);
+    $xfer += $output->writeBool($self->{and_column_predicates});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

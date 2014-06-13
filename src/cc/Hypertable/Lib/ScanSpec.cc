@@ -239,6 +239,17 @@ ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
   return os;
 }
 
+std::ostream &Hypertable::operator<<(std::ostream &os, const ColumnPredicate &cp) {
+  os << "{ColumnPredicate";
+  if (cp.column_family)
+    os << " column_family=" << cp.column_family;
+  if (cp.column_qualifier)
+    os << " column_qualifier=" << cp.column_qualifier << ",len=" << cp.column_qualifier_len;
+  if (cp.value)
+    os << " value=" << cp.value << ",len=" << cp.value_len;
+  os << " operation=" << cp.operation << "}";
+}
+
 
 /** @relates ScanSpec */
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
@@ -269,9 +280,12 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   }
   if (!scan_spec.column_predicates.empty()) {
     os << "\n column_predicates=";
-    foreach_ht(const ColumnPredicate &cp, scan_spec.column_predicates)
-      os << " (" << cp.column_family << " " << cp.operation << " " 
-         << cp.value << ")";
+    foreach_ht(const ColumnPredicate &cp, scan_spec.column_predicates) {
+      os << " (" << cp.column_family;
+      if (cp.column_qualifier && *cp.column_qualifier)
+        os << ":" << cp.column_qualifier;
+      os<< " " << cp.operation << " " << cp.value << ")";
+    }
   }
   if (!scan_spec.columns.empty()) {
     os << "\n columns=(";
