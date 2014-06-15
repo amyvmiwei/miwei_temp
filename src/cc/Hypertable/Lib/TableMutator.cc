@@ -71,9 +71,14 @@ TableMutator::TableMutator(PropertiesPtr &props, Comm *comm, Table *table, Range
 }
 
 TableMutator::~TableMutator() {
-  if (m_unflushed_updates)
-    flush();
-  m_mutator->cancel();
+  try {
+    if (m_unflushed_updates)
+      flush();
+    m_mutator->cancel();
+  }
+  catch (Exception &e) {
+    HT_ERROR_OUT << e << HT_END;
+  }
 }
 
 void
