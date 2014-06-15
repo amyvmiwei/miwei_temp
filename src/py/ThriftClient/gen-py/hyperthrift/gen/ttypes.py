@@ -398,24 +398,24 @@ class ColumnPredicate(object):
 
   Attributes:
    - column_family
+   - column_qualifier
    - operation
    - value
-   - column_qualifier
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.STRING, 'column_family', None, None, ), # 1
-    (2, TType.I32, 'operation', None, None, ), # 2
-    (3, TType.STRING, 'value', None, None, ), # 3
-    (4, TType.STRING, 'column_qualifier', None, None, ), # 4
+    (2, TType.STRING, 'column_qualifier', None, None, ), # 2
+    (3, TType.I32, 'operation', None, None, ), # 3
+    (4, TType.STRING, 'value', None, None, ), # 4
   )
 
-  def __init__(self, column_family=None, operation=None, value=None, column_qualifier=None,):
+  def __init__(self, column_family=None, column_qualifier=None, operation=None, value=None,):
     self.column_family = column_family
+    self.column_qualifier = column_qualifier
     self.operation = operation
     self.value = value
-    self.column_qualifier = column_qualifier
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -432,18 +432,18 @@ class ColumnPredicate(object):
         else:
           iprot.skip(ftype)
       elif fid == 2:
+        if ftype == TType.STRING:
+          self.column_qualifier = iprot.readString();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
         if ftype == TType.I32:
           self.operation = iprot.readI32();
         else:
           iprot.skip(ftype)
-      elif fid == 3:
-        if ftype == TType.STRING:
-          self.value = iprot.readString();
-        else:
-          iprot.skip(ftype)
       elif fid == 4:
         if ftype == TType.STRING:
-          self.column_qualifier = iprot.readString();
+          self.value = iprot.readString();
         else:
           iprot.skip(ftype)
       else:
@@ -460,17 +460,17 @@ class ColumnPredicate(object):
       oprot.writeFieldBegin('column_family', TType.STRING, 1)
       oprot.writeString(self.column_family)
       oprot.writeFieldEnd()
+    if self.column_qualifier is not None:
+      oprot.writeFieldBegin('column_qualifier', TType.STRING, 2)
+      oprot.writeString(self.column_qualifier)
+      oprot.writeFieldEnd()
     if self.operation is not None:
-      oprot.writeFieldBegin('operation', TType.I32, 2)
+      oprot.writeFieldBegin('operation', TType.I32, 3)
       oprot.writeI32(self.operation)
       oprot.writeFieldEnd()
     if self.value is not None:
-      oprot.writeFieldBegin('value', TType.STRING, 3)
+      oprot.writeFieldBegin('value', TType.STRING, 4)
       oprot.writeString(self.value)
-      oprot.writeFieldEnd()
-    if self.column_qualifier is not None:
-      oprot.writeFieldBegin('column_qualifier', TType.STRING, 4)
-      oprot.writeString(self.column_qualifier)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

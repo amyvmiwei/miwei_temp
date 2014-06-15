@@ -171,9 +171,9 @@ enum ColumnPredicateOperation {
  */
 struct ColumnPredicate {
   1: optional string column_family
-  2: ColumnPredicateOperation operation
-  3: optional string value
-  4: optional string column_qualifier
+  2: optional string column_qualifier
+  3: ColumnPredicateOperation operation
+  4: optional string value
 }
 
 /** Specifies options for a scan

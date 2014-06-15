@@ -31,7 +31,12 @@ std::ostream &operator<<(std::ostream &os, const Cell &cell) {
   HT_DUMP_CSTR(os, key, cell.row_key);
   HT_DUMP_CSTR(os, cf, cell.column_family);
   HT_DUMP_CSTR(os, cq, cell.column_qualifier);
-  HT_DUMP_CSTR(os, val, cell.value);
+  if (cell.value_len == 0)
+    HT_DUMP_CSTR(os, val, 0);
+  else {
+    std::string value((const char *)cell.value, cell.value_len);
+    HT_DUMP_CSTR(os, val, value.c_str());
+  }
 
   os <<" len="<< cell.value_len
      <<" ts="<< cell.timestamp

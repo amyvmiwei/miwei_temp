@@ -260,39 +260,39 @@ class CellInterval {
 void swap(CellInterval &a, CellInterval &b);
 
 typedef struct _ColumnPredicate__isset {
-  _ColumnPredicate__isset() : column_family(false), operation(false), value(false), column_qualifier(false) {}
+  _ColumnPredicate__isset() : column_family(false), column_qualifier(false), operation(false), value(false) {}
   bool column_family;
+  bool column_qualifier;
   bool operation;
   bool value;
-  bool column_qualifier;
 } _ColumnPredicate__isset;
 
 class ColumnPredicate {
  public:
 
-  static const char* ascii_fingerprint; // = "5E0D6E56B1DF2285E40B070B2E5E5E6E";
-  static const uint8_t binary_fingerprint[16]; // = {0x5E,0x0D,0x6E,0x56,0xB1,0xDF,0x22,0x85,0xE4,0x0B,0x07,0x0B,0x2E,0x5E,0x5E,0x6E};
+  static const char* ascii_fingerprint; // = "7AD135A1617551CDCFB16B6BF2E36C48";
+  static const uint8_t binary_fingerprint[16]; // = {0x7A,0xD1,0x35,0xA1,0x61,0x75,0x51,0xCD,0xCF,0xB1,0x6B,0x6B,0xF2,0xE3,0x6C,0x48};
 
   ColumnPredicate(const ColumnPredicate&);
   ColumnPredicate& operator=(const ColumnPredicate&);
-  ColumnPredicate() : column_family(), operation((ColumnPredicateOperation::type)0), value(), column_qualifier() {
+  ColumnPredicate() : column_family(), column_qualifier(), operation((ColumnPredicateOperation::type)0), value() {
   }
 
   virtual ~ColumnPredicate() throw();
   std::string column_family;
+  std::string column_qualifier;
   ColumnPredicateOperation::type operation;
   std::string value;
-  std::string column_qualifier;
 
   _ColumnPredicate__isset __isset;
 
   void __set_column_family(const std::string& val);
 
+  void __set_column_qualifier(const std::string& val);
+
   void __set_operation(const ColumnPredicateOperation::type val);
 
   void __set_value(const std::string& val);
-
-  void __set_column_qualifier(const std::string& val);
 
   bool operator == (const ColumnPredicate & rhs) const
   {
@@ -300,15 +300,15 @@ class ColumnPredicate {
       return false;
     else if (__isset.column_family && !(column_family == rhs.column_family))
       return false;
+    if (__isset.column_qualifier != rhs.__isset.column_qualifier)
+      return false;
+    else if (__isset.column_qualifier && !(column_qualifier == rhs.column_qualifier))
+      return false;
     if (!(operation == rhs.operation))
       return false;
     if (__isset.value != rhs.__isset.value)
       return false;
     else if (__isset.value && !(value == rhs.value))
-      return false;
-    if (__isset.column_qualifier != rhs.__isset.column_qualifier)
-      return false;
-    else if (__isset.column_qualifier && !(column_qualifier == rhs.column_qualifier))
       return false;
     return true;
   }
@@ -351,8 +351,8 @@ typedef struct _ScanSpec__isset {
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "AB0BF4CCEE25EA751C9EBCDB64D907B5";
-  static const uint8_t binary_fingerprint[16]; // = {0xAB,0x0B,0xF4,0xCC,0xEE,0x25,0xEA,0x75,0x1C,0x9E,0xBC,0xDB,0x64,0xD9,0x07,0xB5};
+  static const char* ascii_fingerprint; // = "A061305ED0C5784B15F4159C27F0F863";
+  static const uint8_t binary_fingerprint[16]; // = {0xA0,0x61,0x30,0x5E,0xD0,0xC5,0x78,0x4B,0x15,0xF4,0x15,0x9C,0x27,0xF0,0xF8,0x63};
 
   ScanSpec(const ScanSpec&);
   ScanSpec& operator=(const ScanSpec&);

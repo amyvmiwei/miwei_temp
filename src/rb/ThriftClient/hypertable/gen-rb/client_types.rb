@@ -148,15 +148,15 @@ module Hypertable
     class ColumnPredicate
       include ::Thrift::Struct, ::Thrift::Struct_Union
       COLUMN_FAMILY = 1
-      OPERATION = 2
-      VALUE = 3
-      COLUMN_QUALIFIER = 4
+      COLUMN_QUALIFIER = 2
+      OPERATION = 3
+      VALUE = 4
 
       FIELDS = {
         COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family', :optional => true},
+        COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier', :optional => true},
         OPERATION => {:type => ::Thrift::Types::I32, :name => 'operation', :enum_class => ::Hypertable::ThriftGen::ColumnPredicateOperation},
-        VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true},
-        COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier', :optional => true}
+        VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true}
       }
 
       def struct_fields; FIELDS; end

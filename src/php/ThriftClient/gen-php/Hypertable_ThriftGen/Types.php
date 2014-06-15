@@ -499,6 +499,10 @@ class ColumnPredicate {
    */
   public $column_family = null;
   /**
+   * @var string
+   */
+  public $column_qualifier = null;
+  /**
    * @var int
    */
   public $operation = null;
@@ -506,10 +510,6 @@ class ColumnPredicate {
    * @var string
    */
   public $value = null;
-  /**
-   * @var string
-   */
-  public $column_qualifier = null;
 
   public function __construct($vals=null) {
     if (!isset(self::$_TSPEC)) {
@@ -519,15 +519,15 @@ class ColumnPredicate {
           'type' => TType::STRING,
           ),
         2 => array(
+          'var' => 'column_qualifier',
+          'type' => TType::STRING,
+          ),
+        3 => array(
           'var' => 'operation',
           'type' => TType::I32,
           ),
-        3 => array(
-          'var' => 'value',
-          'type' => TType::STRING,
-          ),
         4 => array(
-          'var' => 'column_qualifier',
+          'var' => 'value',
           'type' => TType::STRING,
           ),
         );
@@ -536,14 +536,14 @@ class ColumnPredicate {
       if (isset($vals['column_family'])) {
         $this->column_family = $vals['column_family'];
       }
+      if (isset($vals['column_qualifier'])) {
+        $this->column_qualifier = $vals['column_qualifier'];
+      }
       if (isset($vals['operation'])) {
         $this->operation = $vals['operation'];
       }
       if (isset($vals['value'])) {
         $this->value = $vals['value'];
-      }
-      if (isset($vals['column_qualifier'])) {
-        $this->column_qualifier = $vals['column_qualifier'];
       }
     }
   }
@@ -575,22 +575,22 @@ class ColumnPredicate {
           }
           break;
         case 2:
+          if ($ftype == TType::STRING) {
+            $xfer += $input->readString($this->column_qualifier);
+          } else {
+            $xfer += $input->skip($ftype);
+          }
+          break;
+        case 3:
           if ($ftype == TType::I32) {
             $xfer += $input->readI32($this->operation);
           } else {
             $xfer += $input->skip($ftype);
           }
           break;
-        case 3:
-          if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->value);
-          } else {
-            $xfer += $input->skip($ftype);
-          }
-          break;
         case 4:
           if ($ftype == TType::STRING) {
-            $xfer += $input->readString($this->column_qualifier);
+            $xfer += $input->readString($this->value);
           } else {
             $xfer += $input->skip($ftype);
           }
@@ -613,19 +613,19 @@ class ColumnPredicate {
       $xfer += $output->writeString($this->column_family);
       $xfer += $output->writeFieldEnd();
     }
+    if ($this->column_qualifier !== null) {
+      $xfer += $output->writeFieldBegin('column_qualifier', TType::STRING, 2);
+      $xfer += $output->writeString($this->column_qualifier);
+      $xfer += $output->writeFieldEnd();
+    }
     if ($this->operation !== null) {
-      $xfer += $output->writeFieldBegin('operation', TType::I32, 2);
+      $xfer += $output->writeFieldBegin('operation', TType::I32, 3);
       $xfer += $output->writeI32($this->operation);
       $xfer += $output->writeFieldEnd();
     }
     if ($this->value !== null) {
-      $xfer += $output->writeFieldBegin('value', TType::STRING, 3);
+      $xfer += $output->writeFieldBegin('value', TType::STRING, 4);
       $xfer += $output->writeString($this->value);
-      $xfer += $output->writeFieldEnd();
-    }
-    if ($this->column_qualifier !== null) {
-      $xfer += $output->writeFieldBegin('column_qualifier', TType::STRING, 4);
-      $xfer += $output->writeString($this->column_qualifier);
       $xfer += $output->writeFieldEnd();
     }
     $xfer += $output->writeFieldStop();

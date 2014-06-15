@@ -404,6 +404,11 @@ void ColumnPredicate::__set_column_family(const std::string& val) {
 __isset.column_family = true;
 }
 
+void ColumnPredicate::__set_column_qualifier(const std::string& val) {
+  column_qualifier = val;
+__isset.column_qualifier = true;
+}
+
 void ColumnPredicate::__set_operation(const ColumnPredicateOperation::type val) {
   operation = val;
 }
@@ -413,13 +418,8 @@ void ColumnPredicate::__set_value(const std::string& val) {
 __isset.value = true;
 }
 
-void ColumnPredicate::__set_column_qualifier(const std::string& val) {
-  column_qualifier = val;
-__isset.column_qualifier = true;
-}
-
-const char* ColumnPredicate::ascii_fingerprint = "5E0D6E56B1DF2285E40B070B2E5E5E6E";
-const uint8_t ColumnPredicate::binary_fingerprint[16] = {0x5E,0x0D,0x6E,0x56,0xB1,0xDF,0x22,0x85,0xE4,0x0B,0x07,0x0B,0x2E,0x5E,0x5E,0x6E};
+const char* ColumnPredicate::ascii_fingerprint = "7AD135A1617551CDCFB16B6BF2E36C48";
+const uint8_t ColumnPredicate::binary_fingerprint[16] = {0x7A,0xD1,0x35,0xA1,0x61,0x75,0x51,0xCD,0xCF,0xB1,0x6B,0x6B,0xF2,0xE3,0x6C,0x48};
 
 uint32_t ColumnPredicate::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -450,6 +450,14 @@ uint32_t ColumnPredicate::read(::apache::thrift::protocol::TProtocol* iprot) {
         }
         break;
       case 2:
+        if (ftype == ::apache::thrift::protocol::T_STRING) {
+          xfer += iprot->readString(this->column_qualifier);
+          this->__isset.column_qualifier = true;
+        } else {
+          xfer += iprot->skip(ftype);
+        }
+        break;
+      case 3:
         if (ftype == ::apache::thrift::protocol::T_I32) {
           int32_t ecast4;
           xfer += iprot->readI32(ecast4);
@@ -459,18 +467,10 @@ uint32_t ColumnPredicate::read(::apache::thrift::protocol::TProtocol* iprot) {
           xfer += iprot->skip(ftype);
         }
         break;
-      case 3:
+      case 4:
         if (ftype == ::apache::thrift::protocol::T_STRING) {
           xfer += iprot->readString(this->value);
           this->__isset.value = true;
-        } else {
-          xfer += iprot->skip(ftype);
-        }
-        break;
-      case 4:
-        if (ftype == ::apache::thrift::protocol::T_STRING) {
-          xfer += iprot->readString(this->column_qualifier);
-          this->__isset.column_qualifier = true;
         } else {
           xfer += iprot->skip(ftype);
         }
@@ -497,18 +497,18 @@ uint32_t ColumnPredicate::write(::apache::thrift::protocol::TProtocol* oprot) co
     xfer += oprot->writeString(this->column_family);
     xfer += oprot->writeFieldEnd();
   }
-  xfer += oprot->writeFieldBegin("operation", ::apache::thrift::protocol::T_I32, 2);
+  if (this->__isset.column_qualifier) {
+    xfer += oprot->writeFieldBegin("column_qualifier", ::apache::thrift::protocol::T_STRING, 2);
+    xfer += oprot->writeString(this->column_qualifier);
+    xfer += oprot->writeFieldEnd();
+  }
+  xfer += oprot->writeFieldBegin("operation", ::apache::thrift::protocol::T_I32, 3);
   xfer += oprot->writeI32((int32_t)this->operation);
   xfer += oprot->writeFieldEnd();
 
   if (this->__isset.value) {
-    xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_STRING, 3);
+    xfer += oprot->writeFieldBegin("value", ::apache::thrift::protocol::T_STRING, 4);
     xfer += oprot->writeString(this->value);
-    xfer += oprot->writeFieldEnd();
-  }
-  if (this->__isset.column_qualifier) {
-    xfer += oprot->writeFieldBegin("column_qualifier", ::apache::thrift::protocol::T_STRING, 4);
-    xfer += oprot->writeString(this->column_qualifier);
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldStop();
@@ -520,24 +520,24 @@ uint32_t ColumnPredicate::write(::apache::thrift::protocol::TProtocol* oprot) co
 void swap(ColumnPredicate &a, ColumnPredicate &b) {
   using ::std::swap;
   swap(a.column_family, b.column_family);
+  swap(a.column_qualifier, b.column_qualifier);
   swap(a.operation, b.operation);
   swap(a.value, b.value);
-  swap(a.column_qualifier, b.column_qualifier);
   swap(a.__isset, b.__isset);
 }
 
 ColumnPredicate::ColumnPredicate(const ColumnPredicate& other5) {
   column_family = other5.column_family;
+  column_qualifier = other5.column_qualifier;
   operation = other5.operation;
   value = other5.value;
-  column_qualifier = other5.column_qualifier;
   __isset = other5.__isset;
 }
 ColumnPredicate& ColumnPredicate::operator=(const ColumnPredicate& other6) {
   column_family = other6.column_family;
+  column_qualifier = other6.column_qualifier;
   operation = other6.operation;
   value = other6.value;
-  column_qualifier = other6.column_qualifier;
   __isset = other6.__isset;
   return *this;
 }
@@ -641,8 +641,8 @@ void ScanSpec::__set_and_column_predicates(const bool val) {
 __isset.and_column_predicates = true;
 }
 
-const char* ScanSpec::ascii_fingerprint = "AB0BF4CCEE25EA751C9EBCDB64D907B5";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0xAB,0x0B,0xF4,0xCC,0xEE,0x25,0xEA,0x75,0x1C,0x9E,0xBC,0xDB,0x64,0xD9,0x07,0xB5};
+const char* ScanSpec::ascii_fingerprint = "A061305ED0C5784B15F4159C27F0F863";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0xA0,0x61,0x30,0x5E,0xD0,0xC5,0x78,0x4B,0x15,0xF4,0x15,0x9C,0x27,0xF0,0xF8,0x63};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 

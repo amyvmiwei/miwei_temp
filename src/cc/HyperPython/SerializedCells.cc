@@ -44,9 +44,24 @@ static PyObject *convert(const SerializedCellsWriter &scw) {
 
 BOOST_PYTHON_MODULE(libHyperPython)
 {
+
+  class_<Cell>("Cell")
+    .def("sanity_check", &Cell::sanity_check)
+    .def_readwrite("row", &Cell::row_key)
+    .def_readwrite("column_family", &Cell::column_family)
+    .def_readwrite("column_qualifier", &Cell::column_qualifier)
+    .def_readwrite("timestamp", &Cell::timestamp)
+    .def_readwrite("revision", &Cell::revision)
+    .def_readwrite("value", &Cell::value)
+    .def_readwrite("flag", &Cell::flag)
+    .def(self_ns::str(self_ns::self))
+    ;
+
   class_<SerializedCellsReader>("SerializedCellsReader", 
           init<const char *, uint32_t>())
     .def("has_next", &SerializedCellsReader::next)
+    .def("get_cell", &SerializedCellsReader::get_cell,
+          return_value_policy<return_by_value>())
     .def("row", &SerializedCellsReader::row,
           return_value_policy<return_by_value>())
     .def("column_family", &SerializedCellsReader::column_family,
@@ -56,6 +71,8 @@ BOOST_PYTHON_MODULE(libHyperPython)
     .def("value", &SerializedCellsReader::value_str,
           return_value_policy<return_by_value>())
     .def("value_len", &SerializedCellsReader::value_len)
+    .def("value_str", &SerializedCellsReader::value_str,
+          return_value_policy<return_by_value>())
     .def("timestamp", &SerializedCellsReader::timestamp)
     .def("cell_flag", &SerializedCellsReader::cell_flag)
     .def("flush", &SerializedCellsReader::flush)

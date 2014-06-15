@@ -276,28 +276,28 @@ sub write {
 
 package Hypertable::ThriftGen::ColumnPredicate;
 use base qw(Class::Accessor);
-Hypertable::ThriftGen::ColumnPredicate->mk_accessors( qw( column_family operation value column_qualifier ) );
+Hypertable::ThriftGen::ColumnPredicate->mk_accessors( qw( column_family column_qualifier operation value ) );
 
 sub new {
   my $classname = shift;
   my $self      = {};
   my $vals      = shift || {};
   $self->{column_family} = undef;
+  $self->{column_qualifier} = undef;
   $self->{operation} = undef;
   $self->{value} = undef;
-  $self->{column_qualifier} = undef;
   if (UNIVERSAL::isa($vals,'HASH')) {
     if (defined $vals->{column_family}) {
       $self->{column_family} = $vals->{column_family};
+    }
+    if (defined $vals->{column_qualifier}) {
+      $self->{column_qualifier} = $vals->{column_qualifier};
     }
     if (defined $vals->{operation}) {
       $self->{operation} = $vals->{operation};
     }
     if (defined $vals->{value}) {
       $self->{value} = $vals->{value};
-    }
-    if (defined $vals->{column_qualifier}) {
-      $self->{column_qualifier} = $vals->{column_qualifier};
     }
   }
   return bless ($self, $classname);
@@ -328,20 +328,20 @@ sub read {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^2$/ && do{      if ($ftype == TType::I32) {
+      /^2$/ && do{      if ($ftype == TType::STRING) {
+        $xfer += $input->readString(\$self->{column_qualifier});
+      } else {
+        $xfer += $input->skip($ftype);
+      }
+      last; };
+      /^3$/ && do{      if ($ftype == TType::I32) {
         $xfer += $input->readI32(\$self->{operation});
       } else {
         $xfer += $input->skip($ftype);
       }
       last; };
-      /^3$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{value});
-      } else {
-        $xfer += $input->skip($ftype);
-      }
-      last; };
       /^4$/ && do{      if ($ftype == TType::STRING) {
-        $xfer += $input->readString(\$self->{column_qualifier});
+        $xfer += $input->readString(\$self->{value});
       } else {
         $xfer += $input->skip($ftype);
       }
@@ -363,19 +363,19 @@ sub write {
     $xfer += $output->writeString($self->{column_family});
     $xfer += $output->writeFieldEnd();
   }
+  if (defined $self->{column_qualifier}) {
+    $xfer += $output->writeFieldBegin('column_qualifier', TType::STRING, 2);
+    $xfer += $output->writeString($self->{column_qualifier});
+    $xfer += $output->writeFieldEnd();
+  }
   if (defined $self->{operation}) {
-    $xfer += $output->writeFieldBegin('operation', TType::I32, 2);
+    $xfer += $output->writeFieldBegin('operation', TType::I32, 3);
     $xfer += $output->writeI32($self->{operation});
     $xfer += $output->writeFieldEnd();
   }
   if (defined $self->{value}) {
-    $xfer += $output->writeFieldBegin('value', TType::STRING, 3);
+    $xfer += $output->writeFieldBegin('value', TType::STRING, 4);
     $xfer += $output->writeString($self->{value});
-    $xfer += $output->writeFieldEnd();
-  }
-  if (defined $self->{column_qualifier}) {
-    $xfer += $output->writeFieldBegin('column_qualifier', TType::STRING, 4);
-    $xfer += $output->writeString($self->{column_qualifier});
     $xfer += $output->writeFieldEnd();
   }
   $xfer += $output->writeFieldStop();

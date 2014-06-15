@@ -68,6 +68,12 @@ namespace Hypertable {
       cell.flag = m_cell_flag;
     }
 
+    Cell get_cell() {
+      Cell cell;
+      get(cell);
+      return cell;
+    }
+
     const char *row() { return m_row; }
     const char *column_family() { return m_column_family; }
     const char *column_qualifier() { return m_column_qualifier; }
