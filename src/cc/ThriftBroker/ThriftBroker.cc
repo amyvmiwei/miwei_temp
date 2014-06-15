@@ -1713,6 +1713,7 @@ public:
       convert_cell(cell, hcell);
       cb.add(hcell, false);
       mutator->set_cells(cb.get());
+      mutator->flush();
     } RETHROW(" ns=" << ns << " table=" << table << " cell=" << cell);
     LOG_API_FINISH;
   }
@@ -1726,6 +1727,7 @@ public:
       Hypertable::Cells hcells;
       convert_cells(cells, hcells);
       mutator->set_cells(hcells);
+      mutator->flush();
     } RETHROW(" ns=" << ns << " table=" << table <<" cell.size="
             << cells.size());
     LOG_API_FINISH;
@@ -1741,6 +1743,7 @@ public:
       Hypertable::Cells hcells;      
       convert_cells(cells, hcells);
       mutator->set_cells(hcells);
+      mutator->flush();
     } RETHROW(" ns="<< ns <<" table=" << table<<" cell.size="<< cells.size());
     LOG_API_FINISH;
   }
@@ -1758,6 +1761,7 @@ public:
       convert_cell(cell, hcell);
       cb.add(hcell, false);
       mutator->set_cells(cb.get());
+      mutator->flush();
     } RETHROW(" ns=" << ns << " table=" << table << " cell_as_array.size="
             << cell.size());
     LOG_API_FINISH;
@@ -1778,6 +1782,7 @@ public:
         cb.add(hcell, false);
       }
       mutator->set_cells(cb.get());
+      mutator->flush();
     } RETHROW(" ns=" << ns << " table=" << table << " cell_serialized.size="
             << cells.size() << " flush=" << flush);
 

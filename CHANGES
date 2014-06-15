@@ -1,3 +1,12 @@
+Version 0.9.7.19:
+(2014-06-15)
+
+    Added HypertableStorage for Pig
+    Fixed bug in LoadDataSource with empty trailing fields
+    issue 1222: Fixed earliest cached revision problem in AccessGroup
+    Check for NULL timeout supplied to TableMutatorAsync
+    issue 1256: Call TableMutator::flush() explicitly in ThriftBroker; swallow exceptions in ~TableMutator
+
 Version 0.9.7.18:
 (2014-05-14)
 
