@@ -248,6 +248,7 @@ std::ostream &Hypertable::operator<<(std::ostream &os, const ColumnPredicate &cp
   if (cp.value)
     os << " value=" << cp.value << ",len=" << cp.value_len;
   os << " operation=" << cp.operation << "}";
+  return os;
 }
 
 

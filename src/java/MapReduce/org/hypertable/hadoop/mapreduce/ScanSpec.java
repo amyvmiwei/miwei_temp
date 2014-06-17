@@ -206,7 +206,7 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
           cp.setColumn_familyIsSet(true);
           cp.value = new String(Serialization.readByteArray(in), "UTF-8");
           cp.setValueIsSet(true);
-          cp.operation = ColumnPredicateOperation.findByValue(in.readInt());
+          cp.operation = in.readInt();
           cp.setOperationIsSet(true);
           column_predicates.add(cp);
         }
@@ -393,7 +393,7 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
             Serialization.writeByteArray(out, cp.value.getBytes("UTF-8"));
           else
             Serialization.writeByteArray(out, empty);
-          out.writeInt(cp.operation.getValue());
+          out.writeInt(cp.operation);
         }
       }
       else
@@ -501,12 +501,12 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
     ColumnPredicate cp = new ColumnPredicate();
     cp.column_family = "col1";
     cp.value = "val1";
-    cp.operation = ColumnPredicateOperation.findByValue(1);
+    cp.operation = 1;
     predicates.add(cp);
     cp = new ColumnPredicate();
     cp.column_family = "col2";
     cp.value = "val2";
-    cp.operation = ColumnPredicateOperation.findByValue(2);
+    cp.operation = 2;
     predicates.add(cp);
     src.setColumn_predicates(predicates);
 
@@ -592,11 +592,11 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
     cp = dest.column_predicates.get(0);
     assert cp.column_family.equals("col1");
     assert cp.value.equals("val1");
-    assert cp.operation.getValue() == 1;
+    assert cp.operation == 1;
     cp = dest.column_predicates.get(1);
     assert cp.column_family.equals("col2");
     assert cp.value.equals("val2");
-    assert cp.operation.getValue() == 2;
+    assert cp.operation == 2;
 
     System.out.println("SUCCESS");
     System.exit(0);

@@ -409,7 +409,7 @@ void ColumnPredicate::__set_column_qualifier(const std::string& val) {
 __isset.column_qualifier = true;
 }
 
-void ColumnPredicate::__set_operation(const ColumnPredicateOperation::type val) {
+void ColumnPredicate::__set_operation(const int32_t val) {
   operation = val;
 }
 
@@ -418,8 +418,8 @@ void ColumnPredicate::__set_value(const std::string& val) {
 __isset.value = true;
 }
 
-const char* ColumnPredicate::ascii_fingerprint = "7AD135A1617551CDCFB16B6BF2E36C48";
-const uint8_t ColumnPredicate::binary_fingerprint[16] = {0x7A,0xD1,0x35,0xA1,0x61,0x75,0x51,0xCD,0xCF,0xB1,0x6B,0x6B,0xF2,0xE3,0x6C,0x48};
+const char* ColumnPredicate::ascii_fingerprint = "C0D24FEC9006AF59BF63864BF9F94F59";
+const uint8_t ColumnPredicate::binary_fingerprint[16] = {0xC0,0xD2,0x4F,0xEC,0x90,0x06,0xAF,0x59,0xBF,0x63,0x86,0x4B,0xF9,0xF9,0x4F,0x59};
 
 uint32_t ColumnPredicate::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -459,9 +459,7 @@ uint32_t ColumnPredicate::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 3:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast4;
-          xfer += iprot->readI32(ecast4);
-          this->operation = (ColumnPredicateOperation::type)ecast4;
+          xfer += iprot->readI32(this->operation);
           this->__isset.operation = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -503,7 +501,7 @@ uint32_t ColumnPredicate::write(::apache::thrift::protocol::TProtocol* oprot) co
     xfer += oprot->writeFieldEnd();
   }
   xfer += oprot->writeFieldBegin("operation", ::apache::thrift::protocol::T_I32, 3);
-  xfer += oprot->writeI32((int32_t)this->operation);
+  xfer += oprot->writeI32(this->operation);
   xfer += oprot->writeFieldEnd();
 
   if (this->__isset.value) {
@@ -526,19 +524,19 @@ void swap(ColumnPredicate &a, ColumnPredicate &b) {
   swap(a.__isset, b.__isset);
 }
 
-ColumnPredicate::ColumnPredicate(const ColumnPredicate& other5) {
+ColumnPredicate::ColumnPredicate(const ColumnPredicate& other4) {
+  column_family = other4.column_family;
+  column_qualifier = other4.column_qualifier;
+  operation = other4.operation;
+  value = other4.value;
+  __isset = other4.__isset;
+}
+ColumnPredicate& ColumnPredicate::operator=(const ColumnPredicate& other5) {
   column_family = other5.column_family;
   column_qualifier = other5.column_qualifier;
   operation = other5.operation;
   value = other5.value;
   __isset = other5.__isset;
-}
-ColumnPredicate& ColumnPredicate::operator=(const ColumnPredicate& other6) {
-  column_family = other6.column_family;
-  column_qualifier = other6.column_qualifier;
-  operation = other6.operation;
-  value = other6.value;
-  __isset = other6.__isset;
   return *this;
 }
 
@@ -641,8 +639,8 @@ void ScanSpec::__set_and_column_predicates(const bool val) {
 __isset.and_column_predicates = true;
 }
 
-const char* ScanSpec::ascii_fingerprint = "A061305ED0C5784B15F4159C27F0F863";
-const uint8_t ScanSpec::binary_fingerprint[16] = {0xA0,0x61,0x30,0x5E,0xD0,0xC5,0x78,0x4B,0x15,0xF4,0x15,0x9C,0x27,0xF0,0xF8,0x63};
+const char* ScanSpec::ascii_fingerprint = "E832747BA3A08125D187174C984AAD63";
+const uint8_t ScanSpec::binary_fingerprint[16] = {0xE8,0x32,0x74,0x7B,0xA3,0xA0,0x81,0x25,0xD1,0x87,0x17,0x4C,0x98,0x4A,0xAD,0x63};
 
 uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
 
@@ -668,14 +666,14 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->row_intervals.clear();
-            uint32_t _size7;
-            ::apache::thrift::protocol::TType _etype10;
-            xfer += iprot->readListBegin(_etype10, _size7);
-            this->row_intervals.resize(_size7);
-            uint32_t _i11;
-            for (_i11 = 0; _i11 < _size7; ++_i11)
+            uint32_t _size6;
+            ::apache::thrift::protocol::TType _etype9;
+            xfer += iprot->readListBegin(_etype9, _size6);
+            this->row_intervals.resize(_size6);
+            uint32_t _i10;
+            for (_i10 = 0; _i10 < _size6; ++_i10)
             {
-              xfer += this->row_intervals[_i11].read(iprot);
+              xfer += this->row_intervals[_i10].read(iprot);
             }
             xfer += iprot->readListEnd();
           }
@@ -688,14 +686,14 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->cell_intervals.clear();
-            uint32_t _size12;
-            ::apache::thrift::protocol::TType _etype15;
-            xfer += iprot->readListBegin(_etype15, _size12);
-            this->cell_intervals.resize(_size12);
-            uint32_t _i16;
-            for (_i16 = 0; _i16 < _size12; ++_i16)
+            uint32_t _size11;
+            ::apache::thrift::protocol::TType _etype14;
+            xfer += iprot->readListBegin(_etype14, _size11);
+            this->cell_intervals.resize(_size11);
+            uint32_t _i15;
+            for (_i15 = 0; _i15 < _size11; ++_i15)
             {
-              xfer += this->cell_intervals[_i16].read(iprot);
+              xfer += this->cell_intervals[_i15].read(iprot);
             }
             xfer += iprot->readListEnd();
           }
@@ -748,14 +746,14 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->columns.clear();
-            uint32_t _size17;
-            ::apache::thrift::protocol::TType _etype20;
-            xfer += iprot->readListBegin(_etype20, _size17);
-            this->columns.resize(_size17);
-            uint32_t _i21;
-            for (_i21 = 0; _i21 < _size17; ++_i21)
+            uint32_t _size16;
+            ::apache::thrift::protocol::TType _etype19;
+            xfer += iprot->readListBegin(_etype19, _size16);
+            this->columns.resize(_size16);
+            uint32_t _i20;
+            for (_i20 = 0; _i20 < _size16; ++_i20)
             {
-              xfer += iprot->readString(this->columns[_i21]);
+              xfer += iprot->readString(this->columns[_i20]);
             }
             xfer += iprot->readListEnd();
           }
@@ -832,14 +830,14 @@ uint32_t ScanSpec::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->column_predicates.clear();
-            uint32_t _size22;
-            ::apache::thrift::protocol::TType _etype25;
-            xfer += iprot->readListBegin(_etype25, _size22);
-            this->column_predicates.resize(_size22);
-            uint32_t _i26;
-            for (_i26 = 0; _i26 < _size22; ++_i26)
+            uint32_t _size21;
+            ::apache::thrift::protocol::TType _etype24;
+            xfer += iprot->readListBegin(_etype24, _size21);
+            this->column_predicates.resize(_size21);
+            uint32_t _i25;
+            for (_i25 = 0; _i25 < _size21; ++_i25)
             {
-              xfer += this->column_predicates[_i26].read(iprot);
+              xfer += this->column_predicates[_i25].read(iprot);
             }
             xfer += iprot->readListEnd();
           }
@@ -885,10 +883,10 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeFieldBegin("row_intervals", ::apache::thrift::protocol::T_LIST, 1);
     {
       xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->row_intervals.size()));
-      std::vector<RowInterval> ::const_iterator _iter27;
-      for (_iter27 = this->row_intervals.begin(); _iter27 != this->row_intervals.end(); ++_iter27)
+      std::vector<RowInterval> ::const_iterator _iter26;
+      for (_iter26 = this->row_intervals.begin(); _iter26 != this->row_intervals.end(); ++_iter26)
       {
-        xfer += (*_iter27).write(oprot);
+        xfer += (*_iter26).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
@@ -898,10 +896,10 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeFieldBegin("cell_intervals", ::apache::thrift::protocol::T_LIST, 2);
     {
       xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->cell_intervals.size()));
-      std::vector<CellInterval> ::const_iterator _iter28;
-      for (_iter28 = this->cell_intervals.begin(); _iter28 != this->cell_intervals.end(); ++_iter28)
+      std::vector<CellInterval> ::const_iterator _iter27;
+      for (_iter27 = this->cell_intervals.begin(); _iter27 != this->cell_intervals.end(); ++_iter27)
       {
-        xfer += (*_iter28).write(oprot);
+        xfer += (*_iter27).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
@@ -936,10 +934,10 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeFieldBegin("columns", ::apache::thrift::protocol::T_LIST, 8);
     {
       xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>(this->columns.size()));
-      std::vector<std::string> ::const_iterator _iter29;
-      for (_iter29 = this->columns.begin(); _iter29 != this->columns.end(); ++_iter29)
+      std::vector<std::string> ::const_iterator _iter28;
+      for (_iter28 = this->columns.begin(); _iter28 != this->columns.end(); ++_iter28)
       {
-        xfer += oprot->writeString((*_iter29));
+        xfer += oprot->writeString((*_iter28));
       }
       xfer += oprot->writeListEnd();
     }
@@ -989,10 +987,10 @@ uint32_t ScanSpec::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeFieldBegin("column_predicates", ::apache::thrift::protocol::T_LIST, 17);
     {
       xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->column_predicates.size()));
-      std::vector<ColumnPredicate> ::const_iterator _iter30;
-      for (_iter30 = this->column_predicates.begin(); _iter30 != this->column_predicates.end(); ++_iter30)
+      std::vector<ColumnPredicate> ::const_iterator _iter29;
+      for (_iter29 = this->column_predicates.begin(); _iter29 != this->column_predicates.end(); ++_iter29)
       {
-        xfer += (*_iter30).write(oprot);
+        xfer += (*_iter29).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
@@ -1038,7 +1036,29 @@ void swap(ScanSpec &a, ScanSpec &b) {
   swap(a.__isset, b.__isset);
 }
 
-ScanSpec::ScanSpec(const ScanSpec& other31) {
+ScanSpec::ScanSpec(const ScanSpec& other30) {
+  row_intervals = other30.row_intervals;
+  cell_intervals = other30.cell_intervals;
+  return_deletes = other30.return_deletes;
+  versions = other30.versions;
+  row_limit = other30.row_limit;
+  start_time = other30.start_time;
+  end_time = other30.end_time;
+  columns = other30.columns;
+  keys_only = other30.keys_only;
+  cell_limit = other30.cell_limit;
+  cell_limit_per_family = other30.cell_limit_per_family;
+  row_regexp = other30.row_regexp;
+  value_regexp = other30.value_regexp;
+  scan_and_filter_rows = other30.scan_and_filter_rows;
+  row_offset = other30.row_offset;
+  cell_offset = other30.cell_offset;
+  column_predicates = other30.column_predicates;
+  do_not_cache = other30.do_not_cache;
+  and_column_predicates = other30.and_column_predicates;
+  __isset = other30.__isset;
+}
+ScanSpec& ScanSpec::operator=(const ScanSpec& other31) {
   row_intervals = other31.row_intervals;
   cell_intervals = other31.cell_intervals;
   return_deletes = other31.return_deletes;
@@ -1059,28 +1079,6 @@ ScanSpec::ScanSpec(const ScanSpec& other31) {
   do_not_cache = other31.do_not_cache;
   and_column_predicates = other31.and_column_predicates;
   __isset = other31.__isset;
-}
-ScanSpec& ScanSpec::operator=(const ScanSpec& other32) {
-  row_intervals = other32.row_intervals;
-  cell_intervals = other32.cell_intervals;
-  return_deletes = other32.return_deletes;
-  versions = other32.versions;
-  row_limit = other32.row_limit;
-  start_time = other32.start_time;
-  end_time = other32.end_time;
-  columns = other32.columns;
-  keys_only = other32.keys_only;
-  cell_limit = other32.cell_limit;
-  cell_limit_per_family = other32.cell_limit_per_family;
-  row_regexp = other32.row_regexp;
-  value_regexp = other32.value_regexp;
-  scan_and_filter_rows = other32.scan_and_filter_rows;
-  row_offset = other32.row_offset;
-  cell_offset = other32.cell_offset;
-  column_predicates = other32.column_predicates;
-  do_not_cache = other32.do_not_cache;
-  and_column_predicates = other32.and_column_predicates;
-  __isset = other32.__isset;
   return *this;
 }
 
@@ -1179,9 +1177,9 @@ uint32_t Key::read(::apache::thrift::protocol::TProtocol* iprot) {
         break;
       case 6:
         if (ftype == ::apache::thrift::protocol::T_I32) {
-          int32_t ecast33;
-          xfer += iprot->readI32(ecast33);
-          this->flag = (KeyFlag::type)ecast33;
+          int32_t ecast32;
+          xfer += iprot->readI32(ecast32);
+          this->flag = (KeyFlag::type)ecast32;
           this->__isset.flag = true;
         } else {
           xfer += iprot->skip(ftype);
@@ -1247,7 +1245,16 @@ void swap(Key &a, Key &b) {
   swap(a.__isset, b.__isset);
 }
 
-Key::Key(const Key& other34) {
+Key::Key(const Key& other33) {
+  row = other33.row;
+  column_family = other33.column_family;
+  column_qualifier = other33.column_qualifier;
+  timestamp = other33.timestamp;
+  revision = other33.revision;
+  flag = other33.flag;
+  __isset = other33.__isset;
+}
+Key& Key::operator=(const Key& other34) {
   row = other34.row;
   column_family = other34.column_family;
   column_qualifier = other34.column_qualifier;
@@ -1255,15 +1262,6 @@ Key::Key(const Key& other34) {
   revision = other34.revision;
   flag = other34.flag;
   __isset = other34.__isset;
-}
-Key& Key::operator=(const Key& other35) {
-  row = other35.row;
-  column_family = other35.column_family;
-  column_qualifier = other35.column_qualifier;
-  timestamp = other35.timestamp;
-  revision = other35.revision;
-  flag = other35.flag;
-  __isset = other35.__isset;
   return *this;
 }
 
@@ -1381,15 +1379,15 @@ void swap(MutateSpec &a, MutateSpec &b) {
   swap(a.flags, b.flags);
 }
 
-MutateSpec::MutateSpec(const MutateSpec& other36) {
+MutateSpec::MutateSpec(const MutateSpec& other35) {
+  appname = other35.appname;
+  flush_interval = other35.flush_interval;
+  flags = other35.flags;
+}
+MutateSpec& MutateSpec::operator=(const MutateSpec& other36) {
   appname = other36.appname;
   flush_interval = other36.flush_interval;
   flags = other36.flags;
-}
-MutateSpec& MutateSpec::operator=(const MutateSpec& other37) {
-  appname = other37.appname;
-  flush_interval = other37.flush_interval;
-  flags = other37.flags;
   return *this;
 }
 
@@ -1484,15 +1482,15 @@ void swap(Cell &a, Cell &b) {
   swap(a.__isset, b.__isset);
 }
 
-Cell::Cell(const Cell& other38) {
+Cell::Cell(const Cell& other37) {
+  key = other37.key;
+  value = other37.value;
+  __isset = other37.__isset;
+}
+Cell& Cell::operator=(const Cell& other38) {
   key = other38.key;
   value = other38.value;
   __isset = other38.__isset;
-}
-Cell& Cell::operator=(const Cell& other39) {
-  key = other39.key;
-  value = other39.value;
-  __isset = other39.__isset;
   return *this;
 }
 
@@ -1610,14 +1608,14 @@ uint32_t Result::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->cells.clear();
-            uint32_t _size40;
-            ::apache::thrift::protocol::TType _etype43;
-            xfer += iprot->readListBegin(_etype43, _size40);
-            this->cells.resize(_size40);
-            uint32_t _i44;
-            for (_i44 = 0; _i44 < _size40; ++_i44)
+            uint32_t _size39;
+            ::apache::thrift::protocol::TType _etype42;
+            xfer += iprot->readListBegin(_etype42, _size39);
+            this->cells.resize(_size39);
+            uint32_t _i43;
+            for (_i43 = 0; _i43 < _size39; ++_i43)
             {
-              xfer += this->cells[_i44].read(iprot);
+              xfer += this->cells[_i43].read(iprot);
             }
             xfer += iprot->readListEnd();
           }
@@ -1681,10 +1679,10 @@ uint32_t Result::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 7);
     {
       xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->cells.size()));
-      std::vector<Cell> ::const_iterator _iter45;
-      for (_iter45 = this->cells.begin(); _iter45 != this->cells.end(); ++_iter45)
+      std::vector<Cell> ::const_iterator _iter44;
+      for (_iter44 = this->cells.begin(); _iter44 != this->cells.end(); ++_iter44)
       {
-        xfer += (*_iter45).write(oprot);
+        xfer += (*_iter44).write(oprot);
       }
       xfer += oprot->writeListEnd();
     }
@@ -1708,7 +1706,17 @@ void swap(Result &a, Result &b) {
   swap(a.__isset, b.__isset);
 }
 
-Result::Result(const Result& other46) {
+Result::Result(const Result& other45) {
+  is_empty = other45.is_empty;
+  id = other45.id;
+  is_scan = other45.is_scan;
+  is_error = other45.is_error;
+  error = other45.error;
+  error_msg = other45.error_msg;
+  cells = other45.cells;
+  __isset = other45.__isset;
+}
+Result& Result::operator=(const Result& other46) {
   is_empty = other46.is_empty;
   id = other46.id;
   is_scan = other46.is_scan;
@@ -1717,16 +1725,6 @@ Result::Result(const Result& other46) {
   error_msg = other46.error_msg;
   cells = other46.cells;
   __isset = other46.__isset;
-}
-Result& Result::operator=(const Result& other47) {
-  is_empty = other47.is_empty;
-  id = other47.id;
-  is_scan = other47.is_scan;
-  is_error = other47.is_error;
-  error = other47.error;
-  error_msg = other47.error_msg;
-  cells = other47.cells;
-  __isset = other47.__isset;
   return *this;
 }
 
@@ -1844,23 +1842,23 @@ uint32_t ResultAsArrays::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_LIST) {
           {
             this->cells.clear();
-            uint32_t _size48;
-            ::apache::thrift::protocol::TType _etype51;
-            xfer += iprot->readListBegin(_etype51, _size48);
-            this->cells.resize(_size48);
-            uint32_t _i52;
-            for (_i52 = 0; _i52 < _size48; ++_i52)
+            uint32_t _size47;
+            ::apache::thrift::protocol::TType _etype50;
+            xfer += iprot->readListBegin(_etype50, _size47);
+            this->cells.resize(_size47);
+            uint32_t _i51;
+            for (_i51 = 0; _i51 < _size47; ++_i51)
             {
               {
-                this->cells[_i52].clear();
-                uint32_t _size53;
-                ::apache::thrift::protocol::TType _etype56;
-                xfer += iprot->readListBegin(_etype56, _size53);
-                this->cells[_i52].resize(_size53);
-                uint32_t _i57;
-                for (_i57 = 0; _i57 < _size53; ++_i57)
+                this->cells[_i51].clear();
+                uint32_t _size52;
+                ::apache::thrift::protocol::TType _etype55;
+                xfer += iprot->readListBegin(_etype55, _size52);
+                this->cells[_i51].resize(_size52);
+                uint32_t _i56;
+                for (_i56 = 0; _i56 < _size52; ++_i56)
                 {
-                  xfer += iprot->readString(this->cells[_i52][_i57]);
+                  xfer += iprot->readString(this->cells[_i51][_i56]);
                 }
                 xfer += iprot->readListEnd();
               }
@@ -1927,15 +1925,15 @@ uint32_t ResultAsArrays::write(::apache::thrift::protocol::TProtocol* oprot) con
     xfer += oprot->writeFieldBegin("cells", ::apache::thrift::protocol::T_LIST, 7);
     {
       xfer += oprot->writeListBegin(::apache::thrift::protocol::T_LIST, static_cast<uint32_t>(this->cells.size()));
-      std::vector<CellAsArray> ::const_iterator _iter58;
-      for (_iter58 = this->cells.begin(); _iter58 != this->cells.end(); ++_iter58)
+      std::vector<CellAsArray> ::const_iterator _iter57;
+      for (_iter57 = this->cells.begin(); _iter57 != this->cells.end(); ++_iter57)
       {
         {
-          xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>((*_iter58).size()));
-          std::vector<std::string> ::const_iterator _iter59;
-          for (_iter59 = (*_iter58).begin(); _iter59 != (*_iter58).end(); ++_iter59)
+          xfer += oprot->writeListBegin(::apache::thrift::protocol::T_STRING, static_cast<uint32_t>((*_iter57).size()));
+          std::vector<std::string> ::const_iterator _iter58;
+          for (_iter58 = (*_iter57).begin(); _iter58 != (*_iter57).end(); ++_iter58)
           {
-            xfer += oprot->writeString((*_iter59));
+            xfer += oprot->writeString((*_iter58));
           }
           xfer += oprot->writeListEnd();
         }
@@ -1962,7 +1960,17 @@ void swap(ResultAsArrays &a, ResultAsArrays &b) {
   swap(a.__isset, b.__isset);
 }
 
-ResultAsArrays::ResultAsArrays(const ResultAsArrays& other60) {
+ResultAsArrays::ResultAsArrays(const ResultAsArrays& other59) {
+  is_empty = other59.is_empty;
+  id = other59.id;
+  is_scan = other59.is_scan;
+  is_error = other59.is_error;
+  error = other59.error;
+  error_msg = other59.error_msg;
+  cells = other59.cells;
+  __isset = other59.__isset;
+}
+ResultAsArrays& ResultAsArrays::operator=(const ResultAsArrays& other60) {
   is_empty = other60.is_empty;
   id = other60.id;
   is_scan = other60.is_scan;
@@ -1971,16 +1979,6 @@ ResultAsArrays::ResultAsArrays(const ResultAsArrays& other60) {
   error_msg = other60.error_msg;
   cells = other60.cells;
   __isset = other60.__isset;
-}
-ResultAsArrays& ResultAsArrays::operator=(const ResultAsArrays& other61) {
-  is_empty = other61.is_empty;
-  id = other61.id;
-  is_scan = other61.is_scan;
-  is_error = other61.is_error;
-  error = other61.error;
-  error_msg = other61.error_msg;
-  cells = other61.cells;
-  __isset = other61.__isset;
   return *this;
 }
 
@@ -2176,7 +2174,17 @@ void swap(ResultSerialized &a, ResultSerialized &b) {
   swap(a.__isset, b.__isset);
 }
 
-ResultSerialized::ResultSerialized(const ResultSerialized& other62) {
+ResultSerialized::ResultSerialized(const ResultSerialized& other61) {
+  is_empty = other61.is_empty;
+  id = other61.id;
+  is_scan = other61.is_scan;
+  is_error = other61.is_error;
+  error = other61.error;
+  error_msg = other61.error_msg;
+  cells = other61.cells;
+  __isset = other61.__isset;
+}
+ResultSerialized& ResultSerialized::operator=(const ResultSerialized& other62) {
   is_empty = other62.is_empty;
   id = other62.id;
   is_scan = other62.is_scan;
@@ -2185,16 +2193,6 @@ ResultSerialized::ResultSerialized(const ResultSerialized& other62) {
   error_msg = other62.error_msg;
   cells = other62.cells;
   __isset = other62.__isset;
-}
-ResultSerialized& ResultSerialized::operator=(const ResultSerialized& other63) {
-  is_empty = other63.is_empty;
-  id = other63.id;
-  is_scan = other63.is_scan;
-  is_error = other63.is_error;
-  error = other63.error;
-  error_msg = other63.error_msg;
-  cells = other63.cells;
-  __isset = other63.__isset;
   return *this;
 }
 
@@ -2292,13 +2290,13 @@ void swap(NamespaceListing &a, NamespaceListing &b) {
   swap(a.is_namespace, b.is_namespace);
 }
 
-NamespaceListing::NamespaceListing(const NamespaceListing& other64) {
+NamespaceListing::NamespaceListing(const NamespaceListing& other63) {
+  name = other63.name;
+  is_namespace = other63.is_namespace;
+}
+NamespaceListing& NamespaceListing::operator=(const NamespaceListing& other64) {
   name = other64.name;
   is_namespace = other64.is_namespace;
-}
-NamespaceListing& NamespaceListing::operator=(const NamespaceListing& other65) {
-  name = other65.name;
-  is_namespace = other65.is_namespace;
   return *this;
 }
 
@@ -2452,21 +2450,21 @@ void swap(TableSplit &a, TableSplit &b) {
   swap(a.__isset, b.__isset);
 }
 
-TableSplit::TableSplit(const TableSplit& other66) {
+TableSplit::TableSplit(const TableSplit& other65) {
+  start_row = other65.start_row;
+  end_row = other65.end_row;
+  location = other65.location;
+  ip_address = other65.ip_address;
+  hostname = other65.hostname;
+  __isset = other65.__isset;
+}
+TableSplit& TableSplit::operator=(const TableSplit& other66) {
   start_row = other66.start_row;
   end_row = other66.end_row;
   location = other66.location;
   ip_address = other66.ip_address;
   hostname = other66.hostname;
   __isset = other66.__isset;
-}
-TableSplit& TableSplit::operator=(const TableSplit& other67) {
-  start_row = other67.start_row;
-  end_row = other67.end_row;
-  location = other67.location;
-  ip_address = other67.ip_address;
-  hostname = other67.hostname;
-  __isset = other67.__isset;
   return *this;
 }
 
@@ -2601,19 +2599,19 @@ void swap(ColumnFamilyOptions &a, ColumnFamilyOptions &b) {
   swap(a.__isset, b.__isset);
 }
 
-ColumnFamilyOptions::ColumnFamilyOptions(const ColumnFamilyOptions& other68) {
+ColumnFamilyOptions::ColumnFamilyOptions(const ColumnFamilyOptions& other67) {
+  max_versions = other67.max_versions;
+  ttl = other67.ttl;
+  time_order_desc = other67.time_order_desc;
+  counter = other67.counter;
+  __isset = other67.__isset;
+}
+ColumnFamilyOptions& ColumnFamilyOptions::operator=(const ColumnFamilyOptions& other68) {
   max_versions = other68.max_versions;
   ttl = other68.ttl;
   time_order_desc = other68.time_order_desc;
   counter = other68.counter;
   __isset = other68.__isset;
-}
-ColumnFamilyOptions& ColumnFamilyOptions::operator=(const ColumnFamilyOptions& other69) {
-  max_versions = other69.max_versions;
-  ttl = other69.ttl;
-  time_order_desc = other69.time_order_desc;
-  counter = other69.counter;
-  __isset = other69.__isset;
   return *this;
 }
 
@@ -2814,7 +2812,18 @@ void swap(ColumnFamilySpec &a, ColumnFamilySpec &b) {
   swap(a.__isset, b.__isset);
 }
 
-ColumnFamilySpec::ColumnFamilySpec(const ColumnFamilySpec& other70) {
+ColumnFamilySpec::ColumnFamilySpec(const ColumnFamilySpec& other69) {
+  name = other69.name;
+  access_group = other69.access_group;
+  deleted = other69.deleted;
+  generation = other69.generation;
+  id = other69.id;
+  value_index = other69.value_index;
+  qualifier_index = other69.qualifier_index;
+  options = other69.options;
+  __isset = other69.__isset;
+}
+ColumnFamilySpec& ColumnFamilySpec::operator=(const ColumnFamilySpec& other70) {
   name = other70.name;
   access_group = other70.access_group;
   deleted = other70.deleted;
@@ -2824,17 +2833,6 @@ ColumnFamilySpec::ColumnFamilySpec(const ColumnFamilySpec& other70) {
   qualifier_index = other70.qualifier_index;
   options = other70.options;
   __isset = other70.__isset;
-}
-ColumnFamilySpec& ColumnFamilySpec::operator=(const ColumnFamilySpec& other71) {
-  name = other71.name;
-  access_group = other71.access_group;
-  deleted = other71.deleted;
-  generation = other71.generation;
-  id = other71.id;
-  value_index = other71.value_index;
-  qualifier_index = other71.qualifier_index;
-  options = other71.options;
-  __isset = other71.__isset;
   return *this;
 }
 
@@ -2988,21 +2986,21 @@ void swap(AccessGroupOptions &a, AccessGroupOptions &b) {
   swap(a.__isset, b.__isset);
 }
 
-AccessGroupOptions::AccessGroupOptions(const AccessGroupOptions& other72) {
+AccessGroupOptions::AccessGroupOptions(const AccessGroupOptions& other71) {
+  replication = other71.replication;
+  blocksize = other71.blocksize;
+  compressor = other71.compressor;
+  bloom_filter = other71.bloom_filter;
+  in_memory = other71.in_memory;
+  __isset = other71.__isset;
+}
+AccessGroupOptions& AccessGroupOptions::operator=(const AccessGroupOptions& other72) {
   replication = other72.replication;
   blocksize = other72.blocksize;
   compressor = other72.compressor;
   bloom_filter = other72.bloom_filter;
   in_memory = other72.in_memory;
   __isset = other72.__isset;
-}
-AccessGroupOptions& AccessGroupOptions::operator=(const AccessGroupOptions& other73) {
-  replication = other73.replication;
-  blocksize = other73.blocksize;
-  compressor = other73.compressor;
-  bloom_filter = other73.bloom_filter;
-  in_memory = other73.in_memory;
-  __isset = other73.__isset;
   return *this;
 }
 
@@ -3135,19 +3133,19 @@ void swap(AccessGroupSpec &a, AccessGroupSpec &b) {
   swap(a.__isset, b.__isset);
 }
 
-AccessGroupSpec::AccessGroupSpec(const AccessGroupSpec& other74) {
+AccessGroupSpec::AccessGroupSpec(const AccessGroupSpec& other73) {
+  name = other73.name;
+  generation = other73.generation;
+  options = other73.options;
+  defaults = other73.defaults;
+  __isset = other73.__isset;
+}
+AccessGroupSpec& AccessGroupSpec::operator=(const AccessGroupSpec& other74) {
   name = other74.name;
   generation = other74.generation;
   options = other74.options;
   defaults = other74.defaults;
   __isset = other74.__isset;
-}
-AccessGroupSpec& AccessGroupSpec::operator=(const AccessGroupSpec& other75) {
-  name = other75.name;
-  generation = other75.generation;
-  options = other75.options;
-  defaults = other75.defaults;
-  __isset = other75.__isset;
   return *this;
 }
 
@@ -3217,17 +3215,17 @@ uint32_t Schema::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_MAP) {
           {
             this->access_groups.clear();
-            uint32_t _size76;
-            ::apache::thrift::protocol::TType _ktype77;
-            ::apache::thrift::protocol::TType _vtype78;
-            xfer += iprot->readMapBegin(_ktype77, _vtype78, _size76);
-            uint32_t _i80;
-            for (_i80 = 0; _i80 < _size76; ++_i80)
+            uint32_t _size75;
+            ::apache::thrift::protocol::TType _ktype76;
+            ::apache::thrift::protocol::TType _vtype77;
+            xfer += iprot->readMapBegin(_ktype76, _vtype77, _size75);
+            uint32_t _i79;
+            for (_i79 = 0; _i79 < _size75; ++_i79)
             {
-              std::string _key81;
-              xfer += iprot->readString(_key81);
-              AccessGroupSpec& _val82 = this->access_groups[_key81];
-              xfer += _val82.read(iprot);
+              std::string _key80;
+              xfer += iprot->readString(_key80);
+              AccessGroupSpec& _val81 = this->access_groups[_key80];
+              xfer += _val81.read(iprot);
             }
             xfer += iprot->readMapEnd();
           }
@@ -3240,17 +3238,17 @@ uint32_t Schema::read(::apache::thrift::protocol::TProtocol* iprot) {
         if (ftype == ::apache::thrift::protocol::T_MAP) {
           {
             this->column_families.clear();
-            uint32_t _size83;
-            ::apache::thrift::protocol::TType _ktype84;
-            ::apache::thrift::protocol::TType _vtype85;
-            xfer += iprot->readMapBegin(_ktype84, _vtype85, _size83);
-            uint32_t _i87;
-            for (_i87 = 0; _i87 < _size83; ++_i87)
+            uint32_t _size82;
+            ::apache::thrift::protocol::TType _ktype83;
+            ::apache::thrift::protocol::TType _vtype84;
+            xfer += iprot->readMapBegin(_ktype83, _vtype84, _size82);
+            uint32_t _i86;
+            for (_i86 = 0; _i86 < _size82; ++_i86)
             {
-              std::string _key88;
-              xfer += iprot->readString(_key88);
-              ColumnFamilySpec& _val89 = this->column_families[_key88];
-              xfer += _val89.read(iprot);
+              std::string _key87;
+              xfer += iprot->readString(_key87);
+              ColumnFamilySpec& _val88 = this->column_families[_key87];
+              xfer += _val88.read(iprot);
             }
             xfer += iprot->readMapEnd();
           }
@@ -3320,11 +3318,11 @@ uint32_t Schema::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeFieldBegin("access_groups", ::apache::thrift::protocol::T_MAP, 1);
     {
       xfer += oprot->writeMapBegin(::apache::thrift::protocol::T_STRING, ::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->access_groups.size()));
-      std::map<std::string, AccessGroupSpec> ::const_iterator _iter90;
-      for (_iter90 = this->access_groups.begin(); _iter90 != this->access_groups.end(); ++_iter90)
+      std::map<std::string, AccessGroupSpec> ::const_iterator _iter89;
+      for (_iter89 = this->access_groups.begin(); _iter89 != this->access_groups.end(); ++_iter89)
       {
-        xfer += oprot->writeString(_iter90->first);
-        xfer += _iter90->second.write(oprot);
+        xfer += oprot->writeString(_iter89->first);
+        xfer += _iter89->second.write(oprot);
       }
       xfer += oprot->writeMapEnd();
     }
@@ -3334,11 +3332,11 @@ uint32_t Schema::write(::apache::thrift::protocol::TProtocol* oprot) const {
     xfer += oprot->writeFieldBegin("column_families", ::apache::thrift::protocol::T_MAP, 2);
     {
       xfer += oprot->writeMapBegin(::apache::thrift::protocol::T_STRING, ::apache::thrift::protocol::T_STRUCT, static_cast<uint32_t>(this->column_families.size()));
-      std::map<std::string, ColumnFamilySpec> ::const_iterator _iter91;
-      for (_iter91 = this->column_families.begin(); _iter91 != this->column_families.end(); ++_iter91)
+      std::map<std::string, ColumnFamilySpec> ::const_iterator _iter90;
+      for (_iter90 = this->column_families.begin(); _iter90 != this->column_families.end(); ++_iter90)
       {
-        xfer += oprot->writeString(_iter91->first);
-        xfer += _iter91->second.write(oprot);
+        xfer += oprot->writeString(_iter90->first);
+        xfer += _iter90->second.write(oprot);
       }
       xfer += oprot->writeMapEnd();
     }
@@ -3387,7 +3385,17 @@ void swap(Schema &a, Schema &b) {
   swap(a.__isset, b.__isset);
 }
 
-Schema::Schema(const Schema& other92) {
+Schema::Schema(const Schema& other91) {
+  access_groups = other91.access_groups;
+  column_families = other91.column_families;
+  generation = other91.generation;
+  version = other91.version;
+  group_commit_interval = other91.group_commit_interval;
+  access_group_defaults = other91.access_group_defaults;
+  column_family_defaults = other91.column_family_defaults;
+  __isset = other91.__isset;
+}
+Schema& Schema::operator=(const Schema& other92) {
   access_groups = other92.access_groups;
   column_families = other92.column_families;
   generation = other92.generation;
@@ -3396,16 +3404,6 @@ Schema::Schema(const Schema& other92) {
   access_group_defaults = other92.access_group_defaults;
   column_family_defaults = other92.column_family_defaults;
   __isset = other92.__isset;
-}
-Schema& Schema::operator=(const Schema& other93) {
-  access_groups = other93.access_groups;
-  column_families = other93.column_families;
-  generation = other93.generation;
-  version = other93.version;
-  group_commit_interval = other93.group_commit_interval;
-  access_group_defaults = other93.access_group_defaults;
-  column_family_defaults = other93.column_family_defaults;
-  __isset = other93.__isset;
   return *this;
 }
 
@@ -3498,15 +3496,15 @@ void swap(ClientException &a, ClientException &b) {
   swap(a.__isset, b.__isset);
 }
 
-ClientException::ClientException(const ClientException& other94) {
+ClientException::ClientException(const ClientException& other93) {
+  code = other93.code;
+  message = other93.message;
+  __isset = other93.__isset;
+}
+ClientException& ClientException::operator=(const ClientException& other94) {
   code = other94.code;
   message = other94.message;
   __isset = other94.__isset;
-}
-ClientException& ClientException::operator=(const ClientException& other95) {
-  code = other95.code;
-  message = other95.message;
-  __isset = other95.__isset;
   return *this;
 }
 }} // namespace

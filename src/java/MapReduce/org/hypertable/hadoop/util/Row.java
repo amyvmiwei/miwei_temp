@@ -33,7 +33,7 @@ public class Row implements Writable, Comparable<Row> {
   private ByteBuffer mSerializedCells=null;
   private byte [] mRowKey=null;
   private NavigableMap<byte[], NavigableMap<byte[], byte[]>> mColFamilyToCol=null;
-  private SerializedCellsReader mReader = new SerializedCellsReader(null);
+  private SerializedCellsReader mReader = new SerializedCellsReader();
 
   /** Default Ctor **/
   public Row() {

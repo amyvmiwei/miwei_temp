@@ -14,6 +14,11 @@ import java.nio.InvalidMarkException;
 
 public class SerializedCellsReader {
 
+  public SerializedCellsReader() {
+    mBase = null;
+    mBaseOffset = 0;
+  }
+
   public SerializedCellsReader(byte [] buf) {
     mBase = buf;
     mBaseOffset = 0;
@@ -24,6 +29,15 @@ public class SerializedCellsReader {
       if (version != SerializedCellsFlag.VERSION)
         throw new AssertionError("SerializedCells version mismatch, expected "
                 + SerializedCellsFlag.VERSION + ", got " + version);
+    }
+  }
+
+  public SerializedCellsReader(ByteBuffer buf) {
+    if (buf != null)
+      reset(buf);
+    else {
+      mBase = null;
+      mBaseOffset = 0;
     }
   }
 
@@ -155,7 +169,7 @@ public class SerializedCellsReader {
   public int get_column_family_length() { return mColumnFamilyLength; }
 
   public byte [] get_column_qualifier() {
-    if (mColumnQualifier == null) {
+    if (mColumnQualifier == null && mColumnQualifierLength > 0) {
       mColumnQualifier = new byte [ mColumnQualifierLength ];
       System.arraycopy(mBase, mBaseOffset+mColumnQualifierOffset, mColumnQualifier, 0, mColumnQualifierLength);
     }
@@ -169,7 +183,7 @@ public class SerializedCellsReader {
   }
 
   public byte [] get_value() {
-    if (mValue == null) {
+    if (mValue == null && mValueLength > 0) {
       mValue = new byte [ mValueLength ];
       System.arraycopy(mBase, mBaseOffset+mValueOffset, mValue, 0, mValueLength);
     }

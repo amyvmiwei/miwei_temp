@@ -170,14 +170,14 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
     int offset = str.indexOf("=^");
     if (offset != -1) {
       cp.column_family = str.substring(0, offset).trim();
-      cp.operation = ColumnPredicateOperation.PREFIX_MATCH;
+      cp.operation = ColumnPredicateOperation.PREFIX_MATCH.getValue();
       cp.value = str.substring(offset + 2).trim();
     }
     else {
       offset = str.indexOf("=");
       if (offset != -1) {
         cp.column_family = str.substring(0, offset).trim();
-        cp.operation = ColumnPredicateOperation.EXACT_MATCH;
+        cp.operation = ColumnPredicateOperation.EXACT_MATCH.getValue();
         cp.value = str.substring(offset + 1).trim();
       }
       else

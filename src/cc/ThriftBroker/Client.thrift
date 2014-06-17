@@ -172,7 +172,7 @@ enum ColumnPredicateOperation {
 struct ColumnPredicate {
   1: optional string column_family
   2: optional string column_qualifier
-  3: ColumnPredicateOperation operation
+  3: i32 operation
   4: optional string value
 }
 

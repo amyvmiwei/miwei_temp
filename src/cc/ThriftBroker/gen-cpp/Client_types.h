@@ -270,18 +270,18 @@ typedef struct _ColumnPredicate__isset {
 class ColumnPredicate {
  public:
 
-  static const char* ascii_fingerprint; // = "7AD135A1617551CDCFB16B6BF2E36C48";
-  static const uint8_t binary_fingerprint[16]; // = {0x7A,0xD1,0x35,0xA1,0x61,0x75,0x51,0xCD,0xCF,0xB1,0x6B,0x6B,0xF2,0xE3,0x6C,0x48};
+  static const char* ascii_fingerprint; // = "C0D24FEC9006AF59BF63864BF9F94F59";
+  static const uint8_t binary_fingerprint[16]; // = {0xC0,0xD2,0x4F,0xEC,0x90,0x06,0xAF,0x59,0xBF,0x63,0x86,0x4B,0xF9,0xF9,0x4F,0x59};
 
   ColumnPredicate(const ColumnPredicate&);
   ColumnPredicate& operator=(const ColumnPredicate&);
-  ColumnPredicate() : column_family(), column_qualifier(), operation((ColumnPredicateOperation::type)0), value() {
+  ColumnPredicate() : column_family(), column_qualifier(), operation(0), value() {
   }
 
   virtual ~ColumnPredicate() throw();
   std::string column_family;
   std::string column_qualifier;
-  ColumnPredicateOperation::type operation;
+  int32_t operation;
   std::string value;
 
   _ColumnPredicate__isset __isset;
@@ -290,7 +290,7 @@ class ColumnPredicate {
 
   void __set_column_qualifier(const std::string& val);
 
-  void __set_operation(const ColumnPredicateOperation::type val);
+  void __set_operation(const int32_t val);
 
   void __set_value(const std::string& val);
 
@@ -351,8 +351,8 @@ typedef struct _ScanSpec__isset {
 class ScanSpec {
  public:
 
-  static const char* ascii_fingerprint; // = "A061305ED0C5784B15F4159C27F0F863";
-  static const uint8_t binary_fingerprint[16]; // = {0xA0,0x61,0x30,0x5E,0xD0,0xC5,0x78,0x4B,0x15,0xF4,0x15,0x9C,0x27,0xF0,0xF8,0x63};
+  static const char* ascii_fingerprint; // = "E832747BA3A08125D187174C984AAD63";
+  static const uint8_t binary_fingerprint[16]; // = {0xE8,0x32,0x74,0x7B,0xA3,0xA0,0x81,0x25,0xD1,0x87,0x17,0x4C,0x98,0x4A,0xAD,0x63};
 
   ScanSpec(const ScanSpec&);
   ScanSpec& operator=(const ScanSpec&);

@@ -113,7 +113,7 @@ implements org.apache.hadoop.mapred.InputFormat<BytesWritable, Row>, JobConfigur
     private Row m_value;
     private ByteBuffer m_row = null;
     private BytesWritable m_key = null;
-    private SerializedCellsReader m_reader = new SerializedCellsReader(null);
+    private SerializedCellsReader m_reader = new SerializedCellsReader();
 
     private boolean m_eos = false;
 

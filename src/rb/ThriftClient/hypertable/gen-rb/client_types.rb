@@ -155,16 +155,13 @@ module Hypertable
       FIELDS = {
         COLUMN_FAMILY => {:type => ::Thrift::Types::STRING, :name => 'column_family', :optional => true},
         COLUMN_QUALIFIER => {:type => ::Thrift::Types::STRING, :name => 'column_qualifier', :optional => true},
-        OPERATION => {:type => ::Thrift::Types::I32, :name => 'operation', :enum_class => ::Hypertable::ThriftGen::ColumnPredicateOperation},
+        OPERATION => {:type => ::Thrift::Types::I32, :name => 'operation'},
         VALUE => {:type => ::Thrift::Types::STRING, :name => 'value', :optional => true}
       }
 
       def struct_fields; FIELDS; end
 
       def validate
-        unless @operation.nil? || ::Hypertable::ThriftGen::ColumnPredicateOperation::VALID_VALUES.include?(@operation)
-          raise ::Thrift::ProtocolException.new(::Thrift::ProtocolException::UNKNOWN, 'Invalid value of field operation!')
-        end
       end
 
       ::Thrift::Struct.generate_accessors self

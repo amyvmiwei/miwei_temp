@@ -245,7 +245,7 @@ public class DriverHypertable extends Driver {
     }
     else if (mSetup.type == Setup.Type.READ) {
       String row;
-      SerializedCellsReader reader = new SerializedCellsReader(null);
+      SerializedCellsReader reader = new SerializedCellsReader();
 
       if (mSetup.parallelism != 0) {
         System.out.println("Parallel reads not implemented");
@@ -287,7 +287,7 @@ public class DriverHypertable extends Driver {
       boolean eos = false;
       String start_row = mCommon.formatRowKey(task.start, mSetup.keySize);
       String end_row = mCommon.formatRowKey(task.end, mSetup.keySize);
-      SerializedCellsReader reader = new SerializedCellsReader(null);
+      SerializedCellsReader reader = new SerializedCellsReader();
 
       if (mSetup.parallelism != 0) {
         System.out.println("Parallel scans not implemented");

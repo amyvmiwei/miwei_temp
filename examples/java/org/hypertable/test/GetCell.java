@@ -73,7 +73,7 @@ public class GetCell {
                                                                      .setRow_intervals(Arrays.asList(new RowInterval()
                                                                                                      .setStart_row("A").setStart_inclusive(true)
                                                                                                      .setEnd_row("A").setEnd_inclusive(true))));
-      SerializedCellsReader reader = new SerializedCellsReader(null);
+      SerializedCellsReader reader = new SerializedCellsReader();
       reader.reset(serializedCells);
       reader.next();
       long readFromDb2 = Long.parseLong(new String(reader.get_value()));
