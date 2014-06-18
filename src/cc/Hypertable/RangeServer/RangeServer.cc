@@ -69,11 +69,14 @@
 
 #include <boost/algorithm/string.hpp>
 
-#if defined(TCMALLOC)
-#include <google/tcmalloc.h>
-#include <google/heap-checker.h>
-#include <google/heap-profiler.h>
-#include <google/malloc_extension.h>
+#if defined(TCMALLOC_MINIMAL)
+#include <gperftools/tcmalloc.h>
+#include <gperftools/malloc_extension.h>
+#elif defined(TCMALLOC)
+#include <gperftools/heap-checker.h>
+#include <gperftools/heap-profiler.h>
+#include <gperftools/malloc_extension.h>
+#include <gperftools/tcmalloc.h>
 #endif
 
 #include <algorithm>
@@ -2253,19 +2256,23 @@ void RangeServer::heapcheck(ResponseCallback *cb, const char *outfile) {
 
   HT_INFO("heapcheck");
 
-#if defined(TCMALLOC)
-  HeapLeakChecker::NoGlobalLeaks();
+#if defined(TCMALLOC) || defined(TCMALLOC_MINIMAL)
   if (outfile && *outfile) {
     std::ofstream out(outfile);
     char buf[4096];
     MallocExtension::instance()->GetStats(buf, 4096);
     out << buf << std::endl;
   }
+#endif
+
+#if defined(TCMALLOC)
+  HeapLeakChecker::NoGlobalLeaks();
   if (IsHeapProfilerRunning())
     HeapProfilerDump("heapcheck");
 #else
   HT_WARN("heapcheck not defined for current allocator");
 #endif
+
   cb->response_ok();
 }
 
