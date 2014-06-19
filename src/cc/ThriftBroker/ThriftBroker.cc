@@ -55,21 +55,19 @@
 #include <unordered_map>
 
 #define THROW_TE(_code_, _str_) do { ThriftGen::ClientException te; \
-  te.code = _code_; te.message = _str_; \
+  te.code = _code_; \
+  te.message.append(Error::get_text(_code_)); \
+  te.message.append(" - "); \
+  te.message.append(_str_); \
   te.__isset.code = te.__isset.message = true; \
   throw te; \
-} while (0)
-
-#define THROW_(_code_) do { \
-  Hypertable::Exception e(_code_, __LINE__, HT_FUNC, __FILE__); \
-  std::ostringstream oss; oss << e; \
-  HT_ERROR_OUT << oss.str() << HT_END; \
-  THROW_TE(_code_, oss.str()); \
 } while (0)
 
 #define RETHROW(_expr_) catch (Hypertable::Exception &e) { \
   std::ostringstream oss;  oss << HT_FUNC << " " << _expr_ << ": "<< e; \
   HT_ERROR_OUT << oss.str() << HT_END; \
+  oss.str(""); \
+  oss << _expr_; \
   THROW_TE(e.code(), oss.str()); \
 }
 
@@ -996,7 +994,7 @@ public:
 
     try {
       get_scanner_async(scanner)->cancel();
-    } RETHROW(" scanner=" << scanner)
+    } RETHROW("scanner=" << scanner)
 
     LOG_API_FINISH_E(" cancelled");
   }
@@ -1101,7 +1099,7 @@ public:
     try {
       TableScanner *scanner = get_scanner(scanner_id);
       _next_row(result, scanner);
-    } RETHROW(" result.size=" << result.size())
+    } RETHROW("result.size=" << result.size())
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
 
@@ -1296,7 +1294,7 @@ public:
 
     try {
       _offer_cell(ns, table, mutate_spec, cell);
-    } RETHROW(" namespace=" << ns << " table=" << table
+    } RETHROW("namespace=" << ns << " table=" << table
             << " mutate_spec.appname="<< mutate_spec.appname)
     LOG_API_FINISH_E(" cell="<< cell);
   }
@@ -1315,7 +1313,7 @@ public:
     try {
       _offer_cells(ns, table, mutate_spec, cells);
       LOG_API("mutate_spec.appname=" << mutate_spec.appname << " done");
-    } RETHROW(" namespace=" << ns << " table=" << table
+    } RETHROW("namespace=" << ns << " table=" << table
             << " mutate_spec.appname=" << mutate_spec.appname)
     LOG_API_FINISH_E(" cells.size=" << cells.size());
   }
@@ -1519,7 +1517,7 @@ public:
     LOG_API_START("future="<< ff);
     try {
       remove_future(ff);
-    } RETHROW(" future=" << ff)
+    } RETHROW("future=" << ff)
     LOG_API_FINISH;
   }
 
@@ -1529,10 +1527,10 @@ public:
 
   virtual ThriftGen::Namespace namespace_open(const String &ns) {
     ThriftGen::Namespace id;
-    LOG_API_START("namespace name=" << ns);
+    LOG_API_START("namespace =" << ns);
     try {
       id = get_cached_object_id( m_context.client->open_namespace(ns) );
-    } RETHROW(" namespace name" << ns)
+    } RETHROW("namespace " << ns)
     LOG_API_FINISH_E(" id=" << id);
     return id;
   }
@@ -1549,7 +1547,7 @@ public:
     try {
       id = get_object_id(_open_mutator_async(ns, table, ff, flags));
       add_reference(id, ff);
-    } RETHROW(" namespace=" << ns << " table=" << table << " future="
+    } RETHROW("namespace=" << ns << " table=" << table << " future="
             << ff << " flags=" << flags)
     LOG_API_FINISH_E(" mutator=" << id);
     return id;
@@ -1569,7 +1567,7 @@ public:
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       TablePtr t = namespace_ptr->open_table(table);
       id =  get_object_id(t->create_mutator(0, flags, flush_interval));
-    } RETHROW(" namespace=" << ns << "table=" << table << " flags="
+    } RETHROW("namespace=" << ns << "table=" << table << " flags="
             << flags << " flush_interval=" << flush_interval)
     LOG_API_FINISH_E(" async_mutator=" << id);
     return id;
@@ -1584,7 +1582,7 @@ public:
     LOG_API_START("mutator="<< mutator);
     try {
       get_mutator(mutator)->flush();
-    } RETHROW(" mutator=" << mutator)
+    } RETHROW("mutator=" << mutator)
     LOG_API_FINISH_E(" done");
   }
 
@@ -1596,7 +1594,7 @@ public:
     LOG_API_START("mutator="<< mutator);
     try {
       get_mutator_async(mutator)->flush();
-    } RETHROW(" mutator=" << mutator)
+    } RETHROW("mutator=" << mutator)
     LOG_API_FINISH_E(" done");
   }
 
@@ -1609,7 +1607,7 @@ public:
     try {
       flush_mutator(mutator);
       remove_mutator(mutator);
-    } RETHROW(" mutator=" << mutator)
+    } RETHROW("mutator=" << mutator)
     LOG_API_FINISH;
   }
 
@@ -1622,7 +1620,7 @@ public:
 
     try {
       get_mutator_async(mutator)->cancel();
-    } RETHROW(" mutator="<< mutator)
+    } RETHROW("mutator="<< mutator)
 
     LOG_API_FINISH_E(" cancelled");
   }
@@ -1637,7 +1635,7 @@ public:
       flush_mutator_async(mutator);
       remove_mutator(mutator);
       remove_references(mutator);
-    } RETHROW(" mutator" << mutator)
+    } RETHROW("mutator" << mutator)
     LOG_API_FINISH;
   }
 
@@ -1659,7 +1657,7 @@ public:
     LOG_API_START("mutator=" << mutator << " cell=" << cell);
     try {
       _set_cell(mutator, cell);
-    } RETHROW(" mutator=" << mutator << " cell=" << cell)
+    } RETHROW("mutator=" << mutator << " cell=" << cell)
     LOG_API_FINISH;
   }
 
@@ -1668,7 +1666,7 @@ public:
     LOG_API_START("mutator=" << mutator << " cell.size=" << cells.size());
     try {
       _set_cells(mutator, cells);
-    } RETHROW(" mutator=" << mutator << " cell.size=" << cells.size())
+    } RETHROW("mutator=" << mutator << " cell.size=" << cells.size())
     LOG_API_FINISH;
   }
 
@@ -1679,7 +1677,7 @@ public:
             << cell.size());
     try {
       _set_cell(mutator, cell);
-    } RETHROW(" mutator="<< mutator <<" cell_as_array.size="<< cell.size());
+    } RETHROW("mutator="<< mutator <<" cell_as_array.size="<< cell.size());
     LOG_API_FINISH;
   }
 
@@ -1698,7 +1696,7 @@ public:
       get_mutator(mutator)->set_cells(cb.get());
       if (flush || reader.flush())
         get_mutator(mutator)->flush();
-    } RETHROW(" mutator="<< mutator <<" cell.size="<< cells.size())
+    } RETHROW("mutator="<< mutator <<" cell.size="<< cells.size())
 
     LOG_API_FINISH;
   }
@@ -1714,7 +1712,7 @@ public:
       cb.add(hcell, false);
       mutator->set_cells(cb.get());
       mutator->flush();
-    } RETHROW(" ns=" << ns << " table=" << table << " cell=" << cell);
+    } RETHROW("ns=" << ns << " table=" << table << " cell=" << cell);
     LOG_API_FINISH;
   }
 
@@ -1728,7 +1726,7 @@ public:
       convert_cells(cells, hcells);
       mutator->set_cells(hcells);
       mutator->flush();
-    } RETHROW(" ns=" << ns << " table=" << table <<" cell.size="
+    } RETHROW("ns=" << ns << " table=" << table <<" cell.size="
             << cells.size());
     LOG_API_FINISH;
   }
@@ -1744,7 +1742,7 @@ public:
       convert_cells(cells, hcells);
       mutator->set_cells(hcells);
       mutator->flush();
-    } RETHROW(" ns="<< ns <<" table=" << table<<" cell.size="<< cells.size());
+    } RETHROW("ns="<< ns <<" table=" << table<<" cell.size="<< cells.size());
     LOG_API_FINISH;
   }
 
@@ -1762,7 +1760,7 @@ public:
       cb.add(hcell, false);
       mutator->set_cells(cb.get());
       mutator->flush();
-    } RETHROW(" ns=" << ns << " table=" << table << " cell_as_array.size="
+    } RETHROW("ns=" << ns << " table=" << table << " cell_as_array.size="
             << cell.size());
     LOG_API_FINISH;
   }
@@ -1783,7 +1781,7 @@ public:
       }
       mutator->set_cells(cb.get());
       mutator->flush();
-    } RETHROW(" ns=" << ns << " table=" << table << " cell_serialized.size="
+    } RETHROW("ns=" << ns << " table=" << table << " cell_serialized.size="
             << cells.size() << " flush=" << flush);
 
     LOG_API_FINISH;
@@ -1794,7 +1792,7 @@ public:
     LOG_API_START("mutator=" << mutator << " cells.size=" << cells.size());
     try {
       _set_cells_async(mutator, cells);
-    } RETHROW(" mutator=" << mutator << " cells.size=" << cells.size())
+    } RETHROW("mutator=" << mutator << " cells.size=" << cells.size())
     LOG_API_FINISH;
   }
 
@@ -1808,7 +1806,7 @@ public:
     LOG_API_START("mutator=" << mutator <<" cell=" << cell);
     try {
       _set_cell_async(mutator, cell);
-    } RETHROW(" mutator=" << mutator << " cell=" << cell);
+    } RETHROW("mutator=" << mutator << " cell=" << cell);
     LOG_API_FINISH;
   }
 
@@ -1822,7 +1820,7 @@ public:
     LOG_API_START("mutator=" << mutator << " cells.size=" << cells.size());
     try {
       _set_cells_async(mutator, cells);
-    } RETHROW(" mutator=" << mutator << " cells.size=" << cells.size())
+    } RETHROW("mutator=" << mutator << " cells.size=" << cells.size())
     LOG_API_FINISH;
   }
 
@@ -1838,7 +1836,7 @@ public:
            << cell.size());
     try {
       _set_cell_async(mutator, cell);
-    } RETHROW(" mutator=" << mutator << " cell_as_array.size=" << cell.size())
+    } RETHROW("mutator=" << mutator << " cell_as_array.size=" << cell.size())
     LOG_API_FINISH;
   }
 
@@ -1865,7 +1863,7 @@ public:
       if (flush || reader.flush() || mutator_ptr->needs_flush())
         mutator_ptr->flush();
 
-    } RETHROW(" mutator=" << mutator << " cells.size=" << cells.size());
+    } RETHROW("mutator=" << mutator << " cells.size=" << cells.size());
     LOG_API_FINISH;
   }
 
@@ -1880,7 +1878,7 @@ public:
     LOG_API_START("namespace=" << ns);
     try {
       exists = m_context.client->exists_namespace(ns);
-    } RETHROW(" namespace=" << ns)
+    } RETHROW("namespace=" << ns)
     LOG_API_FINISH_E(" exists=" << exists);
     return exists;
   }
@@ -1896,7 +1894,7 @@ public:
     try {
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       exists = namespace_ptr->exists_table(table);
-    } RETHROW(" namespace=" << ns << " table="<< table)
+    } RETHROW("namespace=" << ns << " table="<< table)
     LOG_API_FINISH_E(" exists=" << exists);
     return exists;
   }
@@ -1912,7 +1910,7 @@ public:
     try {
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       result = namespace_ptr->get_table_id(table);
-    } RETHROW(" namespace=" << ns << " table="<< table)
+    } RETHROW("namespace=" << ns << " table="<< table)
     LOG_API_FINISH_E(" id=" << result);
   }
 
@@ -1927,7 +1925,7 @@ public:
     try {
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       result = namespace_ptr->get_schema_str(table);
-    } RETHROW(" namespace=" << ns << " table=" << table)
+    } RETHROW("namespace=" << ns << " table=" << table)
     LOG_API_FINISH_E(" schema=" << result);
   }
 
@@ -1942,7 +1940,7 @@ public:
     try {
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       result = namespace_ptr->get_schema_str(table, true);
-    } RETHROW(" namespace=" << ns << " table=" << table)
+    } RETHROW("namespace=" << ns << " table=" << table)
     LOG_API_FINISH_E(" schema=" << result);
   }
 
@@ -1959,7 +1957,7 @@ public:
       Hypertable::SchemaPtr schema = namespace_ptr->get_schema(table);
       if (schema)
         convert_schema(schema, result);
-    } RETHROW(" namespace=" << ns << " table="<< table)
+    } RETHROW("namespace=" << ns << " table="<< table)
     LOG_API_FINISH;
   }
 
@@ -1981,7 +1979,7 @@ public:
           tables.push_back(listing[ii].name);
 
     }
-    RETHROW(" namespace=" << ns)
+    RETHROW("namespace=" << ns)
     LOG_API_FINISH_E(" tables.size=" << tables.size());
   }
 
@@ -2000,7 +1998,7 @@ public:
         _return.push_back(entry);
       }
     }
-    RETHROW(" namespace=" << ns)
+    RETHROW("namespace=" << ns)
 
     LOG_API_FINISH_E(" listing.size=" << _return.size());
   }
@@ -2025,7 +2023,7 @@ public:
         _return.push_back(tsplit);
       }
     }
-    RETHROW(" namespace=" << ns << " table=" << table)
+    RETHROW("namespace=" << ns << " table=" << table)
 
     LOG_API_FINISH_E(" splits.size=" << splits.size());
   }
@@ -2040,7 +2038,7 @@ public:
     try {
       m_context.client->drop_namespace(ns, NULL, if_exists);
     }
-    RETHROW(" namespace=" << ns << " if_exists=" << if_exists)
+    RETHROW("namespace=" << ns << " if_exists=" << if_exists)
     LOG_API_FINISH;
   }
 
@@ -2056,7 +2054,7 @@ public:
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       namespace_ptr->rename_table(table, new_table_name);
     }
-    RETHROW(" namespace=" << ns << " table=" << table << " new_table_name="
+    RETHROW("namespace=" << ns << " table=" << table << " new_table_name="
             << new_table_name << " done")
     LOG_API_FINISH;
   }
