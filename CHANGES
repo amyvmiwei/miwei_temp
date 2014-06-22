@@ -1,3 +1,50 @@
+Version 0.9.8.0:
+(2014-06-23)
+
+    Improved secondary index query support
+    Added Cluster ID to commit log block header
+    issue 1146: Change default Hypertable port numbers to be non-ephemeral
+    issue 1080: Do localtime conversion for all datetime values passed through API
+    Changed default Hadoop distro to cdh4
+    Renamed DFS Broker to FS Broker
+    Added REBUILD INDICES command
+    Upgraded Thrift to > 0.9.1 (commit 816790b)
+    issue 1219: Modified query cache to invalidate on row+column
+    Cleaned up Schema code and HQL/Thrift schema create & modify commands
+    Added methods to support printing ThriftGen::Key and ThriftGen::Cell ruby classes
+    Fixed some issues discovered when building PHP API example program
+    Got RangeServer::heapcheck() to dump heap stats with tcmalloc_minimal
+    Fixed some issues discovered when building java API example program
+    Fixed some issues discovered when building python API example program
+    issue 1256: Call TableMutator::flush() explicitly in ThriftBroker; swallow exceptions in ~TableMutator
+    Fixed bugs discovered when building API example programs
+    Fixed schema object initialization problems
+    add HypertableStorage for Pig
+    Updated ThriftBroker port number in bin/start-test-client.sh
+    Fixed bug in LoadDataSource with empty trailing fields
+    Fixed output stream operator for Key in ThriftHelper
+    Cleaned up sub operation handling in Master
+    issue 1222: Fixed earliest cached revision problem in AccessGroup
+    Fixed bugs in analyze-missing-keys.sh in rangeserver-failover-basic tests
+    Allow COUNTER & MAX_VERSIONS if supplied MAX_VERSIONS value is 0
+    Catch and log exceptions when destroying unclosed objects in ThriftBroker
+    Check for NULL timeout supplied to TableMutatorAsync
+    Added test for ROW intervals plus index lookup
+    Got rid of build warnings (java & cpp)
+    Updated lzo code to latest version
+    issue 1206: Shell exceptions should report stack information only in verbose mode
+    issue 1235: Prevent users from removing /tmp and /sys namespaces
+    issue 1229: Fixed bad basename command in ht version
+    Fixed create namespace problem when intermediate component is a table
+    Properly handle case where target of table rename is a namespace
+    Added ability to add/drop inidices after table creation
+    Updated load_generator to reflect recent secondary index changes
+    Share index update code between client lib and RangeServer
+    issue 1188: Fixed race condition between Cluster ID generate and read
+    Improved Master operation remove approval handling
+    Removed source_machine variable and localhost role from Capfiles
+    Got rid of unused merge_diff tool
+
 Version 0.9.7.19:
 (2014-06-15)
 
