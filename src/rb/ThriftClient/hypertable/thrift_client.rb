@@ -71,4 +71,19 @@ module Hypertable
       client.close()
     end
   end
+
+  module ThriftGen
+    class Key
+      def to_s
+        "{Key row=%s column_family=%s column_qualifier=%s flag=%s}" %
+          [row, column_family, column_qualifier, flag]
+      end
+    end
+    class Cell
+      def to_s
+        "{Cell key=%s value=%s}" % [key, value]
+      end
+    end
+  end
+
 end
