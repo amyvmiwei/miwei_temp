@@ -35,6 +35,7 @@ extern "C" {
 #include <cstdint>
 #include <initializer_list>
 #include <stack>
+#include <string>
 #include <vector>
 
 namespace Hypertable {
