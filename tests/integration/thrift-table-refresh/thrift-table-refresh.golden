@@ -38,4 +38,4 @@ row10	f	hello, world
 [test-10]
 HqlResult(mutator=None, cells=None, results=None, scanner=None)
 Error: foo - HYPERTABLE table does not exist
- foo - HYPERTABLE table does not exist
+HYPERTABLE table does not exist 

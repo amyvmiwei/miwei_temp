@@ -22,7 +22,9 @@ for f in $SCRIPT_DIR/mml/* ; do
   $HT_HOME/bin/ht metalog_dump /hypertable/servers/tmp/mml >> mml.output
 done
 
-diff mml.output $SCRIPT_DIR/mml.golden
+cat mml.output | perl -e 'while (<>) { s/timestamp=.*?201\d,/timestamp=0,/g; print; }' > mml.output.filtered
+
+diff mml.output.filtered $SCRIPT_DIR/mml.golden
 if [ $? -ne 0 ]; then
   echo "MML upgrade test failure"
   exit 1
