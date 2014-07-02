@@ -518,7 +518,8 @@ void AccessGroup::run_compaction(int maintenance_flags, Hints *hints) {
       if ((m_cell_cache_manager->immutable_cache_empty()) &&
           m_stores.size() <= (size_t)1 &&
           (!MaintenanceFlag::split(maintenance_flags) &&
-           !MaintenanceFlag::move_compaction(maintenance_flags)))
+           !MaintenanceFlag::move_compaction(maintenance_flags) &&
+           !MaintenanceFlag::gc_compaction(maintenance_flags)))
         break;
       major = true;
       HT_INFOF("Starting Major Compaction of %s", m_full_name.c_str());
