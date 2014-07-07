@@ -49,13 +49,14 @@
 using namespace Hypertable;
 using namespace Hypertable::MetaLog;
 
-Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition) :
-  m_fs(fs), m_definition(definition), m_version(0) {
+Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition, int flags) :
+  m_fs(fs), m_definition(definition), m_flags(flags), m_version(0) {
 }
 
 
-Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition, const String &path) :
-  m_fs(fs), m_definition(definition), m_version(0) {
+Reader::Reader(FilesystemPtr &fs, DefinitionPtr &definition,
+	       const String &path, int flags) :
+  m_fs(fs), m_definition(definition), m_flags(flags), m_version(0) {
 
   // Setup DFS path name
   m_path = path;
@@ -202,7 +203,8 @@ void Reader::load_file(const String &fname) {
                     header.checksum, computed_checksum);
 
         m_entity_map[header] = entity;
-        m_entities.push_back(entity);
+	if (m_flags & LOAD_ALL_ENTITIES)
+	  m_entities.push_back(entity);
       }
 
     }
@@ -210,7 +212,7 @@ void Reader::load_file(const String &fname) {
   }
   catch (Exception &e) {
     HT_THROW2F(e.code(), e, "Error reading metalog file: %s: read %llu/%llu",
-               fname.c_str(), (Llu)cur_offset, (Llu)file_length);
+	       fname.c_str(), (Llu)cur_offset, (Llu)file_length);
   }
 
   if (!found_recover_entry)

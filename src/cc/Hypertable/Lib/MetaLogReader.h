@@ -56,14 +56,19 @@ namespace Hypertable {
 
     public:
 
+      enum Flags {
+	LOAD_ALL_ENTITIES=1
+      };
+
       /** Constructor.
        * Constructs and empty object.  This constructor is used when opening a
        * specific %MetaLog fragment file and is typically followed by a call to
        * load_file().
        * @param fs Smart pointer to Filesystem object
        * @param definition Smart pointer to Definition object
+       * @param flags Flags that control reading behavior
        */
-      Reader(FilesystemPtr &fs, DefinitionPtr &definition);
+      Reader(FilesystemPtr &fs, DefinitionPtr &definition, int flags=0);
 
       /** Constructor.
        * @anchor primary_metalog_reader_constructor
@@ -79,8 +84,9 @@ namespace Hypertable {
        * @param fs Smart pointer to Filesystem object
        * @param definition Smart pointer to Definition object
        * @param path %Path to %MetaLog directory
+       * @param flags Flags that control reading behavior
        */
-      Reader(FilesystemPtr &fs, DefinitionPtr &definition, const String &path);
+      Reader(FilesystemPtr &fs, DefinitionPtr &definition, const String &path, int flags=0);
 
       /** Returns latest version of all entities.
        * @param entities Reference to vector to hold returned entities
@@ -181,6 +187,9 @@ namespace Hypertable {
 
       /// Path name of %MetaLog directory
       String m_path;
+
+      /// Flags that control read behavior
+      int m_flags;
 
       /// Next unused numeric filename
       int32_t m_next_filenum;

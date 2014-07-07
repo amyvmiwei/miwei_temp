@@ -197,12 +197,13 @@ int main(int argc, char **argv) {
     }
     def = iter->second;
 
+    int reader_flags = dump_all ? MetaLog::Reader::LOAD_ALL_ENTITIES : 0;
     if (is_file) {
-      rsml_reader = new MetaLog::Reader(fs, def);
+      rsml_reader = new MetaLog::Reader(fs, def, reader_flags);
       rsml_reader->load_file(log_path);
     }
     else
-      rsml_reader = new MetaLog::Reader(fs, def, log_path);
+      rsml_reader = new MetaLog::Reader(fs, def, log_path, reader_flags);
 
     if (!metadata_tsv && !print_logs)
       cout << "log version: " << rsml_reader->version() << "\n";
