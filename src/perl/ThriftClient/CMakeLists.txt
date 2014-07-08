@@ -21,9 +21,8 @@ HT_GLOB(GenPerl_SRCS gen-perl/*.pm)
 
 add_custom_command(
   OUTPUT    ${GenPerl_SRCS}
-  COMMAND   thrift
-  ARGS      -r --gen perl -o ${CMAKE_CURRENT_SOURCE_DIR}
-            ${ThriftBroker_IDL_DIR}/Hql.thrift
+  COMMAND   ${HYPERTABLE_SOURCE_DIR}/bin/src-utils/gen-thrift-perl.sh
+  ARGS      ${CMAKE_CURRENT_SOURCE_DIR} ${ThriftBroker_IDL_DIR}/Hql.thrift
   DEPENDS   ${ThriftBroker_IDL_DIR}/Client.thrift
             ${ThriftBroker_IDL_DIR}/Hql.thrift
   COMMENT   "thrift2perl"

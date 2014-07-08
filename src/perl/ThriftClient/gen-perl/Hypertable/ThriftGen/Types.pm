@@ -2569,6 +2569,7 @@ sub write {
 }
 
 package Hypertable::ThriftGen::ClientException;
+use base qw(Error);
 use base qw(Thrift::TException);
 use base qw(Class::Accessor);
 Hypertable::ThriftGen::ClientException->mk_accessors( qw( code message ) );
