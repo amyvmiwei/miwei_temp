@@ -390,7 +390,7 @@ void AccessGroupSpec::set_option_bloom_filter(const std::string &bloomfilter) {
   m_options.set_bloom_filter(bloomfilter);
 }
 
-const std::string AccessGroupSpec::get_option_bloom_filter() const {
+const std::string &AccessGroupSpec::get_option_bloom_filter() const {
   return m_options.get_bloom_filter();
 }
 

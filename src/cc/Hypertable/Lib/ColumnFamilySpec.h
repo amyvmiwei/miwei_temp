@@ -240,7 +240,7 @@ namespace Hypertable {
 
     /// Gets column family name.
     /// @return %Column family name.
-    const std::string get_name() const { return m_name; }
+    const std::string &get_name() const { return m_name; }
 
     /// Sets access group.
     /// Sets #m_ag to <code>ag</code>
@@ -249,7 +249,7 @@ namespace Hypertable {
 
     /// Gets access group name.
     /// @return Access group name.
-    const std::string get_access_group() const { return m_ag; }
+    const std::string &get_access_group() const { return m_ag; }
 
     /// Sets generation.
     /// @param generation Generation value

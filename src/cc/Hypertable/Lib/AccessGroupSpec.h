@@ -122,7 +122,7 @@ namespace Hypertable {
 
     /// Gets <i>compressor</i> option.
     /// @return <i>compressor</i> option.
-    const std::string get_compressor() const { return m_compressor; }
+    const std::string &get_compressor() const { return m_compressor; }
 
     /// Checks if <i>compressor</i> option is set.
     /// This method returns the value of the COMPRESSOR bit of #m_isset.
@@ -154,7 +154,7 @@ namespace Hypertable {
 
     /// Gets <i>bloom filter</i> option.
     /// @return <i>bloom filter</i> option.
-    const std::string get_bloom_filter() const { return m_bloomfilter; }
+    const std::string &get_bloom_filter() const { return m_bloomfilter; }
 
     /// Checks if <i>bloom filter</i> option is set.
     /// This method returns the value of the BLOOMFILTER bit of #m_isset.
@@ -338,7 +338,7 @@ namespace Hypertable {
 
     /// Gets access group name.
     /// @return Access group name.
-    const std::string get_name() const { return m_name; }
+    const std::string &get_name() const { return m_name; }
 
     /// Sets generation.
     /// @param generation Generation value
@@ -406,7 +406,7 @@ namespace Hypertable {
 
     /// Gets <i>bloom filter</i> option.
     /// @return <i>bloom filter</i> option.
-    const std::string get_option_bloom_filter() const;
+    const std::string &get_option_bloom_filter() const;
 
     /// Sets <i>in memory</i> option.
     /// Sets the <i>in memory</i> option of the #m_options member to

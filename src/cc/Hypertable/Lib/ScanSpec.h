@@ -335,7 +335,7 @@ public:
     ColumnPredicate cp;
     cp.column_family = arena.dup(column_family);
     cp.column_qualifier = arena.dup(column_qualifier);
-    cp.column_qualifier_len = strlen(column_qualifier);
+    cp.column_qualifier_len = column_qualifier ? strlen(column_qualifier) : 0;
     cp.operation = operation;
     if (value) {
       cp.value = arena.dup(value);
