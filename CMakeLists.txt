@@ -220,6 +220,10 @@ elseif (ADDRESS_SANITIZER)
   MESSAGE (FATAL_ERROR "ADDRESS_SANITIZER can only be used in conjunction with LLVM")
 endif ()
 
+if (APPLE)
+   SET (CMAKE_EXE_LINKER_FLAGS "-framework IOKit -framework CoreFoundation")
+endif ()
+
 # include directories
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
     ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}

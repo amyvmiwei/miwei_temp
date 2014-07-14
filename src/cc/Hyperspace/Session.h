@@ -47,6 +47,10 @@
 #include <unordered_map>
 #include <vector>
 
+namespace Hypertable {
+  class SleepWakeNotifier;
+}
+
 /** %Hyperspace definitions */
 namespace Hyperspace {
 
@@ -671,6 +675,17 @@ namespace Hyperspace {
 
     void update_master_addr(const String &host);
 
+    /// Handle sleep event (e.g. laptop close).
+    /// This method handles a suspend event (e.g. laptop close) by setting
+    /// #m_expire_time to the current time plus the grace period.
+    void handle_sleep();
+
+    /// Handle wakeup event (e.g. laptop open).
+    /// This method handles a resume event (e.g. laptop open) by setting
+    /// #m_expire_time to the current time plus the grace period.  It also
+    /// transitions back to STATE_SAFE if current state is STATE_JEOPARDY.
+    void handle_wakeup();
+
     /** Attempts to shutdown the Hyperspace server and destroys this session.
      *
      * @param timer maximum wait timer
@@ -710,6 +725,9 @@ namespace Hyperspace {
     Mutex                     m_callback_mutex;
     vector<String>            m_hyperspace_replicas;
     String                    m_hyperspace_master;
+
+    /// Delivers suspend/resume notifications (e.g. laptop close/open).
+    SleepWakeNotifier *m_sleep_wake_notifier;
   };
 
   typedef boost::intrusive_ptr<Session> SessionPtr;

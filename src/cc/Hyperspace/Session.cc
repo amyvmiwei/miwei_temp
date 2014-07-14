@@ -19,27 +19,30 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include <cassert>
+#include <Common/Compat.h>
+
+#include "Session.h"
+
+#include <Hyperspace/ClientHandleState.h>
+#include <Hyperspace/Master.h>
+#include <Hyperspace/Protocol.h>
+
+#include <AsyncComm/DispatchHandlerSynchronizer.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionManager.h>
+
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/Logger.h>
+#include <Common/Properties.h>
+#include <Common/Serialization.h>
+#include <Common/SleepWakeNotifier.h>
+#include <Common/Time.h>
 
 #include <boost/algorithm/string.hpp>
 #include <boost/tokenizer.hpp>
 
-#include "AsyncComm/DispatchHandlerSynchronizer.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionManager.h"
-#include "Common/Serialization.h"
-
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/Logger.h"
-#include "Common/Time.h"
-#include "Common/Properties.h"
-
-#include "ClientHandleState.h"
-#include "Master.h"
-#include "Protocol.h"
-#include "Session.h"
+#include <cassert>
 
 using namespace std;
 using namespace Hypertable;
@@ -72,11 +75,16 @@ Session::Session(Comm *comm, PropertiesPtr &cfg)
   xtime_add_millis(m_expire_time, m_grace_period);
 
   m_keepalive_handler_ptr = new ClientKeepaliveHandler(m_comm, m_cfg, this);
+
+  function<void()> sleep_callback = [this]() -> void {this->handle_sleep();};
+  function<void()> wakeup_callback = [this]() -> void {this->handle_wakeup();};
+  m_sleep_wake_notifier = new SleepWakeNotifier(sleep_callback, wakeup_callback);
 }
 
 Session::~Session() {
   if (m_keepalive_handler_ptr)
     m_keepalive_handler_ptr->destroy_session();
+  delete m_sleep_wake_notifier;
 }
 
 void Session::update_master_addr(const String &host)
@@ -86,6 +94,23 @@ void Session::update_master_addr(const String &host)
             Error::BAD_DOMAIN_NAME);
   m_hyperspace_master = host;
 }
+
+void Session::handle_sleep() {
+  ScopedLock lock(m_mutex);
+  boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
+  xtime_add_millis(m_expire_time, m_grace_period);
+}
+
+void Session::handle_wakeup() {
+  {
+    ScopedLock lock(m_mutex);
+    boost::xtime_get(&m_expire_time, boost::TIME_UTC_);
+    xtime_add_millis(m_expire_time, m_grace_period);
+  }
+  if (m_state == Session::STATE_JEOPARDY)
+    state_transition(Session::STATE_SAFE);
+}
+
 
 void Session::shutdown(Timer *timer) {
   DispatchHandlerSynchronizer sync_handler;

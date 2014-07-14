@@ -135,7 +135,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
                ServerKeepaliveHandlerPtr &keepalive_handler,
                ApplicationQueuePtr &app_queue_ptr)
   : m_verbose(false), m_next_handle_number(1), m_next_session_id(1),
-    m_maintenance_outstanding(false), m_lease_credit(0),
+    m_maintenance_outstanding(false),
     m_shutdown(false), m_bdb_fs(0) {
 
   m_verbose = props->get_bool("verbose");
@@ -424,39 +424,8 @@ void Master::remove_expired_sessions() {
   std::vector<uint64_t> handles;
   std::vector<uint64_t> expired_sessions;
   boost::xtime now;
-  uint64_t lease_credit;
 
-  {
-    // start extend expiry in case of suspension
-    {
-      ScopedLock lock(m_last_tick_mutex);
-      lease_credit = m_lease_credit;
-    }
-
-    boost::xtime_get(&now, boost::TIME_UTC_);
-
-    // try recomputing lease credit
-    if (lease_credit == 0) {
-      {
-        ScopedLock lock(m_last_tick_mutex);
-        lease_credit = xtime_diff_millis(m_last_tick, now);
-      }
-      if (lease_credit < 5000)
-        lease_credit = 0;
-    }
-
-    // extend all leases in case of suspension
-    if (lease_credit) {
-      ScopedLock lock(m_session_map_mutex);
-      if (!m_shutdown) {
-        HT_INFOF("Suspension detected, extending all session leases "
-                 "by %lu milliseconds", (Lu)lease_credit);
-        for (SessionMap::iterator iter = m_session_map.begin();
-             iter != m_session_map.end(); iter++)
-          (*iter).second->extend_lease((uint32_t)lease_credit);
-      }
-    }
-  } // end extend expiry in case of suspension
+  boost::xtime_get(&now, boost::TIME_UTC_);
 
   // mark expired sessions
   while (next_expired_session(session_data, now)) {
@@ -1833,6 +1802,32 @@ Master::destroy_handle(uint64_t handle, int &error, String &errmsg,
   HT_BDBTXN_END(false);
 
   return true;
+}
+
+void Master::handle_sleep() {
+  boost::xtime_get(&m_sleep_time, boost::TIME_UTC_);
+  HT_INFO("Suspend detected.");
+}
+
+
+void Master::handle_wakeup() {
+  boost::xtime now;
+  uint64_t lease_credit;
+
+  boost::xtime_get(&now, boost::TIME_UTC_);
+  lease_credit = xtime_diff_millis(m_sleep_time, now) + m_lease_interval;
+
+  // extend all leases
+  {
+    ScopedLock lock(m_session_map_mutex);
+    if (!m_shutdown) {
+      HT_INFOF("Resume detected, extending all session leases "
+               "by %lu milliseconds.", (Lu)lease_credit);
+      for (SessionMap::iterator iter = m_session_map.begin();
+           iter != m_session_map.end(); iter++)
+        (*iter).second->extend_lease((uint32_t)lease_credit);
+    }
+  }
 }
 
 /*

@@ -39,6 +39,7 @@ MurmurHash.cc
 Properties.cc
 Random.cc
 Regex.cc
+SleepWakeNotifier.cc
 String.cc
 System.cc
 SystemInfo.cc
