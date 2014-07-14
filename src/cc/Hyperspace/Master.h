@@ -160,13 +160,27 @@ namespace Hyperspace {
 
     void tick() {
       ScopedLock lock(m_last_tick_mutex);
-      boost::xtime now;
-      boost::xtime_get(&now, boost::TIME_UTC_);
-      m_lease_credit = xtime_diff_millis(m_last_tick, now);
-      if (m_lease_credit < 5000)
-        m_lease_credit = 0;
-      memcpy(&m_last_tick, &now, sizeof(boost::xtime));
+      boost::xtime_get(&m_last_tick, boost::TIME_UTC_);
     }
+
+    /// Handle sleep event (e.g. laptop close).
+    /// This method works in conjunction with handle_wakeup() to allow
+    /// Hyperspace to continue working after the machine on which it is running
+    /// has been suspended and resumed, for example when the laptop is closed
+    /// and then reopened.  It records the current time in #m_sleep_time, which
+    /// is then used by handle_wakeup() to extend session leases.
+    void handle_sleep();
+
+    /// Handle wakeup event (e.g. laptop open).
+    /// This method works in conjunction with handle_sleep() to allow
+    /// Hyperspace to continue working after the machine on which it is running
+    /// has been suspended and resumed, for example when the laptop is closed
+    /// and then reopened.  It extends all session leases by an amount computed
+    /// as follows:
+    /// <pre>
+    /// (now - m_sleep_time) + lease_interval
+    /// </pre>
+    void handle_wakeup();
 
     void do_maintenance();
 
@@ -325,7 +339,10 @@ namespace Hyperspace {
     Mutex         m_maintenance_mutex;
     bool          m_maintenance_outstanding;
     boost::xtime  m_last_tick;
-    uint64_t      m_lease_credit;
+
+    /// Suspension time recorded by handle_sleep()
+    boost::xtime m_sleep_time;
+
     bool          m_shutdown;
 
     // BerkeleyDB state

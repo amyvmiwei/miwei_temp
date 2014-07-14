@@ -220,6 +220,10 @@ elseif (ADDRESS_SANITIZER)
   MESSAGE (FATAL_ERROR "ADDRESS_SANITIZER can only be used in conjunction with LLVM")
 endif ()
 
+if (APPLE)
+   SET (CMAKE_EXE_LINKER_FLAGS "-framework IOKit -framework CoreFoundation")
+endif ()
+
 # include directories
 include_directories(src/cc ${HYPERTABLE_BINARY_DIR}/src/cc
     ${ZLIB_INCLUDE_DIR} ${Boost_INCLUDE_DIRS}
@@ -297,8 +301,8 @@ if (THRIFT_SOURCE_DIR)
   file(GLOB PHPFILES ${THRIFT_SOURCE_DIR}/lib/php/src/*.php)
   install(FILES ${PHPFILES} DESTINATION lib/php)
   install(DIRECTORY ${THRIFT_SOURCE_DIR}/lib/php/src/protocol
-		    ${THRIFT_SOURCE_DIR}/lib/php/src/server
-		    ${THRIFT_SOURCE_DIR}/lib/php/src/transport
+                   ${THRIFT_SOURCE_DIR}/lib/php/src/server
+                   ${THRIFT_SOURCE_DIR}/lib/php/src/transport
           DESTINATION lib/php USE_SOURCE_PERMISSIONS)
   message(STATUS "Copying Perl files into installation")
   file(GLOB PERLFILES ${THRIFT_SOURCE_DIR}/lib/perl/lib/*.pm)

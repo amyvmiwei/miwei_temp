@@ -33,6 +33,7 @@ extern "C" {
 #include "Common/Init.h"
 #include "Common/Error.h"
 #include "Common/InetAddr.h"
+#include "Common/SleepWakeNotifier.h"
 #include "Common/System.h"
 #include "Common/Usage.h"
 
@@ -83,6 +84,9 @@ int main(int argc, char **argv) {
     ApplicationQueuePtr app_queue_ptr;
     MasterPtr master = new Master(conn_mgr, properties,
                                   keepalive_handler, app_queue_ptr);
+    function<void()> sleep_callback = [master]() -> void {master->handle_sleep();};
+    function<void()> wakeup_callback = [master]() -> void {master->handle_wakeup();};
+    SleepWakeNotifier sleep_wake_notifier(sleep_callback, wakeup_callback);
     uint16_t port = get_i16("port");
     CommAddress local_addr = InetAddr(INADDR_ANY, port);
     ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue_ptr,
@@ -103,6 +107,8 @@ int main(int argc, char **argv) {
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 
     app_queue_ptr->join();
+
+    HT_INFO("Exitting...");
   }
   catch (Exception &e) {
     HT_ERROR_OUT << e << HT_END;
