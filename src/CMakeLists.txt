@@ -19,7 +19,6 @@ if (Thrift_FOUND)
   add_subdirectory(perl/ThriftClient)
   add_subdirectory(py/ThriftClient)
   add_subdirectory(php/ThriftClient)
-  add_subdirectory(java/ThriftClient)
 endif ()
 
 if (PYTHONTHRIFT_FOUND AND PYTHON_FOUND)

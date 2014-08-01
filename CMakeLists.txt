@@ -152,7 +152,7 @@ find_package(Hoard)
 find_package(Mapr)
 find_package(Qfs)
 find_package(Ceph)
-find_package(Ant REQUIRED)
+find_package(Maven REQUIRED)
 find_package(JNI)
 find_package(LibEvent REQUIRED)
 find_package(Thrift REQUIRED)
@@ -260,9 +260,15 @@ include(DocHelper)
 
 # sub-project directories
 add_subdirectory(src)
+add_subdirectory(java)
 add_subdirectory(examples)
 add_subdirectory(contrib)
 add_subdirectory(tests/integration)
+
+# Maven Repository
+if (NOT MAVEN_REPOSITORY)
+   SET (MAVEN_REPOSITORY "~/.m2/repository")
+endif ()
 
 # Java stuff
 if (NOT SKIP_JAVA_BUILD)
@@ -276,22 +282,6 @@ configure_file(bin/prerm.in prerm @ONLY)
 file(GLOB CONFS conf/[^.]*)
 install(FILES ${CONFS} DESTINATION conf)
 install(PROGRAMS ${HYPERTABLE_BINARY_DIR}/ht DESTINATION bin)
-
-# common jars
-file(GLOB JARS lib/*.jar lib/*.txt)
-install(FILES ${JARS} DESTINATION lib/java)
-
-# cdh3 jars
-file(GLOB JARS lib/cdh3/*.jar)
-install(FILES ${JARS} DESTINATION lib/java/cdh3)
-install(FILES ${HYPERTABLE_BINARY_DIR}/java/cdh3/hypertable-${VERSION}.jar
-          DESTINATION lib/java/cdh3 OPTIONAL)
-
-# cdh4 jars
-file(GLOB JARS lib/cdh4/*.jar)
-install(FILES ${JARS} DESTINATION lib/java/cdh4)
-install(FILES ${HYPERTABLE_BINARY_DIR}/java/cdh4/hypertable-${VERSION}.jar
-          DESTINATION lib/java/cdh4 OPTIONAL)
 
 install(PROGRAMS bin/jrun DESTINATION bin)
 
@@ -317,10 +307,6 @@ endif ()
 install(DIRECTORY ${Thrift_INCLUDE_DIR} DESTINATION include USE_SOURCE_PERMISSIONS)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(FILES ${HYPERTABLE_BINARY_DIR}/java/cdh3/hypertable-${VERSION}-examples.jar
-          DESTINATION lib/java/cdh3 OPTIONAL)
-  install(FILES ${HYPERTABLE_BINARY_DIR}/java/cdh4/hypertable-${VERSION}-examples.jar
-          DESTINATION lib/java/cdh4 OPTIONAL)
   file(GLOB SCRIPTS bin/*.sh)
   install(PROGRAMS ${SCRIPTS} DESTINATION bin)
   install(DIRECTORY examples/apache_log DESTINATION examples
