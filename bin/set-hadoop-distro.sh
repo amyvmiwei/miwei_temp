@@ -54,6 +54,14 @@ elif [ $DISTRO == "apache2" ]; then
     \cp $HT_HOME/lib/java/specific/protobuf-java-2.5.0.jar $HT_HOME/lib/java
 fi
 
+# Setup symlinks
+pushd .
+cd $HT_HOME/lib/java
+\ln -sf hypertable-[0-9]* hypertable.jar
+\ln -sf hypertable-examples-* hypertable-examples.jar
+\ln -sf libthrift-* libthrift.jar
+popd
+
 echo $DISTRO > $HT_HOME/conf/hadoop-distro
 
 echo "Hypertable successfully configured for Hadoop $DISTRO"
