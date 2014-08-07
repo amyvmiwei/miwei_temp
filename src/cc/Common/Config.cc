@@ -508,7 +508,7 @@ void DefaultPolicy::init_options() {
         "thrift broker")
     ("ThriftBroker.Future.Capacity", i32()->default_value(50*M), "Capacity "
         "of result queue (in bytes) for Future objects")
-    ("ThriftBroker.NextThreshold", i32()->default_value(128*K), "Total size  "
+    ("ThriftBroker.NextThreshold", i32()->default_value(512*K), "Total size  "
         "threshold for (size of cell data) for thrift broker next calls")
     ("ThriftBroker.API.Logging", boo()->default_value(false), "Enable or "
         "disable Thrift API logging")

@@ -127,7 +127,7 @@ public class RowOutputFormat
       try {
         // Flush remaining buffer to ThriftBroker
         if (!mSerializedCellsWriter.isEmpty()) {
-          mClient.mutator_set_cells_serialized(mMutator, mSerializedCellsWriter.buffer(), false);
+          mClient.mutator_set_cells_serialized(mMutator, mSerializedCellsWriter.buffer(), true);
         }
 
         mClient.close_mutator(mMutator);
