@@ -1,5 +1,5 @@
-/**
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -34,8 +34,10 @@ import org.apache.hadoop.mapreduce.OutputCommitter;
 import org.apache.hadoop.mapreduce.RecordWriter;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import org.hypertable.thriftgen.*;
+import org.hypertable.thrift.SerializedCellsFlag;
+import org.hypertable.thrift.SerializedCellsWriter;
 import org.hypertable.thrift.ThriftClient;
+import org.hypertable.thriftgen.*;
 
 
 /**
@@ -67,6 +69,7 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
     private ThriftClient mClient;
     private long mNamespace;
     private long mMutator;
+    private SerializedCellsWriter mCellsWriter;
     private String table;
     private String namespace;
 
@@ -94,6 +97,7 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
         }
         mNamespace = mClient.namespace_open(namespace);
         mMutator = mClient.mutator_open(mNamespace, table, flags, flush_interval);
+        mCellsWriter = new SerializedCellsWriter(6*1024*1024);
       }
       catch (Exception e) {
         log.error(e);
@@ -122,6 +126,10 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
     @Override
       public void close(TaskAttemptContext ctx) throws IOException {
       try {
+        if (!mCellsWriter.isEmpty()) {
+          mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), true);
+          mCellsWriter.clear();
+        }
         mClient.mutator_close(mMutator);
         mClient.namespace_close(mNamespace);
       }
@@ -137,11 +145,15 @@ public class OutputFormat extends org.apache.hadoop.mapreduce.OutputFormat<KeyWr
     @Override
       public void write(KeyWritable key, BytesWritable value) throws IOException {
       try {
-        Cell cell = new Cell();
-        key.convert_buffers_to_strings();
-        cell.key = key;
-        cell.value = ByteBuffer.wrap(value.getBytes(), 0, value.getLength());
-        mClient.mutator_set_cell(mMutator, cell);
+        key.convert_strings_to_buffers();
+        while (!mCellsWriter.add(key.getRowBytes(), key.getRowOffset(), key.getRowLength(),
+                                 key.getColumnFamilyBytes(), key.getColumnFamilyOffset(), key.getColumnFamilyLength(),
+                                 key.getColumnQualifierBytes(), key.getColumnQualifierOffset(), key.getColumnQualifierLength(),
+                                 key.getTimestamp(), value.getBytes(), 0, value.getLength(),
+                                 SerializedCellsFlag.FLAG_INSERT)) {
+          mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(), false);
+          mCellsWriter.clear();
+        }
       }
       catch (Exception e) {
         log.error(e);

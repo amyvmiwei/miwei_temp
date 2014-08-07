@@ -36,6 +36,7 @@ import org.hypertable.Common.Checksum;
 import org.hypertable.Common.CString;
 
 import org.hypertable.thriftgen.*;
+import org.hypertable.thrift.SerializedCellsFlag;
 import org.hypertable.thrift.ThriftClient;
 
 /**
@@ -100,6 +101,27 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
     return row;
   }
 
+  /** Returns byte array holding the row.
+   * @return byte array holding row
+   */
+  public byte [] getRowBytes() {
+    return row_buffer;
+  }
+
+  /** Returns offset within byte array of beginning of row.
+   * @return offset within byte array of beginning of row
+   */
+  public int getRowOffset() {
+    return row_buffer_offset;
+  }
+
+  /** Returns row length
+   * @return row length
+   */
+  public int getRowLength() {
+    return row_buffer_length;
+  }
+
   /**
    * Sets the column family
    *
@@ -154,6 +176,27 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
     return column_family;
   }
 
+  /** Returns byte array holding the column family.
+   * @return byte array holding column family
+   */
+  public byte [] getColumnFamilyBytes() {
+    return column_family_buffer;
+  }
+
+  /** Returns offset within byte array of beginning of column family.
+   * @return offset within byte array of beginning of column family
+   */
+  public int getColumnFamilyOffset() {
+    return column_family_buffer_offset;
+  }
+
+  /** Returns column family length
+   * @return column family length
+   */
+  public int getColumnFamilyLength() {
+    return column_family_buffer_length;
+  }
+
   /**
    * Sets the column qualifier
    *
@@ -206,6 +249,27 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
       }
     }
     return column_qualifier;
+  }
+
+  /** Returns byte array holding the column qualifier.
+   * @return byte array holding column qualifier
+   */
+  public byte [] getColumnQualifierBytes() {
+    return column_qualifier_buffer;
+  }
+
+  /** Returns offset within byte array of beginning of column qualifier.
+   * @return offset within byte array of beginning of column qualifier
+   */
+  public int getColumnQualifierOffset() {
+    return column_qualifier_buffer_offset;
+  }
+
+  /** Returns column qualifier length
+   * @return column qualifier length
+   */
+  public int getColumnQualifierLength() {
+    return column_qualifier_buffer_length;
   }
 
   public Key setTimestamp(long timestamp) {
@@ -347,13 +411,13 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
       writeVInt(m_output_buffer, 0);
 
     if (!isSetTimestamp()) {
-      timestamp = Long.MIN_VALUE+2;
+      timestamp = SerializedCellsFlag.AUTO_ASSIGN;
       setTimestampIsSet(true);
     }
     m_output_buffer.putLong(timestamp);
 
     if (!isSetRevision()) {
-      revision = Long.MIN_VALUE+2;
+      revision = SerializedCellsFlag.AUTO_ASSIGN;
       setRevisionIsSet(true);
     }
     m_output_buffer.putLong(revision);
@@ -452,13 +516,13 @@ public class KeyWritable extends Key implements WritableComparable<Key> {
         setTimestampIsSet(true);
       }
       else
-        timestamp = Long.MIN_VALUE + 2;
+        timestamp = SerializedCellsFlag.AUTO_ASSIGN;
       if (key.isSetRevision()) {
         revision = key.revision;
         setRevisionIsSet(true);
       }
       else
-        revision = Long.MIN_VALUE + 2;
+        revision = SerializedCellsFlag.AUTO_ASSIGN;
     }
     catch (UnsupportedEncodingException e) {
       e.printStackTrace();

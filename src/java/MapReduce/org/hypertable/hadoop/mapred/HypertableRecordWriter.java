@@ -135,7 +135,7 @@ public class HypertableRecordWriter implements RecordWriter<Text, Text> {
     try {
       if (!mCellsWriter.isEmpty()) {
         mClient.mutator_set_cells_serialized(mMutator, mCellsWriter.buffer(),
-                false);
+                                             true);
         mCellsWriter.clear();
       }
       if (mNamespaceId != 0)
