@@ -114,10 +114,7 @@ implements Writable, Comparable<TableSplit> {
    */
   @Override
   public String[] getLocations() {
-    int period_offset = m_hostname.indexOf('.');
-    if (period_offset == -1)
-      return new String[] {m_hostname};
-    return new String[] {m_hostname, m_hostname.substring(0, period_offset)};
+    return new String[] {m_hostname};
   }
 
   /**
@@ -164,7 +161,7 @@ implements Writable, Comparable<TableSplit> {
       if (base_spec.isSetRow_intervals()) {
         for (RowInterval ri : base_spec.getRow_intervals()) {
           if (ri.isSetStart_row()) {
-            if (m_startrow == null ||
+            if (m_startrow == null || m_startrow.length == 0 ||
                 ri.getStart_row().compareTo(new String(m_startrow, "UTF-8")) > 0) {
               interval.setStart_row(ri.getStart_row());
               interval.setStart_rowIsSet(true);
@@ -173,7 +170,7 @@ implements Writable, Comparable<TableSplit> {
             }
           }
           if (ri.isSetEnd_row()) {
-            if (m_endrow == null ||
+            if (m_endrow == null || m_endrow.length == 0 ||
                 ri.getEnd_row().compareTo(new String(m_endrow, "UTF-8")) < 0) {
               interval.setEnd_row(ri.getEnd_row());
               interval.setEnd_rowIsSet(true);

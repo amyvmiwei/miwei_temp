@@ -117,10 +117,7 @@ implements InputSplit,Comparable<TableSplit> {
    * @see org.apache.hadoop.mapreduce.InputSplit#getLocations()
    */
   public String[] getLocations() {
-    int period_offset = m_hostname.indexOf('.');
-    if (period_offset == -1)
-      return new String[] {m_hostname};
-    return new String[] {m_hostname, m_hostname.substring(0, period_offset)};
+    return new String[] {m_hostname};
   }
 
   /**
@@ -167,7 +164,7 @@ implements InputSplit,Comparable<TableSplit> {
       if (base_spec.isSetRow_intervals()) {
         for (RowInterval ri : base_spec.getRow_intervals()) {
           if (ri.isSetStart_row()) {
-            if (m_startrow == null ||
+            if (m_startrow == null || m_startrow.length == 0 ||
                 ri.getStart_row().compareTo(new String(m_startrow, "UTF-8")) > 0) {
               interval.setStart_row(ri.getStart_row());
               interval.setStart_rowIsSet(true);
