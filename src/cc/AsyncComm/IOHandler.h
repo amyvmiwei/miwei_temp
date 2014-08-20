@@ -28,6 +28,15 @@
 #ifndef HYPERTABLE_IOHANDLER_H
 #define HYPERTABLE_IOHANDLER_H
 
+#include "DispatchHandler.h"
+#include "PollEvent.h"
+#include "ReactorFactory.h"
+#include "ExpireTimer.h"
+
+#include <Common/Logger.h>
+#include <Common/Mutex.h>
+#include <Common/Time.h>
+
 extern "C" {
 #include <errno.h>
 #include <time.h>
@@ -49,13 +58,6 @@ extern "C" {
 #endif
 }
 
-#include "Common/Logger.h"
-#include "Common/Mutex.h"
-#include "Common/Time.h"
-
-#include "DispatchHandler.h"
-#include "ReactorFactory.h"
-#include "ExpireTimer.h"
 
 namespace Hypertable {
 
@@ -76,7 +78,7 @@ namespace Hypertable {
   public:
 
     /** Constructor.
-     * Initializes the I/O handler, assigns it a Reactor, and sets m_local_addr
+     * Initializes the I/O handler, assigns it a Reactor, and sets #m_local_addr
      * to the locally bound address (IPv4:port) of <code>sd</code> (see
      * <code>getsockname</code>).
      * @param sd Socket descriptor
@@ -85,6 +87,21 @@ namespace Hypertable {
     IOHandler(int sd, DispatchHandlerPtr &dhp)
       : m_reference_count(0), m_free_flag(0), m_error(Error::OK),
         m_sd(sd), m_dispatch_handler(dhp), m_decomissioned(false) {
+      ReactorFactory::get_reactor(m_reactor);
+      m_poll_interest = 0;
+      socklen_t namelen = sizeof(m_local_addr);
+      getsockname(m_sd, (sockaddr *)&m_local_addr, &namelen);
+      memset(&m_alias, 0, sizeof(m_alias));
+    }
+
+    /// Constructor.
+    /// Initializes handler for raw I/O.  Assigns it a Reactor and
+    /// sets #m_local_addr to the locally bound address (IPv4:port) of
+    /// <code>sd</code>.
+    /// @param sd Socket descriptor
+    IOHandler(int sd) : m_reference_count(0), m_free_flag(0),
+                        m_error(Error::OK), m_sd(sd),
+                        m_decomissioned(false) {
       ReactorFactory::get_reactor(m_reactor);
       m_poll_interest = 0;
       socklen_t namelen = sizeof(m_local_addr);
@@ -124,12 +141,14 @@ namespace Hypertable {
     // Implement me!!!
 #endif
 
-    /** Destructor.
-     */
+    /// Destructor.
+    /// If #m_socket_internally_created is set to <i>true</i>, closes the socket
+    /// descriptor #m_sd.
     virtual ~IOHandler() {
       HT_ASSERT(m_free_flag != 0xdeadbeef);
       m_free_flag = 0xdeadbeef;
-      ::close(m_sd);
+      if (m_socket_internally_created)
+        ::close(m_sd);
       return;
     }
 
@@ -169,7 +188,7 @@ namespace Hypertable {
      * @return Error::OK on success, or one of Error::COMM_POLL_ERROR,
      * Error::COMM_SEND_ERROR, or Error::COMM_RECEIVE_ERROR on error
      */
-    int start_polling(int mode=Reactor::READ_READY);
+    int start_polling(int mode=PollEvent::READ);
 
     /** Adds the poll interest specified in <code>mode</code> to the polling
      * interface for this handler.
@@ -382,16 +401,16 @@ namespace Hypertable {
 
     /** Return <code>poll()</code> interface events corresponding to the
      * normalized polling interest in <code>mode</code>.  <code>mode</code>
-     * is some bitwise combination of the flags Reactor::READ_READY and
-     * Reactor::WRITE_READY.
+     * is some bitwise combination of the flags PollEvent::READ and
+     * PollEvent::WRITE.
      * @return <code>poll()</code> events correspond to polling interest
      * specified in <code>mode</code>.
      */
     short poll_events(int mode) {
       short events = 0;
-      if (mode & Reactor::READ_READY)
+      if (mode & PollEvent::READ)
         events |= POLLIN;
-      if (mode & Reactor::WRITE_READY)
+      if (mode & PollEvent::WRITE)
         events |= POLLOUT;
       return events;
     }
@@ -406,7 +425,7 @@ namespace Hypertable {
         return;
       }
 #if defined(__APPLE__) || defined(__sun__) || defined(__FreeBSD__)
-      remove_poll_interest(Reactor::READ_READY|Reactor::WRITE_READY);
+      remove_poll_interest(PollEvent::READ|PollEvent::WRITE);
 #elif defined(__linux__)
       struct epoll_event event;  // this is necessary for < Linux 2.6.9
       if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_DEL, m_sd, &event) < 0) {
@@ -454,8 +473,8 @@ namespace Hypertable {
     ReactorPtr m_reactor;
 
     /** Current polling interest.  The polling interest is some bitwise
-     * combination of the flags Reactor::READ_READY and
-     * Reactor::WRITE_READY.
+     * combination of the flags PollEvent::READ and
+     * PollEvent::WRITE.
      */
     int m_poll_interest;
 
@@ -463,6 +482,9 @@ namespace Hypertable {
      * must be mutex protected by caller.
      */
     bool m_decomissioned;
+
+    /// Socket was internally created and should be closed on destroy.
+    bool m_socket_internally_created {true};
   };
   /** @}*/
 }

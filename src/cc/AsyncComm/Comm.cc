@@ -102,6 +102,29 @@ void Comm::destroy() {
   }
 }
 
+int Comm::register_socket(int sd, const CommAddress &addr,
+                          RawSocketHandler *handler) {
+  IOHandlerRaw *io_handler;
+
+  if (m_handler_map->checkout_handler(addr, &io_handler) == Error::OK) {
+    m_handler_map->decrement_reference_count(io_handler);
+    return Error::ALREADY_EXISTS;
+  }
+
+  HT_ASSERT(addr.is_inet());
+  io_handler = new IOHandlerRaw(sd, addr.inet, handler);
+  m_handler_map->insert_handler(io_handler);
+
+  int32_t error;
+  if ((error = io_handler->start_polling(PollEvent::READ|PollEvent::WRITE)) != Error::OK) {
+    delete io_handler;
+    HT_THROWF(error, "Problem polling on raw socket bound to %s",
+              addr.to_str().c_str());
+  }
+
+  return Error::OK;
+}
+
 
 int
 Comm::connect(const CommAddress &addr, DispatchHandlerPtr &default_handler) {
@@ -450,6 +473,7 @@ void Comm::close_socket(const CommAddress &addr) {
   IOHandlerAccept *accept_handler;
   IOHandlerData *data_handler;
   IOHandlerDatagram *datagram_handler;
+  IOHandlerRaw *raw_handler;
 
   if (m_handler_map->checkout_handler(addr, &data_handler) == Error::OK)
     handler = data_handler;
@@ -457,6 +481,8 @@ void Comm::close_socket(const CommAddress &addr) {
     handler = datagram_handler;
   else if (m_handler_map->checkout_handler(addr, &accept_handler) == Error::OK)
     handler = accept_handler;
+  else if (m_handler_map->checkout_handler(addr, &raw_handler) == Error::OK)
+    handler = raw_handler;
   else
     return;
 
@@ -586,7 +612,7 @@ Comm::connect_socket(int sd, const CommAddress &addr,
     }
     else if (errno == EINPROGRESS) {
       //HT_INFO("connect() in progress starting to poll");
-      error = handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
+      error = handler->start_polling(PollEvent::READ|PollEvent::WRITE);
       if (error == Error::COMM_POLL_ERROR) {
         HT_ERRORF("Polling problem on connection to %s: %s",
                   connectable_addr.to_str().c_str(), strerror(errno));
@@ -602,7 +628,7 @@ Comm::connect_socket(int sd, const CommAddress &addr,
     return Error::COMM_CONNECT_ERROR;
   }
 
-  error = handler->start_polling(Reactor::READ_READY|Reactor::WRITE_READY);
+  error = handler->start_polling(PollEvent::READ|PollEvent::WRITE);
   if (error != Error::OK) {
     HT_ERRORF("Polling problem on connection to %s: %s (%s)",
               connectable_addr.to_str().c_str(),

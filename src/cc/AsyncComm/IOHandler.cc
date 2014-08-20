@@ -99,9 +99,9 @@ int IOHandler::start_polling(int mode) {
   struct epoll_event event;
   memset(&event, 0, sizeof(struct epoll_event));
   event.data.ptr = this;
-  if (mode & Reactor::READ_READY)
+  if (mode & PollEvent::READ)
     event.events |= EPOLLIN;
-  if (mode & Reactor::WRITE_READY)
+  if (mode & PollEvent::WRITE)
     event.events |= EPOLLOUT;
   if (ReactorFactory::ms_epollet)
     event.events |= POLLRDHUP | EPOLLET;
@@ -130,9 +130,9 @@ int IOHandler::add_poll_interest(int mode) {
     memset(&event, 0, sizeof(struct epoll_event));
     event.data.ptr = this;
 
-    if (m_poll_interest & Reactor::READ_READY)
+    if (m_poll_interest & PollEvent::READ)
       event.events |= EPOLLIN;
-    if (m_poll_interest & Reactor::WRITE_READY)
+    if (m_poll_interest & PollEvent::WRITE)
       event.events |= EPOLLOUT;
 
     if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
@@ -157,9 +157,9 @@ int IOHandler::remove_poll_interest(int mode) {
     memset(&event, 0, sizeof(struct epoll_event));
     event.data.ptr = this;
 
-    if (m_poll_interest & Reactor::READ_READY)
+    if (m_poll_interest & PollEvent::READ)
       event.events |= EPOLLIN;
-    if (m_poll_interest & Reactor::WRITE_READY)
+    if (m_poll_interest & PollEvent::WRITE)
       event.events |= EPOLLOUT;
 
     if (epoll_ctl(m_reactor->poll_fd, EPOLL_CTL_MOD, m_sd, &event) < 0) {
@@ -213,10 +213,10 @@ int IOHandler::add_poll_interest(int mode) {
 
   HANDLE_POLL_INTERFACE_ADD;
 
-  if (m_poll_interest & Reactor::WRITE_READY)
+  if (m_poll_interest & PollEvent::WRITE)
     events |= POLLOUT;
 
-  if (m_poll_interest & Reactor::READ_READY)
+  if (m_poll_interest & PollEvent::READ)
     events |= POLLIN;
 
   if (events) {
@@ -295,11 +295,11 @@ int IOHandler::add_poll_interest(int mode) {
 
   HANDLE_POLL_INTERFACE_ADD;
 
-  if (mode & Reactor::READ_READY) {
+  if (mode & PollEvent::READ) {
     EV_SET(&events[count], m_sd, EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, this);
     count++;
   }
-  if (mode & Reactor::WRITE_READY) {
+  if (mode & PollEvent::WRITE) {
     EV_SET(&events[count], m_sd, EVFILT_WRITE, EV_ADD | EV_ENABLE, 0, 0, this);
     count++;
   }
@@ -321,12 +321,12 @@ int IOHandler::remove_poll_interest(int mode) {
 
   HANDLE_POLL_INTERFACE_MODIFY;
 
-  if (mode & Reactor::READ_READY) {
+  if (mode & PollEvent::READ) {
     EV_SET(&devents[count], m_sd, EVFILT_READ, EV_DELETE, 0, 0, 0);
     count++;
   }
 
-  if (mode & Reactor::WRITE_READY) {
+  if (mode & PollEvent::WRITE) {
     EV_SET(&devents[count], m_sd, EVFILT_WRITE, EV_DELETE, 0, 0, 0);
     count++;
   }

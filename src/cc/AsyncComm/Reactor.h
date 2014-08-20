@@ -69,13 +69,6 @@ namespace Hypertable {
 
   public:
 
-    /** Poll interest abstraction constants.
-     */
-    enum PollInterest {
-      READ_READY  = 0x01, /**< Read ready polling interest */
-      WRITE_READY = 0x02  /**< Write ready polling interest */
-    };
-
     /** Constructor.
      * Initializes polling interface and creates interrupt socket.
      * If ReactorFactory::use_poll is set to <i>true</i>, then the reactor will

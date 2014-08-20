@@ -125,8 +125,8 @@ namespace Hypertable {
      *   - Inserts newly created handler in #m_handler_map
      *   - If <i>proxy master</i>, propagate proxy map over newly established
      *     connection.
-     *   - Starts polling on newly created handler with Reactor::READ_READY and
-     *     Reactor::WRITE_READY interest
+     *   - Starts polling on newly created handler with PollEvent::READ and
+     *     PollEvent::WRITE interest
      *   - Delivers Event::CONNECTION_ESTABLISHED event
      */
     bool handle_incoming_connection();

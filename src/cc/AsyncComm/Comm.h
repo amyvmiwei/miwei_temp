@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,17 +25,18 @@
  * as the main entry point to the AsyncComm subsystem.
  */
 
-#ifndef HYPERTABLE_COMMENGINE_H
-#define HYPERTABLE_COMMENGINE_H
-
-#include "Common/Mutex.h"
-#include "Common/ReferenceCount.h"
+#ifndef AsyncComm_Comm_h
+#define AsyncComm_Comm_h
 
 #include "CommAddress.h"
 #include "CommBuf.h"
 #include "ConnectionHandlerFactory.h"
 #include "DispatchHandler.h"
 #include "HandlerMap.h"
+#include "RawSocketHandler.h"
+
+#include <Common/Mutex.h>
+#include <Common/ReferenceCount.h>
 
 /** %Hypertable definitions
  */
@@ -81,6 +82,19 @@ namespace Hypertable {
      * the ms_instance pointer to 0.
      */
     static void destroy();
+
+    /// Registers an externally managed socket with comm event loop.
+    /// This function allows an application to register a socket with
+    /// the comm layer just for its the event loop.  The wire protocol
+    /// is handled entirely by the <code>handler</code> object.
+    /// @param sd Socket descriptor
+    /// @param addr Address structure for connection identification purposes
+    /// @param handler Raw connection handler
+    /// @return Error::OK on success, Error::ALREADY_EXISTS if <code>addr</code>
+    /// already registered with comm layer.
+    /// @throws Exception on polling error
+    int register_socket(int sd, const CommAddress &addr,
+                        RawSocketHandler *handler);
 
     /** Establishes a TCP connection and attaches a default dispatch handler.
      * This method establishes a TCP connection to <code>addr</code>
@@ -505,4 +519,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_COMMENGINE_H
+#endif // AsyncComm_Comm_h

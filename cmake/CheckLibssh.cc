@@ -1,5 +1,5 @@
-/** -*- C++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -17,21 +17,11 @@
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
 
-#include <stdio.h>
-#include <string.h>
-#include <google/tcmalloc.h>
+#include <libssh/libssh.h>
+
+#include <cstdio>
 
 int main() {
-  int major, minor;
-  const char *patch;
-  const char *version = tc_version(&major, &minor, &patch);
-
-  if (major != TC_VERSION_MAJOR || minor != TC_VERSION_MINOR ||
-      strcmp(patch, TC_VERSION_PATCH)) {
-    fprintf(stderr, "Tcmalloc header/library mismatch:\n "
-            "header: %s\nlibrary: %s\n", TC_VERSION_STRING, version);
-    return 1;
-  }
-  printf("%d.%d%s", major, minor, patch);
+  printf("%d.%d.%d", LIBSSH_VERSION_MAJOR, LIBSSH_VERSION_MINOR, LIBSSH_VERSION_MICRO);
   return 0;
 }

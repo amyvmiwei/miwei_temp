@@ -325,7 +325,7 @@ int IOHandlerDatagram::handle_write_readiness() {
 
   // is this necessary?
   if (m_send_queue.empty())
-    error = remove_poll_interest(Reactor::WRITE_READY);
+    error = remove_poll_interest(PollEvent::WRITE);
 
   if (error != Error::OK && m_error == Error::OK)
     m_error = error;
@@ -354,11 +354,11 @@ int IOHandlerDatagram::send_message(const InetAddr &addr, CommBufPtr &cbp) {
   }
 
   if (initially_empty && !m_send_queue.empty()) {
-    error = add_poll_interest(Reactor::WRITE_READY);
+    error = add_poll_interest(PollEvent::WRITE);
     //HT_INFO("Adding Write interest");
   }
   else if (!initially_empty && m_send_queue.empty()) {
-    error = remove_poll_interest(Reactor::WRITE_READY);
+    error = remove_poll_interest(PollEvent::WRITE);
     //HT_INFO("Removing Write interest");
   }
 

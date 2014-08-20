@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -25,8 +25,8 @@
  * for mapping socket addresses to I/O handlers.
  */
 
-#ifndef HYPERTABLE_HANDLERMAP_H
-#define HYPERTABLE_HANDLERMAP_H
+#ifndef AsyncComm_HandlerMap_h
+#define AsyncComm_HandlerMap_h
 
 #include <cassert>
 
@@ -46,6 +46,7 @@
 #include "CommBuf.h"
 #include "IOHandlerData.h"
 #include "IOHandlerDatagram.h"
+#include "IOHandlerRaw.h"
 #include "ProxyMap.h"
 
 namespace Hypertable {
@@ -93,6 +94,12 @@ namespace Hypertable {
      */
     void insert_handler(IOHandlerDatagram *handler);
 
+    /** Inserts a raw handler.
+     * Uses IOHandler#m_addr as the key.
+     * @param handler Raw I/O handler to insert
+     */
+    void insert_handler(IOHandlerRaw *handler);
+
     /** Checks out accept I/O handler associated with <code>addr</code>.
      * Looks up <code>addr</code> in accept map.  If an entry is found,
      * then its reference count is incremented and it is returned
@@ -128,6 +135,17 @@ namespace Hypertable {
      * found for <code>addr</code>.
      */
     int checkout_handler(const CommAddress &addr, IOHandlerDatagram **handler);
+
+    /** Checks out raw I/O handler associated with <code>addr</code>.
+     * Looks up <code>addr</code> in raw map.  If an entry is found,
+     * then its reference count is incremented and it is returned
+     * in <code>handler</code>.
+     * @param addr Connection address
+     * @param handler Address of handler pointer returned
+     * @return Error::OK on success, or Error::COMM_NOT_CONNECTED if no mapping
+     * found for <code>addr</code>.
+     */
+    int checkout_handler(const CommAddress &addr, IOHandlerRaw **handler);
 
     /** Checks to see if <code>addr</code> is contained in map.
      * First translates <code>addr</code> to socket address and then
@@ -375,6 +393,15 @@ namespace Hypertable {
      */
     IOHandlerDatagram *lookup_datagram_handler(const InetAddr &addr);
 
+    /** Finds <i>raw</i> I/O handler associated with <code>addr</code>.
+     * This method looks up <code>addr</code> in #m_raw_handler_map and
+     * returns the handler, if found.
+     * @param addr Address of raw handler to locate
+     * @return Pointer to IOHandlerRaw object associated with
+     * <code>addr</code>, or nullptr if not found.
+     */
+    IOHandlerRaw *lookup_raw_handler(const InetAddr &addr);
+
     /// %Mutex for serializing concurrent access
     Mutex m_mutex;
 
@@ -393,6 +420,9 @@ namespace Hypertable {
     /// Datagram (UDP) map (InetAddr-to-IOHandlerDatagram)
     SockAddrMap<IOHandlerDatagram *> m_datagram_handler_map;
 
+    /// Raw map (InetAddr-to-IOHandlerRaw)
+    SockAddrMap<IOHandlerRaw *> m_raw_handler_map;
+
     /// Decomissioned handler set
     std::set<IOHandler *> m_decomissioned_handlers;
 
@@ -410,4 +440,4 @@ namespace Hypertable {
 }
 
 
-#endif // HYPERTABLE_HANDLERMAP_H
+#endif // AsyncComm_HandlerMap_h

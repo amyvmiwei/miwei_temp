@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2007-2012 Hypertable, Inc.
+# Copyright (C) 2007-2014 Hypertable, Inc.
 #
 # This program is free software; you can redistribute it and/or
 # modify it under the terms of the GNU General Public License
@@ -17,20 +17,10 @@
 # 02110-1301, USA.
 #
 
-add_subdirectory(fsclient)
-add_subdirectory(dumplog)
-add_subdirectory(generate_error_code_doc)
-add_subdirectory(hyperspace)
-add_subdirectory(hypertable)
-add_subdirectory(master_client)
-add_subdirectory(metalog_dump)
-add_subdirectory(prepend_md5)
-add_subdirectory(prune_tsv)
-add_subdirectory(rsclient)
-add_subdirectory(serverup)
-add_subdirectory(Lib)
-add_subdirectory(load_generator)
-add_subdirectory(get_property)
-add_subdirectory(balance_plan_generator)
-add_subdirectory(check_integrity)
-add_subdirectory(ssh)
+# ht_ssh - Mulit-host ssh automation tool
+add_executable(ht_ssh ht_ssh.cc SshSocketHandler.cc SshThreadsCallbacks.cc SshOutputCollector.cc)
+target_link_libraries(ht_ssh HyperCommon HyperComm ${Libssh_LIBRARIES})
+
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS ht_ssh RUNTIME DESTINATION bin)
+endif ()

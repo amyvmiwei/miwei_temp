@@ -144,8 +144,8 @@ bool IOHandlerAccept::handle_incoming_connection() {
     m_handler_map->insert_handler(handler, true);
 
     int32_t error;
-    if ((error = handler->start_polling(Reactor::READ_READY |
-                                        Reactor::WRITE_READY)) != Error::OK) {
+    if ((error = handler->start_polling(PollEvent::READ |
+                                        PollEvent::WRITE)) != Error::OK) {
       HT_ERRORF("Problem starting polling on incoming connection - %s",
                 Error::get_text(error));
       ReactorRunner::handler_map->decrement_reference_count(handler);

@@ -35,6 +35,8 @@ IOHandler.cc
 IOHandlerAccept.cc
 IOHandlerData.cc
 IOHandlerDatagram.cc
+IOHandlerRaw.cc
+PollEvent.cc
 Protocol.cc
 ProxyMap.cc
 Reactor.cc
