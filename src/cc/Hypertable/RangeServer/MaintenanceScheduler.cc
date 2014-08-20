@@ -80,6 +80,8 @@ MaintenanceScheduler::MaintenanceScheduler(MaintenanceQueuePtr &queue,
   m_merges_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MergesPerInterval",
                                   std::numeric_limits<int32_t>::max());
   m_move_compactions_per_interval = get_i32("Hypertable.RangeServer.Maintenance.MoveCompactionsPerInterval");
+  m_initialization_per_interval = get_i32("Hypertable.RangeServer.Maintenance.InitializationPerInterval",
+                                          std::numeric_limits<int32_t>::max());
 
   m_maintenance_queue_worker_count = 
     (int32_t)Global::maintenance_queue->worker_count();
@@ -403,14 +405,17 @@ void MaintenanceScheduler::schedule() {
     sort(ranges_prioritized.array.begin(), ranges_prioritized.array.end(), ordering);
 
     int32_t merges_created = 0;
+    int32_t initialization_created = 0;
     uint32_t level = 0;
 
     foreach_ht (RangeData &rd, ranges_prioritized.array) {
-      if (!rd.data->initialized) {
+      if (!rd.data->initialized && !low_memory &&
+           initialization_created < m_initialization_per_interval) {
         level = get_level(rd);
         Global::maintenance_queue->add(new MaintenanceTaskDeferredInitialization(
                                   level, rd.data->priority,
                                   schedule_time, rd.range));
+        ++initialization_created;
       }
       if (rd.data->maintenance_flags & MaintenanceFlag::SPLIT) {
         level = get_level(rd);
