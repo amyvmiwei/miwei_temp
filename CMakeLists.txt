@@ -298,6 +298,10 @@ if (THRIFT_SOURCE_DIR)
   install(FILES ${PERLFILES} DESTINATION lib/perl)
   install(DIRECTORY ${THRIFT_SOURCE_DIR}/lib/perl/lib/Thrift
           DESTINATION lib/perl USE_SOURCE_PERMISSIONS)
+  message(STATUS "Copying Python files into installation")
+  install(DIRECTORY ${THRIFT_SOURCE_DIR}/lib/py/src/
+          DESTINATION lib/py/thrift USE_SOURCE_PERMISSIONS)
+  message(STATUS "Copying Ruby files into installation")
   file(GLOB RUBYFILES ${THRIFT_SOURCE_DIR}/lib/rb/lib/*.rb)
   install(FILES ${RUBYFILES} DESTINATION lib/rb)
   install(DIRECTORY ${THRIFT_SOURCE_DIR}/lib/rb/lib/thrift
