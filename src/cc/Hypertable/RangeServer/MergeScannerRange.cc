@@ -131,6 +131,12 @@ MergeScannerRange::do_initialize()
 
   io_add_output_cell(cur_bytes);
 
+  // If this scan is for rebuilding indexes, update index with first key/value
+  if (m_index_updater) {
+    assert(sstate.key.flag == FLAG_INSERT);
+    m_index_updater->add(sstate.key, sstate.value);
+  }
+
   // was OFFSET or CELL_OFFSET or index rebuild specified? then move forward and
   // skip
   if (m_cell_offset || m_row_offset || m_index_updater)
