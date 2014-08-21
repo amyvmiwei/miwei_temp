@@ -20,17 +20,6 @@
  */
 
 #include "Common/Compat.h"
-#include <cassert>
-#include <cstdlib>
-#include <cstring>
-
-extern "C" {
-#include <limits.h>
-#include <poll.h>
-#include <string.h>
-}
-
-#include <boost/algorithm/string.hpp>
 
 #include "Common/Error.h"
 #include "Common/ScopeGuard.h"
@@ -43,6 +32,19 @@ extern "C" {
 #include "RangeLocator.h"
 #include "ScanBlock.h"
 #include "ScanSpec.h"
+
+#include <boost/algorithm/string.hpp>
+
+#include <cassert>
+#include <cstdlib>
+#include <cstring>
+#include <vector>
+
+extern "C" {
+#include <limits.h>
+#include <poll.h>
+#include <string.h>
+}
 
 // convenient local macros to record errors for debugging
 #define SAVE_ERR(_code_, _msg_) \
@@ -62,6 +64,7 @@ extern "C" {
   } while (false)
 
 using namespace Hypertable;
+using namespace std;
 
 namespace {
 
@@ -267,7 +270,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
     RangeLocationInfo *rane_loc_infop, Timer &timer, bool hard) {
   RangeSpec range;
   ScanSpec meta_scan_spec;
-  ScanBlock scan_block;
+  vector<ScanBlock> scan_blocks(1);
   int error;
   Key key;
   RangeLocationInfo range_loc_info;
@@ -349,7 +352,12 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
       //    << addr.to_str() << " scan_spec=" << meta_scan_spec << HT_END;
 
       m_range_server.create_scanner(addr, m_metadata_table, range,
-                                    meta_scan_spec, scan_block, timer);
+                                    meta_scan_spec, scan_blocks.back(), timer);
+      while (!scan_blocks.back().eos()) {
+        int scanner_id = scan_blocks.back().get_scanner_id();
+        scan_blocks.resize(scan_blocks.size()+1);
+        m_range_server.fetch_scanblock(addr, scanner_id, scan_blocks.back());
+      }
     }
     catch (Exception &e) {
       if (e.code() == Error::COMM_NOT_CONNECTED ||
@@ -369,14 +377,9 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
       return Error::COMM_SEND_ERROR;
     }
 
-    if ((error = process_metadata_scanblock(scan_block, timer)) != Error::OK) {
+    if ((error = process_metadata_scanblocks(scan_blocks, timer)) != Error::OK) {
       m_root_stale = true;
-      m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
       return error;
-    }
-
-    if (!scan_block.eos()) {
-      m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
     }
 
     if (!m_cache->lookup(TableIdentifier::METADATA_ID, meta_key,
@@ -417,8 +420,16 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
   // meta_scan_spec.interval = ????;
 
   try {
+    scan_blocks.clear();
+    scan_blocks.resize(1);
     m_range_server.create_scanner(addr, m_metadata_table, range,
-                                  meta_scan_spec, scan_block, timer);
+                                  meta_scan_spec, scan_blocks.back(), timer);
+
+    while (!scan_blocks.back().eos()) {
+      int scanner_id = scan_blocks.back().get_scanner_id();
+      scan_blocks.resize(scan_blocks.size()+1);
+      m_range_server.fetch_scanblock(addr, scanner_id, scan_blocks.back());
+    }
   }
   catch (Exception &e) {
     if (e.code() == Error::COMM_NOT_CONNECTED ||
@@ -438,14 +449,8 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
     return Error::COMM_SEND_ERROR;
   }
 
-  if ((error = process_metadata_scanblock(scan_block, timer)) != Error::OK) {
-    m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
+  if ((error = process_metadata_scanblocks(scan_blocks, timer)) != Error::OK)
     return error;
-  }
-
-  if (!scan_block.eos()) {
-    m_range_server.destroy_scanner(addr, scan_block.get_scanner_id(), 0);
-  }
 
   if (row_key == 0)
     row_key = "";
@@ -460,7 +465,7 @@ RangeLocator::find(const TableIdentifier *table, const char *row_key,
 }
 
 
-int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block, Timer &timer) {
+int RangeLocator::process_metadata_scanblocks(vector<ScanBlock> &scan_blocks, Timer &timer) {
   RangeLocationInfo range_loc_info;
   SerializedKey serkey;
   ByteString value;
@@ -477,96 +482,100 @@ int RangeLocator::process_metadata_scanblock(ScanBlock &scan_block, Timer &timer
   bool got_end_row = false;
   bool got_location = false;
 
-  while (scan_block.next(serkey, value)) {
+  for (auto & scan_block : scan_blocks) {
 
-    if (!key.load(serkey)) {
-      String err_msg = format("METADATA lookup for '%s' returned bad key",
-                              serkey.str() + 1);
-      HT_ERRORF("%s", err_msg.c_str());
-      SAVE_ERR(Error::INVALID_METADATA, err_msg);
-      return Error::INVALID_METADATA;
-    }
+    while (scan_block.next(serkey, value)) {
 
-    if ((stripped_key = strchr(key.row, ':')) == 0) {
-      String err_msg = format("Bad row key found in METADATA - '%s'", key.row);
-      HT_ERRORF("%s", err_msg.c_str());
-      SAVE_ERR(Error::INVALID_METADATA, err_msg);
-      return Error::INVALID_METADATA;
-    }
-    stripped_key++;
+      if (!key.load(serkey)) {
+        String err_msg = format("METADATA lookup for '%s' returned bad key",
+                                serkey.str() + 1);
+        HT_ERRORF("%s", err_msg.c_str());
+        SAVE_ERR(Error::INVALID_METADATA, err_msg);
+        return Error::INVALID_METADATA;
+      }
+
+      if ((stripped_key = strchr(key.row, ':')) == 0) {
+        String err_msg = format("Bad row key found in METADATA - '%s'", key.row);
+        HT_ERRORF("%s", err_msg.c_str());
+        SAVE_ERR(Error::INVALID_METADATA, err_msg);
+        return Error::INVALID_METADATA;
+      }
+      stripped_key++;
 #if 0
-    {
-      const uint8_t *str;
-      size_t len = value.decode_length(&str);
-      String tmp_str = String((const char *)str, len);
-      HT_DEBUG_OUT << "Got key=" << key << ", stripped_key "
-          << stripped_key << ", value=" << tmp_str << " got start_row="
-          << got_start_row << ", got_end_row=" << got_end_row
-          << ", got_location=" << got_location << HT_END;
-    }
+      {
+        const uint8_t *str;
+        size_t len = value.decode_length(&str);
+        String tmp_str = String((const char *)str, len);
+        HT_DEBUG_OUT << "Got key=" << key << ", stripped_key "
+                     << stripped_key << ", value=" << tmp_str << " got start_row="
+                     << got_start_row << ", got_end_row=" << got_end_row
+                     << ", got_location=" << got_location << HT_END;
+      }
 #endif
-    if (got_end_row) {
-      if (strcmp(stripped_key, range_loc_info.end_row.c_str())) {
-        if (got_start_row && got_location) {
+      if (got_end_row) {
+        if (strcmp(stripped_key, range_loc_info.end_row.c_str())) {
+          if (got_start_row && got_location) {
 
-          // If not already connected, connect...
-          if (connected.count(range_loc_info.addr) == 0) {
-            if (connect(range_loc_info.addr, timer) == Error::OK)
-              connected.insert(range_loc_info.addr);
+            // If not already connected, connect...
+            if (connected.count(range_loc_info.addr) == 0) {
+              if (connect(range_loc_info.addr, timer) == Error::OK)
+                connected.insert(range_loc_info.addr);
+            }
+
+            m_cache->insert(table_name.c_str(), range_loc_info);
+
+            //HT_DEBUG_OUT << "(1) cache insert table=" << table_name << " start="
+            //    << range_loc_info.start_row << " end=" << range_loc_info.end_row
+            //    << " loc=" << range_loc_info.addr.to_str() << HT_END;
+
           }
+          else {
+            //HT_DEBUG_OUT << "Incomplete METADATA record found =" << table_name << " end="
+            //    << range_loc_info.end_row << " got start_row=" << got_start_row
+            //    << ", got_end_row=" << got_end_row << ", got_location=" << got_location << HT_END;
 
-          m_cache->insert(table_name.c_str(), range_loc_info);
-
-          //HT_DEBUG_OUT << "(1) cache insert table=" << table_name << " start="
-          //    << range_loc_info.start_row << " end=" << range_loc_info.end_row
-          //    << " loc=" << range_loc_info.addr.to_str() << HT_END;
-
+            SAVE_ERR(Error::INVALID_METADATA, format("Incomplete METADATA record "
+                                                     "found under row key '%s' (got_location=%s)", range_loc_info
+                                                     .end_row.c_str(), got_location ? "true" : "false"));
+          }
+          range_loc_info.start_row = "";
+          range_loc_info.end_row = "";
+          range_loc_info.addr.clear();
+          got_start_row = false;
+          got_end_row = false;
+          got_location = false;
         }
-        else {
-          //HT_DEBUG_OUT << "Incomplete METADATA record found =" << table_name << " end="
-          //    << range_loc_info.end_row << " got start_row=" << got_start_row
-          //    << ", got_end_row=" << got_end_row << ", got_location=" << got_location << HT_END;
+      }
+      else {
+        const char *colon = strchr(key.row, ':');
+        assert(colon);
+        table_name.clear();
+        table_name.append(key.row, colon-key.row);
+        range_loc_info.end_row = stripped_key;
+        got_end_row = true;
+      }
 
-          SAVE_ERR(Error::INVALID_METADATA, format("Incomplete METADATA record "
-                   "found under row key '%s' (got_location=%s)", range_loc_info
-                   .end_row.c_str(), got_location ? "true" : "false"));
-        }
-        range_loc_info.start_row = "";
-        range_loc_info.end_row = "";
-        range_loc_info.addr.clear();
-        got_start_row = false;
-        got_end_row = false;
-        got_location = false;
+      if (key.column_family_code == m_startrow_cid) {
+        const uint8_t *str;
+        size_t len = value.decode_length(&str);
+        //cout << "TS=" << key.timestamp << endl;
+        range_loc_info.start_row = String((const char *)str, len);
+        got_start_row = true;
+      }
+      else if (key.column_family_code == m_location_cid) {
+        const uint8_t *str;
+        size_t len = value.decode_length(&str);
+        if (str[0] == '!' && len == 1)
+          return Error::TABLE_NOT_FOUND;
+        range_loc_info.addr.set_proxy( String((const char *)str, len));
+        got_location = true;
+      }
+      else {
+        HT_ERRORF("METADATA lookup on row '%s' returned incorrect column (id=%d)",
+                  serkey.row(), key.column_family_code);
       }
     }
-    else {
-      const char *colon = strchr(key.row, ':');
-      assert(colon);
-      table_name.clear();
-      table_name.append(key.row, colon-key.row);
-      range_loc_info.end_row = stripped_key;
-      got_end_row = true;
-    }
 
-    if (key.column_family_code == m_startrow_cid) {
-      const uint8_t *str;
-      size_t len = value.decode_length(&str);
-      //cout << "TS=" << key.timestamp << endl;
-      range_loc_info.start_row = String((const char *)str, len);
-      got_start_row = true;
-    }
-    else if (key.column_family_code == m_location_cid) {
-      const uint8_t *str;
-      size_t len = value.decode_length(&str);
-      if (str[0] == '!' && len == 1)
-	return Error::TABLE_NOT_FOUND;
-      range_loc_info.addr.set_proxy( String((const char *)str, len));
-      got_location = true;
-    }
-    else {
-      HT_ERRORF("METADATA lookup on row '%s' returned incorrect column (id=%d)",
-                serkey.row(), key.column_family_code);
-    }
   }
 
   if (got_start_row && got_end_row && got_location) {

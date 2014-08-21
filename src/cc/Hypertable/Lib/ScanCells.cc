@@ -26,7 +26,7 @@
 using namespace Hypertable;
 
 bool ScanCells::add(EventPtr &event, int *scanner_id) {
-  ScanBlockPtr scanblock = new ScanBlock;
+  ScanBlockPtr scanblock = std::make_shared<ScanBlock>();
   scanblock->load(event);
   m_scanblocks.push_back(scanblock);
   *scanner_id = scanblock->get_scanner_id();

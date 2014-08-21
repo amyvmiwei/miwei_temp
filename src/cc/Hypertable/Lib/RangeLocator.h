@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,8 +22,6 @@
 #ifndef HYPERTABLE_RANGELOCATOR_H
 #define HYPERTABLE_RANGELOCATOR_H
 
-#include <deque>
-
 #include "Common/Mutex.h"
 #include "Common/Error.h"
 #include "Common/ReferenceCount.h"
@@ -39,6 +37,9 @@
 #include "RangeLocationInfo.h"
 #include "Schema.h"
 #include "Types.h"
+
+#include <deque>
+#include <vector>
 
 namespace Hypertable {
 
@@ -160,7 +161,7 @@ namespace Hypertable {
     void initialize(Timer &timer);
     void hyperspace_disconnected();
     void hyperspace_reconnected();
-    int process_metadata_scanblock(ScanBlock &scan_block, Timer &timer);
+    int process_metadata_scanblocks(std::vector<ScanBlock> &scan_blocks, Timer &timer);
     int read_root_location(Timer &timer);
     void initialize();
     int connect(CommAddress &addr, Timer &timer);
