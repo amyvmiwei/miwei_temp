@@ -105,6 +105,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   : m_props(props), m_conn_manager(conn_mgr),
     m_app_queue(app_queue), m_hyperspace(hyperspace) {
 
+  m_ganglia_metrics = std::make_shared<GangliaMetrics>(15860);
+
   m_context = std::make_shared<Context>();
   m_context->props = props;
   m_context->comm = conn_mgr->get_comm();
@@ -2368,6 +2370,10 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
 
   Global::load_statistics->recompute(&load_stats);
   m_stats->system.refresh();
+
+  m_ganglia_metrics->update("hypertable.rangeserver.Scans", (int32_t)load_stats.scan_count);
+  if (!m_ganglia_metrics->send())
+    HT_INFOF("Problem sending Ganglia metrics - %s", m_ganglia_metrics->get_error());
 
   uint64_t disk_total = 0;
   uint64_t disk_avail = 0;

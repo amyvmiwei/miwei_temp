@@ -30,6 +30,7 @@ CommHeader.cc
 Config.cc
 ConnectionManager.cc
 Event.cc
+GangliaMetrics.cc
 HandlerMap.cc
 IOHandler.cc
 IOHandlerAccept.cc
