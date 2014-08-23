@@ -2352,9 +2352,10 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
 
   HT_ON_OBJ_SCOPE_EXIT(*this, &RangeServer::test_and_set_get_statistics_outstanding, false);
 
-    ScopedLock lock(m_stats_mutex);
+  ScopedLock lock(m_stats_mutex);
   RangesPtr ranges = Global::get_ranges();
   int64_t timestamp = Hypertable::get_ts64();
+  int64_t elapsed_millis = (timestamp - m_stats_last_timestamp)/1000000LL;
   time_t now = (time_t)(timestamp/1000000000LL);
   LoadStatistics::Bundle load_stats;
 
@@ -2657,16 +2658,18 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
                             (float)m_stats->system.proc_stat.heap_slack / 1000000000.0);
   m_ganglia_metrics->update("hypertable.rangeserver.memory.tracked",
                             (float)m_stats->tracked_memory / 1000000000.0);
-  m_ganglia_metrics->update("hypertable.rangeserver.cpu.user",
-                            (int32_t)m_stats->system.proc_stat.cpu_user);
-  m_ganglia_metrics->update("hypertable.rangeserver.cpu.sys",
-                            (int32_t)m_stats->system.proc_stat.cpu_sys);
+
+  int32_t pct = ((float)m_stats->system.proc_stat.cpu_user / (float)elapsed_millis) * 100.0;
+  m_ganglia_metrics->update("hypertable.rangeserver.cpu.user", pct);
+
+  pct = ((float)m_stats->system.proc_stat.cpu_sys / (float)elapsed_millis) * 100.0;
+  m_ganglia_metrics->update("hypertable.rangeserver.cpu.sys", pct);
+
   if (m_stats->block_cache_accesses)
-    m_ganglia_metrics->update("hypertable.rangeserver.blockCache.hits",
-                              (float)m_stats->block_cache_hits/
-                              (float)m_stats->block_cache_accesses);
+    m_ganglia_metrics->update("hypertable.rangeserver.blockCache.hitRate",
+                              (int32_t)(m_stats->block_cache_hits/m_stats->block_cache_accesses));
   else
-    m_ganglia_metrics->update("hypertable.rangeserver.blockCache.hits", 0.0);
+    m_ganglia_metrics->update("hypertable.rangeserver.blockCache.hitRate", (int32_t)0);
   m_ganglia_metrics->update("hypertable.rangeserver.blockCache.memory",
                             (float)m_stats->block_cache_max_memory / 1000000000.0);
   uint64_t block_cache_fill = m_stats->block_cache_max_memory -
@@ -2675,11 +2678,10 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
                             (float)block_cache_fill / 1000000000.0);
 
   if (m_stats->query_cache_accesses)
-    m_ganglia_metrics->update("hypertable.rangeserver.queryCache.hits",
-                              (float)m_stats->query_cache_hits/
-                              (float)m_stats->query_cache_accesses);
+    m_ganglia_metrics->update("hypertable.rangeserver.queryCache.hitRate",
+                              (int32_t)(m_stats->query_cache_hits/m_stats->query_cache_accesses));
   else
-    m_ganglia_metrics->update("hypertable.rangeserver.queryCache.hits", 0.0);
+    m_ganglia_metrics->update("hypertable.rangeserver.queryCache.hitRate", (int32_t)0);
   m_ganglia_metrics->update("hypertable.rangeserver.queryCache.memory",
                             (float)m_stats->query_cache_max_memory / 1000000000.0);
   uint64_t query_cache_fill = m_stats->query_cache_max_memory -
@@ -2689,6 +2691,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   if (!m_ganglia_metrics->send())
     HT_INFOF("Problem sending Ganglia metrics - %s", m_ganglia_metrics->get_error());
 
+  m_stats_last_timestamp = timestamp;
 
   HT_INFO("Exiting get_statistics()");
 

@@ -274,7 +274,7 @@ namespace Hypertable {
 
     StatsRangeServerPtr    m_stats;
     LoadStatisticsPtr      m_load_statistics;
-    int64_t                m_server_stats_timestamp;
+    int64_t                m_stats_last_timestamp {};
 
     /// Indicates if a get_statistics() call is outstanding
     bool m_get_statistics_outstanding {};
