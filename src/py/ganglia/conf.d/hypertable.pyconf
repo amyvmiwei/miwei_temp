@@ -1,0 +1,96 @@
+modules {
+  module {
+    name = "hypertable"
+    language = "python"
+  }
+}
+
+collection_group {
+  collect_every = 30
+  time_threshold = 50
+  metric {
+    name = "hypertable.rangeserver.scans"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.updates"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.cellsRead"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.cellsWritten"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.scanners"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.cellstores"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.ranges"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.virtual"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.resident"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.pageFaults"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.heap"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.heapSlack"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.tracked"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.cpu.user"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.cpu.sys"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.blockCache.hits"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.blockCache.memory"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.blockCache.fill"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.queryCache.hits"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.queryCache.memory"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.queryCache.fill"
+    value_threshold = 1
+  }
+
+}

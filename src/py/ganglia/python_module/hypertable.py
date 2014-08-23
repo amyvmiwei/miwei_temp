@@ -1,6 +1,8 @@
 import errno
 import json
+import os
 import socket
+import sys
 import time
 from socket import error as socket_error
 
@@ -37,21 +39,267 @@ def metric_init(params):
     global sock
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    sock.bind(("127.0.0.1", LISTEN_PORT))
+    try:
+        sock.bind(("127.0.0.1", LISTEN_PORT))
+    except socket_error as serr:
+        print "error: unable to bind to port", LISTEN_PORT, "-", os.strerror(serr.errno)
+        sys.exit(1)
     sock.setblocking(0);
 
-    d1 = {'name': 'hypertable.rangeserver.Scans',
+    ## RangeServer metrics
+
+    d = {'name': 'hypertable.rangeserver.scans',
         'call_back': metric_callback,
         'time_max': 90,
-        'value_type': 'int',
+        'value_type': 'float',
         'units': 'scans/s',
         'slope': 'both',
-        'format': '%d',
+        'format': '%f',
         'description': 'Scans per second',
         'groups': 'hypertable,rangeserver'}
-    values['hypertable.rangeserver.Scans'] = 0
+    values['hypertable.rangeserver.scans'] = 0
+    descriptors.append(d);
 
-    descriptors = [d1]
+    d = {'name': 'hypertable.rangeserver.updates',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'updates/s',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Updates per second',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.updates'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.cellsRead',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'cells read/s',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Cells read per second',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.cellsRead'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.cellsWritten',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'cells written/s',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Cells written per second',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.cellsWritten'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.scanners',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': 'outstanding scanners',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Outstanding scanners',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.scanners'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.cellstores',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': 'cellstore count',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'CellStore count',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.cellstores'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.ranges',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': 'range count',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Range count',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.ranges'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.memory.virtual',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'GB',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Virtual memory',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.memory.virtual'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.memory.resident',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'GB',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Resident memory',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.memory.resident'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.memory.pageFaults',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': 'page faults',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Page faults (major)',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.memory.pageFaults'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.memory.heap',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'GB',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Heap memory',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.memory.heap'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.memory.heapSlack',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'GB',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Heap slack bytes',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.memory.heapSlack'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.memory.tracked',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'GB',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Tracked memory',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.memory.tracked'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.memory.cpu.user',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': 'milliseconds',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Process CPU user time',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.memory.cpu.user'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.memory.cpu.sys',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': 'milliseconds',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Process CPU system time',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.memory.cpu.sys'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.blockCache.hits',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'percentage',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Block cache hit rate',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.blockCache.hits'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.blockCache.memory',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'GB',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Block cache memory',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.blockCache.memory'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.blockCache.fill',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'GB',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Block cache fill',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.blockCache.fill'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.queryCache.hits',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'percentage',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Query cache hit rate',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.queryCache.hits'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.queryCache.memory',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'GB',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Query cache memory',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.queryCache.memory'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.queryCache.fill',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'float',
+        'units': 'GB',
+        'slope': 'both',
+        'format': '%f',
+        'description': 'Query cache fill',
+        'groups': 'hypertable,rangeserver'}
+    values['hypertable.rangeserver.queryCache.fill'] = 0
+    descriptors.append(d);
+
     return descriptors
 
 def metric_cleanup():
@@ -62,13 +310,12 @@ def metric_cleanup():
 
 #This code is for debugging and unit testing
 if __name__ == '__main__':
-    params = {'RandomMax': '500',
-        'ConstantValue': '322'}
+    if len(sys.argv) < 2:
+        print "usage: hypertable.py <metric>"
+        sys.exit(0)
+    params = { }
     metric_init(params)
-    for d in descriptors:
-        v = d['call_back'](d['name'])
-        print 'value for %s is %u' % (d['name'],  v)
     while True:
+        scans = metric_callback(sys.argv[1])
+        print sys.argv[1], "=", scans
         time.sleep(30)
-        scans = metric_callback('hypertable.rangeserver.Scans')
-        print 'value for \'hypertable.rangeserver.Scans\' is %d' % scans

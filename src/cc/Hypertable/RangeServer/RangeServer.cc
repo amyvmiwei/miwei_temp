@@ -2371,9 +2371,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   Global::load_statistics->recompute(&load_stats);
   m_stats->system.refresh();
 
-  m_ganglia_metrics->update("hypertable.rangeserver.Scans", (int32_t)load_stats.scan_count);
-  if (!m_ganglia_metrics->send())
-    HT_INFOF("Problem sending Ganglia metrics - %s", m_ganglia_metrics->get_error());
+  float period_seconds = (float)load_stats.period_millis / 1000.0;
 
   uint64_t disk_total = 0;
   uint64_t disk_avail = 0;
@@ -2631,6 +2629,66 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
     HT_ASSERT((ptr-ext.base) == (ptrdiff_t)ext.size);
     cb->response(ext);
   }
+
+  // Ganglia metrics
+  m_ganglia_metrics->update("hypertable.rangeserver.scans",
+                            (float)load_stats.scan_count / period_seconds);
+  m_ganglia_metrics->update("hypertable.rangeserver.updates",
+                            (float)load_stats.update_count / period_seconds);
+  m_ganglia_metrics->update("hypertable.rangeserver.cellsRead",
+                            (float)load_stats.scan_cells / period_seconds);
+  m_ganglia_metrics->update("hypertable.rangeserver.cellsWritten",
+                            (float)load_stats.update_cells / period_seconds);
+  m_ganglia_metrics->update("hypertable.rangeserver.scanners",
+                            m_stats->scanner_count);
+  m_ganglia_metrics->update("hypertable.rangeserver.cellstores",
+                            (int32_t)m_stats->file_count);
+  m_ganglia_metrics->update("hypertable.rangeserver.ranges",
+                            m_stats->range_count);
+  m_ganglia_metrics->update("hypertable.rangeserver.memory.virtual",
+                            (float)m_stats->system.proc_stat.vm_size / 1024.0);
+  m_ganglia_metrics->update("hypertable.rangeserver.memory.resident",
+                            (float)m_stats->system.proc_stat.vm_resident / 1024.0);
+  m_ganglia_metrics->update("hypertable.rangeserver.memory.pageFaults",
+                            (int32_t)m_stats->system.proc_stat.major_faults);
+  m_ganglia_metrics->update("hypertable.rangeserver.memory.heap",
+                            (float)m_stats->system.proc_stat.heap_size / 1000000000.0);
+  m_ganglia_metrics->update("hypertable.rangeserver.memory.heapSlack",
+                            (float)m_stats->system.proc_stat.heap_slack / 1000000000.0);
+  m_ganglia_metrics->update("hypertable.rangeserver.memory.tracked",
+                            (float)m_stats->tracked_memory / 1000000000.0);
+  m_ganglia_metrics->update("hypertable.rangeserver.cpu.user",
+                            (int32_t)m_stats->system.proc_stat.cpu_user);
+  m_ganglia_metrics->update("hypertable.rangeserver.cpu.sys",
+                            (int32_t)m_stats->system.proc_stat.cpu_sys);
+  if (m_stats->block_cache_accesses)
+    m_ganglia_metrics->update("hypertable.rangeserver.blockCache.hits",
+                              (float)m_stats->block_cache_hits/
+                              (float)m_stats->block_cache_accesses);
+  else
+    m_ganglia_metrics->update("hypertable.rangeserver.blockCache.hits", 0.0);
+  m_ganglia_metrics->update("hypertable.rangeserver.blockCache.memory",
+                            (float)m_stats->block_cache_max_memory / 1000000000.0);
+  uint64_t block_cache_fill = m_stats->block_cache_max_memory -
+    m_stats->block_cache_available_memory;
+  m_ganglia_metrics->update("hypertable.rangeserver.blockCache.fill",
+                            (float)block_cache_fill / 1000000000.0);
+
+  if (m_stats->query_cache_accesses)
+    m_ganglia_metrics->update("hypertable.rangeserver.queryCache.hits",
+                              (float)m_stats->query_cache_hits/
+                              (float)m_stats->query_cache_accesses);
+  else
+    m_ganglia_metrics->update("hypertable.rangeserver.queryCache.hits", 0.0);
+  m_ganglia_metrics->update("hypertable.rangeserver.queryCache.memory",
+                            (float)m_stats->query_cache_max_memory / 1000000000.0);
+  uint64_t query_cache_fill = m_stats->query_cache_max_memory -
+    m_stats->query_cache_available_memory;
+  m_ganglia_metrics->update("hypertable.rangeserver.queryCache.fill",
+                            (float)query_cache_fill / 1000000000.0);
+  if (!m_ganglia_metrics->send())
+    HT_INFOF("Problem sending Ganglia metrics - %s", m_ganglia_metrics->get_error());
+
 
   HT_INFO("Exiting get_statistics()");
 
