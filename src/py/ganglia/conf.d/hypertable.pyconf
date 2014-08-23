@@ -69,7 +69,7 @@ collection_group {
     value_threshold = 1
   }
   metric {
-    name = "hypertable.rangeserver.blockCache.hits"
+    name = "hypertable.rangeserver.blockCache.hitRate"
     value_threshold = 1
   }
   metric {
@@ -81,7 +81,7 @@ collection_group {
     value_threshold = 1
   }
   metric {
-    name = "hypertable.rangeserver.queryCache.hits"
+    name = "hypertable.rangeserver.queryCache.hitRate"
     value_threshold = 1
   }
   metric {

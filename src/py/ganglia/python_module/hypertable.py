@@ -52,7 +52,7 @@ def metric_init(params):
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'float',
-        'units': 'scans/s',
+        'units': 'per second',
         'slope': 'both',
         'format': '%f',
         'description': 'Scans per second',
@@ -64,7 +64,7 @@ def metric_init(params):
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'float',
-        'units': 'updates/s',
+        'units': 'per second',
         'slope': 'both',
         'format': '%f',
         'description': 'Updates per second',
@@ -76,7 +76,7 @@ def metric_init(params):
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'float',
-        'units': 'cells read/s',
+        'units': 'per second',
         'slope': 'both',
         'format': '%f',
         'description': 'Cells read per second',
@@ -88,7 +88,7 @@ def metric_init(params):
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'float',
-        'units': 'cells written/s',
+        'units': 'per second',
         'slope': 'both',
         'format': '%f',
         'description': 'Cells written per second',
@@ -112,7 +112,7 @@ def metric_init(params):
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'uint',
-        'units': 'cellstore count',
+        'units': 'count',
         'slope': 'both',
         'format': '%u',
         'description': 'CellStore count',
@@ -124,7 +124,7 @@ def metric_init(params):
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'uint',
-        'units': 'range count',
+        'units': 'count',
         'slope': 'both',
         'format': '%u',
         'description': 'Range count',
@@ -204,7 +204,7 @@ def metric_init(params):
     values['hypertable.rangeserver.memory.tracked'] = 0
     descriptors.append(d);
 
-    d = {'name': 'hypertable.rangeserver.memory.cpu.user',
+    d = {'name': 'hypertable.rangeserver.cpu.user',
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'uint',
@@ -213,10 +213,10 @@ def metric_init(params):
         'format': '%u',
         'description': 'Process CPU user time',
         'groups': 'hypertable,rangeserver'}
-    values['hypertable.rangeserver.memory.cpu.user'] = 0
+    values['hypertable.rangeserver.cpu.user'] = 0
     descriptors.append(d);
 
-    d = {'name': 'hypertable.rangeserver.memory.cpu.sys',
+    d = {'name': 'hypertable.rangeserver.cpu.sys',
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'uint',
@@ -225,19 +225,19 @@ def metric_init(params):
         'format': '%u',
         'description': 'Process CPU system time',
         'groups': 'hypertable,rangeserver'}
-    values['hypertable.rangeserver.memory.cpu.sys'] = 0
+    values['hypertable.rangeserver.cpu.sys'] = 0
     descriptors.append(d);
 
-    d = {'name': 'hypertable.rangeserver.blockCache.hits',
+    d = {'name': 'hypertable.rangeserver.blockCache.hitRate',
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'float',
-        'units': 'percentage',
+        'units': '%',
         'slope': 'both',
         'format': '%f',
         'description': 'Block cache hit rate',
         'groups': 'hypertable,rangeserver'}
-    values['hypertable.rangeserver.blockCache.hits'] = 0
+    values['hypertable.rangeserver.blockCache.hitRate'] = 0
     descriptors.append(d);
 
     d = {'name': 'hypertable.rangeserver.blockCache.memory',
@@ -264,7 +264,7 @@ def metric_init(params):
     values['hypertable.rangeserver.blockCache.fill'] = 0
     descriptors.append(d);
 
-    d = {'name': 'hypertable.rangeserver.queryCache.hits',
+    d = {'name': 'hypertable.rangeserver.queryCache.hitRate',
         'call_back': metric_callback,
         'time_max': 90,
         'value_type': 'float',
@@ -273,7 +273,7 @@ def metric_init(params):
         'format': '%f',
         'description': 'Query cache hit rate',
         'groups': 'hypertable,rangeserver'}
-    values['hypertable.rangeserver.queryCache.hits'] = 0
+    values['hypertable.rangeserver.queryCache.hitRate'] = 0
     descriptors.append(d);
 
     d = {'name': 'hypertable.rangeserver.queryCache.memory',
