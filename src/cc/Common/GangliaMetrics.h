@@ -25,10 +25,8 @@
 /// aggregating metrics and sending them to the Ganglia gmond process running on
 /// localhost.
 
-#ifndef AsyncComm_GangliaMetrics_h
-#define AsyncComm_GangliaMetrics_h
-
-#include <AsyncComm/Comm.h>
+#ifndef Common_GangliaMetrics_h
+#define Common_GangliaMetrics_h
 
 #include <Common/InetAddr.h>
 
@@ -38,7 +36,7 @@
 
 namespace Hypertable {
 
-  /// @addtogroup AsyncComm
+  /// @addtogroup Common
   /// @{
 
   class GangliaMetrics {
@@ -64,7 +62,6 @@ namespace Hypertable {
 
   private:
     bool connect();
-    Comm *m_comm {};
     uint16_t m_port {};
     int m_sd {};
     std::string m_error;
@@ -81,4 +78,4 @@ namespace Hypertable {
   /// @}
 }
 
-#endif // AsyncComm_GangliaMetrics_h
+#endif // Common_GangliaMetrics_h

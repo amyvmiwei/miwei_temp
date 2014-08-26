@@ -20,6 +20,23 @@
  */
 
 #include "Common/Compat.h"
+
+#include <Hyperspace/Config.h>
+#include <Hyperspace/ServerConnectionHandler.h>
+#include <Hyperspace/ServerKeepaliveHandler.h>
+#include <Hyperspace/Master.h>
+
+#include <AsyncComm/ApplicationQueue.h>
+#include <AsyncComm/Comm.h>
+#include <AsyncComm/ConnectionHandlerFactory.h>
+
+#include <Common/Init.h>
+#include <Common/Error.h>
+#include <Common/InetAddr.h>
+#include <Common/SleepWakeNotifier.h>
+#include <Common/System.h>
+#include <Common/Usage.h>
+
 #include <iostream>
 #include <fstream>
 #include <string>
@@ -30,27 +47,10 @@ extern "C" {
 #include <unistd.h>
 }
 
-#include "Common/Init.h"
-#include "Common/Error.h"
-#include "Common/InetAddr.h"
-#include "Common/SleepWakeNotifier.h"
-#include "Common/System.h"
-#include "Common/Usage.h"
-
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/Comm.h"
-#include "AsyncComm/ConnectionHandlerFactory.h"
-
-#include "Config.h"
-#include "ServerConnectionHandler.h"
-#include "ServerKeepaliveHandler.h"
-#include "Master.h"
-
 using namespace Hyperspace;
 using namespace Hypertable;
 using namespace Config;
 using namespace std;
-
 
 /*
  * Handler factory for Hyperspace master
@@ -58,17 +58,16 @@ using namespace std;
 class HandlerFactory : public ConnectionHandlerFactory {
 
 public:
-  HandlerFactory(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master)
-    : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master) { }
+  HandlerFactory(ApplicationQueuePtr &app_queue, MasterPtr &master)
+    : m_app_queue(app_queue), m_master(master) { }
 
   virtual void get_instance(DispatchHandlerPtr &dhp) {
-    dhp = new ServerConnectionHandler(m_comm, m_app_queue_ptr, m_master_ptr);
+    dhp = new ServerConnectionHandler(m_app_queue, m_master);
   }
 
 private:
-  Comm                 *m_comm;
-  ApplicationQueuePtr   m_app_queue_ptr;
-  MasterPtr             m_master_ptr;
+  ApplicationQueuePtr   m_app_queue;
+  MasterPtr             m_master;
 };
 
 
@@ -81,16 +80,15 @@ int main(int argc, char **argv) {
     Comm *comm = Comm::instance();
     ConnectionManagerPtr conn_mgr = new ConnectionManager(comm);
     ServerKeepaliveHandlerPtr keepalive_handler;
-    ApplicationQueuePtr app_queue_ptr;
+    ApplicationQueuePtr app_queue;
     MasterPtr master = new Master(conn_mgr, properties,
-                                  keepalive_handler, app_queue_ptr);
+                                  keepalive_handler, app_queue);
     function<void()> sleep_callback = [master]() -> void {master->handle_sleep();};
     function<void()> wakeup_callback = [master]() -> void {master->handle_wakeup();};
     SleepWakeNotifier sleep_wake_notifier(sleep_callback, wakeup_callback);
     uint16_t port = has("port") ? get_i16("port") : get_i16("Hyperspace.Replica.Port");
     CommAddress local_addr = InetAddr(INADDR_ANY, port);
-    ConnectionHandlerFactoryPtr hf(new HandlerFactory(comm, app_queue_ptr,
-                                                      master));
+    ConnectionHandlerFactoryPtr hf(new HandlerFactory(app_queue, master));
     comm->listen(local_addr, hf);
 
     DispatchHandlerPtr dhp(keepalive_handler.get());
@@ -106,7 +104,7 @@ int main(int argc, char **argv) {
     if ((error = comm->set_timer(maintenance_interval, maintenance_dhp.get())) != Error::OK)
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
 
-    app_queue_ptr->join();
+    app_queue->join();
 
     HT_INFO("Exitting...");
   }

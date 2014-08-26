@@ -29,8 +29,6 @@
 
 #include "GangliaMetrics.h"
 
-#include <AsyncComm/Comm.h>
-
 #include <Common/Logger.h>
 
 extern "C" {

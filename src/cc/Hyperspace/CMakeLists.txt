@@ -42,6 +42,7 @@ StateDbKeys.cc
 BerkeleyDbFilesystem.cc
 Event.cc
 Master.cc
+MetricsHandler.cc
 request/RequestHandlerMkdir.cc
 request/RequestHandlerDelete.cc
 request/RequestHandlerExpireSessions.cc

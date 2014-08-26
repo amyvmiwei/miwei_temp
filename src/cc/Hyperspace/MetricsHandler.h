@@ -19,35 +19,48 @@
  * 02110-1301, USA.
  */
 
-#ifndef Hyperspace_ServerConnectionHandler_h
-#define Hyperspace_ServerConnectionHandler_h
+#ifndef Hyperspace_MetricsHandler_h
+#define Hyperspace_MetricsHandler_h
 
-#include "Common/Compat.h"
+#include <AsyncComm/DispatchHandler.h>
 
-#include "AsyncComm/ApplicationQueue.h"
-#include "AsyncComm/DispatchHandler.h"
+#include <Common/GangliaMetrics.h>
+#include <Common/Properties.h>
+#include <Common/StatsSystem.h>
+#include <Common/metrics.h>
 
-#include "Master.h"
+#include <memory>
+#include <mutex>
 
 namespace Hyperspace {
 
-  /*
-   *
-   */
-  class ServerConnectionHandler : public DispatchHandler {
+  using namespace Hypertable;
+
+  class MetricsHandler : public DispatchHandler {
   public:
-    ServerConnectionHandler(ApplicationQueuePtr &app_queue, MasterPtr &master);
+
+    MetricsHandler(PropertiesPtr &props);
+
+    virtual ~MetricsHandler();
 
     virtual void handle(EventPtr &event);
 
+    void request_count_increment() {
+      std::lock_guard<std::mutex> lock(m_mutex);
+      m_request_count.current++;
+    }
+
   private:
-    Comm *m_comm {};
-    ApplicationQueuePtr m_app_queue;
-    MasterPtr m_master;
-    uint64_t m_session_id {};
-    uint32_t m_maintenance_interval {};
+    std::mutex m_mutex;
+    GangliaMetricsPtr m_ganglia_metrics;
+    StatsSystem m_previous_stats;
+    int64_t m_previous_timestamp;
+    int32_t m_collection_interval {};
+    rate_metric<int64_t> m_request_count {};
   };
+
+  typedef std::shared_ptr<MetricsHandler> MetricsHandlerPtr;
 
 }
 
-#endif // Hyperspace_ServerConnectionHandler_h
+#endif // Hyperspace_MetricsHandler_h

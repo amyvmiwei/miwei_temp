@@ -32,6 +32,7 @@ Escaper.cc
 FailureInducer.cc
 FileUtils.cc
 Filesystem.cc
+GangliaMetrics.cc
 HostSpecification.cc
 InetAddr.cc
 InteractiveCommand.cc

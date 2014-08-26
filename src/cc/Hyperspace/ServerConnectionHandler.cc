@@ -25,6 +25,7 @@
 #include "Common/StringExt.h"
 
 #include "AsyncComm/ApplicationQueue.h"
+#include "AsyncComm/Comm.h"
 
 #include "Protocol.h"
 #include "request/RequestHandlerAttrSet.h"
@@ -56,9 +57,10 @@ using namespace Hyperspace;
 using namespace Serialization;
 using namespace Error;
 
-ServerConnectionHandler::ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue,
-    MasterPtr &master) : m_comm(comm), m_app_queue_ptr(app_queue), m_master_ptr(master),
-    m_session_id(0) {
+ServerConnectionHandler::ServerConnectionHandler(ApplicationQueuePtr &app_queue,
+                                                 MasterPtr &master)
+  : m_app_queue(app_queue), m_master(master), m_session_id(0) {
+  m_comm = Comm::instance();
   m_maintenance_interval = Config::properties->get_i32("Hyperspace.Maintenance.Interval");
 }
 
@@ -83,100 +85,100 @@ void ServerConnectionHandler::handle(EventPtr &event) {
 
       // if this is not the current replication master then try to return
       // addr of current master
-      if (!m_master_ptr->is_master())
+      if (!m_master->is_master())
         HT_THROW(Error::HYPERSPACE_NOT_MASTER_LOCATION, (String) "Current master=" +
-            m_master_ptr->get_current_master());
+            m_master->get_current_master());
 
       switch (event->header.command) {
          case Protocol::COMMAND_HANDSHAKE:
            {
-             const uint8_t *decode_ptr = event->payload;
+             const uint8_t *decode = event->payload;
              size_t decode_remain = event->payload_len;
 
-             m_session_id = decode_i64(&decode_ptr, &decode_remain);
+             m_session_id = decode_i64(&decode, &decode_remain);
              if (m_session_id == 0)
              HT_THROW(Error::PROTOCOL_ERROR, "Bad session id: 0");
-             handler = new RequestHandlerHandshake(m_comm, m_master_ptr.get(),
+             handler = new RequestHandlerHandshake(m_comm, m_master.get(),
                                                    m_session_id, event);
 
           }
           break;
       case Protocol::COMMAND_OPEN:
-        handler = new RequestHandlerOpen(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerOpen(m_comm, m_master.get(),
                                          m_session_id, event);
         break;
       case Protocol::COMMAND_CLOSE:
-        handler = new RequestHandlerClose(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerClose(m_comm, m_master.get(),
                                           m_session_id, event);
         break;
       case Protocol::COMMAND_MKDIR:
-        handler = new RequestHandlerMkdir(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerMkdir(m_comm, m_master.get(),
                                           m_session_id, event);
         break;
       case Protocol::COMMAND_DELETE:
-        handler = new RequestHandlerDelete(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerDelete(m_comm, m_master.get(),
                                            m_session_id, event);
         break;
       case Protocol::COMMAND_ATTRSET:
-        handler = new RequestHandlerAttrSet(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerAttrSet(m_comm, m_master.get(),
                                             m_session_id, event);
         break;
       case Protocol::COMMAND_ATTRGET:
-        handler = new RequestHandlerAttrGet(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerAttrGet(m_comm, m_master.get(),
                                             m_session_id, event);
         break;
       case Protocol::COMMAND_ATTRINCR:
-        handler = new RequestHandlerAttrIncr(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerAttrIncr(m_comm, m_master.get(),
                                              m_session_id, event);
         break;
       case Protocol::COMMAND_ATTREXISTS:
-        handler = new RequestHandlerAttrExists(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerAttrExists(m_comm, m_master.get(),
                                                m_session_id, event);
         break;
       case Protocol::COMMAND_ATTRLIST:
-        handler = new RequestHandlerAttrList(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerAttrList(m_comm, m_master.get(),
                                              m_session_id, event);
         break;
       case Protocol::COMMAND_ATTRDEL:
-        handler = new RequestHandlerAttrDel(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerAttrDel(m_comm, m_master.get(),
                                             m_session_id, event);
         break;
       case Protocol::COMMAND_EXISTS:
-        handler = new RequestHandlerExists(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerExists(m_comm, m_master.get(),
                                            m_session_id, event);
         break;
       case Protocol::COMMAND_READDIR:
-        handler = new RequestHandlerReaddir(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerReaddir(m_comm, m_master.get(),
                                             m_session_id, event);
         break;
       case Protocol::COMMAND_READDIRATTR:
-        handler = new RequestHandlerReaddirAttr(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerReaddirAttr(m_comm, m_master.get(),
                                                 m_session_id, event);
         break;
       case Protocol::COMMAND_READPATHATTR:
-        handler = new RequestHandlerReadpathAttr(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerReadpathAttr(m_comm, m_master.get(),
                                                  m_session_id, event);
         break;
       case Protocol::COMMAND_LOCK:
-        handler = new RequestHandlerLock(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerLock(m_comm, m_master.get(),
                                          m_session_id, event);
         break;
       case Protocol::COMMAND_RELEASE:
-        handler = new RequestHandlerRelease(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerRelease(m_comm, m_master.get(),
                                             m_session_id, event);
         break;
       case Protocol::COMMAND_STATUS:
         handler = new RequestHandlerStatus(m_comm, event);
         break;
       case Protocol::COMMAND_SHUTDOWN:
-        handler = new RequestHandlerShutdown(m_comm, m_master_ptr.get(),
+        handler = new RequestHandlerShutdown(m_comm, m_master.get(),
                                              m_session_id, event);
         break;
       default:
         HT_THROWF(Error::PROTOCOL_ERROR, "Unimplemented command (%llu)",
                   (Llu)event->header.command);
       }
-      m_app_queue_ptr->add(handler);
+      m_app_queue->add(handler);
     }
     catch (Exception &e) {
       ResponseCallback cb(m_comm, event);
@@ -189,13 +191,13 @@ void ServerConnectionHandler::handle(EventPtr &event) {
     HT_INFOF("%s", event->to_str().c_str());
   }
   else if (event->type == Hypertable::Event::DISCONNECT) {
-    m_app_queue_ptr->add( new RequestHandlerDestroySession(m_master_ptr.get(), m_session_id) );
+    m_app_queue->add( new RequestHandlerDestroySession(m_master.get(), m_session_id) );
     cout << flush;
   }
   else if (event->type == Hypertable::Event::TIMER) {
     int error;
     try {
-      m_app_queue_ptr->add(new Hyperspace::RequestHandlerDoMaintenance(m_master_ptr.get(), event) );
+      m_app_queue->add(new Hyperspace::RequestHandlerDoMaintenance(m_master.get(), event) );
     }
     catch (Exception &e) {
       HT_ERROR_OUT << e << HT_END;

@@ -105,7 +105,7 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   : m_props(props), m_conn_manager(conn_mgr),
     m_app_queue(app_queue), m_hyperspace(hyperspace) {
 
-  m_ganglia_metrics = std::make_shared<GangliaMetrics>(15860);
+  m_ganglia_metrics = std::make_shared<GangliaMetrics>(props->get_i16("Hypertable.Metrics.Ganglia.Port"));
 
   m_context = std::make_shared<Context>();
   m_context->props = props;
@@ -2650,7 +2650,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
                             (float)m_stats->system.proc_stat.vm_size / 1024.0);
   m_ganglia_metrics->update("hypertable.rangeserver.memory.resident",
                             (float)m_stats->system.proc_stat.vm_resident / 1024.0);
-  m_ganglia_metrics->update("hypertable.rangeserver.memory.pageFaults",
+  m_ganglia_metrics->update("hypertable.rangeserver.memory.majorFaults",
                             (int32_t)m_stats->system.proc_stat.major_faults);
   m_ganglia_metrics->update("hypertable.rangeserver.memory.heap",
                             (float)m_stats->system.proc_stat.heap_size / 1000000000.0);

@@ -8,6 +8,48 @@ modules {
 collection_group {
   collect_every = 30
   time_threshold = 50
+
+##
+## Hyperspace
+##
+
+  metric {
+    name = "hypertable.hyperspace.requests"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.hyperspace.cpu.user"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.hyperspace.cpu.sys"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.hyperspace.memory.virtual"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.hyperspace.memory.resident"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.hyperspace.memory.majorFaults"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.hyperspace.memory.heap"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.hyperspace.memory.heapSlack"
+    value_threshold = 1
+  }
+
+##
+## RangeServer
+##
+
   metric {
     name = "hypertable.rangeserver.scans"
     value_threshold = 1
@@ -45,7 +87,7 @@ collection_group {
     value_threshold = 1
   }
   metric {
-    name = "hypertable.rangeserver.memory.pageFaults"
+    name = "hypertable.rangeserver.memory.majorFaults"
     value_threshold = 1
   }
   metric {

@@ -59,9 +59,9 @@
 #include <AsyncComm/ApplicationQueue.h>
 #include <AsyncComm/Comm.h>
 #include <AsyncComm/Event.h>
-#include <AsyncComm/GangliaMetrics.h>
 #include <AsyncComm/ResponseCallback.h>
 
+#include <Common/GangliaMetrics.h>
 #include <Common/Logger.h>
 #include <Common/Properties.h>
 

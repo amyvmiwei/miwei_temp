@@ -237,6 +237,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   uint16_t port = props->get_i16("Hyperspace.Replica.Port");
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
+  m_metrics_handler = std::make_shared<MetricsHandler>(props);
 
   boost::xtime_get(&m_last_tick, boost::TIME_UTC_);
 
