@@ -27,6 +27,7 @@
 
 #include <Common/Error.h>
 #include <Common/Logger.h>
+#include <Common/Properties.h>
 
 #include <mutex>
 
@@ -40,13 +41,11 @@ namespace {
 }
 
 
-MetricsHandler::MetricsHandler(PropertiesPtr &props)
-  : m_previous_stats(StatsSystem::PROCINFO|StatsSystem::PROC) {
-  m_ganglia_metrics = std::make_shared<GangliaMetrics>(props->get_i16("Hypertable.Metrics.Ganglia.Port"));
+MetricsHandler::MetricsHandler(PropertiesPtr &props) {
+  int16_t port = props->get_i16("Hypertable.Metrics.Ganglia.Port");
+  m_ganglia_collector = std::make_shared<MetricsCollectorGanglia>("hyperspace", port);
   m_collection_interval = props->get_i32("Hypertable.Monitoring.Interval");
-  m_previous_stats.refresh();
-  m_previous_timestamp = Hypertable::get_ts64();
-
+  m_last_timestamp = Hypertable::get_ts64();
   {
     lock_guard<mutex> lock(g_mutex);
     int error;
@@ -54,7 +53,6 @@ MetricsHandler::MetricsHandler(PropertiesPtr &props)
     if ((error = g_comm->set_timer(m_collection_interval, this)) != Error::OK)
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));
   }
-
 }
 
 MetricsHandler::~MetricsHandler() {
@@ -72,50 +70,27 @@ void MetricsHandler::handle(Hypertable::EventPtr &event) {
     return;
 
   if (event->type == Hypertable::Event::TIMER) {
-    StatsSystem system_stats;
-    int64_t timestamp;
 
-    system_stats.refresh();
-    timestamp = Hypertable::get_ts64();
+    int64_t timestamp = Hypertable::get_ts64();
 
-    int64_t elapsed_millis = (timestamp-m_previous_timestamp) / 1000000LL;
+    m_metrics_process.collect(timestamp, m_ganglia_collector.get());
+
+    int64_t elapsed_secs = (timestamp - m_last_timestamp) / 1000000000LL;
 
     {
       lock_guard<mutex> lock(m_mutex);
-      m_ganglia_metrics->update("hypertable.hyperspace.requests",
-                                m_request_count.rate(elapsed_millis/1000));
-      m_request_count.reset();
+      m_ganglia_collector->update("requests", m_requests.rate(elapsed_secs));
+      m_requests.reset();
     }
 
-    // CPU user time
-    int32_t pct = ((system_stats.proc_stat.cpu_user - m_previous_stats.proc_stat.cpu_user) * 100) / elapsed_millis;
-    m_ganglia_metrics->update("hypertable.hyperspace.cpu.user", pct);
+    try {
+      m_ganglia_collector->publish();
+    }
+    catch (Exception &e) {
+      HT_INFOF("Problem publishing Ganglia metrics - %s", e.what());
+    }
 
-    // CPU sys time
-    pct = ((system_stats.proc_stat.cpu_sys - m_previous_stats.proc_stat.cpu_sys) * 100) / elapsed_millis;
-    m_ganglia_metrics->update("hypertable.hyperspace.cpu.sys", pct);
-
-    m_ganglia_metrics->update("hypertable.hyperspace.memory.virtual",
-                              (float)system_stats.proc_stat.vm_size / 1024.0);
-
-    m_ganglia_metrics->update("hypertable.hyperspace.memory.resident",
-                              (float)system_stats.proc_stat.vm_resident / 1024.0);
-
-    m_ganglia_metrics->update("hypertable.hyperspace.memory.majorFaults",
-                              (int32_t)system_stats.proc_stat.major_faults);
-
-    m_ganglia_metrics->update("hypertable.hyperspace.memory.heap",
-                              (float)system_stats.proc_stat.heap_size / 1000000000.0);
-
-    m_ganglia_metrics->update("hypertable.hyperspace.memory.heapSlack",
-                              (float)system_stats.proc_stat.heap_slack / 1000000000.0);
-
-
-    if (!m_ganglia_metrics->send())
-      HT_INFOF("Problem sending Ganglia metrics - %s", m_ganglia_metrics->get_error());
-
-    m_previous_stats = system_stats;
-    m_previous_timestamp = timestamp;
+    m_last_timestamp = timestamp;
 
     if ((error = g_comm->set_timer(m_collection_interval, this)) != Error::OK)
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));

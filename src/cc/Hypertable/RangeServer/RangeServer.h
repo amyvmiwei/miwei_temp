@@ -61,8 +61,9 @@
 #include <AsyncComm/Event.h>
 #include <AsyncComm/ResponseCallback.h>
 
-#include <Common/GangliaMetrics.h>
 #include <Common/Logger.h>
+#include <Common/MetricsCollectorGanglia.h>
+#include <Common/MetricsProcess.h>
 #include <Common/Properties.h>
 
 #include <boost/thread/condition.hpp>
@@ -307,7 +308,8 @@ namespace Hypertable {
     std::ofstream m_profile_query_out;
     bool m_profile_query {};
     Mutex m_profile_mutex;
-    GangliaMetricsPtr m_ganglia_metrics;
+    MetricsCollectorGangliaPtr m_ganglia_collector;
+    MetricsProcess m_metrics_process;
   };
 
   /// Smart pointer to RangeServer

@@ -20,27 +20,40 @@
  */
 
 /// @file
-/// Declarations for metrics.
-/// This file contains type declarations for metrics, a collection of classes to
-/// aid in metrics collection.
+/// Declarations for MetricsCollector.
+/// This file contains type declarations for MetricsCollector, a simple class for
+/// aggregating metrics and sending them to the Ganglia gmond process running on
+/// localhost.
 
-#ifndef Common_metrics_h
-#define Common_metrics_h
+#ifndef Common_MetricsCollector_h
+#define Common_MetricsCollector_h
+
+#include <cstdint>
+#include <string>
 
 namespace Hypertable {
 
   /// @addtogroup Common
   /// @{
 
-  template<typename _Tp> struct interval_metric {
-    _Tp current {};
-    _Tp previous {};
-    void reset() { current=previous; }
-    _Tp diff() { return current-previous; }
-    float rate(float elapsed) { return (float)diff() / elapsed; }
+  class MetricsCollector {
+  public:
+
+    virtual void update(const std::string &name, const std::string &value) = 0;
+
+    virtual void update(const std::string &name, int16_t value) = 0;
+
+    virtual void update(const std::string &name, int32_t value) = 0;
+
+    virtual void update(const std::string &name, float value) = 0;
+
+    virtual void update(const std::string &name, double value) = 0;
+
+    virtual void publish() = 0;
+
   };
 
   /// @}
 }
 
-#endif // Common_metrics_h
+#endif // Common_MetricsCollector_h

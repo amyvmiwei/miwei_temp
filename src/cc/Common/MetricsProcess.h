@@ -20,27 +20,40 @@
  */
 
 /// @file
-/// Declarations for metrics.
-/// This file contains type declarations for metrics, a collection of classes to
-/// aid in metrics collection.
+/// Declarations for MetricsProcess.
+/// This file contains type declarations for MetricsProcess, a simple class for
+/// aggregating metrics and sending them to the Ganglia gmond process running on
+/// localhost.
 
-#ifndef Common_metrics_h
-#define Common_metrics_h
+#ifndef Common_MetricsProcess_h
+#define Common_MetricsProcess_h
+
+#include <Common/Metrics.h>
+#include <Common/MetricsCollector.h>
+#include <Common/metrics.h>
+
+#include <cstdint>
+#include <string>
 
 namespace Hypertable {
 
   /// @addtogroup Common
   /// @{
 
-  template<typename _Tp> struct interval_metric {
-    _Tp current {};
-    _Tp previous {};
-    void reset() { current=previous; }
-    _Tp diff() { return current-previous; }
-    float rate(float elapsed) { return (float)diff() / elapsed; }
+  class MetricsProcess : public Metrics {
+  public:
+
+    MetricsProcess();
+    void collect(int64_t now, MetricsCollector *collector) override;
+
+  private:
+    int64_t m_last_timestamp;
+    int64_t m_last_cpu_user;
+    int64_t m_last_cpu_sys;
+    int64_t m_last_major_faults;
   };
 
   /// @}
 }
 
-#endif // Common_metrics_h
+#endif // Common_MetricsProcess_h

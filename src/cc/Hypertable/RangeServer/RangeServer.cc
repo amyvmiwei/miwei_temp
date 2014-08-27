@@ -105,7 +105,9 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   : m_props(props), m_conn_manager(conn_mgr),
     m_app_queue(app_queue), m_hyperspace(hyperspace) {
 
-  m_ganglia_metrics = std::make_shared<GangliaMetrics>(props->get_i16("Hypertable.Metrics.Ganglia.Port"));
+  int16_t ganglia_port = props->get_i16("Hypertable.Metrics.Ganglia.Port");
+  m_ganglia_collector =
+    std::make_shared<MetricsCollectorGanglia>("rangeserver", ganglia_port);
 
   m_context = std::make_shared<Context>();
   m_context->props = props;
@@ -2632,64 +2634,56 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   }
 
   // Ganglia metrics
-  m_ganglia_metrics->update("hypertable.rangeserver.scans",
+
+  m_metrics_process.collect(timestamp, m_ganglia_collector.get());
+
+  m_ganglia_collector->update("scans",
                             (float)load_stats.scan_count / period_seconds);
-  m_ganglia_metrics->update("hypertable.rangeserver.updates",
+  m_ganglia_collector->update("updates",
                             (float)load_stats.update_count / period_seconds);
-  m_ganglia_metrics->update("hypertable.rangeserver.cellsRead",
+  m_ganglia_collector->update("cellsRead",
                             (float)load_stats.scan_cells / period_seconds);
-  m_ganglia_metrics->update("hypertable.rangeserver.cellsWritten",
+  m_ganglia_collector->update("cellsWritten",
                             (float)load_stats.update_cells / period_seconds);
-  m_ganglia_metrics->update("hypertable.rangeserver.scanners",
+  m_ganglia_collector->update("scanners",
                             m_stats->scanner_count);
-  m_ganglia_metrics->update("hypertable.rangeserver.cellstores",
+  m_ganglia_collector->update("cellstores",
                             (int32_t)m_stats->file_count);
-  m_ganglia_metrics->update("hypertable.rangeserver.ranges",
+  m_ganglia_collector->update("ranges",
                             m_stats->range_count);
-  m_ganglia_metrics->update("hypertable.rangeserver.memory.virtual",
-                            (float)m_stats->system.proc_stat.vm_size / 1024.0);
-  m_ganglia_metrics->update("hypertable.rangeserver.memory.resident",
-                            (float)m_stats->system.proc_stat.vm_resident / 1024.0);
-  m_ganglia_metrics->update("hypertable.rangeserver.memory.majorFaults",
-                            (int32_t)m_stats->system.proc_stat.major_faults);
-  m_ganglia_metrics->update("hypertable.rangeserver.memory.heap",
-                            (float)m_stats->system.proc_stat.heap_size / 1000000000.0);
-  m_ganglia_metrics->update("hypertable.rangeserver.memory.heapSlack",
-                            (float)m_stats->system.proc_stat.heap_slack / 1000000000.0);
-  m_ganglia_metrics->update("hypertable.rangeserver.memory.tracked",
+  m_ganglia_collector->update("memory.tracked",
                             (float)m_stats->tracked_memory / 1000000000.0);
 
-  int32_t pct = ((float)m_stats->system.proc_stat.cpu_user / (float)elapsed_millis) * 100.0;
-  m_ganglia_metrics->update("hypertable.rangeserver.cpu.user", pct);
-
-  pct = ((float)m_stats->system.proc_stat.cpu_sys / (float)elapsed_millis) * 100.0;
-  m_ganglia_metrics->update("hypertable.rangeserver.cpu.sys", pct);
-
   if (m_stats->block_cache_accesses)
-    m_ganglia_metrics->update("hypertable.rangeserver.blockCache.hitRate",
+    m_ganglia_collector->update("blockCache.hitRate",
                               (int32_t)(m_stats->block_cache_hits/m_stats->block_cache_accesses));
   else
-    m_ganglia_metrics->update("hypertable.rangeserver.blockCache.hitRate", (int32_t)0);
-  m_ganglia_metrics->update("hypertable.rangeserver.blockCache.memory",
+    m_ganglia_collector->update("blockCache.hitRate", (int32_t)0);
+  m_ganglia_collector->update("blockCache.memory",
                             (float)m_stats->block_cache_max_memory / 1000000000.0);
   uint64_t block_cache_fill = m_stats->block_cache_max_memory -
     m_stats->block_cache_available_memory;
-  m_ganglia_metrics->update("hypertable.rangeserver.blockCache.fill",
+  m_ganglia_collector->update("blockCache.fill",
                             (float)block_cache_fill / 1000000000.0);
 
   if (m_stats->query_cache_accesses)
-    m_ganglia_metrics->update("hypertable.rangeserver.queryCache.hitRate",
+    m_ganglia_collector->update("queryCache.hitRate",
                               (int32_t)(m_stats->query_cache_hits/m_stats->query_cache_accesses));
   else
-    m_ganglia_metrics->update("hypertable.rangeserver.queryCache.hitRate", (int32_t)0);
-  m_ganglia_metrics->update("hypertable.rangeserver.queryCache.memory",
+    m_ganglia_collector->update("queryCache.hitRate", (int32_t)0);
+  m_ganglia_collector->update("queryCache.memory",
                             (float)m_stats->query_cache_max_memory / 1000000000.0);
   uint64_t query_cache_fill = m_stats->query_cache_max_memory -
     m_stats->query_cache_available_memory;
-  m_ganglia_metrics->update("hypertable.rangeserver.queryCache.fill",
+  m_ganglia_collector->update("queryCache.fill",
                             (float)query_cache_fill / 1000000000.0);
-  if (!m_ganglia_metrics->send())
-    HT_INFOF("Problem sending Ganglia metrics - %s", m_ganglia_metrics->get_error());
+
+  try {
+    m_ganglia_collector->publish();
+  }
+  catch (Exception &e) {
+    HT_INFOF("Problem publishing Ganglia metrics - %s", e.what());
+  }
 
   m_stats_last_timestamp = timestamp;
 

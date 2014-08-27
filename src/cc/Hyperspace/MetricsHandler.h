@@ -24,9 +24,9 @@
 
 #include <AsyncComm/DispatchHandler.h>
 
-#include <Common/GangliaMetrics.h>
+#include <Common/MetricsCollectorGanglia.h>
+#include <Common/MetricsProcess.h>
 #include <Common/Properties.h>
-#include <Common/StatsSystem.h>
 #include <Common/metrics.h>
 
 #include <memory>
@@ -47,16 +47,16 @@ namespace Hyperspace {
 
     void request_count_increment() {
       std::lock_guard<std::mutex> lock(m_mutex);
-      m_request_count.current++;
+      m_requests.current++;
     }
 
   private:
     std::mutex m_mutex;
-    GangliaMetricsPtr m_ganglia_metrics;
-    StatsSystem m_previous_stats;
-    int64_t m_previous_timestamp;
+    MetricsCollectorGangliaPtr m_ganglia_collector;
+    MetricsProcess m_metrics_process;
+    int64_t m_last_timestamp;
     int32_t m_collection_interval {};
-    rate_metric<int64_t> m_request_count {};
+    interval_metric<int64_t> m_requests {};
   };
 
   typedef std::shared_ptr<MetricsHandler> MetricsHandlerPtr;

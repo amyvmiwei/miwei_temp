@@ -32,11 +32,12 @@ Escaper.cc
 FailureInducer.cc
 FileUtils.cc
 Filesystem.cc
-GangliaMetrics.cc
 HostSpecification.cc
 InetAddr.cc
 InteractiveCommand.cc
 Logger.cc
+MetricsCollectorGanglia.cc
+MetricsProcess.cc
 MurmurHash.cc
 Properties.cc
 Random.cc

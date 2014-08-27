@@ -20,15 +20,16 @@
  */
 
 /// @file
-/// Ddefinitions for GangliaMetrics.
-/// This file contains type ddefinitions for GangliaMetrics, a simple class for
+/// Ddefinitions for MetricsCollectorGanglia.
+/// This file contains type ddefinitions for MetricsCollectorGanglia, a simple class for
 /// aggregating metrics and sending them to the Ganglia gmond process running on
 /// localhost.
 
 #include <Common/Compat.h>
 
-#include "GangliaMetrics.h"
+#include "MetricsCollectorGanglia.h"
 
+#include <Common/InetAddr.h>
 #include <Common/Logger.h>
 
 extern "C" {
@@ -51,8 +52,11 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-GangliaMetrics::GangliaMetrics(uint16_t port) : m_port(port) {
+MetricsCollectorGanglia::MetricsCollectorGanglia(const string &component,
+                                                 uint16_t port) : m_port(port) {
   InetAddr local_addr(INADDR_ANY, 0);
+
+  m_prefix = "hypertable." + component + ".";
 
   if ((m_sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     HT_FATALF("socket(AF_INET, SOCK_DGRAM, 0) failure - %s", strerror(errno));
@@ -75,35 +79,34 @@ GangliaMetrics::GangliaMetrics(uint16_t port) : m_port(port) {
 
 }
 
-GangliaMetrics::~GangliaMetrics() {
+MetricsCollectorGanglia::~MetricsCollectorGanglia() {
   ::close(m_sd);
 }
 
-void GangliaMetrics::update(const std::string &name, const std::string &value) {
-  m_values_string[name] = value;
+void MetricsCollectorGanglia::update(const std::string &name, const std::string &value) {
+  m_values_string[m_prefix + name] = value;
 }
 
-void GangliaMetrics::update(const std::string &name, int16_t value) {
-  m_values_int[name] = (int32_t)value;
+void MetricsCollectorGanglia::update(const std::string &name, int16_t value) {
+  m_values_int[m_prefix + name] = (int32_t)value;
 }
 
-void GangliaMetrics::update(const std::string &name, int32_t value) {
-  m_values_int[name] = value;
+void MetricsCollectorGanglia::update(const std::string &name, int32_t value) {
+  m_values_int[m_prefix + name] = value;
 }
 
-void GangliaMetrics::update(const std::string &name, float value) {
-  m_values_double[name] = (double)value;
+void MetricsCollectorGanglia::update(const std::string &name, float value) {
+  m_values_double[m_prefix + name] = (double)value;
 }
 
-void GangliaMetrics::update(const std::string &name, double value) {
-  m_values_double[name] = value;
+void MetricsCollectorGanglia::update(const std::string &name, double value) {
+  m_values_double[m_prefix + name] = value;
 }
 
-bool GangliaMetrics::send() {
-  if (!m_connected) {
-    if (!this->connect())
-      return false;
-  }
+void MetricsCollectorGanglia::publish() {
+
+  if (!m_connected)
+    this->connect();
 
   bool first = true;
   char cbuf[64];
@@ -152,24 +155,16 @@ bool GangliaMetrics::send() {
 
   m_message.append(" }");
 
-  if (::send(m_sd, m_message.c_str(), m_message.length(), 0) < 0) {
-    m_error = strerror(errno);
-    return false;
-  }
+  if (::send(m_sd, m_message.c_str(), m_message.length(), 0) < 0)
+    HT_THROW(Error::COMM_SEND_ERROR, strerror(errno));
 
-  m_error.clear();
-  return true;
 }
 
-bool GangliaMetrics::connect() {
+void MetricsCollectorGanglia::connect() {
   InetAddr addr("localhost", m_port);
   if (::connect(m_sd, (struct sockaddr *) &addr, sizeof(sockaddr_in)) < 0) {
-    m_error = strerror(errno);
     m_connected = false;
+    HT_THROW(Error::COMM_CONNECT_ERROR, strerror(errno));
   }
-  else {
-    m_error.clear();
-    m_connected = true;
-  }
-  return m_connected;
+  m_connected = true;
 }

@@ -20,17 +20,16 @@
  */
 
 /// @file
-/// Declarations for GangliaMetrics.
-/// This file contains type declarations for GangliaMetrics, a simple class for
+/// Declarations for MetricsCollectorGanglia.
+/// This file contains type declarations for MetricsCollectorGanglia, a simple class for
 /// aggregating metrics and sending them to the Ganglia gmond process running on
 /// localhost.
 
-#ifndef Common_GangliaMetrics_h
-#define Common_GangliaMetrics_h
+#ifndef Common_MetricsCollectorGanglia_h
+#define Common_MetricsCollectorGanglia_h
 
-#include <Common/InetAddr.h>
+#include "MetricsCollector.h"
 
-#include <cstdint>
 #include <memory>
 #include <unordered_map>
 
@@ -39,29 +38,28 @@ namespace Hypertable {
   /// @addtogroup Common
   /// @{
 
-  class GangliaMetrics {
+  class MetricsCollectorGanglia : public MetricsCollector {
   public:
 
-    GangliaMetrics(uint16_t port);
+    MetricsCollectorGanglia(const std::string &component, uint16_t port);
 
-    ~GangliaMetrics();
+    ~MetricsCollectorGanglia();
 
-    void update(const std::string &name, const std::string &value);
+    void update(const std::string &name, const std::string &value) override;
 
-    void update(const std::string &name, int16_t value);
+    void update(const std::string &name, int16_t value) override;
 
-    void update(const std::string &name, int32_t value);
+    void update(const std::string &name, int32_t value) override;
 
-    void update(const std::string &name, float value);
+    void update(const std::string &name, float value) override;
 
-    void update(const std::string &name, double value);
+    void update(const std::string &name, double value) override;
 
-    bool send();
-
-    const char *get_error() { return m_error.c_str(); }
+    void publish() override;
 
   private:
-    bool connect();
+    void connect();
+    std::string m_prefix;
     uint16_t m_port {};
     int m_sd {};
     std::string m_error;
@@ -72,10 +70,10 @@ namespace Hypertable {
     bool m_connected {};
   };
 
-  /// Smart pointer to GangliaMetrics
-  typedef std::shared_ptr<GangliaMetrics> GangliaMetricsPtr;
+  /// Smart pointer to MetricsCollectorGanglia
+  typedef std::shared_ptr<MetricsCollectorGanglia> MetricsCollectorGangliaPtr;
 
   /// @}
 }
 
-#endif // Common_GangliaMetrics_h
+#endif // Common_MetricsCollectorGanglia_h
