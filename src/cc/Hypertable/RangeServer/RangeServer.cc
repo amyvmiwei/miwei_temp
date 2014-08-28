@@ -2357,7 +2357,6 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   ScopedLock lock(m_stats_mutex);
   RangesPtr ranges = Global::get_ranges();
   int64_t timestamp = Hypertable::get_ts64();
-  int64_t elapsed_millis = (timestamp - m_stats_last_timestamp)/1000000LL;
   time_t now = (time_t)(timestamp/1000000000LL);
   LoadStatistics::Bundle load_stats;
 
@@ -2645,6 +2644,12 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
                             (float)load_stats.scan_cells / period_seconds);
   m_ganglia_collector->update("cellsWritten",
                             (float)load_stats.update_cells / period_seconds);
+
+  m_ganglia_collector->update("compactions.major", load_stats.compactions_major);
+  m_ganglia_collector->update("compactions.minor", load_stats.compactions_minor);
+  m_ganglia_collector->update("compactions.merging", load_stats.compactions_merging);
+  m_ganglia_collector->update("compactions.gc", load_stats.compactions_gc);
+
   m_ganglia_collector->update("scanners",
                             m_stats->scanner_count);
   m_ganglia_collector->update("cellstores",

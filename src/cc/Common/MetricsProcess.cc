@@ -29,6 +29,7 @@
 
 #include "MetricsProcess.h"
 
+#include <Common/Logger.h>
 #include <Common/StatsSystem.h>
 #include <Common/Time.h>
 
@@ -36,34 +37,30 @@ using namespace Hypertable;
 using namespace std;
 
 MetricsProcess::MetricsProcess() {
-  m_last_timestamp = Hypertable::get_ts64();
   StatsSystem system_stats(StatsSystem::PROCINFO|StatsSystem::PROC);
   system_stats.refresh();
-  m_last_cpu_user = system_stats.proc_stat.cpu_user;
-  m_last_cpu_sys = system_stats.proc_stat.cpu_sys;
-  m_last_major_faults = system_stats.proc_stat.major_faults;
+  m_last_timestamp = get_ts64();
+  m_last_sys = system_stats.proc_stat.cpu_sys;
+  m_last_user = system_stats.proc_stat.cpu_user;
 }
-
-
 
 void MetricsProcess::collect(int64_t now, MetricsCollector *collector) {
   StatsSystem system_stats(StatsSystem::PROCINFO|StatsSystem::PROC);
-
-  if (now <= m_last_timestamp)
-    return;
-
-  int64_t elapsed_millis = (now - m_last_timestamp) / 1000000LL;
   int32_t pct;
 
   system_stats.refresh();
-  
-  // CPU user time
-  pct = ((system_stats.proc_stat.cpu_user - m_last_cpu_user) * 100) / elapsed_millis;
-  collector->update("cpu.user", pct);
 
-  // CPU sys time
-  pct = ((system_stats.proc_stat.cpu_sys - m_last_cpu_sys) * 100) / elapsed_millis;
+  int64_t elapsed_millis = (now - m_last_timestamp) / 1000000LL;
+  int64_t diff_sys = (system_stats.proc_stat.cpu_sys - m_last_sys) / System::cpu_info().total_cores;
+  int64_t diff_user = (system_stats.proc_stat.cpu_user - m_last_user) / System::cpu_info().total_cores;
+
+  // CPU sys
+  pct = (diff_sys * 100) / elapsed_millis;
   collector->update("cpu.sys", pct);
+
+  // CPU user
+  pct = (diff_user * 100) / elapsed_millis;
+  collector->update("cpu.user", pct);
 
   // Virtual memory
   collector->update("memory.virtual",
@@ -72,10 +69,6 @@ void MetricsProcess::collect(int64_t now, MetricsCollector *collector) {
   // Resident memory
   collector->update("memory.resident",
                     (float)system_stats.proc_stat.vm_resident / 1024.0);
-
-  // Major page faults
-  collector->update("memory.majorFaults",
-                    (int32_t)(system_stats.proc_stat.major_faults - m_last_major_faults));
 
   // Heap size
   collector->update("memory.heap",
@@ -86,8 +79,7 @@ void MetricsProcess::collect(int64_t now, MetricsCollector *collector) {
                     (float)system_stats.proc_stat.heap_slack / 1000000000.0);
 
   m_last_timestamp = now;
-  m_last_cpu_user = system_stats.proc_stat.cpu_user;
-  m_last_cpu_sys = system_stats.proc_stat.cpu_sys;
-  m_last_major_faults = system_stats.proc_stat.major_faults;
+  m_last_sys = system_stats.proc_stat.cpu_sys;
+  m_last_user = system_stats.proc_stat.cpu_user;
 
 }

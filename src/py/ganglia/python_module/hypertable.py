@@ -23,7 +23,7 @@ def collect_metrics():
     buf = ""
     while True:
         try:
-            buf = sock.recv(1024)
+            buf = sock.recv(8192)
             metrics = json.loads(buf)
             for key, value in metrics.iteritems():
                 values[key] = value
@@ -58,20 +58,8 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Request rate',
-        'groups': 'hypertable'}
+        'groups': 'hypertable Hyperspace'}
     values['hypertable.hyperspace.requests'] = 0
-    descriptors.append(d);
-
-    d = {'name': 'hypertable.hyperspace.cpu.user',
-        'call_back': metric_callback,
-        'time_max': 90,
-        'value_type': 'uint',
-        'units': '%',
-        'slope': 'both',
-        'format': '%u',
-        'description': 'Process CPU user time',
-        'groups': 'hypertable'}
-    values['hypertable.hyperspace.cpu.user'] = 0
     descriptors.append(d);
 
     d = {'name': 'hypertable.hyperspace.cpu.sys',
@@ -82,8 +70,20 @@ def metric_init(params):
         'slope': 'both',
         'format': '%u',
         'description': 'Process CPU system time',
-        'groups': 'hypertable'}
+        'groups': 'hypertable Hyperspace'}
     values['hypertable.hyperspace.cpu.sys'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.hyperspace.cpu.user',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': '%',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Process CPU user time',
+        'groups': 'hypertable Hyperspace'}
+    values['hypertable.hyperspace.cpu.user'] = 0
     descriptors.append(d);
 
     d = {'name': 'hypertable.hyperspace.memory.virtual',
@@ -94,7 +94,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Virtual memory',
-        'groups': 'hypertable'}
+        'groups': 'hypertable Hyperspace'}
     values['hypertable.hyperspace.memory.virtual'] = 0
     descriptors.append(d);
 
@@ -106,20 +106,8 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Resident memory',
-        'groups': 'hypertable'}
+        'groups': 'hypertable Hyperspace'}
     values['hypertable.hyperspace.memory.resident'] = 0
-    descriptors.append(d);
-
-    d = {'name': 'hypertable.hyperspace.memory.majorFaults',
-        'call_back': metric_callback,
-        'time_max': 90,
-        'value_type': 'uint',
-        'units': 'major faults',
-        'slope': 'both',
-        'format': '%u',
-        'description': 'Major page faults',
-        'groups': 'hypertable'}
-    values['hypertable.hyperspace.memory.majorFaults'] = 0
     descriptors.append(d);
 
     d = {'name': 'hypertable.hyperspace.memory.heap',
@@ -130,7 +118,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Heap memory',
-        'groups': 'hypertable'}
+        'groups': 'hypertable Hyperspace'}
     values['hypertable.hyperspace.memory.heap'] = 0
     descriptors.append(d);
 
@@ -142,7 +130,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Heap slack bytes',
-        'groups': 'hypertable'}
+        'groups': 'hypertable Hyperspace'}
     values['hypertable.hyperspace.memory.heapSlack'] = 0
     descriptors.append(d);
 
@@ -158,7 +146,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Scans per second',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.scans'] = 0
     descriptors.append(d);
 
@@ -170,7 +158,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Updates per second',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.updates'] = 0
     descriptors.append(d);
 
@@ -182,7 +170,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Cells read per second',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.cellsRead'] = 0
     descriptors.append(d);
 
@@ -194,8 +182,56 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Cells written per second',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.cellsWritten'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.compactions.major',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': '',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Major compactions',
+        'groups': 'hypertable RangeServer'}
+    values['hypertable.rangeserver.compactions.major'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.compactions.minor',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': '',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Minor compactions',
+        'groups': 'hypertable RangeServer'}
+    values['hypertable.rangeserver.compactions.minor'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.compactions.merging',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': '',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Merging compactions',
+        'groups': 'hypertable RangeServer'}
+    values['hypertable.rangeserver.compactions.merging'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.compactions.gc',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': '',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'GC compactions',
+        'groups': 'hypertable RangeServer'}
+    values['hypertable.rangeserver.compactions.gc'] = 0
     descriptors.append(d);
 
     d = {'name': 'hypertable.rangeserver.scanners',
@@ -206,7 +242,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%u',
         'description': 'Outstanding scanner count',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.scanners'] = 0
     descriptors.append(d);
 
@@ -218,7 +254,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%u',
         'description': 'CellStore count',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.cellstores'] = 0
     descriptors.append(d);
 
@@ -230,7 +266,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%u',
         'description': 'Range count',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.ranges'] = 0
     descriptors.append(d);
 
@@ -242,7 +278,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Virtual memory',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.memory.virtual'] = 0
     descriptors.append(d);
 
@@ -254,20 +290,8 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Resident memory',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.memory.resident'] = 0
-    descriptors.append(d);
-
-    d = {'name': 'hypertable.rangeserver.memory.majorFaults',
-        'call_back': metric_callback,
-        'time_max': 90,
-        'value_type': 'uint',
-        'units': 'major faults',
-        'slope': 'both',
-        'format': '%u',
-        'description': 'Major page faults',
-        'groups': 'hypertable'}
-    values['hypertable.rangeserver.memory.majorFaults'] = 0
     descriptors.append(d);
 
     d = {'name': 'hypertable.rangeserver.memory.heap',
@@ -278,7 +302,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Heap memory',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.memory.heap'] = 0
     descriptors.append(d);
 
@@ -290,7 +314,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Heap slack bytes',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.memory.heapSlack'] = 0
     descriptors.append(d);
 
@@ -302,20 +326,8 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Tracked memory',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.memory.tracked'] = 0
-    descriptors.append(d);
-
-    d = {'name': 'hypertable.rangeserver.cpu.user',
-        'call_back': metric_callback,
-        'time_max': 90,
-        'value_type': 'uint',
-        'units': '%',
-        'slope': 'both',
-        'format': '%u',
-        'description': 'Process CPU user time',
-        'groups': 'hypertable'}
-    values['hypertable.rangeserver.cpu.user'] = 0
     descriptors.append(d);
 
     d = {'name': 'hypertable.rangeserver.cpu.sys',
@@ -326,8 +338,20 @@ def metric_init(params):
         'slope': 'both',
         'format': '%u',
         'description': 'Process CPU system time',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.cpu.sys'] = 0
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.rangeserver.cpu.user',
+        'call_back': metric_callback,
+        'time_max': 90,
+        'value_type': 'uint',
+        'units': '%',
+        'slope': 'both',
+        'format': '%u',
+        'description': 'Process CPU user time',
+        'groups': 'hypertable RangeServer'}
+    values['hypertable.rangeserver.cpu.user'] = 0
     descriptors.append(d);
 
     d = {'name': 'hypertable.rangeserver.blockCache.hitRate',
@@ -338,7 +362,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%u',
         'description': 'Block cache hit rate',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.blockCache.hitRate'] = 0
     descriptors.append(d);
 
@@ -350,7 +374,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Block cache memory',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.blockCache.memory'] = 0
     descriptors.append(d);
 
@@ -362,7 +386,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Block cache fill',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.blockCache.fill'] = 0
     descriptors.append(d);
 
@@ -374,7 +398,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%u',
         'description': 'Query cache hit rate',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.queryCache.hitRate'] = 0
     descriptors.append(d);
 
@@ -386,7 +410,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Query cache memory',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.queryCache.memory'] = 0
     descriptors.append(d);
 
@@ -398,7 +422,7 @@ def metric_init(params):
         'slope': 'both',
         'format': '%f',
         'description': 'Query cache fill',
-        'groups': 'hypertable'}
+        'groups': 'hypertable RangeServer'}
     values['hypertable.rangeserver.queryCache.fill'] = 0
     descriptors.append(d);
 

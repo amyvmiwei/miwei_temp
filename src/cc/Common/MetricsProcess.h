@@ -30,10 +30,8 @@
 
 #include <Common/Metrics.h>
 #include <Common/MetricsCollector.h>
-#include <Common/metrics.h>
 
 #include <cstdint>
-#include <string>
 
 namespace Hypertable {
 
@@ -42,15 +40,12 @@ namespace Hypertable {
 
   class MetricsProcess : public Metrics {
   public:
-
     MetricsProcess();
     void collect(int64_t now, MetricsCollector *collector) override;
-
   private:
-    int64_t m_last_timestamp;
-    int64_t m_last_cpu_user;
-    int64_t m_last_cpu_sys;
-    int64_t m_last_major_faults;
+    int64_t m_last_timestamp {};
+    int64_t m_last_sys {};
+    int64_t m_last_user {};
   };
 
   /// @}

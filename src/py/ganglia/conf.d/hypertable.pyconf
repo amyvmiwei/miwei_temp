@@ -18,11 +18,11 @@ collection_group {
     value_threshold = 1
   }
   metric {
-    name = "hypertable.hyperspace.cpu.user"
+    name = "hypertable.hyperspace.cpu.sys"
     value_threshold = 1
   }
   metric {
-    name = "hypertable.hyperspace.cpu.sys"
+    name = "hypertable.hyperspace.cpu.user"
     value_threshold = 1
   }
   metric {
@@ -31,10 +31,6 @@ collection_group {
   }
   metric {
     name = "hypertable.hyperspace.memory.resident"
-    value_threshold = 1
-  }
-  metric {
-    name = "hypertable.hyperspace.memory.majorFaults"
     value_threshold = 1
   }
   metric {
@@ -67,6 +63,22 @@ collection_group {
     value_threshold = 1
   }
   metric {
+    name = "hypertable.rangeserver.compactions.major"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.compactions.minor"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.compactions.merging"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.rangeserver.compactions.gc"
+    value_threshold = 1
+  }
+  metric {
     name = "hypertable.rangeserver.scanners"
     value_threshold = 1
   }
@@ -87,10 +99,6 @@ collection_group {
     value_threshold = 1
   }
   metric {
-    name = "hypertable.rangeserver.memory.majorFaults"
-    value_threshold = 1
-  }
-  metric {
     name = "hypertable.rangeserver.memory.heap"
     value_threshold = 1
   }
@@ -103,11 +111,11 @@ collection_group {
     value_threshold = 1
   }
   metric {
-    name = "hypertable.rangeserver.cpu.user"
+    name = "hypertable.rangeserver.cpu.sys"
     value_threshold = 1
   }
   metric {
-    name = "hypertable.rangeserver.cpu.sys"
+    name = "hypertable.rangeserver.cpu.user"
     value_threshold = 1
   }
   metric {

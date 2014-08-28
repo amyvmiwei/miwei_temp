@@ -45,7 +45,7 @@ namespace Hyperspace {
 
     virtual void handle(EventPtr &event);
 
-    void request_count_increment() {
+    void request_increment() {
       std::lock_guard<std::mutex> lock(m_mutex);
       m_requests.current++;
     }
