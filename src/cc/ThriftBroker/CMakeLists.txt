@@ -33,7 +33,7 @@ target_link_libraries(HyperThrift ${Thrift_LIBS} ${LibEvent_LIBS})
 add_library(HyperThriftConfig Config.cc)
 target_link_libraries(HyperThriftConfig HyperThrift Hypertable)
 
-set(ThriftBroker_SRCS ThriftBroker.cc)
+set(ThriftBroker_SRCS ThriftBroker.cc MetricsHandler.cc)
 
 add_custom_command(
   OUTPUT    ${ThriftGen_SRCS}

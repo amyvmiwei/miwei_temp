@@ -2,17 +2,34 @@ modules {
   module {
     name = "hypertable"
     language = "python"
-    param EnableHyperspace {
-      value = 1
-    }
-    param EnableMaster {
-      value = 1
-    }
-    param EnableRangeServer {
-      value = 1
-    }
+    param EnableHyperspace { value = 1 }
+    param EnableMaster { value = 1 }
+    param EnableRangeServer { value = 1 }
+    param EnableThriftBroker { value = 1 }
   }
 }
+
+collection_group {
+  collect_every = 3600
+  time_threshold = 5000
+  metric {
+    name = "hypertable.hyperspace.version"
+    value_threshold = 0
+  }
+  metric {
+    name = "hypertable.master.version"
+    value_threshold = 0
+  }
+  metric {
+    name = "hypertable.rangeserver.version"
+    value_threshold = 0
+  }
+  metric {
+    name = "hypertable.thriftbroker.version"
+    value_threshold = 0
+  }
+}
+
 
 collection_group {
   collect_every = 30
@@ -182,6 +199,47 @@ collection_group {
   }
   metric {
     name = "hypertable.rangeserver.queryCache.fill"
+    value_threshold = 1
+  }
+
+##
+## ThriftBroker
+##
+
+  metric {
+    name = "hypertable.thriftbroker.requests"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.thriftbroker.errors"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.thriftbroker.connections"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.thriftbroker.cpu.sys"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.thriftbroker.cpu.user"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.thriftbroker.memory.virtual"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.thriftbroker.memory.resident"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.thriftbroker.memory.heap"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.thriftbroker.memory.heapSlack"
     value_threshold = 1
   }
 

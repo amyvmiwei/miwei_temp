@@ -78,6 +78,9 @@ void MetricsProcess::collect(int64_t now, MetricsCollector *collector) {
   collector->update("memory.heapSlack",
                     (float)system_stats.proc_stat.heap_slack / 1000000000.0);
 
+  // Heap slack bytes
+  collector->update("version", version_string());
+
   m_last_timestamp = now;
   m_last_sys = system_stats.proc_stat.cpu_sys;
   m_last_user = system_stats.proc_stat.cpu_user;

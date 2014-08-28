@@ -49,7 +49,6 @@ def metric_init(params):
     ##
     ## Hyperspace metrics
     ##
-
     if 'EnableHyperspace' in params and int(params['EnableHyperspace']) == 1:
         d = {'name': 'hypertable.hyperspace.requests',
              'call_back': metric_callback,
@@ -134,11 +133,19 @@ def metric_init(params):
              'groups': 'hypertable Hyperspace'}
         values['hypertable.hyperspace.memory.heapSlack'] = 0
         descriptors.append(d);
+        
+        d = {'name': 'hypertable.hyperspace.version',
+             'call_back': metric_callback,
+             'value_type': 'string',
+             'format': '%s',
+             'description': 'Hyperspace version',
+             'groups': 'hypertable Hyperspace'}
+        values['hypertable.hyperspace.version'] = ''
+        descriptors.append(d);
 
     ##
     ## Master metrics
     ##
-
     if 'EnableMaster' in params and int(params['EnableMaster']) == 1:
         d = {'name': 'hypertable.master.operations',
              'call_back': metric_callback,
@@ -222,6 +229,15 @@ def metric_init(params):
              'description': 'Heap slack bytes',
              'groups': 'hypertable Master'}
         values['hypertable.master.memory.heapSlack'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.master.version',
+             'call_back': metric_callback,
+             'value_type': 'string',
+             'format': '%s',
+             'description': 'Master version',
+             'groups': 'hypertable Master'}
+        values['hypertable.master.version'] = ''
         descriptors.append(d);
 
     ##
@@ -515,6 +531,136 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         values['hypertable.rangeserver.queryCache.fill'] = 0
         descriptors.append(d);
+        
+        d = {'name': 'hypertable.rangeserver.version',
+             'call_back': metric_callback,
+             'value_type': 'string',
+             'format': '%s',
+             'description': 'RangeServer version',
+             'groups': 'hypertable RangeServer'}
+        values['hypertable.rangeserver.version'] = ''
+        descriptors.append(d);
+
+    ##
+    ## ThriftBroker metrics
+    ##
+    if 'EnableThriftBroker' in params and int(params['EnableThriftBroker']) == 1:
+        d = {'name': 'hypertable.thriftbroker.requests',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'requests/s',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Request rate',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.requests'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.thriftbroker.errors',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'errors/s',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Error rate',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.errors'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.thriftbroker.connections',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': 'connections',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Active connection count',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.connections'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.thriftbroker.cpu.sys',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': '%',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Process CPU system time',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.cpu.sys'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.thriftbroker.cpu.user',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': '%',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Process CPU user time',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.cpu.user'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.thriftbroker.memory.virtual',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'GB',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Virtual memory',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.memory.virtual'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.thriftbroker.memory.resident',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'GB',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Resident memory',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.memory.resident'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.thriftbroker.memory.heap',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'GB',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Heap memory',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.memory.heap'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.thriftbroker.memory.heapSlack',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'GB',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Heap slack bytes',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.memory.heapSlack'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.thriftbroker.version',
+             'call_back': metric_callback,
+             'value_type': 'string',
+             'format': '%s',
+             'description': 'ThriftBroker version',
+             'groups': 'hypertable ThriftBroker'}
+        values['hypertable.thriftbroker.version'] = ''
+        descriptors.append(d);
 
     return descriptors
 
@@ -529,7 +675,10 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print "usage: hypertable.py <metric>"
         sys.exit(0)
-    params = {'EnableHyperspace': '1', 'EnableMaster': '1', 'EnableRangeServer': '1'}
+    params = { 'EnableHyperspace': '1',
+               'EnableMaster': '1',
+               'EnableRangeServer': '1',
+               'EnableThriftBroker': '1' }
     metric_init(params)
     while True:
         scans = metric_callback(sys.argv[1])
