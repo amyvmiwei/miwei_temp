@@ -2,6 +2,15 @@ modules {
   module {
     name = "hypertable"
     language = "python"
+    param EnableHyperspace {
+      value = 1
+    }
+    param EnableMaster {
+      value = 1
+    }
+    param EnableRangeServer {
+      value = 1
+    }
   }
 }
 
@@ -39,6 +48,39 @@ collection_group {
   }
   metric {
     name = "hypertable.hyperspace.memory.heapSlack"
+    value_threshold = 1
+  }
+
+##
+## Master
+##
+
+  metric {
+    name = "hypertable.master.operations"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.master.cpu.sys"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.master.cpu.user"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.master.memory.virtual"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.master.memory.resident"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.master.memory.heap"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.master.memory.heapSlack"
     value_threshold = 1
   }
 

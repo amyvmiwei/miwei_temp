@@ -173,6 +173,7 @@ int main(int argc, char **argv) {
     context->conn_manager = new ConnectionManager(context->comm);
     context->hyperspace = new Hyperspace::Session(context->comm, context->props);
     context->rsc_manager = new RangeServerConnectionManager();
+    context->metrics_handler = std::make_shared<MetricsHandler>(properties);
 
     context->toplevel_dir = properties->get_str("Hypertable.Directory");
     boost::trim_if(context->toplevel_dir, boost::is_any_of("/"));

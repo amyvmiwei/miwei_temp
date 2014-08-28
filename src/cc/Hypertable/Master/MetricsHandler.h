@@ -22,10 +22,10 @@
 /// @file
 /// Declarations for MetricsHandler.
 /// This file contains declarations for MetricsHandler, a dispatch handler class
-/// used to collect and publish %Hyperspace metrics.
+/// used to collect and publish %Master metrics.
 
-#ifndef Hyperspace_MetricsHandler_h
-#define Hyperspace_MetricsHandler_h
+#ifndef Master_MetricsHandler_h
+#define Master_MetricsHandler_h
 
 #include <AsyncComm/DispatchHandler.h>
 
@@ -37,14 +37,12 @@
 #include <memory>
 #include <mutex>
 
-namespace Hyperspace {
+namespace Hypertable {
 
-  using namespace Hypertable;
-
-  /// @addtogroup Hyperspace
+  /// @addtogroup Master
   /// @{
 
-  /// Collects and publishes %Hyperspace metrics.
+  /// Collects and publishes %Master metrics.
   /// This class acts as the metrics timer dispatch handler 
   class MetricsHandler : public DispatchHandler {
   public:
@@ -61,18 +59,18 @@ namespace Hyperspace {
     virtual ~MetricsHandler();
 
     /// Collects and publishes metrics.
-    /// This method computes and updates the requests/s and general process
+    /// This method computes and updates the operations/s and general process
     /// metrics and publishes them via #m_ganglia_collector.  After metrics have
     /// been collected, the timer is re-registered for #m_collection_interval
     /// milliseconds in the future.
     /// @param event %Comm layer timer event
     virtual void handle(EventPtr &event);
 
-    /// Increments request count.
-    /// Increments #m_requests which is used in computing requests/s.
-    void request_increment() {
+    /// Increments operation count.
+    /// Increments #m_operations which is used in computing operations/s.
+    void operation_increment() {
       std::lock_guard<std::mutex> lock(m_mutex);
-      m_requests.current++;
+      m_operations.current++;
     }
 
   private:
@@ -91,8 +89,8 @@ namespace Hyperspace {
     /// %Metrics collection interval
     int32_t m_collection_interval {};
 
-    /// %Hyperspace requests
-    interval_metric<int64_t> m_requests {};
+    /// %Master operations
+    interval_metric<int64_t> m_operations {};
   };
 
   /// Smart pointer to MetricsHandler
@@ -101,4 +99,4 @@ namespace Hyperspace {
   /// @}
 }
 
-#endif // Hyperspace_MetricsHandler_h
+#endif // Master_MetricsHandler_h

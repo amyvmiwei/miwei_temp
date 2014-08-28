@@ -22,7 +22,7 @@
 /// @file
 /// Declarations for MetricsHandler.
 /// This file contains declarations for MetricsHandler, a dispatch handler class
-/// used to collect and publish %Hyperspace metrics.
+/// used to collect and publish %Master metrics.
 
 #include <Common/Compat.h>
 
@@ -36,7 +36,6 @@
 
 #include <mutex>
 
-using namespace Hyperspace;
 using namespace Hypertable;
 using namespace std;
 
@@ -48,7 +47,7 @@ namespace {
 
 MetricsHandler::MetricsHandler(PropertiesPtr &props) {
   int16_t port = props->get_i16("Hypertable.Metrics.Ganglia.Port");
-  m_ganglia_collector = std::make_shared<MetricsCollectorGanglia>("hyperspace", port);
+  m_ganglia_collector = std::make_shared<MetricsCollectorGanglia>("master", port);
   m_collection_interval = props->get_i32("Hypertable.Monitoring.Interval");
   m_last_timestamp = Hypertable::get_ts64();
   {
@@ -84,8 +83,8 @@ void MetricsHandler::handle(Hypertable::EventPtr &event) {
 
     {
       lock_guard<mutex> lock(m_mutex);
-      m_ganglia_collector->update("requests", m_requests.rate(elapsed_secs));
-      m_requests.reset();
+      m_ganglia_collector->update("operations", m_operations.rate(elapsed_secs));
+      m_operations.reset();
     }
 
     try {

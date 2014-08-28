@@ -30,6 +30,7 @@ DispatchHandlerOperationGetStatistics.cc
 DispatchHandlerOperationSetState.cc
 LoadBalancer.cc
 MetaLogDefinitionMaster.cc
+MetricsHandler.cc
 Monitoring.cc
 Operation.cc
 OperationAlterTable.cc
