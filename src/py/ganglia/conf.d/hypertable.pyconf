@@ -10,19 +10,23 @@ modules {
 }
 
 collection_group {
-  collect_every = 30
-  time_threshold = 50
+  collect_every = 900
+  time_threshold = 1200
   metric {
     name = "hypertable.hyperspace.version"
+    title = "Hypertable Hyperspace Version"
   }
   metric {
     name = "hypertable.master.version"
+    title = "Hypertable Master Version"
   }
   metric {
     name = "hypertable.rangeserver.version"
+    title = "Hypertable RangeServer Version"
   }
   metric {
     name = "hypertable.thriftbroker.version"
+    title = "Hypertable ThriftBroker Version"
   }
 }
 
@@ -37,30 +41,37 @@ collection_group {
 
   metric {
     name = "hypertable.hyperspace.requests"
+    title = "Hyperspace Requests"
     value_threshold = 1
   }
   metric {
     name = "hypertable.hyperspace.cpu.sys"
+    title = "Hyperspace CPU system"
     value_threshold = 1
   }
   metric {
     name = "hypertable.hyperspace.cpu.user"
+    title = "Hyperspace CPU user"
     value_threshold = 1
   }
   metric {
     name = "hypertable.hyperspace.memory.virtual"
+    title = "Hyperspace Virtual Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.hyperspace.memory.resident"
+    title = "Hyperspace Resident Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.hyperspace.memory.heap"
+    title = "Hyperspace Heap"
     value_threshold = 1
   }
   metric {
     name = "hypertable.hyperspace.memory.heapSlack"
+    title = "Hyperspace Heap Slack"
     value_threshold = 1
   }
 
@@ -70,30 +81,37 @@ collection_group {
 
   metric {
     name = "hypertable.master.operations"
+    title = "Master Operations"
     value_threshold = 1
   }
   metric {
     name = "hypertable.master.cpu.sys"
+    title = "Master CPU system"
     value_threshold = 1
   }
   metric {
     name = "hypertable.master.cpu.user"
+    title = "Master CPU user"
     value_threshold = 1
   }
   metric {
     name = "hypertable.master.memory.virtual"
+    title = "Master Virtual Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.master.memory.resident"
+    title = "Master Resident Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.master.memory.heap"
+    title = "Master Heap"
     value_threshold = 1
   }
   metric {
     name = "hypertable.master.memory.heapSlack"
+    title = "Master Heap Slack"
     value_threshold = 1
   }
 
@@ -103,98 +121,122 @@ collection_group {
 
   metric {
     name = "hypertable.rangeserver.scans"
+    title = "RangeServer Scans"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.updates"
+    title = "RangeServer Updates"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.cellsRead"
+    title = "RangeServer Cells Read"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.cellsWritten"
+    title = "RangeServer Cells Written"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.compactions.major"
+    title = "RangeServer Major Compactions"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.compactions.minor"
+    title = "RangeServer Minor Compactions"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.compactions.merging"
+    title = "RangeServer Merging Compactions"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.compactions.gc"
+    title = "RangeServer GC Compactions"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.scanners"
+    title = "RangeServer Scanners"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.cellstores"
+    title = "RangeServer Cell Stores"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.ranges"
+    title = "RangeServer Ranges"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.memory.virtual"
+    title = "RangeServer Virtual Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.memory.resident"
+    title = "RangeServer Resident Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.memory.heap"
+    title = "RangeServer Heap"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.memory.heapSlack"
+    title = "RangeServer Heap Slack"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.memory.tracked"
+    title = "RangeServer Tracked Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.cpu.sys"
+    title = "RangeServer CPU system"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.cpu.user"
+    title = "RangeServer CPU user"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.blockCache.hitRate"
+    title = "RangeServer Block Cache Hits"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.blockCache.memory"
+    title = "RangeServer Block Cache Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.blockCache.fill"
+    title = "RangeServer Block Cache Fill"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.queryCache.hitRate"
+    title = "RangeServer Query Cache Hits"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.queryCache.memory"
+    title = "RangeServer Query Cache Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.rangeserver.queryCache.fill"
+    title = "RangeServer Query Cache Fill"
     value_threshold = 1
   }
 
@@ -204,38 +246,47 @@ collection_group {
 
   metric {
     name = "hypertable.thriftbroker.requests"
+    title = "ThriftBroker Requests"
     value_threshold = 1
   }
   metric {
     name = "hypertable.thriftbroker.errors"
+    title = "ThriftBroker Errors"
     value_threshold = 1
   }
   metric {
     name = "hypertable.thriftbroker.connections"
+    title = "ThriftBroker Connections"
     value_threshold = 1
   }
   metric {
     name = "hypertable.thriftbroker.cpu.sys"
+    title = "ThriftBroker CPU system"
     value_threshold = 1
   }
   metric {
     name = "hypertable.thriftbroker.cpu.user"
+    title = "ThriftBroker CPU user"
     value_threshold = 1
   }
   metric {
     name = "hypertable.thriftbroker.memory.virtual"
+    title = "ThriftBroker Virtual Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.thriftbroker.memory.resident"
+    title = "ThriftBroker Resident Memory"
     value_threshold = 1
   }
   metric {
     name = "hypertable.thriftbroker.memory.heap"
+    title = "ThriftBroker Heap"
     value_threshold = 1
   }
   metric {
     name = "hypertable.thriftbroker.memory.heapSlack"
+    title = "ThriftBroker Heap Slack"
     value_threshold = 1
   }
 

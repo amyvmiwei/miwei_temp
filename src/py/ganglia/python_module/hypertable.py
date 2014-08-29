@@ -50,6 +50,42 @@ def metric_init(params):
     sock.setblocking(0);
 
     ##
+    ## Specifying all version metrics for all hosts renders better in the UI
+    ##
+    d = {'name': 'hypertable.hyperspace.version',
+         'call_back': metric_callback,
+         'value_type': 'string',
+         'description': 'Hyperspace version',
+         'groups': 'hypertable Hyperspace'}
+    values['hypertable.hyperspace.version'] = 'n/a'
+    descriptors.append(d);
+    
+    d = {'name': 'hypertable.master.version',
+         'call_back': metric_callback,
+         'value_type': 'string',
+         'description': 'Master version',
+         'groups': 'hypertable Master'}
+    values['hypertable.master.version'] = 'n/a'
+    descriptors.append(d);
+    
+    d = {'name': 'hypertable.rangeserver.version',
+         'call_back': metric_callback,
+         'value_type': 'string',
+         'description': 'RangeServer version',
+         'groups': 'hypertable RangeServer'}
+    values['hypertable.rangeserver.version'] = 'n/a'
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.thriftbroker.version',
+         'call_back': metric_callback,
+         'value_type': 'string',
+         'description': 'ThriftBroker version',
+         'groups': 'hypertable ThriftBroker'}
+    values['hypertable.thriftbroker.version'] = 'n/a'
+    descriptors.append(d);
+
+
+    ##
     ## Hyperspace metrics
     ##
     if 'EnableHyperspace' in params and int(params['EnableHyperspace']) == 1:
@@ -137,14 +173,6 @@ def metric_init(params):
         values['hypertable.hyperspace.memory.heapSlack'] = 0
         descriptors.append(d);
         
-        d = {'name': 'hypertable.hyperspace.version',
-             'call_back': metric_callback,
-             'value_type': 'string',
-             'description': 'Hyperspace version',
-             'groups': 'hypertable Hyperspace'}
-        values['hypertable.hyperspace.version'] = ''
-        descriptors.append(d);
-
     ##
     ## Master metrics
     ##
@@ -232,14 +260,6 @@ def metric_init(params):
              'groups': 'hypertable Master'}
         values['hypertable.master.memory.heapSlack'] = 0
         descriptors.append(d);
-        
-        d = {'name': 'hypertable.master.version',
-             'call_back': metric_callback,
-             'value_type': 'string',
-             'description': 'Master version',
-             'groups': 'hypertable Master'}
-        values['hypertable.master.version'] = ''
-        descriptors.append(d);
 
     ##
     ## RangeServer metrics
@@ -297,7 +317,7 @@ def metric_init(params):
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
-             'units': '',
+             'units': 'compactions',
              'slope': 'both',
              'format': '%u',
              'description': 'Major compactions',
@@ -309,7 +329,7 @@ def metric_init(params):
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
-             'units': '',
+             'units': 'compactions',
              'slope': 'both',
              'format': '%u',
              'description': 'Minor compactions',
@@ -321,7 +341,7 @@ def metric_init(params):
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
-             'units': '',
+             'units': 'compactions',
              'slope': 'both',
              'format': '%u',
              'description': 'Merging compactions',
@@ -333,7 +353,7 @@ def metric_init(params):
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
-             'units': '',
+             'units': 'compactions',
              'slope': 'both',
              'format': '%u',
              'description': 'GC compactions',
@@ -532,14 +552,6 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         values['hypertable.rangeserver.queryCache.fill'] = 0
         descriptors.append(d);
-        
-        d = {'name': 'hypertable.rangeserver.version',
-             'call_back': metric_callback,
-             'value_type': 'string',
-             'description': 'RangeServer version',
-             'groups': 'hypertable RangeServer'}
-        values['hypertable.rangeserver.version'] = ''
-        descriptors.append(d);
 
     ##
     ## ThriftBroker metrics
@@ -651,14 +663,6 @@ def metric_init(params):
              'description': 'Heap slack bytes',
              'groups': 'hypertable ThriftBroker'}
         values['hypertable.thriftbroker.memory.heapSlack'] = 0
-        descriptors.append(d);
-        
-        d = {'name': 'hypertable.thriftbroker.version',
-             'call_back': metric_callback,
-             'value_type': 'string',
-             'description': 'ThriftBroker version',
-             'groups': 'hypertable ThriftBroker'}
-        values['hypertable.thriftbroker.version'] = ''
         descriptors.append(d);
 
     return descriptors
