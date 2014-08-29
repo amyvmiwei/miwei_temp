@@ -26,7 +26,10 @@ def collect_metrics():
             buf = sock.recv(8192)
             metrics = json.loads(buf)
             for key, value in metrics.iteritems():
-                values[key] = value
+                if isinstance(value, unicode):
+                    values[key] = str(value)
+                else:
+                    values[key] = value
         except socket_error as serr:
             if serr.errno != errno.EAGAIN:
                 return None
@@ -137,7 +140,6 @@ def metric_init(params):
         d = {'name': 'hypertable.hyperspace.version',
              'call_back': metric_callback,
              'value_type': 'string',
-             'format': '%s',
              'description': 'Hyperspace version',
              'groups': 'hypertable Hyperspace'}
         values['hypertable.hyperspace.version'] = ''
@@ -234,7 +236,6 @@ def metric_init(params):
         d = {'name': 'hypertable.master.version',
              'call_back': metric_callback,
              'value_type': 'string',
-             'format': '%s',
              'description': 'Master version',
              'groups': 'hypertable Master'}
         values['hypertable.master.version'] = ''
@@ -535,7 +536,6 @@ def metric_init(params):
         d = {'name': 'hypertable.rangeserver.version',
              'call_back': metric_callback,
              'value_type': 'string',
-             'format': '%s',
              'description': 'RangeServer version',
              'groups': 'hypertable RangeServer'}
         values['hypertable.rangeserver.version'] = ''
@@ -656,7 +656,6 @@ def metric_init(params):
         d = {'name': 'hypertable.thriftbroker.version',
              'call_back': metric_callback,
              'value_type': 'string',
-             'format': '%s',
              'description': 'ThriftBroker version',
              'groups': 'hypertable ThriftBroker'}
         values['hypertable.thriftbroker.version'] = ''

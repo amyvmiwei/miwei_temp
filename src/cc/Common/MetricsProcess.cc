@@ -78,7 +78,7 @@ void MetricsProcess::collect(int64_t now, MetricsCollector *collector) {
   collector->update("memory.heapSlack",
                     (float)system_stats.proc_stat.heap_slack / 1000000000.0);
 
-  // Heap slack bytes
+  // Hypertable version
   collector->update("version", version_string());
 
   m_last_timestamp = now;
