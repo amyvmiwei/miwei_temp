@@ -94,13 +94,9 @@ public class MetricsProcess {
     double gb;
     long cpuTimeSys = process.getTimeSys();
     long cpuTimeUser = process.getTimeUser();
-    long elapsed_millis = (now - mLastTimestamp) / 1000000L;
-    /**
+    long elapsed_millis = now - mLastTimestamp;
     long diff_sys = (cpuTimeSys - mLastSys) / org.hypertable.Common.System.processorCount;
     long diff_user = (cpuTimeUser - mLastUser) / org.hypertable.Common.System.processorCount;
-    */
-    long diff_sys = cpuTimeSys - mLastSys;
-    long diff_user = cpuTimeUser - mLastUser;
 
     if (elapsed_millis > 0) {
       /* CPU sys */

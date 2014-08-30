@@ -86,20 +86,21 @@ public class MetricsHandler implements DispatchHandler {
 
     if (event.type == Event.Type.TIMER) {
       long now = System.currentTimeMillis();
+      long elapsed_millis = now - mLastTimestamp;
+      long elapsed_seconds = elapsed_millis / 1000;
       mMetricsProcess.collect(now, mMetricsCollectorGanglia);
       mMetricsCollectorGanglia.update("type", "hadoop");
       synchronized (this) {
         mMetricsCollectorGanglia.update("errors", mErrors);
-        mMetricsCollectorGanglia.update("syncs", mSyncs);
+        double sps = (double)mSyncs / (double)elapsed_seconds;
+        mMetricsCollectorGanglia.update("syncs", sps);
         if (mSyncs > 0)
           mMetricsCollectorGanglia.update("syncLatency", mSyncLatency/mSyncs);
-        long elapsed_millis = now - mLastTimestamp;
         if (elapsed_millis > 0) {
-          double elapsed_seconds = (double)elapsed_millis / 1000.0;
-          double throughput = (double)mBytesRead / elapsed_seconds;
-          mMetricsCollectorGanglia.update("readThroughput", throughput);
-          throughput = (double)mBytesWritten / elapsed_seconds;
-          mMetricsCollectorGanglia.update("writeThroughput", throughput);
+          long mbps = (mBytesRead / 1000000) / elapsed_seconds;
+          mMetricsCollectorGanglia.update("readThroughput", (int)mbps);
+          mbps = (mBytesWritten / 1000000) / elapsed_seconds;
+          mMetricsCollectorGanglia.update("writeThroughput", (int)mbps);
         }
         mLastTimestamp = now;
         mErrors = 0;

@@ -208,11 +208,11 @@ def metric_init(params):
         d = {'name': 'hypertable.fsbroker.syncs',
              'call_back': metric_callback,
              'time_max': 90,
-             'value_type': 'uint',
-             'units': 'syncs',
+             'value_type': 'float',
+             'units': 'syncs/s',
              'slope': 'both',
-             'format': '%u',
-             'description': 'Sync count',
+             'format': '%f',
+             'description': 'Syncs/s',
              'groups': 'hypertable FSBroker'}
         values['hypertable.fsbroker.syncs'] = 0
         descriptors.append(d);
@@ -238,7 +238,7 @@ def metric_init(params):
              'format': '%u',
              'description': 'Read throughput',
              'groups': 'hypertable FSBroker'}
-        values['hypertable.fsbroker.syncLatency'] = 0
+        values['hypertable.fsbroker.readThroughput'] = 0
         descriptors.append(d);
 
         d = {'name': 'hypertable.fsbroker.writeThroughput',
@@ -250,7 +250,7 @@ def metric_init(params):
              'format': '%u',
              'description': 'Write throughput',
              'groups': 'hypertable FSBroker'}
-        values['hypertable.fsbroker.syncLatency'] = 0
+        values['hypertable.fsbroker.writeThroughput'] = 0
         descriptors.append(d);
 
         if 'FSBroker' in params and params['FSBroker'] == "hadoop":
@@ -868,12 +868,14 @@ if __name__ == '__main__':
     if len(sys.argv) < 2:
         print "usage: hypertable.py <metric>"
         sys.exit(0)
-    params = { 'EnableHyperspace': '1',
+    params = { 'FSBroker': 'hadoop',
+               'EnableFSBroker': '1',
+               'EnableHyperspace': '1',
                'EnableMaster': '1',
                'EnableRangeServer': '1',
                'EnableThriftBroker': '1' }
     metric_init(params)
     while True:
-        scans = metric_callback(sys.argv[1])
-        print sys.argv[1], "=", scans
+        value = metric_callback(sys.argv[1])
+        print sys.argv[1], "=", value
         time.sleep(30)
