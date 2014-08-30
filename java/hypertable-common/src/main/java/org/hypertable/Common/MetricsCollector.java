@@ -35,5 +35,5 @@ public interface MetricsCollector {
   public void update(String name, int value);
   public void update(String name, float value);
   public void update(String name, double value);
-  public void publish();
+  public void publish() throws Exception;
 }

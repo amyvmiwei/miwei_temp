@@ -30,9 +30,11 @@ package org.hypertable.FsBroker.Lib;
 import java.lang.Integer;
 import java.lang.Short;
 import java.util.Properties;
+import java.util.logging.Logger;
 import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.DispatchHandler;
 import org.hypertable.AsyncComm.Event;
+import org.hypertable.Common.MetricsCollectorGanglia;
 import org.hypertable.Common.MetricsProcess;
 
 /** Collects and publishes %Hyperspace metrics.
@@ -40,6 +42,8 @@ import org.hypertable.Common.MetricsProcess;
  * collection for Hyperspace.
  */
 public class MetricsHandler implements DispatchHandler {
+
+  static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
   /** Constructor.
    * Initializes #m_collection_interval to the property
@@ -56,6 +60,8 @@ public class MetricsHandler implements DispatchHandler {
 
     str = props.getProperty("Hypertable.Metrics.Ganglia.Port", "15860");
     short port = Short.parseShort(str);
+
+    mMetricsCollectorGanglia = new MetricsCollectorGanglia("fsbroker", port);
 
     str = props.getProperty("Hypertable.Monitoring.Interval", "30000");
     mCollectionInterval = Integer.parseInt(str);
@@ -75,7 +81,15 @@ public class MetricsHandler implements DispatchHandler {
   public void handle(Event event) {
 
     if (event.type == Event.Type.TIMER) {
-      mMetricsProcess.collect(0, null);
+      long now = System.currentTimeMillis();
+      mMetricsProcess.collect(now, mMetricsCollectorGanglia);
+      try {
+        mMetricsCollectorGanglia.publish();
+      }
+      catch (Exception e) {
+        log.info("Problem publishing Ganglia metrics - " +
+                 e.getMessage());
+      }
     }
     else {
       System.out.println("Unexpected event - " + event);
@@ -93,5 +107,8 @@ public class MetricsHandler implements DispatchHandler {
 
   /** Process metrics tracker */
   private MetricsProcess mMetricsProcess = new MetricsProcess();
+
+  /** Ganglia metrics collector */
+  private MetricsCollectorGanglia mMetricsCollectorGanglia;
 
 }
