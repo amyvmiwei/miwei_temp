@@ -193,7 +193,19 @@ def metric_init(params):
     ## FSBroker metrics
     ##
     if 'EnableFSBroker' in params and int(params['EnableFSBroker']) == 1:
-        d = {'name': 'hypertable.fsbroker.sync',
+        d = {'name': 'hypertable.fsbroker.errors',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': 'errors',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Error count',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.errors'] = 0
+        descriptors.append(d);
+
+        d = {'name': 'hypertable.fsbroker.syncs',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -202,7 +214,7 @@ def metric_init(params):
              'format': '%u',
              'description': 'Sync count',
              'groups': 'hypertable FSBroker'}
-        values['hypertable.fsbroker.sync'] = 0
+        values['hypertable.fsbroker.syncs'] = 0
         descriptors.append(d);
 
         d = {'name': 'hypertable.fsbroker.syncLatency',
@@ -325,30 +337,31 @@ def metric_init(params):
              'groups': 'hypertable FSBroker'}
         values['hypertable.fsbroker.memory.resident'] = 0
         descriptors.append(d);
-        
-        d = {'name': 'hypertable.fsbroker.memory.heap',
-             'call_back': metric_callback,
-             'time_max': 90,
-             'value_type': 'float',
-             'units': 'GB',
-             'slope': 'both',
-             'format': '%f',
-             'description': 'Heap memory',
-             'groups': 'hypertable FSBroker'}
-        values['hypertable.fsbroker.memory.heap'] = 0
-        descriptors.append(d);
-        
-        d = {'name': 'hypertable.fsbroker.memory.heapSlack',
-             'call_back': metric_callback,
-             'time_max': 90,
-             'value_type': 'float',
-             'units': 'GB',
-             'slope': 'both',
-             'format': '%f',
-             'description': 'Heap slack bytes',
-             'groups': 'hypertable FSBroker'}
-        values['hypertable.fsbroker.memory.heapSlack'] = 0
-        descriptors.append(d);
+
+        if 'FSBroker' in params and params['FSBroker'] != "hadoop":
+            d = {'name': 'hypertable.fsbroker.memory.heap',
+                 'call_back': metric_callback,
+                 'time_max': 90,
+                 'value_type': 'float',
+                 'units': 'GB',
+                 'slope': 'both',
+                 'format': '%f',
+                 'description': 'Heap memory',
+                 'groups': 'hypertable FSBroker'}
+            values['hypertable.fsbroker.memory.heap'] = 0
+            descriptors.append(d);
+            
+            d = {'name': 'hypertable.fsbroker.memory.heapSlack',
+                 'call_back': metric_callback,
+                 'time_max': 90,
+                 'value_type': 'float',
+                 'units': 'GB',
+                 'slope': 'both',
+                 'format': '%f',
+                 'description': 'Heap slack bytes',
+                 'groups': 'hypertable FSBroker'}
+            values['hypertable.fsbroker.memory.heapSlack'] = 0
+            descriptors.append(d);
         
     ##
     ## Master metrics

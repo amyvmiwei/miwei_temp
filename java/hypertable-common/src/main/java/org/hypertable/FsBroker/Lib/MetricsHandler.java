@@ -62,13 +62,17 @@ public class MetricsHandler implements DispatchHandler {
     short port = Short.parseShort(str);
 
     mMetricsCollectorGanglia = new MetricsCollectorGanglia("fsbroker", port);
+    mMetricsCollectorGanglia.update("type", "hadoop");
 
     str = props.getProperty("Hypertable.Monitoring.Interval", "30000");
     mCollectionInterval = Integer.parseInt(str);
 
     mComm = comm;
 
+    mLastTimestamp = System.currentTimeMillis();
+
     mComm.SetTimer(mCollectionInterval, this);
+
   }
 
   /** Collects and publishes metrics.
@@ -83,6 +87,27 @@ public class MetricsHandler implements DispatchHandler {
     if (event.type == Event.Type.TIMER) {
       long now = System.currentTimeMillis();
       mMetricsProcess.collect(now, mMetricsCollectorGanglia);
+      mMetricsCollectorGanglia.update("type", "hadoop");
+      synchronized (this) {
+        mMetricsCollectorGanglia.update("errors", mErrors);
+        mMetricsCollectorGanglia.update("syncs", mSyncs);
+        if (mSyncs > 0)
+          mMetricsCollectorGanglia.update("syncLatency", mSyncLatency/mSyncs);
+        long elapsed_millis = now - mLastTimestamp;
+        if (elapsed_millis > 0) {
+          double elapsed_seconds = (double)elapsed_millis / 1000.0;
+          double throughput = (double)mBytesRead / elapsed_seconds;
+          mMetricsCollectorGanglia.update("readThroughput", throughput);
+          throughput = (double)mBytesWritten / elapsed_seconds;
+          mMetricsCollectorGanglia.update("writeThroughput", throughput);
+        }
+        mLastTimestamp = now;
+        mErrors = 0;
+        mSyncs = 0;
+        mSyncLatency = 0;
+        mBytesRead = 0;
+        mBytesWritten = 0;
+      }
       try {
         mMetricsCollectorGanglia.publish();
       }
@@ -99,6 +124,23 @@ public class MetricsHandler implements DispatchHandler {
     mComm.SetTimer(mCollectionInterval, this);    
   }
 
+  public synchronized void addBytesRead(long count) {
+    mBytesRead += count;
+  }
+
+  public synchronized void addBytesWritten(long count) {
+    mBytesWritten += count;
+  }
+
+  public synchronized void addSync(long latency) {
+    mSyncs++;
+    mSyncLatency += (int)latency;
+  }
+
+  public synchronized void incrementErrorCount() {
+    mErrors++;
+  }
+
   /** Metrics collection interval */
   private int mCollectionInterval = 0;
 
@@ -110,5 +152,23 @@ public class MetricsHandler implements DispatchHandler {
 
   /** Ganglia metrics collector */
   private MetricsCollectorGanglia mMetricsCollectorGanglia;
+
+  /** Timestamp (ms) of last metrics collection */
+  private long mLastTimestamp;
+
+  /** Bytes written since last metrics collection */
+  private long mBytesWritten = 0;
+
+  /** Bytes read since last metrics collection */
+  private long mBytesRead = 0;
+
+  /** Cumulative sync latency since last metrics collection */
+  private int mSyncLatency = 0;
+
+  /** Syncs since last metrics collection */
+  private int mSyncs = 0;
+
+  /** Error count since last metrics collection */
+  private long mErrors = 0;
 
 }

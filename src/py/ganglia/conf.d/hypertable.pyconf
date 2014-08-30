@@ -2,12 +2,12 @@ modules {
   module {
     name = "hypertable"
     language = "python"
-    param EnableHyperspace { value = 1 }
+    param FSBroker { value = "hadoop" }
     param EnableFSBroker { value = 1 }
+    param EnableHyperspace { value = 1 }
     param EnableMaster { value = 1 }
     param EnableRangeServer { value = 1 }
     param EnableThriftBroker { value = 1 }
-    param FSBroker { value = "hadoop" }
   }
 }
 
@@ -90,7 +90,12 @@ collection_group {
 ##
 
   metric {
-    name = "hypertable.fsbroker.sync"
+    name = "hypertable.fsbroker.errors"
+    title = "FSBroker Errors"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.syncs"
     title = "FSBroker Syncs"
     value_threshold = 1
   }

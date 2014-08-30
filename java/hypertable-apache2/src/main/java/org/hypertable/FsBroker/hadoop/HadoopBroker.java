@@ -237,10 +237,12 @@ public class HadoopBroker implements Broker {
 
           }
           catch (FileNotFoundException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
           }
           catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             if (hdfsUtils == null) {
               hdfsUtils = new FSHDFSUtils();
               hdfsUtils.recoverFileLease(mFilesystem, new Path(fileName), mConf);
@@ -303,6 +305,7 @@ public class HadoopBroker implements Broker {
                 error = cb.response_ok();
             }
             catch (NotReplicatedYetException e) {
+              mMetricsHandler.incrementErrorCount();
                 long now = System.currentTimeMillis();
                 if ((now - start_time) > cb.request_ttl()) {
                     log.warning(e.toString());
@@ -312,6 +315,7 @@ public class HadoopBroker implements Broker {
                 error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
             }
             catch (IOException e) {
+              mMetricsHandler.incrementErrorCount();
                 log.severe("I/O exception - " + e.toString());
                 if (error == Error.OK)
                     error = Error.DFSBROKER_IO_ERROR;
@@ -370,10 +374,12 @@ public class HadoopBroker implements Broker {
             error = cb.response(fd);
         }
         catch (FileNotFoundException e) {
+          mMetricsHandler.incrementErrorCount();
             log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
+          mMetricsHandler.incrementErrorCount();
             log.severe("I/O exception while creating file '" + fileName + "' - "
                        + e.toString());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
@@ -416,10 +422,12 @@ public class HadoopBroker implements Broker {
             error = cb.response(length);
           }
           catch (FileNotFoundException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
           }
           catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             if (hdfsUtils == null) {
               hdfsUtils = new FSHDFSUtils();
               hdfsUtils.recoverFileLease(mFilesystem, new Path(fileName), mConf);
@@ -458,10 +466,12 @@ public class HadoopBroker implements Broker {
 
         }
         catch (FileNotFoundException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("I/O exception while making directory '" + fileName
                        + "' - " + e.toString());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
@@ -506,10 +516,13 @@ public class HadoopBroker implements Broker {
                 nread += r;
             }
 
+            mMetricsHandler.addBytesRead(nread);
+
             error = cb.response(offset, nread, data);
 
         }
         catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("I/O exception - " + e.toString());
             if (error == Error.OK)
                 error = Error.DFSBROKER_IO_ERROR;
@@ -548,16 +561,23 @@ public class HadoopBroker implements Broker {
 
             ofd.os.write(data, 0, amount);
 
-            if (sync)
-                ofd.os.hflush();
+            mMetricsHandler.addBytesWritten(amount);
+
+            if (sync) {
+              long startTime = System.currentTimeMillis();
+              ofd.os.hflush();
+              mMetricsHandler.addSync(System.currentTimeMillis() - startTime);
+            }
 
             error = cb.response(offset, amount);
         }
         catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             e.printStackTrace();
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
         }
         catch (BufferUnderflowException e) {
+            mMetricsHandler.incrementErrorCount();
             e.printStackTrace();
             error = cb.error(Error.PROTOCOL_ERROR, e.toString());
         }
@@ -622,10 +642,13 @@ public class HadoopBroker implements Broker {
               nread += r;
             }
 
+            mMetricsHandler.addBytesRead(nread);
+
             error = cb.response(offset, nread, data);
             break;
           }
           catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             if (hdfsUtils == null) {
               hdfsUtils = new FSHDFSUtils();
               hdfsUtils.recoverFileLease(mFilesystem, new Path(ofd.pathname), mConf);
@@ -677,10 +700,12 @@ public class HadoopBroker implements Broker {
 
         }
         catch (FileNotFoundException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("I/O exception while removing file '" + fileName + "' - "
                        + e.toString());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
@@ -719,6 +744,7 @@ public class HadoopBroker implements Broker {
 
         }
         catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("I/O exception - " + e.toString());
             if (error == Error.OK)
                 error = Error.DFSBROKER_IO_ERROR;
@@ -744,7 +770,9 @@ public class HadoopBroker implements Broker {
             if (mVerbose)
                 log.info("Flush request handle=" + fd);
 
+            long startTime = System.currentTimeMillis();
             ofd.os.hflush();
+            mMetricsHandler.addSync(System.currentTimeMillis() - startTime);
 
             error = cb.response_ok();
 
@@ -753,6 +781,7 @@ public class HadoopBroker implements Broker {
                         + ", error=" + error + ")");
         }
         catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("I/O exception - " + e.toString());
             if (error == Error.OK)
                 error = Error.DFSBROKER_IO_ERROR;
@@ -784,10 +813,12 @@ public class HadoopBroker implements Broker {
 
         }
         catch (FileNotFoundException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("I/O exception while removing directory '" + fileName
                        + "' - " + e.toString());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
@@ -842,6 +873,7 @@ public class HadoopBroker implements Broker {
             error = cb.response(listing);
         }
         catch (IOException e) {
+          mMetricsHandler.incrementErrorCount();
           log.severe("I/O exception while reading directory '" + dirName
                      + "' - " + e.toString());
           error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
@@ -865,10 +897,12 @@ public class HadoopBroker implements Broker {
             error = cb.response( mFilesystem.exists(new Path(fileName)) );
         }
         catch (FileNotFoundException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("File not found: " + fileName);
             error = cb.error(Error.DFSBROKER_FILE_NOT_FOUND, e.getMessage());
         }
         catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("I/O exception while checking for existence of file '"
                        + fileName + "' - " + e.toString());
             error = cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
@@ -890,6 +924,7 @@ public class HadoopBroker implements Broker {
             mFilesystem.rename(new Path(src), new Path(dst));
         }
         catch (IOException e) {
+            mMetricsHandler.incrementErrorCount();
             log.severe("I/O exception while renaming "+ src + " -> "+ dst +": "
                        + e.toString());
             cb.error(Error.DFSBROKER_IO_ERROR, e.toString());
