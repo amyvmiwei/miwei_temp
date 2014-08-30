@@ -7,6 +7,7 @@ modules {
     param EnableMaster { value = 1 }
     param EnableRangeServer { value = 1 }
     param EnableThriftBroker { value = 1 }
+    param FSBroker { value = "hadoop" }
   }
 }
 
@@ -16,6 +17,14 @@ collection_group {
   metric {
     name = "hypertable.hyperspace.version"
     title = "Hypertable Hyperspace Version"
+  }
+  metric {
+    name = "hypertable.fsbroker.version"
+    title = "Hypertable FSBroker Version"
+  }
+  metric {
+    name = "hypertable.fsbroker.type"
+    title = "Hypertable FSBroker Type"
   }
   metric {
     name = "hypertable.master.version"
@@ -73,6 +82,76 @@ collection_group {
   metric {
     name = "hypertable.hyperspace.memory.heapSlack"
     title = "Hyperspace Heap Slack"
+    value_threshold = 1
+  }
+
+##
+## FSBroker
+##
+
+  metric {
+    name = "hypertable.fsbroker.sync"
+    title = "FSBroker Syncs"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.syncLatency"
+    title = "FSBroker Sync Latency"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.readThroughput"
+    title = "FSBroker Read Throughput"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.writeThroughput"
+    title = "FSBroker Write Throughput"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.jvm.gc"
+    title = "FSBroker JVM GCs"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.jvm.gcTime"
+    title = "FSBroker JVM GC Time"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.jvm.heapSize"
+    title = "FSBroker JVM Heap Size"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.cpu.sys"
+    title = "FSBroker CPU system"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.cpu.user"
+    title = "FSBroker CPU user"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.memory.virtual"
+    title = "FSBroker Virtual Memory"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.memory.resident"
+    title = "FSBroker Resident Memory"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.memory.heap"
+    title = "FSBroker Heap"
+    value_threshold = 1
+  }
+  metric {
+    name = "hypertable.fsbroker.memory.heapSlack"
+    title = "FSBroker Heap Slack"
     value_threshold = 1
   }
 

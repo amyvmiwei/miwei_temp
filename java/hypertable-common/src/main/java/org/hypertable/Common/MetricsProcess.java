@@ -98,13 +98,15 @@ public class MetricsProcess {
     long diff_sys = (cpuTimeSys - mLastSys) / org.hypertable.Common.System.processorCount;
     long diff_user = (cpuTimeUser - mLastUser) / org.hypertable.Common.System.processorCount;
 
-    /* CPU sys */
-    pct = (int)((diff_sys * 100) / elapsed_millis);
-    collector.update("cpu.sys", pct);
+    if (elapsed_millis > 0) {
+      /* CPU sys */
+      pct = (int)((diff_sys * 100) / elapsed_millis);
+      collector.update("cpu.sys", pct);
 
-    /* CPU user */
-    pct = (int)((diff_user * 100) / elapsed_millis);
-    collector.update("cpu.user", pct);
+      /* CPU user */
+      pct = (int)((diff_user * 100) / elapsed_millis);
+      collector.update("cpu.user", pct);
+    }
 
     /* Virtual memory */
     gb = (double)process.getMemVsize() / (double)(1024*1024*1024);

@@ -59,6 +59,22 @@ def metric_init(params):
          'groups': 'hypertable Hyperspace'}
     values['hypertable.hyperspace.version'] = 'n/a'
     descriptors.append(d);
+
+    d = {'name': 'hypertable.fsbroker.version',
+         'call_back': metric_callback,
+         'value_type': 'string',
+         'description': 'FSBroker version',
+         'groups': 'hypertable FSBroker'}
+    values['hypertable.fsbroker.version'] = 'n/a'
+    descriptors.append(d);
+
+    d = {'name': 'hypertable.fsbroker.type',
+         'call_back': metric_callback,
+         'value_type': 'string',
+         'description': 'FSBroker type',
+         'groups': 'hypertable FSBroker'}
+    values['hypertable.fsbroker.type'] = 'n/a'
+    descriptors.append(d);
     
     d = {'name': 'hypertable.master.version',
          'call_back': metric_callback,
@@ -171,6 +187,167 @@ def metric_init(params):
              'description': 'Heap slack bytes',
              'groups': 'hypertable Hyperspace'}
         values['hypertable.hyperspace.memory.heapSlack'] = 0
+        descriptors.append(d);
+
+    ##
+    ## FSBroker metrics
+    ##
+    if 'EnableFSBroker' in params and int(params['EnableFSBroker']) == 1:
+        d = {'name': 'hypertable.fsbroker.sync',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': 'syncs',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Sync count',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.sync'] = 0
+        descriptors.append(d);
+
+        d = {'name': 'hypertable.fsbroker.syncLatency',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': 'ms',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Sync latency',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.syncLatency'] = 0
+        descriptors.append(d);
+
+        d = {'name': 'hypertable.fsbroker.readThroughput',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': 'MB/s',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Read throughput',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.syncLatency'] = 0
+        descriptors.append(d);
+
+        d = {'name': 'hypertable.fsbroker.writeThroughput',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': 'MB/s',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Write throughput',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.syncLatency'] = 0
+        descriptors.append(d);
+
+        if 'FSBroker' in params and params['FSBroker'] == "hadoop":
+            d = {'name': 'hypertable.fsbroker.jvm.gc',
+                 'call_back': metric_callback,
+                 'time_max': 90,
+                 'value_type': 'uint',
+                 'units': 'GCs',
+                 'slope': 'both',
+                 'format': '%u',
+                 'description': 'JVM GCs',
+                 'groups': 'hypertable FSBroker'}
+            values['hypertable.fsbroker.jvm.gc'] = 0
+            descriptors.append(d);
+            
+            d = {'name': 'hypertable.fsbroker.jvm.gcTime',
+                 'call_back': metric_callback,
+                 'time_max': 90,
+                 'value_type': 'uint',
+                 'units': 'ms',
+                 'slope': 'both',
+                 'format': '%u',
+                 'description': 'JVM GC time',
+                 'groups': 'hypertable FSBroker'}
+            values['hypertable.fsbroker.jvm.gcTime'] = 0
+            descriptors.append(d);
+            
+            d = {'name': 'hypertable.fsbroker.jvm.heapSize',
+                 'call_back': metric_callback,
+                 'time_max': 90,
+                 'value_type': 'float',
+                 'units': 'GB',
+                 'slope': 'both',
+                 'format': '%f',
+                 'description': 'JVM heap size',
+                 'groups': 'hypertable FSBroker'}
+            values['hypertable.fsbroker.jvm.heapSize'] = 0
+            descriptors.append(d);
+        
+        d = {'name': 'hypertable.fsbroker.cpu.sys',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': '%',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Process CPU system time',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.cpu.sys'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.fsbroker.cpu.user',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': '%',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Process CPU user time',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.cpu.user'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.fsbroker.memory.virtual',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'GB',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Virtual memory',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.memory.virtual'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.fsbroker.memory.resident',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'GB',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Resident memory',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.memory.resident'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.fsbroker.memory.heap',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'GB',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Heap memory',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.memory.heap'] = 0
+        descriptors.append(d);
+        
+        d = {'name': 'hypertable.fsbroker.memory.heapSlack',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'GB',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Heap slack bytes',
+             'groups': 'hypertable FSBroker'}
+        values['hypertable.fsbroker.memory.heapSlack'] = 0
         descriptors.append(d);
         
     ##
