@@ -43,6 +43,7 @@ import org.hypertable.AsyncComm.Comm;
 import org.hypertable.AsyncComm.ResponseCallback;
 import org.hypertable.Common.Error;
 import org.hypertable.FsBroker.Lib.Broker;
+import org.hypertable.FsBroker.Lib.MetricsHandler;
 import org.hypertable.FsBroker.Lib.OpenFileData;
 import org.hypertable.FsBroker.Lib.OpenFileMap;
 import org.hypertable.FsBroker.Lib.ResponseCallbackCreate;
@@ -71,6 +72,8 @@ public class HadoopBroker implements Broker {
 
     public HadoopBroker(Comm comm, Properties props) throws IOException {
         String str;
+
+        mMetricsHandler = new MetricsHandler(comm, props);
 
         str = props.getProperty("verbose");
         if (str != null && str.equalsIgnoreCase("true"))
@@ -908,6 +911,7 @@ public class HadoopBroker implements Broker {
     private Configuration mConf = new Configuration();
     private FileSystem    mFilesystem;
     private FileSystem    mFilesystem_noverify;
+  private MetricsHandler mMetricsHandler;
     private boolean       mVerbose = false;
     public  OpenFileMap   mOpenFileMap = new OpenFileMap();
 }

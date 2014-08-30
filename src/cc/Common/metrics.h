@@ -32,12 +32,37 @@ namespace Hypertable {
   /// @addtogroup Common
   /// @{
 
+  /// Interval metric strucutre.
+  /// This parameterized structure is used to track a metric over a time
+  /// interval.  It contains two members, #previous which is a sample of the
+  /// metric at the beginning of the time window, and #current which is a sample
+  /// of the metric at the current end of the time window.  It includes member
+  /// functions for computing the difference between the samples, and a method
+  /// for computing a rate of change..
+  /// @tparam _Tp Underlying type of the metric
   template<typename _Tp> struct interval_metric {
+
+    /// Current value
     _Tp current {};
+
+    /// Previous value
     _Tp previous {};
-    void reset() { current=previous; }
+
+    /// Resets the metric.
+    /// This method sets #previous equal to #current.
+    void reset() { previous=current; }
+
+    /// Returns difference between current and previous sample.
+    /// @return Difference between current and previous sample.
     _Tp diff() { return current-previous; }
-    float rate(float elapsed) { return (float)diff() / elapsed; }
+
+    /// Computes rate of change.
+    /// Computes a rate of change of the metric by dividing the difference of
+    /// the samples (#current - #previous) by <code>elapsed_time</code>, which
+    /// is the time over which the two samples were collected.
+    /// @param elapsed_time Elapsed time between previous and current samples
+    /// @return Rate of change of the metric
+    float rate(float elapsed_time) { return (float)diff() / elapsed_time; }
   };
 
   /// @}

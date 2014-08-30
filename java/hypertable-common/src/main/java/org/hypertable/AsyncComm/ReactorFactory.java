@@ -27,27 +27,31 @@ import java.io.IOException;
 
 public class ReactorFactory {
 
-    public static void Initialize(short count) throws IOException {
-        reactors = new Reactor [count];
-        for (int i=0; i<count; i++) {
-            reactors[i] = new Reactor();
-            Thread thread = new Thread(reactors[i], "Reactor " + i);
-            thread.setPriority(Thread.MAX_PRIORITY);
-            thread.start();
-        }
+  public static void Initialize(short count) throws IOException {
+    reactors = new Reactor [count+1];
+    for (int i=0; i<=count; i++) {
+      reactors[i] = new Reactor();
+      Thread thread = new Thread(reactors[i], "Reactor " + i);
+      thread.setPriority(Thread.MAX_PRIORITY);
+      thread.start();
     }
+  }
 
-    public static void Shutdown() {
-        for (int i=0; i<reactors.length; i++)
-            reactors[i].Shutdown();
-    }
+  public static void Shutdown() {
+    for (int i=0; i<reactors.length; i++)
+      reactors[i].Shutdown();
+  }
 
-    public static Reactor Get() {
-        return reactors[nexti.getAndIncrement() % reactors.length];
-    }
+  public static Reactor Get() {
+    return reactors[nexti.getAndIncrement() % (reactors.length-1)];
+  }
 
-    private static AtomicInteger nexti = new AtomicInteger(0);
+  public static Reactor GetTimerReactor() {
+    return reactors[reactors.length-1];
+  }
 
-    private static Reactor [] reactors;
+  private static AtomicInteger nexti = new AtomicInteger(0);
+
+  private static Reactor [] reactors;
 }
 

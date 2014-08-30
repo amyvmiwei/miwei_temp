@@ -3,6 +3,7 @@ modules {
     name = "hypertable"
     language = "python"
     param EnableHyperspace { value = 1 }
+    param EnableFSBroker { value = 1 }
     param EnableMaster { value = 1 }
     param EnableRangeServer { value = 1 }
     param EnableThriftBroker { value = 1 }
