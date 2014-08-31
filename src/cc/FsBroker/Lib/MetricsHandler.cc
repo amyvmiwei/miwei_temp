@@ -88,13 +88,12 @@ void MetricsHandler::handle(Hypertable::EventPtr &event) {
 
       m_ganglia_collector->update("errors", m_errors);
 
-      double sps = (double)m_syncs / (double)elapsed_seconds;
-      m_ganglia_collector->update("syncs", sps);
-
       int32_t avgSyncLatency = (m_syncs > 0) ? m_sync_latency/m_syncs : 0;
       m_ganglia_collector->update("syncLatency", m_sync_latency/m_syncs);
 
       if (elapsed_millis > 0) {
+        double sps = (double)m_syncs / (double)elapsed_seconds;
+        m_ganglia_collector->update("syncs", sps);
         int64_t mbps = (m_bytes_read / 1000000) / elapsed_seconds;
         m_ganglia_collector->update("readThroughput", (int)mbps);
         mbps = (m_bytes_written / 1000000) / elapsed_seconds;

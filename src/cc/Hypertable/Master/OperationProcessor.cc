@@ -662,7 +662,8 @@ void OperationProcessor::retire_operation(Vertex v, OperationPtr &operation) {
     m_context.exclusive_ops.erase(operation->name());
   //HT_INFOF("Retiring op %p vertex %p", operation.get(), v);
 
-  m_context.master_context->metrics_handler->operation_increment();
+  if (m_context.master_context->metrics_handler)
+    m_context.master_context->metrics_handler->operation_increment();
 
   if (operation->is_perpetual())
     m_context.perpetual_ops.insert(operation);
