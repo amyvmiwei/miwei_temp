@@ -23,6 +23,7 @@ ClientBufferedReaderHandler.cc
 Config.cc
 ConnectionHandler.cc
 FileDevice.cc
+MetricsHandler.cc
 Protocol.cc
 RequestHandlerClose.cc
 RequestHandlerCreate.cc

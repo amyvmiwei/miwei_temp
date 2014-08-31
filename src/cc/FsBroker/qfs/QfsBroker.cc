@@ -53,6 +53,7 @@ QfsBroker::QfsBroker(PropertiesPtr &cfg)
     : m_host(cfg->get_str("host")),
     m_port(cfg->get_i16("port")),
     m_client(KFS::Connect(m_host, m_port)) {
+  m_metrics_handler = std::make_shared<MetricsHandler>(cfg, "qfs");
 }
 
 QfsBroker::~QfsBroker() {
@@ -125,6 +126,7 @@ void QfsBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
   OpenFileDataQfsPtr fdata;
   if (!m_open_file_map.get(fd, fdata)) {
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -144,6 +146,7 @@ void QfsBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   OpenFileDataQfsPtr fdata;
   if (!m_open_file_map.get(fd, fdata)) {
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -159,6 +162,7 @@ void QfsBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   }
   else {
     buf.size = (uint32_t)len;
+    m_metrics_handler->add_bytes_read(len);
     cb->response(offset, buf);
   }
 }
@@ -168,6 +172,7 @@ void QfsBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount,
   OpenFileDataQfsPtr fdata;
   if (!m_open_file_map.get(fd, fdata)) {
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -181,7 +186,9 @@ void QfsBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount,
   }
   else {
     if(flush) {
+      int64_t start_time = get_ts64();
       int error = m_client->Sync(fdata->fd);
+      m_metrics_handler->add_sync(get_ts64() - start_time);
       if(error) {
         HT_ERRORF("append(fd=%d,qfsFd=%d,%lld,%s) failure (%d) - %s", (int)fd,
                   (int)fdata->fd, (Lld)amount, flush ? "flush" : "",
@@ -189,6 +196,7 @@ void QfsBroker::append(ResponseCallbackAppend *cb, uint32_t fd, uint32_t amount,
         return report_error(cb, error);
       }
     }
+    m_metrics_handler->add_bytes_written(written);
     cb->response(offset, written);
   }
 }
@@ -221,6 +229,7 @@ void QfsBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
   OpenFileDataQfsPtr fdata;
   if (!m_open_file_map.get(fd, fdata)) {
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -242,6 +251,7 @@ void QfsBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
   }
   else {
     buf.size = (uint32_t)status;
+    m_metrics_handler->add_bytes_read(buf.size);
     cb->response(offset, buf);
   }
 }
@@ -271,10 +281,13 @@ void QfsBroker::flush(ResponseCallback *cb, uint32_t fd) {
   OpenFileDataQfsPtr fdata;
   if (!m_open_file_map.get(fd, fdata)) {
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, format("%d", (int)fd));
+    m_metrics_handler->increment_error_count();
     return;
   }
 
+  int64_t start_time = get_ts64();
   int status = m_client->Sync(fdata->fd);
+  m_metrics_handler->add_sync(get_ts64() - start_time);
   if(status < 0) {
     HT_ERRORF("flush(fd=%d,qfsFd=%d) failure (%d) - %s", (int)fd,
               (int)fdata->fd, -status,
@@ -346,6 +359,7 @@ void QfsBroker::shutdown(ResponseCallback *cb) {
 }
 
 void QfsBroker::report_error(ResponseCallback *cb, int error) {
+  m_metrics_handler->increment_error_count();
   string errors = KFS::ErrorCodeToStr(error);
   switch(-error) {
   case ENOTDIR:

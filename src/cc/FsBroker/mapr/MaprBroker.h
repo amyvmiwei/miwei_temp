@@ -22,20 +22,20 @@
 #ifndef HYPERTABLE_MAPRBROKER_H
 #define HYPERTABLE_MAPRBROKER_H
 
+#include <hdfs.h>
+
+#include <FsBroker/Lib/Broker.h>
+#include <FsBroker/Lib/MetricsHandler.h>
+
+#include <Common/Properties.h>
+#include <Common/String.h>
+#include <Common/atomic.h>
+
 #include <string>
 
 extern "C" {
 #include <unistd.h>
 }
-
-#include "Common/atomic.h"
-#include "Common/String.h"
-#include "Common/atomic.h"
-#include "Common/Properties.h"
-
-#include "FsBroker/Lib/Broker.h"
-
-#include "hdfs.h"
 
 namespace Hypertable {
   using namespace FsBroker;
@@ -114,6 +114,9 @@ namespace Hypertable {
     static atomic_t ms_next_fd;
 
     virtual void report_error(ResponseCallback *cb);
+
+    /// Metrics collection handler
+    MetricsHandlerPtr m_metrics_handler;
 
     bool         m_verbose;
     hdfsFS       m_filesystem;

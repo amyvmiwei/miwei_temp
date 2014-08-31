@@ -129,7 +129,7 @@ public class MetricsHandler implements DispatchHandler {
   }
 
   /** Adds bytes read.
-   * Addes <code>count</code> to mBytesRead.
+   * Adds <code>count</code> to mBytesRead.
    * @param count Count of bytes read
    */
   public synchronized void addBytesRead(long count) {
@@ -137,7 +137,7 @@ public class MetricsHandler implements DispatchHandler {
   }
 
   /** Adds bytes written.
-   * Addes <code>count</code> to mBytesWritten.
+   * Adds <code>count</code> to mBytesWritten.
    * @param count Count of bytes written
    */
   public synchronized void addBytesWritten(long count) {
@@ -145,7 +145,7 @@ public class MetricsHandler implements DispatchHandler {
   }
 
   /** Adds sync information.
-   * Addes <code>latency</code> to mSyncLatency and increments mSyncs.
+   * Adds <code>latency</code> to mSyncLatency and increments mSyncs.
    * @param latency Latency of sync
    */
   public synchronized void addSync(long latency) {

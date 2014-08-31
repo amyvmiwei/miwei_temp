@@ -66,6 +66,8 @@ MaprBroker::MaprBroker(PropertiesPtr &cfg) {
   m_namenode_host = cfg->get_str("DfsBroker.Hdfs.NameNode.Host");
   m_namenode_port = cfg->get_i16("DfsBroker.Hdfs.NameNode.Port");
 
+  m_metrics_handler = std::make_shared<MetricsHandler>(cfg, "mapr");
+
   m_filesystem = hdfsConnectNewInstance(m_namenode_host.c_str(), m_namenode_port);
 
 }
@@ -191,6 +193,7 @@ void MaprBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
     sprintf(errbuf, "%d", fd);
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, errbuf);
     HT_ERRORF("bad file handle: %d", fd);
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -209,6 +212,8 @@ void MaprBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   }
 
   buf.size = nread;
+
+  m_metrics_handler->add_bytes_read(nread);
 
   if ((error = cb->response(offset, buf)) != Error::OK)
     HT_ERRORF("Problem sending response for read(%u, %u) - %s",
@@ -231,6 +236,7 @@ void MaprBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, errbuf);
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -248,11 +254,15 @@ void MaprBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
     return;
   }
 
+  int64_t start_time = get_ts64();
   if (sync && hdfsFlush(m_filesystem, fdata->file)) {
     report_error(cb);
     HT_ERRORF("flush failed: fd=%d - %s", fd, strerror(errno));
     return;
   }
+  m_metrics_handler->add_sync(get_ts64() - start_time);
+
+  m_metrics_handler->add_bytes_written(nwritten);
 
   if ((error = cb->response(offset, nwritten)) != Error::OK)
     HT_ERRORF("Problem sending response for append(%u, %u) - %s",
@@ -271,6 +281,7 @@ void MaprBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, errbuf);
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -354,6 +365,7 @@ MaprBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, errbuf);
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -365,6 +377,8 @@ MaprBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
   }
 
   buf.size = nread;
+
+  m_metrics_handler->add_bytes_read(nread);
 
   if ((error = cb->response(offset, buf)) != Error::OK)
     HT_ERRORF("Problem sending response for pread(%u, %llu, %u) - %s",
@@ -513,16 +527,19 @@ void MaprBroker::flush(ResponseCallback *cb, uint32_t fd) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, errbuf);
+    m_metrics_handler->increment_error_count();
     return;
   }
 
   HT_DEBUGF("flush fd=%d filename=%s", fd, fdata->filename.c_str());
 
+  int64_t start_time = get_ts64();
   if (hdfsFlush(m_filesystem, fdata->file) == -1) {
     report_error(cb);
     HT_ERRORF("flush failed: fd=%d - %s", fd, strerror(errno));
     return;
   }
+  m_metrics_handler->add_sync(get_ts64() - start_time);
 
   cb->response_ok();
 }
@@ -579,6 +596,8 @@ MaprBroker::debug(ResponseCallback *cb, int32_t command,
 void MaprBroker::report_error(ResponseCallback *cb) {
   char errbuf[128];
   errbuf[0] = 0;
+
+  m_metrics_handler->increment_error_count();
 
   strerror_r(errno, errbuf, 128);
 
