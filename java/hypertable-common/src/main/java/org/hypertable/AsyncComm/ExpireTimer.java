@@ -45,6 +45,8 @@ public class ExpireTimer implements Comparable<ExpireTimer> {
   public long expire_time;
 
   /** Comparison function.
+   * Compares expire time.  Later (larger) expire times are considered less than
+   * earlier ones.
    * @param other Other timer object with which to compare
    * @return A negative integer, zero, or a positive integer as this object is
    * less than, equal to, or greater than <code>other</code>.

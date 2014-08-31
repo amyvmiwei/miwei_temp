@@ -27,6 +27,17 @@
 
 package org.hypertable.Common;
 
+/** Metrics interface.
+ * This interface is for classes that compute metrics and publish them to a
+ * metrics collector.
+ */
 public interface Metrics {
+
+  /** Collects metrics.
+   * Computes metrics and publishes them via <code>collector</code>.
+   * @param now Current time in milliseconds
+   * @param collector Metrics collector
+   */
   public void collect(long now, MetricsCollector collector);
+
 }

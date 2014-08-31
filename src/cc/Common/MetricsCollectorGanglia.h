@@ -38,35 +38,96 @@ namespace Hypertable {
   /// @addtogroup Common
   /// @{
 
+  /// Ganglia metrics collector.
   class MetricsCollectorGanglia : public MetricsCollector {
   public:
 
+    /// Constructor.
+    /// Creates a datagram send socket and binds it to an arbitrary interface
+    /// and ephemeral port.  Initializes #m_prefix to
+    /// "hypertable." + <code>component</code> + ".".
+    /// @param component Hypertable component ("fsbroker", "hyperspace, "master",
+    /// "rangeserver", or "thriftbroker")
+    /// @param port Ganglia collection port
     MetricsCollectorGanglia(const std::string &component, uint16_t port);
 
+    /// Destructor.
+    /// Closes datagram socket (#m_sd).
     ~MetricsCollectorGanglia();
 
+    /// Updates string metric value.
+    /// Inserts <code>value</code> into m_values_string map using a key that is
+    /// formulated as m_prefix + <code>name</code>.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     void update(const std::string &name, const std::string &value) override;
 
+    /// Updates short integer metric value.
+    /// Inserts <code>value</code> into m_values_int map using a key that is
+    /// formulated as m_prefix + <code>name</code>.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     void update(const std::string &name, int16_t value) override;
 
+    /// Updates integer metric value.
+    /// Inserts <code>value</code> into m_values_int map using a key that is
+    /// formulated as m_prefix + <code>name</code>.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     void update(const std::string &name, int32_t value) override;
 
+    /// Updates float metric value.
+    /// Inserts <code>value</code> into m_values_double map using a key that is
+    /// formulated as m_prefix + <code>name</code>.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     void update(const std::string &name, float value) override;
 
+    /// Updates double metric value.
+    /// Inserts <code>value</code> into m_values_double map using a key that is
+    /// formulated as m_prefix + <code>name</code>.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     void update(const std::string &name, double value) override;
 
+    /// Publishes metric values to Ganglia hypertable extension.
+    /// Constructs a JSON object containing the metrics key/value pairs
+    /// constructed from the #m_values_string, #m_values_int, and
+    /// #m_values_double maps.  The JSON string is sent to the the Ganglia
+    /// hyperspace extension by sending it in the form of a datagram packet over
+    /// #m_sd.
     void publish() override;
 
   private:
+
+    /// Connects to Ganglia hypertable extension receive port.
+    /// Connects #m_sd to "localhost", port #m_port.  Throws an exception on
+    /// error, otherwise sets #m_connected to <i>true</i>.
+    /// @throws Exception with code set to Error::COMM_CONNECT_ERROR
     void connect();
+
+    /// Metric name prefix ("hypertable." + component + ".")
     std::string m_prefix;
+
+    /// Ganglia hypertable extension listen port
     uint16_t m_port {};
+
+    /// Datagram send socket
     int m_sd {};
-    std::string m_error;
+
+    /// Persistent string for holding JSON string
     std::string m_message;
+
+    /// Map holding string metric values
     std::unordered_map<std::string, std::string> m_values_string;
+
+    /// Map holding integer metric values
     std::unordered_map<std::string, int32_t> m_values_int;
+
+    /// Map holding floating point metric values
     std::unordered_map<std::string, double> m_values_double;
+
+    /// Flag indicating if socket is connected
     bool m_connected {};
   };
 

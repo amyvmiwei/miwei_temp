@@ -275,7 +275,9 @@ namespace Hypertable {
 
     StatsRangeServerPtr    m_stats;
     LoadStatisticsPtr      m_load_statistics;
-    int64_t                m_stats_last_timestamp {};
+
+    /// Timestamp (nanoseconds) of last metrics collection
+    int64_t m_stats_last_timestamp {};
 
     /// Indicates if a get_statistics() call is outstanding
     bool m_get_statistics_outstanding {};
@@ -308,7 +310,11 @@ namespace Hypertable {
     std::ofstream m_profile_query_out;
     bool m_profile_query {};
     Mutex m_profile_mutex;
+
+    /// Ganglia metrics collector
     MetricsCollectorGangliaPtr m_ganglia_collector;
+
+    /// Process metrics
     MetricsProcess m_metrics_process;
   };
 

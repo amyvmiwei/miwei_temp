@@ -39,10 +39,13 @@ import org.hyperic.sigar.Mem;
 import org.hyperic.sigar.Sigar;
 import org.hyperic.sigar.SigarException;
 
-/** Collects process metrics.
- */
+/** Collects process metrics. */
 public class MetricsProcess {
 
+  /** Constructor.
+   * Initializes mLastSys and mLastUser from data gathered from SIGAR.
+   * Initializes mLastTimestamp to current time in milliseconds.
+   */
   public MetricsProcess() {
     SigarProcess process = new SigarProcess(mSigar);
     mLastSys = process.getTimeSys();
@@ -50,6 +53,22 @@ public class MetricsProcess {
     mLastTimestamp = System.currentTimeMillis();
   }
 
+  /** Collects process metrics.
+   * Computes process metrics and publishes them via <code>collector</code>.
+   * The following JVM metrics and process metrics collected from SIGAR are
+   * computed and published:
+   * <ul>
+   * <li> <code>jvm.gc</code> - GC count</li>
+   * <li> <code>jvm.gcTime</code> - GC time (ms)</li>
+   * <li> <code>jvm.heapSize</code> - JVM heap size (GB)</li>
+   * <li> <code>cpu.sys</code> - CPU system time (%)</li>
+   * <li> <code>cpu.user</code> - CPU user time (%)</li>
+   * <li> <code>memory.virtual</code> - Virtual memory (GB)</li>
+   * <li> <code>memory.resident</code> - Resident memory (GB)</li>
+   * </ul>
+   * @param now Current time in milliseconds
+   * @param collector Metrics collector
+   */
   public void collect(long now, MetricsCollector collector) {
     HashMap<GarbageCollectorMXBean, Long> collectionCounts = new HashMap<GarbageCollectorMXBean, Long>();
     HashMap<GarbageCollectorMXBean, Long> collectionTimes = new HashMap<GarbageCollectorMXBean, Long>();
@@ -123,7 +142,10 @@ public class MetricsProcess {
     mLastUser = cpuTimeUser;
   }
 
+  /** Map of last GC collection counts */
   HashMap<GarbageCollectorMXBean, Long> mCollectionCounts = new HashMap<GarbageCollectorMXBean, Long>();
+
+  /** Map of last GC collection times */
   HashMap<GarbageCollectorMXBean, Long> mCollectionTimes = new HashMap<GarbageCollectorMXBean, Long>();
 
   /** SIGAR */

@@ -37,22 +37,23 @@ import org.hypertable.AsyncComm.Event;
 import org.hypertable.Common.MetricsCollectorGanglia;
 import org.hypertable.Common.MetricsProcess;
 
-/** Collects and publishes %Hyperspace metrics.
+/** Collects and publishes FSBroker metrics.
  * This class acts as the timer dispatch handler for periodic metrics
- * collection for Hyperspace.
+ * collection in an FSBroker.
  */
 public class MetricsHandler implements DispatchHandler {
 
   static final Logger log = Logger.getLogger("org.hypertable.FsBroker.Lib");
 
   /** Constructor.
-   * Initializes #m_collection_interval to the property
+   * Initializes #mCollectionInterval to the property
    * <code>Hypertable.Monitoring.Interval</code> and allocates a Ganglia
-   * collector object, initializing it with "hyperspace" and
+   * collector object, initializing it with "fsbroker" and
    * <code>Hypertable.Metrics.Ganglia.Port</code>.  Lastly, calls
-   * Comm::set_timer() to register a timer for
-   * #m_collection_interval milliseconds in the future and passes
+   * Comm.SetTimer() to register a timer for
+   * #mCollectionInterval milliseconds in the future and passes
    * <code>this</code> as the timer handler.
+   * @param comm Comm layer object
    * @param props %Properties object
    */
   public MetricsHandler(Comm comm, Properties props) {
@@ -76,11 +77,13 @@ public class MetricsHandler implements DispatchHandler {
   }
 
   /** Collects and publishes metrics.
-   * This method updates the <code>requests/s</code> and general process
-   * metrics and publishes them via #m_ganglia_collector.  After metrics have
-   * been collected, the timer is re-registered for #m_collection_interval
-   * milliseconds in the future.
-   * @param event %Comm layer timer event
+   * This method updates the <code>type</code>, <code>errors</code>,
+   * <code>syncs</code>, <code>syncLatency</code>, <code>readThroughput</code>,
+   * <code>writeThroughput</code> and general process metrics and publishes them
+   * via mMetricsCollectorGanglia.  After metrics have been collected, the
+   * timer is re-registered for mCollectionInterval milliseconds in the future
+   * and the metrics collection member variables are reset.
+   * @param event Comm layer TIMER event
    */
   public void handle(Event event) {
 
@@ -125,19 +128,34 @@ public class MetricsHandler implements DispatchHandler {
     mComm.SetTimer(mCollectionInterval, this);    
   }
 
+  /** Adds bytes read.
+   * Addes <code>count</code> to mBytesRead.
+   * @param count Count of bytes read
+   */
   public synchronized void addBytesRead(long count) {
     mBytesRead += count;
   }
 
+  /** Adds bytes written.
+   * Addes <code>count</code> to mBytesWritten.
+   * @param count Count of bytes written
+   */
   public synchronized void addBytesWritten(long count) {
     mBytesWritten += count;
   }
 
+  /** Adds sync information.
+   * Addes <code>latency</code> to mSyncLatency and increments mSyncs.
+   * @param latency Latency of sync
+   */
   public synchronized void addSync(long latency) {
     mSyncs++;
     mSyncLatency += (int)latency;
   }
 
+  /** Increments error count.
+   * Increments mErrors.
+   */
   public synchronized void incrementErrorCount() {
     mErrors++;
   }

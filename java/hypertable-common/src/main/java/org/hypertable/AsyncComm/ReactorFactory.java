@@ -42,16 +42,27 @@ public class ReactorFactory {
       reactors[i].Shutdown();
   }
 
+  /** Gets a reactor.
+   * Returns the next reactor in round-robin fashion from the reactors vector.
+   * The last reactor in the vector is the timer reactor and is skipped.
+   * @return Next reactor
+   */
   public static Reactor Get() {
     return reactors[nexti.getAndIncrement() % (reactors.length-1)];
   }
 
+  /** Gets the timer reactor.
+   * Returns the timer reactor which is the last reactor in the reactors vector.
+   * @return Timer reactor
+   */
   public static Reactor GetTimerReactor() {
     return reactors[reactors.length-1];
   }
 
+  /** Index of next reactor used by Get() */
   private static AtomicInteger nexti = new AtomicInteger(0);
 
+  /** I/O Reactors */
   private static Reactor [] reactors;
 }
 

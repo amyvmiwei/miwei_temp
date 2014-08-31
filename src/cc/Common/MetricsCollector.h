@@ -21,9 +21,8 @@
 
 /// @file
 /// Declarations for MetricsCollector.
-/// This file contains type declarations for MetricsCollector, a simple class for
-/// aggregating metrics and sending them to the Ganglia gmond process running on
-/// localhost.
+/// This file contains type declarations for MetricsCollector, an abstract class
+/// that defines an interface for metrics collectors.
 
 #ifndef Common_MetricsCollector_h
 #define Common_MetricsCollector_h
@@ -36,19 +35,36 @@ namespace Hypertable {
   /// @addtogroup Common
   /// @{
 
+  /// Abstract metrics collector
   class MetricsCollector {
   public:
 
+    /// Updates string metric value.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     virtual void update(const std::string &name, const std::string &value) = 0;
 
+    /// Updates int16 metric value.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     virtual void update(const std::string &name, int16_t value) = 0;
 
+    /// Updates int32 metric value.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     virtual void update(const std::string &name, int32_t value) = 0;
 
+    /// Updates float metric value.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     virtual void update(const std::string &name, float value) = 0;
 
+    /// Updates double metric value.
+    /// @param name Relative name of metric
+    /// @param value Metric value
     virtual void update(const std::string &name, double value) = 0;
 
+    /// Publishes collected metrics.
     virtual void publish() = 0;
 
   };

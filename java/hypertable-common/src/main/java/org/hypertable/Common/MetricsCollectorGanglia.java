@@ -41,8 +41,18 @@ import java.net.UnknownHostException;
 import java.net.SocketException;
 
 
+/** Collector for Ganglia metrics.
+ */
 public class MetricsCollectorGanglia implements MetricsCollector {
 
+  /** Constructor.
+   * Creates a datagram send socket and connects it to the Ganglia hypertable
+   * extension listen port.  Initializes mPrefix to
+   * "hypertable." + <code>component</code> + ".".
+   * @param component Hypertable component ("fsbroker", "hyperspace, "master",
+   * "rangeserver", or "thriftbroker")
+   * @param port Ganglia collection port
+   */
   public MetricsCollectorGanglia(String component, short port) {
     mPrefix = "hypertable." + component + ".";
     mPort = port;
@@ -68,26 +78,63 @@ public class MetricsCollectorGanglia implements MetricsCollector {
     mConnected = true;
   }
 
+  /** Updates string metric value.
+   * Inserts <code>value</code> into mValuesString map using a key that is
+   * formulated as mPrefix + <code>name</code>.
+   * @param name Name of metric
+   * @param value Metric value
+   */
   public void update(String name, String value) {
     mValuesString.put(mPrefix+name, value);
   }
 
+  /** Updates short integer metric value.
+   * Inserts <code>value</code> into mValuesInt map using a key that is
+   * formulated as mPrefix + <code>name</code>.
+   * @param name Name of metric
+   * @param value Metric value
+   */
   public void update(String name, short value) {
     mValuesInt.put(mPrefix+name, new Integer((int)value));
   }
 
+  /** Updates integer metric value.
+   * Inserts <code>value</code> into mValuesInt map using a key that is
+   * formulated as mPrefix + <code>name</code>.
+   * @param name Name of metric
+   * @param value Metric value
+   */
   public void update(String name, int value) {
     mValuesInt.put(mPrefix+name, new Integer(value));
   }
 
+  /** Updates float metric value.
+   * Inserts <code>value</code> into mValuesDouble map using a key that is
+   * formulated as mPrefix + <code>name</code>.
+   * @param name Name of metric
+   * @param value Metric value
+   */
   public void update(String name, float value) {
     mValuesDouble.put(mPrefix+name, new Double((double)value));
   }
 
+  /** Updates double metric value.
+   * Inserts <code>value</code> into mValuesDouble map using a key that is
+   * formulated as mPrefix + <code>name</code>.
+   * @param name Name of metric
+   * @param value Metric value
+   */
   public void update(String name, double value) {
     mValuesDouble.put(mPrefix+name, new Double(value));
   }
 
+  /** Publishes metric values to Ganglia hypertable extension.
+   * Constructs a JSON object containing the metrics key/value pairs constructed
+   * from the mValuesString, mValuesInt, and mValuesDouble maps.  The JSON
+   * string is sent to the the Ganglia hyperspace extension by sending it in the
+   * form of a datagram packet over mSocket.
+   * @throws Exception if the send fails
+   */
   public void publish() throws Exception {
 
     if (!mConnected)
@@ -136,12 +183,27 @@ public class MetricsCollectorGanglia implements MetricsCollector {
 
   }
 
+  /** Metric name prefix ("hypertable." + component + ".") */
   private String mPrefix;
+
+  /** Host address (localhost) of Ganglia gmond to connect to */
   private InetAddress mAddr;
+
+  /** Ganglia hypertable extension listen port */
   private short mPort;
+
+  /** Flag indicating if socket is connected */
   private boolean mConnected = false;
+
+  /** Datagram send socket */
   private DatagramSocket mSocket;
+
+  /** Map holding string metric values */
   private HashMap<String, String> mValuesString = new HashMap<String, String>();
+
+  /** Map holding integer metric values */
   private HashMap<String, Integer> mValuesInt = new HashMap<String, Integer>();
+
+  /** Map holding floating point metric values */
   private HashMap<String, Double> mValuesDouble = new HashMap<String, Double>();
 }

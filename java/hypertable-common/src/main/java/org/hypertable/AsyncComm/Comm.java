@@ -143,9 +143,9 @@ public class Comm {
 
   /** Sets an absolute timer.
    * Sets a timer to "go off" at the absolute time <code>expire_time</code>.
-   * Once the current time is equal to <code>expire_time</code> milliseconds, the timer will be removed
-   * and the DispatchHandler.handle() method of <code>handler</code> will get
-   * called with a TIMER event.
+   * Once the current time is equal to <code>expire_time</code> milliseconds,
+   * the timer will be removed and the DispatchHandler.handle() method of
+   * <code>handler</code> will get called with a TIMER event.
    * @param duration_millis Milliseconds in the future
    * @param handler Handler through which the timer event is delivered
    */
@@ -157,7 +157,7 @@ public class Comm {
   }
 
   /** Cancels a timer.
-   * Cancels timer previously registered with <code>handler</code>.
+   * Cancels the timer previously registered with <code>handler</code>.
    * @param handler Handler identifying timer to cancel.
    */
   public void CancelTimer(DispatchHandler handler) {

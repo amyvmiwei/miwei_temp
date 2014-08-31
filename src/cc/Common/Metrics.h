@@ -21,9 +21,8 @@
 
 /// @file
 /// Declarations for Metrics.
-/// This file contains type declarations for Metrics, a simple class for
-/// aggregating metrics and sending them to the Ganglia gmond process running on
-/// localhost.
+/// This file contains type declarations for Metrics, an abstract class that
+/// defines the interface for metrics gathering classes.
 
 #ifndef Common_Metrics_h
 #define Common_Metrics_h
@@ -37,9 +36,18 @@ namespace Hypertable {
   /// @addtogroup Common
   /// @{
 
+  /// Metrics interface.
+  /// This abstract class defines the interface for classes that compute metrics
+  /// and publish them to a metrics collector.
   class Metrics {
   public:
+
+    /// Collects metrics.
+    /// Computes metrics and publishes them via <code>collector</code>.
+    /// @param now Current time in nanoseconds
+    /// @param collector Metrics collector
     virtual void collect(int64_t now, MetricsCollector *collector) = 0;
+
   };
 
   /// @}

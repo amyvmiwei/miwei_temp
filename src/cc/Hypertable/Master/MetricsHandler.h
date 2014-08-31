@@ -59,10 +59,10 @@ namespace Hypertable {
     virtual ~MetricsHandler();
 
     /// Collects and publishes metrics.
-    /// This method computes and updates the operations/s and general process
-    /// metrics and publishes them via #m_ganglia_collector.  After metrics have
-    /// been collected, the timer is re-registered for #m_collection_interval
-    /// milliseconds in the future.
+    /// This method computes and updates the <code>operations/s</code> and
+    /// general process metrics and publishes them via #m_ganglia_collector.
+    /// After metrics have been collected, the timer is re-registered for
+    /// #m_collection_interval milliseconds in the future.
     /// @param event %Comm layer timer event
     virtual void handle(EventPtr &event);
 

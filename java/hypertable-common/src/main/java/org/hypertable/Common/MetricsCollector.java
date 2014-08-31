@@ -29,11 +29,41 @@ package org.hypertable.Common;
 
 import java.lang.String;
 
+/** Metrics collector interface. */
 public interface MetricsCollector {
+  
+  /** Updates string metric value.
+   * @param name Relative name of metric
+   * @param value Metric value
+   */
   public void update(String name, String value);
+
+  /** Updates short integer metric value.
+   * @param name Relative name of metric
+   * @param value Metric value
+   */
   public void update(String name, short value);
+
+  /** Updates integer metric value.
+   * @param name Relative name of metric
+   * @param value Metric value
+   */
   public void update(String name, int value);
+
+  /** Updates float metric value.
+   * @param name Relative name of metric
+   * @param value Metric value
+   */
   public void update(String name, float value);
+
+  /** Updates double metric value.
+   * @param name Relative name of metric
+   * @param value Metric value
+   */
   public void update(String name, double value);
+
+  /** Publishes collected metrics.
+   * @throws Exception
+   */
   public void publish() throws Exception;
 }
