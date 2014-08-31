@@ -109,7 +109,6 @@ public class MetricsProcess {
 
     SigarProcess process = new SigarProcess(mSigar);
 
-    int pct;
     double gb;
     long cpuTimeSys = process.getTimeSys();
     long cpuTimeUser = process.getTimeUser();
@@ -117,15 +116,17 @@ public class MetricsProcess {
     long diff_sys = (cpuTimeSys - mLastSys) / org.hypertable.Common.System.processorCount;
     long diff_user = (cpuTimeUser - mLastUser) / org.hypertable.Common.System.processorCount;
 
-    if (elapsed_millis > 0) {
-      /* CPU sys */
-      pct = (int)((diff_sys * 100) / elapsed_millis);
-      collector.update("cpu.sys", pct);
+    int pct = 0;
 
-      /* CPU user */
+    /* CPU sys */
+    if (elapsed_millis > 0)
+      pct = (int)((diff_sys * 100) / elapsed_millis);
+    collector.update("cpu.sys", pct);
+
+    /* CPU user */
+    if (elapsed_millis > 0)
       pct = (int)((diff_user * 100) / elapsed_millis);
-      collector.update("cpu.user", pct);
-    }
+    collector.update("cpu.user", pct);
 
     /* Virtual memory */
     gb = (double)process.getMemVsize() / (double)(1024*1024*1024);

@@ -46,20 +46,22 @@ MetricsProcess::MetricsProcess() {
 
 void MetricsProcess::collect(int64_t now, MetricsCollector *collector) {
   StatsSystem system_stats(StatsSystem::PROCINFO|StatsSystem::PROC);
-  int32_t pct;
 
   system_stats.refresh();
 
   int64_t elapsed_millis = (now - m_last_timestamp) / 1000000LL;
   int64_t diff_sys = (system_stats.proc_stat.cpu_sys - m_last_sys) / System::cpu_info().total_cores;
   int64_t diff_user = (system_stats.proc_stat.cpu_user - m_last_user) / System::cpu_info().total_cores;
+  int32_t pct = 0;
 
   // CPU sys
-  pct = (diff_sys * 100) / elapsed_millis;
+  if (elapsed_millis)
+    pct = (diff_sys * 100) / elapsed_millis;
   collector->update("cpu.sys", pct);
 
   // CPU user
-  pct = (diff_user * 100) / elapsed_millis;
+  if (elapsed_millis)
+    pct = (diff_user * 100) / elapsed_millis;
   collector->update("cpu.user", pct);
 
   // Virtual memory
