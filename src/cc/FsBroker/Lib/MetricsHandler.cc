@@ -89,7 +89,7 @@ void MetricsHandler::handle(Hypertable::EventPtr &event) {
       m_ganglia_collector->update("errors", m_errors);
 
       int32_t avgSyncLatency = (m_syncs > 0) ? m_sync_latency/m_syncs : 0;
-      m_ganglia_collector->update("syncLatency", m_sync_latency/m_syncs);
+      m_ganglia_collector->update("syncLatency", avgSyncLatency);
 
       if (elapsed_millis > 0) {
         double sps = (double)m_syncs / (double)elapsed_seconds;

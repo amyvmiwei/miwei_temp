@@ -98,7 +98,7 @@ public class MetricsHandler implements DispatchHandler {
         double sps = (double)mSyncs / (double)elapsed_seconds;
         mMetricsCollectorGanglia.update("syncs", sps);
         int avgSyncLatency = (mSyncs > 0) ? mSyncLatency/mSyncs : 0;
-        mMetricsCollectorGanglia.update("syncLatency", mSyncLatency/mSyncs);
+        mMetricsCollectorGanglia.update("syncLatency", avgSyncLatency);
         if (elapsed_millis > 0) {
           long mbps = (mBytesRead / 1000000) / elapsed_seconds;
           mMetricsCollectorGanglia.update("readThroughput", (int)mbps);
