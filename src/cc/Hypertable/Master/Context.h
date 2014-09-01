@@ -50,6 +50,7 @@
 #include "Hypertable/Lib/MetaLogWriter.h"
 #include "Hypertable/Lib/Table.h"
 
+#include "MetricsHandler.h"
 #include "Monitoring.h"
 #include "RangeServerConnection.h"
 #include "RangeServerConnectionManager.h"
@@ -118,6 +119,7 @@ namespace Hypertable {
     StringSet available_servers;
     PropertiesPtr props;
     ConnectionManagerPtr conn_manager;
+    MetricsHandlerPtr metrics_handler;
     Hyperspace::SessionPtr hyperspace;
     uint64_t master_file_handle;
     FilesystemPtr dfs;

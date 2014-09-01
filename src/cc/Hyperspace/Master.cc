@@ -237,6 +237,7 @@ Master::Master(ConnectionManagerPtr &conn_mgr, PropertiesPtr &props,
   uint16_t port = props->get_i16("Hyperspace.Replica.Port");
   InetAddr::initialize(&m_local_addr, INADDR_ANY, port);
 
+  m_metrics_handler = std::make_shared<MetricsHandler>(props);
 
   boost::xtime_get(&m_last_tick, boost::TIME_UTC_);
 
@@ -481,6 +482,7 @@ void Master::remove_expired_sessions() {
 void
 Master::mkdir(ResponseCallback *cb, uint64_t session_id, const char *name, const std::vector<Attribute>& init_attrs) {
   bool commited = false;
+  m_metrics_handler->request_increment();
   CommandContext ctx("mkdir", session_id);
   HT_BDBTXN_BEGIN() {
     commited = false;
@@ -521,6 +523,7 @@ void
 Master::mkdirs(ResponseCallback *cb, uint64_t session_id, const char *name, const std::vector<Attribute>& init_attrs) {
   std::vector<EventContext> evts;
   bool commited = false;
+  m_metrics_handler->request_increment();
   CommandContext ctx("mkdirs", session_id);
   HT_BDBTXN_BEGIN() {
     commited = false;
@@ -595,6 +598,7 @@ Master::mkdirs(ResponseCallback *cb, uint64_t session_id, const char *name, cons
 void
 Master::unlink(ResponseCallback *cb, uint64_t session_id, const char *name) {
   bool commited = false;
+  m_metrics_handler->request_increment();
   CommandContext ctx("unlink", session_id);
   HT_BDBTXN_BEGIN() {
     commited = false;
@@ -637,6 +641,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
   uint64_t handle = 0;
   bool created = false;
   uint64_t lock_generation = 0;
+  m_metrics_handler->request_increment();
   CommandContext ctx("open", session_id);
   HT_BDBTXN_BEGIN() {
     commited = false;
@@ -678,6 +683,7 @@ Master::open(ResponseCallbackOpen *cb, uint64_t session_id, const char *name,
  * Close
  */
 void Master::close(ResponseCallback *cb, uint64_t session_id, uint64_t handle) {
+  m_metrics_handler->request_increment();
   CommandContext ctx("close", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);
@@ -753,6 +759,7 @@ Master::attr_set(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
 
   bool commited = false;
   uint64_t opened_handle = 0;
+  m_metrics_handler->request_increment();
   CommandContext ctx("attrset", session_id);
 
   HT_ASSERT((name && *name) || handle);
@@ -826,6 +833,7 @@ Master::attr_get(ResponseCallbackAttrGet *cb, uint64_t session_id,
 
   std::vector<DynamicBufferPtr> dbufs;
   dbufs.reserve(attrs.size());
+  m_metrics_handler->request_increment();
   CommandContext ctx("attrget", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);
@@ -875,6 +883,7 @@ Master::attr_incr(ResponseCallbackAttrIncr *cb, uint64_t session_id,
                  uint64_t handle, const char *name, const char* attr) {
 
   uint64_t attr_val;
+  m_metrics_handler->request_increment();
   CommandContext ctx("attrincr", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);
@@ -912,6 +921,7 @@ void
 Master::attr_del(ResponseCallback *cb, uint64_t session_id, uint64_t handle,
                  const char *name) {
   bool commited = false;
+  m_metrics_handler->request_increment();
   CommandContext ctx("attrdel", session_id);
   HT_BDBTXN_BEGIN() {
     commited = false;
@@ -946,6 +956,7 @@ Master::attr_exists(ResponseCallbackAttrExists *cb, uint64_t session_id, uint64_
                     const char *name, const char *attr)
 {
   bool exists = false;
+  m_metrics_handler->request_increment();
   CommandContext ctx("attrexists", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);
@@ -971,6 +982,7 @@ void
 Master::attr_list(ResponseCallbackAttrList *cb, uint64_t session_id, uint64_t handle)
 {
   std::vector<String> attributes;
+  m_metrics_handler->request_increment();
   CommandContext ctx("attrlist", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);
@@ -1005,6 +1017,7 @@ Master::exists(ResponseCallbackExists *cb, uint64_t session_id,
                const char *name) {
 
   bool file_exists = false;
+  m_metrics_handler->request_increment();
   CommandContext ctx("exists", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);
@@ -1040,6 +1053,7 @@ void
 Master::readdir(ResponseCallbackReaddir *cb, uint64_t session_id,
                 uint64_t handle) {
   std::vector<DirEntry> listing;
+  m_metrics_handler->request_increment();
   CommandContext ctx("readdir", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);
@@ -1075,6 +1089,7 @@ void
 Master::readdir_attr(ResponseCallbackReaddirAttr *cb, uint64_t session_id,
                      uint64_t handle, const char *name, const char *attr, bool include_sub_entries) {
   std::vector<DirEntryAttr> listing;
+  m_metrics_handler->request_increment();
   CommandContext ctx("readdirattr", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);
@@ -1113,6 +1128,7 @@ void
 Master::readpath_attr(ResponseCallbackReadpathAttr *cb, uint64_t session_id,
                       uint64_t handle, const char *name, const char *attr) {
   std::vector<DirEntryAttr> listing;
+  m_metrics_handler->request_increment();
   CommandContext ctx("readpathattr", session_id);
   HT_BDBTXN_BEGIN() {
     ctx.reset(&txn);

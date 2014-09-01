@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERSPACE_SERVERCONNECTIONHANDLER_H
-#define HYPERSPACE_SERVERCONNECTIONHANDLER_H
+#ifndef Hyperspace_ServerConnectionHandler_h
+#define Hyperspace_ServerConnectionHandler_h
 
 #include "Common/Compat.h"
 
@@ -36,18 +36,18 @@ namespace Hyperspace {
    */
   class ServerConnectionHandler : public DispatchHandler {
   public:
-    ServerConnectionHandler(Comm *comm, ApplicationQueuePtr &app_queue, MasterPtr &master);
+    ServerConnectionHandler(ApplicationQueuePtr &app_queue, MasterPtr &master);
 
-    virtual void handle(EventPtr &event_ptr);
+    virtual void handle(EventPtr &event);
 
   private:
-    Comm                *m_comm;
-    ApplicationQueuePtr  m_app_queue_ptr;
-    MasterPtr            m_master_ptr;
-    uint64_t             m_session_id;
-    uint32_t             m_maintenance_interval;
+    Comm *m_comm {};
+    ApplicationQueuePtr m_app_queue;
+    MasterPtr m_master;
+    uint64_t m_session_id {};
+    uint32_t m_maintenance_interval {};
   };
 
 }
 
-#endif // HYPERSPACE_SERVERCONNECTIONHANDLER_H
+#endif // Hyperspace_ServerConnectionHandler_h

@@ -38,6 +38,14 @@
 
 namespace Hypertable {
 
+  /// @defgroup libFsBroker Lib
+  /// @ingroup FsBroker
+  /// File %System %Broker library.
+  /// The %Lib module contains the file system broker library which provides
+  /// the common framework code for all c++ file system brokers.
+  /// @{
+
+  /// File system broker definitions
   namespace FsBroker {
 
     /** Abstract class to be implemented by brokers
@@ -236,6 +244,8 @@ namespace Hypertable {
     typedef boost::intrusive_ptr<Broker> BrokerPtr;
 
   }
+
+  /// @}
 }
 
 #endif // FsBroker_Lib_Broker_h

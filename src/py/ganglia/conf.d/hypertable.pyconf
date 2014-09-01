@@ -1,0 +1,317 @@
+modules {
+  module {
+    name = "hypertable"
+    language = "python"
+    param FSBroker { value = "hadoop" }
+    param EnableFSBroker { value = 1 }
+    param EnableHyperspace { value = 1 }
+    param EnableMaster { value = 1 }
+    param EnableRangeServer { value = 1 }
+    param EnableThriftBroker { value = 1 }
+  }
+}
+
+collection_group {
+  collect_every = 900
+  time_threshold = 1200
+  metric {
+    name = "hypertable.hyperspace.version"
+    title = "Hypertable Hyperspace Version"
+  }
+  metric {
+    name = "hypertable.fsbroker.version"
+    title = "Hypertable FSBroker Version"
+  }
+  metric {
+    name = "hypertable.fsbroker.type"
+    title = "Hypertable FSBroker Type"
+  }
+  metric {
+    name = "hypertable.master.version"
+    title = "Hypertable Master Version"
+  }
+  metric {
+    name = "hypertable.rangeserver.version"
+    title = "Hypertable RangeServer Version"
+  }
+  metric {
+    name = "hypertable.thriftbroker.version"
+    title = "Hypertable ThriftBroker Version"
+  }
+}
+
+
+collection_group {
+  collect_every = 30
+  time_threshold = 50
+
+##
+## Hyperspace
+##
+
+  metric {
+    name = "hypertable.hyperspace.requests"
+    title = "Hyperspace Requests"
+  }
+  metric {
+    name = "hypertable.hyperspace.cpu.sys"
+    title = "Hyperspace CPU system"
+  }
+  metric {
+    name = "hypertable.hyperspace.cpu.user"
+    title = "Hyperspace CPU user"
+  }
+  metric {
+    name = "hypertable.hyperspace.memory.virtual"
+    title = "Hyperspace Virtual Memory"
+  }
+  metric {
+    name = "hypertable.hyperspace.memory.resident"
+    title = "Hyperspace Resident Memory"
+  }
+  metric {
+    name = "hypertable.hyperspace.memory.heap"
+    title = "Hyperspace Heap"
+  }
+  metric {
+    name = "hypertable.hyperspace.memory.heapSlack"
+    title = "Hyperspace Heap Slack"
+  }
+
+##
+## FSBroker
+##
+
+  metric {
+    name = "hypertable.fsbroker.errors"
+    title = "FSBroker Errors"
+  }
+  metric {
+    name = "hypertable.fsbroker.syncs"
+    title = "FSBroker Syncs"
+  }
+  metric {
+    name = "hypertable.fsbroker.syncLatency"
+    title = "FSBroker Sync Latency"
+  }
+  metric {
+    name = "hypertable.fsbroker.readThroughput"
+    title = "FSBroker Read Throughput"
+  }
+  metric {
+    name = "hypertable.fsbroker.writeThroughput"
+    title = "FSBroker Write Throughput"
+  }
+  metric {
+    name = "hypertable.fsbroker.jvm.gc"
+    title = "FSBroker JVM GCs"
+  }
+  metric {
+    name = "hypertable.fsbroker.jvm.gcTime"
+    title = "FSBroker JVM GC Time"
+  }
+  metric {
+    name = "hypertable.fsbroker.jvm.heapSize"
+    title = "FSBroker JVM Heap Size"
+  }
+  metric {
+    name = "hypertable.fsbroker.cpu.sys"
+    title = "FSBroker CPU system"
+  }
+  metric {
+    name = "hypertable.fsbroker.cpu.user"
+    title = "FSBroker CPU user"
+  }
+  metric {
+    name = "hypertable.fsbroker.memory.virtual"
+    title = "FSBroker Virtual Memory"
+  }
+  metric {
+    name = "hypertable.fsbroker.memory.resident"
+    title = "FSBroker Resident Memory"
+  }
+  metric {
+    name = "hypertable.fsbroker.memory.heap"
+    title = "FSBroker Heap"
+  }
+  metric {
+    name = "hypertable.fsbroker.memory.heapSlack"
+    title = "FSBroker Heap Slack"
+  }
+
+##
+## Master
+##
+
+  metric {
+    name = "hypertable.master.operations"
+    title = "Master Operations"
+  }
+  metric {
+    name = "hypertable.master.cpu.sys"
+    title = "Master CPU system"
+  }
+  metric {
+    name = "hypertable.master.cpu.user"
+    title = "Master CPU user"
+  }
+  metric {
+    name = "hypertable.master.memory.virtual"
+    title = "Master Virtual Memory"
+  }
+  metric {
+    name = "hypertable.master.memory.resident"
+    title = "Master Resident Memory"
+  }
+  metric {
+    name = "hypertable.master.memory.heap"
+    title = "Master Heap"
+  }
+  metric {
+    name = "hypertable.master.memory.heapSlack"
+    title = "Master Heap Slack"
+  }
+
+##
+## RangeServer
+##
+
+  metric {
+    name = "hypertable.rangeserver.scans"
+    title = "RangeServer Scans"
+  }
+  metric {
+    name = "hypertable.rangeserver.updates"
+    title = "RangeServer Updates"
+  }
+  metric {
+    name = "hypertable.rangeserver.cellsRead"
+    title = "RangeServer Cells Read"
+  }
+  metric {
+    name = "hypertable.rangeserver.cellsWritten"
+    title = "RangeServer Cells Written"
+  }
+  metric {
+    name = "hypertable.rangeserver.compactions.major"
+    title = "RangeServer Major Compactions"
+  }
+  metric {
+    name = "hypertable.rangeserver.compactions.minor"
+    title = "RangeServer Minor Compactions"
+  }
+  metric {
+    name = "hypertable.rangeserver.compactions.merging"
+    title = "RangeServer Merging Compactions"
+  }
+  metric {
+    name = "hypertable.rangeserver.compactions.gc"
+    title = "RangeServer GC Compactions"
+  }
+  metric {
+    name = "hypertable.rangeserver.scanners"
+    title = "RangeServer Scanners"
+  }
+  metric {
+    name = "hypertable.rangeserver.cellstores"
+    title = "RangeServer Cell Stores"
+  }
+  metric {
+    name = "hypertable.rangeserver.ranges"
+    title = "RangeServer Ranges"
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.virtual"
+    title = "RangeServer Virtual Memory"
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.resident"
+    title = "RangeServer Resident Memory"
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.heap"
+    title = "RangeServer Heap"
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.heapSlack"
+    title = "RangeServer Heap Slack"
+  }
+  metric {
+    name = "hypertable.rangeserver.memory.tracked"
+    title = "RangeServer Tracked Memory"
+  }
+  metric {
+    name = "hypertable.rangeserver.cpu.sys"
+    title = "RangeServer CPU system"
+  }
+  metric {
+    name = "hypertable.rangeserver.cpu.user"
+    title = "RangeServer CPU user"
+  }
+  metric {
+    name = "hypertable.rangeserver.blockCache.hitRate"
+    title = "RangeServer Block Cache Hits"
+  }
+  metric {
+    name = "hypertable.rangeserver.blockCache.memory"
+    title = "RangeServer Block Cache Memory"
+  }
+  metric {
+    name = "hypertable.rangeserver.blockCache.fill"
+    title = "RangeServer Block Cache Fill"
+  }
+  metric {
+    name = "hypertable.rangeserver.queryCache.hitRate"
+    title = "RangeServer Query Cache Hits"
+  }
+  metric {
+    name = "hypertable.rangeserver.queryCache.memory"
+    title = "RangeServer Query Cache Memory"
+  }
+  metric {
+    name = "hypertable.rangeserver.queryCache.fill"
+    title = "RangeServer Query Cache Fill"
+  }
+
+##
+## ThriftBroker
+##
+
+  metric {
+    name = "hypertable.thriftbroker.requests"
+    title = "ThriftBroker Requests"
+  }
+  metric {
+    name = "hypertable.thriftbroker.errors"
+    title = "ThriftBroker Errors"
+  }
+  metric {
+    name = "hypertable.thriftbroker.connections"
+    title = "ThriftBroker Connections"
+  }
+  metric {
+    name = "hypertable.thriftbroker.cpu.sys"
+    title = "ThriftBroker CPU system"
+  }
+  metric {
+    name = "hypertable.thriftbroker.cpu.user"
+    title = "ThriftBroker CPU user"
+  }
+  metric {
+    name = "hypertable.thriftbroker.memory.virtual"
+    title = "ThriftBroker Virtual Memory"
+  }
+  metric {
+    name = "hypertable.thriftbroker.memory.resident"
+    title = "ThriftBroker Resident Memory"
+  }
+  metric {
+    name = "hypertable.thriftbroker.memory.heap"
+    title = "ThriftBroker Heap"
+  }
+  metric {
+    name = "hypertable.thriftbroker.memory.heapSlack"
+    title = "ThriftBroker Heap Slack"
+  }
+
+}

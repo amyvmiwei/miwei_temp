@@ -181,6 +181,8 @@ void DefaultPolicy::init_options() {
         "Number of client worker threads created")
     ("Hypertable.Connection.Retry.Interval", i32()->default_value(10000),
         "Average time, in milliseconds, between connection retry atempts")
+    ("Hypertable.Metrics.Ganglia.Port", i16()->default_value(15860),
+        "UDP Port on which Hypertable gmond python extension module listens for metrics")
     ("Hypertable.LoadMetrics.Interval", i32()->default_value(3600), "Period of "
         "time, in seconds, between writing metrics to sys/RS_METRICS")
     ("Hypertable.Request.Timeout", i32()->default_value(600000), "Length of "

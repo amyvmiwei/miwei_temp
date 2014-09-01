@@ -105,6 +105,10 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   : m_props(props), m_conn_manager(conn_mgr),
     m_app_queue(app_queue), m_hyperspace(hyperspace) {
 
+  int16_t ganglia_port = props->get_i16("Hypertable.Metrics.Ganglia.Port");
+  m_ganglia_collector =
+    std::make_shared<MetricsCollectorGanglia>("rangeserver", ganglia_port);
+
   m_context = std::make_shared<Context>();
   m_context->props = props;
   m_context->comm = conn_mgr->get_comm();
@@ -2350,7 +2354,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
 
   HT_ON_OBJ_SCOPE_EXIT(*this, &RangeServer::test_and_set_get_statistics_outstanding, false);
 
-    ScopedLock lock(m_stats_mutex);
+  ScopedLock lock(m_stats_mutex);
   RangesPtr ranges = Global::get_ranges();
   int64_t timestamp = Hypertable::get_ts64();
   time_t now = (time_t)(timestamp/1000000000LL);
@@ -2368,6 +2372,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
 
   Global::load_statistics->recompute(&load_stats);
   m_stats->system.refresh();
+
+  float period_seconds = (float)load_stats.period_millis / 1000.0;
 
   uint64_t disk_total = 0;
   uint64_t disk_avail = 0;
@@ -2625,6 +2631,66 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
     HT_ASSERT((ptr-ext.base) == (ptrdiff_t)ext.size);
     cb->response(ext);
   }
+
+  // Ganglia metrics
+
+  m_metrics_process.collect(timestamp, m_ganglia_collector.get());
+
+  m_ganglia_collector->update("scans",
+                            (float)load_stats.scan_count / period_seconds);
+  m_ganglia_collector->update("updates",
+                            (float)load_stats.update_count / period_seconds);
+  m_ganglia_collector->update("cellsRead",
+                            (float)load_stats.scan_cells / period_seconds);
+  m_ganglia_collector->update("cellsWritten",
+                            (float)load_stats.update_cells / period_seconds);
+
+  m_ganglia_collector->update("compactions.major", load_stats.compactions_major);
+  m_ganglia_collector->update("compactions.minor", load_stats.compactions_minor);
+  m_ganglia_collector->update("compactions.merging", load_stats.compactions_merging);
+  m_ganglia_collector->update("compactions.gc", load_stats.compactions_gc);
+
+  m_ganglia_collector->update("scanners",
+                            m_stats->scanner_count);
+  m_ganglia_collector->update("cellstores",
+                            (int32_t)m_stats->file_count);
+  m_ganglia_collector->update("ranges",
+                            m_stats->range_count);
+  m_ganglia_collector->update("memory.tracked",
+                            (float)m_stats->tracked_memory / 1000000000.0);
+
+  if (m_stats->block_cache_accesses)
+    m_ganglia_collector->update("blockCache.hitRate",
+                              (int32_t)(m_stats->block_cache_hits/m_stats->block_cache_accesses));
+  else
+    m_ganglia_collector->update("blockCache.hitRate", (int32_t)0);
+  m_ganglia_collector->update("blockCache.memory",
+                            (float)m_stats->block_cache_max_memory / 1000000000.0);
+  uint64_t block_cache_fill = m_stats->block_cache_max_memory -
+    m_stats->block_cache_available_memory;
+  m_ganglia_collector->update("blockCache.fill",
+                            (float)block_cache_fill / 1000000000.0);
+
+  if (m_stats->query_cache_accesses)
+    m_ganglia_collector->update("queryCache.hitRate",
+                              (int32_t)(m_stats->query_cache_hits/m_stats->query_cache_accesses));
+  else
+    m_ganglia_collector->update("queryCache.hitRate", (int32_t)0);
+  m_ganglia_collector->update("queryCache.memory",
+                            (float)m_stats->query_cache_max_memory / 1000000000.0);
+  uint64_t query_cache_fill = m_stats->query_cache_max_memory -
+    m_stats->query_cache_available_memory;
+  m_ganglia_collector->update("queryCache.fill",
+                            (float)query_cache_fill / 1000000000.0);
+
+  try {
+    m_ganglia_collector->publish();
+  }
+  catch (Exception &e) {
+    HT_INFOF("Problem publishing Ganglia metrics - %s", e.what());
+  }
+
+  m_stats_last_timestamp = timestamp;
 
   HT_INFO("Exiting get_statistics()");
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -16,9 +16,17 @@
  * You should have received a copy of the GNU General Public License
  * along with Hypertable. If not, see <http://www.gnu.org/licenses/>
  */
+
+/// @file
+/// ThriftBroker server.
+/// This file contains the main function and server definition for the
+/// ThriftBroker, a server that provides client language independent access to
+/// Hypertable.
+
 #include <Common/Compat.h>
 
 #include <ThriftBroker/Config.h>
+#include <ThriftBroker/MetricsHandler.h>
 #include <ThriftBroker/SerializedCellsReader.h>
 #include <ThriftBroker/SerializedCellsWriter.h>
 #include <ThriftBroker/ThriftHelper.h>
@@ -54,6 +62,16 @@
 #include <sstream>
 #include <unordered_map>
 
+/// @defgroup ThriftBroker ThriftBroker
+/// %Thrift broker.
+/// The @ref ThriftBroker module contains the definition of the ThriftBroker.
+/// @{
+
+namespace {
+  /// Smart pointer to metrics gathering handler
+  MetricsHandlerPtr g_metrics_handler;
+}
+
 #define THROW_TE(_code_, _str_) do { ThriftGen::ClientException te; \
   te.code = _code_; \
   te.message.append(Error::get_text(_code_)); \
@@ -68,12 +86,14 @@
   HT_ERROR_OUT << oss.str() << HT_END; \
   oss.str(""); \
   oss << _expr_; \
+  g_metrics_handler->error_increment(); \
   THROW_TE(e.code(), oss.str()); \
 }
 
 #define LOG_API_START(_expr_) \
   boost::xtime start_time, end_time; \
   std::ostringstream logging_stream;\
+  g_metrics_handler->request_increment(); \
   if (m_context.log_api) {\
     boost::xtime_get(&start_time, TIME_UTC_);\
     logging_stream << "API " << __func__ << ": " << _expr_;\
@@ -2690,12 +2710,13 @@ public:
     typedef ::apache::thrift::transport::TSocket TTransport;
     String remotePeer =
       dynamic_cast<TTransport*>(connInfo.transport.get())->getPeerAddress();
-
+    g_metrics_handler->connection_increment();
     return ServerHandlerFactory::getHandler(remotePeer);
   }
 
   virtual void releaseHandler( ::Hypertable::ThriftGen::ClientServiceIf *service) {
     ServerHandler* serverHandler = dynamic_cast<ServerHandler*>(service);
+    g_metrics_handler->connection_decrement();
     return ServerHandlerFactory::releaseHandler(serverHandler);
   }
 };
@@ -2711,6 +2732,8 @@ int main(int argc, char **argv) {
 
   try {
     init_with_policies<Policies>(argc, argv);
+
+    g_metrics_handler = std::make_shared<MetricsHandler>(properties);
 
     if (get_bool("ThriftBroker.Hyperspace.Session.Reconnect"))
       properties->set("Hyperspace.Session.Reconnect", true);
@@ -2739,7 +2762,11 @@ int main(int argc, char **argv) {
                            transportFactory, protocolFactory);
 
     HT_INFO("Starting the server...");
+
     server.serve();
+
+    g_metrics_handler.reset();
+
     HT_INFO("Exiting.\n");
   }
   catch (Hypertable::Exception &e) {
@@ -2747,3 +2774,5 @@ int main(int argc, char **argv) {
   }
   return 0;
 }
+
+/// @}

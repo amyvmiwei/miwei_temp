@@ -64,6 +64,8 @@ LocalBroker::LocalBroker(PropertiesPtr &cfg) {
   else
     m_directio = cfg->get_bool("FsBroker.Local.DirectIO");
 
+  m_metrics_handler = std::make_shared<MetricsHandler>(cfg, "local");
+
 #if defined(__linux__)
   // disable direct i/o for kernels < 2.6
   if (m_directio) {
@@ -243,6 +245,7 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
     sprintf(errbuf, "%d", fd);
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, errbuf);
     HT_ERRORF("bad file handle: %d", fd);
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -261,6 +264,7 @@ void LocalBroker::read(ResponseCallbackRead *cb, uint32_t fd, uint32_t amount) {
   }
 
   buf.size = nread;
+  m_metrics_handler->add_bytes_read(buf.size);
 
   if ((error = cb->response(offset, buf)) != Error::OK)
     HT_ERRORF("Problem sending response for read(%u, %u) - %s",
@@ -283,6 +287,7 @@ void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, errbuf);
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -300,11 +305,15 @@ void LocalBroker::append(ResponseCallbackAppend *cb, uint32_t fd,
     return;
   }
 
+  int64_t start_time = get_ts64();
   if (sync && fsync(fdata->fd) != 0) {
     report_error(cb);
     HT_ERRORF("flush failed: fd=%d - %s", fdata->fd, strerror(errno));
     return;
   }
+  m_metrics_handler->add_sync(get_ts64() - start_time);
+
+  m_metrics_handler->add_bytes_written(nwritten);
 
   if ((error = cb->response(offset, nwritten)) != Error::OK)
     HT_ERRORF("Problem sending response for append(%u, localfd=%u, %u) - %s",
@@ -323,6 +332,7 @@ void LocalBroker::seek(ResponseCallback *cb, uint32_t fd, uint64_t offset) {
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, errbuf);
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -415,6 +425,7 @@ LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
     char errbuf[32];
     sprintf(errbuf, "%d", fd);
     cb->error(Error::FSBROKER_BAD_FILE_HANDLE, errbuf);
+    m_metrics_handler->increment_error_count();
     return;
   }
 
@@ -426,6 +437,8 @@ LocalBroker::pread(ResponseCallbackRead *cb, uint32_t fd, uint64_t offset,
               strerror(errno));
     return;
   }
+
+  m_metrics_handler->add_bytes_read(nread);
 
   if ((error = cb->response(offset, buf)) != Error::OK)
     HT_ERRORF("Problem sending response for pread(%u, %llu, %u) - %s",
@@ -482,6 +495,7 @@ void LocalBroker::rmdir(ResponseCallback *cb, const char *dname) {
       cmd_str = (String)"/bin/rm -rf " + absdir;
       if (system(cmd_str.c_str()) != 0) {
         HT_ERRORF("%s failed.", cmd_str.c_str());
+        m_metrics_handler->increment_error_count();
         cb->error(Error::FSBROKER_IO_ERROR, cmd_str);
         return;
       }
@@ -684,11 +698,13 @@ void LocalBroker::flush(ResponseCallback *cb, uint32_t fd) {
     return;
   }
 
+  int64_t start_time = get_ts64();
   if (fsync(fdata->fd) != 0) {
     report_error(cb);
     HT_ERRORF("flush failed: fd=%d - %s", fdata->fd, strerror(errno));
     return;
   }
+  m_metrics_handler->add_sync(get_ts64() - start_time);
 
   cb->response_ok();
 }
@@ -749,6 +765,8 @@ LocalBroker::debug(ResponseCallback *cb, int32_t command,
 void LocalBroker::report_error(ResponseCallback *cb) {
   char errbuf[128];
   errbuf[0] = 0;
+
+  m_metrics_handler->increment_error_count();
 
   strerror_r(errno, errbuf, 128);
 

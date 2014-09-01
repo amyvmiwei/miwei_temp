@@ -19,22 +19,21 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_LOCALBROKER_H
-#define HYPERTABLE_LOCALBROKER_H
+#ifndef FsBroker_local_LocalBroker_h
+#define FsBroker_local_LocalBroker_h
+
+#include <FsBroker/Lib/Broker.h>
+#include <FsBroker/Lib/MetricsHandler.h>
+
+#include <Common/Properties.h>
+#include <Common/String.h>
+#include <Common/atomic.h>
 
 #include <string>
 
 extern "C" {
 #include <unistd.h>
 }
-
-#include "Common/atomic.h"
-#include "Common/String.h"
-#include "Common/atomic.h"
-#include "Common/Properties.h"
-
-#include "FsBroker/Lib/Broker.h"
-
 
 namespace Hypertable {
   using namespace FsBroker;
@@ -110,12 +109,15 @@ namespace Hypertable {
 
     virtual void report_error(ResponseCallback *cb);
 
-    String       m_rootdir;
-    bool         m_verbose;
-    bool         m_directio;
-    bool         m_no_removal;
+    /// Metrics collection handler
+    MetricsHandlerPtr m_metrics_handler;
+
+    String m_rootdir;
+    bool m_verbose;
+    bool m_directio;
+    bool m_no_removal;
   };
 
 }
 
-#endif // HYPERTABLE_LOCALBROKER_H
+#endif // FsBroker_local_LocalBroker_h

@@ -1,0 +1,71 @@
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
+ *
+ * This file is part of Hypertable.
+ *
+ * Hypertable is free software; you can redistribute it and/or
+ * modify it under the terms of the GNU General Public License
+ * as published by the Free Software Foundation; version 3
+ * of the License.
+ *
+ * Hypertable is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with this program; if not, write to the Free Software
+ * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
+ * 02110-1301, USA.
+ */
+
+/// @file
+/// Declarations for metrics.
+/// This file contains type declarations for metrics, a collection of classes to
+/// aid in metrics collection.
+
+#ifndef Common_metrics_h
+#define Common_metrics_h
+
+namespace Hypertable {
+
+  /// @addtogroup Common
+  /// @{
+
+  /// Interval metric strucutre.
+  /// This parameterized structure is used to track a metric over a time
+  /// interval.  It contains two members, #previous which is a sample of the
+  /// metric at the beginning of the time window, and #current which is a sample
+  /// of the metric at the current end of the time window.  It includes member
+  /// functions for computing the difference between the samples, and a method
+  /// for computing a rate of change..
+  /// @tparam _Tp Underlying type of the metric
+  template<typename _Tp> struct interval_metric {
+
+    /// Current value
+    _Tp current {};
+
+    /// Previous value
+    _Tp previous {};
+
+    /// Resets the metric.
+    /// This method sets #previous equal to #current.
+    void reset() { previous=current; }
+
+    /// Returns difference between current and previous sample.
+    /// @return Difference between current and previous sample.
+    _Tp diff() { return current-previous; }
+
+    /// Computes rate of change.
+    /// Computes a rate of change of the metric by dividing the difference of
+    /// the samples (#current - #previous) by <code>elapsed_time</code>, which
+    /// is the time over which the two samples were collected.
+    /// @param elapsed_time Elapsed time between previous and current samples
+    /// @return Rate of change of the metric
+    float rate(float elapsed_time) { return (float)diff() / elapsed_time; }
+  };
+
+  /// @}
+}
+
+#endif // Common_metrics_h

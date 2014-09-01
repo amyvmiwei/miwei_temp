@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -23,6 +23,7 @@
 #define HYPERSPACE_MASTER_H
 
 #include <Hyperspace/BerkeleyDbFilesystem.h>
+#include <Hyperspace/MetricsHandler.h>
 #include <Hyperspace/Protocol.h>
 #include <Hyperspace/ServerKeepaliveHandler.h>
 #include <Hyperspace/response/ResponseCallbackAttrExists.h>
@@ -333,6 +334,7 @@ namespace Hyperspace {
     struct sockaddr_in m_local_addr;
     SessionDataVec m_session_heap;
     SessionMap m_session_map;
+    MetricsHandlerPtr m_metrics_handler;
 
     Mutex         m_session_map_mutex;
     Mutex         m_last_tick_mutex;

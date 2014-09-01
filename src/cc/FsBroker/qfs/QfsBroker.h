@@ -23,11 +23,13 @@
 #define HYPERTABLE_QFSBROKER_H
 
 #include <FsBroker/Lib/Broker.h>
+#include <FsBroker/Lib/MetricsHandler.h>
 
-#include <Common/String.h>
 #include <Common/Properties.h>
+#include <Common/String.h>
 
 #include <atomic>
+#include <string>
 
 extern "C" {
 #include <unistd.h>
@@ -103,6 +105,9 @@ namespace Hypertable {
 
     /// Atomic counter for file descriptor assignment
     static std::atomic<int> ms_next_fd;
+
+    /// Metrics collection handler
+    MetricsHandlerPtr m_metrics_handler;
 
     std::string m_host;
     int m_port;

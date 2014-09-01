@@ -11,6 +11,7 @@ add_subdirectory(cc/FsBroker/Lib)
 add_subdirectory(cc/FsBroker/local)
 add_subdirectory(cc/Benchmark)
 
+add_subdirectory(py/ganglia)
 add_subdirectory(rb/Monitoring)
 
 if (Thrift_FOUND)

@@ -62,6 +62,8 @@ namespace Hypertable {
         scan_mbps = 0.0;
         update_mbps = 0.0;
         period_millis = 0;
+        compactions_major = compactions_minor =
+          compactions_merging = compactions_gc = 0;
       }
       uint32_t scan_count;    //!< Scan count
       uint32_t scan_cells;    //!< Cells scanned
@@ -73,6 +75,10 @@ namespace Hypertable {
       double update_mbps;     //!< Megabytes/s updated
       uint32_t sync_count;    //!< Sync count
       int64_t period_millis;  //!< Time period over which stats are computed
+      int32_t compactions_major;
+      int32_t compactions_minor;
+      int32_t compactions_merging;
+      int32_t compactions_gc;
     };
 
     /** Constructor.
@@ -116,6 +122,26 @@ namespace Hypertable {
       m_running.update_cells += cells;
       m_running.update_bytes += total_bytes;
       m_running.sync_count += syncs;
+    }
+
+    void increment_compactions_major() {
+      ScopedLock lock(m_mutex);
+      m_running.compactions_major++;
+    }
+
+    void increment_compactions_minor() {
+      ScopedLock lock(m_mutex);
+      m_running.compactions_minor++;
+    }
+
+    void increment_compactions_merging() {
+      ScopedLock lock(m_mutex);
+      m_running.compactions_merging++;
+    }
+
+    void increment_compactions_gc() {
+      ScopedLock lock(m_mutex);
+      m_running.compactions_gc++;
     }
 
     /** Recomputes statistics.

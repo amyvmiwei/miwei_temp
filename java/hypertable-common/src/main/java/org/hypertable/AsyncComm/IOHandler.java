@@ -79,25 +79,21 @@ public abstract class IOHandler {
     public void Shutdown() {
         mShuttingDown = true;
         mReactor.AddToRegistrationQueue(this);
-        mReactor.WakeUp();
     }
 
     public void SetInterest(int interest) {
         mInterest = interest;
         mReactor.AddToRegistrationQueue(this);
-        mReactor.WakeUp();
     }
 
     public void AddInterest(int interest) {
         mInterest |= interest;
         mReactor.AddToRegistrationQueue(this);
-        mReactor.WakeUp();
     }
 
     public void RemoveInterest(int interest) {
         mInterest &= ~interest;
         mReactor.AddToRegistrationQueue(this);
-        mReactor.WakeUp();
     }
 
     Reactor GetReactor() { return mReactor; }

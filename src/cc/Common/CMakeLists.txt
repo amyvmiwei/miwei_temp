@@ -36,6 +36,8 @@ HostSpecification.cc
 InetAddr.cc
 InteractiveCommand.cc
 Logger.cc
+MetricsCollectorGanglia.cc
+MetricsProcess.cc
 MurmurHash.cc
 Properties.cc
 Random.cc
