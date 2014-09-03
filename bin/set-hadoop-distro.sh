@@ -41,7 +41,7 @@ fi
 \cp -f $HT_HOME/lib/java/common/*.jar $HT_HOME/lib/java
 \cp -f $HT_HOME/lib/java/$DISTRO/*.jar $HT_HOME/lib/java
 
-if [ $DISTRO == "cdh4" ]; then
+if [ $DISTRO == "cdh4" ] || [ $DISTRO == "ibmbi3" ]; then
     \cp $HT_HOME/lib/java/apache2/hypertable-*.jar $HT_HOME/lib/java
     \cp $HT_HOME/lib/java/specific/guava-11.0.2.jar $HT_HOME/lib/java
     \cp $HT_HOME/lib/java/specific/protobuf-java-2.4.0a.jar $HT_HOME/lib/java
