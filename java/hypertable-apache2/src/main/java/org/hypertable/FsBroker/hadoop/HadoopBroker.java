@@ -96,6 +96,14 @@ public class HadoopBroker implements Broker {
           }
         }
 
+        // The following config setting prevents the error
+        //   IOException: All datanodes X.X.X.X:50010 are bad. Aborting...
+        int timeout = mConf.getInt("dfs.datanode.socket.write.timeout", 0);
+        if (timeout < 630000) {
+          System.out.println("Increasing 'dfs.datanode.socket.write.timeout' to 630000");
+          mConf.setInt("dfs.datanode.socket.write.timeout", 630000);
+        }
+
         // settings from the hadoop configuration are overwritten by values
         // from the configuration file
         str = props.getProperty("HdfsBroker.dfs.replication");
