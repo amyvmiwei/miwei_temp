@@ -329,7 +329,7 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
         if (ri == null ||
             ((!ri.isSetStart_row() || ts.end_row == null || ts.end_row.compareTo(ri.getStart_row()) > 0 ||
               (ts.end_row.compareTo(ri.getStart_row()) == 0 && ri.isStart_inclusive())) &&
-             (!ri.isSetEnd_row() || ts.start_row == null || ts.start_row.compareTo(ri.getEnd_row()) < 0))) {
+             (!ri.isSetEnd_row() || ts.start_row == null || ts.start_row.compareTo(ri.getEnd_row()) <= 0))) {
           byte [] start_row = (ts.start_row == null) ? null : ts.start_row.getBytes("UTF-8");
           byte [] end_row = (ts.end_row == null) ? null : ts.end_row.getBytes("UTF-8");
           TableSplit split = new TableSplit(tablename.getBytes("UTF-8"), start_row,
