@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,32 +19,33 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RESPONSECALLBACKCREATESCANNER_H
-#define HYPERTABLE_RESPONSECALLBACKCREATESCANNER_H
+#ifndef Hypertable_RangeServer_ResponseCallbackCreateScanner_h
+#define Hypertable_RangeServer_ResponseCallbackCreateScanner_h
+
+#include <Hypertable/Lib/ProfileDataScanner.h>
+
+#include <AsyncComm/ResponseCallback.h>
 
 #include <boost/shared_array.hpp>
-
-#include "Common/Error.h"
-
-#include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ResponseCallback.h"
 
 namespace Hypertable {
 
   class ResponseCallbackCreateScanner : public ResponseCallback {
   public:
-    ResponseCallbackCreateScanner(Comm *comm, EventPtr &event_ptr)
-      : ResponseCallback(comm, event_ptr) { }
+    ResponseCallbackCreateScanner(Comm *comm, EventPtr &event)
+      : ResponseCallback(comm, event) { }
 
     int response(short moreflag, int32_t id, StaticBuffer &ext,
-         int32_t skipped_rows, int32_t skipped_cells);
+                 int32_t skipped_rows, int32_t skipped_cells,
+                 ProfileDataScanner &profile_data);
 
     int response(short moreflag, int32_t id, 
-         boost::shared_array<uint8_t> &ext_buffer, uint32_t ext_len,
-         int32_t skipped_rows, int32_t skipped_cells);
+                 boost::shared_array<uint8_t> &ext_buffer, uint32_t ext_len,
+                 int32_t skipped_rows, int32_t skipped_cells,
+                 ProfileDataScanner &profile_data);
   };
 
 }
 
 
-#endif // HYPERTABLE_RESPONSECALLBACKCREATESCANNER_H
+#endif // Hypertable_RangeServer_ResponseCallbackCreateScanner_h

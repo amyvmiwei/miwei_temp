@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,25 +19,25 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RESPONSECALLBACKFETCHSCANBLOCK_H
-#define HYPERTABLE_RESPONSECALLBACKFETCHSCANBLOCK_H
+#ifndef Hypertable_RangeServer_ResponseCallbackFetchScanblock_h
+#define Hypertable_RangeServer_ResponseCallbackFetchScanblock_h
 
-#include "Common/Error.h"
+#include <Hypertable/Lib/ProfileDataScanner.h>
 
-#include "AsyncComm/CommBuf.h"
-#include "AsyncComm/ResponseCallback.h"
+#include <AsyncComm/ResponseCallback.h>
 
 namespace Hypertable {
 
   class ResponseCallbackFetchScanblock : public ResponseCallback {
   public:
-    ResponseCallbackFetchScanblock(Comm *comm, EventPtr &event_ptr)
-      : ResponseCallback(comm, event_ptr) { }
+    ResponseCallbackFetchScanblock(Comm *comm, EventPtr &event)
+      : ResponseCallback(comm, event) { }
 
-    int response(short moreflag, int32_t id, StaticBuffer &ext);
+    int response(short moreflag, int32_t id, StaticBuffer &ext,
+                 ProfileDataScanner &profile_data);
   };
 
 }
 
 
-#endif // HYPERTABLE_RESPONSECALLBACKFETCHSCANBLOCK_H
+#endif // Hypertable_RangeServer_ResponseCallbackFetchScanblock_h

@@ -1373,6 +1373,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
   uint32_t id = 0;
   SchemaPtr schema;
   ScanContextPtr scan_ctx;
+  ProfileDataScanner profile_data;
   bool decrement_needed=false;
 
   HT_DEBUG_OUT <<"Creating scanner:\n"<< *table << *range_spec
@@ -1443,7 +1444,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       if (m_query_cache->lookup(cache_key, ext_buffer, &ext_len, &cell_count)) {
         // The first argument to the response method is flags and the
         // 0th bit is the EOS (end-of-scan) bit, hence the 1
-        if ((error = cb->response(1, id, ext_buffer, ext_len, 0, 0))
+        if ((error = cb->response(1, id, ext_buffer, ext_len, 0, 0, profile_data))
                 != Error::OK)
           HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
         range->decrement_scan_counter();
@@ -1513,16 +1514,16 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       boost::shared_array<uint8_t> ext_buffer(buffer);
       m_query_cache->insert(cache_key, tablename_ptr, row_key_ptr,
                             columns, cell_count, ext_buffer, rbuf.fill());
-      if ((error = cb->response(1, id, ext_buffer, rbuf.fill(),
-             skipped_rows, skipped_cells)) != Error::OK) {
+      if ((error = cb->response(1, id, ext_buffer, rbuf.fill(), skipped_rows,
+                                skipped_cells, profile_data)) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
     else {
       short moreflag = more ? 0 : 1;
       StaticBuffer ext(rbuf);
-      if ((error = cb->response(moreflag, id, ext, skipped_rows, skipped_cells))
-             != Error::OK) {
+      if ((error = cb->response(moreflag, id, ext, skipped_rows,
+                                skipped_cells, profile_data)) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
@@ -1560,6 +1561,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
   TableInfoPtr table_info;
   TableIdentifierManaged scanner_table;
   SchemaPtr schema;
+  ProfileDataScanner profile_data;
 
   HT_DEBUG_OUT <<"Scanner ID = " << scanner_id << HT_END;
 
@@ -1616,7 +1618,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
       short moreflag = more ? 0 : 1;
       StaticBuffer ext(rbuf);
 
-      error = cb->response(moreflag, scanner_id, ext);
+      error = cb->response(moreflag, scanner_id, ext, profile_data);
       if (error != Error::OK)
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
 

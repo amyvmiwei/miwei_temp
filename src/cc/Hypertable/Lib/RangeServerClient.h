@@ -169,10 +169,11 @@ namespace Hypertable {
      * @param range range specification
      * @param scan_spec scan specification
      * @param handler response handler
+     * @param profile Request should be profiled
      */
     void create_scanner(const CommAddress &addr, const TableIdentifier &table,
                         const RangeSpec &range, const ScanSpec &scan_spec,
-                        DispatchHandler *handler);
+                        DispatchHandler *handler, bool profile=false);
 
     /** Issues a "create scanner" request asynchronously with timer.
      * @param addr address of RangeServer
@@ -181,10 +182,12 @@ namespace Hypertable {
      * @param scan_spec scan specification
      * @param handler response handler
      * @param timer timer
+     * @param profile Request should be profiled
      */
     void create_scanner(const CommAddress &addr, const TableIdentifier &table,
                         const RangeSpec &range, const ScanSpec &scan_spec,
-                        DispatchHandler *handler, Timer &timer);
+                        DispatchHandler *handler, Timer &timer,
+                        bool profile=false);
 
     /** Issues a "create scanner" request.
      * @param addr address of RangeServer
@@ -192,10 +195,11 @@ namespace Hypertable {
      * @param range range specification
      * @param scan_spec scan specification
      * @param scan_block block of return key/value pairs
+     * @param profile Request should be profiled
      */
     void create_scanner(const CommAddress &addr, const TableIdentifier &table,
                         const RangeSpec &range, const ScanSpec &scan_spec,
-                        ScanBlock &scan_block);
+                        ScanBlock &scan_block, bool profile=false);
 
     /** Issues a synchronous "create scanner" request with timer.
      * @param addr address of RangeServer
@@ -204,10 +208,12 @@ namespace Hypertable {
      * @param scan_spec scan specification
      * @param scan_block block of return key/value pairs
      * @param timer timer
+     * @param profile Request should be profiled
      */
     void create_scanner(const CommAddress &addr, const TableIdentifier &table,
                         const RangeSpec &range, const ScanSpec &scan_spec,
-                        ScanBlock &scan_block, Timer &timer);
+                        ScanBlock &scan_block, Timer &timer,
+                        bool profile=false);
 
     /** Issues a "destroy scanner" request asynchronously.
      * @param addr address of RangeServer
@@ -243,35 +249,41 @@ namespace Hypertable {
      * @param addr address of RangeServer
      * @param scanner_id Scanner ID returned from a call to create_scanner.
      * @param handler response handler
+     * @param profile Request should be profiled
      */
     void fetch_scanblock(const CommAddress &addr, int scanner_id,
-                         DispatchHandler *handler);
+                         DispatchHandler *handler, bool profile=false);
 
     /** Issues a "fetch scanblock" request asynchronously.
      * @param addr address of RangeServer
      * @param scanner_id Scanner ID returned from a call to create_scanner.
      * @param handler response handler
      * @param timer timer
+     * @param profile Request should be profiled
      */
     void fetch_scanblock(const CommAddress &addr, int scanner_id,
-                         DispatchHandler *handler, Timer &timer);
+                         DispatchHandler *handler, Timer &timer,
+                         bool profile=false);
 
     /** Issues a synchronous "fetch scanblock" request.
      * @param addr address of RangeServer
      * @param scanner_id scanner ID returned from a call to create_scanner.
      * @param scan_block block of return key/value pairs
+     * @param profile Request should be profiled
      */
     void fetch_scanblock(const CommAddress &addr, int scanner_id,
-                         ScanBlock &scan_block);
+                         ScanBlock &scan_block, bool profile=false);
 
     /** Issues a synchronous "fetch scanblock" request with timer.
      * @param addr address of RangeServer
      * @param scanner_id scanner ID returned from a call to create_scanner.
      * @param scan_block block of return key/value pairs
      * @param timer timer
+     * @param profile Request should be profiled
      */
     void fetch_scanblock(const CommAddress &addr, int scanner_id,
-                         ScanBlock &scan_block, Timer &timer);
+                         ScanBlock &scan_block, Timer &timer,
+                         bool profile=false);
 
     /** Issues a "drop table" request asynchronously.
      * @param addr address of RangeServer
@@ -578,11 +590,12 @@ namespace Hypertable {
     void do_create_scanner(const CommAddress &addr,
                            const TableIdentifier &table, const RangeSpec &range,
                            const ScanSpec &scan_spec, ScanBlock &scan_block,
-                           uint32_t timeout_ms);
+                           uint32_t timeout_ms, bool profile=false);
     void do_destroy_scanner(const CommAddress &addr, int scanner_id,
                             uint32_t timeout_ms);
     void do_fetch_scanblock(const CommAddress &addr, int scanner_id,
-                            ScanBlock &scan_block, uint32_t timeout_ms);
+                            ScanBlock &scan_block, uint32_t timeout_ms,
+                            bool profile=false);
     void do_drop_table(const CommAddress &addr,
                        const TableIdentifier &table,
                        uint32_t timeout_ms);

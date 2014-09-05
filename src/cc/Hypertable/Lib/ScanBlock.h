@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -22,9 +22,12 @@
 #ifndef HYPERTABLE_SCANBLOCK_H
 #define HYPERTABLE_SCANBLOCK_H
 
-#include "AsyncComm/Event.h"
-#include "Common/ByteString.h"
-#include "SerializedKey.h"
+#include <Hypertable/Lib/SerializedKey.h>
+#include <Hypertable/Lib/ProfileDataScanner.h>
+
+#include <AsyncComm/Event.h>
+
+#include <Common/ByteString.h>
 
 #include <memory>
 #include <vector>
@@ -118,6 +121,7 @@ namespace Hypertable {
     Vector m_vec;
     Vector::iterator m_iter;
     EventPtr m_event;
+    ProfileDataScanner m_profile_data;
   };
 
   typedef std::shared_ptr<ScanBlock> ScanBlockPtr;

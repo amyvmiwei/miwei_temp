@@ -51,6 +51,7 @@ namespace Hypertable {
       FLAGS_BIT_REQUEST          = 0x0001, //!< Request message
       FLAGS_BIT_IGNORE_RESPONSE  = 0x0002, //!< Response should be ignored
       FLAGS_BIT_URGENT           = 0x0004, //!< Request is urgent
+      FLAGS_BIT_PROFILE          = 0x0008, //!< Request should be profiled
       FLAGS_BIT_PROXY_MAP_UPDATE = 0x4000, //!< ProxyMap update message
       FLAGS_BIT_PAYLOAD_CHECKSUM = 0x8000  //!< Payload checksumming is enabled
     };
@@ -61,6 +62,7 @@ namespace Hypertable {
       FLAGS_MASK_REQUEST          = 0xFFFE, //!< Request message bit
       FLAGS_MASK_IGNORE_RESPONSE  = 0xFFFD, //!< Response should be ignored bit
       FLAGS_MASK_URGENT           = 0xFFFB, //!< Request is urgent bit
+      FLAGS_MASK_PROFILE          = 0xFFF7, //!< Request should be profiled
       FLAGS_MASK_PROXY_MAP_UPDATE = 0xBFFF, //!< ProxyMap update message bit
       FLAGS_MASK_PAYLOAD_CHECKSUM = 0x7FFF  //!< Payload checksumming is enabled bit
     };

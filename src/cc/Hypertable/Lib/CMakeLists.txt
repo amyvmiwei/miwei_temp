@@ -69,6 +69,7 @@ MetaLogWriter.cc
 NameIdMapper.cc
 Namespace.cc
 NamespaceCache.cc
+ProfileDataScanner.cc
 PseudoTables.cc
 RS_METRICS/RangeMetrics.cc
 RS_METRICS/ReaderTable.cc
