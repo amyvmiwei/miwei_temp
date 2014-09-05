@@ -32,7 +32,7 @@
 #include <Common/MetricsCollectorGanglia.h>
 #include <Common/MetricsProcess.h>
 #include <Common/Properties.h>
-#include <Common/metrics.h>
+#include <Common/metrics>
 
 #include <memory>
 #include <mutex>

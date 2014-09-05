@@ -24,8 +24,8 @@
 /// This file contains type declarations for metrics, a collection of classes to
 /// aid in metrics collection.
 
-#ifndef Common_metrics_h
-#define Common_metrics_h
+#ifndef Common_metrics
+#define Common_metrics
 
 namespace Hypertable {
 
@@ -68,4 +68,4 @@ namespace Hypertable {
   /// @}
 }
 
-#endif // Common_metrics_h
+#endif // Common_metrics
