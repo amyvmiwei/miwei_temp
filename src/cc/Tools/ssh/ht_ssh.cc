@@ -46,6 +46,20 @@
 using namespace Hypertable;
 using namespace std;
 
+namespace {
+  void dump_usage_and_exit() {
+    cout << endl;
+    cout << "ht_ssh version " << version_string() << endl;
+    cout << endl;
+    cout << "This application uses libssh 0.6.3 (https://www.libssh.org/)" << endl;
+    cout << "libssh is licensed under the GNU Lesser General Public License" << endl;
+    cout << endl;
+    cout << "usage: ht_ssh [options] <hosts-specification> <command>" << endl;
+    cout << endl;
+    _exit(1);
+  }
+}
+
 /// @defgroup ssh ssh
 /// @ingroup Tools
 /// Mulit-host ssh automation tool.
@@ -68,16 +82,12 @@ int main(int argc, char **argv) {
       host_spec = argv[i];
     else if (command.empty())
       command = argv[i];
-    else {
-      cout << "usage: cluster [options] <hosts-specification> <command>" << endl;
-      return 1;
-    }
+    else
+      dump_usage_and_exit();
   }
 
-  if (command.empty()) {
-    cout << "usage: cluster [options] <hosts-specification> <command>" << endl;
-    return 1;
-  }
+  if (command.empty())
+    dump_usage_and_exit();
 
   vector<string> hosts;
   try {

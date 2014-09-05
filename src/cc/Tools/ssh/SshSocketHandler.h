@@ -121,6 +121,13 @@ namespace Hypertable {
     /// @param message libssh message
     void global_request_callback(ssh_session session, ssh_message message);
 
+    /// libssh exit status callback
+    /// This function sets #m_command_exit_status to <code>exit_status</code>,
+    /// sets #m_command_exit_status_is_set to <i>true</i>, and then signals
+    /// #m_cond.
+    /// @param exit_status Exit status of issued command
+    void set_exit_status(int exit_status);
+
     /// Waits for connection establishment.
     /// Blocks on #m_cond until in connected state or #m_error is non-empty.  If
     /// connection is not established by <code>deadline</code> then #m_error is
@@ -216,11 +223,17 @@ namespace Hypertable {
     /// libssh callbacks
     ssh_callbacks_struct m_callbacks;
 
+    /// libssh channel callbacks
+    ssh_channel_callbacks_struct m_channel_callbacks;
+
     /// Current command being issued
     std::string m_command;
 
     /// Command exit status
     int m_command_exit_status {};
+
+    /// Flag indicating that the exit status has been set
+    bool m_command_exit_status_is_set {};
 
     /// Output collector for logging
     SshOutputCollector m_log_collector;

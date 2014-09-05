@@ -104,7 +104,7 @@ IOHandlerRaw::handle_event(struct pollfd *event, time_t arrival_time) {
 bool
 IOHandlerRaw::handle_event(struct epoll_event *event, time_t arrival_time) {
 
-  //DisplayEvent(event);
+  //display_event(event);
 
   try {
 
