@@ -357,7 +357,7 @@ cmd_select(NamespacePtr &ns, ConnectionManagerPtr &conn_manager,
 
   fout.strict_sync();
 
-  cb.on_finish((TableMutator*)0);
+  cb.on_finish(scanner.get());
 }
 
 

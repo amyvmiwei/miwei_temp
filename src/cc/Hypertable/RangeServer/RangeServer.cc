@@ -1474,6 +1474,10 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
                                      &cells_scanned, &cells_returned);
+    profile_data.cells_scanned = cells_scanned;
+    profile_data.cells_returned = cells_returned;
+    profile_data.bytes_scanned = bytes_scanned;
+    profile_data.bytes_returned = bytes_returned;
 
     {
       Locker<LoadStatistics> lock(*Global::load_statistics);
@@ -1598,6 +1602,10 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
     mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
                                      &cells_scanned, &cells_returned);
+    profile_data.cells_scanned = cells_scanned;
+    profile_data.cells_returned = cells_returned;
+    profile_data.bytes_scanned = bytes_scanned;
+    profile_data.bytes_returned = bytes_returned;
 
     {
       Locker<LoadStatistics> lock(*Global::load_statistics);

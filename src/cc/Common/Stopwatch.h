@@ -95,6 +95,15 @@ namespace Hypertable {
             + ((double)elapsed_time.nsec / 1000000000.0);
     }
 
+    /** Returns elapsed time in milliseconds.*/
+    int64_t elapsed_millis() {
+      if (m_running) {
+        stop();
+        start();
+      }
+      return (elapsed_time.sec * 1000) + (elapsed_time.nsec / 1000000);
+    }
+
   private:
     /** Flag whether the Stopwatch is currently running */
     bool m_running;

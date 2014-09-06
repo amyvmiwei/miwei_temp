@@ -31,13 +31,14 @@ namespace Hypertable {
 
   class HqlCommandInterpreter : public CommandInterpreter {
   public:
-    HqlCommandInterpreter(Client *client);
+    HqlCommandInterpreter(Client *client, bool profile=false);
     HqlCommandInterpreter(HqlInterpreter *interp);
 
     virtual void execute_line(const String &line);
 
   private:
     HqlInterpreterPtr m_interp;
+    bool m_profile {};
   };
 
   typedef intrusive_ptr<HqlCommandInterpreter> HqlCommandInterpreterPtr;

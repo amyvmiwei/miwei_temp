@@ -56,10 +56,11 @@ namespace {
     int command;
     boost::progress_display *progress;
     Stopwatch stopwatch;
+    bool m_profile {};
 
-    CommandCallback(CommandInterpreter &interp)
+    CommandCallback(CommandInterpreter &interp, bool profile=false)
       : HqlInterpreter::Callback(interp.normal_mode()), commander(interp),
-        command(0), progress(0) {
+        command(0), progress(0), m_profile(profile) {
       format_ts_in_nanos = interp.timestamp_output_format()
           == CommandInterpreter::TIMESTAMP_FORMAT_NANOS;
       output = stdout; // set to stdout
@@ -143,13 +144,41 @@ namespace {
         fflush(stderr);
       }
     }
+
+    virtual void on_finish(TableScanner *scanner) {
+      if (scanner && m_profile) {
+        fputc('\n', stderr);
+        fprintf(stderr, "  Elapsed time:  %lld ms\n", (Lld)stopwatch.elapsed_millis());
+        ProfileDataScanner profile_data;
+        scanner->get_profile_data(profile_data);
+        fprintf(stderr, " Cells scanned:  %lld\n", (Lld)profile_data.cells_scanned);
+        fprintf(stderr, "Cells returned:  %lld\n", (Lld)profile_data.cells_returned);
+        fprintf(stderr, " Bytes scanned:  %lld\n", (Lld)profile_data.bytes_scanned);
+        fprintf(stderr, "Bytes returned:  %lld\n", (Lld)profile_data.bytes_returned);
+        fprintf(stderr, "   Scan blocks:  %d\n", (int)profile_data.scanblocks);
+        fprintf(stderr, "  Sub scanners:  %d\n", (int)profile_data.subscanners);
+        string servers;
+        bool first = true;
+        for (auto & server : profile_data.servers) {
+          if (first)
+            first = false;
+          else
+            servers += ",";
+          servers += server;
+        }
+        fprintf(stderr, "       Servers:  %s\n", servers.c_str());
+        fputc('\n', stderr);
+        fflush(stderr);
+      }
+    }
+
   };
 
 } // local namespace
 
 
-HqlCommandInterpreter::HqlCommandInterpreter(Client *client)
-    : m_interp(client->create_hql_interpreter(false)) {
+HqlCommandInterpreter::HqlCommandInterpreter(Client *client, bool profile)
+  : m_interp(client->create_hql_interpreter(false)), m_profile(profile) {
 }
 
 
@@ -159,7 +188,7 @@ HqlCommandInterpreter::HqlCommandInterpreter(HqlInterpreter *interp)
 
 
 void HqlCommandInterpreter::execute_line(const String &line) {
-  CommandCallback cb(*this);
+  CommandCallback cb(*this, m_profile);
   m_interp->execute(line, cb);
 }
 
