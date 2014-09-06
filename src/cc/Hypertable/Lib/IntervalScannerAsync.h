@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,19 +19,20 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_INTERVALSCANNERASYNC_H
-#define HYPERTABLE_INTERVALSCANNERASYNC_H
+#ifndef Hypertable_Lib_intervalScannerAsync_h
+#define Hypertable_Lib_intervalScannerAsync_h
 
-#include "Common/Properties.h"
-#include "Common/ReferenceCount.h"
-#include "Common/StringExt.h"
+#include <Hypertable/Lib/ProfileDataScanner.h>
+#include <Hypertable/Lib/RangeLocator.h>
+#include <Hypertable/Lib/RangeServerClient.h>
+#include <Hypertable/Lib/ScanBlock.h>
+#include <Hypertable/Lib/ScanCells.h>
+#include <Hypertable/Lib/TableScannerDispatchHandler.h>
+#include <Hypertable/Lib/Types.h>
 
-#include "ScanCells.h"
-#include "RangeLocator.h"
-#include "RangeServerClient.h"
-#include "ScanBlock.h"
-#include "Types.h"
-#include "TableScannerDispatchHandler.h"
+#include <Common/Properties.h>
+#include <Common/ReferenceCount.h>
+#include <Common/StringExt.h>
 
 namespace Hypertable {
 
@@ -72,6 +73,10 @@ namespace Hypertable {
     int64_t bytes_scanned() { return m_bytes_scanned; }
     bool is_destroyed_scanner(bool is_create);
 
+    /// Returns reference to profile data.
+    /// @return Reference to profile data
+    ProfileDataScanner &profile_data() { return m_profile_data; }
+
   private:
     void reset_outstanding_status(bool is_create, bool reset_timer);
     void readahead();
@@ -90,6 +95,7 @@ namespace Hypertable {
     ScanLimitState      m_scan_limit_state;
     RangeServerClient   m_range_server;
     TableIdentifierManaged m_table_identifier;
+    ProfileDataScanner m_profile_data;
     bool                m_eos;
     String              m_create_scanner_row;
     RangeLocationInfo   m_range_info;
@@ -122,4 +128,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_INTERVALSCANNERASYNC_H
+#endif // Hypertable_Lib_intervalScannerAsync_h

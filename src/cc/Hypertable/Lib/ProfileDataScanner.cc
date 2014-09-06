@@ -47,7 +47,7 @@ size_t ProfileDataScanner::encoded_length() const {
 
 void ProfileDataScanner::encode(uint8_t **bufp) const {
   encode_i8(bufp, (uint8_t)VERSION);
-  encode_i32(bufp, (uint32_t)ranges);
+  encode_i32(bufp, (uint32_t)subscanners);
   encode_i32(bufp, (uint32_t)scanblocks);
   encode_i64(bufp, (uint64_t)cells_scanned);
   encode_i64(bufp, (uint64_t)cells_returned);
@@ -62,7 +62,7 @@ void ProfileDataScanner::encode(uint8_t **bufp) const {
 
 void ProfileDataScanner::decode(const uint8_t **bufp, size_t *remainp) {
   decode_i8(bufp, remainp);  // skip version for now
-  ranges = (int32_t)decode_i32(bufp, remainp);
+  subscanners = (int32_t)decode_i32(bufp, remainp);
   scanblocks = (int32_t)decode_i32(bufp, remainp);
   cells_scanned = (int64_t)decode_i64(bufp, remainp);
   cells_returned = (int64_t)decode_i64(bufp, remainp);
@@ -71,4 +71,15 @@ void ProfileDataScanner::decode(const uint8_t **bufp, size_t *remainp) {
   size_t count = (size_t)decode_i32(bufp, remainp);
   for (size_t i=0; i<count; i++)
     servers.insert( decode_vstr(bufp, remainp) );
+}
+
+ProfileDataScanner &ProfileDataScanner::operator+=(const ProfileDataScanner &other) {
+  subscanners += other.subscanners;
+  scanblocks += other.scanblocks;
+  cells_scanned += other.cells_scanned;
+  cells_returned += other.cells_returned;
+  bytes_scanned += other.bytes_scanned;
+  bytes_returned += other.bytes_returned;
+  servers.insert(other.servers.begin(), other.servers.end());
+  return *this;
 }

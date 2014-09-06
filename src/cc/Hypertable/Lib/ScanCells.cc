@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,15 +19,24 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
-#include "ScanCells.h"
+#include <Hypertable/Lib/ScanCells.h>
 
 using namespace Hypertable;
 
 bool ScanCells::add(EventPtr &event, int *scanner_id) {
   ScanBlockPtr scanblock = std::make_shared<ScanBlock>();
   scanblock->load(event);
+
+  /// Aggregate profile data
+  ProfileDataScanner profile_data { scanblock->profile_data() };
+  m_profile_data.scanblocks++;
+  m_profile_data.cells_scanned += profile_data.cells_scanned;
+  m_profile_data.cells_returned += profile_data.cells_returned;
+  m_profile_data.bytes_scanned += profile_data.bytes_scanned;
+  m_profile_data.bytes_returned += profile_data.bytes_returned;
+
   m_scanblocks.push_back(scanblock);
   *scanner_id = scanblock->get_scanner_id();
   return scanblock->eos();

@@ -112,6 +112,10 @@ namespace Hypertable {
     /** Returns number of skipped rows because of a CELL_OFFSET predicate */
     int get_skipped_cells() { return m_skipped_cells; }
 
+    /// Returns reference to profile data.
+    /// @return Reference to profile data
+    ProfileDataScanner &profile_data() { return m_profile_data; }
+
   private:
     int m_error;
     uint16_t m_flags;

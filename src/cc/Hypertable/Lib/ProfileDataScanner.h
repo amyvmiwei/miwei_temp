@@ -56,7 +56,9 @@ namespace Hypertable {
     /// @param remainp Address of integer holding amount of remaining buffer
     void decode(const uint8_t **bufp, size_t *remainp) override;
 
-    int32_t ranges {};
+    ProfileDataScanner &operator+=(const ProfileDataScanner &other);
+
+    int32_t subscanners {};
     int32_t scanblocks {};
     int64_t cells_scanned {};
     int64_t cells_returned {};
