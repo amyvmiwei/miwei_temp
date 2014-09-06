@@ -184,13 +184,10 @@ namespace Hypertable {
      * @param table table identifier
      * @param range range specification
      * @param scan_spec scan specification
-     * @param profile Scan should be profiled
      * @return protocol message
      */
     static CommBuf *create_request_create_scanner(const TableIdentifier &table,
-                                                  const RangeSpec &range,
-                                                  const ScanSpec &scan_spec,
-                                                  bool profile=false);
+        const RangeSpec &range, const ScanSpec &scan_spec);
 
     /** Creates a "destroy scanner" request message.
      * @param scanner_id scanner ID returned from a "create scanner" request
@@ -200,11 +197,9 @@ namespace Hypertable {
 
     /** Creates a "fetch scanblock" request message.
      * @param scanner_id scanner ID returned from a "create scanner" request
-     * @param profile Scan should be profiled
      * @return protocol message
      */
-    static CommBuf *create_request_fetch_scanblock(int scanner_id,
-                                                   bool profile=false);
+    static CommBuf *create_request_fetch_scanblock(int scanner_id);
 
     /** Creates a "status" request message.
      * @return protocol message

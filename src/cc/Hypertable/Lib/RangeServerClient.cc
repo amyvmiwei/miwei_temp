@@ -198,11 +198,9 @@ RangeServerClient::update(const CommAddress &addr, uint64_t cluster_id,
 void
 RangeServerClient::create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-                                  const ScanSpec &scan_spec,
-                                  DispatchHandler *handler,
-                                  bool profile) {
+    const ScanSpec &scan_spec, DispatchHandler *handler) {
   CommBufPtr cbp(RangeServerProtocol::create_request_create_scanner(table,
-                                               range, scan_spec, profile));
+                 range, scan_spec));
   send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
@@ -210,40 +208,38 @@ void
 RangeServerClient::create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
     const ScanSpec &scan_spec, DispatchHandler *handler,
-    Timer &timer, bool profile) {
+    Timer &timer) {
   CommBufPtr cbp(RangeServerProtocol::create_request_create_scanner(table,
-                                                range, scan_spec, profile));
+                 range, scan_spec));
   send_message(addr, cbp, handler, timer.remaining());
 }
 
 void
 RangeServerClient::create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
-    const ScanSpec &scan_spec, ScanBlock &scan_block,
-    bool profile) {
+    const ScanSpec &scan_spec, ScanBlock &scan_block) {
   do_create_scanner(addr, table, range, scan_spec,
-                    scan_block, m_default_timeout_ms,
-                    profile);
+                    scan_block, m_default_timeout_ms);
 }
 
 void
 RangeServerClient::create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
     const ScanSpec &scan_spec, ScanBlock &scan_block,
-    Timer &timer, bool profile) {
+    Timer &timer) {
   do_create_scanner(addr, table, range, scan_spec,
-                    scan_block, timer.remaining(), profile);
+                    scan_block, timer.remaining());
 }
 
 void
 RangeServerClient::do_create_scanner(const CommAddress &addr,
     const TableIdentifier &table, const RangeSpec &range,
     const ScanSpec &scan_spec, ScanBlock &scan_block,
-    uint32_t timeout_ms, bool profile) {
+    uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::create_request_create_scanner(table,
-                                              range, scan_spec, profile));
+                 range, scan_spec));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
   if (!sync_handler.wait_for_reply(event))
@@ -301,45 +297,41 @@ RangeServerClient::do_destroy_scanner(const CommAddress &addr, int scanner_id,
 
 void
 RangeServerClient::fetch_scanblock(const CommAddress &addr, int scanner_id,
-                                   DispatchHandler *handler, bool profile) {
+                                   DispatchHandler *handler) {
   CommBufPtr cbp(RangeServerProtocol::
-                 create_request_fetch_scanblock(scanner_id, profile));
+                 create_request_fetch_scanblock(scanner_id));
   send_message(addr, cbp, handler, m_default_timeout_ms);
 }
 
 void
 RangeServerClient::fetch_scanblock(const CommAddress &addr, int scanner_id,
-                                   DispatchHandler *handler, Timer &timer,
-                                   bool profile) {
+                                   DispatchHandler *handler, Timer &timer) {
   CommBufPtr cbp(RangeServerProtocol::
-                 create_request_fetch_scanblock(scanner_id, profile));
+                 create_request_fetch_scanblock(scanner_id));
   send_message(addr, cbp, handler, timer.remaining());
 }
 
 
 void
 RangeServerClient::fetch_scanblock(const CommAddress &addr, int scanner_id,
-                                   ScanBlock &scan_block, bool profile) {
-  do_fetch_scanblock(addr, scanner_id, scan_block,
-                     m_default_timeout_ms, profile);
+                                   ScanBlock &scan_block) {
+  do_fetch_scanblock(addr, scanner_id, scan_block, m_default_timeout_ms);
 }
 
 void
 RangeServerClient::fetch_scanblock(const CommAddress &addr, int scanner_id,
-                                   ScanBlock &scan_block, Timer &timer,
-                                   bool profile) {
-  do_fetch_scanblock(addr, scanner_id, scan_block,
-                     timer.remaining(), profile);
+                                   ScanBlock &scan_block, Timer &timer) {
+  do_fetch_scanblock(addr, scanner_id, scan_block, timer.remaining());
 }
 
 void
 RangeServerClient::do_fetch_scanblock(const CommAddress &addr, int scanner_id,
                                       ScanBlock &scan_block,
-                                      uint32_t timeout_ms, bool profile) {
+                                      uint32_t timeout_ms) {
   DispatchHandlerSynchronizer sync_handler;
   EventPtr event;
   CommBufPtr cbp(RangeServerProtocol::
-                 create_request_fetch_scanblock(scanner_id, profile));
+                 create_request_fetch_scanblock(scanner_id));
   send_message(addr, cbp, &sync_handler, timeout_ms);
 
   if (!sync_handler.wait_for_reply(event))
