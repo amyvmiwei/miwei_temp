@@ -124,6 +124,12 @@ ScanCells::load(SchemaPtr &schema, const String &end_row, bool end_inclusive,
           limit_state->cells_seen >= limit_state->cell_limit)
         return true;
     }
+
+    // If a row limit is set and scanblock is at EOS then check to see if unique
+    // row keys seen (limit_state->rows_seen+1) is equal to the limit
+    if (limit_state->row_limit > 0 && scanblock->eos() &&
+        (limit_state->rows_seen+1) >= limit_state->row_limit)
+      return true;
   }
 
   if (key.row)

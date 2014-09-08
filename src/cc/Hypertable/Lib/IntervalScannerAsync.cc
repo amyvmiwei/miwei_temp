@@ -581,7 +581,7 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
     }
   }
 
-  if (m_state != RESTART && m_defer_readahead)
+  if (!m_eos && m_state != RESTART && m_defer_readahead)
     readahead();
 
   return;

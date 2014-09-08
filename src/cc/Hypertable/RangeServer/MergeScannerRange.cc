@@ -129,8 +129,6 @@ MergeScannerRange::do_initialize()
       m_row_count = 1;
   }
 
-  io_add_output_cell(cur_bytes);
-
   // If this scan is for rebuilding indexes, update index with first key/value
   if (m_index_updater) {
     assert(sstate.key.flag == FLAG_INSERT);
@@ -141,6 +139,8 @@ MergeScannerRange::do_initialize()
   // skip
   if (m_cell_offset || m_row_offset || m_index_updater)
     do_forward();
+  else
+    io_add_output_cell(cur_bytes);
 }
 
 void 
@@ -280,8 +280,9 @@ forward:
       m_cell_count++;
   }
 
-  io_add_output_cell(cur_bytes);
-
   if (m_cell_limit != 0 && m_cell_count > m_cell_limit)
     m_done = true;
+
+  if (!m_done)
+    io_add_output_cell(cur_bytes);
 }
