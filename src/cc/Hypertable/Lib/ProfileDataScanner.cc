@@ -29,6 +29,7 @@
 #include "ProfileDataScanner.h"
 
 #include <Common/Serialization.h>
+#include <Common/StringExt.h>
 
 using namespace Hypertable;
 using namespace Hypertable::Serialization;
@@ -37,7 +38,7 @@ using namespace std;
 #define VERSION 1
 
 size_t ProfileDataScanner::encoded_length() const {
-  size_t length = 45;
+  size_t length = 53;
   if (!servers.empty()) {
     for (auto & str : servers)
       length += encoded_length_vstr(str);
@@ -53,6 +54,7 @@ void ProfileDataScanner::encode(uint8_t **bufp) const {
   encode_i64(bufp, (uint64_t)cells_returned);
   encode_i64(bufp, (uint64_t)bytes_scanned);
   encode_i64(bufp, (uint64_t)bytes_returned);
+  encode_i64(bufp, (uint64_t)disk_read);
   encode_i32(bufp, (uint32_t)servers.size());
   if (!servers.empty()) {
     for (auto & str : servers)
@@ -68,6 +70,7 @@ void ProfileDataScanner::decode(const uint8_t **bufp, size_t *remainp) {
   cells_returned = (int64_t)decode_i64(bufp, remainp);
   bytes_scanned = (int64_t)decode_i64(bufp, remainp);
   bytes_returned = (int64_t)decode_i64(bufp, remainp);
+  disk_read = (int64_t)decode_i64(bufp, remainp);
   size_t count = (size_t)decode_i32(bufp, remainp);
   for (size_t i=0; i<count; i++)
     servers.insert( decode_vstr(bufp, remainp) );
@@ -80,6 +83,42 @@ ProfileDataScanner &ProfileDataScanner::operator+=(const ProfileDataScanner &oth
   cells_returned += other.cells_returned;
   bytes_scanned += other.bytes_scanned;
   bytes_returned += other.bytes_returned;
+  disk_read += other.disk_read;
   servers.insert(other.servers.begin(), other.servers.end());
   return *this;
+}
+
+ProfileDataScanner &ProfileDataScanner::operator-=(const ProfileDataScanner &other) {
+  subscanners -= other.subscanners;
+  scanblocks -= other.scanblocks;
+  cells_scanned -= other.cells_scanned;
+  cells_returned -= other.cells_returned;
+  bytes_scanned -= other.bytes_scanned;
+  bytes_returned -= other.bytes_returned;
+  disk_read -= other.disk_read;
+  for (auto &server : other.servers)
+    servers.erase(server);
+  return *this;
+}
+
+string ProfileDataScanner::to_string() {
+  string str = "{ProfileDataScanner: ";
+  str += string("cells_scanned=") + cells_scanned + " ";
+  str += string("cells_returned=") + cells_returned + " ";
+  str += string("bytes_scanned=") + bytes_scanned + " ";
+  str += string("bytes_returned=") + bytes_returned + " ";
+  str += string("disk_read=") + disk_read + " ";
+  str += string("subscanners=") + subscanners + " ";
+  str += string("scanblocks=") + scanblocks + " ";
+  str += string("servers=");
+  bool first = true;
+  for (auto & server : servers) {
+    if (first)
+      first = false;
+    else
+      str += ",";
+    str += server;
+  }
+  str += "}";
+  return str;
 }

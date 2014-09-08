@@ -30,12 +30,8 @@ bool ScanCells::add(EventPtr &event, int *scanner_id) {
   scanblock->load(event);
 
   /// Aggregate profile data
-  ProfileDataScanner profile_data { scanblock->profile_data() };
+  m_profile_data += scanblock->profile_data();
   m_profile_data.scanblocks++;
-  m_profile_data.cells_scanned += profile_data.cells_scanned;
-  m_profile_data.cells_returned += profile_data.cells_returned;
-  m_profile_data.bytes_scanned += profile_data.bytes_scanned;
-  m_profile_data.bytes_returned += profile_data.bytes_returned;
 
   m_scanblocks.push_back(scanblock);
   *scanner_id = scanblock->get_scanner_id();

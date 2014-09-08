@@ -58,12 +58,17 @@ namespace Hypertable {
 
     ProfileDataScanner &operator+=(const ProfileDataScanner &other);
 
+    ProfileDataScanner &operator-=(const ProfileDataScanner &other);
+
+    std::string to_string();
+
     int32_t subscanners {};
     int32_t scanblocks {};
     int64_t cells_scanned {};
     int64_t cells_returned {};
     int64_t bytes_scanned {};
     int64_t bytes_returned {};
+    int64_t disk_read {};
     std::set<std::string> servers;
   };
 

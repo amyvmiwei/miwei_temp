@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,13 +19,13 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_SCANNERMAP_H
-#define HYPERTABLE_SCANNERMAP_H
+#ifndef Hypertable_RangeServer_ScannerMap_h
+#define Hypertable_RangeServer_ScannerMap_h
 
 #include <Hypertable/RangeServer/CellListScanner.h>
 #include <Hypertable/RangeServer/Range.h>
 
-#include <Common/atomic.h>
+#include <Hypertable/Lib/ProfileDataScanner.h>
 
 #include <boost/thread/mutex.hpp>
 
@@ -33,9 +33,13 @@ extern "C" {
 #include <time.h>
 }
 
+#include <atomic>
 #include <unordered_map>
 
 namespace Hypertable {
+
+  /// @addtogroup RangeServer
+  /// @{
 
   class ScannerMap {
 
@@ -46,13 +50,14 @@ namespace Hypertable {
      * This method computes a unique scanner ID and puts the given scanner
      * and range pointers into a map using the scanner ID as the key.
      *
-     * @param scanner_ptr smart pointer to scanner object
-     * @param range_ptr smart pointer to range object
+     * @param scanner smart pointer to scanner object
+     * @param range smart pointer to range object
      * @param table table identifier for this scanner
+     * @param profile_data Scanner profile data
      * @return unique scanner ID
      */
-    uint32_t put(CellListScannerPtr &scanner_ptr, RangePtr &range_ptr,
-                 const TableIdentifier *table);
+    uint32_t put(CellListScannerPtr &scanner, RangePtr &range,
+                 const TableIdentifier *table, ProfileDataScanner &profile_data);
 
     /**
      * This method retrieves the scanner and range mapped to the given scanner
@@ -60,12 +65,15 @@ namespace Hypertable {
      * entry.
      *
      * @param id scanner id
-     * @param scanner_ptr smart pointer to returned scanner object
-     * @param range_ptr smart pointer to returned range object
+     * @param scanner smart pointer to returned scanner object
+     * @param range smart pointer to returned range object
      * @param table reference to (managed) table identifier
+     * @param profile_data Pointer to profile data structure populated by this
+     * function
      * @return true if found, false if not
      */
-    bool get(uint32_t id, CellListScannerPtr &scanner_ptr, RangePtr &range_ptr, TableIdentifierManaged &table);
+    bool get(uint32_t id, CellListScannerPtr &scanner, RangePtr &range,
+             TableIdentifierManaged &table, ProfileDataScanner *profile_data);
 
     /**
      * This method removes the entry in the scanner map corresponding to the
@@ -96,22 +104,30 @@ namespace Hypertable {
      */
     void get_counts(int32_t *totalp, CstrToInt32Map &table_scanner_count_map);
 
+    /** Updates profile data of a scanner in the map.
+     * @param id Scanner ID of scanner
+     * @param profile_data new profile data to associate with scanner
+     */
+    void update_profile_data(uint32_t id, ProfileDataScanner &profile_data);
+
   private:
 
-    /**
-     * Returns the number of milliseconds since the epoch
+    /** Returns the number of milliseconds since the epoch.
+     * @return Milliseconds since epoch
      */
     int64_t get_timestamp_millis();
 
-    static atomic_t ms_next_id;
+    static std::atomic<int> ms_next_id;
 
-    Mutex          m_mutex;
+    /// %Mutex for serializing access to members
+    Mutex m_mutex;
 
     struct ScanInfo {
-      CellListScannerPtr scanner_ptr;
-      RangePtr range_ptr;
+      CellListScannerPtr scanner;
+      RangePtr range;
       int64_t last_access_millis;
       TableIdentifierManaged table;
+      ProfileDataScanner profile_data;
     };
     typedef std::unordered_map<uint32_t, ScanInfo> CellListScannerMap;
 
@@ -119,7 +135,9 @@ namespace Hypertable {
 
   };
 
+  /// @}
+
 }
 
 
-#endif // HYPERTABLE_SCANNERMAP_H
+#endif // Hypertable_RangeServer_ScannerMap_h

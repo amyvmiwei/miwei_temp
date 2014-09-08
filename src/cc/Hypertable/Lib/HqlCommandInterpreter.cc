@@ -155,6 +155,7 @@ namespace {
         fprintf(stderr, "Cells returned:  %lld\n", (Lld)profile_data.cells_returned);
         fprintf(stderr, " Bytes scanned:  %lld\n", (Lld)profile_data.bytes_scanned);
         fprintf(stderr, "Bytes returned:  %lld\n", (Lld)profile_data.bytes_returned);
+        fprintf(stderr, "     Disk read:  %lld\n", (Lld)profile_data.disk_read);
         fprintf(stderr, "   Scan blocks:  %d\n", (int)profile_data.scanblocks);
         fprintf(stderr, "  Sub scanners:  %d\n", (int)profile_data.subscanners);
         string servers;

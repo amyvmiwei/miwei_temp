@@ -1478,12 +1478,17 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     profile_data.cells_returned = cells_returned;
     profile_data.bytes_scanned = bytes_scanned;
     profile_data.bytes_returned = bytes_returned;
+    profile_data.disk_read = mscanner->get_disk_read();
 
     {
       Locker<LoadStatistics> lock(*Global::load_statistics);
-      Global::load_statistics->add_scan_data(1, cells_scanned, bytes_scanned);
-      range->add_read_data(cells_scanned, cells_returned, bytes_scanned, bytes_returned,
-                           more ? 0 : mscanner->get_disk_read());
+      Global::load_statistics->add_scan_data(1, profile_data.cells_scanned,
+                                             profile_data.bytes_scanned);
+      range->add_read_data(profile_data.cells_scanned,
+                           profile_data.cells_returned,
+                           profile_data.bytes_scanned,
+                           profile_data.bytes_returned,
+                           profile_data.disk_read);
     }
 
     MergeScannerRange *rscan=dynamic_cast<MergeScannerRange *>(scanner.get());
@@ -1492,12 +1497,14 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     if (more) {
       scan_ctx->deep_copy_specs();
-      id = Global::scanner_map.put(scanner, range, table);
+      id = Global::scanner_map.put(scanner, range, table, profile_data);
     }
     else {
       id = 0;
       scanner.reset();
     }
+
+    //HT_INFOF("scanner=%d cell_count=%d %s", (int)id, (int)cell_count, profile_data.to_string().c_str());
 
     if (table->is_metadata())
       HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
@@ -1565,13 +1572,14 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
   TableInfoPtr table_info;
   TableIdentifierManaged scanner_table;
   SchemaPtr schema;
+  ProfileDataScanner profile_data_before;
   ProfileDataScanner profile_data;
 
   HT_DEBUG_OUT <<"Scanner ID = " << scanner_id << HT_END;
 
   try {
 
-    if (!Global::scanner_map.get(scanner_id, scanner, range, scanner_table))
+    if (!Global::scanner_map.get(scanner_id, scanner, range, scanner_table, &profile_data_before))
       HT_THROW(Error::RANGESERVER_INVALID_SCANNER_ID,
                format("scanner ID %d", scanner_id));
 
@@ -1606,17 +1614,28 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
     profile_data.cells_returned = cells_returned;
     profile_data.bytes_scanned = bytes_scanned;
     profile_data.bytes_returned = bytes_returned;
-
-    {
-      Locker<LoadStatistics> lock(*Global::load_statistics);
-      Global::load_statistics->add_scan_data(0, cells_scanned, bytes_scanned);
-      range->add_read_data(cells_scanned, cells_returned, bytes_scanned, bytes_returned,
-                           more ? 0 : mscanner->get_disk_read());
-    }
+    profile_data.disk_read = mscanner->get_disk_read();
 
     if (!more) {
       Global::scanner_map.remove(scanner_id);
       scanner.reset();
+    }
+    else
+      Global::scanner_map.update_profile_data(scanner_id, profile_data);
+
+    profile_data -= profile_data_before;
+
+    //HT_INFOF("scanner=%d cell_count=%d %s", (int)scanner_id, (int)cell_count, profile_data.to_string().c_str());
+
+    {
+      Locker<LoadStatistics> lock(*Global::load_statistics);
+      Global::load_statistics->add_scan_data(0, profile_data.cells_scanned,
+                                             profile_data.bytes_scanned);
+      range->add_read_data(profile_data.cells_scanned,
+                           profile_data.cells_returned,
+                           profile_data.bytes_scanned,
+                           profile_data.bytes_returned,
+                           profile_data.disk_read);
     }
 
     /**

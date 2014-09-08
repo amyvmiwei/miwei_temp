@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,25 +19,27 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
+
 #include "ScannerMap.h"
 
 using namespace Hypertable;
+using namespace std;
 
-atomic_t ScannerMap::ms_next_id = ATOMIC_INIT(0);
+atomic<int> ScannerMap::ms_next_id {};
 
 /**
  */
-uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr,
-                         RangePtr &range_ptr,
-                         const TableIdentifier *table) {
+uint32_t ScannerMap::put(CellListScannerPtr &scanner, RangePtr &range,
+                         const TableIdentifier *table, ProfileDataScanner &profile_data) {
   ScopedLock lock(m_mutex);
   ScanInfo scaninfo;
-  scaninfo.scanner_ptr = scanner_ptr;
-  scaninfo.range_ptr = range_ptr;
+  scaninfo.scanner = scanner;
+  scaninfo.range = range;
   scaninfo.last_access_millis = get_timestamp_millis();
   scaninfo.table= *table;
-  uint32_t id = atomic_inc_return(&ms_next_id);
+  scaninfo.profile_data = profile_data;
+  uint32_t id = ++ms_next_id;
   m_scanner_map[id] = scaninfo;
   return id;
 }
@@ -47,16 +49,17 @@ uint32_t ScannerMap::put(CellListScannerPtr &scanner_ptr,
 /**
  */
 bool
-ScannerMap::get(uint32_t id, CellListScannerPtr &scanner_ptr,
-                RangePtr &range_ptr, TableIdentifierManaged &table) {
+ScannerMap::get(uint32_t id, CellListScannerPtr &scanner, RangePtr &range,
+                TableIdentifierManaged &table,ProfileDataScanner *profile_data){
   ScopedLock lock(m_mutex);
   CellListScannerMap::iterator iter = m_scanner_map.find(id);
   if (iter == m_scanner_map.end())
     return false;
   (*iter).second.last_access_millis = get_timestamp_millis();
-  scanner_ptr = (*iter).second.scanner_ptr;
-  range_ptr = (*iter).second.range_ptr;
+  scanner = (*iter).second.scanner;
+  range = (*iter).second.range;
   table = (*iter).second.table;
+  *profile_data = (*iter).second.profile_data;
   return true;
 }
 
@@ -74,15 +77,14 @@ void ScannerMap::purge_expired(uint32_t max_idle_millis) {
   ScopedLock lock(m_mutex);
   int64_t now_millis = get_timestamp_millis();
   CellListScannerMap::iterator iter = m_scanner_map.begin();
-
   while (iter != m_scanner_map.end()) {
     if ((now_millis - (*iter).second.last_access_millis) > (int64_t)max_idle_millis) {
       CellListScannerMap::iterator tmp_iter = iter;
       HT_WARNF("Destroying scanner %d because it has not been used in %u "
                "milliseconds", (*iter).first, max_idle_millis);
       ++iter;
-      (*tmp_iter).second.scanner_ptr = 0;
-      (*tmp_iter).second.range_ptr = 0;
+      (*tmp_iter).second.scanner = 0;
+      (*tmp_iter).second.range = 0;
       m_scanner_map.erase(tmp_iter);
     }
     else
@@ -104,6 +106,15 @@ void ScannerMap::get_counts(int32_t *totalp, CstrToInt32Map &table_scanner_count
       table_scanner_count_map[(*iter).second.table.id]++;
   }
 
+}
+
+void ScannerMap::update_profile_data(uint32_t id, ProfileDataScanner &profile_data) {
+  ScopedLock lock(m_mutex);
+  auto iter = m_scanner_map.find(id);
+  if (iter == m_scanner_map.end())
+    HT_WARNF("Unable to locate scanner ID %u in scanner map", (unsigned)id);
+  else
+    iter->second.profile_data = profile_data;
 }
 
 
