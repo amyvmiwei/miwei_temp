@@ -505,7 +505,7 @@ void IntervalScannerAsync::set_result(EventPtr &event, ScanCellsPtr &cells,
         bool is_create) {
   cells = new ScanCells;
   m_cur_scanner_finished = cells->add(event, &m_cur_scanner_id);
-  m_profile_data += cells->profile_data();
+
   if (is_create)
     m_profile_data.subscanners++;
 
@@ -536,9 +536,10 @@ void IntervalScannerAsync::set_result(EventPtr &event, ScanCellsPtr &cells,
     m_create_event_saved = false;
     m_range_info = m_next_range_info;
     m_cur_scanner_finished = cells->add(m_create_event, &m_cur_scanner_id);
-    m_profile_data += cells->profile_data();
     m_profile_data.subscanners++;
   }
+
+  m_profile_data += cells->profile_data();
 }
 
 void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
