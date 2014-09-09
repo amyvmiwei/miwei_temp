@@ -254,31 +254,35 @@ std::ostream &Hypertable::operator<<(std::ostream &os, const ColumnPredicate &cp
 
 /** @relates ScanSpec */
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
-  os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
-     <<" cell_limit="<< scan_spec.cell_limit
-     <<" cell_limit_per_family="<< scan_spec.cell_limit_per_family
-     <<" max_versions="<< scan_spec.max_versions
-     <<" return_deletes="<< scan_spec.return_deletes
-     <<" keys_only="<< scan_spec.keys_only;
-  os <<" row_regexp=" << (scan_spec.row_regexp ? scan_spec.row_regexp : "");
-  os <<" value_regexp=" << (scan_spec.value_regexp ? scan_spec.value_regexp : "");
-  os <<" scan_and_filter_rows=" << scan_spec.scan_and_filter_rows;
-  os <<" do_not_cache=" << scan_spec.do_not_cache;
-  os <<" and_column_predicates=" << scan_spec.and_column_predicates;
-  os <<" rebuild_indices=" << scan_spec.rebuild_indices.to_string();
-  os <<" row_offset=" << scan_spec.row_offset;
-  os <<" cell_offset=" << scan_spec.cell_offset;
+  os <<"{ScanSpec:";
 
-  if (!scan_spec.row_intervals.empty()) {
-    os << "\n rows=";
-    foreach_ht(const RowInterval &ri, scan_spec.row_intervals)
-      os << " " << ri;
+  // columns
+  os << " columns=";
+  if (scan_spec.columns.empty())
+    os << '*';
+  else {
+    os << '(';
+    bool first = true;
+    for (auto column : scan_spec.columns) {
+      if (first)
+        first = false;
+      else
+        os << ",";
+      os << column;
+    }
+    os <<')';
   }
-  if (!scan_spec.cell_intervals.empty()) {
-    os << "\n cells=";
-    foreach_ht(const CellInterval &ci, scan_spec.cell_intervals)
-      os << " " << ci;
-  }
+
+  // row intervals
+  for (auto & ri : scan_spec.row_intervals)
+    os << " " << ri;
+
+  // cell intervals
+  for (auto & ci : scan_spec.cell_intervals)
+    os << " " << ci;
+
+#if 0
+  // column predicates
   if (!scan_spec.column_predicates.empty()) {
     os << "\n column_predicates=";
     foreach_ht(const ColumnPredicate &cp, scan_spec.column_predicates) {
@@ -288,14 +292,61 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
       os<< " " << cp.operation << " " << cp.value << ")";
     }
   }
-  if (!scan_spec.columns.empty()) {
-    os << "\n columns=(";
-    foreach_ht (const char *c, scan_spec.columns)
-      os <<"'"<< c << "' ";
-    os <<')';
+#endif  
+  
+  // time interval
+  if (scan_spec.time_interval.first != TIMESTAMP_MIN ||
+      scan_spec.time_interval.second != TIMESTAMP_MAX) {
+    if (scan_spec.time_interval.first != TIMESTAMP_MIN)
+      os << scan_spec.time_interval.first << " <= ";
+    os << "TIMESTAMP";
+    if (scan_spec.time_interval.second != TIMESTAMP_MAX)
+      os << " < " << scan_spec.time_interval.second;
   }
-  os <<"\n time_interval=(" << scan_spec.time_interval.first <<", "
-     << scan_spec.time_interval.second <<")\n}\n";
+
+  if (scan_spec.row_offset)
+    os <<" row_offset=" << scan_spec.row_offset;
+
+  if (scan_spec.row_limit)
+    os << " row_limit="<< scan_spec.row_limit;
+
+  if (scan_spec.cell_offset)
+    os <<" cell_offset=" << scan_spec.cell_offset;
+
+  if (scan_spec.cell_limit)
+    os <<" cell_limit=" << scan_spec.cell_limit;
+
+  if (scan_spec.cell_limit_per_family)
+    os << " cell_limit_per_family=" << scan_spec.cell_limit_per_family;
+
+  if (scan_spec.max_versions)
+    os << " max_versions=" << scan_spec.max_versions;
+
+  if (scan_spec.return_deletes)
+    os << " return_deletes";
+
+  if (scan_spec.keys_only)
+    os << " keys_only";
+
+  if (scan_spec.row_regexp)
+    os << " row_regexp=" << scan_spec.row_regexp;
+
+  if (scan_spec.value_regexp)
+    os << " value_regexp=" << scan_spec.value_regexp;
+
+  if (scan_spec.scan_and_filter_rows)
+    os << " scan_and_filter_rows";
+
+  if (scan_spec.do_not_cache)
+    os << " do_not_cache";
+
+  if (scan_spec.and_column_predicates)
+    os << " and_column_predicates";
+
+  if (scan_spec.rebuild_indices)
+    os << " rebuild_indices=" << scan_spec.rebuild_indices.to_string();
+
+  os << "}";
 
   return os;
 }

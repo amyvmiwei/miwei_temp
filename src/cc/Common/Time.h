@@ -67,7 +67,7 @@ namespace Hypertable {
    *
    * @param early The earlier (older) timestamp
    * @param late The later (newer) timestamp
-   * @return A 64bit nanosecond timestamp
+   * @return Millisecond difference between <code>early</code> and <code>late</code>
    */
   int64_t xtime_diff_millis(boost::xtime &early, boost::xtime &late);
 
