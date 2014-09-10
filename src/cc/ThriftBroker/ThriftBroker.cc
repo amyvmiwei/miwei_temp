@@ -60,6 +60,7 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <unordered_map>
 
@@ -98,6 +99,7 @@ namespace {
 #define LOG_API_START(_expr_) \
   boost::xtime start_time, end_time; \
   std::ostringstream logging_stream;\
+  ScannerInfoPtr scanner_info;\
   g_metrics_handler->request_increment(); \
   if (m_context.log_api || g_log_slow_queries) {\
     boost::xtime_get(&start_time, TIME_UTC_);\
@@ -106,15 +108,21 @@ namespace {
   }
 
 #define LOG_API_FINISH \
-  if (m_context.log_api) { \
+  if (m_context.log_api || (g_log_slow_queries && scanner_info)) { \
     boost::xtime_get(&end_time, TIME_UTC_); \
-    std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    if (m_context.log_api)\
+      std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    if (scanner_info) \
+      scanner_info->latency += xtime_diff_millis(start_time, end_time);\
   }
 
 #define LOG_API_FINISH_E(_expr_) \
-  if (m_context.log_api) { \
+  if (m_context.log_api || (g_log_slow_queries && scanner_info)) { \
     boost::xtime_get(&end_time, TIME_UTC_); \
-    std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << _expr_ << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    if (m_context.log_api)\
+      std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << _expr_ << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    if (scanner_info)\
+      scanner_info->latency += xtime_diff_millis(start_time, end_time);\
   }
 
 
@@ -314,6 +322,80 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
      cp.column_family.c_str(), cp.column_qualifier.c_str(), cp.operation, 
      cp.__isset.value ? cp.value.c_str() : 0));
   }
+}
+
+
+void
+convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpecBuilder &ssb) {
+  if (tss.__isset.row_limit)
+    ssb.set_row_limit(tss.row_limit);
+
+  if (tss.__isset.cell_limit)
+    ssb.set_cell_limit(tss.cell_limit);
+
+  if (tss.__isset.cell_limit_per_family)
+    ssb.set_cell_limit_per_family(tss.cell_limit_per_family);
+
+  if (tss.__isset.versions)
+    ssb.set_max_versions(tss.versions);
+
+  if (tss.__isset.start_time)
+    ssb.set_start_time(tss.start_time);
+
+  if (tss.__isset.end_time)
+    ssb.set_end_time(tss.end_time);
+
+  if (tss.__isset.return_deletes)
+    ssb.set_return_deletes(tss.return_deletes);
+
+  if (tss.__isset.keys_only)
+    ssb.set_keys_only(tss.keys_only);
+
+  if (tss.__isset.row_regexp)
+    ssb.set_row_regexp(tss.row_regexp.c_str());
+
+  if (tss.__isset.value_regexp)
+    ssb.set_value_regexp(tss.value_regexp.c_str());
+
+  if (tss.__isset.scan_and_filter_rows)
+    ssb.set_scan_and_filter_rows(tss.scan_and_filter_rows);
+
+  if (tss.__isset.do_not_cache)
+    ssb.set_do_not_cache(tss.do_not_cache);
+
+  if (tss.__isset.row_offset)
+    ssb.set_row_offset(tss.row_offset);
+
+  if (tss.__isset.cell_offset)
+    ssb.set_cell_offset(tss.cell_offset);
+
+  if (tss.__isset.and_column_predicates)
+    ssb.set_and_column_predicates(tss.and_column_predicates);
+
+  // columns
+  ssb.reserve_columns(tss.columns.size());
+  for (auto & col : tss.columns)
+    ssb.add_column(col);
+
+  // row intervals
+  ssb.reserve_rows(tss.row_intervals.size());
+  for (auto & ri : tss.row_intervals)
+    ssb.add_row_interval(ri.start_row, ri.start_inclusive,
+                         ri.end_row, ri.end_inclusive);
+
+  // cell intervals
+  ssb.reserve_cells(tss.cell_intervals.size());
+  for (auto & ci : tss.cell_intervals)
+    ssb.add_cell_interval(ci.start_row, ci.start_column, ci.start_inclusive,
+                          ci.end_row, ci.end_column, ci.end_inclusive);
+
+  // column predicates
+  ssb.reserve_column_predicates(tss.column_predicates.size());
+  for (auto & cp : tss.column_predicates)
+    ssb.add_column_predicate(cp.column_family, cp.column_qualifier.c_str(),
+                             cp.operation, 
+                             cp.__isset.value ? cp.value.c_str() : 0);
+
 }
 
 void
@@ -741,6 +823,17 @@ void convert_schema(const ThriftGen::Schema &tschema,
 
 }
 
+class ScannerInfo {
+public:
+  ScannerInfo(int64_t ns, const string &t) :
+    ns(ns), table(t), scan_spec_builder(128) { }
+  int64_t ns;
+  const string table;
+  ScanSpecBuilder scan_spec_builder;
+  int64_t latency {};
+};
+typedef std::shared_ptr<ScannerInfo> ScannerInfoPtr;
+
 class ServerHandler;
 
 template <class ResultT, class CellT>
@@ -1069,9 +1162,9 @@ public:
     Scanner id;
     LOG_API_START("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
     try {
-      Hypertable::ScanSpec hss;
-      convert_scan_spec(ss, hss);
-      id = get_object_id(_open_scanner(ns, table, hss));
+      ScannerInfoPtr si = make_shared<ScannerInfo>(ns, table);
+      convert_scan_spec(ss, si->scan_spec_builder);
+      id = get_scanner_id(_open_scanner(ns, table, si->scan_spec_builder.get()), si);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" scanner="<<id);
     return id;
@@ -1126,11 +1219,24 @@ public:
     LOG_API_FINISH;
   }
 
-  virtual void scanner_close(const Scanner scanner) {
-    LOG_API_START("scanner="<< scanner);
+  virtual void scanner_close(const Scanner id) {
+    LOG_API_START("scanner="<< id);
     try {
-      remove_scanner(scanner);
-    } RETHROW("scanner="<< scanner)
+      ClientObjectPtr cobj;
+      remove_scanner(id, cobj, scanner_info);
+      TableScanner *scanner = dynamic_cast<TableScanner *>(cobj.get());
+      if (g_log_slow_queries) {
+        ProfileDataScanner pd;
+        scanner->get_profile_data(pd);
+        boost::xtime_get(&end_time, TIME_UTC_);
+        if (scanner_info->latency >= g_slow_query_latency_threshold)
+          log_slow_query_scanspec(__func__, start_time, 
+                                  scanner_info->latency, pd,
+                                  get_namespace(scanner_info->ns),
+                                  scanner_info->table,
+                                  scanner_info->scan_spec_builder.get());
+      }
+    } RETHROW("scanner="<< id)
     LOG_API_FINISH;
   }
 
@@ -1169,7 +1275,7 @@ public:
           const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
     try {
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
       _next(result, scanner, m_context.next_threshold);
     } RETHROW("scanner="<< scanner_id)
     LOG_API_FINISH_E(" result.size=" << result.size());
@@ -1183,7 +1289,7 @@ public:
           const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
     try {
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
       _next(result, scanner, m_context.next_threshold);
     } RETHROW("scanner="<< scanner_id <<" result.size="<< result.size())
     LOG_API_FINISH_E("result.size="<< result.size());
@@ -1202,7 +1308,7 @@ public:
       SerializedCellsWriter writer(m_context.next_threshold);
       Hypertable::Cell cell;
 
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
 
       while (1) {
         if (scanner->next(cell)) {
@@ -1231,7 +1337,7 @@ public:
   virtual void scanner_get_row(ThriftCells &result, const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id <<" result.size="<< result.size());
     try {
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
       _next_row(result, scanner);
     } RETHROW("scanner=" << scanner_id)
 
@@ -1246,7 +1352,7 @@ public:
           const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
     try {
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
       _next_row(result, scanner);
     } RETHROW("result.size=" << result.size())
     LOG_API_FINISH_E(" result.size="<< result.size());
@@ -1266,7 +1372,7 @@ public:
       Hypertable::Cell cell;
       std::string prev_row;
 
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
 
       while (1) {
         if (scanner->next(cell)) {
@@ -2565,6 +2671,14 @@ public:
     return id;
   }
 
+  int64_t get_scanner_id(TableScanner *scanner, ScannerInfoPtr &info) {
+    ScopedLock lock(m_mutex);
+    int64_t id = reinterpret_cast<int64_t>(scanner);
+    m_object_map.insert(make_pair(id, scanner));
+    m_scanner_info_map.insert(make_pair(id, info));
+    return id;
+  }
+
   void add_reference(int64_t from, int64_t to) {
     ScopedLock lock(m_mutex);
     ObjectMap::iterator it = m_object_map.find(to);
@@ -2588,15 +2702,18 @@ public:
     return scanner;
   }
 
-  TableScanner *get_scanner(int64_t id) {
-    TableScanner *scanner = 
-      dynamic_cast<TableScanner *>(get_object(id));
-    if (scanner == 0) {
+  TableScanner *get_scanner(int64_t id, ScannerInfoPtr &info) {
+    ScopedLock lock(m_mutex);
+    auto it = m_object_map.find(id);
+    if (it == m_object_map.end()) {
       HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
       THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
                format("Invalid scanner id: %lld", (Lld)id));
     }
-    return scanner;
+    auto sit = m_scanner_info_map.find(id);
+    HT_ASSERT(sit != m_scanner_info_map.end());
+    info = sit->second;
+    return dynamic_cast<TableScanner *>(it->second.get());
   }
 
   bool remove_object(int64_t id) {
@@ -2632,11 +2749,38 @@ public:
   }
 
   void remove_scanner(int64_t id) {
-    if (!remove_object(id)) {
+    // destroy client object unlocked
+    ClientObjectPtr item;
+    {
+      ScopedLock lock(m_mutex);
+      m_scanner_info_map.erase(id);
+      ObjectMap::iterator it = m_object_map.find(id);
+      if (it != m_object_map.end()) {
+        item = (*it).second;
+        m_object_map.erase(it);
+      }
+      else {
+        HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
+        THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
+                 format("Invalid scanner id: %lld", (Lld)id));
+      }
+    }
+  }
+
+  void remove_scanner(int64_t id, ClientObjectPtr &scanner, ScannerInfoPtr &info) {
+    ScopedLock lock(m_mutex);
+    ObjectMap::iterator it = m_object_map.find(id);
+    if (it != m_object_map.end()) {
+      scanner = (*it).second;
+      m_object_map.erase(it);
+    }
+    else {
       HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
       THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
                format("Invalid scanner id: %lld", (Lld)id));
     }
+    info = m_scanner_info_map[id];
+    m_scanner_info_map.erase(id);
   }
 
   virtual void shared_mutator_refresh(const ThriftGen::Namespace ns,
@@ -2745,6 +2889,7 @@ private:
   multimap<::int64_t, ClientObjectPtr> m_reference_map;
   ObjectMap m_object_map;
   ObjectMap m_cached_object_map;
+  std::unordered_map< ::int64_t, ScannerInfoPtr> m_scanner_info_map;
 };
 
 template <class ResultT, class CellT>
