@@ -239,6 +239,7 @@ ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
   return os;
 }
 
+/** @relates ColumnPredicate */
 std::ostream &Hypertable::operator<<(std::ostream &os, const ColumnPredicate &cp) {
   os << "{ColumnPredicate";
   if (cp.column_family)
@@ -281,18 +282,9 @@ ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
   for (auto & ci : scan_spec.cell_intervals)
     os << " " << ci;
 
-#if 0
   // column predicates
-  if (!scan_spec.column_predicates.empty()) {
-    os << "\n column_predicates=";
-    foreach_ht(const ColumnPredicate &cp, scan_spec.column_predicates) {
-      os << " (" << cp.column_family;
-      if (cp.column_qualifier && *cp.column_qualifier)
-        os << ":" << cp.column_qualifier;
-      os<< " " << cp.operation << " " << cp.value << ")";
-    }
-  }
-#endif  
+  for (auto & cp : scan_spec.column_predicates)
+    os << " " << cp;
   
   // time interval
   if (scan_spec.time_interval.first != TIMESTAMP_MIN ||
