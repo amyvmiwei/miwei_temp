@@ -86,7 +86,7 @@ protected:
   friend class IntervalScannerAsync;
   friend class IndexScannerCallback;
 
-  /**
+  /** Adds key/value pairs from scan result.
    * @param event the event that contains the scan results
    * @param scanner_id scanner_id for the scanner
    * @return true if this if this event has the eos bit set

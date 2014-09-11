@@ -22,7 +22,7 @@
 /// @file
 /// Definitions for Cronolog.
 /// This file contains type definitions for Cronolog, a class that provides a
-/// rotating log similar to that of cronolog (http://cronolog.org/)
+/// time based rotating log similar to that of cronolog (http://cronolog.org/)
 
 #include <Common/Compat.h>
 

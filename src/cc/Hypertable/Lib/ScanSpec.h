@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_SCANSPEC_H
-#define HYPERTABLE_SCANSPEC_H
+#ifndef Hypertable_Lib_ScanSpec_h
+#define Hypertable_Lib_ScanSpec_h
 
 #include <Hypertable/Lib/KeySpec.h>
 #include <Hypertable/Lib/TableParts.h>
@@ -31,13 +31,12 @@
 
 #include <vector>
 
-
 namespace Hypertable {
 
 using namespace std;
 
 /**
- * Represents a column predicate (... WHERE cf = "value").  
+ * Represents a column predicate (e.g. WHERE cf = "value").  
  * c-string data members are not managed so caller must handle (de)allocation.
  */
 class ColumnPredicate {
@@ -72,6 +71,9 @@ public:
   size_t encoded_length() const;
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
+
+  /// Renders predicate as HQL.
+  /// @return HQL string representing predidate.
   const string render_hql() const;
 
   const char *column_family {};
@@ -100,6 +102,9 @@ public:
   size_t encoded_length() const;
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
+
+  /// Renders row interval as HQL.
+  /// @return HQL string representing row interval.
   const string render_hql() const;
 
   const char *start {};
@@ -129,6 +134,9 @@ public:
   size_t encoded_length() const;
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
+
+  /// Renders cell interval as HQL.
+  /// @return HQL string representing cell interval.
   const string render_hql() const;
 
   const char *start_row {};
@@ -167,6 +175,10 @@ public:
   size_t encoded_length() const;
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
+
+  /// Renders scan spec as an HQL SELECT statement.
+  /// @param table Name of table being selected
+  /// @return HQL SELECT statement.
   const string render_hql(const string &table) const;
 
   void clear() {
@@ -653,4 +665,4 @@ std::ostream &operator<<(std::ostream &os, const ScanSpec &scan_spec);
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_SCANSPEC_H
+#endif // Hypertable_Lib_ScanSpec_h

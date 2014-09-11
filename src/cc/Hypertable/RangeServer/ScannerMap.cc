@@ -52,7 +52,7 @@ bool
 ScannerMap::get(uint32_t id, CellListScannerPtr &scanner, RangePtr &range,
                 TableIdentifierManaged &table,ProfileDataScanner *profile_data){
   ScopedLock lock(m_mutex);
-  CellListScannerMap::iterator iter = m_scanner_map.find(id);
+  auto iter = m_scanner_map.find(id);
   if (iter == m_scanner_map.end())
     return false;
   (*iter).second.last_access_millis = get_timestamp_millis();
@@ -76,10 +76,10 @@ bool ScannerMap::remove(uint32_t id) {
 void ScannerMap::purge_expired(uint32_t max_idle_millis) {
   ScopedLock lock(m_mutex);
   int64_t now_millis = get_timestamp_millis();
-  CellListScannerMap::iterator iter = m_scanner_map.begin();
+  auto iter = m_scanner_map.begin();
   while (iter != m_scanner_map.end()) {
     if ((now_millis - (*iter).second.last_access_millis) > (int64_t)max_idle_millis) {
-      CellListScannerMap::iterator tmp_iter = iter;
+      auto tmp_iter = iter;
       HT_WARNF("Destroying scanner %d because it has not been used in %u "
                "milliseconds", (*iter).first, max_idle_millis);
       ++iter;
@@ -100,10 +100,9 @@ void ScannerMap::get_counts(int32_t *totalp, CstrToInt32Map &table_scanner_count
 
   *totalp = m_scanner_map.size();
 
-  for (CellListScannerMap::iterator iter = m_scanner_map.begin();
-       iter != m_scanner_map.end(); ++iter) {
-    if ((tsc_iter = table_scanner_count_map.find((*iter).second.table.id)) != table_scanner_count_map.end())
-      table_scanner_count_map[(*iter).second.table.id]++;
+  for (auto & entry : m_scanner_map) {
+    if ((tsc_iter = table_scanner_count_map.find(entry.second.table.id)) != table_scanner_count_map.end())
+      table_scanner_count_map[entry.second.table.id]++;
   }
 
 }

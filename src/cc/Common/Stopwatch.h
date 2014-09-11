@@ -95,7 +95,8 @@ namespace Hypertable {
             + ((double)elapsed_time.nsec / 1000000000.0);
     }
 
-    /** Returns elapsed time in milliseconds.*/
+    /// Returns elapsed time in milliseconds.
+    /// @return Elapsed time in milliseconds.
     int64_t elapsed_millis() {
       if (m_running) {
         stop();

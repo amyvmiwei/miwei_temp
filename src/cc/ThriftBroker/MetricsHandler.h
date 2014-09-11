@@ -68,7 +68,8 @@ namespace Hypertable {
     /// Collects and publishes metrics.
     /// This method computes and updates the requests/s, errors, connections,
     /// and general process metrics and publishes them via #m_ganglia_collector.
-    /// After metrics have been collected, the timer is re-registered for
+    /// After metrics have been collected, if #m_slow_query_log is not null,
+    /// then it is synced and the timer is re-registered for
     /// #m_collection_interval milliseconds in the future.
     /// @param event %Comm layer timer event
     virtual void handle(EventPtr &event);

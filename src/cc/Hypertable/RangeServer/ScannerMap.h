@@ -117,21 +117,24 @@ namespace Hypertable {
      */
     int64_t get_timestamp_millis();
 
+    /// Next available scanner ID
     static std::atomic<int> ms_next_id;
 
     /// %Mutex for serializing access to members
     Mutex m_mutex;
 
+    /// Holds scanner information.
     struct ScanInfo {
       CellListScannerPtr scanner;
       RangePtr range;
       int64_t last_access_millis;
       TableIdentifierManaged table;
+      /// Accumulated profile data
       ProfileDataScanner profile_data;
     };
-    typedef std::unordered_map<uint32_t, ScanInfo> CellListScannerMap;
 
-    CellListScannerMap m_scanner_map;
+    /// Scanner map
+    std::unordered_map<uint32_t, ScanInfo> m_scanner_map;
 
   };
 

@@ -95,6 +95,7 @@ namespace Hypertable {
     ScanLimitState      m_scan_limit_state;
     RangeServerClient   m_range_server;
     TableIdentifierManaged m_table_identifier;
+    /// Accumulated profile data
     ProfileDataScanner m_profile_data;
     bool                m_eos;
     String              m_create_scanner_row;

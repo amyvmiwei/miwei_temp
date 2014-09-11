@@ -56,19 +56,42 @@ namespace Hypertable {
     /// @param remainp Address of integer holding amount of remaining buffer
     void decode(const uint8_t **bufp, size_t *remainp) override;
 
+    /// Adds profile data from another object.
+    /// Adds profile data from <code>other</code>.
+    /// @param other Other object containing profile data to add
     ProfileDataScanner &operator+=(const ProfileDataScanner &other);
 
+    /// Subtracts profile data from another object.
+    /// Subtracts profile data from <code>other</code>.
+    /// @param other Other object containing profile data to subtract
     ProfileDataScanner &operator-=(const ProfileDataScanner &other);
 
+    /// Returns human-readible string describing profile data.
+    /// @return Human-readible string describing profile data.
     std::string to_string();
 
+    /// Number of RangeServer::create_scanner() calls
     int32_t subscanners {};
+
+    /// Number of scan blocks returned from RangeServers
     int32_t scanblocks {};
+
+    /// Number of cell scanned while executing scan
     int64_t cells_scanned {};
+
+    /// Number of cell returned while executing scan
     int64_t cells_returned {};
+
+    /// Number of bytes scanned while executing scan
     int64_t bytes_scanned {};
+
+    /// Number of bytes returned while executing scan
     int64_t bytes_returned {};
+
+    /// Number of bytes read from disk while executing scan
     int64_t disk_read {};
+
+    /// Set of server proxy names participating in scan
     std::set<std::string> servers;
   };
 
