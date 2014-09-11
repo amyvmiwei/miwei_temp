@@ -41,10 +41,12 @@
 #include <Hypertable/Lib/NamespaceListing.h>
 #include <Hypertable/Lib/ProfileDataScanner.h>
 
+#include <Common/Cronolog.h>
 #include <Common/Init.h>
 #include <Common/Logger.h>
 #include <Common/Mutex.h>
 #include <Common/Random.h>
+#include <Common/System.h>
 #include <Common/Time.h>
 
 #include <concurrency/ThreadManager.h>
@@ -76,6 +78,8 @@ namespace {
   bool g_log_slow_queries {};
   /// Slow query latency threshold
   int32_t g_slow_query_latency_threshold {};
+  /// Slow query log
+  Cronolog *g_slow_query_log {};
 }
 
 #define THROW_TE(_code_, _str_) do { ThriftGen::ClientException te; \
@@ -154,7 +158,7 @@ namespace {
     boost::xtime_get(&end_time, TIME_UTC_); \
     int64_t latency_ms = xtime_diff_millis(start_time, end_time); \
     if (latency_ms >= g_slow_query_latency_threshold) \
-      log_slow_query(__func__, start_time, latency_ms, _pd_, _ns_, _hql_); \
+      log_slow_query(__func__, start_time, end_time, latency_ms, _pd_, _ns_, _hql_); \
   } \
 } while(0)
 
@@ -165,7 +169,7 @@ namespace {
     boost::xtime_get(&end_time, TIME_UTC_); \
     int64_t latency_ms = xtime_diff_millis(start_time, end_time); \
     if (latency_ms >= g_slow_query_latency_threshold) \
-      log_slow_query_scanspec(__func__, start_time, latency_ms, pd, _ns_, _table_, _ss_); \
+      log_slow_query_scanspec(__func__, start_time, end_time, latency_ms, pd, _ns_, _table_, _ss_); \
   } \
 } while(0)
 
@@ -825,9 +829,11 @@ void convert_schema(const ThriftGen::Schema &tschema,
 
 class ScannerInfo {
 public:
+  ScannerInfo(int64_t ns) : ns(ns), scan_spec_builder(128) { }
   ScannerInfo(int64_t ns, const string &t) :
     ns(ns), table(t), scan_spec_builder(128) { }
   int64_t ns;
+  string hql;
   const string table;
   ScanSpecBuilder scan_spec_builder;
   int64_t latency {};
@@ -843,11 +849,15 @@ struct HqlCallback : HqlInterpreter::Callback {
   ResultT &result;
   ServerHandler &handler;
   ProfileDataScanner profile_data;
+  int64_t ns {};
+  string hql;
   bool flush, buffered;
   bool is_scan {};
 
-  HqlCallback(ResultT &r, ServerHandler *handler, bool flush, bool buffered)
-    : result(r), handler(*handler), flush(flush), buffered(buffered) { }
+  HqlCallback(ResultT &r, ServerHandler *handler, const ThriftGen::Namespace ns,
+              const String &hql, bool flush, bool buffered)
+    : result(r), handler(*handler), ns(ns), hql(hql), flush(flush),
+      buffered(buffered) { }
 
   virtual void on_return(const String &);
   virtual void on_scan(TableScanner &);
@@ -956,7 +966,8 @@ public:
   }
 
   void log_slow_query(const char *func_name, boost::xtime start_time,
-                      int64_t latency_ms, ProfileDataScanner &profile_data,
+                      boost::xtime end_time, int64_t latency_ms,
+                      ProfileDataScanner &profile_data,
                       Hypertable::Namespace *ns, const string &hql) {
 
     // Build servers string
@@ -996,16 +1007,20 @@ public:
       hql_ptr = hql_cleaned.c_str();
     }
 
-    HT_INFOF("%lld %s %s %lld %d %d %lld %lld %lld %s %s %s",
-             (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
-             (Lld)latency_ms, profile_data.subscanners, profile_data.scanblocks,
-             (Lld)profile_data.bytes_returned, (Lld)profile_data.bytes_scanned,
-             (Lld)profile_data.disk_read, servers.c_str(), ns_str.c_str(),
-             hql_ptr);
+    string line = format("%lld %s %s %lld %d %d %lld %lld %lld %s %s %s",
+                         (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
+                         (Lld)latency_ms, profile_data.subscanners,
+                         profile_data.scanblocks,
+                         (Lld)profile_data.bytes_returned,
+                         (Lld)profile_data.bytes_scanned,
+                         (Lld)profile_data.disk_read, servers.c_str(),
+                         ns_str.c_str(), hql_ptr);
+    g_slow_query_log->write((time_t)end_time.sec, line);
+
   }
 
   void log_slow_query_scanspec(const char *func_name, boost::xtime start_time,
-                               int64_t latency_ms,
+                               boost::xtime end_time, int64_t latency_ms,
                                ProfileDataScanner &profile_data,
                                Hypertable::Namespace *ns, const string &table,
                                Hypertable::ScanSpec &ss) {
@@ -1028,12 +1043,15 @@ public:
     else if (ns_str[0] != '/')
       ns_str = string("/") + ns_str;
 
-    HT_INFOF("%lld %s %s %lld %d %d %lld %lld %lld %s %s %s",
-             (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
-             (Lld)latency_ms, profile_data.subscanners, profile_data.scanblocks,
-             (Lld)profile_data.bytes_returned, (Lld)profile_data.bytes_scanned,
-             (Lld)profile_data.disk_read, servers.c_str(), ns_str.c_str(),
-             ss.render_hql(table).c_str());
+    string line = format("%lld %s %s %lld %d %d %lld %lld %lld %s %s %s",
+                         (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
+                         (Lld)latency_ms, profile_data.subscanners,
+                         profile_data.scanblocks,
+                         (Lld)profile_data.bytes_returned,
+                         (Lld)profile_data.bytes_scanned,
+                         (Lld)profile_data.disk_read, servers.c_str(),
+                         ns_str.c_str(), ss.render_hql(table).c_str());
+    g_slow_query_log->write((time_t)end_time.sec, line);
   }
   
 
@@ -1044,7 +1062,7 @@ public:
             << " unbuffered="<< unbuffered);
 
     HqlCallback<HqlResult, ThriftGen::Cell>
-      cb(result, this, !noflush, !unbuffered);
+      cb(result, this, ns, hql, !noflush, !unbuffered);
 
     try {
       run_hql_interp(ns, hql, cb);
@@ -1054,6 +1072,10 @@ public:
 
     if (!unbuffered && cb.is_scan)
       LOG_SLOW_QUERY(cb.profile_data, get_namespace(ns), hql);
+    else {
+      cb.hql = hql;
+      cb.ns = ns;
+    }
 
     LOG_API_FINISH;
   }
@@ -1071,7 +1093,7 @@ public:
                    " unbuffered="<< unbuffered);
 
     HqlCallback<HqlResult2, CellAsArray>
-      cb(result, this, !noflush, !unbuffered);
+      cb(result, this, ns, hql, !noflush, !unbuffered);
 
     try {
       run_hql_interp(ns, hql, cb);
@@ -1092,7 +1114,7 @@ public:
                    " unbuffered="<< unbuffered);
 
     HqlCallback<HqlResultAsArrays, CellAsArray>
-      cb(result, this, !noflush, !unbuffered);
+      cb(result, this, ns, hql, !noflush, !unbuffered);
 
     try {
       run_hql_interp(ns, hql, cb);
@@ -1230,12 +1252,20 @@ public:
         ProfileDataScanner pd;
         scanner->get_profile_data(pd);
         boost::xtime_get(&end_time, TIME_UTC_);
-        if (scanner_info->latency >= g_slow_query_latency_threshold)
-          log_slow_query_scanspec(__func__, start_time, 
-                                  scanner_info->latency, pd,
-                                  get_namespace(scanner_info->ns),
-                                  scanner_info->table,
-                                  scanner_info->scan_spec_builder.get());
+        if (scanner_info->latency >= g_slow_query_latency_threshold) {
+          if (scanner_info->hql.empty())
+            log_slow_query_scanspec(__func__, start_time, end_time,
+                                    scanner_info->latency, pd,
+                                    get_namespace(scanner_info->ns),
+                                    scanner_info->table,
+                                    scanner_info->scan_spec_builder.get());
+          else
+            log_slow_query(__func__, start_time, end_time,
+                           scanner_info->latency, pd,
+                           get_namespace(scanner_info->ns),
+                           scanner_info->hql);
+            
+        }
       }
     } RETHROW("scanner="<< id)
     LOG_API_FINISH;
@@ -2916,7 +2946,9 @@ void HqlCallback<ResultT, CellT>::on_scan(TableScanner &s) {
 
   }
   else {
-    result.scanner = handler.get_object_id(&s);
+    ScannerInfoPtr si = make_shared<ScannerInfo>(ns);
+    si->hql = hql;
+    result.scanner = handler.get_scanner_id(&s, si);
     result.__isset.scanner = true;
   }
   is_scan = true;
@@ -3027,15 +3059,18 @@ int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
 
-    g_metrics_handler = std::make_shared<MetricsHandler>(properties);
-
     if (get_bool("ThriftBroker.Hyperspace.Session.Reconnect"))
       properties->set("Hyperspace.Session.Reconnect", true);
 
     if (get_bool("ThriftBroker.SlowQueryLog.Enable")) {
       g_log_slow_queries = true;
       g_slow_query_latency_threshold = get_i32("ThriftBroker.SlowQueryLog.LatencyThreshold");
+      g_slow_query_log = new Cronolog("SlowQuery.log",
+                                      System::install_dir + "/log",
+                                      System::install_dir + "/log/archive");
     }
+
+    g_metrics_handler = std::make_shared<MetricsHandler>(properties, g_slow_query_log);
 
     boost::shared_ptr<ThriftBroker::Context> context(new ThriftBroker::Context());
 

@@ -75,7 +75,7 @@ const string ColumnPredicate::render_hql() const {
       hql.append(column_qualifier);
       hql.append("*");
     }
-    else if (operation & ColumnPredicate::QUALIFIER_PREFIX_MATCH) {
+    else if (operation & ColumnPredicate::QUALIFIER_REGEX_MATCH) {
       hql.append("/");
       hql.append(column_qualifier);
       hql.append("/");
@@ -418,9 +418,6 @@ const string ScanSpec::render_hql(const string &table) const {
 
   if (do_not_cache)
     hql.append(" DO_NOT_CACHE");
-
-  if (and_column_predicates)
-    hql.append(" AND_COLUMN_PREDICATES");
 
   if (rebuild_indices)
     hql.append(format(" REBUILD_INDICES %s", rebuild_indices.to_string().c_str()));
