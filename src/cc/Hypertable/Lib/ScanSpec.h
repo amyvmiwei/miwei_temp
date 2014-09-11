@@ -34,6 +34,8 @@
 
 namespace Hypertable {
 
+using namespace std;
+
 /**
  * Represents a column predicate (... WHERE cf = "value").  
  * c-string data members are not managed so caller must handle (de)allocation.
@@ -70,6 +72,7 @@ public:
   size_t encoded_length() const;
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
+  const string render_hql() const;
 
   const char *column_family {};
   const char *column_qualifier {};
@@ -97,6 +100,7 @@ public:
   size_t encoded_length() const;
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
+  const string render_hql() const;
 
   const char *start {};
   bool start_inclusive {true};
@@ -125,6 +129,7 @@ public:
   size_t encoded_length() const;
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
+  const string render_hql() const;
 
   const char *start_row {};
   const char *start_column {};
@@ -162,6 +167,7 @@ public:
   size_t encoded_length() const;
   void encode(uint8_t **bufp) const;
   void decode(const uint8_t **bufp, size_t *remainp);
+  const string render_hql(const string &table) const;
 
   void clear() {
     row_limit = 0;

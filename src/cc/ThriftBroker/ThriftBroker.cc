@@ -971,7 +971,11 @@ public:
       servers.append(server);
     }
 
-    string ns_str = ns->get_name();
+    string ns_str(ns->get_name());
+    if (ns_str.empty())
+      ns_str.append("/");
+    else if (ns_str[0] != '/')
+      ns_str = string("/") + ns_str;
 
     // Strip HQL string of newlines
     const char *hql_ptr = hql.c_str();
@@ -996,8 +1000,8 @@ public:
              (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
              (Lld)latency_ms, profile_data.subscanners, profile_data.scanblocks,
              (Lld)profile_data.bytes_returned, (Lld)profile_data.bytes_scanned,
-             (Lld)profile_data.disk_read, servers.c_str(),
-             ns_str.empty() ? "/" : ns_str.c_str(), hql_ptr);
+             (Lld)profile_data.disk_read, servers.c_str(), ns_str.c_str(),
+             hql_ptr);
   }
 
   void log_slow_query_scanspec(const char *func_name, boost::xtime start_time,
@@ -1018,21 +1022,18 @@ public:
       servers.append(server);
     }
 
-    string ns_str = ns->get_name();
-
-    // Build query string
-    string query("FROM ");
-    query += table + " ";
-    std::stringstream sstr;
-    sstr << ss;
-    query += sstr.str();
+    string ns_str(ns->get_name());
+    if (ns_str.empty())
+      ns_str.append("/");
+    else if (ns_str[0] != '/')
+      ns_str = string("/") + ns_str;
 
     HT_INFOF("%lld %s %s %lld %d %d %lld %lld %lld %s %s %s",
              (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
              (Lld)latency_ms, profile_data.subscanners, profile_data.scanblocks,
              (Lld)profile_data.bytes_returned, (Lld)profile_data.bytes_scanned,
-             (Lld)profile_data.disk_read, servers.c_str(),
-             ns_str.empty() ? "/" : ns_str.c_str(), query.c_str());
+             (Lld)profile_data.disk_read, servers.c_str(), ns_str.c_str(),
+             ss.render_hql(table).c_str());
   }
   
 
