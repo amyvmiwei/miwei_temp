@@ -1,3 +1,31 @@
+Version 0.9.8.1:
+(2014-09-14)
+
+    Fixed ganglia metrics bug causing last metric value to be reported indefinitely
+    Added slow query log
+    Renamed Common/metrics.h to Common/metrics to fix git filename case sensitivity issue on OSX
+    Fixed deadlocks in ht_ssh
+    issue 1264: Fixed TableSplit/RowInterval comparison in mapreduce InputFormat
+    Added support for IBM BigInsights 3
+    Set HDFS config dfs.datanode.socket.write.timeout to 630000
+    Added support for Ganglia metrics
+    Added thrift python package into installation
+    Fixed problem with REBUILD INDEXES skipping first key/value
+    Fixed large row METADATA scanning problem
+    Added ability to limit number of initialization tasks per maintenance interval
+    Added ht_ssh a mulit-host ssh automation tool
+    Fixed performance problems in MapReduce connector
+    issue 1266: Added symbolic links to hypertable and libthrift jars
+    issue 1264: Fixed bug in mapreduce/TableSplt that caused erroneous results
+    Maven'ized the Java build
+    issue 127: Fixed laptop suspend problem on OSX
+    issue 1027: Removed bad assert in ~IntervalScannerAsync
+    Use stable_sort to sort keys in client mutator buffer
+    Fixed some memory problems reported by Andy.
+    Make Perl thrift Exception classes derive from Error
+    Fixed bug causing GC compactions to get skipped for inactive ranges
+    Pass LOAD_ALL_ENTITIES flag to MetaLog::Reader if required
+
 Version 0.9.8.0:
 (2014-06-23)
 
