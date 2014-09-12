@@ -2584,9 +2584,6 @@ namespace Hypertable {
           Token BLOOMFILTER  = as_lower_d["bloomfilter"];
           Token TRUE         = as_lower_d["true"];
           Token FALSE        = as_lower_d["false"];
-          Token YES          = as_lower_d["yes"];
-          Token NO           = as_lower_d["no"];
-          Token OFF          = as_lower_d["off"];
           Token AND          = as_lower_d["and"];
           Token OR           = as_lower_d["or"];
           Token LIKE         = as_lower_d["like"];

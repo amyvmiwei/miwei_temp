@@ -57,8 +57,6 @@ namespace {
     "  name of the file (minus the .tsv extension) is\n"
     "  taken as the category.\n";
 
-  const int RETRY_TIMEOUT = 30;
-
 }
 
 

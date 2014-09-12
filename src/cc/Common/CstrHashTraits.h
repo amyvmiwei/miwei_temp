@@ -56,7 +56,7 @@ struct CstrHashTraits {
 
 inline size_t
 hash_case_cstr(const char *s) {
-  register size_t ret = 0;
+  size_t ret = 0;
 
   for (; *s; ++s)
     ret += (ret << 3) + tolower((unsigned)*s);

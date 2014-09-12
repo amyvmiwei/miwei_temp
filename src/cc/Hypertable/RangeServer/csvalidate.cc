@@ -110,8 +110,8 @@ namespace {
     uint16_t block_header_format;
   };
 
-  const char DATA_BLOCK_MAGIC[10]           =
-    { 'D','a','t','a','-','-','-','-','-','-' };
+  //const char DATA_BLOCK_MAGIC[10]={ 'D','a','t','a','-','-','-','-','-','-' };
+
   const char INDEX_FIXED_BLOCK_MAGIC[10]    =
     { 'I','d','x','F','i','x','-','-','-','-' };
   const char INDEX_VARIABLE_BLOCK_MAGIC[10] =

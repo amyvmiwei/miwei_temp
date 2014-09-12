@@ -42,7 +42,7 @@ namespace Hypertable {
  * @return The calculated hash value
  */
 inline size_t tcl_hash(const char *s) {
-  register size_t ret = 0;
+  size_t ret = 0;
 
   for (; *s; ++s)
     ret += (ret << 3) + (unsigned)*s;
@@ -59,8 +59,8 @@ inline size_t tcl_hash(const char *s) {
  * @return The calculated hash value
  */
 inline size_t tcl_hash(const void *data, size_t len, size_t seed) {
-  register size_t ret = seed;
-  register const uint8_t *dp = (uint8_t *)data, *end = dp + len;
+  size_t ret = seed;
+  const uint8_t *dp = (uint8_t *)data, *end = dp + len;
 
   for (; dp < end; ++dp)
     ret += (ret << 3) + *dp;
@@ -83,8 +83,8 @@ inline size_t tcl_hash(const void *data, size_t len, size_t seed) {
  * @return The calculated hash value
  */
 inline size_t tcl_hash2(const void *data, size_t len, size_t seed) {
-  register size_t ret = seed;
-  register const uint8_t *dp = (uint8_t *)data;
+  size_t ret = seed;
+  const uint8_t *dp = (uint8_t *)data;
 
   if (len >= 8) do {
     HT_TCLHASH_DO8(dp, 0);

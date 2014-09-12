@@ -214,7 +214,7 @@ const int DEFAULT_PAUSE = 500;
 // for unit conversion to/from MB/GB
 const double KiB = 1024.;
 const double MiB = KiB * 1024;
-const double GiB = MiB * 1024;
+//const double GiB = MiB * 1024;
 
 // for computing rx/tx rate
 RecMutex _net_mutex;
