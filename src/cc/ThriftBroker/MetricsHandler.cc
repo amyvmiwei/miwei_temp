@@ -45,7 +45,8 @@ namespace {
 }
 
 
-MetricsHandler::MetricsHandler(PropertiesPtr &props) {
+MetricsHandler::MetricsHandler(PropertiesPtr &props, Cronolog *slow_query_log)
+  : m_slow_query_log(slow_query_log) {
   int16_t port = props->get_i16("Hypertable.Metrics.Ganglia.Port");
   m_ganglia_collector = std::make_shared<MetricsCollectorGanglia>("thriftbroker", port);
   m_collection_interval = props->get_i32("Hypertable.Monitoring.Interval");
@@ -98,6 +99,9 @@ void MetricsHandler::handle(Hypertable::EventPtr &event) {
     }
 
     m_last_timestamp = timestamp;
+
+    if (m_slow_query_log)
+      m_slow_query_log->sync();
 
     if ((error = g_comm->set_timer(m_collection_interval, this)) != Error::OK)
       HT_FATALF("Problem setting timer - %s", Error::get_text(error));

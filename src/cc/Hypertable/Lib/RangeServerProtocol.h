@@ -180,7 +180,9 @@ namespace Hypertable {
     static CommBuf *create_request_commit_log_sync(uint64_t cluster_id,
                                                    const TableIdentifier&table);
 
-    /** Creates a "create scanner" request message.
+    /** Creates a <i>create scanner</i> request message.
+     * Creates a <i>create scanner</i> request message.  Sets
+     * CommHeader::FLAGS_BIT_PROFILE header flag.
      * @param table table identifier
      * @param range range specification
      * @param scan_spec scan specification

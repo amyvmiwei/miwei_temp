@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,15 +19,20 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
-#include "ScanCells.h"
+#include <Hypertable/Lib/ScanCells.h>
 
 using namespace Hypertable;
 
 bool ScanCells::add(EventPtr &event, int *scanner_id) {
   ScanBlockPtr scanblock = std::make_shared<ScanBlock>();
   scanblock->load(event);
+
+  /// Aggregate profile data
+  m_profile_data += scanblock->profile_data();
+  m_profile_data.scanblocks++;
+
   m_scanblocks.push_back(scanblock);
   *scanner_id = scanblock->get_scanner_id();
   return scanblock->eos();
@@ -119,6 +124,12 @@ ScanCells::load(SchemaPtr &schema, const String &end_row, bool end_inclusive,
           limit_state->cells_seen >= limit_state->cell_limit)
         return true;
     }
+
+    // If a row limit is set and scanblock is at EOS then check to see if unique
+    // row keys seen (limit_state->rows_seen+1) is equal to the limit
+    if (limit_state->row_limit > 0 && scanblock->eos() &&
+        (limit_state->rows_seen+1) >= limit_state->row_limit)
+      return true;
   }
 
   if (key.row)

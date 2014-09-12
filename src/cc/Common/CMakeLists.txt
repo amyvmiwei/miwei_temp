@@ -23,6 +23,7 @@ set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Common")
 set(Common_SRCS
 Checksum.cc
 Config.cc
+Cronolog.cc
 Crontab.cc
 DiscreteRandomGenerator.cc
 DiscreteRandomGeneratorFactory.cc

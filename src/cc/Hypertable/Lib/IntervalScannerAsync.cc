@@ -259,7 +259,10 @@ void IntervalScannerAsync::find_range_and_start_scan(const char *row_key, bool h
       // create scanner asynchronously
       m_create_outstanding = true;
       m_range_server.create_scanner(m_next_range_info.addr, m_table_identifier, range,
-          m_scan_spec_builder.get(), &m_create_handler, m_create_timer);
+                                    m_scan_spec_builder.get(), &m_create_handler, m_create_timer);
+      HT_ASSERT(m_next_range_info.addr.is_proxy());
+      m_profile_data.servers.insert(m_next_range_info.addr.proxy);
+                
     }
     catch (Exception &e) {
       String msg = format("Problem creating scanner at %s on %s[%s..%s] - %s",
@@ -503,6 +506,9 @@ void IntervalScannerAsync::set_result(EventPtr &event, ScanCellsPtr &cells,
   cells = new ScanCells;
   m_cur_scanner_finished = cells->add(event, &m_cur_scanner_id);
 
+  if (is_create)
+    m_profile_data.subscanners++;
+
   // if there was an OFFSET (or CELL_OFFSET) predicate in the query and the
   // RangeServer actually skipped rows (or cells) because of this predicate
   // then adjust the ScanSpec for the next scanner.
@@ -530,7 +536,10 @@ void IntervalScannerAsync::set_result(EventPtr &event, ScanCellsPtr &cells,
     m_create_event_saved = false;
     m_range_info = m_next_range_info;
     m_cur_scanner_finished = cells->add(m_create_event, &m_cur_scanner_id);
+    m_profile_data.subscanners++;
   }
+
+  m_profile_data += cells->profile_data();
 }
 
 void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
@@ -573,7 +582,7 @@ void IntervalScannerAsync::load_result(ScanCellsPtr &cells) {
     }
   }
 
-  if (m_state != RESTART && m_defer_readahead)
+  if (!m_eos && m_state != RESTART && m_defer_readahead)
     readahead();
 
   return;

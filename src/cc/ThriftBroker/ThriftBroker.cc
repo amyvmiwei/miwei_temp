@@ -39,11 +39,14 @@
 #include <Hypertable/Lib/HqlInterpreter.h>
 #include <Hypertable/Lib/Key.h>
 #include <Hypertable/Lib/NamespaceListing.h>
+#include <Hypertable/Lib/ProfileDataScanner.h>
 
+#include <Common/Cronolog.h>
 #include <Common/Init.h>
 #include <Common/Logger.h>
 #include <Common/Mutex.h>
 #include <Common/Random.h>
+#include <Common/System.h>
 #include <Common/Time.h>
 
 #include <concurrency/ThreadManager.h>
@@ -59,6 +62,7 @@
 #include <iostream>
 #include <iomanip>
 #include <map>
+#include <memory>
 #include <sstream>
 #include <unordered_map>
 
@@ -70,6 +74,12 @@
 namespace {
   /// Smart pointer to metrics gathering handler
   MetricsHandlerPtr g_metrics_handler;
+  /// Enable slow query log
+  bool g_log_slow_queries {};
+  /// Slow query latency threshold
+  int32_t g_slow_query_latency_threshold {};
+  /// Slow query log
+  Cronolog *g_slow_query_log {};
 }
 
 #define THROW_TE(_code_, _str_) do { ThriftGen::ClientException te; \
@@ -93,22 +103,30 @@ namespace {
 #define LOG_API_START(_expr_) \
   boost::xtime start_time, end_time; \
   std::ostringstream logging_stream;\
+  ScannerInfoPtr scanner_info;\
   g_metrics_handler->request_increment(); \
-  if (m_context.log_api) {\
+  if (m_context.log_api || g_log_slow_queries) {\
     boost::xtime_get(&start_time, TIME_UTC_);\
-    logging_stream << "API " << __func__ << ": " << _expr_;\
+    if (m_context.log_api)\
+      logging_stream << "API " << __func__ << ": " << _expr_;\
   }
 
 #define LOG_API_FINISH \
-  if (m_context.log_api) { \
+  if (m_context.log_api || (g_log_slow_queries && scanner_info)) { \
     boost::xtime_get(&end_time, TIME_UTC_); \
-    std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    if (m_context.log_api)\
+      std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    if (scanner_info) \
+      scanner_info->latency += xtime_diff_millis(start_time, end_time);\
   }
 
 #define LOG_API_FINISH_E(_expr_) \
-  if (m_context.log_api) { \
+  if (m_context.log_api || (g_log_slow_queries && scanner_info)) { \
     boost::xtime_get(&end_time, TIME_UTC_); \
-    std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << _expr_ << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    if (m_context.log_api)\
+      std::cout << start_time.sec <<'.'<< std::setw(9) << std::setfill('0') << start_time.nsec <<" API "<< __func__ <<": "<< logging_stream.str() << _expr_ << " latency=" << xtime_diff_millis(start_time, end_time) << std::endl; \
+    if (scanner_info)\
+      scanner_info->latency += xtime_diff_millis(start_time, end_time);\
   }
 
 
@@ -133,6 +151,26 @@ namespace {
       cout <<"mutator="<< _res_.mutator; \
   } \
   cout << std::endl; \
+} while(0)
+
+#define LOG_SLOW_QUERY(_pd_, _ns_, _hql_) do {   \
+  if (g_log_slow_queries) { \
+    boost::xtime_get(&end_time, TIME_UTC_); \
+    int64_t latency_ms = xtime_diff_millis(start_time, end_time); \
+    if (latency_ms >= g_slow_query_latency_threshold) \
+      log_slow_query(__func__, start_time, end_time, latency_ms, _pd_, _ns_, _hql_); \
+  } \
+} while(0)
+
+#define LOG_SLOW_QUERY_SCANNER(_scanner_, _ns_, _table_, _ss_) do {      \
+  if (g_log_slow_queries) { \
+    ProfileDataScanner pd; \
+    _scanner_->get_profile_data(pd); \
+    boost::xtime_get(&end_time, TIME_UTC_); \
+    int64_t latency_ms = xtime_diff_millis(start_time, end_time); \
+    if (latency_ms >= g_slow_query_latency_threshold) \
+      log_slow_query_scanspec(__func__, start_time, end_time, latency_ms, pd, _ns_, _table_, _ss_); \
+  } \
 } while(0)
 
 namespace Hypertable { namespace ThriftBroker {
@@ -288,6 +326,80 @@ convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpec &hss) {
      cp.column_family.c_str(), cp.column_qualifier.c_str(), cp.operation, 
      cp.__isset.value ? cp.value.c_str() : 0));
   }
+}
+
+
+void
+convert_scan_spec(const ThriftGen::ScanSpec &tss, Hypertable::ScanSpecBuilder &ssb) {
+  if (tss.__isset.row_limit)
+    ssb.set_row_limit(tss.row_limit);
+
+  if (tss.__isset.cell_limit)
+    ssb.set_cell_limit(tss.cell_limit);
+
+  if (tss.__isset.cell_limit_per_family)
+    ssb.set_cell_limit_per_family(tss.cell_limit_per_family);
+
+  if (tss.__isset.versions)
+    ssb.set_max_versions(tss.versions);
+
+  if (tss.__isset.start_time)
+    ssb.set_start_time(tss.start_time);
+
+  if (tss.__isset.end_time)
+    ssb.set_end_time(tss.end_time);
+
+  if (tss.__isset.return_deletes)
+    ssb.set_return_deletes(tss.return_deletes);
+
+  if (tss.__isset.keys_only)
+    ssb.set_keys_only(tss.keys_only);
+
+  if (tss.__isset.row_regexp)
+    ssb.set_row_regexp(tss.row_regexp.c_str());
+
+  if (tss.__isset.value_regexp)
+    ssb.set_value_regexp(tss.value_regexp.c_str());
+
+  if (tss.__isset.scan_and_filter_rows)
+    ssb.set_scan_and_filter_rows(tss.scan_and_filter_rows);
+
+  if (tss.__isset.do_not_cache)
+    ssb.set_do_not_cache(tss.do_not_cache);
+
+  if (tss.__isset.row_offset)
+    ssb.set_row_offset(tss.row_offset);
+
+  if (tss.__isset.cell_offset)
+    ssb.set_cell_offset(tss.cell_offset);
+
+  if (tss.__isset.and_column_predicates)
+    ssb.set_and_column_predicates(tss.and_column_predicates);
+
+  // columns
+  ssb.reserve_columns(tss.columns.size());
+  for (auto & col : tss.columns)
+    ssb.add_column(col);
+
+  // row intervals
+  ssb.reserve_rows(tss.row_intervals.size());
+  for (auto & ri : tss.row_intervals)
+    ssb.add_row_interval(ri.start_row, ri.start_inclusive,
+                         ri.end_row, ri.end_inclusive);
+
+  // cell intervals
+  ssb.reserve_cells(tss.cell_intervals.size());
+  for (auto & ci : tss.cell_intervals)
+    ssb.add_cell_interval(ci.start_row, ci.start_column, ci.start_inclusive,
+                          ci.end_row, ci.end_column, ci.end_inclusive);
+
+  // column predicates
+  ssb.reserve_column_predicates(tss.column_predicates.size());
+  for (auto & cp : tss.column_predicates)
+    ssb.add_column_predicate(cp.column_family, cp.column_qualifier.c_str(),
+                             cp.operation, 
+                             cp.__isset.value ? cp.value.c_str() : 0);
+
 }
 
 void
@@ -715,6 +827,19 @@ void convert_schema(const ThriftGen::Schema &tschema,
 
 }
 
+class ScannerInfo {
+public:
+  ScannerInfo(int64_t ns) : ns(ns), scan_spec_builder(128) { }
+  ScannerInfo(int64_t ns, const string &t) :
+    ns(ns), table(t), scan_spec_builder(128) { }
+  int64_t ns;
+  string hql;
+  const string table;
+  ScanSpecBuilder scan_spec_builder;
+  int64_t latency {};
+};
+typedef std::shared_ptr<ScannerInfo> ScannerInfoPtr;
+
 class ServerHandler;
 
 template <class ResultT, class CellT>
@@ -723,14 +848,21 @@ struct HqlCallback : HqlInterpreter::Callback {
 
   ResultT &result;
   ServerHandler &handler;
+  ProfileDataScanner profile_data;
+  int64_t ns {};
+  string hql;
   bool flush, buffered;
+  bool is_scan {};
 
-  HqlCallback(ResultT &r, ServerHandler *handler, bool flush, bool buffered)
-    : result(r), handler(*handler), flush(flush), buffered(buffered) { }
+  HqlCallback(ResultT &r, ServerHandler *handler, const ThriftGen::Namespace ns,
+              const String &hql, bool flush, bool buffered)
+    : result(r), handler(*handler), ns(ns), hql(hql), flush(flush),
+      buffered(buffered) { }
 
   virtual void on_return(const String &);
   virtual void on_scan(TableScanner &);
   virtual void on_finish(TableMutator *);
+
 };
 
 
@@ -833,18 +965,117 @@ public:
     return m_remote_peer;
   }
 
+  void log_slow_query(const char *func_name, boost::xtime start_time,
+                      boost::xtime end_time, int64_t latency_ms,
+                      ProfileDataScanner &profile_data,
+                      Hypertable::Namespace *ns, const string &hql) {
+
+    // Build servers string
+    string servers;
+    bool first = true;
+    servers.reserve(profile_data.servers.size()*6);
+    for (auto & server : profile_data.servers) {
+      if (first)
+        first = false;
+      else
+        servers.append(",");
+      servers.append(server);
+    }
+
+    string ns_str(ns->get_name());
+    if (ns_str.empty())
+      ns_str.append("/");
+    else if (ns_str[0] != '/')
+      ns_str = string("/") + ns_str;
+
+    // Strip HQL string of newlines
+    const char *hql_ptr = hql.c_str();
+    string hql_cleaned;
+    if (hql.find_first_of('\n') != string::npos) {
+      hql_cleaned.reserve(hql.length());
+      const char *base = hql.c_str();
+      const char *ptr = base;
+      while (*ptr) {
+        while (*ptr && *ptr != '\n')
+          ptr++;
+        hql_cleaned.append(base, ptr-base);
+        if (*ptr) {
+          hql_cleaned.append(" ", 1);
+          base = ++ptr;
+        }
+      }
+      hql_ptr = hql_cleaned.c_str();
+    }
+
+    string line = format("%lld %s %s %lld %d %d %lld %lld %lld %s %s %s",
+                         (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
+                         (Lld)latency_ms, profile_data.subscanners,
+                         profile_data.scanblocks,
+                         (Lld)profile_data.bytes_returned,
+                         (Lld)profile_data.bytes_scanned,
+                         (Lld)profile_data.disk_read, servers.c_str(),
+                         ns_str.c_str(), hql_ptr);
+    g_slow_query_log->write((time_t)end_time.sec, line);
+
+  }
+
+  void log_slow_query_scanspec(const char *func_name, boost::xtime start_time,
+                               boost::xtime end_time, int64_t latency_ms,
+                               ProfileDataScanner &profile_data,
+                               Hypertable::Namespace *ns, const string &table,
+                               Hypertable::ScanSpec &ss) {
+
+    // Build servers string
+    string servers;
+    bool first = true;
+    servers.reserve(profile_data.servers.size()*6);
+    for (auto & server : profile_data.servers) {
+      if (first)
+        first = false;
+      else
+        servers.append(",");
+      servers.append(server);
+    }
+
+    string ns_str(ns->get_name());
+    if (ns_str.empty())
+      ns_str.append("/");
+    else if (ns_str[0] != '/')
+      ns_str = string("/") + ns_str;
+
+    string line = format("%lld %s %s %lld %d %d %lld %lld %lld %s %s %s",
+                         (Lld)start_time.sec, func_name, m_remote_peer.c_str(),
+                         (Lld)latency_ms, profile_data.subscanners,
+                         profile_data.scanblocks,
+                         (Lld)profile_data.bytes_returned,
+                         (Lld)profile_data.bytes_scanned,
+                         (Lld)profile_data.disk_read, servers.c_str(),
+                         ns_str.c_str(), ss.render_hql(table).c_str());
+    g_slow_query_log->write((time_t)end_time.sec, line);
+  }
+  
+
   virtual void
   hql_exec(HqlResult& result, const ThriftGen::Namespace ns,
           const String &hql, bool noflush, bool unbuffered) {
     LOG_API_START("namespace=" << ns << " hql=" << hql << " noflush=" << noflush
             << " unbuffered="<< unbuffered);
+
+    HqlCallback<HqlResult, ThriftGen::Cell>
+      cb(result, this, ns, hql, !noflush, !unbuffered);
+
     try {
-      HqlCallback<HqlResult, ThriftGen::Cell>
-          cb(result, this, !noflush, !unbuffered);
       run_hql_interp(ns, hql, cb);
       //LOG_HQL_RESULT(result);
     } RETHROW("namespace=" << ns << " hql="<< hql <<" noflush="<< noflush
               << " unbuffered="<< unbuffered)
+
+    if (!unbuffered && cb.is_scan)
+      LOG_SLOW_QUERY(cb.profile_data, get_namespace(ns), hql);
+    else {
+      cb.hql = hql;
+      cb.ns = ns;
+    }
 
     LOG_API_FINISH;
   }
@@ -860,13 +1091,19 @@ public:
           const String &hql, bool noflush, bool unbuffered) {
     LOG_API_START("namespace=" << ns << " hql="<< hql <<" noflush="<< noflush <<
                    " unbuffered="<< unbuffered);
+
+    HqlCallback<HqlResult2, CellAsArray>
+      cb(result, this, ns, hql, !noflush, !unbuffered);
+
     try {
-      HqlCallback<HqlResult2, CellAsArray>
-          cb(result, this, !noflush, !unbuffered);
       run_hql_interp(ns, hql, cb);
       //LOG_HQL_RESULT(result);
     } RETHROW("namespace=" << ns << " hql="<< hql <<" noflush="<< noflush <<
               " unbuffered="<< unbuffered)
+
+    if (!unbuffered && cb.is_scan)
+      LOG_SLOW_QUERY(cb.profile_data, get_namespace(ns), hql);
+
     LOG_API_FINISH;
   }
 
@@ -875,13 +1112,19 @@ public:
           const String &hql, bool noflush, bool unbuffered) {
     LOG_API_START("namespace=" << ns << " hql="<< hql <<" noflush="<< noflush <<
                    " unbuffered="<< unbuffered);
+
+    HqlCallback<HqlResultAsArrays, CellAsArray>
+      cb(result, this, ns, hql, !noflush, !unbuffered);
+
     try {
-      HqlCallback<HqlResultAsArrays, CellAsArray>
-          cb(result, this, !noflush, !unbuffered);
       run_hql_interp(ns, hql, cb);
       //LOG_HQL_RESULT(result);
     } RETHROW("namespace=" << ns << " hql="<< hql <<" noflush="<< noflush <<
               " unbuffered="<< unbuffered)
+
+    if (!unbuffered && cb.is_scan)
+      LOG_SLOW_QUERY(cb.profile_data, get_namespace(ns), hql);
+
     LOG_API_FINISH;
   }
 
@@ -942,7 +1185,9 @@ public:
     Scanner id;
     LOG_API_START("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
     try {
-      id = get_object_id(_open_scanner(ns, table, ss));
+      ScannerInfoPtr si = make_shared<ScannerInfo>(ns, table);
+      convert_scan_spec(ss, si->scan_spec_builder);
+      id = get_scanner_id(_open_scanner(ns, table, si->scan_spec_builder.get()), si);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" scanner="<<id);
     return id;
@@ -997,11 +1242,32 @@ public:
     LOG_API_FINISH;
   }
 
-  virtual void scanner_close(const Scanner scanner) {
-    LOG_API_START("scanner="<< scanner);
+  virtual void scanner_close(const Scanner id) {
+    LOG_API_START("scanner="<< id);
     try {
-      remove_scanner(scanner);
-    } RETHROW("scanner="<< scanner)
+      ClientObjectPtr cobj;
+      remove_scanner(id, cobj, scanner_info);
+      TableScanner *scanner = dynamic_cast<TableScanner *>(cobj.get());
+      if (g_log_slow_queries) {
+        ProfileDataScanner pd;
+        scanner->get_profile_data(pd);
+        boost::xtime_get(&end_time, TIME_UTC_);
+        if (scanner_info->latency >= g_slow_query_latency_threshold) {
+          if (scanner_info->hql.empty())
+            log_slow_query_scanspec(__func__, start_time, end_time,
+                                    scanner_info->latency, pd,
+                                    get_namespace(scanner_info->ns),
+                                    scanner_info->table,
+                                    scanner_info->scan_spec_builder.get());
+          else
+            log_slow_query(__func__, start_time, end_time,
+                           scanner_info->latency, pd,
+                           get_namespace(scanner_info->ns),
+                           scanner_info->hql);
+            
+        }
+      }
+    } RETHROW("scanner="<< id)
     LOG_API_FINISH;
   }
 
@@ -1040,7 +1306,7 @@ public:
           const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
     try {
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
       _next(result, scanner, m_context.next_threshold);
     } RETHROW("scanner="<< scanner_id)
     LOG_API_FINISH_E(" result.size=" << result.size());
@@ -1054,7 +1320,7 @@ public:
           const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
     try {
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
       _next(result, scanner, m_context.next_threshold);
     } RETHROW("scanner="<< scanner_id <<" result.size="<< result.size())
     LOG_API_FINISH_E("result.size="<< result.size());
@@ -1073,7 +1339,7 @@ public:
       SerializedCellsWriter writer(m_context.next_threshold);
       Hypertable::Cell cell;
 
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
 
       while (1) {
         if (scanner->next(cell)) {
@@ -1102,7 +1368,7 @@ public:
   virtual void scanner_get_row(ThriftCells &result, const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id <<" result.size="<< result.size());
     try {
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
       _next_row(result, scanner);
     } RETHROW("scanner=" << scanner_id)
 
@@ -1117,7 +1383,7 @@ public:
           const Scanner scanner_id) {
     LOG_API_START("scanner="<< scanner_id);
     try {
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
       _next_row(result, scanner);
     } RETHROW("result.size=" << result.size())
     LOG_API_FINISH_E(" result.size="<< result.size());
@@ -1137,7 +1403,7 @@ public:
       Hypertable::Cell cell;
       std::string prev_row;
 
-      TableScanner *scanner = get_scanner(scanner_id);
+      TableScanner *scanner = get_scanner(scanner_id, scanner_info);
 
       while (1) {
         if (scanner->next(cell)) {
@@ -1176,7 +1442,15 @@ public:
           const String &table, const String &row) {
     LOG_API_START("namespace=" << ns << " table="<< table <<" row="<< row);
     try {
-      _get_row(result,ns, table, row);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
+      TablePtr t = namespace_ptr->open_table(table);
+      Hypertable::ScanSpec ss;
+      ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
+                                                         row.c_str(), true));
+      ss.max_versions = 1;
+      TableScannerPtr scanner = t->create_scanner(ss);
+      _next(result, scanner.get(), INT32_MAX);
+      LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, ss);
     } RETHROW("namespace=" << ns << " table="<< table <<" row="<< row)
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
@@ -1187,7 +1461,15 @@ public:
     LOG_API_START("namespace=" << ns << " table="<< table <<" row="<< row);
 
     try {
-      _get_row(result, ns, table, row);
+      Hypertable::Namespace *namespace_ptr = get_namespace(ns);
+      TablePtr t = namespace_ptr->open_table(table);
+      Hypertable::ScanSpec ss;
+      ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
+                                                         row.c_str(), true));
+      ss.max_versions = 1;
+      TableScannerPtr scanner = t->create_scanner(ss);
+      _next(result, scanner.get(), INT32_MAX);
+      LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, ss);
     } RETHROW("namespace=" << ns << " table="<< table <<" row="<< row)
     LOG_API_FINISH_E("result.size="<< result.size());
   }
@@ -1213,6 +1495,7 @@ public:
       writer.finalize(SerializedCellsFlag::EOS);
 
       result = String((char *)writer.get_buffer(), writer.get_buffer_length());
+      LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, ss);
     } RETHROW("namespace=" << ns << " table="<< table <<" row"<< row)
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
@@ -1226,9 +1509,9 @@ public:
       HT_THROW(Error::BAD_KEY, "Empty row key");
       
     try {
+      Hypertable::ScanSpec ss;
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       TablePtr t = namespace_ptr->open_table(table);
-      Hypertable::ScanSpec ss;
 
       ss.cell_intervals.push_back(Hypertable::CellInterval(row.c_str(),
           column.c_str(), true, row.c_str(), column.c_str(), true));
@@ -1240,8 +1523,11 @@ public:
       if (scanner->next(cell))
         result = String((char *)cell.value, cell.value_len);
 
+      LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, ss);
+
     } RETHROW("namespace=" << ns << " table=" << table << " row="
             << row << " column=" << column)
+
     LOG_API_FINISH_E(" result=" << result);
   }
 
@@ -1251,8 +1537,11 @@ public:
             << ss << " result.size=" << result.size());
 
     try {
-      TableScannerPtr scanner = _open_scanner(ns, table, ss);
+      Hypertable::ScanSpec hss;
+      convert_scan_spec(ss, hss);
+      TableScannerPtr scanner = _open_scanner(ns, table, hss);
       _next(result, scanner.get(), INT32_MAX);
+      LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, hss);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
@@ -1263,8 +1552,11 @@ public:
     LOG_API_START("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
-      TableScannerPtr scanner = _open_scanner(ns, table, ss);
+      Hypertable::ScanSpec hss;
+      convert_scan_spec(ss, hss);
+      TableScannerPtr scanner = _open_scanner(ns, table, hss);
       _next(result, scanner.get(), INT32_MAX);
+      LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, hss);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
@@ -1275,8 +1567,10 @@ public:
     LOG_API_START("namespace=" << ns << " table="<< table <<" scan_spec="<< ss);
 
     try {
+      Hypertable::ScanSpec hss;
+      convert_scan_spec(ss, hss);
       SerializedCellsWriter writer(0, true);
-      TableScannerPtr scanner = _open_scanner(ns, table, ss);
+      TableScannerPtr scanner = _open_scanner(ns, table, hss);
       Hypertable::Cell cell;
 
       while (scanner->next(cell))
@@ -1284,6 +1578,7 @@ public:
       writer.finalize(SerializedCellsFlag::EOS);
 
       result = String((char *)writer.get_buffer(), writer.get_buffer_length());
+      LOG_SLOW_QUERY_SCANNER(scanner, get_namespace(ns), table, hss);
     } RETHROW("namespace=" << ns << " table="<< table <<" scan_spec="<< ss)
     LOG_API_FINISH_E(" result.size="<< result.size());
   }
@@ -2246,12 +2541,10 @@ public:
   }
 
   TableScanner *_open_scanner(const ThriftGen::Namespace ns,
-          const String &table, const ThriftGen::ScanSpec &ss) {
+          const String &table, const Hypertable::ScanSpec &ss) {
     Hypertable::Namespace *namespace_ptr = get_namespace(ns);
     TablePtr t = namespace_ptr->open_table(table);
-    Hypertable::ScanSpec hss;
-    convert_scan_spec(ss, hss);
-    return t->create_scanner(hss, 0);
+    return t->create_scanner(ss, 0);
   }
 
   TableMutator *_open_mutator(const ThriftGen::Namespace ns,
@@ -2295,19 +2588,6 @@ public:
         break;
       }
     }
-  }
-
-  template <class CellT>
-  void _get_row(vector<CellT> &result, const ThriftGen::Namespace ns,
-          const String &table, const String &row) {
-    Hypertable::Namespace *namespace_ptr = get_namespace(ns);
-    TablePtr t = namespace_ptr->open_table(table);
-    Hypertable::ScanSpec ss;
-    ss.row_intervals.push_back(Hypertable::RowInterval(row.c_str(), true,
-                                                       row.c_str(), true));
-    ss.max_versions = 1;
-    TableScannerPtr scanner = t->create_scanner(ss);
-    _next(result, scanner.get(), INT32_MAX);
   }
 
   void run_hql_interp(const ThriftGen::Namespace ns, const String &hql,
@@ -2422,6 +2702,14 @@ public:
     return id;
   }
 
+  int64_t get_scanner_id(TableScanner *scanner, ScannerInfoPtr &info) {
+    ScopedLock lock(m_mutex);
+    int64_t id = reinterpret_cast<int64_t>(scanner);
+    m_object_map.insert(make_pair(id, scanner));
+    m_scanner_info_map.insert(make_pair(id, info));
+    return id;
+  }
+
   void add_reference(int64_t from, int64_t to) {
     ScopedLock lock(m_mutex);
     ObjectMap::iterator it = m_object_map.find(to);
@@ -2445,15 +2733,18 @@ public:
     return scanner;
   }
 
-  TableScanner *get_scanner(int64_t id) {
-    TableScanner *scanner = 
-      dynamic_cast<TableScanner *>(get_object(id));
-    if (scanner == 0) {
+  TableScanner *get_scanner(int64_t id, ScannerInfoPtr &info) {
+    ScopedLock lock(m_mutex);
+    auto it = m_object_map.find(id);
+    if (it == m_object_map.end()) {
       HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
       THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
                format("Invalid scanner id: %lld", (Lld)id));
     }
-    return scanner;
+    auto sit = m_scanner_info_map.find(id);
+    HT_ASSERT(sit != m_scanner_info_map.end());
+    info = sit->second;
+    return dynamic_cast<TableScanner *>(it->second.get());
   }
 
   bool remove_object(int64_t id) {
@@ -2489,11 +2780,38 @@ public:
   }
 
   void remove_scanner(int64_t id) {
-    if (!remove_object(id)) {
+    // destroy client object unlocked
+    ClientObjectPtr item;
+    {
+      ScopedLock lock(m_mutex);
+      m_scanner_info_map.erase(id);
+      ObjectMap::iterator it = m_object_map.find(id);
+      if (it != m_object_map.end()) {
+        item = (*it).second;
+        m_object_map.erase(it);
+      }
+      else {
+        HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
+        THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
+                 format("Invalid scanner id: %lld", (Lld)id));
+      }
+    }
+  }
+
+  void remove_scanner(int64_t id, ClientObjectPtr &scanner, ScannerInfoPtr &info) {
+    ScopedLock lock(m_mutex);
+    ObjectMap::iterator it = m_object_map.find(id);
+    if (it != m_object_map.end()) {
+      scanner = (*it).second;
+      m_object_map.erase(it);
+    }
+    else {
       HT_ERROR_OUT << "Bad scanner id - " << id << HT_END;
       THROW_TE(Error::THRIFTBROKER_BAD_SCANNER_ID,
                format("Invalid scanner id: %lld", (Lld)id));
     }
+    info = m_scanner_info_map[id];
+    m_scanner_info_map.erase(id);
   }
 
   virtual void shared_mutator_refresh(const ThriftGen::Namespace ns,
@@ -2602,6 +2920,7 @@ private:
   multimap<::int64_t, ClientObjectPtr> m_reference_map;
   ObjectMap m_object_map;
   ObjectMap m_cached_object_map;
+  std::unordered_map< ::int64_t, ScannerInfoPtr> m_scanner_info_map;
 };
 
 template <class ResultT, class CellT>
@@ -2621,11 +2940,18 @@ void HqlCallback<ResultT, CellT>::on_scan(TableScanner &s) {
       result.cells.push_back(tcell);
     }
     result.__isset.cells = true;
+
+    if (g_log_slow_queries)
+      s.get_profile_data(profile_data);
+
   }
   else {
-    result.scanner = handler.get_object_id(&s);
+    ScannerInfoPtr si = make_shared<ScannerInfo>(ns);
+    si->hql = hql;
+    result.scanner = handler.get_scanner_id(&s, si);
     result.__isset.scanner = true;
   }
+  is_scan = true;
 }
 
 template <class ResultT, class CellT>
@@ -2733,10 +3059,18 @@ int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
 
-    g_metrics_handler = std::make_shared<MetricsHandler>(properties);
-
     if (get_bool("ThriftBroker.Hyperspace.Session.Reconnect"))
       properties->set("Hyperspace.Session.Reconnect", true);
+
+    if (get_bool("ThriftBroker.SlowQueryLog.Enable")) {
+      g_log_slow_queries = true;
+      g_slow_query_latency_threshold = get_i32("ThriftBroker.SlowQueryLog.LatencyThreshold");
+      g_slow_query_log = new Cronolog("SlowQuery.log",
+                                      System::install_dir + "/log",
+                                      System::install_dir + "/log/archive");
+    }
+
+    g_metrics_handler = std::make_shared<MetricsHandler>(properties, g_slow_query_log);
 
     boost::shared_ptr<ThriftBroker::Context> context(new ThriftBroker::Context());
 

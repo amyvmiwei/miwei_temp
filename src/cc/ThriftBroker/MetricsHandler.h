@@ -29,6 +29,7 @@
 
 #include <AsyncComm/DispatchHandler.h>
 
+#include <Common/Cronolog.h>
 #include <Common/MetricsCollectorGanglia.h>
 #include <Common/MetricsProcess.h>
 #include <Common/Properties.h>
@@ -57,7 +58,8 @@ namespace Hypertable {
     /// #m_collection_interval milliseconds in the future and passes
     /// <code>this</code> as the timer handler.
     /// @param props %Properties object
-    MetricsHandler(PropertiesPtr &props);
+    /// @param slow_query_log Slow query log
+    MetricsHandler(PropertiesPtr &props, Cronolog *slow_query_log);
 
     /// Destructor.
     /// Cancels the timer.
@@ -66,7 +68,8 @@ namespace Hypertable {
     /// Collects and publishes metrics.
     /// This method computes and updates the requests/s, errors, connections,
     /// and general process metrics and publishes them via #m_ganglia_collector.
-    /// After metrics have been collected, the timer is re-registered for
+    /// After metrics have been collected, if #m_slow_query_log is not null,
+    /// then it is synced and the timer is re-registered for
     /// #m_collection_interval milliseconds in the future.
     /// @param event %Comm layer timer event
     virtual void handle(EventPtr &event);
@@ -108,6 +111,9 @@ namespace Hypertable {
 
     /// General process metrics tracker
     MetricsProcess m_metrics_process;
+
+    /// Slow query log
+    Cronolog *m_slow_query_log {};
 
     /// %Timestamp of last metrics collection
     int64_t m_last_timestamp;

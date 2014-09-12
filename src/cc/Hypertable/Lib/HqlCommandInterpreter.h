@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,29 +19,60 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_HQLCOMMANDINTERPRETER_H
-#define HYPERTABLE_HQLCOMMANDINTERPRETER_H
+/// @file
+/// Declarations for HqlCommandInterpreter.
+/// This file contains type declarations for HqlCommandInterpreter, a class for
+/// executing HQL commands with statistic written to stderr.
 
-#include "Tools/Lib/CommandInterpreter.h"
-#include "HqlInterpreter.h"
+#ifndef Hypertable_Lib_HqlCommandInterpreter_h
+#define Hypertable_Lib_HqlCommandInterpreter_h
+
+#include <Hypertable/Lib/HqlInterpreter.h>
+
+#include <Tools/Lib/CommandInterpreter.h>
 
 namespace Hypertable {
 
   class Client;
 
+  /// @addtogroup libHypertable
+  /// @{
+
+  /// HQL command interpreter.
   class HqlCommandInterpreter : public CommandInterpreter {
   public:
-    HqlCommandInterpreter(Client *client);
+
+    /// Constructor.
+    /// @param client Hypertable client object
+    /// @param profile Flag indicating that scan queries should be profiled
+    HqlCommandInterpreter(Client *client, bool profile=false);
+
+    /// Constructor.
     HqlCommandInterpreter(HqlInterpreter *interp);
 
+    /// Executes an HQL command.
+    /// Executes an HQL command provided in <code>line</code>.  For write
+    /// commands, a progress meter is used to report progress to stdout and
+    /// statistics are reported to stderr when finished.  If constructed with
+    /// the profile flag, then profile information is reported to stderr when
+    /// SELECT queries are issued.
+    /// @param line HQL command to execute
     virtual void execute_line(const String &line);
 
   private:
+
+    /// HQL interpreter
     HqlInterpreterPtr m_interp;
+
+    /// Flag indicating if SELECT commands should be profiled
+    bool m_profile {};
   };
 
+  /// Smart pointer to HqlCommandInterpreter
   typedef intrusive_ptr<HqlCommandInterpreter> HqlCommandInterpreterPtr;
+
+  /// @}
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_HQLCOMMANDINTERPRETER_H
+#endif // Hypertable_Lib_HqlCommandInterpreter_h

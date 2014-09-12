@@ -37,6 +37,7 @@ namespace {
       cmdline_desc().add_options()
         ("no-log-sync", boo()->default_value(false),
          "Don't sync rangeserver commit logs on autoflush")
+        ("profile", "Send profiling output to stderr")
         ("namespace", str()->default_value(""),
          "Automatically use specified namespace when starting")
         ;
@@ -58,9 +59,10 @@ int main(int argc, char **argv) {
 
   try {
     init_with_policies<Policies>(argc, argv);
+    bool profile = has("profile");
 
     hypertable = new Hypertable::Client();
-    interp = new HqlCommandInterpreter(hypertable);
+    interp = new HqlCommandInterpreter(hypertable, profile);
     shell = new CommandShell("hypertable", interp, properties);
     shell->set_namespace(get_str("namespace"));
     interp->set_silent(shell->silent());

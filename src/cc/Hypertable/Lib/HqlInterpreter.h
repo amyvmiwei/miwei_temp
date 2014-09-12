@@ -19,18 +19,19 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_HQLINTERPRETER_H
-#define HYPERTABLE_HQLINTERPRETER_H
+#ifndef Hypertable_Lib_HqlInterpreter_h
+#define Hypertable_Lib_HqlInterpreter_h
+
+#include <Hypertable/Lib/Cells.h>
+#include <Hypertable/Lib/TableDumper.h>
+#include <Hypertable/Lib/TableScanner.h>
+#include <Hypertable/Lib/TableMutator.h>
+
+#include <FsBroker/Lib/Client.h>
+
+#include <AsyncComm/ConnectionManager.h>
 
 #include <vector>
-
-#include "AsyncComm/ConnectionManager.h"
-#include "FsBroker/Lib/Client.h"
-
-#include "Cells.h"
-#include "TableDumper.h"
-#include "TableScanner.h"
-#include "TableMutator.h"
 
 namespace Hypertable {
 
@@ -94,6 +95,9 @@ namespace Hypertable {
         }
       }
 
+      /** Called when scan is finished. */
+      virtual void on_finish(TableScanner *scanner) {  }
+
     };
 
     /** An example for simple queries that returns small number of results */
@@ -145,4 +149,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_HQLINTERPRETER_H
+#endif // Hypertable_Lib_HqlInterpreter_h

@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,43 +19,40 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLESCANNERSYNC_H
-#define HYPERTABLE_TABLESCANNERSYNC_H
+#ifndef Hypertable_Lib_TableScanner_h
+#define Hypertable_Lib_TableScanner_h
+
+#include <Hypertable/Lib/ClientObject.h>
+#include <Hypertable/Lib/TableScannerQueue.h>
+#include <Hypertable/Lib/TableScannerAsync.h>
+#include <Hypertable/Lib/TableCallback.h>
+#include <Hypertable/Lib/ScanCells.h>
 
 #include <list>
 
-#include "Common/ReferenceCount.h"
-
-#include "ClientObject.h"
-#include "TableScannerQueue.h"
-#include "TableScannerAsync.h"
-#include "TableCallback.h"
-#include "ScanCells.h"
-
 namespace Hypertable {
 
-  /**
-   */
+  /// @addtogroup libHypertable
+  /// @{
+
+  /** Synchronous table scanner. */
   class TableScanner : public ClientObject {
 
   public:
 
-    /**
-     * Constructs a TableScanner object.
-     *
-     * @param comm pointer to the Comm layer
-     * @param table pointer to the table object
-     * @param range_locator smart pointer to range locator
-     * @param scan_spec reference to scan specification object
-     * @param timeout_ms maximum time in milliseconds to allow scanner
-     *        methods to execute before throwing an exception
+    /** Constructor.
+     * @param comm Comm layer object
+     * @param table Table object
+     * @param range_locator Smart pointer to range locator
+     * @param scan_spec Scan specification
+     * @param timeout_ms Timeout (deadline) milliseconds
      */
     TableScanner(Comm *comm, Table *table,  RangeLocatorPtr &range_locator,
                  const ScanSpec &scan_spec, uint32_t timeout_ms);
 
-    /**
+    /** Destructor.
      * Cancel asynchronous scanner and keep dealing with RangeServer responses
-     * till async scanner is done
+     * till async scanner is finished.
      */
     virtual ~TableScanner() {
       try {
@@ -73,39 +70,38 @@ namespace Hypertable {
       }
     }
 
-    /**
-     * Get the next cell.
-     *
+    /** Gets the next cell.
      * @param cell The cell object to contain the result
-     * @return true for success
+     * @return <i>true</i> on success, <i>false</i> on end of scan
      */
     bool next(Cell &cell);
 
-    /**
-     * Unget one cell.
-     *
+    /** Ungets one cell.
      * Only one cell that's previously obtained from #next can be unget. Mostly
      * designed to provide one cell look-ahead for downstream wrapper to
      * implement next_row.
-     *
      * @param cell the cell object to unget
      * @throws exception if unget is called twice without intervening next
      */
     void unget(const Cell &cell);
 
+    /// Gets profile data.
+    /// @param profile_data Reference to profile data object populated by this
+    /// method
+    void get_profile_data(ProfileDataScanner &profile_data) {
+      m_scanner->get_profile_data(profile_data);
+    }
+
   private:
 
     friend class TableCallback;
-    /**
-     * Callback method for successful scan
-     *
+
+    /** Callback for successful scan.
      * @param cells Vector of returned cells
      */
     void scan_ok(ScanCellsPtr &cells);
 
-    /**
-     * Callback method for scan errors
-     *
+    /** Callback for scan errors.
      * @param error
      * @param error_msg
      */
@@ -115,6 +111,7 @@ namespace Hypertable {
     TableScannerQueuePtr m_queue;
     TableScannerAsyncPtr m_scanner;
     ScanCellsPtr m_cur_cells;
+    ProfileDataScanner m_profile_data;
     size_t m_cur_cells_index;
     size_t m_cur_cells_size;
     int m_error;
@@ -122,10 +119,15 @@ namespace Hypertable {
     bool m_eos;
     Cell m_ungot;
   };
+  
+  /// Smart pointer to TableScanner.
   typedef intrusive_ptr<TableScanner> TableScannerPtr;
 
   void copy(TableScanner &scanner, CellsBuilder &b);
   inline void copy(TableScannerPtr &p, CellsBuilder &v) { copy(*p.get(), v); }
+
+  /// @}
+
 } // namesapce Hypertable
 
-#endif // HYPERTABLE_TABLESCANNER_H
+#endif // Hypertable_Lib_TableScanner_h

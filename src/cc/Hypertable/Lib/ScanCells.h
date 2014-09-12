@@ -19,20 +19,19 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_SCANCELLS_H
-#define HYPERTABLE_SCANCELLS_H
+#ifndef Hypertable_Lib_ScanCells_h
+#define Hypertable_Lib_ScanCells_h
 
-#include "Common/Compat.h"
+#include <Hypertable/Lib/Cells.h>
+#include <Hypertable/Lib/ProfileDataScanner.h>
+#include <Hypertable/Lib/ScanBlock.h>
+#include <Hypertable/Lib/ScanLimitState.h>
+#include <Hypertable/Lib/Schema.h>
+
+#include <Common/StringExt.h>
+#include <Common/ReferenceCount.h>
 
 #include <vector>
-
-#include "Common/StringExt.h"
-#include "Common/ReferenceCount.h"
-
-#include "Cells.h"
-#include "ScanBlock.h"
-#include "ScanLimitState.h"
-#include "Schema.h"
 
 namespace Hypertable {
 
@@ -78,12 +77,16 @@ public:
     return mem_used;
   }
 
+  /// Returns reference to profile data.
+  /// @return Reference to profile data
+  ProfileDataScanner &profile_data() { return m_profile_data; }
+
 protected:
 
   friend class IntervalScannerAsync;
   friend class IndexScannerCallback;
 
-  /**
+  /** Adds key/value pairs from scan result.
    * @param event the event that contains the scan results
    * @param scanner_id scanner_id for the scanner
    * @return true if this if this event has the eos bit set
@@ -134,6 +137,7 @@ protected:
 
   vector<ScanBlockPtr> m_scanblocks;
   CellsBuilderPtr m_cells;
+  ProfileDataScanner m_profile_data;
   bool m_eos;
 }; // ScanCells
 
@@ -141,4 +145,4 @@ typedef intrusive_ptr<ScanCells> ScanCellsPtr;
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_SCANCELLS_H
+#endif // Hypertable_Lib_ScanCells_h

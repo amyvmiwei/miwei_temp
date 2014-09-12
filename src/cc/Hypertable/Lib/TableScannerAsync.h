@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,14 +19,13 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_TABLESCANNERASYNC_H
-#define HYPERTABLE_TABLESCANNERASYNC_H
-
-#include <Common/ReferenceCount.h>
+#ifndef Hypertable_Lib_TableScannerAsync_h
+#define Hypertable_Lib_TableScannerAsync_h
 
 #include <Hypertable/Lib/Cells.h>
 #include <Hypertable/Lib/CellPredicate.h>
 #include <Hypertable/Lib/ClientObject.h>
+#include <Hypertable/Lib/ProfileDataScanner.h>
 #include <Hypertable/Lib/RangeLocator.h>
 #include <Hypertable/Lib/RangeServerClient.h>
 #include <Hypertable/Lib/IntervalScannerAsync.h>
@@ -36,7 +35,7 @@
 #include <Hypertable/Lib/ResultCallback.h>
 #include <Hypertable/Lib/Table.h>
 
-#include "AsyncComm/DispatchHandlerSynchronizer.h"
+#include <AsyncComm/DispatchHandlerSynchronizer.h>
 
 #include <vector>
 
@@ -44,6 +43,10 @@ namespace Hypertable {
 
   class Table;
 
+  /// @addtogroup libHypertable
+  /// @{
+
+  /** Asynchronous table scanner. */
   class TableScannerAsync : public ClientObject {
 
   public:
@@ -109,7 +112,6 @@ namespace Hypertable {
      */
     void handle_timeout(int scanner_id, const String &error_msg, bool is_create);
 
-
     /**
      * Returns number of bytes scanned
      *
@@ -126,6 +128,14 @@ namespace Hypertable {
      * Returns a pointer to the table
      */
     Table *get_table() {return m_table; }
+
+    /// Gets profile data.
+    /// @param profile_data Reference to profile data object populated by this
+    /// method
+    void get_profile_data(ProfileDataScanner &profile_data) {
+      ScopedLock lock(m_mutex);
+      profile_data = m_profile_data;
+    }
 
   private:
     friend class IndexScannerCallback;
@@ -151,6 +161,7 @@ namespace Hypertable {
     typedef std::set<const char *, LtCstr> CstrRowSet;
     CstrRowSet          m_rowset;
     ResultCallback     *m_cb;
+    ProfileDataScanner m_profile_data;
     int                 m_current_scanner;
     Mutex               m_mutex;
     Mutex               m_cancel_mutex;
@@ -163,7 +174,11 @@ namespace Hypertable {
     bool                m_use_index;
   };
 
+  /// Smart pointer to TableScannerAsync
   typedef intrusive_ptr<TableScannerAsync> TableScannerAsyncPtr;
+
+  /// @}
+
 } // namespace Hypertable
 
-#endif // HYPERTABLE_TABLESCANNERASYNC_H
+#endif // Hypertable_Lib_TableScannerAsync_h

@@ -580,6 +580,8 @@ void TableScannerAsync::maybe_callback_error(int scanner_id, bool next) {
   if (next) {
     HT_ASSERT(m_outstanding>0 && m_interval_scanners[scanner_id] != 0);
     m_outstanding--;
+    // Aggregate profile data
+    m_profile_data += m_interval_scanners[scanner_id]->profile_data();
     m_interval_scanners[scanner_id] = 0;
   }
 
@@ -602,6 +604,8 @@ void TableScannerAsync::maybe_callback_ok(int scanner_id, bool next, bool do_cal
   if (next) {
     HT_ASSERT(m_outstanding>0 && m_interval_scanners[scanner_id] != 0);
     m_outstanding--;
+    // Aggregate profile data
+    m_profile_data += m_interval_scanners[scanner_id]->profile_data();
     m_interval_scanners[scanner_id] = 0;
   }
 

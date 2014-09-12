@@ -228,6 +228,7 @@ CommBuf *RangeServerProtocol::
 create_request_create_scanner(const TableIdentifier &table,
                             const RangeSpec &range, const ScanSpec &scan_spec) {
   CommHeader header(COMMAND_CREATE_SCANNER);
+  header.flags |= CommHeader::FLAGS_BIT_PROFILE;
   if (table.is_system()) // If system table, set the urgent bit
     header.flags |= CommHeader::FLAGS_BIT_URGENT;
   CommBuf *cbuf = new CommBuf(header, table.encoded_length()
@@ -249,6 +250,7 @@ CommBuf *RangeServerProtocol::create_request_destroy_scanner(int scanner_id) {
 
 CommBuf *RangeServerProtocol::create_request_fetch_scanblock(int scanner_id) {
   CommHeader header(COMMAND_FETCH_SCANBLOCK);
+  header.flags |= CommHeader::FLAGS_BIT_PROFILE;
   header.gid = scanner_id;
   CommBuf *cbuf = new CommBuf(header, 4);
   cbuf->append_i32(scanner_id);

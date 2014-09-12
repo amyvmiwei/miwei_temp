@@ -1373,6 +1373,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
   uint32_t id = 0;
   SchemaPtr schema;
   ScanContextPtr scan_ctx;
+  ProfileDataScanner profile_data;
   bool decrement_needed=false;
 
   HT_DEBUG_OUT <<"Creating scanner:\n"<< *table << *range_spec
@@ -1443,7 +1444,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       if (m_query_cache->lookup(cache_key, ext_buffer, &ext_len, &cell_count)) {
         // The first argument to the response method is flags and the
         // 0th bit is the EOS (end-of-scan) bit, hence the 1
-        if ((error = cb->response(1, id, ext_buffer, ext_len, 0, 0))
+        if ((error = cb->response(1, id, ext_buffer, ext_len, 0, 0, profile_data))
                 != Error::OK)
           HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
         range->decrement_scan_counter();
@@ -1473,12 +1474,21 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
                                      &cells_scanned, &cells_returned);
+    profile_data.cells_scanned = cells_scanned;
+    profile_data.cells_returned = cells_returned;
+    profile_data.bytes_scanned = bytes_scanned;
+    profile_data.bytes_returned = bytes_returned;
+    profile_data.disk_read = mscanner->get_disk_read();
 
     {
       Locker<LoadStatistics> lock(*Global::load_statistics);
-      Global::load_statistics->add_scan_data(1, cells_scanned, bytes_scanned);
-      range->add_read_data(cells_scanned, cells_returned, bytes_scanned, bytes_returned,
-                           more ? 0 : mscanner->get_disk_read());
+      Global::load_statistics->add_scan_data(1, profile_data.cells_scanned,
+                                             profile_data.bytes_scanned);
+      range->add_read_data(profile_data.cells_scanned,
+                           profile_data.cells_returned,
+                           profile_data.bytes_scanned,
+                           profile_data.bytes_returned,
+                           profile_data.disk_read);
     }
 
     MergeScannerRange *rscan=dynamic_cast<MergeScannerRange *>(scanner.get());
@@ -1487,12 +1497,14 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     if (more) {
       scan_ctx->deep_copy_specs();
-      id = Global::scanner_map.put(scanner, range, table);
+      id = Global::scanner_map.put(scanner, range, table, profile_data);
     }
     else {
       id = 0;
       scanner.reset();
     }
+
+    //HT_INFOF("scanner=%d cell_count=%d %s", (int)id, (int)cell_count, profile_data.to_string().c_str());
 
     if (table->is_metadata())
       HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
@@ -1513,16 +1525,16 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
       boost::shared_array<uint8_t> ext_buffer(buffer);
       m_query_cache->insert(cache_key, tablename_ptr, row_key_ptr,
                             columns, cell_count, ext_buffer, rbuf.fill());
-      if ((error = cb->response(1, id, ext_buffer, rbuf.fill(),
-             skipped_rows, skipped_cells)) != Error::OK) {
+      if ((error = cb->response(1, id, ext_buffer, rbuf.fill(), skipped_rows,
+                                skipped_cells, profile_data)) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
     else {
       short moreflag = more ? 0 : 1;
       StaticBuffer ext(rbuf);
-      if ((error = cb->response(moreflag, id, ext, skipped_rows, skipped_cells))
-             != Error::OK) {
+      if ((error = cb->response(moreflag, id, ext, skipped_rows,
+                                skipped_cells, profile_data)) != Error::OK) {
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
       }
     }
@@ -1560,12 +1572,14 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
   TableInfoPtr table_info;
   TableIdentifierManaged scanner_table;
   SchemaPtr schema;
+  ProfileDataScanner profile_data_before;
+  ProfileDataScanner profile_data;
 
   HT_DEBUG_OUT <<"Scanner ID = " << scanner_id << HT_END;
 
   try {
 
-    if (!Global::scanner_map.get(scanner_id, scanner, range, scanner_table))
+    if (!Global::scanner_map.get(scanner_id, scanner, range, scanner_table, &profile_data_before))
       HT_THROW(Error::RANGESERVER_INVALID_SCANNER_ID,
                format("scanner ID %d", scanner_id));
 
@@ -1596,17 +1610,32 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
     mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
                                      &cells_scanned, &cells_returned);
-
-    {
-      Locker<LoadStatistics> lock(*Global::load_statistics);
-      Global::load_statistics->add_scan_data(0, cells_scanned, bytes_scanned);
-      range->add_read_data(cells_scanned, cells_returned, bytes_scanned, bytes_returned,
-                           more ? 0 : mscanner->get_disk_read());
-    }
+    profile_data.cells_scanned = cells_scanned;
+    profile_data.cells_returned = cells_returned;
+    profile_data.bytes_scanned = bytes_scanned;
+    profile_data.bytes_returned = bytes_returned;
+    profile_data.disk_read = mscanner->get_disk_read();
 
     if (!more) {
       Global::scanner_map.remove(scanner_id);
       scanner.reset();
+    }
+    else
+      Global::scanner_map.update_profile_data(scanner_id, profile_data);
+
+    profile_data -= profile_data_before;
+
+    //HT_INFOF("scanner=%d cell_count=%d %s", (int)scanner_id, (int)cell_count, profile_data.to_string().c_str());
+
+    {
+      Locker<LoadStatistics> lock(*Global::load_statistics);
+      Global::load_statistics->add_scan_data(0, profile_data.cells_scanned,
+                                             profile_data.bytes_scanned);
+      range->add_read_data(profile_data.cells_scanned,
+                           profile_data.cells_returned,
+                           profile_data.bytes_scanned,
+                           profile_data.bytes_returned,
+                           profile_data.disk_read);
     }
 
     /**
@@ -1616,7 +1645,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
       short moreflag = more ? 0 : 1;
       StaticBuffer ext(rbuf);
 
-      error = cb->response(moreflag, scanner_id, ext);
+      error = cb->response(moreflag, scanner_id, ext, profile_data);
       if (error != Error::OK)
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
 

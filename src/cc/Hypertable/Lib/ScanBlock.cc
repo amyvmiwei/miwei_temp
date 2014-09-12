@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,31 +19,31 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-#include "Common/Error.h"
-#include "Common/Logger.h"
+/// @file
+/// Definitions for ScanBlock.
+/// This file contains type definitions for ScanBlock, a class for managing a
+/// block of scan results.
 
-#include "AsyncComm/Protocol.h"
-#include "Common/Serialization.h"
+#include <Common/Compat.h>
 
 #include "ScanBlock.h"
+
+#include <AsyncComm/Protocol.h>
+
+#include <Common/Error.h>
+#include <Common/Logger.h>
+#include <Common/Serialization.h>
 
 using namespace Hypertable;
 using namespace Serialization;
 
 
-/**
- *
- */
 ScanBlock::ScanBlock() : m_flags(0x0001), m_scanner_id(-1),
     m_skipped_rows(0), m_skipped_cells(0) {
   m_iter = m_vec.end();
 }
 
 
-/**
- *
- */
 int ScanBlock::load(EventPtr &event_ptr) {
   const uint8_t *decode_ptr = event_ptr->payload + 4;
   size_t decode_remain = event_ptr->payload_len - 4;
@@ -61,6 +61,8 @@ int ScanBlock::load(EventPtr &event_ptr) {
     m_scanner_id = decode_i32(&decode_ptr, &decode_remain);
     m_skipped_rows = decode_i32(&decode_ptr, &decode_remain);
     m_skipped_cells = decode_i32(&decode_ptr, &decode_remain);
+    if (event_ptr->header.flags & CommHeader::FLAGS_BIT_PROFILE)
+      m_profile_data.decode(&decode_ptr, &decode_remain);
     len = decode_i32(&decode_ptr, &decode_remain);
   }
   catch (Exception &e) {

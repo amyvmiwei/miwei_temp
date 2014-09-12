@@ -60,6 +60,46 @@ void ColumnPredicate::decode(const uint8_t **bufp, size_t *remainp) {
          operation = decode_i32(bufp, remainp));
 }
 
+const string ColumnPredicate::render_hql() const {
+  bool exists = (operation & ColumnPredicate::VALUE_MATCH) == 0;
+  string hql;
+  hql.reserve(strlen(column_family) + column_qualifier_len + value_len + 16);
+  if (exists)
+    hql.append("Exists(");
+  hql.append(column_family);
+  if (column_qualifier_len) {
+    hql.append(":");
+    if (operation & ColumnPredicate::QUALIFIER_EXACT_MATCH)
+      hql.append(column_qualifier);
+    else if (operation & ColumnPredicate::QUALIFIER_PREFIX_MATCH) {
+      hql.append(column_qualifier);
+      hql.append("*");
+    }
+    else if (operation & ColumnPredicate::QUALIFIER_REGEX_MATCH) {
+      hql.append("/");
+      hql.append(column_qualifier);
+      hql.append("/");
+    }
+  }
+  if (exists) {
+    hql.append(")");
+    return hql;
+  }
+  HT_ASSERT(value);
+  if (operation & ColumnPredicate::EXACT_MATCH)
+    hql.append(" = \"");
+  else if (operation & ColumnPredicate::PREFIX_MATCH)
+    hql.append(" =^ \"");
+  else if (operation & ColumnPredicate::REGEX_MATCH)
+    hql.append(" =~ /");
+  hql.append(value);
+  if (operation & ColumnPredicate::REGEX_MATCH)
+    hql.append("/");
+  else
+    hql.append("\"");
+  return hql;
+}
+
 size_t RowInterval::encoded_length() const {
   return 2 + encoded_length_vstr(start) + encoded_length_vstr(end);
 }
@@ -78,6 +118,31 @@ void RowInterval::decode(const uint8_t **bufp, size_t *remainp) {
     start_inclusive = decode_bool(bufp, remainp);
     end = decode_vstr(bufp, remainp);
     end_inclusive = decode_bool(bufp, remainp));
+}
+
+const string RowInterval::render_hql() const {
+  string hql;
+  hql.reserve( (start ? strlen(start) : 0) + (end ? strlen(end) : 0) + 8);
+  if (start && *start) {
+    hql.append("\"");
+    hql.append(start);
+    hql.append("\"");
+    if (start_inclusive)
+      hql.append(" <= ");
+    else
+      hql.append(" < ");
+  }
+  hql.append("ROW");
+  if (end && *end) {
+    if (end_inclusive)
+      hql.append(" <= ");
+    else
+      hql.append(" < ");
+    hql.append("\"");
+    hql.append(end);
+    hql.append("\"");
+  }
+  return hql;
 }
 
 size_t CellInterval::encoded_length() const {
@@ -103,6 +168,40 @@ void CellInterval::decode(const uint8_t **bufp, size_t *remainp) {
     end_row = decode_vstr(bufp, remainp);
     end_column = decode_vstr(bufp, remainp);
     end_inclusive = decode_bool(bufp, remainp));
+}
+
+const string CellInterval::render_hql() const {
+  string hql;
+  hql.reserve( (start_row ? strlen(start_row) : 0) +
+               (start_column ? strlen(start_column) : 0) +
+               (end_row ? strlen(end_row) : 0) +
+               (end_column ? strlen(end_column) : 0) + 8);
+  if (start_row && *start_row) {
+    hql.append("\"");
+    hql.append(start_row);
+    hql.append("',\"");
+    if (start_column && *start_column)
+      hql.append(start_column);
+    hql.append("',");
+    if (start_inclusive)
+      hql.append(" <= ");
+    else
+      hql.append(" < ");
+  }
+  hql.append("CELL");
+  if (end_row && *end_row) {
+    if (end_inclusive)
+      hql.append(" <= ");
+    else
+      hql.append(" < ");
+    hql.append("\"");
+    hql.append(end_row);
+    hql.append("',\"");
+    if (end_column && *end_column)
+      hql.append(end_column);
+    hql.append("',");
+  }
+  return hql;
 }
 
 size_t ScanSpec::encoded_length() const {
@@ -192,6 +291,140 @@ void ScanSpec::decode(const uint8_t **bufp, size_t *remainp) {
     cell_offset = decode_vi32(bufp, remainp));
 }
 
+const string ScanSpec::render_hql(const string &table) const {
+  string hql;
+
+  hql.append("SELECT ");
+
+  if (columns.empty())
+    hql.append("*");
+  else {
+    bool first = true;
+    for (auto column : columns) {
+      if (first)
+        first = false;
+      else
+        hql.append(",");
+      hql.append("\"");
+      hql.append(column);
+      hql.append("\"");
+    }
+  }
+
+  hql.append(" FROM ");
+  hql.append(table);
+
+  char const *bool_op = " AND ";
+  bool first = true;
+
+  // row intervals
+  for (auto & ri : row_intervals) {
+    if (first) {
+      hql.append(" WHERE ");
+      first = false;
+    }
+    else
+      hql.append(bool_op);
+    hql.append(ri.render_hql());
+  }
+
+  if (row_regexp) {
+    if (first) {
+      hql.append(" WHERE ");
+      first = false;
+    }
+    else
+      hql.append(bool_op);
+    hql.append(format("ROW REGEXP \"%s\"", row_regexp));
+  }
+
+  if (value_regexp) {
+    if (first) {
+      hql.append(" WHERE ");
+      first = false;
+    }
+    else
+      hql.append(bool_op);
+    hql.append(format("VALUE REGEXP \"%s\"", value_regexp));
+  }
+
+
+  // cell intervals
+  for (auto & ci : cell_intervals) {
+    if (first) {
+      hql.append(" WHERE ");
+      first = false;
+    }
+    else
+      hql.append(bool_op);
+    hql.append(ci.render_hql());
+  }
+
+  if (!and_column_predicates)
+    bool_op = " OR ";
+
+  // column predicates
+  for (auto & cp : column_predicates) {
+    if (first) {
+      hql.append(" WHERE ");
+      first = false;
+    }
+    else
+      hql.append(bool_op);
+    hql.append(cp.render_hql());
+  }
+  
+  // time interval
+  if (time_interval.first != TIMESTAMP_MIN ||
+      time_interval.second != TIMESTAMP_MAX) {
+    hql.append(" AND ");
+    if (time_interval.first != TIMESTAMP_MIN) {
+      hql.append(format("%lld", (Lld)time_interval.first));
+      hql.append(" <= ");
+    }
+    hql.append("TIMESTAMP");
+    if (time_interval.second != TIMESTAMP_MAX) {
+      hql.append(" < ");
+      hql.append(format("%lld", (Lld)time_interval.second));
+    }
+  }
+
+  if (row_offset)
+    hql.append(format(" ROW_OFFSET %d", (int)row_offset));
+
+  if (row_limit)
+    hql.append(format(" ROW_LIMIT %d", (int)row_limit));
+
+  if (cell_offset)
+    hql.append(format(" CELL_OFFSET %d", (int)cell_offset));
+
+  if (cell_limit)
+    hql.append(format(" CELL_LIMIT %d", (int)cell_limit));
+
+  if (cell_limit_per_family)
+    hql.append(format(" CELL_LIMIT_PER_FAMILY %d", (int)cell_limit_per_family));
+
+  if (max_versions)
+    hql.append(format(" MAX_VERSIONS %d", (int)max_versions));
+
+  if (return_deletes)
+    hql.append(" RETURN_DELETES");
+
+  if (keys_only)
+    hql.append(" KEYS_ONLY");
+
+  if (scan_and_filter_rows)
+    hql.append(" SCAN_AND_FILTER_ROWS");
+
+  if (do_not_cache)
+    hql.append(" DO_NOT_CACHE");
+
+  if (rebuild_indices)
+    hql.append(format(" REBUILD_INDICES %s", rebuild_indices.to_string().c_str()));
+
+  return hql;
+}
+
 
 /** @relates RowInterval */
 ostream &Hypertable::operator<<(ostream &os, const RowInterval &ri) {
@@ -239,6 +472,7 @@ ostream &Hypertable::operator<<(ostream &os, const CellInterval &ci) {
   return os;
 }
 
+/** @relates ColumnPredicate */
 std::ostream &Hypertable::operator<<(std::ostream &os, const ColumnPredicate &cp) {
   os << "{ColumnPredicate";
   if (cp.column_family)
@@ -254,48 +488,90 @@ std::ostream &Hypertable::operator<<(std::ostream &os, const ColumnPredicate &cp
 
 /** @relates ScanSpec */
 ostream &Hypertable::operator<<(ostream &os, const ScanSpec &scan_spec) {
-  os <<"\n{ScanSpec: row_limit="<< scan_spec.row_limit
-     <<" cell_limit="<< scan_spec.cell_limit
-     <<" cell_limit_per_family="<< scan_spec.cell_limit_per_family
-     <<" max_versions="<< scan_spec.max_versions
-     <<" return_deletes="<< scan_spec.return_deletes
-     <<" keys_only="<< scan_spec.keys_only;
-  os <<" row_regexp=" << (scan_spec.row_regexp ? scan_spec.row_regexp : "");
-  os <<" value_regexp=" << (scan_spec.value_regexp ? scan_spec.value_regexp : "");
-  os <<" scan_and_filter_rows=" << scan_spec.scan_and_filter_rows;
-  os <<" do_not_cache=" << scan_spec.do_not_cache;
-  os <<" and_column_predicates=" << scan_spec.and_column_predicates;
-  os <<" rebuild_indices=" << scan_spec.rebuild_indices.to_string();
-  os <<" row_offset=" << scan_spec.row_offset;
-  os <<" cell_offset=" << scan_spec.cell_offset;
+  os <<"{ScanSpec:";
 
-  if (!scan_spec.row_intervals.empty()) {
-    os << "\n rows=";
-    foreach_ht(const RowInterval &ri, scan_spec.row_intervals)
-      os << " " << ri;
-  }
-  if (!scan_spec.cell_intervals.empty()) {
-    os << "\n cells=";
-    foreach_ht(const CellInterval &ci, scan_spec.cell_intervals)
-      os << " " << ci;
-  }
-  if (!scan_spec.column_predicates.empty()) {
-    os << "\n column_predicates=";
-    foreach_ht(const ColumnPredicate &cp, scan_spec.column_predicates) {
-      os << " (" << cp.column_family;
-      if (cp.column_qualifier && *cp.column_qualifier)
-        os << ":" << cp.column_qualifier;
-      os<< " " << cp.operation << " " << cp.value << ")";
+  // columns
+  os << " columns=";
+  if (scan_spec.columns.empty())
+    os << '*';
+  else {
+    os << '(';
+    bool first = true;
+    for (auto column : scan_spec.columns) {
+      if (first)
+        first = false;
+      else
+        os << ",";
+      os << column;
     }
-  }
-  if (!scan_spec.columns.empty()) {
-    os << "\n columns=(";
-    foreach_ht (const char *c, scan_spec.columns)
-      os <<"'"<< c << "' ";
     os <<')';
   }
-  os <<"\n time_interval=(" << scan_spec.time_interval.first <<", "
-     << scan_spec.time_interval.second <<")\n}\n";
+
+  // row intervals
+  for (auto & ri : scan_spec.row_intervals)
+    os << " " << ri;
+
+  // cell intervals
+  for (auto & ci : scan_spec.cell_intervals)
+    os << " " << ci;
+
+  // column predicates
+  for (auto & cp : scan_spec.column_predicates)
+    os << " " << cp;
+  
+  // time interval
+  if (scan_spec.time_interval.first != TIMESTAMP_MIN ||
+      scan_spec.time_interval.second != TIMESTAMP_MAX) {
+    if (scan_spec.time_interval.first != TIMESTAMP_MIN)
+      os << scan_spec.time_interval.first << " <= ";
+    os << "TIMESTAMP";
+    if (scan_spec.time_interval.second != TIMESTAMP_MAX)
+      os << " < " << scan_spec.time_interval.second;
+  }
+
+  if (scan_spec.row_offset)
+    os <<" row_offset=" << scan_spec.row_offset;
+
+  if (scan_spec.row_limit)
+    os << " row_limit="<< scan_spec.row_limit;
+
+  if (scan_spec.cell_offset)
+    os <<" cell_offset=" << scan_spec.cell_offset;
+
+  if (scan_spec.cell_limit)
+    os <<" cell_limit=" << scan_spec.cell_limit;
+
+  if (scan_spec.cell_limit_per_family)
+    os << " cell_limit_per_family=" << scan_spec.cell_limit_per_family;
+
+  if (scan_spec.max_versions)
+    os << " max_versions=" << scan_spec.max_versions;
+
+  if (scan_spec.return_deletes)
+    os << " return_deletes";
+
+  if (scan_spec.keys_only)
+    os << " keys_only";
+
+  if (scan_spec.row_regexp)
+    os << " row_regexp=" << scan_spec.row_regexp;
+
+  if (scan_spec.value_regexp)
+    os << " value_regexp=" << scan_spec.value_regexp;
+
+  if (scan_spec.scan_and_filter_rows)
+    os << " scan_and_filter_rows";
+
+  if (scan_spec.do_not_cache)
+    os << " do_not_cache";
+
+  if (scan_spec.and_column_predicates)
+    os << " and_column_predicates";
+
+  if (scan_spec.rebuild_indices)
+    os << " rebuild_indices=" << scan_spec.rebuild_indices.to_string();
+
+  os << "}";
 
   return os;
 }
