@@ -210,7 +210,7 @@ add_test(Common-BloomFilter bloom_filter_test)
 add_test(Common-Hash hash_test)
 
 if (NOT HT_COMPONENT_INSTALL)
-  file(GLOB HEADERS *.h)
+  file(GLOB HEADERS *.h metrics)
 
   install(FILES ${HEADERS} ${VERSION_H} DESTINATION include/Common)
 
