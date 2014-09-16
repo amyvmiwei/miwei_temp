@@ -123,8 +123,8 @@ foreach(thrift_dep ${Thrift_LIB_DEPENDENCIES_LIST})
   HT_INSTALL_LIBS(lib ${thrift_dep})
 endforeach ()
 
-# Install libssh
-HT_INSTALL_LIBS(lib ${Libssh_LIBRARIES})
+# Install libssh and libssl
+HT_INSTALL_LIBS(lib ${Libssh_LIBRARIES} ${Libssl_LIBRARIES})
 
 # copy cronolog to the /bin directory
 install(PROGRAMS "${CRONOLOG_DIR}/cronolog" DESTINATION
