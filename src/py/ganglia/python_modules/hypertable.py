@@ -58,52 +58,52 @@ def metric_init(params):
     ##
     ## Specifying all version metrics for all hosts renders better in the UI
     ##
-    d = {'name': 'hypertable.hyperspace.version',
+    d = {'name': 'ht.hyperspace.version',
          'call_back': metric_callback,
          'value_type': 'string',
          'description': 'Hyperspace version',
          'groups': 'hypertable Hyperspace'}
-    values['hypertable.hyperspace.version'] = 'n/a'
+    values['ht.hyperspace.version'] = 'n/a'
     descriptors.append(d);
 
-    d = {'name': 'hypertable.fsbroker.version',
+    d = {'name': 'ht.fsbroker.version',
          'call_back': metric_callback,
          'value_type': 'string',
          'description': 'FSBroker version',
          'groups': 'hypertable FSBroker'}
-    values['hypertable.fsbroker.version'] = 'n/a'
+    values['ht.fsbroker.version'] = 'n/a'
     descriptors.append(d);
 
-    d = {'name': 'hypertable.fsbroker.type',
+    d = {'name': 'ht.fsbroker.type',
          'call_back': metric_callback,
          'value_type': 'string',
          'description': 'FSBroker type',
          'groups': 'hypertable FSBroker'}
-    values['hypertable.fsbroker.type'] = 'n/a'
+    values['ht.fsbroker.type'] = 'n/a'
     descriptors.append(d);
     
-    d = {'name': 'hypertable.master.version',
+    d = {'name': 'ht.master.version',
          'call_back': metric_callback,
          'value_type': 'string',
          'description': 'Master version',
          'groups': 'hypertable Master'}
-    values['hypertable.master.version'] = 'n/a'
+    values['ht.master.version'] = 'n/a'
     descriptors.append(d);
     
-    d = {'name': 'hypertable.rangeserver.version',
+    d = {'name': 'ht.rangeserver.version',
          'call_back': metric_callback,
          'value_type': 'string',
          'description': 'RangeServer version',
          'groups': 'hypertable RangeServer'}
-    values['hypertable.rangeserver.version'] = 'n/a'
+    values['ht.rangeserver.version'] = 'n/a'
     descriptors.append(d);
 
-    d = {'name': 'hypertable.thriftbroker.version',
+    d = {'name': 'ht.thriftbroker.version',
          'call_back': metric_callback,
          'value_type': 'string',
          'description': 'ThriftBroker version',
          'groups': 'hypertable ThriftBroker'}
-    values['hypertable.thriftbroker.version'] = 'n/a'
+    values['ht.thriftbroker.version'] = 'n/a'
     descriptors.append(d);
 
 
@@ -111,7 +111,7 @@ def metric_init(params):
     ## Hyperspace metrics
     ##
     if 'EnableHyperspace' in params and int(params['EnableHyperspace']) == 1:
-        d = {'name': 'hypertable.hyperspace.requests',
+        d = {'name': 'ht.hyperspace.requests',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -122,7 +122,7 @@ def metric_init(params):
              'groups': 'hypertable Hyperspace'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.hyperspace.cpu.sys',
+        d = {'name': 'ht.hyperspace.cpu.sys',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -133,7 +133,7 @@ def metric_init(params):
              'groups': 'hypertable Hyperspace'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.hyperspace.cpu.user',
+        d = {'name': 'ht.hyperspace.cpu.user',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -144,7 +144,7 @@ def metric_init(params):
              'groups': 'hypertable Hyperspace'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.hyperspace.memory.virtual',
+        d = {'name': 'ht.hyperspace.memory.virtual',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -155,7 +155,7 @@ def metric_init(params):
              'groups': 'hypertable Hyperspace'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.hyperspace.memory.resident',
+        d = {'name': 'ht.hyperspace.memory.resident',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -166,7 +166,7 @@ def metric_init(params):
              'groups': 'hypertable Hyperspace'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.hyperspace.memory.heap',
+        d = {'name': 'ht.hyperspace.memory.heap',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -177,7 +177,7 @@ def metric_init(params):
              'groups': 'hypertable Hyperspace'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.hyperspace.memory.heapSlack',
+        d = {'name': 'ht.hyperspace.memory.heapSlack',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -192,7 +192,7 @@ def metric_init(params):
     ## FSBroker metrics
     ##
     if 'EnableFSBroker' in params and int(params['EnableFSBroker']) == 1:
-        d = {'name': 'hypertable.fsbroker.errors',
+        d = {'name': 'ht.fsbroker.errors',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -203,7 +203,7 @@ def metric_init(params):
              'groups': 'hypertable FSBroker'}
         descriptors.append(d);
 
-        d = {'name': 'hypertable.fsbroker.syncs',
+        d = {'name': 'ht.fsbroker.syncs',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -214,7 +214,7 @@ def metric_init(params):
              'groups': 'hypertable FSBroker'}
         descriptors.append(d);
 
-        d = {'name': 'hypertable.fsbroker.syncLatency',
+        d = {'name': 'ht.fsbroker.syncLatency',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -225,7 +225,7 @@ def metric_init(params):
              'groups': 'hypertable FSBroker'}
         descriptors.append(d);
 
-        d = {'name': 'hypertable.fsbroker.readThroughput',
+        d = {'name': 'ht.fsbroker.readThroughput',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -236,7 +236,7 @@ def metric_init(params):
              'groups': 'hypertable FSBroker'}
         descriptors.append(d);
 
-        d = {'name': 'hypertable.fsbroker.writeThroughput',
+        d = {'name': 'ht.fsbroker.writeThroughput',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -248,7 +248,7 @@ def metric_init(params):
         descriptors.append(d);
 
         if 'FSBroker' in params and params['FSBroker'] == "hadoop":
-            d = {'name': 'hypertable.fsbroker.jvm.gc',
+            d = {'name': 'ht.fsbroker.jvm.gc',
                  'call_back': metric_callback,
                  'time_max': 90,
                  'value_type': 'uint',
@@ -259,7 +259,7 @@ def metric_init(params):
                  'groups': 'hypertable FSBroker'}
             descriptors.append(d);
             
-            d = {'name': 'hypertable.fsbroker.jvm.gcTime',
+            d = {'name': 'ht.fsbroker.jvm.gcTime',
                  'call_back': metric_callback,
                  'time_max': 90,
                  'value_type': 'uint',
@@ -270,7 +270,7 @@ def metric_init(params):
                  'groups': 'hypertable FSBroker'}
             descriptors.append(d);
             
-            d = {'name': 'hypertable.fsbroker.jvm.heapSize',
+            d = {'name': 'ht.fsbroker.jvm.heapSize',
                  'call_back': metric_callback,
                  'time_max': 90,
                  'value_type': 'float',
@@ -281,7 +281,7 @@ def metric_init(params):
                  'groups': 'hypertable FSBroker'}
             descriptors.append(d);
         
-        d = {'name': 'hypertable.fsbroker.cpu.sys',
+        d = {'name': 'ht.fsbroker.cpu.sys',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -292,7 +292,7 @@ def metric_init(params):
              'groups': 'hypertable FSBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.fsbroker.cpu.user',
+        d = {'name': 'ht.fsbroker.cpu.user',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -303,7 +303,7 @@ def metric_init(params):
              'groups': 'hypertable FSBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.fsbroker.memory.virtual',
+        d = {'name': 'ht.fsbroker.memory.virtual',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -314,7 +314,7 @@ def metric_init(params):
              'groups': 'hypertable FSBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.fsbroker.memory.resident',
+        d = {'name': 'ht.fsbroker.memory.resident',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -326,7 +326,7 @@ def metric_init(params):
         descriptors.append(d);
 
         if 'FSBroker' in params and params['FSBroker'] != "hadoop":
-            d = {'name': 'hypertable.fsbroker.memory.heap',
+            d = {'name': 'ht.fsbroker.memory.heap',
                  'call_back': metric_callback,
                  'time_max': 90,
                  'value_type': 'float',
@@ -337,7 +337,7 @@ def metric_init(params):
                  'groups': 'hypertable FSBroker'}
             descriptors.append(d);
             
-            d = {'name': 'hypertable.fsbroker.memory.heapSlack',
+            d = {'name': 'ht.fsbroker.memory.heapSlack',
                  'call_back': metric_callback,
                  'time_max': 90,
                  'value_type': 'float',
@@ -352,7 +352,7 @@ def metric_init(params):
     ## Master metrics
     ##
     if 'EnableMaster' in params and int(params['EnableMaster']) == 1:
-        d = {'name': 'hypertable.master.operations',
+        d = {'name': 'ht.master.operations',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -363,7 +363,7 @@ def metric_init(params):
              'groups': 'hypertable Master'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.master.cpu.sys',
+        d = {'name': 'ht.master.cpu.sys',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -374,7 +374,7 @@ def metric_init(params):
              'groups': 'hypertable Master'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.master.cpu.user',
+        d = {'name': 'ht.master.cpu.user',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -385,7 +385,7 @@ def metric_init(params):
              'groups': 'hypertable Master'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.master.memory.virtual',
+        d = {'name': 'ht.master.memory.virtual',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -396,7 +396,7 @@ def metric_init(params):
              'groups': 'hypertable Master'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.master.memory.resident',
+        d = {'name': 'ht.master.memory.resident',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -407,7 +407,7 @@ def metric_init(params):
              'groups': 'hypertable Master'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.master.memory.heap',
+        d = {'name': 'ht.master.memory.heap',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -418,7 +418,7 @@ def metric_init(params):
              'groups': 'hypertable Master'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.master.memory.heapSlack',
+        d = {'name': 'ht.master.memory.heapSlack',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -433,7 +433,7 @@ def metric_init(params):
     ## RangeServer metrics
     ##
     if 'EnableRangeServer' in params and int(params['EnableRangeServer']) == 1:
-        d = {'name': 'hypertable.rangeserver.scans',
+        d = {'name': 'ht.rangeserver.scans',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -444,7 +444,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.updates',
+        d = {'name': 'ht.rangeserver.updates',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -455,7 +455,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.cellsRead',
+        d = {'name': 'ht.rangeserver.cellsRead',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -466,7 +466,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.cellsWritten',
+        d = {'name': 'ht.rangeserver.cellsWritten',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -477,7 +477,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.compactions.major',
+        d = {'name': 'ht.rangeserver.compactions.major',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -488,7 +488,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.compactions.minor',
+        d = {'name': 'ht.rangeserver.compactions.minor',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -499,7 +499,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.compactions.merging',
+        d = {'name': 'ht.rangeserver.compactions.merging',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -510,7 +510,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.compactions.gc',
+        d = {'name': 'ht.rangeserver.compactions.gc',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -521,7 +521,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.scanners',
+        d = {'name': 'ht.rangeserver.scanners',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -532,7 +532,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.cellstores',
+        d = {'name': 'ht.rangeserver.cellstores',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -543,7 +543,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.ranges',
+        d = {'name': 'ht.rangeserver.ranges',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -554,7 +554,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.memory.virtual',
+        d = {'name': 'ht.rangeserver.memory.virtual',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -565,7 +565,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.memory.resident',
+        d = {'name': 'ht.rangeserver.memory.resident',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -576,7 +576,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.memory.heap',
+        d = {'name': 'ht.rangeserver.memory.heap',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -587,7 +587,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.memory.heapSlack',
+        d = {'name': 'ht.rangeserver.memory.heapSlack',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -598,7 +598,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.memory.tracked',
+        d = {'name': 'ht.rangeserver.memory.tracked',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -609,7 +609,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.cpu.sys',
+        d = {'name': 'ht.rangeserver.cpu.sys',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -620,7 +620,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.cpu.user',
+        d = {'name': 'ht.rangeserver.cpu.user',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -631,7 +631,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.blockCache.hitRate',
+        d = {'name': 'ht.rangeserver.blockCache.hitRate',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -642,7 +642,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.blockCache.memory',
+        d = {'name': 'ht.rangeserver.blockCache.memory',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -653,7 +653,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.blockCache.fill',
+        d = {'name': 'ht.rangeserver.blockCache.fill',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -664,7 +664,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.queryCache.hitRate',
+        d = {'name': 'ht.rangeserver.queryCache.hitRate',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -675,7 +675,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.queryCache.memory',
+        d = {'name': 'ht.rangeserver.queryCache.memory',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -686,7 +686,7 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.rangeserver.queryCache.fill',
+        d = {'name': 'ht.rangeserver.queryCache.fill',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -701,7 +701,7 @@ def metric_init(params):
     ## ThriftBroker metrics
     ##
     if 'EnableThriftBroker' in params and int(params['EnableThriftBroker']) == 1:
-        d = {'name': 'hypertable.thriftbroker.requests',
+        d = {'name': 'ht.thriftbroker.requests',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -712,7 +712,7 @@ def metric_init(params):
              'groups': 'hypertable ThriftBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.thriftbroker.errors',
+        d = {'name': 'ht.thriftbroker.errors',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -723,7 +723,7 @@ def metric_init(params):
              'groups': 'hypertable ThriftBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.thriftbroker.connections',
+        d = {'name': 'ht.thriftbroker.connections',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -734,7 +734,7 @@ def metric_init(params):
              'groups': 'hypertable ThriftBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.thriftbroker.cpu.sys',
+        d = {'name': 'ht.thriftbroker.cpu.sys',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -745,7 +745,7 @@ def metric_init(params):
              'groups': 'hypertable ThriftBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.thriftbroker.cpu.user',
+        d = {'name': 'ht.thriftbroker.cpu.user',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'uint',
@@ -756,7 +756,7 @@ def metric_init(params):
              'groups': 'hypertable ThriftBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.thriftbroker.memory.virtual',
+        d = {'name': 'ht.thriftbroker.memory.virtual',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -767,7 +767,7 @@ def metric_init(params):
              'groups': 'hypertable ThriftBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.thriftbroker.memory.resident',
+        d = {'name': 'ht.thriftbroker.memory.resident',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -778,7 +778,7 @@ def metric_init(params):
              'groups': 'hypertable ThriftBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.thriftbroker.memory.heap',
+        d = {'name': 'ht.thriftbroker.memory.heap',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
@@ -789,7 +789,7 @@ def metric_init(params):
              'groups': 'hypertable ThriftBroker'}
         descriptors.append(d);
         
-        d = {'name': 'hypertable.thriftbroker.memory.heapSlack',
+        d = {'name': 'ht.thriftbroker.memory.heapSlack',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',

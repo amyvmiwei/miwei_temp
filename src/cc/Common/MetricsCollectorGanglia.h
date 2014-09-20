@@ -45,7 +45,7 @@ namespace Hypertable {
     /// Constructor.
     /// Creates a datagram send socket and binds it to an arbitrary interface
     /// and ephemeral port.  Initializes #m_prefix to
-    /// "hypertable." + <code>component</code> + ".".
+    /// "ht." + <code>component</code> + ".".
     /// @param component Hypertable component ("fsbroker", "hyperspace, "master",
     /// "rangeserver", or "thriftbroker")
     /// @param port Ganglia collection port
@@ -106,7 +106,7 @@ namespace Hypertable {
     /// @throws Exception with code set to Error::COMM_CONNECT_ERROR
     void connect();
 
-    /// Metric name prefix ("hypertable." + component + ".")
+    /// Metric name prefix ("ht." + component + ".")
     std::string m_prefix;
 
     /// Ganglia hypertable extension listen port

@@ -15,27 +15,27 @@ collection_group {
   collect_every = 900
   time_threshold = 1200
   metric {
-    name = "hypertable.hyperspace.version"
+    name = "ht.hyperspace.version"
     title = "Hypertable Hyperspace Version"
   }
   metric {
-    name = "hypertable.fsbroker.version"
+    name = "ht.fsbroker.version"
     title = "Hypertable FSBroker Version"
   }
   metric {
-    name = "hypertable.fsbroker.type"
+    name = "ht.fsbroker.type"
     title = "Hypertable FSBroker Type"
   }
   metric {
-    name = "hypertable.master.version"
+    name = "ht.master.version"
     title = "Hypertable Master Version"
   }
   metric {
-    name = "hypertable.rangeserver.version"
+    name = "ht.rangeserver.version"
     title = "Hypertable RangeServer Version"
   }
   metric {
-    name = "hypertable.thriftbroker.version"
+    name = "ht.thriftbroker.version"
     title = "Hypertable ThriftBroker Version"
   }
 }
@@ -50,31 +50,31 @@ collection_group {
 ##
 
   metric {
-    name = "hypertable.hyperspace.requests"
+    name = "ht.hyperspace.requests"
     title = "Hyperspace Requests"
   }
   metric {
-    name = "hypertable.hyperspace.cpu.sys"
+    name = "ht.hyperspace.cpu.sys"
     title = "Hyperspace CPU system"
   }
   metric {
-    name = "hypertable.hyperspace.cpu.user"
+    name = "ht.hyperspace.cpu.user"
     title = "Hyperspace CPU user"
   }
   metric {
-    name = "hypertable.hyperspace.memory.virtual"
+    name = "ht.hyperspace.memory.virtual"
     title = "Hyperspace Virtual Memory"
   }
   metric {
-    name = "hypertable.hyperspace.memory.resident"
+    name = "ht.hyperspace.memory.resident"
     title = "Hyperspace Resident Memory"
   }
   metric {
-    name = "hypertable.hyperspace.memory.heap"
+    name = "ht.hyperspace.memory.heap"
     title = "Hyperspace Heap"
   }
   metric {
-    name = "hypertable.hyperspace.memory.heapSlack"
+    name = "ht.hyperspace.memory.heapSlack"
     title = "Hyperspace Heap Slack"
   }
 
@@ -83,59 +83,59 @@ collection_group {
 ##
 
   metric {
-    name = "hypertable.fsbroker.errors"
+    name = "ht.fsbroker.errors"
     title = "FSBroker Errors"
   }
   metric {
-    name = "hypertable.fsbroker.syncs"
+    name = "ht.fsbroker.syncs"
     title = "FSBroker Syncs"
   }
   metric {
-    name = "hypertable.fsbroker.syncLatency"
+    name = "ht.fsbroker.syncLatency"
     title = "FSBroker Sync Latency"
   }
   metric {
-    name = "hypertable.fsbroker.readThroughput"
+    name = "ht.fsbroker.readThroughput"
     title = "FSBroker Read Throughput"
   }
   metric {
-    name = "hypertable.fsbroker.writeThroughput"
+    name = "ht.fsbroker.writeThroughput"
     title = "FSBroker Write Throughput"
   }
   metric {
-    name = "hypertable.fsbroker.jvm.gc"
+    name = "ht.fsbroker.jvm.gc"
     title = "FSBroker JVM GCs"
   }
   metric {
-    name = "hypertable.fsbroker.jvm.gcTime"
+    name = "ht.fsbroker.jvm.gcTime"
     title = "FSBroker JVM GC Time"
   }
   metric {
-    name = "hypertable.fsbroker.jvm.heapSize"
+    name = "ht.fsbroker.jvm.heapSize"
     title = "FSBroker JVM Heap Size"
   }
   metric {
-    name = "hypertable.fsbroker.cpu.sys"
+    name = "ht.fsbroker.cpu.sys"
     title = "FSBroker CPU system"
   }
   metric {
-    name = "hypertable.fsbroker.cpu.user"
+    name = "ht.fsbroker.cpu.user"
     title = "FSBroker CPU user"
   }
   metric {
-    name = "hypertable.fsbroker.memory.virtual"
+    name = "ht.fsbroker.memory.virtual"
     title = "FSBroker Virtual Memory"
   }
   metric {
-    name = "hypertable.fsbroker.memory.resident"
+    name = "ht.fsbroker.memory.resident"
     title = "FSBroker Resident Memory"
   }
   metric {
-    name = "hypertable.fsbroker.memory.heap"
+    name = "ht.fsbroker.memory.heap"
     title = "FSBroker Heap"
   }
   metric {
-    name = "hypertable.fsbroker.memory.heapSlack"
+    name = "ht.fsbroker.memory.heapSlack"
     title = "FSBroker Heap Slack"
   }
 
@@ -144,31 +144,31 @@ collection_group {
 ##
 
   metric {
-    name = "hypertable.master.operations"
+    name = "ht.master.operations"
     title = "Master Operations"
   }
   metric {
-    name = "hypertable.master.cpu.sys"
+    name = "ht.master.cpu.sys"
     title = "Master CPU system"
   }
   metric {
-    name = "hypertable.master.cpu.user"
+    name = "ht.master.cpu.user"
     title = "Master CPU user"
   }
   metric {
-    name = "hypertable.master.memory.virtual"
+    name = "ht.master.memory.virtual"
     title = "Master Virtual Memory"
   }
   metric {
-    name = "hypertable.master.memory.resident"
+    name = "ht.master.memory.resident"
     title = "Master Resident Memory"
   }
   metric {
-    name = "hypertable.master.memory.heap"
+    name = "ht.master.memory.heap"
     title = "Master Heap"
   }
   metric {
-    name = "hypertable.master.memory.heapSlack"
+    name = "ht.master.memory.heapSlack"
     title = "Master Heap Slack"
   }
 
@@ -177,99 +177,99 @@ collection_group {
 ##
 
   metric {
-    name = "hypertable.rangeserver.scans"
+    name = "ht.rangeserver.scans"
     title = "RangeServer Scans"
   }
   metric {
-    name = "hypertable.rangeserver.updates"
+    name = "ht.rangeserver.updates"
     title = "RangeServer Updates"
   }
   metric {
-    name = "hypertable.rangeserver.cellsRead"
+    name = "ht.rangeserver.cellsRead"
     title = "RangeServer Cells Read"
   }
   metric {
-    name = "hypertable.rangeserver.cellsWritten"
+    name = "ht.rangeserver.cellsWritten"
     title = "RangeServer Cells Written"
   }
   metric {
-    name = "hypertable.rangeserver.compactions.major"
+    name = "ht.rangeserver.compactions.major"
     title = "RangeServer Major Compactions"
   }
   metric {
-    name = "hypertable.rangeserver.compactions.minor"
+    name = "ht.rangeserver.compactions.minor"
     title = "RangeServer Minor Compactions"
   }
   metric {
-    name = "hypertable.rangeserver.compactions.merging"
+    name = "ht.rangeserver.compactions.merging"
     title = "RangeServer Merging Compactions"
   }
   metric {
-    name = "hypertable.rangeserver.compactions.gc"
+    name = "ht.rangeserver.compactions.gc"
     title = "RangeServer GC Compactions"
   }
   metric {
-    name = "hypertable.rangeserver.scanners"
+    name = "ht.rangeserver.scanners"
     title = "RangeServer Scanners"
   }
   metric {
-    name = "hypertable.rangeserver.cellstores"
+    name = "ht.rangeserver.cellstores"
     title = "RangeServer Cell Stores"
   }
   metric {
-    name = "hypertable.rangeserver.ranges"
+    name = "ht.rangeserver.ranges"
     title = "RangeServer Ranges"
   }
   metric {
-    name = "hypertable.rangeserver.memory.virtual"
+    name = "ht.rangeserver.memory.virtual"
     title = "RangeServer Virtual Memory"
   }
   metric {
-    name = "hypertable.rangeserver.memory.resident"
+    name = "ht.rangeserver.memory.resident"
     title = "RangeServer Resident Memory"
   }
   metric {
-    name = "hypertable.rangeserver.memory.heap"
+    name = "ht.rangeserver.memory.heap"
     title = "RangeServer Heap"
   }
   metric {
-    name = "hypertable.rangeserver.memory.heapSlack"
+    name = "ht.rangeserver.memory.heapSlack"
     title = "RangeServer Heap Slack"
   }
   metric {
-    name = "hypertable.rangeserver.memory.tracked"
+    name = "ht.rangeserver.memory.tracked"
     title = "RangeServer Tracked Memory"
   }
   metric {
-    name = "hypertable.rangeserver.cpu.sys"
+    name = "ht.rangeserver.cpu.sys"
     title = "RangeServer CPU system"
   }
   metric {
-    name = "hypertable.rangeserver.cpu.user"
+    name = "ht.rangeserver.cpu.user"
     title = "RangeServer CPU user"
   }
   metric {
-    name = "hypertable.rangeserver.blockCache.hitRate"
+    name = "ht.rangeserver.blockCache.hitRate"
     title = "RangeServer Block Cache Hits"
   }
   metric {
-    name = "hypertable.rangeserver.blockCache.memory"
+    name = "ht.rangeserver.blockCache.memory"
     title = "RangeServer Block Cache Memory"
   }
   metric {
-    name = "hypertable.rangeserver.blockCache.fill"
+    name = "ht.rangeserver.blockCache.fill"
     title = "RangeServer Block Cache Fill"
   }
   metric {
-    name = "hypertable.rangeserver.queryCache.hitRate"
+    name = "ht.rangeserver.queryCache.hitRate"
     title = "RangeServer Query Cache Hits"
   }
   metric {
-    name = "hypertable.rangeserver.queryCache.memory"
+    name = "ht.rangeserver.queryCache.memory"
     title = "RangeServer Query Cache Memory"
   }
   metric {
-    name = "hypertable.rangeserver.queryCache.fill"
+    name = "ht.rangeserver.queryCache.fill"
     title = "RangeServer Query Cache Fill"
   }
 
@@ -278,39 +278,39 @@ collection_group {
 ##
 
   metric {
-    name = "hypertable.thriftbroker.requests"
+    name = "ht.thriftbroker.requests"
     title = "ThriftBroker Requests"
   }
   metric {
-    name = "hypertable.thriftbroker.errors"
+    name = "ht.thriftbroker.errors"
     title = "ThriftBroker Errors"
   }
   metric {
-    name = "hypertable.thriftbroker.connections"
+    name = "ht.thriftbroker.connections"
     title = "ThriftBroker Connections"
   }
   metric {
-    name = "hypertable.thriftbroker.cpu.sys"
+    name = "ht.thriftbroker.cpu.sys"
     title = "ThriftBroker CPU system"
   }
   metric {
-    name = "hypertable.thriftbroker.cpu.user"
+    name = "ht.thriftbroker.cpu.user"
     title = "ThriftBroker CPU user"
   }
   metric {
-    name = "hypertable.thriftbroker.memory.virtual"
+    name = "ht.thriftbroker.memory.virtual"
     title = "ThriftBroker Virtual Memory"
   }
   metric {
-    name = "hypertable.thriftbroker.memory.resident"
+    name = "ht.thriftbroker.memory.resident"
     title = "ThriftBroker Resident Memory"
   }
   metric {
-    name = "hypertable.thriftbroker.memory.heap"
+    name = "ht.thriftbroker.memory.heap"
     title = "ThriftBroker Heap"
   }
   metric {
-    name = "hypertable.thriftbroker.memory.heapSlack"
+    name = "ht.thriftbroker.memory.heapSlack"
     title = "ThriftBroker Heap Slack"
   }
 

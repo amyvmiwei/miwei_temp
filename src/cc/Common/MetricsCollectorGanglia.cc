@@ -56,7 +56,7 @@ MetricsCollectorGanglia::MetricsCollectorGanglia(const string &component,
                                                  uint16_t port) : m_port(port) {
   InetAddr local_addr(INADDR_ANY, 0);
 
-  m_prefix = "hypertable." + component + ".";
+  m_prefix = "ht." + component + ".";
 
   if ((m_sd = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
     HT_FATALF("socket(AF_INET, SOCK_DGRAM, 0) failure - %s", strerror(errno));
