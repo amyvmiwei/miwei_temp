@@ -17,6 +17,9 @@
 # 02110-1301, USA.
 #
 
+set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/cluster")
+set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/cluster")
+
 set(cluster_SRCS
 ht_cluster.cc
 ClusterCommandInterpreter.cc
@@ -27,6 +30,15 @@ ClusterDefinitionTokenizer.cc
 # cluster - command interpreter
 add_executable(cluster ${cluster_SRCS})
 target_link_libraries(cluster Hypertable)
+
+# ClusterDefinitionTokenizer_test
+add_executable(ClusterDefinitionTokenizer_test ClusterDefinitionTokenizer.cc
+                                     tests/ClusterDefinitionTokenizer_test.cc)
+target_link_libraries(ClusterDefinitionTokenizer_test HyperCommon)
+
+add_test(Cluster-definition-tokenizer ClusterDefinitionTokenizer_test
+                  ${SRC_DIR}/tests/ClusterDefinitionTokenizer_test.input
+                  ${SRC_DIR}/tests/ClusterDefinitionTokenizer_test.golden)
 
 if (NOT HT_COMPONENT_INSTALL)
   install(TARGETS cluster RUNTIME DESTINATION bin)

@@ -1,0 +1,17 @@
+#### test-definition: example 1
+INSTALL_DIR="/opt/hypertable"
+HYPERTABLE_VERSION="0.9.8.0"
+
+role: master master
+role: hyperspace master, hyperspace01, hyperspace02
+
+#### test-definition: example 2
+INSTALL_DIR="/opt/hypertable"
+HYPERTABLE_VERSION="0.9.8.0"
+
+role: master master
+role: hyperspace master, hyperspace01, hyperspace02
+
+# here is another
+# variable definition
+CONFIG="/opt/hypertable/dev-hypertable.cfg"
