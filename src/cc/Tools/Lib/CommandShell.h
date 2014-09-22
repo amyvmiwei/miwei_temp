@@ -44,6 +44,7 @@ namespace Hypertable {
     bool silent() { return m_silent; }
     bool test_mode() { return m_test_mode; }
     void set_namespace(const String &ns) { m_namespace=ns; }
+    void set_line_command_mode(bool val) { m_line_command_mode=val; }
 
     static void add_options(PropertiesDesc &);
 
@@ -65,6 +66,7 @@ namespace Hypertable {
     bool m_silent;
     bool m_test_mode;
     bool m_no_prompt;
+    bool m_line_command_mode {};
     bool m_cont;
     char *m_line_read;
     bool m_notify;

@@ -17,9 +17,17 @@
 # 02110-1301, USA.
 #
 
-file(GLOB entries *)
-foreach(entry ${entries})
-  if(IS_DIRECTORY ${entry} AND EXISTS ${entry}/CMakeLists.txt)
-    add_subdirectory(${entry})
-  endif()
-endforeach(entry)
+set(cluster_SRCS
+ht_cluster.cc
+ClusterCommandInterpreter.cc
+ClusterDefinition.cc
+ClusterDefinitionTokenizer.cc
+)
+
+# cluster - command interpreter
+add_executable(cluster ${cluster_SRCS})
+target_link_libraries(cluster Hypertable)
+
+if (NOT HT_COMPONENT_INSTALL)
+  install(TARGETS cluster RUNTIME DESTINATION bin)
+endif ()
