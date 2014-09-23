@@ -39,7 +39,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
   string line;
-  string output;
+  string content;
 
   if (argc != 3) {
     cout << "usage: ClusterDefinitionTokenizer_test <input-file> <golden-file>" << endl;
@@ -58,18 +58,29 @@ int main(int argc, char **argv) {
 
   while (getline(input_file, line)) {
 
-    if (line.find_first_of("#### test-definition:") == 0) {
-      if (!output.empty())
-        output_file << output;
-      output.clear();
+    if (!strncmp(line.c_str(), "#### test-definition:", 21)) {
+      if (!content.empty()) {
+        ClusterDefinitionTokenizer tokenizer(content);
+        ClusterDefinitionTokenizer::Token token;
+        while (tokenizer.next(token)) {
+          output_file << "Token " << ClusterDefinitionTokenizer::Token::type_to_text(token.type) << endl;
+          output_file << token.text;
+        }
+      }
+      content.clear();
     }
-
-    output.append(line);
-    output.append("\n");
+    content.append(line);
+    content.append("\n");
   }
 
-  if (!output.empty())
-    output_file << output;
+  if (!content.empty()) {
+    ClusterDefinitionTokenizer tokenizer(content);
+    ClusterDefinitionTokenizer::Token token;
+    while (tokenizer.next(token)) {
+      output_file << "Token " << ClusterDefinitionTokenizer::Token::type_to_text(token.type) << endl;
+      output_file << token.text;
+    }
+  }
 
   output_file.close();
   input_file.close();

@@ -21,8 +21,10 @@
 #include <Common/Compat.h>
 
 #include "ClusterDefinition.h"
+#include "ClusterDefinitionTokenizer.h"
 
 #include <Common/FileUtils.h>
+#include <Common/Logger.h>
 
 #include <cerrno>
 #include <ctime>
@@ -75,17 +77,23 @@ bool ClusterDefinition::compilation_needed() {
 
 void ClusterDefinition::make() {
   size_t lastslash = m_definition_script.find_last_of('/');
-  if (lastslash != string::npos) {
-    string script_directory = m_definition_script.substr(0, lastslash);
-    if (!FileUtils::mkdirs(script_directory)) {
-      cout << "mkdirs('" << script_directory << "') - " << strerror(errno) << endl;
-      exit(1);
-    }
-    string contents;
-    if (FileUtils::read(m_definition_file, contents) < 0)
-      exit(1);
-    if (FileUtils::write(m_definition_script, contents) < 0)
-      exit(1);
+  HT_ASSERT(lastslash != string::npos);
+
+  string script_directory = m_definition_script.substr(0, lastslash);
+  if (!FileUtils::mkdirs(script_directory)) {
+    cout << "mkdirs('" << script_directory << "') - " << strerror(errno) << endl;
+    exit(1);
   }
+  string contents;
+  if (FileUtils::read(m_definition_file, contents) < 0)
+    exit(1);
+
+  ClusterDefinitionTokenizer tokenizer(contents);
+
+  /*
+  if (FileUtils::write(m_definition_script, contents) < 0)
+    exit(1);
+  */
+
   cout << "make" << endl;
 }

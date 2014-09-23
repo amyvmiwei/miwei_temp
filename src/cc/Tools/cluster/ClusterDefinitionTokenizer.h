@@ -41,8 +41,10 @@ namespace Hypertable {
         TASK=3,
         FUNCTION=4,
         COMMENT=5,
-        CODE=6
+        CODE=6,
+        BLANKLINE=7
       };
+      static const char *type_to_text(int type);
       void clear() { type=NONE; text.clear(); line=0; fname.clear(); }
       int type {};
       string text;
@@ -50,7 +52,7 @@ namespace Hypertable {
       string fname;
     };
 
-    ClusterDefinitionTokenizer(const string &fname);
+    ClusterDefinitionTokenizer(const string &content);
 
     bool next(Token &token);
 
@@ -60,7 +62,7 @@ namespace Hypertable {
 
     bool accumulate(const char **basep, const char *endp, int type, Token &token);
 
-    string m_definition_file;
+    string m_content;
     const char *m_next {};
     size_t m_line {};
   };

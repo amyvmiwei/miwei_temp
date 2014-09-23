@@ -106,7 +106,7 @@ namespace {
             return true;
           }
         }
-        else if (*ptr == '"' || *ptr == '\'' || *ptr == '`')
+        else if (*ptr == '"' || *ptr == '\'' || *ptr == '`' || *ptr == '{')
           scope.push(*ptr);
       }
       ptr++;
@@ -116,9 +116,33 @@ namespace {
   }
 }
 
-ClusterDefinitionTokenizer::ClusterDefinitionTokenizer(const string &fname) 
-  : m_definition_file(fname) {
-  m_next = m_definition_file.c_str();
+const char *ClusterDefinitionTokenizer::Token::type_to_text(int type) {
+  switch (type) {
+  case(NONE):
+    return "NONE";
+  case(VARIABLE):
+    return "VARIABLE";
+  case(ROLE):
+    return "ROLE";
+  case(TASK):
+    return "TASK";
+  case(FUNCTION):
+    return "FUNCTION";
+  case(COMMENT):
+    return "COMMENT";
+  case(CODE):
+    return "CODE";
+  case(BLANKLINE):
+    return "BLANKLINE";
+  default:
+    HT_ASSERT(!"Unknown token type");
+  }
+  return nullptr;
+}
+
+ClusterDefinitionTokenizer::ClusterDefinitionTokenizer(const string &content)
+  : m_content(content) {
+  m_next = m_content.c_str();
 }
 
 bool ClusterDefinitionTokenizer::next(Token &token) {
@@ -156,8 +180,9 @@ bool ClusterDefinitionTokenizer::next(Token &token) {
 
     case (Token::ROLE):
       end = find_role_end(base, &m_line);
-      accumulate(&base, end, Token::ROLE, token);
-      return true;
+      if (accumulate(&base, end, Token::ROLE, token))
+        return true;
+      break;
 
     case (Token::TASK):
       if ((ptr = strchr(base, '{')) == 0)
@@ -176,17 +201,22 @@ bool ClusterDefinitionTokenizer::next(Token &token) {
       if (!find_end_char(ptr, &end, &m_line))
         HT_THROWF(Error::SYNTAX_ERROR, "Missing terminating '}' character in "
                   "function starting on line %d", (int)m_line);
-      if (!accumulate(&base, end, Token::CODE, token))
+      if (accumulate(&base, end, Token::FUNCTION, token))
         return true;
       break;
 
     case (Token::COMMENT):
-      if (!accumulate(&base, end, Token::COMMENT, token))
+      if (accumulate(&base, end, Token::COMMENT, token))
         return true;
       break;
 
     case (Token::CODE):
-      if (!accumulate(&base, end, Token::CODE, token))
+      if (accumulate(&base, end, Token::CODE, token))
+        return true;
+      break;
+
+    case (Token::BLANKLINE):
+      if (accumulate(&base, end, Token::BLANKLINE, token))
         return true;
       break;
 
@@ -207,7 +237,7 @@ int ClusterDefinitionTokenizer::identify_line_type(const char *base, const char 
     ptr++;
 
   if (ptr == end)
-    return Token::CODE;
+    return Token::BLANKLINE;
 
   if (is_identifier_start_character(*ptr)) {
     ptr++;
@@ -248,19 +278,27 @@ int ClusterDefinitionTokenizer::identify_line_type(const char *base, const char 
 bool ClusterDefinitionTokenizer::accumulate(const char **basep,
                                             const char *end,
                                             int type, Token &token) {
-  if (token.type != Token::NONE &&
-      type != token.type &&
-      !(type == Token::TASK && token.type == Token::COMMENT)) {
-    m_next = *basep;
-    return true;
+
+  if (token.type == Token::ROLE && type == Token::CODE)
+    type = Token::ROLE;
+  else {
+    if (token.type == Token::COMMENT && type == Token::TASK)
+      token.type = Token::TASK;
+    else if (type == Token::FUNCTION || type == Token::BLANKLINE)
+      type = Token::CODE;
+
+    if (token.type != Token::NONE &&
+        (type != token.type || type == Token::ROLE)) {
+      m_next = *basep;
+      return true;
+    }
   }
-  HT_ASSERT(token.type == Token::NONE || type == token.type ||
-            (type == Token::TASK && token.type == Token::COMMENT));
+
   if (*end)
     end++;
-  *basep = end;
-  m_next = end;
   token.text.append(*basep, end-*basep);
   token.type = type;
-  return *m_next;
+  *basep = end;
+  m_next = end;
+  return *m_next == 0;
 }
