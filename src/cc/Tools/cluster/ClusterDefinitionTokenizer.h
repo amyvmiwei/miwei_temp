@@ -22,6 +22,7 @@
 #ifndef Tools_cluster_ClusterDefinitionTokenizer_h
 #define Tools_cluster_ClusterDefinitionTokenizer_h
 
+#include <memory>
 #include <string>
 
 namespace Hypertable {
@@ -36,13 +37,14 @@ namespace Hypertable {
     public:
       enum {
         NONE=0,
-        VARIABLE=1,
-        ROLE=2,
-        TASK=3,
-        FUNCTION=4,
-        COMMENT=5,
-        CODE=6,
-        BLANKLINE=7
+        INCLUDE,
+        VARIABLE,
+        ROLE,
+        TASK,
+        FUNCTION,
+        COMMENT,
+        CODE,
+        BLANKLINE
       };
       static const char *type_to_text(int type);
       void clear() { type=NONE; text.clear(); line=0; fname.clear(); }
@@ -52,7 +54,11 @@ namespace Hypertable {
       string fname;
     };
 
-    ClusterDefinitionTokenizer(const string &content);
+    ClusterDefinitionTokenizer(const string &fname);
+
+    ClusterDefinitionTokenizer(const string &fname, const string &content);
+
+    string dirname();
 
     bool next(Token &token);
 
@@ -62,10 +68,14 @@ namespace Hypertable {
 
     bool accumulate(const char **basep, const char *endp, int type, Token &token);
 
+    string m_fname;
     string m_content;
     const char *m_next {};
     size_t m_line {};
   };
+
+  /// Smart pointer to ClusterDefinitionTokenizer
+  typedef shared_ptr<ClusterDefinitionTokenizer> ClusterDefinitionTokenizerPtr;
 
 }
 

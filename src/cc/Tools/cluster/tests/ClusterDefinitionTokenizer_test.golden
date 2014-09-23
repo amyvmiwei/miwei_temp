@@ -12,6 +12,8 @@ Token ROLE
 role: hyperspace master, hyperspace01, hyperspace02
 Token CODE
 
+Token INCLUDE
+include: "cluster.tasks"
 Token COMMENT
 #### test-definition: example 2
 Token VARIABLE
@@ -48,6 +50,10 @@ role: slave slave1 slave2 slave3
             slave4 slave5 slave6
 Token ROLE
 role: thriftbroker_additional tb1 tb2
+Token CODE
+
+Token INCLUDE
+include: "cluster.tasks"
 Token CODE
 
 Token TASK

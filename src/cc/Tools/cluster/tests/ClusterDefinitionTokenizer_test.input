@@ -5,6 +5,7 @@ HYPERTABLE_VERSION="0.9.8.0"
 role: master master
 role: hyperspace master, hyperspace01, hyperspace02
 
+include: "cluster.tasks"
 #### test-definition: example 2
 INSTALL_DIR="/opt/hypertable"
 HYPERTABLE_VERSION="0.9.8.0"
@@ -24,6 +25,8 @@ role: master master
 role: slave slave1 slave2 slave3
             slave4 slave5 slave6
 role: thriftbroker_additional tb1 tb2
+
+include: "cluster.tasks"
 
 # sets up the symbolic link 'current' in the installation area.
 # To point to the directory of the current version

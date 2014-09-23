@@ -128,7 +128,7 @@ int main(int argc, char **argv) {
     status = shell->run();
   }
   catch(Exception &e) {
-    HT_ERROR_OUT << e << HT_END;
+    cout << Error::get_text(e.code()) << " - " << e.what() << endl;
     status = e.code();
   }
   _exit(status);

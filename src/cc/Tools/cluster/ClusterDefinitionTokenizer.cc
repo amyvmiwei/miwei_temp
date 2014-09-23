@@ -53,13 +53,6 @@ namespace {
     return is_identifier_start_character(c) || isdigit(c);
   }
 
-  const char *find_role_end(const char *base, size_t *linep) {
-    const char *end = base;
-    while (*end && *end != '\n')
-      end++;
-    return end;
-  }
-
   bool find_end_char(const char *base, const char **endp, size_t *linep) {
     stack<char> scope;
 
@@ -73,46 +66,48 @@ namespace {
       if (scope.top() == '"') {
         if (*ptr == '"' && *(ptr-1) != '\\') {
           scope.pop();
-          if (scope.empty()) {
-            *endp = ptr+1;
-            return true;
-          }
+          if (scope.empty())
+            break;
         }
       }
       else if (scope.top() == '\'') {
         if (*ptr == '\'' && *(ptr-1) != '\\') {
           scope.pop();
-          if (scope.empty()) {
-            *endp = ptr+1;
-            return true;
-          }
+          if (scope.empty())
+            break;
         }
       }
       else if (scope.top() == '`') {
         if (*ptr == '`') {
           scope.pop();
-          if (scope.empty()) {
-            *endp = ptr+1;
-            return true;
-          }
+          if (scope.empty())
+            break;
         }
       }
       else {
         HT_ASSERT(scope.top() == '{');
         if (*ptr == '}') {
           scope.pop();
-          if (scope.empty()) {
-            *endp = ptr+1;
-            return true;
-          }
+          if (scope.empty())
+            break;
         }
         else if (*ptr == '"' || *ptr == '\'' || *ptr == '`' || *ptr == '{')
           scope.push(*ptr);
       }
+      if (*ptr == '\n')
+        (*linep)++;
       ptr++;
     }
 
-    return false;
+    if (*ptr == 0)
+      return false;
+
+    ptr++;
+    while (*ptr && *ptr != '\n')
+      ptr++;
+
+    *endp = ptr;
+    return true;
   }
 }
 
@@ -120,6 +115,8 @@ const char *ClusterDefinitionTokenizer::Token::type_to_text(int type) {
   switch (type) {
   case(NONE):
     return "NONE";
+  case(INCLUDE):
+    return "INCLUDE";
   case(VARIABLE):
     return "VARIABLE";
   case(ROLE):
@@ -140,9 +137,24 @@ const char *ClusterDefinitionTokenizer::Token::type_to_text(int type) {
   return nullptr;
 }
 
-ClusterDefinitionTokenizer::ClusterDefinitionTokenizer(const string &content)
-  : m_content(content) {
+ClusterDefinitionTokenizer::ClusterDefinitionTokenizer(const string &fname)
+  : m_fname(fname) {
+  if (FileUtils::read(m_fname, m_content) < 0)
+    exit(1);
   m_next = m_content.c_str();
+}
+
+ClusterDefinitionTokenizer::ClusterDefinitionTokenizer(const string &fname,
+                                                       const string &content)
+  : m_fname(fname), m_content(content) {
+  m_next = m_content.c_str();
+}
+
+string ClusterDefinitionTokenizer::dirname() {
+  size_t lastslash = m_fname.find_last_of('/');
+  if (lastslash != string::npos)
+    return m_fname.substr(0, lastslash);
+  return ".";
 }
 
 bool ClusterDefinitionTokenizer::next(Token &token) {
@@ -171,15 +183,15 @@ bool ClusterDefinitionTokenizer::next(Token &token) {
       ptr = strchr(base, '=');
       ptr++;
       if (*ptr == '\'' || *ptr == '"' || *ptr == '`') {
+        int starting_line = (int)m_line;
         if (!find_end_char(ptr, &end, &m_line))
           HT_THROWF(Error::SYNTAX_ERROR,
-                    "Unterminated string starting on line %d",(int)m_line);
+                    "Unterminated string starting on line %d", starting_line);
       }
       accumulate(&base, end, Token::VARIABLE, token);
       return true;
 
     case (Token::ROLE):
-      end = find_role_end(base, &m_line);
       if (accumulate(&base, end, Token::ROLE, token))
         return true;
       break;
@@ -188,9 +200,13 @@ bool ClusterDefinitionTokenizer::next(Token &token) {
       if ((ptr = strchr(base, '{')) == 0)
         HT_THROWF(Error::SYNTAX_ERROR,
                   "Mal-formed task: statement starting on line %d",(int)m_line);
-      if (!find_end_char(ptr, &end, &m_line))
-        HT_THROWF(Error::SYNTAX_ERROR, "Missing terminating '}' character in "
-                  "task: statement starting on line %d", (int)m_line);
+      {
+        int starting_line = (int)m_line;
+        if (!find_end_char(ptr, &end, &m_line))
+          HT_THROWF(Error::SYNTAX_ERROR, "Missing terminating '}' character in "
+                    "task: statement on line %d of file '%s'",
+                    starting_line, m_fname.c_str());
+      }
       accumulate(&base, end, Token::TASK, token);
       return true;
 
@@ -198,9 +214,13 @@ bool ClusterDefinitionTokenizer::next(Token &token) {
       if ((ptr = strchr(base, '{')) == 0)
         HT_THROWF(Error::SYNTAX_ERROR,
                   "Mal-formed function starting on line %d",(int)m_line);
-      if (!find_end_char(ptr, &end, &m_line))
-        HT_THROWF(Error::SYNTAX_ERROR, "Missing terminating '}' character in "
-                  "function starting on line %d", (int)m_line);
+      {
+        int starting_line = (int)m_line;
+        if (!find_end_char(ptr, &end, &m_line))
+          HT_THROWF(Error::SYNTAX_ERROR, "Missing terminating '}' character in "
+                    "function on line %d of file '%s'",
+                    starting_line, m_fname.c_str());
+      }
       if (accumulate(&base, end, Token::FUNCTION, token))
         return true;
       break;
@@ -217,6 +237,11 @@ bool ClusterDefinitionTokenizer::next(Token &token) {
 
     case (Token::BLANKLINE):
       if (accumulate(&base, end, Token::BLANKLINE, token))
+        return true;
+      break;
+
+    case (Token::INCLUDE):
+      if (accumulate(&base, end, Token::INCLUDE, token))
         return true;
       break;
 
@@ -246,6 +271,8 @@ int ClusterDefinitionTokenizer::identify_line_type(const char *base, const char 
     if (*ptr == '=')
       return Token::VARIABLE;
     else if (*ptr == ':') {
+      if (!strncmp(base, "include", 4))
+        return Token::INCLUDE;
       if (!strncmp(base, "role", 4))
         return Token::ROLE;
       else if (!strncmp(base, "task", 4))
@@ -290,6 +317,7 @@ bool ClusterDefinitionTokenizer::accumulate(const char **basep,
     if (token.type != Token::NONE &&
         (type != token.type || type == Token::ROLE)) {
       m_next = *basep;
+      m_line--;
       return true;
     }
   }

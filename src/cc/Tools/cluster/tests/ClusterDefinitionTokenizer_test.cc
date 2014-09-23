@@ -60,7 +60,7 @@ int main(int argc, char **argv) {
 
     if (!strncmp(line.c_str(), "#### test-definition:", 21)) {
       if (!content.empty()) {
-        ClusterDefinitionTokenizer tokenizer(content);
+        ClusterDefinitionTokenizer tokenizer(argv[1], content);
         ClusterDefinitionTokenizer::Token token;
         while (tokenizer.next(token)) {
           output_file << "Token " << ClusterDefinitionTokenizer::Token::type_to_text(token.type) << endl;
@@ -74,7 +74,7 @@ int main(int argc, char **argv) {
   }
 
   if (!content.empty()) {
-    ClusterDefinitionTokenizer tokenizer(content);
+    ClusterDefinitionTokenizer tokenizer(argv[1], content);
     ClusterDefinitionTokenizer::Token token;
     while (tokenizer.next(token)) {
       output_file << "Token " << ClusterDefinitionTokenizer::Token::type_to_text(token.type) << endl;
