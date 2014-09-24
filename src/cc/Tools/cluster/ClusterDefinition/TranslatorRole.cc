@@ -40,6 +40,73 @@ using namespace Hypertable::ClusterDefinition;
 using namespace std;
 
 const string TranslatorRole::translate(TranslationContext &context) {
-  return m_text;
+  string translated_text;
+  size_t offset = m_text.find_first_of("role:");
+  if (offset == string::npos)
+    HT_THROWF(Error::SYNTAX_ERROR, "Bad role definition on line %d of '%s'",
+              (int)m_lineno, m_fname.c_str());
+  const char *ptr = m_text.c_str() + offset + 5;
+  // skip whitespace
+  while (*ptr && isspace(*ptr))
+    ptr++;
+
+  const char *base = ptr;
+  if (*ptr == 0 || !isalpha(*ptr))
+    HT_THROWF(Error::SYNTAX_ERROR, "Bad role definition on line %d of '%s'",
+              (int)m_lineno, m_fname.c_str());
+  while (*ptr && (isalnum(*ptr) || *ptr == '_'))
+    ptr++;
+
+  string name(base, ptr-base);
+
+  translated_text.append("ROLE_");
+  translated_text.append(name);
+  translated_text.append("=\"");
+
+  while (*ptr && isspace(*ptr))
+    ptr++;
+
+  base = 0;
+  while (*ptr) {
+    if (isalnum(*ptr) || *ptr == '_') {
+      if (base == 0)
+        base = ptr;
+    }
+    else if (isspace(*ptr) || *ptr == '-' || *ptr == '+' || *ptr == '(' || *ptr == ')') {
+      if (base) {
+        string name(base, ptr-base);
+        if (context.roles.count(name) > 0) {
+          translated_text.append("${ROLE_");
+          translated_text.append(name);
+          translated_text.append("}");
+        }
+        else
+          translated_text.append(name);
+        base = 0;
+      }
+      if (isspace(*ptr)) {
+        if (!isspace(translated_text[translated_text.length()-1]))
+          translated_text.append(1, ' ');
+      }
+      else
+        translated_text.append(1, *ptr);
+    }
+    else if (*ptr == '[' || *ptr == ']' || *ptr == '.') {
+      if (base) {
+        translated_text.append(base, ptr-base);
+        base = 0;
+      }
+      translated_text.append(1, *ptr);      
+    }
+    else
+      HT_THROWF(Error::SYNTAX_ERROR, "Invalid character '%c' found in role "
+                "definition on line %d of '%s'",
+                *ptr, (int)m_lineno, m_fname.c_str());
+    ptr++;
+  }
+
+  boost::trim_right_if(translated_text, boost::is_any_of(" \t\n\r"));
+  translated_text.append("\"\n");
+  return translated_text;
 }
 

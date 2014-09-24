@@ -55,10 +55,25 @@ namespace {
   struct AppPolicy : Config::Policy {
     static void init_options() {
       cmdline_desc().add_options()
+        ("clear-cache", "Clear contents of cache")
         ("definition,f", str(), "Definition file name")
         ;
     }
   };
+
+  void clear_cache() {
+    string cache_dir;
+    struct passwd *pw = getpwuid(getuid());
+    cache_dir.append(pw->pw_dir);
+    cache_dir.append("/.cluster");
+    if (!FileUtils::exists(cache_dir))
+      return;
+    string cmd = (string)"/bin/rm -rf " + cache_dir;
+    if (system(cmd.c_str()) != 0) {
+      cout << "Failed execution: " << cmd << endl;
+      exit(1);
+    }
+  }
 
   const string locate_definition_file() {
     string fname;
@@ -116,6 +131,11 @@ int main(int argc, char **argv) {
 
   try {
     init_with_policies<Policies>(argc, argv);
+
+    if (has("clear-cache")) {
+      clear_cache();
+      exit(0);
+    }
 
     Compiler compiler(locate_definition_file());
 

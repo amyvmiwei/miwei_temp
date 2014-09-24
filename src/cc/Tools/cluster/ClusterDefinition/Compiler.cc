@@ -101,12 +101,11 @@ void Compiler::make() {
 
   string output;
   Token token;
+  TranslationContext context;
 
   while (definitions.top()->next(token)) {
-    output.append("Token ");
-    output.append(Token::type_to_text(token.type));
-    output.append("\n");
-    output.append(token.text);
+    if (token.translator)
+      output.append(token.translator->translate(context));
     if (token.type == Token::INCLUDE) {
       string include_file = token.text.substr(token.text.find_first_of("include:")+8);
       boost::trim_if(include_file, boost::is_any_of("'\" \t\n\r"));
@@ -119,5 +118,4 @@ void Compiler::make() {
   if (FileUtils::write(m_definition_script, output) < 0)
     exit(1);
 
-  cout << "make" << endl;
 }

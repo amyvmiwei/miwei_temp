@@ -28,6 +28,7 @@
 #define Tools_cluster_TranslationContext_h
 
 #include <map>
+#include <set>
 #include <string>
 
 namespace Hypertable { namespace ClusterDefinition {
@@ -40,6 +41,7 @@ namespace Hypertable { namespace ClusterDefinition {
   class TranslationContext {
 
   public:
+    set<string> roles;
     map<string, string> symbols;
     map<string, string> task_description_short;
     map<string, string> task_description_long;

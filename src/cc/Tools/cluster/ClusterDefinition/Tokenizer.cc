@@ -302,6 +302,7 @@ bool Tokenizer::accumulate(const char **basep,
         (type != token.type || type == Token::ROLE)) {
       m_next = *basep;
       m_line--;
+      token.create_translator();
       return true;
     }
   }
@@ -312,5 +313,9 @@ bool Tokenizer::accumulate(const char **basep,
   token.type = type;
   *basep = end;
   m_next = end;
-  return *m_next == 0;
+  if (type == Token::VARIABLE || type == Token::TASK || *m_next == 0) {
+    token.create_translator();
+    return true;
+  }
+  return false;
 }
