@@ -22,7 +22,7 @@
 #include <Common/Compat.h>
 
 #include "ClusterCommandInterpreter.h"
-#include "ClusterDefinition.h"
+#include "ClusterDefinition/Compiler.h"
 
 #include <Tools/Lib/CommandShell.h>
 
@@ -43,7 +43,12 @@ extern "C" {
 }
 
 using namespace Hypertable;
+using namespace Hypertable::ClusterDefinition;
 using namespace Hypertable::Config;
+
+/// @defgroup cluster cluster
+/// @ingroup Tools
+/// Cluster task automation tool.
 
 namespace {
 
@@ -112,7 +117,7 @@ int main(int argc, char **argv) {
   try {
     init_with_policies<Policies>(argc, argv);
 
-    ClusterDefinition definition(locate_definition_file());
+    Compiler compiler(locate_definition_file());
 
     exit(0);
 

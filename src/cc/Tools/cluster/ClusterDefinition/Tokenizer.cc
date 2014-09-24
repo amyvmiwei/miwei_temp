@@ -18,9 +18,15 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/// @file
+/// Definitions for Tokenizer.
+/// This file contains type definitions for Tokenizer, a class for tokenizing a
+/// cluster definition file.
+
 #include <Common/Compat.h>
 
-#include "ClusterDefinitionTokenizer.h"
+#include "Tokenizer.h"
 
 #include <Common/Error.h>
 #include <Common/FileUtils.h>
@@ -41,6 +47,7 @@ extern "C" {
 #include <stack>
 
 using namespace Hypertable;
+using namespace Hypertable::ClusterDefinition;
 using namespace std;
 
 namespace {
@@ -111,7 +118,7 @@ namespace {
   }
 }
 
-const char *ClusterDefinitionTokenizer::Token::type_to_text(int type) {
+const char *Tokenizer::Token::type_to_text(int type) {
   switch (type) {
   case(NONE):
     return "NONE";
@@ -137,27 +144,27 @@ const char *ClusterDefinitionTokenizer::Token::type_to_text(int type) {
   return nullptr;
 }
 
-ClusterDefinitionTokenizer::ClusterDefinitionTokenizer(const string &fname)
+Tokenizer::Tokenizer(const string &fname)
   : m_fname(fname) {
   if (FileUtils::read(m_fname, m_content) < 0)
     exit(1);
   m_next = m_content.c_str();
 }
 
-ClusterDefinitionTokenizer::ClusterDefinitionTokenizer(const string &fname,
+Tokenizer::Tokenizer(const string &fname,
                                                        const string &content)
   : m_fname(fname), m_content(content) {
   m_next = m_content.c_str();
 }
 
-string ClusterDefinitionTokenizer::dirname() {
+string Tokenizer::dirname() {
   size_t lastslash = m_fname.find_last_of('/');
   if (lastslash != string::npos)
     return m_fname.substr(0, lastslash);
   return ".";
 }
 
-bool ClusterDefinitionTokenizer::next(Token &token) {
+bool Tokenizer::next(Token &token) {
   const char *base = m_next;
   const char *end;
   const char *ptr;
@@ -254,7 +261,7 @@ bool ClusterDefinitionTokenizer::next(Token &token) {
 }
 
 
-int ClusterDefinitionTokenizer::identify_line_type(const char *base, const char *end) {
+int Tokenizer::identify_line_type(const char *base, const char *end) {
   const char *ptr = base;
 
   // skip leading whitespace
@@ -302,7 +309,7 @@ int ClusterDefinitionTokenizer::identify_line_type(const char *base, const char 
 }
 
 
-bool ClusterDefinitionTokenizer::accumulate(const char **basep,
+bool Tokenizer::accumulate(const char **basep,
                                             const char *end,
                                             int type, Token &token) {
 

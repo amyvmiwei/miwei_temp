@@ -19,17 +19,25 @@
  * 02110-1301, USA.
  */
 
-#ifndef Tools_cluster_ClusterDefinitionTokenizer_h
-#define Tools_cluster_ClusterDefinitionTokenizer_h
+/// @file
+/// Declarations for Tokenizer.
+/// This file contains type declarations for Tokenizer, a class for tokenizing a
+/// cluster definition file.
+
+#ifndef Tools_cluster_ClusterDefinition_Tokenizer_h
+#define Tools_cluster_ClusterDefinition_Tokenizer_h
 
 #include <memory>
 #include <string>
 
-namespace Hypertable {
+namespace Hypertable { namespace ClusterDefinition {
 
   using namespace std;
 
-  class ClusterDefinitionTokenizer {
+  /// @addtogroup ClusterDefinition
+  /// @{
+
+  class Tokenizer {
 
   public:
 
@@ -54,9 +62,9 @@ namespace Hypertable {
       string fname;
     };
 
-    ClusterDefinitionTokenizer(const string &fname);
+    Tokenizer(const string &fname);
 
-    ClusterDefinitionTokenizer(const string &fname, const string &content);
+    Tokenizer(const string &fname, const string &content);
 
     string dirname();
 
@@ -74,9 +82,11 @@ namespace Hypertable {
     size_t m_line {};
   };
 
-  /// Smart pointer to ClusterDefinitionTokenizer
-  typedef shared_ptr<ClusterDefinitionTokenizer> ClusterDefinitionTokenizerPtr;
+  /// Smart pointer to Tokenizer
+  typedef shared_ptr<Tokenizer> TokenizerPtr;
 
-}
+  /// @}
 
-#endif // Tools_cluster_ClusterDefinitionTokenizer_h
+}}
+
+#endif // Tools_cluster_ClusterDefinition_Tokenizer_h

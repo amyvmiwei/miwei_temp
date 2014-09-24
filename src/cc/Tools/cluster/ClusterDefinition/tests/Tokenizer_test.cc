@@ -20,7 +20,7 @@
  */
 #include <Common/Compat.h>
 
-#include <Tools/cluster/ClusterDefinitionTokenizer.h>
+#include <Tools/cluster/ClusterDefinition/Tokenizer.h>
 
 #include <Common/Error.h>
 #include <Common/FileUtils.h>
@@ -35,6 +35,7 @@
 #include <string>
 
 using namespace Hypertable;
+using namespace Hypertable::ClusterDefinition;
 using namespace std;
 
 int main(int argc, char **argv) {
@@ -42,7 +43,7 @@ int main(int argc, char **argv) {
   string content;
 
   if (argc != 3) {
-    cout << "usage: ClusterDefinitionTokenizer_test <input-file> <golden-file>" << endl;
+    cout << "usage: Tokenizer_test <input-file> <golden-file>" << endl;
     exit(1);
   }
 
@@ -54,16 +55,16 @@ int main(int argc, char **argv) {
   }
 
   ofstream output_file;
-  output_file.open("ClusterDefinitionTokenizer_test.output");
+  output_file.open("Tokenizer_test.output");
 
   while (getline(input_file, line)) {
 
     if (!strncmp(line.c_str(), "#### test-definition:", 21)) {
       if (!content.empty()) {
-        ClusterDefinitionTokenizer tokenizer(argv[1], content);
-        ClusterDefinitionTokenizer::Token token;
+        Tokenizer tokenizer(argv[1], content);
+        Tokenizer::Token token;
         while (tokenizer.next(token)) {
-          output_file << "Token " << ClusterDefinitionTokenizer::Token::type_to_text(token.type) << endl;
+          output_file << "Token " << Tokenizer::Token::type_to_text(token.type) << endl;
           output_file << token.text;
         }
       }
@@ -74,10 +75,10 @@ int main(int argc, char **argv) {
   }
 
   if (!content.empty()) {
-    ClusterDefinitionTokenizer tokenizer(argv[1], content);
-    ClusterDefinitionTokenizer::Token token;
+    Tokenizer tokenizer(argv[1], content);
+    Tokenizer::Token token;
     while (tokenizer.next(token)) {
-      output_file << "Token " << ClusterDefinitionTokenizer::Token::type_to_text(token.type) << endl;
+      output_file << "Token " << Tokenizer::Token::type_to_text(token.type) << endl;
       output_file << token.text;
     }
   }
@@ -85,7 +86,7 @@ int main(int argc, char **argv) {
   output_file.close();
   input_file.close();
 
-  string cmd = format("diff ClusterDefinitionTokenizer_test.output %s", argv[2]);
+  string cmd = format("diff Tokenizer_test.output %s", argv[2]);
   if (system(cmd.c_str()))
     exit(1);
 

@@ -19,32 +19,36 @@
  * 02110-1301, USA.
  */
 
-#ifndef Tools_cluster_ClusterDefinition_h
-#define Tools_cluster_ClusterDefinition_h
+/// @file
+/// Declarations for TranslatorVariable.
+/// This file contains type declarations for TranslatorVariable, a class for
+/// translating variable definition statements.
+
+#ifndef Tools_cluster_TranslatorVariable_h
+#define Tools_cluster_TranslatorVariable_h
+
+#include "TranslationContext.h"
+#include "Translator.h"
 
 #include <string>
 
-namespace Hypertable {
+namespace Hypertable { namespace ClusterDefinition {
 
   using namespace std;
 
-  class ClusterDefinition {
+  /// @addtogroup ClusterDefinition
+  /// @{
 
+  class TranslatorVariable : public Translator {
   public:
-    ClusterDefinition(const string &fname);
-
+    TranslatorVariable(const string &text) : m_text(text) {};
+    const string translate(TranslationContext &context) override;
   private:
-
-    bool compilation_needed();
-
-    void make();
-
-    string m_definition_file;
-
-    string m_definition_script;
-
+    string m_text;
   };
 
-}
+  /// @}
 
-#endif // Tools_cluster_ClusterDefinition_h
+}}
+
+#endif // Tools_cluster_TranslatorVariable_h

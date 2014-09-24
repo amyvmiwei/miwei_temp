@@ -18,10 +18,16 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA
  * 02110-1301, USA.
  */
+
+/// @file
+/// Ddefinitions for Compiler.
+/// This file contains type ddefinitions for Compiler, a class for compiling a
+/// cluster definition file into an executable bash script.
+
 #include <Common/Compat.h>
 
-#include "ClusterDefinition.h"
-#include "ClusterDefinitionTokenizer.h"
+#include "Compiler.h"
+#include "Tokenizer.h"
 
 #include <Common/FileUtils.h>
 #include <Common/Logger.h>
@@ -41,9 +47,10 @@ extern "C" {
 }
 
 using namespace Hypertable;
+using namespace Hypertable::ClusterDefinition;
 using namespace std;
 
-ClusterDefinition::ClusterDefinition(const string &fname) : m_definition_file(fname) {
+Compiler::Compiler(const string &fname) : m_definition_file(fname) {
   struct passwd *pw = getpwuid(getuid());
   m_definition_script.append(pw->pw_dir);
   m_definition_script.append("/.cluster");
@@ -55,7 +62,7 @@ ClusterDefinition::ClusterDefinition(const string &fname) : m_definition_file(fn
 }
 
 
-bool ClusterDefinition::compilation_needed() {
+bool Compiler::compilation_needed() {
 
   if (!FileUtils::exists(m_definition_script))
     return true;
@@ -78,7 +85,7 @@ bool ClusterDefinition::compilation_needed() {
 
 }
 
-void ClusterDefinition::make() {
+void Compiler::make() {
   size_t lastslash = m_definition_script.find_last_of('/');
   HT_ASSERT(lastslash != string::npos);
 
@@ -88,24 +95,24 @@ void ClusterDefinition::make() {
     exit(1);
   }
 
-  stack<ClusterDefinitionTokenizerPtr> definitions;
+  stack<TokenizerPtr> definitions;
 
-  definitions.push( make_shared<ClusterDefinitionTokenizer>(m_definition_file) );
+  definitions.push( make_shared<Tokenizer>(m_definition_file) );
 
   string output;
-  ClusterDefinitionTokenizer::Token token;
+  Tokenizer::Token token;
 
   while (definitions.top()->next(token)) {
     output.append("Token ");
-    output.append(ClusterDefinitionTokenizer::Token::type_to_text(token.type));
+    output.append(Tokenizer::Token::type_to_text(token.type));
     output.append("\n");
     output.append(token.text);
-    if (token.type == ClusterDefinitionTokenizer::Token::INCLUDE) {
+    if (token.type == Tokenizer::Token::INCLUDE) {
       string include_file = token.text.substr(token.text.find_first_of("include:")+8);
       boost::trim_if(include_file, boost::is_any_of("'\" \t\n\r"));
       if (include_file[0] != '/')
         include_file = definitions.top()->dirname() + "/" + include_file;
-      definitions.push( make_shared<ClusterDefinitionTokenizer>(include_file) );      
+      definitions.push( make_shared<Tokenizer>(include_file) );      
     }
   }
 
