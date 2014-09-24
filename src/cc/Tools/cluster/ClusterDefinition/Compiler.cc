@@ -100,14 +100,14 @@ void Compiler::make() {
   definitions.push( make_shared<Tokenizer>(m_definition_file) );
 
   string output;
-  Tokenizer::Token token;
+  Token token;
 
   while (definitions.top()->next(token)) {
     output.append("Token ");
-    output.append(Tokenizer::Token::type_to_text(token.type));
+    output.append(Token::type_to_text(token.type));
     output.append("\n");
     output.append(token.text);
-    if (token.type == Tokenizer::Token::INCLUDE) {
+    if (token.type == Token::INCLUDE) {
       string include_file = token.text.substr(token.text.find_first_of("include:")+8);
       boost::trim_if(include_file, boost::is_any_of("'\" \t\n\r"));
       if (include_file[0] != '/')

@@ -20,12 +20,12 @@
  */
 
 /// @file
-/// Declarations for TranslatorVariable.
-/// This file contains type declarations for TranslatorVariable, a class for
-/// translating variable definition statements.
+/// Declarations for TranslatorTask.
+/// This file contains type declarations for TranslatorTask, a class for
+/// translating a task definiton statement.
 
-#ifndef Tools_cluster_TranslatorVariable_h
-#define Tools_cluster_TranslatorVariable_h
+#ifndef Tools_cluster_TranslatorTask_h
+#define Tools_cluster_TranslatorTask_h
 
 #include "TranslationContext.h"
 #include "Translator.h"
@@ -39,29 +39,27 @@ namespace Hypertable { namespace ClusterDefinition {
   /// @addtogroup ClusterDefinition
   /// @{
 
-  /// Translates a variable definition.
-  class TranslatorVariable : public Translator {
+  /// Translates a task definition.
+  class TranslatorTask : public Translator {
   public:
     /// Constructor.
-    /// @param fname Filename of source file containing variable definition
-    /// @param lineno Line number within source file of variable definition text
-    /// @param text Text of variable definition
-    TranslatorVariable(const string &fname, size_t lineno, const string &text)
+    /// @param fname Filename of source file containing task definition
+    /// @param lineno Line number within source file of task definition
+    /// @param text Text of task definition
+    TranslatorTask(const string &fname, size_t lineno, const string &text)
       : m_fname(fname), m_lineno(lineno), m_text(text) {};
 
-    /// Translates a variable definition.
-    /// This method doesn't actually do any translation of the variable
-    /// definition text, but parses it and adds the variable to the symbol table
-    /// in <code>context</code> which is used by downstream translators.
-    /// @return Unmodified variable definition text
+    /// Translates a task definition.
+    /// ????
+    /// @return 
     const string translate(TranslationContext &context) override;
 
   private:
-    /// Source file name containing input text
+    /// Source file name containing task definition
     string m_fname;
-    /// Starting offset within #m_fname of input text
+    /// Line number within #m_fname of task definition
     size_t m_lineno;
-    /// Text of variable definition
+    /// Text of task definition
     string m_text;
   };
 
@@ -69,4 +67,4 @@ namespace Hypertable { namespace ClusterDefinition {
 
 }}
 
-#endif // Tools_cluster_TranslatorVariable_h
+#endif // Tools_cluster_TranslatorTask_h

@@ -28,6 +28,7 @@
 
 #include "TranslatorVariable.h"
 
+#include <Common/Error.h>
 #include <Common/Logger.h>
 
 #include <boost/algorithm/string.hpp>
@@ -41,7 +42,8 @@ using namespace std;
 const string TranslatorVariable::translate(TranslationContext &context) {
   size_t offset = m_text.find_first_of('=');
   if (offset == string::npos)
-    HT_FATALF("Bad variable definition: %s", m_text.c_str());
+    HT_THROWF(Error::SYNTAX_ERROR, "Bad variable definition on line %d of '%s'",
+              (int)m_lineno, m_fname.c_str());
   string name = m_text.substr(0, offset);
   boost::trim(name);
   string raw_value = m_text.substr(offset+1);
@@ -70,7 +72,7 @@ const string TranslatorVariable::translate(TranslationContext &context) {
         (value[0] == '"' && value[value.length()-1] == '"'))
       value = value.substr(1, value.length()-2);
   }
-  context.variable[name] = value;
+  context.symbols[name] = value;
   return m_text;
 }
 

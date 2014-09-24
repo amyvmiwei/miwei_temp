@@ -27,6 +27,8 @@
 #ifndef Tools_cluster_ClusterDefinition_Tokenizer_h
 #define Tools_cluster_ClusterDefinition_Tokenizer_h
 
+#include "Token.h"
+
 #include <memory>
 #include <string>
 
@@ -37,30 +39,10 @@ namespace Hypertable { namespace ClusterDefinition {
   /// @addtogroup ClusterDefinition
   /// @{
 
+  /// Splits cluster definition file into tokens.
   class Tokenizer {
 
   public:
-
-    class Token {
-    public:
-      enum {
-        NONE=0,
-        INCLUDE,
-        VARIABLE,
-        ROLE,
-        TASK,
-        FUNCTION,
-        COMMENT,
-        CODE,
-        BLANKLINE
-      };
-      static const char *type_to_text(int type);
-      void clear() { type=NONE; text.clear(); line=0; fname.clear(); }
-      int type {};
-      string text;
-      size_t line {};
-      string fname;
-    };
 
     Tokenizer(const string &fname);
 

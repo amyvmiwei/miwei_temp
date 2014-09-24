@@ -24,7 +24,11 @@ set(cluster_SRCS
 ht_cluster.cc
 ClusterCommandInterpreter.cc
 ClusterDefinition/Compiler.cc
+ClusterDefinition/Token.cc
 ClusterDefinition/Tokenizer.cc
+ClusterDefinition/TranslatorCode.cc
+ClusterDefinition/TranslatorRole.cc
+ClusterDefinition/TranslatorTask.cc
 ClusterDefinition/TranslatorVariable.cc
 )
 

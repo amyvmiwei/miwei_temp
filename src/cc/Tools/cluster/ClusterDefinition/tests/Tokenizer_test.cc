@@ -62,9 +62,9 @@ int main(int argc, char **argv) {
     if (!strncmp(line.c_str(), "#### test-definition:", 21)) {
       if (!content.empty()) {
         Tokenizer tokenizer(argv[1], content);
-        Tokenizer::Token token;
+        Token token;
         while (tokenizer.next(token)) {
-          output_file << "Token " << Tokenizer::Token::type_to_text(token.type) << endl;
+          output_file << "Token " << Token::type_to_text(token.type) << endl;
           output_file << token.text;
         }
       }
@@ -76,9 +76,9 @@ int main(int argc, char **argv) {
 
   if (!content.empty()) {
     Tokenizer tokenizer(argv[1], content);
-    Tokenizer::Token token;
+    Token token;
     while (tokenizer.next(token)) {
-      output_file << "Token " << Tokenizer::Token::type_to_text(token.type) << endl;
+      output_file << "Token " << Token::type_to_text(token.type) << endl;
       output_file << token.text;
     }
   }

@@ -40,7 +40,7 @@ namespace Hypertable { namespace ClusterDefinition {
   class TranslationContext {
 
   public:
-    map<string, string> variable;
+    map<string, string> symbols;
     map<string, string> task_description_short;
     map<string, string> task_description_long;
 

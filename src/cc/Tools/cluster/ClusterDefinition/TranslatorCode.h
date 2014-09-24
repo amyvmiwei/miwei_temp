@@ -20,12 +20,12 @@
  */
 
 /// @file
-/// Declarations for TranslatorVariable.
-/// This file contains type declarations for TranslatorVariable, a class for
-/// translating variable definition statements.
+/// Declarations for TranslatorCode.
+/// This file contains type declarations for TranslatorCode, a class for
+/// translating a code block.
 
-#ifndef Tools_cluster_TranslatorVariable_h
-#define Tools_cluster_TranslatorVariable_h
+#ifndef Tools_cluster_TranslatorCode_h
+#define Tools_cluster_TranslatorCode_h
 
 #include "TranslationContext.h"
 #include "Translator.h"
@@ -39,29 +39,28 @@ namespace Hypertable { namespace ClusterDefinition {
   /// @addtogroup ClusterDefinition
   /// @{
 
-  /// Translates a variable definition.
-  class TranslatorVariable : public Translator {
+  /// Translates a code block.
+  class TranslatorCode : public Translator {
   public:
     /// Constructor.
-    /// @param fname Filename of source file containing variable definition
-    /// @param lineno Line number within source file of variable definition text
-    /// @param text Text of variable definition
-    TranslatorVariable(const string &fname, size_t lineno, const string &text)
+    /// @param fname Filename of source file
+    /// @param lineno Starting offset within source file of code block text
+    /// @param text Text of code block
+    TranslatorCode(const string &fname, size_t lineno, const string &text)
       : m_fname(fname), m_lineno(lineno), m_text(text) {};
 
-    /// Translates a variable definition.
-    /// This method doesn't actually do any translation of the variable
-    /// definition text, but parses it and adds the variable to the symbol table
-    /// in <code>context</code> which is used by downstream translators.
-    /// @return Unmodified variable definition text
+    /// Translates a code block.
+    /// This method does no translation and passes the code block text straight
+    /// through untranslated.
+    /// @return Unmodified code block text
     const string translate(TranslationContext &context) override;
 
   private:
-    /// Source file name containing input text
+    /// Source file name containing code block
     string m_fname;
-    /// Starting offset within #m_fname of input text
+    /// Starting offset within #m_fname of code block
     size_t m_lineno;
-    /// Text of variable definition
+    /// Text of code block
     string m_text;
   };
 
@@ -69,4 +68,4 @@ namespace Hypertable { namespace ClusterDefinition {
 
 }}
 
-#endif // Tools_cluster_TranslatorVariable_h
+#endif // Tools_cluster_TranslatorCode_h

@@ -118,32 +118,6 @@ namespace {
   }
 }
 
-const char *Tokenizer::Token::type_to_text(int type) {
-  switch (type) {
-  case(NONE):
-    return "NONE";
-  case(INCLUDE):
-    return "INCLUDE";
-  case(VARIABLE):
-    return "VARIABLE";
-  case(ROLE):
-    return "ROLE";
-  case(TASK):
-    return "TASK";
-  case(FUNCTION):
-    return "FUNCTION";
-  case(COMMENT):
-    return "COMMENT";
-  case(CODE):
-    return "CODE";
-  case(BLANKLINE):
-    return "BLANKLINE";
-  default:
-    HT_ASSERT(!"Unknown token type");
-  }
-  return nullptr;
-}
-
 Tokenizer::Tokenizer(const string &fname)
   : m_fname(fname) {
   if (FileUtils::read(m_fname, m_content) < 0)
@@ -172,6 +146,9 @@ bool Tokenizer::next(Token &token) {
 
   if (*base == 0)
     return false;
+
+  token.line = m_line + 1;
+  token.fname = m_fname;
 
   while (*base) {
 

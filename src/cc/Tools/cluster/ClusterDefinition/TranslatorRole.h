@@ -20,17 +20,16 @@
  */
 
 /// @file
-/// Declarations for Translator.
-/// This file contains type declarations for Translator, an abstract base class
-/// for classes that translate cluster definition entities
-/// (e.g. role, task, ...)
+/// Declarations for TranslatorRole.
+/// This file contains type declarations for TranslatorRole, a class for
+/// translating a role definiton statement.
 
-#ifndef Tools_cluster_Translator_h
-#define Tools_cluster_Translator_h
+#ifndef Tools_cluster_TranslatorRole_h
+#define Tools_cluster_TranslatorRole_h
 
 #include "TranslationContext.h"
+#include "Translator.h"
 
-#include <memory>
 #include <string>
 
 namespace Hypertable { namespace ClusterDefinition {
@@ -40,15 +39,32 @@ namespace Hypertable { namespace ClusterDefinition {
   /// @addtogroup ClusterDefinition
   /// @{
 
-  class Translator {
+  /// Translates a role definition.
+  class TranslatorRole : public Translator {
   public:
-    virtual const string translate(TranslationContext &context) = 0;
+    /// Constructor.
+    /// @param fname Filename of source file
+    /// @param lineno Starting offset within source file of input text
+    /// @param text Input text
+    TranslatorRole(const string &fname, size_t lineno, const string &text)
+      : m_fname(fname), m_lineno(lineno), m_text(text) {};
+
+    /// Translates a role definition.
+    /// ????
+    /// @return 
+    const string translate(TranslationContext &context) override;
+
+  private:
+    /// Source file name containing input text
+    string m_fname;
+    /// Starting offset within #m_fname of input text
+    size_t m_lineno;
+    /// Input text
+    string m_text;
   };
 
-  /// Smart pointer to Translator
-  typedef shared_ptr<Translator> TranslatorPtr;
-
   /// @}
+
 }}
 
-#endif // Tools_cluster_Translator_h
+#endif // Tools_cluster_TranslatorRole_h

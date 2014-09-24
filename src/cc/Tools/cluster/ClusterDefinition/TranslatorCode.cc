@@ -1,4 +1,4 @@
-/* -*- c++ -*-
+/*
  * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -20,35 +20,26 @@
  */
 
 /// @file
-/// Declarations for Translator.
-/// This file contains type declarations for Translator, an abstract base class
-/// for classes that translate cluster definition entities
-/// (e.g. role, task, ...)
+/// Definitions for TranslatorCode.
+/// This file contains type definitions for TranslatorCode, a class for
+/// translating code block.
 
-#ifndef Tools_cluster_Translator_h
-#define Tools_cluster_Translator_h
+#include <Common/Compat.h>
 
-#include "TranslationContext.h"
+#include "TranslatorCode.h"
 
-#include <memory>
-#include <string>
+#include <Common/Error.h>
+#include <Common/Logger.h>
 
-namespace Hypertable { namespace ClusterDefinition {
+#include <boost/algorithm/string.hpp>
 
-  using namespace std;
+#include <cctype>
 
-  /// @addtogroup ClusterDefinition
-  /// @{
+using namespace Hypertable;
+using namespace Hypertable::ClusterDefinition;
+using namespace std;
 
-  class Translator {
-  public:
-    virtual const string translate(TranslationContext &context) = 0;
-  };
+const string TranslatorCode::translate(TranslationContext &context) {
+  return m_text;
+}
 
-  /// Smart pointer to Translator
-  typedef shared_ptr<Translator> TranslatorPtr;
-
-  /// @}
-}}
-
-#endif // Tools_cluster_Translator_h

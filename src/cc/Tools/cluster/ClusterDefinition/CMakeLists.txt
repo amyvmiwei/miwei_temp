@@ -20,17 +20,22 @@
 set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/cluster/ClusterDefinition")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/cluster/ClusterDefinition")
 
-set(cluster_SRCS
-ht_cluster.cc
-ClusterCommandInterpreter.cc
-ClusterDefinition/Compiler.cc
-ClusterDefinition/Tokenizer.cc
-ClusterDefinition/TranslatorVariable.cc
+set(Translator_test_SRCS
+TranslatorCode.cc
+TranslatorRole.cc
+TranslatorTask.cc
+TranslatorVariable.cc
+)
+
+set(Tokenizer_test_SRCS
+Token.cc
+Tokenizer.cc
+${Translator_test_SRCS}
 )
 
 # Tokenizer_test
-add_executable(Tokenizer_test Tokenizer.cc
-                              tests/Tokenizer_test.cc)
+add_executable(Tokenizer_test ${Tokenizer_test_SRCS} tests/Tokenizer_test.cc)
+
 target_link_libraries(Tokenizer_test HyperCommon)
 
 add_test(Cluster-definition-tokenizer Tokenizer_test
