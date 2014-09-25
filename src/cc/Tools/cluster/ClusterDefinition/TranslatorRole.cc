@@ -105,6 +105,8 @@ const string TranslatorRole::translate(TranslationContext &context) {
     ptr++;
   }
 
+  context.roles.insert(name);
+
   boost::trim_right_if(translated_text, boost::is_any_of(" \t\n\r"));
   translated_text.append("\"\n");
   return translated_text;

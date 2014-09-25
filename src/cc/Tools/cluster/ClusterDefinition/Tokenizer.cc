@@ -27,6 +27,7 @@
 #include <Common/Compat.h>
 
 #include "Tokenizer.h"
+#include "TokenizerTools.h"
 
 #include <Common/Error.h>
 #include <Common/FileUtils.h>
@@ -49,74 +50,6 @@ extern "C" {
 using namespace Hypertable;
 using namespace Hypertable::ClusterDefinition;
 using namespace std;
-
-namespace {
-
-  bool is_identifier_start_character(char c) {
-    return isalpha(c) || c == '_';
-  }
-
-  bool is_identifier_character(char c) {
-    return is_identifier_start_character(c) || isdigit(c);
-  }
-
-  bool find_end_char(const char *base, const char **endp, size_t *linep) {
-    stack<char> scope;
-
-    HT_ASSERT(*base == '"' || *base == '\'' || *base == '`' || *base == '{');
-
-    scope.push(*base);
-    const char *ptr = base+1;
-
-    while (*ptr) {
-
-      if (scope.top() == '"') {
-        if (*ptr == '"' && *(ptr-1) != '\\') {
-          scope.pop();
-          if (scope.empty())
-            break;
-        }
-      }
-      else if (scope.top() == '\'') {
-        if (*ptr == '\'' && *(ptr-1) != '\\') {
-          scope.pop();
-          if (scope.empty())
-            break;
-        }
-      }
-      else if (scope.top() == '`') {
-        if (*ptr == '`') {
-          scope.pop();
-          if (scope.empty())
-            break;
-        }
-      }
-      else {
-        HT_ASSERT(scope.top() == '{');
-        if (*ptr == '}') {
-          scope.pop();
-          if (scope.empty())
-            break;
-        }
-        else if (*ptr == '"' || *ptr == '\'' || *ptr == '`' || *ptr == '{')
-          scope.push(*ptr);
-      }
-      if (*ptr == '\n')
-        (*linep)++;
-      ptr++;
-    }
-
-    if (*ptr == 0)
-      return false;
-
-    ptr++;
-    while (*ptr && *ptr != '\n')
-      ptr++;
-
-    *endp = ptr;
-    return true;
-  }
-}
 
 Tokenizer::Tokenizer(const string &fname)
   : m_fname(fname) {
@@ -168,9 +101,10 @@ bool Tokenizer::next(Token &token) {
       ptr++;
       if (*ptr == '\'' || *ptr == '"' || *ptr == '`') {
         int starting_line = (int)m_line;
-        if (!find_end_char(ptr, &end, &m_line))
+        if (!TokenizerTools::find_end_char(ptr, &end, &m_line))
           HT_THROWF(Error::SYNTAX_ERROR,
                     "Unterminated string starting on line %d", starting_line);
+        TokenizerTools::skip_to_newline(&end);
       }
       accumulate(&base, end, Token::VARIABLE, token);
       return true;
@@ -186,10 +120,11 @@ bool Tokenizer::next(Token &token) {
                   "Mal-formed task: statement starting on line %d",(int)m_line);
       {
         int starting_line = (int)m_line;
-        if (!find_end_char(ptr, &end, &m_line))
+        if (!TokenizerTools::find_end_char(ptr, &end, &m_line))
           HT_THROWF(Error::SYNTAX_ERROR, "Missing terminating '}' character in "
                     "task: statement on line %d of file '%s'",
                     starting_line, m_fname.c_str());
+        TokenizerTools::skip_to_newline(&end);
       }
       accumulate(&base, end, Token::TASK, token);
       return true;
@@ -200,10 +135,11 @@ bool Tokenizer::next(Token &token) {
                   "Mal-formed function starting on line %d",(int)m_line);
       {
         int starting_line = (int)m_line;
-        if (!find_end_char(ptr, &end, &m_line))
+        if (!TokenizerTools::find_end_char(ptr, &end, &m_line))
           HT_THROWF(Error::SYNTAX_ERROR, "Missing terminating '}' character in "
                     "function on line %d of file '%s'",
                     starting_line, m_fname.c_str());
+        TokenizerTools::skip_to_newline(&end);
       }
       if (accumulate(&base, end, Token::FUNCTION, token))
         return true;
@@ -248,9 +184,9 @@ int Tokenizer::identify_line_type(const char *base, const char *end) {
   if (ptr == end)
     return Token::BLANKLINE;
 
-  if (is_identifier_start_character(*ptr)) {
+  if (TokenizerTools::is_identifier_start_character(*ptr)) {
     ptr++;
-    while (is_identifier_character(*ptr))
+    while (TokenizerTools::is_identifier_character(*ptr))
       ptr++;
     if (*ptr == '=')
       return Token::VARIABLE;

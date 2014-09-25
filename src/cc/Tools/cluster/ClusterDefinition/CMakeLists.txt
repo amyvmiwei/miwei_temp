@@ -21,6 +21,7 @@ set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Tools/cluster/ClusterDefinition")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/cluster/ClusterDefinition")
 
 set(Translator_test_SRCS
+TokenizerTools.cc
 TranslatorCode.cc
 TranslatorRole.cc
 TranslatorTask.cc

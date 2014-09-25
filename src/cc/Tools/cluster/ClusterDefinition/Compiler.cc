@@ -118,4 +118,10 @@ void Compiler::make() {
   if (FileUtils::write(m_definition_script, output) < 0)
     exit(1);
 
+  if (chmod(m_definition_script.c_str(), 0755) < 0) {
+    cout << "chmod('" << m_definition_script << "', 0755) failed - "
+         << strerror(errno) << endl;
+    exit(1);
+  }
+
 }

@@ -26,6 +26,7 @@ ClusterCommandInterpreter.cc
 ClusterDefinition/Compiler.cc
 ClusterDefinition/Token.cc
 ClusterDefinition/Tokenizer.cc
+ClusterDefinition/TokenizerTools.cc
 ClusterDefinition/TranslatorCode.cc
 ClusterDefinition/TranslatorRole.cc
 ClusterDefinition/TranslatorTask.cc
