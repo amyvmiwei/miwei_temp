@@ -48,41 +48,57 @@ using namespace std;
 namespace {
 
   bool translate_ssh_statement(const char *base, const char *end,
-                               const char **nextp, string &ssh_command) {
+                               const char **nextp, string &ssh_command,
+                               string &errmsg) {
     HT_ASSERT(strncmp(base, "ssh:", 4) == 0);
+    errmsg.clear();
 
     base += 4;
 
     const char *open_curly = base;
-    const char *close_curly;
     while (open_curly < end && *open_curly != '{')
       open_curly++;
 
-    if (open_curly == end || !TokenizerTools::find_end_char(open_curly, &close_curly))
+    const char *close_curly;
+    if (open_curly == end || !TokenizerTools::find_end_char(open_curly, &close_curly)) {
+      errmsg.append("curly brace not found");
       return false;
-    
-    string options(base, open_curly-base);
-    
+    }
+        
     // parse options
+    string options;
+    {
+      string text(base, open_curly-base);
+      char_separator<char> sep(" \t\n\r");
+      tokenizer<char_separator<char>> tokens(text, sep);
+      for (const auto& token : tokens) {
+        if (!strncmp(token.c_str(), "random-start-delay=", 19)) {
+          if (!TokenizerTools::is_number(token.substr(19))) {
+            errmsg.append("invalid random-start-delay argument");
+            return false;
+          }
+          options.append(" --");
+          options.append(token);
+        }
+        else if (token.compare("in-series") == 0) {
+          options.append(" --");
+          options.append(token);
+        }
+        else {
+          errmsg.append(Hypertable::format("Unknown option '%s'", token.c_str()));
+          return false;
+        }
+      }
+    }
 
     // build ssh command
     ssh_command.clear();
-    ssh_command.append(Hypertable::format("%s/bin/ht ssh \"${_SSH_HOSTS}\" \"", System::install_dir.c_str()));
+    ssh_command.append(Hypertable::format("%s/bin/ht ssh%s \"${_SSH_HOSTS}\" \"",
+                                          System::install_dir.c_str(), options.c_str()));
     open_curly++;
     string contents(open_curly, close_curly-open_curly);
-    char_separator<char> sep("\n\r");
-    string line;
-    bool first = true;
-    tokenizer<char_separator<char>> tokens(contents, sep);
-    for (const auto& token : tokens) {
-      line = token;
-      trim_if(line, is_any_of(" \t;"));
-      if (first)
-        first = false;
-      else
-        ssh_command.append("; ");
-      ssh_command.append(line);
-    }
+    trim(contents);
+    ssh_command.append(contents);
     ssh_command.append("\"");
 
     *nextp = close_curly + 1;
@@ -95,29 +111,47 @@ namespace {
 
 const string TranslatorTask::translate(TranslationContext &context) {
   string translated_text;
-  string short_description;
-  string long_description;
+  string description;
 
   const char *base = m_text.c_str();
-  const char *end = strchr(base, '\n');
+  const char *end;
   string line;
 
-  while (base) {
+  while (*base) {
+
+    end = strchr(base, '\n');
     line.clear();
     if (end == 0)
-      HT_THROWF(Error::SYNTAX_ERROR, "Bad task definition on line %d of '%s'",
-                (int)m_lineno, m_fname.c_str());
-    line.append(base, end-base);
+      line.append(base);
+    else
+      line.append(base, end-base);
     boost::trim(line);
-    if (line[0] == '#')
-      long_description.append(line.substr(1));
+
+    if (line[0] == '#') {
+      line = line.substr(1);
+      trim(line);
+      if (description.empty())
+        description.append(line);
+      else if (description[description.length()-1] == '.') {
+        description.append("  ");
+        description.append(line);
+      }
+      else {
+        description.append(" ");
+        description.append(line);
+      }
+    }
     else
       break;
-    base = end + 1;
-    end = strchr(base, '\n');
+    if (end)
+      base = end;
+    else
+      base += strlen(base);
+    if (*base)
+      base++;
   }
 
-  if (base == 0)
+  if (*base == 0)
     HT_THROWF(Error::SYNTAX_ERROR, "Bad task definition on line %d of '%s'",
               (int)m_lineno, m_fname.c_str());
 
@@ -191,25 +225,31 @@ const string TranslatorTask::translate(TranslationContext &context) {
   }
   translated_text.append("\"\n  ");
 
+  size_t lineno = m_lineno;
+
   // skip '{' and whitespace
   base = ptr + 1;
-  while (base < end && isspace(*base))
+  while (base < end && isspace(*base)) {
+    if (*base == '\n')
+      lineno++;
     base++;
+  }
 
   HT_ASSERT(base < end);
 
   string task_body;
   string ssh_command;
-  size_t lineno = m_lineno;
+  string error_msg;
   size_t offset;
 
   while (TokenizerTools::find_token("ssh:", base, end, &offset)) {
     lineno += TokenizerTools::count_newlines(base, base+offset);
     task_body.append(base, offset);
     base += offset;
-    if (!translate_ssh_statement(base, end, &ptr, ssh_command))
-      HT_THROWF(Error::SYNTAX_ERROR,"Invalid ssh: statement on line %d of '%s'",
-                (int)lineno, m_fname.c_str());
+    if (!translate_ssh_statement(base, end, &ptr, ssh_command, error_msg))
+      HT_THROWF(Error::SYNTAX_ERROR,"Invalid ssh: statement (%s) on line %d of '%s'",
+                error_msg.c_str(), (int)lineno, m_fname.c_str());
+    lineno += TokenizerTools::count_newlines(base, ptr);
     task_body.append(ssh_command);
     base = ptr;
   }
@@ -219,11 +259,6 @@ const string TranslatorTask::translate(TranslationContext &context) {
     trim_right(contents);
     task_body.append(contents);
   }
-
-  /*
-  string task_body(ptr, end-ptr);
-  boost::trim(task_body);
-  */
 
   translated_text.append(task_body);
 

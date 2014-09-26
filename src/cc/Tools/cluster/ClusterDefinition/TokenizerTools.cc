@@ -32,6 +32,9 @@
 #include <Common/Logger.h>
 
 #include <cctype>
+#include <cerrno>
+#include <climits>
+#include <cstdlib>
 #include <stack>
 
 using namespace std;
@@ -54,6 +57,22 @@ bool is_valid_identifier(const string &name) {
     if (!is_identifier_character(*ptr))
       return false;
   }
+  return true;
+}
+
+bool is_number(const string &str) {
+  char *end;
+
+  errno = 0;
+  long val = strtol(str.c_str(), &end, 10);
+
+  if ((errno == ERANGE && (val == LONG_MAX || val == LONG_MIN))
+      || (errno != 0 && val == 0))
+    return false;
+
+  if (end == 0 || *end)
+    return false;
+
   return true;
 }
 
@@ -138,7 +157,7 @@ bool find_end_char(const char *base, const char **endp, size_t *linep) {
 size_t count_newlines(const char *base, const char *end) {
   size_t count = 0;
   for (const char *ptr=base; ptr<end; ptr++) {
-    if (*base == '\n')
+    if (*ptr == '\n')
       count++;
   }
   return count;
