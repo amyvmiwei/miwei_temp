@@ -39,6 +39,7 @@
 #include <iostream>
 #include <stack>
 #include <string>
+#include <vector>
 
 extern "C" {
 #include <pwd.h>
@@ -52,6 +53,7 @@ using namespace Hypertable::ClusterDefinition;
 using namespace std;
 
 namespace {
+
   string extract_short_description(const string &description) {
     string short_description;
     const char *ptr = strstr(description.c_str(), ". ");
@@ -66,7 +68,46 @@ namespace {
     else
       short_description = description.substr(0, 51);
     return short_description;
-  }        
+  }
+
+  void extract_long_description(const string &description, vector<string> &lines) {
+    
+    string long_description;
+    lines.clear();
+    const char *base = description.c_str();
+    const char *end = base + description.length();
+    const char *ptr;
+    while (base < end) {
+      // skip whitespace
+      while (*base && isspace(*base))
+        base++;
+
+      if ((end-base) > 79) {
+        ptr = base + 79;
+        for (size_t i=0; i<20; i++) {
+          if (isspace(*ptr)) {
+            lines.push_back(string(base, ptr-base));
+            base = ptr;
+            break;
+          }
+          ptr--;
+        }
+        if (ptr != base) {
+          ptr = base + 79;
+          while (*ptr && !isspace(*ptr))
+            ptr++;
+          lines.push_back(string(base, ptr-base));
+          base = ptr;
+        }
+      }
+      else {
+        lines.push_back(base);
+        break;
+      }
+    }
+    return;
+  }
+  
 }
 
 Compiler::Compiler(const string &fname) : m_definition_file(fname) {
@@ -121,6 +162,7 @@ void Compiler::make() {
   string output;
   Token token;
   TranslationContext context;
+  bool first;
 
   while (definitions.top()->next(token)) {
     if (token.translator)
@@ -133,6 +175,16 @@ void Compiler::make() {
       definitions.push( make_shared<Tokenizer>(include_file) );      
     }
   }
+
+  output.append("\n");
+  output.append("display_line () {\n");
+  output.append("  let size=$1\n");
+  output.append("  for ((i=0; i<$size; i++)); do\n");
+  output.append("    echo -n \"-\"\n");
+  output.append("  done\n");
+  output.append("  echo\n");
+  output.append("}\n");
+
 
   const char *dots = "..........................";
   output.append("\n");
@@ -154,9 +206,39 @@ void Compiler::make() {
   }
   output.append("  echo\n");
   output.append("  exit 0\n");
+  output.append("elif [ $1 == \"-e\" ] || [ $1 == \"--explain\" ]; then\n");
+  output.append("  shift\n");
+  output.append("  echo\n");
+  output.append("  echo \"$1\"\n");
+  output.append("  display_line ${#1}\n");
+  vector<string> lines;
+  first = true;
+  for (auto & entry : context.tasks) {
+    if (first) {
+      output.append("  if [ $1 == \"");
+      first = false;
+    }
+    else
+      output.append("  elif [ $1 == \"");
+    output.append(entry.first);
+    output.append("\" ]; then\n");
+    extract_long_description(entry.second, lines);
+    for (auto & line : lines) {
+      output.append("    echo \"");
+      output.append(line);
+      output.append("\"\n");
+    }
+  }
+  output.append("  else\n");
+  output.append("    echo \"Task '$1' is not defined.\"\n");
+  output.append("    exit 1\n");
+  output.append("  fi\n");
+  output.append("  echo\n");
+  output.append("  exit 0\n");
+
   output.append("fi\n");
 
-  bool first = true;
+  first = true;
   for (auto & entry : context.tasks) {
     if (first) {
       output.append(format("if [ $1 == \"%s\" ]; then\n  %s\n",
