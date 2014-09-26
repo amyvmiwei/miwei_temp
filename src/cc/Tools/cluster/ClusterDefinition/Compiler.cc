@@ -31,11 +31,14 @@
 
 #include <Common/FileUtils.h>
 #include <Common/Logger.h>
+#include <Common/String.h>
 
 #include <boost/algorithm/string.hpp>
 
 #include <cerrno>
+#include <cstdlib>
 #include <ctime>
+#include <fstream>
 #include <iostream>
 #include <stack>
 #include <string>
@@ -47,6 +50,8 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 }
+
+#define HT_CLUSTER_VERSION 1
 
 using namespace Hypertable;
 using namespace Hypertable::ClusterDefinition;
@@ -141,6 +146,43 @@ bool Compiler::compilation_needed() {
   }
   time_t script_modification_time = statbuf.st_mtime;
 
+  string line;
+  ifstream output_script_file(m_output_script);
+  const char *base;
+  const char *ptr;
+
+  if (!output_script_file.is_open())
+    return true;
+
+  while (getline(output_script_file, line)) {
+
+    if (line.empty() || line[0] != '#')
+      break;
+
+    base = line.c_str() + 1;
+    ptr = strchr(base, ':');
+    if (ptr != 0) {
+      string tag(base, ptr-base);
+      boost::trim(tag);
+      if (tag.compare("version") == 0) {
+        string value(ptr+1);
+        boost::trim(value);
+        if (atoi(value.c_str()) != HT_CLUSTER_VERSION)
+          return true;
+      }
+      else if (tag.compare("dependency") == 0) {
+        string dependency_file(ptr+1);
+        boost::trim(dependency_file);
+        if (stat(dependency_file.c_str(), &statbuf) < 0) {
+          cout << "stat('" << dependency_file << "') - " << strerror(errno) << endl;
+          exit(1);
+        }
+        if (statbuf.st_mtime > definition_modification_time)
+          definition_modification_time = statbuf.st_mtime;
+      }
+    }
+  }
+
   return definition_modification_time > script_modification_time;
 
 }
@@ -159,12 +201,15 @@ void Compiler::make() {
 
   definitions.push( make_shared<Tokenizer>(m_definition_file) );
 
+  string header;
   string output;
   Token token;
   TranslationContext context;
   bool first;
 
-  output.append("#!/bin/bash\n");
+  header.append("#!/bin/bash\n");
+  header.append("#\n");
+  header.append(Hypertable::format("# version: %d\n", HT_CLUSTER_VERSION));
 
   while (definitions.top()->next(token)) {
     if (token.translator)
@@ -175,8 +220,10 @@ void Compiler::make() {
       if (include_file[0] != '/')
         include_file = definitions.top()->dirname() + "/" + include_file;
       definitions.push( make_shared<Tokenizer>(include_file) );      
+      header.append(Hypertable::format("# dependency: %s\n", include_file.c_str()));
     }
   }
+  header.append("\n");
 
   output.append("\n");
   output.append("display_line () {\n");
@@ -267,7 +314,7 @@ void Compiler::make() {
     output.append("fi\n");
   }
 
-  if (FileUtils::write(m_output_script, output) < 0)
+  if (FileUtils::write(m_output_script, header + output) < 0)
     exit(1);
 
   if (chmod(m_output_script.c_str(), 0755) < 0) {
