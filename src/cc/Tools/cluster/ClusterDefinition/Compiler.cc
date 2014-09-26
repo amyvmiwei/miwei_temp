@@ -38,6 +38,7 @@
 #include <ctime>
 #include <iostream>
 #include <stack>
+#include <string>
 
 extern "C" {
 #include <pwd.h>
@@ -49,6 +50,24 @@ extern "C" {
 using namespace Hypertable;
 using namespace Hypertable::ClusterDefinition;
 using namespace std;
+
+namespace {
+  string extract_short_description(const string &description) {
+    string short_description;
+    const char *ptr = strstr(description.c_str(), ". ");
+    if (ptr) {
+      if ((ptr - description.c_str()) < 52)
+        short_description = description.substr(0, ptr - description.c_str());
+      else
+        short_description = description.substr(0, 51);
+    }
+    else if (description.length() < 52)
+      short_description = description;
+    else
+      short_description = description.substr(0, 51);
+    return short_description;
+  }        
+}
 
 Compiler::Compiler(const string &fname) : m_definition_file(fname) {
   struct passwd *pw = getpwuid(getuid());
@@ -114,6 +133,41 @@ void Compiler::make() {
       definitions.push( make_shared<Tokenizer>(include_file) );      
     }
   }
+
+  const char *dots = "..........................";
+  output.append("\n");
+  output.append("if [ $1 == \"-T\" ] || [ $1 == \"--tasks\" ]; then\n");
+  output.append("  echo\n");
+  output.append("  echo \"TASK                        DESCRIPTION\"\n");
+  output.append("  echo \"=========================== ===================================================\"\n");
+  for (auto & entry : context.tasks) {
+    output.append("  echo \"");
+    output.append(entry.first);
+    output.append(" ");
+    if (entry.first.length() < 26)
+      output.append(dots, 26-entry.first.length());
+    else
+      output.append("..");
+    output.append(" ");
+    output.append(extract_short_description(entry.second));
+    output.append("\"\n");
+  }
+  output.append("  echo\n");
+  output.append("  exit 0\n");
+  output.append("fi\n");
+
+  bool first = true;
+  for (auto & entry : context.tasks) {
+    if (first) {
+      output.append(format("if [ $1 == \"%s\" ]; then\n  %s\n",
+                           entry.first.c_str(), entry.first.c_str()));
+      first = false;
+    }
+    else
+      output.append(format("elif [ $1 == \"%s\" ]; then\n  %s\n",
+                           entry.first.c_str(), entry.first.c_str()));
+  }
+  output.append("fi\n");
 
   if (FileUtils::write(m_definition_script, output) < 0)
     exit(1);

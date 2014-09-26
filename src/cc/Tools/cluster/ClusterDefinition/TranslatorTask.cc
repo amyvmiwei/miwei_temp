@@ -264,6 +264,8 @@ const string TranslatorTask::translate(TranslationContext &context) {
 
   translated_text.append("\n}\n");
 
+  context.tasks[task_name] = description;
+
   return translated_text;
 }
 

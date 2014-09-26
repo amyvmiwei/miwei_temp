@@ -41,11 +41,9 @@ namespace Hypertable { namespace ClusterDefinition {
   class TranslationContext {
 
   public:
-    set<string> roles;
     map<string, string> symbols;
-    map<string, string> task_description_short;
-    map<string, string> task_description_long;
-
+    set<string> roles;
+    map<string, string> tasks;
   };
 
   /// @}
