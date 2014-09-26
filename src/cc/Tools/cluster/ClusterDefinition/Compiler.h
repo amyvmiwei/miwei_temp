@@ -49,6 +49,10 @@ namespace Hypertable {
       /// @param fname Pathname of cluster definition file
       Compiler(const string &fname);
 
+      /// Returns pathname of output script
+      /// @return Pathname of output script
+      string output_script() { return m_output_script; }
+
     private:
 
       bool compilation_needed();
@@ -57,7 +61,7 @@ namespace Hypertable {
 
       string m_definition_file;
 
-      string m_definition_script;
+      string m_output_script;
 
     };
 

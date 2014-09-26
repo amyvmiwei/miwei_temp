@@ -112,10 +112,10 @@ namespace {
 
 Compiler::Compiler(const string &fname) : m_definition_file(fname) {
   struct passwd *pw = getpwuid(getuid());
-  m_definition_script.append(pw->pw_dir);
-  m_definition_script.append("/.cluster");
-  m_definition_script.append(m_definition_file);
-  m_definition_script.append(".sh");
+  m_output_script.append(pw->pw_dir);
+  m_output_script.append("/.cluster");
+  m_output_script.append(m_definition_file);
+  m_output_script.append(".sh");
 
   if (compilation_needed())
     make();
@@ -124,7 +124,7 @@ Compiler::Compiler(const string &fname) : m_definition_file(fname) {
 
 bool Compiler::compilation_needed() {
 
-  if (!FileUtils::exists(m_definition_script))
+  if (!FileUtils::exists(m_output_script))
     return true;
 
   struct stat statbuf;
@@ -135,8 +135,8 @@ bool Compiler::compilation_needed() {
   }
   time_t definition_modification_time = statbuf.st_mtime;
 
-  if (stat(m_definition_script.c_str(), &statbuf) < 0) {
-    cout << "stat('" << m_definition_script << "') - " << strerror(errno) << endl;
+  if (stat(m_output_script.c_str(), &statbuf) < 0) {
+    cout << "stat('" << m_output_script << "') - " << strerror(errno) << endl;
     exit(1);
   }
   time_t script_modification_time = statbuf.st_mtime;
@@ -146,10 +146,10 @@ bool Compiler::compilation_needed() {
 }
 
 void Compiler::make() {
-  size_t lastslash = m_definition_script.find_last_of('/');
+  size_t lastslash = m_output_script.find_last_of('/');
   HT_ASSERT(lastslash != string::npos);
 
-  string script_directory = m_definition_script.substr(0, lastslash);
+  string script_directory = m_output_script.substr(0, lastslash);
   if (!FileUtils::mkdirs(script_directory)) {
     cout << "mkdirs('" << script_directory << "') - " << strerror(errno) << endl;
     exit(1);
@@ -163,6 +163,8 @@ void Compiler::make() {
   Token token;
   TranslationContext context;
   bool first;
+
+  output.append("#!/bin/bash\n");
 
   while (definitions.top()->next(token)) {
     if (token.translator)
@@ -208,54 +210,68 @@ void Compiler::make() {
   output.append("  exit 0\n");
   output.append("elif [ $1 == \"-e\" ] || [ $1 == \"--explain\" ]; then\n");
   output.append("  shift\n");
-  output.append("  echo\n");
-  output.append("  echo \"$1\"\n");
-  output.append("  display_line ${#1}\n");
-  vector<string> lines;
-  first = true;
-  for (auto & entry : context.tasks) {
-    if (first) {
-      output.append("  if [ $1 == \"");
-      first = false;
-    }
-    else
-      output.append("  elif [ $1 == \"");
-    output.append(entry.first);
-    output.append("\" ]; then\n");
-    extract_long_description(entry.second, lines);
-    for (auto & line : lines) {
-      output.append("    echo \"");
-      output.append(line);
-      output.append("\"\n");
-    }
-  }
-  output.append("  else\n");
-  output.append("    echo \"Task '$1' is not defined.\"\n");
+  output.append("  if [ $# -eq 0 ]; then\n");
+  output.append("    echo \"Missing task name in -e option\"\n");
   output.append("    exit 1\n");
   output.append("  fi\n");
-  output.append("  echo\n");
-  output.append("  exit 0\n");
 
-  output.append("fi\n");
-
-  first = true;
-  for (auto & entry : context.tasks) {
-    if (first) {
-      output.append(format("if [ $1 == \"%s\" ]; then\n  %s\n",
-                           entry.first.c_str(), entry.first.c_str()));
-      first = false;
+  if (!context.tasks.empty()) {
+    vector<string> lines;
+    first = true;
+    for (auto & entry : context.tasks) {
+      if (first) {
+        output.append("  if [ $1 == \"");
+        first = false;
+      }
+      else
+        output.append("  elif [ $1 == \"");
+      output.append(entry.first);
+      output.append("\" ]; then\n");
+      output.append("  echo\n");
+      output.append("  echo \"$1\"\n");
+      output.append("  display_line ${#1}\n");
+      extract_long_description(entry.second, lines);
+      for (auto & line : lines) {
+        output.append("    echo \"");
+        output.append(line);
+        output.append("\"\n");
+      }
     }
-    else
-      output.append(format("elif [ $1 == \"%s\" ]; then\n  %s\n",
-                           entry.first.c_str(), entry.first.c_str()));
+    output.append("  else\n");
+    output.append("    echo \"Task '$1' is not defined.\"\n");
+    output.append("    exit 1\n");
+    output.append("  fi\n");
+    output.append("  echo\n");
+    output.append("  exit 0\n");
   }
+  else {
+    output.append("  echo \"Task '$1' is not defined.\"\n");
+    output.append("  exit 1\n");
+  }
+
   output.append("fi\n");
 
-  if (FileUtils::write(m_definition_script, output) < 0)
+  // Generate task targets
+  if (!context.tasks.empty()) {
+    first = true;
+    for (auto & entry : context.tasks) {
+      if (first) {
+        output.append(format("if [ $1 == \"%s\" ]; then\n  shift\n  %s $@\n",
+                             entry.first.c_str(), entry.first.c_str()));
+        first = false;
+      }
+      else
+        output.append(format("elif [ $1 == \"%s\" ]; then\n  shift\n  %s $@\n",
+                             entry.first.c_str(), entry.first.c_str()));
+    }
+    output.append("fi\n");
+  }
+
+  if (FileUtils::write(m_output_script, output) < 0)
     exit(1);
 
-  if (chmod(m_definition_script.c_str(), 0755) < 0) {
-    cout << "chmod('" << m_definition_script << "', 0755) failed - "
+  if (chmod(m_output_script.c_str(), 0755) < 0) {
+    cout << "chmod('" << m_output_script << "', 0755) failed - "
          << strerror(errno) << endl;
     exit(1);
   }

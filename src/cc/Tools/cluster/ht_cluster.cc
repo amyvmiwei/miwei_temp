@@ -23,6 +23,7 @@
 
 #include "ClusterCommandInterpreter.h"
 #include "ClusterDefinition/Compiler.h"
+#include "ClusterDefinition/TokenizerTools.h"
 
 #include <Tools/Lib/CommandShell.h>
 
@@ -35,6 +36,8 @@
 
 #include <cerrno>
 #include <iostream>
+#include <string>
+#include <vector>
 
 extern "C" {
 #include <pwd.h>
@@ -78,15 +81,6 @@ namespace {
   const string locate_definition_file() {
     string fname;
 
-    if (has("definition")) {
-      fname = get_str("definition");
-      if (!FileUtils::exists(fname)) {
-        cout << "Definition file '" << fname << "' does not exist." << endl;
-        exit(1);
-      }
-      return fname;
-    }
-    
     // conf dir
     fname = System::install_dir + "/conf/cluster.def";
     if (FileUtils::exists(fname))
@@ -115,12 +109,51 @@ namespace {
     cout << "Unable to locate 'cluster.def' in '" << System::install_dir 
          << "/conf', " << "'.'" << ", or '" << pw->pw_dir << "'" << endl;
     exit(1);
-    
+  }
+
+  bool is_environment_setting(const string &arg) {
+    HT_ASSERT(!arg.empty());
+    if (!TokenizerTools::is_identifier_start_character(arg[0]))
+      return false;
+    const char *ptr = arg.c_str();
+    while (TokenizerTools::is_identifier_character(*ptr))
+      ptr++;
+    return *ptr == '=';
+  }
+
+  void exec_command(const string &script, vector<string> environment,
+                    vector<string> arguments) {
+    char **argv = new char *[environment.size() + arguments.size() + 3];
+
+    if (environment.empty()) {
+      argv[0] = (char *)script.c_str();
+      size_t i=1;
+      for (auto & arg : arguments)
+        argv[i++] = (char *)arg.c_str();
+      argv[i] = nullptr;
+      if (execv(script.c_str(), argv) < 0) {
+        cout << "execv() failed - " << strerror(errno) << endl;
+        exit(1);
+      }
+    }
+    else {
+      argv[0] = (char *)"env";
+      size_t i=1;
+      for (auto & setting : environment)
+        argv[i++] = (char *)setting.c_str();
+      argv[i++] = (char *)script.c_str();
+      for (auto & arg : arguments)
+        argv[i++] = (char *)arg.c_str();
+      argv[i] = nullptr;
+      if (execvp("env", argv) < 0) {
+        cout << "execv() failed - " << strerror(errno) << endl;
+        exit(1);
+      }
+    }
+    HT_FATAL("Should not reach here!");
   }
 
 }
-
-typedef Meta::list<AppPolicy, CommandShellPolicy, DefaultPolicy> Policies;
 
 
 int main(int argc, char **argv) {
@@ -130,14 +163,74 @@ int main(int argc, char **argv) {
   int status = 0;
 
   try {
-    init_with_policies<Policies>(argc, argv);
+    vector<string> environment;
+    string definition_file;
+    System::initialize();
 
-    if (has("clear-cache")) {
-      clear_cache();
-      exit(0);
+    if (argc > 1) {
+      vector<string> arguments;
+      bool display_script {};
+
+      if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")) {
+        cout << "usage: cluster <options> <environment> <task> [<arg> ...]" << endl;
+        exit(0);
+      }
+      else if (!strcmp(argv[1], "--clear-cache")) {
+        clear_cache();
+        exit(0);
+      }
+
+      // environment settings and cluster options
+      int i = 1;
+      while (i<argc) {
+        if (!strcmp(argv[i], "-f")) {
+          if (!definition_file.empty()) {
+            cout << "error: -f option supplied multiple times" << endl;
+            exit(1);
+          }
+          i++;
+          if (i == argc) {
+            cout << "error: missing argument to -f option" << endl;
+            exit(1);
+          }
+          definition_file.append(argv[i]);
+          i++;
+          continue;
+        }
+        else if (!strcmp(argv[i], "--display-script")) {
+          display_script = true;
+        }
+        else if (!is_environment_setting(argv[i]))
+          break;
+        environment.push_back(argv[i]);
+        i++;
+      }
+
+      // load command arguments
+      while (i<argc) {
+        arguments.push_back(argv[i]);
+        i++;
+      }
+
+      if (definition_file.empty())
+        definition_file = locate_definition_file();
+
+      if (display_script) {
+        Compiler compiler(definition_file);
+        string cmd = (string)"cat " + compiler.output_script();
+        if (system(cmd.c_str()) != 0) {
+          cout << "Failed execution: " << cmd << endl;
+          exit(1);
+        }
+        exit(0);
+      }
+
+      if (!arguments.empty()) {
+        Compiler compiler(definition_file);
+        exec_command(compiler.output_script(), environment, arguments);
+      }
+
     }
-
-    Compiler compiler(locate_definition_file());
 
     exit(0);
 

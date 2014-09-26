@@ -40,6 +40,7 @@ using namespace Hypertable::ClusterDefinition;
 using namespace std;
 
 const string TranslatorVariable::translate(TranslationContext &context) {
+  string translation_text;
   size_t offset = m_text.find_first_of('=');
   if (offset == string::npos)
     HT_THROWF(Error::SYNTAX_ERROR, "Bad variable definition on line %d of '%s'",
@@ -67,12 +68,20 @@ const string TranslatorVariable::translate(TranslationContext &context) {
       value.append(1, *ptr);
     }
   }
+
+  translation_text.append(name);
+  translation_text.append("=${");
+  translation_text.append(name);
+  translation_text.append(":-");
+  translation_text.append(value);
+  translation_text.append("}\n");
+
   if (value.length() >= 2) {
     if ((value[0] == '\'' && value[value.length()-1] == '\'') ||
         (value[0] == '"' && value[value.length()-1] == '"'))
       value = value.substr(1, value.length()-2);
   }
   context.symbols[name] = value;
-  return m_text;
+  return translation_text;
 }
 
