@@ -45,4 +45,4 @@ add_test(Cluster-definition-tokenizer Tokenizer_test
 add_executable(Translator_test ${Translator_test_SRCS} tests/Translator_test.cc)
 target_link_libraries(Translator_test HyperCommon)
 add_test(Cluster-definition-translator Translator_test
-                  ${SRC_DIR}/tests/Tokenizer_test.golden)
+                  ${SRC_DIR}/tests/Translator_test.golden)

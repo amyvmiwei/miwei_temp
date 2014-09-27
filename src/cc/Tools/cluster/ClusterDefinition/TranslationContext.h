@@ -44,6 +44,7 @@ namespace Hypertable { namespace ClusterDefinition {
     map<string, string> symbols;
     set<string> roles;
     map<string, string> tasks;
+    map<string, string> task_roles;
   };
 
   /// @}

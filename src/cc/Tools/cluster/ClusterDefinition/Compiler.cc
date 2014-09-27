@@ -225,8 +225,9 @@ void Compiler::make() {
   }
   header.append("\n");
 
+  // CLUSTER_BUILTIN_display_line function
   output.append("\n");
-  output.append("display_line () {\n");
+  output.append("CLUSTER_BUILTIN_display_line () {\n");
   output.append("  let size=$1\n");
   output.append("  for ((i=0; i<$size; i++)); do\n");
   output.append("    echo -n \"-\"\n");
@@ -234,6 +235,19 @@ void Compiler::make() {
   output.append("  echo\n");
   output.append("}\n");
 
+  // show_variables function
+  output.append("\n");
+  output.append("show_variables () {\n");
+  output.append("  echo\n");
+  for (auto & entry : context.symbols) {
+    output.append("  echo \"");
+    output.append(entry.first);
+    output.append("=");
+    output.append(entry.second);
+    output.append("\"\n");
+  }
+  output.append("  echo\n");
+  output.append("}\n");
 
   const char *dots = "..........................";
   output.append("\n");
@@ -276,13 +290,16 @@ void Compiler::make() {
       output.append("\" ]; then\n");
       output.append("  echo\n");
       output.append("  echo \"$1\"\n");
-      output.append("  display_line ${#1}\n");
+      output.append("  CLUSTER_BUILTIN_display_line ${#1}\n");
       extract_long_description(entry.second, lines);
       for (auto & line : lines) {
         output.append("    echo \"");
         output.append(line);
         output.append("\"\n");
       }
+      output.append("    echo \"(roles: ");
+      output.append(context.task_roles[entry.first]);
+      output.append(")\"\n");
     }
     output.append("  else\n");
     output.append("    echo \"Task '$1' is not defined.\"\n");
@@ -311,6 +328,11 @@ void Compiler::make() {
         output.append(format("elif [ $1 == \"%s\" ]; then\n  shift\n  %s $@\n",
                              entry.first.c_str(), entry.first.c_str()));
     }
+    output.append("elif [ $1 == \"show_variables\" ]; then\n  show_variables\n");
+    output.append("fi\n");
+  }
+  else {
+    output.append("if [ $1 == \"show_variables\" ]; then\n  show_variables\n");
     output.append("fi\n");
   }
 

@@ -43,6 +43,8 @@ namespace {
     "task: foo {\n  ssh: bad-option=1 { hostname } }",
     "task: foo {\n  ssh: { hostname }\n  echo 'yes'\n  echo 'maybe'\n  ssh: }",
     "task: foo {\n  echo 'before'\n  ssh: { hostname }\n  echo 'yes'\n  echo 'maybe'\n  ssh: }",
+    "# Conflict with builtin\n  task: CLUSTER_BUILTIN_display_line { }",
+    "# Conflict with builtin\n  task: show_variables { }",
     (const char *)0
   };
 }
@@ -75,7 +77,7 @@ int main(int argc, char **argv) {
 
   output_file.close();
 
-  string cmd = format("diff Tokenizer_test.output %s", argv[1]);
+  string cmd = format("diff Translator_test.output %s", argv[1]);
   if (system(cmd.c_str()))
     exit(1);
 

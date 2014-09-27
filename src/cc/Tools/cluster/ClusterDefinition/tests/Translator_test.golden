@@ -10,3 +10,5 @@ HYPERTABLE syntax error - Invalid ssh: statement (curly brace not found) on line
 HYPERTABLE syntax error - Invalid ssh: statement (Unknown option 'bad-option=1') on line 9 of 'test.def'
 HYPERTABLE syntax error - Invalid ssh: statement (curly brace not found) on line 12 of 'test.def'
 HYPERTABLE syntax error - Invalid ssh: statement (curly brace not found) on line 13 of 'test.def'
+HYPERTABLE syntax error - Task name 'CLUSTER_BUILTIN_display_line' conflicts with built-in on line 8 of 'test.def'
+HYPERTABLE syntax error - Task name 'show_variables' conflicts with built-in on line 8 of 'test.def'

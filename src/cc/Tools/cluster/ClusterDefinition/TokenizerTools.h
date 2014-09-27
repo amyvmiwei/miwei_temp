@@ -28,6 +28,7 @@
 #ifndef Tools_cluster_ClusterDefinition_TokenizerTools_h
 #define Tools_cluster_ClusterDefinition_TokenizerTools_h
 
+#include <map>
 #include <string>
 
 namespace Hypertable {
@@ -59,6 +60,9 @@ namespace Hypertable {
       extern size_t count_newlines(const char *base, const char *end);
 
       extern bool skip_to_newline(const char **endp);
+
+      extern bool substitute_variables(const string &input, string &output,
+                                       map<string, string> &vmap);
 
     }
 

@@ -47,6 +47,12 @@ using namespace std;
 
 namespace {
 
+  const char *builtin_task_name[] = {
+    "CLUSTER_BUILTIN_display_line",
+    "show_variables",
+    nullptr
+  };
+
   bool translate_ssh_statement(const char *base, const char *end,
                                const char **nextp, string &ssh_command,
                                string &errmsg) {
@@ -151,6 +157,11 @@ const string TranslatorTask::translate(TranslationContext &context) {
       base++;
   }
 
+  // Do variable substitution
+  while (TokenizerTools::substitute_variables(description, description,
+                                              context.symbols))
+    ;
+
   if (*base == 0)
     HT_THROWF(Error::SYNTAX_ERROR, "Bad task definition on line %d of '%s'",
               (int)m_lineno, m_fname.c_str());
@@ -182,6 +193,13 @@ const string TranslatorTask::translate(TranslationContext &context) {
 
   string task_name(words[1]);
 
+  for (size_t i=0; builtin_task_name[i]; i++) {
+    if (task_name.compare(builtin_task_name[i]) == 0)
+      HT_THROWF(Error::SYNTAX_ERROR,
+                "Task name '%s' conflicts with built-in on line %d of '%s'",
+                task_name.c_str(), (int)m_lineno, m_fname.c_str());
+  }
+
   if (!TokenizerTools::is_valid_identifier(task_name))
     HT_THROWF(Error::SYNTAX_ERROR, "Invalid task name (%s) on line %d of '%s'",
               task_name.c_str(), (int)m_lineno, m_fname.c_str());
@@ -189,6 +207,7 @@ const string TranslatorTask::translate(TranslationContext &context) {
   translated_text.append(task_name);
   translated_text.append(" () {\n  local _SSH_HOSTS=\"");;
 
+  string task_roles;
   if (words.size() > 3) {
     text.clear();
     for (size_t i=3; i<words.size(); i++) {
@@ -209,6 +228,9 @@ const string TranslatorTask::translate(TranslationContext &context) {
       translated_text.append("(${ROLE_");
       translated_text.append(t);
       translated_text.append("})");
+      if (!task_roles.empty())
+        task_roles.append(", ");
+      task_roles.append(t);
     }
   }
   else {
@@ -235,7 +257,7 @@ const string TranslatorTask::translate(TranslationContext &context) {
     base++;
   }
 
-  HT_ASSERT(base < end);
+  HT_ASSERT(base <= end);
 
   string task_body;
   string ssh_command;
@@ -265,6 +287,7 @@ const string TranslatorTask::translate(TranslationContext &context) {
   translated_text.append("\n}\n");
 
   context.tasks[task_name] = description;
+  context.task_roles[task_name] = task_roles;
 
   return translated_text;
 }
