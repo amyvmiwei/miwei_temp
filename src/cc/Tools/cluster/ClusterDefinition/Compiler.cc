@@ -230,7 +230,7 @@ void Compiler::make() {
   output.append("CLUSTER_BUILTIN_display_line () {\n");
   output.append("  let size=$1\n");
   output.append("  for ((i=0; i<$size; i++)); do\n");
-  output.append("    echo -n \"-\"\n");
+  output.append("    echo -n \"=\"\n");
   output.append("  done\n");
   output.append("  echo\n");
   output.append("}\n");
@@ -297,9 +297,13 @@ void Compiler::make() {
         output.append(line);
         output.append("\"\n");
       }
-      output.append("    echo \"(roles: ");
-      output.append(context.task_roles[entry.first]);
-      output.append(")\"\n");
+      if (context.task_roles[entry.first].empty())
+        output.append("    echo \"[ROLES: all]\"\n");
+      else {
+        output.append("    echo \"[ROLES: ");
+        output.append(context.task_roles[entry.first]);
+        output.append("]\"\n");
+      }
     }
     output.append("  else\n");
     output.append("    echo \"Task '$1' is not defined.\"\n");

@@ -61,6 +61,10 @@ const string TranslatorRole::translate(TranslationContext &context) {
 
   string name(base, ptr-base);
 
+  if (name.compare("all") == 0)
+    HT_THROWF(Error::SYNTAX_ERROR, "Invalid role name 'all' on line %d of '%s'",
+              (int)m_lineno, m_fname.c_str());
+
   while (*ptr && isspace(*ptr))
     ptr++;
 
