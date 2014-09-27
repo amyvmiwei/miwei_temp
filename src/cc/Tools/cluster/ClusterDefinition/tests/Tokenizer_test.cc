@@ -38,6 +38,17 @@ using namespace Hypertable;
 using namespace Hypertable::ClusterDefinition;
 using namespace std;
 
+namespace {
+  
+  const char *bad_input[] = {
+    "# comment\n\nrole master test00\n",
+    "# comment\n\nrole: master test00\ntask doit { echo \"done\" }",
+    "# comment\n\nrole: master test00\ninclude cluster.tasks\ntask: doit { echo \"done\" }",
+    nullptr
+  };
+
+}
+
 int main(int argc, char **argv) {
   string line;
   string content;
@@ -83,8 +94,23 @@ int main(int argc, char **argv) {
     }
   }
 
-  output_file.close();
   input_file.close();
+
+  size_t i=0;
+  while (bad_input[i]) {
+    try {
+      Tokenizer tokenizer(argv[1], bad_input[i]);
+      Token token;
+      while (tokenizer.next(token))
+        ;
+    }
+    catch (Exception &e) {
+      output_file << Error::get_text(e.code()) << " - " << e.what() << endl;
+    }
+    i++;
+  }
+
+  output_file.close();
 
   string cmd = format("diff Tokenizer_test.output %s", argv[2]);
   if (system(cmd.c_str()))

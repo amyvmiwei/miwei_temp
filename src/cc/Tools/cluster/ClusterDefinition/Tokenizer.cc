@@ -58,8 +58,7 @@ Tokenizer::Tokenizer(const string &fname)
   m_next = m_content.c_str();
 }
 
-Tokenizer::Tokenizer(const string &fname,
-                                                       const string &content)
+Tokenizer::Tokenizer(const string &fname, const string &content)
   : m_fname(fname), m_content(content) {
   m_next = m_content.c_str();
 }
@@ -207,6 +206,15 @@ int Tokenizer::identify_line_type(const char *base, const char *end) {
     else if (isspace(*ptr)) {
       if (!strncmp(base, "function", 8))
         return Token::FUNCTION;
+      else if (!strncmp(base, "role", 4))
+        HT_THROWF(Error::SYNTAX_ERROR,
+                  "Invalid role: statement on line %d",(int)m_line);
+      else if (!strncmp(base, "task", 4))
+        HT_THROWF(Error::SYNTAX_ERROR,
+                  "Invalid task: statement on line %d",(int)m_line);
+      else if (!strncmp(base, "include", 4))
+        HT_THROWF(Error::SYNTAX_ERROR,
+                  "Invalid include: statement on line %d",(int)m_line);
       ptr++;
       while (ptr < end && isspace(*ptr))
         ptr++;

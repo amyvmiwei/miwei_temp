@@ -128,3 +128,6 @@ myfunc () {
 echo "yes"
 Token COMMENT
 # end function
+HYPERTABLE syntax error - Invalid role: statement on line 3
+HYPERTABLE syntax error - Invalid task: statement on line 4
+HYPERTABLE syntax error - Invalid include: statement on line 4

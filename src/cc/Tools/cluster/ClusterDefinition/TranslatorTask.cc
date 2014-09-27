@@ -264,6 +264,18 @@ const string TranslatorTask::translate(TranslationContext &context) {
   string error_msg;
   size_t offset;
 
+  // Check for missing ':' character
+  if (TokenizerTools::find_token("ssh", base, end, &offset)) {
+    size_t tmp_lineno = lineno + TokenizerTools::count_newlines(base, base+offset);
+    ptr = base + offset + 3;
+    while (*ptr && isspace(*ptr))
+      ptr++;
+    if (*ptr == '{' || *ptr == 0 || !strncmp(ptr, "random-start-delay=", 19) ||
+        !strncmp(ptr, "in-series", 9))
+      HT_THROWF(Error::SYNTAX_ERROR,"Invalid ssh: statement on line %d of '%s'",
+                (int)tmp_lineno, m_fname.c_str());
+  }
+
   while (TokenizerTools::find_token("ssh:", base, end, &offset)) {
     lineno += TokenizerTools::count_newlines(base, base+offset);
     task_body.append(base, offset);
