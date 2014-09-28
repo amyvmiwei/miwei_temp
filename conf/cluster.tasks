@@ -1,0 +1,223 @@
+
+INSTALL_DIR=${INSTALL_PREFIX}/${HYPERTABLE_VERSION}
+if [[ ${ORIGIN_CONFIG_FILE} != */hypertable.cfg ]]; then
+  CONFIG="--config ${INSTALL_DIR}/${HYPERTABLE_VERSION}/conf/`basename ${ORIGIN_CONFIG_FILE}`"
+fi
+
+RSYNC="rsync -av -e 'ssh -o StrictHostKeyChecking=no'"
+
+# Install origin configuration file.
+# This task copies the origin config file \$ORIGIN_CONFIG_FILE
+# (${ORIGIN_CONFIG_FILE}) into the conf/ directory of the Hypertable
+# installation.
+task: install_origin_config roles: source {
+  ssh: {
+    ${RSYNC} ${ORIGIN_CONFIG_FILE} ${INSTALL_DIR}/conf
+  }
+}
+
+
+# Set Hadoop distro.
+# This task copies the contents of the \$HADOOP_DISTRO variable
+# (${HADOOP_DISTRO}) into the conf/hadoop-distro file of the Hypertable
+# installation directory.
+task: set_hadoop_distro roles: source {
+  ssh: {
+    echo ${HADOOP_DISTRO} > ${INSTALL_DIR}/conf/hadoop-distro
+  }
+}
+
+
+# Rsync config dir from source machine to all.
+# This task rsync's the configuration directory (conf/) from the source machine
+# (${ROLE_source}) to all nodes in the cluster.  It does this by ssh'ing into
+# all nodes in parallel and pulling the configuration directory from the source
+# node.
+task: rsync_config_dir {
+  ssh: {
+    ${RSYNC} ${ROLE_source}:${INSTALL_DIR}/conf/ ${INSTALL_DIR}/conf
+  }
+}
+
+
+# Rsync installation dir from source machine to all.
+# This task rsync's the installation directory (excluding log, run, fs, and
+# hyperspace) from the source machine (${ROLE_source}) to all nodes in the
+# cluster.  It does this by ssh'ing into all nodes in parallel and pulling the
+# installation from the source node.
+task: rsync_installation {
+  ssh: {
+    ${RSYNC} --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=conf --exclude=hyperspace ${ROLE_source}:${INSTALL_DIR} ${INSTALL_DIR}
+  }
+  rsync_config_dir
+}
+
+
+# Distribute installation.  This task writes the value of the variable
+# \$HADOOP_DISTRO (${HADOOP_DISTRO}) into the conf/hadoop-distro file of the
+# hypertable installation and then runs the rsync_installation task.
+task: dist roles: source {
+  ssh: {
+    echo ${HADOOP_DISTRO} > ${INSTALL_DIR}/conf/hadoop-distro
+  }
+  rsync_installation
+}
+
+
+# Push config file out to all machines.
+# This task copies the config file into the conf/ directory of the hypertable
+# installation on the source machine (${ROLE_source}) by running task
+# install_origin_config and then rsyncs it out to all of the machines in the cluster by
+# running the rsync_config_dir task.
+task: push_config {
+  install_origin_config
+  rsync_config_dir
+}
+
+
+# Stop ThriftBroker on primary servers.
+# Stops only the ThriftBroker in the current@ installation.
+task: stop_thriftbrokers_primary roles: master, slave {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker
+  }
+}
+
+
+# Stop ThriftBroker on additional machines.
+# Stops the FSBroker and ThriftBroker in the current@ installation.
+task: stop_thriftbrokers_additional roles: thriftbroker_additional {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker fsbroker
+  }
+}
+
+
+# Stop ThriftBrokers.
+# Stops ThriftBrokers by running stop_thriftbrokers_primary and
+# stop_thriftbrokers_additional tasks.
+task: stop_thriftbrokers {
+  stop_thriftbrokers_primary
+  if [ -n ${ROLE_thriftbroker_additional} ]; then
+    stop_thriftbrokers_additional
+  fi
+}
+
+
+# Stop FSBrokers.
+# Stops FSBrokers in the current@ installation.
+task: stop_fsbroker roles: master, slave {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/stop-servers.sh fsbroker
+  }
+}
+
+
+# Stop slaves (RangeServers).
+# Stops RangeServers in the current@ installation.
+task: stop_slave roles: slave {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/stop-servers.sh rangeserver
+  }
+}
+
+
+# Stop Masters.
+# Stops Masters and monitoring servers in the current@ installation.
+task: stop_master roles: master {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/stop-servers.sh master
+    ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh
+  }
+}
+
+
+# Stop monitoring servers.
+# Stops monitoring servers in the current@ installation.
+task: stop_monitoring roles: master {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh
+  }
+}
+
+
+# Stop Hyperspace.
+# Stops Hyperspace in the current@ installation.
+task: stop_hyperspace roles: hyperspace {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/stop-hyperspace.sh
+  }
+}
+
+
+# Stop primary servers.
+# Stops slave, master, and hyperspace processes by running the stop_master,
+# stop_slaves, stop_hyperspace, and stop_fsbroker tasks.
+task: stop_servers roles: master, slave, hyperspace {
+  stop_master
+  stop_slave
+  stop_hyperspace
+  stop_fsbroker
+}
+
+
+# Stop all Hypertable processes.
+# Stops all Hypertable processes by running the stop_thriftbrokers and
+# stop_servers tasks.
+task: stop {
+  stop_thriftbrokers
+  stop_servers
+}
+
+
+# Kills all Hypertable processes.
+# Kills all Hypertable processes by searching for them in a process listing an
+# sending them the -9 signal.
+task: kill {
+  ssh: {
+    PIDS1=\`ps auxww | fgrep "/opt/hypertable" | fgrep "/bin/" | fgrep -v java | fgrep -v grep | tr -s "[ ]" | cut -f2 -d' '\`
+    PIDS2=\`ps auxww | fgrep "org.hypertable.FsBroker.hadoop.main" | fgrep -v grep | tr -s "[ ]" | cut -f2 -d' '\`
+    if [ -n "\$PIDS1" ] || [ -n "\$PIDS2" ]; then
+      COUNT=\`echo "\$PIDS1 \$PIDS2" | wc -w\`
+      echo "Sending SIGKILL to \$COUNT processes ..."
+      kill -9 \`echo "\$PIDS1 \$PIDS2"\`
+    fi
+  }
+}
+
+
+# Clean Master state.
+task: clean_master roles: master {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/start-fsbroker.sh ${FS} ${CONFIG}
+    ${INSTALL_PREFIX}/current/bin/clean-database.sh ${CONFIG}
+   ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh
+  }
+}
+
+# Clean Hyperspace state.
+task: clean_hyperspace roles: hyperspace {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/clean-hyperspace.sh
+  }
+}
+
+# Clean RangeServer state.
+task: clean_slaves roles: slave {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/stop-servers.sh --no-hyperspace --no-master
+    rm -rf ${INSTALL_PREFIX}/current/run/*
+  }
+}
+
+# Destroy database removing all tables.
+task: cleandb {
+#  if prompt_clean == 1
+#    puts "This will DELETE ALL DATA stored in the Hypertable instance with MASTER='#{roles[:master].first}'. ARE YOU SURE you want to proceed? ('Yes' to proceed)"
+#    value = STDIN.gets.chomp rescue nil
+#    exit unless value == "Yes"
+#  end
+  clean_master
+  clean_hyperspace
+  clean_slaves
+}

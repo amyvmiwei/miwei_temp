@@ -69,6 +69,11 @@ const string TranslatorVariable::translate(TranslationContext &context) {
     }
   }
 
+  size_t whitespace_chars = 0;
+  for (const char *ptr = m_text.c_str(); *ptr && isspace(*ptr); ptr++)
+    whitespace_chars++;
+
+  translation_text.append(m_text.c_str(), whitespace_chars);
   translation_text.append(name);
   translation_text.append("=${");
   translation_text.append(name);

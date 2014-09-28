@@ -102,9 +102,18 @@ namespace {
     ssh_command.append(Hypertable::format("%s/bin/ht ssh%s \"${_SSH_HOSTS}\" \"",
                                           System::install_dir.c_str(), options.c_str()));
     open_curly++;
-    string contents(open_curly, close_curly-open_curly);
-    trim(contents);
-    ssh_command.append(contents);
+    string content(open_curly, close_curly-open_curly);
+    trim(content);
+
+    string escaped_content;
+    escaped_content.reserve(content.length()+32);
+    for (const char *ptr = content.c_str(); *ptr; ptr++) {
+      if (*ptr == '"')
+        escaped_content.append(1, '\\');
+      escaped_content.append(1, *ptr);
+    }
+
+    ssh_command.append(escaped_content);
     ssh_command.append("\"");
 
     *nextp = close_curly + 1;
@@ -112,8 +121,10 @@ namespace {
     return true;
   }
 
-
 }
+
+
+
 
 const string TranslatorTask::translate(TranslationContext &context) {
   string translated_text;
@@ -245,7 +256,17 @@ const string TranslatorTask::translate(TranslationContext &context) {
       translated_text.append("})");
     }
   }
-  translated_text.append("\"\n  ");
+  translated_text.append("\"\n");
+  translated_text.append("  if [ $# -gt 0 ] && [ $1 == \"on\" ]; then\n");
+  translated_text.append("    shift\n");
+  translated_text.append("    if [ $# -eq 0 ]; then\n");
+  translated_text.append("      echo \"Missing host specification in 'on' argument\"\n");
+  translated_text.append("      exit 1\n");
+  translated_text.append("    else\n");
+  translated_text.append("      _SSH_HOSTS=\"$1\"\n");
+  translated_text.append("      shift\n");
+  translated_text.append("    fi\n");
+  translated_text.append("  fi\n  ");
 
   size_t lineno = m_lineno;
 
@@ -289,9 +310,9 @@ const string TranslatorTask::translate(TranslationContext &context) {
   }
 
   if (base < end) {
-    string contents(base, end-base);
-    trim_right(contents);
-    task_body.append(contents);
+    string content(base, end-base);
+    trim_right(content);
+    task_body.append(content);
   }
 
   translated_text.append(task_body);
