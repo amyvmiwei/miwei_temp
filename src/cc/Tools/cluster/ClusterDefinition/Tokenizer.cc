@@ -144,6 +144,20 @@ bool Tokenizer::next(Token &token) {
         return true;
       break;
 
+    case (Token::CONTROLFLOW):
+      {
+        end = base;
+        if (!TokenizerTools::skip_control_flow_statement(&end))
+          HT_THROWF(Error::SYNTAX_ERROR,
+                    "Incomplete control flow statement on line %d of file '%s'",
+                    (int)m_line, m_fname.c_str());
+        m_line += TokenizerTools::count_newlines(base, end);
+        TokenizerTools::skip_to_newline(&end);
+      }
+      if (accumulate(&base, end, Token::CONTROLFLOW, token))
+        return true;
+      break;
+
     case (Token::COMMENT):
       if (accumulate(&base, end, Token::COMMENT, token))
         return true;
@@ -204,7 +218,11 @@ int Tokenizer::identify_line_type(const char *base, const char *end) {
       }
     }
     else if (isspace(*ptr)) {
-      if (!strncmp(base, "function", 8))
+      if (!strncmp(base, "if", 2) || !strncmp(base, "while", 5) ||
+          !strncmp(base, "for", 3) || !strncmp(base, "until", 5) ||
+          !strncmp(base, "case", 4))
+        return Token::CONTROLFLOW;
+      else if (!strncmp(base, "function", 8))
         return Token::FUNCTION;
       else if (!strncmp(base, "role", 4))
         HT_THROWF(Error::SYNTAX_ERROR,
@@ -239,7 +257,8 @@ bool Tokenizer::accumulate(const char **basep,
   else {
     if (token.type == Token::COMMENT && type == Token::TASK)
       token.type = Token::TASK;
-    else if (type == Token::FUNCTION || type == Token::BLANKLINE)
+    else if (type == Token::FUNCTION || type == Token::BLANKLINE ||
+             type == Token::CONTROLFLOW)
       type = Token::CODE;
 
     if (token.type != Token::NONE &&

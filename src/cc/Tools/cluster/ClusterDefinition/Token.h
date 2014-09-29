@@ -44,15 +44,16 @@ namespace Hypertable { namespace ClusterDefinition {
   public:
     /// Enumeration for token types.
     enum {
-      NONE=0,   //!< none
-      INCLUDE,  //!< include: statement
-      VARIABLE, //!< variable defintion      
-      ROLE,     //!< role: statement      
-      TASK,     //!< task: statement
-      FUNCTION, //!< function defintion
-      COMMENT,  //!< comment block
-      CODE,     //!< code block
-      BLANKLINE //!< blank line
+      NONE=0,       //!< none
+      INCLUDE,      //!< include: statement
+      VARIABLE,     //!< variable defintion      
+      ROLE,         //!< role: statement      
+      TASK,         //!< task: statement
+      FUNCTION,     //!< function defintion
+      CONTROLFLOW,  //!< control flow statement
+      COMMENT,      //!< comment block
+      CODE,         //!< code block
+      BLANKLINE     //!< blank line
     };
 
     /// Clears token state

@@ -333,10 +333,16 @@ void Compiler::make() {
                              entry.first.c_str(), entry.first.c_str()));
     }
     output.append("elif [ $1 == \"show_variables\" ]; then\n  show_variables\n");
+    output.append("else\n");
+    output.append("  echo \"Task '$1' is not defined.\"\n");
+    output.append("  exit 1\n");
     output.append("fi\n");
   }
   else {
     output.append("if [ $1 == \"show_variables\" ]; then\n  show_variables\n");
+    output.append("else\n");
+    output.append("  echo \"Task '$1' is not defined.\"\n");
+    output.append("  exit 1\n");
     output.append("fi\n");
   }
 

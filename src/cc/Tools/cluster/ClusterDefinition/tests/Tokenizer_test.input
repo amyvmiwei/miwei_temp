@@ -76,3 +76,58 @@ myfunc () {
 }
 echo "yes"
 # end function
+#### test-definition: nested control structures
+
+FOO=bar
+if [ $FOO == "bar" ]; then
+  echo yes
+fi
+
+VAR=how
+while true; do
+  if [ $FOO == "bar" ]; then
+    echo "if then else";
+    BAR=yes
+  fi
+  BAZ=yes
+done
+
+VAR=now
+until true; do
+  if [ $FOO == "bar" ]; then
+    echo "if then else";
+    BAR=no
+  fi
+  BAZ=no
+done
+
+VAR=brown
+case $space in
+[1-6]*)
+  Message="All is quiet."
+  ;;
+[7-8]*)
+  Message="Start thinking about cleaning out some stuff.  There's a partition that is $space % full."
+  ;;
+9[1-8])
+  Message="Better hurry with that new disk...  One partition is $space % full."
+  ;;
+99)
+  Message="I'm drowning here!  There's a partition at $space %!"
+  ;;
+*)
+  Message="I seem to be running with an nonexistent amount of disk space..."
+  ;;
+esac
+
+VAR=cow
+for I in 1 2 3 4 5
+do
+  statements1      #Executed for all values of ''I'', up to a disaster-condition if any.
+  statements2
+  if (disaster-condition)
+  then
+    break            #Abandon the loop.
+  fi
+  statements3          #While good and, no disaster-condition.
+done

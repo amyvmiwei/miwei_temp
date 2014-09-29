@@ -54,8 +54,13 @@ namespace Hypertable {
       extern bool find_token(const string &token, const char *base,
                              const char *end, size_t *offsetp);
 
+      extern bool find_next_token(const char *base, size_t *offsetp,
+                                  size_t *lengthp);
+
       extern bool find_end_char(const char *base, const char **endp,
                                 size_t *linep=nullptr);
+
+      extern bool skip_control_flow_statement(const char **basep);
 
       extern size_t count_newlines(const char *base, const char *end);
 

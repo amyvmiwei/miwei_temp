@@ -51,6 +51,7 @@ void Token::create_translator() {
     translator = make_shared<TranslatorTask>(fname, line, text);
     break;
   case (FUNCTION):
+  case (CONTROLFLOW):
   case (COMMENT):
   case (CODE):
   case (BLANKLINE):
@@ -75,6 +76,8 @@ const char *Token::type_to_text(int type) {
     return "TASK";
   case(FUNCTION):
     return "FUNCTION";
+  case(CONTROLFLOW):
+    return "CONTROLFLOW";
   case(COMMENT):
     return "COMMENT";
   case(CODE):

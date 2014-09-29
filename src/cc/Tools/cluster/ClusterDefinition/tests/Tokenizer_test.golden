@@ -128,6 +128,73 @@ myfunc () {
 echo "yes"
 Token COMMENT
 # end function
+Token COMMENT
+#### test-definition: nested control structures
+Token CODE
+
+Token VARIABLE
+FOO=bar
+Token CODE
+if [ $FOO == "bar" ]; then
+  echo yes
+fi
+
+Token VARIABLE
+VAR=how
+Token CODE
+while true; do
+  if [ $FOO == "bar" ]; then
+    echo "if then else";
+    BAR=yes
+  fi
+  BAZ=yes
+done
+
+Token VARIABLE
+VAR=now
+Token CODE
+until true; do
+  if [ $FOO == "bar" ]; then
+    echo "if then else";
+    BAR=no
+  fi
+  BAZ=no
+done
+
+Token VARIABLE
+VAR=brown
+Token CODE
+case $space in
+[1-6]*)
+  Message="All is quiet."
+  ;;
+[7-8]*)
+  Message="Start thinking about cleaning out some stuff.  There's a partition that is $space % full."
+  ;;
+9[1-8])
+  Message="Better hurry with that new disk...  One partition is $space % full."
+  ;;
+99)
+  Message="I'm drowning here!  There's a partition at $space %!"
+  ;;
+*)
+  Message="I seem to be running with an nonexistent amount of disk space..."
+  ;;
+esac
+
+Token VARIABLE
+VAR=cow
+Token CODE
+for I in 1 2 3 4 5
+do
+  statements1      #Executed for all values of ''I'', up to a disaster-condition if any.
+  statements2
+  if (disaster-condition)
+  then
+    break            #Abandon the loop.
+  fi
+  statements3          #While good and, no disaster-condition.
+done
 HYPERTABLE syntax error - Invalid role: statement on line 3
 HYPERTABLE syntax error - Invalid task: statement on line 4
 HYPERTABLE syntax error - Invalid include: statement on line 4

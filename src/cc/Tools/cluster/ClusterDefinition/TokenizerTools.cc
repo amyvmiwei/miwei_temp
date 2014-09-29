@@ -35,6 +35,7 @@
 #include <cerrno>
 #include <climits>
 #include <cstdlib>
+#include <map>
 #include <stack>
 
 using namespace std;
@@ -85,8 +86,45 @@ bool find_token(const string &token, const char *base, const char *end, size_t *
     if (quote_char == 0) {
       if (*ptr == '"' || *ptr == '\'' || *ptr == '`')
         quote_char = *ptr;
+      else if (*ptr == '#') {  // skip comments
+        while (ptr < end && *ptr != '\n')
+          ptr++;
+        if (ptr == end)
+          return false;
+      }
       else if (strncmp(ptr, token.c_str(), token.length()) == 0) {
         *offsetp = ptr-base;
+        return true;
+      }
+    }
+    else {
+      if (*ptr == quote_char && *(ptr-1) != '\\')
+        quote_char = 0;
+    }
+    ptr++;
+  }
+  return false;
+}
+
+bool find_next_token(const char *base, size_t *offsetp, size_t *lengthp) {
+  char quote_char = 0;
+  const char *ptr = base;
+  while (*ptr) {
+    if (quote_char == 0) {
+      if (*ptr == '"' || *ptr == '\'' || *ptr == '`')
+        quote_char = *ptr;
+      else if (*ptr == '#') {  // skip comments
+        while (*ptr && *ptr != '\n')
+          ptr++;
+        if (*ptr == 0)
+          continue;
+      }
+      else if (is_identifier_character(*ptr)) {
+        *offsetp = ptr-base;
+        base = ptr++;
+        while (*ptr && is_identifier_character(*ptr))
+          ptr++;
+        *lengthp = ptr - base;
         return true;
       }
     }
@@ -153,6 +191,55 @@ bool find_end_char(const char *base, const char **endp, size_t *linep) {
   *endp = ptr;
   return true;
 }
+
+bool skip_control_flow_statement(const char **basep) {
+  map<string, string> control_flow_token_map;
+  control_flow_token_map["if"] = "fi";
+  control_flow_token_map["for"] = "done";
+  control_flow_token_map["until"] = "done";
+  control_flow_token_map["while"] = "done";
+  control_flow_token_map["case"] = "esac";
+  const char *ptr = *basep;
+
+  while (*ptr && isspace(*ptr))
+    ptr++;
+
+  size_t offset;
+  size_t length;
+  if (!find_next_token(ptr, &offset, &length)) {
+    *basep = ptr;
+    return false;
+  }
+
+  string token(ptr+offset, length);
+  auto iter = control_flow_token_map.find(token);
+  if (iter == control_flow_token_map.end()) {
+    *basep = ptr;
+    return false;
+  }
+
+  stack<string> scope;
+  scope.push(control_flow_token_map[token]);
+
+  ptr = ptr+offset+length;
+  while (*ptr && find_next_token(ptr, &offset, &length)) {
+    token = string(ptr+offset, length);
+    if (token.compare(scope.top()) == 0) {
+      scope.pop();
+      if (scope.empty()) {
+        *basep = ptr+offset+length;
+        return true;
+      }
+    }
+    else if (control_flow_token_map.find(token) != control_flow_token_map.end())
+      scope.push(control_flow_token_map[token]);
+    ptr += (offset+length);
+  }
+
+  *basep = ptr;
+  return false;
+}
+
 
 size_t count_newlines(const char *base, const char *end) {
   size_t count = 0;
