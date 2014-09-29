@@ -122,7 +122,7 @@ namespace {
   /// #hosts populated with the expansion of the pattern.
   class Token {
   public:
-    /// Token value (one of: 0 '(' '(' '+' '-')
+    /// Token value (one of: 0 '(' '(' '+' '-' ',')
     char value {};
     /// Set of hosts represented by host pattern token
     set<ClusterHostname> hosts;
@@ -221,7 +221,8 @@ namespace {
     if (*m_ptr == 0)
       return false;
 
-    if (*m_ptr == '(' || *m_ptr == ')' || *m_ptr == '+' || *m_ptr == '-') {
+    if (*m_ptr == '(' || *m_ptr == ')' || *m_ptr == '+' ||
+        *m_ptr == ',' || *m_ptr == '-') {
       token.value = *m_ptr++;
       return true;
     }
@@ -256,7 +257,7 @@ namespace {
     }
 
     if (*m_ptr != 0 && !isspace(*m_ptr) && *m_ptr != '(' && *m_ptr != ')' &&
-        *m_ptr != '+' && *m_ptr != '-')
+        *m_ptr != '+' && *m_ptr != ',' && *m_ptr != '-')
       HT_THROWF(Error::BAD_FORMAT, "Invalid character %s encountered at position %d",
                 current_character(), current_position());
 
@@ -387,7 +388,7 @@ HostSpecification::operator std::vector<std::string>() {
     else if (token.value == '(')
       frame_stack.push(std::make_shared<Frame>());
     else if (token.value == ')') {
-      if (last_token == '+' || last_token == '-')
+      if (last_token == '+' || last_token == ',' || last_token == '-')
         HT_THROWF(Error::BAD_FORMAT, "Missing operand for '%c' operator at position %d",
                   last_token, tokenizer.current_position() - 1);
       if (frame_stack.size() == 1)
@@ -403,10 +404,10 @@ HostSpecification::operator std::vector<std::string>() {
           frame_stack.top()->hosts.insert(host);
       }
     }
-    else if (token.value == '+') {
+    else if (token.value == '+' || token.value == ',') {
       if (last_token != 0 && last_token != ')')
-        HT_THROWF(Error::BAD_FORMAT, "Missing operand for '+' operator at position %d",
-                  tokenizer.current_position() - 1);
+        HT_THROWF(Error::BAD_FORMAT, "Missing operand for '%c' operator at position %d",
+                  token.value, tokenizer.current_position() - 1);
       frame_stack.top()->subtract = false;
     }
     else if (token.value == '-') {
@@ -423,7 +424,7 @@ HostSpecification::operator std::vector<std::string>() {
   if (frame_stack.size() != 1)
     HT_THROW(Error::BAD_FORMAT, "Mis-matched parenthesis");
 
-  if (last_token == '+' || last_token == '-')
+  if (last_token == '+' || last_token == ',' || last_token == '-')
     HT_THROWF(Error::BAD_FORMAT, "Missing operand for '%c' operator at position %d",
               last_token, tokenizer.current_position() - 1);
 

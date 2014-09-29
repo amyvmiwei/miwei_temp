@@ -42,7 +42,9 @@ namespace Hypertable {
   /// function to convert a pattern into a list of hostnames.  The host pattern
   /// syntax can include numeric ranges such as `host[00-15]` and supports
   /// set union '+' and set difference '-' operators (left associative).  Host
-  /// sets can also be grouped using parenthesis.  The following examples
+  /// sets can also be grouped using parenthesis.  The ',' character is
+  /// equivalent to the '+' character, so a comma-separated list of host names
+  /// is a valid host specification pattern as well.  The following examples
   /// illustrate the host specification pattern syntax:
   /// <table>
   /// <tr>
@@ -71,6 +73,12 @@ namespace Hypertable {
   ///     <code>host03</code><br/>
   ///     <code>host04</code><br/>
   ///     <code>host05</code><br/></td>
+  /// </tr>
+  /// <tr>
+  /// <td><code>host01, host02, host03</code></td>
+  /// <td><code>host01</code><br/>
+  ///     <code>host02</code><br/>
+  ///     <code>host03</code><br/></td>
   /// </tr>
   /// </table>
   /// 
