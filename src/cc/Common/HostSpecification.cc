@@ -239,7 +239,7 @@ namespace {
 
     if (isalnum(*m_ptr)) {
       const char *base = m_ptr;
-      while (*m_ptr != 0 && (isalnum(*m_ptr) || *m_ptr == '.' || *m_ptr == '-'))
+      while (*m_ptr != 0 && (isalnum(*m_ptr) || *m_ptr == '.' || *m_ptr == '_'))
         m_ptr++;
       prefix = string(base, m_ptr-base);
     }

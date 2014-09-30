@@ -99,7 +99,7 @@ namespace {
 
     // build ssh command
     ssh_command.clear();
-    ssh_command.append(Hypertable::format("%s/bin/ht ssh%s \"${_SSH_HOSTS}\" \"",
+    ssh_command.append(Hypertable::format("%s/bin/ht ssh%s \" ${_SSH_HOSTS}\" \"",
                                           System::install_dir.c_str(), options.c_str()));
     open_curly++;
     string content(open_curly, close_curly-open_curly);
