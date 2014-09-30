@@ -55,15 +55,6 @@ using namespace Hypertable::Config;
 
 namespace {
 
-  struct AppPolicy : Config::Policy {
-    static void init_options() {
-      cmdline_desc().add_options()
-        ("clear-cache", "Clear contents of cache")
-        ("definition,f", str(), "Definition file name")
-        ;
-    }
-  };
-
   void clear_cache() {
     string cache_dir;
     struct passwd *pw = getpwuid(getuid());

@@ -54,6 +54,9 @@ extern "C" {
 
 #define HT_CLUSTER_VERSION 1
 
+#define TASK_COLUMN_WIDTH 28
+#define DESCRIPTION_COLUMN_WIDTH (79-TASK_COLUMN_WIDTH)
+
 using namespace Hypertable;
 using namespace Hypertable::ClusterDefinition;
 using namespace std;
@@ -67,10 +70,10 @@ namespace {
       if (*ptr == '.' && (*(ptr+1) == 0 || isspace(*(ptr+1))))
         break;
     }
-    if ((ptr - description.c_str()) < 52)
+    if ((ptr - description.c_str()) <= DESCRIPTION_COLUMN_WIDTH)
       short_description = description.substr(0, ptr - description.c_str());
     else
-      short_description = description.substr(0, 51);
+      short_description = description.substr(0, DESCRIPTION_COLUMN_WIDTH);
     return short_description;
   }
 
@@ -246,7 +249,7 @@ void Compiler::make() {
   output.append("  echo\n");
   output.append("}\n");
 
-  const char *dots = "..........................";
+  const char *dots = "....................................................";
   output.append("\n");
   output.append("if [ $1 == \"-T\" ] || [ $1 == \"--tasks\" ]; then\n");
   output.append("  echo\n");
@@ -256,8 +259,8 @@ void Compiler::make() {
     output.append("  echo \"");
     output.append(entry.first);
     output.append(" ");
-    if (entry.first.length() < 26)
-      output.append(dots, 26-entry.first.length());
+    if (entry.first.length() <= TASK_COLUMN_WIDTH)
+      output.append(dots, TASK_COLUMN_WIDTH-entry.first.length());
     else
       output.append("..");
     output.append(" ");

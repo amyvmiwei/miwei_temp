@@ -84,7 +84,9 @@ namespace {
             return false;
           }
           options.append(" --");
-          options.append(token);
+          options.append(token.substr(0, 18));
+          options.append(" ");
+          options.append(token.substr(19));
         }
         else if (token.compare("in-series") == 0) {
           options.append(" --");
@@ -267,8 +269,11 @@ const string TranslatorTask::translate(TranslationContext &context) {
   translated_text.append("      shift\n");
   translated_text.append("    fi\n");
   translated_text.append("  fi\n  ");
+  translated_text.append("  echo \"");
+  translated_text.append(task_name);
+  translated_text.append(" $@\"\n  ");
 
-  size_t lineno = m_lineno;
+  size_t lineno = m_lineno + TokenizerTools::count_newlines(m_text.c_str(), base);
 
   // skip '{' and whitespace
   base = ptr + 1;
