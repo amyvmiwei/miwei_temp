@@ -35,6 +35,7 @@
 
 #include <boost/algorithm/string.hpp>
 
+#include <cctype>
 #include <cerrno>
 #include <cstdlib>
 #include <ctime>
@@ -61,15 +62,13 @@ namespace {
 
   string extract_short_description(const string &description) {
     string short_description;
-    const char *ptr = strstr(description.c_str(), ". ");
-    if (ptr) {
-      if ((ptr - description.c_str()) < 52)
-        short_description = description.substr(0, ptr - description.c_str());
-      else
-        short_description = description.substr(0, 51);
+    const char *ptr;
+    for (ptr = description.c_str(); *ptr; ptr++) {
+      if (*ptr == '.' && (*(ptr+1) == 0 || isspace(*(ptr+1))))
+        break;
     }
-    else if (description.length() < 52)
-      short_description = description;
+    if ((ptr - description.c_str()) < 52)
+      short_description = description.substr(0, ptr - description.c_str());
     else
       short_description = description.substr(0, 51);
     return short_description;
@@ -173,10 +172,8 @@ bool Compiler::compilation_needed() {
       else if (tag.compare("dependency") == 0) {
         string dependency_file(ptr+1);
         boost::trim(dependency_file);
-        if (stat(dependency_file.c_str(), &statbuf) < 0) {
-          cout << "stat('" << dependency_file << "') - " << strerror(errno) << endl;
-          exit(1);
-        }
+        if (stat(dependency_file.c_str(), &statbuf) < 0)
+          return true;
         if (statbuf.st_mtime > definition_modification_time)
           definition_modification_time = statbuf.st_mtime;
       }
@@ -242,9 +239,9 @@ void Compiler::make() {
   for (auto & entry : context.symbols) {
     output.append("  echo \"");
     output.append(entry.first);
-    output.append("=");
-    output.append(entry.second);
-    output.append("\"\n");
+    output.append("=${");
+    output.append(entry.first);
+    output.append("}\"\n");
   }
   output.append("  echo\n");
   output.append("}\n");
@@ -298,11 +295,11 @@ void Compiler::make() {
         output.append("\"\n");
       }
       if (context.task_roles[entry.first].empty())
-        output.append("    echo \"[ROLES: all]\"\n");
+        output.append("    echo \"-- ROLES: all\"\n");
       else {
-        output.append("    echo \"[ROLES: ");
+        output.append("    echo \"-- ROLES: ");
         output.append(context.task_roles[entry.first]);
-        output.append("]\"\n");
+        output.append("\"\n");
       }
     }
     output.append("  else\n");

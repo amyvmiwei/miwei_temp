@@ -81,11 +81,6 @@ namespace {
   const string locate_definition_file() {
     string fname;
 
-    // conf dir
-    fname = System::install_dir + "/conf/cluster.def";
-    if (FileUtils::exists(fname))
-      return fname;
-
     // CWD
     fname.clear();
     char cwd[1024];
@@ -98,16 +93,13 @@ namespace {
     if (FileUtils::exists(fname))
       return fname;
 
-    // HOME directory
-    fname.clear();
-    struct passwd *pw = getpwuid(getuid());
-    fname.append(pw->pw_dir);
-    fname.append("/cluster.def");
+    // conf dir
+    fname = System::install_dir + "/conf/cluster.def";
     if (FileUtils::exists(fname))
       return fname;
 
-    cout << "Unable to locate 'cluster.def' in '" << System::install_dir 
-         << "/conf', " << "'.'" << ", or '" << pw->pw_dir << "'" << endl;
+    cout << "Unable to locate 'cluster.def' in '.' or '" << System::install_dir 
+         << "/conf'" << endl;
     exit(1);
   }
 
