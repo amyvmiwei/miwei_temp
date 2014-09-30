@@ -188,9 +188,8 @@ if [ $STOP_MASTER == "true" ] ; then
   echo 'shutdown;quit;' | $HYPERTABLE_HOME/bin/ht master_client --batch
   # wait for master shutdown
   wait_for_server_shutdown master "master" "$@"
-  if [ $? != 0 ] ; then
-      stop_server master
-  fi
+  # Kill from pidfile if it still exists
+  stop_server master
 fi
 
 #

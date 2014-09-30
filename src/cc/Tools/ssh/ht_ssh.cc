@@ -95,7 +95,7 @@ int main(int argc, char **argv) {
   }
   catch (Exception &e) {
     cout << "Invalid host specification: " << e.what() << endl;
-    exit(1);
+    _exit(1);
   }
 
   ssh_threads_set_callbacks(SshThreadsCallbacks::get());
@@ -114,27 +114,42 @@ int main(int argc, char **argv) {
   // Wait for connections
   for (auto & handler : handlers) {
     if (!handler->wait_for_connection(deadline)) {
-      handler->dump_log(cout);
-      exit(1);
+      handler->dump_log(cerr);
+      _exit(1);
     }
   }
 
   // Issue commands
   for (auto & handler : handlers) {
     if (!handler->issue_command(command)) {
-      handler->dump_log(cout);
-      exit(1);
+      handler->dump_log(cerr);
+      _exit(1);
     }
   }
 
   // Wait for commands to complete
+  vector<string> failed_hosts;
   for (auto & handler : handlers) {
+    handler->set_terminal_output(true);
     if (!handler->wait_for_command_completion()) {
-      handler->dump_output(cout);
-      exit(1);
+      handler->dump_log(cerr);
+      failed_hosts.push_back(handler->hostname());
     }
-    handler->dump_output(cout);
+    handler->set_terminal_output(false);
   }
 
-  return 0;
+  if (!failed_hosts.empty()) {
+    cerr << "Command failed on hosts:  ";
+    bool first = true;
+    for (auto & host : failed_hosts) {
+      if (first)
+        first = false;
+      else
+        cerr << ",";
+      cerr << host;
+    }
+    cerr << endl << flush;
+  }
+
+  _exit(0);
 }

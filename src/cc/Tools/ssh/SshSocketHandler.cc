@@ -345,6 +345,9 @@ bool SshSocketHandler::handle(int sd, int events) {
           return false;
         }
 
+        if (m_terminal_output)
+          write_to_stdout((const char *)m_stdout_buffer.ptr, nbytes);
+
         m_stdout_buffer.ptr += (size_t)nbytes;
         if (m_stdout_buffer.fill() == SSH_READ_PAGE_SIZE) {
           m_stdout_collector.add(m_stdout_buffer);
@@ -372,6 +375,9 @@ bool SshSocketHandler::handle(int sd, int events) {
           return false;
         }
 
+        if (m_terminal_output)
+          write_to_stderr((const char *)m_stderr_buffer.ptr, nbytes);
+
         m_stderr_buffer.ptr += (size_t)nbytes;
         if (m_stderr_buffer.fill() == SSH_READ_PAGE_SIZE) {
           m_stderr_collector.add(m_stderr_buffer);
@@ -392,7 +398,9 @@ bool SshSocketHandler::handle(int sd, int events) {
 	  m_command_exit_status = exit_status;
 	}
 	m_stdout_collector.add(m_stdout_buffer);
+        m_stdout_buffer = SshOutputCollector::Buffer();
 	m_stderr_collector.add(m_stderr_buffer);
+        m_stderr_buffer = SshOutputCollector::Buffer();
 	ssh_channel_close(m_channel);
 	ssh_channel_free(m_channel);
 	m_channel = 0;
@@ -530,6 +538,7 @@ bool SshSocketHandler::wait_for_command_completion() {
   return m_error.empty() && m_command_exit_status == 0;
 }
 
+/*
 void SshSocketHandler::dump_output(std::ostream &out) {
   for (auto & line : m_stdout_collector)
     out << "[" << m_hostname << "] " << line << "\n";
@@ -541,6 +550,57 @@ void SshSocketHandler::dump_output(std::ostream &out) {
     out << "[" << m_hostname << "] ERROR exit status = " << m_command_exit_status << "\n";
   out << flush;
 }
+*/
+
+void SshSocketHandler::set_terminal_output(bool val) {
+  unique_lock<mutex> lock(m_mutex);
+
+  m_terminal_output = val;
+  if (!m_terminal_output)
+    return;
+
+  // Send stdout collected so far to output stream
+  bool first = true;
+  if (m_stdout_buffer.fill()) {
+    m_stdout_collector.add(m_stdout_buffer);
+    m_stdout_buffer = SshOutputCollector::Buffer();
+  }
+  m_line_prefix_needed_stdout = true;
+  if (!m_stdout_collector.empty()) {
+    for (auto & line : m_stdout_collector) {
+      if (first)
+        first = false;
+      else
+        cout << "\n";
+      cout << "[" << m_hostname << "] " << line;
+    }
+    if (!m_stdout_collector.last_line_is_partial())
+      cout << "\n";
+    else
+      m_line_prefix_needed_stdout = false;
+  }
+
+  // Send stderr collected so far to output stream
+  first = true;
+  if (m_stderr_buffer.fill()) {
+    m_stderr_collector.add(m_stderr_buffer);
+    m_stderr_buffer = SshOutputCollector::Buffer();
+  }
+  m_line_prefix_needed_stderr = true;
+  if (!m_stderr_collector.empty()) {
+    for (auto & line : m_stderr_collector) {
+      if (first)
+        first = false;
+      else
+        cerr << "\n";
+      cerr << "[" << m_hostname << "] " << line;
+    }
+    if (!m_stderr_collector.last_line_is_partial())
+      cerr << "\n";
+    else
+      m_line_prefix_needed_stderr = false;
+  }
+}
 
 void SshSocketHandler::dump_log(std::ostream &out) {
   m_log_collector.add(m_log_buffer);
@@ -548,11 +608,13 @@ void SshSocketHandler::dump_log(std::ostream &out) {
     out << "[" << m_hostname << "] " << line << "\n";
   if (!m_error.empty())
     out << "[" << m_hostname << "] ERROR " << m_error << endl;
+  if (m_command_exit_status != 0)
+    out << "[" << m_hostname << "] ERROR exit status = " << m_command_exit_status << "\n";
   out << flush;  
 }
 
 
-bool SshSocketHandler::verify_knownhost()  {
+bool SshSocketHandler::verify_knownhost() {
   unsigned char *hash {};
   size_t hlen {};
   int rc;
@@ -607,3 +669,62 @@ bool SshSocketHandler::verify_knownhost()  {
   free(hash);
   return true;
 }
+
+
+void SshSocketHandler::write_to_stdout(const char *output, size_t len) {
+  const char *base = output;
+  const char *end = output + len;
+  const char *ptr;
+
+  while (base < end) {
+    if (m_line_prefix_needed_stdout)
+      cout << "[" << m_hostname << "] ";
+
+    for (ptr = base; ptr<end; ptr++) {
+      if (*ptr == '\n')
+        break;
+    }
+
+    if (ptr < end) {
+      cout << string(base, ptr-base) << endl;
+      base = ptr+1;
+      m_line_prefix_needed_stdout = true;
+    }
+    else {
+      cout << string(base, ptr-base);
+      m_line_prefix_needed_stdout = false;
+      break;
+    }
+  }
+  cout << flush;
+}
+
+
+void SshSocketHandler::write_to_stderr(const char *output, size_t len) {
+  const char *base = output;
+  const char *end = output + len;
+  const char *ptr;
+
+  while (base < end) {
+    if (m_line_prefix_needed_stderr)
+      cerr << "[" << m_hostname << "] ";
+
+    for (ptr = base; ptr<end; ptr++) {
+      if (*ptr == '\n')
+        break;
+    }
+
+    if (ptr < end) {
+      cerr << string(base, ptr-base) << endl;
+      base = ptr+1;
+      m_line_prefix_needed_stderr = true;
+    }
+    else {
+      cerr << string(base, ptr-base);
+      m_line_prefix_needed_stderr = false;
+      break;
+    }
+  }
+  cerr << flush;
+}
+
