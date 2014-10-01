@@ -180,7 +180,7 @@ task: stop {
 # sending them the -9 signal.
 task: kill {
   ssh: {
-    PIDS1=\`ps auxww | fgrep "/opt/hypertable" | fgrep "/bin/" | fgrep -v java | fgrep -v grep | tr -s "[ ]" | cut -f2 -d' '\`
+    PIDS1=\`ps auxww | fgrep "/opt/hypertable" | fgrep "/bin/" | fgrep -v "/bin/cluster" | fgrep -v java | fgrep -v grep | tr -s "[ ]" | cut -f2 -d' '\`
     PIDS2=\`ps auxww | fgrep "org.hypertable.FsBroker.hadoop.main" | fgrep -v grep | tr -s "[ ]" | cut -f2 -d' '\`
     if [ -n "\$PIDS1" ] || [ -n "\$PIDS2" ]; then
       COUNT=\`echo "\$PIDS1 \$PIDS2" | wc -w\`
