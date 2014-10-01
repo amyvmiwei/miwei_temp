@@ -240,17 +240,20 @@ void Compiler::make() {
   header.append("#\n");
   header.append(Hypertable::format("# version: %d\n", HT_CLUSTER_VERSION));
 
-  while (definitions.top()->next(token)) {
-    if (token.translator)
-      output.append(token.translator->translate(context));
-    if (token.type == Token::INCLUDE) {
-      string include_file = token.text.substr(token.text.find_first_of("include:")+8);
-      boost::trim_if(include_file, boost::is_any_of("'\" \t\n\r"));
-      if (include_file[0] != '/')
-        include_file = definitions.top()->dirname() + "/" + include_file;
-      definitions.push( make_shared<Tokenizer>(include_file) );      
-      header.append(Hypertable::format("# dependency: %s\n", include_file.c_str()));
+  while (!definitions.empty()) {
+    while (definitions.top()->next(token)) {
+      if (token.translator)
+        output.append(token.translator->translate(context));
+      if (token.type == Token::INCLUDE) {
+        string include_file = token.text.substr(token.text.find_first_of("include:")+8);
+        boost::trim_if(include_file, boost::is_any_of("'\" \t\n\r"));
+        if (include_file[0] != '/')
+          include_file = definitions.top()->dirname() + "/" + include_file;
+        definitions.push( make_shared<Tokenizer>(include_file) );      
+        header.append(Hypertable::format("# dependency: %s\n", include_file.c_str()));
+      }
     }
+    definitions.pop();
   }
   header.append("\n");
 

@@ -33,12 +33,12 @@ ClusterDefinition/TranslatorTask.cc
 ClusterDefinition/TranslatorVariable.cc
 )
 
-# cluster - command interpreter
-add_executable(cluster ${cluster_SRCS})
-target_link_libraries(cluster Hypertable)
+# ht_cluster - command interpreter
+add_executable(ht_cluster ${cluster_SRCS})
+target_link_libraries(ht_cluster Hypertable)
 
 add_subdirectory(ClusterDefinition)
 
 if (NOT HT_COMPONENT_INSTALL)
-  install(TARGETS cluster RUNTIME DESTINATION bin)
+  install(TARGETS ht_cluster RUNTIME DESTINATION bin)
 endif ()
