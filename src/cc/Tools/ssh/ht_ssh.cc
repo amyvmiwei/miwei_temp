@@ -37,8 +37,10 @@
 #include <Common/Timer.h>
 
 #include <algorithm>
+#include <cctype>
 #include <chrono>
 #include <cstdlib>
+#include <fstream>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -98,9 +100,11 @@ int main(int argc, char **argv) {
     else if (host_spec.empty())
       host_spec = argv[i];
     else if (command.empty())
-      command = argv[i];
-    else
-      dump_usage_and_exit();
+      command.append(argv[i]);
+    else {
+      command.append(" ");
+      command.append(argv[i]);
+    }
   }
 
   if (command.empty())

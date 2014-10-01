@@ -148,12 +148,16 @@ int main(int argc, char **argv) {
   try {
     vector<string> environment;
     string definition_file;
+    vector<string> arguments;
+    bool display_script {};
+
     System::initialize();
+    Config::properties = new Properties();
+    ReactorFactory::initialize(System::get_processor_count());
 
-    if (argc > 1) {
-      vector<string> arguments;
-      bool display_script {};
-
+    // environment settings and cluster options
+    int i = 1;
+    while (i<argc) {
       if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")) {
         cout << "usage: cluster <options> <environment> <task> [<arg> ...]" << endl;
         exit(0);
@@ -162,60 +166,52 @@ int main(int argc, char **argv) {
         clear_cache();
         exit(0);
       }
-
-      // environment settings and cluster options
-      int i = 1;
-      while (i<argc) {
-        if (!strcmp(argv[i], "-f")) {
-          if (!definition_file.empty()) {
-            cout << "error: -f option supplied multiple times" << endl;
-            exit(1);
-          }
-          i++;
-          if (i == argc) {
-            cout << "error: missing argument to -f option" << endl;
-            exit(1);
-          }
-          definition_file.append(argv[i]);
-          i++;
-          continue;
-        }
-        else if (!strcmp(argv[i], "--display-script")) {
-          display_script = true;
-        }
-        else if (!is_environment_setting(argv[i]))
-          break;
-        environment.push_back(argv[i]);
-        i++;
-      }
-
-      // load command arguments
-      while (i<argc) {
-        arguments.push_back(argv[i]);
-        i++;
-      }
-
-      if (definition_file.empty())
-        definition_file = locate_definition_file();
-
-      if (display_script) {
-        Compiler compiler(definition_file);
-        string cmd = (string)"cat " + compiler.output_script();
-        if (system(cmd.c_str()) != 0) {
-          cout << "Failed execution: " << cmd << endl;
+      else if (!strcmp(argv[i], "-f")) {
+        if (!definition_file.empty()) {
+          cout << "error: -f option supplied multiple times" << endl;
           exit(1);
         }
-        exit(0);
+        i++;
+        if (i == argc) {
+          cout << "error: missing argument to -f option" << endl;
+          exit(1);
+        }
+        definition_file.append(argv[i]);
+        i++;
+        continue;
       }
-
-      if (!arguments.empty()) {
-        Compiler compiler(definition_file);
-        exec_command(compiler.output_script(), environment, arguments);
+      else if (!strcmp(argv[i], "--display-script")) {
+        display_script = true;
       }
-
+      else if (!is_environment_setting(argv[i]))
+        break;
+      environment.push_back(argv[i]);
+      i++;
     }
 
-    exit(0);
+    // load command arguments
+    while (i<argc) {
+      arguments.push_back(argv[i]);
+      i++;
+    }
+
+    if (definition_file.empty())
+      definition_file = locate_definition_file();
+
+    if (display_script) {
+      Compiler compiler(definition_file);
+      string cmd = (string)"cat " + compiler.output_script();
+      if (system(cmd.c_str()) != 0) {
+        cout << "Failed execution: " << cmd << endl;
+        exit(1);
+      }
+      exit(0);
+    }
+
+    if (!arguments.empty()) {
+      Compiler compiler(definition_file);
+      exec_command(compiler.output_script(), environment, arguments);
+    }
 
     interp = new ClusterCommandInterpreter();
     shell = new CommandShell("cluster", interp, properties);

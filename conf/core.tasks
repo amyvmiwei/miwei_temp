@@ -51,7 +51,7 @@ task: rsync_config_dir {
 # installation from the source node.
 task: rsync_installation {
   ssh: {
-    ${RSYNC} --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=conf --exclude=hyperspace ${ROLE_source}:${INSTALL_DIR} ${INSTALL_DIR}
+    ${RSYNC} --exclude=log --exclude=run --exclude=demo --exclude=fs --exclude=conf --exclude=hyperspace ${ROLE_source}:${INSTALL_DIR} ${INSTALL_PREFIX}
   }
   rsync_config_dir
 }
@@ -82,7 +82,7 @@ task: push_config {
 
 # Stop ThriftBroker on primary servers.
 # Stops the ThriftBroker from the current installation.
-task: stop_thriftbroker_primary roles: master, slave {
+task: stop_thriftbrokers_primary roles: master, slave {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker
   }
@@ -91,7 +91,7 @@ task: stop_thriftbroker_primary roles: master, slave {
 
 # Stop ThriftBroker on ThriftBroker-only servers.
 # Stops the FSBroker and ThriftBroker from the current installation.
-task: stop_thriftbroker_only roles: thriftbroker {
+task: stop_thriftbrokers_only roles: thriftbroker {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/stop-servers.sh thriftbroker fsbroker
   }
@@ -99,19 +99,19 @@ task: stop_thriftbroker_only roles: thriftbroker {
 
 
 # Stop ThriftBrokers.
-# Stops ThriftBrokers by running stop_thriftbroker_primary and
-# stop_thriftbroker_only tasks.
-task: stop_thriftbroker {
-  stop_thriftbroker_primary
+# Stops ThriftBrokers by running stop_thriftbrokers_primary and
+# stop_thriftbrokers_only tasks.
+task: stop_thriftbrokers {
+  stop_thriftbrokers_primary
   if [ -n "${ROLE_thriftbroker}" ]; then
-    stop_thriftbroker_only
+    stop_thriftbrokers_only
   fi
 }
 
 
 # Stop FS brokers.
 # Stops FSBrokers in the current installation.
-task: stop_fsbroker roles: master, slave {
+task: stop_fsbrokers roles: master, slave {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/stop-servers.sh fsbroker
   }
@@ -120,7 +120,7 @@ task: stop_fsbroker roles: master, slave {
 
 # Stop slaves.
 # Stops RangeServers in the current installation.
-task: stop_slave roles: slave {
+task: stop_slaves roles: slave {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/stop-servers.sh rangeserver
   }
@@ -129,7 +129,7 @@ task: stop_slave roles: slave {
 
 # Stop masters.
 # Stops Masters and monitoring servers in the current installation.
-task: stop_master roles: master {
+task: stop_masters roles: master {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/stop-servers.sh master
     ${INSTALL_PREFIX}/current/bin/stop-monitoring.sh
@@ -155,22 +155,22 @@ task: stop_hyperspace roles: hyperspace {
 }
 
 
-# Stop primary servers.
-# Stops slave, master, and hyperspace processes by running the stop_master,
-# stop_slaves, stop_hyperspace, and stop_fsbroker tasks.
+# Stop primary database processes.
+# Stops slave, master, and hyperspace processes by running the stop_masters,
+# stop_slaves, stop_hyperspace, and stop_fsbrokers tasks.
 task: stop_database roles: master, slave, hyperspace {
-  stop_master
-  stop_slave
+  stop_masters
+  stop_slaves
   stop_hyperspace
-  stop_fsbroker
+  stop_fsbrokers
 }
 
 
 # Stop all Hypertable processes.
-# Stops all Hypertable processes by running the stop_thriftbroker and
+# Stops all Hypertable processes by running the stop_thriftbrokers and
 # stop_database tasks.
 task: stop {
-  stop_thriftbroker
+  stop_thriftbrokers
   stop_database
 }
 
@@ -195,7 +195,7 @@ task: kill {
 # Cleans the master state by starting the FS broker and then running the
 # clean-database.sh and stop-monitoring.sh scripts from the current
 # installation.
-task: clean_master roles: master {
+task: clean_masters roles: master {
   ssh: {
     ${INSTALL_PREFIX}/current/bin/start-fsbroker.sh ${FS} ${CONFIG}
     ${INSTALL_PREFIX}/current/bin/clean-database.sh ${CONFIG}
@@ -215,14 +215,18 @@ task: clean_hyperspace roles: hyperspace {
 
 # Clean slave state.  Removes the contents of the run/ directory in the current
 # installation.
-task: clean_slave roles: slave {
+task: clean_slaves roles: slave {
   ssh: {
     rm -rf ${INSTALL_PREFIX}/current/run/*
   }
 }
 
 
-# Destroy database removing all tables.
+# Destroy database removing all tables.  If the variable \$PROMPT_CLEAN is equal
+# to \"true\", this task will first prompt the user for confirmation.  If the
+# confirmation is obtained or \$PROMPT_CLEAN is equal to \"false\", then the task
+# will wipe the database clean by calling the following tasks:  stop, kill,
+# clean_masters, clean_hyperspace, clean_slaves
 task: cleandb {
   if [ "${PROMPT_CLEAN}" == "true" ]; then
     echo "This will DELETE ALL DATA stored in Hypertable. ARE YOU SURE you want to proceed?"
@@ -234,7 +238,90 @@ task: cleandb {
   fi
   stop
   kill
-  clean_master
+  clean_masters
   clean_hyperspace
-  clean_slave
+  clean_slaves
+}
+
+
+# Start monitoring server.  Starts the monitoring server by running the
+# start-monitoring.sh script from the current installation.
+task: start_monitoring roles: master {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/start-monitoring.sh
+  }
+}
+
+
+# Start hyperspace.  Starts hyperspace by running the start-hyperspace.sh script
+# from the current installation.
+task: start_hyperspace roles: hyperspace {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/start-hyperspace.sh ${CONFIG}
+  }
+}
+
+
+# Start master processes.  Starts master processes FS broker, master, and
+# monitoring server from the current installation.
+task: start_masters roles: master {
+  ssh: {
+    ${INSTALL_PREFIX}/current/bin/start-fsbroker.sh ${FS} ${CONFIG}
+    ${INSTALL_PREFIX}/current/bin/start-master.sh ${CONFIG}
+    ${INSTALL_PREFIX}/current/bin/start-monitoring.sh
+  }
+}
+
+
+# Start slave processes.  Starts slave processes by starting the FS broker and
+# RangeServers from the current installation.  The processes are started with a
+# random start delay of 5000 milliseconds.
+task: start_slaves roles: slave {
+  ssh: random-start-delay=5000 {
+    ${INSTALL_PREFIX}/current/bin/start-fsbroker.sh ${FS} ${CONFIG}
+    ${INSTALL_PREFIX}/current/bin/start-rangeserver.sh ${CONFIG}
+  }
+}
+
+
+# Start ThriftBrokers on primary servers.
+task: start_thriftbrokers_primary roles: master, slave {
+  ssh: random-start-delay=5000 {
+    ${INSTALL_PREFIX}/current/bin/start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS}
+  }
+}
+
+
+# Start ThriftBrokers on ThriftBroker-only servers.
+task: start_thriftbrokers_only roles: thriftbroker {
+  ssh: random-start-delay=5000 {
+    ${INSTALL_PREFIX}/current/bin/start-fsbroker.sh ${FS} ${CONFIG}
+    ${INSTALL_PREFIX}/current/bin/start-thriftbroker.sh ${CONFIG} ${THRIFTBROKER_ARGS}
+  }
+}
+
+
+# Start ThriftBrokers.  Starts
+task: start_thriftbrokers {
+  start_thriftbrokers_primary
+  start_thriftbrokers_only
+#  if [ -n "${ROLE_thriftbroker}" ]; then
+#    start_thriftbrokers_only
+#  fi
+}
+
+
+# Start primary Hypertable processes.  Starts primary Hypertable processes by
+# running tasks start_hyperspace, start_masters, and start_slaves.
+task: start_database {
+  start_hyperspace
+  start_masters
+  start_slaves
+}
+
+# Start all Hypertable processes.  Starts all Hypertable processes by running
+# tasks start_database and start_thriftboker.
+task: start {
+  start_database
+  start_thriftbrokers
 }

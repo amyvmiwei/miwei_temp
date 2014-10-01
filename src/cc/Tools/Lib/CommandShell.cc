@@ -110,7 +110,7 @@ CommandShell::CommandShell(const String &program_name,
   if (m_batch_mode)
     m_silent = true;
   else
-    m_silent = m_props->get_bool("silent");
+    m_silent = m_props->has("silent") ? m_props->get_bool("silent") : false;
   m_test_mode = m_props->has("test-mode");
   if (m_test_mode)
     Logger::get()->set_test_mode();
