@@ -32,6 +32,7 @@
 #include <Common/FileUtils.h>
 #include <Common/Logger.h>
 #include <Common/String.h>
+#include <Common/System.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -113,6 +114,34 @@ namespace {
       }
     }
     return;
+  }
+
+  const string construct_with_function(set<string> &roles) {
+    string text = "with () {\n";
+    text.append("  local args=(\"$@\")\n");
+    text.append("  if [ ${#args[@]} != 2 ]; then\n");
+    text.append("    exit 0\n");
+    text.append("  fi\n");
+    if (!roles.empty()) {
+      text.append("  IFS=',' read -ra ROLES <<< \"${args[0]}\"\n");
+      text.append("  ON=\n");
+      text.append("  for role in \"${ROLES[@]}\"; do\n");
+      text.append("    if [ $role == \"all\" ]; then\n");
+      text.append("      ON=\"");
+      for (auto & role : roles)
+        text.append(format("(${ROLE_%s}) ", role.c_str()));
+      text.append("\"\n");
+      for (auto & role : roles) {
+        text.append(format("    elif [ $role == \"%s\" ]; then\n", role.c_str()));
+        text.append(format("      ON=\"$ON (${ROLE_%s})\"\n", role.c_str()));
+      }
+      text.append("    fi\n");
+      text.append("  done\n");
+      text.append(format("  %s/bin/ht ssh \" $ON\" \"${args[1]}\"\n",
+                         System::install_dir.c_str()));
+    }
+    text.append("}\n");
+    return text;
   }
   
 }
@@ -249,6 +278,9 @@ void Compiler::make() {
   output.append("  echo\n");
   output.append("}\n");
 
+  // with function
+  output.append(construct_with_function(context.roles));
+
   const char *dots = "....................................................";
   output.append("\n");
   output.append("if [ $1 == \"-T\" ] || [ $1 == \"--tasks\" ]; then\n");
@@ -333,6 +365,7 @@ void Compiler::make() {
                              entry.first.c_str(), entry.first.c_str()));
     }
     output.append("elif [ $1 == \"show_variables\" ]; then\n  show_variables\n");
+    output.append("elif [ $1 == \"with\" ]; then\n  shift\n  with \"$@\"\n");
     output.append("else\n");
     output.append("  echo \"Task '$1' is not defined.\"\n");
     output.append("  exit 1\n");
@@ -340,6 +373,7 @@ void Compiler::make() {
   }
   else {
     output.append("if [ $1 == \"show_variables\" ]; then\n  show_variables\n");
+    output.append("elif [ $1 == \"with\" ]; then\n  shift\n  with \"$@\"\n");
     output.append("else\n");
     output.append("  echo \"Task '$1' is not defined.\"\n");
     output.append("  exit 1\n");

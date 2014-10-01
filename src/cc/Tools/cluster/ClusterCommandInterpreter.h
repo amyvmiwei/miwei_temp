@@ -24,15 +24,25 @@
 
 #include <Tools/Lib/CommandInterpreter.h>
 
+#include <string>
+
 namespace Hypertable {
 
   using namespace std;
 
   class ClusterCommandInterpreter : public CommandInterpreter {
   public:
-    ClusterCommandInterpreter();
+
+    /// Constructor.
+    /// @param script Absolute pathname of command script
+    ClusterCommandInterpreter(const string &script);
 
     virtual void execute_line(const string &line);
+
+  private:
+
+    /// Pathname of command script
+    string m_command_script;
 
   };
 

@@ -208,12 +208,12 @@ int main(int argc, char **argv) {
       exit(0);
     }
 
-    if (!arguments.empty()) {
-      Compiler compiler(definition_file);
-      exec_command(compiler.output_script(), environment, arguments);
-    }
+    Compiler compiler(definition_file);
 
-    interp = new ClusterCommandInterpreter();
+    if (!arguments.empty())
+      exec_command(compiler.output_script(), environment, arguments);
+
+    interp = new ClusterCommandInterpreter(compiler.output_script());
     shell = new CommandShell("cluster", interp, properties);
 
     // Entire line is command

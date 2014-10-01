@@ -30,8 +30,15 @@
 #include <boost/algorithm/string.hpp>
 
 #include <cctype>
+#include <cerrno>
 #include <cstdlib>
 #include <iostream>
+
+extern "C" {
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
+}
 
 using namespace Hypertable;
 using namespace Hypertable::ClusterDefinition;
@@ -63,41 +70,97 @@ namespace {
     return escaped_str;
   }
 
+  bool extract_command_line_argument(const char *base, const char **end, string &arg) {
+    const char *ptr = base;
+    while (*ptr && isspace(*ptr))
+      ptr++;
+    if (*ptr == '"' || *ptr == '\'') {
+      if (!TokenizerTools::find_end_char(ptr, end)) {
+        cout << "Invalid command line - missing terminating quote" << endl;
+        return false;
+      }
+      arg.append(ptr, (*end)-ptr);
+      (*end)++;
+      boost::trim(arg);
+    }
+    else {
+      base = ptr++;
+      while (*ptr && !isspace(*ptr))
+        ptr++;
+      arg.append(base, ptr-base);
+      *end = ptr;
+      boost::trim(arg);
+    }
+    return true;
+  }
+
+
 }
 
 
-ClusterCommandInterpreter::ClusterCommandInterpreter() {
+ClusterCommandInterpreter::ClusterCommandInterpreter(const string &script) 
+  : m_command_script(script) {
   return;
 }
 
 
 void ClusterCommandInterpreter::execute_line(const String &line) {
-  string host_spec;
+  char *argv[5];
+  const char *end;
+  string target;
   string command;
   string trimmed_line(line);
   boost::trim(trimmed_line);
+
   if (!strncmp(trimmed_line.c_str(), "on ", 3)) {
-    const char *ptr = trimmed_line.c_str() + 3;
-    const char *end;
-    while (*ptr && isspace(*ptr))
-      ptr++;
-    if (*ptr == '"' || *ptr == '\'') {
-      if (!TokenizerTools::find_end_char(ptr, &end)) {
-        cout << "Invalid command line - missing terminating quote" << endl;
-        return;
+
+    if (!extract_command_line_argument(trimmed_line.c_str() + 3, &end, target))
+      return;
+
+    command.append(end);
+    if (command.empty()) {
+      cout << "Invalid command line" << endl;
+      return;
+    }
+
+    boost::trim_if(target, boost::is_any_of("'\""));
+
+    string ssh_binary;
+    ssh_binary.append(System::install_dir.c_str());
+    ssh_binary.append("/bin/ht_ssh");
+
+    argv[0] = (char *)ssh_binary.c_str();
+    argv[1] = (char *)target.c_str();
+    argv[2] = (char *)command.c_str();
+    argv[3] = nullptr;
+
+    pid_t pid = vfork();
+
+    if (pid == 0) {
+      if (execv(ssh_binary.c_str(), argv) < 0) {
+        cout << "execv() failed - " << strerror(errno) << endl;
+        _exit(1);
       }
-      ptr++;
-      host_spec.append(ptr, (end-ptr)-1);
-      command.append(end+1);
-      boost::trim(command);
+    }
+    else if (pid < 0) {
+      cout << "vfork() failed - " << strerror(errno) << endl;
+      _exit(1);
     }
     else {
-      end = ptr+1;
-      while (*end && !isspace(*end))
-        end++;
-      host_spec.append(ptr, end-ptr);
+      int status;
+      waitpid(pid, &status, 0);
+    }
+  }
+  else {
+
+    if (!strncmp(trimmed_line.c_str(), "with ", 5)) {
+      if (!extract_command_line_argument(trimmed_line.c_str()+5, &end, target))
+        return;
       command.append(end);
-      boost::trim(command);
+    }
+    else {
+      target = "all";
+      command.append(trimmed_line);
     }
 
     if (command.empty()) {
@@ -105,21 +168,31 @@ void ClusterCommandInterpreter::execute_line(const String &line) {
       return;
     }
 
-    command = escape_string(command);
+    boost::trim_if(target, boost::is_any_of("'\""));
 
-    string ssh_command = format("%s/bin/ht_ssh \"%s\" %s",
-                                System::install_dir.c_str(), host_spec.c_str(),
-                                command.c_str());
-    int ret = system(ssh_command.c_str());
-    if (ret)
-      cout << "Command exited with status " << ret << endl;
-  }
-  else {
-    cout << "executing line: " << line << endl;
-    cout << "executing line: ";
-    for (const char *ptr = line.c_str(); *ptr; ptr++)
-      cout << *ptr;
-    cout << endl;
+    argv[0] = (char *)m_command_script.c_str();
+    argv[1] = (char *)"with";
+    argv[2] = (char *)target.c_str();
+    argv[3] = (char *)command.c_str();
+    argv[4] = nullptr;
+
+    pid_t pid = vfork();
+
+    if (pid == 0) {
+      if (execv(m_command_script.c_str(), argv) < 0) {
+        cout << "execv() failed - " << strerror(errno) << endl;
+        _exit(1);
+      }
+    }
+    else if (pid < 0) {
+      cout << "vfork() failed - " << strerror(errno) << endl;
+      _exit(1);
+    }
+    else {
+      int status;
+      waitpid(pid, &status, 0);
+    }
+    
   }
 }
 
