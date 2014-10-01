@@ -50,6 +50,7 @@ namespace {
   const char *builtin_task_name[] = {
     "CLUSTER_BUILTIN_display_line",
     "show_variables",
+    "with",
     nullptr
   };
 

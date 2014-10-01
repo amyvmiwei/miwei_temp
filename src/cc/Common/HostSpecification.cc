@@ -247,9 +247,9 @@ namespace {
     if (*m_ptr == '[') {
       host_pattern = prefix;
       host_pattern += extract_numeric_range(&range_begin, &range_end);
-      if (isalnum(*m_ptr) || *m_ptr == '.' || *m_ptr == '-') {
+      if (isalnum(*m_ptr) || *m_ptr == '.' || *m_ptr == '_') {
         const char *base = m_ptr;
-        while (*m_ptr != 0 && (isalnum(*m_ptr) || *m_ptr == '.' || *m_ptr == '-'))
+        while (*m_ptr != 0 && (isalnum(*m_ptr) || *m_ptr == '.' || *m_ptr == '_'))
           m_ptr++;
         postfix_len = m_ptr - base;
         host_pattern.append(base, postfix_len);
