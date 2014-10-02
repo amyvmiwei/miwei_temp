@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// main function definition for ht_ssh.
+/// This file contains the main function definition for ht_ssh, a tool for
+/// establishing ssh connections and executing commands on hosts in parallel.
+
 #include <Common/Compat.h>
 
 #include "SshSocketHandler.h"

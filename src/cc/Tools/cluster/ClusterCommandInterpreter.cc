@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Definitions for ClusterCommandInterpreter.
+/// This file contains type definitions for ClusterCommandInterpreter, a class
+/// for handling interactive command execution for the cluster tool.
+
 #include <Common/Compat.h>
 
 #include "ClusterCommandInterpreter.h"
