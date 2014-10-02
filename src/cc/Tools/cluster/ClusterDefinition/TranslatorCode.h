@@ -52,6 +52,7 @@ namespace Hypertable { namespace ClusterDefinition {
     /// Translates a code block.
     /// This method does no translation and passes the code block text straight
     /// through untranslated.
+    /// @param context Context object containing symbol tables
     /// @return Unmodified code block text
     const string translate(TranslationContext &context) override;
 

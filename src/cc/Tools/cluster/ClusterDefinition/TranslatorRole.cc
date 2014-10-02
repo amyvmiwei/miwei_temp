@@ -74,7 +74,8 @@ const string TranslatorRole::translate(TranslationContext &context) {
       if (base == 0)
         base = ptr;
     }
-    else if (isspace(*ptr) || *ptr == '-' || *ptr == '+' || *ptr == '(' || *ptr == ')') {
+    else if (isspace(*ptr) || *ptr == '-' || *ptr == '+' ||
+             *ptr == ',' || *ptr == '(' || *ptr == ')') {
       if (base) {
         string name(base, ptr-base);
         if (context.roles.count(name) > 0) {

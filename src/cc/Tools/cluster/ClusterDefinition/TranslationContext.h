@@ -38,12 +38,21 @@ namespace Hypertable { namespace ClusterDefinition {
   /// @addtogroup ClusterDefinition
   /// @{
 
+  /// Context used to translate cluster definition statements.
   class TranslationContext {
 
   public:
+
+    /// Map of variable names to default values
     map<string, string> symbols;
+
+    /// Set of role names
     set<string> roles;
+
+    /// Map of tasks to descriptive text
     map<string, string> tasks;
+
+    // Map of tasks to comma separated roles
     map<string, string> task_roles;
   };
 

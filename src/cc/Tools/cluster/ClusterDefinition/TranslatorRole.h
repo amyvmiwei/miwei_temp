@@ -50,8 +50,21 @@ namespace Hypertable { namespace ClusterDefinition {
       : m_fname(fname), m_lineno(lineno), m_text(text) {};
 
     /// Translates a role definition.
-    /// ????
-    /// @return 
+    /// This function translates role definitions of the form:
+    /// <pre>
+    /// role: slave test[00-99]
+    /// </pre>
+    /// To a bash variable definition of the form:
+    /// <pre>
+    /// ROLE_slave="test[00-99]"
+    /// </pre>
+    /// As a side effect, it inserts the role name into
+    /// <code>context.roles</code> and inserts the variable name representing
+    /// the role (e.g. <code>ROLE_name</code>) into the
+    /// <code>context.symbols</code> map, mapping it to the role value (e.g.
+    /// <code>test[00-99]</code> in the above example).
+    /// @param context Context object containing symbol tables
+    /// @return Translated role statement.
     const string translate(TranslationContext &context) override;
 
   private:
@@ -59,7 +72,7 @@ namespace Hypertable { namespace ClusterDefinition {
     string m_fname;
     /// Starting offset within #m_fname of input text
     size_t m_lineno;
-    /// Input text
+    /// Input text containing role definition statememt
     string m_text;
   };
 

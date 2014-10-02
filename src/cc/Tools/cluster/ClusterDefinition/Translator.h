@@ -40,8 +40,13 @@ namespace Hypertable { namespace ClusterDefinition {
   /// @addtogroup ClusterDefinition
   /// @{
 
+  /// Abstract base class for translators.
   class Translator {
   public:
+    /// Translates token
+    /// This method is called to translate a token.
+    /// @param context Context object containing symbol tables
+    /// @return Translated token text
     virtual const string translate(TranslationContext &context) = 0;
   };
 
