@@ -46,6 +46,14 @@ namespace Hypertable {
 
     public:
       /// Constructor.
+      /// Initializes #m_definition_file with <code>fname</code> and initializes
+      /// #m_output_script with the pathname of the output script constructed as
+      /// follows:
+      /// <pre>
+      /// ${HOME} + "/.cluster/" + m_definition_file + ".sh"
+      /// </pre>
+      /// It then calls compilation_needed() to determine if the script needs to
+      /// be rebuilt and, if so, calls make().
       /// @param fname Pathname of cluster definition file
       Compiler(const string &fname);
 
@@ -55,12 +63,28 @@ namespace Hypertable {
 
     private:
 
+      /// Determines if script needs to be re-built.
+      /// This function returns <i>true</i> if 1) the output script
+      /// (#m_output_script) does not exist, or 2) the modification timestamp of
+      /// the definition file (#m_definition_file) or any of its dependencies
+      /// (included files) is greater than the modification timestamp of the
+      /// output script, or 3) The compiler version number listed in the comment
+      /// header of the output script does not match the current compiler
+      /// version.  The dependencies are listed in a comment header of the
+      /// output script.
+      /// @return <i>true</i> if script needs to be compiled, <i>false</i>
+      /// otherwise
       bool compilation_needed();
 
+      /// Compiles the definition file into a task/command execution script.
+      /// This function compiles #m_definition_file into a task/command
+      /// execution script.
       void make();
 
+      /// Cluster definition file
       string m_definition_file;
 
+      /// Output script
       string m_output_script;
 
     };

@@ -249,8 +249,8 @@ int Tokenizer::identify_line_type(const char *base, const char *end) {
 
 
 bool Tokenizer::accumulate(const char **basep,
-                                            const char *end,
-                                            int type, Token &token) {
+                           const char *end,
+                           int type, Token &token) {
 
   if (token.type == Token::ROLE && type == Token::CODE)
     type = Token::ROLE;

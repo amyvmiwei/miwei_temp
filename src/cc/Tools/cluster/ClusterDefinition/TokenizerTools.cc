@@ -172,7 +172,14 @@ bool find_end_char(const char *base, const char **endp, size_t *linep) {
     }
     else {
       HT_ASSERT(scope.top() == '{');
-      if (*ptr == '}') {
+      if (*ptr == '#') {
+        // skip comments
+        while (*ptr && *ptr != '\n')
+          ptr++;
+        if (*ptr == 0)
+          break;
+      }
+      else if (*ptr == '}') {
         scope.pop();
         if (scope.empty())
           break;

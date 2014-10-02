@@ -57,30 +57,32 @@ namespace Hypertable {
     /// <th> Description </th>
     /// </tr>
     /// <tr>
-    /// <td> &lt;command&gt; </td>
-    /// <td> Runs &lt;command&gt; on all roles by invoking the <i>with</i>
-    ///      function of the command script and passing in <code>all</code> for
-    ///      the target roles</td>
+    /// <td><code> command</code></td>
+    /// <td> Runs <code>command</code> on all roles by invoking the
+    ///      <code>with</code> function of the command script and passing in
+    ///      <code>all</code> for the target roles</td>
     /// </tr>
     /// <tr>
-    /// <td> on &lt;hostspec&gt; &lt;command&gt; </td>
-    /// <td> Runs &lt;command&gt; on all the hosts &lt;hostspec&gt; by launching
-    ///      the ssh tool</td>
+    /// <td><code> on &lt;hostspec&gt; command</code></td>
+    /// <td> Runs <code>command</code> on all the hosts
+    ///      specified by <code>&lt;hostspec&gt;</code> (see HostSpecification)
+    ///      by launching the ht_ssh tool</td>
     /// </tr>
     /// <tr>
-    /// <td> with &lt;role-list&gt; &lt;command&gt; </td>
-    /// <td> Runs &lt;command&gt; by invoking the <i>with</i> function of the
-    ///      command script and passing in &lt;role-list&gt; for the target
-    ///      roles</td>
+    /// <td><code> with &lt;role-list&gt; command</code></td>
+    /// <td> Runs <code>command</code> by invoking the <code>with</code>
+    ///      function of the command script and passing in
+    ///      <code>&lt;role-list&gt;</code> (comma-separated, no spaces) for the
+    ///      target roles</td>
     /// </tr>
     /// <tr>
-    /// <td> <code>!&lt;task&gt;</code> </td>
-    /// <td> Runs &lt;task&gt; by invoking the &lt;task&gt; function of the
-    ///      command script.</td>
+    /// <td> <code> !task</code> </td>
+    /// <td> Runs <code>task</code> by invoking the <code>task</code> function
+    ///      of the command script.</td>
     /// </tr>
     /// </table>
     ///
-    /// @param line Command or task specification
+    /// @param line Command or task specification (see table)
     virtual void execute_line(const string &line);
 
   private:

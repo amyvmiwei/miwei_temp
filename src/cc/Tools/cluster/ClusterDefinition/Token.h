@@ -43,7 +43,7 @@ namespace Hypertable { namespace ClusterDefinition {
   class Token {
   public:
     /// Enumeration for token types.
-    enum {
+    enum Type {
       NONE=0,       //!< none
       INCLUDE,      //!< include: statement
       VARIABLE,     //!< variable defintion      
