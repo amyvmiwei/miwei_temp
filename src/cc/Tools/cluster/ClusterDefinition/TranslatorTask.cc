@@ -54,7 +54,26 @@ namespace {
     nullptr
   };
 
+  const string determine_trailing_indentation(const string &text) {
+    string indentation;
+    if (!text.empty()) {
+      const char *base = text.c_str();
+      const char *ptr = base + (text.length() - 1);
+      size_t count = 0;
+      while (ptr >= base && isspace(*ptr) && *ptr != '\n' && *ptr != '\r') {
+        count++;
+        ptr--;
+      }
+      indentation.append(ptr+1);
+    }
+    // If can't determine indentation, make it two spaces
+    if (indentation.empty())
+      indentation.append("  ");
+    return indentation;
+  }
+
   bool translate_ssh_statement(const char *base, const char *end,
+                               const string &indentation,
                                const char **nextp, string &ssh_command,
                                string &errmsg) {
     HT_ASSERT(strncmp(base, "ssh:", 4) == 0);
@@ -117,7 +136,13 @@ namespace {
     }
 
     ssh_command.append(escaped_content);
-    ssh_command.append("\"");
+    ssh_command.append("\"\n");
+    ssh_command.append(indentation);
+    ssh_command.append("if [ $? -ne 0 ]; then\n");
+    ssh_command.append(indentation);
+    ssh_command.append("  exit 1\n");
+    ssh_command.append(indentation);
+    ssh_command.append("fi");
 
     *nextp = close_curly + 1;
 
@@ -307,7 +332,8 @@ const string TranslatorTask::translate(TranslationContext &context) {
     lineno += TokenizerTools::count_newlines(base, base+offset);
     task_body.append(base, offset);
     base += offset;
-    if (!translate_ssh_statement(base, end, &ptr, ssh_command, error_msg))
+    string indentation = determine_trailing_indentation(task_body);
+    if (!translate_ssh_statement(base, end, indentation, &ptr, ssh_command, error_msg))
       HT_THROWF(Error::SYNTAX_ERROR,"Invalid ssh: statement (%s) on line %d of '%s'",
                 error_msg.c_str(), (int)lineno, m_fname.c_str());
     lineno += TokenizerTools::count_newlines(base, ptr);
