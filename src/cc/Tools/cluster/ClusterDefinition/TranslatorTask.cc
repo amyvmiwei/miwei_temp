@@ -269,7 +269,7 @@ const string TranslatorTask::translate(TranslationContext &context) {
   translated_text.append("      _SSH_HOSTS=\"$1\"\n");
   translated_text.append("      shift\n");
   translated_text.append("    fi\n");
-  translated_text.append("  fi\n  ");
+  translated_text.append("  fi\n");
   translated_text.append("  echo \"");
   translated_text.append(task_name);
   translated_text.append(" $@\"\n  ");

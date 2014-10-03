@@ -54,8 +54,6 @@ extern "C" {
 #include <unistd.h>
 }
 
-#define HT_CLUSTER_VERSION 1
-
 #define TASK_COLUMN_WIDTH 28
 #define DESCRIPTION_COLUMN_WIDTH (79-TASK_COLUMN_WIDTH)
 

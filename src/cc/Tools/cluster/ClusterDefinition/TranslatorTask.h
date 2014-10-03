@@ -50,8 +50,45 @@ namespace Hypertable { namespace ClusterDefinition {
       : m_fname(fname), m_lineno(lineno), m_text(text) {};
 
     /// Translates a task definition.
-    /// ????
-    /// @return 
+    /// The best way to illustrate how tasks get translated is with an example.
+    /// The following task definition:
+    /// <pre>
+    ///   task: display_hostnames roles: master,slave {
+    ///     echo "before"
+    ///     ssh: {
+    ///       hostname
+    ///     }
+    ///     echo "after"
+    ///   }
+    /// </pre>
+    /// gets translated into a bash function similar to the following:
+    /// <pre>
+    ///   display_hostnames () {
+    ///     local _SSH_HOSTS="(${ROLE_master}) + (${ROLE_slave})"
+    ///     if [ $# -gt 0 ] && [ $1 == "on" ]; then
+    ///       shift
+    ///       if [ $# -eq 0 ]; then
+    ///         echo "Missing host specification in 'on' argument"
+    ///         exit 1
+    ///       else
+    ///         _SSH_HOSTS="$1"
+    ///         shift
+    ///       fi
+    ///     fi
+    ///     echo "display_hostnames $@"
+    ///     echo "before"
+    ///     /opt/hypertable/0.9.8.1/bin/ht ssh " ${_SSH_HOSTS}" "hostname"
+    ///     echo "after"
+    ///   }
+    /// </pre>
+    /// Notice that the <code>ssh:</code> statemnts get translated to a call to
+    /// the <code>ht_ssh</code> tool.  Also, the function includes logic to
+    /// check for <code>on &lt;hostspec&gt;</code> initial arguments.  If found,
+    /// the target hosts for <code>ssh:</code> statements becomes
+    /// <code>&lt;hostspec&gt;</code> instead of the default roles specified by
+    /// the <code>roles:</code> clause.
+    /// @param context %Context object containing symbol tables
+    /// @return translated task statement
     const string translate(TranslationContext &context) override;
 
   private:
