@@ -369,27 +369,27 @@ task: install_package roles: master, hyperspace, slave, thriftbroker, spare {
   if [ $ext == "deb" ]; then
     ssh: {
       dpkg -i ${INSTALL_PREFIX}/${PACKAGE_FILE##*/}
-      rm ${INSTALL_PREFIX}/${PACKAGE_FILE##*/}
+      rm ${INSTALL_PREFIX}/${PACKAGE_FILE##*/} ${INSTALL_PREFIX}/${PACKAGE_BASENAME}
       echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
     }
   elif [ $ext == "rpm" ]; then
     ssh: {
       rpm -ivh --replacepkgs --nomd5 --nodeps --oldpackage ${INSTALL_PREFIX}/${PACKAGE_FILE##*/}
-      rm ${INSTALL_PREFIX}/${PACKAGE_FILE##*/}
+      rm ${INSTALL_PREFIX}/${PACKAGE_FILE##*/} ${INSTALL_PREFIX}/${PACKAGE_BASENAME}
       echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
     }
   elif [ $ext == "tar.bz2" ]; then
     ssh: {
       tar xjv -f ${INSTALL_PREFIX}/${PACKAGE_BASENAME} -C ${INSTALL_PREFIX}
       mv ${INSTALL_PREFIX}/${DIR_BASENAME}/opt/hypertable/${HYPERTABLE_VERSION} ${INSTALL_PREFIX}
-      /bin/rm -rf ${INSTALL_PREFIX}/${DIR_BASENAME}
+      /bin/rm -rf ${INSTALL_PREFIX}/${DIR_BASENAME} ${INSTALL_PREFIX}/${PACKAGE_BASENAME}
       echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
     }
   elif [ $ext == "tar.gz" ]; then
     ssh: {
       tar xzv -f ${INSTALL_PREFIX}/${PACKAGE_BASENAME} -C ${INSTALL_PREFIX}
       mv ${INSTALL_PREFIX}/${DIR_BASENAME}/opt/hypertable/${HYPERTABLE_VERSION} ${INSTALL_PREFIX}
-      /bin/rm -rf ${INSTALL_PREFIX}/${DIR_BASENAME}
+      /bin/rm -rf ${INSTALL_PREFIX}/${DIR_BASENAME} ${INSTALL_PREFIX}/${PACKAGE_BASENAME}
       echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
     }
   else
