@@ -46,6 +46,10 @@ if [ -h /opt/hypertable/current ]; then
       cp $OLD_HOME/conf/*.cfg /tmp/hypertable-install/
       rm -f $OLD_HOME/conf/*.cfg
     fi
+    if ls $OLD_HOME/conf/*.def > /dev/null 2>&1; then
+      cp $OLD_HOME/conf/*.def /tmp/hypertable-install/
+      rm -f $OLD_HOME/conf/*.def
+    fi
     if [ -e $OLD_HOME/conf/notification-hook.sh ]; then
       cp $OLD_HOME/conf/notification-hook.sh /tmp/hypertable-install/
       rm -f $OLD_HOME/conf/notification-hook.sh

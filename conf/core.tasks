@@ -103,9 +103,7 @@ task: stop_thriftbrokers_only roles: thriftbroker {
 # stop_thriftbrokers_only tasks.
 task: stop_thriftbrokers {
   stop_thriftbrokers_primary
-  if [ -n "${ROLE_thriftbroker}" ]; then
-    stop_thriftbrokers_only
-  fi
+  stop_thriftbrokers_only
 }
 
 
@@ -319,9 +317,127 @@ task: start_database {
   start_slaves
 }
 
+
 # Start all Hypertable processes.  Starts all Hypertable processes by running
 # tasks start_database and start_thriftboker.
 task: start {
   start_database
   start_thriftbrokers
+}
+
+
+# Set the symbolic link 'current' to point to \$HYPERTABLE_VERSION.
+# Sets the symbolic link 'current' in directory $\INSTALL_PREFIX
+# (${INSTALL_PREFIX}) to point to \$HYPERTABLE_VERSION (${HYPERTABLE_VERSION})
+task: set_current roles: master, hyperspace, slave, thriftbroker, spare {
+  ssh: {
+    cd ${INSTALL_PREFIX}
+    rm -f current
+    ln -s ${HYPERTABLE_VERSION} current
+  }
+}
+
+declare -a VALID_EXTENSIONS=('tar.bz2' 'deb' 'rpm' 'tar.gz')
+
+# Install package on all machines.
+# Installs package \$PACKAGE_FILE (${PACKAGE_FILE}) on all machines in the
+# cluster.
+task: install_package roles: master, hyperspace, slave, thriftbroker, spare {
+  local ext
+  for valid_ext in "${VALID_EXTENSIONS[@]}"; do
+    if [[ ${PACKAGE_FILE} == *.${valid_ext} ]]; then
+      ext=${valid_ext}
+    fi
+  done
+  if [ -z "${ext}" ]; then
+    echo "Package file ${PACKAGE_FILE} is of unsupported type."
+    echo "Expected one of: ${VALID_EXTENSIONS[*]}"
+    exit 1
+  fi
+  if [[ ${PACKAGE_FILE} != *${HYPERTABLE_VERSION}* ]]; then
+    echo "Package file ${PACKAGE_FILE} doesn't match version ${HYPERTABLE_VERSION}"
+    exit 1
+  fi
+
+  ssh: {
+    ${RSYNC} ${ROLE_source}:${PACKAGE_FILE} ${INSTALL_PREFIX}
+  }
+
+  local PACKAGE_BASENAME=$(basename "$PACKAGE_FILE")
+  local DIR_BASENAME=${PACKAGE_BASENAME%.$ext}
+
+  if [ $ext == "deb" ]; then
+    ssh: {
+      dpkg -i ${INSTALL_PREFIX}/${PACKAGE_FILE##*/}
+      rm ${INSTALL_PREFIX}/${PACKAGE_FILE##*/}
+      echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
+    }
+  elif [ $ext == "rpm" ]; then
+    ssh: {
+      rpm -ivh --replacepkgs --nomd5 --nodeps --oldpackage ${INSTALL_PREFIX}/${PACKAGE_FILE##*/}
+      rm ${INSTALL_PREFIX}/${PACKAGE_FILE##*/}
+      echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
+    }
+  elif [ $ext == "tar.bz2" ]; then
+    ssh: {
+      tar xjv -f ${INSTALL_PREFIX}/${PACKAGE_BASENAME} -C ${INSTALL_PREFIX}
+      mv ${INSTALL_PREFIX}/${DIR_BASENAME}/opt/hypertable/${HYPERTABLE_VERSION} ${INSTALL_PREFIX}
+      /bin/rm -rf ${INSTALL_PREFIX}/${DIR_BASENAME}
+      echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
+    }
+  elif [ $ext == "tar.gz" ]; then
+    ssh: {
+      tar xzv -f ${INSTALL_PREFIX}/${PACKAGE_BASENAME} -C ${INSTALL_PREFIX}
+      mv ${INSTALL_PREFIX}/${DIR_BASENAME}/opt/hypertable/${HYPERTABLE_VERSION} ${INSTALL_PREFIX}
+      /bin/rm -rf ${INSTALL_PREFIX}/${DIR_BASENAME}
+      echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
+    }
+  else
+    echo "Unrecognized package type - ${ext}"
+    exit 1
+  fi
+}
+
+# FHS-ize the installation.
+# FHS-izes the installations by running bin/fhsize.sh from the
+# \$HYPERTABLE_VERSION (${HYPERTABLE_VERSION}) installation and writes
+# $\HADOOP_DISTRO (${HADOOP_DISTRO}) into the conf/hadoop-distro file
+task: fhsize {
+  ssh: {
+    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/fhsize.sh
+    echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
+  }
+}
+
+
+# Verify upgrade.
+# Verifies upgrade by running upgrade-ok.sh
+task: verify_upgrade roles: source {
+  ssh: {
+    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/upgrade-ok.sh ${INSTALL_PREFIX}/current ${HYPERTABLE_VERSION}
+  }
+}
+
+
+# Upgrade installation.
+# Upgrades installation by copying or re-creating existing symlinks for
+# \"hyperspace\", \"conf\", \"run\", \"log\"  and \"fs\" directories from the
+# current installation to installation specified by \$HYPERTABLE_VERSION
+# (${HYPERTABLE_VERSION}). This is accomplished with a call to upgrade.sh
+task: upgrade_installation roles: master, hyperspace, slave, thriftbroker, spare {
+  ssh: {
+    ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/bin/upgrade.sh ${INSTALL_PREFIX}/current ${HYPERTABLE_VERSION}
+  }
+}
+
+
+# Verify and upgrade installation.
+# Verify upgrade, fhs-izes if needed, and then copies hyperspace and the
+# rangeserver state in the run/ directory to new installation and then sets the
+# \"current\" link by running tasks verify_upgrade, upgrade_installation, and
+# set_current
+task: upgrade {
+  verify_upgrade
+  upgrade_installation
+  set_current
 }
