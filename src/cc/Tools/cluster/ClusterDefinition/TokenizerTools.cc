@@ -184,8 +184,19 @@ bool find_end_char(const char *base, const char **endp, size_t *linep) {
         if (scope.empty())
           break;
       }
-      else if (*ptr == '"' || *ptr == '\'' || *ptr == '`' || *ptr == '{')
+      else if (*ptr == '"' || *ptr == '\'' || *ptr == '`')
         scope.push(*ptr);
+      else if (*ptr == '{') {
+        if (*(ptr-1) == '$') {
+          while (*ptr && *ptr != '}')
+            ptr++;
+          if (*ptr == 0)
+            break;
+          ptr++;
+        }
+        else
+          scope.push(*ptr);
+      }
     }
     if (*ptr == '\n' && linep)
       (*linep)++;

@@ -103,6 +103,53 @@ namespace {
     return true;
   }
 
+  const char *help_text[] = {
+    "",
+    "Shell commands or cluster definition tasks can be run remotely on any",
+    "set of machines using the following syntax.  Type 'quit' or 'exit' to",
+    "exit the command interpreter.",
+    "",
+    "<command> [ <arg> ... ]",
+    "",
+    "  This instructs the interpreter to run the shell command (<command>)",
+    "  with optional arguments (<arg> ...) on all hosts specified in all",
+    "  the roles in the cluster definition file.",
+    "",
+    "  cluster> echo \"Hello, World!\"",
+    "",
+    "on <hostspec> <command> [ <arg> ... ]",
+    "",
+    "  This instructs the interpreter to run the shell command (<command>)",
+    "  with optional arguments (<arg> ...) on all hosts matching a host",
+    "  specification (<hostspec>).  The host specification is a compact",
+    "  way to specify a large number of host names matching a pattern,",
+    "  for example the host specification \"test[01-06] - test02\" expands",
+    "  to:  test01, test03, test04, test05, test06.",
+    "",
+    "  cluster> on test[02-04]-test03 echo \"Hello, World!\"",
+    "",
+    "with <roles> <command> [ <arg> ... ]",
+    "",
+    "  This instructs the interpreter to run the shell command (<command>)",
+    "  with optional arguments (<arg> ...) on all hosts represented by the",
+    "  comma-separated list of role names (<roles>) specified in the cluster",
+    "  definition file.",
+    "",
+    "  cluster> with master,slave echo \"Hello, World!\"",
+    "",
+    "!<task> [ on <hostspec> ] [<arg> ...]",
+    "",
+    "  This instructs the interpreter to run a task (<task>) with optional",
+    "  arguments (<arg> ...) using the default roles supplied in the task",
+    "  definition or on a specific set of hosts that match a host",
+    "  specification pattern by supplying the \"on <hostspec>\" after the",
+    "  task name.",
+    "",
+    "  cluster> !start_hyperspace",
+    "  cluster> !start_hyperspace on test02",
+    "",
+    nullptr
+  };
 
 }
 
@@ -133,6 +180,12 @@ void ClusterCommandInterpreter::execute_line(const String &line) {
     for (auto & arg : args)
       argv[i++] = (char *)arg.c_str();
     argv[i] = 0;
+  }
+  else if (!strcmp(trimmed_line.c_str(), "help")) {
+    for (size_t i=0; help_text[i]; i++)
+      cout << help_text[i] << "\n";
+    cout << flush;
+    return;
   }
   else if (!strncmp(trimmed_line.c_str(), "on ", 3)) {
 

@@ -68,10 +68,10 @@ namespace Hypertable {
       /// (#m_output_script) does not exist, or 2) the modification timestamp of
       /// the definition file (#m_definition_file) or any of its dependencies
       /// (included files) is greater than the modification timestamp of the
-      /// output script, or 3) The compiler version number listed in the comment
-      /// header of the output script does not match the current compiler
-      /// version.  The dependencies are listed in a comment header of the
-      /// output script.
+      /// output script, or 3) The Hypertable version string listed in the
+      /// comment header of the output script does not match the current
+      /// Hypertable version string.  The dependencies are listed in a comment
+      /// header of the output script.
       /// @return <i>true</i> if script needs to be compiled, <i>false</i>
       /// otherwise
       bool compilation_needed();

@@ -65,7 +65,7 @@ namespace {
     string cmd = (string)"/bin/rm -rf " + cache_dir;
     if (system(cmd.c_str()) != 0) {
       cout << "Failed execution: " << cmd << endl;
-      exit(1);
+      _exit(1);
     }
   }
 
@@ -77,7 +77,7 @@ namespace {
     char cwd[1024];
     if (getcwd(cwd, 1024) == nullptr) {
       cout << "getcwd() - " << strerror(errno) << endl;
-      exit(1);
+      _exit(1);
     }
     fname.append(cwd);
     fname.append("/cluster.def");
@@ -91,7 +91,7 @@ namespace {
 
     cout << "Unable to locate 'cluster.def' in '.' or '" << System::install_dir 
          << "/conf'" << endl;
-    exit(1);
+    _exit(1);
   }
 
   bool is_environment_setting(const string &arg) {
@@ -116,7 +116,7 @@ namespace {
       argv[i] = nullptr;
       if (execv(script.c_str(), argv) < 0) {
         cout << "execv() failed - " << strerror(errno) << endl;
-        exit(1);
+        _exit(1);
       }
     }
     else {
@@ -130,11 +130,53 @@ namespace {
       argv[i] = nullptr;
       if (execvp("env", argv) < 0) {
         cout << "execv() failed - " << strerror(errno) << endl;
-        exit(1);
+        _exit(1);
       }
     }
     HT_FATAL("Should not reach here!");
   }
+
+  const char *usage[] = {
+    "",
+    "usage: ht_cluster [<options>] [<environment>] <task> [<arg> ...]",
+    "usage: ht_cluster",
+    "",
+    "options:",
+    "  --clear-cache     Clear command script cache directory (~/.cluster)",
+    "  --display-script  Display the command script compiled from the cluster",
+    "                    definition file",
+    "  -f <fname>        Use <fname> for the definition file",
+    "  --help            Display this help message",
+    "",
+    "This program is used to run tasks specified in a cluster definition file.",
+    "The default name of the cluster definition file is \"cluster.def\" and is",
+    "first searched for in the current working directory and if not found, then",
+    "it is searched for in the directory ../conf/ relative to the ht_cluster",
+    "executable file.  The cluster definition file can also be explicitly",
+    "specified with the -f option.  This program can be run in two modes,",
+    "command-line mode or interactive mode.",
+    "",
+    "Command-line mode",
+    "-----------------",
+    "In this mode, the task name and its arguments are passed in on the",
+    "command-line.  Optionally, environment variables can be set by supplying a",
+    "list of space-separated <name>=<value> variable specifications where <name>",
+    "is the name of the environment variable to set and <value> is the value you",
+    "would like to set it to prior to running the task.  The environment",
+    "variables must appear before the task name on the command line.",
+    "",
+    "Interactive mode",
+    "----------------",
+    "ht_cluster will enter interactive mode if it is run without any arguments.",
+    "In this mode tasks or any shell command can be run interactively.  Tasks",
+    "can be run on their default roles or any set of machines matching a host",
+    "specification.  Shell commands can be run on any set of roles or on any",
+    "set of machines matching a host specification.  Type 'help' at the",
+    "interactive command prompt for details on the format of interactive",
+    "commands.",
+    "",
+    nullptr
+  };
 
 }
 
@@ -159,22 +201,24 @@ int main(int argc, char **argv) {
     int i = 1;
     while (i<argc) {
       if (!strcmp(argv[1], "--help") || !strcmp(argv[1], "-h")) {
-        cout << "usage: cluster <options> <environment> <task> [<arg> ...]" << endl;
-        exit(0);
+        for (size_t i=0; usage[i]; i++)
+          cout << usage[i] << "\n";
+        cout << flush;
+        _exit(0);
       }
       else if (!strcmp(argv[1], "--clear-cache")) {
         clear_cache();
-        exit(0);
+        _exit(0);
       }
       else if (!strcmp(argv[i], "-f")) {
         if (!definition_file.empty()) {
           cout << "error: -f option supplied multiple times" << endl;
-          exit(1);
+          _exit(1);
         }
         i++;
         if (i == argc) {
           cout << "error: missing argument to -f option" << endl;
-          exit(1);
+          _exit(1);
         }
         definition_file.append(argv[i]);
         i++;
@@ -203,9 +247,9 @@ int main(int argc, char **argv) {
       string cmd = (string)"cat " + compiler.output_script();
       if (system(cmd.c_str()) != 0) {
         cout << "Failed execution: " << cmd << endl;
-        exit(1);
+        _exit(1);
       }
-      exit(0);
+      _exit(0);
     }
 
     Compiler compiler(definition_file);

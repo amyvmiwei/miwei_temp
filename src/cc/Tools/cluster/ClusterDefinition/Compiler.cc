@@ -33,6 +33,7 @@
 #include <Common/Logger.h>
 #include <Common/String.h>
 #include <Common/System.h>
+#include <Common/Version.h>
 
 #include <boost/algorithm/string.hpp>
 
@@ -198,7 +199,7 @@ bool Compiler::compilation_needed() {
       if (tag.compare("version") == 0) {
         string value(ptr+1);
         boost::trim(value);
-        if (atoi(value.c_str()) != HT_CLUSTER_VERSION)
+        if (strcmp(value.c_str(), version_string()))
           return true;
       }
       else if (tag.compare("dependency") == 0) {
@@ -238,7 +239,7 @@ void Compiler::make() {
 
   header.append("#!/bin/bash\n");
   header.append("#\n");
-  header.append(Hypertable::format("# version: %d\n", HT_CLUSTER_VERSION));
+  header.append(Hypertable::format("# version: %s\n", version_string()));
 
   while (!definitions.empty()) {
     while (definitions.top()->next(token)) {
@@ -288,8 +289,8 @@ void Compiler::make() {
   output.append("\n");
   output.append("if [ $1 == \"-T\" ] || [ $1 == \"--tasks\" ]; then\n");
   output.append("  echo\n");
-  output.append("  echo \"TASK                        DESCRIPTION\"\n");
-  output.append("  echo \"=========================== ===================================================\"\n");
+  output.append("  echo \"TASK                          DESCRIPTION\"\n");
+  output.append("  echo \"============================= =================================================\"\n");
   for (auto & entry : context.tasks) {
     output.append("  echo \"");
     output.append(entry.first);
