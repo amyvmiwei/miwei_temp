@@ -64,6 +64,7 @@ upgrade_dir() {
         cp $new_dir/METADATA.xml $target  
         cp $new_dir/RS_METRICS.xml $target
         cp $new_dir/notification-hook.tmpl $target
+        cp $new_dir/*.tasks $target
       fi
       cd $HYPERTABLE_HOME 
       rm -rf $dir 
@@ -78,6 +79,7 @@ upgrade_dir() {
           cp $new_dir/METADATA.xml $target 
           cp $new_dir/RS_METRICS.xml $target
           cp $new_dir/notification-hook.tmpl $target
+          cp $new_dir/*.tasks $target
         fi
         cd $HYPERTABLE_HOME 
         rm -rf $new_dir 
@@ -96,6 +98,8 @@ upgrade_dir() {
       if [ $dir == "conf" ] ; then
         cp $new_dir/METADATA.xml $target 
         cp $new_dir/RS_METRICS.xml $target
+        cp $new_dir/notification-hook.tmpl $target
+        cp $new_dir/*.tasks $target
       fi
       cd $HYPERTABLE_HOME 
       rm -rf $dir 

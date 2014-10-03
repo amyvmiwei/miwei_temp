@@ -79,7 +79,9 @@ stop_server() {
     else
       pidfiles=`server_pidfile $server`
     fi
-    kill_from_pidfiles $pidfiles
+    for pidfile in $pidfiles ; do
+      kill_from_pidfiles $pidfile
+    done
   done
 }
 

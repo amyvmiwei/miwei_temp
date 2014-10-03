@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/*
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -110,7 +110,7 @@ CommandShell::CommandShell(const String &program_name,
   if (m_batch_mode)
     m_silent = true;
   else
-    m_silent = m_props->get_bool("silent");
+    m_silent = m_props->has("silent") ? m_props->get_bool("silent") : false;
   m_test_mode = m_props->has("test-mode");
   if (m_test_mode)
     Logger::get()->set_test_mode();
@@ -404,29 +404,36 @@ process_line:
       /**
        * Add commands to queue
        */
-      base = line;
-      ptr = find_char(base, ';');
-      while (ptr) {
-        m_accum += string(base, ptr-base);
-        if (m_accum.size() > 0) {
-          boost::trim(m_accum);
-          if (m_accum.find("#") != 0)
-            command_queue.push(m_accum);
-          m_accum = "";
-          m_cont = false;
-        }
-        base = ptr+1;
+      if (m_line_command_mode) {
+        if (*line == 0 || *line == '#')
+          continue;
+        command_queue.push(line);
+      }
+      else {
+        base = line;
         ptr = find_char(base, ';');
-      }
-      command = string(base);
-      boost::trim(command);
-      if (command != "" && command.find("#") != 0) {
-        m_accum += command;
-        boost::trim(m_accum);
-      }
-      if (m_accum != "") {
-        m_cont = true;
-        m_accum += " ";
+        while (ptr) {
+          m_accum += string(base, ptr-base);
+          if (m_accum.size() > 0) {
+            boost::trim(m_accum);
+            if (m_accum.find("#") != 0)
+              command_queue.push(m_accum);
+            m_accum = "";
+            m_cont = false;
+          }
+          base = ptr+1;
+          ptr = find_char(base, ';');
+        }
+        command = string(base);
+        boost::trim(command);
+        if (command != "" && command.find("#") != 0) {
+          m_accum += command;
+          boost::trim(m_accum);
+        }
+        if (m_accum != "") {
+          m_cont = true;
+          m_accum += " ";
+        }
       }
 
       while (!command_queue.empty()) {

@@ -47,6 +47,7 @@
 #include <iostream>
 #include <memory>
 #include <mutex>
+#include <ostream>
 #include <string>
 #include <tuple>
 
@@ -162,19 +163,23 @@ namespace Hypertable {
     /// @param out Output stream to write log messages to.
     void dump_log(std::ostream &out);
 
-    /// Writes collected stdout and stderr to output stream.
-    /// This function iterates over #m_stdout_collector and then
-    /// #m_stderr_collector, writing each line to <code>out</code>.  If #m_error
-    /// contains an error message, it is written to <code>out</code> and if
-    /// #m_command_exit_status is non-zero, then it is written to
-    /// <code>out</code> as well.
-    /// @param out Output stream to write log messages to.
-    void dump_output(std::ostream &out);
+    /// Tells handler to send collected output subsequent output to terminal
+    /// If <code>val</code> is <i>true</i>, sends any collected stdout or stderr
+    /// output to terminal and sets #m_terminal_output to <i>true</i> which causes any
+    /// subsequent output collected to be sent to the terminal.  Otherwise,
+    /// #m_terminal_output is set to <i>false</i> which prevents subsequent
+    /// output from being sent to the terminal.
+    /// @param val If <i>true</i>, enable terminal output, otherwise disable it
+    void set_terminal_output(bool val);
 
     /// Enables debug logging output.
     /// Sets #ms_debug_enabled to <i>true</i> to cause verbose logging messages
     /// to be displayed to stdout.
     static void enable_debug();
+
+    /// Returns hostname
+    /// @return Hostname
+    const std::string hostname() const { return m_hostname; }
 
   private:
 
@@ -183,6 +188,18 @@ namespace Hypertable {
     /// error message on failure.
     /// @return <i>true</i> on success, <i>false</i> on error.
     bool verify_knownhost();
+
+    /// Writes output to stdout
+    /// Writes output to stdout, prefixing each line with '[' hostname ']'
+    /// @param output Pointer to output data
+    /// @param len Length of data pointed to by <code>output</code>
+    void write_to_stdout(const char *output, size_t len);
+
+    /// Writes output to stderr
+    /// Writes output to stderr, prefixing each line with '[' hostname ']'
+    /// @param output Pointer to output data
+    /// @param len Length of data pointed to by <code>output</code>
+    void write_to_stderr(const char *output, size_t len);
 
     /// Flag for enabling debugging output.
     static bool ms_debug_enabled;
@@ -235,19 +252,28 @@ namespace Hypertable {
     /// Flag indicating that the exit status has been set
     bool m_command_exit_status_is_set {};
 
+    /// Redirect output to terminal
+    bool m_terminal_output {};
+
+    /// Line prefix needs to be emitted on next stdout output
+    bool m_line_prefix_needed_stdout {};
+
+    /// Line prefix needs to be emitted on next stderr output
+    bool m_line_prefix_needed_stderr {};
+
     /// Output collector for logging
     SshOutputCollector m_log_collector;
 
     /// Current logging output buffer
     SshOutputCollector::Buffer m_log_buffer {};
 
-    /// Output collector fro stdout
+    /// Output collector for stdout
     SshOutputCollector m_stdout_collector;
 
     /// Current stdout output buffer
     SshOutputCollector::Buffer m_stdout_buffer {};
 
-    /// Output collector fro stderr
+    /// Output collector for stderr
     SshOutputCollector m_stderr_collector;
 
     /// Current stderr output buffer

@@ -94,7 +94,7 @@ else
       pushd .
       rm -f /tmp/hypertable-conf.tgz
       cd $HYPERTABLE_HOME/conf/
-      tar czf /tmp/hypertable-conf.tgz --exclude=*.cfg --exclude=notification-hook.sh *
+      tar czf /tmp/hypertable-conf.tgz --exclude=*.cfg --exclude=*.def --exclude=notification-hook.sh *
       cd $etchome
       tar xzf /tmp/hypertable-conf.tgz
       popd

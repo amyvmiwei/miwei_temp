@@ -13,6 +13,10 @@ host7 host8 host9 host10
 # host[7-9]
 host10
 host7 host8 host9 host10 
+# host1, host2, host3
+host1 host2 host3 
+# host[01-10]-host07
+host01 host02 host03 host04 host05 host06 host08 host09 host10 
 # test1 test~2 test3
 Invalid host specification: Invalid character '~' encountered at position 11
 # test[a-07]

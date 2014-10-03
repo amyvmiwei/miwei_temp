@@ -71,7 +71,7 @@ namespace {
     virtual void handle(EventPtr &event_ptr) {
       if (event_ptr->type == Event::DISCONNECT) {
         if (!m_connected) {
-          cout << "Unable to establish connection to range server" << endl;
+          cout << "Unable to establish connection to master" << endl;
           _exit(0);
         }
       }

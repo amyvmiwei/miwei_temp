@@ -111,6 +111,9 @@ int main(int argc, char **argv) {
 
     range_server = 0;
 
+    if (has("pidfile"))
+      FileUtils::unlink(get_str("pidfile"));
+
     HT_ERROR("Exiting RangeServer.");
   }
   catch (Exception &e) {

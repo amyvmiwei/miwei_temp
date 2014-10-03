@@ -1,6 +1,6 @@
 #!/bin/bash
 #
-# Copyright (C) 2007-2012 Hypertable, Inc.
+# Copyright (C) 2007-2014 Hypertable, Inc.
 #
 # This file is part of Hypertable.
 #
@@ -29,12 +29,12 @@ popd > /dev/null
 
 if [ -d /tmp/hypertable-install ]; then
 
-  # Make backup of new conf files (that are not .cfg or notification-hook.sh)
+  # Make backup of new conf files (that are not .cfg, .def, notification-hook.sh)
   rm -f /tmp/hypertable-install/tmp-conf.tgz
   if [ ! -h /opt/hypertable/@VERSION@/conf ] && [ -d /opt/hypertable/@VERSION@/conf ]; then
     pushd . > /dev/null
     cd /opt/hypertable/@VERSION@/conf
-    tar czf /tmp/hypertable-install/tmp-conf.tgz --exclude=*.cfg --exclude=notification-hook.sh *
+    tar czf /tmp/hypertable-install/tmp-conf.tgz --exclude=*.cfg --exclude=*.def --exclude=notification-hook.sh *
     popd > /dev/null
   fi
 
@@ -43,7 +43,7 @@ if [ -d /tmp/hypertable-install ]; then
     /tmp/hypertable-install/post.sh
   fi
   
-  # Restore backup of new conf files (that are not .cfg or notification-hook.sh)
+  # Restore backup of new conf files (that are not .cfg, .def, or notification-hook.sh)
   if [ -e /tmp/hypertable-install/tmp-conf.tgz ]; then
     pushd . > /dev/null
     cd @CMAKE_INSTALL_PREFIX@/conf/
@@ -54,6 +54,11 @@ if [ -d /tmp/hypertable-install ]; then
   # Copy saved config files
   if ls /tmp/hypertable-install/*.cfg > /dev/null 2>&1; then
     cp /tmp/hypertable-install/*.cfg @CMAKE_INSTALL_PREFIX@/conf/
+  fi
+
+  # Copy saved .def files
+  if ls /tmp/hypertable-install/*.def > /dev/null 2>&1; then
+    cp /tmp/hypertable-install/*.def @CMAKE_INSTALL_PREFIX@/conf/
   fi
 
   # Copy saved notification script

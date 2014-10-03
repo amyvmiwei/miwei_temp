@@ -69,7 +69,8 @@ void ReactorFactory::initialize(uint16_t reactor_count) {
     use_poll = true;
 #endif
 
-  if (Config::properties->get_bool("Comm.UsePoll") == true)
+  if (Config::properties->has("Comm.UsePoll") &&
+      Config::properties->get_bool("Comm.UsePoll"))
     use_poll = true;
 
   for (uint16_t i=0; i<=reactor_count; i++) {

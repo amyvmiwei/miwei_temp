@@ -29,6 +29,7 @@
 #define Tools_cluster_SshOutputCollector_h
 
 #include <Common/PageArena.h>
+#include <Common/Logger.h>
 
 #include <boost/iterator/iterator_facade.hpp>
 
@@ -58,10 +59,10 @@ namespace Hypertable {
       Buffer(char *buffer, size_t sz=0) : base(buffer), ptr(buffer), size(sz) { }
       /// Returns amount of buffer filled.
       /// @return Amount of buffer filled.
-      size_t fill() { return ptr-base; }
+      size_t fill() const { return ptr-base; }
       /// Returns amount of unused space remaining in buffer
       /// @return Amount of unused space remaining in buffer
-      size_t remain() { return size-fill(); }
+      size_t remain() const { return size-fill(); }
       /// Adds data to buffer.
       /// @param data Pointer to data to add
       /// @param len Length of data to add
@@ -147,6 +148,32 @@ namespace Hypertable {
     void add(Buffer buf) {
       if (buf.fill())
         m_buffers.push_back(buf);
+    }
+
+    /// Returns <i>true</i> if no output has been collected
+    /// Returns <i>true</i> if there are no collected buffers or if none of the
+    /// collected buffers contain data
+    /// @return <i>true</i> if no output has been collected, <i>false</i>
+    /// otherwise
+    bool empty() const {
+      if (m_buffers.empty())
+        return true;
+      for (auto & buffer : m_buffers) {
+        if (buffer.fill())
+          return false;
+      }
+      return true;
+    }
+
+    /// Returns <i>true</i> if last line collected is partial.
+    /// If the last character collected is <b>not</i> a newline character, this
+    /// function returns <i>true</i>, indicating that the collection has
+    /// stopped in the middle of a line and there are more line characters to be
+    /// read.
+    /// @return <i>true</i> if last line collected is partial
+    bool last_line_is_partial() {
+      HT_ASSERT(m_buffers.empty() || m_buffers.back().fill() > 0);
+      return !m_buffers.empty() && *(m_buffers.back().ptr-1) != '\n';
     }
 
     /// Returns iterator at beginning of output collector.
