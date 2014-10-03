@@ -33,6 +33,7 @@
 #include <Common/FileUtils.h>
 #include <Common/Init.h>
 #include <Common/System.h>
+#include <Common/Version.h>
 
 #include <cerrno>
 #include <iostream>
@@ -147,6 +148,7 @@ namespace {
     "                    definition file",
     "  -f <fname>        Use <fname> for the definition file",
     "  --help            Display this help message",
+    "  --version         Display version string",
     "",
     "This program is used to run tasks specified in a cluster definition file.",
     "The default name of the cluster definition file is \"cluster.def\" and is",
@@ -204,6 +206,10 @@ int main(int argc, char **argv) {
         for (size_t i=0; usage[i]; i++)
           cout << usage[i] << "\n";
         cout << flush;
+        _exit(0);
+      }
+      else if (!strcmp(argv[1], "--version")) {
+        cout << version_string() << endl;
         _exit(0);
       }
       else if (!strcmp(argv[1], "--clear-cache")) {
