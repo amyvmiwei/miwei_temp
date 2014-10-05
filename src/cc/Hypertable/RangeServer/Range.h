@@ -109,6 +109,7 @@ namespace Hypertable {
       bool     needs_split;
       bool     load_acknowledged;
       bool     initialized;
+      bool     unsplittable;
     };
 
     typedef std::map<String, AccessGroup *> AccessGroupMap;
