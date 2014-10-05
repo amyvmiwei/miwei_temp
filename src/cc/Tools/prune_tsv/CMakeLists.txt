@@ -24,14 +24,8 @@ set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Tools/prune_tsv")
 add_executable(prune_tsv prune_tsv.cc)
 target_link_libraries(prune_tsv HyperCommon HyperComm)
 
-# prune_tsv_test
-add_executable(prune_tsv_test prune_tsv_test.cc ${TEST_DEPENDENCIES})
-target_link_libraries(prune_tsv_test HyperCommon)
-
-configure_file(${HYPERTABLE_SOURCE_DIR}/conf/hypertable.cfg
-               ${DST_DIR}/hypertable.cfg)
-
-add_test(prune-tsv prune_tsv_test)
+add_test(prune-tsv env INSTALL_DIR=${INSTALL_DIR}
+                   ${CMAKE_CURRENT_SOURCE_DIR}/tests/run.sh)
 
 if (NOT HT_COMPONENT_INSTALL)
   install(TARGETS prune_tsv RUNTIME DESTINATION bin)
