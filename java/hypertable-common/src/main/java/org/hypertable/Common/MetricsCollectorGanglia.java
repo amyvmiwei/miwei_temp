@@ -53,7 +53,7 @@ public class MetricsCollectorGanglia implements MetricsCollector {
    * "rangeserver", or "thriftbroker")
    * @param port Ganglia collection port
    */
-  public MetricsCollectorGanglia(String component, short port) {
+  public MetricsCollectorGanglia(String component, int port) {
     mPrefix = "ht." + component + ".";
     mPort = port;
 
@@ -190,7 +190,7 @@ public class MetricsCollectorGanglia implements MetricsCollector {
   private InetAddress mAddr;
 
   /** Ganglia hypertable extension listen port */
-  private short mPort;
+  private int mPort;
 
   /** Flag indicating if socket is connected */
   private boolean mConnected = false;
