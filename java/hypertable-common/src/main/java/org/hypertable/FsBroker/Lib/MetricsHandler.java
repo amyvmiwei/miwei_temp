@@ -28,7 +28,6 @@
 package org.hypertable.FsBroker.Lib;
 
 import java.lang.Integer;
-import java.lang.Short;
 import java.util.Properties;
 import java.util.logging.Logger;
 import org.hypertable.AsyncComm.Comm;
@@ -60,7 +59,7 @@ public class MetricsHandler implements DispatchHandler {
     String str;
 
     str = props.getProperty("Hypertable.Metrics.Ganglia.Port", "15860");
-    short port = Short.parseShort(str);
+    int port = Integer.parseInt(str);
 
     mMetricsCollectorGanglia = new MetricsCollectorGanglia("fsbroker", port);
     mMetricsCollectorGanglia.update("type", "hadoop");
