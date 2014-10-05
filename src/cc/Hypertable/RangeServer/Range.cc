@@ -552,7 +552,7 @@ bool Range::need_maintenance() {
   ScopedLock lock(m_schema_mutex);
   bool needed = false;
   int64_t mem, disk, disk_total = 0;
-  if (!m_metalog_entity->get_load_acknowledged())
+  if (!m_metalog_entity->get_load_acknowledged() || m_unsplittable)
     return false;
   for (size_t i=0; i<m_access_group_vector.size(); ++i) {
     m_access_group_vector[i]->space_usage(&mem, &disk);
@@ -651,6 +651,8 @@ Range::get_maintenance_data(ByteArena &arena, time_t now,
 
   if (!m_unsplittable && size >= m_split_threshold)
     mdata->needs_split = true;
+
+  mdata->unsplittable = m_unsplittable;
 
   if (size > Global::range_maximum_size) {
     ScopedLock lock(m_mutex);
@@ -1036,6 +1038,8 @@ void Range::split_install_log() {
     if (!estimate_split_row(split_row_data, split_row)) {
       if (Global::row_size_unlimited) {
         m_unsplittable = true;
+        HT_WARNF("Split attempt aborted for range %s because it is marked unsplittable",
+                 m_name.c_str());
         HT_THROW(Error::CANCELLED, "");
       }
       m_error = Error::RANGESERVER_ROW_OVERFLOW;
@@ -1849,5 +1853,6 @@ std::ostream &Hypertable::operator<<(std::ostream &os, const Range::MaintenanceD
   os << "needs_major_compaction=" << (mdata.needs_major_compaction ? "true" : "false") << "\n";
   os << "needs_split=" << (mdata.needs_split ? "true" : "false") << "\n";
   os << "load_acknowledged=" << (mdata.load_acknowledged ? "true" : "false") << "\n";
+  os << "unsplittable=" << (mdata.unsplittable ? "true" : "false") << "\n";
   return os;
 }
