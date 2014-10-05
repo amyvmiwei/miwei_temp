@@ -598,7 +598,6 @@ public class ScanSpec extends org.hypertable.thriftgen.ScanSpec {
     assert cp.value.equals("val2");
     assert cp.operation == 2;
 
-    System.out.println("SUCCESS");
     System.exit(0);
   }
 }

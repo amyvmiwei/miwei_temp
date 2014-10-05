@@ -365,7 +365,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       parseValueRegexps(job);
       parseColumnPredicate(job);
 
-      System.out.println(m_base_spec);
+      System.err.println(m_base_spec);
     }
     catch (Exception e) {
       e.printStackTrace();
@@ -387,7 +387,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       if (m_tablename == null)
         m_tablename = job.get(TABLE);
       ScanSpec scan_spec = ts.createScanSpec(m_base_spec);
-      System.out.println(scan_spec);
+      System.err.println(scan_spec);
 
       if (m_client == null) {
         int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
@@ -438,7 +438,7 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       if (iter != null && iter.hasNext()) {
         ri = iter.next();
         if (iter.hasNext()) {
-          System.out.println("InputFormat only allows a single ROW interval");
+          System.err.println("InputFormat only allows a single ROW interval");
           System.exit(-1);
         }
       }
