@@ -168,9 +168,9 @@ namespace Hypertable {
       /// This function copies the input text <code>input</code> to
       /// <code>output</code>, performing variable substitution.  The function
       /// searches the input text for strings of the form <code>${name}</code>
-      /// and if <code>name</code> is found in <code>vmap</code>, the string is
-      /// replaced with the mapped value for <code>name</code> in
-      /// <code>vmap</code>.
+      /// of <code>$name</code> and if <code>name</code> is found in
+      /// <code>vmap</code>, the string is replaced with the mapped value for
+      /// <code>name</code> in <code>vmap</code>.
       /// @param intput Input text
       /// @param output Output text with variables substituted
       /// @param vmap Variable map mapping name -> sustitution text
