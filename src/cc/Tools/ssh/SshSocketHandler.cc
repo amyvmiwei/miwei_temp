@@ -538,19 +538,6 @@ bool SshSocketHandler::wait_for_command_completion() {
   return m_error.empty() && m_command_exit_status == 0;
 }
 
-/*
-void SshSocketHandler::dump_output(std::ostream &out) {
-  for (auto & line : m_stdout_collector)
-    out << "[" << m_hostname << "] " << line << "\n";
-  for (auto & line : m_stderr_collector)
-    out << "[" << m_hostname << "] " << line << "\n";
-  if (!m_error.empty())
-    out << "[" << m_hostname << "] ERROR " << m_error << "\n";
-  if (m_command_exit_status != 0)
-    out << "[" << m_hostname << "] ERROR exit status = " << m_command_exit_status << "\n";
-  out << flush;
-}
-*/
 
 void SshSocketHandler::set_terminal_output(bool val) {
   unique_lock<mutex> lock(m_mutex);
@@ -603,13 +590,19 @@ void SshSocketHandler::set_terminal_output(bool val) {
 }
 
 void SshSocketHandler::dump_log(std::ostream &out) {
-  m_log_collector.add(m_log_buffer);
-  for (auto & line : m_log_collector)
-    out << "[" << m_hostname << "] " << line << "\n";
-  if (!m_error.empty())
+  if (m_log_buffer.fill()) {
+    m_log_collector.add(m_log_buffer);
+    m_log_buffer = SshOutputCollector::Buffer();
+  }
+  if (!m_error.empty()) {
+    for (auto & line : m_log_collector)
+      out << "[" << m_hostname << "] " << line << "\n";
     out << "[" << m_hostname << "] ERROR " << m_error << endl;
+  }
+  /**
   if (m_command_exit_status != 0)
-    out << "[" << m_hostname << "] ERROR exit status = " << m_command_exit_status << "\n";
+    out << "[" << m_hostname << "] exit status = " << m_command_exit_status << "\n";
+  */
   out << flush;  
 }
 
