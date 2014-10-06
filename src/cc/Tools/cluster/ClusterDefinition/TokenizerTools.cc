@@ -281,22 +281,40 @@ bool substitute_variables(const string &input, string &output,
   bool ret {};
   string translated_text;
   const char *base = input.c_str();
-  const char *ptr = strstr(base, "${");
+  const char *ptr = strchr(base, '$');
   while (ptr) {
     translated_text.append(base, ptr-base);
     base = ptr;
-    if ((ptr = strchr(base, '}')) != nullptr) {
-      string variable(base+2, (ptr-base)-2);
+    if (base[1] == '{') {
+      if ((ptr = strchr(base, '}')) != nullptr) {
+        string variable(base+2, (ptr-base)-2);
+        auto iter = vmap.find(variable);
+        if (iter != vmap.end()) {
+          translated_text.append(vmap[variable]);
+          ret = true;
+        }
+        else
+          translated_text.append(base, (ptr-base)+1);
+        base = ptr + 1;
+      }
+      else
+        base++;
+    }
+    else {
+      ptr = base + 1;
+      while (*ptr && is_identifier_character(*ptr))
+        ptr++;
+      string variable(base+1, (ptr-base)-1);
       auto iter = vmap.find(variable);
       if (iter != vmap.end()) {
         translated_text.append(vmap[variable]);
         ret = true;
       }
       else
-        translated_text.append(base, (ptr-base)+1);
-      base = ptr + 1;
-      ptr = strstr(base, "${");      
+        translated_text.append(base, ptr-base);
+      base = ptr;
     }
+    ptr = strchr(base, '$');
   }
   translated_text.append(base);
   output.clear();

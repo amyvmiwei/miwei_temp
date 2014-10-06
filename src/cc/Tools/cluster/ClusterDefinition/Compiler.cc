@@ -28,6 +28,7 @@
 
 #include "Compiler.h"
 #include "Tokenizer.h"
+#include "TokenizerTools.h"
 
 #include <Common/FileUtils.h>
 #include <Common/Logger.h>
@@ -246,6 +247,7 @@ void Compiler::make() {
       if (token.type == Token::INCLUDE) {
         string include_file = token.text.substr(token.text.find_first_of("include:")+8);
         boost::trim_if(include_file, boost::is_any_of("'\" \t\n\r"));
+        TokenizerTools::substitute_variables(include_file, include_file, context.symbols);
         if (include_file[0] != '/')
           include_file = definitions.top()->dirname() + "/" + include_file;
         definitions.push( make_shared<Tokenizer>(include_file) );      
