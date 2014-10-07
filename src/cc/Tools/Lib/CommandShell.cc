@@ -27,10 +27,11 @@
 #include <queue>
 
 extern "C" {
+#include <dirent.h>
+#include <editline/readline.h>
 #include <errno.h>
 #include <limits.h>
 #include <poll.h>
-#include <editline/readline.h>
 #include <signal.h>
 }
 
@@ -86,6 +87,80 @@ namespace {
     }
     return 0;
   }
+
+  unsigned char complete(EditLine *el, int ch) {
+    struct dirent *dp;
+    const wchar_t *ptr;
+    char *buf, *bptr;
+    const LineInfoW *lf = el_wline(el);
+    int len, mblen, i;
+    unsigned char res = 0;
+    wchar_t dir[1024];
+
+    /* Find the last word */
+    for (ptr = lf->cursor -1; !iswspace(*ptr) && ptr > lf->buffer; --ptr)
+      continue;
+    if (ptr > lf->buffer)
+      ptr++;
+    len = lf->cursor - ptr;
+
+    /* Convert last word to multibyte encoding, so we can compare to it */
+    wctomb(NULL, 0); /* Reset shift state */
+    mblen = MB_LEN_MAX * len + 1;
+    buf = bptr = (char *)malloc(mblen);
+    for (i = 0; i < len; ++i) {
+      /* Note: really should test for -1 return from wctomb */
+      bptr += wctomb(bptr, ptr[i]);
+    }
+    *bptr = 0; /* Terminate multibyte string */
+    mblen = bptr - buf;
+
+    string directory;
+    string prefix;
+
+    bptr = strrchr(buf, '/');
+    if (bptr == nullptr) {
+      directory.append(".");
+      prefix.append(buf);
+    }
+    else if (bptr == buf) {
+      directory.append("/");
+      prefix.append(buf+1);
+    }
+    else {
+      if (buf[0] != '/')
+        directory.append("./");
+      directory.append(buf, bptr-buf);
+      prefix.append(bptr+1);
+    }
+
+    vector<string> completions;
+
+    DIR *dd = opendir(directory.c_str());
+    if (dd) {
+      string completion;
+      for (dp = readdir(dd); dp != NULL; dp = readdir(dd)) {
+        if (strncmp(dp->d_name, prefix.c_str(), prefix.length()) == 0) {
+          completion = string(&dp->d_name[prefix.length()]);
+          if (dp->d_type == DT_DIR)
+            completion.append("/");
+          completions.push_back(completion);
+        }
+      }
+      if (completions.size() == 1) {
+        mbstowcs(dir, completions[0].c_str(), sizeof(dir) / sizeof(*dir));
+        if (el_winsertstr(el, dir) == -1)
+          res = CC_ERROR;
+        else
+          res = CC_REFRESH;
+      }
+      closedir(dd);
+    }
+
+    free(buf);
+    return res;
+  }
+
 }
 
 CommandShell *CommandShell::ms_instance;
@@ -147,6 +222,12 @@ CommandShell::CommandShell(const String &program_name,
     el_wset(m_editline, EL_PROMPT, prompt);
     el_wset(m_editline, EL_SIGNAL, 1);
     el_wset(m_editline, EL_EDITOR, L"emacs");
+
+    /* Add a user-defined function	*/
+    el_wset(m_editline, EL_ADDFN, L"ed-complete", L"Complete argument", complete);
+
+    /* Bind <tab> to it */
+    el_wset(m_editline, EL_BIND, L"^I", L"ed-complete", NULL);
 
     /* Source the user's defaults file. */
     el_source(m_editline, NULL);
