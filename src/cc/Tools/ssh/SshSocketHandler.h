@@ -130,9 +130,10 @@ namespace Hypertable {
     void set_exit_status(int exit_status);
 
     /// Waits for connection establishment.
-    /// Blocks on #m_cond until in connected state or #m_error is non-empty.  If
-    /// connection is not established by <code>deadline</code> then #m_error is
-    /// set to "timeout" and <i>false</i> is returned.
+    /// Blocks on #m_cond until in connected state or #m_error is non-empty or
+    /// #m_cancelled is <i>true</i>.  If connection is not established by
+    /// <code>deadline</code> then #m_error is set to "timeout" and <i>false</i>
+    /// is returned.
     /// @param deadline Maximum wait time
     /// @return <i>true</i> upon successful connection, <i>false</i> if
     /// connection attempt failed (#m_error is non-empty) or
@@ -149,11 +150,18 @@ namespace Hypertable {
 
     /// Waits for command completion.
     /// This function blocks on #m_cond until the command previously issued by
-    /// issue_command() has completed or stopped due to an error.
+    /// issue_command() has completed or stopped due to an error or #m_cancelled
+    /// was set to <i>true</i>.
     /// @return <i>true</i> if command successfully completed, <i>false<i> if
     /// #m_error is contains an error message or #m_command_exit_status was set
-    /// to a non-zero value.
+    /// to a non-zero value or #m_cancelled is <i>true</i> and #m_state is not
+    /// STATE_CONNECTED.
     bool wait_for_command_completion();
+
+    /// Cancels outstanding connection establishment or command execution.
+    /// Sets #m_cancelled to <i>true</i>, closes #m_channel if it has been
+    /// opened, closes #m_ssh_session if it is open, and then signals #m_cond.
+    void cancel();
 
     /// Writes collected log messages to output stream.
     /// This function adds #m_log_buffer to #m_log_collector and then iterates
@@ -260,6 +268,9 @@ namespace Hypertable {
 
     /// Line prefix needs to be emitted on next stderr output
     bool m_line_prefix_needed_stderr {};
+
+    /// Flag indicating that outstanding operations should be cancelled
+    bool m_cancelled {};
 
     /// Output collector for logging
     SshOutputCollector m_log_collector;

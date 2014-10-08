@@ -176,7 +176,7 @@ SshSocketHandler::SshSocketHandler(const string &hostname)
 
 
 SshSocketHandler::~SshSocketHandler() {
-  if (m_state != STATE_INITIAL) {
+  if (m_state != STATE_INITIAL && m_ssh_session) {
     ssh_disconnect(m_ssh_session);
     ssh_free(m_ssh_session);
   }
@@ -478,7 +478,7 @@ void SshSocketHandler::set_exit_status(int exit_status) {
 
 bool SshSocketHandler::wait_for_connection(chrono::system_clock::time_point deadline) {
   unique_lock<mutex> lock(m_mutex);
-  while (m_state != STATE_CONNECTED && m_error.empty()) {
+  while (m_state != STATE_CONNECTED && m_error.empty() && !m_cancelled) {
     if (m_cond.wait_until(lock, deadline) == cv_status::timeout) {
       m_error = "timeout";
       return false;
@@ -533,9 +533,25 @@ bool SshSocketHandler::issue_command(const std::string &command) {
 bool SshSocketHandler::wait_for_command_completion() {
   unique_lock<mutex> lock(m_mutex);
   while (m_state != STATE_CONNECTED && m_error.empty() &&
-         !m_command_exit_status_is_set)
+         !m_command_exit_status_is_set && !m_cancelled)
     m_cond.wait(lock);
-  return m_error.empty() && m_command_exit_status == 0;
+  return m_error.empty() && m_command_exit_status == 0 &&
+    (!m_cancelled || m_state == STATE_CONNECTED);
+}
+
+void SshSocketHandler::cancel() {
+  unique_lock<mutex> lock(m_mutex);
+  m_cancelled = true;
+  if (m_channel) {
+    ssh_channel_close(m_channel);
+    ssh_channel_free(m_channel);
+    m_channel = 0;
+  }
+  if (m_state != STATE_INITIAL && m_ssh_session) {
+    ssh_disconnect(m_ssh_session);
+    ssh_free(m_ssh_session);
+  }
+  m_cond.notify_all();
 }
 
 

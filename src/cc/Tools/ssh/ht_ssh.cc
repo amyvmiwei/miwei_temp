@@ -48,6 +48,7 @@
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <sstream>
 #include <vector>
 
@@ -57,6 +58,21 @@ using namespace Hypertable;
 using namespace std;
 
 namespace {
+
+  std::mutex g_mutex;
+  bool g_handlers_created {};
+  bool g_cancelled {};
+  vector<SshSocketHandlerPtr> g_handlers;
+
+  void sig(int i) {
+    lock_guard<mutex> lock(g_mutex);
+    g_cancelled = true;
+    if (g_handlers_created) {
+      for (auto & handler : g_handlers)
+        handler->cancel();
+    }
+  }
+
   void dump_usage_and_exit() {
     cout << endl;
     cout << "ht_ssh version " << version_string() << endl;
@@ -85,8 +101,6 @@ int main(int argc, char **argv) {
   System::initialize();
   Config::properties = new Properties();
   ReactorFactory::initialize(System::get_processor_count());
-
-  vector<SshSocketHandlerPtr> handlers;
 
   string host_spec;
   string command;
@@ -124,25 +138,41 @@ int main(int argc, char **argv) {
     _exit(1);
   }
 
+  (void)signal(SIGINT,  sig);
+  (void)signal(SIGQUIT, sig);
+
   ssh_threads_set_callbacks(SshThreadsCallbacks::get());
 
-  handlers.reserve(hosts.size());
+  g_handlers.reserve(hosts.size());
 
   for (auto & host : hosts) {
-    handlers.push_back(make_shared<SshSocketHandler>(host));
+    g_handlers.push_back(make_shared<SshSocketHandler>(host));
     if (debug)
-      handlers.back()->enable_debug();
+      g_handlers.back()->enable_debug();
   }
 
   auto now = chrono::system_clock::now();
   auto deadline = now + std::chrono::seconds(30);
 
+  {
+    lock_guard<mutex> lock(g_mutex);
+    g_handlers_created = true;
+    if (g_cancelled)
+      _exit(1);
+  }
+
   // Wait for connections
-  for (auto & handler : handlers) {
+  for (auto & handler : g_handlers) {
     if (!handler->wait_for_connection(deadline)) {
       handler->dump_log(cerr);
       _exit(1);
     }
+  }
+
+  {
+    lock_guard<mutex> lock(g_mutex);
+    if (g_cancelled)
+      _exit(1);
   }
 
   vector<string> failed_hosts;
@@ -152,7 +182,7 @@ int main(int argc, char **argv) {
   if (start_delay) {
     map<chrono::time_point<chrono::steady_clock>, SshSocketHandlerPtr> start_map;
     chrono::time_point<chrono::steady_clock> start_time;
-    for (auto & handler : handlers) {
+    for (auto & handler : g_handlers) {
       start_time = chrono::steady_clock::now()
         + std::chrono::milliseconds(Random::number32() % start_delay);
       start_map[start_time] = handler;
@@ -169,7 +199,7 @@ int main(int argc, char **argv) {
     }
   }
   else {
-    for (auto & handler : handlers) {
+    for (auto & handler : g_handlers) {
       if (!handler->issue_command(command)) {
         handler->dump_log(cerr);
         failed_hosts.push_back(handler->hostname());
@@ -179,7 +209,7 @@ int main(int argc, char **argv) {
   }
 
   // Wait for commands to complete
-  for (auto & handler : handlers) {
+  for (auto & handler : g_handlers) {
     if (handler) {
       handler->set_terminal_output(true);
       if (!handler->wait_for_command_completion()) {
@@ -201,6 +231,7 @@ int main(int argc, char **argv) {
       cerr << host;
     }
     cerr << endl << flush;
+    _exit(2);
   }
 
   _exit(0);
