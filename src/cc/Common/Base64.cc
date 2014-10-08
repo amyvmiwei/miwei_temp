@@ -28,6 +28,12 @@
 
 #include "Base64.h"
 
+#if defined(__APPLE__)
+#include <Common/fmemopen.h>
+#endif
+
+#include <string>
+
 extern "C" {
 #include <openssl/bio.h>
 #include <openssl/evp.h>
