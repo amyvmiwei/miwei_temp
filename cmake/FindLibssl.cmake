@@ -36,12 +36,17 @@ find_library(Libssl_LIBRARY NO_DEFAULT_PATH
   PATHS ${HT_DEPENDENCY_LIB_DIR} /lib /lib64 /usr/lib /usr/lib64 /usr/local/lib /usrlocal/lib64 /opt/local/lib
 )
 
+find_library(Libcrypto_LIBRARY NO_DEFAULT_PATH
+  NAMES crypto
+  PATHS ${HT_DEPENDENCY_LIB_DIR} /lib /lib64 /usr/lib /usr/lib64 /usr/local/lib /usrlocal/lib64 /opt/local/lib
+)
+
 message(STATUS "Libssl include: ${Libssl_INCLUDE_DIR}")
-message(STATUS "Libssl library: ${Libssl_LIBRARY}")
+message(STATUS "Libssl libraries: ${Libssl_LIBRARY} ${Libcrypto_LIBRARY}")
 
 if (Libssl_INCLUDE_DIR AND Libssl_LIBRARY)
   set(Libssl_FOUND TRUE)
-  set( Libssl_LIBRARIES ${Libssl_LIBRARY})
+  set(Libssl_LIBRARIES ${Libssl_LIBRARY} ${Libcrypto_LIBRARY})
 
   exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
                ARGS ${Libssl_LIBRARY}

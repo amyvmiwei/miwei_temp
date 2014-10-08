@@ -20,6 +20,10 @@
 set(SRC_DIR "${HYPERTABLE_SOURCE_DIR}/src/cc/Common")
 set(DST_DIR "${HYPERTABLE_BINARY_DIR}/src/cc/Common")
 
+if (APPLE)
+  set(Fmemopen_SRCS fmemopen.c)
+endif ()
+
 set(Common_SRCS
 Base64.cc
 Checksum.cc
@@ -64,7 +68,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
   link_libraries(socket)
 endif (${CMAKE_SYSTEM_NAME} MATCHES "SunOS")
 
-add_library(HyperCommon ${Common_SRCS})
+add_library(HyperCommon ${Common_SRCS} ${Fmemopen_SRCS})
 target_link_libraries(HyperCommon ${EXPAT_LIBRARIES} ${SIGAR_LIBRARIES}
   ${BOOST_LIBS} ${READLINE_LIBRARIES} ${ZLIB_LIBRARIES} ${SNAPPY_LIBRARIES}
   ${NCURSES_LIBRARY} ${CMAKE_THREAD_LIBS_INIT}
