@@ -1,3 +1,21 @@
+Version 0.9.8.2:
+(2014-10-08)
+
+    issue 1310: Added ctrl-c handling to ht_ssh
+    Added filename completion to CommandShell
+    Added CDH5 support
+    ht_cluster: added support for variable substitution in include: statements
+    issue 1313: Don't dump ssh log on non-zero command exit status
+    issue 1306: Fix HDFS broker to handle Ganglia port > 32767
+    issue 1299: Made MapReduce connector log to stderr instead of stdout
+    issue 1311: Prevent immediate maintenance scheduling for unsplittable ranges
+    Made prune_tsv test independent of prior test runs
+    Added ht_cluster task automation tool
+    Update FindLibssh.cmake
+    Changed Ganglia metric name prefix from "hypertable." to "ht."
+    Added Common/Base64
+    Added Common/Crypto
+
 Version 0.9.8.1:
 (2014-09-14)
 
