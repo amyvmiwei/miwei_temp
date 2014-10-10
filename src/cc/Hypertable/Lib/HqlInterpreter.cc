@@ -164,6 +164,14 @@ cmd_show_create_table(NamespacePtr &ns, ParserState &state,
 void
 cmd_create_table(NamespacePtr &ns, ParserState &state,
                  HqlInterpreter::Callback &cb) {
+  if (!state.input_file.empty()) {
+    if (state.input_file_src != LOCAL_FILE)
+      HT_THROW(Error::SYNTAX_ERROR, "Schema file must reside in local FS");
+    string schema_str;
+    if (!FileUtils::read(state.input_file, schema_str))
+      HT_THROW(Error::FILE_NOT_FOUND, state.input_file);
+    state.create_schema = Schema::new_instance(schema_str);
+  }
   ns->create_table(state.table_name, state.create_schema);
   cb.on_finish();
 }
@@ -171,9 +179,22 @@ cmd_create_table(NamespacePtr &ns, ParserState &state,
 void
 cmd_alter_table(NamespacePtr &ns, ParserState &state,
                  HqlInterpreter::Callback &cb) {
+  bool force {};
+
   if (!ns)
     HT_THROW(Error::BAD_NAMESPACE, "Null namespace");
-  ns->alter_table(state.table_name, state.alter_schema);
+
+  if (!state.input_file.empty()) {
+    if (state.input_file_src != LOCAL_FILE)
+      HT_THROW(Error::SYNTAX_ERROR, "Schema file must reside in local FS");
+    string schema_str;
+    if (!FileUtils::read(state.input_file, schema_str))
+      HT_THROW(Error::FILE_NOT_FOUND, state.input_file);
+    state.alter_schema = Schema::new_instance(schema_str);
+    force = true;
+  }
+
+  ns->alter_table(state.table_name, state.alter_schema, force);
   ns->refresh_table(state.table_name);
   cb.on_finish();
 }

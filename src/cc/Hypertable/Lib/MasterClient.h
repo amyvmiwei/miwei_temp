@@ -113,10 +113,10 @@ namespace Hypertable {
                       DispatchHandler *handler, Timer *timer = 0);
     void create_table(const String &tablename, const String &schema,
                       Timer *timer = 0);
-    void alter_table(const String &tablename, const String &schema,
+    void alter_table(const String &tablename, const String &schema, bool force,
                      DispatchHandler *handler, Timer *timer = 0);
     void alter_table(const String &tablename, const String &schema,
-                     Timer *timer = 0);
+                     bool force, Timer *timer = 0);
     void rename_table(const String &old_name, const String &new_name,
                       DispatchHandler *handler, Timer *timer = 0);
     void rename_table(const String &old_name, const String &new_name,

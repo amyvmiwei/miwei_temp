@@ -53,7 +53,7 @@ using namespace std;
 
 Tokenizer::Tokenizer(const string &fname)
   : m_fname(fname) {
-  if (FileUtils::read(m_fname, m_content) < 0)
+  if (!FileUtils::read(m_fname, m_content))
     exit(1);
   m_next = m_content.c_str();
 }

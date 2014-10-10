@@ -320,6 +320,9 @@ namespace Hypertable {
 
     /// Index tables to be created or dropped
     TableParts m_parts;
+
+    /// Proceed even if there's a generation mis-match
+    bool m_force {};
   };
 
   /// @}

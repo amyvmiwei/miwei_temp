@@ -61,6 +61,7 @@ OperationAlterTable::OperationAlterTable(ContextPtr &context, EventPtr &event)
   : Operation(context, event, MetaLog::EntityType::OPERATION_ALTER_TABLE) {
   const uint8_t *ptr = event->payload;
   size_t remaining = event->payload_len;
+  m_decode_version = 4;
   decode_request(&ptr, &remaining);
   initialize_dependencies();
 }
@@ -108,31 +109,32 @@ void OperationAlterTable::execute() {
   case OperationState::VALIDATE_SCHEMA:
     if (!get_schemas(original_schema, alter_schema))
       break;
-    try {
+    if (!m_force) {
+      try {
+        if (original_schema->get_generation() != alter_schema->get_generation())
+          HT_THROWF(Error::MASTER_SCHEMA_GENERATION_MISMATCH,
+                    "Expected altered schema generation %lld to match original"
+                    " %lld", (Lld)alter_schema->get_generation(),
+                    (Lld)original_schema->get_generation());
 
-      if (original_schema->get_generation() != alter_schema->get_generation())
-        HT_THROWF(Error::MASTER_SCHEMA_GENERATION_MISMATCH,
-                  "Expected altered schema generation %lld to match original"
-                  " %lld", (Lld)alter_schema->get_generation(),
-                  (Lld)original_schema->get_generation());
+        if (!alter_schema->clear_generation_if_changed(*original_schema)) {
+          // No change, therefore nothing to do
+          complete_ok();
+          break;
+        }
 
-      if (!alter_schema->clear_generation_if_changed(*original_schema)) {
-        // No change, therefore nothing to do
-        complete_ok();
+        // Assign new generation number
+        int64_t generation = get_ts64();
+        alter_schema->update_generation(generation);
+      }
+      catch (Exception &e) {
+        if (e.code() != Error::MASTER_SCHEMA_GENERATION_MISMATCH)
+          HT_ERROR_OUT << e << HT_END;
+        complete_error(e);
         break;
       }
-
-      // Assign new generation number
-      int64_t generation = get_ts64();
-      alter_schema->update_generation(generation);
-      m_schema = alter_schema->render_xml(true);
     }
-    catch (Exception &e) {
-      if (e.code() != Error::MASTER_SCHEMA_GENERATION_MISMATCH)
-        HT_ERROR_OUT << e << HT_END;
-      complete_error(e);
-      break;
-    }
+    m_schema = alter_schema->render_xml(true);
     {
       ScopedLock lock(m_mutex);
       m_dependencies.clear();
@@ -267,7 +269,7 @@ void OperationAlterTable::display_state(std::ostream &os) {
   os << " name=" << m_name << " id=" << m_id << " ";
 }
 
-#define OPERATION_ALTER_TABLE_VERSION 3
+#define OPERATION_ALTER_TABLE_VERSION 4
 
 uint16_t OperationAlterTable::encoding_version() const {
   return OPERATION_ALTER_TABLE_VERSION;
@@ -275,7 +277,7 @@ uint16_t OperationAlterTable::encoding_version() const {
 
 size_t OperationAlterTable::encoded_state_length() const {
   size_t length = Serialization::encoded_length_vstr(m_name) +
-    Serialization::encoded_length_vstr(m_schema) +
+    Serialization::encoded_length_vstr(m_schema) + 1 +
     Serialization::encoded_length_vstr(m_id);
   length += 4;
   foreach_ht (const String &location, m_completed)
@@ -290,6 +292,7 @@ size_t OperationAlterTable::encoded_state_length() const {
 void OperationAlterTable::encode_state(uint8_t **bufp) const {
   Serialization::encode_vstr(bufp, m_name);
   Serialization::encode_vstr(bufp, m_schema);
+  Serialization::encode_bool(bufp, m_force);
   Serialization::encode_vstr(bufp, m_id);
   Serialization::encode_i32(bufp, m_completed.size());
   foreach_ht (const String &location, m_completed)
@@ -318,6 +321,8 @@ void OperationAlterTable::decode_state(const uint8_t **bufp, size_t *remainp) {
 void OperationAlterTable::decode_request(const uint8_t **bufp, size_t *remainp) {
   m_name = Serialization::decode_vstr(bufp, remainp);
   m_schema = Serialization::decode_vstr(bufp, remainp);
+  if (m_decode_version >= 4)
+    m_force = Serialization::decode_bool(bufp, remainp);
 }
 
 const String OperationAlterTable::name() {

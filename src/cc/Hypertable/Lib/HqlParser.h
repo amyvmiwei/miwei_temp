@@ -724,7 +724,7 @@ namespace Hypertable {
           state.create_schema = Schema::new_instance(schema_str);
           state.create_schema->clear_generation();
         }
-        else {
+        else if (state.input_file.empty()) {
 
           state.create_schema->set_group_commit_interval(state.group_commit_interval);
           state.create_schema->set_access_group_defaults(state.table_ag_defaults);
@@ -763,6 +763,12 @@ namespace Hypertable {
     struct finish_alter_table_statement {
       finish_alter_table_statement(ParserState &state) : state(state) { }
       void operator()(char const *, char const *) const {
+
+        state.command = COMMAND_ALTER_TABLE;
+
+        // If schema was supplied with WITH clause, just return
+        if (!state.input_file.empty())
+          return;
 
         // Verify column family modifications are OK then replace old column
         // family with modified one
@@ -829,7 +835,6 @@ namespace Hypertable {
         }
 
         state.alter_schema->validate();
-        state.command = COMMAND_ALTER_TABLE;
       }
       ParserState &state;
     };
@@ -2908,11 +2913,12 @@ namespace Hypertable {
 
           alter_table_statement
             = ALTER >> TABLE >> user_identifier[start_alter_table(self.state)]
-            >> +(ADD >> create_definitions
-                 | MODIFY[set_modify_flag(self.state, true)] >>
+            >> ( WITH >> string_literal[set_input_file(self.state)] |
+                 +(ADD >> create_definitions
+                   | MODIFY[set_modify_flag(self.state, true)] >>
                    create_definitions[set_modify_flag(self.state, false)]
-                 | drop_specification
-                 | RENAME >> COLUMN >> FAMILY >> rename_column_definition)
+                   | drop_specification
+                   | RENAME >> COLUMN >> FAMILY >> rename_column_definition) )
             ;
 
           exists_table_statement
@@ -2991,9 +2997,9 @@ namespace Hypertable {
           create_table_statement
             = CREATE >> TABLE
               >> user_identifier[start_create_table_statement(self.state)]
-              >> ((LIKE >> user_identifier[set_clone_table_name(self.state)])
-                  | (create_definitions))
-              >> *(table_option)
+              >> ( LIKE >> user_identifier[set_clone_table_name(self.state)] |
+                    WITH >> string_literal[set_input_file(self.state)] |
+                   (create_definitions) >> *(table_option) )
             ;
 
           create_namespace_statement

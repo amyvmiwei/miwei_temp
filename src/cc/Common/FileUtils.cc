@@ -54,17 +54,15 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
-ssize_t FileUtils::read(const String &fname, String &contents) {
+bool FileUtils::read(const String &fname, String &contents) {
   off_t len {};
-  String str;
   char *buf = file_to_buffer(fname, &len);
   if (buf != 0) {
     contents.append(buf, len);
     delete [] buf;
+    return true;
   }
-  else
-    len = -1;
-  return (ssize_t)len;
+  return false;
 }
 
 

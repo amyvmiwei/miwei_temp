@@ -1174,7 +1174,7 @@ public:
       Hypertable::Namespace *namespace_ptr = get_namespace(ns);
       Hypertable::SchemaPtr hschema = new Hypertable::Schema();
       convert_schema(schema, hschema);
-      namespace_ptr->alter_table(table, hschema);
+      namespace_ptr->alter_table(table, hschema, false);
     } RETHROW("namespace=" << ns << " table="<< table)
 
     LOG_API_FINISH;

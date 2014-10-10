@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2013 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -86,7 +86,8 @@ namespace Hypertable {
     static CommBuf *
     create_create_table_request(const String &tablename, const String &schemastr);
     static CommBuf *
-    create_alter_table_request(const String &tablename, const String &schemastr);
+      create_alter_table_request(const String &tablename,
+                                 const String &schemastr, bool force);
     static CommBuf *
     create_compact_request(const String &tablename, const String &row,
                            uint32_t range_types);

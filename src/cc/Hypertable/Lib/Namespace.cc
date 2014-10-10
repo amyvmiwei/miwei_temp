@@ -136,23 +136,23 @@ Namespace::create_table(const String &table_name, SchemaPtr &schema) {
 }
 
 
-void Namespace::alter_table(const String &table_name, SchemaPtr &schema) {
+void Namespace::alter_table(const String &table_name, SchemaPtr &schema, bool force) {
   String name = Filesystem::basename(table_name);
   if (name.size() && name[0]=='^')
     HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
   string full_name = get_full_name(table_name);
   const string schema_str = schema->render_xml(true);
-  m_master_client->alter_table(full_name, schema_str);
+  m_master_client->alter_table(full_name, schema_str, force);
 }
 
 
-void Namespace::alter_table(const String &table_name, const String &schema_str) {
+void Namespace::alter_table(const String &table_name, const String &schema_str, bool force) {
   String name = Filesystem::basename(table_name);
   if (name.size() && name[0]=='^')
     HT_THROW(Error::SYNTAX_ERROR, (String)"Invalid table name character '^'");
   String full_name = get_full_name(table_name);
   SchemaPtr schema = Schema::new_instance(schema_str);
-  m_master_client->alter_table(full_name, schema_str);
+  m_master_client->alter_table(full_name, schema_str, force);
 }
 
 

@@ -145,8 +145,9 @@ namespace Hypertable {
     /** Alter table schema.
      * @param table_name Name of table to alter
      * @param schema Schema object holding alterations
+     * @param force Force table alteration even if generation mismatch
      */
-    void alter_table(const String &table_name, SchemaPtr &schema);
+    void alter_table(const String &table_name, SchemaPtr &schema, bool force);
 
 #if 0
     /**
@@ -190,9 +191,10 @@ namespace Hypertable {
      *
      * @param table_name Name of the table to alter
      * @param schema_str desired alterations represented as schema
+     * @param force Force table alteration even if generation mismatch
      */
 #endif
-    void alter_table(const String &table_name, const String &schema_str);
+    void alter_table(const String &table_name, const String &schema_str, bool force);
 
     /**
      * Opens a table

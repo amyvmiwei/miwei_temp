@@ -68,7 +68,7 @@ LocationInitializer::LocationInitializer(std::shared_ptr<Context> &context)
       }
     }
     else if (FileUtils::exists(m_location_file)) {
-      if (FileUtils::read(m_location_file, m_location) < 0) {
+      if (!FileUtils::read(m_location_file, m_location)) {
         HT_ERRORF("Problem reading location file '%s'", m_location_file.c_str());
         _exit(1);
       }

@@ -52,9 +52,9 @@ namespace Hypertable {
      *
      * @param fname The file name
      * @param contents A reference to a String which will receive the data
-     * @return The number of bytes read, or -1 on error (and sets errno)
+     * @return <i>true</i> on success, <i>false</i> on error
      */
-    static ssize_t read(const String &fname, String &contents);
+    static bool read(const String &fname, String &contents);
 
     /** Reads data from a file descriptor into a buffer
      *

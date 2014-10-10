@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -406,7 +406,7 @@ MasterClient::create_table(const String &tablename, const String &schema,
 
 void
 MasterClient::alter_table(const String &tablename, const String &schema,
-                          DispatchHandler *handler, Timer *timer) {
+                          bool force, DispatchHandler *handler, Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
   CommBufPtr cbp;
   EventPtr event;
@@ -416,7 +416,7 @@ MasterClient::alter_table(const String &tablename, const String &schema,
   initialize(timer, tmp_timer);
 
   while (!timer->expired()) {
-    cbp = MasterProtocol::create_alter_table_request(tablename, schema);
+    cbp = MasterProtocol::create_alter_table_request(tablename, schema, force);
     if (!send_message(cbp, timer, event, label))
       continue;
     const uint8_t *ptr = event->payload + 4;
@@ -438,7 +438,7 @@ MasterClient::alter_table(const String &tablename, const String &schema,
 
 void
 MasterClient::alter_table(const String &tablename, const String &schema,
-                          Timer *timer) {
+                          bool force, Timer *timer) {
   Timer tmp_timer(m_timeout_ms);
   CommBufPtr cbp;
   EventPtr event;
@@ -448,7 +448,7 @@ MasterClient::alter_table(const String &tablename, const String &schema,
   initialize(timer, tmp_timer);
 
   while (!timer->expired()) {
-    cbp = MasterProtocol::create_alter_table_request(tablename, schema);
+    cbp = MasterProtocol::create_alter_table_request(tablename, schema, force);
     if (!send_message(cbp, timer, event, label))
       continue;
     const uint8_t *ptr = event->payload + 4;
