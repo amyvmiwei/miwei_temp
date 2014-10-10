@@ -209,6 +209,12 @@ namespace Hypertable {
     /// @param len Length of data pointed to by <code>output</code>
     void write_to_stderr(const char *output, size_t len);
 
+    /// Determines if data available on socket for reading
+    /// Checks socket descriptor #m_sd to see if there is any data available for
+    /// reading.
+    /// @return <i>true</i> if data is available, <i>false</i> otherwise
+    bool socket_has_data();
+
     /// Flag for enabling debugging output.
     static bool ms_debug_enabled;
 
