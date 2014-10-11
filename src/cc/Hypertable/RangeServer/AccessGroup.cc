@@ -477,10 +477,8 @@ void AccessGroup::measure_garbage(double *total, double *garbage) {
   while (mscanner->get(key, value))
     mscanner->forward();
 
-  uint64_t input, output;
-  mscanner->get_io_accounting_data(&input, &output);
-  *total = (double)input;
-  *garbage = (double)(input - output);
+  *total = (double)mscanner->get_input_bytes();
+  *garbage = *total - (double)mscanner->get_output_bytes();
 }
 
 

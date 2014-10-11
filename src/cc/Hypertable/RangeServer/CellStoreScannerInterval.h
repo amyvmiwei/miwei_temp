@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -33,7 +33,7 @@ namespace Hypertable {
     virtual void forward() = 0;
     virtual bool get(Key &key, ByteString &value) = 0;
     virtual ~CellStoreScannerInterval() { }
-    uint64_t get_disk_read() { return m_disk_read; }
+    int64_t get_disk_read() { return m_disk_read; }
 
   protected:
     struct BlockInfo {

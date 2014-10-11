@@ -188,8 +188,8 @@ bool CellStoreScanner<IndexT>::get(Key &key, ByteString &value) {
 }
 
 template <typename IndexT>
-uint64_t CellStoreScanner<IndexT>::get_disk_read() {
-  uint64_t amount = 0;
+int64_t CellStoreScanner<IndexT>::get_disk_read() {
+  int64_t amount = 0;
   for (size_t i=0; i<m_interval_max; i++)
     amount += m_interval_scanners[i]->get_disk_read();
   return amount;

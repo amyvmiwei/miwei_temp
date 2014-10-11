@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -74,27 +74,23 @@ namespace Hypertable {
       m_release_callback = cb;
     }
 
-    void io_add_input_cell(uint64_t cur_bytes) {
+    void io_add_input_cell(int64_t cur_bytes) {
       m_bytes_input += cur_bytes;
       m_cells_input++;
     }
 
-    void io_add_output_cell(uint64_t cur_bytes) {
+    void io_add_output_cell(int64_t cur_bytes) {
       m_bytes_output += cur_bytes;
       m_cells_output++;
     }
 
-    void get_io_accounting_data(uint64_t *inbytesp, uint64_t *outbytesp,
-                                uint64_t *incellsp=0, uint64_t *outcellsp=0) {
-      *inbytesp = m_bytes_input;
-      *outbytesp = m_bytes_output;
-      if (incellsp)
-        *incellsp = m_cells_input;
-      if (outcellsp)
-        *outcellsp = m_cells_output;
-    }
+    virtual int64_t get_input_cells() { return m_cells_input; }
+    virtual int64_t get_output_cells() { return m_cells_output; }
 
-    virtual uint64_t get_disk_read();
+    virtual int64_t get_input_bytes() { return m_bytes_input; }
+    virtual int64_t get_output_bytes() { return m_bytes_output; }
+
+    virtual int64_t get_disk_read();
 
   protected:
     void initialize();
@@ -113,10 +109,10 @@ namespace Hypertable {
     CellStoreReleaseCallback m_release_callback;
 
   private:
-    uint64_t m_bytes_input {};
-    uint64_t m_bytes_output {};
-    uint64_t m_cells_input {};
-    uint64_t m_cells_output {};
+    int64_t m_bytes_input {};
+    int64_t m_bytes_output {};
+    int64_t m_cells_input {};
+    int64_t m_cells_output {};
   };
 
   typedef boost::intrusive_ptr<MergeScanner> MergeScannerPtr;

@@ -68,11 +68,10 @@ MergeScanner::get(Key &key, ByteString &value) {
   return do_get(key, value);
 }
 
-uint64_t 
-MergeScanner::get_disk_read() {
-  uint64_t amount = m_disk_read;
+int64_t MergeScanner::get_disk_read() {
+  int64_t amount = m_disk_read;
   for (size_t i=0; i<m_scanners.size(); i++)
-    amount += m_scanners[i]->get_disk_read();
+    amount += (int64_t)m_scanners[i]->get_disk_read();
   return amount;
 }
 

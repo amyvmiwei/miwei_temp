@@ -42,8 +42,8 @@ namespace Hypertable {
 
     ScanContext *scan_context() { return m_scan_context_ptr.get(); }
 
-    virtual uint64_t get_disk_read() = 0;
-    void add_disk_read(uint64_t amount) { m_disk_read += amount; }
+    virtual int64_t get_disk_read() = 0;
+    void add_disk_read(int64_t amount) { m_disk_read += amount; }
 
   protected:
     uint64_t m_disk_read;

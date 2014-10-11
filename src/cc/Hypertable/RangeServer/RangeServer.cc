@@ -1463,7 +1463,6 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
     range->decrement_scan_counter();
     decrement_needed = false;
 
-    uint64_t cells_scanned, cells_returned, bytes_scanned, bytes_returned;
     uint32_t cell_count {};
 
     more = FillScanBlock(scanner, rbuf, &cell_count, m_scanner_buffer_size);
@@ -1472,13 +1471,13 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     assert(mscanner);
 
-    mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
-                                     &cells_scanned, &cells_returned);
-    profile_data.cells_scanned = cells_scanned;
-    profile_data.cells_returned = cells_returned;
-    profile_data.bytes_scanned = bytes_scanned;
-    profile_data.bytes_returned = bytes_returned;
+    profile_data.cells_scanned = mscanner->get_input_cells();
+    profile_data.cells_returned = mscanner->get_output_cells();
+    profile_data.bytes_scanned = mscanner->get_input_bytes();
+    profile_data.bytes_returned = mscanner->get_output_bytes();
     profile_data.disk_read = mscanner->get_disk_read();
+
+    int64_t output_cells = mscanner->get_output_cells();
 
     {
       Locker<LoadStatistics> lock(*Global::load_statistics);
@@ -1508,7 +1507,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     if (table->is_metadata())
       HT_INFOF("Successfully created scanner (id=%u) on table '%s', returning "
-               "%lld k/v pairs, more=%lld", id, table->id, (Lld)cells_returned, (Lld) more);
+               "%lld k/v pairs, more=%lld", id, table->id,
+               (Lld)output_cells, (Lld) more);
 
     /**
      *  Send back data
@@ -1599,7 +1599,6 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
                 (Lld)schema->get_generation(), (Lld)scanner_table.generation);
     }
 
-    uint64_t cells_scanned, cells_returned, bytes_scanned, bytes_returned;
     uint32_t cell_count {};
 
     more = FillScanBlock(scanner, rbuf, &cell_count, m_scanner_buffer_size);
@@ -1608,13 +1607,13 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
     assert(mscanner);
 
-    mscanner->get_io_accounting_data(&bytes_scanned, &bytes_returned,
-                                     &cells_scanned, &cells_returned);
-    profile_data.cells_scanned = cells_scanned;
-    profile_data.cells_returned = cells_returned;
-    profile_data.bytes_scanned = bytes_scanned;
-    profile_data.bytes_returned = bytes_returned;
+    profile_data.cells_scanned = mscanner->get_input_cells();
+    profile_data.cells_returned = mscanner->get_output_cells();
+    profile_data.bytes_scanned = mscanner->get_input_bytes();
+    profile_data.bytes_returned = mscanner->get_output_bytes();
     profile_data.disk_read = mscanner->get_disk_read();
+
+    int64_t output_cells = mscanner->get_output_cells();
 
     if (!more) {
       Global::scanner_map.remove(scanner_id);
@@ -1650,7 +1649,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
         HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
 
       HT_DEBUGF("Successfully fetched %u bytes (%lld k/v pairs) of scan data",
-                ext.size-4, (Lld)cells_returned);
+                ext.size-4, (Lld)output_cells);
     }
 
   }

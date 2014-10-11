@@ -25,6 +25,8 @@
 /// performing a scan over a range.
 
 #include <Common/Compat.h>
+
+#include "MergeScannerAccessGroup.h"
 #include "MergeScannerRange.h"
 
 #include <Hypertable/Lib/Key.h>
@@ -74,6 +76,29 @@ MergeScannerRange::MergeScannerRange(const string &table_id, ScanContextPtr &sca
     }
   }
 }
+
+int64_t MergeScannerRange::get_input_cells() {
+  MergeScannerAccessGroup *ag_merge_scanner;
+  int64_t cells = 0;
+  for (auto scanner : m_scanners) {
+    ag_merge_scanner = dynamic_cast<MergeScannerAccessGroup *>(scanner);
+    HT_ASSERT(ag_merge_scanner);
+    cells += ag_merge_scanner->get_input_cells();
+  }
+  return cells;
+}
+
+int64_t MergeScannerRange::get_input_bytes() {
+  MergeScannerAccessGroup *ag_merge_scanner;
+  int64_t bytes = 0;
+  for (auto scanner : m_scanners) {
+    ag_merge_scanner = dynamic_cast<MergeScannerAccessGroup *>(scanner);
+    HT_ASSERT(ag_merge_scanner);
+    bytes += ag_merge_scanner->get_input_bytes();
+  }
+  return bytes;
+}
+
 
 bool 
 MergeScannerRange::do_get(Key &key, ByteString &value) 

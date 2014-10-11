@@ -57,6 +57,11 @@ namespace Hypertable {
       return m_row_skipped;
     }
 
+    int64_t get_input_cells() override;
+
+    int64_t get_input_bytes() override;
+
+
   protected:
     virtual bool do_get(Key &key, ByteString &value);
     virtual void do_initialize();
