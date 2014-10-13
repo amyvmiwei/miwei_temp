@@ -1449,7 +1449,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
           HT_ERRORF("Problem sending OK response - %s", Error::get_text(error));
         range->decrement_scan_counter();
         Locker<LoadStatistics> lock(*Global::load_statistics);
-        Global::load_statistics->add_scan_data(1, cell_count, ext_len);
+        Global::load_statistics->add_cached_scan_data(1, cell_count, ext_len);
         return;
       }
     }
@@ -1481,8 +1481,11 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     {
       Locker<LoadStatistics> lock(*Global::load_statistics);
-      Global::load_statistics->add_scan_data(1, profile_data.cells_scanned,
-                                             profile_data.bytes_scanned);
+      Global::load_statistics->add_scan_data(1,
+                                             profile_data.cells_scanned,
+                                             profile_data.cells_returned,
+                                             profile_data.bytes_scanned,
+                                             profile_data.bytes_returned);
       range->add_read_data(profile_data.cells_scanned,
                            profile_data.cells_returned,
                            profile_data.bytes_scanned,
@@ -1628,8 +1631,11 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
     {
       Locker<LoadStatistics> lock(*Global::load_statistics);
-      Global::load_statistics->add_scan_data(0, profile_data.cells_scanned,
-                                             profile_data.bytes_scanned);
+      Global::load_statistics->add_scan_data(0,
+                                             profile_data.cells_scanned,
+                                             profile_data.cells_returned,
+                                             profile_data.bytes_scanned,
+                                             profile_data.bytes_returned);
       range->add_read_data(profile_data.cells_scanned,
                            profile_data.cells_returned,
                            profile_data.bytes_scanned,
@@ -2413,7 +2419,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   m_loadavg_accum += m_stats->system.loadavg_stat.loadavg[0];
   m_page_in_accum += m_stats->system.swap_stat.page_in;
   m_page_out_accum += m_stats->system.swap_stat.page_out;
-  m_load_factors.bytes_scanned += load_stats.scan_bytes;
+  m_load_factors.bytes_scanned += load_stats.bytes_scanned;
   m_load_factors.bytes_written += load_stats.update_bytes;
   m_metric_samples++;
 
@@ -2421,8 +2427,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   m_stats->set_version(version_string());
   m_stats->timestamp = timestamp;
   m_stats->scan_count = load_stats.scan_count;
-  m_stats->scanned_cells = load_stats.scan_cells;
-  m_stats->scanned_bytes = load_stats.scan_bytes;
+  m_stats->scanned_cells = load_stats.cells_scanned;
+  m_stats->scanned_bytes = load_stats.bytes_scanned;
   m_stats->update_count = load_stats.update_count;
   m_stats->updated_cells = load_stats.update_cells;
   m_stats->updated_bytes = load_stats.update_bytes;
@@ -2665,13 +2671,33 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   m_metrics_process.collect(timestamp, m_ganglia_collector.get());
 
   m_ganglia_collector->update("scans",
-                            (float)load_stats.scan_count / period_seconds);
+                              (float)load_stats.scan_count / period_seconds);
   m_ganglia_collector->update("updates",
-                            (float)load_stats.update_count / period_seconds);
-  m_ganglia_collector->update("cellsRead",
-                            (float)load_stats.scan_cells / period_seconds);
+                              (float)load_stats.update_count / period_seconds);
+  m_ganglia_collector->update("cellsScanned",
+                              (float)load_stats.cells_scanned / period_seconds);
+  if (load_stats.cells_scanned > 0)
+    m_ganglia_collector->update("cellsScanYield",
+                                ((float)load_stats.cells_returned /
+                                 (float)load_stats.cells_scanned) * 100.0);
+  m_ganglia_collector->update("cellsReturned",
+                              (float)(load_stats.cells_returned +
+                                      load_stats.cached_cells_returned)
+                              / period_seconds);
   m_ganglia_collector->update("cellsWritten",
-                            (float)load_stats.update_cells / period_seconds);
+                              (float)load_stats.update_cells / period_seconds);
+  m_ganglia_collector->update("bytesScanned",
+                              (float)load_stats.bytes_scanned / period_seconds);
+  if (load_stats.bytes_scanned > 0)
+    m_ganglia_collector->update("bytesScanYield",
+                                ((float)load_stats.bytes_returned /
+                                 (float)load_stats.bytes_scanned) * 100.0);
+  m_ganglia_collector->update("bytesReturned",
+                              (float)(load_stats.bytes_returned +
+                                      load_stats.cached_bytes_returned)
+                              / period_seconds);
+  m_ganglia_collector->update("bytesWritten",
+                            (float)load_stats.update_bytes / period_seconds);
 
   m_ganglia_collector->update("compactions.major", load_stats.compactions_major);
   m_ganglia_collector->update("compactions.minor", load_stats.compactions_minor);
@@ -2710,6 +2736,8 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
     m_stats->query_cache_available_memory;
   m_ganglia_collector->update("queryCache.fill",
                             (float)query_cache_fill / 1000000000.0);
+
+  m_ganglia_collector->update("requestBacklog",(int32_t)m_app_queue->backlog());
 
   try {
     m_ganglia_collector->publish();

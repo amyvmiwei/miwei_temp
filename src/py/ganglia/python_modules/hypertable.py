@@ -455,14 +455,36 @@ def metric_init(params):
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
-        d = {'name': 'ht.rangeserver.cellsRead',
+        d = {'name': 'ht.rangeserver.cellsReturned',
              'call_back': metric_callback,
              'time_max': 90,
              'value_type': 'float',
              'units': 'cells/s',
              'slope': 'both',
              'format': '%f',
-             'description': 'Cells read per second',
+             'description': 'Cells returned per second',
+             'groups': 'hypertable RangeServer'}
+        descriptors.append(d);
+
+        d = {'name': 'ht.rangeserver.cellsScanned',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'cells/s',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Cells scanned per second',
+             'groups': 'hypertable RangeServer'}
+        descriptors.append(d);
+
+        d = {'name': 'ht.rangeserver.cellsScanYield',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': '%',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Cell scan yield',
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         
@@ -474,6 +496,61 @@ def metric_init(params):
              'slope': 'both',
              'format': '%f',
              'description': 'Cells written per second',
+             'groups': 'hypertable RangeServer'}
+        descriptors.append(d);
+
+        d = {'name': 'ht.rangeserver.bytesReturned',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'bytes/s',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Bytes returned per second',
+             'groups': 'hypertable RangeServer'}
+        descriptors.append(d);
+
+        d = {'name': 'ht.rangeserver.bytesScanned',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'bytes/s',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Bytes scanned per second',
+             'groups': 'hypertable RangeServer'}
+        descriptors.append(d);
+
+        d = {'name': 'ht.rangeserver.bytesScanYield',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': '%',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Byte scan yield',
+             'groups': 'hypertable RangeServer'}
+        descriptors.append(d);
+        
+        d = {'name': 'ht.rangeserver.bytesWritten',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'float',
+             'units': 'bytes/s',
+             'slope': 'both',
+             'format': '%f',
+             'description': 'Bytes written per second',
+             'groups': 'hypertable RangeServer'}
+        descriptors.append(d);
+
+        d = {'name': 'ht.rangeserver.requestBacklog',
+             'call_back': metric_callback,
+             'time_max': 90,
+             'value_type': 'uint',
+             'units': 'requests',
+             'slope': 'both',
+             'format': '%u',
+             'description': 'Request backlog',
              'groups': 'hypertable RangeServer'}
         descriptors.append(d);
         

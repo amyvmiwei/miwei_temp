@@ -94,11 +94,11 @@ public class MetricsHandler implements DispatchHandler {
       mMetricsCollectorGanglia.update("type", "hadoop");
       synchronized (this) {
         mMetricsCollectorGanglia.update("errors", mErrors);
-        double sps = (double)mSyncs / (double)elapsed_seconds;
-        mMetricsCollectorGanglia.update("syncs", sps);
-        int avgSyncLatency = (mSyncs > 0) ? mSyncLatency/mSyncs : 0;
-        mMetricsCollectorGanglia.update("syncLatency", avgSyncLatency);
         if (elapsed_millis > 0) {
+          double sps = (double)mSyncs / (double)elapsed_seconds;
+          mMetricsCollectorGanglia.update("syncs", sps);
+          int avgSyncLatency = (mSyncs > 0) ? mSyncLatency/mSyncs : 0;
+          mMetricsCollectorGanglia.update("syncLatency", avgSyncLatency);
           long mbps = (mBytesRead / 1000000) / elapsed_seconds;
           mMetricsCollectorGanglia.update("readThroughput", (int)mbps);
           mbps = (mBytesWritten / 1000000) / elapsed_seconds;
@@ -187,6 +187,6 @@ public class MetricsHandler implements DispatchHandler {
   private int mSyncs = 0;
 
   /** Error count since last metrics collection */
-  private long mErrors = 0;
+  private int mErrors = 0;
 
 }

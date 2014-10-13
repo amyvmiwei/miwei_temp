@@ -57,24 +57,30 @@ namespace Hypertable {
       /** Resets members to zero */
       void clear() {
         scan_count = update_count = sync_count = 0;
-        scan_cells = update_cells = 0;
-        scan_bytes = update_bytes = 0;
+        cells_scanned = cells_returned = cached_cells_returned = 0;
+        bytes_scanned = bytes_returned = cached_bytes_returned = 0;
+        update_count = update_cells = 0;
+        update_bytes = 0;
         scan_mbps = 0.0;
         update_mbps = 0.0;
         period_millis = 0;
         compactions_major = compactions_minor =
           compactions_merging = compactions_gc = 0;
       }
-      uint32_t scan_count;    //!< Scan count
-      uint32_t scan_cells;    //!< Cells scanned
-      uint64_t scan_bytes;    //!< Bytes scanned
-      uint32_t update_count;  //!< Update count
-      uint32_t update_cells;  //!< Cells updated
-      uint64_t update_bytes;  //!< Bytes updated
-      double scan_mbps;       //!< Megabytes/s scanned
-      double update_mbps;     //!< Megabytes/s updated
-      uint32_t sync_count;    //!< Sync count
-      int64_t period_millis;  //!< Time period over which stats are computed
+      uint32_t scan_count;     //!< Scan count
+      uint32_t cells_scanned;  //!< Cells scanned
+      uint32_t cached_cells_returned;  //!< Cached cells returned
+      uint32_t cells_returned; //!< Cells returned
+      uint64_t bytes_scanned;  //!< Bytes scanned
+      uint64_t cached_bytes_returned;  //!< Cached bytes returned
+      uint64_t bytes_returned; //!< Bytes returned
+      uint32_t update_count;   //!< Update count
+      uint32_t update_cells;   //!< Cells updated
+      uint64_t update_bytes;   //!< Bytes updated
+      double scan_mbps;        //!< Megabytes/s scanned
+      double update_mbps;      //!< Megabytes/s updated
+      uint32_t sync_count;     //!< Sync count
+      int64_t period_millis;   //!< Time period over which stats are computed
       int32_t compactions_major;
       int32_t compactions_minor;
       int32_t compactions_merging;
@@ -100,14 +106,33 @@ namespace Hypertable {
 
     /** Adds scan data to #m_running statistics bundle.
      * @param count Scan count
-     * @param cells Count of cells scanned
-     * @param total_bytes Count of bytes scanned
+     * @param cells_scanned Count of cells scanned
+     * @param cells_returned Count of cells returned
+     * @param bytes_scanned Count of bytes scanned
+     * @param bytes_returned Count of bytes returned
      * @warning This method must be called with #m_mutex locked
      */
-    void add_scan_data(uint32_t count, uint32_t cells, uint64_t total_bytes) {
+    void add_scan_data(uint32_t count, uint32_t cells_scanned,
+                       uint32_t cells_returned, uint64_t bytes_scanned,
+                       uint64_t bytes_returned) {
       m_running.scan_count += count;
-      m_running.scan_cells += cells;
-      m_running.scan_bytes += total_bytes;
+      m_running.cells_scanned += cells_scanned;
+      m_running.cells_returned += cells_returned;
+      m_running.bytes_scanned += bytes_scanned;
+      m_running.bytes_returned += bytes_returned;
+    }
+
+    /** Adds cached scan data to #m_running statistics bundle.
+     * @param count Scan count
+     * @param cached_cells_returned Count of cached cells returned
+     * @param cached_bytes_returned Count of cached bytes returned
+     * @warning This method must be called with #m_mutex locked
+     */
+    void add_cached_scan_data(uint32_t count, uint32_t cached_cells_returned,
+                              uint64_t cached_bytes_returned) {
+      m_running.scan_count += count;
+      m_running.cached_cells_returned += cached_cells_returned;
+      m_running.cached_bytes_returned += cached_bytes_returned;
     }
 
     /** Adds scan data to #m_running statistics bundle.
@@ -168,7 +193,7 @@ namespace Hypertable {
         double time_diff = (double)m_computed.period_millis * 1000.0;
         if (time_diff) {
           m_computed.scan_mbps =
-            (double)m_computed.scan_bytes / time_diff;
+            (double)m_computed.bytes_scanned / time_diff;
           m_computed.update_mbps =
             (double)m_computed.update_bytes / time_diff;
         }
@@ -181,8 +206,8 @@ namespace Hypertable {
         m_running.clear();
 
         HT_INFOF("scans=(%u %u %llu %f) updates=(%u %u %llu %f %u)",
-                 m_computed.scan_count, m_computed.scan_cells,
-                 (Llu)m_computed.scan_bytes, m_computed.scan_mbps,
+                 m_computed.scan_count, m_computed.cells_scanned,
+                 (Llu)m_computed.bytes_scanned, m_computed.scan_mbps,
                  m_computed.update_count, m_computed.update_cells,
                  (Llu)m_computed.update_bytes, m_computed.update_mbps,
                  m_computed.sync_count);

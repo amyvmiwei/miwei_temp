@@ -476,6 +476,15 @@ namespace Hypertable {
     virtual void add_unlocked(ApplicationHandler *app_handler) {
       add(app_handler);
     }
+
+    /// Returns the request backlog
+    /// Returns the request backlog, which is the number of requests waiting on
+    /// the request queues for a thread to become available
+    /// @return Request backlog
+    size_t backlog() {
+      ScopedLock lock(m_state.mutex);
+      return m_state.queue.size() + m_state.urgent_queue.size();
+    }
   };
 
   /// Smart pointer to ApplicationQueue object

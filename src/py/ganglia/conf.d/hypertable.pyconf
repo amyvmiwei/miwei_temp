@@ -185,12 +185,40 @@ collection_group {
     title = "RangeServer Updates"
   }
   metric {
-    name = "ht.rangeserver.cellsRead"
-    title = "RangeServer Cells Read"
+    name = "ht.rangeserver.cellsReturned"
+    title = "RangeServer Cells Returned"
+  }
+  metric {
+    name = "ht.rangeserver.cellsScanned"
+    title = "RangeServer Cells Scanned"
+  }
+  metric {
+    name = "ht.rangeserver.cellsScanYield"
+    title = "RangeServer Cell Scan Yield"
   }
   metric {
     name = "ht.rangeserver.cellsWritten"
     title = "RangeServer Cells Written"
+  }
+  metric {
+    name = "ht.rangeserver.bytesReturned"
+    title = "RangeServer Bytes Returned"
+  }
+  metric {
+    name = "ht.rangeserver.bytesScanned"
+    title = "RangeServer Bytes Scanned"
+  }
+  metric {
+    name = "ht.rangeserver.bytesScanYield"
+    title = "RangeServer Byte Scan Yield"
+  }
+  metric {
+    name = "ht.rangeserver.bytesWritten"
+    title = "RangeServer Bytes Written"
+  }
+  metric {
+    name = "ht.rangeserver.requestBacklog"
+    title = "RangeServer Request Backlog"
   }
   metric {
     name = "ht.rangeserver.compactions.major"
