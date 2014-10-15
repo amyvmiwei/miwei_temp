@@ -26,7 +26,10 @@
 
 
 #include <Common/Compat.h>
+
 #include "IndexUpdater.h"
+
+#include <Hypertable/RangeServer/Global.h>
 
 #include <Hypertable/Lib/IndexTables.h>
 #include <Hypertable/Lib/LoadDataEscape.h>
@@ -50,27 +53,22 @@ public:
 
 IndexUpdater::IndexUpdater(SchemaPtr &primary_schema, TablePtr index_table, 
                            TablePtr qualifier_index_table)
-  : m_index_mutator(0), m_qualifier_index_mutator(0), m_highest_column_id(0)
-{
+  : m_index_mutator(0), m_qualifier_index_mutator(0) {
   m_cb = new IndexUpdaterCallback();
   if (index_table)
     m_index_mutator = index_table->create_mutator_async(m_cb);
   if (qualifier_index_table)
-    m_qualifier_index_mutator = qualifier_index_table->create_mutator_async(m_cb);
+    m_qualifier_index_mutator =qualifier_index_table->create_mutator_async(m_cb);
   memset(&m_index_map[0], 0, sizeof(m_index_map));
   memset(&m_qualifier_index_map[0], 0, sizeof(m_qualifier_index_map));
 
   for (auto cf_spec : primary_schema->get_column_families()) {
     if (!cf_spec || cf_spec->get_deleted())
       continue;
-    if (cf_spec->get_id() > m_highest_column_id)
-      m_highest_column_id = cf_spec->get_id();
-
     if (cf_spec->get_value_index())
       m_index_map[cf_spec->get_id()] = true;
     if (cf_spec->get_qualifier_index())
       m_qualifier_index_map[cf_spec->get_id()] = true;
-    m_cf_namemap[cf_spec->get_id()] = cf_spec->get_name();
   }
 }
 
@@ -140,7 +138,8 @@ IndexUpdaterPtr IndexUpdaterFactory::create(const String &table_id,
 
   if ((has_index && index_table) 
         && (has_qualifier_index && qualifier_index_table)) {
-    return std::make_shared<IndexUpdater>(schema, index_table, qualifier_index_table);
+    return std::make_shared<IndexUpdater>(schema, index_table,
+                                          qualifier_index_table);
   }
 
   // at least one index table was not cached: load it
@@ -176,7 +175,8 @@ IndexUpdaterPtr IndexUpdaterFactory::create(const String &table_id,
   }
 
   if (index_table || qualifier_index_table)
-    return std::make_shared<IndexUpdater>(schema, index_table, qualifier_index_table);
+    return std::make_shared<IndexUpdater>(schema, index_table,
+                                          qualifier_index_table);
   else
     return IndexUpdaterPtr(0);
 }

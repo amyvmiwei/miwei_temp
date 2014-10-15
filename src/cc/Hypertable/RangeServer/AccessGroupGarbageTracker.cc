@@ -91,20 +91,24 @@ AccessGroupGarbageTracker::update_cellstore_info(vector<CellStoreInfo> &stores,
   }
 }
 
-void AccessGroupGarbageTracker::output_state(std::ofstream &out, const std::string &label) {
+void AccessGroupGarbageTracker::output_state(std::ofstream &out,
+                                             const std::string &label) {
   ScopedLock lock(m_mutex);
   out << label << "\telapsed_target\t" << m_elapsed_target << "\n";
   out << label << "\tlast_collection_time\t" << m_last_collection_time << "\n";
   out << label << "\tstored_deletes\t" << m_stored_deletes << "\n";
   out << label << "\tstored_expirable\t" << m_stored_expirable << "\n";
-  out << label << "\tlast_collection_disk_usage\t" << m_last_collection_disk_usage << "\n";
+  out << label << "\tlast_collection_disk_usage\t"
+      << m_last_collection_disk_usage << "\n";
   out << label << "\tcurrent_disk_usage\t" << m_current_disk_usage << "\n";
   out << label << "\taccum_data_target\t" << m_accum_data_target << "\n";
   out << label << "\tmin_ttl\t" << m_min_ttl << "\n";
-  out << label << "\thave_max_versions\t" << (m_have_max_versions ? "true" : "false") << "\n";
+  out << label << "\thave_max_versions\t"
+      << (m_have_max_versions ? "true" : "false") << "\n";
   out << label << "\tin_memory\t" << (m_in_memory ? "true" : "false") << "\n";
   out << label << "\tdelete_count\t" << compute_delete_count() << "\n";
-  out << label << "\tmemory_accumulated\t" << memory_accumulated_since_collection() << "\n";
+  out << label << "\tmemory_accumulated\t"
+      << memory_accumulated_since_collection() << "\n";
 }
 
 
@@ -117,8 +121,10 @@ bool AccessGroupGarbageTracker::check_needed(time_t now) {
 
 
 void
-AccessGroupGarbageTracker::adjust_targets(time_t now, MergeScanner *mscanner) {
-  if (mscanner && (mscanner->get_flags() & MergeScanner::RETURN_DELETES) == 0) {
+AccessGroupGarbageTracker::adjust_targets(time_t now,
+                                          MergeScannerAccessGroup *mscanner) {
+  if (mscanner && (mscanner->get_flags() &
+                   MergeScannerAccessGroup::RETURN_DELETES) == 0) {
     double input = (double)mscanner->get_input_bytes();
     double garbage = input - (double)mscanner->get_output_bytes();
     adjust_targets(now, input, garbage);
@@ -146,7 +152,8 @@ AccessGroupGarbageTracker::adjust_targets(time_t now, double total,
   if (have_garbage && check_deletes != gc_needed) {
     if (garbage_ratio > 0) {
       int64_t new_accum_data_target =
-        (total_accumulated_since_collection() * m_garbage_threshold) / garbage_ratio;
+        (total_accumulated_since_collection() * m_garbage_threshold)
+        / garbage_ratio;
       if (!gc_needed)
         new_accum_data_target *= 1.15;
       if (new_accum_data_target < m_accum_data_target_minimum)

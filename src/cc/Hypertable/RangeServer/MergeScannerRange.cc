@@ -38,12 +38,9 @@
 using namespace Hypertable;
 using namespace std;
 
-MergeScannerRange::MergeScannerRange(const string &table_id, ScanContextPtr &scan_ctx) 
-  : MergeScanner(scan_ctx), m_cell_offset(0), m_cell_skipped(0), 
-    m_cell_count(0), m_cell_limit(0), m_row_offset(0), m_row_skipped(0),
-    m_row_count(0), m_row_limit(0), m_cell_count_per_family(0), 
-    m_cell_limit_per_family(0), m_prev_key(0), m_prev_timestamp(TIMESTAMP_NULL),
-    m_prev_cf(-1), m_skip_this_row(false) {
+MergeScannerRange::MergeScannerRange(const string &table_id, ScanContextPtr &scan_ctx)
+  : m_scan_context(scan_ctx) {
+
   if (scan_ctx->spec != 0) {
     m_cell_limit = scan_ctx->spec->cell_limit;
     m_row_limit = scan_ctx->spec->row_limit;
@@ -77,100 +74,19 @@ MergeScannerRange::MergeScannerRange(const string &table_id, ScanContextPtr &sca
   }
 }
 
-int64_t MergeScannerRange::get_input_cells() {
-  MergeScannerAccessGroup *ag_merge_scanner;
-  int64_t cells = 0;
-  for (auto scanner : m_scanners) {
-    ag_merge_scanner = dynamic_cast<MergeScannerAccessGroup *>(scanner);
-    HT_ASSERT(ag_merge_scanner);
-    cells += ag_merge_scanner->get_input_cells();
+MergeScannerRange::~MergeScannerRange() {
+  try {
+    for (auto scanner : m_scanners)
+      delete scanner;
   }
-  return cells;
-}
-
-int64_t MergeScannerRange::get_input_bytes() {
-  MergeScannerAccessGroup *ag_merge_scanner;
-  int64_t bytes = 0;
-  for (auto scanner : m_scanners) {
-    ag_merge_scanner = dynamic_cast<MergeScannerAccessGroup *>(scanner);
-    HT_ASSERT(ag_merge_scanner);
-    bytes += ag_merge_scanner->get_input_bytes();
+  catch (Hypertable::Exception &e) {
+    HT_ERROR_OUT << "Problem destroying MergeScannerRange : " << e
+                 << HT_END;
   }
-  return bytes;
 }
 
 
-bool 
-MergeScannerRange::do_get(Key &key, ByteString &value) 
-{
-  if (!m_queue.empty()) {
-    const ScannerState &sstate = m_queue.top();
-    key = sstate.key;
-    value = sstate.value;
-    return true;
-  }
-
-  return false;
-}
-
-void
-MergeScannerRange::do_initialize()
-{
-  int64_t cur_bytes;
-  ScannerState sstate;
-
-  if (m_queue.empty())
-    return;
-
-  sstate = m_queue.top();
-
-  // update I/O tracking
-  cur_bytes = sstate.key.length + sstate.value.length();
-  io_add_input_cell(cur_bytes);
-
-  // if a new cell was inserted then store the column family and the
-  // key; this is needed in do_forward() to figure out if the next row
-  // has a new column family or column qualifier
-  if (sstate.key.flag == FLAG_INSERT) {
-    assert(m_prev_key.fill()==0);
-
-    m_cell_count_per_family = 1;
-    m_prev_key.set(sstate.key.row, (sstate.key.flag_ptr+1)
-                   - (const uint8_t *)sstate.key.row);
-    m_prev_cf = sstate.key.column_family_code;
-    m_prev_timestamp = sstate.key.timestamp;
-
-    if (m_row_offset) {
-      m_skip_this_row = true;
-      m_row_skipped++;
-    }
-
-    if (m_cell_offset)
-      m_cell_skipped = 1;
-    else if (!m_row_offset && m_cell_limit)
-      m_cell_count = 1;
-
-    if (m_row_limit && !m_row_offset && !m_cell_offset)
-      m_row_count = 1;
-  }
-
-  // If this scan is for rebuilding indexes, update index with first key/value
-  if (m_index_updater) {
-    assert(sstate.key.flag == FLAG_INSERT);
-    m_index_updater->add(sstate.key, sstate.value);
-  }
-
-  // was OFFSET or CELL_OFFSET or index rebuild specified? then move forward and
-  // skip
-  if (m_cell_offset || m_row_offset || m_index_updater)
-    do_forward();
-  else
-    io_add_output_cell(cur_bytes);
-}
-
-void 
-MergeScannerRange::do_forward() 
-{
+void MergeScannerRange::forward() {
   int64_t cur_bytes;
   ScannerState sstate;
   Key key;
@@ -202,7 +118,6 @@ forward:
 
     // update the I/O tracking
     cur_bytes = sstate.key.length + sstate.value.length();
-    io_add_input_cell(cur_bytes);
 
     // If this scan is for rebuilding indexes, update indexes and continue
     if (m_index_updater) {
@@ -308,6 +223,117 @@ forward:
   if (m_cell_limit != 0 && m_cell_count > m_cell_limit)
     m_done = true;
 
-  if (!m_done)
-    io_add_output_cell(cur_bytes);
+  if (!m_done) {
+    m_cells_output++;
+    m_bytes_output += cur_bytes;
+  }
+}
+
+bool MergeScannerRange::get(Key &key, ByteString &value) {
+
+  if (!m_initialized)
+    initialize();
+
+  if (m_done)
+    return false;
+
+  if (!m_queue.empty()) {
+    const ScannerState &sstate = m_queue.top();
+    key = sstate.key;
+    value = sstate.value;
+    return true;
+  }
+
+  return false;
+}
+
+
+void MergeScannerRange::initialize() {
+  ScannerState sstate;
+
+  assert(!m_initialized);
+
+  while (!m_queue.empty())
+    m_queue.pop();
+
+  for (size_t i=0; i<m_scanners.size(); i++) {
+    if (m_scanners[i]->get(sstate.key, sstate.value)) {
+      sstate.scanner = m_scanners[i];
+      m_queue.push(sstate);
+    }
+  }
+
+  if (m_queue.empty())
+    return;
+
+  sstate = m_queue.top();
+
+  // update I/O tracking
+  int64_t cur_bytes = sstate.key.length + sstate.value.length();
+
+  // if a new cell was inserted then store the column family and the
+  // key; this is needed in forward() to figure out if the next row
+  // has a new column family or column qualifier
+  if (sstate.key.flag == FLAG_INSERT) {
+    assert(m_prev_key.fill()==0);
+
+    m_cell_count_per_family = 1;
+    m_prev_key.set(sstate.key.row, (sstate.key.flag_ptr+1)
+                   - (const uint8_t *)sstate.key.row);
+    m_prev_cf = sstate.key.column_family_code;
+    m_prev_timestamp = sstate.key.timestamp;
+
+    if (m_row_offset) {
+      m_skip_this_row = true;
+      m_row_skipped++;
+    }
+
+    if (m_cell_offset)
+      m_cell_skipped = 1;
+    else if (!m_row_offset && m_cell_limit)
+      m_cell_count = 1;
+
+    if (m_row_limit && !m_row_offset && !m_cell_offset)
+      m_row_count = 1;
+  }
+
+  // If this scan is for rebuilding indexes, update index with first key/value
+  if (m_index_updater) {
+    assert(sstate.key.flag == FLAG_INSERT);
+    m_index_updater->add(sstate.key, sstate.value);
+  }
+
+  // was OFFSET or CELL_OFFSET or index rebuild specified? then move forward and
+  // skip
+  if (m_cell_offset || m_row_offset || m_index_updater)
+    forward();
+  else {
+    m_cells_output++;
+    m_bytes_output += cur_bytes;
+  }
+
+  m_initialized = true;
+}
+
+
+
+int64_t MergeScannerRange::get_input_cells() {
+  int64_t cells = 0;
+  for (auto scanner : m_scanners)
+    cells += scanner->get_input_cells();
+  return cells;
+}
+
+int64_t MergeScannerRange::get_input_bytes() {
+  int64_t bytes = 0;
+  for (auto scanner : m_scanners)
+    bytes += scanner->get_input_bytes();
+  return bytes;
+}
+
+int64_t MergeScannerRange::get_disk_read() {
+  int64_t amount = 0;
+  for (auto scanner : m_scanners)
+    amount += (int64_t)scanner->get_disk_read();
+  return amount;
 }

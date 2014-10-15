@@ -81,13 +81,14 @@ void CellCacheManager::add(CellListScannerPtr &scanner) {
   }
 }
 
-void CellCacheManager::add_immutable_scanner(MergeScanner *mscanner,
+void CellCacheManager::add_immutable_scanner(MergeScannerAccessGroup *mscanner,
                                              ScanContextPtr &scan_ctx) {
   if (m_immutable_cache)
     mscanner->add_scanner(m_immutable_cache->create_scanner(scan_ctx));
 }
 
-void CellCacheManager::add_scanners(MergeScanner *scanner, ScanContextPtr &scan_context) {
+void CellCacheManager::add_scanners(MergeScannerAccessGroup *scanner,
+                                    ScanContextPtr &scan_context) {
   if (!m_active_cache->empty())
     scanner->add_scanner(m_active_cache->create_scanner(scan_context));
   add_immutable_scanner(scanner, scan_context);

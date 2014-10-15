@@ -25,12 +25,12 @@
 /// that heuristically estimates how much garbage has accumulated in an access
 /// group and signals when collection is needed.
 
-#ifndef HYPERTABLE_ACCESSGROUPGARBAGETRACKER_H
-#define HYPERTABLE_ACCESSGROUPGARBAGETRACKER_H
+#ifndef Hypertable_RangeServer_AccessGroupGarbageTracker_h
+#define Hypertable_RangeServer_AccessGroupGarbageTracker_h
 
 #include <Hypertable/RangeServer/CellCacheManager.h>
 #include <Hypertable/RangeServer/CellStoreInfo.h>
-#include <Hypertable/RangeServer/MergeScanner.h>
+#include <Hypertable/RangeServer/MergeScannerAccessGroup.h>
 
 #include <Hypertable/Lib/Schema.h>
 
@@ -87,7 +87,7 @@ namespace Hypertable {
   /// </pre>
   /// The next step of the compaction routine is to perform the compaction:
   /// <pre>
-  /// %MergeScanner *mscanner = new %MergeScannerAccessGroup ...
+  /// %MergeScannerAccessGroup *mscanner = new %MergeScannerAccessGroup ...
   /// while (scanner->get(key, value)) {
   ///   ...
   ///   scanner->forward();
@@ -105,7 +105,8 @@ namespace Hypertable {
   /// update_cellstore_info() routine must be called to properly update the
   /// state of the garbage tracker.  For example:
   /// <pre>
-  /// bool gc_compaction = (mscanner->get_flags() & MergeScanner::RETURN_DELETES) == 0;
+  /// bool gc_compaction = (mscanner->get_flags() &
+  ///                       MergeScannerAccessGroup::RETURN_DELETES) == 0;
   /// garbage_tracker.update_cellstore_info(stores, now, gc_compaction);
   /// </pre>
   class AccessGroupGarbageTracker {
@@ -175,10 +176,11 @@ namespace Hypertable {
     /// The #m_accum_data_target value will be adjusted using the following
     /// computation:
     /// <pre>
-    /// (total_accumulated_since_collection() * #m_garbage_threshold) / measured_garbage_ratio
+    /// (total_accumulated_since_collection() * #m_garbage_threshold)
+    ///   / measured_garbage_ratio
     /// </pre>
-    /// If GC is not needed (but the check indicated that it was), then the value
-    /// of the above computation is multiplied by 1.15 which avoids micro
+    /// If GC is not needed (but the check indicated that it was), then the
+    /// value of the above computation is multiplied by 1.15 which avoids micro
     /// adjustments leading to a flurry of unnecessary garbage measurements as
     /// the amount of garbage gets close to the threshold.
     /// If the adjustment results in an increase, it is limited to double the
@@ -193,8 +195,8 @@ namespace Hypertable {
     /// time_t elapsed_time = now - #m_last_collection_time
     /// (elapsed_time * #m_garbage_threshold) / measured_garbage_ratio
     /// </pre>
-    /// If GC is not needed (but the check indicated that it was), then the value
-    /// of the above computation is multiplied by 1.15 which avoids micro
+    /// If GC is not needed (but the check indicated that it was), then the
+    /// value of the above computation is multiplied by 1.15 which avoids micro
     /// adjustments leading to a flurry of unnecessary garbage measurements as
     /// the amount of garbage gets close to the threshold.
     /// If the adjustment results in an increase, it is limited to double the
@@ -208,13 +210,13 @@ namespace Hypertable {
     /// Adjusts targets using statistics from a merge scanner used in a GC
     /// compaction.  This member function first checks mscanner to see if it
     /// was a GC compaction by checking its flags for the absence of the
-    /// MergeScanner::RETURN_DELETES, flag and if so, it retrieves the i/o
-    /// statistics from <code>mscanner</code> to determine the overall size and
-    /// amount of garbage removed during the merge scan and then calls
+    /// MergeScannerAccessGroup::RETURN_DELETES, flag and if so, it retrieves
+    /// the i/o statistics from <code>mscanner</code> to determine the overall
+    /// size and amount of garbage removed during the merge scan and then calls
     /// @ref adjust_targets
     /// @param now Current time to be used in elapsed time calculation
     /// @param mscanner Merge scanner used in a GC compaction
-    void adjust_targets(time_t now, MergeScanner *mscanner);
+    void adjust_targets(time_t now, MergeScannerAccessGroup *mscanner);
 
     /// Updates stored data statistics from current set of %CellStores.
     /// This method updates the #m_stored_expirable, #m_stored_deletes,
@@ -352,4 +354,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_ACCESSGROUPGARBAGETRACKER_H
+#endif // Hypertable_RangeServer_AccessGroupGarbageTracker_h

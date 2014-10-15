@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -24,15 +24,17 @@
 /// This file contains the type declarations for Range, a class used to
 /// access and manage a range of table data.
 
-#ifndef HYPERTABLE_RANGE_H
-#define HYPERTABLE_RANGE_H
+#ifndef Hypertable_RangeServer_Range_h
+#define Hypertable_RangeServer_Range_h
 
 #include <Hypertable/RangeServer/AccessGroup.h>
 #include <Hypertable/RangeServer/AccessGroupHintsFile.h>
+#include <Hypertable/RangeServer/CellList.h>
 #include <Hypertable/RangeServer/CellStore.h>
 #include <Hypertable/RangeServer/LoadFactors.h>
 #include <Hypertable/RangeServer/LoadMetricsRange.h>
 #include <Hypertable/RangeServer/MaintenanceFlag.h>
+#include <Hypertable/RangeServer/MergeScannerRange.h>
 #include <Hypertable/RangeServer/MetaLogEntityRange.h>
 #include <Hypertable/RangeServer/MetaLogEntityTask.h>
 #include <Hypertable/RangeServer/Metadata.h>
@@ -50,6 +52,7 @@
 #include <Hypertable/Lib/Types.h>
 
 #include <Common/Barrier.h>
+#include <Common/ReferenceCount.h>
 #include <Common/String.h>
 
 #include <map>
@@ -61,7 +64,7 @@ namespace Hypertable {
   /// @{
 
   /// Represents a table row range.
-  class Range : public CellList {
+  class Range : public ReferenceCount {
 
   public:
 
@@ -119,15 +122,14 @@ namespace Hypertable {
           const RangeSpec *, RangeSet *, const RangeState *, bool needs_compaction=false);
     Range(MasterClientPtr &, SchemaPtr &, MetaLogEntityRange *, RangeSet *);
     virtual ~Range() {}
-    virtual void add(const Key &key, const ByteString value);
-    virtual const char *get_split_row() { return 0; }
+    void add(const Key &key, const ByteString value);
 
     void lock();
     void unlock();
 
     MetaLogEntityRange *metalog_entity() { return m_metalog_entity.get(); }
 
-    CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
+    void create_scanner(ScanContextPtr &scan_ctx, MergeScannerRangePtr &scanner);
 
     /** Creates a scanner over the pseudo-table indicated by
      * <code>table_name</code>.  The following pseudo-tables are supported:
@@ -345,7 +347,7 @@ namespace Hypertable {
     void relinquish_compact();
     void relinquish_finalize();
 
-    bool estimate_split_row(SplitRowDataMapT &split_row_data, String &row);
+    bool estimate_split_row(CellList::SplitRowDataMapT &split_row_data, String &row);
 
     void split_install_log();
     void split_compact_and_shrink();
@@ -407,4 +409,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_RANGE_H
+#endif // Hypertable_RangeServer_Range_h

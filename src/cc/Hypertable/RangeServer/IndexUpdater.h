@@ -27,8 +27,7 @@
 #ifndef Hypertable_RangeServer_IndexUpdater_h
 #define Hypertable_RangeServer_IndexUpdater_h
 
-#include <Hypertable/RangeServer/Global.h>
-
+#include <Hypertable/Lib/ResultCallback.h>
 #include <Hypertable/Lib/Schema.h>
 #include <Hypertable/Lib/Table.h>
 #include <Hypertable/Lib/TableMutatorAsync.h>
@@ -41,8 +40,6 @@
 
 namespace Hypertable {
 
-  class ResultCallback;
-
   /// @addtogroup RangeServer
   /// @{
 
@@ -52,7 +49,8 @@ namespace Hypertable {
 
   public:
 
-    /// constructor; objects are created by IndexUpdaterFactory
+    /// Constructor.
+    /// Objects are created by IndexUpdaterFactory
     IndexUpdater(SchemaPtr &primary_schema, TablePtr index_table, 
                  TablePtr qualifier_index_table);
 
@@ -72,13 +70,17 @@ namespace Hypertable {
     void add(const Key &key, const ByteString &value);
 
   private:
+
+    /// Mutator for value index table
     TableMutatorAsync *m_index_mutator;
+
+    /// Mutator for qualifier index table
     TableMutatorAsync *m_qualifier_index_mutator;
-    ResultCallback    *m_cb;
-    bool               m_index_map[256];
-    bool               m_qualifier_index_map[256];
-    String             m_cf_namemap[256];
-    int32_t m_highest_column_id;
+
+    /// Async mutator callback object
+    ResultCallback *m_cb;
+    bool m_index_map[256];
+    bool m_qualifier_index_map[256];
   };
 
   /// Smart pointer to IndexUpdater.
@@ -87,11 +89,11 @@ namespace Hypertable {
   /// Factory class for creating IndexUpdater objects.
   class IndexUpdaterFactory {
   public:
-    // Factory function.
+    /// Factory function.
     static IndexUpdaterPtr create(const String &table_id, SchemaPtr &schema,
             bool has_index, bool has_qualifier_index);
 
-    // Cleanup function; called before leaving main()
+    /// Cleanup function; called before leaving main()
     static void close();
 
     /// Clears both value and qualifier caches

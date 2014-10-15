@@ -28,7 +28,7 @@
 #ifndef Hypertable_RangeServer_FillScanBlock_h
 #define Hypertable_RangeServer_FillScanBlock_h
 
-#include <Hypertable/RangeServer/CellListScanner.h>
+#include <Hypertable/RangeServer/MergeScannerRange.h>
 
 #include <Common/DynamicBuffer.h>
 
@@ -51,7 +51,7 @@ namespace Hypertable {
   /// @param buffer_size Target size of scan block
   /// @return <i>true</i> if there are more results to be pulled from the
   /// scanner when this function returns, <i>false</i> otherwise.
-  bool FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf,
+  bool FillScanBlock(MergeScannerRangePtr &scanner, DynamicBuffer &dbuf,
                      uint32_t *cell_count, int64_t buffer_size);
 
   /// @}

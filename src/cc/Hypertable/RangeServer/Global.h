@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -50,7 +50,6 @@
 #include "MemoryTracker.h"
 #include "MetaLogEntityTask.h"
 #include "MetaLogEntityRemoveOkLogs.h"
-#include "ScannerMap.h"
 #include "TableInfo.h"
 
 namespace Hypertable {
@@ -87,7 +86,6 @@ namespace Hypertable {
     static int32_t        access_group_garbage_compaction_threshold;
     static int32_t        access_group_max_mem;
     static int32_t        cell_cache_scanner_cache_size;
-    static ScannerMap     scanner_map;
     static Hypertable::FileBlockCache *block_cache;
     static TablePtr       metadata_table;
     static TablePtr       rs_metrics_table;

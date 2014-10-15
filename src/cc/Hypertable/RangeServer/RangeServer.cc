@@ -38,7 +38,6 @@
 #include <Hypertable/RangeServer/MaintenanceTaskCompaction.h>
 #include <Hypertable/RangeServer/MaintenanceTaskRelinquish.h>
 #include <Hypertable/RangeServer/MaintenanceTaskSplit.h>
-#include <Hypertable/RangeServer/MergeScanner.h>
 #include <Hypertable/RangeServer/MergeScannerRange.h>
 #include <Hypertable/RangeServer/MetaLogDefinitionRangeServer.h>
 #include <Hypertable/RangeServer/MetaLogEntityRange.h>
@@ -1368,7 +1367,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
   String errmsg;
   TableInfoPtr table_info;
   RangePtr range;
-  CellListScannerPtr scanner;
+  MergeScannerRangePtr scanner;
   bool more = true;
   uint32_t id = 0;
   SchemaPtr schema;
@@ -1458,7 +1457,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
                                scan_spec, range_spec, schema, &columns);
     scan_ctx->timeout_ms = cb->event()->header.timeout_ms;
 
-    scanner = range->create_scanner(scan_ctx);
+    range->create_scanner(scan_ctx, scanner);
 
     range->decrement_scan_counter();
     decrement_needed = false;
@@ -1467,17 +1466,13 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 
     more = FillScanBlock(scanner, rbuf, &cell_count, m_scanner_buffer_size);
 
-    MergeScanner *mscanner = dynamic_cast<MergeScanner*>(scanner.get());
+    profile_data.cells_scanned = scanner->get_input_cells();
+    profile_data.cells_returned = scanner->get_output_cells();
+    profile_data.bytes_scanned = scanner->get_input_bytes();
+    profile_data.bytes_returned = scanner->get_output_bytes();
+    profile_data.disk_read = scanner->get_disk_read();
 
-    assert(mscanner);
-
-    profile_data.cells_scanned = mscanner->get_input_cells();
-    profile_data.cells_returned = mscanner->get_output_cells();
-    profile_data.bytes_scanned = mscanner->get_input_bytes();
-    profile_data.bytes_returned = mscanner->get_output_bytes();
-    profile_data.disk_read = mscanner->get_disk_read();
-
-    int64_t output_cells = mscanner->get_output_cells();
+    int64_t output_cells = scanner->get_output_cells();
 
     {
       Locker<LoadStatistics> lock(*Global::load_statistics);
@@ -1493,13 +1488,12 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
                            profile_data.disk_read);
     }
 
-    MergeScannerRange *rscan=dynamic_cast<MergeScannerRange *>(scanner.get());
-    int skipped_rows = rscan ? rscan->get_skipped_rows() : 0;
-    int skipped_cells = rscan ? rscan->get_skipped_cells() : 0;
+    int skipped_rows = scanner->get_skipped_rows();
+    int skipped_cells = scanner->get_skipped_cells();
 
     if (more) {
       scan_ctx->deep_copy_specs();
-      id = Global::scanner_map.put(scanner, range, table, profile_data);
+      id = m_scanner_map.put(scanner, range, table, profile_data);
     }
     else {
       id = 0;
@@ -1559,7 +1553,7 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
 void
 RangeServer::destroy_scanner(ResponseCallback *cb, uint32_t scanner_id) {
   HT_DEBUGF("destroying scanner id=%u", scanner_id);
-  Global::scanner_map.remove(scanner_id);
+  m_scanner_map.remove(scanner_id);
   cb->response_ok();
 }
 
@@ -1568,7 +1562,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
         uint32_t scanner_id) {
   String errmsg;
   int error = Error::OK;
-  CellListScannerPtr scanner;
+  MergeScannerRangePtr scanner;
   RangePtr range;
   bool more = true;
   DynamicBuffer rbuf;
@@ -1582,7 +1576,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
   try {
 
-    if (!Global::scanner_map.get(scanner_id, scanner, range, scanner_table, &profile_data_before))
+    if (!m_scanner_map.get(scanner_id, scanner, range, scanner_table, &profile_data_before))
       HT_THROW(Error::RANGESERVER_INVALID_SCANNER_ID,
                format("scanner ID %d", scanner_id));
 
@@ -1595,7 +1589,7 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
     // verify schema
     if (schema->get_generation() != scanner_table.generation) {
-      Global::scanner_map.remove(scanner_id);
+      m_scanner_map.remove(scanner_id);
       HT_THROWF(Error::RANGESERVER_GENERATION_MISMATCH,
                "RangeServer Schema generation for table '%s' is %lld but "
                 "scanner has generation %lld", scanner_table.id,
@@ -1606,24 +1600,20 @@ RangeServer::fetch_scanblock(ResponseCallbackFetchScanblock *cb,
 
     more = FillScanBlock(scanner, rbuf, &cell_count, m_scanner_buffer_size);
 
-    MergeScanner *mscanner = dynamic_cast<MergeScanner*>(scanner.get());
+    profile_data.cells_scanned = scanner->get_input_cells();
+    profile_data.cells_returned = scanner->get_output_cells();
+    profile_data.bytes_scanned = scanner->get_input_bytes();
+    profile_data.bytes_returned = scanner->get_output_bytes();
+    profile_data.disk_read = scanner->get_disk_read();
 
-    assert(mscanner);
-
-    profile_data.cells_scanned = mscanner->get_input_cells();
-    profile_data.cells_returned = mscanner->get_output_cells();
-    profile_data.bytes_scanned = mscanner->get_input_bytes();
-    profile_data.bytes_returned = mscanner->get_output_bytes();
-    profile_data.disk_read = mscanner->get_disk_read();
-
-    int64_t output_cells = mscanner->get_output_cells();
+    int64_t output_cells = scanner->get_output_cells();
 
     if (!more) {
-      Global::scanner_map.remove(scanner_id);
+      m_scanner_map.remove(scanner_id);
       scanner.reset();
     }
     else
-      Global::scanner_map.update_profile_data(scanner_id, profile_data);
+      m_scanner_map.update_profile_data(scanner_id, profile_data);
 
     profile_data -= profile_data_before;
 
@@ -2582,7 +2572,7 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
 
   // collect outstanding scanner count and compute server cellstore total
   m_stats->file_count = 0;
-  Global::scanner_map.get_counts(&m_stats->scanner_count, table_scanner_count_map);
+  m_scanner_map.get_counts(&m_stats->scanner_count, table_scanner_count_map);
   for (size_t i=0; i<m_stats->tables.size(); i++) {
     m_stats->tables[i].scanner_count = table_scanner_count_map[m_stats->tables[i].table_id.c_str()];
     m_stats->file_count += m_stats->tables[i].file_count;
@@ -3613,7 +3603,7 @@ void RangeServer::do_maintenance() {
     boost::xtime now;
 
     // Purge expired scanners
-    Global::scanner_map.purge_expired(m_scanner_ttl);
+    m_scanner_map.purge_expired(m_scanner_ttl);
 
     // Set Low Memory mode
     bool low_memory_mode = m_timer_handler->low_memory_mode();

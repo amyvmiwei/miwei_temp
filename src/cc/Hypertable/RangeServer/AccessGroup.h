@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -24,8 +24,8 @@
 /// This file contains declarations for AccessGroup, a class for providing data
 /// management and queries over an access group of a range.
 
-#ifndef HYPERTABLE_ACCESSGROUP_H
-#define HYPERTABLE_ACCESSGROUP_H
+#ifndef Hypertable_RangeServer_AccessGroup_h
+#define Hypertable_RangeServer_AccessGroup_h
 
 #include <Hypertable/RangeServer/AccessGroupGarbageTracker.h>
 #include <Hypertable/RangeServer/CellCacheManager.h>
@@ -33,11 +33,13 @@
 #include <Hypertable/RangeServer/CellStoreInfo.h>
 #include <Hypertable/RangeServer/LiveFileTracker.h>
 #include <Hypertable/RangeServer/MaintenanceFlag.h>
+#include <Hypertable/RangeServer/MergeScannerAccessGroup.h>
 
 #include <Hypertable/Lib/Schema.h>
 #include <Hypertable/Lib/Types.h>
 
 #include <Common/PageArena.h>
+#include <Common/ReferenceCount.h>
 #include <Common/String.h>
 #include <Common/StringExt.h>
 
@@ -56,7 +58,8 @@ namespace Hypertable {
   /// @addtogroup RangeServer
   /// @{
 
-  class AccessGroup : public CellList {
+  /// Access group
+  class AccessGroup : public ReferenceCount {
 
   public:
 
@@ -130,11 +133,14 @@ namespace Hypertable {
                 AccessGroupSpec *ag_spec, const RangeSpec *range,
                 const Hints *hints=0);
 
-    virtual void add(const Key &key, const ByteString value);
+    /// Adds a key/value pair
+    /// @param key Key
+    /// @param value Value
+    void add(const Key &key, const ByteString value);
 
-    void split_row_estimate_data_cached(SplitRowDataMapT &split_row_data);
+    void split_row_estimate_data_cached(CellList::SplitRowDataMapT &split_row_data);
 
-    void split_row_estimate_data_stored(SplitRowDataMapT &split_row_data);
+    void split_row_estimate_data_stored(CellList::SplitRowDataMapT &split_row_data);
 
     /** Populates <code>scanner</code> with data for <i>.cellstore.index</i>
      * pseudo table.  For each CellStore that is part of the access group,
@@ -157,7 +163,7 @@ namespace Hypertable {
       m_mutex.unlock();
     }
 
-    CellListScanner *create_scanner(ScanContextPtr &scan_ctx);
+    MergeScannerAccessGroup *create_scanner(ScanContextPtr &scan_ctx);
 
     bool include_in_scan(ScanContextPtr &scan_ctx);
     uint64_t disk_usage();
@@ -298,4 +304,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_ACCESSGROUP_H
+#endif // Hypertable_RangeServer_AccessGroup_h

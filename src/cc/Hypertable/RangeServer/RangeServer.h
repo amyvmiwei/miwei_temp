@@ -42,6 +42,7 @@
 #include <Hypertable/RangeServer/ResponseCallbackGetStatistics.h>
 #include <Hypertable/RangeServer/ResponseCallbackPhantomUpdate.h>
 #include <Hypertable/RangeServer/ResponseCallbackUpdate.h>
+#include <Hypertable/RangeServer/ScannerMap.h>
 #include <Hypertable/RangeServer/TableInfo.h>
 #include <Hypertable/RangeServer/TableInfoMap.h>
 #include <Hypertable/RangeServer/TimerHandler.h>
@@ -269,6 +270,9 @@ namespace Hypertable {
     ConnectionHandler     *m_master_connection_handler;
     MasterClientPtr        m_master_client;
     Hyperspace::SessionPtr m_hyperspace;
+
+    /// Outstanding scanner map
+    ScannerMap m_scanner_map;
     uint32_t               m_scanner_ttl;
     uint64_t               m_bytes_loaded;
     uint64_t               m_log_roll_limit;

@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -27,6 +27,7 @@
 #include <Common/Compat.h>
 #include "Range.h"
 
+#include <Hypertable/RangeServer/CellList.h>
 #include <Hypertable/RangeServer/CellStoreFactory.h>
 #include <Hypertable/RangeServer/Global.h>
 #include <Hypertable/RangeServer/MergeScannerRange.h>
@@ -488,10 +489,9 @@ void Range::add(const Key &key, const ByteString value) {
 }
 
 
-CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
-  MergeScanner *mscanner = new MergeScannerRange(m_table.id, scan_ctx);
-  AccessGroupVector  ag_vector(0);
-
+void Range::create_scanner(ScanContextPtr &scan_ctx, MergeScannerRangePtr &scanner) {
+  scanner = std::make_shared<MergeScannerRange>(m_table.id, scan_ctx);
+  AccessGroupVector ag_vector(0);
 
   HT_ASSERT(m_initialized);
 
@@ -502,18 +502,16 @@ CellListScanner *Range::create_scanner(ScanContextPtr &scan_ctx) {
   }
 
   try {
-    for (size_t i=0; i<ag_vector.size(); ++i) {
-      if (ag_vector[i]->include_in_scan(scan_ctx))
-        mscanner->add_scanner(ag_vector[i]->create_scanner(scan_ctx));
+    for (auto & ag : ag_vector) {
+      if (ag->include_in_scan(scan_ctx))
+        scanner->add_scanner(ag->create_scanner(scan_ctx));
     }
   }
   catch (Exception &e) {
-    delete mscanner;
     HT_THROW2(e.code(), e, "");
   }
 
   // increment #scanners
-  return mscanner;
 }
 
 CellListScanner *Range::create_scanner_pseudo_table(ScanContextPtr &scan_ctx,
@@ -1023,8 +1021,8 @@ void Range::split_install_log() {
 
   {
     StlArena arena(128000);
-    SplitRowDataMapT split_row_data = 
-      SplitRowDataMapT(LtCstr(), SplitRowDataAlloc(arena));
+    CellList::SplitRowDataMapT split_row_data = 
+      CellList::SplitRowDataMapT(LtCstr(), CellList::SplitRowDataAlloc(arena));
 
     // Fetch CellStore block index split row data from
     foreach_ht (const AccessGroupPtr &ag, ag_vector)
@@ -1052,7 +1050,7 @@ void Range::split_install_log() {
     if (split_row.compare(end_row) >= 0 || split_row.compare(start_row) <= 0) {
       LoadDataEscape escaper;
       String escaped_start_row, escaped_end_row, escaped_split_row;
-      foreach_ht (SplitRowDataMapT::value_type &entry, split_row_data) {
+      foreach_ht (CellList::SplitRowDataMapT::value_type &entry, split_row_data) {
 	escaper.escape(entry.first, strlen(entry.first), escaped_split_row);
 	HT_ERRORF("[split_row_data] %lld %s", (Lld)entry.second, escaped_split_row.c_str());
       }
@@ -1146,11 +1144,11 @@ void Range::split_install_log() {
   HT_MAYBE_FAIL_X("metadata-split-1", m_is_metadata);
 }
 
-bool Range::estimate_split_row(SplitRowDataMapT &split_row_data, String &row) {
+bool Range::estimate_split_row(CellList::SplitRowDataMapT &split_row_data, String &row) {
 
   // Set target to half the total number of keys
   int64_t target = 0;
-  for (SplitRowDataMapT::iterator iter=split_row_data.begin();
+  for (CellList::SplitRowDataMapT::iterator iter=split_row_data.begin();
        iter != split_row_data.end(); ++iter)
     target += iter->second;
   target /= 2;
@@ -1160,7 +1158,7 @@ bool Range::estimate_split_row(SplitRowDataMapT &split_row_data, String &row) {
     return false;
 
   int64_t cumulative = 0;
-  for (SplitRowDataMapT::iterator iter=split_row_data.begin();
+  for (CellList::SplitRowDataMapT::iterator iter=split_row_data.begin();
        iter != split_row_data.end(); ++iter) {
     if (cumulative + iter->second >= target) {
       if (cumulative > 0)
@@ -1175,7 +1173,7 @@ bool Range::estimate_split_row(SplitRowDataMapT &split_row_data, String &row) {
   String end_row = m_metalog_entity->get_end_row();
   if (row.compare(end_row) >= 0) {
     row.clear();
-    for (SplitRowDataMapT::iterator iter=split_row_data.begin();
+    for (CellList::SplitRowDataMapT::iterator iter=split_row_data.begin();
          iter != split_row_data.end(); ++iter) {
       if (strcmp(iter->first, end_row.c_str()) < 0)
         row = iter->first;

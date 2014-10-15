@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2013 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,24 +19,35 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MERGESCANNERACCESSGROUP_H
-#define HYPERTABLE_MERGESCANNERACCESSGROUP_H
+/// @file
+/// Declarations for MergeScannerAccessGroup.
+/// This file contains the type declarations for MergeScannerAccessGroup, a
+/// class used to perform a scan over an access group.
 
+#ifndef Hypertable_RangeServer_MergeScannerAccessGroup_h
+#define Hypertable_RangeServer_MergeScannerAccessGroup_h
+
+#include "CellListScanner.h"
+#include "CellStoreReleaseCallback.h"
+#include "IndexUpdater.h"
+#include "ScanContext.h"
+
+#include <Common/ByteString.h>
+#include <Common/DynamicBuffer.h>
+
+#include <memory>
 #include <queue>
 #include <string>
 #include <vector>
 #include <set>
 
-#include "Common/ByteString.h"
-#include "Common/DynamicBuffer.h"
-
-#include "MergeScanner.h"
-#include "IndexUpdater.h"
-
-
 namespace Hypertable {
 
-  class MergeScannerAccessGroup : public MergeScanner {
+  /// @addtogroup RangeServer
+  /// @{
+
+  /// Merge scanner for access groups.
+  class MergeScannerAccessGroup {
 
     class RegexpInfo {
     public:
@@ -80,15 +91,74 @@ namespace Hypertable {
       bool last_column_match;
     };
 
-  public:
-    MergeScannerAccessGroup(String &table_name, ScanContextPtr &scan_ctx, uint32_t flags=0);
+    struct ScannerState {
+      CellListScanner *scanner;
+      Key key;
+      ByteString value;
+    };
 
-  protected:
-    virtual bool do_get(Key &key, ByteString &value);
-    virtual void do_initialize();
-    virtual void do_forward();
+    struct LtScannerState {
+      bool operator()(const ScannerState &ss1, const ScannerState &ss2) const {
+        return ss1.key.serial > ss2.key.serial;
+      }
+    };
+
+  public:
+
+    enum Flags {
+      RETURN_DELETES = 0x00000001,
+      IS_COMPACTION = 0x00000002,
+      ACCUMULATE_COUNTERS = 0x00000004
+    };
+
+    /// Constructor.
+    /// @param table_name Table name
+    /// @param scan_ctx Scan context
+    /// @param flags Flags
+    MergeScannerAccessGroup(String &table_name, ScanContextPtr &scan_ctx,
+                            uint32_t flags=0);
+
+    /// Destructor.
+    /// Destroys all scanners in #m_scanners and then calls #m_release_callback
+    virtual ~MergeScannerAccessGroup();
+
+    void add_scanner(CellListScanner *scanner) {
+      m_scanners.push_back(scanner);
+    }
+
+    void forward();
+
+    bool get(Key &key, ByteString &value);
+
+    uint32_t get_flags() { return m_flags; }
+
+    void install_release_callback(CellStoreReleaseCallback &cb) {
+      m_release_callback = cb;
+    }
+
+    void io_add_input_cell(int64_t cur_bytes) {
+      m_bytes_input += cur_bytes;
+      m_cells_input++;
+    }
+
+    void io_add_output_cell(int64_t cur_bytes) {
+      m_bytes_output += cur_bytes;
+      m_cells_output++;
+    }
+
+    int64_t get_input_cells() { return m_cells_input; }
+    int64_t get_output_cells() { return m_cells_output; }
+
+    int64_t get_input_bytes() { return m_bytes_input; }
+    int64_t get_output_bytes() { return m_bytes_output; }
+
+    void add_disk_read(int64_t amount) { m_disk_read += amount; }
+    int64_t get_disk_read();
 
   private:
+
+    void initialize();
+
     inline bool matches_deleted_row(const Key& key) const {
       size_t len = key.len_row();
 
@@ -237,9 +307,26 @@ namespace Hypertable {
 
     inline void purge_from_index(const Key &key, const ByteString &value) {
       HT_ASSERT(key.flag == FLAG_INSERT);
-      if (m_scan_context_ptr->cell_predicates[key.column_family_code].indexed)
+      if (m_scan_context->cell_predicates[key.column_family_code].indexed)
         m_index_updater->purge(key, value);
     }
+
+    CellStoreReleaseCallback m_release_callback;
+
+    uint32_t m_flags {};
+    bool m_done {};
+    bool m_initialized {};
+
+    std::vector<CellListScanner *>  m_scanners;
+    std::priority_queue<ScannerState, std::vector<ScannerState>,
+        LtScannerState> m_queue;
+
+
+    int64_t m_bytes_input {};
+    int64_t m_bytes_output {};
+    int64_t m_cells_input {};
+    int64_t m_cells_output {};
+    int64_t m_disk_read {};
 
     // if this is true, return a delete even if it doesn't satisfy
     // the ScanSpec timestamp/version requirement
@@ -280,6 +367,11 @@ namespace Hypertable {
 
   };
 
+  /// Shared pointer to MergeScannerAccessGroup
+  typedef std::shared_ptr<MergeScannerAccessGroup> MergeScannerAccessGroupPtr;
+
+  /// @}
+
 } // namespace Hypertable
 
-#endif // HYPERTABLE_MERGESCANNERACCESSGROUP_H
+#endif // Hypertable_RangeServer_MergeScannerAccessGroup_h

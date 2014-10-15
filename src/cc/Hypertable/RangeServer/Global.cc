@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -59,7 +59,6 @@ namespace Hypertable {
   int32_t                Global::access_group_garbage_compaction_threshold = 0;
   int32_t                Global::access_group_max_mem = 0;
   int32_t                Global::cell_cache_scanner_cache_size = 0;
-  ScannerMap             Global::scanner_map;
   FileBlockCache        *Global::block_cache = 0;
   TablePtr               Global::metadata_table = 0;
   TablePtr               Global::rs_metrics_table = 0;

@@ -1,5 +1,5 @@
 /* -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -24,13 +24,13 @@
 /// This file contains type declarations for CellCacheManager, a class for
 /// managing an access group's cell caches.
 
-#ifndef HYPERTABLE_CELLCACHEMANAGER_H
-#define HYPERTABLE_CELLCACHEMANAGER_H
+#ifndef Hypertable_RangeServer_CellCacheManager_h
+#define Hypertable_RangeServer_CellCacheManager_h
 
 #include <Hypertable/RangeServer/CellCache.h>
 #include <Hypertable/RangeServer/CellList.h>
 #include <Hypertable/RangeServer/CellListScanner.h>
-#include <Hypertable/RangeServer/MergeScanner.h>
+#include <Hypertable/RangeServer/MergeScannerAccessGroup.h>
 #include <Hypertable/RangeServer/ScanContext.h>
 
 #include <Hypertable/Lib/Schema.h>
@@ -111,7 +111,8 @@ namespace Hypertable {
     /// @param mscanner Merge scanner to which immutable cache scanner should be
     /// added
     /// @param scan_ctx Scan context for initializing immutable cache scanner
-    void add_immutable_scanner(MergeScanner *mscanner, ScanContextPtr &scan_ctx);
+    void add_immutable_scanner(MergeScannerAccessGroup *mscanner,
+                               ScanContextPtr &scan_ctx);
 
     /// Creates scanners on the active and immutable caches and adds them to a
     /// merge scanner.  If the active cache is not empty, a scanner is
@@ -121,7 +122,8 @@ namespace Hypertable {
     /// @param mscanner Merge scanner to which immutable cache scanner should be
     /// added
     /// @param scan_ctx Scan context for initializing scanners
-    void add_scanners(MergeScanner *scanner, ScanContextPtr &scan_context);
+    void add_scanners(MergeScannerAccessGroup *scanner
+                      , ScanContextPtr &scan_context);
 
     /// Populates map of split row data.
     /// This method calls CellCache::split_row_estimate_data() on both the
@@ -232,4 +234,4 @@ namespace Hypertable {
 
 } // namespace Hypertable;
 
-#endif // HYPERTABLE_CELLCACHEMANAGER_H
+#endif // Hypertable_RangeServer_CellCacheManager_h

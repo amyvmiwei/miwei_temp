@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -25,7 +25,7 @@
 namespace Hypertable {
 
   bool
-  FillScanBlock(CellListScannerPtr &scanner, DynamicBuffer &dbuf,
+  FillScanBlock(MergeScannerRangePtr &scanner, DynamicBuffer &dbuf,
                 uint32_t *cell_count, int64_t buffer_size) {
     Key key;
     ByteString value;

@@ -19,6 +19,11 @@
  * 02110-1301, USA.
  */
 
+/// @file
+/// Definitions for ScannerMap.
+/// This file contains the type definitions for ScannerMap, a class for holding
+/// outstanding range scanners.
+
 #include <Common/Compat.h>
 
 #include "ScannerMap.h"
@@ -30,7 +35,7 @@ atomic<int> ScannerMap::ms_next_id {};
 
 /**
  */
-uint32_t ScannerMap::put(CellListScannerPtr &scanner, RangePtr &range,
+uint32_t ScannerMap::put(MergeScannerRangePtr &scanner, RangePtr &range,
                          const TableIdentifier *table, ProfileDataScanner &profile_data) {
   ScopedLock lock(m_mutex);
   ScanInfo scaninfo;
@@ -49,7 +54,7 @@ uint32_t ScannerMap::put(CellListScannerPtr &scanner, RangePtr &range,
 /**
  */
 bool
-ScannerMap::get(uint32_t id, CellListScannerPtr &scanner, RangePtr &range,
+ScannerMap::get(uint32_t id, MergeScannerRangePtr &scanner, RangePtr &range,
                 TableIdentifierManaged &table,ProfileDataScanner *profile_data){
   ScopedLock lock(m_mutex);
   auto iter = m_scanner_map.find(id);

@@ -27,12 +27,13 @@
 #ifndef Hypertable_RangeServer_MergeScannerRange_h
 #define Hypertable_RangeServer_MergeScannerRange_h
 
-#include <Hypertable/RangeServer/MergeScanner.h>
+#include <Hypertable/RangeServer/MergeScannerAccessGroup.h>
 #include <Hypertable/RangeServer/IndexUpdater.h>
 
 #include <Common/ByteString.h>
 #include <Common/DynamicBuffer.h>
 
+#include <memory>
 #include <queue>
 #include <set>
 #include <string>
@@ -43,49 +44,108 @@ namespace Hypertable {
   /// @addtogroup RangeServer
   /// @{
 
-  /// Performas a scan over a range.
-  class MergeScannerRange : public MergeScanner {
+  /// Performs a scan over a range.
+  class MergeScannerRange {
 
   public:
     MergeScannerRange(const std::string &table_id, ScanContextPtr &scan_ctx);
 
-    int32_t get_skipped_cells() {
-      return m_cell_skipped;
+    /// Destructor.
+    /// Destroys all scanners in #m_scanners.
+    virtual ~MergeScannerRange();
+
+    void add_scanner(MergeScannerAccessGroup *scanner) {
+      m_scanners.push_back(scanner);
     }
 
-    int32_t get_skipped_rows() {
-      return m_row_skipped;
-    }
+    void forward();
 
-    int64_t get_input_cells() override;
+    bool get(Key &key, ByteString &value);
 
-    int64_t get_input_bytes() override;
+    int32_t get_skipped_cells() { return m_cell_skipped; }
 
+    int32_t get_skipped_rows() { return m_row_skipped; }
 
-  protected:
-    virtual bool do_get(Key &key, ByteString &value);
-    virtual void do_initialize();
-    virtual void do_forward();
+    /// Returns number of cells input.
+    /// Calls MergeScannerAccessGroup::get_input_cells() on each scanner in
+    /// #m_scanners and returns the aggregated result.
+    /// @return number of cells input.
+    int64_t get_input_cells();
+
+    /// Returns number of cells output.
+    /// Returns number of cells returned via calls to get().
+    /// @return Number of cells output.
+    int64_t get_output_cells() { return m_cells_output; }
+
+    /// Returns number of bytes input.
+    /// Calls MergeScannerAccessGroup::get_input_bytes() on each scanner in
+    /// #m_scanners and returns the aggregated result.
+    /// @return number of bytes input.
+    int64_t get_input_bytes();
+
+    /// Returns number of bytes output.
+    /// Returns number of bytes returned via calls to get().
+    /// @return Number of cells output.
+    int64_t get_output_bytes() { return m_bytes_output; }
+
+    int64_t get_disk_read();
+
+    ScanContext *scan_context() { return m_scan_context.get(); }
 
   private:
 
+    void initialize();
+
+    struct ScannerState {
+      MergeScannerAccessGroup *scanner;
+      Key key;
+      ByteString value;
+    };
+
+    struct LtScannerState {
+      bool operator()(const ScannerState &ss1, const ScannerState &ss2) const {
+        return ss1.key.serial > ss2.key.serial;
+      }
+    };
+
+    std::vector<MergeScannerAccessGroup *>  m_scanners;
+    std::priority_queue<ScannerState, std::vector<ScannerState>,
+                        LtScannerState> m_queue;
+
+    /// Scan context
+    ScanContextPtr m_scan_context;
+
     /// Index updater for <i>rebuild indices</i> scan
     IndexUpdaterPtr m_index_updater;
-    int32_t       m_cell_offset;
-    int32_t       m_cell_skipped;
-    int32_t       m_cell_count;
-    int32_t       m_cell_limit;
-    int32_t       m_row_offset;
-    int32_t       m_row_skipped;
-    int32_t       m_row_count;
-    int32_t       m_row_limit;
-    int32_t       m_cell_count_per_family;
-    int32_t       m_cell_limit_per_family;
+
+    /// Flag indicating scan is finished
+    bool m_done {};
+
+    /// Flag indicating if scan has been initialized
+    bool m_initialized {};
+
+    bool m_skip_this_row {};
+
+    int32_t m_cell_offset {};
+    int32_t m_cell_skipped {};
+    int32_t m_cell_count {};
+    int32_t m_cell_limit {};
+    int32_t m_row_offset {};
+    int32_t m_row_skipped {};
+    int32_t m_row_count {};
+    int32_t m_row_limit {};
+    int32_t m_cell_count_per_family {};
+    int32_t m_cell_limit_per_family {};
+    int32_t m_prev_cf {-1};
+    int64_t m_prev_timestamp {TIMESTAMP_NULL};
+    int64_t m_bytes_output {};
+    int64_t m_cells_output {};
     DynamicBuffer m_prev_key;
-    int64_t       m_prev_timestamp;
-    int32_t       m_prev_cf;
-    bool          m_skip_this_row;
+
   };
+
+  /// Smart pointer to MergeScannerRange
+  typedef std::shared_ptr<MergeScannerRange> MergeScannerRangePtr;
 
   /// @}
 
