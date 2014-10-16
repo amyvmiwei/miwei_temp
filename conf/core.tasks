@@ -63,9 +63,11 @@ task: rsync_installation {
 # Hypertable \$HYPERTABLE_VERSION (${HYPERTABLE_VERSION}) installation and then
 # runs the rsync_installation task.
 task: dist roles: source {
-  ssh: {
-    echo ${HADOOP_DISTRO} > ${INSTALL_DIR}/conf/hadoop-distro
-  }
+  if [ ! -f ${INSTALL_DIR}/conf/hadoop-distro ] || [ "`cat ${INSTALL_DIR}/conf/hadoop-distro`" != "${HADOOP_DISTRO}" ]; then
+    ssh: {
+      echo ${HADOOP_DISTRO} > ${INSTALL_DIR}/conf/hadoop-distro
+    }
+  fi
   rsync_installation
 }
 

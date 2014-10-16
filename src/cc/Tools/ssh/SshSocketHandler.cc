@@ -185,6 +185,7 @@ SshSocketHandler::~SshSocketHandler() {
 
 bool SshSocketHandler::handle(int sd, int events) {
   lock_guard<mutex> lock(m_mutex);
+  bool is_eof {};
   int rc;
 
   if (ms_debug_enabled)
@@ -350,11 +351,12 @@ bool SshSocketHandler::handle(int sd, int events) {
         if (m_stdout_buffer.base == 0)
           m_stdout_buffer = m_stdout_collector.allocate_buffer();
 
-        int nbytes = ssh_channel_read(m_channel,
-                                      m_stdout_buffer.ptr,
-                                      m_stdout_buffer.remain(),
-                                      0);
-        if (nbytes < 0) {
+        int nbytes = ssh_channel_read_nonblocking(m_channel,
+                                                  m_stdout_buffer.ptr,
+                                                  m_stdout_buffer.remain(),
+                                                  0);
+
+        if (nbytes == SSH_ERROR) {
           m_error = string("ssh_channel_read() failed - ") + ssh_get_error(m_ssh_session);
           ssh_channel_close(m_channel);
           ssh_channel_free(m_channel);
@@ -362,6 +364,15 @@ bool SshSocketHandler::handle(int sd, int events) {
           m_cond.notify_all();
           return false;
         }
+        else if (nbytes == SSH_EOF) {
+          is_eof = true;
+          break;
+        }
+        else if (nbytes <= 0)
+          break;
+
+        if (nbytes > 0 && *m_stdout_buffer.ptr == 0)
+          break;
 
         if (m_terminal_output)
           write_to_stdout((const char *)m_stdout_buffer.ptr, nbytes);
@@ -380,11 +391,12 @@ bool SshSocketHandler::handle(int sd, int events) {
         if (m_stderr_buffer.base == 0)
           m_stderr_buffer = m_stderr_collector.allocate_buffer();
 
-        int nbytes = ssh_channel_read(m_channel,
-                                      m_stderr_buffer.ptr,
-                                      m_stderr_buffer.remain(),
-                                      1);
-        if (nbytes < 0) {
+        int nbytes = ssh_channel_read_nonblocking(m_channel,
+                                                  m_stderr_buffer.ptr,
+                                                  m_stderr_buffer.remain(),
+                                                  1);
+
+        if (nbytes == SSH_ERROR) {
           m_error = string("ssh_channel_read() failed - ") + ssh_get_error(m_ssh_session);
           ssh_channel_close(m_channel);
           ssh_channel_free(m_channel);
@@ -392,6 +404,15 @@ bool SshSocketHandler::handle(int sd, int events) {
           m_cond.notify_all();
           return false;
         }
+        else if (nbytes == SSH_EOF) {
+          is_eof = true;
+          break;
+        }
+        else if (nbytes <= 0)
+          break;
+
+        if (nbytes > 0 && *m_stderr_buffer.ptr == 0)
+          break;
 
         if (m_terminal_output)
           write_to_stderr((const char *)m_stderr_buffer.ptr, nbytes);
@@ -405,7 +426,7 @@ bool SshSocketHandler::handle(int sd, int events) {
           break;
       }
 
-      if (ssh_channel_is_eof(m_channel)) {
+      if (is_eof || ssh_channel_is_eof(m_channel)) {
         int exit_status = ssh_channel_get_exit_status(m_channel);
 	// If ssh_channel_get_exit_status() returns -1 and the exit status has not yet
 	/// been set, then we need to read again to get the exit status
@@ -438,8 +459,8 @@ bool SshSocketHandler::handle(int sd, int events) {
   }
 
   if (ms_debug_enabled)
-    HT_INFOF("Leaving handler (%s events=%s, state=%s)", m_hostname.c_str(),
-             PollEvent::to_string(events).c_str(), state_str(m_state));
+    HT_INFOF("Leaving handler (%s poll_interest=%s, state=%s)", m_hostname.c_str(),
+             PollEvent::to_string(m_poll_interest).c_str(), state_str(m_state));
   
   return true;
 }
@@ -604,6 +625,7 @@ void SshSocketHandler::set_terminal_output(bool val) {
       cout << "\n";
     else
       m_line_prefix_needed_stdout = false;
+    cout << flush;
   }
 
   // Send stderr collected so far to output stream
@@ -625,6 +647,7 @@ void SshSocketHandler::set_terminal_output(bool val) {
       cerr << "\n";
     else
       m_line_prefix_needed_stderr = false;
+    cerr << flush;
   }
 }
 
