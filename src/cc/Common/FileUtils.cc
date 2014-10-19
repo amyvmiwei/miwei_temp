@@ -475,7 +475,7 @@ bool FileUtils::expand_tilde(String &fname) {
   if (fname[0] != '~')
     return false;
 
-  if (fname[1] == '/') {
+  if (fname.length() == 1 || fname[1] == '/') {
     if (getpwuid_r(getuid() , &pbuf, buf, 256, &prbuf) != 0 || prbuf == 0)
       return false;
     fname = (String)pbuf.pw_dir + fname.substr(1);
