@@ -1375,8 +1375,8 @@ RangeServer::create_scanner(ResponseCallbackCreateScanner *cb,
   ProfileDataScanner profile_data;
   bool decrement_needed=false;
 
-  HT_DEBUG_OUT <<"Creating scanner:\n"<< *table << *range_spec
-               << *scan_spec << HT_END;
+  //HT_DEBUG_OUT <<"Creating scanner:\n"<< *table << *range_spec
+  //<< *scan_spec << HT_END;
 
   if (!m_log_replay_barrier->wait(cb->event()->deadline(), table, range_spec))
     return;
@@ -2428,25 +2428,22 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   m_stats->cpu_sys = m_stats->system.cpu_stat.sys;
   m_stats->live = m_log_replay_barrier->user_complete();
 
+  uint64_t previous_query_cache_accesses = m_stats->query_cache_accesses;
+  uint64_t previous_query_cache_hits = m_stats->query_cache_hits;
+  uint64_t previous_block_cache_accesses = m_stats->block_cache_accesses;
+  uint64_t previous_block_cache_hits = m_stats->block_cache_hits;
+
   if (m_query_cache)
     m_query_cache->get_stats(&m_stats->query_cache_max_memory,
                              &m_stats->query_cache_available_memory,
                              &m_stats->query_cache_accesses,
                              &m_stats->query_cache_hits);
 
-  if (Global::block_cache) {
+  if (Global::block_cache)
     Global::block_cache->get_stats(&m_stats->block_cache_max_memory,
                                    &m_stats->block_cache_available_memory,
                                    &m_stats->block_cache_accesses,
                                    &m_stats->block_cache_hits);
-  }
-  else {
-    m_stats->block_cache_max_memory = 0;
-    m_stats->block_cache_available_memory = 0;
-    m_stats->block_cache_accesses = 0;
-    m_stats->block_cache_hits = 0;
-  }
-
 
   TableMutatorPtr mutator;
   if (now > m_next_metrics_update) {
@@ -2578,32 +2575,6 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
     m_stats->file_count += m_stats->tables[i].file_count;
   }
 
-  if (m_query_cache) {
-    m_query_cache->get_stats(&m_stats->query_cache_max_memory,
-                             &m_stats->query_cache_available_memory,
-                             &m_stats->query_cache_accesses,
-                             &m_stats->query_cache_hits);
-  }
-  else {
-    m_stats->query_cache_max_memory = 0;
-    m_stats->query_cache_available_memory = 0;
-    m_stats->query_cache_accesses = 0;
-    m_stats->query_cache_hits = 0;
-  }
-
-  if (Global::block_cache) {
-    Global::block_cache->get_stats(&m_stats->block_cache_max_memory,
-                                   &m_stats->block_cache_available_memory,
-                                   &m_stats->block_cache_accesses,
-                                   &m_stats->block_cache_hits);
-  }
-  else {
-    m_stats->block_cache_max_memory = 0;
-    m_stats->block_cache_available_memory = 0;
-    m_stats->block_cache_accesses = 0;
-    m_stats->block_cache_hits = 0;
-  }
-
   /**
    * If created a mutator above, write data to sys/RS_METRICS
    */
@@ -2703,9 +2674,15 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   m_ganglia_collector->update("memory.tracked",
                             (float)m_stats->tracked_memory / 1000000000.0);
 
-  if (m_stats->block_cache_accesses)
+  HT_ASSERT(previous_block_cache_accesses <= m_stats->block_cache_accesses &&
+            previous_block_cache_hits <= m_stats->block_cache_hits);
+  uint64_t block_cache_accesses = m_stats->block_cache_accesses - previous_block_cache_accesses;
+  uint64_t block_cache_hits = m_stats->block_cache_hits - previous_block_cache_hits;
+
+  if (block_cache_accesses)
     m_ganglia_collector->update("blockCache.hitRate",
-                              (int32_t)(m_stats->block_cache_hits/m_stats->block_cache_accesses));
+                                (int32_t)((block_cache_hits*100) 
+                                          / block_cache_accesses));
   else
     m_ganglia_collector->update("blockCache.hitRate", (int32_t)0);
   m_ganglia_collector->update("blockCache.memory",
@@ -2715,9 +2692,15 @@ void RangeServer::get_statistics(ResponseCallbackGetStatistics *cb,
   m_ganglia_collector->update("blockCache.fill",
                             (float)block_cache_fill / 1000000000.0);
 
-  if (m_stats->query_cache_accesses)
+  HT_ASSERT(previous_query_cache_accesses <= m_stats->query_cache_accesses &&
+            previous_query_cache_hits <= m_stats->query_cache_hits);
+  uint64_t query_cache_accesses = m_stats->query_cache_accesses - previous_query_cache_accesses;
+  uint64_t query_cache_hits = m_stats->query_cache_hits - previous_query_cache_hits;
+
+  if (query_cache_accesses)
     m_ganglia_collector->update("queryCache.hitRate",
-                              (int32_t)(m_stats->query_cache_hits/m_stats->query_cache_accesses));
+                                (int32_t)((query_cache_hits*100) /
+                                          query_cache_accesses));
   else
     m_ganglia_collector->update("queryCache.hitRate", (int32_t)0);
   m_ganglia_collector->update("queryCache.memory",
