@@ -81,7 +81,7 @@ const string Base64::encode(const string &message, bool newlines) {
   fclose(stream);
 
   string encoded_message(buffer, buffer_length);
-  delete buffer;
+  delete [] buffer;
 
   return encoded_message;
 }
