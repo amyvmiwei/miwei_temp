@@ -278,6 +278,9 @@ namespace Hypertable {
     /// Flag indicating that outstanding operations should be cancelled
     bool m_cancelled {};
 
+    /// Flag indicating that current channel is EOF
+    bool m_channel_is_eof {};
+
     /// Output collector for logging
     SshOutputCollector m_log_collector;
 

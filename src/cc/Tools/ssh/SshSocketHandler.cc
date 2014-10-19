@@ -185,7 +185,6 @@ SshSocketHandler::~SshSocketHandler() {
 
 bool SshSocketHandler::handle(int sd, int events) {
   lock_guard<mutex> lock(m_mutex);
-  bool is_eof {};
   int rc;
 
   if (ms_debug_enabled)
@@ -342,7 +341,6 @@ bool SshSocketHandler::handle(int sd, int events) {
       }
       HT_ASSERT(rc == SSH_OK);
       m_state = STATE_CHANNEL_REQUEST_READ;
-      break;
       
     case (STATE_CHANNEL_REQUEST_READ):
 
@@ -351,10 +349,10 @@ bool SshSocketHandler::handle(int sd, int events) {
         if (m_stdout_buffer.base == 0)
           m_stdout_buffer = m_stdout_collector.allocate_buffer();
 
-        int nbytes = ssh_channel_read_nonblocking(m_channel,
-                                                  m_stdout_buffer.ptr,
-                                                  m_stdout_buffer.remain(),
-                                                  0);
+        int nbytes = ssh_channel_read(m_channel,
+                                      m_stdout_buffer.ptr,
+                                      m_stdout_buffer.remain(),
+                                      0);
 
         if (nbytes == SSH_ERROR) {
           m_error = string("ssh_channel_read() failed - ") + ssh_get_error(m_ssh_session);
@@ -365,14 +363,14 @@ bool SshSocketHandler::handle(int sd, int events) {
           return false;
         }
         else if (nbytes == SSH_EOF) {
-          is_eof = true;
+          m_channel_is_eof = true;
           break;
         }
         else if (nbytes <= 0)
           break;
 
         if (nbytes > 0 && *m_stdout_buffer.ptr == 0)
-          break;
+          continue;
 
         if (m_terminal_output)
           write_to_stdout((const char *)m_stdout_buffer.ptr, nbytes);
@@ -382,8 +380,6 @@ bool SshSocketHandler::handle(int sd, int events) {
           m_stdout_collector.add(m_stdout_buffer);
           m_stdout_buffer = SshOutputCollector::Buffer();
         }
-        else
-          break;
       }
 
       while (true) {
@@ -391,10 +387,10 @@ bool SshSocketHandler::handle(int sd, int events) {
         if (m_stderr_buffer.base == 0)
           m_stderr_buffer = m_stderr_collector.allocate_buffer();
 
-        int nbytes = ssh_channel_read_nonblocking(m_channel,
-                                                  m_stderr_buffer.ptr,
-                                                  m_stderr_buffer.remain(),
-                                                  1);
+        int nbytes = ssh_channel_read(m_channel,
+                                      m_stderr_buffer.ptr,
+                                      m_stderr_buffer.remain(),
+                                      1);
 
         if (nbytes == SSH_ERROR) {
           m_error = string("ssh_channel_read() failed - ") + ssh_get_error(m_ssh_session);
@@ -405,14 +401,14 @@ bool SshSocketHandler::handle(int sd, int events) {
           return false;
         }
         else if (nbytes == SSH_EOF) {
-          is_eof = true;
+          m_channel_is_eof = true;
           break;
         }
         else if (nbytes <= 0)
           break;
 
         if (nbytes > 0 && *m_stderr_buffer.ptr == 0)
-          break;
+          continue;
 
         if (m_terminal_output)
           write_to_stderr((const char *)m_stderr_buffer.ptr, nbytes);
@@ -422,14 +418,16 @@ bool SshSocketHandler::handle(int sd, int events) {
           m_stderr_collector.add(m_stderr_buffer);
           m_stderr_buffer = SshOutputCollector::Buffer();
         }
-        else
-          break;
       }
 
-      if (is_eof || ssh_channel_is_eof(m_channel)) {
+      if (m_channel_is_eof || ssh_channel_is_eof(m_channel)) {
         int exit_status = ssh_channel_get_exit_status(m_channel);
 	// If ssh_channel_get_exit_status() returns -1 and the exit status has not yet
 	/// been set, then we need to read again to get the exit status
+        if (ms_debug_enabled)
+          HT_INFOF("At EOF (%s exit_status=%d, status_is_set=%s)",
+                   m_hostname.c_str(), exit_status,
+                   m_command_exit_status_is_set ? "true" : "false");
 	if (exit_status == -1 && !m_command_exit_status_is_set)
           break;
 	if (!m_command_exit_status_is_set) {
@@ -512,7 +510,7 @@ void SshSocketHandler::global_request_callback(ssh_session session, ssh_message 
 void SshSocketHandler::set_exit_status(int exit_status) {
   m_command_exit_status = exit_status;
   m_command_exit_status_is_set = true;
-  m_cond.notify_all();
+  m_channel_is_eof = true;
 }
 
 bool SshSocketHandler::wait_for_connection(chrono::system_clock::time_point deadline) {
@@ -534,6 +532,7 @@ bool SshSocketHandler::issue_command(const std::string &command) {
   m_command_exit_status_is_set = false;
 
   m_channel = ssh_channel_new(m_ssh_session);
+  m_channel_is_eof = false;
   HT_ASSERT(m_channel);
 
   ssh_channel_set_blocking(m_channel, 0);
