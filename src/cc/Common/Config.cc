@@ -522,7 +522,7 @@ void DefaultPolicy::init_options() {
         "worker threads for thrift broker")
     ("ThriftBroker.Hyperspace.Session.Reconnect", boo()->default_value(true),
         "ThriftBroker will reconnect to Hyperspace on session expiry")
-    ("ThriftBroker.SlowQueryLog.Enable", boo()->default_value(true),
+    ("ThriftBroker.SlowQueryLog.Enable", boo()->default_value(false),
         "Enable slow query logging")
     ("ThriftBroker.SlowQueryLog.LatencyThreshold", i32()->default_value(10000),
         "Latency threshold above which a query is considered slow")
