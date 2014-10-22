@@ -54,6 +54,8 @@ extern "C" {
 using namespace Hypertable;
 using namespace std;
 
+std::mutex FileUtils::ms_mutex;
+
 bool FileUtils::read(const String &fname, String &contents) {
   off_t len {};
   char *buf = file_to_buffer(fname, &len);
@@ -468,12 +470,15 @@ void FileUtils::add_trailing_slash(String &path) {
 
 
 bool FileUtils::expand_tilde(String &fname) {
-  struct passwd pbuf;
-  struct passwd *prbuf;
-  char buf[256];
 
   if (fname[0] != '~')
     return false;
+
+  lock_guard<mutex> lock(ms_mutex);
+
+  struct passwd pbuf;
+  struct passwd *prbuf;
+  char buf[256];
 
   if (fname.length() == 1 || fname[1] == '/') {
     if (getpwuid_r(getuid() , &pbuf, buf, 256, &prbuf) != 0 || prbuf == 0)

@@ -1,5 +1,5 @@
-/*
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -24,8 +24,8 @@
  * Helper/Utility functions for accessing files and the file system.
  */
 
-#ifndef HYPERTABLE_FILEUTILS_H
-#define HYPERTABLE_FILEUTILS_H
+#ifndef Common_FileUtils_h
+#define Common_FileUtils_h
 
 extern "C" {
 #include <dirent.h>
@@ -34,6 +34,7 @@ extern "C" {
 }
 #include "Common/String.h"
 
+#include <mutex>
 #include <vector>
 
 namespace Hypertable {
@@ -262,11 +263,14 @@ namespace Hypertable {
      */
     static void readdir(const String &dirname, const String &fname_regex,
 			std::vector<struct dirent> &listing);
+
+    /// Mutex for protecting thread-unsafe glibc library function calls
+    static std::mutex ms_mutex;
   };
 
   /** @} */
 
 }
 
-#endif // HYPERTABLE_FILEUTILS_H
+#endif // Common_FileUtils_h
 

@@ -34,6 +34,7 @@
 #include <AsyncComm/PollEvent.h>
 
 #include <cerrno>
+#include <cstdlib>
 #include <cstring>
 #include <set>
 
@@ -218,10 +219,19 @@ bool SshSocketHandler::handle(int sd, int events) {
 
         HT_ASSERT(m_ssh_session);
 
+        char *home = getenv("HOME");
+        if (home == nullptr)
+          HT_FATAL("Environment variable HOME is not set");
+        string ssh_dir(home);
+        ssh_dir.append("/.ssh");
+        ssh_options_set(m_ssh_session, SSH_OPTIONS_SSH_DIR, ssh_dir.c_str());
+
         int verbosity = SSH_LOG_PROTOCOL;
-        ssh_options_set(m_ssh_session, SSH_OPTIONS_HOST, m_hostname.c_str());
         ssh_options_set(m_ssh_session, SSH_OPTIONS_LOG_VERBOSITY, &verbosity);
+
+        ssh_options_set(m_ssh_session, SSH_OPTIONS_HOST, m_hostname.c_str());
         ssh_options_set(m_ssh_session, SSH_OPTIONS_FD, &m_sd);
+
         ssh_set_blocking(m_ssh_session, 0);
 
         // set callbacks
