@@ -82,14 +82,11 @@ void MetricsHandler::handle(Hypertable::EventPtr &event) {
 
     int64_t elapsed_secs = (timestamp - m_last_timestamp) / 1000000000LL;
 
-    {
-      lock_guard<mutex> lock(m_mutex);
-      m_ganglia_collector->update("requests", m_requests.rate(elapsed_secs));
-      m_requests.reset();
-      m_ganglia_collector->update("errors", m_errors.rate(elapsed_secs));
-      m_errors.reset();
-      m_ganglia_collector->update("connections", m_active_connections);
-    }
+    m_ganglia_collector->update("requests", m_requests.rate(elapsed_secs));
+    m_requests.reset();
+    m_ganglia_collector->update("errors", m_errors.rate(elapsed_secs));
+    m_errors.reset();
+    m_ganglia_collector->update("connections", m_active_connections);
 
     try {
       m_ganglia_collector->publish();

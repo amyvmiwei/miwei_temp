@@ -27,7 +27,11 @@
 #ifndef Common_metrics
 #define Common_metrics
 
+#include <atomic>
+
 namespace Hypertable {
+
+  using namespace std;
 
   /// @addtogroup Common
   /// @{
@@ -43,14 +47,14 @@ namespace Hypertable {
   template<typename _Tp> struct interval_metric {
 
     /// Current value
-    _Tp current {};
+    atomic<_Tp> current {};
 
     /// Previous value
-    _Tp previous {};
+    atomic<_Tp> previous {};
 
     /// Resets the metric.
     /// This method sets #previous equal to #current.
-    void reset() { previous=current; }
+    void reset() { previous.store(current); }
 
     /// Returns difference between current and previous sample.
     /// @return Difference between current and previous sample.

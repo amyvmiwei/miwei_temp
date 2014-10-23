@@ -35,10 +35,13 @@
 #include <Common/Properties.h>
 #include <Common/metrics>
 
+#include <atomic>
 #include <memory>
 #include <mutex>
 
 namespace Hypertable {
+
+  using namespace std;
 
   /// @addtogroup ThriftBroker
   /// @{
@@ -77,34 +80,28 @@ namespace Hypertable {
     /// Increments request count.
     /// Increments #m_requests which is used in computing requests/s.
     void request_increment() {
-      std::lock_guard<std::mutex> lock(m_mutex);
       m_requests.current++;
     }
 
     /// Increments error count.
     /// Increments #m_errors which is used in computing errors/s.
     void error_increment() {
-      std::lock_guard<std::mutex> lock(m_mutex);
       m_errors.current++;
     }
 
     /// Increments connection count.
     /// Increments #m_active_connections.
     void connection_increment() {
-      std::lock_guard<std::mutex> lock(m_mutex);
       m_active_connections++;
     }
 
     /// Decrements connection count.
     /// Decrements #m_active_connections.
     void connection_decrement() {
-      std::lock_guard<std::mutex> lock(m_mutex);
       m_active_connections--;
     }
 
   private:
-    /// %Mutex for serializing access to members
-    std::mutex m_mutex;
 
     /// Ganglia metrics collector
     MetricsCollectorGangliaPtr m_ganglia_collector;
@@ -128,7 +125,7 @@ namespace Hypertable {
     interval_metric<int64_t> m_errors {};
 
     /// Active %ThriftBroker connections
-    int32_t m_active_connections {};
+    atomic<int32_t> m_active_connections {};
   };
 
   /// Smart pointer to MetricsHandler

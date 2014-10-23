@@ -31,6 +31,7 @@
 #include "MetricsCollector.h"
 
 #include <memory>
+#include <mutex>
 #include <unordered_map>
 
 namespace Hypertable {
@@ -105,6 +106,9 @@ namespace Hypertable {
     /// error, otherwise sets #m_connected to <i>true</i>.
     /// @throws Exception with code set to Error::COMM_CONNECT_ERROR
     void connect();
+
+    /// %Mutex for serializing access to members
+    std::mutex m_mutex;
 
     /// Metric name prefix ("ht." + component + ".")
     std::string m_prefix;

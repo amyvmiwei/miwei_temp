@@ -84,26 +84,32 @@ MetricsCollectorGanglia::~MetricsCollectorGanglia() {
 }
 
 void MetricsCollectorGanglia::update(const std::string &name, const std::string &value) {
+  lock_guard<mutex> lock(m_mutex);
   m_values_string[m_prefix + name] = value;
 }
 
 void MetricsCollectorGanglia::update(const std::string &name, int16_t value) {
+  lock_guard<mutex> lock(m_mutex);
   m_values_int[m_prefix + name] = (int32_t)value;
 }
 
 void MetricsCollectorGanglia::update(const std::string &name, int32_t value) {
+  lock_guard<mutex> lock(m_mutex);
   m_values_int[m_prefix + name] = value;
 }
 
 void MetricsCollectorGanglia::update(const std::string &name, float value) {
+  lock_guard<mutex> lock(m_mutex);
   m_values_double[m_prefix + name] = (double)value;
 }
 
 void MetricsCollectorGanglia::update(const std::string &name, double value) {
+  lock_guard<mutex> lock(m_mutex);
   m_values_double[m_prefix + name] = value;
 }
 
 void MetricsCollectorGanglia::publish() {
+  lock_guard<mutex> lock(m_mutex);
 
   if (!m_connected)
     this->connect();

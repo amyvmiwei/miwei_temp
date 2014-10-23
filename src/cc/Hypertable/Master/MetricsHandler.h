@@ -69,13 +69,10 @@ namespace Hypertable {
     /// Increments operation count.
     /// Increments #m_operations which is used in computing operations/s.
     void operation_increment() {
-      std::lock_guard<std::mutex> lock(m_mutex);
       m_operations.current++;
     }
 
   private:
-    /// %Mutex for serializing access to members
-    std::mutex m_mutex;
 
     /// Ganglia metrics collector
     MetricsCollectorGangliaPtr m_ganglia_collector;
