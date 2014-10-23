@@ -1,3 +1,27 @@
+Version 0.9.8.3:
+(2014-10-28)
+
+    Monitoring system - fixed JSONP rendering and YAML parsing for ruby >= 1.9
+    Unset LD_LIBRARY_PATH when launching rrdtool
+    Added CommandShell prefix completion and ~ expansion
+    Added support for CREATE/ALTER TABLE ... WITH <schema-file>
+    issue 1324: SlowQuery log crash if SlowQuery.log link already exists
+    Disable slow query log by default
+    issue 1325: Added missing call to ssh_init() in ht_ssh
+    Search for Openssl first in default install location
+    Eliminated deadlock in TableMutator::retry_flush()
+    Added property Hypertable.Metrics.Ganglia.Disable
+    Replaced mutex locks with atomic variables for frequently updated metrics
+    Fixed alloc-dealloc-mismatch problem discovered by AddressSanitizer
+    Fixed bug in cache hit rate metrics computation
+    Cleaned up merge scanners; Removed unnecessary virtual methods
+    Added cells/bytes Returned & ScanYield and requestBacklog metrics to RS
+    Fixed bytes/cells scanned metric computation
+    issue 1321: Fixed infinite loop problem in ht_ssh during connect
+    Fixed EOF hang problem in ht_ssh
+    Fixed read hang problem in ht_ssh
+    Fixed hang problem with ht_ssh
+
 Version 0.9.8.2:
 (2014-10-08)
 
