@@ -47,8 +47,7 @@ namespace {
 
 MetricsHandler::MetricsHandler(PropertiesPtr &props, Cronolog *slow_query_log)
   : m_slow_query_log(slow_query_log) {
-  int16_t port = props->get_i16("Hypertable.Metrics.Ganglia.Port");
-  m_ganglia_collector = std::make_shared<MetricsCollectorGanglia>("thriftbroker", port);
+  m_ganglia_collector = std::make_shared<MetricsCollectorGanglia>("thriftbroker", props);
   m_collection_interval = props->get_i32("Hypertable.Monitoring.Interval");
   m_last_timestamp = Hypertable::get_ts64();
   {

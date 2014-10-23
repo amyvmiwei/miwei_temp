@@ -104,9 +104,8 @@ RangeServer::RangeServer(PropertiesPtr &props, ConnectionManagerPtr &conn_mgr,
   : m_props(props), m_conn_manager(conn_mgr),
     m_app_queue(app_queue), m_hyperspace(hyperspace) {
 
-  int16_t ganglia_port = props->get_i16("Hypertable.Metrics.Ganglia.Port");
   m_ganglia_collector =
-    std::make_shared<MetricsCollectorGanglia>("rangeserver", ganglia_port);
+    std::make_shared<MetricsCollectorGanglia>("rangeserver", props);
 
   m_context = std::make_shared<Context>();
   m_context->props = props;

@@ -30,6 +30,8 @@
 
 #include "MetricsCollector.h"
 
+#include <Common/Properties.h>
+
 #include <memory>
 #include <mutex>
 #include <unordered_map>
@@ -49,8 +51,8 @@ namespace Hypertable {
     /// "ht." + <code>component</code> + ".".
     /// @param component Hypertable component ("fsbroker", "hyperspace, "master",
     /// "rangeserver", or "thriftbroker")
-    /// @param port Ganglia collection port
-    MetricsCollectorGanglia(const std::string &component, uint16_t port);
+    /// @param props Properties object
+    MetricsCollectorGanglia(const std::string &component, PropertiesPtr &props);
 
     /// Destructor.
     /// Closes datagram socket (#m_sd).
@@ -133,6 +135,9 @@ namespace Hypertable {
 
     /// Flag indicating if socket is connected
     bool m_connected {};
+
+    /// Flag indicating if publishing is disabled
+    bool m_disabled {};
   };
 
   /// Smart pointer to MetricsCollectorGanglia

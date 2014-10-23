@@ -37,6 +37,7 @@ import java.net.InetAddress;
 import java.net.PortUnreachableException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Properties;
 import java.net.UnknownHostException;
 import java.net.SocketException;
 
@@ -53,9 +54,15 @@ public class MetricsCollectorGanglia implements MetricsCollector {
    * "rangeserver", or "thriftbroker")
    * @param port Ganglia collection port
    */
-  public MetricsCollectorGanglia(String component, int port) {
+  public MetricsCollectorGanglia(String component, Properties props) {
     mPrefix = "ht." + component + ".";
-    mPort = port;
+
+    String str = props.getProperty("Hypertable.Metrics.Ganglia.Port", "15860");
+    mPort = Integer.parseInt(str);
+
+    str = props.getProperty("Hypertable.Metrics.Ganglia.Disabled");
+    if (str != null && str.equalsIgnoreCase("true"))
+      mDisabled = true;
 
     try {
       mAddr = InetAddress.getByName("localhost");
@@ -137,6 +144,9 @@ public class MetricsCollectorGanglia implements MetricsCollector {
    */
   public void publish() throws Exception {
 
+    if (mDisabled)
+      return;
+
     if (!mConnected)
       mSocket.connect(mAddr, mPort);
 
@@ -194,6 +204,9 @@ public class MetricsCollectorGanglia implements MetricsCollector {
 
   /** Flag indicating if socket is connected */
   private boolean mConnected = false;
+
+  /** Flag indicating if publishing is disabled */
+  private boolean mDisabled = false;
 
   /** Datagram send socket */
   private DatagramSocket mSocket;

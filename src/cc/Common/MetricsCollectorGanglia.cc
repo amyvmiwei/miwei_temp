@@ -53,8 +53,12 @@ using namespace Hypertable;
 using namespace std;
 
 MetricsCollectorGanglia::MetricsCollectorGanglia(const string &component,
-                                                 uint16_t port) : m_port(port) {
+                                                 PropertiesPtr &props) {
   InetAddr local_addr(INADDR_ANY, 0);
+
+  m_port = props->get_i16("Hypertable.Metrics.Ganglia.Port");
+
+  m_disabled = props->get_bool("Hypertable.Metrics.Ganglia.Disable");
 
   m_prefix = "ht." + component + ".";
 
@@ -110,6 +114,9 @@ void MetricsCollectorGanglia::update(const std::string &name, double value) {
 
 void MetricsCollectorGanglia::publish() {
   lock_guard<mutex> lock(m_mutex);
+
+  if (m_disabled)
+    return;
 
   if (!m_connected)
     this->connect();

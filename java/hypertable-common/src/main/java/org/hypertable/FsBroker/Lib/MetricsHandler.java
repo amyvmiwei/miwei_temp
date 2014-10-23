@@ -56,15 +56,11 @@ public class MetricsHandler implements DispatchHandler {
    * @param props %Properties object
    */
   public MetricsHandler(Comm comm, Properties props) {
-    String str;
 
-    str = props.getProperty("Hypertable.Metrics.Ganglia.Port", "15860");
-    int port = Integer.parseInt(str);
-
-    mMetricsCollectorGanglia = new MetricsCollectorGanglia("fsbroker", port);
+    mMetricsCollectorGanglia = new MetricsCollectorGanglia("fsbroker", props);
     mMetricsCollectorGanglia.update("type", "hadoop");
 
-    str = props.getProperty("Hypertable.Monitoring.Interval", "30000");
+    String str = props.getProperty("Hypertable.Monitoring.Interval", "30000");
     mCollectionInterval = Integer.parseInt(str);
 
     mComm = comm;

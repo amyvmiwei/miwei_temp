@@ -46,8 +46,7 @@ namespace {
 
 
 MetricsHandler::MetricsHandler(PropertiesPtr &props) {
-  int16_t port = props->get_i16("Hypertable.Metrics.Ganglia.Port");
-  m_ganglia_collector = std::make_shared<MetricsCollectorGanglia>("master", port);
+  m_ganglia_collector = std::make_shared<MetricsCollectorGanglia>("master", props);
   m_collection_interval = props->get_i32("Hypertable.Monitoring.Interval");
   m_last_timestamp = Hypertable::get_ts64();
   {
