@@ -141,6 +141,7 @@ namespace Hypertable {
      *
      */
     virtual bool need_retry() {
+      ScopedLock lock(m_mutex);
       return (m_failed_mutations.size() > 0);
     }
 
@@ -168,6 +169,7 @@ namespace Hypertable {
      * @param failed_mutations reference to vector of Cell/error pairs
      */
     virtual void get_failed(FailedMutations &failed_mutations) {
+      ScopedLock lock(m_mutex);
       failed_mutations = m_failed_mutations;
     }
 
@@ -246,7 +248,7 @@ namespace Hypertable {
     bool       m_refresh_schema;
     bool       m_unflushed_updates;
     FailedMutations m_failed_mutations;
-    CellsBuilder    m_failed_cells;
+    CellsBuilderPtr m_failed_cells;
   };
 
   typedef intrusive_ptr<TableMutator> TableMutatorPtr;

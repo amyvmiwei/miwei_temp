@@ -253,11 +253,20 @@ bool TableMutator::retry(uint32_t timeout_ms) {
 }
 
 void TableMutator::retry_flush() {
+  FailedMutations failed_mutations;
+  CellsBuilderPtr failed_cells;
+
   {
     ScopedLock lock(m_mutex);
-    if (m_failed_cells.size() > 0)
-      set_cells(m_failed_cells.get());
+    if (m_failed_cells && m_failed_cells->size() > 0) {
+      failed_mutations.swap(m_failed_mutations);
+      failed_cells = m_failed_cells;
+      m_failed_cells.reset();
+    }
   }
+
+  if (failed_cells && failed_cells->size() > 0)
+    set_cells(failed_cells->get());
 
   poll(0, 0, 2000);
 
@@ -287,9 +296,9 @@ TableMutator::show_failed(const Exception &e, std::ostream &out) {
 
 void TableMutator::update_ok() {
   ScopedLock lock(m_mutex);
-  if (m_failed_cells.size() > 0) {
-    m_failed_cells.clear();
+  if (m_failed_cells && m_failed_cells->size() > 0) {
     m_failed_mutations.clear();
+    m_failed_cells.reset();
   }
 }
 
@@ -297,5 +306,7 @@ void TableMutator::update_error(int error, FailedMutations &failures) {
   ScopedLock lock(m_mutex);
   // copy all failed updates
   m_last_error = error;
-  m_failed_cells.copy_failed_mutations(failures, m_failed_mutations);
+  if (!m_failed_cells)
+    m_failed_cells = new CellsBuilder(failures.size());
+  m_failed_cells->copy_failed_mutations(failures, m_failed_mutations);
 }

@@ -92,7 +92,7 @@ public:
    */
   virtual bool retry(uint32_t timeout_ms = 0) {
     ScopedRecLock lock(m_mutex);
-    return Parent::retry();
+    return Parent::retry(timeout_ms);
   }
 
   /**
