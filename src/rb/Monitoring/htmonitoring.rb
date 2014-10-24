@@ -1,6 +1,7 @@
 #!/usr/bin/env ruby
 require 'rubygems'
 require 'yaml'
+require 'syck'
 require 'json'
 require 'titleize'
 require 'sinatra/base'
@@ -8,6 +9,10 @@ require 'pathname'
 
 %w(helpers).each {  |r| require "#{  File.dirname(__FILE__)}/app/#{r}"}
 Dir["#{  File.dirname(__FILE__)}/app/lib/*.rb"].each {|r| require r}
+
+if RUBY_VERSION >= "1.9"
+  YAML::ENGINE.yamler = 'syck'
+end
 
 module HTMonitoring
   @root = Pathname.new(File.dirname(__FILE__)).expand_path
@@ -121,10 +126,12 @@ module HTMonitoring
 
     get '/data/:server/:key/:type' do
       if params[:server].downcase == "rangeserver" and params[:key].downcase == "servers"
+        content_type :js
         rrd_stats = RRDStat.new
         json = rrd_stats.get_server_list
         graph_callback(json)
       elsif params[:server].downcase == "table"
+        content_type :js
         rrd_stats = RRDStat.new
         json = rrd_stats.get_table_list
         graph_callback(json)
@@ -144,10 +151,12 @@ module HTMonitoring
 
      get '/data/:type/:stat/:timestamp_index/:sort_by/:resolution' do
       if params[:type].downcase == "table"
+        content_type :js
         stats = TableStats.new
         json = stats.get_graph_data({:stat => params[:stat], :timestamp_index => params[:timestamp_index].to_i, :sort_by => params[:sort_by]})
         graph_callback(json)
       elsif params[:type].downcase == "rangeserver"
+        content_type :js
         stats = RRDStat.new
         json = stats.get_graph_data({:stat => params[:stat], :timestamp_index => params[:timestamp_index].to_i, :sort_by => params[:sort_by],:resolution => params[:resolution]})
         graph_callback(json)
