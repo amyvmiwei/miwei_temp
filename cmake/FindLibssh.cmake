@@ -36,12 +36,19 @@ find_library(Libssh_LIBRARY NO_DEFAULT_PATH
   PATHS ${HT_DEPENDENCY_LIB_DIR} /lib /usr/lib /usr/local/lib /opt/local/lib /usr/lib/x86_64-linux-gnu
 )
 
-message(STATUS "Libssh include: ${Libssh_INCLUDE_DIR}")
-message(STATUS "Libssh library: ${Libssh_LIBRARY}")
+find_library(Libssh_ssl_LIBRARY NO_DEFAULT_PATH
+  NAMES ssl
+  PATHS ${HT_DEPENDENCY_LIB_DIR} /usr/local/ssl/lib /lib /lib64 /usr/lib /usr/lib64 /usr/local/lib /usrlocal/lib64 /opt/local/lib
+)
+
+find_library(Libssh_crypto_LIBRARY NO_DEFAULT_PATH
+  NAMES crypto
+  PATHS ${HT_DEPENDENCY_LIB_DIR} /usr/local/ssl/lib /lib /lib64 /usr/lib /usr/lib64 /usr/local/lib /usrlocal/lib64 /opt/local/lib
+)
 
 if (Libssh_INCLUDE_DIR AND Libssh_LIBRARY)
   set(Libssh_FOUND TRUE)
-  set( Libssh_LIBRARIES ${Libssh_LIBRARY})
+  set(Libssh_LIBRARIES ${Libssh_LIBRARY} ${Libssh_ssl_LIBRARY} ${Libssh_crypto_LIBRARY})
 
   exec_program(${CMAKE_SOURCE_DIR}/bin/ldd.sh
                ARGS ${Libssh_LIBRARY}
@@ -76,7 +83,8 @@ else ()
 endif ()
 
 if (Libssh_FOUND)
-  message(STATUS "Found Libssh: ${Libssh_LIBRARY}")
+  message(STATUS "Found Libssh: ${Libssh_LIBRARIES}")
+  message(STATUS "Libssh include: ${Libssh_INCLUDE_DIR}")
   try_run(TC_CHECK TC_CHECK_BUILD
           ${HYPERTABLE_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/CMakeTmp
           ${HYPERTABLE_SOURCE_DIR}/cmake/CheckLibssh.cc
@@ -89,7 +97,7 @@ if (Libssh_FOUND)
   endif ()
   message("       version: ${TC_TRY_OUT}")
 else ()
-  message(STATUS "Not Found Libssh: ${Libssh_LIBRARY}")
+  message(STATUS "Not Found Libssh")
   if (Libssh_FIND_REQUIRED)
     message(FATAL_ERROR "Could NOT find libssh library")
   endif ()
