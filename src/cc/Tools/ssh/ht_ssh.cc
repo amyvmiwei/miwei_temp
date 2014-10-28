@@ -142,6 +142,7 @@ int main(int argc, char **argv) {
   (void)signal(SIGQUIT, sig);
 
   ssh_threads_set_callbacks(SshThreadsCallbacks::get());
+  ssh_init();
 
   g_handlers.reserve(hosts.size());
 
