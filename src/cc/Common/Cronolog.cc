@@ -136,6 +136,8 @@ void Cronolog::roll(time_t now) {
     if (chdir(m_current_dir.c_str()) < 0)
       HT_FATALF("chdir(%s) failure - %s", m_current_dir.c_str(), strerror(errno));
 
+    ::unlink(m_name.c_str());
+
     if (symlink(archive.c_str(), m_name.c_str()) < 0)
       HT_FATALF("symlink(%s, %s) failure - %s", archive.c_str(), m_name.c_str(),
                 strerror(errno));
