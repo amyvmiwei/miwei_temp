@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_COMMANDINTERPRETER_H
-#define HYPERTABLE_COMMANDINTERPRETER_H
+#ifndef Tools_Lib_CommandInterpreter_h
+#define Tools_Lib_CommandInterpreter_h
 
 #include "Common/ReferenceCount.h"
 #include "Common/String.h"
@@ -32,7 +32,7 @@ namespace Hypertable {
     enum { TIMESTAMP_FORMAT_DEFAULT, TIMESTAMP_FORMAT_NANOS };
 
     CommandInterpreter();
-    virtual void execute_line(const String &line) = 0;
+    virtual int execute_line(const String &line) = 0;
     void set_timestamp_output_format(const String &format);
     void set_silent(bool silent) { m_silent = silent; }
     void set_test_mode(bool mode) { m_test_mode = mode; }
@@ -52,4 +52,4 @@ namespace Hypertable {
 
 } // namespace Hypertable
 
-#endif // HYPERTABLE_COMMANDINTERPRETER_H
+#endif // Tools_Lib_CommandInterpreter_h

@@ -83,7 +83,8 @@ namespace Hypertable {
     /// </table>
     ///
     /// @param line Command or task specification (see table)
-    virtual void execute_line(const string &line);
+    /// @return Command return code
+    int execute_line(const string &line) override;
 
   private:
 

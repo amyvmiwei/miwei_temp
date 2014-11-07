@@ -102,7 +102,7 @@ RangeServerCommandInterpreter::RangeServerCommandInterpreter(
 }
 
 
-void RangeServerCommandInterpreter::execute_line(const String &line) {
+int RangeServerCommandInterpreter::execute_line(const String &line) {
   TableIdentifier *table = 0;
   RangeSpec range;
   TableInfo *table_info;
@@ -309,7 +309,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
 
       if (state.scanner_id == -1) {
         if (m_cur_scanner_id == -1)
-          return;
+          return 0;
         scanner_id = m_cur_scanner_id;
         m_cur_scanner_id = -1;
       }
@@ -380,6 +380,7 @@ void RangeServerCommandInterpreter::execute_line(const String &line) {
   }
   else
     HT_THROW(Error::HQL_PARSE_ERROR, String("parse error at: ") + info.stop);
+  return 0;
 }
 
 

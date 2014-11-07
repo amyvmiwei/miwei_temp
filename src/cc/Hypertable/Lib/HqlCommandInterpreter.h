@@ -57,7 +57,8 @@ namespace Hypertable {
     /// the profile flag, then profile information is reported to stderr when
     /// SELECT queries are issued.
     /// @param line HQL command to execute
-    virtual void execute_line(const String &line);
+    /// @return Command return code
+    int execute_line(const String &line) override;
 
   private:
 

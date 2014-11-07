@@ -1,4 +1,4 @@
-/*
+/* -*- c++ -*-
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_HSCOMMANDINTERPRETER_H
-#define HYPERTABLE_HSCOMMANDINTERPRETER_H
+#ifndef Hyperspace_HsCommandInterpreter_h
+#define Hyperspace_HsCommandInterpreter_h
 
 #include "Tools/Lib/CommandInterpreter.h"
 #include "HsClientState.h"
@@ -36,7 +36,7 @@ namespace Hyperspace {
   public:
     HsCommandInterpreter(Session* session);
 
-    virtual void execute_line(const String &line);
+    int execute_line(const String &line) override;
 
   private:
     static void printDirEntryAttrListing(int indent, const String& attr_name, const std::vector<DirEntryAttr> listing);
@@ -48,4 +48,4 @@ namespace Hyperspace {
 
 }
 
-#endif // HYPERTABLE_HSCOMMANDINTERPRETER_H
+#endif // Hyperspace_HsCommandInterpreter_h

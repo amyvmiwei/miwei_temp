@@ -1,5 +1,5 @@
-/** -*- c++ -*-
- * Copyright (C) 2007-2012 Hypertable, Inc.
+/* -*- c++ -*-
+ * Copyright (C) 2007-2014 Hypertable, Inc.
  *
  * This file is part of Hypertable.
  *
@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_MASTERCOMMANDINTERPRETER_H
-#define HYPERTABLE_MASTERCOMMANDINTERPRETER_H
+#ifndef Tools_master_client_MasterCommandInterpreter_h
+#define Tools_master_client_MasterCommandInterpreter_h
 
 #include "Common/String.h"
 
@@ -36,7 +36,7 @@ namespace Hypertable {
   public:
     MasterCommandInterpreter(MasterClientPtr &master);
 
-    virtual void execute_line(const String &line);
+    int execute_line(const String &line) override;
 
   private:
     MasterClientPtr m_master;
@@ -47,4 +47,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_MASTERCOMMANDINTERPRETER_H
+#endif // Tools_master_client_MasterCommandInterpreter_h

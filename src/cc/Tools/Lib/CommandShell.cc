@@ -60,7 +60,7 @@ namespace {
   "-------------------------\n" \
   "?          (\\?) Synonym for `help'.\n" \
   "clear      (\\c) Clear command.\n" \
-  "exit       (\\q) Exit program. Same as quit.\n" \
+  "exit [rc]  (\\q) Exit program with optional return code rc.\n" \
   "print      (\\p) Print current command.\n" \
   "quit       (\\q) Quit program.\n" \
   "source <f> (.)  Execute commands in file <f>.\n" \
@@ -232,6 +232,9 @@ CommandShell::CommandShell(const String &program_name,
 
   if (m_props->has("execute")) {
     m_cmd_str = m_props->get_str("execute");
+    boost::trim(m_cmd_str);
+    if (!m_cmd_str.empty() && m_cmd_str[m_cmd_str.length()] != ';')
+      m_cmd_str.append(";");
     m_has_cmd_exec = true;
     m_batch_mode = true;
   }
@@ -404,6 +407,7 @@ int CommandShell::run() {
   String source_commands;
   String use_ns;
   const char *base, *ptr;
+  int exit_status = 0;
 
   if (m_props->has("timestamp-format"))
     timestamp_format = m_props->get_str("timestamp-format");
@@ -459,12 +463,20 @@ process_line:
           m_notifier_ptr->notify();
         continue;
       }
-      else if (!strncasecmp(line, "quit", 4) || !strncasecmp(line, "exit", 4)
-          || !strcmp(line, "\\q")) {
+      else if (!strncasecmp(line, "quit", 4) || !strcmp(line, "\\q")) {
         if (!m_batch_mode)
           history_w(m_history, &m_history_event, H_SAVE,
                   ms_history_file.c_str());
-        return 0;
+        return exit_status;
+      }
+      else if (!strncasecmp(line, "exit", 4)) {
+        if (!m_batch_mode)
+          history_w(m_history, &m_history_event, H_SAVE,
+                  ms_history_file.c_str());
+        const char *ptr = line + 4;
+        while (*ptr && isspace(*ptr))
+          ptr++;
+        return (*ptr) ? atoi(ptr) : exit_status;
       }
       else if (!strncasecmp(line, "print", 5) || !strcmp(line, "\\p")) {
         cout << m_accum << endl;
@@ -551,12 +563,20 @@ process_line:
       }
 
       while (!command_queue.empty()) {
-        if (command_queue.front() == "quit"
-            || command_queue.front() == "exit") {
+        if (command_queue.front() == "quit") {
           if (!m_batch_mode)
             history_w(m_history, &m_history_event, H_SAVE,
                     ms_history_file.c_str());
-          return 0;
+          return exit_status;
+        }
+        else if (boost::algorithm::starts_with(command_queue.front(), "exit")) {
+          if (!m_batch_mode)
+            history_w(m_history, &m_history_event, H_SAVE,
+                    ms_history_file.c_str());
+          const char *ptr = command_queue.front().c_str() + 4;
+          while (*ptr && isspace(*ptr))
+            ptr++;
+          return (*ptr) ? atoi(ptr) : exit_status;
         }
         command = command_queue.front();
         command_queue.pop();
@@ -568,13 +588,13 @@ process_line:
           if ((secs == 0 && errno == EINVAL) || *endptr != 0) {
             cout << "error: invalid seconds specification" << endl;
             if (m_batch_mode)
-              return 1;
+              return 2;
           }
           else
             poll(0, 0, secs*1000);
         }
         else {
-          m_interp_ptr->execute_line(command);
+          exit_status = m_interp_ptr->execute_line(command);
           if(m_notify)
             m_notifier_ptr->notify();
         }
@@ -593,7 +613,7 @@ process_line:
       if(m_notify)
         m_notifier_ptr->notify();
       if (m_batch_mode)
-        return 1;
+        return 2;
       m_accum = "";
       while (!command_queue.empty())
         command_queue.pop();
@@ -604,7 +624,7 @@ process_line:
   if (!m_batch_mode)
     history_w(m_history, &m_history_event, H_SAVE, ms_history_file.c_str());
 
-  return 0;
+  return exit_status;
 }
 
 const wchar_t *

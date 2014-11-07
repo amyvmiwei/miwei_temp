@@ -160,7 +160,7 @@ ClusterCommandInterpreter::ClusterCommandInterpreter(const string &script)
 }
 
 
-void ClusterCommandInterpreter::execute_line(const String &line) {
+int ClusterCommandInterpreter::execute_line(const String &line) {
   char **argv;
   const char *end;
   string program;
@@ -172,7 +172,7 @@ void ClusterCommandInterpreter::execute_line(const String &line) {
   if (trimmed_line[0] == '!') {
     vector<string> args;
     if (!split_command_line(trimmed_line.substr(1), args) || args.empty())
-      return;
+      return 2;
     program = m_command_script;
     argv = new char *[args.size()+2];
     size_t i=0;
@@ -185,17 +185,17 @@ void ClusterCommandInterpreter::execute_line(const String &line) {
     for (size_t i=0; help_text[i]; i++)
       cout << help_text[i] << "\n";
     cout << flush;
-    return;
+    return 0;
   }
   else if (!strncmp(trimmed_line.c_str(), "on ", 3)) {
 
     if (!extract_command_line_argument(trimmed_line.c_str() + 3, &end, target))
-      return;
+      return 2;
 
     command.append(end);
     if (command.empty()) {
       cout << "Invalid command line" << endl;
-      return;
+      return 2;
     }
 
     boost::trim_if(target, boost::is_any_of("'\""));
@@ -214,7 +214,7 @@ void ClusterCommandInterpreter::execute_line(const String &line) {
 
     if (!strncmp(trimmed_line.c_str(), "with ", 5)) {
       if (!extract_command_line_argument(trimmed_line.c_str()+5, &end, target))
-        return;
+        return 2;
       command.append(end);
     }
     else {
@@ -224,7 +224,7 @@ void ClusterCommandInterpreter::execute_line(const String &line) {
 
     if (command.empty()) {
       cout << "Invalid command line" << endl;
-      return;
+      return 2;
     }
 
     boost::trim_if(target, boost::is_any_of("'\""));
@@ -243,18 +243,19 @@ void ClusterCommandInterpreter::execute_line(const String &line) {
   if (pid == 0) {
     if (execv(program.c_str(), argv) < 0) {
       cout << "execv(" << program << ") failed - " << strerror(errno) << endl;
-      _exit(1);
+      _exit(2);
     }
   }
   else if (pid < 0) {
     cout << "vfork() failed - " << strerror(errno) << endl;
-    _exit(1);
+    _exit(2);
   }
   else {
     int status;
     waitpid(pid, &status, 0);
     delete [] argv;
+    return status;
   }
-
+  return 0;
 }
 

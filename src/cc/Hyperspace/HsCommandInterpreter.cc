@@ -19,13 +19,24 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
+#include <Common/Compat.h>
 
-#include <cassert>
-#include <cstdio>
-#include <cstring>
-#include <fstream>
-#include <iostream>
+#include "HsCommandInterpreter.h"
+#include "HsHelpText.h"
+#include "HsParser.h"
+#include "DirEntry.h"
+#include "DirEntryAttr.h"
+#include "FileHandleCallback.h"
+
+#include <Common/Error.h>
+#include <Common/FileUtils.h>
+#include <Common/Stopwatch.h>
+#include <Common/DynamicBuffer.h>
+
+#include <boost/progress.hpp>
+#include <boost/timer.hpp>
+#include <boost/thread/xtime.hpp>
+#include <boost/algorithm/string.hpp>
 
 extern "C" {
 #include <time.h>
@@ -34,22 +45,11 @@ extern "C" {
 #endif
 }
 
-
-#include <boost/progress.hpp>
-#include <boost/timer.hpp>
-#include <boost/thread/xtime.hpp>
-#include <boost/algorithm/string.hpp>
-
-#include "Common/Error.h"
-#include "Common/FileUtils.h"
-#include "Common/Stopwatch.h"
-#include "Common/DynamicBuffer.h"
-#include "HsCommandInterpreter.h"
-#include "HsHelpText.h"
-#include "HsParser.h"
-#include "DirEntry.h"
-#include "DirEntryAttr.h"
-#include "FileHandleCallback.h"
+#include <cassert>
+#include <cstdio>
+#include <cstring>
+#include <fstream>
+#include <iostream>
 
 using namespace std;
 using namespace Hyperspace;
@@ -61,7 +61,7 @@ HsCommandInterpreter::HsCommandInterpreter(Session* session)
 }
 
 
-void HsCommandInterpreter::execute_line(const String &line) {
+int HsCommandInterpreter::execute_line(const String &line) {
   String out_str;
   ParserState state;
   Parser parser(state);
@@ -525,6 +525,7 @@ void HsCommandInterpreter::execute_line(const String &line) {
   else
     HT_THROWF(Error::HYPERSPACE_CLI_PARSE_ERROR, "parse error at: %s",
               info.stop);
+  return 0;
 }
 
 void HsCommandInterpreter::printDirEntryAttrListing(int indent, const String& attr_name, const std::vector<DirEntryAttr> listing) {

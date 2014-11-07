@@ -1,4 +1,4 @@
-/** -*- c++ -*-
+/*
  * Copyright (C) 2007-2012 Hypertable, Inc.
  *
  * This file is part of Hypertable.
@@ -19,12 +19,12 @@
  * 02110-1301, USA.
  */
 
-#include "Common/Compat.h"
-
-#include "Hypertable/Lib/HqlHelpText.h"
-#include "Hypertable/Lib/HqlParser.h"
+#include <Common/Compat.h>
 
 #include "MasterCommandInterpreter.h"
+
+#include <Hypertable/Lib/HqlHelpText.h>
+#include <Hypertable/Lib/HqlParser.h>
 
 using namespace Hypertable;
 using namespace Hql;
@@ -36,7 +36,7 @@ MasterCommandInterpreter::MasterCommandInterpreter(MasterClientPtr &master)
 }
 
 
-void MasterCommandInterpreter::execute_line(const String &line) {
+int MasterCommandInterpreter::execute_line(const String &line) {
   Hql::ParserState state;
   Hql::Parser parser(state);
   parse_info<> info;
@@ -62,5 +62,6 @@ void MasterCommandInterpreter::execute_line(const String &line) {
   }
   else
     HT_THROW(Error::HQL_PARSE_ERROR, String("parse error at: ") + info.stop);
+  return 0;
 }
 

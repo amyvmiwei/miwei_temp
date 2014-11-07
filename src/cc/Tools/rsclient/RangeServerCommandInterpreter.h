@@ -19,8 +19,8 @@
  * 02110-1301, USA.
  */
 
-#ifndef HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H
-#define HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H
+#ifndef Tools_rsclient_RangeServerCommandInterpreter_h
+#define Tools_rsclient_RangeServerCommandInterpreter_h
 
 #include "TableInfo.h"
 
@@ -47,7 +47,7 @@ namespace Hypertable {
     RangeServerCommandInterpreter(Hyperspace::SessionPtr &,
         const sockaddr_in addr, RangeServerClientPtr &);
 
-    virtual void execute_line(const String &line);
+    int execute_line(const String &line) override;
 
   private:
 
@@ -69,4 +69,4 @@ namespace Hypertable {
 
 }
 
-#endif // HYPERTABLE_RANGESERVERCOMMANDINTERPRETER_H
+#endif // Tools_rsclient_RangeServerCommandInterpreter_h
