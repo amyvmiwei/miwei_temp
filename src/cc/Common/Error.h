@@ -108,6 +108,7 @@ namespace Hypertable {
       INCOMPATIBLE_OPTIONS                         = 61,
       BAD_VALUE                                    = 62,
       SCHEMA_GENERATION_MISMATCH                   = 63,
+      INVALID_METHOD_IDENTIFIER                    = 64,
 
       CONFIG_BAD_ARGUMENT                          = 1001,
       CONFIG_BAD_CFG_FILE                          = 1002,
