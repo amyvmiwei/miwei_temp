@@ -1,0 +1,253 @@
+#!/bin/bash
+
+INSTALL_PREFIX=/opt/hypertable
+HADOOP_DISTRO=cdh5
+HYPERTABLE_VERSION=
+KEYPAIR_PATH=
+PACKAGE_PATH=
+
+usage() {
+    echo "Usage: $0 <keypair> <package>"
+}
+
+
+# Install package on all machines.
+# Installs package \$PACKAGE_FILE (${PACKAGE_FILE}) on all machines in the
+# cluster.
+install_package () {
+  local PACKAGE_FILE=$1
+  shift
+  declare -a VALID_EXTENSIONS=('tar.bz2' 'deb' 'rpm' 'tar.gz')
+  local ext
+  for valid_ext in "${VALID_EXTENSIONS[@]}"; do
+    if [[ ${PACKAGE_FILE} == *.${valid_ext} ]]; then
+      ext=${valid_ext}
+    fi
+  done
+  if [ -z "${ext}" ]; then
+    echo "Package file ${PACKAGE_FILE} is of unsupported type."
+    echo "Expected one of: ${VALID_EXTENSIONS[*]}"
+    exit 1
+  fi
+
+  local PACKAGE_BASENAME=$(basename "$PACKAGE_FILE")
+  local DIR_BASENAME=${PACKAGE_BASENAME%.$ext}
+
+  sudo mkdir -p ${INSTALL_PREFIX}
+
+  if [ $ext == "deb" ]; then
+      sudo dpkg -i ${PACKAGE_FILE}
+  elif [ $ext == "rpm" ]; then
+      sudo rpm -ivh --replacepkgs --nomd5 --nodeps --oldpackage ${PACKAGE_FILE}
+  elif [ $ext == "tar.bz2" ]; then
+      sudo tar xjv -f ${PACKAGE_FILE} -C ${INSTALL_PREFIX}
+      sudo mv ${INSTALL_PREFIX}/${DIR_BASENAME}/opt/hypertable/${HYPERTABLE_VERSION} ${INSTALL_PREFIX}
+      sudo /bin/rm -rf ${INSTALL_PREFIX}/${DIR_BASENAME}
+      cd ${INSTALL_PREFIX}
+      sudo ln -sf ${HYPERTABLE_VERSION} current
+  elif [ $ext == "tar.gz" ]; then
+      sudo tar xzv -f ${PACKAGE_FILE} -C ${INSTALL_PREFIX}
+      sudo mv ${INSTALL_PREFIX}/${DIR_BASENAME}/opt/hypertable/${HYPERTABLE_VERSION} ${INSTALL_PREFIX}
+      sudo /bin/rm -rf ${INSTALL_PREFIX}/${DIR_BASENAME}
+      cd ${INSTALL_PREFIX}
+      sudo ln -sf ${HYPERTABLE_VERSION} current
+  else
+    echo "Unrecognized package type - ${ext}"
+    exit 1
+  fi
+}
+
+
+
+for i in "$@" ; do
+  case $i in
+  --package=*)
+    PACKAGE_FILE=`echo $i | cut -b11-`
+  ;;
+  --keypair=*)
+    KEYPAIR_PATH=`echo $i | cut -b11-`
+  ;;
+  --help)
+    set +x
+    usage
+    exit 1
+  ;;
+  *)
+    if [ -z "$KEYPAIR_PATH" ]; then
+	KEYPAIR_PATH=$i
+    elif  [ -z "$PACKAGE_PATH" ]; then
+	PACKAGE_PATH=$i
+    else
+	usage
+        exit 1
+    fi
+  ;;
+  esac
+done
+
+if  [ -z "$PACKAGE_PATH" ]; then
+    usage
+    exit 1
+fi
+
+KEYPAIR_FILE=`basename $KEYPAIR_PATH`
+
+cd ~hadoop/.ssh
+aws s3 cp $KEYPAIR_PATH .
+if [ $? -ne 0 ] || [ ! -f $KEYPAIR_FILE ]; then
+  echo "Problem downloading private key file '$KEYPAIR_PATH'"
+  exit 1
+fi
+chmod 400 $KEYPAIR_FILE
+
+aws s3 cp $KEYPAIR_PATH.pub .
+if [ $? -ne 0 ] || [ ! -f $KEYPAIR_FILE.pub ]; then
+  echo "Problem downloading public key file '$KEYPAIR_PATH.pub'"
+  exit 1
+fi
+
+chmod 600 authorized_keys
+cat $KEYPAIR_FILE.pub >> authorized_keys
+chmod 400 authorized_keys
+
+
+PACKAGE_FILE=`basename $PACKAGE_PATH`
+
+cd ~
+aws s3 cp $PACKAGE_PATH .
+if [ $? -ne 0 ] || [ ! -f $PACKAGE_FILE ]; then
+  echo "Problem downloading the Hypertable package '$PACKAGE_PATH'"
+  exit 1
+fi
+
+HYPERTABLE_VERSION=`echo $PACKAGE_FILE | cut -f2 -d'-'`
+
+#
+# Install Hypertable
+#
+install_package $PACKAGE_FILE
+sudo /opt/hypertable/current/bin/fhsize.sh
+sudo chown -R hadoop:hadoop /opt/hypertable/* /etc/opt/hypertable /var/opt/hypertable
+echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
+cd ~
+rm -f $PACKAGE_FILE
+
+
+#
+# Update /etc/hosts
+#
+
+sudo cp /etc/hosts /etc/hosts.backup
+
+ec2-describe-instances > /tmp/describe-instances.txt
+
+IP=`hostname --ip-address`
+INSTANCE=`fgrep $IP /tmp/describe-instances.txt | cut -f2 -d'	'`
+CLUSTER_ID=`fgrep aws:elasticmapreduce:job-flow-id /tmp/describe-instances.txt | fgrep $INSTANCE | cut -f5 -d'	'`
+MY_ROLE=`fgrep aws:elasticmapreduce:instance-group-role /tmp/describe-instances.txt | fgrep $INSTANCE | cut -f5 -d'	'`
+
+declare -A hosts
+
+while read line ; do
+  ip=`echo $line | cut -f1 -d' '`
+  names=`echo $line | cut -f2- -d' '`
+  hosts[$ip]=$names
+done < /etc/hosts.backup
+
+if [ ${hosts["127.0.0.1"]+_} ]; then
+  echo "127.0.0.1 " ${hosts["127.0.0.1"]} > /tmp/hosts
+  unset hosts["127.0.0.1"]
+fi
+
+declare -A slaves
+
+MAX_CORE_SUFFIX="0000"
+let core=0
+for i in `fgrep "$CLUSTER_ID" /tmp/describe-instances.txt | cut -f3 -d'	'` ; do
+  dns=`fgrep INSTANCE /tmp/describe-instances.txt | fgrep $i | cut -f5 -d'	'`
+  role=`fgrep aws:elasticmapreduce:instance-group-role /tmp/describe-instances.txt | fgrep $i | cut -f5 -d'	'`
+  ip=`fgrep INSTANCE /tmp/describe-instances.txt | fgrep $i | cut -f18 -d'	'`
+  if [ "$role" == "CORE" ]; then
+    if [ $core -lt 10 ]; then
+      MAX_CORE_SUFFIX="000$core"
+    elif [ $core -lt 100 ]; then
+      MAX_CORE_SUFFIX="00$core"
+    elif [ $core -lt 1000 ]; then
+      MAX_CORE_SUFFIX="0$core"
+    else
+      MAX_CORE_SUFFIX="$core"
+    fi
+    name="core${MAX_CORE_SUFFIX}"
+    let core=core+1
+  elif [ "$role" == "MASTER" ]; then
+    name="master"
+  fi
+
+  if [ ${hosts[$ip]+_} ]; then
+    echo $ip ${hosts[$ip]} $name >> /tmp/hosts
+    unset hosts[$ip]
+  else
+    echo $ip $dns $name >> /tmp/hosts
+  fi
+done
+
+for host in "${!hosts[@]}"; do
+  echo $ip ${hosts[$host]} >> /tmp/hosts
+done
+
+sudo cp /tmp/hosts /etc/hosts
+rm -f /tmp/describe-instances.txt
+
+
+CLUSTER_DEF_FILE="/opt/hypertable/current/conf/cluster.def"
+echo "INSTALL_PREFIX=/opt/hypertable" > $CLUSTER_DEF_FILE
+echo "HYPERTABLE_VERSION=${HYPERTABLE_VERSION}" >> $CLUSTER_DEF_FILE
+echo "PACKAGE_FILE=/home/hadoop/${PACKAGE_FILE}" >> $CLUSTER_DEF_FILE
+echo "FS=hadoop" >> $CLUSTER_DEF_FILE
+echo "HADOOP_DISTRO=${HADOOP_DISTRO}" >> $CLUSTER_DEF_FILE
+echo "ORIGIN_CONFIG_FILE=/home/hadoop/hypertable.cfg" >> $CLUSTER_DEF_FILE
+echo "PROMPT_CLEAN=true" >> $CLUSTER_DEF_FILE
+echo >> $CLUSTER_DEF_FILE
+echo "role: source master" >> $CLUSTER_DEF_FILE
+echo "role: master master" >> $CLUSTER_DEF_FILE
+echo "role: hyperspace master" >> $CLUSTER_DEF_FILE
+if [ $MAX_CORE_SUFFIX == "0000" ]; then
+  echo "role: slave core0000" >> $CLUSTER_DEF_FILE
+else
+  echo "role: slave core[0000-${MAX_CORE_SUFFIX}]" >> $CLUSTER_DEF_FILE
+fi
+echo "role: thriftbroker" >> $CLUSTER_DEF_FILE
+echo "role: spare" >> $CLUSTER_DEF_FILE
+echo >> $CLUSTER_DEF_FILE
+echo "include: \"core.tasks\"" >> $CLUSTER_DEF_FILE
+
+rm -f /tmp/describe-instances.txt
+
+
+echo "export PATH=\$PATH:/opt/hypertable/current/bin" >> ~hadoop/.bashrc
+
+#
+# Create default config file
+#
+cat /opt/hypertable/current/conf/hypertable.cfg | sed 's/localhost/master/g' | fgrep -v "HdfsBroker.Hadoop.ConfDir" > /home/hadoop/hypertable.cfg
+echo >> /home/hadoop/hypertable.cfg
+echo "HdfsBroker.Hadoop.ConfDir=/home/hadoop/conf" >> /home/hadoop/hypertable.cfg
+echo "Hypertable.Cluster.Name=\"$CLUSTER_ID\"" >> /home/hadoop/hypertable.cfg
+cd /
+DIRS=
+for i in `ls -1 | grep "^mnt"` ; do DIRS="$DIRS,/$i"; done
+echo "Hypertable.RangeServer.Monitoring.DataDirectories=\"${DIRS:1}\"" >> /home/hadoop/hypertable.cfg
+
+
+#
+# Monitoring system
+#
+sudo yum -y install rrdtool ruby rubygems ruby-devel ruby-rdoc
+sudo gem install --no-rdoc --no-ri sinatra rack thin json titleize syck
+
+#
+# Ganglia
+#
+sudo yum -y install ganglia-gmond-python
+
+exit 0

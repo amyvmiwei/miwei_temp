@@ -1,0 +1,56 @@
+#!/bin/bash
+
+INSTALL_PREFIX=/opt/hypertable
+HADOOP_DISTRO=cdh5
+HYPERTABLE_VERSION=
+KEYPAIR_PATH=
+PACKAGE_PATH=
+
+usage() {
+    echo "Usage: $0 [<hypertable-cfg-file>]"
+}
+
+HYPERTABLE_CFG_PATH=
+
+for i in "$@" ; do
+  case $i in
+  --dummy=*)
+    DUMMY=`echo $i | cut -b8-`
+  ;;
+  --help)
+    set +x
+    usage
+    exit 1
+  ;;
+  *)
+    if [ -z "$HYPERTABLE_CFG_PATH" ]; then
+	KEYPAIR_PATHKEYPAIR_PATH=$i
+    else
+	usage
+        exit 1
+    fi
+  ;;
+  esac
+done
+
+if  [ -n "$HYPERTABLE_CFG_PATH" ]; then
+  cd ~hadoop
+  rm -f hypertable.cfg
+  aws s3 cp $HYPERTABLE_CFG_PATH hypertable.cfg
+  if [ $? -ne 0 ]; then
+    echo "Failed to fetch hypertable config file '$HYPERTABLE_CFG_PATH'"
+    exit 1
+  fi
+fi
+
+ec2-describe-instances > /tmp/describe-instances.txt
+IP=`hostname --ip-address`
+INSTANCE=`fgrep $IP /tmp/describe-instances.txt | cut -f2 -d'	'`
+MY_ROLE=`fgrep aws:elasticmapreduce:instance-group-role /tmp/describe-instances.txt | fgrep $INSTANCE | cut -f5 -d'	'`
+rm -f /tmp/describe-instances.txt
+
+if [ "$MY_ROLE" == "MASTER" ]; then
+  sudo -u hadoop ht cluster push_config
+else
+  exit 0
+fi
