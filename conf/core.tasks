@@ -456,3 +456,60 @@ task: rangeserver_dump roles: slave {
     echo "dump NOKEYS '${RS_DUMP_FILE}';" | ${INSTALL_DIR}/bin/ht rsclient --batch ${CONFIG}
   }
 }
+
+
+# Start Ganglia gmond.  Starts the Ganglia gmond process with a call to 
+# sudo /etc/init.d/gmond start
+task: start_gmond {
+  ssh: {
+    sudo /etc/init.d/gmond start
+  }
+}
+
+
+# Stop Ganglia gmond.  Stops the Ganglia gmond process with a call to 
+# sudo /etc/init.d/gmond stop
+task: stop_gmond {
+  ssh: {
+    sudo /etc/init.d/gmond stop
+  }
+}
+
+
+# Start Ganglia gmetad.  Starts the Ganglia gmetad process with a call to 
+# sudo /etc/init.d/gmetad start
+task: start_gmetad roles: master {
+  ssh: {
+    sudo /etc/init.d/gmetad start
+  }
+}
+
+
+# Stop Ganglia gmetad.  Stops the Ganglia gmetad process with a call to 
+# sudo /etc/init.d/gmetad stop
+task: stop_gmetad roles: master {
+  ssh: {
+    sudo /etc/init.d/gmetad stop
+  }
+}
+
+
+# Start Ganglia.  Starts Ganglia by calling start_gmond and then start_gmetad
+task: start_ganglia {
+  start_gmond
+  start_gmetad
+}
+
+
+# Stop Ganglia.  Stops Ganglia by calling stop_gmetad and then stop_gmond
+task: stop_ganglia {
+  stop_gmetad
+  stop_gmond
+}
+
+
+# Restart Ganglia.  Restarts Ganglia by calling stop_ganglia followed by start_ganglia
+task: restart_ganglia {
+  stop_ganglia
+  start_ganglia
+}
