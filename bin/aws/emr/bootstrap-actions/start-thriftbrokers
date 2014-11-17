@@ -1,0 +1,5 @@
+#!/bin/bash
+
+sudo -u hadoop /opt/hypertable/current/bin/start-thriftbroker.sh
+
+exit 0

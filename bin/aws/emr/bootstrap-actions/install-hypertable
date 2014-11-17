@@ -5,6 +5,7 @@ HADOOP_DISTRO=cdh5
 HYPERTABLE_VERSION=
 KEYPAIR_PATH=
 PACKAGE_PATH=
+MASTER=`fgrep isMaster /mnt/var/lib/info/instance.json | cut -f2 -d: | tr -d " ,"`
 
 usage() {
     echo "Usage: $0 <keypair> <package>"
@@ -92,6 +93,8 @@ fi
 
 KEYPAIR_FILE=`basename $KEYPAIR_PATH`
 
+# Setup keys for 'hadoop' account
+
 cd ~hadoop/.ssh
 aws s3 cp $KEYPAIR_PATH .
 if [ $? -ne 0 ] || [ ! -f $KEYPAIR_FILE ]; then
@@ -110,10 +113,20 @@ chmod 600 authorized_keys
 cat $KEYPAIR_FILE.pub >> authorized_keys
 chmod 400 authorized_keys
 
+# Setup keys for 'root' account
+
+cd /root/.ssh
+cp ~hadoop/.ssh/$KEYPAIR_FILE .
+chmod 400 $KEYPAIR_FILE
+
+chmod 600 authorized_keys
+cp ~hadoop/.ssh/$KEYPAIR_FILE.pub .
+cat $KEYPAIR_FILE.pub >> authorized_keys
+chmod 400 authorized_keys
 
 PACKAGE_FILE=`basename $PACKAGE_PATH`
 
-cd ~
+cd /tmp
 aws s3 cp $PACKAGE_PATH .
 if [ $? -ne 0 ] || [ ! -f $PACKAGE_FILE ]; then
   echo "Problem downloading the Hypertable package '$PACKAGE_PATH'"
@@ -129,7 +142,8 @@ install_package $PACKAGE_FILE
 sudo /opt/hypertable/current/bin/fhsize.sh
 sudo chown -R hadoop:hadoop /opt/hypertable/* /etc/opt/hypertable /var/opt/hypertable
 echo ${HADOOP_DISTRO} > ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
-cd ~
+chown hadoop:hadoop ${INSTALL_PREFIX}/${HYPERTABLE_VERSION}/conf/hadoop-distro
+cd /tmp
 rm -f $PACKAGE_FILE
 
 
@@ -144,7 +158,6 @@ ec2-describe-instances > /tmp/describe-instances.txt
 IP=`hostname --ip-address`
 INSTANCE=`fgrep $IP /tmp/describe-instances.txt | cut -f2 -d'	'`
 CLUSTER_ID=`fgrep aws:elasticmapreduce:job-flow-id /tmp/describe-instances.txt | fgrep $INSTANCE | cut -f5 -d'	'`
-MY_ROLE=`fgrep aws:elasticmapreduce:instance-group-role /tmp/describe-instances.txt | fgrep $INSTANCE | cut -f5 -d'	'`
 
 declare -A hosts
 
@@ -237,17 +250,30 @@ cd /
 DIRS=
 for i in `ls -1 | grep "^mnt"` ; do DIRS="$DIRS,/$i"; done
 echo "Hypertable.RangeServer.Monitoring.DataDirectories=\"${DIRS:1}\"" >> /home/hadoop/hypertable.cfg
-
+cp /home/hadoop/hypertable.cfg /opt/hypertable/current/conf/
+chown hadoop:hadoop /opt/hypertable/current/conf/hypertable.cfg
 
 #
 # Monitoring system
 #
-sudo yum -y install rrdtool ruby rubygems ruby-devel ruby-rdoc
-sudo gem install --no-rdoc --no-ri sinatra rack thin json titleize syck
+if [ "$MASTER" == "true" ]; then
+  sudo yum -y install rrdtool ruby rubygems ruby-devel ruby-rdoc
+  sudo gem install --no-rdoc --no-ri sinatra rack thin json titleize syck
+fi
 
 #
 # Ganglia
 #
 sudo yum -y install ganglia-gmond-python
+sudo cp /etc/gmond.conf /etc/ganglia/
+
+sudo cp /opt/hypertable/current/lib/py/ganglia/python_modules/hypertable.py /usr/lib64/ganglia/python_modules
+if [ "$MASTER" == "true" ]; then
+    sudo cp /etc/gmetad.conf /etc/ganglia/
+    sudo usermod -a -G apache nobody
+    sudo bash -c "cat /opt/hypertable/current/lib/py/ganglia/conf.d/hypertable.pyconf | fgrep -v 'param EnableRangeServer' > /etc/ganglia/conf.d/hypertable.pyconf"
+else
+    sudo bash -c "cat /opt/hypertable/current/lib/py/ganglia/conf.d/hypertable.pyconf | fgrep -v 'param EnableHyperspace' | fgrep -v 'param EnableMaster' > /etc/ganglia/conf.d/hypertable.pyconf"
+fi
 
 exit 0
