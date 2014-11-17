@@ -147,6 +147,8 @@ namespace {
             m_schema->set_version(content_to_i32(atts[i], atts[i+1]));
           else if (!strcasecmp(atts[i], "group_commit_interval"))
             m_schema->set_group_commit_interval(content_to_i32(atts[i], atts[i+1]));
+          else if (!strcasecmp(atts[i], "compressor"))
+            m_schema->access_group_defaults().set_compressor(atts[i+1]);
           else
             HT_THROWF(Error::SCHEMA_PARSE_ERROR,
                       "Unrecognized attribute (%s) in Schema element", atts[i]);

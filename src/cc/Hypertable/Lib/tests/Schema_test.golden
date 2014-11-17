@@ -664,6 +664,41 @@ HYPERTABLE schema parse error: Invalid boolean value for inMemory (foo)
     </ColumnFamily>
   </AccessGroup>
 </Schema>
+<!-- 19 -->
+<Schema>
+  <Generation>1</Generation>
+  <AccessGroupDefaults>
+    <Compressor>none</Compressor>
+  </AccessGroupDefaults>
+  <ColumnFamilyDefaults>
+  </ColumnFamilyDefaults>
+  <AccessGroup name="default">
+    <Generation>0</Generation>
+    <Options>
+      <Compressor>none</Compressor>
+    </Options>
+    <ColumnFamilyDefaults>
+    </ColumnFamilyDefaults>
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>a</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>b</Name>
+      <AccessGroup>default</AccessGroup>
+      <Deleted>false</Deleted>
+      <Options>
+        <Counter>false</Counter>
+      </Options>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
 CREATE TABLE MyTable (
   actions MAX_VERSIONS 3 TTL 2592000,
   language MAX_VERSIONS 2,

@@ -42,11 +42,13 @@ DESCRIBE TABLE IndexTest;
 DESCRIBE TABLE "^IndexTest";
 <Schema version="1">
   <AccessGroupDefaults>
+    <Compressor>none</Compressor>
   </AccessGroupDefaults>
   <ColumnFamilyDefaults>
   </ColumnFamilyDefaults>
   <AccessGroup name="default">
     <Options>
+      <Compressor>none</Compressor>
     </Options>
     <ColumnFamilyDefaults>
     </ColumnFamilyDefaults>

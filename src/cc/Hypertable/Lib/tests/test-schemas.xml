@@ -504,3 +504,20 @@
     </ColumnFamily>
   </AccessGroup>
 </Schema>
+<!-- 19 -->
+<Schema generation="1" compressor="none">
+  <AccessGroup name="default">
+    <ColumnFamily id="1">
+      <Generation>1</Generation>
+      <Name>a</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+    <ColumnFamily id="2">
+      <Generation>1</Generation>
+      <Name>b</Name>
+      <Counter>false</Counter>
+      <deleted>false</deleted>
+    </ColumnFamily>
+  </AccessGroup>
+</Schema>
