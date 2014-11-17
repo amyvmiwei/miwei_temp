@@ -17,6 +17,8 @@ host7 host8 host9 host10
 host1 host2 host3 
 # host[01-10] - host07
 host01 host02 host03 host04 host05 host06 host08 host09 host10 
+# host[01-10] -host07
+host01 host02 host03 host04 host05 host06 host08 host09 host10 
 # ht-rel-css-slave[21-25]
 ht-rel-css-slave21 ht-rel-css-slave22 ht-rel-css-slave23 ht-rel-css-slave24 ht-rel-css-slave25 
 # test1 test~2 test3

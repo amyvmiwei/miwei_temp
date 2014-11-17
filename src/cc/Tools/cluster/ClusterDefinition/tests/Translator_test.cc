@@ -21,6 +21,7 @@
 #include <Common/Compat.h>
 
 #include "../TranslationContext.h"
+#include "../TranslatorRole.h"
 #include "../TranslatorTask.h"
 
 #include <Common/Error.h>
@@ -50,6 +51,13 @@ namespace {
     "# Conflict with builtin\n  task: show_variables { }",
     (const char *)0
   };
+  const char *bad_roles[] = {
+    "role: foo ht-good-master\n",
+    "role: foo ht-good - master\n",
+    "role: foo ht-good -master\n",
+    "role: foo ht-good -slave\n",
+    nullptr
+  };
 }
 
 using namespace Hypertable;
@@ -78,6 +86,18 @@ int main(int argc, char **argv) {
     }
   }
 
+  context.roles.insert("master");
+  for (size_t i=0; bad_roles[i]; i++) {
+    try {
+      TranslatorRole role("test.def", 8, bad_roles[i]);
+      string translated = role.translate(context);
+      output_file << "ok: " << translated << endl;
+    }
+    catch (Exception &e) {
+      output_file << Error::get_text(e.code()) << " - " << e.what() << endl;
+    }
+  }
+    
   output_file.close();
 
   string cmd = format("diff Translator_test.output %s", argv[1]);

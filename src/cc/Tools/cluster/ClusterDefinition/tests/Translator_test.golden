@@ -15,3 +15,11 @@ HYPERTABLE syntax error - Invalid ssh: statement on line 11 of 'test.def'
 HYPERTABLE syntax error - Invalid ssh: statement (curly brace not found) on line 13 of 'test.def'
 HYPERTABLE syntax error - Task name 'CLUSTER_BUILTIN_display_line' conflicts with built-in on line 8 of 'test.def'
 HYPERTABLE syntax error - Task name 'show_variables' conflicts with built-in on line 8 of 'test.def'
+ok: ROLE_foo="ht-good-master"
+
+ok: ROLE_foo="ht-good - ${ROLE_master}"
+
+ok: ROLE_foo="ht-good -${ROLE_master}"
+
+ok: ROLE_foo="ht-good -slave"
+

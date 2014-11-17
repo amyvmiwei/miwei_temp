@@ -22,6 +22,7 @@ namespace {
     "host[7-9]\nhost10",
     "host1, host2, host3",
     "host[01-10] - host07",
+    "host[01-10] -host07",
     "ht-rel-css-slave[21-25]",
     nullptr
   };

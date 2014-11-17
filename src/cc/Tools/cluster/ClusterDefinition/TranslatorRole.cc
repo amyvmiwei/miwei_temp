@@ -65,16 +65,24 @@ const string TranslatorRole::translate(TranslationContext &context) {
     HT_THROWF(Error::SYNTAX_ERROR, "Invalid role name 'all' on line %d of '%s'",
               (int)m_lineno, m_fname.c_str());
 
+  if (*ptr == 0 || !isspace(*ptr))
+    HT_THROWF(Error::SYNTAX_ERROR,
+              "Invalid role specification for '%s' on line %d of '%s'",
+              name.c_str(), (int)m_lineno, m_fname.c_str());
+
   while (*ptr && isspace(*ptr))
     ptr++;
 
   base = 0;
   while (*ptr) {
-    if (isalnum(*ptr) || *ptr == '_') {
+    if (base == 0 && *ptr == '-') {
+      translated_value.append(1, *ptr);
+    }
+    else if (isalnum(*ptr) || *ptr == '_' || *ptr == '-' || *ptr == '.') {
       if (base == 0)
         base = ptr;
     }
-    else if (isspace(*ptr) || *ptr == '-' || *ptr == '+' ||
+    else if (isspace(*ptr) || *ptr == '+' ||
              *ptr == ',' || *ptr == '(' || *ptr == ')') {
       if (base) {
         string name(base, ptr-base);
@@ -94,7 +102,7 @@ const string TranslatorRole::translate(TranslationContext &context) {
       else
         translated_value.append(1, *ptr);
     }
-    else if (*ptr == '[' || *ptr == ']' || *ptr == '.') {
+    else if (*ptr == '[' || *ptr == ']') {
       if (base) {
         translated_value.append(base, ptr-base);
         base = 0;
