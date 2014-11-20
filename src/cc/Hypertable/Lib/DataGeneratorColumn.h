@@ -156,7 +156,7 @@ namespace Hypertable {
         m_size = m_cooked.size();
       }
       // otherwise ("raw" mode): pick a random offset
-      else {
+      else if (!m_word_stream) {
         offset = Random::number32() % m_value_data_len;
       }
 
