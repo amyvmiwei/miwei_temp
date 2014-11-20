@@ -29,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
+import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -43,6 +45,7 @@ import org.apache.hadoop.mapred.JobConf;
 import org.apache.hadoop.mapred.JobConfigurable;
 
 import org.hypertable.thriftgen.*;
+import org.hypertable.Common.HostSpecification;
 import org.hypertable.Common.Time;
 import org.hypertable.hadoop.mapreduce.ScanSpec;
 import org.hypertable.hadoop.mapred.TableSplit;
@@ -70,6 +73,8 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
   public static final String NO_ESCAPE          = "hypertable.mapreduce.input.no_escape";
   public static final String THRIFT_FRAMESIZE   = "hypertable.mapreduce.thriftbroker.framesize";
   public static final String THRIFT_FRAMESIZE2  = "hypertable.mapreduce.thriftclient.framesize";
+  public static final String THRIFT_HOST        = "hypertable.mapreduce.thriftbroker.host";
+  public static final String THRIFT_PORT        = "hypertable.mapreduce.thriftbroker.port";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
@@ -85,6 +90,46 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
         return str.substring(1, str.length()-1);
     }
     return str;
+  }
+
+  /**
+   * Gets the ThriftBroker host name.
+   * Obtains the ThriftBroker host name from the
+   * "hypertable.mapreduce.thriftbroker.host" property.  The value of this
+   * property can either be a host name or IP address, or it can be a host
+   * specification.  If it is a host specification, it is expanded into a vector
+   * of host names, one of which is chosen at random.  The default value of
+   * "localhost" is used if the host property was not supplied.
+   * @param job Job configuration
+   * @return Host name of ThriftBroker
+   */
+  private String getThriftHost(JobConf job) throws ParseException {
+    String host = "localhost";
+    String spec = job.get(THRIFT_HOST);
+    if (spec != null) {
+      HostSpecification hs = new HostSpecification(spec);
+      Vector<String> expanded = hs.expand();
+      if (expanded.size() == 1)
+        host = expanded.elementAt(0);
+      else
+        host = expanded.elementAt((new Random()).nextInt(expanded.size()));
+    }
+    return host;
+  }
+
+  /**
+   * Gets the ThriftBroker framesize.
+   * Obtains the framesize by first reading the 
+   * "hypertable.mapreduce.thriftbroker.framesize" property and if that is zero,
+   * reads the deprecated "hypertable.mapreduce.thriftclient.framesize"
+   * @param job Job configuration
+   * @return ThriftBroker frame size
+   */
+  private int getThriftFramesize(JobConf job) {
+    int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
+    if (framesize == 0)
+      framesize = job.getInt(THRIFT_FRAMESIZE2, 0);
+    return framesize;
   }
 
   public void parseOptions(JobConf job) throws ParseException {
@@ -390,14 +435,13 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       System.err.println(scan_spec);
 
       if (m_client == null) {
-        int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
-        if (framesize == 0)
-          framesize = job.getInt(THRIFT_FRAMESIZE2, 0);
+        String host = getThriftHost(job);
+        int port = job.getInt(THRIFT_PORT, 15867);
+        int framesize = getThriftFramesize(job);
         if (framesize != 0)
-          m_client = ThriftClient.create("localhost", 15867, 1600000,
-                  true, framesize);
+          m_client = ThriftClient.create(host, port, 1600000, true, framesize);
         else
-          m_client = ThriftClient.create("localhost", 15867);
+          m_client = ThriftClient.create(host, port);
       }
       return new HypertableRecordReader(m_client, m_namespace, m_tablename,
               scan_spec, m_include_timestamps, m_no_escape);
@@ -410,6 +454,10 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }
+    catch (ParseException e) {
+      e.printStackTrace();
+      throw new IOException(e.getMessage());
+    }
   }
 
   public InputSplit[] getSplits(JobConf job, int numSplits) throws IOException {
@@ -419,14 +467,13 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       RowInterval ri = null;
 
       if (m_client == null) {
-        int framesize = job.getInt(THRIFT_FRAMESIZE, 0);
-        if (framesize == 0)
-          framesize = job.getInt(THRIFT_FRAMESIZE2, 0);
+        String host = getThriftHost(job);
+        int port = job.getInt(THRIFT_PORT, 15867);
+        int framesize = getThriftFramesize(job);
         if (framesize != 0)
-          m_client = ThriftClient.create("localhost", 15867, 1600000,
-                  true, framesize);
+          m_client = ThriftClient.create(host, port, 1600000, true, framesize);
         else
-          m_client = ThriftClient.create("localhost", 15867);
+          m_client = ThriftClient.create(host, port);
       }
 
       String tablename = job.get(TABLE);
@@ -476,6 +523,10 @@ implements org.apache.hadoop.mapred.InputFormat<Text, Text>, JobConfigurable {
       throw new IOException(e.getMessage());
     }
     catch (TException e) {
+      e.printStackTrace();
+      throw new IOException(e.getMessage());
+    }
+    catch (ParseException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }

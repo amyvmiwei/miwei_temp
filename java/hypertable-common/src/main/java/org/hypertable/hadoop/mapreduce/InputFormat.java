@@ -24,18 +24,23 @@ package org.hypertable.hadoop.mapreduce;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Random;
+import java.util.Vector;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 
+import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.io.BytesWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import org.hypertable.Common.HostSpecification;
 import org.hypertable.thriftgen.*;
 import org.hypertable.thrift.ThriftClient;
 
@@ -53,11 +58,54 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
   public static final String SCAN_SPEC = "hypertable.mapreduce.input.scan-spec";
   public static final String THRIFT_FRAMESIZE = "hypertable.mapreduce.thriftclient.framesize";
   public static final String THRIFT_FRAMESIZE2 = "hypertable.mapreduce.thriftbroker.framesize";
+  public static final String THRIFT_HOST = "hypertable.mapreduce.thriftbroker.host";
+  public static final String THRIFT_PORT = "hypertable.mapreduce.thriftbroker.port";
 
   private ThriftClient m_client = null;
   private ScanSpec m_base_spec = null;
   private String m_tablename = null;
   private String m_namespace = null;
+
+  /**
+   * Gets the ThriftBroker host name.
+   * Obtains the ThriftBroker host name from the
+   * "hypertable.mapreduce.thriftbroker.host" property.  The value of this
+   * property can either be a host name or IP address, or it can be a host
+   * specification.  If it is a host specification, it is expanded into a vector
+   * of host names, one of which is chosen at random.  The default value of
+   * "localhost" is used if the host property was not supplied.
+   * @param conf Job configuration
+   * @return Host name of ThriftBroker
+   */
+  private String getThriftHost(Configuration conf) throws ParseException {
+    String host = "localhost";
+    String spec = conf.get(THRIFT_HOST);
+    if (spec != null) {
+      HostSpecification hs = new HostSpecification(spec);
+      Vector<String> expanded = hs.expand();
+      if (expanded.size() == 1)
+        host = expanded.elementAt(0);
+      else
+        host = expanded.elementAt((new Random()).nextInt(expanded.size()));
+    }
+    return host;
+  }
+
+  /**
+   * Gets the ThriftBroker framesize.
+   * Obtains the framesize by first reading the 
+   * "hypertable.mapreduce.thriftbroker.framesize" property and if that is zero,
+   * reads the deprecated "hypertable.mapreduce.thriftclient.framesize"
+   * @param conf Job configuration
+   * @return ThriftBroker frame size
+   */
+  private int getThriftFramesize(Configuration conf) {
+    int framesize = conf.getInt(THRIFT_FRAMESIZE, 0);
+    if (framesize == 0)
+      framesize = conf.getInt(THRIFT_FRAMESIZE2, 0);
+    return framesize;
+  }
+
 
   protected class RecordReader
   extends org.apache.hadoop.mapreduce.RecordReader<KeyWritable, BytesWritable> {
@@ -257,14 +305,13 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       System.err.println(scan_spec);
 
       if (m_client == null) {
-        int framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE, 0);
-        if (framesize == 0)
-          framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE2, 0);
+        String host = getThriftHost(context.getConfiguration());
+        int port = context.getConfiguration().getInt(THRIFT_PORT, 15867);
+        int framesize = getThriftFramesize(context.getConfiguration());
         if (framesize != 0)
-          m_client = ThriftClient.create("localhost", 15867, 1600000,
-                  true, framesize);
+          m_client = ThriftClient.create(host, port, 1600000, true, framesize);
         else
-          m_client = ThriftClient.create("localhost", 15867);
+          m_client = ThriftClient.create(host, port);
       }
       return new RecordReader(m_client, m_namespace, m_tablename, scan_spec);
     }
@@ -273,6 +320,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       throw new IOException(e.getMessage());
     }
     catch (TException e) {
+      e.printStackTrace();
+      throw new IOException(e.getMessage());
+    }
+    catch (ParseException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }
@@ -296,14 +347,13 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       RowInterval ri = null;
 
       if (m_client == null) {
-        int framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE, 0);
-        if (framesize == 0)
-          framesize = context.getConfiguration().getInt(THRIFT_FRAMESIZE2, 0);
+        String host = getThriftHost(context.getConfiguration());
+        int port = context.getConfiguration().getInt(THRIFT_PORT, 15867);
+        int framesize = getThriftFramesize(context.getConfiguration());
         if (framesize != 0)
-          m_client = ThriftClient.create("localhost", 15867, 1600000,
-                  true, framesize);
+          m_client = ThriftClient.create(host, port, 1600000, true, framesize);
         else
-          m_client = ThriftClient.create("localhost", 15867);
+          m_client = ThriftClient.create(host, port);
       }
 
       if (m_base_spec == null)
@@ -344,6 +394,10 @@ extends org.apache.hadoop.mapreduce.InputFormat<KeyWritable, BytesWritable> {
       throw new IOException(e.getMessage());
     }
     catch (TException e) {
+      e.printStackTrace();
+      throw new IOException(e.getMessage());
+    }
+    catch (ParseException e) {
       e.printStackTrace();
       throw new IOException(e.getMessage());
     }
