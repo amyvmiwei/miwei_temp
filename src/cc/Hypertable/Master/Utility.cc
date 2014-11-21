@@ -237,6 +237,11 @@ void prepare_index(ContextPtr &context, const String &name,
   ag_spec->add_column(new_cf_spec);
 
   Schema *index_schema = new Schema();
+
+  // Merge defaults
+  index_schema->access_group_defaults().merge( primary_schema->access_group_defaults() );
+  index_schema->column_family_defaults().merge( primary_schema->column_family_defaults() );
+    
   index_schema->add_access_group(ag_spec);
   index_schema->set_group_commit_interval(
           primary_schema->get_group_commit_interval());
