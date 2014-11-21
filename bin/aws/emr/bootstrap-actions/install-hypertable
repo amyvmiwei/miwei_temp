@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 INSTALL_PREFIX=/opt/hypertable
 HADOOP_DISTRO=cdh5
@@ -156,14 +156,14 @@ sudo cp /etc/hosts /etc/hosts.backup
 ec2-describe-instances > /tmp/describe-instances.txt
 
 IP=`hostname --ip-address`
-INSTANCE=`fgrep $IP /tmp/describe-instances.txt | cut -f2 -d'	'`
+INSTANCE=`fgrep $IP /tmp/describe-instances.txt | fgrep INSTANCE | cut -f2 -d'	'`
 CLUSTER_ID=`fgrep aws:elasticmapreduce:job-flow-id /tmp/describe-instances.txt | fgrep $INSTANCE | cut -f5 -d'	'`
 
 declare -A hosts
 
 while read line ; do
-  ip=`echo $line | cut -f1 -d' '`
-  names=`echo $line | cut -f2- -d' '`
+  ip=`echo $line | tr -s " " | cut -f1 -d' '`
+  names=`echo $line | tr -s " " | cut -f2- -d' '`
   hosts[$ip]=$names
 done < /etc/hosts.backup
 
@@ -209,7 +209,6 @@ for host in "${!hosts[@]}"; do
 done
 
 sudo cp /tmp/hosts /etc/hosts
-rm -f /tmp/describe-instances.txt
 
 
 CLUSTER_DEF_FILE="/opt/hypertable/current/conf/cluster.def"
@@ -234,7 +233,7 @@ echo "role: spare" >> $CLUSTER_DEF_FILE
 echo >> $CLUSTER_DEF_FILE
 echo "include: \"core.tasks\"" >> $CLUSTER_DEF_FILE
 
-rm -f /tmp/describe-instances.txt
+#rm -f /tmp/describe-instances.txt
 
 
 echo "export PATH=\$PATH:/opt/hypertable/current/bin" >> ~hadoop/.bashrc
