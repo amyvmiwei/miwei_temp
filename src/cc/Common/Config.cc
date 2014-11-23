@@ -269,7 +269,7 @@ void DefaultPolicy::init_options() {
     ("Hyperspace.LogGc.Interval", i32()->default_value(60000), "Check for unused BerkeleyDB "
         "log files after this much time")
     ("Hyperspace.LogGc.MaxUnusedLogs", i32()->default_value(200), "Number of unused BerkeleyDB "
-        " to keep around in case of lagging replicas")
+        "to keep around in case of lagging replicas")
     ("Hyperspace.Replica.Host", strs(), "Hostname of Hyperspace replica")
     ("Hyperspace.Replica.Port", i16()->default_value(15861),
         "Port number on which Hyperspace is or should be listening for requests")
@@ -282,10 +282,11 @@ void DefaultPolicy::init_options() {
         "Number of Hyperspace Replica worker threads created")
     ("Hyperspace.Replica.Reactors", i32(),
         "Number of Hyperspace Master communication reactor threads created")
-    ("Hyperspace.Replica.Dir", str(), "Root of hyperspace file and directory "
+    ("Hyperspace.Replica.Dir", str()->default_value("hyperspace"),
+         "Root of hyperspace file and directory "
         "heirarchy in local filesystem (if relative path, then is relative to "
         "the Hypertable data directory root)")
-    ("Hyperspace.KeepAlive.Interval", i32()->default_value(10000),
+    ("Hyperspace.KeepAlive.Interval", i32()->default_value(30000),
         "Hyperspace Keepalive interval (see Chubby paper)")
     ("Hyperspace.Lease.Interval", i32()->default_value(60000),
         "Hyperspace Lease interval (see Chubby paper)")
