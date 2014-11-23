@@ -1,3 +1,20 @@
+Version 0.9.8.4:
+(2014-11-23)
+
+    Cleaned up default hypertable.cfg file
+    Added packaging support for Yosemite and next few versions of OSX
+    Propagate table defaults from primary table to index tables
+    Fixed crash in load_generator with word stream
+    issue1332: Made ThriftBroker host/port configurable in MapReduce connectors
+    Added java HostSpecification class
+    issue1329: Fixed problem with compressor spec in old table Schema
+    1328: Fixed variable expansion problem in cluster.def role definiton
+    issue 1330: Added tasks to core.tasks for starting/stopping Ganglia
+    issue 1328: Allow hyphen in hostnames in HostSpecification
+    Addded Error::INVALID_METHOD_IDENTIFIER
+    Modified CommandShell to exit with return status of last command
+    Fixed bug in kill task in conf/core.tasks
+
 Version 0.9.8.3:
 (2014-10-28)
 

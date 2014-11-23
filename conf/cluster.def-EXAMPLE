@@ -1,6 +1,6 @@
 INSTALL_PREFIX=/opt/hypertable
-HYPERTABLE_VERSION=0.9.8.3
-PACKAGE_FILE=/root/packages/hypertable-0.9.8.3-linux-x86_64.tar.gz
+HYPERTABLE_VERSION=0.9.8.4
+PACKAGE_FILE=/root/packages/hypertable-0.9.8.4-linux-x86_64.tar.gz
 FS=hadoop
 HADOOP_DISTRO=cdh4
 ORIGIN_CONFIG_FILE=/root/hypertable.cfg
