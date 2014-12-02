@@ -170,7 +170,8 @@ namespace Hypertable {
       /// searches the input text for strings of the form <code>${name}</code>
       /// of <code>$name</code> and if <code>name</code> is found in
       /// <code>vmap</code>, the string is replaced with the mapped value for
-      /// <code>name</code> in <code>vmap</code>.
+      /// <code>name</code> in <code>vmap</code>.  If the variable reference is
+      /// escaped (i.e. <code>\$name</code>) then it is skipped.
       /// @param intput Input text
       /// @param output Output text with variables substituted
       /// @param vmap Variable map mapping name -> sustitution text
