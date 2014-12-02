@@ -47,7 +47,7 @@ namespace Hypertable { namespace ClusterDefinition {
     /// @param lineno Starting offset within source file of code block text
     /// @param text Text of code block
     TranslatorCode(const string &fname, size_t lineno, const string &text)
-      : m_fname(fname), m_lineno(lineno), m_text(text) {};
+      : m_fname(fname), m_text(text) { (void)lineno; };
 
     /// Translates a code block.
     /// This method does no translation and passes the code block text straight
@@ -59,8 +59,6 @@ namespace Hypertable { namespace ClusterDefinition {
   private:
     /// Source file name containing code block
     string m_fname;
-    /// Starting offset within #m_fname of code block
-    size_t m_lineno;
     /// Text of code block
     string m_text;
   };
