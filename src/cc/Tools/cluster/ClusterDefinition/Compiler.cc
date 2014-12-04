@@ -44,6 +44,7 @@
 #include <ctime>
 #include <fstream>
 #include <iostream>
+#include<map>
 #include <stack>
 #include <string>
 #include <vector>
@@ -54,6 +55,10 @@ extern "C" {
 #include <sys/types.h>
 #include <unistd.h>
 }
+
+#if defined(__APPLE__)
+extern char **environ;
+#endif
 
 #define TASK_COLUMN_WIDTH 28
 #define DESCRIPTION_COLUMN_WIDTH (79-TASK_COLUMN_WIDTH)
@@ -226,6 +231,14 @@ void Compiler::make() {
     exit(1);
   }
 
+  // Create map of environment variables
+  map<string, string> environ_map;
+  for (size_t i=0; environ[i]; i++) {
+    const char *ptr = strchr(environ[i], '=');
+    HT_ASSERT(ptr);
+    environ_map[string(environ[i], ptr-environ[i])] = string(ptr+1);
+  }
+
   stack<TokenizerPtr> definitions;
 
   definitions.push( make_shared<Tokenizer>(m_definition_file) );
@@ -247,7 +260,9 @@ void Compiler::make() {
       if (token.type == Token::INCLUDE) {
         string include_file = token.text.substr(token.text.find_first_of("include:")+8);
         boost::trim_if(include_file, boost::is_any_of("'\" \t\n\r"));
-        TokenizerTools::substitute_variables(include_file, include_file, context.symbols);
+        while (TokenizerTools::substitute_variables(include_file, include_file, context.symbols))
+          ;
+        TokenizerTools::substitute_variables(include_file, include_file, environ_map);
         if (include_file[0] != '/')
           include_file = definitions.top()->dirname() + "/" + include_file;
         definitions.push( make_shared<Tokenizer>(include_file) );      
