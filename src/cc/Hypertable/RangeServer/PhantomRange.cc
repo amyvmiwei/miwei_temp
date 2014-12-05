@@ -189,7 +189,7 @@ String PhantomRange::create_log(FilesystemPtr &log_dfs,
   md5_trunc_modified_base64(end_row.c_str(), md5DigestStr);
   md5DigestStr[16] = 0;
 
-  logname = format("%s/tables/%s/_xfer/%s/phantom-%lld",
+  logname = format("%s/tables/%s/_xfer/%s_phantom_%lld",
                      Global::toplevel_dir.c_str(),
                    table.id, md5DigestStr, (Lld)recovery_id);
 

@@ -633,7 +633,7 @@ void RangeServer::local_recover() {
                    (range_entity->get_state() & RangeState::PHANTOM) != 0) {
             // If log was created originally for the phantom range, remove it
             String transfer_log = range_entity->get_transfer_log();
-            if (strstr(transfer_log.c_str(), "/phantom-") != 0) {
+            if (strstr(transfer_log.c_str(), "phantom") != 0) {
 	      try {
 		Global::log_dfs->rmdir(transfer_log);
 	      }
@@ -2098,7 +2098,6 @@ RangeServer::drop_table(ResponseCallback *cb, const TableIdentifier *table) {
   foreach_ht(RangeData &rd, ranges.array) {
     rd.range->disable_maintenance();
     try {
-      rd.range->remove_original_transfer_log();
       Global::rsml_writer->record_removal(rd.range->metalog_entity());
     }
     catch (Exception &e) {

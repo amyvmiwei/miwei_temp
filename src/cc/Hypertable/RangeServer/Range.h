@@ -327,8 +327,6 @@ namespace Hypertable {
       return m_metalog_entity->get_load_acknowledged();
     }
 
-    void remove_original_transfer_log();
-
     /// Get table ID
     /// @return %Table ID
     const std::string get_table_id() { return m_table.id; }

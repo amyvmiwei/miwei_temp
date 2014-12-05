@@ -34,6 +34,7 @@
 #include <Hypertable/RangeServer/MetaLogEntityTaskAcknowledgeRelinquish.h>
 #include <Hypertable/RangeServer/MetadataNormal.h>
 #include <Hypertable/RangeServer/MetadataRoot.h>
+#include <Hypertable/RangeServer/TransferLog.h>
 
 #include <Hypertable/Lib/CommitLog.h>
 #include <Hypertable/Lib/CommitLogReader.h>
@@ -722,11 +723,8 @@ void Range::relinquish() {
 
 
 void Range::relinquish_install_log() {
-  char md5DigestStr[33];
   String logname;
-  time_t now = 0;
   AccessGroupVector ag_vector(0);
-  String transfer_log, original_transfer_log;
 
   {
     ScopedLock lock(m_schema_mutex);
@@ -738,35 +736,14 @@ void Range::relinquish_install_log() {
 
   {
     ScopedLock lock(m_mutex);
-    m_metalog_entity->save_original_transfer_log();
 
-    /**
-     * Create transfer log
-     */
-    md5_trunc_modified_base64(m_metalog_entity->get_end_row().c_str(),
-                              md5DigestStr);
-    md5DigestStr[16] = 0;
+    logname = TransferLog(Global::log_dfs, Global::toplevel_dir,
+                          m_table.id, m_metalog_entity->get_end_row()).name();
 
-    do {
-      if (now != 0)
-        poll(0, 0, 1200);
-      now = time(0);
-      transfer_log = format("%s/tables/%s/_xfer/%s/%d", 
-                            Global::toplevel_dir.c_str(), m_table.id,
-                            md5DigestStr, (int)now);
-    }
-    while (Global::log_dfs->exists(transfer_log));
+    Global::log_dfs->mkdirs(logname);
 
-    m_metalog_entity->set_transfer_log(transfer_log);
+    m_metalog_entity->set_transfer_log(logname);
 
-    try {
-      Global::log_dfs->mkdirs(transfer_log);
-    }
-    catch (Exception &e) {
-      poll(0, 0, 1200);
-      m_metalog_entity->rollback_transfer_log();
-      throw;
-    }
 
     /**
      * Persist RELINQUISH_LOG_INSTALLED Metalog state
@@ -798,7 +775,7 @@ void Range::relinquish_install_log() {
   {
     Barrier::ScopedActivator block_updates(m_update_barrier);
     ScopedLock lock(m_mutex);
-    m_transfer_log = new CommitLog(Global::dfs,transfer_log,!m_table.is_user());
+    m_transfer_log = new CommitLog(Global::dfs, logname, !m_table.is_user());
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->stage_compaction();
   }
@@ -879,8 +856,6 @@ void Range::relinquish_finalize() {
 			      &table_frozen, range_spec,
                               m_metalog_entity->get_transfer_log(),
                               m_metalog_entity->get_soft_limit(), false);
-
-  remove_original_transfer_log();
 
   // Remove range from TableInfo
   if (!m_range_set->remove(start_row, end_row)) {
@@ -996,12 +971,9 @@ void Range::split() {
 void Range::split_install_log() {
   String split_row;
   std::vector<String> split_rows;
-  char md5DigestStr[33];
   AccessGroupVector ag_vector(0);
-  String transfer_log;
+  String logname;
   String start_row, end_row;
-
-  m_metalog_entity->save_original_transfer_log();
 
   m_metalog_entity->get_boundary_rows(start_row, end_row);
 
@@ -1071,34 +1043,12 @@ void Range::split_install_log() {
     ScopedLock lock(m_mutex);
     m_metalog_entity->set_split_row(split_row);
 
-    /**
-     * Create split (transfer) log
-     */
-    md5_trunc_modified_base64(split_row.c_str(), md5DigestStr);
-    md5DigestStr[16] = 0;
-    time_t now = 0;
+    logname = TransferLog(Global::log_dfs, Global::toplevel_dir,
+                          m_table.id, split_row).name();
 
-    do {
-      if (now != 0)
-        poll(0, 0, 1200);
-      now = time(0);
-      transfer_log = format("%s/tables/%s/_xfer/%s/%d",
-                            Global::toplevel_dir.c_str(), m_table.id,
-                            md5DigestStr, (int)now);
-    }
-    while (Global::log_dfs->exists(transfer_log));
+    Global::log_dfs->mkdirs(logname);
 
-    m_metalog_entity->set_transfer_log(transfer_log);
-
-    // Create transfer log dir
-    try {
-      Global::log_dfs->mkdirs(transfer_log);
-    }
-    catch (Exception &e) {
-      poll(0, 0, 1200);
-      m_metalog_entity->rollback_transfer_log();
-      throw;
-    }
+    m_metalog_entity->set_transfer_log(logname);
 
     if (m_split_off_high)
       m_metalog_entity->set_old_boundary_row(end_row);
@@ -1137,7 +1087,7 @@ void Range::split_install_log() {
     m_split_row = split_row;
     for (size_t i=0; i<ag_vector.size(); i++)
       ag_vector[i]->stage_compaction();
-    m_transfer_log = new CommitLog(Global::dfs, transfer_log, !m_table.is_user());
+    m_transfer_log = new CommitLog(Global::dfs, logname, !m_table.is_user());
   }
 
   HT_MAYBE_FAIL("split-1");
@@ -1447,8 +1397,6 @@ void Range::split_notify_master() {
 
   MetaLog::EntityTaskPtr acknowledge_relinquish_task;
   std::vector<MetaLog::Entity *> entities;
-
-  remove_original_transfer_log();
 
   // Add Range entity with updated state
   entities.push_back(m_metalog_entity.get());
@@ -1786,27 +1734,6 @@ void Range::acknowledge_load(uint32_t timeout_ms) {
   catch (Exception &e) {
     m_metalog_entity->set_load_acknowledged(false);
     throw;
-  }
-}
-
-void Range::remove_original_transfer_log() {
-  String transfer_log = m_metalog_entity->get_original_transfer_log();
-  if (!transfer_log.empty()) {
-    RE2 regex("\\/_xfer\\/");
-    if (RE2::PartialMatch(transfer_log.c_str(), regex)) {
-      try {
-        HT_INFOF("Removing transfer log %s", transfer_log.c_str());
-        if (Global::log_dfs->exists(transfer_log))
-          Global::log_dfs->rmdir(transfer_log);
-      }
-      catch (Exception &e) {
-        HT_WARNF("Problem removing transfer log %s - %s",
-                 transfer_log.c_str(), Error::get_text(e.code()));
-      }
-    }
-    else
-      HT_WARNF("Skipping log removal of '%s' because it does not look like a transfer log",
-	       transfer_log.c_str());
   }
 }
 
