@@ -104,6 +104,13 @@ public class HadoopBroker implements Broker {
           mConf.setInt("dfs.datanode.socket.write.timeout", 630000);
         }
 
+        // Setting this to 131072 down from its default of 1M reduces broker
+        // memory consumption
+        if (mConf.getInt("dfs.client.read.shortcircuit.buffer.size", -1) == -1) {
+          System.out.println("Setting 'dfs.client.read.shortcircuit.buffer.size' to 131072");
+          mConf.setInt("dfs.client.read.shortcircuit.buffer.size", 131072);
+        }
+
         // settings from the hadoop configuration are overwritten by values
         // from the configuration file
         str = props.getProperty("HdfsBroker.dfs.replication");
