@@ -137,6 +137,10 @@ namespace Hypertable {
      */
     void read();
 
+    /// Checks if hints file exists.
+    /// @return <i>true</i> if file exists, <i>false</i> otherwise
+    bool exists();
+
   private:
 
     /** Parses header portion of hints file.

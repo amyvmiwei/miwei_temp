@@ -352,15 +352,15 @@ namespace Hypertable {
     void split_notify_master();
 
     // these need to be aligned
-    uint64_t         m_scans;
-    uint64_t         m_cells_scanned;
-    uint64_t         m_cells_returned;
-    uint64_t         m_cells_written;
-    uint64_t         m_updates;
-    uint64_t         m_bytes_scanned;
-    uint64_t         m_bytes_returned;
-    uint64_t         m_bytes_written;
-    uint64_t         m_disk_bytes_read;
+    uint64_t m_scans {};
+    uint64_t m_cells_scanned {};
+    uint64_t m_cells_returned {};
+    uint64_t m_cells_written {};
+    uint64_t m_updates {};
+    uint64_t m_bytes_scanned {};
+    uint64_t m_bytes_returned {};
+    uint64_t m_bytes_written {};
+    uint64_t m_disk_bytes_read {};
 
     Mutex            m_mutex;
     Mutex            m_schema_mutex;
@@ -374,28 +374,28 @@ namespace Hypertable {
     AccessGroupVector  m_access_group_vector;
     std::vector<AccessGroup *>       m_column_family_vector;
     RangeMaintenanceGuard m_maintenance_guard;
-    int64_t          m_revision;
-    int64_t          m_latest_revision;
-    int64_t          m_split_threshold;
-    String           m_split_row;
-    CommitLogPtr     m_transfer_log;
+    int64_t m_revision {TIMESTAMP_MIN};
+    int64_t m_latest_revision {TIMESTAMP_MIN};
+    int64_t m_split_threshold {};
+    String m_split_row;
+    CommitLogPtr m_transfer_log;
     Barrier          m_update_barrier;
     Barrier          m_scan_barrier;
-    bool             m_split_off_high;
-    bool             m_is_root;
-    bool             m_is_metadata;
-    bool             m_unsplittable;
+    bool             m_split_off_high {};
+    bool             m_is_root {};
+    bool             m_is_metadata {};
+    bool             m_unsplittable {};
     uint64_t         m_added_deletes[KEYSPEC_DELETE_MAX];
-    uint64_t         m_added_inserts;
+    uint64_t         m_added_inserts {};
     RangeSet        *m_range_set;
-    int32_t          m_error;
-    int              m_compaction_type_needed;
-    int64_t          m_maintenance_generation;
+    int32_t          m_error {};
+    int              m_compaction_type_needed {};
+    int64_t          m_maintenance_generation {};
     LoadMetricsRange m_load_metrics;
-    bool             m_dropped;
-    bool             m_capacity_exceeded_throttle;
-    bool             m_relinquish;
-    bool             m_initialized;
+    bool             m_dropped {};
+    bool             m_capacity_exceeded_throttle {};
+    bool             m_relinquish {};
+    bool             m_initialized {};
   };
 
   /// Smart pointer to Range

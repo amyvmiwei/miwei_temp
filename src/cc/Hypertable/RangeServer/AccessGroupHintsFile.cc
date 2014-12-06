@@ -135,14 +135,14 @@ void AccessGroupHintsFile::read() {
                            Global::toplevel_dir.c_str(),
                            m_table_id.c_str(), m_range_dir.c_str());
   try {
+
     int64_t length = Global::dfs->length(filename);
-    size_t nread = 0;
     const char *base;
 
     dbuf.grow(length+1);
 
     fd = Global::dfs->open(filename, Filesystem::OPEN_FLAG_VERIFY_CHECKSUM);
-    nread = Global::dfs->read(fd, dbuf.base, length);
+    size_t nread = Global::dfs->read(fd, dbuf.base, length);
     Global::dfs->close(fd);
     dbuf.base[nread] = 0;
 
@@ -205,13 +205,24 @@ void AccessGroupHintsFile::read() {
     }
   }
   catch (Exception &e) {
-    if (e.code() == Error::FSBROKER_BAD_FILENAME)
-      HT_INFOF("Hints file %s does not exist, skipping...", filename.c_str());
-    else
-      HT_ERRORF("Problem loading hints file %s - %s", filename.c_str(),
-                Error::get_text(e.code()));
+    HT_ERRORF("Problem loading hints file %s - %s", filename.c_str(),
+              Error::get_text(e.code()));
     m_hints.clear();
   }
+}
+
+bool AccessGroupHintsFile::exists() {
+
+  string path = format("%s/tables/%s/default/%s", Global::toplevel_dir.c_str(),
+                       m_table_id.c_str(), m_range_dir.c_str());
+
+  if (!Global::dfs->exists(path))
+    return false;
+
+  path.append("/hints");
+
+  return Global::dfs->exists(path);
+
 }
 
 namespace {

@@ -72,38 +72,22 @@ Range::Range(MasterClientPtr &master_client,
              const TableIdentifier *identifier, SchemaPtr &schema,
              const RangeSpec *range, RangeSet *range_set,
              const RangeState *state, bool needs_compaction)
-  : m_scans(0), m_cells_scanned(0), m_cells_returned(0), m_cells_written(0),
-    m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
-    m_disk_bytes_read(0), m_master_client(master_client),
+  : m_master_client(master_client),
     m_hints_file(identifier->id, range->start_row, range->end_row),
-    m_schema(schema),m_revision(TIMESTAMP_MIN),m_latest_revision(TIMESTAMP_MIN),
-    m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
-    m_range_set(range_set), m_error(Error::OK),
-    m_compaction_type_needed(0), m_maintenance_generation(0),
-    m_load_metrics(identifier->id, range->start_row, range->end_row),
-    m_dropped(false), m_capacity_exceeded_throttle(false), m_relinquish(false),
-    m_initialized(false) {
+    m_schema(schema), m_range_set(range_set),
+    m_load_metrics(identifier->id, range->start_row, range->end_row) {
   m_metalog_entity = new MetaLogEntityRange(*identifier, *range, *state, needs_compaction);
   initialize();
 }
 
 Range::Range(MasterClientPtr &master_client, SchemaPtr &schema,
              MetaLogEntityRange *range_entity, RangeSet *range_set)
-  : m_scans(0), m_cells_scanned(0), m_cells_returned(0), m_cells_written(0),
-    m_updates(0), m_bytes_scanned(0), m_bytes_returned(0), m_bytes_written(0),
-    m_disk_bytes_read(0), m_master_client(master_client),
-    m_metalog_entity(range_entity), 
+  : m_master_client(master_client),  m_metalog_entity(range_entity), 
     m_hints_file(range_entity->get_table_id(), range_entity->get_start_row(),
                  range_entity->get_end_row()),
-    m_schema(schema), m_revision(TIMESTAMP_MIN),
-    m_latest_revision(TIMESTAMP_MIN), m_split_threshold(0),
-    m_split_off_high(false), m_unsplittable(false), m_added_inserts(0),
-    m_range_set(range_set), m_error(Error::OK), 
-    m_compaction_type_needed(0), m_maintenance_generation(0),
+    m_schema(schema), m_range_set(range_set),
     m_load_metrics(range_entity->get_table_id(), range_entity->get_start_row(),
-                   range_entity->get_end_row()),
-    m_dropped(false), m_capacity_exceeded_throttle(false), m_relinquish(false),
-    m_initialized(false) {
+                   range_entity->get_end_row()) {
   initialize();
 }
 
@@ -162,6 +146,12 @@ void Range::initialize() {
   }
 
   m_column_family_vector.resize(m_schema->get_max_column_family_id() + 1);
+
+  // If no transfer log, check to see if hints file exists and if not, write
+  // one.  This is to handle the case of the missing hints file for the
+  // initially loaded range in a table
+  if (m_metalog_entity->get_transfer_log().empty() && !m_hints_file.exists())
+    m_hints_file.write(Global::location_initializer->get());
 
   // Read hints file and load AGname-to-hints map
   std::map<String, const AccessGroup::Hints *> hints_map;
